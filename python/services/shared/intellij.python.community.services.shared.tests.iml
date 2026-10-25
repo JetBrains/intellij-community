@@ -34,5 +34,4 @@
     <orderEntry type="module" module-name="intellij.libraries.hamcrest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.python.community.services.shared" />
 </module>

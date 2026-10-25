@@ -145,10 +145,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/smRunner",
-        "//platform/smRunner:smRunner_test_lib",
-    ],
+    module_name = "intellij.platform.smRunner.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -212,6 +209,8 @@ jvm_library(
         "//platform/consoleView:consoleView_test_lib",
         "//platform/consoleView/impl",
         "//platform/consoleView/impl:impl_test_lib",
+        "//platform/smRunner",
+        "//platform/smRunner:smRunner_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5/codeInsight",

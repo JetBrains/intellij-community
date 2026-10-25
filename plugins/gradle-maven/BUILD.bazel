@@ -121,10 +121,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/gradle-maven:gradle-java-maven",
-        "//plugins/gradle-maven:gradle-java-maven_test_lib",
-    ],
+    module_name = "intellij.gradle.java.maven.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -213,6 +210,8 @@ jvm_library(
         "//plugins/properties/properties-psi-api:psi_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//plugins/gradle-maven:gradle-java-maven",
+        "//plugins/gradle-maven:gradle-java-maven_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//xml/plugin",

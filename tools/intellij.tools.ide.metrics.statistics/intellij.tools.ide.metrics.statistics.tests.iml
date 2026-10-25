@@ -11,5 +11,4 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.metrics.statistics" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.tools.ide.metrics.statistics" />
 </module>

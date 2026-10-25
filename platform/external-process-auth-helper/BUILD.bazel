@@ -122,10 +122,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/external-process-auth-helper",
-        "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
-    ],
+    module_name = "intellij.platform.externalProcessAuthHelper.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":externalProcessAuthHelper-tests"],
     deps = [
@@ -133,6 +130,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/external-process-auth-helper",
+        "//platform/external-process-auth-helper:external-process-auth-helper_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.externalProcessAuthHelper.tests` end

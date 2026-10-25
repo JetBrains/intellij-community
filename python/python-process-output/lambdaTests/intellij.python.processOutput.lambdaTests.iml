@@ -46,5 +46,4 @@
     <orderEntry type="module" module-name="intellij.python.processOutput.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.processOutput.frontend" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.python.processOutput.frontend" />
 </module>

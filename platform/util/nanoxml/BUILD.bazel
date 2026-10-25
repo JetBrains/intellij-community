@@ -71,16 +71,15 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/util/nanoxml",
-        "//platform/util/nanoxml:nanoxml_test_lib",
-    ],
+    module_name = "intellij.platform.util.nanoxml.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":nanoxml-tests"],
     deps = [
         # do not sort,
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/util/nanoxml",
+        "//platform/util/nanoxml:nanoxml_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.nanoxml.tests` end

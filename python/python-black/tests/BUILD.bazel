@@ -23,10 +23,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-black:black",
-        "//python/python-black:black_test_lib",
-    ],
+    module_name = "intellij.python.black.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -75,6 +72,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
+        "//python/python-black:black",
+        "//python/python-black:black_test_lib",
         "//python/common",
         "//python/common:common_test_lib",
         "//python/openapi:community",

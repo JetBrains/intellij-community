@@ -187,11 +187,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/code-insight/line-markers",
-        "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
-    ],
     kotlinc_opts = ":custom_kotlin-codeInsight-lineMarkers-tests",
+    module_name = "intellij.kotlin.codeInsight.lineMarkers.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -234,6 +231,8 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "//plugins/kotlin/code-insight/line-markers",
+        "//plugins/kotlin/code-insight/line-markers:line-markers_test_lib",
         "//platform/scratch/plugin",
         "//platform/scratch/plugin:plugin_test_lib",
     ],

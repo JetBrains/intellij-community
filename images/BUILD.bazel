@@ -177,10 +177,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//images",
-        "//images:images_test_lib",
-    ],
+    module_name = "intellij.platform.images.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -208,6 +205,8 @@ jvm_library(
         "//platform/ui.jcef",
         "//platform/ui.jcef:ui.jcef_test_lib",
         "@lib//:kotlin-stdlib",
+        "//images",
+        "//images:images_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],

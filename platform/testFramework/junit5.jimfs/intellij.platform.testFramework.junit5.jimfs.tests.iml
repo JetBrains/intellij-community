@@ -14,5 +14,4 @@
     <orderEntry type="module" module-name="intellij.platform.util.ex" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.jimfs" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.testFramework.junit5.jimfs" />
 </module>

@@ -101,10 +101,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testFramework/monorepo",
-        "//platform/testFramework/monorepo:monorepo_test_lib",
-    ],
+    module_name = "intellij.platform.testFramework.monorepo.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":monorepo-tests"],
     deps = [
@@ -142,6 +139,8 @@ jvm_library(
         "//java/java-runtime:rt_test_lib",
         "//platform/runtime/repository",
         "//platform/runtime/repository:repository_test_lib",
+        "//platform/testFramework/monorepo",
+        "//platform/testFramework/monorepo:monorepo_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.monorepo.tests` end

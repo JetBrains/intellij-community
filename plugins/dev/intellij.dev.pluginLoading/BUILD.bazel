@@ -111,15 +111,14 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
-        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading_test_lib",
-    ],
+    module_name = "intellij.dev.pluginLoading.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":pluginLoading-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading",
+        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
         "//platform/core-impl",

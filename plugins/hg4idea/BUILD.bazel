@@ -162,10 +162,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/hg4idea:vcs-hg",
-        "//plugins/hg4idea:vcs-hg_test_lib",
-    ],
+    module_name = "intellij.vcs.hg.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -221,6 +218,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
+        "//plugins/hg4idea:vcs-hg",
+        "//plugins/hg4idea:vcs-hg_test_lib",
         "//platform/vcs-log/impl:vcs-log-impl-tests",
         "//platform/vcs-log/impl:vcs-log-impl-tests_test_lib",
         "//libraries/junit4",

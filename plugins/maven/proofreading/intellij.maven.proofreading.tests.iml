@@ -14,5 +14,4 @@
     <orderEntry type="module" module-name="intellij.maven.proofreading" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.maven.proofreading" />
 </module>

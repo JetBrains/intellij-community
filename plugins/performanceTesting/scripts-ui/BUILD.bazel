@@ -130,10 +130,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/performanceTesting/scripts-ui:ui",
-        "//plugins/performanceTesting/scripts-ui:ui_test_lib",
-    ],
+    module_name = "intellij.performanceTesting.ui.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -159,6 +156,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//plugins/performanceTesting/scripts-ui:ui",
+        "//plugins/performanceTesting/scripts-ui:ui_test_lib",
         "//platform/structure-view-impl/plugin",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//libraries/lucene.common",

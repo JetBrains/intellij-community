@@ -166,11 +166,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/base/util",
-        "//plugins/kotlin/base/util:util_test_lib",
-    ],
     kotlinc_opts = ":custom_kotlin-base-util-tests",
+    module_name = "intellij.kotlin.base.util.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":kotlin-base-util-tests"],
     deps = [
@@ -182,6 +179,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
+        "//plugins/kotlin/base/util",
+        "//plugins/kotlin/base/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.base.util.tests` end

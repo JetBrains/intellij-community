@@ -69,5 +69,4 @@
     <orderEntry type="module" module-name="intellij.platform.problemView.collector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.kotlin.gradle.java" />
 </module>

@@ -191,10 +191,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/mermaid",
-        "//plugins/mermaid:mermaid_test_lib",
-    ],
+    module_name = "intellij.mermaid.tests",
     resource_strip_prefix = "testData",
     resources = glob(
         ["testData/**/*"],
@@ -203,6 +200,8 @@ jvm_library(
     runtime_deps = [":mermaid-tests"],
     deps = [
         # do not sort,
+        "//plugins/mermaid",
+        "//plugins/mermaid:mermaid_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/core-api:core",

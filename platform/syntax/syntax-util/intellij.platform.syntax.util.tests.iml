@@ -15,5 +15,4 @@
     <orderEntry type="module" module-name="intellij.platform.syntax" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.syntax.util" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.syntax.util" />
 </module>

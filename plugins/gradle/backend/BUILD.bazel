@@ -110,15 +110,14 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/gradle/backend",
-        "//plugins/gradle/backend:backend_test_lib",
-    ],
+    module_name = "intellij.gradle.backend.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":backend-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/gradle/backend",
+        "//plugins/gradle/backend:backend_test_lib",
         "//plugins/gradle",
         "//plugins/gradle:gradle_test_lib",
         "//plugins/gradle/settings",

@@ -138,10 +138,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/buildView",
-        "//platform/buildView:buildView_test_lib",
-    ],
+    module_name = "intellij.platform.buildView.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -152,6 +149,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//platform/buildView",
+        "//platform/buildView:buildView_test_lib",
         "//platform/testFramework/buildView",
         "//platform/testFramework/buildView:buildView_test_lib",
         "//platform/core-api:core",

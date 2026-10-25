@@ -130,10 +130,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testFramework/junit5/codeInsight",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
-    ],
+    module_name = "intellij.platform.testFramework.junit5.codeInsight.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":testFramework-junit5-codeInsight-tests"],
     deps = [
@@ -147,6 +144,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//platform/testFramework/junit5/codeInsight",
+        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//platform/util",
         "//platform/util:util_test_lib",
         "//platform/syntax/syntax-api:syntax",

@@ -62,7 +62,6 @@
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.testng" />
   <component name="copyright">
     <Base>
       <setting name="state" value="1" />

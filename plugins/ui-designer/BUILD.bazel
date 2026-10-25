@@ -239,10 +239,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/ui-designer:java-guiForms-designer",
-        "//plugins/ui-designer:java-guiForms-designer_test_lib",
-    ],
+    module_name = "intellij.java.guiForms.designer.tests",
     resource_jars = [":java-guiForms-designer-tests_test_resources"],
     resource_strip_prefix = "testData",
     resources = glob(
@@ -368,6 +365,8 @@ jvm_library(
         "//libraries/caffeine:caffeine_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//plugins/ui-designer:java-guiForms-designer",
+        "//plugins/ui-designer:java-guiForms-designer_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//libraries/junit4",

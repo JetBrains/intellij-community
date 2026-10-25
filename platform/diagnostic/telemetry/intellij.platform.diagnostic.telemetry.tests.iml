@@ -18,5 +18,4 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.exporters" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jackson3" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.diagnostic.telemetry" />
 </module>

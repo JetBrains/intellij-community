@@ -36,11 +36,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//fleet/build/s3",
-        "//fleet/build/s3:s3_test_lib",
-    ],
     kotlinc_opts = ":custom_tests",
+    module_name = "fleet.build.s3.tests",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -49,6 +46,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
+        "//fleet/build/s3",
+        "//fleet/build/s3:s3_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
         "//fleet/test-runtime",

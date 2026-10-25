@@ -31,11 +31,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-process-output/frontend",
-        "//python/python-process-output/frontend:frontend_test_lib",
-    ],
     kotlinc_opts = ":custom_lambdaTests",
+    module_name = "intellij.python.processOutput.lambdaTests",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -83,6 +80,8 @@ jvm_library(
         "//tools/intellij.tools.ide.starter.product.pycharm:ide-starter-product-pycharm_test_lib",
         "//python/python-process-output/common",
         "//python/python-process-output/common:common_test_lib",
+        "//python/python-process-output/frontend",
+        "//python/python-process-output/frontend:frontend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.processOutput.lambdaTests` end

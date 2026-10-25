@@ -136,14 +136,13 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/jshell/console",
-        "//plugins/jshell/console:console_test_lib",
-    ],
+    module_name = "intellij.java.jshell.console.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":java-jshell-console-tests"],
     deps = [
         # do not sort,
+        "//plugins/jshell/console",
+        "//plugins/jshell/console:console_test_lib",
         "//plugins/jshell/execution",
         "//plugins/jshell/execution:execution_test_lib",
         "//libraries/junit6",

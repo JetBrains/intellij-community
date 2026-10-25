@@ -160,11 +160,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_test_lib",
-    ],
     kotlinc_opts = ":custom_kotlin-refactorings-rename-tests",
+    module_name = "intellij.kotlin.refactorings.rename.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -215,6 +212,8 @@ jvm_library(
         "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
+        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename",
+        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/scratch/plugin",

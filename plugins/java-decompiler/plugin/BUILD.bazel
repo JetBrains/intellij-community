@@ -158,10 +158,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/java-decompiler/plugin:java-decompiler",
-        "//plugins/java-decompiler/plugin:java-decompiler_test_lib",
-    ],
+    module_name = "intellij.java.decompiler.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -211,6 +208,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/structure-view-impl:structureView",
         "//platform/structure-view-impl:structureView_test_lib",
+        "//plugins/java-decompiler/plugin:java-decompiler",
+        "//plugins/java-decompiler/plugin:java-decompiler_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//libraries/junit4",

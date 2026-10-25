@@ -12,5 +12,4 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.rt" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.diagnostic.telemetry.rt" />
 </module>

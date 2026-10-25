@@ -83,10 +83,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/diagnostic/telemetry/rt",
-        "//platform/diagnostic/telemetry/rt:rt_test_lib",
-    ],
+    module_name = "intellij.platform.diagnostic.telemetry.rt.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":diagnostic-telemetry-rt-tests"],
     deps = [
@@ -96,6 +93,8 @@ jvm_library(
         "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/diagnostic/telemetry/rt",
+        "//platform/diagnostic/telemetry/rt:rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.rt.tests` end

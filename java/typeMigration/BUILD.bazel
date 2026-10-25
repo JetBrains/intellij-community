@@ -130,10 +130,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/typeMigration",
-        "//java/typeMigration:typeMigration_test_lib",
-    ],
+    module_name = "intellij.java.typeMigration.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -191,6 +188,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
+        "//java/typeMigration",
+        "//java/typeMigration:typeMigration_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//aether-dependency-resolver/plugin",

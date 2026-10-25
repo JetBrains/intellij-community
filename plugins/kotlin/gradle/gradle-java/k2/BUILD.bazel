@@ -112,10 +112,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java",
-        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java_test_lib",
-    ],
+    module_name = "intellij.kotlin.gradle.java.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -183,6 +180,8 @@ jvm_library(
         "//plugins/kotlin/project-configuration:project-configuration_test_lib",
         "//plugins/kotlin/fir/testFramework",
         "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
+        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java",
+        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
         "//platform/ide-core",

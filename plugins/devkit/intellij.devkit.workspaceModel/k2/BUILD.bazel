@@ -149,11 +149,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/devkit/intellij.devkit.workspaceModel/k2",
-        "//plugins/devkit/intellij.devkit.workspaceModel/k2:k2_test_lib",
-    ],
     kotlinc_opts = ":custom_devkit-workspaceModel-k2-tests",
+    module_name = "intellij.devkit.workspaceModel.k2.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -191,6 +188,8 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
+        "//plugins/devkit/intellij.devkit.workspaceModel/k2",
+        "//plugins/devkit/intellij.devkit.workspaceModel/k2:k2_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/scratch/plugin",

@@ -36,10 +36,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/mcp-server/mcpserver.terminal",
-        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
-    ],
+    module_name = "intellij.mcpserver.terminal.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -60,6 +57,8 @@ jvm_library(
         "//plugins/mcp-server:mcpserver_test_lib",
         "//plugins/mcp-server/mcpserver.plugin",
         "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
+        "//plugins/mcp-server/mcpserver.terminal",
+        "//plugins/mcp-server/mcpserver.terminal:mcpserver.terminal_test_lib",
         "//plugins/mcp-server/mcpserver.testFramework",
         "//plugins/mcp-server/mcpserver.testFramework:mcpserver.testFramework_test_lib",
         "//plugins/mcp-server/tests",

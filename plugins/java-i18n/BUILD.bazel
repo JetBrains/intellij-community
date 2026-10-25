@@ -203,10 +203,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/java-i18n",
-        "//plugins/java-i18n:java-i18n_test_lib",
-    ],
+    module_name = "intellij.java.i18n.tests",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -282,6 +279,8 @@ jvm_library(
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+        "//plugins/java-i18n",
+        "//plugins/java-i18n:java-i18n_test_lib",
         "//java/java-frontback-psi-api:frontback-psi",
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
         "//platform/statistics",

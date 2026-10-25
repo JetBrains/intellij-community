@@ -139,10 +139,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testRunner",
-        "//platform/testRunner:testRunner_test_lib",
-    ],
+    module_name = "intellij.platform.testRunner.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -178,6 +175,8 @@ jvm_library(
         "//platform/xdebugger-impl:debugger-impl_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
+        "//platform/testRunner",
+        "//platform/testRunner:testRunner_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testRunner.tests` end

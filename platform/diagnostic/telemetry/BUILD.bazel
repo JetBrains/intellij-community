@@ -124,10 +124,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/diagnostic/telemetry",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-    ],
+    module_name = "intellij.platform.diagnostic.telemetry.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":telemetry-tests"],
     deps = [
@@ -145,6 +142,8 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
+        "//platform/diagnostic/telemetry",
+        "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//platform/diagnostic/telemetry.exporters",
         "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",

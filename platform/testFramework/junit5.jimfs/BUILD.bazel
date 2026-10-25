@@ -85,10 +85,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testFramework/junit5.jimfs",
-        "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
-    ],
+    module_name = "intellij.platform.testFramework.junit5.jimfs.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":junit5-jimfs-tests"],
     deps = [
@@ -102,6 +99,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/util-ex",
         "//platform/util-ex:util-ex_test_lib",
+        "//platform/testFramework/junit5.jimfs",
+        "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.jimfs.tests` end

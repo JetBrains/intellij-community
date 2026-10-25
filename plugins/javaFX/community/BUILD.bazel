@@ -101,10 +101,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/javaFX/community",
-        "//plugins/javaFX/community:community_test_lib",
-    ],
+    module_name = "intellij.javaFX.community.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -168,6 +165,8 @@ jvm_library(
         "//java/java-impl-refactorings:impl-refactorings_test_lib",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
+        "//plugins/javaFX/community",
+        "//plugins/javaFX/community:community_test_lib",
         "//plugins/javaFX:javaFX-tests",
         "//plugins/javaFX:javaFX-tests_test_lib",
         "//java/java-syntax:syntax",

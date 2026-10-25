@@ -26,5 +26,4 @@
     <orderEntry type="module" module-name="intellij.platform.runtime.repository" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.monorepo" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.testFramework.monorepo" />
 </module>

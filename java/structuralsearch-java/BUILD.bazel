@@ -121,10 +121,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/structuralsearch-java:structuralSearch",
-        "//java/structuralsearch-java:structuralSearch_test_lib",
-    ],
+    module_name = "intellij.java.structuralSearch.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -177,6 +174,8 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
+        "//java/structuralsearch-java:structuralSearch",
+        "//java/structuralsearch-java:structuralSearch_test_lib",
         "//java/java-psi-api:psi",
         "//java/java-psi-api:psi_test_lib",
         "//platform/lang-api:lang",

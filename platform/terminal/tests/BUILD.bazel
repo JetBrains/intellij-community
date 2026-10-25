@@ -36,14 +36,13 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/terminal",
-        "//platform/terminal:terminal_test_lib",
-    ],
+    module_name = "intellij.platform.terminal.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
+        "//platform/terminal",
+        "//platform/terminal:terminal_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",

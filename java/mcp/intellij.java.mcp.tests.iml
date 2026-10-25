@@ -33,5 +33,4 @@
     <orderEntry type="module" module-name="intellij.platform.todo.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.java.mcp" />
 </module>

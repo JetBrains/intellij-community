@@ -76,16 +76,15 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/util-rt",
-        "//platform/util-rt:util-rt_test_lib",
-    ],
+    module_name = "intellij.platform.util.rt.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":util-rt-tests"],
     deps = [
         # do not sort,
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/util-rt",
+        "//platform/util-rt:util-rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.rt.tests` end

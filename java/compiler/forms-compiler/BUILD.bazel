@@ -104,10 +104,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/compiler/forms-compiler:java-guiForms-compiler",
-        "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
-    ],
+    module_name = "intellij.java.guiForms.compiler.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":java-guiForms-compiler-tests"],
     deps = [
@@ -120,6 +117,8 @@ jvm_library(
         "//platform/util/multiplatform:multiplatform_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//java/compiler/forms-compiler:java-guiForms-compiler",
+        "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` end

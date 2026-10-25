@@ -16,5 +16,4 @@
     <orderEntry type="module" module-name="intellij.libraries.groovy" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.decompiler.engine" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.java.decompiler.engine" />
 </module>

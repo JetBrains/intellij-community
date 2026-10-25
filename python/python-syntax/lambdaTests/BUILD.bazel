@@ -31,11 +31,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-parser:parser",
-        "//python/python-parser:parser_test_lib",
-    ],
     kotlinc_opts = ":custom_lambdaTests",
+    module_name = "intellij.python.syntax.lambdaTests",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -86,6 +83,8 @@ jvm_library(
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server_test_lib",
         "//tools/intellij.tools.ide.starter.product.pycharm:ide-starter-product-pycharm",
         "//tools/intellij.tools.ide.starter.product.pycharm:ide-starter-product-pycharm_test_lib",
+        "//python/python-parser:parser",
+        "//python/python-parser:parser_test_lib",
         "//python/python-psi-impl:psi-impl",
         "//python/python-psi-impl:psi-impl_test_lib",
     ],

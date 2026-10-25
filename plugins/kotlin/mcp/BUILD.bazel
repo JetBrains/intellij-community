@@ -123,10 +123,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/mcp",
-        "//plugins/kotlin/mcp:mcp_test_lib",
-    ],
+    module_name = "intellij.kotlin.mcp.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -146,6 +143,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//plugins/kotlin/mcp",
+        "//plugins/kotlin/mcp:mcp_test_lib",
         "//plugins/kotlin/formatter/minimal",
         "//plugins/kotlin/formatter/minimal:minimal_test_lib",
         "//platform/code-style-api:codeStyle",

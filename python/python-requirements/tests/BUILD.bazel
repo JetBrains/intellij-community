@@ -39,11 +39,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-requirements/backend",
-        "//python/python-requirements/backend:backend_test_lib",
-    ],
     kotlinc_opts = ":custom_tests",
+    module_name = "intellij.python.requirements.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -79,6 +76,8 @@ jvm_library(
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
         "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
+        "//python/python-requirements/backend",
+        "//python/python-requirements/backend:backend_test_lib",
         "//python/python-requirements/common",
         "//python/python-requirements/common:common_test_lib",
     ],

@@ -110,10 +110,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/completion/common",
-        "//platform/completion/common:common_test_lib",
-    ],
+    module_name = "intellij.platform.completion.common.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":common-tests"],
     deps = [
@@ -131,6 +128,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/completion/common",
+        "//platform/completion/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.completion.common.tests` end

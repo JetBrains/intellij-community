@@ -97,10 +97,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension",
-        "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension_test_lib",
-    ],
+    module_name = "intellij.platform.diagnostic.telemetry.agent.extension.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":diagnostic-telemetry-agent-extension-tests"],
     deps = [
@@ -110,6 +107,8 @@ jvm_library(
         "//libraries/opentelemetry-sdk-autoconfigure-spi",
         "//libraries/opentelemetry-sdk-autoconfigure-spi:opentelemetry-sdk-autoconfigure-spi_test_lib",
         "@lib//:kotlin-stdlib",
+        "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension",
+        "//platform/diagnostic/telemetry/agent-extension:diagnostic-telemetry-agent-extension_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.agent.extension.tests` end

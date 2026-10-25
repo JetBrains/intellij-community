@@ -132,11 +132,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-venv:venv",
-        "//python/python-venv:venv_test_lib",
-    ],
     kotlinc_opts = ":custom_venv-tests",
+    module_name = "intellij.python.venv.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -172,6 +169,8 @@ jvm_library(
         "//platform/lang-core:lang-core_test_lib",
         "//python/testFramework",
         "//python/testFramework:testFramework_test_lib",
+        "//python/python-venv:venv",
+        "//python/python-venv:venv_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.venv.tests` end

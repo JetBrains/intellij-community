@@ -24,5 +24,4 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.java.ide.customization" />
 </module>

@@ -39,11 +39,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-pytools/backend",
-        "//python/python-pytools/backend:backend_test_lib",
-    ],
     kotlinc_opts = ":custom_tests",
+    module_name = "intellij.python.pytools.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -100,6 +97,8 @@ jvm_library(
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
         "//python/python-lsp-core:lsp-core",
         "//python/python-lsp-core:lsp-core_test_lib",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/backend:backend_test_lib",
         "//python/python-pytools/common",
         "//python/python-pytools/common:common_test_lib",
     ],

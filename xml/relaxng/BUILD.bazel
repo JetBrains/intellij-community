@@ -165,10 +165,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//xml/relaxng",
-        "//xml/relaxng:relaxng_test_lib",
-    ],
+    module_name = "intellij.relaxng.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -215,6 +212,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//xml/xml-analysis-api:analysis",
         "//xml/xml-analysis-api:analysis_test_lib",
+        "//xml/relaxng",
+        "//xml/relaxng:relaxng_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework/junit5",

@@ -149,11 +149,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//notebooks/visualization",
-        "//notebooks/visualization:visualization_test_lib",
-    ],
     kotlinc_opts = ":custom_visualization-tests",
+    module_name = "intellij.notebooks.visualization.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":visualization-tests"],
     deps = [
@@ -166,6 +163,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//notebooks/visualization",
+        "//notebooks/visualization:visualization_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
     ],

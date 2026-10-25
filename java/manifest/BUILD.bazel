@@ -123,10 +123,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/manifest",
-        "//java/manifest:manifest_test_lib",
-    ],
+    module_name = "intellij.java.manifest.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -161,6 +158,8 @@ jvm_library(
         "//java/testFramework:testFramework_test_lib",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
+        "//java/manifest",
+        "//java/manifest:manifest_test_lib",
         "//java/plugin",
         "//java/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin",

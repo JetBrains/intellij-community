@@ -109,10 +109,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/syntax/syntax-util:util",
-        "//platform/syntax/syntax-util:util_test_lib",
-    ],
+    module_name = "intellij.platform.syntax.util.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":util-tests"],
     deps = [
@@ -128,6 +125,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/syntax/syntax-api:syntax",
         "//platform/syntax/syntax-api:syntax_test_lib",
+        "//platform/syntax/syntax-util:util",
+        "//platform/syntax/syntax-util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.util.tests` end

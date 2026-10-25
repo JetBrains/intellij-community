@@ -36,11 +36,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//fleet/build/http",
-        "//fleet/build/http:http_test_lib",
-    ],
     kotlinc_opts = ":custom_tests",
+    module_name = "fleet.build.http.tests",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
@@ -49,6 +46,8 @@ jvm_library(
     runtime_deps = [":tests"],
     deps = [
         # do not sort,
+        "//fleet/build/http",
+        "//fleet/build/http:http_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:fleet-io-ktor-client-mock",
         "//fleet/test-runtime",

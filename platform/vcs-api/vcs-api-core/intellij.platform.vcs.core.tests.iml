@@ -38,5 +38,4 @@
     <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.vcs.core" />
 </module>

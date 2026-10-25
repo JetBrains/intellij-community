@@ -117,10 +117,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/mcp",
-        "//java/mcp:mcp_test_lib",
-    ],
+    module_name = "intellij.java.mcp.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -138,6 +135,8 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//java/mcp",
+        "//java/mcp:mcp_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//libraries/junit6",

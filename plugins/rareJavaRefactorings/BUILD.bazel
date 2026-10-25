@@ -165,10 +165,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/rareJavaRefactorings:java-rareRefactorings",
-        "//plugins/rareJavaRefactorings:java-rareRefactorings_test_lib",
-    ],
+    module_name = "intellij.java.rareRefactorings.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -209,6 +206,8 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//jps/model-api:model",
         "//jps/model-api:model_test_lib",
+        "//plugins/rareJavaRefactorings:java-rareRefactorings",
+        "//plugins/rareJavaRefactorings:java-rareRefactorings_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/bazel-runfiles",

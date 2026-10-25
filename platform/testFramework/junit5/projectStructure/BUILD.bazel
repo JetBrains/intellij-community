@@ -107,10 +107,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testFramework/junit5/projectStructure",
-        "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
-    ],
+    module_name = "intellij.platform.testFramework.junit5.projectStructure.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -143,6 +140,8 @@ jvm_library(
         "@lib//:kotlin-stdlib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
+        "//platform/testFramework/junit5/projectStructure",
+        "//platform/testFramework/junit5/projectStructure:projectStructure_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.projectStructure.tests` end

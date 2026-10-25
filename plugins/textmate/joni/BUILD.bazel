@@ -90,10 +90,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/textmate/joni",
-        "//plugins/textmate/joni:joni_test_lib",
-    ],
+    module_name = "intellij.textmate.joni.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":joni-tests"],
     deps = [
@@ -105,6 +102,8 @@ jvm_library(
         "//plugins/textmate/core/tests:tests_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//plugins/textmate/joni",
+        "//plugins/textmate/joni:joni_test_lib",
     ],
 )
 ### auto-generated section `build intellij.textmate.joni.tests` end

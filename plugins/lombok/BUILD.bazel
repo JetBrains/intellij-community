@@ -179,10 +179,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/lombok",
-        "//plugins/lombok:lombok_test_lib",
-    ],
+    module_name = "intellij.lombok.tests",
     resource_jars = [
         ":lombok-tests_test_resources",
         ":lombok-tests_test_resources_1",
@@ -264,6 +261,8 @@ jvm_library(
         "//platform/code-style-api:codeStyle_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
+        "//plugins/lombok",
+        "//plugins/lombok:lombok_test_lib",
         "//plugins/lombok/plugin",
         "//plugins/lombok/plugin:plugin_test_lib",
         "//platform/statistics",

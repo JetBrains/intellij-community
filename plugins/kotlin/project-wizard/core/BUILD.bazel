@@ -151,10 +151,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/project-wizard/core",
-        "//plugins/kotlin/project-wizard/core:core_test_lib",
-    ],
+    module_name = "intellij.kotlin.projectWizard.core.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":kotlin-projectWizard-core-tests"],
     deps = [
@@ -166,6 +163,8 @@ jvm_library(
         "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
+        "//plugins/kotlin/project-wizard/core",
+        "//plugins/kotlin/project-wizard/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.projectWizard.core.tests` end

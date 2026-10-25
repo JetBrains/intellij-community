@@ -116,10 +116,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/findUsagesMl",
-        "//plugins/findUsagesMl:findUsagesMl_test_lib",
-    ],
+    module_name = "intellij.findUsagesMl.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -143,6 +140,8 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//platform/core-impl",
         "//platform/core-impl:core-impl_test_lib",
+        "//plugins/findUsagesMl",
+        "//plugins/findUsagesMl:findUsagesMl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.findUsagesMl.tests` end

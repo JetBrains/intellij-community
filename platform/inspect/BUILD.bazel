@@ -156,10 +156,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/inspect",
-        "//platform/inspect:inspect_test_lib",
-    ],
+    module_name = "intellij.platform.inspect.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -192,6 +189,8 @@ jvm_library(
         "//plugins/grazie:grazie_test_lib",
         "//platform/vcs/plugin",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/inspect",
+        "//platform/inspect:inspect_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.inspect.tests` end

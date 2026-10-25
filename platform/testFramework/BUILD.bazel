@@ -299,10 +299,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-    ],
+    module_name = "intellij.platform.testFramework.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -396,6 +393,8 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/structure-view-impl/frontend",
         "//platform/structure-view-impl/frontend:frontend_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.tests` end

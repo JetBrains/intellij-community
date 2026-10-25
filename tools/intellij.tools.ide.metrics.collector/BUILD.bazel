@@ -115,11 +115,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
-        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
-    ],
     kotlinc_opts = ":custom_ide-metrics-collector-tests",
+    module_name = "intellij.tools.ide.metrics.collector.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -144,6 +141,8 @@ jvm_library(
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/assertj-core",
         "//libraries/assertj-core:assertj-core_test_lib",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
+        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.metrics.collector.tests` end

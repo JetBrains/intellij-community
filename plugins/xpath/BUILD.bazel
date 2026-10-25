@@ -193,10 +193,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/xpath",
-        "//plugins/xpath:xpath_test_lib",
-    ],
+    module_name = "intellij.xpath.tests",
     resource_strip_prefix = "xpath-lang/testData",
     resources = glob(
         ["xpath-lang/testData/**/*"],
@@ -267,6 +264,8 @@ jvm_library(
         "//platform/core-ui:core-ui_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
+        "//plugins/xpath",
+        "//plugins/xpath:xpath_test_lib",
         "//platform/structure-view-impl/plugin",
         "//platform/structure-view-impl/plugin:plugin_test_lib",
     ],

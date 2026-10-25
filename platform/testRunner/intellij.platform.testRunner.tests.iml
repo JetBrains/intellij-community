@@ -23,5 +23,4 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.testRunner" />
 </module>

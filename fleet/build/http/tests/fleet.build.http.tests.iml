@@ -29,5 +29,4 @@
     <orderEntry type="library" scope="TEST" name="fleet:io.ktor.client.mock" level="project" />
     <orderEntry type="module" module-name="fleet.test.runtime" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="fleet.build.http" />
 </module>

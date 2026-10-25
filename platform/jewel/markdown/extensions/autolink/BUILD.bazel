@@ -129,11 +129,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/jewel/markdown/extensions/autolink",
-        "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
-    ],
     kotlinc_opts = ":custom_jewel-markdown-extensions-autolink-tests",
+    module_name = "intellij.platform.jewel.markdown.extensions.autolink.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":jewel-markdown-extensions-autolink-tests"],
     deps = [
@@ -146,6 +143,8 @@ jvm_library(
         "//libraries/junit4:junit4_test_lib",
         "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
+        "//platform/jewel/markdown/extensions/autolink",
+        "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.autolink.tests` end

@@ -95,10 +95,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/sqlite",
-        "//platform/sqlite:sqlite_test_lib",
-    ],
+    module_name = "intellij.platform.sqlite.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -114,6 +111,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//platform/sqlite",
+        "//platform/sqlite:sqlite_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.sqlite.tests` end

@@ -147,10 +147,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/copyright",
-        "//plugins/copyright:copyright_test_lib",
-    ],
+    module_name = "intellij.copyright.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":copyright-tests"],
     deps = [
@@ -182,6 +179,8 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5.jimfs",
         "//platform/testFramework/junit5.jimfs:junit5.jimfs_test_lib",
+        "//plugins/copyright",
+        "//plugins/copyright:copyright_test_lib",
     ],
 )
 ### auto-generated section `build intellij.copyright.tests` end

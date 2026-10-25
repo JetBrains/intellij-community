@@ -123,10 +123,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/maven/jps",
-        "//plugins/maven/jps:jps_test_lib",
-    ],
+    module_name = "intellij.maven.jps.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":jps-tests"],
     deps = [
@@ -147,6 +144,8 @@ jvm_library(
         "//jps/jps-builders:build-tests_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//plugins/maven/jps",
+        "//plugins/maven/jps:jps_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.jps.tests` end

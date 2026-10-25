@@ -107,10 +107,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/github/github-tracker:vcs-github-tracker",
-        "//plugins/github/github-tracker:vcs-github-tracker_test_lib",
-    ],
+    module_name = "intellij.vcs.github.tracker.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -128,6 +125,8 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//plugins/github/github-tracker:vcs-github-tracker",
+        "//plugins/github/github-tracker:vcs-github-tracker_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.github.tracker.tests` end

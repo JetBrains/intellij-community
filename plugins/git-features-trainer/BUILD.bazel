@@ -130,10 +130,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/git-features-trainer:vcs-git-featuresTrainer",
-        "//plugins/git-features-trainer:vcs-git-featuresTrainer_test_lib",
-    ],
+    module_name = "intellij.vcs.git.featuresTrainer.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":vcs-git-featuresTrainer-tests"],
     deps = [
@@ -143,6 +140,8 @@ jvm_library(
         "//plugins/ide-features-trainer:featuresTrainer_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//plugins/git-features-trainer:vcs-git-featuresTrainer",
+        "//plugins/git-features-trainer:vcs-git-featuresTrainer_test_lib",
         "//plugins/ide-features-trainer:featuresTrainer-tests",
         "//plugins/ide-features-trainer:featuresTrainer-tests_test_lib",
         "//libraries/junit4",

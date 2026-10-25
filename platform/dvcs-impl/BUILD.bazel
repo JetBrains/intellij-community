@@ -154,10 +154,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/dvcs-impl:vcs-dvcs-impl",
-        "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
-    ],
+    module_name = "intellij.platform.vcs.dvcs.impl.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -199,6 +196,8 @@ jvm_library(
         "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/lang-core",
         "//platform/lang-core:lang-core_test_lib",
+        "//platform/dvcs-impl:vcs-dvcs-impl",
+        "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",

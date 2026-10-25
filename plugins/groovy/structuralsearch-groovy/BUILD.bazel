@@ -122,10 +122,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/groovy/structuralsearch-groovy:structuralSearch",
-        "//plugins/groovy/structuralsearch-groovy:structuralSearch_test_lib",
-    ],
+    module_name = "intellij.groovy.structuralSearch.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -174,6 +171,8 @@ jvm_library(
         "//libraries/lucene.common:lucene.common_test_lib",
         "//platform/code-style-api:codeStyle",
         "//platform/code-style-api:codeStyle_test_lib",
+        "//plugins/groovy/structuralsearch-groovy:structuralSearch",
+        "//plugins/groovy/structuralsearch-groovy:structuralSearch_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",

@@ -163,10 +163,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/problemsView/ui",
-        "//platform/problemsView/ui:ui_test_lib",
-    ],
+    module_name = "intellij.platform.problemView.ui.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -205,6 +202,8 @@ jvm_library(
         "//platform/lang-impl:lang-impl_test_lib",
         "//platform/problemsView/shared",
         "//platform/problemsView/shared:shared_test_lib",
+        "//platform/problemsView/ui",
+        "//platform/problemsView/ui:ui_test_lib",
         "//platform/projectModel-api:projectModel",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testFramework",

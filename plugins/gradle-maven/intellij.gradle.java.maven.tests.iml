@@ -52,5 +52,4 @@
     <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.gradle.java.maven" />
 </module>

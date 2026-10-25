@@ -105,10 +105,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/gradle/jps-plugin:jps",
-        "//plugins/gradle/jps-plugin:jps_test_lib",
-    ],
+    module_name = "intellij.gradle.jps.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":jps-tests"],
     deps = [
@@ -126,6 +123,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//jps/jps-builders:build-tests",
         "//jps/jps-builders:build-tests_test_lib",
+        "//plugins/gradle/jps-plugin:jps",
+        "//plugins/gradle/jps-plugin:jps_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],

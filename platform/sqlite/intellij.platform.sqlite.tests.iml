@@ -14,5 +14,4 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.sqlite" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.sqlite" />
 </module>

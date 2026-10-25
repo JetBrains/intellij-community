@@ -92,10 +92,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-markdown:markdown",
-        "//python/python-markdown:markdown_test_lib",
-    ],
+    module_name = "intellij.python.markdown.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -119,6 +116,8 @@ jvm_library(
         "//python:python-community-tests_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//python/python-markdown:markdown",
+        "//python/python-markdown:markdown_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//platform/scratch/plugin",

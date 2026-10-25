@@ -125,10 +125,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//RegExpSupport:regexp",
-        "//RegExpSupport:regexp_test_lib",
-    ],
+    module_name = "intellij.regexp.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -173,6 +170,8 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/core-ui",
         "//platform/core-ui:core-ui_test_lib",
+        "//RegExpSupport:regexp",
+        "//RegExpSupport:regexp_test_lib",
         "//platform/util/concurrency",
         "//platform/util/concurrency:concurrency_test_lib",
     ],

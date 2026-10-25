@@ -84,10 +84,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/java-decompiler/engine",
-        "//plugins/java-decompiler/engine:engine_test_lib",
-    ],
+    module_name = "intellij.java.decompiler.engine.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":java-decompiler-engine-tests"],
     deps = [
@@ -105,6 +102,8 @@ jvm_library(
         "@lib//:eclipse",
         "//libraries/groovy",
         "//libraries/groovy:groovy_test_lib",
+        "//plugins/java-decompiler/engine",
+        "//plugins/java-decompiler/engine:engine_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.decompiler.engine.tests` end

@@ -12,5 +12,4 @@
     <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry.agent.extension" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.diagnostic.telemetry.agent.extension" />
 </module>

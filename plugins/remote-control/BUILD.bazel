@@ -124,10 +124,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/remote-control",
-        "//plugins/remote-control:remote-control_test_lib",
-    ],
+    module_name = "intellij.remoteControl.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -168,6 +165,8 @@ jvm_library(
         "//spellchecker:spellchecker_test_lib",
         "//libraries/lucene.common",
         "//libraries/lucene.common:lucene.common_test_lib",
+        "//plugins/remote-control",
+        "//plugins/remote-control:remote-control_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",

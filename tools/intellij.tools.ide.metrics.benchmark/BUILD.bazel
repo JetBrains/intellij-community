@@ -116,10 +116,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-    ],
+    module_name = "intellij.tools.ide.metrics.benchmark.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -151,6 +148,8 @@ jvm_library(
         "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
+        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],

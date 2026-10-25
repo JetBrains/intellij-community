@@ -177,11 +177,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
-    ],
     kotlinc_opts = ":custom_kotlin-analysis-platform-tests",
+    module_name = "intellij.kotlin.analysis.platform.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -277,6 +274,8 @@ jvm_library(
         "//plugins/kotlin/base/indices:indices_test_lib",
         "//plugins/kotlin/base/indices/tests",
         "//plugins/kotlin/base/indices/tests:tests_test_lib",
+        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform",
+        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",

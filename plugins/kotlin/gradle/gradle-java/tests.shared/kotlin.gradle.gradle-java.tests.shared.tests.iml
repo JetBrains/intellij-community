@@ -96,5 +96,4 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6.params" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="kotlin.gradle.gradle-java.tests.shared" />
 </module>

@@ -155,11 +155,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/gradle/completion",
-        "//plugins/gradle/completion:completion_test_lib",
-    ],
     kotlinc_opts = ":custom_completion-tests",
+    module_name = "intellij.gradle.completion.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -188,6 +185,8 @@ jvm_library(
         "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/util/text-matching",
         "//platform/util/text-matching:text-matching_test_lib",
+        "//plugins/gradle/completion",
+        "//plugins/gradle/completion:completion_test_lib",
         "//plugins/repository-search/completion",
         "//plugins/repository-search/completion:completion_test_lib",
         "//libraries/junit6",

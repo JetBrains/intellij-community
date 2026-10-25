@@ -139,10 +139,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/commander",
-        "//plugins/commander:commander_test_lib",
-    ],
+    module_name = "intellij.commander.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -180,6 +177,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//platform/core-api:core",
         "//platform/core-api:core_test_lib",
+        "//plugins/commander",
+        "//plugins/commander:commander_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",

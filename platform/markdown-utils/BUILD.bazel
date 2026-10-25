@@ -96,10 +96,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/markdown-utils",
-        "//platform/markdown-utils:markdown-utils_test_lib",
-    ],
+    module_name = "intellij.platform.markdown.utils.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":markdown-utils-tests"],
     deps = [
@@ -119,6 +116,8 @@ jvm_library(
         "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/lang-impl",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/markdown-utils",
+        "//platform/markdown-utils:markdown-utils_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.markdown.utils.tests` end

@@ -100,10 +100,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//aether-dependency-resolver",
-        "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
-    ],
+    module_name = "intellij.java.aetherDependencyResolver.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [":java-aetherDependencyResolver-tests"],
     deps = [
@@ -112,6 +109,8 @@ jvm_library(
         "//platform/testFramework:testFramework_test_lib",
         "//libraries/maven-resolver-provider",
         "//libraries/maven-resolver-provider:maven-resolver-provider_test_lib",
+        "//aether-dependency-resolver",
+        "//aether-dependency-resolver:aether-dependency-resolver_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",

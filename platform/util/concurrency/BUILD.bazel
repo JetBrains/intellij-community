@@ -98,10 +98,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/util/concurrency",
-        "//platform/util/concurrency:concurrency_test_lib",
-    ],
+    module_name = "intellij.platform.concurrency.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -124,6 +121,8 @@ jvm_library(
         "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
+        "//platform/util/concurrency",
+        "//platform/util/concurrency:concurrency_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.concurrency.tests` end

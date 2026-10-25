@@ -127,10 +127,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/ml-impl",
-        "//platform/ml-impl:ml-impl_test_lib",
-    ],
+    module_name = "intellij.platform.ml.impl.tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -170,6 +167,8 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/statistics/testFramework",
         "//platform/statistics/testFramework:testFramework_test_lib",
+        "//platform/ml-impl",
+        "//platform/ml-impl:ml-impl_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],

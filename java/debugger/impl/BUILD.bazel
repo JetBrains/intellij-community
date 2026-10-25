@@ -228,11 +228,8 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/debugger/impl",
-        "//java/debugger/impl:impl_test_lib",
-    ],
     kotlinc_opts = ":custom_java-debugger-impl-tests",
+    module_name = "intellij.java.debugger.impl.tests",
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
@@ -275,6 +272,8 @@ jvm_library(
         "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
+        "//java/debugger/impl",
+        "//java/debugger/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.debugger.impl.tests` end

@@ -44,5 +44,4 @@
     <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.smRunner" />
 </module>

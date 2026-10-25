@@ -10,5 +10,4 @@
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.nanoxml" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.platform.util.nanoxml" />
 </module>
