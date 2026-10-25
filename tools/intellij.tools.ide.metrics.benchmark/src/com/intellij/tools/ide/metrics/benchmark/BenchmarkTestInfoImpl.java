@@ -16,7 +16,6 @@ import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.testFramework.BenchmarkTestInfo;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.ProfilerForTests;
-import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.tools.ide.metrics.collector.MetricsCollector;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
@@ -387,9 +386,9 @@ public class BenchmarkTestInfoImpl implements BenchmarkTestInfo {
                                       .setAttribute("warmup", String.valueOf(iterationType.equals(IterationMode.WARMUP))),
                                     ignore -> perfTestWorkload.get());
 
-                        if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+                        //if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
                           // TODO: Print debug metrics here https://youtrack.jetbrains.com/issue/AT-726
-                        }
+                        //}
                         //noinspection CallToSystemGC
                         System.gc();
                         StorageLockContext.forceDirectMemoryCache();

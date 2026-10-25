@@ -6,7 +6,6 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.teamcity.TeamCityClient
-import com.intellij.testFramework.UsefulTestCase
 import com.intellij.tools.ide.metrics.collector.MetricsCollector
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
@@ -62,10 +61,12 @@ internal class IJPerfBenchmarksMetricsPublisher {
       return tempPropertiesFile.toPath()
     }
 
+    private val isUnderTeamCity = System.getenv("TEAMCITY_VERSION") != null
+
     private val teamCityClient = TeamCityClient(
       systemPropertiesFilePath =
       // ignoring TC system properties for local test run
-      if (UsefulTestCase.IS_UNDER_TEAMCITY) Path(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
+      if (isUnderTeamCity) Path(System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE"))
       else setBuildParams()
     )
 
@@ -129,7 +130,7 @@ internal class IJPerfBenchmarksMetricsPublisher {
         // Print metrics in stdout when running locally
         // https://youtrack.jetbrains.com/issue/AT-644/Performance-tests-do-not-check-anything#focus=Comments-27-8578186.0-0
         // https://youtrack.jetbrains.com/issue/AT-726
-        if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+        if (!isUnderTeamCity) {
           println("Collected metrics: (can be found in ${teamCityClient.artifactForPublishingDir.resolve(uniqueTestIdentifier).toUri()})")
           println(metricsDto.metrics.joinToString(separator = System.lineSeparator()) { String.format("%-60s %6s", it.n, it.v) })
         }
