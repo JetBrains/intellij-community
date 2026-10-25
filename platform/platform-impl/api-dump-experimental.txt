@@ -99,6 +99,9 @@ f:com.intellij.ide.startup.StartupActionScriptManager
 - <init>():V
 - s:canRectangleBeUsed(java.awt.Component,java.awt.Rectangle,com.intellij.ide.ui.ScreenAreaConsumer):Z
 - s:register(com.intellij.ide.ui.ScreenAreaConsumer):Z
+f:com.intellij.ide.ui.customization.CustomActionsSchema
+- com.intellij.openapi.components.PersistentStateComponent
+- *sf:PROP_ORIGINAL_ICON_DESCRIPTOR:com.intellij.openapi.util.Key
 *f:com.intellij.ide.ui.customization.DefaultActionGroupWithDelegate
 - com.intellij.openapi.actionSystem.DefaultActionGroup
 - com.intellij.openapi.actionSystem.ActionWithDelegate

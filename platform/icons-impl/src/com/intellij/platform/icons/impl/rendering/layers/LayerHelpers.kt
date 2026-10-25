@@ -3,11 +3,13 @@ package com.intellij.platform.icons.impl.rendering.layers
 
 import com.intellij.platform.icons.impl.layers.findModifier
 import com.intellij.platform.icons.impl.modifiers.ColorFilterModifier
+import com.intellij.platform.icons.impl.modifiers.SizeVariantModifier
 import com.intellij.platform.icons.impl.modifiers.StrokeModifier
 import com.intellij.platform.icons.impl.modifiers.SvgPatcherModifier
 import com.intellij.platform.icons.impl.rendering.DefaultImageModifiers
 import com.intellij.platform.icons.impl.rendering.DefaultRenderingContext
 import com.intellij.platform.icons.layers.IconLayer
+import com.intellij.platform.icons.modifiers.SizeVariantPolicy
 import com.intellij.platform.icons.rendering.ScalingContext
 import kotlin.math.ceil
 
@@ -18,6 +20,7 @@ fun IconLayer.generateImageModifiers(renderingContext: DefaultRenderingContext? 
         svgPatcher = findModifier<SvgPatcherModifier>()?.svgPatcher ?: defaults?.svgPatcher,
         isDark = defaults?.isDark ?: false,
         stroke = findModifier<StrokeModifier>()?.color ?: defaults?.stroke,
+        sizeVariantPolicy = findModifier<SizeVariantModifier>()?.policy ?: defaults?.sizeVariantPolicy ?: SizeVariantPolicy.Exact,
     )
 }
 
