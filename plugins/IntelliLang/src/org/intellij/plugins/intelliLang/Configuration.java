@@ -303,6 +303,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private final CachedValue<MultiMap<String, BaseInjection>> myInjectionsById = new CachedValueImpl<>(() -> {
     MultiMap<String, BaseInjection> map = new MultiMap<>();
     for (BaseInjection injection : getAllInjections()) {
+      if (InjectorUtils.findInjectionSupport(injection.getSupportId()) == null) continue;
       map.putValue(injection.getInjectedLanguageId(), injection);
     }
     return CachedValueProvider.Result.create(map, this);

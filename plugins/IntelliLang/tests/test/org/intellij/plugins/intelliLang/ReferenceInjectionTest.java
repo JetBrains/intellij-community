@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -19,6 +20,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction;
@@ -26,6 +28,12 @@ import org.intellij.plugins.intelliLang.references.FileReferenceInjector;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesContributor;
 import org.intellij.plugins.intelliLang.references.InjectedReferencesInspection;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
@@ -69,6 +77,37 @@ public class ReferenceInjectionTest extends AbstractLanguageInjectionTestCase {
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(myFixture.getReferenceAtCaretPosition());
+  }
+
+  public void testIgnoreInjectionOfUnloadedSupport() throws Exception {
+    Configuration configuration = Configuration.getProjectInstance(getProject());
+    Element oldState = configuration.getState();
+    try {
+      configuration.loadState(JDOMUtil.load("""
+        <LanguageInjectionConfiguration>
+          <injection language="file-reference" injector-id="unloaded-support">
+            <display-name>Unloaded Support</display-name>
+            <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("forName"))]]></place>
+          </injection>
+        </LanguageInjectionConfiguration>"""));
+      configuration.incModificationCount();
+      myFixture.configureByText("foo.xml", "<foo xxx=\"ba<caret>r\"/>");
+
+      List<String> errors = new ArrayList<>();
+      LoggedErrorProcessor.executeWith(new LoggedErrorProcessor() {
+        @Override
+        public @NotNull Set<Action> processError(@NotNull String category, @NotNull String message, String @NotNull [] details, @Nullable Throwable t) {
+          errors.add(message);
+          return Action.NONE;
+        }
+      }, () -> assertNull(getInjectedReferences()));
+      assertEmpty(errors);
+      assertTrue(JDOMUtil.write(configuration.getState()).contains("unloaded-support"));
+    }
+    finally {
+      configuration.loadState(oldState);
+      configuration.incModificationCount();
+    }
   }
 
   public void testInjectIntoTagValue() {
