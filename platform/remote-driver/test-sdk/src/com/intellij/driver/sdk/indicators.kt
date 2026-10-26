@@ -58,8 +58,10 @@ fun Driver.areIndicatorsVisible(project: Project): Boolean {
  * Also, you can avoid calling this method before [waitForIndicators] since it also waits for an open project.
  */
 fun Driver.waitForProjectOpen(timeout: Duration = 1.minutes) {
-  waitFor("Project is opened", timeout) {
-    isProjectOpened()
+  withoutPauseOnIndicators {
+    waitFor("Project is opened", timeout) {
+      isProjectOpened()
+    }
   }
 }
 
@@ -88,13 +90,15 @@ fun Driver.waitForIndicators(timeout: Duration, waitSmartLongEnough: Boolean = t
 
 /**
  * Method waits till a project is opened and there are no indicators for 10 seconds.
+ *
+ * The wait runs without the pause on the indicators. Its own driver calls must not start a nested wait.
  */
 internal fun Driver.waitForIndicators(
   projectGet: () -> Project?,
   timeout: Duration,
   waitSmartLongEnough: Boolean = true,
   ignoreDumbMode: Boolean = false,
-) {
+): Unit = withoutPauseOnIndicators {
   var smartLongEnoughStart: Instant? = null
 
   waitFor("Indicators with waitSmartLongEnough=$waitSmartLongEnough, ignoreDumbMode=$ignoreDumbMode", timeout) {

@@ -5,6 +5,7 @@ import com.intellij.driver.client.impl.JmxHost
 import com.intellij.driver.sdk.ManualWaitForIndicators
 import com.intellij.driver.sdk.getOpenProjects
 import com.intellij.driver.sdk.isPauseOnIndicatorsSuppressed
+import com.intellij.driver.sdk.isProjectOpened
 import com.intellij.driver.sdk.waitForIndicators
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.ide.IDETestContext
@@ -43,7 +44,8 @@ class LocalDriverRunner : DriverRunner {
       driver = DriverImpl(JmxHost(address = driverOptions.address), isRemDevMode = false) {
         pauseOnIndicators?.let { timeout ->
           if (isConnected && !isPauseOnIndicatorsSuppressed()) {
-            getOpenProjects().forEach {
+            // A project that is not opened yet, such as one behind a modal dialog, can stay so until the timeout.
+            getOpenProjects().filter { isProjectOpened(it) }.forEach {
               @OptIn(ManualWaitForIndicators::class)
               waitForIndicators(it, timeout, false)
             }
