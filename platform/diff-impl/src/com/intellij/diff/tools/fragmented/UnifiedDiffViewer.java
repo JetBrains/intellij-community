@@ -59,20 +59,14 @@ import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.editor.IndentsModel;
-import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.ReadonlyFragmentModificationHandler;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -80,13 +74,7 @@ import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EmptyFoldingModel;
-import com.intellij.openapi.editor.impl.EmptyImmutableMarkupModel;
-import com.intellij.openapi.editor.impl.EmptyIndentsModel;
-import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.markup.MarkupModel;
-import com.intellij.openapi.editor.textarea.EmptyInlayModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -98,7 +86,6 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -123,16 +110,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.Action;
 import javax.swing.Icon;
 import javax.swing.JComponent;
-import java.awt.Point;
-import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
@@ -1255,14 +1238,14 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
   private @Nullable Editor createImaginaryEditor(@NotNull Side side) {
     if (myProject == null) return null;
-    if (UnifiedImaginaryEditor.ourDisableImaginaryEditor) return null;
+    if (UnifiedSideEditor.isDisabled()) return null;
     if (!Registry.is("diff.unified.enable.imaginary.editor")) return null;
 
     int caretOffset = myEditor.getCaretModel().getOffset();
     LineCol caretPosition = LineCol.fromOffset(myDocument, caretOffset);
 
     Document sideDocument = getDocument(side);
-    ImaginaryEditor editor = new UnifiedImaginaryEditor(myProject, sideDocument, side);
+    UnifiedSideEditor editor = new UnifiedSideEditor(this, myProject, side);
 
     int sideLine = transferLineFromOnesideStrict(side, caretPosition.line);
     if (sideLine != -1) {
@@ -1621,186 +1604,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       return ContainerUtil.map(getNonSkippedDiffChanges(), change -> {
         return DiffUtil.getLinesRange(editor.getDocument(), change.getLine1(), change.getLine2());
       });
-    }
-  }
-
-  private class UnifiedImaginaryEditor extends ImaginaryEditor {
-    private static final Set<String> ourReportedMockMethods = ConcurrentHashMap.newKeySet();
-    private static boolean ourDisableImaginaryEditor = false;
-
-    private final Side mySide;
-
-    private UnifiedImaginaryEditor(@NotNull Project project, @NotNull Document document, @NotNull Side side) {
-      super(project, document);
-      mySide = side;
-    }
-
-    @Override
-    protected RuntimeException notImplemented() {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      ourDisableImaginaryEditor = true;
-      return new UnsupportedOperationException("Not implemented. UnifiedDiffViewer.UnifiedImaginaryEditor will be disabled.");
-    }
-
-    protected void warnMockImplementation(@NotNull String methodName) {
-      if (ourReportedMockMethods.add(methodName)) {
-        String message = "Method '" + methodName + "' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'";
-        if (ApplicationManager.getApplication().isInternal() ||
-            ApplicationManager.getApplication().isUnitTestMode()) {
-          LOG.error(message);
-        }
-        else {
-          LOG.warn(message);
-        }
-      }
-    }
-
-    @Override
-    @Nullable
-    @ApiStatus.Obsolete
-    public VirtualFile getVirtualFile() {
-      return FileDocumentManager.getInstance().getFile(getDocument());
-    }
-
-    @Override
-    public @NotNull EditorColorsScheme getColorsScheme() {
-      return myEditor.getColorsScheme();
-    }
-
-    @Override
-    public @NotNull ProperTextRange calculateVisibleRange() {
-      ChangedBlockData blockData = myModel.getData();
-      if (blockData == null) return new ProperTextRange(0, 0);
-
-      ProperTextRange range = myEditor.calculateVisibleRange();
-      Document oneSideDocument = UnifiedDiffViewer.this.myDocument;
-      int line1 = oneSideDocument.getLineNumber(range.getStartOffset());
-      int line2 = oneSideDocument.getLineNumber(range.getEndOffset());
-
-      Document sideDocument = UnifiedDiffViewer.this.getDocument(mySide);
-      LineNumberConvertor lineConvertor = blockData.getLineNumberConvertor(mySide);
-      int sideLine1 = lineConvertor.convertApproximate(Math.max(0, line1 - 1));
-      int sideLine2 = lineConvertor.convertApproximate(Math.min(DiffUtil.getLineCount(oneSideDocument), line2 + 1));
-
-      if (sideLine1 < 0 || sideLine1 > sideLine2 || sideLine2 > DiffUtil.getLineCount(sideDocument)) {
-        return ProperTextRange.create(0, 0);
-      }
-      TextRange sideRange = DiffUtil.getLinesRange(sideDocument, sideLine1, sideLine2, false);
-      return ProperTextRange.create(sideRange.getStartOffset(), sideRange.getEndOffset());
-    }
-
-    @Override
-    public boolean isOneLineMode() {
-      return false;
-    }
-
-    @Override
-    public boolean isViewer() {
-      return true;
-    }
-
-    @Override
-    public @NotNull EditorSettings getSettings() {
-      return myEditor.getSettings();
-    }
-
-    @Override
-    public @NotNull JComponent getComponent() {
-      return myEditor.getComponent(); // isShowing() checks
-    }
-
-    @Override
-    public @NotNull JComponent getContentComponent() {
-      return myEditor.getContentComponent(); // isShowing() checks
-    }
-
-    @Override
-    public @NotNull MarkupModel getMarkupModel() {
-      return new EmptyImmutableMarkupModel(getDocument());
-    }
-
-    @Override
-    public @NotNull IndentsModel getIndentsModel() {
-      return new EmptyIndentsModel();
-    }
-
-    @Override
-    public @NotNull InlayModel getInlayModel() {
-      return new EmptyInlayModel();
-    }
-
-    @Override
-    public @NotNull FoldingModel getFoldingModel() {
-      return new EmptyFoldingModel();
-    }
-
-    @Override
-    public boolean hasHeaderComponent() {
-      return false;
-    }
-
-    @Override
-    public @Nullable JComponent getHeaderComponent() {
-      return null;
-    }
-
-    @Override
-    public void setHeaderComponent(@Nullable JComponent header) {
-      warnMockImplementation("setHeaderComponent");
-    }
-
-    @Override
-    public int getLineHeight() {
-      warnMockImplementation("getLineHeight");
-      return myEditor.getLineHeight();
-    }
-
-    @Override
-    public @NotNull LogicalPosition visualToLogicalPosition(@NotNull VisualPosition visiblePos) {
-      warnMockImplementation("visualToLogicalPosition");
-      return new LogicalPosition(0, 0);
-    }
-
-    @Override
-    public @NotNull LogicalPosition xyToLogicalPosition(@NotNull Point p) {
-      warnMockImplementation("xyToLogicalPosition");
-      return new LogicalPosition(0, 0);
-    }
-
-    @Override
-    public @NotNull VisualPosition logicalToVisualPosition(@NotNull LogicalPosition logicalPos) {
-      warnMockImplementation("logicalToVisualPosition");
-      return new VisualPosition(0, 0);
-    }
-
-    @Override
-    public @NotNull VisualPosition xyToVisualPosition(@NotNull Point p) {
-      warnMockImplementation("xyToVisualPosition");
-      return new VisualPosition(0, 0);
-    }
-
-    @Override
-    public @NotNull VisualPosition xyToVisualPosition(@NotNull Point2D p) {
-      warnMockImplementation("xyToVisualPosition");
-      return new VisualPosition(0, 0);
-    }
-
-    @Override
-    public @NotNull Point logicalPositionToXY(@NotNull LogicalPosition pos) {
-      warnMockImplementation("logicalPositionToXY");
-      return new Point(0, 0);
-    }
-
-    @Override
-    public @NotNull Point visualPositionToXY(@NotNull VisualPosition visible) {
-      warnMockImplementation("visualPositionToXY");
-      return new Point(0, 0);
-    }
-
-    @Override
-    public @NotNull Point2D visualPositionToPoint2D(@NotNull VisualPosition pos) {
-      warnMockImplementation("visualPositionToPoint2D");
-      return new Point(0, 0);
     }
   }
 }
