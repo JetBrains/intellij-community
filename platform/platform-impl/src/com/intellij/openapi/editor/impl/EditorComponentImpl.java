@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorCoreUtil;
+import com.intellij.openapi.editor.EditorProjection;
 import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -239,6 +240,7 @@ public final class EditorComponentImpl extends JTextComponent
       location = editor.getCaretModel().getLogicalPosition();
     }
     sink.set(CommonDataKeys.EDITOR_VIRTUAL_SPACE, EditorCoreUtil.inVirtualSpace(editor, location));
+    sink.set(EditorProjection.EDITOR_PROJECTION, EditorProjection.findAt(editor, editor.getCaretModel().getOffset()));
   }
 
   @DirtyUI

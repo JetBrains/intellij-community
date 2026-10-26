@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor
 
 import com.intellij.injected.editor.EditorWindow
+import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.openapi.editor.EditorProjection.Provider
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.annotations.ApiStatus
@@ -48,19 +50,20 @@ interface EditorProjection : Editor {
   }
 
   companion object {
-    private val PROVIDER_KEY: Key<Provider> = Key.create("EditorProjection.Provider")
+    @JvmField
+    val EDITOR_PROJECTION: DataKey<EditorProjection> = DataKey.create("editor.projection")
 
     @JvmStatic
     fun registerProvider(editor: Editor, provider: Provider) {
       assert(editor !is EditorWindow)
-      editor.putUserData(PROVIDER_KEY, provider)
+      editor.putUserData(PROJECTION_PROVIDER_KEY, provider)
     }
 
     /**
      * @return The [EditorProjection] at the given text offset.
      */
     @JvmStatic
-    fun findAt(editor: Editor, offset: Int): EditorProjection? = editor.getUserData(PROVIDER_KEY)?.getProjection(offset)
+    fun findAt(editor: Editor, offset: Int): EditorProjection? = editor.getUserData(PROJECTION_PROVIDER_KEY)?.getProjection(offset)
 
     /**
      * @return The [EditorProjection] at the given text offset, or [editor] itself when there is none.
@@ -75,3 +78,5 @@ interface EditorProjection : Editor {
     fun resolveAtCaret(editor: Editor): Editor = resolveAt(editor, editor.caretModel.offset)
   }
 }
+
+private val PROJECTION_PROVIDER_KEY: Key<Provider> = Key.create("EditorProjection.Provider")

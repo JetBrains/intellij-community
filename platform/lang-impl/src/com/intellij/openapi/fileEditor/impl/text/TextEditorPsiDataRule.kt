@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.EditorProjection
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.IndexNotReadyException
@@ -52,6 +53,12 @@ internal class TextEditorPsiDataRule : UiDataRule {
 
     val caret = snapshot[CommonDataKeys.CARET] ?: editor.caretModel.primaryCaret.also {
       sink[CommonDataKeys.CARET] = it
+    }
+
+    val projection = snapshot[EditorProjection.EDITOR_PROJECTION]
+    if (projection != null) {
+      projectionSnapshot(sink, editor, projection)
+      return
     }
 
     val file = editor.virtualFile ?: return
@@ -112,6 +119,33 @@ internal class TextEditorPsiDataRule : UiDataRule {
     sink.lazy(InjectedDataKeys.LANGUAGE) {
       getInjectedLanguage(project, editor, caret, file)
     }
+  }
+}
+
+/**
+ * The host editor shows the document of [projection] at the caret, and its own document has no PSI.
+ * The projection and its caret go into the injected keys. An action that reads the injected context, such as
+ * Find Usages, thus gets the editor whose document holds the PSI. The regular keys stay consistent with the host
+ * editor, so an action that pairs the editor with the PSI file does not apply an offset of one document to the other.
+ */
+private fun projectionSnapshot(sink: DataSink, hostEditor: Editor, projection: EditorProjection) {
+  val file = projection.virtualFile ?: return
+  val caret = projection.caretModel.primaryCaret
+  sink[CommonDataKeys.HOST_EDITOR] = hostEditor
+  sink[InjectedDataKeys.EDITOR] = projection
+  sink[InjectedDataKeys.CARET] = caret
+  sink[InjectedDataKeys.VIRTUAL_FILE] = file
+  sink.lazy(InjectedDataKeys.PSI_FILE) {
+    PsiVersioningService.freezePsiVersion {
+      getPsiFile(projection, file)
+    }
+  }
+  sink.lazy(InjectedDataKeys.PSI_ELEMENT) {
+    getPsiElementIn(projection, caret, file)
+  }
+  sink.lazy(InjectedDataKeys.LANGUAGE) {
+    val psiFile = getPsiFile(projection, file) ?: return@lazy null
+    getLanguageAtCurrentPositionInEditor(caret, psiFile)
   }
 }
 
