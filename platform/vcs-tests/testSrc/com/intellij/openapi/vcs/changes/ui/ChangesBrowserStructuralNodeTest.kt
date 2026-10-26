@@ -20,6 +20,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -252,6 +253,41 @@ internal class ChangesBrowserStructuralNodeTest {
           second.disposed.await()
         }
         assertTrue(highlights.tryReceive().isFailure)
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          FileEditorManager.getInstance(project).closeFile(file)
+        }
+      }
+    }
+
+  @Test
+  fun `test a refresh after the highlight ends outside the preview shows no preview again`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val highlights = recordHighlights(disposable)
+      val file = LightVirtualFile("highlight-ended.txt", "first\nsecond\n")
+      val fixture = createHighlightFixture(file)
+      try {
+        coroutineScope {
+          val previewScope = this
+          withContext(Dispatchers.EDT) {
+            fixture.view.previewShowing = true
+            fixture.view.previewFocus = true
+            StructuralChangesPreview(fixture.view, previewScope).install()
+            fixture.view.selectionPath = TreePath(fixture.first.path)
+          }
+          val first = highlights.receive()
+          awaitPreviews(previewScope)
+          withContext(Dispatchers.EDT) {
+            // A closed diff tab or input in the editor ends the highlight without the preview.
+            Disposer.dispose(first.handle)
+            fixture.view.updateTreeModel(DefaultTreeModel(fixture.root), ChangesTree.ALWAYS_KEEP)
+          }
+          // One round trip through the event thread runs the restart that the model listener schedules.
+          withContext(Dispatchers.EDT) { }
+          awaitPreviews(previewScope)
+          assertTrue(highlights.tryReceive().isFailure, "The refresh must not show the closed preview again")
+        }
       }
       finally {
         withContext(NonCancellable + Dispatchers.EDT) {
@@ -925,7 +961,7 @@ internal class ChangesBrowserStructuralNodeTest {
       override fun highlight(file: VirtualFile, range: TextRange, modificationStamp: Long): Disposable {
         val request = HighlightRequest(file, range)
         requests.trySend(request).getOrThrow()
-        return Disposable { request.disposed.complete(Unit) }
+        return request.handle
       }
     }, disposable)
     return requests
@@ -1125,7 +1161,9 @@ internal class ChangesBrowserStructuralNodeTest {
     val file: VirtualFile,
     val range: TextRange,
     val disposed: CompletableDeferred<Unit> = CompletableDeferred(),
-  )
+  ) {
+    val handle: Disposable = Disposable { disposed.complete(Unit) }
+  }
 
   /** The diff side of a splitter preview. It shows an empty panel. */
   private class EmptyDiffPreview : DiffPreviewUpdateProcessor {
