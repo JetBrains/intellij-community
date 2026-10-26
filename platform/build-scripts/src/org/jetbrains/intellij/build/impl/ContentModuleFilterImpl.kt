@@ -23,6 +23,7 @@ fun createContentModuleFilter(
   productProperties: ProductProperties,
   outputProvider: ModuleOutputProvider,
   bundledPluginModules: () -> List<String>,
+  bypassFilter: Boolean = false
 ): ContentModuleFilter {
   if (productProperties.productMode == ProductMode.MONOLITH) {
     if (productProperties.productLayout.skipUnresolvedContentModules) {
@@ -34,6 +35,7 @@ fun createContentModuleFilter(
     project = project,
     bundledPluginModules = bundledPluginModules().toSet(),
     productMode = productProperties.productMode,
+    bypassFilter = bypassFilter
   )
 }
 
@@ -44,7 +46,7 @@ fun createContentModuleFilter(
  * per product. So it asks for every mode a split product uses, and no plugin is bypassed as "not bundled".
  */
 fun createProductModeContentModuleFilter(project: JpsProject, productMode: ProductMode): ContentModuleFilter {
-  return ContentModuleByProductModeFilter(project = project, bundledPluginModules = null, productMode = productMode)
+  return ContentModuleByProductModeFilter(project = project, bundledPluginModules = null, productMode = productMode, false)
 }
 
 /**
@@ -56,12 +58,14 @@ fun createProductModeContentModuleFilter(project: JpsProject, productMode: Produ
 internal class ContentModuleByProductModeFilter(
   private val project: JpsProject,
   private val bundledPluginModules: Set<String>?,
-  private val productMode: ProductMode
+  private val productMode: ProductMode,
+  private val bypassFilter: Boolean,
 ) : ContentModuleFilter {
 
   private val productModeMatcher by lazy { JpsProductModeMatcher(productMode) }
 
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
+    if (bypassFilter) return true
     if (pluginMainModuleName != null && bundledPluginModules != null && !bundledPluginModules.contains(pluginMainModuleName)) {
       return true
     }
