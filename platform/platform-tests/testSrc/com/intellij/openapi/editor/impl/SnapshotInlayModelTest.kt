@@ -22,6 +22,7 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotInlayModelTest {
