@@ -6,7 +6,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.DataContext
 import org.jetbrains.annotations.ApiStatus
 
-/** Delete on the selected structural nodes reverts their changes. Delete of a file is not part of it, so a selection with a file gets null. */
+/**
+ * Delete on the selected structural nodes reverts their changes. Delete of a file is not part of it, so a selection with a file gets null.
+ * The Rollback action uses it too, so both revert only the selected changes.
+ */
 @ApiStatus.Internal
 class StructuralRollbackDeleteProvider private constructor(private val nodes: List<ChangesBrowserStructuralNode<*>>) : DeleteProvider {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

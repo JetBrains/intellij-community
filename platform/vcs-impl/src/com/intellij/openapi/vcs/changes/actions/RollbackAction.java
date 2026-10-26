@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.changes.ui.RollbackChangesDialog;
 import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
+import com.intellij.openapi.vcs.changes.ui.StructuralRollbackDeleteProvider;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -48,6 +50,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_POPUP;
+import static com.intellij.openapi.actionSystem.ActionPlaces.CHANGES_VIEW_TOOLBAR;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.ui.Messages.showYesNoDialog;
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
@@ -71,6 +74,11 @@ public final class RollbackAction extends DumbAwareAction {
 
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || !ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
+    if (getStructuralRollback(e) != null) {
+      e.getPresentation().setEnabledAndVisible(true);
+      e.getPresentation().setText(getRollbackOperationName(project));
+      return;
+    }
     if (isPreferCheckboxesOverSelection() &&
         CommitModeManager.getInstance(project).getCurrentCommitMode() instanceof CommitMode.NonModalCommitMode &&
         CHANGES_VIEW_POPUP.equals(e.getPlace())) {
@@ -106,6 +114,11 @@ public final class RollbackAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     if (!RollbackFilesAction.Manager.checkClmActive(e)) return;
+    StructuralRollbackDeleteProvider structuralRollback = getStructuralRollback(e);
+    if (structuralRollback != null) {
+      structuralRollback.deleteElement(e.getDataContext());
+      return;
+    }
 
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     List<FilePath> missingFiles = e.getData(ChangesListView.MISSING_FILES_DATA_KEY);
@@ -135,6 +148,15 @@ public final class RollbackAction extends DumbAwareAction {
     else if (!hasChanges) {
       RollbackChangesDialog.rollbackChanges(project);
     }
+  }
+
+  /**
+   * The rollback of the selected changes inside files. They revert at once, as Delete reverts them. The toolbar keeps the dialog for the
+   * files, because it can act on the checked files instead of the selection.
+   */
+  private static @Nullable StructuralRollbackDeleteProvider getStructuralRollback(@NotNull AnActionEvent e) {
+    if (CHANGES_VIEW_TOOLBAR.equals(e.getPlace())) return null;
+    return e.getData(PlatformDataKeys.DELETE_ELEMENT_PROVIDER) instanceof StructuralRollbackDeleteProvider rollback ? rollback : null;
   }
 
   private static @NotNull Collection<? extends Change> getSelectedChanges(@NotNull AnActionEvent e) {
