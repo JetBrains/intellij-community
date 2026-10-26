@@ -29,7 +29,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.Interner;
 import com.intellij.util.io.URLUtil;
-import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -38,7 +37,6 @@ import java.io.File;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -66,7 +64,7 @@ public final class JavaLibraryUtil {
   private static final ParameterizedCachedValueProvider<Libraries, Module> MAVEN_LIBRARIES_MODULE_PROVIDER = module -> {
     String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
     Libraries libraries = fillLibraries(OrderEnumerator.orderEntries(module),
-                                        isUnsupportedBuildSystem(externalSystemId));
+                                        externalSystemId == null);
     return Result.create(libraries, ProjectRootManager.getInstance(module.getProject()));
   };
 
@@ -212,7 +210,7 @@ public final class JavaLibraryUtil {
                                                    @NotNull String mavenCoords,
                                                    @Nullable Attributes.Name versionAttribute) {
     String externalSystemId = ExternalSystemModulePropertyManager.getInstance(module).getExternalSystemId();
-    if (isUnsupportedBuildSystem(externalSystemId)) {
+    if (externalSystemId == null) {
       return getJpsLibraryVersion(module, mavenCoords, versionAttribute);
     }
     else {
@@ -231,7 +229,7 @@ public final class JavaLibraryUtil {
       .forEachLibrary(library -> {
         VirtualFile[] libraryFiles = library.getFiles(OrderRootType.CLASSES);
         for (VirtualFile libraryFile : libraryFiles) {
-          if (matchLibraryName(sanitizeLibraryName(libraryFile.getNameWithoutExtension()), name)) {
+          if (matchLibraryName(libraryFile.getNameWithoutExtension(), name)) {
             File jarFile = localJarFile(libraryFile);
             if (jarFile == null) continue;
 
@@ -278,10 +276,6 @@ public final class JavaLibraryUtil {
   private static @NotNull Libraries getModuleLibraries(@NotNull Module module) {
     return CachedValuesManager.getManager(module.getProject())
       .getParameterizedCachedValue(module, MAVEN_LIBRARIES_MODULE_KEY, MAVEN_LIBRARIES_MODULE_PROVIDER, false, module);
-  }
-
-  private static boolean isUnsupportedBuildSystem(@Nullable String externalSystemId) {
-    return externalSystemId == null || "Blaze".equals(externalSystemId);
   }
 
   static @NotNull Libraries fillLibraries(OrderEnumerator orderEnumerator, boolean collectFiles) {
@@ -335,9 +329,6 @@ public final class JavaLibraryUtil {
 
         String nameWithoutExtension = libraryFile.getNameWithoutExtension();
 
-        // Drop prefix of Bazel processed libraries IDEA-324807
-        nameWithoutExtension = intern(sanitizeLibraryName(nameWithoutExtension));
-
         jarLibrariesIndex.put(nameWithoutExtension, nameWithoutExtension);
 
         String indexNamePart = baseName(nameWithoutExtension);
@@ -363,16 +354,6 @@ public final class JavaLibraryUtil {
     } while (index < length);
 
     return index < 0 ? name : name.substring(0, index);
-  }
-
-  private static final List<String> BAZEL_PREFIXES = List.of("processed_", "header_");
-
-  private static @NotNull String sanitizeLibraryName(@NotNull String nameWithoutExtension) {
-    var name = nameWithoutExtension;
-    for (String prefix : BAZEL_PREFIXES) {
-      name = StringsKt.removePrefix(name, prefix);
-    }
-    return name; // omit this prefix for Bazel
   }
 
   static boolean matchLibraryName(@NotNull String fileName, @NotNull String libraryName) {
