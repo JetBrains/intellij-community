@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.markdown.backend.inspections
 
-import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
@@ -20,9 +19,9 @@ class MarkdownNoTableBordersInspection: LocalInspectionTool() {
         super.visitTable(table)
         if (!table.hasCorrectBorders()) {
           holder.registerProblem(
-            table,
+            table.headerRow ?: table,
             MarkdownBundle.message("markdown.no.table.borders.inspection.description"),
-            IntentionWrapper(FixTableBordersIntention())
+            FixTableBordersIntention()
           )
         }
       }

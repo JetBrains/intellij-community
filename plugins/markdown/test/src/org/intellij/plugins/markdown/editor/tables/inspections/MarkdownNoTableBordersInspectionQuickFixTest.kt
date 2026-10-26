@@ -79,6 +79,28 @@ class MarkdownNoTableBordersInspectionQuickFixTest: LightPlatformCodeInsightFixt
     doTest(before, after)
   }
 
+  @Test
+  fun `works from any table row`() {
+    // language=Markdown
+    val before = """
+    none | none
+    -----|---
+    some | some<caret>
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none | none |
+    |------|------|
+    | some | some |
+    """.trimIndent()
+    myFixture.configureByText("some.md", before)
+    val targetText = MarkdownBundle.message("markdown.fix.table.borders.intention.text")
+    val fix = myFixture.getAvailableIntention(targetText)
+    assertNotNull(fix)
+    myFixture.launchAction(fix!!)
+    myFixture.checkResult(after)
+  }
+
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     myFixture.enableInspections(MarkdownNoTableBordersInspection())

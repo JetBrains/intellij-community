@@ -1,13 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.markdown.backend.intentions
 
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
+import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
 import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
@@ -20,26 +20,30 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 
-internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
-  override fun getFamilyName(): String = text
+internal class FixTableBordersIntention: IntentionAndQuickFixAction() {
+  override fun getName(): String = MarkdownBundle.message("markdown.fix.table.borders.intention.text")
 
-  override fun getText(): String {
-    return MarkdownBundle.message("markdown.fix.table.borders.intention.text")
+  override fun getFamilyName(): String = name
+
+  override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile): Boolean {
+    val editor = editor ?: return false
+    return TableUtils.findTable(psiFile, editor.caretModel.offset)?.hasCorrectBorders() == false
   }
 
-  override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
-    val table = TableUtils.findTable(element)
-    return table?.hasCorrectBorders() == false
+  override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
+    val editor = editor ?: return
+    val table = TableUtils.findTable(psiFile, editor.caretModel.offset) ?: return
+    fixTable(table, editor)
   }
 
-  override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
-    val table = TableUtils.findTable(element)!!
+  private fun fixTable(table: MarkdownTable, editor: Editor?) {
     val rows = table.getRows(true)
-    val columnsCount = rows.asSequence().map { it.columnsCount }.maxOrNull() ?: 0
+    val columnsCount = rows.maxOfOrNull { it.columnsCount } ?: 0
     for (row in rows) {
       fixRow(row, columnsCount)
     }
@@ -48,8 +52,10 @@ internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
         fixSeparatorRow(it)
       }
     }
-    val tableStyle = getTableStyle(table.containingFile)
-    val document = editor?.document ?: PsiDocumentManager.getInstance(project).getDocument(table.containingFile) ?: return
+    val project = table.project
+    val file = table.containingFile
+    val tableStyle = getTableStyle(file)
+    val document = editor?.document ?: PsiDocumentManager.getInstance(project).getDocument(file) ?: return
     if (!table.isCorrectlyFormatted(tableStyle)) {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
       TableFormattingUtils.reformatAllColumns(
