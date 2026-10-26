@@ -116,10 +116,6 @@ abstract class WelcomeScreenProjectProvider {
       return getWelcomeScreenProjectProvider()?.doGetProjectPaneToActivateId()
     }
 
-    fun getStartupToolWindowIdToActivate(): String? {
-      return getWelcomeScreenProjectProvider()?.doGetStartupToolWindowIdToActivate()
-    }
-
     fun getToolWindowIdsToExclusiveShowing(): Set<String> {
       return getWelcomeScreenProjectProvider()?.getToolWindowIdsToExclusiveShowing() ?: emptySet()
     }
@@ -269,8 +265,6 @@ abstract class WelcomeScreenProjectProvider {
   protected open fun doIsHiddenInRecentProjects(): Boolean = true
 
   protected open fun doGetProjectPaneToActivateId(): String? = null
-
-  protected open fun doGetStartupToolWindowIdToActivate(): String? = null
 
   protected open fun getToolWindowIdsToExclusiveShowing(): Set<String> = emptySet()
 

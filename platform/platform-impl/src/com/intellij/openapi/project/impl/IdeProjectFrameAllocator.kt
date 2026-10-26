@@ -128,7 +128,6 @@ import java.awt.event.WindowEvent
 import java.awt.event.WindowStateListener
 import java.nio.file.Path
 import java.time.Instant
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JFrame
 import javax.swing.SwingUtilities
@@ -592,40 +591,37 @@ private suspend fun hideSplashWhenEditorOrToolWindowShown(project: Project) {
 }
 
 /**
- * Activates [ProjectFrameUiPolicy.startupToolWindowIdToActivate] as soon as the tool windows of the default pane are registered.
- * The activation does not wait for the `toolWindowsRegistered` event, the activation action registration, and the pending tasks.
- * If the tool window is not registered at that time, [applyProjectFrameUiPolicy] activates it later.
+ * Activates the Project view for [ProjectFrameUiPolicy.activatesProjectViewOnStartup] as soon as the tool windows of the default pane
+ * are registered. The activation does not wait for the `toolWindowsRegistered` event, the activation action registration, and the
+ * pending tasks. If the Project view is not registered at that time, [applyProjectFrameUiPolicy] activates it later.
  */
 private class EarlyStartupToolWindowActivation private constructor(
   private val toolWindowManager: ToolWindowManager,
   private val project: Project,
-  private val toolWindowId: String,
 ) {
   companion object {
     /**
      * Returns null if the early activation can change the result of [applyProjectFrameUiPolicy].
      * [applyProjectFrameUiPolicy] hides the tool windows outside the exclusive showing set before the activation.
-     * It hides a tool window of [ProjectFrameUiPolicy.toolWindowIdsToHideOnStartup] in the same EDT task as the activation.
      */
     fun create(
       toolWindowManager: ToolWindowManager,
       project: Project,
       projectFrameUiPolicy: ProjectFrameUiPolicy,
     ): EarlyStartupToolWindowActivation? {
-      val toolWindowId = projectFrameUiPolicy.startupToolWindowIdToActivate ?: return null
+      if (!projectFrameUiPolicy.activatesProjectViewOnStartup) {
+        return null
+      }
       val exclusiveShowing = projectFrameUiPolicy.toolWindowIdsToExclusiveShowing
-      if (exclusiveShowing.isNotEmpty() && toolWindowId !in exclusiveShowing) {
+      if (exclusiveShowing.isNotEmpty() && ToolWindowId.PROJECT_VIEW !in exclusiveShowing) {
         return null
       }
-      if (toolWindowId in projectFrameUiPolicy.toolWindowIdsToHideOnStartup) {
-        return null
-      }
-      return EarlyStartupToolWindowActivation(toolWindowManager, project, toolWindowId)
+      return EarlyStartupToolWindowActivation(toolWindowManager, project)
     }
   }
 
   /**
-   * True if [run] found the tool window and started its activation.
+   * True if [run] found the Project view and started its activation.
    * It is read after `ToolWindowManagerImpl.init` returns, so the activation is not repeated.
    */
   @Volatile
@@ -638,7 +634,7 @@ private class EarlyStartupToolWindowActivation private constructor(
     if (project.isDisposed || LaterInvocator.isInModalContext()) {
       return
     }
-    val toolWindow = toolWindowManager.getToolWindow(toolWindowId) ?: return
+    val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW) ?: return
     // set before the activation: a failed activation is not repeated, the same as the activation through `invokeLater`
     isAttempted = true
     toolWindow.activate(null)
@@ -647,7 +643,7 @@ private class EarlyStartupToolWindowActivation private constructor(
 
 /**
  * Returns the ids of the tool windows that a welcome-experience frame registers before its content paints:
- * the welcome set of the product, the startup tool window, and the tool windows that the stored layout shows.
+ * the welcome set of the product, the Project view of the policy, and the tool windows that the stored layout shows.
  * Returns null when the product declares no welcome set, so the frame registers every tool window at once.
  */
 private fun computeEagerToolWindowIdsOfWelcomeFrame(
@@ -660,7 +656,9 @@ private fun computeEagerToolWindowIdsOfWelcomeFrame(
   }
 
   val result = HashSet(welcomeToolWindowIds)
-  projectFrameUiPolicy?.startupToolWindowIdToActivate?.let(result::add)
+  if (projectFrameUiPolicy?.activatesProjectViewOnStartup == true) {
+    result.add(ToolWindowId.PROJECT_VIEW)
+  }
   result.addAll(toolWindowManager.getToolWindowIdsShownByStoredLayout())
   return result
 }
@@ -696,52 +694,31 @@ internal fun applyProjectFrameUiPolicy(
     hideNotExclusive(toolWindowManager.toolWindowIds.filter { !exclusiveShowing.contains(it) })
   }
 
-  val startupToolWindowId = projectFrameUiPolicy.startupToolWindowIdToActivate.takeUnless { isStartupToolWindowActivated }
-  val toolWindowIdsToHideOnStartup = projectFrameUiPolicy.toolWindowIdsToHideOnStartup
-  val pendingToolWindowIds = ConcurrentHashMap.newKeySet<String>().apply {
-    startupToolWindowId?.let(::add)
-    addAll(toolWindowIdsToHideOnStartup)
+  if (projectFrameUiPolicy.activatesProjectViewOnStartup && !isStartupToolWindowActivated) {
+    activateProjectViewWhenRegistered(toolWindowManager, project)
   }
-  if (pendingToolWindowIds.isEmpty()) {
-    return
-  }
+}
 
+/** Activates the Project view in a later EDT task, as soon as it is registered. */
+private fun activateProjectViewWhenRegistered(toolWindowManager: ToolWindowManager, project: Project) {
+  val isScheduled = AtomicBoolean()
   var connection: SimpleMessageBusConnection? = null
 
-  fun disconnectIfDone() {
-    if (project.isDisposed || pendingToolWindowIds.isEmpty()) {
-      connection?.disconnect()
-      connection = null
-    }
-  }
-
-  fun applyPolicyForToolWindowId(toolWindowId: String) {
-    if (!pendingToolWindowIds.contains(toolWindowId)) {
+  fun activateIfRegistered() {
+    val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW) ?: return
+    if (!isScheduled.compareAndSet(false, true)) {
       return
     }
-    val toolWindow = toolWindowManager.getToolWindow(toolWindowId) ?: return
-    if (!pendingToolWindowIds.remove(toolWindowId)) {
-      return
-    }
-
     toolWindowManager.invokeLater {
-      if (project.isDisposed) {
-        return@invokeLater
-      }
-
-      if (startupToolWindowId == toolWindowId) {
+      if (!project.isDisposed) {
         toolWindow.activate(null)
       }
-      if (toolWindowId in toolWindowIdsToHideOnStartup) {
-        toolWindow.hide()
-      }
     }
-
-    disconnectIfDone()
+    connection?.disconnect()
   }
 
-  pendingToolWindowIds.toList().forEach(::applyPolicyForToolWindowId)
-  if (pendingToolWindowIds.isEmpty()) {
+  activateIfRegistered()
+  if (isScheduled.get()) {
     return
   }
 
@@ -750,17 +727,13 @@ internal fun applyProjectFrameUiPolicy(
   connection = messageBusConnection
   messageBusConnection.subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
     override fun toolWindowsRegistered(ids: List<String>, toolWindowManager: ToolWindowManager) {
-      if (toolWindowManager !== expectedToolWindowManager) {
-        return
+      if (toolWindowManager === expectedToolWindowManager && ToolWindowId.PROJECT_VIEW in ids) {
+        activateIfRegistered()
       }
-
-      ids.forEach(::applyPolicyForToolWindowId)
     }
   })
-
-  // Cover ids registered between initial check and listener subscription.
-  pendingToolWindowIds.toList().forEach(::applyPolicyForToolWindowId)
-  disconnectIfDone()
+  // cover a registration between the first check and the subscription
+  activateIfRegistered()
 }
 
 private suspend fun restoreEditors(

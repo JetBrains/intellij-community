@@ -88,19 +88,16 @@ data class ProjectFrameUiPolicy(
   /** Project View pane id to select on startup. */
   val projectPaneToActivateId: String? = null,
 
-  /** Toolwindow id to activate after toolwindow initialization. */
-  val startupToolWindowIdToActivate: String? = null,
+  /** True if the project open activates the Project view after the tool window initialization. */
+  val activatesProjectViewOnStartup: Boolean = false,
 
-  /** Toolwindow ids to hide after startup activation. */
-  val toolWindowIdsToHideOnStartup: Set<String> = emptySet(),
-
-  /** Toolwindow ids to hide after startup activation. */
+  /** Tool window ids to keep on startup. The project open hides every other tool window. */
   val toolWindowIdsToExclusiveShowing: Set<String> = emptySet(),
 ) {
   fun isEmpty(): Boolean {
     return projectPaneToActivateId == null &&
-           startupToolWindowIdToActivate == null &&
-           toolWindowIdsToHideOnStartup.isEmpty()
+           !activatesProjectViewOnStartup &&
+           toolWindowIdsToExclusiveShowing.isEmpty()
   }
 }
 

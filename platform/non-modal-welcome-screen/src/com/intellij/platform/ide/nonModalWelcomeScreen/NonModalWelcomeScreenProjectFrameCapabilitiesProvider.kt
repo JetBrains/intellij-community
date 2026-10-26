@@ -3,7 +3,6 @@ package com.intellij.platform.ide.nonModalWelcomeScreen
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
@@ -54,7 +53,7 @@ private const val FIRST_RUN_PROPERTY = "NON_MODAL_WELCOME_SCREEN_FIRST_RUN_V2"
 
 private val NON_MODAL_WELCOME_SCREEN_UI_POLICY =ProjectFrameUiPolicy(
   projectPaneToActivateId = WelcomeScreenProjectProvider.getProjectPaneToActivateId() ?: WelcomeScreenLeftPanel.ID,
-  startupToolWindowIdToActivate = WelcomeScreenProjectProvider.getStartupToolWindowIdToActivate() ?: ToolWindowId.PROJECT_VIEW,
+  activatesProjectViewOnStartup = true,
 )
 
 private val NON_MODAL_WELCOME_SCREEN_FIRST_RUN_UI_POLICY =
