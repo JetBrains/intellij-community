@@ -67,6 +67,12 @@ interface UnindexedFilesScannerExecutor {
     throw UnsupportedOperationException()
   }
 
+  /**
+   * Suspends until the running scan holds the project in dumb mode on its own, or until no scan runs.
+   */
+  suspend fun awaitScanningDumbModeOrIdle() {
+  }
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): UnindexedFilesScannerExecutor = project.service<UnindexedFilesScannerExecutor>()

@@ -477,6 +477,11 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     return UnindexedFilesScanner(project, indexingReason, shouldHideProgressInSmartMode).queue()
   }
 
+  override suspend fun awaitScanningDumbModeOrIdle() {
+    val scanningDumb = project.serviceAsync<DumbModeWhileScanningTrigger>().isDumbModeForScanningActive()
+    combine(scanningDumb, isRunning) { dumb, running -> dumb || !running }.first { it }
+  }
+
   companion object {
     private val LOG = Logger.getInstance(UnindexedFilesScannerExecutor::class.java)
 
