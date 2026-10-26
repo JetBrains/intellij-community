@@ -26,6 +26,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -74,6 +75,7 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/util/progress:progress_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.settingsSync` end
