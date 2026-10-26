@@ -52,6 +52,9 @@ interface FileSystem<P : PathHolder> {
   fun parsePath(raw: String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
+
+  /** Whether [path] is a directory on this machine. */
+  suspend fun directoryExists(path: P): Boolean
   suspend fun getExistingSelectableInterpreters(
     projectPathPrefix: Path,
   ): List<ExistingSelectableInterpreter<P>>

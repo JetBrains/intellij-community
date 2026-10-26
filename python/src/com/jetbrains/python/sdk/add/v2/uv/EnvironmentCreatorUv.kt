@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk.add.v2.uv
 
 import com.intellij.ide.BrowserUtil
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
@@ -14,6 +13,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
@@ -37,6 +37,7 @@ import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.errorProcessing.ErrorSink
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.add.v2.CustomNewEnvironmentCreator
 import com.jetbrains.python.sdk.add.v2.InterpreterCreationContext
 import com.jetbrains.python.sdk.add.v2.PathHolder
@@ -284,13 +285,16 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
    * `.python-version` and for a `pyproject.toml` whose `requires-python` narrows the choice, so an ancestor of a
    * project directory yet to be created answers as that directory will once it is created there.
    *
+   * PY-93438: each candidate goes to the file system as its eel path, because a target can not read an IDE path such as
+   * `\\wsl$\Ubuntu\...`. The check is for a directory: a target checks a file with `test -f`, which is false for one.
+   *
    * `system = true` is what makes this a prediction rather than a report. Without it uv answers with the interpreter of
    * the `.venv` already in the directory, while the environment this dialog goes on to build is created by
    * `uv venv --clear`, which ignores that venv and takes uv's default instead.
    */
   private suspend fun resolveDefaultLanguageLevel(uvExecutable: P, projectPath: Path): String? {
     val workingDir = generateSequence(projectPath) { it.parent }.firstOrNull { candidate ->
-      model.fileSystem.parsePath(candidate.toString()).successOrNull?.let { model.fileSystem.fileExists(it) } == true
+      model.fileSystem.parsePath(candidate.asEelPath().toString()).successOrNull?.let { model.fileSystem.directoryExists(it) } == true
     } ?: return null
 
     val runtime = PyToolRuntime(model.fileSystem.getBinaryToExec(uvExecutable, workingDir), ExecOptions())

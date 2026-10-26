@@ -260,6 +260,8 @@ data class EelFileSystem(
 
   override suspend fun fileExists(path: PathHolder.Eel): Boolean = path.path.exists()
 
+  override suspend fun directoryExists(path: PathHolder.Eel): Boolean = withContext(Dispatchers.IO) { path.path.isDirectory() }
+
   override suspend fun validateVenv(homePath: PathHolder.Eel): PyResult<Unit> = withContext(Dispatchers.IO) {
     val validationResult = when {
       !homePath.path.isAbsolute -> PyResult.localizedError(message("python.sdk.new.error.no.absolute"))
@@ -582,6 +584,8 @@ internal data class TargetFileSystem(
   override suspend fun fileExists(path: PathHolder.Target): Boolean {
     return executeCommand("test -f ${path.pathString}").isSuccess
   }
+
+  override suspend fun directoryExists(path: PathHolder.Target): Boolean = executeCommand("test -d ${path.pathString}").isSuccess
 
   override suspend fun validateVenv(homePath: PathHolder.Target): PyResult<Unit> = withContext(Dispatchers.IO) {
     val pythonBinaryPath = resolvePythonBinary(homePath)
