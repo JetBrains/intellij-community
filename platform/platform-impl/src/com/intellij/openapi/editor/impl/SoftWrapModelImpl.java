@@ -564,6 +564,10 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myRecalculationManager.release();
   }
 
+  void onFontStyleChanged(int startOffset, int endOffset) {
+    myRecalculationManager.onFontStyleChanged(startOffset, endOffset);
+  }
+
   void recalculate(@NotNull String reason) {
     myRecalculationManager.recalculate(reason);
   }

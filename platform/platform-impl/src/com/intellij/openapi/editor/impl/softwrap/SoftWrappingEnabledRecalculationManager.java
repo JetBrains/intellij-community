@@ -236,6 +236,30 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
   }
 
   @Override
+  public void onFontStyleChanged(int startOffset, int endOffset) {
+    if (myBulkDocumentUpdateInProgress.getAsBoolean()) {
+      return; // the end of the bulk update recalculates all soft wraps
+    }
+    if (myDirty) {
+      return; // no need to recalculate specific areas if the whole document will be reprocessed
+    }
+    if (myEditor.isPurePaintingMode() || myDocumentUpdateInProgress) {
+      myDirty = true;
+      return;
+    }
+    TextRange range = new TextRange(startOffset, endOffset);
+    if (myFoldingUpdateInProgress) {
+      deferredFoldRegions.add(range);
+    }
+    else if (myCustomWrapUpdateInProgress) {
+      deferredCustomWraps.add(range);
+    }
+    else {
+      myApplianceManager.recalculate(Collections.singletonList(range), "font style changed");
+    }
+  }
+
+  @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
     if (myBulkDocumentUpdateInProgress.getAsBoolean()) return;
     if (myInlayChangedInBatchMode) {

@@ -114,6 +114,10 @@ internal class CustomWrapOnlyRecalculationManager(
     recalculate("bulk document update finished")
   }
 
+  override fun onFontStyleChanged(startOffset: Int, endOffset: Int) {
+    // custom wraps do not depend on the text width
+  }
+
   override fun beforeFoldRegionDisposed(region: FoldRegion) {
     if (isDocumentUpdateInProgress && !isBulkDocumentUpdateInProgress.getAsBoolean()) {
       documentUpdateStartOffset = minOf(documentUpdateStartOffset, region.startOffset)

@@ -1097,11 +1097,24 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         int startLine = document.getLineNumber(start);
         int endLine = document.getLineNumber(end);
+        boolean softWrapCountChanged = false;
         if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
           myView.invalidateRange(start, end, newChange.fontStyleChanged());
+          if (newChange.fontStyleChanged()) {
+            int softWrapCount = mySoftWrapModel.getRegisteredSoftWraps().size();
+            mySoftWrapModel.onFontStyleChanged(start, end);
+            softWrapCountChanged = mySoftWrapModel.getRegisteredSoftWraps().size() != softWrapCount;
+          }
         }
         if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
-          repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+          if (softWrapCountChanged) {
+            // the visual lines below the range moved
+            validateSize();
+            repaintToScreenBottom(Math.max(0, startLine - 1));
+          }
+          else {
+            repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+          }
         }
         updateCaretCursor();
       });

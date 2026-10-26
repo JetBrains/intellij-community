@@ -32,4 +32,6 @@ internal abstract class SoftWrapRecalculationManager : InlayModel.SimpleAdapter(
   abstract fun onBulkDocumentUpdateStarted()
 
   abstract fun onBulkDocumentUpdateFinished()
+
+  abstract fun onFontStyleChanged(startOffset: Int, endOffset: Int)
 }
