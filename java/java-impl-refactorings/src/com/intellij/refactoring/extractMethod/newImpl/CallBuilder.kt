@@ -11,6 +11,7 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiThrowStatement
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.PsiYieldStatement
@@ -84,7 +85,11 @@ class CallBuilder(private val context: PsiElement) {
   }
 
   private fun exitStatementOf(flow: FlowOutput): String {
-    return if (flow.statements.firstOrNull() is PsiYieldStatement) "yield" else "return"
+    return when (flow.statements.firstOrNull()) {
+      is PsiYieldStatement -> "yield"
+      is PsiThrowStatement -> "throw"
+      else -> "return"
+    }
   }
 
   private fun unconditionalExit(methodCall: String, flow: UnconditionalFlow, dataOutput: DataOutput): List<PsiStatement> {

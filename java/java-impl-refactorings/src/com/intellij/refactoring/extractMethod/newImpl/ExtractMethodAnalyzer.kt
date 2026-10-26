@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.generation.GenerateMembersUtil
@@ -13,11 +14,14 @@ import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiAssignmentExpression
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiDisjunctionType
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementFactory
 import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiExpressionStatement
 import com.intellij.psi.PsiField
+import com.intellij.psi.PsiLambdaExpression
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiMember
 import com.intellij.psi.PsiMethod
@@ -28,6 +32,7 @@ import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceExpression
 import com.intellij.psi.PsiReturnStatement
 import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiThrowStatement
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.PsiTypes
@@ -70,7 +75,9 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
   val analyzer = CodeFragmentAnalyzer(elements)
 
   if (analyzer.hasObservableThrowExit()) throw ExtractException(JavaRefactoringBundle.message("extract.method.error.exception"), elements.first())
-  val flowOutput = findFlowOutput(analyzer)
+  val throwOutput = findThrowOutput(analyzer)
+  val flowOutput = throwOutput?.first
+                   ?: findFlowOutput(analyzer)
                    ?: throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.exits"), elements.first())
 
   val variableData = findVariableData(analyzer, analyzer.findOutputVariables(), inferNullity)
@@ -80,6 +87,7 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
   val dataOutput = when {
     expression != null -> ExpressionOutput(getExpressionType(expression), null, listOf(expression),
                                            if (inferNullity) CodeFragmentAnalyzer.inferNullability(listOf(expression)) else Nullability.UNKNOWN)
+    throwOutput != null -> throwOutput.second
     variableData is VariableOutput -> when {
       variableData.nullability != Nullability.NOT_NULL && flowOutput is ConditionalFlow -> null
       flowOutput is ConditionalFlow && ! canExtractStatementsFromScope(flowOutput.statements, elements) -> null
@@ -108,7 +116,7 @@ fun findExtractOptions(elements: List<PsiElement>, inferNullity: Boolean = true)
 
   extractOptions = extractOptions.copy(
     dataOutput = normalizeDataOutput(dataOutput, flowOutput, elements, exposedVariables.mapNotNull { it.name }),
-    thrownExceptions = analyzer.findThrownExceptions(),
+    thrownExceptions = if (throwOutput != null) findThrownExceptionsWithReturns(elements, throwOutput.first.statements) else analyzer.findThrownExceptions(),
     requiredVariablesInside = analyzer.findUndeclaredVariables().filterNot { it.name in parameterNames },
     typeParameters = findRequiredTypeParameters(targetClass, elements),
     inputParameters = inputParameters,
@@ -189,6 +197,51 @@ private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
     2 -> if (exitStatements.isNotEmpty()) ConditionalFlow(exitStatements) else null
     else -> return null
   }
+}
+
+/**
+ * Finds the output for a fragment that always throws, when the call must keep the throw:
+ * the extracted method returns the exception, and the call site throws it.
+ * Returns null when the call does not need the throw, or when the call site cannot throw the common exception type.
+ */
+internal fun findThrowOutput(analyzer: CodeFragmentAnalyzer): Pair<UnconditionalFlow, ExpressionOutput>? {
+  val elements = analyzer.elements
+  if (elements.singleOrNull() is PsiExpression || analyzer.keepsReturnOnAllPathsAfterCall()) return null
+  val escapingThrows = findEscapingThrows(analyzer) ?: return null
+  if (escapingThrows.isEmpty()) return null
+  val thrownExpressions = escapingThrows.map { throwStatement -> throwStatement.exception ?: return null }
+  val manager = elements.first().manager
+  val commonType = thrownExpressions
+    .map { thrownExpression -> thrownExpression.type ?: return null }
+    .reduce { upperBound, type -> GenericsUtil.getLeastUpperBound(upperBound, type, manager) ?: return null }
+  val exceptionType = normalizeType(commonType) as? PsiClassType ?: return null
+  if (!ExceptionUtil.isUncheckedException(exceptionType) && !ExceptionUtil.isHandled(exceptionType, elements.first())) return null
+  val nullability = CodeFragmentAnalyzer.inferNullability(thrownExpressions)
+  return UnconditionalFlow(escapingThrows, false) to ExpressionOutput(exceptionType, null, thrownExpressions, nullability)
+}
+
+private fun findEscapingThrows(analyzer: CodeFragmentAnalyzer): List<PsiThrowStatement>? {
+  val throwStatements = analyzer.elements
+    .flatMap { element -> PsiTreeUtil.collectElementsOfType(element, PsiThrowStatement::class.java) }
+    .filterNot { throwStatement -> PsiTreeUtil.getParentOfType(throwStatement, PsiLambdaExpression::class.java, PsiClass::class.java) in analyzer }
+  return throwStatements.filter { throwStatement ->
+    val thrownType = throwStatement.exception?.type ?: return null
+    val exceptionType = normalizeType(thrownType) as? PsiClassType ?: return null
+    val handlePlace = ExceptionUtil.getHandlePlace(throwStatement, exceptionType, null)
+    handlePlace !is ExceptionUtil.HandlePlace.TryCatch || handlePlace.tryStatement !in analyzer
+  }
+}
+
+private fun findThrownExceptionsWithReturns(elements: List<PsiElement>, escapingThrows: List<PsiStatement>): List<PsiClassType> {
+  val throwMarkers = escapingThrows.map(PsiTreeUtil::mark)
+  val factory = PsiElementFactory.getInstance(elements.first().project)
+  val block = factory.createCodeBlockFromText("{}", elements.first().context)
+  block.addRange(elements.first(), elements.last())
+  throwMarkers.forEach { marker ->
+    val throwStatement = PsiTreeUtil.releaseMark(block, marker) as PsiThrowStatement
+    throwStatement.replace(factory.createStatementFromText("return ${throwStatement.exception?.text};", throwStatement))
+  }
+  return ExceptionUtil.getThrownCheckedExceptions(block)
 }
 
 private fun findCommonType(first: PsiType, second: PsiType, nullability: Nullability, manager: PsiManager): PsiType? {

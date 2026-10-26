@@ -5,7 +5,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
-import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -758,6 +757,22 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testThrowInNonVoidMethodNeedsReturn() {
+    doTest();
+  }
+
+  public void testThrowCaughtInsideNeedsReturn() {
+    doTest();
+  }
+
+  public void testTwoUncheckedThrowsNeedReturn() {
+    doTest();
+  }
+
+  public void testCheckedThrowHandledNeedsReturn() {
+    doTest();
+  }
+
+  public void testCheckedThrowsUnhandledNeedReturn() {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     try {
       performAction(true, false);
@@ -768,10 +783,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     }
   }
 
-  public void testThrowInNonVoidMethodNeedsReturnConfirmed() {
-    configureByFile(BASE_PATH + "ThrowInNonVoidMethodNeedsReturn.java");
+  public void testCheckedThrowsUnhandledNeedReturnConfirmed() {
+    configureByFile(BASE_PATH + "CheckedThrowsUnhandledNeedReturn.java");
     BaseRefactoringProcessor.ConflictsInTestsException.withIgnoredConflicts(() -> assertTrue(performAction(true, false)));
-    assertTrue(getFile().getText().contains("newMethod()"));
+    assertTrue(getFile().getText().contains("newMethod(b);"));
   }
 
   public void testDontExtractInsideSwitch() {

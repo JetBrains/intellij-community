@@ -421,7 +421,7 @@ class MethodExtractor {
 
 private fun findConflicts(analyzer: CodeFragmentAnalyzer): MultiMap<PsiElement, String> {
   val conflicts = MultiMap<PsiElement, String>()
-  if (!analyzer.keepsReturnOnAllPathsAfterCall()) {
+  if (!analyzer.keepsReturnOnAllPathsAfterCall() && findThrowOutput(analyzer) == null) {
     conflicts.putValue(analyzer.elements.first(), JavaRefactoringBundle.message("extract.method.conflict.missing.return"))
   }
   return conflicts

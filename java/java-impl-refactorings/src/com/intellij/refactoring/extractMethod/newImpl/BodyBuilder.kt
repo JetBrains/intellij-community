@@ -15,6 +15,7 @@ import com.intellij.psi.PsiParserFacade
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiReturnStatement
 import com.intellij.psi.PsiStatement
+import com.intellij.psi.PsiThrowStatement
 import com.intellij.psi.PsiType
 import com.intellij.psi.PsiTypes
 import com.intellij.psi.PsiVariable
@@ -44,7 +45,7 @@ class BodyBuilder(private val factory: PsiElementFactory) {
   private fun statementOf(statement: String) = factory.createStatementFromText(statement, null)
 
   private fun findSubstitutionForExitStatement(flowOutput: FlowOutput, dataOutput: DataOutput, statement: PsiStatement): String {
-    val returnExpression = getReturnedExpression(statement)?.text ?: "null"
+    val returnExpression = ((statement as? PsiThrowStatement)?.exception ?: getReturnedExpression(statement))?.text ?: "null"
     return when (flowOutput) {
       is ConditionalFlow -> when (dataOutput) {
         is VariableOutput -> "return null;"
