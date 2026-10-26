@@ -57,6 +57,7 @@ import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.Base64
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 
@@ -1351,9 +1352,26 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     )
     configureProjectFile("![alt](image.svg)\n\ntail")
 
-    val source = waitForImageInlay().renderer.source
+    val source = waitForImageInlay().renderer.source!!
     assertEquals(90, source.width)
     assertEquals(45, source.height)
+  }
+
+  fun testDataUriImageRendersWithTheSizeFromTheImageEngine() {
+    val svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"90\" height=\"45\"><rect width=\"90\" height=\"45\"/></svg>"
+    val imageSource = "![alt](data:image/svg+xml;base64,${Base64.getEncoder().encodeToString(svg.toByteArray())})"
+    configureProjectFile("$imageSource\n\ntail")
+    EditorTestUtil.setEditorVisibleSize(myFixture.editor, 80, 12)
+
+    val inlay = waitForImageInlay()
+    assertNull("The backend loads no browser-owned image", inlay.renderer.source)
+    assertEquals(listOf(imageSource to "alt"), concealedWithPlaceholders())
+    PlatformTestUtil.waitWithEventsDispatching(
+      "The inlay did not take the size of the loaded image",
+      { inlay.heightInPixels == 45 + 2 * JBUI.scale(2) },
+      10,
+    )
+    assertSame(inlay, imageInlays().single())
   }
 
   fun testCachedAttachmentImageRendersFromProjectRoot() {
@@ -1441,8 +1459,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val refreshed = imageInlays().single()
     assertNotSame("A refresh replaces the inlay, because its renderer is immutable", inlay, refreshed)
     assertFalse(inlay.isValid)
-    assertEquals(image.modificationStamp, refreshed.renderer.source.stamp)
-    assertEquals(90, refreshed.renderer.source.height)
+    assertEquals(image.modificationStamp, refreshed.renderer.source!!.stamp)
+    assertEquals(90, refreshed.renderer.source!!.height)
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
     assertEquals("The source stays concealed across the refresh", listOf("![alt](image.png)"), concealed())
   }
@@ -1998,7 +2016,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     return imageInlays().single()
   }
 
-  /** Waits until [count] image inlays exist. Every inlay has a loaded source by construction. */
+  /** Waits until [count] image inlays exist. A local image has a loaded source by construction. */
   private fun waitForImageInlays(count: Int) {
     PlatformTestUtil.waitWithEventsDispatching(
       "Image inlays were not added",

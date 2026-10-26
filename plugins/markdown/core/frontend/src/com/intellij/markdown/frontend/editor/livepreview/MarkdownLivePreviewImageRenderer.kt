@@ -12,6 +12,8 @@ import com.intellij.openapi.editor.impl.editorIdOrNull
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.ui.svg.AdaptiveImageOrigin
+import com.intellij.util.DataUrl
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import fleet.rpc.client.durable
 import kotlinx.coroutines.launch
@@ -24,7 +26,7 @@ import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 private data class ImageInlay(
   val offset: Int,
   val destination: String,
-  val source: MarkdownLivePreviewSpec.ImageSource,
+  val source: MarkdownLivePreviewSpec.ImageSource?, // null for a browser-owned image
   val ordinal: Int, // orders images from one line
 )
 
@@ -48,7 +50,8 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
   }
 
   private fun presentation(spec: MarkdownLivePreviewSpec.Image): List<MarkdownLivePreviewFold> {
-    return if (spec.source == null) emptyList() else listOf(MarkdownLivePreviewTextFold(spec.range.toTextRange(), spec.placeholderText))
+    if (spec.source == null && !spec.isBrowserOwned) return emptyList()
+    return listOf(MarkdownLivePreviewTextFold(spec.range.toTextRange(), spec.placeholderText))
   }
 
   /** Updates image resources independently of source concealment. */
@@ -66,8 +69,8 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
     val desired = ArrayList<ImageInlay>()
     var previousOffset = -1
     var ordinal = 0
-    for ((range, destination, _, source) in images) {
-      if (source == null) {
+    for ((range, destination, _, isBrowserOwned, source) in images) {
+      if (source == null && !isBrowserOwned) {
         requestImage(destination)
         continue
       }
@@ -115,7 +118,7 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
     val missing = ArrayList<ImageInlay>()
     for (wanted in desired) {
       val inlay = owned.remove(InlayKey(document.getLineNumber(wanted.offset), wanted.destination, wanted.ordinal))
-      if (inlay != null && inlay.renderer.source.stamp == wanted.source.stamp) {
+      if (inlay != null && inlay.renderer.source?.stamp == wanted.source?.stamp) {
         retained += inlay
         continue
       }
@@ -133,7 +136,8 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
       for ((offset, destination, source, ordinal) in missing) {
         // A higher priority sits closer to the line, so the first image of a line gets the highest one.
         val properties = InlayProperties().showAbove(false).relatesToPrecedingText(true).priority(-ordinal)
-        val renderer = MarkdownLivePreviewImageInlayRenderer(editor, destination, source, imageUrl(destination, source.stamp))
+        val origin = if (source == null) getImageOrigin(destination) else AdaptiveImageOrigin.Url(imageUrl(destination, source.stamp))
+        val renderer = MarkdownLivePreviewImageInlayRenderer(editor, destination, source, origin)
         editor.inlayModel.addBlockElement(offset, properties, renderer)?.let { inlays += it }
       }
     }
@@ -141,6 +145,25 @@ internal class MarkdownLivePreviewImageRenderer(project: Project, private val ed
 
   private fun imageUrl(destination: String, stamp: Long): String {
     return MarkdownImageResourceProvider.imageUrl(resourceProvider, destination, stamp)
+  }
+
+  /**
+   * The image engine loads a browser-owned image itself, as the browser of the preview does.
+   * The engine gets only an `http:` or `https:` URL or a `data:` URI. The inlay of another source draws nothing.
+   */
+  private fun getImageOrigin(destination: String): AdaptiveImageOrigin? {
+    if (destination.startsWith("http://", ignoreCase = true) || destination.startsWith("https://", ignoreCase = true)) {
+      return AdaptiveImageOrigin.Url(destination)
+    }
+    if (!DataUrl.isDataUrl(destination)) return null
+    return try {
+      AdaptiveImageOrigin.DataUrl(DataUrl.parse(destination))
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("Failed to parse a Markdown image data URI", e)
+      null
+    }
   }
 
   private fun updateGeometry() {

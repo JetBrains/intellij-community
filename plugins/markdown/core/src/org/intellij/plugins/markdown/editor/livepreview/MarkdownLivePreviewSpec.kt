@@ -162,13 +162,14 @@ sealed interface MarkdownLivePreviewSpec {
   )
 
   /**
-   * Replaces the source of a local image with [placeholderText] and paints the image below its line.
+   * Replaces the source of a image with [placeholderText] and paints the image below its line.
    */
   @Serializable
   data class Image(
     override val range: MarkdownLivePreviewRange,
     val destination: String,
     val placeholderText: String,
+    val isBrowserOwned: Boolean,
     val source: ImageSource? = null,
   ) : MarkdownLivePreviewSpec
 

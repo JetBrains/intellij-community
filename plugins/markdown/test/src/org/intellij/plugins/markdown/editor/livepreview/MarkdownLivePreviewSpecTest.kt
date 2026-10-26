@@ -121,16 +121,33 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
   }
 
   fun testUnsupportedImageDestinationsAreNotConcealed() {
-    assertEmpty(elements("![alt](https://example.org/image.png)"))
-    assertEmpty(elements("![alt](//example.org/image.png)"))
-    assertEmpty(elements("![alt](data:image/png;base64,AAAA)"))
     assertEmpty(elements("![alt][image]\n\n[image]: image.png"))
+  }
+
+  fun testRemoteAndDataImagesAreSpecsWithoutSource() {
+    val logo = "https://upload.wikimedia.org/wikipedia/commons/4/4f/SVG_Logo.svg"
+    val badge = "https://img.shields.io/badge/markdown-preview-blue.svg"
+    val data = "data:image/png;base64,AAAA"
+    val content = "![svg image]($logo)\n\n![svg image]($badge)(https://example.com)\n\n![dot](HTTP://example.org/a.png) ![dot]($data)"
+    val images = images(content)
+
+    assertEquals(listOf(logo, badge, "HTTP://example.org/a.png", data), images.map { it.destination })
+    assertEquals(listOf("svg image", "svg image", "dot", "dot"), images.map { it.placeholderText })
+    assertTrue(images.all { it.isBrowserOwned })
+    assertTrue("The backend loads no browser-owned image", images.all { it.source == null })
+    assertEquals(
+      listOf("![svg image]($logo)", "![svg image]($badge)", "![dot](HTTP://example.org/a.png)", "![dot]($data)"),
+      imageRanges(content),
+    )
+    val other = images("![a](//example.org/a.png) ![b](data:text/plain,text)")
+    assertEquals(listOf("//example.org/a.png", "data:text/plain,text"), other.map { it.destination })
   }
 
   fun testFileUriIsALocalImageDestination() {
     val image = images("![alt](file:///project/image.png)").single()
 
     assertEquals("file:///project/image.png", image.destination)
+    assertFalse(image.isBrowserOwned)
   }
 
   fun testReferenceLinksAreConcealed() {

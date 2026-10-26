@@ -104,7 +104,11 @@ internal class MarkdownLivePreviewImageManager(
 }
 
 private fun MarkdownLivePreviewSpecSet.imageDestinations(): Set<String> {
-  return elements.filterIsInstance<MarkdownLivePreviewSpec.Image>().mapTo(HashSet()) { it.destination }
+  return elements
+    .asSequence()
+    .filterIsInstance<MarkdownLivePreviewSpec.Image>()
+    .filterNot { it.isBrowserOwned }
+    .mapTo(HashSet()) { it.destination }
 }
 
 private fun LoadedImage.toImageSource(): MarkdownLivePreviewSpec.ImageSource? {
