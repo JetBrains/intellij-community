@@ -17,6 +17,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.DocumentationHoverInfo
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorProjection
 import com.intellij.openapi.editor.PopupBridge
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -71,7 +72,18 @@ internal fun calcTargetDocumentationInfo(project: Project, hostEditor: Editor, h
   }
 }
 
+/**
+ * Runs [f] on the injected editor at [hostOffset] first, then on [hostEditor] itself.
+ * A projection of [hostEditor] comes before both, because its document holds the PSI.
+ */
 fun <X : Any> injectedThenHost(project: Project, hostEditor: Editor, hostOffset: Int, f: (Editor, PsiFile, Int) -> X?): X? {
+  val projection = EditorProjection.findAt(hostEditor, hostOffset)
+  if (projection != null) {
+    val nestedOffset = projection.fromHostOffset(hostOffset)
+    if (nestedOffset == -1) return null
+    return injectedThenHost(project, projection, nestedOffset, f)
+  }
+
   val hostFile = PsiUtilBase.getPsiFileInEditor(hostEditor, project)
                  ?: return null
   return tryInjected(project, hostFile, hostEditor, hostOffset, f)

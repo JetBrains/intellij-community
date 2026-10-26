@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorMouseHoverPopupManager
+import com.intellij.openapi.editor.EditorProjection
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.EditorMouseEvent
@@ -57,6 +58,7 @@ import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiFile
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScreenUtil.isMovementTowards
@@ -307,7 +309,7 @@ class CtrlMouseHandler2(
         data.target?.createPointer(),
         data.target?.javaClass,
       )
-      if (editor is EditorWindow) {
+      val hostResult = if (editor is EditorWindow) {
         val manager = InjectedLanguageManager.getInstance(project)
         val hostRanges = result.ranges.map {
           manager.injectedToHost(editor.injectedFile, it)
@@ -317,6 +319,13 @@ class CtrlMouseHandler2(
       else {
         result
       }
+
+      // the ranges are in the document of a projection; the editor that shows this document paints them
+      val projection = InjectedLanguageEditorUtil.getTopLevelEditor(editor) as? EditorProjection
+      if (projection != null) {
+        return@injectedThenHost hostResult.copy(ranges = hostResult.ranges.mapNotNull { projection.toHostRange(it) })
+      }
+      return@injectedThenHost hostResult
     }
   }
 
