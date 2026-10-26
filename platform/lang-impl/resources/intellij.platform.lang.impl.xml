@@ -481,7 +481,6 @@
     </extensionPoint>
     <extensionPoint qualifiedName="com.intellij.refactoring.moveDirectoryWithClassesHelper" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.safeDeleteProcessor" interface="com.intellij.refactoring.safeDelete.SafeDeleteProcessorDelegate" dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.refactoring.safeDeleteAvailability" interface="com.intellij.refactoring.safeDelete.SafeDeleteAvailability" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.moveFileHandler" interface="com.intellij.refactoring.move.moveFilesOrDirectories.MoveFileHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.rename.symbolRenameTargetFactory" dynamic="true"
                     interface="com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory"/>
