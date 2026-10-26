@@ -17,6 +17,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -55,6 +56,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.util.findLibrary
 import org.jetbrains.kotlin.idea.base.util.hasKotlinFilesInTestsOnly
+import org.jetbrains.kotlin.idea.base.util.invalidateProjectRoots
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.ui.CreateLibraryDialogWithModules
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
@@ -361,26 +364,43 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             return
         }
 
-        val facetSettings = KotlinFacetSettingsProvider.getInstance(module.project)?.getInitializedSettings(module)
-        if (facetSettings != null) {
-            ModuleRootModificationUtil.updateModel(module) {
-                feature.sinceVersion?.let { sinceVersion ->
-                    facetSettings.apiLevel = sinceVersion
-                    facetSettings.languageLevel = sinceVersion
-                }
-                facetSettings.compilerSettings?.apply {
-                    additionalArguments = additionalArguments.replaceLanguageFeature(
-                        feature,
-                        state,
-                        getRuntimeLibraryVersion(module),
-                        separator = " ",
-                        quoted = false
-                    )
-                }
-                KotlinFacet.get(module)?.let { kotlinFacet ->
-                    FacetManager.getInstance(module).facetConfigurationChanged(kotlinFacet)
-                }
+        val project = module.project
+        val facet = KotlinFacet.get(module)
+
+        fun updatedArguments(arguments: String): String =
+            arguments.replaceLanguageFeature(
+                feature,
+                state,
+                getRuntimeLibraryVersion(module),
+                separator = " ",
+                quoted = false
+            )
+
+        if (facet == null || facet.configuration.settings.useProjectSettings) {
+            KotlinCompilerSettings.getInstance(project).update {
+                additionalArguments = updatedArguments(additionalArguments)
+                // Trigger a roots change to invalidate Kotlin analysis caches.
+                // This lets open editors reanalyze the code with the updated compiler arguments.
+                project.invalidateProjectRoots(RootsChangeRescanningInfo.NO_RESCAN_NEEDED)
             }
+            return
+        }
+
+        val facetSettings = KotlinFacetSettingsProvider.getInstance(project)
+            ?.getInitializedSettings(module)
+            ?: return
+
+        ModuleRootModificationUtil.updateModel(module) {
+            feature.sinceVersion?.let { sinceVersion ->
+                facetSettings.apiLevel = sinceVersion
+                facetSettings.languageLevel = sinceVersion
+            }
+
+            facetSettings.compilerSettings?.apply {
+                additionalArguments = updatedArguments(additionalArguments)
+            }
+
+            FacetManager.getInstance(module).facetConfigurationChanged(facet)
         }
     }
 
