@@ -20,6 +20,10 @@ rustls = { version = "0.23.46", default-features = false, features = ["ring", "s
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 
+# The relay: `nc` responsible for itself.
+[target.'cfg(target_os = "macos")'.dependencies]
+libc = "0.2.191"
+
 [dev-dependencies]
 pretty_assertions.workspace = true
 tempfile.workspace = true

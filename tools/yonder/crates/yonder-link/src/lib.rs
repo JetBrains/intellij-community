@@ -9,6 +9,8 @@
 pub mod allow;
 pub mod channel;
 pub mod digest;
+#[cfg(target_os = "macos")]
+mod disclaim;
 pub mod identity;
 pub mod proto;
 mod relay;
@@ -16,6 +18,7 @@ mod relay;
 pub use allow::AllowList;
 pub use channel::{Channel, ClientTls, Closer, Frame, LinkError, ServerTls};
 pub use identity::{Fingerprint, Identity};
+pub use relay::local_network_cause;
 
 /// The TCP port of the agent when a host file names none.
 pub const DEFAULT_PORT: u16 = 7741;

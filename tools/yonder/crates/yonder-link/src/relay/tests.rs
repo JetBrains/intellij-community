@@ -57,3 +57,46 @@ fn a_missing_nc_is_an_error_that_names_it() {
     let error = connect_with("/nonexistent/nc", "127.0.0.1:9".parse().expect("an address"), DEADLINE).expect_err("missing");
     assert!(error.to_string().contains("/nonexistent/nc"), "{error}");
 }
+
+#[test]
+fn local_network_privacy_is_a_cause_only_of_host_unreachable_on_a_local_address_that_the_relay_cannot_pass() {
+    let reason = || Some("there is no /usr/bin/nc".to_owned());
+    let lan: IpAddr = "192.168.1.248".parse().expect("an address");
+    assert_eq!(
+        cause(io::ErrorKind::HostUnreachable, lan, reason()).as_deref(),
+        Some(
+            "macOS Local Network privacy can refuse 192.168.1.248, because there is no /usr/bin/nc. Then the app that started this process needs the Local Network permission (System Settings, Privacy & Security, Local Network)"
+        )
+    );
+    for local in ["10.0.0.2", "172.16.0.1", "169.254.3.4", "fe80::1", "fd33:e057:95e:4150::1"] {
+        let ip = local.parse().expect("an address");
+        assert!(cause(io::ErrorKind::HostUnreachable, ip, reason()).is_some(), "{local}");
+    }
+    assert_eq!(
+        cause(io::ErrorKind::HostUnreachable, lan, None),
+        None,
+        "the relay passes the refusal"
+    );
+    assert_eq!(
+        cause(io::ErrorKind::ConnectionRefused, lan, reason()),
+        None,
+        "an agent that does not listen"
+    );
+    let public = "8.8.8.8".parse().expect("an address");
+    assert_eq!(
+        cause(io::ErrorKind::HostUnreachable, public, reason()),
+        None,
+        "not the local network"
+    );
+}
+
+#[cfg(target_os = "macos")]
+#[test]
+fn the_relay_of_this_mac_passes_a_refusal_of_the_local_network_permission() {
+    assert_eq!(unavailable(), None);
+    let refused = LinkError::Unreachable(io::Error::from(io::ErrorKind::HostUnreachable));
+    assert_eq!(
+        local_network_cause(&refused, "192.168.1.248:7741".parse().expect("an address")),
+        None
+    );
+}

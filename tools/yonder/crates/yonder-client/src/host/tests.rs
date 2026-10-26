@@ -98,6 +98,7 @@ fn no_answer_names_each_address_the_host_name_and_the_prepare_commands() {
         refusal.message
     );
     assert!(refusal.message.contains("`bt --host studio --prepare`"), "{}", refusal.message);
+    assert!(!refusal.message.contains("Local Network"), "{}", refusal.message);
 }
 
 #[test]

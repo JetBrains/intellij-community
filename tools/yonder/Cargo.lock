@@ -984,6 +984,7 @@ dependencies = [
 name = "yonder-link"
 version = "0.1.0"
 dependencies = [
+ "libc",
  "pretty_assertions",
  "rcgen",
  "ring",

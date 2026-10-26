@@ -50,6 +50,11 @@ of the certificate is its fingerprint. A client checks that the agent shows the 
 agent checks that the client shows a fingerprint of its allow list, and it reads the list at each handshake. TLS 1.3
 only, on the ring provider. Every read and every write has a deadline, so no call waits for ever.
 
+On macOS, Local Network privacy refuses a connection with `EHOSTUNREACH` when the responsible app of the client has no
+permission. The client then connects through `/usr/bin/nc`, which it starts responsible for itself, so the connection
+works from any terminal app or IDE. TLS stays end to end. The `relay` and `disclaim` modules of `yonder-link` have the
+details.
+
 One connection carries one request. A run lives on the agent, not on the connection: a client that lost its
 connection follows the output again from the last offset it saw.
 

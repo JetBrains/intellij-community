@@ -1,18 +1,21 @@
 //! The relay of a connection through `/usr/bin/nc` on macOS.
 //!
-//! macOS refuses a connection to the local network with `EHOSTUNREACH` when the app that is responsible for the process
-//! has no Local Network permission. A process that `launchd` starts outside an app, such as a background agent
-//! session, cannot get that permission. The system `nc` is exempt. So the client connects `nc` to the agent and talks
-//! TLS through a loopback socket whose other end copies to and from `nc`. TLS and the pinned certificates stay end to
-//! end: `nc` carries only the encrypted bytes.
+//! macOS refuses a connection to the local network with `EHOSTUNREACH` when the responsible process of the client has
+//! no Local Network permission. An app without a team ID, such as a local build of the IDE, gets no permission even
+//! when its switch is on. A process that is responsible for itself, such as a `launchd` job, gets none either, unless it
+//! is a binary of the system. So the client starts the system `nc` responsible for itself (see the `disclaim` module),
+//! connects it to the agent, and talks TLS through a loopback socket whose other end copies to and from `nc`. TLS and
+//! the pinned certificates stay end to end: `nc` carries only the encrypted bytes.
 
 use std::io::{self, BufRead, BufReader, Read, Write};
-use std::net::{Ipv4Addr, Shutdown, SocketAddr, TcpListener, TcpStream};
+use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 use std::time::Duration;
+
+use crate::channel::LinkError;
 
 /// The system `nc`.
 pub(crate) const NC: &str = "/usr/bin/nc";
@@ -20,6 +23,46 @@ pub(crate) const NC: &str = "/usr/bin/nc";
 /// Whether a failed connect is the refusal of the Local Network permission, which the relay can pass.
 pub(crate) fn is_local_network_refusal(error: &io::Error) -> bool {
     cfg!(target_os = "macos") && error.kind() == io::ErrorKind::HostUnreachable && Path::new(NC).exists()
+}
+
+/// Why macOS Local Network privacy can be the cause of `error` on a connect to `address`, or `None`. It can be when the
+/// connect failed with `EHOSTUNREACH` on an address of the local network, and the relay cannot pass the refusal.
+pub fn local_network_cause(error: &LinkError, address: SocketAddr) -> Option<String> {
+    match error {
+        LinkError::Unreachable(error) if cfg!(target_os = "macos") => cause(error.kind(), address.ip(), unavailable()),
+        _ => None,
+    }
+}
+
+fn cause(kind: io::ErrorKind, ip: IpAddr, unavailable: Option<String>) -> Option<String> {
+    if kind != io::ErrorKind::HostUnreachable || !is_local(ip) {
+        return None;
+    }
+    unavailable.map(|reason| {
+        format!(
+            "macOS Local Network privacy can refuse {ip}, because {reason}. Then the app that started this process needs the Local Network permission (System Settings, Privacy & Security, Local Network)"
+        )
+    })
+}
+
+/// Why the relay cannot pass a refusal of the Local Network permission, or `None` when it can.
+fn unavailable() -> Option<String> {
+    if !Path::new(NC).exists() {
+        return Some(format!("there is no {NC}"));
+    }
+    #[cfg(target_os = "macos")]
+    let disclaim = crate::disclaim::unavailable();
+    #[cfg(not(target_os = "macos"))]
+    let disclaim = None::<String>;
+    disclaim.map(|reason| format!("{NC} cannot be responsible for itself: {reason}"))
+}
+
+/// Whether `ip` is an address of the local network: a private or a link-local one.
+const fn is_local(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(v4) => v4.is_private() || v4.is_link_local(),
+        IpAddr::V6(v6) => v6.is_unique_local() || v6.is_unicast_link_local(),
+    }
 }
 
 /// A loopback socket whose other end is `nc` connected to `address`. Answers when `nc` has connected, or the error that
@@ -34,11 +77,16 @@ pub(crate) fn connect_with(nc: &str, address: SocketAddr, deadline: Duration) ->
         _ => address.ip().to_string(),
     };
     let seconds = deadline.as_secs().max(1).to_string();
-    let mut child = Command::new(nc)
+    let mut command = Command::new(nc);
+    command
         .args(["-v", "-G", &seconds, &host, &address.port().to_string()])
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::piped());
+    // Without the disclaim, `nc` keeps the responsible process of the client, and `local_network_cause` names why.
+    #[cfg(target_os = "macos")]
+    let _ = crate::disclaim::disclaim(&mut command);
+    let mut child = command
         .spawn()
         .map_err(|error| io::Error::new(error.kind(), format!("cannot start {nc}: {error}")))?;
     let (Some(stdin), Some(stdout), Some(stderr)) = (child.stdin.take(), child.stdout.take(), child.stderr.take()) else {

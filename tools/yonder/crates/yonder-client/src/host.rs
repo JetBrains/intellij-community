@@ -5,7 +5,7 @@
 //! address that answers goes first in the host file. A cached address that failed goes after the ones that did not, so
 //! the next connection tries it last. When only an address of the host name answers, every cached address failed, and
 //! the host file keeps the new address alone. No step waits without a deadline, so a `.local` name that does not
-//! resolve costs 5 s.
+//! resolve costs 5 s. When macOS Local Network privacy can be what refused an address, the refusal names it once.
 
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -81,12 +81,14 @@ struct Tries {
     /// What the first address with another certificate said.
     untrusted: Option<String>,
     failed: Vec<SocketAddr>,
+    /// Why macOS Local Network privacy can be what refused the connections, from the first address where it can be.
+    local_network: Option<String>,
 }
 
 /// Why one address gave no channel.
 enum Attempt {
-    /// Try the next address.
-    Failed(String),
+    /// Try the next address. The second value tells why macOS Local Network privacy can be the cause.
+    Failed(String, Option<String>),
     /// Another certificate: try the next address, and name the pin when none answers.
     Untrusted(String),
     /// The agent answered and refused: no other address can do better.
@@ -169,7 +171,12 @@ impl Host {
         if let Some(answered) = self.try_each(fresh, &mut tries) {
             return answered;
         }
-        let Tries { tried, untrusted, .. } = tries;
+        let Tries {
+            tried,
+            untrusted,
+            local_network,
+            ..
+        } = tries;
         let alias = self.alias().to_owned();
         if let Some(said) = untrusted {
             return Err(refused(
@@ -186,10 +193,11 @@ impl Host {
         } else {
             tried.join(", ")
         };
+        let local_network = local_network.map(|cause| format!(" {cause}.")).unwrap_or_default();
         Err(refused(
             code::UNREACHABLE,
             format!(
-                "no agent answers on {alias}: tried {tried}; {lookup}. The Mac can sleep, or the agent is not installed: {}",
+                "no agent answers on {alias}: tried {tried}; {lookup}.{local_network} The Mac can sleep, or the agent is not installed: {}",
                 prepare_hint(&alias)
             ),
         ))
@@ -255,7 +263,10 @@ impl Host {
                     return Some(Ok(connected));
                 }
                 Err(Attempt::Refused(refusal)) => return Some(Err(refusal)),
-                Err(Attempt::Failed(said)) => tries.tried.push(format!("{address} ({said})")),
+                Err(Attempt::Failed(said, local_network)) => {
+                    tries.tried.push(format!("{address} ({said})"));
+                    tries.local_network = tries.local_network.take().or(local_network);
+                }
                 Err(Attempt::Untrusted(said)) => {
                     tries.tried.push(format!("{address} (untrusted)"));
                     tries.untrusted.get_or_insert(said);
@@ -270,7 +281,10 @@ impl Host {
         let mut channel = match Channel::connect(address, &self.tls, self.timing.connect) {
             Ok(channel) => channel,
             Err(LinkError::Untrusted(said)) => return Err(Attempt::Untrusted(said)),
-            Err(error) => return Err(Attempt::Failed(error.to_string())),
+            Err(error) => {
+                let local_network = yonder_link::local_network_cause(&error, address);
+                return Err(Attempt::Failed(error.to_string(), local_network));
+            }
         };
         let hello = channel.exchange::<_, Reply>(&Request::hello(VERSION));
         // The connect deadline is short, for a dead address. A write of a large pack to a slow link takes longer, so
@@ -308,7 +322,7 @@ impl Host {
             Ok(Reply::Refused { code, message }) => Err(Attempt::Refused(self.agent_refusal(code, &message))),
             Ok(reply) => Err(Attempt::Refused(self.unexpected(&reply))),
             Err(LinkError::Untrusted(said)) => Err(Attempt::Untrusted(said)),
-            Err(error) => Err(Attempt::Failed(error.to_string())),
+            Err(error) => Err(Attempt::Failed(error.to_string(), None)),
         }
     }
 

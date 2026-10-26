@@ -65,7 +65,7 @@ these:
 | `config` | No home directory, an identity that cannot be read or created, or a file that cannot be written. |
 | `no_host` | No host file for the alias. The message names `bt --host <alias> --prepare` and `yonder prepare`. |
 | `bad_host_file` | A host file that is not JSON of the host file shape, or that names another alias. |
-| `unreachable` | No cached address and no address of the host name answers. The message names each address and the lookup. |
+| `unreachable` | No cached address and no address of the host name answers. The message names each address and the lookup. On macOS it also names Local Network privacy when an address of the local network failed with `EHOSTUNREACH` and the relay through `/usr/bin/nc` cannot pass the refusal. |
 | `untrusted` | The agent shows a certificate that the host file does not pin, or it refuses the certificate of the client. |
 | `schema` | The agent speaks another schema version. |
 | `timed_out` | No reply within the deadline of the request. For `Follow`: no reply for 10 min, over all reconnects. |
