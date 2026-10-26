@@ -39,14 +39,11 @@ dev_dist_plugin_descriptor(
 dev_plugin(
     name = "intellij.javaFX.community_dev_plugin",
     content_module_jars = [
+        "//plugins/javaFX:javaFX-properties_content_module_jar",
         "//plugins/javaFX:javaFX_content_module_jar",
     ],
     descriptor = "//build/dev-dist-descriptors/intellij.javaFX.community:intellij.javaFX.community_dev_descriptor",
     jars = {
-        "lib/javaFX.jar": [
-            "intellij.javaFX.community",
-            "intellij.javaFX.properties",
-        ],
         "lib/javaFX-jps.jar": [
             "intellij.javaFX.jps",
         ],
@@ -56,6 +53,9 @@ dev_plugin(
         "lib/rt/sceneBuilderBridge.jar": [
             "intellij.javaFX.sceneBuilder",
         ],
+        "lib/javaFX.jar": [
+            "intellij.javaFX.community",
+        ],
     },
     main_module = "intellij.javaFX.community",
     modules = {
@@ -63,7 +63,6 @@ dev_plugin(
         "//plugins/javaFX/community": "intellij.javaFX.community",
         "//plugins/javaFX/jps": "intellij.javaFX.jps",
         "//plugins/javaFX/sceneBuilder": "intellij.javaFX.sceneBuilder",
-        "//plugins/javaFX:javaFX-properties": "intellij.javaFX.properties",
     },
     plugin_directory = "plugins/javaFX",
 )

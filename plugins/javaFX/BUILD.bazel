@@ -14,6 +14,10 @@ jps_test(
 content_module_jar(module = ":javaFX")
 ### auto-generated section `dev intellij.javaFX` end
 
+### auto-generated section `dev intellij.javaFX.properties` start
+content_module_jar(module = ":javaFX-properties")
+### auto-generated section `dev intellij.javaFX.properties` end
+
 ### auto-generated section `build intellij.javaFX` start
 jvm_library(
     name = "javaFX",
