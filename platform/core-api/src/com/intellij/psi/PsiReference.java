@@ -95,7 +95,7 @@ public interface PsiReference {
 
   /**
    * Changes the reference so that it starts to point to the specified element. This is called,
-   * for example, by the "Create Class from New" quickfix to bind the (invalid) reference on
+   * for example, by the "Create class from 'new'" quickfix to bind the (invalid) reference on
    * which the quickfix was called to the newly created class.
    *
    * @param element the element which should become the target of the reference.
