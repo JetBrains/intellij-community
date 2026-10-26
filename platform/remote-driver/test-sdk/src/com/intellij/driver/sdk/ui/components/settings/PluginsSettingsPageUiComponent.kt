@@ -438,8 +438,10 @@ class PluginsSettingsPageUiComponent(data: ComponentData) : LoadablePluginsUiCom
   fun isPluginPresentInList(pluginName: String): Boolean =
     getPluginFromList(pluginName).present()
 
-  fun isPluginPresentInInstalled(pluginName: String): Boolean =
-    getInstalledPluginFromSection(pluginName).present()
+  fun isPluginPresentInInstalled(pluginName: String): Boolean {
+    waitLoaded()
+    return getInstalledPluginFromSection(pluginName).present()
+  }
 
   fun pluginDetailsPage(action: PluginDetailsPage.() -> Unit = {}): PluginDetailsPage =
     x(PluginDetailsPage::class.java, "Plugins description page") { byType("com.intellij.ide.plugins.newui.PluginDetailsPageComponent") }.apply(action)
