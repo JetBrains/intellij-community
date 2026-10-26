@@ -48,7 +48,6 @@ import java.lang.annotation.Annotation;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -84,7 +83,6 @@ public final class JUnit5TeamCityRunner {
   private static final String REVERSE_ORDER = System.getProperty("intellij.build.test.reverse.order");
   private static final String INCLUDE_TAGS = System.getProperty("intellij.build.test.tags");
   private static final String EXCLUDE_TAGS = System.getProperty("intellij.build.test.excluded.tags");
-  private static final String RIDER_TEST_EXECUTION_LISTENER = System.getProperty("intellij.build.test.rider.test.execution.listener");
 
   static boolean isUnderTeamCity() {
     var teamCityVersion = System.getenv("TEAMCITY_VERSION");
@@ -152,7 +150,7 @@ public final class JUnit5TeamCityRunner {
         .build();
       TestPlan testPlan = launcher.discover(discoveryRequest);
 
-      listener = isUnderTeamCity() ? getTeamCityListener() : new ConsoleTestExecutionListener();
+      listener = isUnderTeamCity() ? new TCExecutionListener() : new ConsoleTestExecutionListener();
 
       if (LIST_CLASSES != null) {
         saveListOfTestClasses(testPlan);  // save only
@@ -216,16 +214,6 @@ public final class JUnit5TeamCityRunner {
     if (isUnderTeamCity()) {
       System.out.println(new TestFinished(testName, 0));
     }
-  }
-
-  private static TestExecutionListenerEx getTeamCityListener()
-    throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, InstantiationException, IllegalAccessException {
-    if (RIDER_TEST_EXECUTION_LISTENER == null)
-      return new TCExecutionListener();
-    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-    //noinspection unchecked
-    Class<TestExecutionListenerEx> tcListenerClass = (Class<TestExecutionListenerEx>) Class.forName(RIDER_TEST_EXECUTION_LISTENER, true, classLoader);
-    return tcListenerClass.getDeclaredConstructor().newInstance();
   }
 
   private static boolean assertNoUnhandledExceptions_isLeak(String testFailedServiceMessage) {
