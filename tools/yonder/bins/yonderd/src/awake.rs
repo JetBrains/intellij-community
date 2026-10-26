@@ -45,7 +45,7 @@ fn start(program: &OsString, pid: u32) -> Option<Child> {
             log(&format!(
                 "cannot start {} to keep the host awake: {error}",
                 program.to_string_lossy()
-            ))
+            ));
         })
         .ok()
 }
