@@ -111,6 +111,14 @@ internal class ChangeListsApiImpl : ChangeListsApi {
             }
           }
         }
+
+        override fun changeListUpdateDone() {
+          if (!changeListManager.isInUpdate) {
+            launch {
+              send(onUpdate(changeListManager))
+            }
+          }
+        }
       }, this@projectScopedCallbackFlow.asDisposable())
       send(onUpdate(changeListManager))
     }.distinctUntilChanged()
