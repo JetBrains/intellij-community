@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Test
 import java.awt.Graphics2D
 import java.awt.geom.Rectangle2D
 
+@Suppress("SuspiciousPackagePrivateAccess")
 @TestApplication
 @UsePMarkerImplementation
 class SnapshotFoldingModelTest {
@@ -182,21 +183,20 @@ class SnapshotFoldingModelTest {
       val snapshot = (editor.document as DocumentImpl).core.snapshot()
       var referenceReads = 0
       rootStore.updateRoot(snapshot) { root ->
-        val entry = root.overlappingIterator(3, 5, 0).asSequence().single { it.markerReference?.get() === laterRegion }
-        root.remove(entry.markerId).insert(
-          entry.markerId,
-          entry.nodeStart,
-          entry.nodeEnd,
-          entry.spec,
-          entry.flavorFlags,
-          object : SnapshotMarkerReference {
-            override fun get(): SnapshotRangeMarkerImpl {
-              referenceReads++
-              return laterRegion
-            }
-          },
-          policy = entry.policy,
-        )
+        val entries = root.overlappingIterator(0, editor.document.textLength, 0).asSequence().map { entry ->
+          if (entry.markerId == laterRegion.id) {
+            entry.copy(markerReference = object : SnapshotMarkerReference {
+              override fun get(): SnapshotRangeMarkerImpl {
+                referenceReads++
+                return laterRegion
+              }
+            })
+          }
+          else {
+            entry
+          }
+        }.toList()
+        root.emptyRoot().insertMany(entries)
       }
 
       Triple(

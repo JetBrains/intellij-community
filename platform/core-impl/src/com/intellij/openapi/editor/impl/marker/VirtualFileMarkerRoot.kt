@@ -77,7 +77,7 @@ class VirtualFileMarkerRoot private constructor(
     val restoredRoot = restoredEntries?.let { entries ->
       val markerIds = LongArrayList(entries.size)
       for (entry in entries) markerIds.add(entry.markerId)
-      sourceRoot.removeMany(markerIds).insertMany(entries)
+      (sourceRoot as PMarkerRootImpl).withoutOffsetCache().purgeMany(markerIds).insertMany(entries)
     } ?: sourceRoot
     markerRoot(document).set(restoredRoot)
     attach(document)

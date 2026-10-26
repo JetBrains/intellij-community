@@ -32,7 +32,7 @@ open class PMarkerRootImpl private constructor(
   private val states: PersistentLongMap<StoredNode>,
   /** Number of valid markers that use a persistent policy in the entire tree represented by this root. */
   private val persistentMarkerCount: Int,
-  /** markerId -> absolute textRange */
+  /** Maps marker IDs to absolute ranges. Roots share this cache until the document changes. */
   @Volatile
   private var cachedOffsets: ConcurrentLongLongMap? = null,
   /**
@@ -87,15 +87,14 @@ open class PMarkerRootImpl private constructor(
 
   override fun emptyRoot(): PMarkerRootImpl = empty()
 
+  /** Returns a root without cached offsets before file restoration assigns new offsets to existing markers. */
+  internal fun withoutOffsetCache(): PMarkerRootImpl = PMarkerRootImpl(rootId, states, persistentMarkerCount)
+
   override fun isEmpty(): Boolean = rootId == NULL_NODE
 
   override fun isValid(markerId: Long): Boolean = states.getUnchecked(markerId) is ValidNode
 
   override fun resolve(markerId: Long): Long {
-    val cached = cachedOffsets?.get(markerId) ?: UNCACHED_OFFSETS
-    if (cached != UNCACHED_OFFSETS) {
-      return cached
-    }
     return when (val state = states.getUnchecked(markerId)) {
       null, AbsentNode -> PMarkerResolution.ABSENT
       is InvalidNode -> PMarkerResolution.invalid(state.range)
@@ -116,10 +115,11 @@ open class PMarkerRootImpl private constructor(
     policy: MarkerPolicy,
   ): PMarkerRoot {
     val editor = MapBatchEditor(states, persistentMarkerCount)
-    val newRoot = editor.insert(
-      rootId, MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy)
-    )
-    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+    val entry = MarkerEntry(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy)
+    val newRoot = editor.insert(rootId, entry)
+    val cache = cachedOffsets
+    if (cache != null) cacheInsertedOffsets(cache, entry)
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount(), cache)
   }
 
   override fun insertMany(entries: List<MarkerEntry>): PMarkerRoot {
@@ -129,7 +129,11 @@ open class PMarkerRootImpl private constructor(
     for (entry in entries) {
       newRoot = editor.insert(newRoot, entry)
     }
-    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount())
+    val cache = cachedOffsets
+    if (cache != null) {
+      for (entry in entries) cacheInsertedOffsets(cache, entry)
+    }
+    return PMarkerRootImpl(newRoot, editor.build(), editor.persistentMarkerCount(), cache)
   }
 
   override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
@@ -147,7 +151,7 @@ open class PMarkerRootImpl private constructor(
       }
       currentId = node.parentId
     }
-    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount)
+    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount, cachedOffsets, resolutionCacheIdentity, resolutionUpdate)
   }
 
   override fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot {
@@ -177,7 +181,7 @@ open class PMarkerRootImpl private constructor(
       }
       currentId = node.parentId
     }
-    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount)
+    return PMarkerRootImpl(rootId, editor.build(), persistentMarkerCount, cachedOffsets, resolutionCacheIdentity, resolutionUpdate)
   }
 
   override fun remove(markerId: Long): PMarkerRoot {
@@ -188,6 +192,7 @@ open class PMarkerRootImpl private constructor(
         rootId,
         states.put(markerId, AbsentNode),
         persistentMarkerCount,
+        cachedOffsets,
       )
       is ValidNode -> {
         val offsets = absoluteOffsets(state, markerId)
@@ -201,6 +206,7 @@ open class PMarkerRootImpl private constructor(
           newRoot,
           editor.build(),
           decrementPersistentMarkerCount(persistentMarkerCount, state.entry.policy),
+          cachedOffsets,
         )
       }
     }
@@ -243,7 +249,7 @@ open class PMarkerRootImpl private constructor(
       }
     }
     val newStates = editor.build()
-    return if (newStates === states) this else PMarkerRootImpl(newRoot, newStates, editor.persistentMarkerCount())
+    return if (newStates === states) this else PMarkerRootImpl(newRoot, newStates, editor.persistentMarkerCount(), cachedOffsets)
   }
 
   @TestOnly
@@ -718,6 +724,7 @@ open class PMarkerRootImpl private constructor(
       }
       val existingState = state(markerId)
       require(existingState == null || existingState === AbsentNode) { "Marker $markerId already exists: $existingState" }
+      assert(existingState !== AbsentNode) { "Marker ID $markerId must not be reused" }
       putValid(
         markerId,
         ValidNode(
@@ -812,6 +819,13 @@ open class PMarkerRootImpl private constructor(
     }
 
     fun empty(): PMarkerRootImpl = EMPTY
+
+    /** Registers an inserted range before roots share the cache. Rejects conflicting ranges for the same marker ID. */
+    private fun cacheInsertedOffsets(cache: ConcurrentLongLongMap, entry: MarkerEntry) {
+      val offsets = TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd)
+      val cached = cache.putIfAbsent(entry.markerId, offsets)
+      assert(cached == UNCACHED_OFFSETS || cached == offsets) { "Marker ID ${entry.markerId} must not be reused with different offsets" }
+    }
 
     private fun validatePatch(patch: DocumentPatch, beforeText: DocumentText, afterText: DocumentText) {
       val startOffset = patch.startOffset()

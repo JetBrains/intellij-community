@@ -10,6 +10,8 @@ import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongLists
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -18,6 +20,54 @@ import kotlin.random.Random
 
 @TestApplication
 class PMarkerRootBatchTest {
+  @Test
+  fun `marker changes share offsets without changing old roots`() {
+    val root = applyPatch(PMarkerRootImpl.empty().insertMany(entries()), TEXT, 0, 0, "abcd")
+    root.resolve(12)
+    val cache = checkNotNull(offsetCache(root))
+    val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
+    val roots = listOf(
+      root,
+      root.insert(100, 3, 4, spec, flavorFlags = 0),
+      root.insertMany(listOf(entry(101, 1, 2), entry(102, 2, 3))),
+      root.updateSpec(12, spec),
+      root.updateFlavor(12, 0),
+      root.updateMeasure(1, 99),
+      root.remove(12),
+      root.removeMany(LongLists.singleton(12)),
+      root.purgeMany(LongLists.singleton(12)),
+    )
+
+    repeat(2) { pass ->
+      for (current in roots.shuffled(Random(pass))) {
+        assertSame(cache, offsetCache(current))
+        val expected = resolvedEntries(current).associateBy { it.markerId }
+        for (id in ((1L..48L).toList() + (100L..102L).toList()).shuffled(Random(pass))) {
+          val entry = expected[id]
+          val resolution = if (entry == null) PMarkerResolution.ABSENT
+          else PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(entry.nodeStart, entry.nodeEnd))
+          assertEquals(resolution, current.resolve(id), "Marker $id")
+        }
+      }
+    }
+
+    val edited = applyPatch(root, "abcd$TEXT", 0, 0, "x")
+    assertNull(offsetCache(edited))
+    assertEquals(TextRangeScalarUtil.shift(root.resolve(12), 1), edited.resolve(12))
+    assertNotSame(cache, offsetCache(edited))
+  }
+
+  @Test
+  fun `shared cache rejects conflicting offsets for one marker ID`() {
+    val root = PMarkerRootImpl.empty().insertMany(entries())
+    root.resolve(12)
+    val inserted = root.insertMany(listOf(entry(100, 1, 2)))
+
+    assertThrows(AssertionError::class.java) { root.insertMany(listOf(entry(100, 3, 4))) }
+    assertEquals(PMarkerResolution.ABSENT, root.resolve(100))
+    assertEquals(TextRangeScalarUtil.toScalarRange(1, 2), inserted.resolve(100))
+  }
+
   @Test
   fun `cached absolute offsets preserve shifted roots and removals`() {
     val initial = PMarkerRootImpl.empty().insertMany(entries() + entry(100, 0, 0))
@@ -59,13 +109,13 @@ class PMarkerRootBatchTest {
   fun `insert batch preserves shifted markers and entry metadata`() {
     val initial = insertIndividually(PMarkerRootImpl.empty(), entries())
     val shifted = applyPatch(initial, TEXT, 0, 0, "xx").remove(7)
-    val additions = listOf(entry(100, 3, 3, measure = 5), entry(7, 10, 12), entry(101, 3, 6))
+    val additions = listOf(entry(100, 3, 3, measure = 5), entry(102, 10, 12), entry(101, 3, 6))
     val before = resolvedEntries(shifted)
 
     val actual = shifted.insertMany(additions)
     val expected = insertIndividually(shifted, additions)
 
-    assertEquivalent(expected, actual, (1L..48L).toList() + listOf(100L, 101L))
+    assertEquivalent(expected, actual, (1L..48L).toList() + listOf(100L, 101L, 102L))
     assertEquals(before, resolvedEntries(shifted))
     assertEquivalent(insertIndividually(PMarkerRootImpl.empty(), entries()), PMarkerRootImpl.empty().insertMany(entries()), (1L..48L).toList())
   }
@@ -190,6 +240,10 @@ class PMarkerRootBatchTest {
       assertEquivalent(expected, actual, (1L until nextId).toList(), purgedIds)
     }
   }
+
+  private fun offsetCache(root: PMarkerRoot): Any? = PMarkerRootImpl::class.java.getDeclaredField("cachedOffsets").apply {
+    isAccessible = true
+  }.get(root)
 
   private fun entries(): List<MarkerEntry> = List(48) { index ->
     val start = index / 2 + 2

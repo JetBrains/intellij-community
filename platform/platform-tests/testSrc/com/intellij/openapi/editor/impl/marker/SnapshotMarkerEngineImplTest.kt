@@ -56,7 +56,7 @@ class SnapshotMarkerEngineImplTest {
     assertEquals(TextRange(2, 4), marker.textRange)
 
     fixture.rootStore.updateRoot(snapshot) {
-      it.remove(marker.id).insert(marker.id, 3, 5, nonGreedySpec(), flavorFlags = 0)
+      applyPatch(it, "abcdef", textPatch(0, 0, "x"))
     }
 
     assertSame(snapshot, fixture.document.core.snapshot())

@@ -65,7 +65,7 @@ interface PMarkerRoot {
   ): PMarkerRoot
 
   /**
-   * Inserts a marker whose ID is absent from this root.
+   * Inserts a marker with a new ID. Restore existing markers at new offsets only after discarding their offset cache.
    *
    * The following range precondition must hold:
    *

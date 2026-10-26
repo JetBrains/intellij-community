@@ -72,7 +72,7 @@ internal class PMarkerResolutionTest {
     assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(1))
     assertSame(removed, removed.remove(1))
     assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(1))
-    assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(3, 6)), removed.insert(1, 3, 6, spec, flavorFlags = 0).resolve(1))
+    assertThrows(AssertionError::class.java) { removed.insert(1, 3, 6, spec, flavorFlags = 0) }
   }
 
   @Test

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
+import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.RangeMarkersImpl
 import com.intellij.openapi.util.TextRange
@@ -83,8 +84,9 @@ internal class SnapshotRangeMarkerImplTest {
       val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
       assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), marker.fallbackRange)
       val reference = marker.currentRootReference()
-      val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-      val shifted = reference.get().remove(marker.id).insert(marker.id, 4, 6, spec, flavorFlags = 0)
+      val before = document.core.snapshot().text()
+      val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)
+      val shifted = reference.get().applyPatch(patch, before, before.replace(0, 0, "xx"))
       reference.set(shifted)
       assertEquals(TextRange(4, 6), marker.textRange)
 
