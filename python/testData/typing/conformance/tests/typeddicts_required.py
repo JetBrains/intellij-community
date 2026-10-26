@@ -56,12 +56,13 @@ td5 = td4
 
 
 class TD6(TypedDict):
+    # > It is also an error to nest a qualifier within itself (e.g., ``Required[Required[T]]``).
     a: Required[Required[int]]  # E: Nesting not allowed
     b: Required[NotRequired[int]]  # E: Nesting not allowed
 
 
 class TD7(TypedDict):
-    # > Required[] and NotRequired[] can be used with Annotated[], in any nesting order.
+    # > These type qualifiers may be nested arbitrarily or wrapped in ``Annotated[]``.
     x: Annotated[Required[int], ""]
     y: Required[Annotated[int, ""]]
     z: Annotated[Required[Annotated[int, ""]], ""]
