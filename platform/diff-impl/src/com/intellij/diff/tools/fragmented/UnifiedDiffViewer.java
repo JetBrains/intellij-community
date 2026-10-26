@@ -637,6 +637,65 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     return Pair.create(lines, side);
   }
 
+  /*
+   * These convertors map an offset by its line and column. The column is kept, because a line has the same text in both documents.
+   * They return -1 when the line convertor returns -1.
+   */
+  public int transferOffsetToOnesideStrict(@NotNull Side side, int offset) {
+    LineCol position = LineCol.fromOffset(getDocument(side), offset);
+    int line = transferLineToOnesideStrict(side, position.line);
+    return line != -1 ? LineCol.toOffset(myDocument, line, position.column) : -1;
+  }
+
+  public int transferOffsetToOneside(@NotNull Side side, int offset) {
+    LineCol position = LineCol.fromOffset(getDocument(side), offset);
+    int line = transferLineToOneside(side, position.line);
+    return line != -1 ? LineCol.toOffset(myDocument, line, position.column) : -1;
+  }
+
+  public int transferOffsetFromOnesideStrict(@NotNull Side side, int offset) {
+    LineCol position = LineCol.fromOffset(myDocument, offset);
+    int line = transferLineFromOnesideStrict(side, position.line);
+    return line != -1 ? LineCol.toOffset(getDocument(side), line, position.column) : -1;
+  }
+
+  public int transferOffsetFromOneside(@NotNull Side side, int offset) {
+    LineCol position = LineCol.fromOffset(myDocument, offset);
+    int line = transferLineFromOneside(side, position.line);
+    return line != -1 ? LineCol.toOffset(getDocument(side), line, position.column) : -1;
+  }
+
+  /*
+   * This convertor returns 'good enough' position and the side that shows the line, even if exact matching is impossible
+   */
+  public @Nullable Pair<Integer, Side> transferOffsetFromOneside(int offset) {
+    LineCol position = LineCol.fromOffset(myDocument, offset);
+    Pair<int[], Side> pair = transferLineFromOneside(position.line);
+    Side side = pair.second;
+    int line = side.select(pair.first);
+    return line != -1 ? Pair.create(LineCol.toOffset(getDocument(side), line, position.column), side) : null;
+  }
+
+  /*
+   * This convertor returns null if exact matching is impossible, or if the unified document shows lines of the other side inside the range.
+   * The text of a line is the same in both documents, so only the lines in between can differ.
+   * The end offset is exclusive, so a range that ends with a line break stays on the line of that line break.
+   */
+  public @Nullable TextRange transferRangeToOnesideStrict(@NotNull Side side, @NotNull TextRange range) {
+    Document sideDocument = getDocument(side);
+    int startLine = sideDocument.getLineNumber(range.getStartOffset());
+    int endLine = sideDocument.getLineNumber(Math.max(range.getStartOffset(), range.getEndOffset() - 1));
+
+    int onesideStartLine = transferLineToOnesideStrict(side, startLine);
+    int onesideEndLine = transferLineToOnesideStrict(side, endLine);
+    if (onesideStartLine == -1 || onesideEndLine == -1) return null;
+    if (onesideEndLine - onesideStartLine != endLine - startLine) return null;
+
+    int start = myDocument.getLineStartOffset(onesideStartLine) + range.getStartOffset() - sideDocument.getLineStartOffset(startLine);
+    int end = myDocument.getLineStartOffset(onesideEndLine) + range.getEndOffset() - sideDocument.getLineStartOffset(endLine);
+    return new TextRange(start, end);
+  }
+
   @RequiresEdt
   private void destroyChangedBlockData() {
     myModel.clear();
@@ -1468,7 +1527,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     @Override
     protected @Nullable Iterable<? extends Crumb> computeCrumbs(int offset) {
-      Pair<Integer, Side> pair = transferOffsetToTwoside(offset);
+      Pair<Integer, Side> pair = transferOffsetFromOneside(offset);
       if (pair == null) return null;
 
       Side side = pair.second;
@@ -1490,29 +1549,6 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       }
     }
 
-    private @Nullable Pair<Integer, Side> transferOffsetToTwoside(int offset) {
-      LineCol onesidePosition = LineCol.fromOffset(myDocument, offset);
-
-      Pair<int[], Side> pair = transferLineFromOneside(onesidePosition.line);
-      Side side = pair.second;
-      int twosideLine = side.select(pair.first);
-      if (twosideLine == -1) return null;
-
-      Document twosideDocument = getDocument(side);
-      LineCol twosidePosition = new LineCol(twosideLine, onesidePosition.column);
-      return Pair.create(twosidePosition.toOffset(twosideDocument), side);
-    }
-
-    private int transferOffsetFromTwoside(@NotNull Side side, int offset) {
-      LineCol twosidePosition = LineCol.fromOffset(getDocument(side), offset);
-
-      int onesideLine = transferLineToOneside(side, twosidePosition.line);
-      if (onesideLine == -1) return -1;
-
-      LineCol onesidePosition = new LineCol(onesideLine, twosidePosition.column);
-      return onesidePosition.toOffset(myDocument);
-    }
-
 
     private final class UnifiedNavigatableCrumb implements NavigatableCrumb {
       private final @NotNull NavigatableCrumb myDelegate;
@@ -1526,15 +1562,15 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
       @Override
       public int getAnchorOffset() {
         int offset = myDelegate.getAnchorOffset();
-        return offset != -1 ? transferOffsetFromTwoside(mySide, offset) : -1;
+        return offset != -1 ? transferOffsetToOneside(mySide, offset) : -1;
       }
 
       @Override
       public @Nullable TextRange getHighlightRange() {
         TextRange range = myDelegate.getHighlightRange();
         if (range == null) return null;
-        int start = transferOffsetFromTwoside(mySide, range.getStartOffset());
-        int end = transferOffsetFromTwoside(mySide, range.getEndOffset());
+        int start = transferOffsetToOneside(mySide, range.getStartOffset());
+        int end = transferOffsetToOneside(mySide, range.getEndOffset());
         if (start == -1 || end == -1) return null;
         return new TextRange(start, end);
       }
