@@ -146,7 +146,7 @@ class WebServerPageConnectionService {
     if (myState.isRequestedFileWithoutReferrerModified(modifiedFiles)) {
       return object : AsyncFileListener.ChangeApplier {
         override fun afterVfsChange() {
-          showGotItTooltip(modifiedFiles)
+          showGotItTooltipLater(modifiedFiles)
           myState.clear()
           val server = myServer
           server?.send<Any>(-1, RELOAD_PAGE_MESSAGE.retainedDuplicate(), null)
@@ -158,7 +158,7 @@ class WebServerPageConnectionService {
     return if (affectedClients.isEmpty()) null
     else object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
-        showGotItTooltip(modifiedFiles)
+        showGotItTooltipLater(modifiedFiles)
         for ((requestedPage, affectedFiles) in affectedClients) {
           if (affectedFiles.isEmpty()) {
             LOGGER.debug("Reloading page for $requestedPage")
@@ -195,6 +195,14 @@ class WebServerPageConnectionService {
 
   private fun clientDisconnected(client: WebSocketClient) {
     myState.clientDisconnected(client)
+  }
+
+  private fun showGotItTooltipLater(modifiedFiles: List<VirtualFile>) {
+    // cheap checks before going to EDT; they are repeated in showGotItTooltip
+    if (WebPreviewState.isPreviewOpened || WebBrowserManager.getInstance().webServerReloadMode !== ReloadMode.RELOAD_ON_SAVE) return
+    ApplicationManager.getApplication().invokeLater {
+      showGotItTooltip(modifiedFiles)
+    }
   }
 
   private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
@@ -325,7 +333,7 @@ class WebServerPageConnectionService {
 
       if (myFileListenerDisposable == null) {
         val disposable = Disposer.newDisposable(ApplicationManager.getApplication(), "RequestedPagesState.myFileListenerDisposable")
-        VirtualFileManager.getInstance().addAsyncFileListener(WebServerFileContentListener(), disposable)
+        VirtualFileManager.getInstance().addAsyncFileListenerBackgroundable(WebServerFileContentListener(), disposable)
         myFileListenerDisposable = disposable
       }
       if (reloadMode == ReloadMode.RELOAD_ON_CHANGE && myDocumentListenerDisposable == null) {
