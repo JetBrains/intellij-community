@@ -46,6 +46,7 @@ dev_dist_plugin(
         "intellij.java.ui",
         "intellij.java.execution.impl",
         "intellij.java.debugger.impl",
+        "intellij.java.debugger.impl.compiler",
         "intellij.java.debugger.libraries.jb.jdi",
         "intellij.java.debugger.memory.agent",
         "intellij.java.remoteServers.impl",

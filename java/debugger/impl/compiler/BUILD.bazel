@@ -1,0 +1,74 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.debugger.impl.compiler` start
+content_module_jar(module = ":compiler")
+### auto-generated section `dev intellij.java.debugger.impl.compiler` end
+
+### auto-generated section `build intellij.java.debugger.impl.compiler` start
+jvm_library(
+    name = "compiler",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.impl.compiler",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//java/debugger/impl",
+        "//java/debugger/openapi:java-debugger",
+        "//java/compiler/openapi:java-compiler",
+        "//java/compiler/impl",
+        "//platform/xdebugger-api:debugger",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/core-api:core",
+        "//platform/core-ui",
+        "//platform/util",
+        "//platform/platform-api:ide",
+    ],
+)
+
+jvm_library(
+    name = "compiler_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.java.debugger.impl.compiler",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":compiler",
+        "//java/debugger/impl:impl_test_lib",
+        "//java/debugger/openapi:java-debugger_test_lib",
+        "//java/compiler/openapi:java-compiler_test_lib",
+        "//java/compiler/impl:impl_test_lib",
+        "//platform/xdebugger-api:debugger_test_lib",
+        "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/core-api:core_test_lib",
+        "//platform/core-ui:core-ui_test_lib",
+        "//platform/util:util_test_lib",
+        "//platform/platform-api:ide_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.debugger.impl.compiler` end
+
+### auto-generated section `iml intellij.java.debugger.impl.compiler` start
+exports_files(
+    [
+        "intellij.java.debugger.impl.compiler.iml",
+        "resources/intellij.java.debugger.impl.compiler.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.debugger.impl.compiler` end

@@ -306,6 +306,7 @@ java/compiler/openapi
 java/debugger/backend
 java/debugger/frontend
 java/debugger/impl
+java/debugger/impl/compiler
 java/debugger/jb-jdi
 java/debugger/jsp
 java/debugger/memory-agent

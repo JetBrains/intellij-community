@@ -1,0 +1,23 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.impl"/>
+    <module name="intellij.java.debugger"/>
+    <module name="intellij.java.debugger.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.debugger"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <resource-bundle>messages.ActionsBundle</resource-bundle>
+
+  <actions>
+    <action id="Debugger.ReloadFile" class="com.intellij.java.debugger.impl.compiler.ReloadFileAction">
+      <add-to-group group-id="JavaDebuggerActions"/>
+    </action>
+  </actions>
+</idea-plugin>

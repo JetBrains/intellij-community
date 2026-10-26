@@ -446,7 +446,6 @@
               icon="AllIcons.Debugger.Db_set_breakpoint">
         <add-to-group group-id="XDebugger.ToolWindow.TopToolbar"/>
       </action>
-      <action id="Debugger.ReloadFile" class="com.intellij.debugger.actions.ReloadFileAction"/>
     </group>
 
     <action class="com.intellij.debugger.memory.action.tracking.JumpToAllocationSourceAction"
