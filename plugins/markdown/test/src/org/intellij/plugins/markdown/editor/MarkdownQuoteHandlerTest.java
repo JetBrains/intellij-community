@@ -1,5 +1,6 @@
 package org.intellij.plugins.markdown.editor;
 
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
@@ -26,6 +27,20 @@ public class MarkdownQuoteHandlerTest extends BasePlatformTestCase {
     doTest("Hello <caret>", '\'', "Hello '<caret>'");
   }
 
+  public void testSingleQuoteInsideParentheses() {
+    doTest("(sometext <caret>)", '\'', "(sometext '<caret>')");
+  }
+
+  public void testSecondSingleQuoteInsideParentheses() {
+    doTest("(sometext '<caret>)", '\'', "(sometext ''<caret>)");
+  }
+
+  public void testDeleteMiddleSingleQuoteInsideParentheses() {
+    myFixture.configureByText("test.md", "(sometext ''<caret>')");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+    myFixture.checkResult("(sometext '<caret>')");
+  }
+
   public void testDoubleQuote() {
     doTest("Hello <caret> world", '"', "Hello \"<caret>\" world");
   }
@@ -40,6 +55,16 @@ public class MarkdownQuoteHandlerTest extends BasePlatformTestCase {
 
   public void testBacktickInsideParenthesis() {
     doTest("Test (<caret>)", '`', "Test (`<caret>`)");
+  }
+
+  public void testSecondBacktickInsideParentheses() {
+    doTest("(sometext `<caret>)", '`', "(sometext ``<caret>)");
+  }
+
+  public void testDeleteMiddleBacktickInsideParentheses() {
+    myFixture.configureByText("test.md", "(sometext ``<caret>`)");
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE);
+    myFixture.checkResult("(sometext `<caret>`)");
   }
 
   public void testEmphAsterisk() {

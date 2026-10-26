@@ -52,8 +52,13 @@ public final class MarkdownQuoteHandler implements QuoteHandler {
       return false;
     }
 
-    return getRangeOfThisType(chars, offset).getLength() != 1 ||
-           (!isWordPart(chars, offset - 1) && !isWordPart(chars, offset + 1));
+    var current = getRangeOfThisType(chars, offset);
+    int position = offset - current.getStartOffset();
+    boolean canOpen = isBacktick
+                      ? current.getLength() % 2 != 0 && position == current.getLength() / 2
+                      : position % 2 == 0;
+    return canOpen &&
+           (current.getLength() != 1 || !isWordPart(chars, offset - 1) && !isWordPart(chars, offset + 1));
   }
 
   @Override
