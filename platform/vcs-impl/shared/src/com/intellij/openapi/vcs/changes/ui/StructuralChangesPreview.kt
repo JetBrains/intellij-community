@@ -10,7 +10,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -169,15 +169,16 @@ class StructuralChangesPreview(
     if (!preview.isPreviewOpen()) preview.openPreview(false)
     val lines = (node as? ChangesBrowserStructuralNode<*>)?.getDiffLines() ?: return
     val viewer = awaitViewer(preview, node.diffFile(), model, node) ?: return
-    val handle = tree.project.service<StructuralChangesPreviewHighlighter>().highlightDiff(viewer, lines) ?: return
+    val handle = highlighter()?.highlightDiff(viewer, lines) ?: return
     keepHighlight(handle, node.userObject)
   }
 
   /** Waits until the preview shows the file of the node and finishes its diff. The preview follows the tree selection on its own. */
   private suspend fun awaitViewer(preview: EditorTabDiffPreview, file: VirtualFile?, model: TreeModel, node: ChangesBrowserNode<*>): DiffViewerBase? {
+    val highlighter = highlighter() ?: return null
     repeat(VIEWER_WAIT_ATTEMPTS) {
       if (!isCurrentSelection(model, node)) return null
-      val viewer = tree.project.service<StructuralChangesPreviewHighlighter>().findDiffViewer(preview.previewFile)
+      val viewer = highlighter.findDiffViewer(preview.previewFile)
       if (viewer != null && !viewer.hasPendingRediff() && (file == null || viewer.request.contents.any { (it as? DocumentContent)?.highlightFile == file })) {
         return viewer
       }
@@ -241,9 +242,12 @@ class StructuralChangesPreview(
 
   @RequiresEdt
   private fun showHighlight(target: HighlightTarget) {
-    val handle = tree.project.service<StructuralChangesPreviewHighlighter>().highlight(target.file, target.range, target.modificationStamp)
+    val handle = highlighter()?.highlight(target.file, target.range, target.modificationStamp)
     handle?.let { keepHighlight(it, owner = null) }
   }
+
+  /** Only the frontend module registers the highlighter. A process without that module shows the preview without the dim. */
+  private fun highlighter(): StructuralChangesPreviewHighlighter? = tree.project.serviceOrNull()
 
   /** Keeps the highlight until it ends. A closed diff tab or input in the editor ends it, and then the preview counts as closed. */
   @RequiresEdt
