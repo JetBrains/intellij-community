@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.Utils.runUpdateSessionForActionSearch
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItemsProvider
@@ -32,9 +33,12 @@ import org.jetbrains.annotations.NonNls
 import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.measureTimedValue
 
 private const val MAX_QUERY_LENGTH: Int = 200
 private val RANKER_TIMEOUT: Duration = 3.seconds
+
+private val LOG = logger<SeRankerActionsProvider>()
 
 /**
  * Finds actions for a natural-language query with the selected [SeActionsRanker].
@@ -80,8 +84,13 @@ class SeRankerActionsProvider internal constructor(
     val candidates = selectCandidates(SeActionsFilter.from(params.filter).includeDisabled)
     if (candidates.isEmpty()) return
 
+    val rankerCandidates = candidates.map { it.rankerCandidate }
     val matches = withTimeoutOrNull(RANKER_TIMEOUT) {
-      candidatesStrategy.rank(session, query, candidates.map { it.rankerCandidate })
+      val (matches, duration) = measureTimedValue { candidatesStrategy.rank(session, query, rankerCandidates) }
+      // A cancelled call and a call that times out do not come to this line.
+      LOG.debug("Ranked ${rankerCandidates.size} items - ${ranker.diagnosticName} ranker - ${candidatesStrategy.registryOption} " +
+               "- ${duration.inWholeMilliseconds} ms.")
+      matches
     } ?: return
 
     val candidatesById = candidates.associateBy { it.rankerCandidate.id }
