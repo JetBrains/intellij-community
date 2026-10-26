@@ -77,7 +77,7 @@ fun SeResultList.handleEvent(
     }
     is SeResultReplacedEvent -> {
       val indexes = event.uuidsToReplace.mapNotNull { uuidToReplace ->
-        val index = firstIndexOrNull(true) { uuidToReplace == it.uuid }
+        val index = firstIndexOrNull(0) { uuidToReplace == it.uuid }
         if (index == null) {
           pendingReplacementElementUuids.add(uuidToReplace)
           SeLog.log(SeLog.DEFAULT) { "SeResultReplacedEvent: uuid $uuidToReplace not found in the list, saved to pending replacement" }
@@ -109,7 +109,7 @@ fun SeResultList.handleEvent(
 
 private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, isZeroOffset: Boolean): Int {
   if (newItem.isCommand) {
-    val firstNotCommandIndex = firstIndexOrNull(true, true) { item -> !item.isCommand } ?: size
+    val firstNotCommandIndex = firstIndexOrNull(0, true) { item -> !item.isCommand } ?: size
 
     val comparator = compareBy<SeItemData>(
       { !it.presentation.text.lowercase().startsWith(searchPattern) },
@@ -128,9 +128,17 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, 
     return firstNotCommandIndex
   }
 
-  val shouldIgnoreFrozenElements = isZeroOffset && newItem.isExactMatch
+  val startIndex =
+    if (isZeroOffset) {
+      if (newItem.isExactMatch) 0
+      else {
+        // Insert new elements above the 0 or lower weighted items
+        firstIndexOrNull(0) { it.weight <= 0 } ?: frozenCount
+      }
+    }
+    else frozenCount
 
-  return firstIndexOrNull(shouldIgnoreFrozenElements) { item ->
+  return firstIndexOrNull(startIndex) { item ->
     if (item.isCommand) return@firstIndexOrNull false
 
     shouldInsertAbove(
@@ -168,9 +176,7 @@ internal fun shouldInsertAbove(
   return newWeight > itemWeight
 }
 
-private fun SeResultList.firstIndexOrNull(fullSearch: Boolean, acceptMoreRow: Boolean = false, predicate: (SeItemData) -> Boolean): Int? {
-  val startIndex = if (fullSearch) 0 else frozenCount
-
+private fun SeResultList.firstIndexOrNull(startIndex: Int = frozenCount, acceptMoreRow: Boolean = false, predicate: (SeItemData) -> Boolean): Int? {
   return (startIndex until size).firstOrNull { index ->
     when (val row = getRow(index)) {
       is SeResultListItemRow -> {
