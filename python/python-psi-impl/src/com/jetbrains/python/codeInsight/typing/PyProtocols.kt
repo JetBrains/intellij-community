@@ -57,7 +57,12 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
         // A class object matches a callable protocol through its constructor.
         // When the protocol type is a class object, match `__call__` against the `__call__` of the subclass instance.
         val callee = if (protocol.isDefinition) subclass.toInstance() else subclass
-        val invokedMethods = PyCallExpressionHelper.getImplicitlyInvokedMethod(callee, resolveContext)
+        val invokedMethods = if (callee.isDefinition) {
+          callee.findMember(PyNames.INIT, resolveContext).ifEmpty { callee.findMember(PyNames.NEW, resolveContext) }
+        }
+        else {
+          callee.findMember(PyNames.CALL, resolveContext)
+        }
         if (invokedMethods.isNotEmpty()) {
           result.add(Pair(protocolMember, invokedMethods))
         }

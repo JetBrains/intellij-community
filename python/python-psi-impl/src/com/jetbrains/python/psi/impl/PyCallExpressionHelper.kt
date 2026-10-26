@@ -840,14 +840,6 @@ object PyCallExpressionHelper {
     return map.values.find { it.isKeywordContainer }
   }
 
-  fun getImplicitlyInvokedMethod(
-    type: PyClassType,
-    resolveContext: PyResolveContext,
-  ): List<PyTypeMember> {
-    return if (type.isDefinition()) getConstructorTypes(type, resolveContext)
-    else type.findMember(PyNames.CALL, resolveContext)
-  }
-
   /**
    * If [classType] is a class instance, resolves its `__call__` method.
    * If [classType] is a class definition, synthesizes the class constructor.
@@ -977,20 +969,6 @@ object PyCallExpressionHelper {
     callableType.callable,
     callableType.modifier,
   )
-
-  private fun getConstructorTypes(type: PyClassType, resolveContext: PyResolveContext): List<PyTypeMember> {
-    val initFunc = type.findMember(PyNames.INIT, resolveContext)
-    if (initFunc.isNotEmpty()) {
-      return initFunc
-    }
-
-    val newFunc = type.findMember(PyNames.NEW, resolveContext)
-    if (newFunc.isNotEmpty()) {
-      return newFunc
-    }
-
-    return emptyList()
-  }
 
   private fun isReturnTypeAnnotated(type: PyCallableType, context: TypeEvalContext): Boolean {
     val callable = type.callable
