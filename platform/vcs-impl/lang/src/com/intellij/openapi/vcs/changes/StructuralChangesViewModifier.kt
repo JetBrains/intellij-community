@@ -55,14 +55,22 @@ import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ThreeStateCheckBox
 import java.util.BitSet
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 
 /** Adds a node for each change of a modified file. The structure of the file names the changes; the commit can include them one by one. */
 internal class StructuralChangesViewModifier(private val project: Project) : ChangesViewModifier {
+  /** The hunks of the last tree build. A rebuild names again only the files whose inputs changed. */
+  private val hunkCache = ConcurrentHashMap<HunkSource, List<Hunk>>()
+
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
     if (builder !is TreeModelBuilder) return
     project.service<StructuralChangesViewUpdates>()
-    if (!StructuralChangesViewSettings.isEnabled(project)) return
+    if (!StructuralChangesViewSettings.isEnabled(project)) {
+      hunkCache.clear()
+      return
+    }
 
+    val sources = HashSet<HunkSource>()
     val changeNodes = builder.myRoot.traverse().filter(ChangesBrowserChangeNode::class.java).toList()
     for (node in changeNodes) {
       ProgressManager.checkCanceled()
@@ -74,12 +82,9 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
       if (path.isDirectory || path.fileType.isBinary) continue
       val file = path.virtualFile ?: continue
       try {
-        val baseContent = beforeRevision.content ?: continue
-        if (baseContent.length > MAX_CONTENT_LENGTH) continue
         val changeListId = (change as? ChangeListChange)?.changeListId
-        val baseRevision = beforeRevision.revisionNumber
-        val fileHunks = ReadAction.nonBlocking(Callable { collectHunks(file, baseContent, baseRevision, changeListId) })
-          .expireWith(project).executeSynchronously() ?: continue
+        val fileHunks = collectHunks(file, beforeRevision, changeListId) ?: continue
+        sources += fileHunks.source
         for (hunk in fileHunks.hunks) {
           node.add(HunkNode(project, file, path, changeListId, hunk, fileHunks.partialCommit))
         }
@@ -89,27 +94,49 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
         logger<StructuralChangesViewModifier>().warn("Cannot collect structural changes for ${path.path}", e)
       }
     }
+    hunkCache.keys.retainAll(sources)
   }
 
   /**
-   * The hunks of a file, and whether the commit can include them one by one. The commit needs a partial tracker for that, and only some
-   * VCSs, settings, and file statuses give one.
+   * The hunks of a file, and whether the commit can include them one by one. The cache or a tracker gives the hunks without the base content.
+   * A load of the base content can take long, so it runs outside a read action and only when the hunks need it.
    */
-  private fun collectHunks(file: VirtualFile, baseContent: String, baseRevision: VcsRevisionNumber, changeListId: String?): FileHunks? {
+  private fun collectHunks(file: VirtualFile, beforeRevision: ContentRevision, changeListId: String?): FileHunks? {
+    val baseRevision = beforeRevision.revisionNumber
+    // A revision number identifies the base content, so only a base without a number needs its content to find the cached hunks.
+    if (baseRevision != VcsRevisionNumber.NULL) {
+      val read = readNonBlocking { readHunks(file, baseRevision, changeListId, baseContent = null) }
+      if (read != NeedsBaseContent) return read as? FileHunks
+    }
+    val baseContent = beforeRevision.content ?: return null
+    if (baseContent.length > MAX_CONTENT_LENGTH) return null
+    return readNonBlocking { readHunks(file, baseRevision, changeListId, baseContent) } as? FileHunks
+  }
+
+  /**
+   * Reads the hunks of a file. The commit can include them one by one only with a partial tracker, and only some VCSs, settings, and file
+   * statuses give one. Without [baseContent], a file that has no tracker and no cached hunks gives [NeedsBaseContent].
+   */
+  private fun readHunks(file: VirtualFile, baseRevision: VcsRevisionNumber, changeListId: String?, baseContent: String?): HunkRead? {
     if (DumbService.isDumb(project) || !file.isValid) return null
     val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
     val partialCommit = LineStatusTrackerManager.getInstanceImpl(project).canCreatePartialTracker(file, document)
     // The ranges of a valid tracker are the ones that the commit uses.
     val trackerDiff = PartialChangesUtil.getPartialTracker(project, file)?.takeIf { it.isValid() }?.let { readTracker(it, changeListId) }
     val version = FileVersion(document.modificationStamp, baseRevision.asString(), trackerDiff?.trackerBaseHash)
-    val diff = trackerDiff ?: compareLines(file, document, baseContent)
+    val baseContentHash = if (baseRevision == VcsRevisionNumber.NULL) baseContent?.let { StringUtil.stringHashCode(it) } else null
+    val source = HunkSource(file, changeListId, version, baseContentHash, trackerDiff?.hunks)
+    hunkCache[source]?.let { return FileHunks(source, it, partialCommit) }
+
+    val diff = trackerDiff ?: compareLines(file, document, baseContent ?: return NeedsBaseContent)
     if (diff.currentText.length > MAX_CONTENT_LENGTH) return null
     val original = PsiManager.getInstance(project).findFile(file) ?: return null
     val before = StructuralHunkNamer.createSnapshot(original, diff.baseText) ?: return null
     val after = StructuralHunkNamer.createSnapshot(original, diff.currentText) ?: return null
     val names = StructuralHunkNamer.name(before, after, diff.hunks)
     val hunks = diff.hunks.zip(names) { lines, name -> Hunk(lines, name, version) }
-    return FileHunks(hunks, partialCommit)
+    hunkCache[source] = hunks
+    return FileHunks(source, hunks, partialCommit)
   }
 
   private fun readTracker(tracker: PartialLocalLineStatusTracker, changeListId: String?): FileDiff? = tracker.readLock {
@@ -128,10 +155,18 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     return FileDiff(baseText, currentText, fragments.map { HunkLines(it.startLine1, it.endLine1, it.startLine2, it.endLine2) }, null)
   }
 
+  private fun <T> readNonBlocking(compute: () -> T): T = ReadAction.nonBlocking(Callable { compute() }).expireWith(project).executeSynchronously()
+
   /** The hunks of a file. A diff of a tracker has the hash of the tracker base text. */
   private class FileDiff(val baseText: String, val currentText: String, val hunks: List<HunkLines>, val trackerBaseHash: Int?)
 
-  private class FileHunks(val hunks: List<Hunk>, val partialCommit: Boolean)
+  /** A read of the hunks of a file: the hunks, or the request for the base content. */
+  private sealed interface HunkRead
+
+  private class FileHunks(val source: HunkSource, val hunks: List<Hunk>, val partialCommit: Boolean) : HunkRead
+
+  /** The hunks need the base content. The caller loads it outside the read action and reads again. */
+  private data object NeedsBaseContent : HunkRead
 
   private companion object {
     const val MAX_CONTENT_LENGTH = 1_000_000
@@ -144,7 +179,20 @@ private class Hunk(val lines: HunkLines, val name: HunkName, val version: FileVe
  * The document version and the base that the hunks of a file describe. The tracker base text identifies the base of the hunks of a tracker.
  * Other hunks use the base revision, because a new tracker loads the base of the current change.
  */
-private class FileVersion(val documentModificationStamp: Long, val baseRevision: String, val trackerBaseHash: Int?)
+private data class FileVersion(val documentModificationStamp: Long, val baseRevision: String, val trackerBaseHash: Int?)
+
+/**
+ * The inputs of the hunks of a file. A tree rebuild reuses the hunks while the inputs stay the same. A revision number identifies the base
+ * content, so the inputs hold a hash of the base content only for a base without a number. The ranges of a tracker can move to another
+ * changelist, so they are part of the inputs.
+ */
+private data class HunkSource(
+  val file: VirtualFile,
+  val changeListId: String?,
+  val version: FileVersion,
+  val baseContentHash: Int?,
+  val trackerLines: List<HunkLines>?,
+)
 
 /** Identifies a hunk across tree rebuilds, so that the tree keeps the selection while the lines stay the same. */
 private data class HunkKey(val path: FilePath, val changeListId: String?, val lines: HunkLines)
