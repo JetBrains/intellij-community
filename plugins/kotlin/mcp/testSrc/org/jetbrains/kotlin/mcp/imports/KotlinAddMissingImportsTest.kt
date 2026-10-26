@@ -66,6 +66,17 @@ class KotlinAddMissingImportsTest : KotlinImportsTestBase() {
     }
 
     @Test
+    fun `built-in operators are not reported`() = runBlocking {
+        testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesOperators.kt")) { result ->
+            val text = result.textContent.text
+            assertContains(text, "NoSuchTypeAnywhere")
+            for (operator in BUILT_IN_OPERATORS) {
+                assertFalse("\"shortName\":\"$operator\"" in text.replace(" ", ""), "The tool must not report $operator: $text")
+            }
+        }
+    }
+
+    @Test
     fun `five names of one package stay explicit`() = runBlocking {
         testMcpTool(toolName = ADD_MISSING_IMPORTS, input = request("src/UsesGroup.kt")) { result ->
             val text = result.textContent.text
@@ -104,3 +115,5 @@ class KotlinAddMissingImportsTest : KotlinImportsTestBase() {
 }
 
 private val GROUP_NAMES = listOf("Alpha", "Beta", "Gamma", "Delta", "Epsilon")
+
+private val BUILT_IN_OPERATORS = listOf("?:", "||", "&&", "as?", "as", "is", "!is")

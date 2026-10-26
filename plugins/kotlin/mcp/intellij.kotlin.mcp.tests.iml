@@ -35,6 +35,9 @@
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.plugin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
   </component>
 </module>

@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
@@ -100,6 +101,7 @@ private fun importVariantsOf(
 }
 
 private fun canTakeImport(expression: KtSimpleNameExpression): Boolean {
+    if (expression is KtOperationReferenceExpression && !expression.isConventionOperator()) return false
     return expression.parentOfType<KtImportDirective>(withSelf = true) == null &&
             expression.parentOfType<KtPackageDirective>(withSelf = true) == null
 }
