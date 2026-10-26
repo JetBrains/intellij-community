@@ -20,13 +20,16 @@ import java.text.Bidi
 
 /**
  * Dims the editor outside [range]. With [wholeLines], the range keeps the full width of its lines, as a diff hunk does, and an empty
- * range keeps one blank line.
+ * range keeps one blank line. A null range dims the whole editor: a side of a diff hunk can have no lines.
  */
 @ApiStatus.Internal
 @RequiresEdt
-fun highlightStructuralPreview(editor: Editor, range: TextRange, wholeLines: Boolean = false): Disposable? {
-  if (editor.isDisposed || range.startOffset < 0 || range.endOffset > editor.document.textLength) return null
-  if (!wholeLines && (range.isEmpty || hasBidirectionalBoundary(editor, range))) return null
+fun highlightStructuralPreview(editor: Editor, range: TextRange?, wholeLines: Boolean = false): Disposable? {
+  if (editor.isDisposed) return null
+  if (range != null) {
+    if (range.startOffset < 0 || range.endOffset > editor.document.textLength) return null
+    if (!wholeLines && (range.isEmpty || hasBidirectionalBoundary(editor, range))) return null
+  }
   val highlighter = editor.markupModel
     .addRangeHighlighter(0, editor.document.textLength, HighlighterLayer.LAST, null, HighlighterTargetArea.EXACT_RANGE)
     .apply { customRenderer = StructuralPreviewDimRenderer(range, wholeLines) }
@@ -48,16 +51,21 @@ private fun hasBidirectionalBoundary(editor: Editor, range: TextRange): Boolean 
   }
 }
 
-private class StructuralPreviewDimRenderer(private val selectedRange: TextRange, private val wholeLines: Boolean) : CustomHighlighterRenderer {
+private class StructuralPreviewDimRenderer(
+  private val selectedRange: TextRange?,
+  private val wholeLines: Boolean,
+) : CustomHighlighterRenderer {
   override fun getOrder(): CustomHighlighterOrder = CustomHighlighterOrder.AFTER_TEXT
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
-    if (editor.isDisposed || selectedRange.endOffset > editor.document.textLength) return
+    if (editor.isDisposed) return
+    val selectedRange = selectedRange
+    if (selectedRange != null && selectedRange.endOffset > editor.document.textLength) return
     val graphics = g.create() as Graphics2D
     try {
       val clip = graphics.clipBounds ?: editor.scrollingModel.visibleArea
       val dimmedArea = Area(clip)
-      keepSelectedRange(editor, selectedRange, clip, dimmedArea)
+      if (selectedRange != null) keepSelectedRange(editor, selectedRange, clip, dimmedArea)
       graphics.color = editor.colorsScheme.defaultBackground
       GraphicsUtil.paintWithAlpha(graphics, 0.65f) { graphics.fill(dimmedArea) }
     }

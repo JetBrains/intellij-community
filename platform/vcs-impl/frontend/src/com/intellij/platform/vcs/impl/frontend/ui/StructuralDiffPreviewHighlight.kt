@@ -22,7 +22,8 @@ import java.awt.event.KeyEvent
 
 /**
  * Dims a diff viewer outside the lines of one hunk. The unified viewer dims one range that holds the removed and the added lines; the
- * side-by-side viewer dims each side. The dim comes back after each rediff and goes away on mouse or keyboard input in the viewer.
+ * side-by-side viewer dims each side, and a side without lines of the hunk gets the dim on all its lines. The dim comes back after each
+ * rediff and goes away on mouse or keyboard input in the viewer.
  */
 internal class StructuralDiffPreviewHighlight(
   private val viewer: DiffViewerBase,
@@ -81,9 +82,11 @@ internal class StructuralDiffPreviewHighlight(
     return listOfNotNull(dim(viewer.getEditor(Side.LEFT), lines.base), dim(viewer.getEditor(Side.RIGHT), lines.current))
   }
 
+  /** Dims the editor outside the lines. A side without lines of the hunk gets the dim on all its lines. */
   private fun dim(editor: Editor, range: LineRange): Disposable? {
-    if (range.isEmpty || range.end > editor.document.lineCount) return null
-    return highlightStructuralPreview(editor, DiffUtil.getLinesRange(editor.document, range.start, range.end), wholeLines = true)
+    if (range.end > editor.document.lineCount) return null
+    val lines = if (range.isEmpty) null else DiffUtil.getLinesRange(editor.document, range.start, range.end)
+    return highlightStructuralPreview(editor, lines, wholeLines = true)
   }
 
   /** Centers a hunk that fits the viewport. A longer hunk starts near the top. */
