@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.fasterxml.aalto.UncheckedStreamException
@@ -11,6 +11,7 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
@@ -104,7 +105,8 @@ abstract class XmlElementStorage protected constructor(
     }
     catch (e: CancellationException) {
       // the caller of the read is canceled, so the storage must not keep the empty data
-      throw e
+      Cancellation.ensureActive()
+      LOG.error("Cannot load data for $fileSpec", RuntimeException(e))
     }
     catch (e: Throwable) {
       LOG.error("Cannot load data for $fileSpec", e)

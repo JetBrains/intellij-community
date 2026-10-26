@@ -39,6 +39,7 @@ import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -62,6 +63,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.zip.ZipInputStream
 import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.createDirectories
@@ -413,6 +415,42 @@ class ApplicationStoreTest {
     }
     finally {
       storageManager.removeStreamProvider(SlowStreamProvider::class.java)
+    }
+  }
+
+  @Test
+  fun `cancellation exception without the cancellation of the caller breaks the read of the service state`() = runBlocking<Unit>(Dispatchers.Default) {
+    val app = ApplicationManager.getApplication()
+    val storageManager = app.stateStore.storageManager
+    val readError = CancellationException("the provider fails, but the caller is not canceled")
+    val streamProvider = ThrowingStreamProvider(fileSpec = BROKEN_READ_FILE_SPEC, error = readError)
+    storageManager.addStreamProvider(streamProvider)
+    val loggedErrors = CopyOnWriteArrayList<Pair<String, Throwable?>>()
+    val errorProcessor = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        loggedErrors.add(message to t)
+        return Action.NONE
+      }
+    }
+    try {
+      val service = LoggedErrorProcessor.executeWith(errorProcessor).use {
+        // the caller is active, so the exception does not cancel the caller
+        app.service<BrokenReadService>()
+      }
+      assertThat(isActive).isTrue()
+
+      // the exception is reported as an error of the read, and the service gets the default state
+      assertThat(loggedErrors).hasSize(1)
+      val (message, error) = loggedErrors.single()
+      assertThat(message).isEqualTo("Cannot load data for $BROKEN_READ_FILE_SPEC")
+      assertThat(error).isNotInstanceOf(CancellationException::class.java).hasCause(readError)
+      assertThat(service.state).isEqualTo(TestState())
+
+      // the storage keeps the empty data, so the service initialization does not read the file again
+      assertThat(streamProvider.readCount.get()).isEqualTo(1)
+    }
+    finally {
+      storageManager.removeStreamProvider(ThrowingStreamProvider::class.java)
     }
   }
 
@@ -832,6 +870,37 @@ class ApplicationStoreTest {
   }
 
   /**
+   * Throws [error] on each read of [fileSpec].
+   */
+  private class ThrowingStreamProvider(private val fileSpec: String, private val error: Throwable) : StreamProvider {
+    val readCount: AtomicInteger = AtomicInteger()
+
+    override val isExclusive: Boolean = false
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = fileSpec == this.fileSpec
+
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+    }
+
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      if (fileSpec != this.fileSpec) {
+        return false
+      }
+      readCount.incrementAndGet()
+      throw error
+    }
+
+    override fun processChildren(
+      path: String,
+      roamingType: RoamingType,
+      filter: (String) -> Boolean,
+      processor: (String, InputStream, Boolean) -> Boolean,
+    ): Boolean = false
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = false
+  }
+
+  /**
    * Records if the container reads [PRELOADED_FILE_SPEC] and [NOT_PRELOADED_FILE_SPEC] in the preparation of the initialization.
    * It does not serve any data.
    */
@@ -983,6 +1052,18 @@ class ApplicationStoreTest {
   }
 
   @Service
+  @State(name = "BrokenReadService", storages = [Storage(BROKEN_READ_FILE_SPEC)], allowLoadInTests = true)
+  private class BrokenReadService : PersistentStateComponent<TestState> {
+    private var state = TestState()
+
+    override fun getState(): TestState = state
+
+    override fun loadState(state: TestState) {
+      this.state = state
+    }
+  }
+
+  @Service
   @State(name = "PreloadedService", storages = [Storage(PRELOADED_FILE_SPEC)], allowLoadInTests = true)
   private class PreloadedService : A()
 
@@ -992,6 +1073,7 @@ class ApplicationStoreTest {
 }
 
 private const val SLOW_READ_FILE_SPEC = "slow-read.xml"
+private const val BROKEN_READ_FILE_SPEC = "broken-read.xml"
 private const val PRELOADED_FILE_SPEC = "preloaded.xml"
 private const val NOT_PRELOADED_FILE_SPEC = "not-preloaded.xml"
 
