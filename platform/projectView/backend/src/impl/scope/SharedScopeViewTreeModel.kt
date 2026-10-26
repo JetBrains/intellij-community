@@ -41,6 +41,10 @@ internal class SharedScopeViewTreeModel(private val project: Project) {
   /** The pane whose session runs on the model. */
   val livePane: StateFlow<ScopePaneModel?> = mutableLivePane.asStateFlow()
 
+  /** All scope panes, in the order of their scopes. [ScopePaneProvider] updates the list. */
+  @Volatile
+  var panes: List<ScopePaneModel> = emptyList()
+
   /** The pane that the frontend selected last. */
   @Volatile
   private var selectedPane: ScopePaneModel? = null
