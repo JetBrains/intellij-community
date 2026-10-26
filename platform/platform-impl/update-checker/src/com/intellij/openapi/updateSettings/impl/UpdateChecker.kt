@@ -312,7 +312,8 @@ object UpdateChecker {
     }
   }
 
-  internal fun getPluginUpdates(
+  @ApiStatus.Internal
+  fun getPluginUpdates(
     plugins: Collection<PluginId>,
     indicator: ProgressIndicator? = null,
     buildNumber: BuildNumber? = null,
