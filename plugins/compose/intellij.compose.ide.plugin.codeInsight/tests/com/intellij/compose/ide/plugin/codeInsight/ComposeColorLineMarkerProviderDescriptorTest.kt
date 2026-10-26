@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMark
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ColorIconRenderer
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ComposeColorLineMarkerProviderDescriptor
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
-import com.intellij.compose.ide.plugin.shared.withAndroidSdk
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.runInEdtAndGet

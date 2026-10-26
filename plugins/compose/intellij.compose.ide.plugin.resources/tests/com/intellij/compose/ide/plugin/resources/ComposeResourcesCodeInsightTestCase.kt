@@ -5,7 +5,6 @@ import com.intellij.compose.ide.plugin.shared.ANDROID_MAIN
 import com.intellij.compose.ide.plugin.shared.COMMON_MAIN
 import com.intellij.compose.ide.plugin.shared.ComposeBaseTestCase
 import com.intellij.compose.ide.plugin.shared.IOS_MAIN
-import com.intellij.compose.ide.plugin.shared.withAndroidSdk
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Path

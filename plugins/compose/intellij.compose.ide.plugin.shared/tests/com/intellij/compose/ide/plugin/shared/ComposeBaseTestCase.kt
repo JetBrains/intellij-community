@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compose.ide.plugin.shared
 
+import com.android.tools.idea.sdk.AndroidSdks
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -17,6 +18,7 @@ import com.intellij.testFramework.utils.editor.reloadFromDisk
 import com.intellij.util.io.DigestUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
@@ -25,10 +27,12 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.params.Parameter
 import org.junit.jupiter.params.ParameterizedClass
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.name
+import kotlin.io.path.readText
 import kotlin.io.path.relativeTo
 
 /**
@@ -66,6 +70,37 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
    * Override it to apply a step that only some projects need, such as [withAndroidSdk].
    */
   protected open fun FileTestFixture.Builder.configureProject() {}
+
+  /**
+   * Configures the test data project for an Android target.
+   *
+   * Writes the Android SDK path into `local.properties`. The Android Gradle plugin and the IDE SDK sync read the SDK
+   * path from there, and without it both need `ANDROID_HOME`. When the Android plugin is loaded, this step also
+   * registers the Android platform SDK of the project in the SDK table, because the fixture reopens a cached project
+   * without a sync. [removeSdksInTests] removes that SDK after the last test of the class.
+   */
+  protected fun FileTestFixture.Builder.withAndroidSdk() {
+    val sdkPath = KotlinTestUtils.getAndroidSdkSystemIndependentPath()
+    withFile("local.properties", "sdk.dir=$sdkPath")
+    setUpAndroidSdk(File(sdkPath))
+  }
+
+  /** Registers the Android platform SDK for the compile SDK of the test data project, if the SDK table lacks it. */
+  private fun setUpAndroidSdk(sdkPath: File) {
+    val targetHash = ANDROID_PLATFORM_HASH_PREFIX + androidCompileSdk()
+    val androidSdks = AndroidSdks.getInstance()
+    if (androidSdks.findSuitableAndroidSdk(targetHash) != null) return
+    invokeAndWaitIfNeeded { androidSdks.tryToCreate(sdkPath, targetHash) }
+    ?: error("The Android SDK at $sdkPath has no platform '$targetHash'")
+  }
+
+  /** Reads `android-compileSdk` from the version catalog of the test data project. */
+  private fun androidCompileSdk(): Int {
+    val versionCatalog = testDataProjectRoot.resolve("gradle/libs.versions.toml")
+    val match = COMPILE_SDK_REGEX.find(versionCatalog.readText())
+                ?: error("Cannot find android-compileSdk in $versionCatalog")
+    return match.groupValues[1].toInt()
+  }
 
   protected fun testComposeProject(test: () -> Unit) {
     test(GradleVersion.version(targetGradleVersion), composeProjectBuilder, test)
@@ -172,15 +207,15 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
     }
 
     /**
-     * The Gradle sync creates an Android SDK from the local Android SDK path, and the SDK leak tracker reports it.
-     * The name prefix is `com.android.tools.idea.sdk.AndroidSdks.SDK_NAME_PREFIX`, which this module cannot depend on.
+     * [withAndroidSdk] or the Gradle sync creates an Android SDK from the local Android SDK path, and the SDK leak
+     * tracker reports it.
      */
     private fun removeAndroidSdksInTests() {
       invokeAndWaitIfNeeded {
         runWriteAction {
           val jdkTable = ProjectJdkTable.getInstance()
           jdkTable.allJdks
-            .filter { it.name.startsWith(ANDROID_SDK_NAME_PREFIX) }
+            .filter { it.name.startsWith(AndroidSdks.SDK_NAME_PREFIX) }
             .forEach(jdkTable::removeJdk)
         }
       }
@@ -211,6 +246,9 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
 
     private val GENERATED_TEST_DATA_ROOT_NAMES = setOf(".gradle", ".idea", ".kotlin", "kotlin-js-store")
 
-    private const val ANDROID_SDK_NAME_PREFIX = "Android "
+    /** The value of `com.android.sdklib.AndroidTargetHash.PLATFORM_HASH_PREFIX`. The sdklib is not on the classpath of this module. */
+    private const val ANDROID_PLATFORM_HASH_PREFIX = "android-"
+
+    private val COMPILE_SDK_REGEX = Regex("""^android-compileSdk\s*=\s*"(\d+)"""", RegexOption.MULTILINE)
   }
 }
