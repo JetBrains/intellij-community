@@ -55,6 +55,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
@@ -422,6 +423,24 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
           }).executeSynchronously();
         });
       }, outer);
+    }));
+  }
+
+  public void testSyncExecutionRethrowsPCEFromComputation() {
+    ProcessCanceledException pce = new ProcessCanceledException();
+    waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Assertions.assertThatThrownBy(() -> ReadAction.nonBlocking(() -> {
+        throw pce;
+      }).executeSynchronously()).isSameAs(pce);
+    }));
+  }
+
+  public void testSyncExecutionKeepsCancellationExceptionFromComputationAsCause() {
+    CancellationException ce = new CancellationException();
+    waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      Assertions.assertThatThrownBy(() -> ReadAction.nonBlocking(() -> {
+        throw ce;
+      }).executeSynchronously()).isInstanceOf(ProcessCanceledException.class).cause().isSameAs(ce);
     }));
   }
 

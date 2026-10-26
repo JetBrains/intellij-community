@@ -335,6 +335,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private final @NotNull NonBlockingReadActionImpl<T> builder;
     private final @NotNull ChildContext myChildContext;
     private final @NotNull AccessToken childContextToken;
+    private volatile @Nullable Throwable myError;
 
     // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
@@ -484,6 +485,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Override
     public boolean setError(@NotNull Throwable error) {
       boolean result = super.setError(error);
+      if (result) {
+        myError = error;
+      }
       cleanupIfNeeded();
       return result;
     }
@@ -682,7 +686,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
             if (isDone()) {
               if (isCancelled()) {
-                throw new ProcessCanceledException();
+                throw createCancellationException();
               }
               try {
                 return blockingGet(0, TimeUnit.MILLISECONDS);
@@ -709,7 +713,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
               });
               ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, myProgressIndicator);
               if (isCancelled()) {
-                throw new ProcessCanceledException();
+                throw createCancellationException();
               }
             }
           }
@@ -721,6 +725,22 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       finally {
         cleanupIfNeeded();
       }
+    }
+
+    /**
+     * Returns the PCE to throw for this cancelled submission.
+     * Its cause is the stored error, or else the cancellation exception of the cancelled job.
+     */
+    private @NotNull ProcessCanceledException createCancellationException() {
+      Throwable cause = myError;
+      if (cause == null) {
+        Job job = myChildContext.getJob();
+        if (job != null && job.isCancelled()) {
+          cause = job.getCancellationException();
+        }
+      }
+      // the PCE constructor drops a PCE cause, so rethrow it as is
+      return cause instanceof ProcessCanceledException pce ? pce : new ProcessCanceledException(cause);
     }
 
     private static void blockUntilWriteActionIsDone(Submission<?> submission, CoroutineContext context) {
