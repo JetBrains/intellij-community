@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk.uv.run
 
 import com.intellij.python.pytools.resolveExecutable
 import com.intellij.python.uv.backend.UvPyTool
-import com.intellij.python.uv.common.icons.PythonUvCommonIcons
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.run.features.PyRunToolData
@@ -78,7 +77,6 @@ internal class UvRunToolProvider : PySdkRunToolProvider<UvSdkFlavorData, UvSdkFl
     PyBundle.message("uv.run.configuration.type.display.name"),
     PyBundle.message("python.run.configuration.fragments.python.group"),
     label = PyBundle.message("uv.run.tool.label"),
-    icon = PythonUvCommonIcons.UV,
   )
 
   override val initialToolState: Boolean = true
