@@ -61,7 +61,7 @@ private class ScopePaneManager(private val project: Project, private val holders
 
   suspend fun updatePanes(): List<ProjectViewPaneModel> {
     val filters = readAction { NamedScopeFilter.list(*holders) }
-    val result = ArrayList<ProjectViewPaneModel>(filters.size)
+    val result = ArrayList<ScopePaneModel>(filters.size)
     val stillActualIds = hashSetOf<ProjectViewPaneId>()
     for (filter in filters) {
       val id = ScopePaneModel.paneId(filter)
@@ -91,6 +91,7 @@ private class ScopePaneManager(private val project: Project, private val holders
       }
       remove
     }
+    sharedModel.panes = result
     return result
   }
 }

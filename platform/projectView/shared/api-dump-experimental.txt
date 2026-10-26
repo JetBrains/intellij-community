@@ -57,6 +57,16 @@
 - a:visitNodeForSelect(com.intellij.platform.projectView.pane.BackendProjectViewNodeModel,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
 - a:createSelectNodeVisitor(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitor
+*f:com.intellij.platform.projectView.impl.ProjectViewSelectTarget
+- <init>(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):V
+- f:component1():com.intellij.psi.SmartPsiElementPointer
+- f:component2():com.intellij.openapi.vfs.VirtualFile
+- f:copy(com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile):com.intellij.platform.projectView.impl.ProjectViewSelectTarget
+- bs:copy$default(com.intellij.platform.projectView.impl.ProjectViewSelectTarget,com.intellij.psi.SmartPsiElementPointer,com.intellij.openapi.vfs.VirtualFile,I,java.lang.Object):com.intellij.platform.projectView.impl.ProjectViewSelectTarget
+- equals(java.lang.Object):Z
+- f:getElementPointer():com.intellij.psi.SmartPsiElementPointer
+- f:getFile():com.intellij.openapi.vfs.VirtualFile
+- hashCode():I
 *:com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 - a:getChildren(com.intellij.platform.projectView.pane.ProjectViewNodeUserObject,kotlin.coroutines.Continuation):java.lang.Object
 - a:getNodeModelFlow(J,com.intellij.platform.projectView.pane.ProjectViewNodeUserObject,kotlin.coroutines.Continuation):java.lang.Object
@@ -68,12 +78,14 @@
 *a:com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
 - com.intellij.platform.projectView.pane.ProjectViewPaneModel
 - <init>(com.intellij.openapi.project.Project):V
+- pf:computeSelectTarget(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createNodeProvider(com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor,kotlin.coroutines.Continuation):java.lang.Object
 - pa:createSelectNodeVisitorProvider():com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
 - pa:createUpdater(kotlin.coroutines.Continuation):java.lang.Object
 - describe(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - p:describeSelectInTargets(com.intellij.platform.projectView.pane.ProjectViewPaneDescriptorBuilder,kotlin.coroutines.Continuation):java.lang.Object
 - findNodeForSelectIn(com.intellij.platform.projectView.pane.SelectInRequest,kotlin.coroutines.Continuation):java.lang.Object
+- pf:findNodeForSelectTarget(com.intellij.platform.projectView.impl.ProjectViewSelectTarget,kotlin.coroutines.Continuation):java.lang.Object
 - p:flushExternalUpdates(kotlin.coroutines.Continuation):java.lang.Object
 - getCutCopyPasteDeleteHandler():com.intellij.platform.projectView.pane.ProjectViewPaneCutCopyPasteDeleteHandler
 - getDataContext(java.util.List):com.intellij.openapi.actionSystem.DataContext

@@ -401,7 +401,143 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
   }
 
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
-    return currentTreeState.load()?.findNodeForSelectIn(selectInRequest)
+    val treeState = currentTreeState.load() ?: return null
+    val target = computeSelectTarget(selectInRequest) ?: return null
+    return treeState.findNodeForSelectTarget(target)
+  }
+
+  /**
+   * Finds the node of [target] in the current tree, the same way as [findNodeForSelectIn] does.
+   * Returns `null` if this pane has no tree now.
+   */
+  protected suspend fun findNodeForSelectTarget(target: ProjectViewSelectTarget): ProjectViewNodePath? {
+    return currentTreeState.load()?.findNodeForSelectTarget(target)
+  }
+
+  /**
+   * Computes the target of [request] the same way as the classic Project View "Select In" does
+   * (`ProjectViewSelectInTarget` and `SelectInTargetPsiWrapper`). That happens before the classic code touches the pane.
+   */
+  protected suspend fun computeSelectTarget(request: SelectInRequest): ProjectViewSelectTarget? = when (request) {
+    is SelectByContext -> computeContextTarget(request.context)
+    is SelectByEditor -> computeEditorTarget(request)
+  }
+
+  private suspend fun computeContextTarget(context: SelectInContext): ProjectViewSelectTarget? = readAction {
+    if (!canSelectContext(context)) return@readAction null
+    normalizeContextSelector(context)
+  }
+
+  @RequiresReadLock
+  private fun canSelectContext(context: SelectInContext): Boolean {
+    if (project.isDisposed || !project.isInitialized) return false
+    if (!context.virtualFile.isValid) return false
+    val psiItem = contextPsiFile(project, context) ?: return false
+    val vFile = PsiUtilCore.getVirtualFile(psiItem)?.let { BackedVirtualFile.getOriginFileIfBacked(it) }
+    if (vFile == null || !vFile.isValid) return false
+    return ProjectViewPane.canBeSelectedInProjectView(project, vFile)
+  }
+
+  @RequiresReadLock
+  private fun normalizeContextSelector(context: SelectInContext): ProjectViewSelectTarget? {
+    if (project.isDisposed) return null
+    return normalizeSelector(context.virtualFile, context.selectorInFile)
+  }
+
+  private suspend fun computeEditorTarget(request: SelectByEditor): ProjectViewSelectTarget? {
+    val useLastFocused = request.considerOnlyLastFocusedEditor && AppMode.isMonolith()
+    val editors = withContext(Dispatchers.UI) {
+      val fileEditorManager = FileEditorManager.getInstance(project)
+      val lastFocused = if (useLastFocused) (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedEditor() else null
+      if (lastFocused != null) {
+        listOf(lastFocused)
+      }
+      else {
+        (listOf(fileEditorManager.selectedEditor) + fileEditorManager.selectedEditors).filterNotNull()
+      }
+    }
+    for (fileEditor in editors) {
+      if (
+        !request.isInvokedManually &&
+        AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
+        readAction { fileEditor.file?.let { file -> ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
+      ) {
+        if (LOG.isDebugEnabled) {
+          LOG.debug("Skipping $fileEditor because the file is in a library and autoscroll to libraries is off")
+        }
+        continue
+      }
+      val target = computeEditorTargetFor(fileEditor)
+      if (target != null) return target
+    }
+    return null
+  }
+
+  private suspend fun computeEditorTargetFor(fileEditor: FileEditor): ProjectViewSelectTarget? {
+    // A data context may provide its own SelectInContext (SelectInProjectViewImpl.createSelectInContext).
+    val providedContext = withContext(Dispatchers.UI) {
+      DataManager.getInstance().getDataContext(fileEditor.component).getData(SelectInContext.DATA_KEY)
+    }
+    if (providedContext != null) return normalizeContextSelector(providedContext)
+    val psiFilePointer = editorPsiFilePointer(fileEditor) ?: return null
+    // EditorSelectInContext.getSelectorInFile is the caret element;
+    // SimpleSelectInContext.getSelectorInFile is the file itself.
+    val selectorPointer = if (fileEditor is TextEditor) editorCaretElementPointer(fileEditor, psiFilePointer) ?: psiFilePointer else psiFilePointer
+    return readAction {
+      if (project.isDisposed) return@readAction null
+      val psiFile = psiFilePointer.dereference() ?: return@readAction null
+      normalizeSelector(psiFile.viewProvider.virtualFile, selectorPointer.dereference())
+    }
+  }
+
+  private suspend fun editorPsiFilePointer(fileEditor: FileEditor): SmartPsiElementPointer<PsiFile>? {
+    if (!withContext(Dispatchers.UI) { fileEditor.isValid }) return null
+    return if (fileEditor is TextEditor) {
+      val editor = fileEditor.editor
+      if (withContext(Dispatchers.UI) { editor.isDisposed }) return null
+      readAction { EditorContextManager.getPsiFileForEditor(editor, project)?.createSmartPointer() }
+    }
+    else {
+      val file = withContext(Dispatchers.UI) { fileEditor.file } ?: return null
+      readAction { if (file.isValid) PsiManager.getInstance(project).findFile(file)?.createSmartPointer() else null }
+    }
+  }
+
+  private suspend fun editorCaretElementPointer(fileEditor: TextEditor, psiFilePointer: SmartPsiElementPointer<PsiFile>): SmartPsiElementPointer<PsiElement>? {
+    val editor = fileEditor.editor
+    val offset = withContext(Dispatchers.UI) { if (editor.isDisposed) -1 else editor.caretModel.offset }
+    if (offset < 0) return null
+    return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
+      val psiFile = psiFilePointer.dereference() ?: return@constrainedReadAction null
+      if (psiFile.isValid) psiFile.findElementAt(offset)?.createSmartPointer() else null
+    }
+  }
+
+  @RequiresReadLock
+  private fun normalizeSelector(file: VirtualFile, rawSelector: Any?): ProjectViewSelectTarget? {
+    val selector = rawSelector ?: PsiUtilCore.findFileSystemItem(project, file)
+    if (selector !is PsiElement) return ProjectViewSelectTarget(elementPointer = null, file = file) // non-PSI (or no) selector => file-only search
+    if (!selector.isValid) return null // an invalid PSI selector: the classic code throws, we treat it as "no target"
+    val original = selector.originalElement
+    return if (original != null && original.isValid) normalizeElement(original) else null
+  }
+
+  @RequiresReadLock
+  private fun normalizeElement(element: PsiElement): ProjectViewSelectTarget? {
+    var topLevel: PsiElement? = null
+    val providers = DumbService.getInstance(project).filterByDumbAwareness(TreeStructureProvider.EP.getExtensions(project))
+    for (provider in providers) {
+      if (provider is SelectableTreeStructureProvider) {
+        topLevel = provider.getTopLevelElement(element)
+      }
+      if (topLevel != null) {
+        if (!topLevel.isValid) return null
+        break
+      }
+    }
+    val toSelect = findElementToSelect(element, topLevel) ?: return null
+    val vFile = PsiUtilCore.getVirtualFile(toSelect)?.let { BackedVirtualFile.getOriginFileIfBacked(it) }
+    return ProjectViewSelectTarget(toSelect.createSmartPointer(), vFile)
   }
 
   private inner class MyIdeView(private val selectedNodes: List<BackendProjectViewNodeModel<T>>) : IdeView {
@@ -729,7 +865,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       val (target, isDir) = readAction {
         val element = request.elementPointer.dereference() ?: return@readAction null
         val file = if (element.isValid) PsiUtilCore.getVirtualFile(element) else null
-        Pair(SelectTarget(request.elementPointer, file), element is PsiDirectory)
+        Pair(ProjectViewSelectTarget(request.elementPointer, file), element is PsiDirectory)
       } ?: return
       val nodePath = findNodePathForTarget(target) ?: return
       var requestFocus = isDir
@@ -746,23 +882,20 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
       schedule { SelectNodeRequest(it, nodePath, requestFocus) }
     }
 
-    suspend fun findNodeForSelectIn(request: SelectInRequest): ProjectViewNodePath? {
-      // Reproduce the classic Project View "Select In" (ProjectViewSelectInTarget / SelectInTargetPsiWrapper):
-      // derive the target the same way the legacy code does (which happens before the pane is even touched),
-      // then make the tree reflect everything submitted so far (the equivalent of the old updateImmediately),
-      // then search. The result is the same node the legacy Project View would select.
-      val target = computeSelectTarget(request) ?: return null
+    suspend fun findNodeForSelectTarget(target: ProjectViewSelectTarget): ProjectViewNodePath? {
+      // Make the tree reflect everything submitted so far (the equivalent of the old updateImmediately), then search.
+      // The result is the same node the legacy Project View would select.
       awaitPendingUpdates()
       return findNodePathForTarget(target)
     }
 
     /**
-     * The two-pass search shared by [selectElementImpl] and [findNodeForSelectIn]. First try to match the element
+     * The two-pass search shared by [selectElementImpl] and [findNodeForSelectTarget]. First try to match the element
      * itself; a node may report that it doesn't contain the element even though it does contain its file (reportedly
      * the case with top-level Kotlin functions and Kotlin files), so fall back to matching the file only. Unlike
      * [selectElementImpl] this neither awaits pending updates nor schedules a selection: it only finds the path.
      */
-    private suspend fun findNodePathForTarget(target: SelectTarget): ProjectViewNodePath? {
+    private suspend fun findNodePathForTarget(target: ProjectViewSelectTarget): ProjectViewNodePath? {
       val visitorProvider = createSelectNodeVisitorProvider()
       tryFindPath(visitorProvider.createSelectNodeVisitor(target.elementPointer, target.file))?.let { return it }
       if (target.elementPointer == null) return null // we've already tried looking for the file only
@@ -774,128 +907,6 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     private suspend fun tryFindPath(visitor: ProjectViewSelectNodeVisitor<T>): ProjectViewNodePath? {
       val node = visitTree(allowLoading = true) { node -> visitor.visitNodeForSelect(node) } ?: return null
       return suspendingState.getNodePathById(node.id) // null if the node has just been removed
-    }
-
-    private suspend fun computeSelectTarget(request: SelectInRequest): SelectTarget? = when (request) {
-      is SelectByContext -> computeContextTarget(request.context)
-      is SelectByEditor -> computeEditorTarget(request)
-    }
-
-    private suspend fun computeContextTarget(context: SelectInContext): SelectTarget? = readAction {
-      if (!canSelectContext(context)) return@readAction null
-      normalizeContextSelector(context)
-    }
-
-    @RequiresReadLock
-    private fun canSelectContext(context: SelectInContext): Boolean {
-      if (project.isDisposed || !project.isInitialized) return false
-      if (!context.virtualFile.isValid) return false
-      val psiItem = contextPsiFile(project, context) ?: return false
-      val vFile = PsiUtilCore.getVirtualFile(psiItem)?.let { BackedVirtualFile.getOriginFileIfBacked(it) }
-      if (vFile == null || !vFile.isValid) return false
-      return ProjectViewPane.canBeSelectedInProjectView(project, vFile)
-    }
-
-    @RequiresReadLock
-    private fun normalizeContextSelector(context: SelectInContext): SelectTarget? {
-      if (project.isDisposed) return null
-      return normalizeSelector(context.virtualFile, context.selectorInFile)
-    }
-
-    private suspend fun computeEditorTarget(request: SelectByEditor): SelectTarget? {
-      val useLastFocused = request.considerOnlyLastFocusedEditor && AppMode.isMonolith()
-      val editors = withContext(Dispatchers.UI) {
-        val fileEditorManager = FileEditorManager.getInstance(project)
-        val lastFocused = if (useLastFocused) (fileEditorManager as? FileEditorManagerImpl)?.getLastFocusedEditor() else null
-        if (lastFocused != null) {
-          listOf(lastFocused)
-        }
-        else {
-          (listOf(fileEditorManager.selectedEditor) + fileEditorManager.selectedEditors).filterNotNull()
-        }
-      }
-      for (fileEditor in editors) {
-        if (
-          !request.isInvokedManually &&
-          AdvancedSettings.getBoolean("project.view.do.not.autoscroll.to.libraries") &&
-          readAction { fileEditor.file?.let { file -> ProjectFileIndex.getInstance(project).isInLibrary(file) } == true }
-        ) {
-          if (LOG.isDebugEnabled) {
-            LOG.debug("Skipping $fileEditor because the file is in a library and autoscroll to libraries is off")
-          }
-          continue
-        }
-        val target = computeEditorTargetFor(fileEditor)
-        if (target != null) return target
-      }
-      return null
-    }
-
-    private suspend fun computeEditorTargetFor(fileEditor: FileEditor): SelectTarget? {
-      // A data context may provide its own SelectInContext (SelectInProjectViewImpl.createSelectInContext).
-      val providedContext = withContext(Dispatchers.UI) {
-        DataManager.getInstance().getDataContext(fileEditor.component).getData(SelectInContext.DATA_KEY)
-      }
-      if (providedContext != null) return normalizeContextSelector(providedContext)
-      val psiFilePointer = editorPsiFilePointer(fileEditor) ?: return null
-      // EditorSelectInContext.getSelectorInFile is the caret element;
-      // SimpleSelectInContext.getSelectorInFile is the file itself.
-      val selectorPointer = if (fileEditor is TextEditor) editorCaretElementPointer(fileEditor, psiFilePointer) ?: psiFilePointer else psiFilePointer
-      return readAction {
-        if (project.isDisposed) return@readAction null
-        val psiFile = psiFilePointer.dereference() ?: return@readAction null
-        normalizeSelector(psiFile.viewProvider.virtualFile, selectorPointer.dereference())
-      }
-    }
-
-    private suspend fun editorPsiFilePointer(fileEditor: FileEditor): SmartPsiElementPointer<PsiFile>? {
-      if (!withContext(Dispatchers.UI) { fileEditor.isValid }) return null
-      return if (fileEditor is TextEditor) {
-        val editor = fileEditor.editor
-        if (withContext(Dispatchers.UI) { editor.isDisposed }) return null
-        readAction { EditorContextManager.getPsiFileForEditor(editor, project)?.createSmartPointer() }
-      }
-      else {
-        val file = withContext(Dispatchers.UI) { fileEditor.file } ?: return null
-        readAction { if (file.isValid) PsiManager.getInstance(project).findFile(file)?.createSmartPointer() else null }
-      }
-    }
-
-    private suspend fun editorCaretElementPointer(fileEditor: TextEditor, psiFilePointer: SmartPsiElementPointer<PsiFile>): SmartPsiElementPointer<PsiElement>? {
-      val editor = fileEditor.editor
-      val offset = withContext(Dispatchers.UI) { if (editor.isDisposed) -1 else editor.caretModel.offset }
-      if (offset < 0) return null
-      return constrainedReadAction(ReadConstraint.withDocumentsCommitted(project)) {
-        val psiFile = psiFilePointer.dereference() ?: return@constrainedReadAction null
-        if (psiFile.isValid) psiFile.findElementAt(offset)?.createSmartPointer() else null
-      }
-    }
-
-    @RequiresReadLock
-    private fun normalizeSelector(file: VirtualFile, rawSelector: Any?): SelectTarget? {
-      val selector = rawSelector ?: PsiUtilCore.findFileSystemItem(project, file)
-      if (selector !is PsiElement) return SelectTarget(elementPointer = null, file = file) // non-PSI (or no) selector => file-only search
-      if (!selector.isValid) return null // an invalid PSI selector: the classic code throws, we treat it as "no target"
-      val original = selector.originalElement
-      return if (original != null && original.isValid) normalizeElement(original) else null
-    }
-
-    @RequiresReadLock
-    private fun normalizeElement(element: PsiElement): SelectTarget? {
-      var topLevel: PsiElement? = null
-      val providers = DumbService.getInstance(project).filterByDumbAwareness(TreeStructureProvider.EP.getExtensions(project))
-      for (provider in providers) {
-        if (provider is SelectableTreeStructureProvider) {
-          topLevel = provider.getTopLevelElement(element)
-        }
-        if (topLevel != null) {
-          if (!topLevel.isValid) return null
-          break
-        }
-      }
-      val toSelect = findElementToSelect(element, topLevel) ?: return null
-      val vFile = PsiUtilCore.getVirtualFile(toSelect)?.let { BackedVirtualFile.getOriginFileIfBacked(it) }
-      return SelectTarget(toSelect.createSmartPointer(), vFile)
     }
 
     private suspend fun applySettings() {
@@ -1439,7 +1450,9 @@ private data class RetryLoadChildrenRequest(
 
 private val LOG = logger<TreeBasedProjectViewPaneModel<*>>()
 
-private data class SelectTarget(val elementPointer: SmartPsiElementPointer<PsiElement>?, val file: VirtualFile?)
+/** The element and the file that a Select In request targets, see [TreeBasedProjectViewPaneModel.computeSelectTarget]. */
+@ApiStatus.Experimental
+data class ProjectViewSelectTarget(val elementPointer: SmartPsiElementPointer<PsiElement>?, val file: VirtualFile?)
 
 /**
  * Replica of the package-private `SelectInTargetPsiWrapper.findElementToSelect` (which is `protected static`, so it

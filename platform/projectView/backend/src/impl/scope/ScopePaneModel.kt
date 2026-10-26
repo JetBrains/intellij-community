@@ -6,6 +6,7 @@ package com.intellij.platform.projectView.backend.impl.scope
 import com.intellij.ide.scopeView.NamedScopeFilter
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.scopeView.ScopeViewTreeModel
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
@@ -14,8 +15,11 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
 import com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 import com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
+import com.intellij.platform.projectView.impl.ProjectViewSelectTarget
 import com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
 import com.intellij.platform.projectView.impl.ProjectViewUpdater
 import com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
@@ -174,11 +178,31 @@ class ScopePaneModel internal constructor(
     super.loadChildren(parentId, options)
   }
 
+  /**
+   * Searches the first pane whose scope contains the file, the same as the legacy `SelectInProjectViewImpl.doSelectInScopeViewPane`.
+   * This pane goes first, then the other panes in the order of their scopes.
+   */
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+    val target = computeSelectTarget(selectInRequest) ?: return null
+    val pane = findPaneThatAccepts(target.file) ?: return null
+    if (pane === this) return findNodeInThisPane(target)
+    LOG.debug { "The scope of $paneId doesn't contain ${target.file}, searching ${pane.paneId} instead" }
+    return BackendProjectViewPaneService.getInstance(project).withPaneActive(pane.paneId) {
+      pane.findNodeInThisPane(target)
+    }
+  }
+
+  private suspend fun findPaneThatAccepts(file: VirtualFile?): ScopePaneModel? {
+    if (file == null) return this
+    val panes = listOf(this) + sharedModel.panes.filter { it !== this }
+    return panes.firstOrNull { pane -> readAction { pane.currentFilter.load().accept(file) } }
+  }
+
+  private suspend fun findNodeInThisPane(target: ProjectViewSelectTarget): ProjectViewNodePath? {
     sharedModel.claim(this)
     try {
       awaitLive()
-      return super.findNodeForSelectIn(selectInRequest)
+      return findNodeForSelectTarget(target)
     }
     finally {
       // The search doesn't select this pane. When the frontend selects it to show the found node, it claims the model again.

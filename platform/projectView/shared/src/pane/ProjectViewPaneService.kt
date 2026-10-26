@@ -213,6 +213,15 @@ abstract class ProjectViewPaneServiceBase(
     }
   }
 
+  /**
+   * Runs [code] while the pane [paneId] is active, the same as [findNodeForSelectIn] does for its pane.
+   * Returns `null` if there is no such pane.
+   */
+  suspend fun <T> withPaneActive(paneId: ProjectViewPaneId, code: suspend (ProjectViewPaneModel) -> T): T? {
+    val manager = awaitManager(paneId) ?: return null
+    return manager.withPaneActive { code(manager.pane) }
+  }
+
   suspend fun selectNode(nodePath: ProjectViewNodePath, options: ((SelectInProjectViewRequestBuilder) -> Unit)? = null) {
     val manager = managers.value?.get(nodePath.paneId) ?: return
     manager.withPaneActive { 
