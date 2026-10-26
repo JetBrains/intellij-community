@@ -23,43 +23,49 @@ public abstract class ActionButtonLook {
   public static final ActionButtonLook SYSTEM_LOOK = new ActionButtonLook() {
     private ActionButtonLook delegate;
 
-    {
-      updateUI();
-    }
-
     @Override
     public void updateUI() {
       delegate = new IdeaActionButtonLook();
     }
 
+    // IdeaActionButtonLook extends ActionButtonLook, so the static initializer of ActionButtonLook must not create it
+    private @NotNull ActionButtonLook getDelegate() {
+      ActionButtonLook result = delegate;
+      if (result == null) {
+        result = new IdeaActionButtonLook();
+        delegate = result;
+      }
+      return result;
+    }
+
     @Override
     public void paintBackground(Graphics g, JComponent component, int state) {
-      delegate.paintBackground(g, component, state);
+      getDelegate().paintBackground(g, component, state);
     }
 
     @Override
     public void paintBackground(Graphics g, JComponent component, Color color) {
-      delegate.paintBackground(g, component, color);
+      getDelegate().paintBackground(g, component, color);
     }
 
     @Override
     public void paintBorder(Graphics g, JComponent component, int state) {
-      delegate.paintBorder(g, component, state);
+      getDelegate().paintBorder(g, component, state);
     }
 
     @Override
     public void paintBorder(Graphics g, JComponent component, Color color) {
-      delegate.paintBorder(g, component, color);
+      getDelegate().paintBorder(g, component, color);
     }
 
     @Override
     public void paintLookBackground(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {
-      delegate.paintLookBackground(g, rect, color);
+      getDelegate().paintLookBackground(g, rect, color);
     }
 
     @Override
     public void paintLookBorder(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {
-      delegate.paintLookBorder(g, rect, color);
+      getDelegate().paintLookBorder(g, rect, color);
     }
   };
 
