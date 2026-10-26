@@ -100,7 +100,6 @@ class DefaultWhatsNewQueryHandler(private val project: Project) : HTMLEditorProv
         return@withContext
       }
 
-      @Suppress("SSBasedInspection")
       toolWindowManager.notifyByBalloon(toolWindow.id, MessageType.INFO, IdeBundle.message("whats.new.promo.air.tooltip"))
     }
   }
