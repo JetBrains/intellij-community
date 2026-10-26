@@ -56,6 +56,7 @@
     <orderEntry type="module" module-name="intellij.python.pytools.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.pytools.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.assertj.core" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.python.sdk.backend" />
 </module>

@@ -1,6 +1,9 @@
 package com.intellij.python.sdk.common.evolution
 
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.jetbrains.python.sdk.eelNativeMode
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -44,4 +47,12 @@ object PyEvoRegistry {
   /** Upper bound on directories examined per env discovery, so a huge project tree can't turn a node expansion into a long walk. */
   val scanMaxDirs: Int
     get() = Registry.intValue("python.evolution.widget.scan.max.dirs")
+
+  /**
+   * Whether the widget offers the tools and their actions for a project on [descriptor].
+   *
+   * The tools do not work on a non-local eel yet, so there only "Associated", "Custom", "Settings" and "Manage Packages"
+   * stay, unless [eelNativeMode] is on (PY-93438).
+   */
+  fun areToolsEnabledFor(descriptor: EelDescriptor): Boolean = descriptor == LocalEelDescriptor || eelNativeMode
 }
