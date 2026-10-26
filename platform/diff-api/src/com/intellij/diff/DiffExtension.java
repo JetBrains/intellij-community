@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_TOOLBAR
+ * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_RIGHT_TOOLBAR
  * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_POPUP
  * @see com.intellij.openapi.actionSystem.IdeActions#GROUP_DIFF_EDITOR_POPUP
  */

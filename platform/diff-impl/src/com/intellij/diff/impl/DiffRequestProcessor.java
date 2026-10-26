@@ -160,6 +160,7 @@ public abstract class DiffRequestProcessor
   private final @Nullable FrameDiffTool myForcedDiffTool;
 
   private final @NotNull DefaultActionGroup myToolbarGroup;
+  private final @NotNull DefaultActionGroup myRightToolbarBeforeDiffToolChooserGroup;
   private final @NotNull DefaultActionGroup myRightToolbarGroup;
   private final @NotNull DefaultActionGroup myPopupActionGroup;
   private final @NotNull DefaultActionGroup myTouchbarActionGroup;
@@ -169,6 +170,7 @@ public abstract class DiffRequestProcessor
   private final @NotNull DiffHeaderToolbarPanel myTopPanel;
   private final @NotNull SegmentedButtonComponent<DiffTool> myDiffToolChooser;
   private final @NotNull ActionToolbar myToolbar;
+  private final @NotNull HideWhenEmptyToolbar myRightToolbarBeforeDiffToolChooser;
   private final @NotNull ActionToolbar myRightToolbar;
   private final @NotNull Wrapper myToolbarStatusPanel;
   private final @NotNull MyProgressBar myProgressBar;
@@ -212,6 +214,7 @@ public abstract class DiffRequestProcessor
     DiffLangSpecificProvider.EP_NAME.addChangeListener(() -> updateRequest(true), this);
 
     myToolbarGroup = new DefaultActionGroup();
+    myRightToolbarBeforeDiffToolChooserGroup = new DefaultActionGroup();
     myRightToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
     myTouchbarActionGroup = new DefaultActionGroup();
@@ -232,6 +235,12 @@ public abstract class DiffRequestProcessor
     JComponent leftToolbarComponent = myToolbar.getComponent();
     leftToolbarComponent.setOpaque(false);
 
+    myRightToolbarBeforeDiffToolChooser = new HideWhenEmptyToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarBeforeDiffToolChooserGroup);
+    myRightToolbarBeforeDiffToolChooser.setTargetComponent(myContentPanel.getTargetComponent());
+    myRightToolbarBeforeDiffToolChooser.setLayoutStrategy(new NoShrinkToolbarLayoutStrategy());
+    JComponent rightToolbarBeforeDiffToolChooserComponent = myRightToolbarBeforeDiffToolChooser.getComponent();
+    rightToolbarBeforeDiffToolChooserComponent.setOpaque(false);
+
     myRightToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_RIGHT_TOOLBAR, myRightToolbarGroup, true);
     myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     myRightToolbar.setLayoutStrategy(new NoShrinkToolbarLayoutStrategy());
@@ -243,11 +252,16 @@ public abstract class DiffRequestProcessor
     var headerLayoutPanel = DiffHeaderToolbarUtil.createLayoutPanel(leftToolbarComponent,
                                                                     myToolbarStatusPanel,
                                                                     myProgressBar,
+                                                                    rightToolbarBeforeDiffToolChooserComponent,
                                                                     myDiffToolChooser,
                                                                     rightToolbarComponent);
     myTopPanel = new DiffHeaderToolbarPanel(new BorderLayout());
     myTopPanel.add(headerLayoutPanel, BorderLayout.CENTER);
-    GuiUtils.installVisibilityReferents(myTopPanel, leftToolbarComponent, rightToolbarComponent, myDiffToolChooser);
+    GuiUtils.installVisibilityReferents(myTopPanel,
+                                        leftToolbarComponent,
+                                        rightToolbarBeforeDiffToolChooserComponent,
+                                        rightToolbarComponent,
+                                        myDiffToolChooser);
 
     myBottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     myBottomContentSplitter.setFirstComponent(myContentPanel);
@@ -583,6 +597,7 @@ public abstract class DiffRequestProcessor
   private boolean isFocusedInWindow() {
     return DiffUtil.isFocusedComponentInWindow(myContentPanel) ||
            DiffUtil.isFocusedComponentInWindow(myToolbar.getComponent()) ||
+           DiffUtil.isFocusedComponentInWindow(myRightToolbarBeforeDiffToolChooser.getComponent()) ||
            DiffUtil.isFocusedComponentInWindow(myRightToolbar.getComponent());
   }
 
@@ -633,12 +648,16 @@ public abstract class DiffRequestProcessor
       myContentPanel.setContent(null);
 
       myToolbarGroup.removeAll();
+      myRightToolbarBeforeDiffToolChooserGroup.removeAll();
       myRightToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
       myToolbar.setTargetComponent(null);
       ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
+
+      myRightToolbarBeforeDiffToolChooser.setTargetComponent(null);
+      myRightToolbarBeforeDiffToolChooser.reset();
 
       myRightToolbar.setTargetComponent(null);
       ((ActionToolbarImpl)myRightToolbar).reset();
@@ -658,6 +677,7 @@ public abstract class DiffRequestProcessor
   protected void collectToolbarActions(@Nullable List<? extends AnAction> viewerActions,
                                        @Nullable List<? extends AnAction> rightViewerActions) {
     myToolbarGroup.removeAll();
+    myRightToolbarBeforeDiffToolChooserGroup.removeAll();
     myRightToolbarGroup.removeAll();
 
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
@@ -670,6 +690,8 @@ public abstract class DiffRequestProcessor
     DiffUtil.addActionBlock(myToolbarGroup, contextActions, false);
     DiffUtil.addActionBlock(myToolbarGroup, new ShowInExternalToolActionGroup());
 
+    DiffUtil.addActionBlock(myRightToolbarBeforeDiffToolChooserGroup,
+                            ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_RIGHT_TOOLBAR));
     DiffUtil.addActionBlock(myRightToolbarGroup, rightViewerActions, true);
 
     if (SystemInfo.isMac) { // collect touchbar actions
@@ -695,6 +717,10 @@ public abstract class DiffRequestProcessor
 
     ((ActionToolbarImpl)myToolbar).reset(); // do not leak previous DiffViewer via caches
     myToolbar.setTargetComponent(myContentPanel.getTargetComponent());
+
+    myRightToolbarBeforeDiffToolChooser.setTargetComponent(myContentPanel.getTargetComponent());
+    myRightToolbarBeforeDiffToolChooser.reset();
+    myRightToolbarBeforeDiffToolChooser.update();
 
     myRightToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     ((ActionToolbarImpl)myRightToolbar).reset();
@@ -1197,7 +1223,7 @@ public abstract class DiffRequestProcessor
 
     @Override
     public @NotNull List<AnAction> getActions(boolean originalProvider) {
-      return List.of(myToolbarGroup, myRightToolbarGroup, myPopupActionGroup);
+      return List.of(myToolbarGroup, myRightToolbarBeforeDiffToolChooserGroup, myRightToolbarGroup, myPopupActionGroup);
     }
 
     @Override
@@ -1240,6 +1266,29 @@ public abstract class DiffRequestProcessor
       if (getSettings().isGoToNextFileOnNextDifference()) {
         sink.set(DiffDataKeys.CROSS_FILE_PREV_NEXT_DIFFERENCE_ITERABLE, navigator);
       }
+    }
+  }
+
+  private static final class HideWhenEmptyToolbar extends ActionToolbarImpl {
+    HideWhenEmptyToolbar(@NotNull String place, @NotNull ActionGroup group) {
+      super(place, group, true);
+      setVisible(false);
+    }
+
+    @Override
+    public void addNotify() {
+      super.addNotify();
+      update();
+    }
+
+    @Override
+    protected void actionsUpdated(boolean forceRebuild, @NotNull List<? extends AnAction> newVisibleActions) {
+      super.actionsUpdated(forceRebuild, newVisibleActions);
+      setVisible(hasVisibleActions());
+    }
+
+    void update() {
+      updateActionsImmediately(true);
     }
   }
 

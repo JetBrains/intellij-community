@@ -5,6 +5,8 @@ import com.intellij.ide.vfs.virtualFile
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.PathUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
@@ -102,8 +104,17 @@ object MarkdownPreviewPathResolver {
       return projectRoot?.findFileByRelativePath(path) ?: findByAbsolutePath(path)
     }
     // The project root is a fallback for a path that names the project, not the document.
-    return document?.parent?.findFileByRelativePath(path)
+    return document?.directory()?.findFileByRelativePath(path)
            ?: projectRoot?.findFileByRelativePath(path)
+  }
+
+  /**
+   * In a diff view, [path] in [LightVirtualFile] matches the path of the actual changed file
+   */
+  private fun VirtualFile.directory(): VirtualFile? {
+    if (parent != null) return parent
+    if (this !is LightVirtualFile) return null
+    return findByAbsolutePath(PathUtil.getParentPath(path))?.takeIf { it.isDirectory }
   }
 
   /** A Remote Development frontend holds no local file, so it asks the backend. See IJPL-253826. */

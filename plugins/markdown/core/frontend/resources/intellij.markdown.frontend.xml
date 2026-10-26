@@ -10,6 +10,8 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diff"/>
+    <module name="intellij.platform.diff.impl"/>
     <module name="intellij.platform.editor.ex"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide"/>
@@ -36,6 +38,7 @@
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewEditorListener"/>
     <annotator language="Markdown" implementationClass="com.intellij.markdown.frontend.highlighting.MarkdownHighlightingAnnotator"/>
     <fileEditorProvider id="markdown-preview-editor" implementation="com.intellij.markdown.frontend.preview.MarkdownSplitEditorProvider"/>
+    <diff.frontendDiffExtension implementation="com.intellij.markdown.frontend.diff.MarkdownDiffLivePreviewExtension"/>
     <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
                         serviceImplementation="com.intellij.markdown.frontend.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
     <registryKey key="markdown.live.preview.opening.timeout.ms"
@@ -96,5 +99,10 @@
     <action id="Markdown.Layout.LivePreview"
             class="com.intellij.markdown.frontend.actions.MarkdownLivePreviewLayoutAction"
             icon="AllIcons.Actions.Edit"/>
+    <action id="Markdown.Diff.LivePreview"
+            class="com.intellij.markdown.frontend.actions.MarkdownDiffLivePreviewAction"
+            icon="AllIcons.Actions.Edit">
+      <add-to-group group-id="Diff.ViewerToolbarRight"/>
+    </action>
   </actions>
 </idea-plugin>

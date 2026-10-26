@@ -49,6 +49,7 @@
     </group>
     <group id="Diff.ViewerPopupMenu"/>
     <group id="Diff.ViewerToolbar"/>
+    <group id="Diff.ViewerToolbarRight"/>
     <group id="Diff.DiffModes"/>
     <group id="Diff.ViewerSettings"/>
     <group id="Diff.EditorGutterPopupMenu">

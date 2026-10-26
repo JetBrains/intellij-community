@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
 import com.intellij.ui.GuiUtils
@@ -164,6 +165,7 @@ internal class CombinedDiffMainToolbar(
   private fun collectToolbarActions(viewerActions: List<AnAction?>?) {
     leftToolbarGroup.removeAll()
 
+    DiffUtil.addActionBlock(rightToolbarGroup, ActionManager.getInstance().getAction(IdeActions.DIFF_VIEWER_RIGHT_TOOLBAR))
     rightToolbarGroup.add(diffToolChooser)
 
     DiffUtil.addActionBlock(leftToolbarGroup, collectNavigationActions())

@@ -48,6 +48,8 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/editor-ui-ex:editor-ex",
         "//platform/productMode",
+        "//platform/diff-api:diff",
+        "//platform/diff-impl",
     ],
 )
 
@@ -90,6 +92,8 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
         "//platform/editor-ui-ex:editor-ex_test_lib",
         "//platform/productMode:productMode_test_lib",
+        "//platform/diff-api:diff_test_lib",
+        "//platform/diff-impl:diff-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.markdown.frontend` end

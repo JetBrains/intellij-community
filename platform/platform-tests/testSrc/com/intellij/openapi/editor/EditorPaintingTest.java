@@ -168,13 +168,14 @@ public class EditorPaintingTest extends EditorPaintingTestCase {
       previousRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
       caretRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
       nextRegion.putUserData(FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND, true);
+      addRangeHighlighter(8, 11, 0, null, Color.blue);
       myFixture.getEditor().getCaretModel().moveToOffset(7);
 
       BufferedImage image = paintEditor(false, null, null);
       assertFalse(containsRed(image));
       assertFoldBackground(image, 0, Color.white);
       assertFoldBackground(image, 4, Color.green);
-      assertFoldBackground(image, 8, Color.white);
+      assertFoldBackground(image, 8, Color.blue);
     });
   }
 

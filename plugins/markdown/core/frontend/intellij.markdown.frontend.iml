@@ -54,5 +54,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.productMode" />
+    <orderEntry type="module" module-name="intellij.platform.diff" />
+    <orderEntry type="module" module-name="intellij.platform.diff.impl" />
   </component>
 </module>

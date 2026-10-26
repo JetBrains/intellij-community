@@ -30,6 +30,8 @@ import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.impl.view.IterationState
+import com.intellij.openapi.editor.markup.HighlighterLayer
+import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
@@ -1223,26 +1225,24 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertEquals(Color.BLUE.rgb, bitmap.getRGB(editor.offsetToXY(rule.startOffset).x, editor.lineHeight / 2))
   }
 
-  fun testBlockquoteRuleFillsThePlaceholdersOfItsQuoteWithTheQuoteBackground() {
+  fun testPlaceholdersShowTheBackgroundOfTheirText() {
     configure("- > - item\n\ntail<caret>")
     val editor = myFixture.editor
     editor.colorsScheme.setAttributes(MarkdownHighlighterColors.BLOCK_QUOTE, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
-    val rule = blockQuoteRules().single()
-    val bitmap = BufferedImage(1000, editor.lineHeight, BufferedImage.TYPE_INT_ARGB)
-    val graphics = bitmap.createGraphics()
-    try {
-      rule.customRenderer!!.paint(editor, rule, graphics)
-    }
-    finally {
-      graphics.dispose()
-    }
+    val (listBullet, marker, quotedBullet) = concealedLivePreviewRegions(editor)
 
-    val (listBullet, marker, quotedBullet) = concealedLivePreviewRegions(editor).map {
-      bitmap.getRGB(editor.offsetToXY(it.endOffset).x - 1, editor.lineHeight / 2)
+    var image = paintEditor()
+    assertFalse("A bullet before the quote must keep the editor background", Color.RED.rgb == placeholderBackground(image, listBullet))
+    assertEquals(Color.RED.rgb, placeholderBackground(image, marker))
+    assertEquals(Color.RED.rgb, placeholderBackground(image, quotedBullet))
+
+    // A diff change paints its lines above the quote background.
+    val change = TextAttributes(null, Color.GREEN, null, null, Font.PLAIN)
+    editor.markupModel.addRangeHighlighter(0, 1, HighlighterLayer.SELECTION - 1, change, HighlighterTargetArea.LINES_IN_RANGE)
+    image = paintEditor()
+    for (region in listOf(listBullet, marker, quotedBullet)) {
+      assertEquals("The placeholder at ${region.startOffset} must show the change", Color.GREEN.rgb, placeholderBackground(image, region))
     }
-    assertEquals("A bullet before the quote must keep the editor background", 0, listBullet ushr 24)
-    assertEquals(Color.RED.rgb, marker)
-    assertEquals(Color.RED.rgb, quotedBullet)
   }
 
   fun testRevealedMarkersMoveOnlyTheRulesOfTheirLine() {
@@ -2071,6 +2071,26 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     }
     result.append(text, offset, text.length)
     return result.toString()
+  }
+
+  private fun paintEditor(): BufferedImage {
+    val component = myFixture.editor.contentComponent
+    component.size = component.preferredSize
+    val image = BufferedImage(component.width, component.height, BufferedImage.TYPE_INT_RGB)
+    val graphics = image.createGraphics()
+    try {
+      component.paint(graphics)
+    }
+    finally {
+      graphics.dispose()
+    }
+    return image
+  }
+
+  /** Returns the pixel at the top right of a placeholder, clear of its glyph and of a blockquote rule. */
+  private fun placeholderBackground(image: BufferedImage, region: FoldRegion): Int {
+    val end = myFixture.editor.offsetToXY(region.endOffset)
+    return image.getRGB(end.x - 1, end.y + 1)
   }
 
   private fun concealedLivePreviewRegions(editor: Editor): List<FoldRegion> =

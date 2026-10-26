@@ -4,8 +4,6 @@ package com.intellij.markdown.frontend.editor.livepreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.colors.TextAttributesKey
-import com.intellij.openapi.editor.ex.FoldingModelEx
-import com.intellij.openapi.editor.impl.FoldingKeys
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -78,9 +76,6 @@ internal class MarkdownLivePreviewBlockQuoteRenderer(private val editor: Editor)
  * The rule starts on the marker line at the x position of the marker.
  * A highlighter that ends at a line start stops the rule above that line.
  * The rule takes the foreground of [ruleColorKey].
- * A placeholder with [FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND] ignores highlighters and shows the editor background.
- * Thus the painter fills each such placeholder on the marker line, from the marker on, with the background of the quote lines.
- * This covers the marker itself and a list bullet in the quote.
  */
 @ApiStatus.Internal
 class MarkdownBlockQuotePainter internal constructor(
@@ -103,25 +98,11 @@ class MarkdownBlockQuotePainter internal constructor(
     val scheme = editor.colorsScheme
     val child = (graphics as? Graphics2D)?.create() as? Graphics2D ?: return
     try {
-      scheme.getAttributes(MarkdownHighlighterColors.BLOCK_QUOTE)?.backgroundColor?.let {
-        child.color = it
-        fillPlaceholders(editor, markerOffset, child)
-      }
       child.color = scheme.getAttributes(ruleColorKey)?.foregroundColor ?: scheme.defaultForeground
-      child.fillRect(x, start, JBUI.scale(2), end - start)
+      child.fillRect(x, start, JBUI.scale(3), end - start)
     }
     finally {
       child.dispose()
-    }
-  }
-
-  private fun fillPlaceholders(editor: Editor, markerOffset: Int, graphics: Graphics2D) {
-    val foldingModel = editor.foldingModel as? FoldingModelEx ?: return
-    val lineEnd = DocumentUtil.getLineEndOffset(markerOffset, editor.document)
-    for (region in foldingModel.getRegionsOverlappingWith(markerOffset, lineEnd)) {
-      if (region.isExpanded || region.startOffset < markerOffset || !FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(region)) continue
-      val placeholder = editor.offsetToXY(region.startOffset)
-      graphics.fillRect(placeholder.x, placeholder.y, editor.offsetToXY(region.endOffset).x - placeholder.x, editor.lineHeight)
     }
   }
 }

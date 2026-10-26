@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.preview
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -29,6 +30,15 @@ class MarkdownPreviewPathResolverTest : BasePlatformTestCase() {
 
   fun `test relative to the document`() {
     assertFound(nearImage, "img/near.png")
+  }
+
+  /** A diff shows a revision in a light file without a parent. The light file keeps the path of the revision. */
+  fun `test relative to the path of a light file`() {
+    val revision = object : LightVirtualFile(document.name) {
+      override fun getPath(): String = document.path
+    }
+    val resolution = runBlocking { MarkdownPreviewPathResolver.resolve(revision, projectRoot(), "img/near.png") }
+    assertEquals(Resolution.Found(nearImage), resolution)
   }
 
   fun `test relative with a dot prefix`() {

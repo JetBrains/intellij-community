@@ -584,6 +584,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:CHANGES_VIEW_ROLLBACK:java.lang.String
 - sf:CONSOLE_CLEAR_ALL:java.lang.String
 - sf:DIFF_VIEWER_POPUP:java.lang.String
+- sf:DIFF_VIEWER_RIGHT_TOOLBAR:java.lang.String
 - sf:DIFF_VIEWER_TOOLBAR:java.lang.String
 - sf:EXTRACT_METHOD_TOOL_WINDOW_TREE_POPUP:java.lang.String
 - sf:GROUP_ANALYZE:java.lang.String
