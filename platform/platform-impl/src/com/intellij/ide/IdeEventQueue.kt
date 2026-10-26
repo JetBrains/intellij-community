@@ -220,7 +220,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
     addDispatcher(EditingCanceller(), null)
     //addDispatcher(new UIMouseTracker(), null);
-    abracadabraDaberBoreh(this)
+    setTargetEventQueueForToolkitEvents(this)
     if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
       postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
     }
@@ -1374,14 +1374,21 @@ interface NakedRunnable: Runnable
 
 private class ComponentEventWithClientId(source: Component, id: Int, override val clientId: ClientId?) : ComponentEvent(source, id), ClientIdAwareEvent
 
-@Suppress("SpellCheckingInspection")
-private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
+private fun setTargetEventQueueForToolkitEvents(eventQueue: IdeEventQueue) {
   // We need to track if there are KeyBoardEvents in `IdeEventQueue`,
   // so we want to intercept all events posted to `IdeEventQueue` and increment counters.
   // However, the regular control flow goes like this:
   //   PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() ->
   //     we missed the event because `postEventPrivate()` can't be overridden.
-  // Instead, we do the following:
+  // JBR provides an API to replace the event queue which receives toolkit events.
+  // We use this if it's available:
+  if (JBR.isToolkitEventsSupported()) {
+    JBR.getToolkitEvents().setTargetEventQueue(eventQueue)
+    return
+  }
+
+  // TODO: remove this legacy path
+  // If the JBR API is not available, we do the following instead:
   // - create a new `PostEventQueue` holding our `IdeEventQueue` instead of old `EventQueue`
   // - replace `PostEventQueue` value in `AppContext` with this new `PostEventQueue`
   // After that, the control flow goes like this:
