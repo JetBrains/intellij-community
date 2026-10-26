@@ -1,34 +1,47 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.grazie.ide.language
 
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class IgnoreSupportTest : GrazieTestBase() {
+@TestApplication
+class IgnoreSupportTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
+  @Suppress("unused")
+  private val grazie by grazieTestFixture(projectFixture)
+
+  @Test
   fun `test typo in gitignore comment`() {
-    myFixture.configureByText(
+    grazie.fixture.configureByText(
       "a.ignore",
       """
         # This is a <TYPO descr="Typo: In word 'frend'">frend</TYPO> of human
         target/
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test grammar error in gitignore comment`() {
-    myFixture.configureByText(
+    grazie.fixture.configureByText(
       "a.ignore",
       """
         # It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend of human
         build/
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test consecutive comment lines are joined`() {
-    myFixture.configureByText(
+    grazie.fixture.configureByText(
       "a.ignore",
       """
         # It is
@@ -36,11 +49,12 @@ class IgnoreSupportTest : GrazieTestBase() {
         out/
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test no spellcheck on entries`() {
-    myFixture.configureByText(
+    grazie.fixture.configureByText(
       "a.ignore",
       """
         # comment
@@ -48,11 +62,12 @@ class IgnoreSupportTest : GrazieTestBase() {
         somemisspeltdir/*.log
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test section and header comments are checked`() {
-    myFixture.configureByText(
+    grazie.fixture.configureByText(
       "a.ignore",
       """
         ### Header with a <TYPO descr="Typo: In word 'typoheader'">typoheader</TYPO>
@@ -63,6 +78,6 @@ class IgnoreSupportTest : GrazieTestBase() {
         build/
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 }

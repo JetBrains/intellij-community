@@ -1,47 +1,59 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.language
 
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.testFramework.PerformanceUnitTest
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.nio.charset.StandardCharsets
 
 
 @Suppress("NonAsciiCharacters")
-class PropertiesSupportTest : GrazieTestBase() {
+@TestApplication
+class PropertiesSupportTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun setUp() {
-    super.setUp()
-    val encodingManager = EncodingProjectManager.getInstance(project)
+  private val grazie by grazieTestFixture(projectFixture)
+
+  @BeforeEach
+  fun setUp() {
+    val encodingManager = EncodingProjectManager.getInstance(grazie.project)
     val defaultCharset = encodingManager.getDefaultCharsetForPropertiesFiles(null)
     val native2Ascii = encodingManager.isNative2AsciiForPropertiesFiles()
 
     encodingManager.setDefaultCharsetForPropertiesFiles(null, StandardCharsets.UTF_8)
     encodingManager.setNative2AsciiForPropertiesFiles(null, false)
 
-    Disposer.register(testRootDisposable) {
+    Disposer.register(grazie.testRootDisposable) {
       encodingManager.setDefaultCharsetForPropertiesFiles(null, defaultCharset)
       encodingManager.setNative2AsciiForPropertiesFiles(null, native2Ascii)
     }
   }
 
+  @Test
   fun `test asian-english mixed text in properties file`() {
-    myFixture.configureByText("a.properties", "title=本地daemon插件jar")
-    myFixture.checkHighlighting()
+    grazie.fixture.configureByText("a.properties", "title=本地daemon插件jar")
+    grazie.fixture.checkHighlighting()
 
-    enableProofreadingFor(setOf(Lang.CHINESE))
-    myFixture.configureByText("a.properties", "title=本地daemon插件jar")
-    myFixture.checkHighlighting()
+    grazie.enableProofreadingFor(setOf(Lang.CHINESE))
+    grazie.fixture.configureByText("a.properties", "title=本地daemon插件jar")
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test grammar check in file`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
 
-    myFixture.configureByText(
+    grazie.fixture.configureByText(
       "a.properties",
       """
         one.typo=It is <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> friend of human
@@ -70,25 +82,27 @@ class PropertiesSupportTest : GrazieTestBase() {
         method.duplicates.found.message={0, choice, 1#1 code fragment|2#{0,number} code fragments} found
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test escaping in properties file`() {
-    myFixture.configureByText("a.properties",
+    grazie.fixture.configureByText("a.properties",
       """
         one.liner=Hello\nworld\ragain\tanother
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
   @PerformanceUnitTest
+  @Test
   fun `test properties typos spellcheck performance`() {
     Benchmark.newBenchmark("Highlight typos in i18n.properties file") {
-      runHighlightTestForFile("ide/language/properties/i18n.properties")
+      grazie.runHighlightTestForFile("ide/language/properties/i18n.properties")
     }.setup {
-      psiManager.dropPsiCaches()
-      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
+      grazie.dropPsiCaches()
+      GrazieSpellCheckerEngine.getInstance(grazie.project).dropSuggestionCache()
     }.start()
   }
 }

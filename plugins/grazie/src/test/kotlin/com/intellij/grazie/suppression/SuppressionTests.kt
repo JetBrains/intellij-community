@@ -1,48 +1,59 @@
 package com.intellij.grazie.suppression
 
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Test
 
-class SuppressionTests: GrazieTestBase() {
+@TestApplication
+class SuppressionTests {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = JAVA_LATEST
+  @Suppress("unused")
+  private val grazie by grazieTestFixture(projectFixture, projectDescriptor = JAVA_LATEST)
 
+  @Test
   fun `test suppressing style inspection doesn't affect grammar issues`() {
-    myFixture.configureByText("A.java", """
+    grazie.fixture.configureByText("A.java", """
         class A {
           // Show is cancelled because of <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> cat
           @SuppressWarnings("GrazieStyle")
           public static void main() {}
         }
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test suppressing grammar inspection doesn't affect style issues`() {
-    myFixture.configureByText("A.java", """
+    grazie.fixture.configureByText("A.java", """
         class A {
           // Show is <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">can<caret>celled</STYLE_SUGGESTION> because of an cat
           @SuppressWarnings("GrazieInspection")
           public static void main() {}
         }
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test suppress style action generates necessary inspection id`() {
-    myFixture.configureByText("Class.java", """
+    grazie.fixture.configureByText("Class.java", """
       public class Class {
           // Show is <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">can<caret>celled</STYLE_SUGGESTION>
           public static void main() {}
       }
     """.trimIndent())
-    myFixture.checkHighlighting()
-    val intention = myFixture.getAvailableIntention("Suppress for method")
+    grazie.fixture.checkHighlighting()
+    val intention = grazie.fixture.getAvailableIntention("Suppress for method")
     assertNotNull(intention)
-    myFixture.launchAction(intention!!)
-    myFixture.checkResult("""
+    grazie.fixture.launchAction(intention!!)
+    grazie.fixture.checkResult("""
       public class Class {
           // Show is cancelled
           @SuppressWarnings("GrazieStyle")
@@ -51,18 +62,19 @@ class SuppressionTests: GrazieTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test suppress grammar action generates necessary inspection id`() {
-    myFixture.configureByText("Class.java", """
+    grazie.fixture.configureByText("Class.java", """
       public class Class {
           // There is <GRAMMAR_ERROR descr="EN_A_VS_AN">a<caret>n</GRAMMAR_ERROR> cat
           public static void main() {}
       }
     """.trimIndent())
-    myFixture.checkHighlighting()
-    val intention = myFixture.getAvailableIntention("Suppress for class")
+    grazie.fixture.checkHighlighting()
+    val intention = grazie.fixture.getAvailableIntention("Suppress for class")
     assertNotNull(intention)
-    myFixture.launchAction(intention!!)
-    myFixture.checkResult("""
+    grazie.fixture.launchAction(intention!!)
+    grazie.fixture.checkResult("""
       @SuppressWarnings("GrazieInspection")
       public class Class {
           // There is an cat
@@ -71,25 +83,27 @@ class SuppressionTests: GrazieTestBase() {
     """.trimIndent())
   }
 
+  @Test
   fun `test disabling grammar inspection`() {
-    myFixture.disableInspections(GrazieInspection.Grammar())
-    myFixture.configureByText("Class.java", """
+    grazie.fixture.disableInspections(GrazieInspection.Grammar())
+    grazie.fixture.configureByText("Class.java", """
       public class Class {
           // Show is <STYLE_SUGGESTION descr="Grazie.RuleEngine.En.Style.VARIANT_LEXICAL_DIFFERENCES">can<caret>celled</STYLE_SUGGESTION> because of an cat
           public static void main() {}
       }
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test disabling style inspection`() {
-    myFixture.disableInspections(GrazieInspection.Style())
-    myFixture.configureByText("Class.java", """
+    grazie.fixture.disableInspections(GrazieInspection.Style())
+    grazie.fixture.configureByText("Class.java", """
       public class Class {
           // Show is cancelled because of <GRAMMAR_ERROR descr="EN_A_VS_AN">an</GRAMMAR_ERROR> cat
           public static void main() {}
       }
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 }

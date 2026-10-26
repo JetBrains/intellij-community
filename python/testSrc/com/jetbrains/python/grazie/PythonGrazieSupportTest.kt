@@ -5,59 +5,80 @@ import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.GrazieTestFixture
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.utils.TextStyleDomain
 import com.intellij.idea.TestFor
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.jetbrains.python.PythonTestUtil
+import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
 @Subsystems.Inspections
 @Components.Grazie
 @Layers.Functional
-class PythonGrazieSupportTest : GrazieTestBase() {
-  override fun getTestDataPath() = Path(PythonTestUtil.getTestDataPath(), "grazie").toString()
+@TestApplication
+class PythonGrazieSupportTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
+  private val grazie by grazieTestFixture(
+    projectFixture,
+    testDataPath = Path(PythonTestUtil.getTestDataPath(), "grazie").toString(),
+  )
+
+  @Test
   fun `test f-strings`() {
-    runHighlightTestForFile("FStrings.py")
+    grazie.runHighlightTestForFile("FStrings.py")
   }
 
+  @Test
   fun `test grammar check in constructs`() {
-    runHighlightTestForFile("Constructs.py")
+    grazie.runHighlightTestForFile("Constructs.py")
   }
 
+  @Test
   fun `test grammar check in docs`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFile("Docs.py")
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+    grazie.runHighlightTestForFile("Docs.py")
   }
 
+  @Test
   fun `test grammar check in comments`() {
-    runHighlightTestForFile("Comments.py")
+    grazie.runHighlightTestForFile("Comments.py")
   }
 
+  @Test
   fun `test grammar check in string literals`() {
-    runHighlightTestForFile("StringLiterals.py")
+    grazie.runHighlightTestForFile("StringLiterals.py")
   }
 
   // PY-53047
+  @Test
   fun `test docstring tags are excluded`() {
-    GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, enabledRules) }
-    runHighlightTestForFile("DocstringTagsAreExcluded.py")
+    GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, GrazieTestFixture.enabledRules) }
+    grazie.runHighlightTestForFile("DocstringTagsAreExcluded.py")
   }
 
   @TestFor(issues=["PY-27635", "PY-62267"])
+  @Test
   fun `test sphinx roles are excluded`() {
-    GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, enabledRules) }
-    runHighlightTestForFile("SphinxRolesAreExcluded.py")
+    GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeDocumentation, GrazieTestFixture.enabledRules) }
+    grazie.runHighlightTestForFile("SphinxRolesAreExcluded.py")
   }
 
   @TestFor(issues=["PY-27635"])
+  @Test
   fun `test sphinx markup in comments is excluded`() {
-    runHighlightTestForFile("SphinxInCommentsExcluded.py")
+    grazie.runHighlightTestForFile("SphinxInCommentsExcluded.py")
   }
 
   @TestFor(issues=["IJPL-257025"])
+  @Test
   fun `test docstring parameter names are excluded`() {
-    runHighlightTestForFile("DocstringParameterNamesAreExcluded.py")
+    grazie.runHighlightTestForFile("DocstringParameterNamesAreExcluded.py")
   }
 }

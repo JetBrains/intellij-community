@@ -9,10 +9,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.lang.xml.XMLLanguage;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiComment;
@@ -44,7 +41,7 @@ import org.junit.jupiter.api.Assertions;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.grazie.text.TextContentTest.unknownOffsets;
+import static com.intellij.grazie.text.TextContentTestUtil.unknownOffsets;
 
 public class TextExtractionTest extends BasePlatformTestCase {
   public void testFindPsiAtLastOffset() {
@@ -168,7 +165,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
   public void testExcludePropertyHtml() {
     List<TextContent> texts = extractTexts("a.properties", "a=<html>Hello <p/><i>World</i></html>", 8, PsiElement.class);
-    assertEquals(List.of("Hello", "World"), ContainerUtil.map(texts, TextContentTest::unknownOffsets));
+    assertEquals(List.of("Hello", "World"), ContainerUtil.map(texts, TextContentTestUtil::unknownOffsets));
   }
 
   public void testMultiLineCommentInProperties() {
@@ -194,7 +191,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
        */""";
     assertEquals(
       List.of("Hello |,\nhere's an asterisk: *\nand some |.\ntags1 |\ntags2 |one| two", "three| four|\n|is unknown."),
-      ContainerUtil.map(extractTexts("a.java", docText, 6, PsiDocComment.class), TextContentTest::unknownOffsets));
+      ContainerUtil.map(extractTexts("a.java", docText, 6, PsiDocComment.class), TextContentTestUtil::unknownOffsets));
 
     TextContent text = extractText("a.java", docText, docText.indexOf("the offset"));
     assertEquals("the offset of  in something", text.toString());
@@ -495,25 +492,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   private TextContent extractText(String fileName, String fileText, int offset) {
-    return extractText(fileName, fileText, offset, getProject());
+    return TextContentTestUtil.extractText(fileName, fileText, offset, getProject());
   }
 
   private List<TextContent> extractTexts(String fileName, String text, int offset, Class<? extends PsiElement> psi) {
-    PsiFile file = createFile(fileName, text, getProject());
+    PsiFile file = TextContentTestUtil.createFile(fileName, text, getProject());
     return TextExtractor.findTextsAt(PsiTreeUtil.findElementOfClassAtOffset(file, offset, psi, false), TextContent.TextDomain.ALL);
-  }
-
-  private static PsiFile createFile(String fileName, String fileText, Project project) {
-    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    return PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, fileText);
-  }
-
-  public static TextContent extractText(String fileName, String fileText, int offset, Project project) {
-    return TextExtractor.findTextAt(createFile(fileName, fileText, project), offset, TextContent.TextDomain.ALL);
-  }
-
-  public static Set<TextContent> extractAllTexts(String fileName, String fileText, Project project) {
-    PsiFile file = createFile(fileName, fileText, project);
-    return TextExtractor.findAllTextContents(file.getViewProvider(), TextContent.TextDomain.ALL);
   }
 }

@@ -16,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.PLAIN_TEXT;
+import static com.intellij.grazie.text.TextContentTestUtil.unknownOffsets;
 
 public class TextContentTest extends BasePlatformTestCase {
   public void testTextOffsetLean() {
@@ -105,15 +106,6 @@ public class TextContentTest extends BasePlatformTestCase {
     assertEquals("c|", unknownOffsets(joined.excludeRange(new TextRange(0, 1))));
     
     assertEquals(joined, TextContent.joinWithWhitespace(' ', List.of(f1, f2)));
-  }
-
-  public static String unknownOffsets(TextContent text) {
-    StringBuilder sb = new StringBuilder(text);
-    int[] offsets = text.unknownOffsets();
-    for (int i = offsets.length - 1; i >= 0; i--) {
-      sb.insert(offsets[i], "|");
-    }
-    return sb.toString();
   }
 
   public void testUnknownAndExcludeOrderDoesNotMatter() {

@@ -4,19 +4,31 @@ package com.intellij.grazie.ide.language
 
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.GrazieCheckers
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Test
 
-class CommitSupportTest : GrazieTestBase() {
+@TestApplication
+class CommitSupportTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val grazie by grazieTestFixture(projectFixture)
+
+  @Test
   fun `test commit message has highlighting with all quick fixes`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-    configureCommit(myFixture, """
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    configureCommit(grazie.fixture, """
             
             This is <caret><GRAMMAR_ERROR descr="EN_A_VS_AN">a</GRAMMAR_ERROR> error.
             
@@ -27,14 +39,15 @@ class CommitSupportTest : GrazieTestBase() {
             das <TYPO descr="Typo: In word 'daert'">daert</TYPO> geschätzt fünf <STYLE_SUGGESTION descr="MANNSTUNDE">Mannstunden</STYLE_SUGGESTION>.
           """.trimIndent())
 
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
 
-    myFixture.findSingleIntention("Wrong article")
-    myFixture.findSingleIntention("an")
-    myFixture.findSingleIntention("Ignore 'a error'")
-    myFixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an'' in commit messages…")
+    grazie.fixture.findSingleIntention("Wrong article")
+    grazie.fixture.findSingleIntention("an")
+    grazie.fixture.findSingleIntention("Ignore 'a error'")
+    grazie.fixture.findSingleIntention("Configure rule 'Use of 'a' vs. 'an'' in commit messages…")
   }
 
+  @Test
   fun `test correct highlighting in commit messages`() {
     checkCommitMessage("JIRA-123: add apache commons text dependency")
     checkCommitMessage("JIRA-123: it started - june is here")
@@ -44,17 +57,20 @@ class CommitSupportTest : GrazieTestBase() {
     checkCommitMessage("<TYPO descr=\"Typo: In word 'typopo'\">typopo</TYPO> [grazie]: june is here")
   }
 
+  @Test
   fun `test mass apply is not available in commit messages`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-    configureCommit(myFixture, "This is <caret><GRAMMAR_ERROR descr=\"EN_A_VS_AN\">a</GRAMMAR_ERROR> error")
-    myFixture.checkHighlighting()
-    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    configureCommit(grazie.fixture, "This is <caret><GRAMMAR_ERROR descr=\"EN_A_VS_AN\">a</GRAMMAR_ERROR> error")
+    grazie.fixture.checkHighlighting()
+    assertNull(grazie.fixture.getAvailableIntention("Accept all writing suggestions…"))
   }
 
+  @Test
   fun `test typos are highlighted under the real commit editor inspection profile`() {
-    checkRealCommitHighlighting(myFixture, "<TYPO descr=\"Typo: In word 'typopo'\">typopo</TYPO> [grazie]: june is here")
+    checkRealCommitHighlighting(grazie.fixture, "<TYPO descr=\"Typo: In word 'typopo'\">typopo</TYPO> [grazie]: june is here")
   }
 
+  @Test
   fun `test spell checking is skipped when commit message checking is disabled`() {
     GrazieConfig.update { state ->
       state.copy(checkingContext = state.checkingContext.copy(isCheckInCommitMessagesEnabled = false))
@@ -62,12 +78,12 @@ class CommitSupportTest : GrazieTestBase() {
     service<GrazieCheckers>().awaitConfiguration()
 
     // No <TYPO> markup: with the "Commit messages" toggle off, CommitAnnotator must not report typos.
-    checkRealCommitHighlighting(myFixture, "typopo [grazie]: june is here")
+    checkRealCommitHighlighting(grazie.fixture, "typopo [grazie]: june is here")
   }
 
   private fun checkCommitMessage(text: String) {
-    configureCommit(myFixture, text)
-    myFixture.checkHighlighting()
+    configureCommit(grazie.fixture, text)
+    grazie.fixture.checkHighlighting()
   }
 }
 

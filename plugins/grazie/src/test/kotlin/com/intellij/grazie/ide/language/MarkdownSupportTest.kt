@@ -3,7 +3,7 @@
 
 package com.intellij.grazie.ide.language
 
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.SpellCheckerManager.Companion.getInstance
@@ -11,73 +11,91 @@ import com.intellij.spellchecker.dictionary.Dictionary
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Absent
 import com.intellij.spellchecker.dictionary.Dictionary.LookupStatus.Present
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
 
-class MarkdownSupportTest : GrazieTestBase() {
-  override val additionalEnabledRules: Set<String> = setOf(
+@TestApplication
+class MarkdownSupportTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val grazie by grazieTestFixture(projectFixture, additionalEnabledRules = setOf(
     "LanguageTool.EN.COMMA_COMPOUND_SENTENCE",
     "LanguageTool.EN.EN_QUOTES",
     "LanguageTool.EN.DASH_RULE"
-  )
+  ))
 
+  @Test
   fun `test grammar check in file`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/markdown/Example.md")
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+    grazie.runHighlightTestForFile("ide/language/markdown/Example.md")
   }
 
+  @Test
   fun `test grazie spellchecker in file`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-    runHighlightTestForFile("ide/language/markdown/Spellcheck.md")
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+    grazie.runHighlightTestForFile("ide/language/markdown/Spellcheck.md")
   }
 
+  @Test
   fun `test no false positives in test links`() {
-    runHighlightTestForFile("ide/language/markdown/TestLink.md")
+    grazie.runHighlightTestForFile("ide/language/markdown/TestLink.md")
   }
 
+  @Test
   fun `test replacement with markup inside`() {
-    myFixture.configureByText("a.md", "Please, <STYLE_SUGGESTION descr=\"GATHER_UP\">gather<caret> </STYLE_SUGGESTION>[<STYLE_SUGGESTION descr=\"GATHER_UP\">up</STYLE_SUGGESTION> the](url) documentation.")
-    myFixture.checkHighlighting()
-    myFixture.launchAction(myFixture.findSingleIntention("gather"))
-    myFixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved
+    grazie.fixture.configureByText("a.md", "Please, <STYLE_SUGGESTION descr=\"GATHER_UP\">gather<caret> </STYLE_SUGGESTION>[<STYLE_SUGGESTION descr=\"GATHER_UP\">up</STYLE_SUGGESTION> the](url) documentation.")
+    grazie.fixture.checkHighlighting()
+    grazie.fixture.launchAction(grazie.fixture.findSingleIntention("gather"))
+    grazie.fixture.checkResult("Please, gather[ the](url) documentation.") // the result could be different, but the markup should still be preserved
   }
 
+  @Test
   fun `test no highlighting in a very large file to avoid slow analysis`() {
     val text = "This is an very nice mistake in English text.\n\n".repeat(10_000)
-    myFixture.configureByText("a.md", text)
-    myFixture.checkHighlighting()
+    grazie.fixture.configureByText("a.md", text)
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test no style warning highlighting for picky passive voice rules`() {
-    myFixture.configureByText("a.md", """
+    grazie.fixture.configureByText("a.md", """
       Many objects are disposed automatically by the platform if they implement the Disposable interface. 
       The most important type of such objects is services. Application-level services are automatically disposed 
       by the platform when the IDE is closed or the plugin providing the service is unloaded.
       Project-level services are disposed on project close or plugin upload events.
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test html entity excluded before grazie checks`() {
-    myFixture.configureByText("a.md", "You&#39;re here.")
-    myFixture.checkHighlighting()
+    grazie.fixture.configureByText("a.md", "You&#39;re here.")
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test no LT article warning before number starting with a vowel`() {
-    myFixture.configureByText("a.md", "Extract an 8x8 pixel square from an 11x11 square from an 18432x18432 square from an 11000.")
-    myFixture.checkHighlighting()
+    grazie.fixture.configureByText("a.md", "Extract an 8x8 pixel square from an 11x11 square from an 18432x18432 square from an 11000.")
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test no em dash warning for list bullet in injected markdown`() {
-    myFixture.configureByText("a.md", """
+    grazie.fixture.configureByText("a.md", """
       Something
       ```markdown
       ## Goals
       - Primary outcomes the feature must deliver.
       ```
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test no typos in asian-english mixed texts with text-level spellchecker`() {
     // It may look like a synthetic example that has nothing to do with the real world,
     // but this is exactly what [androidDictionary] looks like
@@ -94,9 +112,10 @@ class MarkdownSupportTest : GrazieTestBase() {
       // Some Japanese too
       次のprojectのdeadlineは来週の金曜日なので、急いでfinishしなければなりません。
     """.trimIndent()
-    myFixture.configureByText("a.md", mixedText)
-    myFixture.checkHighlighting()
+    grazie.fixture.configureByText("a.md", mixedText)
+    grazie.fixture.checkHighlighting()
 
+    val project = grazie.project
     val name = "androidDictionary"
     val words = setOf("foldable", "rollable", "wearable")
     getInstance(project).spellChecker!!.addDictionary(object : Dictionary {
@@ -104,22 +123,23 @@ class MarkdownSupportTest : GrazieTestBase() {
       override fun lookup(word: String): LookupStatus = if (word in words) Present else Absent
       override fun getWords(): Set<String> = words
     })
-    Disposer.register(testRootDisposable) { getInstance(project).spellChecker!!.removeDictionary(name) }
-    myFixture.configureByText("a.md", mixedText)
-    myFixture.checkHighlighting()
+    Disposer.register(grazie.testRootDisposable) { getInstance(project).spellChecker!!.removeDictionary(name) }
+    grazie.fixture.configureByText("a.md", mixedText)
+    grazie.fixture.checkHighlighting()
 
-    enableProofreadingFor(setOf(Lang.CHINESE, Lang.JAPANESE))
-    myFixture.configureByText("a.md", mixedText + """
+    grazie.enableProofreadingFor(setOf(Lang.CHINESE, Lang.JAPANESE))
+    grazie.fixture.configureByText("a.md", mixedText + """
 
       <!-- 将文本粘贴在此，或者检测以下文本 我和她去看了<GRAMMAR_ERROR descr="wa5">二部</GRAMMAR_ERROR>电影。-->
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test grammar check in html comment`() {
-    myFixture.configureByText("a.md", """
+    grazie.fixture.configureByText("a.md", """
       <!-- It is <GRAMMAR_ERROR <TYPO descr="Typo: In word 'descr'">descr</TYPO>=\"EN_A_VS_AN\">an</GRAMMAR_ERROR> friend there -->
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 }

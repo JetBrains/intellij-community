@@ -1,91 +1,121 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.grazie
 
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextContentTest
-import com.intellij.grazie.text.TextExtractionTest
 import com.intellij.grazie.text.TextExtractor
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.grazie.text.extractAllTexts
+import com.intellij.grazie.text.unknownOffsets
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import kotlin.io.path.Path
 
-class KotlinGrazieSupportTest28 : GrazieTestBase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
-
-    override val additionalEnabledRules: Set<String> = setOf("UPPERCASE_SENTENCE_START")
-
-    override fun runHighlightTestForFile(file: String) {
-        myFixture.configureByFile(file)
-        myFixture.checkHighlighting(true, false, false, false)
+@TestApplication
+class KotlinGrazieSupportTest28 {
+    companion object {
+        private val projectFixture = projectFixture(openAfterCreation = true)
+        private val descriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
     }
 
-    override fun getTestDataPath(): String = Path(PlatformTestUtil.getCommunityPath(), "plugins/kotlin/idea/tests/testData").toString()
+    private val grazie by grazieTestFixture(
+        projectFixture,
+        moduleTypeId = descriptor.moduleTypeId,
+        testDataPath = Path(PlatformTestUtil.getCommunityPath(), "plugins/kotlin/idea/tests/testData").toString(),
+        additionalEnabledRules = setOf("UPPERCASE_SENTENCE_START"),
+    )
 
+    @BeforeEach
+    fun setUpModule() {
+        val module = grazie.fixture.module
+        val sdk = descriptor.sdk!!
+        WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, grazie.testRootDisposable) }
+        ModuleRootModificationUtil.setModuleSdk(module, sdk)
+        ModuleRootModificationUtil.updateModel(module) { descriptor.configureModule(module, it, it.contentEntries.single()) }
+        IndexingTestUtil.waitUntilIndexesAreReady(grazie.project)
+    }
+
+    @Test
     fun `test spellcheck in constructs`() {
-        runHighlightTestForFile("grazie/Constructs.kt")
+        grazie.runHighlightTestForFile("grazie/Constructs.kt")
     }
 
+    @Test
     fun `test Kotlin keyword operator is not a typo`() {
-        myFixture.configureByText("a.kt", """
+        grazie.fixture.configureByText("a.kt", """
             fun f(low: Int, high: Int) {
                 val mid = (low + high) ushr 1
             }
         """.trimIndent())
-        myFixture.checkHighlighting()
+        grazie.fixture.checkHighlighting()
     }
 
+    @Test
     fun `test grammar check in docs`() {
-        enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-        runHighlightTestForFile("grazie/Docs.kt")
+        grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+        grazie.runHighlightTestForFile("grazie/Docs.kt")
     }
 
+    @Test
     fun `test grammar check in string literals`() {
-        runHighlightTestForFile("grazie/StringLiterals.kt")
+        grazie.runHighlightTestForFile("grazie/StringLiterals.kt")
     }
 
+    @Test
     fun `test umlauts doesn't produce false positives`() {
-        enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-        runHighlightTestForFile("grazie/Umlauts.kt")
+        grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+        grazie.runHighlightTestForFile("grazie/Umlauts.kt")
     }
 
+    @Test
     fun `test no german warnings in kdoc with heading and slashes`() {
-        enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
-        myFixture.configureByText("a.kt", """
+        grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN))
+        grazie.fixture.configureByText("a.kt", """
             /**
              * # Titel
              * Hier ist ok // Außer am Satzanfang werden nur Nomen und Eigennamen großgeschrieben.
              */
             fun f() {}
         """.trimIndent())
-        myFixture.checkHighlighting()
+        grazie.fixture.checkHighlighting()
     }
 
+    @Test
     fun `test text extraction in string literals`() {
-        val file = myFixture.configureByText("a.kt", "val s = \"foo $" + "{injection} bar\" ")
-        val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)
-        assertEquals("foo | bar", TextContentTest.unknownOffsets(content))
+        val file = grazie.fixture.configureByText("a.kt", "val s = \"foo $" + "{injection} bar\" ")
+        val content = runReadActionBlocking { TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL) }
+        assertEquals("foo | bar", unknownOffsets(content!!))
     }
 
+    @Test
     fun `test text extraction in string literals with soft hyphen`() {
-        val file = myFixture.configureByText("a.kt", "val s = \"I just want to say \\u00ADhello to everyone.\"")
-        val content = TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL)
-        assertEquals("I just want to say |hello to everyone.", TextContentTest.unknownOffsets(content))
+        val file = grazie.fixture.configureByText("a.kt", "val s = \"I just want to say \\u00ADhello to everyone.\"")
+        val content = runReadActionBlocking { TextExtractor.findTextAt(file, 10, TextContent.TextDomain.ALL) }
+        assertEquals("I just want to say |hello to everyone.", unknownOffsets(content!!))
     }
 
+    @Test
     fun `test meaningful single suggestion in RenameTo action`() {
-        myFixture.configureByText("a.kt", """
+        grazie.fixture.configureByText("a.kt", """
             class A {
                 // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
                 val <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO> = 1
             }
         """)
-        myFixture.checkHighlighting()
-        val intention = myFixture.findSingleIntention("Typo: Rename to 'target'")
-        myFixture.launchAction(intention)
-        myFixture.checkResult("""
+        grazie.fixture.checkHighlighting()
+        val intention = grazie.fixture.findSingleIntention("Typo: Rename to 'target'")
+        grazie.fixture.launchAction(intention)
+        grazie.fixture.checkResult("""
             class A {
                 // target
                 val target = 1
@@ -93,32 +123,35 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
         """)
     }
 
+    @Test
     fun `test meaningful single suggestion in escaped identifier`() {
-        myFixture.configureByText("a.kt", """
+        grazie.fixture.configureByText("a.kt", """
             fun `test no <TYPO descr="Typo: In word 'typpo'">typpo</TYPO> around path <TYPO descr="Typo: In word 'typpo'">ty<caret>ppo</TYPO>`() {
             }
         """)
-        myFixture.checkHighlighting()
-        val intention = myFixture.findSingleIntention("Typo: Rename to 'test no typpo around path typo'")
-        myFixture.launchAction(intention)
-        myFixture.checkResult("""
+        grazie.fixture.checkHighlighting()
+        val intention = grazie.fixture.findSingleIntention("Typo: Rename to 'test no typpo around path typo'")
+        grazie.fixture.launchAction(intention)
+        grazie.fixture.checkResult("""
             fun `test no typpo around path typo`() {
             }
         """)
     }
 
+    @Test
     fun `test escape sequences in string literals`() {
-        myFixture.configureByText("a.kt", """
+        grazie.fixture.configureByText("a.kt", """
             val value2 = "class\nexpected 1\ttypo: 2"
             val value1 = ""${'"'}
                 wrong object class\<TYPO descr="Typo: In word 'nexpected'">nexpected</TYPO> 1\<TYPO descr="Typo: In word 'ttypo'">ttypo</TYPO>: 2
             ""${'"'}""".trimIndent()
         )
-        myFixture.checkHighlighting()
+        grazie.fixture.checkHighlighting()
     }
 
+    @Test
     fun `test code-like fragments are not extracted`() {
-        val texts = TextExtractionTest.extractAllTexts("a.kt", $$"""
+        val texts = runReadActionBlocking { extractAllTexts("a.kt", $$"""
             /**
              * The Markdown lexer folds a nested list item's leading indentation into its `LIST_BULLET`/`LIST_NUMBER` token
              * (e.g. `"  - "`), so a list / list-item block would otherwise start inside the line's indentation. Trim that
@@ -148,7 +181,7 @@ class KotlinGrazieSupportTest28 : GrazieTestBase() {
              * `fun main() { println("Hello, Kotlin") }`
              */
             fun main() {}
-        """.trimIndent(), project)
+        """.trimIndent(), grazie.project) }
         assertEquals(1, texts.size)
         assertEquals(texts.first().toString(), """
             The Markdown lexer folds a nested list item's leading indentation into its / token

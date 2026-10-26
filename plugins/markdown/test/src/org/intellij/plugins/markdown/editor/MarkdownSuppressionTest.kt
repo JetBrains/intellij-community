@@ -1,21 +1,32 @@
 package org.intellij.plugins.markdown.editor
 
 import com.intellij.codeInspection.htmlInspections.XmlInspectionToolProvider
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
+import org.junit.jupiter.api.Test
 
-internal class MarkdownSuppressionTest: GrazieTestBase() {
+@TestApplication
+internal class MarkdownSuppressionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  override fun getTestDataPath(): String = "${MarkdownTestingUtil.TEST_DATA_PATH}/editor/suppression/"
+  private val grazie by grazieTestFixture(projectFixture, testDataPath = "${MarkdownTestingUtil.TEST_DATA_PATH}/editor/suppression/")
 
-  fun `test multiple suppressions with table`() = doTest()
-  fun `test suppressions with yaml header`() = doTest()
-  fun `test multiple suppressions with toml header`() = doTest()
+  @Test
+  fun `test multiple suppressions with table`(): Unit = doTest()
+  @Test
+  fun `test suppressions with yaml header`(): Unit = doTest()
+  @Test
+  fun `test multiple suppressions with toml header`(): Unit = doTest()
 
+  @Test
   fun `test unknown html tags and attributes are suppressed`() {
-    myFixture.enableInspections(XmlInspectionToolProvider())
-    myFixture.configureByText(
+    grazie.fixture.enableInspections(XmlInspectionToolProvider())
+    grazie.fixture.configureByText(
       "test.md",
       """
         <rule unknown-attribute="value">
@@ -24,19 +35,19 @@ internal class MarkdownSuppressionTest: GrazieTestBase() {
         <div unknown-attribute="value"></div>
       """.trimIndent()
     )
-    myFixture.doHighlighting()
+    grazie.fixture.doHighlighting()
   }
 
   private fun doTest() {
-    val name = getTestName(true)
-    myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
-    myFixture.configureByFile("$name.md")
+    val name = testFileName()
+    grazie.fixture.enableInspections(MarkdownIncorrectTableFormattingInspection())
+    grazie.fixture.configureByFile("$name.md")
 
-    val intention = myFixture.availableIntentions.first { it.text == "Suppress for file" }
-    myFixture.launchAction(intention)
-    myFixture.checkResultByFile("$name.after.md")
+    val intention = grazie.fixture.availableIntentions.first { it.text == "Suppress for file" }
+    grazie.fixture.launchAction(intention)
+    grazie.fixture.checkResultByFile("$name.after.md")
   }
 
-  override fun getTestName(lowercaseFirstLetter: Boolean): String =
-    super.getTestName(lowercaseFirstLetter).trimStart().replace(' ', '_')
+  private fun testFileName(): String =
+    grazie.getTestName(true).trimStart().replace(' ', '_')
 }

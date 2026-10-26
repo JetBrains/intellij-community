@@ -11,7 +11,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.GrazieTestFixture
 import com.intellij.grazie.ide.TextProblemSeverities
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuickFix
@@ -40,7 +40,7 @@ class ReportingTest : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    GrazieTestBase.maskSaxParserFactory(testRootDisposable)
+    GrazieTestFixture.maskSaxParserFactory(testRootDisposable)
   }
 
   fun `test tooltip and description texts in inspection`() {

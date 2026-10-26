@@ -4,64 +4,80 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.grazieTestFixture
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.spellcheck.engine.GrazieSpellCheckerEngine
 import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextContentTest
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.text.unknownOffsets
 import com.intellij.grazie.utils.TextStyleDomain
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.Disposer
 import com.intellij.spellchecker.ProjectDictionaryLayer
 import com.intellij.spellchecker.settings.SpellCheckerSettings
 import com.intellij.testFramework.DumbModeTestUtils.runInDumbModeSynchronously
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PerformanceUnitTest
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.tools.ide.metrics.benchmark.Benchmark
-import org.junit.Assert.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 
 
-class JavaSupportTest : GrazieTestBase() {
-
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
+@TestApplication
+class JavaSupportTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
   }
 
+  private val grazie by grazieTestFixture(projectFixture, projectDescriptor = LightJavaCodeInsightFixtureTestCase.JAVA_LATEST)
+
+  @Test
   fun `test spellcheck in constructs`() {
-    runHighlightTestForFile("ide/language/java/Constructs.java")
+    grazie.runHighlightTestForFile("ide/language/java/Constructs.java")
   }
 
+  @Test
   fun `test grammar check in docs`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
-    runHighlightTestForFile("ide/language/java/Docs.java")
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.RUSSIAN))
+    grazie.runHighlightTestForFile("ide/language/java/Docs.java")
   }
 
+  @Test
   fun `test grammar check in string literals`() {
-    runHighlightTestForFile("ide/language/java/StringLiterals.java")
+    grazie.runHighlightTestForFile("ide/language/java/StringLiterals.java")
   }
 
+  @Test
   fun `test grammar check in comments`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
-    runHighlightTestForFile("ide/language/java/Comments.java")
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.UKRAINIAN, Lang.BELARUSIAN))
+    grazie.runHighlightTestForFile("ide/language/java/Comments.java")
   }
 
+  @Test
   fun `test split line quick fix`() {
-    runHighlightTestForFile("ide/language/java/SplitLine.java")
-    myFixture.launchAction(myFixture.findSingleIntention(", but"))
-    myFixture.checkResultByFile("ide/language/java/SplitLine_after.java")
+    grazie.runHighlightTestForFile("ide/language/java/SplitLine.java")
+    grazie.fixture.launchAction(grazie.fixture.findSingleIntention(", but"))
+    grazie.fixture.checkResultByFile("ide/language/java/SplitLine_after.java")
   }
 
+  @Test
   fun `test do not merge text with non-text`() {
-    runHighlightTestForFile("ide/language/java/AccidentalMerge.java")
-    myFixture.launchAction(myFixture.findSingleIntention("Remove"))
-    myFixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
+    grazie.runHighlightTestForFile("ide/language/java/AccidentalMerge.java")
+    grazie.fixture.launchAction(grazie.fixture.findSingleIntention("Remove"))
+    grazie.fixture.checkResultByFile("ide/language/java/AccidentalMerge_after.java")
   }
 
+  @Test
   fun `test escape sequences in string literals`() {
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       class Scratch {
           public static void main(String[] args) {
               var value1 = ""${'"'}
@@ -69,52 +85,59 @@ class JavaSupportTest : GrazieTestBase() {
           }
       }
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test escaped backslash before text`() {
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       class Repro {
         String path = "C:\\transform-templates";
       }
     """.trimIndent())
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
   @PerformanceUnitTest
+  @Test
   fun `test long comment performance`() {
     Benchmark.newBenchmark("highlighting") {
-      runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
-    }.setup { psiManager.dropPsiCaches() }.start()
+      grazie.runHighlightTestForFile("ide/language/java/LongCommentPerformance.java")
+    }.setup { grazie.dropPsiCaches() }.start()
   }
 
   @PerformanceUnitTest
+  @Test
   fun `test performance with many line comments`() {
     val text = "// this is a single line comment\n".repeat(5000)
-    myFixture.configureByText("a.java", text)
+    grazie.fixture.configureByText("a.java", text)
     Benchmark.newBenchmark("highlighting") {
-      myFixture.checkHighlighting()
-    }.setup { psiManager.dropPsiCaches() }.start()
+      grazie.fixture.checkHighlighting()
+    }.setup { grazie.dropPsiCaches() }.start()
   }
 
+  @Test
   fun testCommentIsNotHighlightedIfThereIsReference() {
-    runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
+    grazie.runHighlightTestForFile("ide/language/java/VectorablexxClass.java")
 
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
-    runInDumbModeSynchronously(project) { runHighlightTestForFile("ide/language/java/VectorablexxClass.java") }
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, grazie.testRootDisposable)
+    runInDumbModeSynchronously(grazie.project) { grazie.runHighlightTestForFile("ide/language/java/VectorablexxClass.java") }
   }
 
+  @Test
   fun `test spellchecking normalization`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
-    runHighlightTestForFile("ide/language/java/Normalization.java")
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.PORTUGAL_PORTUGUESE))
+    grazie.runHighlightTestForFile("ide/language/java/Normalization.java")
   }
 
+  @Test
   fun `test grazie spellchecking in java`() {
     val words = setOf("SSIZE_MAX", "MacTyppoo", "CANopen", "DBtune", "RESTTful", "typpoTypoo")
-    ProjectDictionaryLayer(project).dictionary.addToDictionary(words)
-    runHighlightTestForFile("ide/language/java/CamelCase.java")
+    ProjectDictionaryLayer(grazie.project).dictionary.addToDictionary(words)
+    grazie.runHighlightTestForFile("ide/language/java/CamelCase.java")
   }
 
+  @Test
   fun `test multiline compounds`() {
     doTest(
       """
@@ -158,18 +181,19 @@ class JavaSupportTest : GrazieTestBase() {
     )
   }
 
+  @Test
   fun `test meaningful single suggestion in RenameTo action`() {
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       class A {
         void foo() {
           int <TYPO descr="Typo: In word 'tagret'">tag<caret>ret</TYPO>Dir = 1;
         }
       }
     """)
-    myFixture.checkHighlighting()
-    val intention = myFixture.findSingleIntention("Typo: Rename to 'targetDir'")
-    myFixture.launchAction(intention)
-    myFixture.checkResult("""
+    grazie.fixture.checkHighlighting()
+    val intention = grazie.fixture.findSingleIntention("Typo: Rename to 'targetDir'")
+    grazie.fixture.launchAction(intention)
+    grazie.fixture.checkResult("""
       class A {
         void foo() {
           int targetDir = 1;
@@ -178,18 +202,19 @@ class JavaSupportTest : GrazieTestBase() {
     """)
   }
 
+  @Test
   fun `test multiple suggestions in RenameTo action`() {
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       class A {
         void foo() {
           int <TYPO descr="Typo: In word 'barek'">barek<caret></TYPO> = 1;
         }
       }
     """)
-    myFixture.checkHighlighting()
-    val intention = myFixture.findSingleIntention("Typo: Rename to…")
-    myFixture.launchAction(intention)
-    myFixture.checkResult("""
+    grazie.fixture.checkHighlighting()
+    val intention = grazie.fixture.findSingleIntention("Typo: Rename to…")
+    grazie.fixture.launchAction(intention)
+    grazie.fixture.checkResult("""
       class A {
         void foo() {
           int bark = 1;
@@ -198,16 +223,19 @@ class JavaSupportTest : GrazieTestBase() {
     """)
   }
 
+  @Test
   fun `test no highlighting after fixing an error within the same range`() {
-    runHighlightTestForFile("ide/language/java/PDF.java")
-    myFixture.launchAction(myFixture.findSingleIntention("PDF"))
-    myFixture.checkHighlighting()
+    grazie.runHighlightTestForFile("ide/language/java/PDF.java")
+    grazie.fixture.launchAction(grazie.fixture.findSingleIntention("PDF"))
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test no highlighting inside of markdown code`() {
-    runHighlightTestForFile("ide/language/java/MarkdownCode.java")
+    grazie.runHighlightTestForFile("ide/language/java/MarkdownCode.java")
   }
 
+  @Test
   fun `test text extraction from markdown doc reference link`() {
     val text = """
       class A {
@@ -215,12 +243,13 @@ class JavaSupportTest : GrazieTestBase() {
         void foo() {}
       }
     """.trimIndent()
-    val file = myFixture.configureByText("a.java", text)
-    val content = TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL)
-    assertEquals("Please do not use directly; use | instead.", TextContentTest.unknownOffsets(content))
-    assertEmpty(content!!.markupOffsets().toList())
+    val file = grazie.fixture.configureByText("a.java", text)
+    val content = runReadActionBlocking { TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL) }
+    assertEquals("Please do not use directly; use | instead.", unknownOffsets(content!!))
+    assertTrue(content.markupOffsets().isEmpty())
   }
 
+  @Test
   fun `test text extraction from markdown doc inline link preserves label`() {
     val text = """
       class A {
@@ -228,46 +257,52 @@ class JavaSupportTest : GrazieTestBase() {
         void foo() {}
       }
     """.trimIndent()
-    val file = myFixture.configureByText("a.java", text)
-    val content = TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL)
-    assertEquals("Please read the manual before use.", TextContentTest.unknownOffsets(content))
-    assertArrayEquals(intArrayOf("Please read ".length, "Please read the manual".length), content!!.markupOffsets())
+    val file = grazie.fixture.configureByText("a.java", text)
+    val content = runReadActionBlocking { TextExtractor.findTextAt(file, text.indexOf("Please"), TextContent.TextDomain.ALL) }
+    assertEquals("Please read the manual before use.", unknownOffsets(content!!))
+    assertArrayEquals(intArrayOf("Please read ".length, "Please read the manual".length), content.markupOffsets())
   }
 
+  @Test
   fun `test java keeps trailing spaces properly`() {
-    runHighlightTestForFile("ide/language/java/Trailing.java")
+    grazie.runHighlightTestForFile("ide/language/java/Trailing.java")
   }
 
+  @Test
   fun `test add capitalized word to dictionary`() {
+    val project = grazie.project
     val isUseSingleDictionary = SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave
-    Disposer.register(testRootDisposable) {
+    Disposer.register(grazie.testRootDisposable) {
       SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave = isUseSingleDictionary
     }
     SpellCheckerSettings.getInstance(project).isUseSingleDictionaryToSave = true
 
-    myFixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'Blahblahwordish'\">Blahblahword<caret>ish</TYPO>")
-    myFixture.checkHighlighting()
-    val intention = myFixture.findSingleIntention("Save 'Blahblahwordish' to dictionary")
-    myFixture.launchAction(intention)
-    myFixture.configureByText("a.java", "// Blahblahwordish")
-    myFixture.checkHighlighting()
+    grazie.fixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'Blahblahwordish'\">Blahblahword<caret>ish</TYPO>")
+    grazie.fixture.checkHighlighting()
+    val intention = grazie.fixture.findSingleIntention("Save 'Blahblahwordish' to dictionary")
+    grazie.fixture.launchAction(intention)
+    grazie.fixture.configureByText("a.java", "// Blahblahwordish")
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test capitalized and uppercases words are not treated as typo if lowercase version is saved to a dictionary`() {
-    saveWord("wexwex")
-    myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
-    myFixture.checkHighlighting()
+    grazie.saveWord("wexwex")
+    grazie.fixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test capitalized and uppercases words are not treated as typo if capitalized version is saved to a dictionary`() {
-    saveWord("Wexwex")
-    myFixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
-    myFixture.checkHighlighting()
+    grazie.saveWord("Wexwex")
+    grazie.fixture.configureByText("a.java", "// wexwex, Wexwex, WEXWEX")
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test capitalized and uppercases words are treated as typo if mixed case version is saved to a dictionary`() {
-    saveWord("WexWex")
-    myFixture.configureByText("a.java",
+    grazie.saveWord("WexWex")
+    grazie.fixture.configureByText("a.java",
       """
         // <TYPO descr="Typo: In word 'wexwex'">wexwex</TYPO> 
         // <TYPO descr="Typo: In word 'wexWex'">wexWex</TYPO> 
@@ -276,40 +311,44 @@ class JavaSupportTest : GrazieTestBase() {
         // WexWex
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test mixed words can be added via SaveTo action`() {
-    assertTrue(GrazieSpellCheckerEngine.getInstance(project).getSpeller()!!.isMisspelled("typppoStatusChanged"))
-    myFixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'typppoStatusChanged'\">typppoStatusChanged</TYPO>")
-    myFixture.checkHighlighting()
+    assertTrue(GrazieSpellCheckerEngine.getInstance(grazie.project).getSpeller()!!.isMisspelled("typppoStatusChanged"))
+    grazie.fixture.configureByText("a.java", "// <TYPO descr=\"Typo: In word 'typppoStatusChanged'\">typppoStatusChanged</TYPO>")
+    grazie.fixture.checkHighlighting()
 
-    saveWord("typppoStatusChanged")
-    myFixture.configureByText("a.java", "// typppoStatusChanged")
-    myFixture.checkHighlighting()
+    grazie.saveWord("typppoStatusChanged")
+    grazie.fixture.configureByText("a.java", "// typppoStatusChanged")
+    grazie.fixture.checkHighlighting()
   }
 
   @PerformanceUnitTest
+  @Test
   fun `test performance on typos by word-level spellchecker`() {
     // German is not enabled on purpose to disable suggestion-based typo detection
     Benchmark.newBenchmark("word-level spellchecking performance") {
-      runHighlightTestForFile("ide/language/java/Dictionary.java")
+      grazie.runHighlightTestForFile("ide/language/java/Dictionary.java")
     }.setup {
-      psiManager.dropPsiCaches()
-      GrazieSpellCheckerEngine.getInstance(project).dropSuggestionCache()
+      grazie.dropPsiCaches()
+      GrazieSpellCheckerEngine.getInstance(grazie.project).dropSuggestionCache()
     }.start()
   }
 
+  @Test
   fun `test todo in dumb mode`() {
-    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, testRootDisposable)
-    runInDumbModeSynchronously(project) {
-      myFixture.configureByText("a.java", "// TODO It is an friend of human")
-      myFixture.checkHighlighting()
+    CodeInsightTestFixtureImpl.mustWaitForSmartMode(false, grazie.testRootDisposable)
+    runInDumbModeSynchronously(grazie.project) {
+      grazie.fixture.configureByText("a.java", "// TODO It is an friend of human")
+      grazie.fixture.checkHighlighting()
     }
   }
 
+  @Test
   fun `test false positive an with consonant`() {
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       // Returns an xlsx file based on given type. I have an mp3.
       // Writes a uint32_t to a buffer.
       // It is an SA disk. It is an SC disk. It is a SATA disk.
@@ -319,23 +358,24 @@ class JavaSupportTest : GrazieTestBase() {
       // Sending an Sms. Sending an sms. Sending an SMS.
       """.trimIndent()
     )
-    myFixture.checkHighlighting()
+    grazie.fixture.checkHighlighting()
   }
 
+  @Test
   fun `test mass apply is available around problems`() {
     // Action is available because there is a typo intersecting with selection
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       class A {
         void foo() {
           // <TYPO descr="Typo: In word 'tagret'">t<caret><selection>a</selection>gret</TYPO>
         }
       }
     """)
-    myFixture.checkHighlighting()
-    assertNotNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+    grazie.fixture.checkHighlighting()
+    assertNotNull(grazie.fixture.getAvailableIntention("Accept all writing suggestions…"))
 
     // Action is available because there is caret near typo
-    myFixture.configureByText("b.java", """
+    grazie.fixture.configureByText("b.java", """
       class B {
         void foo() {
           // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
@@ -343,11 +383,11 @@ class JavaSupportTest : GrazieTestBase() {
         }
       }
     """)
-    myFixture.checkHighlighting()
-    assertNotNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+    grazie.fixture.checkHighlighting()
+    assertNotNull(grazie.fixture.getAvailableIntention("Accept all writing suggestions…"))
 
     // Action is not available because there is no grammar / style / spelling issues in selection
-    myFixture.configureByText("c.java", """
+    grazie.fixture.configureByText("c.java", """
       class C {
         void foo() {
           // <TYPO descr="Typo: In word 'tagret'">tagret</TYPO>
@@ -355,57 +395,61 @@ class JavaSupportTest : GrazieTestBase() {
         }
       }
     """)
-    myFixture.checkHighlighting()
-    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+    grazie.fixture.checkHighlighting()
+    assertNull(grazie.fixture.getAvailableIntention("Accept all writing suggestions…"))
   }
 
+  @Test
   fun `test mass apply is not available if there are no suggestions`() {
     GrazieConfig.update { it.withDomainEnabledRules(TextStyleDomain.CodeComment, setOf("LanguageTool.EN.IT_IS_OBVIOUS")) }
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
       class A {
         void foo() {
           // I think <STYLE_SUGGESTION descr="IT_IS_OBVIOUS">it's pretty obvious</STYLE_SUGGESTION> that he likes you.
         }
       }
     """)
-    myFixture.checkHighlighting()
-    assertNull(myFixture.getAvailableIntention("Accept all writing suggestions…"))
+    grazie.fixture.checkHighlighting()
+    assertNull(grazie.fixture.getAvailableIntention("Accept all writing suggestions…"))
   }
 
+  @Test
   fun `test dependency parser creates correct trees based on text content language`() {
-    enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.AMERICAN_ENGLISH))
-    myFixture.configureByText("a.java", """
+    grazie.enableProofreadingFor(setOf(Lang.GERMANY_GERMAN, Lang.AMERICAN_ENGLISH))
+    grazie.fixture.configureByText("a.java", """
       // In der tiefen Winternacht saß der alte Mann am Feuer. Die fast.
       
       // Hello. This is really English text. Nothing to see here. Die fast.
     """.trimIndent())
     assertDoesNotThrow {
-      myFixture.checkHighlighting()
+      grazie.fixture.checkHighlighting()
     }
   }
 
+  @Test
   fun `test asian-english mixed texts`() {
-    runHighlightTestForFile("ide/language/java/Mixed.java")
+    grazie.runHighlightTestForFile("ide/language/java/Mixed.java")
 
-    enableProofreadingFor(setOf(Lang.JAPANESE))
-    runHighlightTestForFile("ide/language/java/Mixed.java")
+    grazie.enableProofreadingFor(setOf(Lang.JAPANESE))
+    grazie.runHighlightTestForFile("ide/language/java/Mixed.java")
   }
 
+  @Test
   fun `test spellchecking does not produce NoSuchMethodError`() {
-    myFixture.configureByText("a.java", """
+    grazie.fixture.configureByText("a.java", """
      // A little bit more text to sound like English. 
      // It's a <GRAMMAR_ERROR descr="Grazie.RuleEngine.En.Spelling.MISPLACED_SPACE">grea tbig</GRAMMAR_ERROR> adventure.
     """.trimIndent())
     assertDoesNotThrow {
-      myFixture.checkHighlighting()
+      grazie.fixture.checkHighlighting()
     }
   }
 
   private fun doTest(beforeText: String, afterText: String, hint: String) {
-    myFixture.configureByText("a.java", beforeText)
-    val intentionAction = myFixture.findSingleIntention(hint)
+    grazie.fixture.configureByText("a.java", beforeText)
+    val intentionAction = grazie.fixture.findSingleIntention(hint)
     assertNotNull(intentionAction)
-    myFixture.launchAction(intentionAction)
-    myFixture.checkResult(afterText)
+    grazie.fixture.launchAction(intentionAction)
+    grazie.fixture.checkResult(afterText)
   }
 }
