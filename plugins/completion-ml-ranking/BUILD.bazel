@@ -39,6 +39,7 @@ jvm_library(
         exclude = ["resources/**/icon-robots.txt"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -121,6 +122,7 @@ jvm_library(
         "//platform/diff-impl:diff-impl_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
         "//platform/util:util-ui_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.completionMlRanking` end
