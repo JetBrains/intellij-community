@@ -74,10 +74,13 @@ internal class StructuralChangesViewModifierTest {
   private val project get() = projectFixture.get()
   private val fileFixture = sourceRootFixture.virtualFileFixture("changes.txt", "")
   private var presentationIcon: Icon? = null
+  private val structureViews = AtomicInteger()
   private val factory = PsiStructureViewFactory { file ->
     object : TreeBasedStructureViewBuilder() {
-      override fun createStructureViewModel(editor: Editor?): StructureViewModel =
-        StructureViewModelBase(file, editor, FileElement(file, presentationIcon))
+      override fun createStructureViewModel(editor: Editor?): StructureViewModel {
+        structureViews.incrementAndGet()
+        return StructureViewModelBase(file, editor, FileElement(file, presentationIcon))
+      }
     }
   }
 
@@ -145,6 +148,43 @@ internal class StructuralChangesViewModifierTest {
     assertEquals(2, updates.get())
     assertTrue(StructuralChangesViewSettings.isEnabled(project))
     assertEquals(1, build(change).size)
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `a rebuild names again only a file whose version changed`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val change = change("first=0", "first=1")
+    assertEquals(listOf("first=1"), build(change).map { it.textPresentation })
+    val views = structureViews.get()
+
+    assertEquals(listOf("first=1"), build(change).map { it.textPresentation })
+    assertEquals(views, structureViews.get(), "A rebuild of the same file version reuses its hunk names")
+
+    edtWriteAction {
+      FileDocumentManager.getInstance().getDocument(fileFixture.get())!!.setText("first=2")
+    }
+    assertEquals(listOf("first=2"), build(change).map { it.textPresentation })
+    assertTrue(structureViews.get() > views, "An edit names the hunks of the file again")
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `a rebuild loads the base content of a numbered revision only after an edit`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val loads = AtomicInteger()
+    val change = change("first=0", "first=1", VcsRevisionNumber.Int(1), loads)
+    assertEquals(listOf("first=1"), build(change).map { it.textPresentation })
+    assertEquals(1, loads.get())
+
+    assertEquals(listOf("first=1"), build(change).map { it.textPresentation })
+    assertEquals(1, loads.get(), "The revision number identifies the base content, so a rebuild of the same file version loads nothing")
+
+    edtWriteAction {
+      FileDocumentManager.getInstance().getDocument(fileFixture.get())!!.setText("first=2")
+    }
+    assertEquals(listOf("first=2"), build(change).map { it.textPresentation })
+    assertEquals(2, loads.get(), "An edit needs the base content again")
   }
 
   @Test
@@ -257,12 +297,12 @@ internal class StructuralChangesViewModifierTest {
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `hunk icons keep their logical size and full paint at device scales`(): Unit = timeoutRunBlocking {
     setSelected(true)
-    val change = change("element=0", "element=1")
     for (width in listOf(16, 32)) {
       var referenceSize: Dimension? = null
       for (scale in listOf(1, 2)) {
         presentationIcon = createPresentationIcon(width, scale)
-        val node = build(change).single()
+        // The tree reuses the names of an unchanged file version, so each icon needs a new version.
+        val node = build(change("element=0", "element=$width-$scale")).single()
         val size = withContext(Dispatchers.EDT) {
           val tree = JTree(DefaultTreeModel(node))
           val renderer = ChangesBrowserNodeRenderer(project, { false }, false)
@@ -341,17 +381,27 @@ internal class StructuralChangesViewModifierTest {
     }
   }
 
-  private suspend fun change(before: String?, after: String): Change {
+  private suspend fun change(
+    before: String?,
+    after: String,
+    number: VcsRevisionNumber = VcsRevisionNumber.NULL,
+    loads: AtomicInteger = AtomicInteger(),
+  ): Change {
     val file = fileFixture.get()
     edtWriteAction { VfsUtil.saveText(file, after) }
     val path = VcsUtil.getFilePath(file)
-    return Change(before?.let { revision(path, it) }, CurrentContentRevision(path))
+    return Change(before?.let { revision(path, it, number, loads) }, CurrentContentRevision(path))
   }
 
-  private fun revision(path: FilePath, text: String?): ContentRevision = object : ContentRevision {
+  private fun revision(
+    path: FilePath,
+    text: String?,
+    number: VcsRevisionNumber = VcsRevisionNumber.NULL,
+    loads: AtomicInteger = AtomicInteger(),
+  ): ContentRevision = object : ContentRevision {
     override fun getFile(): FilePath = path
-    override fun getContent(): String? = text
-    override fun getRevisionNumber(): VcsRevisionNumber = VcsRevisionNumber.NULL
+    override fun getContent(): String? = text.also { loads.incrementAndGet() }
+    override fun getRevisionNumber(): VcsRevisionNumber = number
   }
 
   private suspend fun build(change: Change): List<ChangesBrowserStructuralNode<*>> {
