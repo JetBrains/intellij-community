@@ -133,7 +133,7 @@ private fun SeResultList.indexToAdd(newItem: SeItemData, searchPattern: String, 
       if (newItem.isExactMatch) 0
       else {
         // Insert new elements above the 0 or lower weighted items
-        firstIndexOrNull(0) { it.weight <= 0 } ?: frozenCount
+        minOf(firstIndexOrNull(0) { it.weight <= 0 } ?: frozenCount, frozenCount)
       }
     }
     else frozenCount
