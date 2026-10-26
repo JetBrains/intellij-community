@@ -17,6 +17,7 @@ import com.intellij.platform.backend.workspace.WorkspaceModelSerializerHook
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
 import com.intellij.platform.diagnostic.telemetry.helpers.MillisecondsMeasurer
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
@@ -51,7 +52,7 @@ import kotlin.time.measureTimedValue
 @Internal
 class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: CoroutineScope) : WorkspaceModelCache {
   override val enabled: Boolean
-    get() = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
+    get() = forceEnableCaching || (!ApplicationManager.getApplication().isUnitTestMode && !IdeProductMode.isMonolithLight)
 
   private val isCacheSaved = AtomicBoolean(true)
   private val saveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
