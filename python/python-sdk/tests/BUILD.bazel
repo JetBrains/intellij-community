@@ -129,6 +129,14 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
+        "//python/python-pytools/backend",
+        "//python/python-pytools/backend:backend_test_lib",
+        "//python/python-pytools/common",
+        "//python/python-pytools/common:common_test_lib",
+        "//platform/testFramework",
+        "//platform/testFramework:testFramework_test_lib",
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.sdk.tests` end
