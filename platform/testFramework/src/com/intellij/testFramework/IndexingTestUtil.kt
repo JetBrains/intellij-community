@@ -150,11 +150,14 @@ private class IndexWaiter(private val project: Project) {
         true // wait for queued scanning tasks to complete
       }
     }
+    else if (scannerExecutor?.isRunning?.value == true) {
+      return true
+    }
     // Scheduled tasks will become running tasks soon. To avoid a race, we check scheduled tasks first
     else if (dumbService.hasScheduledTasks()) {
       return true
     }
-    else if (scannerExecutor?.isRunning?.value == true || dumbService.isRunning()) {
+    else if (dumbService.isRunning()) {
       return true
     }
     else if (dumbService.isDumb) {
