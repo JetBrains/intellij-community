@@ -169,8 +169,8 @@ class StructuralChangesPreview(
     if (!preview.isPreviewOpen()) preview.openPreview(false)
     val lines = (node as? ChangesBrowserStructuralNode<*>)?.getDiffLines() ?: return
     val viewer = awaitViewer(preview, node.diffFile(), model, node) ?: return
-    highlight = tree.project.service<StructuralChangesPreviewHighlighter>().highlightDiff(viewer, lines) ?: return
-    highlightOwner = node.userObject
+    val handle = tree.project.service<StructuralChangesPreviewHighlighter>().highlightDiff(viewer, lines) ?: return
+    keepHighlight(handle, node.userObject)
   }
 
   /** Waits until the preview shows the file of the node and finishes its diff. The preview follows the tree selection on its own. */
@@ -241,7 +241,21 @@ class StructuralChangesPreview(
 
   @RequiresEdt
   private fun showHighlight(target: HighlightTarget) {
-    highlight = tree.project.service<StructuralChangesPreviewHighlighter>().highlight(target.file, target.range, target.modificationStamp)
+    val handle = tree.project.service<StructuralChangesPreviewHighlighter>().highlight(target.file, target.range, target.modificationStamp)
+    handle?.let { keepHighlight(it, owner = null) }
+  }
+
+  /** Keeps the highlight until it ends. A closed diff tab or input in the editor ends it, and then the preview counts as closed. */
+  @RequiresEdt
+  private fun keepHighlight(handle: Disposable, owner: Any?) {
+    highlight = handle
+    highlightOwner = owner
+    Disposer.register(handle) {
+      if (highlight === handle) {
+        highlight = null
+        highlightOwner = null
+      }
+    }
   }
 
   @RequiresEdt
