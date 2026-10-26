@@ -33,7 +33,7 @@ internal class BufferingPersistentChangeListStorageTest(
     storageDir = tempDir.resolve("storage"),
     getUseWriteCache = { useCache },
     getCurrentFsTimestamp = { 0 },
-    unitTestMode = true
+    unitTestMode = true,
   )
 
   @BeforeEach
@@ -239,19 +239,19 @@ internal class BufferingPersistentChangeListStorageTest(
   }
 
   @Test
-  fun `lastId is preserved across multiple reopen cycles`() {
-    val id1 = storage.nextId()
-    storage.close(false)
+  fun `IDs of one session are consecutive`() {
+    val id = storage.nextId()
+    assertThat(storage.nextId()).isEqualTo(id + 1)
+    assertThat(storage.nextId()).isEqualTo(id + 2)
+  }
+
+  @Test
+  fun `new session does not repeat IDs after the storage is dropped`() {
+    val id = storage.nextId()
+    storage.close(/*drop: */true)
 
     storage = createStorage()
-    assertThat(storage.lastId).isEqualTo(id1)
-    storage.nextId()
-    storage.nextId()
-    val id2 = storage.nextId()
-    storage.close(false)
-
-    storage = createStorage()
-    assertThat(storage.lastId).isEqualTo(id2)
+    assertThat(storage.nextId()).isNotEqualTo(id)
   }
 
   @Test

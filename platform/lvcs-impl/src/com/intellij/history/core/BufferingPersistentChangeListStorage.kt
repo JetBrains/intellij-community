@@ -15,10 +15,12 @@ import com.intellij.util.io.ClosedStorageException
 import com.intellij.util.io.delete
 import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
+import kotlin.random.Random
+
+private const val START_ID_LIMIT = 1L shl 62
 
 internal class BufferingPersistentChangeListStorage(
   private val storageDir: Path,
@@ -34,9 +36,16 @@ internal class BufferingPersistentChangeListStorage(
    */
   private val pendingChangeSets = ArrayDeque<ChangeSet>()
 
-  private val lastIdRef = AtomicLong()
-  @get:VisibleForTesting
-  val lastId: Long get() = lastIdRef.get()
+  /**
+   * The last given ID.
+   * The start value is a random number below [START_ID_LIMIT] and the IDs of one session are consecutive, so they are unique.
+   *
+   * [START_ID_LIMIT] limit exists to ensure that the counter doesn't overflow under normal operation.
+   * By normal operation we mean that less than `Long.MAX_VALUE - START_ID_LIMIT` IDs are generated in one session.
+   * This increases the risk of collision, but with the typical number of IDs well below tens of millions and the purge mechanism,
+   * the risk is negligible.
+   */
+  private val lastIdRef = AtomicLong(Random.nextLong(START_ID_LIMIT))
 
   private var isCompletelyBroken = false
 
@@ -59,9 +68,7 @@ internal class BufferingPersistentChangeListStorage(
   @Synchronized
   @Throws(IOException::class)
   private fun initStorage(): LocalHistoryStorage {
-    val storage = openLocalHistoryStorage(storageDir, getCurrentFsTimestamp, unitTestMode)
-    lastIdRef.set(storage.getLastId())
-    return storage
+    return openLocalHistoryStorage(storageDir, getCurrentFsTimestamp, unitTestMode)
   }
 
   private fun handleError(e: Throwable?, @NonNls message: @NonNls String?) {
@@ -106,7 +113,6 @@ internal class BufferingPersistentChangeListStorage(
   override fun close(drop: Boolean) {
     if (!drop) {
       flushPending()
-      writeLastId()
     }
     Disposer.dispose(storage)
     if (drop) {
@@ -118,7 +124,6 @@ internal class BufferingPersistentChangeListStorage(
     purgeOnce()
     try {
       flushPending()
-      writeLastId()
       storage.force()
     }
     catch (e: IOException) {
@@ -149,7 +154,6 @@ internal class BufferingPersistentChangeListStorage(
     }
     else {
       doWriteNextSet(changeSet)
-      writeLastId()
     }
   }
 
@@ -170,18 +174,6 @@ internal class BufferingPersistentChangeListStorage(
       storage.writeStream(storage.createNextRecord(changeSet.timestamp), true).use { out ->
         changeSet.write(out)
       }
-    }
-    catch (e: IOException) {
-      handleError(e, null)
-    }
-  }
-
-  @Synchronized
-  private fun writeLastId() {
-    if (isCompletelyBroken) return
-
-    try {
-      storage.setLastId(lastId)
     }
     catch (e: IOException) {
       handleError(e, null)
