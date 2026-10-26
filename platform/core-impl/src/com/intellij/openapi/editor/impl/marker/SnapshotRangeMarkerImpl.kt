@@ -214,7 +214,16 @@ open class SnapshotRangeMarkerImpl private constructor(
     return rootStorage.updateCurrentRoot(update)
   }
 
-  fun currentRootReference(): AtomicReference<PMarkerRoot> = rootStorage.currentRootReference()
+  fun currentRootReference(): AtomicReference<PMarkerRoot> {
+    val document = documentOrFile
+    val store = rootStorage
+    return if (document is DocumentImpl && store is SnapshotMarkerRootStore) {
+      store.rootReference(document.core.snapshot())
+    }
+    else {
+      store.currentRootReference()
+    }
+  }
 
   override fun toString(): String = "SnapshotRangeMarker(id=$markerId" +
                                     (if (isDisposed()) ", disposed" else "") +
