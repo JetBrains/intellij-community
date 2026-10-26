@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.diff.DiffContext
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.diff.tools.util.base.IgnorePolicy
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings
 import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.CustomizedDataContext
@@ -137,6 +138,35 @@ internal class UnifiedSideEditorTest {
           }
         }
       }
+    }
+  }
+
+  /**
+   * A comparison that ignores whitespace shows a shared line with the text of the master side, the right side here.
+   * A column of the left side then follows the words, not the count of characters.
+   */
+  @Test
+  fun `a column of the other side follows the words when the comparison ignores whitespace`() {
+    val settings = TextDiffSettings()
+    settings.ignorePolicy = IgnorePolicy.IGNORE_WHITESPACES
+    val indented = "a\n   my text\nc"
+    val spaced = "a\nmy     text\nc"
+    withViewer(indented, spaced, settings) { viewer ->
+      val hostText = viewer.editor.document.text
+      assertTrue(hostText.contains("my     text"), "the unified document shows the master side: '$hostText'")
+
+      val left = viewer.projection(Side.LEFT)
+      assertEquals(hostText.indexOf("my"), left.toHostOffset(indented.indexOf("my")))
+      assertEquals(hostText.indexOf("my"), left.toHostOffset(indented.indexOf("my") - 2), "inside the indent")
+      assertEquals(hostText.indexOf("text"), left.toHostOffset(indented.indexOf("text")))
+      assertEquals(indented.indexOf("text"), left.fromHostOffset(hostText.indexOf("text")))
+      val word = TextRange(indented.indexOf("text"), indented.indexOf("text") + 4)
+      assertEquals("text", viewer.editor.document.getText(requireNotNull(left.toHostRange(word))))
+      val lineWithBreak = TextRange(indented.indexOf("my"), indented.indexOf("\nc") + 1)
+      assertEquals("my     text\n", viewer.editor.document.getText(requireNotNull(left.toHostRange(lineWithBreak))))
+
+      val right = viewer.projection(Side.RIGHT)
+      assertEquals(hostText.indexOf("text"), right.toHostOffset(spaced.indexOf("text")))
     }
   }
 
