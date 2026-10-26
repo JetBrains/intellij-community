@@ -1,37 +1,37 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v37"
+_RESOLUTION_FACTS_VERSION = "resolution.v38"
 
-_RESOLVER_VERSION = "0.1.4"
+_RESOLVER_VERSION = "0.2.0"
 _RESOLVER_BINARY_URL_PREFIX = (
     "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
 )
 _RESOLVER_BINARIES = {
     "linux_arm64": struct(
         filename = "bazel-kmp-resolver-linux-arm64",
-        sha256 = "5967a68110fedbc5c58355cd3fd29e16aee95877cb0dbbb7e8362b0445401ebc",
+        sha256 = "1e90598162f08e710f835a0804a7e221eca6380667dc70d31ef56e562d24b9b5",
     ),
     "linux_x64": struct(
         filename = "bazel-kmp-resolver-linux-x64",
-        sha256 = "9f3f63afbec3e80f895729abd9fad1813d046214a3b4dc36a3d244ced667af31",
+        sha256 = "85e1c04d9392304272b0f07fb3c233d43a550dba253b7f369306b81198672d97",
     ),
     "macos_arm64": struct(
         filename = "bazel-kmp-resolver-macos-arm64",
-        sha256 = "b7355d26460139a63fdc8525521f2f4be451cf46868b90f0ade4a7efe7e7ec76",
+        sha256 = "070fcda61d29f48561d46b5777ddf0c8e63b06b379d6e588020ec58c94164ee3",
     ),
     "macos_x64": struct(
         filename = "bazel-kmp-resolver-macos-x64",
-        sha256 = "319902e3dd3b4744c7d3c1705d8edc6c2f0b9b6061a97021a18cd9688b936263",
+        sha256 = "46980f9168a8651ed2d34f3ad7f8976433f441317b0d8d8d22af4d634bf65016",
     ),
     "windows_x64": struct(
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "815e286350ffd475e67a05ecd51c56a6ccfa3734d655070d6d86d861b8eefa44",
+        sha256 = "27e8a62bfcd5cf3fa6558cf9f4d3a67fa7869a564686e94e158104e18dc26137",
     ),
     "windows_arm64": struct(
         # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "815e286350ffd475e67a05ecd51c56a6ccfa3734d655070d6d86d861b8eefa44",
+        sha256 = "27e8a62bfcd5cf3fa6558cf9f4d3a67fa7869a564686e94e158104e18dc26137",
     ),
 }
 
@@ -703,6 +703,29 @@ def _resolve_fresh(module_ctx, config):
         module_ctx.file(credentials_file, json.encode(repository_credentials), executable = False)
         args.extend(["--repository-credentials-file", module_ctx.path(credentials_file)])
 
+    # Bazel credential helpers for the resolver, `[scope=]path` entries separated by `;` with `%workspace%` standing for
+    # the workspace root, as Bazel's own `--credential_helper`. Read like NETRC above, without being an input of the
+    # resolution. A host a helper applies to is authenticated by the helper alone, the credentials file serves the
+    # other hosts, as in Bazel.
+    # Bazel does not expose the value of `--credential_helper` to repository rules yet, so we will have to set the following
+    # manually when we introduce the credential helper in the codebase:
+    #
+    # #common.bazelrc
+    # common --repo_env=KMP_RESOLVER_CREDENTIAL_HELPER=%workspace%/the_helper_path
+    #
+    for helper in [h for h in module_ctx.os.environ.get("KMP_RESOLVER_CREDENTIAL_HELPER", "").split(";") if h]:
+        args.extend(["--credential-helper", helper.replace("%workspace%", str(_workspace_root(module_ctx)))])
+
+    # Counterparts of Bazel's `--credential_helper_timeout` (10s) and `--credential_helper_cache_duration` (30m), with
+    # the same duration syntax; the resolver applies the same defaults when they are unset.
+    for env_name, flag in [
+        ("KMP_RESOLVER_CREDENTIAL_HELPER_TIMEOUT", "--credential-helper-timeout-ms"),
+        ("KMP_RESOLVER_CREDENTIAL_HELPER_CACHE_DURATION", "--credential-helper-cache-duration-ms"),
+    ]:
+        duration = module_ctx.os.environ.get(env_name, "")
+        if duration:
+            args.extend([flag, str(_duration_to_millis(duration, env_name))])
+
     result = module_ctx.execute(
         args,
         quiet = True,
@@ -716,6 +739,21 @@ def _resolve_fresh(module_ctx, config):
         ))
 
     return module_ctx.read(resolution_path)
+
+def _workspace_root(module_ctx):
+    return module_ctx.path(Label("@@//:MODULE.bazel")).dirname
+
+_MILLIS_PER_UNIT = {"ms": 1, "s": 1000, "m": 60 * 1000, "h": 60 * 60 * 1000, "d": 24 * 60 * 60 * 1000}
+
+def _duration_to_millis(duration, what):
+    """Converts a duration written as Bazel's duration flags expect it (`500ms`, `10s`, `30m`, `1h`, `1d`, or `0`)."""
+    if duration == "0":
+        return 0
+    digits = duration.rstrip("dhms")
+    unit = duration[len(digits):]
+    if not digits.isdigit() or unit not in _MILLIS_PER_UNIT:
+        fail("%s must be a duration such as 10s, 30m, 1h or 500ms, got %r" % (what, duration))
+    return int(digits) * _MILLIS_PER_UNIT[unit]
 
 def _repository_credentials(module_ctx, repositories, netrc):
     auth = get_auth(_auth_context(module_ctx, netrc), repositories)
@@ -888,5 +926,15 @@ kmp = module_extension(
 
       Resolution against private repository will wire `NETRC` and Bazel authentication to allow the Kotlin Multiplatform resolver to query
       these repositories.
+
+      A Bazel credential helper can authenticate the resolver's requests instead, through the `KMP_RESOLVER_CREDENTIAL_HELPER`
+      environment variable: `[scope=]path` entries separated by `;`, `%workspace%` standing for the workspace root, with the
+      syntax and precedence of Bazel's own `--credential_helper`, for instance in a bazelrc:
+
+          common --repo_env=KMP_RESOLVER_CREDENTIAL_HELPER=%workspace%/tools/credential-helper
+
+      `KMP_RESOLVER_CREDENTIAL_HELPER_TIMEOUT` and `KMP_RESOLVER_CREDENTIAL_HELPER_CACHE_DURATION` are the counterparts
+      of Bazel's `--credential_helper_timeout` and `--credential_helper_cache_duration`, with the same duration syntax
+      (defaults: `10s` and `30m`).
     """,
 )
