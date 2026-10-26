@@ -2485,6 +2485,14 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
 
       // old-style type aliases of form `ListOf = list[T]` or `ListOf: TypeAlias = list[T]`
+      // Without the AST, the value of the alias is a fragment, and the target of the alias is its context.
+      if (typeHintContext is PyTargetExpression) {
+        val assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(typeHintContext)
+        if (assignedValue != null && PsiTreeUtil.isAncestor(assignedValue, typeHint, false) && isTypeAliasValue(assignedValue, context)) {
+          return typeHintContext
+        }
+        return null
+      }
       val assignment = PsiTreeUtil.getParentOfType(
         typeHintContext,
         PyAssignmentStatement::class.java,
@@ -2495,17 +2503,19 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
         val assignedValue = PyPsiUtils.flattenParens(assignment.assignedValue)
         if (PsiTreeUtil.isAncestor(assignedValue, typeHintContext, false)) {
           val target = PyPsiUtils.flattenParens(assignment.leftHandSideExpression)
-          if (target is PyTargetExpression) {
-            val isTypeParamDeclaration = assignedValue is PyCallExpression &&
-                                         getTypeParameterKindFromDeclaration(assignedValue, context.typeContext) != null
-            if (!isTypeParamDeclaration && PyTypingAliasStubType.looksLikeTypeHint(assignedValue!!)) {
-              return target
-            }
+          if (target is PyTargetExpression && isTypeAliasValue(assignedValue!!, context)) {
+            return target
           }
         }
       }
 
       return null
+    }
+
+    private fun isTypeAliasValue(assignedValue: PyExpression, context: Context): Boolean {
+      val isTypeParamDeclaration = assignedValue is PyCallExpression &&
+                                   getTypeParameterKindFromDeclaration(assignedValue, context.typeContext) != null
+      return !isTypeParamDeclaration && PyTypingAliasStubType.looksLikeTypeHint(assignedValue)
     }
 
     private fun isArgumentOfUnresolvedGenericInSignature(typeHint: PsiElement, function: PyFunction, context: TypeEvalContext): Boolean {

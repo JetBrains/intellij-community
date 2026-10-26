@@ -305,7 +305,7 @@ public final class PyTypingAliasStubType extends CustomTargetExpressionStubType<
       else if (stub.getInitializerType() == InitializerType.ReferenceExpression && stub.isTypeAliasLikeReference()) {
         aliasText = Objects.toString(stub.getInitializer(), null);
       }
-      return aliasText != null ? unwrapParentheses(PyUtil.createExpressionFromFragment(aliasText, target.getContainingFile())) : null;
+      return aliasText != null ? unwrapParentheses(PyUtil.createExpressionFromFragment(aliasText, target)) : null;
     }
     // Use PSI to get the assigned value but only if the same expression would be saved in stubs
     return unwrapParentheses(getAssignedValueIfTypeAliasLike(target, false));
