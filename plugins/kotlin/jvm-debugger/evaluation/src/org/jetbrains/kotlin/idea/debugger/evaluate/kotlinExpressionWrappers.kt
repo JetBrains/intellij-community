@@ -2,19 +2,20 @@
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.ContextUtil
-import com.intellij.debugger.engine.DebuggerUtils
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.psi.PsiClass
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
+import java.util.concurrent.Callable
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
-import org.jetbrains.kotlin.analysis.api.javaInterop.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.successful
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
@@ -25,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.findClass
 import org.jetbrains.kotlin.analysis.api.symbols.namedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -35,12 +37,12 @@ import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.defaultTypeWithStarProjections
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.withNullability
+import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
-import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework.Companion.asKtClassOrObject
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
@@ -128,14 +130,14 @@ internal class KotlinRuntimeTypeCastWrapper(
 
     companion object {
         private val LOG = Logger.getInstance(KotlinRuntimeTypeCastWrapper::class.java)
-        private const val MAX_ITERATIONS = 20
+        private const val MAX_REWRITE_ITERATIONS = 20
     }
 
     private val receiverValueCache = HashMap<String, Value?>()
 
     override fun transformIfNeeded(codeFragment: KtCodeFragment) {
         var iterations = 0
-        while (iterations < MAX_ITERATIONS) {
+        while (iterations < MAX_REWRITE_ITERATIONS) {
             iterations++
 
             val target = stats.startAndMeasureAnalysisUnderReadAction {
@@ -146,11 +148,13 @@ internal class KotlinRuntimeTypeCastWrapper(
 
             rewrite(target.dotQualified, target.receiverText, target.selectorText, runtimeTypeText)
         }
+
+        LOG.error("Runtime-type cast rewriting did not converge after $MAX_REWRITE_ITERATIONS iterations")
     }
 
     private class RewriteTarget(
-        val dotQualified: KtDotQualifiedExpression,
-        val receiver: KtExpression,
+        val dotQualified: SmartPsiElementPointer<KtDotQualifiedExpression>,
+        val receiver: SmartPsiElementPointer<KtExpression>,
         val receiverText: String,
         val selectorText: String,
     )
@@ -177,8 +181,8 @@ internal class KotlinRuntimeTypeCastWrapper(
             if (!receiverIsValue) continue
 
             return RewriteTarget(
-                dotQualified = dotQualified,
-                receiver = receiver,
+                dotQualified = SmartPointerManager.createPointer(dotQualified),
+                receiver = SmartPointerManager.createPointer(receiver),
                 receiverText = receiver.text,
                 selectorText = selector.getReferencedName(),
             )
@@ -194,45 +198,32 @@ internal class KotlinRuntimeTypeCastWrapper(
     private fun computeRuntimeCastType(codeFragment: KtCodeFragment, target: RewriteTarget): String? {
         val value = evaluateReceiver(codeFragment, target.receiver, target.receiverText) ?: return null
 
-        val project = executionContext.evaluationContext.project
-        val scope = executionContext.evaluationContext.debugProcess.searchScope
-
         val asmType = value.asValue().asmType
         val className = asmType.internalName.replace('/', '.')
+        val rawClassId = ClassId.fromString(asmType.internalName.replace('$', '.'))
+        val runtimeClassId = JavaToKotlinClassMap.mapJavaToKotlin(rawClassId.asSingleFqName()) ?: rawClassId
 
         val memberName = Name.identifier(target.selectorText)
 
-        return runReadAction {
-            val psiClass = DebuggerUtils.findClass(className, project, scope, true) as? PsiClass
-            val localClass = if (psiClass == null) findLocalClassByName(codeFragment, className) else null
-            if (psiClass == null && localClass == null) return@runReadAction null
-
+        return ReadAction.nonBlocking(Callable {
             analyze(codeFragment) {
-                val classSymbol = localClass?.namedClassSymbol
-                    ?: psiClass?.asKtClassOrObject()?.namedClassSymbol
-                    ?: psiClass?.namedClassSymbol
+                val classSymbol = findClass(runtimeClassId)
+                    ?: findLocalClassByName(codeFragment, className)?.namedClassSymbol
                     ?: return@analyze null
 
                 if (!memberExistsOn(classSymbol, memberName)) return@analyze null
 
                 val classId = classSymbol.defaultType.symbol?.classId
-                val isLocal = classId == null
 
                 if (classSymbol.typeParameters.isNotEmpty() && classId != null) {
-                    val recovered = recoverCastTypeFromSource(target.receiver, classId)
+                    val receiver = target.receiver.element
+                    val recovered = if (receiver == null) null else recoverCastTypeFromSource(receiver, classId)
                     if (recovered != null) return@analyze recovered
                 }
 
-                if (!isLocal) {
-                    classSymbol.defaultType.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
-                } else {
-                    val simpleName = classSymbol.name?.asString() ?: return@analyze null
-                    val arity = classSymbol.typeParameters.size
-                    if (arity == 0) simpleName
-                    else simpleName + List(arity) { "*" }.joinToString(prefix = "<", separator = ", ", postfix = ">")
-                }
+                classSymbol.defaultType.replaceTypeParametersWithStarProjections()?.render(position = Variance.INVARIANT)
             }
-        }
+        }).executeSynchronously()
     }
 
     private fun findLocalClassByName(codeFragment: KtCodeFragment, className: String): KtClassOrObject? {
@@ -269,29 +260,27 @@ internal class KotlinRuntimeTypeCastWrapper(
         return typeArguments.any { (it.type as? KaClassType)?.hasErrorType() == true || it.type is KaErrorType }
     }
 
-    private fun evaluateReceiver(codeFragment: KtCodeFragment, receiver: KtExpression, receiverText: String): Value? {
+    private fun evaluateReceiver(codeFragment: KtCodeFragment, receiver: SmartPsiElementPointer<KtExpression>, receiverText: String): Value? {
         if (receiverValueCache.containsKey(receiverText)) return receiverValueCache[receiverText]
 
-        val plainName = runReadAction {
-            when (receiver) {
-                is KtThisExpression -> if (receiver.getLabelName() == null) "" else null // "" marks unlabeled `this`
-                is KtNameReferenceExpression -> receiver.getReferencedName()
+        val plainName = ReadAction.nonBlocking(Callable {
+            when (val element = receiver.element) {
+                is KtThisExpression -> if (element.getLabelName() == null) "" else null // "" marks unlabeled `this`
+                is KtNameReferenceExpression -> element.getReferencedName()
                 else -> null // qualified chain etc.: fall back to compilation
             }
-        }
+        }).executeSynchronously()
         val direct: Value? = try {
-            runReadAction {
-                when {
-                    plainName == null -> null
-                    receiver is KtThisExpression ->
-                        executionContext.evaluationContext.computeThisObject() as? ObjectReference
-                            ?: executionContext.frameProxy.safeThisObject()
-                    else ->
-                        executionContext.frameProxy.safeVisibleVariableByName(plainName)
-                            ?.let { executionContext.frameProxy.getValue(it) }
-                }
+            when (plainName) {
+                null -> null
+                "" ->
+                    executionContext.evaluationContext.computeThisObject() as? ObjectReference
+                        ?: executionContext.frameProxy.safeThisObject()
+                else ->
+                    executionContext.frameProxy.safeVisibleVariableByName(plainName)
+                        ?.let { executionContext.frameProxy.getValue(it) }
             }
-        } catch (e: EvaluateException) {
+        } catch (_: EvaluateException) {
             null
         }
         if (direct != null) {
@@ -301,12 +290,10 @@ internal class KotlinRuntimeTypeCastWrapper(
 
         val value = try {
             val evaluationContext = executionContext.evaluationContext
-            val receiverFragment = runReadAction {
-                KtPsiFactory(codeFragment.project).createBlockCodeFragment(receiverText, codeFragment.context)
-            }
-            val evaluator = runReadAction {
+            val evaluator = ReadAction.nonBlocking(Callable {
+                val receiverFragment = KtPsiFactory(codeFragment.project).createBlockCodeFragment(receiverText, codeFragment.context)
                 KotlinEvaluatorBuilder.build(receiverFragment, ContextUtil.getSourcePosition(evaluationContext))
-            }
+            }).executeSynchronously()
             evaluator.evaluate(evaluationContext)
         } catch (e: EvaluateException) {
             LOG.debug("Failed to evaluate receiver for runtime-type cast: $receiverText", e)
@@ -318,22 +305,19 @@ internal class KotlinRuntimeTypeCastWrapper(
     }
 
     private fun rewrite(
-        dotQualified: KtDotQualifiedExpression,
+        dotQualified: SmartPsiElementPointer<KtDotQualifiedExpression>,
         receiverText: String,
         selectorText: String,
         runtimeTypeText: String,
     ) {
         val newExpressionText = "($receiverText as $runtimeTypeText).$selectorText"
 
-        val newExpression = runReadAction {
-            KtPsiFactory(dotQualified.project).createExpression(newExpressionText)
-        }
-
         invokeAndWaitIfNeeded {
-            dotQualified.project.executeWriteCommand(
+            val element = dotQualified.element ?: return@invokeAndWaitIfNeeded
+            element.project.executeWriteCommand(
                 KotlinDebuggerEvaluationBundle.message("wrap.expression")
             ) {
-                dotQualified.replace(newExpression)
+                element.replace(KtPsiFactory(element.project).createExpression(newExpressionText))
             }
         }
     }
