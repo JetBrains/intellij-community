@@ -12,6 +12,7 @@ import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 
 /**
  * Serializable data interface for search everywhere results
@@ -74,6 +75,8 @@ class SeItemDataFactory {
       additionalInfo[SeItemDataKeys.IS_EXACT_MATCH] = true.toString()
     }
 
+    (item as? SeItemWithDiagnostics)?.diagnostics?.let { additionalInfo[SeItemDataKeys.DIAGNOSTICS] = it }
+
     return SeItemDataImpl(uuid, providerId, SeComposedWeight.from(item), item.presentation(), emptyList(), additionalInfo, itemId)
   }
 }
@@ -93,6 +96,7 @@ class SeItemDataImpl internal constructor(
   val isCommand: Boolean get() = additionalInfo[SeItemDataKeys.IS_COMMAND]?.toBoolean() == true
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
   val isExactMatch: Boolean get() = additionalInfo[SeItemDataKeys.IS_EXACT_MATCH]?.toBoolean() == true
+  val diagnostics: @NonNls String? get() = additionalInfo[SeItemDataKeys.DIAGNOSTICS]
 
   override fun fetchItemIfExists(): SeItem? = SeItemRegistry.getInstance().find(itemId)
 
@@ -133,6 +137,10 @@ val SeItemData.isSemantic: Boolean get() = (this as SeItemDataImpl).isSemantic
 
 @get:ApiStatus.Internal
 val SeItemData.isExactMatch: Boolean get() = (this as SeItemDataImpl).isExactMatch
+
+/** The diagnostic text of a [SeItemWithDiagnostics], or `null` when the item has none. */
+@get:ApiStatus.Internal
+val SeItemData.diagnostics: @NonNls String? get() = (this as SeItemDataImpl).diagnostics
 
 @ApiStatus.Internal
 fun SeItemData.contentEquals(other: Any?): Boolean = (this as SeItemDataImpl).contentEquals(other)

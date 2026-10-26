@@ -18,6 +18,7 @@ import com.intellij.platform.searchEverywhere.SeClosePopupRequester
 import com.intellij.platform.searchEverywhere.SeExtendedInfo
 import com.intellij.platform.searchEverywhere.SeExtendedInfoProvider
 import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.SeItemWithDiagnostics
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeLegacyItem
 import com.intellij.platform.searchEverywhere.SeParams
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
 
 private const val MAX_TYPO_TOLERANT_CANDIDATES: Int = 2
@@ -56,7 +58,8 @@ class SeActionItem(
   val isMultiSelectionSupported: Boolean,
   override val effectiveSearchText: String,
   override val correction: SearchEverywhereSpellCheckResult,
-) : SeItem, SeLegacyItem, SeSpellCorrectionAwareItem {
+  override val diagnostics: @NonNls String? = null,
+) : SeItem, SeLegacyItem, SeSpellCorrectionAwareItem, SeItemWithDiagnostics {
   override fun weight(): Int = weight
   override suspend fun presentation(): SeItemPresentation {
     return SeActionPresentationProvider.get(matchedValue, extendedInfo, isMultiSelectionSupported)

@@ -119,7 +119,7 @@ class SeDecisionsActionsRankerSessionTest {
 
     val ranked = createSession(this).rank(QUERY, CANDIDATES)
 
-    assertEquals(listOf("ZoomIn", "Find"), ranked)
+    assertEquals(listOf(SeActionsRankerMatch("ZoomIn", 0.7), SeActionsRankerMatch("Find", 0.08)), ranked)
   }
 
   @Test
@@ -128,7 +128,7 @@ class SeDecisionsActionsRankerSessionTest {
 
     val ranked = createSession(this).rank(QUERY, CANDIDATES)
 
-    assertEquals(listOf("ZoomOut"), ranked)
+    assertEquals(listOf(SeActionsRankerMatch("ZoomOut", probability = null)), ranked)
   }
 
   @Test
@@ -137,7 +137,7 @@ class SeDecisionsActionsRankerSessionTest {
 
     val ranked = createSession(this).rank(QUERY, CANDIDATES)
 
-    assertEquals(emptyList<String>(), ranked)
+    assertEquals(emptyList<SeActionsRankerMatch>(), ranked)
   }
 
   @Test
@@ -147,7 +147,7 @@ class SeDecisionsActionsRankerSessionTest {
 
     val ranked = createSession(this).rank(QUERY, CANDIDATES)
 
-    assertEquals(emptyList<String>(), ranked)
+    assertEquals(emptyList<SeActionsRankerMatch>(), ranked)
   }
 
   @Test
@@ -196,7 +196,7 @@ class SeDecisionsActionsRankerSessionTest {
       SeDecisionsActionsRankerSession(lease, "test-model", client, this).rank(QUERY, CANDIDATES)
     }
 
-    assertEquals(emptyList<String>(), ranked)
+    assertEquals(emptyList<SeActionsRankerMatch>(), ranked)
     assertEquals(0, requestCount.get())
     assertTrue(logged.isNotEmpty())
     assertTrue(logged.none { it.contains("secret") }, logged.toString())

@@ -28,6 +28,8 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.util.Locale
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
@@ -78,14 +80,15 @@ class SeRankerActionsProvider internal constructor(
     val candidates = selectCandidates(SeActionsFilter.from(params.filter).includeDisabled)
     if (candidates.isEmpty()) return
 
-    val rankedIds = withTimeoutOrNull(RANKER_TIMEOUT) {
+    val matches = withTimeoutOrNull(RANKER_TIMEOUT) {
       candidatesStrategy.rank(session, query, candidates.map { it.rankerCandidate })
     } ?: return
 
     val candidatesById = candidates.associateBy { it.rankerCandidate.id }
-    for ((index, rankedId) in rankedIds.withIndex()) {
-      val candidate = candidatesById[rankedId] ?: continue
-      if (!collector.put(createItem(candidate.actionWrapper, rankedIds.size - index, params.inputQuery))) return
+    for ((index, match) in matches.withIndex()) {
+      val candidate = candidatesById[match.id] ?: continue
+      val item = createItem(candidate.actionWrapper, matches.size - index, params.inputQuery, rankerDiagnostics(match))
+      if (!collector.put(item)) return
     }
   }
 
@@ -166,7 +169,7 @@ class SeRankerActionsProvider internal constructor(
                      ActionWrapper(action, groupMapping, MatchMode.NAME, presentation))
   }
 
-  private fun createItem(actionWrapper: ActionWrapper, weight: Int, searchText: String): SeActionItem {
+  private fun createItem(actionWrapper: ActionWrapper, weight: Int, searchText: String, diagnostics: @NonNls String?): SeActionItem {
     val matchedValue = MatchedValue(actionWrapper, searchText, MatchedValueType.ACTION)
     val contributor = actionsProvider.contributor
     return SeActionItem(matchedValue,
@@ -175,8 +178,17 @@ class SeRankerActionsProvider internal constructor(
                         contributor.getExtendedInfo(matchedValue),
                         contributor.isMultiSelectionSupported,
                         searchText,
-                        SearchEverywhereSpellCheckResult.NoCorrection)
+                        SearchEverywhereSpellCheckResult.NoCorrection,
+                        diagnostics)
   }
 
   private class Candidate(val rankerCandidate: SeActionsRankerCandidate, val actionWrapper: ActionWrapper)
+}
+
+/**
+ * Returns the diagnostic text of [match] for the result list, or `null` when the ranker gave no probability.
+ * See [com.intellij.platform.searchEverywhere.SeItemWithDiagnostics].
+ */
+internal fun rankerDiagnostics(match: SeActionsRankerMatch): @NonNls String? {
+  return match.probability?.let { String.format(Locale.ROOT, "p=%.3f", it) }
 }

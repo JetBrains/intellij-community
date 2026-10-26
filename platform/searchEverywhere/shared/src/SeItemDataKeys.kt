@@ -11,4 +11,7 @@ object SeItemDataKeys {
   const val IS_COMMAND: String = "SeItemDataKeys.IsCommand"
   const val PROVIDER_SORT_WEIGHT: String = "SeItemDataKeys.ProviderSortWeight"
   const val IS_EXACT_MATCH: String = "SeItemDataKeys.IsExactMatch"
+
+  /** The diagnostic text of a [SeItemWithDiagnostics]. */
+  const val DIAGNOSTICS: String = "SeItemDataKeys.Diagnostics"
 }

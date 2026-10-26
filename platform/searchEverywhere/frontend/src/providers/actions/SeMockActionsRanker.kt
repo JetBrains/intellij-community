@@ -42,7 +42,7 @@ private class SeMockActionsRankerSession : SeActionsRankerSession {
     LOG.info("Disposed $this after ${opened.elapsedNow()}")
   }
 
-  override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
+  override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<SeActionsRankerMatch> {
     LOG.info("Rank ${candidates.size} candidates for the query '$query'")
     if (candidates.size > maxCandidates) {
       LOG.warn("Got ${candidates.size} candidates, but the limit is $maxCandidates")
@@ -52,17 +52,17 @@ private class SeMockActionsRankerSession : SeActionsRankerSession {
       delay(SIMULATED_LATENCY)
 
       val words = query.lowercase().split(WORD_SEPARATOR).filter { it.length > 1 }
-      val rankedIds = candidates.asSequence()
+      val matches = candidates.asSequence()
         .map { it to score(it, words) }
         .filter { (_, score) -> score > 0 }
         .sortedByDescending { (_, score) -> score }
         .take(MAX_RESULTS)
-        .map { (candidate, _) -> candidate.id }
+        .map { (candidate, _) -> SeActionsRankerMatch(candidate.id, probability = null) }
         .toList()
 
-      LOG.info("Ranked ${rankedIds.size} of ${candidates.size} candidates in ${start.elapsedNow()}. " +
-               "The best matches: ${rankedIds.take(MAX_LOGGED_RESULTS)}")
-      return rankedIds
+      LOG.info("Ranked ${matches.size} of ${candidates.size} candidates in ${start.elapsedNow()}. " +
+               "The best matches: ${matches.take(MAX_LOGGED_RESULTS).map { it.id }}")
+      return matches
     }
     finally {
       if (!currentCoroutineContext().isActive) {

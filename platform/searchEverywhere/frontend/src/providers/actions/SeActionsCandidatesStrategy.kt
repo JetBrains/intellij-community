@@ -34,7 +34,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       session: SeActionsRankerSession,
       query: String,
       candidates: List<SeActionsRankerCandidate>,
-    ): List<String> {
+    ): List<SeActionsRankerMatch> {
       return session.rank(query, selectPopular(candidates, session.maxCandidates))
     }
   },
@@ -48,7 +48,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       session: SeActionsRankerSession,
       query: String,
       candidates: List<SeActionsRankerCandidate>,
-    ): List<String> {
+    ): List<SeActionsRankerMatch> {
       val limit = maxCandidates(session)
       val partCount = Math.ceilDiv(candidates.size, limit)
       val partSize = Math.ceilDiv(candidates.size, partCount)
@@ -57,7 +57,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       }
 
       val finalistsPerPart = (limit / partCount).coerceAtLeast(1)
-      val finalistIds = partResults.flatMapTo(HashSet()) { it.take(finalistsPerPart) }
+      val finalistIds = partResults.flatMapTo(HashSet()) { matches -> matches.take(finalistsPerPart).map { it.id } }
       if (finalistIds.isEmpty()) return emptyList()
 
       // The next round has fewer candidates. When they are still more than the limit, it splits them again.
@@ -74,7 +74,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
       session: SeActionsRankerSession,
       query: String,
       candidates: List<SeActionsRankerCandidate>,
-    ): List<String> {
+    ): List<SeActionsRankerMatch> {
       return session.rank(query, candidates)
     }
   };
@@ -82,9 +82,9 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
   /**
    * Orders [candidates] by how well they match [query] with [session].
    *
-   * @return the ids of the matching candidates, the best match first.
+   * @return the matching candidates, the best match first.
    */
-  suspend fun rank(session: SeActionsRankerSession, query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
+  suspend fun rank(session: SeActionsRankerSession, query: String, candidates: List<SeActionsRankerCandidate>): List<SeActionsRankerMatch> {
     if (candidates.size <= maxCandidates(session)) return session.rank(query, candidates)
 
     return rankOverLimit(session, query, candidates)
@@ -97,7 +97,7 @@ internal enum class SeActionsCandidatesStrategy(val registryOption: String) {
     session: SeActionsRankerSession,
     query: String,
     candidates: List<SeActionsRankerCandidate>,
-  ): List<String>
+  ): List<SeActionsRankerMatch>
 
   companion object {
     /**

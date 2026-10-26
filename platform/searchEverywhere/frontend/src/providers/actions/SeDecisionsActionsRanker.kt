@@ -107,7 +107,7 @@ internal class SeDecisionsActionsRankerSession(
   /** One choice of the question is the choice that says that no action matches. */
   override val maxCandidates: Int get() = MAX_CHOICES - 1
 
-  override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
+  override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<SeActionsRankerMatch> {
     if (isRefused.get()) return emptyList()
 
     val idsByValue = HashMap<String, String>(candidates.size)
@@ -132,11 +132,14 @@ internal class SeDecisionsActionsRankerSession(
       return emptyList()
     }
 
-    val probabilities = answer.probabilities ?: listOf(DecisionsProbability(choice, 1.0))
+    val probabilities = answer.probabilities
+    if (probabilities == null) {
+      return listOfNotNull(idsByValue[choice]?.let { SeActionsRankerMatch(it, probability = null) })
+    }
     return probabilities.asSequence()
       .filter { it.probability >= MIN_PROBABILITY }
       .sortedByDescending { it.probability }
-      .mapNotNull { idsByValue[it.value] }
+      .mapNotNull { probability -> idsByValue[probability.value]?.let { SeActionsRankerMatch(it, probability.probability) } }
       .toList()
   }
 

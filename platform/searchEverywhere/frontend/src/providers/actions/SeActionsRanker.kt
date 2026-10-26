@@ -70,10 +70,10 @@ interface SeActionsRankerSession : Disposable {
    *
    * The call must be cancellable. Search Everywhere cancels it when the query changes.
    *
-   * @return the ids of the matching candidates, the best match first.
+   * @return the matching candidates, the best match first.
    * The result does not contain the candidates that do not match.
    */
-  suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String>
+  suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<SeActionsRankerMatch>
 
   override fun dispose() {}
 }
@@ -89,3 +89,13 @@ interface SeActionsRankerSession : Disposable {
  */
 @Internal
 data class SeActionsRankerCandidate(val id: String, val name: @Nls String, val description: @Nls String?)
+
+/**
+ * One candidate that matches the query of a [SeActionsRankerSession.rank] call.
+ *
+ * @property id the id of the [SeActionsRankerCandidate].
+ * @property probability the probability that the candidate does what the query asks for, from 0 to 1.
+ * It is `null` when the ranker gives no probability. Search Everywhere shows it only as diagnostic data.
+ */
+@Internal
+data class SeActionsRankerMatch(val id: String, val probability: Double?)
