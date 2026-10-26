@@ -6,4 +6,3 @@ val x = if (flag) {
 
 // K2_TYPE: if (flag2) 13 else 7 -> <b>Int</b>
 // K2_TYPE: if (flag) {     if (flag2) 13 else 7 } else 42 -> <b>Int</b>
-// K2_TYPE: val x = if (flag) {     if (flag2) 13 else 7 } else 42 -> <b>Int</b>

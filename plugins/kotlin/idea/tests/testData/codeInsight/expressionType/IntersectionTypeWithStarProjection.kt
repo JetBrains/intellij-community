@@ -7,4 +7,3 @@ fun foo(i: String) {
 
 // K2_TYPE: i -> <b>String</b>
 // K2_TYPE: i ?: 1 -> <b>Comparable&lt;*&gt; &amp; Serializable</b>
-// K2_TYPE: val a = i ?: 1 -> <b>Comparable&lt;*&gt; &amp; Serializable</b>

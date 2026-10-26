@@ -68,6 +68,16 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
         runTest("../../idea/tests/testData/codeInsight/expressionType/ConstructorCall_fromKotlin_implicit.kt");
     }
 
+    @TestMetadata("DelegatedProperty.kt")
+    public void testDelegatedProperty() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/DelegatedProperty.kt");
+    }
+
+    @TestMetadata("ExpressionBodyWithComment.kt")
+    public void testExpressionBodyWithComment() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/ExpressionBodyWithComment.kt");
+    }
+
     @TestMetadata("FlexibleType.kt")
     public void testFlexibleType() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/FlexibleType.kt");
@@ -221,5 +231,10 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
     @TestMetadata("VariableDeclaration.kt")
     public void testVariableDeclaration() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/VariableDeclaration.kt");
+    }
+
+    @TestMetadata("VariableInitializer.kt")
+    public void testVariableInitializer() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/VariableInitializer.kt");
     }
 }
