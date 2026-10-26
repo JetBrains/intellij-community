@@ -130,19 +130,72 @@ internal class TestScreenRecorderExtensionTest {
   }
 
   @Test
-  fun `does not record a test without the annotation`() {
-    val unrecorded = testContext(methodName = "unrecordedTest")
-    ideLaunched(runContext())
-    startTest(unrecorded)
-    ideLaunched(runContext())
-    extension.afterTestExecution(unrecorded)
-    assertTrue(recordings.isEmpty(), "recording an unannotated test would run a recorder for every test in the repository")
+  fun `records a test without any annotation`() {
+    val plain = testContext(methodName = "plainTest")
+    ideLaunched(runContext()) // an IDE shared by the class
+    startTest(plain)
+    extension.afterTestExecution(plain)
+    assertEquals(1, recordings.size, "a shared IDE is recorded for a test that carries no annotation")
 
-    ConfigurationStorage.instance().put(SCREEN_RECORDING_ENABLED, true)
-    startTest(unrecorded)
+    startTest(plain)
+    ideLaunched(runContext()) // an IDE the test starts itself
+    extension.afterTestExecution(plain)
+    assertEquals(2, recordings.size, "an IDE the test starts is recorded too, with no annotation and no setting")
+  }
+
+  @Test
+  fun `does not record a performance test`() {
+    val performance = testContext(methodName = "performanceTest")
+    ideLaunched(runContext()) // an IDE shared by the class
+    startTest(performance)
+    ideLaunched(runContext()) // an IDE the test starts itself
+    extension.afterTestExecution(performance)
+
+    assertTrue(recordings.isEmpty(), "a recorder would distort the measurements of a performance test")
+  }
+
+  @Test
+  fun `decides for each test method on its own`() {
     ideLaunched(runContext())
-    extension.afterTestExecution(unrecorded)
-    assertEquals(1, recordings.size, "the setting records a test that carries no annotation")
+    listOf("performanceTest", "plainTest", "anotherPerformanceTest").forEach { methodName ->
+      val test = testContext(methodName = methodName)
+      startTest(test)
+      extension.afterTestExecution(test)
+    }
+
+    assertEquals(listOf("plain-test"), recordings.map { it.directory.name }, "only the unmarked method of the class is recorded")
+    verify(recordings.single().recorder, times(1)).stop()
+  }
+
+  @Test
+  fun `does not record a performance test even with WithScreenRecording or the setting`() {
+    ConfigurationStorage.instance().put(SCREEN_RECORDING_ENABLED, true)
+    listOf(
+      testContext(methodName = "performanceTestWithScreenRecording"),
+      testContext(methodName = "recordedTest", testClass = PerformanceTestClass::class.java),
+    ).forEach { test ->
+      startTest(test)
+      ideLaunched(runContext())
+      extension.afterTestExecution(test)
+    }
+
+    assertTrue(recordings.isEmpty(), "the performance marker wins over every way of asking for a recording")
+  }
+
+  @Test
+  fun `a class marker covers its methods, its subclasses and its nested classes`() {
+    listOf(
+      testContext(methodName = "inheritedTest", testClass = PerformanceTestClass::class.java),
+      testContext(methodName = "inheritedTest", testClass = PerformanceTestSubclass::class.java),
+      testContext(methodName = "ownTest", testClass = PerformanceTestSubclass::class.java),
+      testContext(methodName = "nestedTest", testClass = PerformanceTestClass.NestedTests::class.java),
+    ).forEach { test ->
+      startTest(test)
+      ideLaunched(runContext())
+      extension.afterTestExecution(test)
+    }
+
+    assertTrue(recordings.isEmpty(), "a test inside a marked class is a performance test")
   }
 
   @Test
@@ -232,6 +285,32 @@ internal class TestScreenRecorderExtensionTest {
     @WithScreenRecording
     fun anotherRecordedTest() {}
 
-    fun unrecordedTest() {}
+    fun plainTest() {}
+
+    @PerformanceTest
+    fun performanceTest() {}
+
+    @PerformanceTest
+    fun anotherPerformanceTest() {}
+
+    @PerformanceTest
+    @WithScreenRecording
+    fun performanceTestWithScreenRecording() {}
+  }
+
+  @PerformanceTest
+  private open class PerformanceTestClass {
+    fun inheritedTest() {}
+
+    @WithScreenRecording
+    fun recordedTest() {}
+
+    inner class NestedTests {
+      fun nestedTest() {}
+    }
+  }
+
+  private class PerformanceTestSubclass : PerformanceTestClass() {
+    fun ownTest() {}
   }
 }

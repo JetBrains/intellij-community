@@ -1,7 +1,5 @@
 package com.intellij.ide.starter.junit5
 
-import com.intellij.ide.starter.config.ConfigurationStorage
-import com.intellij.ide.starter.config.isScreenRecordingEnabled
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.ide.isRemDevContext
 import com.intellij.ide.starter.runner.CurrentTestMethod
@@ -45,7 +43,8 @@ internal class TestScreenRecorderExtension(
 
   override fun beforeEach(context: ExtensionContext) {
     subscribeToIdeLaunchEvents() // to handle StarterConfigurationStorage.afterEachMessageBusCleanup
-    currentTestRecordingEnabled = ConfigurationStorage.isScreenRecordingEnabled() || context.getScreenRecordingAnnotation() != null
+    // Every test is recorded, except a performance test: a recorder would distort its measurements.
+    currentTestRecordingEnabled = !context.isPerformanceTest()
     liveRunContext?.let { startRecorderIfNeeded(it) }
   }
 
@@ -125,9 +124,10 @@ internal class TestScreenRecorderExtension(
     }
   }
 
-  private fun ExtensionContext.getScreenRecordingAnnotation(): WithScreenRecording? {
-    return testMethod.getOrNull()?.getAnnotation(WithScreenRecording::class.java)
-           ?: testClass.getOrNull()?.getAnnotation(WithScreenRecording::class.java)
+  private fun ExtensionContext.isPerformanceTest(): Boolean {
+    return testMethod.getOrNull()?.isAnnotationPresent(PerformanceTest::class.java) == true ||
+           generateSequence(testClass.getOrNull()) { it.enclosingClass}
+             .any { it.isAnnotationPresent(PerformanceTest::class.java) }
   }
 
   private data class Recording(
