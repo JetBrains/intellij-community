@@ -16,6 +16,8 @@ import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.ui.treeStructure.ProjectViewUpdateCause
 import com.intellij.util.application
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 
 const val MARKDOWN_SETTINGS_FILE_NAME: String = "markdown.xml"
@@ -132,7 +134,8 @@ class MarkdownSettings private constructor(private val legacyProject: Project?):
 
   /** Replaces application defaults with project settings once per project. Non-default application values take priority. */
   internal suspend fun reconcileWithProject(project: Project) {
-    val projectState = project.serviceAsync<LegacyMarkdownSettingsV1>().loadedState ?: return
+    val legacySettings = withContext(Dispatchers.Default) { project.serviceAsync<LegacyMarkdownSettingsV1>() }
+    val projectState = legacySettings.loadedState ?: return
     val properties = PropertiesComponent.getInstance(project)
     if (properties.getBoolean(PROJECT_SETTINGS_MIGRATED)) return
     reconcileWithProject(projectState)
