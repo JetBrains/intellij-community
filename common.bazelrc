@@ -72,6 +72,11 @@ common:bta --javacopt=-XDcompilePolicy=bytodo
 common:jps --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=0
 common:bta --repo_env=IJ_JVM_USE_RULES_KOTLIN_BACKEND=1
 
+# The threading model assertions of the Kotlin output come from the tmh-assertions kotlin plugin of rules_jvm, on both
+# backends. The rules_jvm flag adds the plugin to every jvm_library. The flag stays out of
+# --experimental_propagate_custom_flag below: a tool of the build compiles without the plugin.
+common --@rules_jvm//:tmh_assertions_kotlin_plugin=true
+
 # The bytecode instrumentation of the Java output on the rules_kotlin backend. On the JPS backend the jvm-inc-builder
 # worker instruments the Java classes itself. On the rules_kotlin backend the javac plugin of rules_jvm does it inside
 # each compile. The Bazel flag --plugin puts the plugin on the annotation processor path of every Java compile. The

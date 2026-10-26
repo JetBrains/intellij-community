@@ -41,6 +41,10 @@ public final class TMHAssertionGenerator2 implements TMHAssertionGenerator {
     return !methodDescriptor.endsWith(SUSPEND_METHOD_DESCRIPTOR_SUFFIX);
   }
 
+  /**
+   * @param finder the finder of the classes the instrumented code links against
+   * @return true when the {@code ThreadingAssertions} class the finder serves declares the assertion method of this generator
+   */
   public boolean hasAssertionMethod(@NotNull InstrumentationClassFinder finder) {
     try {
       return finder.loadClass(myThreadAssertionsClassName).findMethod(myAssertionMethodName, ASSERTION_METHOD_DESCRIPTOR) != null;
@@ -48,6 +52,15 @@ public final class TMHAssertionGenerator2 implements TMHAssertionGenerator {
     catch (IOException | ClassNotFoundException e) {
       return false;
     }
+  }
+
+  /**
+   * @param assertionMethodNames the names of the public static methods without parameters and without a result that the
+   *                             {@code ThreadingAssertions} class of the compile declares
+   * @return true when the assertion method of this generator is one of them
+   */
+  public boolean hasAssertionMethod(@NotNull Set<String> assertionMethodNames) {
+    return assertionMethodNames.contains(myAssertionMethodName);
   }
 
   @Override

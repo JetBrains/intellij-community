@@ -78,6 +78,20 @@ bool_flag(
     visibility = ["//visibility:public"],
 )
 
+# The threading model assertions of the Kotlin output, on both backends: true adds the tmh-assertions kotlin plugin to
+# every jvm_library, see community/common.bazelrc. The flag stays out of the exec configuration, so a tool of the build
+# compiles without the plugin.
+bool_flag(
+    name = "tmh_assertions_kotlin_plugin",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "tmh_assertions_kotlin_plugin_enabled",
+    flag_values = {":tmh_assertions_kotlin_plugin": "true"},
+)
+
 # Kotlin toolchain for rules_kotlin backend.
 # ABI-generation options are kept in sync with the JPS backend's invocation of
 # JvmAbiCommandLineProcessor in
@@ -736,6 +750,7 @@ pkg_zip(
         "//jps-builders-6:files_to_zip",
         "//jvm-inc-builder:files_to_zip",
         "//rules/impl/platforms:files_to_zip",
+        "//tmh-assertions-kotlin-plugin:files_to_zip",
         "//worker-framework:files_to_zip",
         "//zip:files_to_zip",
     ],

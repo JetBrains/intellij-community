@@ -4,7 +4,6 @@ package com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.FailSafeClassReader;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumenterClassWriter;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
@@ -43,7 +42,7 @@ public final class WorkerJavaInstrumentation {
         return content != null ? new ByteArrayInputStream(content) : null;
       }
     };
-    List<BytecodeInstrumenter> instrumenters = List.of(new ThreadingModelInstrumenter(OutputOrigin.Kind.java), new NotNullInstrumenter());
+    List<BytecodeInstrumenter> instrumenters = List.of(new ThreadingModelInstrumenter(), new NotNullInstrumenter());
     try {
       for (String path : classes.keySet()) {
         byte[] content = output.get(path);

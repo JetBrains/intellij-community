@@ -1,0 +1,93 @@
+load("@rules_java//java:defs.bzl", "java_test")
+load("@rules_kotlin//kotlin:core.bzl", "kt_compiler_plugin")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_pkg//pkg:mappings.bzl", "pkg_files", "strip_prefix")
+load("//:jvm.bzl", "jvm_provided_library")
+
+pkg_files(
+    name = "files_to_zip",
+    srcs = glob(
+        ["**"],
+        exclude = ["*.iml"],
+    ),
+    prefix = "tmh-assertions-kotlin-plugin",
+    strip_prefix = strip_prefix.from_pkg(),
+    visibility = ["//visibility:public"],
+)
+
+# The compiler is a compile-time dependency of the plugin. rules_kotlin lists it on the plugin classpath of a compile
+# all the same, where the class loader of the compiler hides it.
+jvm_provided_library(
+    name = "kotlin-compiler-provided",
+    lib = "//:kotlin-compiler-embeddable_import",
+)
+
+# A kotlinc plugin that adds the threading model assertions to the Kotlin classes of the running compile, as the
+# jvm-inc-builder worker adds them to the Java output. The compiler starts it from the plugin classpath.
+kt_jvm_library(
+    name = "tmh-assertions-kotlin-plugin",
+    srcs = glob(["src/**/*.kt"]),
+    kotlinc_opts = "//:rules_jvm_bootstrap_kotlinc_options",
+    resource_strip_prefix = "resources",
+    resources = glob(["resources/**"]),
+    visibility = ["//visibility:public"],
+    deps = [
+        ":kotlin-compiler-provided",
+        "//:asm-all_import",
+        "//:kotlin-stdlib_import",
+        "//instrumentation-core",
+    ],
+)
+
+# The plugin target of a compile. The plugin classpath holds the plugin jar, the instrumentation core and their
+# libraries. Both options are on, as the two switches in the process of the jvm-inc-builder worker. The jvm_library
+# macro adds this target to every module of both backends under --@rules_jvm//:tmh_assertions_kotlin_plugin=true.
+kt_compiler_plugin(
+    name = "plugin",
+    compile_phase = True,
+    id = "com.intellij.tools.build.bazel.tmh-assertions",
+    options = {
+        "enabled": ["true"],
+        "generateLineNumbers": ["true"],
+    },
+    stubs_phase = False,
+    # The plugin builds against the embeddable compiler, so its jar is the embeddable dialect.
+    target_embedded_compiler = True,
+    visibility = ["//visibility:public"],
+    deps = [":tmh-assertions-kotlin-plugin"],
+)
+
+# The plugin jar is data, not a dependency: the test gives it to the compiler as the plugin classpath, as a build does.
+# The instrumentation core is on the plugin classpath too, and the test needs it for the reference instrumentation. The
+# jvm-abi-gen plugin is data for the test of the ABI output. The compiler needs the coroutines library at run time.
+java_test(
+    name = "tmh-assertions-kotlin-plugin-tests",
+    srcs = glob(["testSrc/**/*.java"]),
+    data = [
+        ":tmh-assertions-kotlin-plugin.jar",
+        "//instrumentation-core",
+        "@jvm-abi-gen-embeddable_http//file",
+    ],
+    jvm_flags = [
+        "-Dtmh.assertions.plugin.jar=$(rlocationpath :tmh-assertions-kotlin-plugin.jar)",
+        "-Dinstrumentation.core.jar=$(rlocationpath //instrumentation-core)",
+        "-Djvm.abi.gen.plugin.jar=$(rlocationpath @jvm-abi-gen-embeddable_http//file)",
+    ],
+    test_class = "com.intellij.tools.build.bazel.tmhAssertionsKotlinPlugin.TmhAssertionsKotlinPluginTest",
+    deps = [
+        "//:annotations_import",
+        "//:asm-all_import",
+        "//:junit4",
+        "//:kotlinx-coroutines-core_import",
+        "//instrumentation-core",
+        "//jvm-inc-builder:kotlin-compiler-for-bazel",
+        "@bazel_tools//tools/java/runfiles",
+    ],
+)
+
+exports_files(
+    ["tmh-assertions-kotlin-plugin.iml"],
+    visibility = ["//visibility:public"],
+)
+
+### skip generation section `build tmh-assertions-kotlin-plugin`

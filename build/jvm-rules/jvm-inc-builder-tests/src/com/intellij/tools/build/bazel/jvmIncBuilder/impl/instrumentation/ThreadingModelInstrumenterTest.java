@@ -2,7 +2,6 @@
 package com.intellij.tools.build.bazel.jvmIncBuilder.impl.instrumentation;
 
 import com.intellij.tools.build.bazel.jvmIncBuilder.instrumentation.InstrumentationClassFinder;
-import com.intellij.tools.build.bazel.jvmIncBuilder.runner.OutputOrigin;
 import com.intellij.tools.build.bazel.jvmIncBuilder.tmh.TMHTestUtil;
 import org.jetbrains.org.objectweb.asm.ClassReader;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
@@ -44,7 +43,7 @@ public class ThreadingModelInstrumenterTest {
       ClassReader reader = new ClassReader(classData);
       ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
       InstrumentationClassFinder finder = new InstrumentationClassFinder(new URL[]{classesDir.toUri().toURL()});
-      byte[] instrumented = new ThreadingModelInstrumenter(OutputOrigin.Kind.java).instrument("Sample.class", reader, writer, finder);
+      byte[] instrumented = new ThreadingModelInstrumenter().instrument("Sample.class", reader, writer, finder);
 
       assertNotNull(instrumented);
       assertTrue(TMHTestUtil.containsMethodCall(instrumented, assertionMethod));

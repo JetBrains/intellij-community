@@ -268,6 +268,16 @@ def jvm_library(
         visibility = visibility,
     )
 
+    # The threading model assertions of the Kotlin output come from the tmh-assertions kotlin plugin of rules_jvm on
+    # both backends, under --@rules_jvm//:tmh_assertions_kotlin_plugin=true. The flag stays out of the exec
+    # configuration, so a tool of the build compiles without the plugin. The Java output gets its assertions from the
+    # jvm-inc-builder worker on the JPS backend, and from the javac plugin through the Bazel flag --plugin on the
+    # rules_kotlin backend.
+    effective_plugins = plugins + select({
+        str(Label("//:tmh_assertions_kotlin_plugin_enabled")): [Label("//tmh-assertions-kotlin-plugin:plugin")],
+        "//conditions:default": [],
+    })
+
     if use_rules_kotlin_backend:
         # rules_kotlin's kt_jvm_library only accepts .kt/.java/.srcjar in srcs. IntelliJ GUI
         # Designer .form files are still allowed in srcs for compatibility with generated
@@ -294,7 +304,7 @@ def jvm_library(
             resource_strip_prefix = resource_strip_prefix,
             resource_jars = resource_jars,
             neverlink = neverlink,
-            plugins = plugins,
+            plugins = effective_plugins,
             module_name = module_name,
             kotlinc_opts = effective_kotlinc_opts,
             javac_opts = javac_opts,
@@ -324,7 +334,7 @@ def jvm_library(
             resource_strip_prefix = standard_resource_strip_prefix,
             resource_jars = resource_jars,
             neverlink = neverlink,
-            plugins = plugins,
+            plugins = effective_plugins,
             module_name = module_name,
             kotlinc_opts = effective_kotlinc_opts,
             javac_opts = javac_opts,

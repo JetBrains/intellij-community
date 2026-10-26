@@ -153,6 +153,7 @@ internal val DEFAULT_CUSTOM_MODULES: Map<String, CustomModuleDescription> = list
 internal val RULES_JVM_INSTRUMENTATION_MODULES: Set<String> = setOf(
   "instrumentation-core",
   "instrumentation-javac-plugin",
+  "tmh-assertions-kotlin-plugin",
 )
 
 /**

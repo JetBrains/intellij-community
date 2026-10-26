@@ -22,12 +22,9 @@ public class BytecodeInstrumentationRunner implements CompilerRunner {
   private static final Logger LOG = Logger.getLogger("com.intellij.tools.build.bazel.jvmIncBuilder.impl.InstrumenterRunner");
 
   private static final List<BytecodeInstrumenter> ourInstrumenters = List.of(
-    // Kotlin uses soft assertions to preserve behavior from the period when assertions were disabled.
-    // Java keeps the existing assertion methods.
-    // See IJPL-115548.
-    // todo: unify kotlin and java
-    new ThreadingModelInstrumenter(OutputOrigin.Kind.java),
-    new ThreadingModelInstrumenter(OutputOrigin.Kind.kotlin),
+    // The worker instruments the Java output. The Kotlin output gets its threading assertions from the
+    // tmh-assertions-kotlin-plugin inside the compiler, so both backends write the same Kotlin classes.
+    new ThreadingModelInstrumenter(),
     new NotNullInstrumenter()
   );
 
