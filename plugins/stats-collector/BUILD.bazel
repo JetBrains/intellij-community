@@ -38,6 +38,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -87,6 +88,7 @@ jvm_library(
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/statistics:statistics_test_lib",
         "//platform/core-ui:core-ui_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.statsCollector` end
