@@ -30,13 +30,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.Any
-import kotlin.Array
-import kotlin.String
-import kotlin.Throwable
-import kotlin.arrayOfNulls
 import kotlin.enums.enumEntries
-import kotlin.run
 
 @Internal
 class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
@@ -81,7 +75,15 @@ class GradleOutputDispatcherFactory : ExternalSystemOutputDispatcherFactory {
         if (cleanLine.text.startsWith("<ijLog>")) return@BuildOutputLineProcessor
 
         if (cleanLine.text.startsWith("> Task :")) {
-          currentTaskId = TaskNameId(cleanLine.text.removePrefix("> Task ").substringBefore(' '))
+          val taskNameId = TaskNameId(
+            cleanLine.text
+              .removePrefix("> Task ")
+              .trim()
+              .substringBefore(' ')
+          )
+          // multiple invocations of the same task during the build session should flush collected messages
+          parserDispatchers.remove(taskNameId)?.close()
+          currentTaskId = taskNameId
         }
         else if (cleanLine.text.startsWith("> Configure") ||
                  cleanLine.text.startsWith("FAILURE: Build failed") ||
