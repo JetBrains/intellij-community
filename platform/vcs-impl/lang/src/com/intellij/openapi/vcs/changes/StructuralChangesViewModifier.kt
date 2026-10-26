@@ -5,6 +5,7 @@ import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -54,7 +55,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.jetbrains.annotations.Nls
 import java.util.BitSet
@@ -417,7 +417,8 @@ private class HunkNode(
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     val name = hunk.name
-    renderer.icon = name.icon ?: EmptyIcon.ICON_16
+    // A line of text names a hunk without an element icon, so the row shows the text icon instead of an empty gap.
+    renderer.icon = name.icon ?: AllIcons.FileTypes.Text
     if (name.parts.isEmpty()) {
       renderer.append(VcsBundle.message("changes.structural.blank.lines"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
       return
