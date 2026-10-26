@@ -89,21 +89,29 @@ A kernel module reads the installed parts through `site()` inside a function, ne
 
 ### The page layout
 
-The site lays out a page as islands on the window, as the Islands theme of the IDE does. The top bar lies on the
-window, and the route table gives each page one of three layouts (`PageLayout` of `src/routeTable.ts`):
+The page is flat on `--background`, under a top bar with a bottom border. The route table gives each page one of four
+layouts (`PageLayout` of `src/routeTable.ts`):
 
-| Layout | The islands | Pages of the kernel |
+| Layout | The columns | Pages of the kernel |
 | --- | --- | --- |
-| `reading` | The section tree, the document with its crumb row (742px, 70ch of prose), and the table of contents. | A guide, a decision record, a doc. |
+| `reading` | The section tree, the document with its crumb row (786px, 70ch of the 16px prose), and the table of contents. | A guide, a decision record, a doc. |
 | `catalog` | The reading layout with a 960px document, for cards, tiles and chip rows. | The indexes of the guides, the explainers and the decisions. |
-| `tool` | One island across the window. | Home, the source viewer, the launch picker. |
-| `canvas` | The page fills the outlet and draws its own islands. The page owns its trail. | One explainer. |
+| `tool` | One column across the page, at `text-sm`. | Home, the source viewer, the launch picker. |
+| `canvas` | The page fills the outlet and draws its own panes. The page owns its trail. | One explainer. |
 
-A canonical route entry without a `layout` does not compile. `src/pageLayout.tsx` draws the layouts, and `Island` of
-`src/components/Island.tsx` is one island. `sectionTrees` gives the trees of the site sections by route page, for
-example the specs of a spec page. The kernel gives the trees of the guides and the decision records. A reading page
-without a tree or a table of contents has no empty column for it, and its islands stay in the middle of the window.
-Below the `section-nav:` breakpoint the tree opens in a Sheet from the crumb row.
+A canonical route entry without a `layout` does not compile. `src/pageLayout.tsx` draws the layouts. `sectionTrees`
+gives the trees of the site sections by route page, for example the specs of a spec page. The kernel gives the trees of
+the guides and the decision records. A reading page without a tree or a table of contents has no empty column for it,
+and its columns stay in the middle of the page. Below the `section-nav:` breakpoint the tree opens in a Sheet from the
+crumb row.
+
+The tokens are the stock values of the shadcn preset `b0` with the base `base`: Nova, neutral, the stock radius. The
+theme color is the stock blue theme. The
+domain tokens are a status, the six lanes, and the brand gradient. The kernel also defines the host contract tokens of
+the GenUI catalog from the stock values, because a site can render the catalog primitives. A link is the foreground
+color with an underline, as in the shadcn docs. The Air record
+[The docs sites and the GenUI catalog take the stock shadcn preset](../../../plugins/air/docs/decisions/2026-10-26-the-docs-sites-and-the-genui-catalog-take-the-stock-shadcn-preset.md)
+lists every deviation from the stock values and its reason.
 
 The kernel imports each shadcn component by a relative path, for example `./ui/button`. The files under
 `src/components/ui/` are stock shadcn. The Air site resolves a kernel import of a GenUI catalog name to the catalog
