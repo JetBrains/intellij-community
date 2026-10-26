@@ -207,6 +207,12 @@ class RecentProjectFilteringTree internal constructor(
     TreeUtil.expandAll(tree)
   }
 
+  // The speed search restores the selection after the filter, also for the nodes that the filter removed from the tree.
+  override fun onSpeedSearchUpdateComplete(pattern: String?) {
+    val removedPaths = tree.selectionPaths?.filter { tree.getRowForPath(it) < 0 } ?: return
+    tree.selectionModel.removeSelectionPaths(removedPaths.toTypedArray())
+  }
+
   override fun useIdentityHashing(): Boolean = false
 
   private val rootItem: RootItem
