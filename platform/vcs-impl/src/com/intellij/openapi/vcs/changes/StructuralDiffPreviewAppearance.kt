@@ -25,15 +25,15 @@ import java.awt.Font
 
 /**
  * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers and the colors of the changes, but no icons:
- * the hunks in the tree have the checkboxes and the rollback. Removed lines are red, and added lines are green.
+ * the hunks in the tree have the checkboxes and the rollback. Removed lines are red, added lines are green, and changed lines are blue.
  */
 internal class StructuralDiffPreviewAppearance : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
     val project = context.project ?: return
     if (context.getUserData(STRUCTURAL_PREVIEW_CONTEXT) != true || !StructuralChangesViewSettings.isEnabled(project)) return
     when (viewer) {
-      is UnifiedDiffViewer -> quiet(viewer.editor, null, viewer)
-      is TwosideTextDiffViewer -> for (side in Side.entries) quiet(viewer.getEditor(side), side, viewer)
+      is UnifiedDiffViewer -> quiet(viewer.editor, viewer)
+      is TwosideTextDiffViewer -> for (side in Side.entries) quiet(viewer.getEditor(side), viewer)
     }
   }
 
@@ -41,11 +41,11 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
    * The gutter paints the colors of the changes only while it shows the line marker area, so the area stays and loses its icons. The
    * arrows that apply a change ignore the icon setting, so the editor drops them.
    */
-  private fun quiet(editor: EditorEx, side: Side?, viewer: Disposable) {
+  private fun quiet(editor: EditorEx, viewer: Disposable) {
     editor.settings.setGutterIconsShown(false)
     editor.settings.isFoldingOutlineShown = false
     (editor.markupModel as? EditorMarkupModel)?.setTrafficLightIconVisible(false)
-    editor.colorsScheme = StructuralDiffColors(editor.colorsScheme, side)
+    editor.colorsScheme = StructuralDiffColors(editor.colorsScheme)
     editor.markupModel.addMarkupModelListener(viewer, object : MarkupModelListener {
       override fun afterAdded(highlighter: RangeHighlighterEx) = dropArrow(highlighter)
 
@@ -61,24 +61,23 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
 }
 
 /**
- * Red removed lines and green added lines, mixed into the editor background. A line with changed words gets the light mix, and the words
- * get the strong one. In the side-by-side viewer, the left side shows a modification as removed, and the right side shows it as added.
+ * Red removed lines, green added lines, and blue changed lines, mixed into the editor background. A line with changed words gets the light
+ * mix, and the words get the strong one.
  */
-private class StructuralDiffColors(delegate: EditorColorsScheme, private val side: Side?) : DelegateColorScheme(delegate) {
+private class StructuralDiffColors(delegate: EditorColorsScheme) : DelegateColorScheme(delegate) {
   override fun getAttributes(key: TextAttributesKey?): TextAttributes? = paletteAttributes(key) ?: super.getAttributes(key)
 
   override fun getAttributes(key: TextAttributesKey?, useDefaults: Boolean): TextAttributes? =
     paletteAttributes(key) ?: super.getAttributes(key, useDefaults)
 
   private fun paletteAttributes(key: TextAttributesKey?): TextAttributes? {
-    val modified = key == DiffColors.DIFF_MODIFIED && side != null
-    val removed = key == DiffColors.DIFF_DELETED || modified && side == Side.LEFT
-    val added = key == DiffColors.DIFF_INSERTED || modified && side == Side.RIGHT
-    if (!removed && !added) return null
     val background = defaultBackground
-    val tint = when {
-      removed -> if (ColorUtil.isDark(background)) REMOVED_DARK else REMOVED_LIGHT
-      else -> if (ColorUtil.isDark(background)) ADDED_DARK else ADDED_LIGHT
+    val dark = ColorUtil.isDark(background)
+    val tint = when (key) {
+      DiffColors.DIFF_DELETED -> if (dark) REMOVED_DARK else REMOVED_LIGHT
+      DiffColors.DIFF_INSERTED -> if (dark) ADDED_DARK else ADDED_LIGHT
+      DiffColors.DIFF_MODIFIED -> if (dark) CHANGED_DARK else CHANGED_LIGHT
+      else -> return null
     }
     // The diff reads the foreground of a diff key as the background of a line with changed words.
     val line = ColorUtil.mix(background, tint.color, tint.line)
@@ -91,10 +90,13 @@ private class StructuralDiffColors(delegate: EditorColorsScheme, private val sid
 
   @Suppress("UseJBColor") // The editor scheme picks the tint, not the IDE theme.
   private companion object {
-    // Red looks brighter than green at the same share, so a removed line gets less of it.
+    // The shares give the three colors about the same brightness.
+    // At the same share, red looks brighter than green, and blue looks darker.
     val REMOVED_DARK = Tint(Color(0xF85149), line = 0.12, word = 0.32)
     val ADDED_DARK = Tint(Color(0x2EA043), line = 0.16, word = 0.36)
+    val CHANGED_DARK = Tint(Color(0x3574F0), line = 0.16, word = 0.38)
     val REMOVED_LIGHT = Tint(Color(0xFF8182), line = 0.15, word = 0.38)
     val ADDED_LIGHT = Tint(Color(0x4AC26B), line = 0.15, word = 0.38)
+    val CHANGED_LIGHT = Tint(Color(0x3574F0), line = 0.11, word = 0.24)
   }
 }
