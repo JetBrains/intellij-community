@@ -16,10 +16,7 @@ dev_dist_plugin(
     content_modules = ["intellij.copyright.vcs"],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
-        "lib/copyright.jar": [
-            "intellij.copyright",
-            "intellij.copyright.vcs",
-        ],
+        "lib/copyright.jar": ["intellij.copyright"],
     },
     main_module = "intellij.copyright",
     mode_refused_content_modules = {
