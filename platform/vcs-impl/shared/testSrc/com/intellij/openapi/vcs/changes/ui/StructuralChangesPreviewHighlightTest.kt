@@ -115,6 +115,17 @@ internal class StructuralChangesPreviewHighlightTest {
   }
 
   @Test
+  fun `a null range dims every line`(): Unit = timeoutRunBlocking {
+    withEditor("first\nsecond\nthird") { editor ->
+      val document = editor.document
+      val image = renderDim(editor, null, wholeLines = true)
+      for (line in 0 until document.lineCount) {
+        assertDimmed(image, editor.characterPoint(document.getLineStartOffset(line)))
+      }
+    }
+  }
+
+  @Test
   fun `dim skips bidirectional boundary lines`(): Unit = timeoutRunBlocking {
     val hebrewValue = "\u05E9\u05DC\u05D5\u05DD"
     val cases = listOf(
@@ -202,7 +213,7 @@ internal class StructuralChangesPreviewHighlightTest {
     }
   }
 
-  private fun renderDim(editor: Editor, range: TextRange, clip: Rectangle? = null, wholeLines: Boolean = false): BufferedImage {
+  private fun renderDim(editor: Editor, range: TextRange?, clip: Rectangle? = null, wholeLines: Boolean = false): BufferedImage {
     val bounds = clip ?: Rectangle(0, 0, 640, editor.offsetToXY(editor.document.textLength).y + editor.lineHeight)
     val image = BufferedImage(bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB)
     val handle = checkNotNull(highlightStructuralPreview(editor, range, wholeLines))
