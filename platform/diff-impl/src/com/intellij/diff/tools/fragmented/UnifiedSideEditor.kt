@@ -5,10 +5,13 @@ import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
+import com.intellij.openapi.editor.FoldRegion
+import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.editor.IndentsModel
 import com.intellij.openapi.editor.InlayModel
@@ -23,7 +26,6 @@ import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.editor.impl.EmptyFoldingModel
 import com.intellij.openapi.editor.impl.EmptyImmutableMarkupModel
 import com.intellij.openapi.editor.impl.EmptyIndentsModel
 import com.intellij.openapi.editor.impl.ImaginaryCaret
@@ -34,6 +36,8 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.textarea.EmptyInlayModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.ProperTextRange
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -69,6 +73,7 @@ class UnifiedSideEditor(
 ) : ImaginaryEditor(project, viewer.getDocument(side)), EditorProjection {
   private val sideCaretModel = SideCaretModel(this)
   private val sideScrollingModel = SideScrollingModel(this)
+  private val sideFoldingModel = SideFoldingModel(this)
 
   private val host: EditorEx
     get() = viewer.editor
@@ -97,7 +102,7 @@ class UnifiedSideEditor(
 
   override fun getScrollingModel(): ScrollingModel = sideScrollingModel
 
-  override fun getFoldingModel(): FoldingModel = EmptyFoldingModel()
+  override fun getFoldingModel(): FoldingModel = sideFoldingModel
 
   override fun getMarkupModel(): MarkupModel = EmptyImmutableMarkupModel(document)
 
@@ -249,6 +254,113 @@ class UnifiedSideEditor(
       if (withSelection) setSelection(minOf(anchor, getOffset()), maxOf(anchor, getOffset()))
       if (scrollToCaret) sideEditor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
     }
+  }
+
+  /**
+   * A view of the fold regions of the host editor in the offsets of this side.
+   * It expands and collapses a region, and it adds and removes none, so a folding pass changes nothing through it.
+   */
+  private class SideFoldingModel(val sideEditor: UnifiedSideEditor) : FoldingModel, ModificationTracker {
+    private val hostModel: FoldingModel
+      get() = sideEditor.host.foldingModel
+
+    override fun getAllFoldRegions(): Array<FoldRegion> = hostModel.allFoldRegions.mapNotNull { wrap(it) }.toTypedArray()
+
+    override fun isOffsetCollapsed(offset: Int): Boolean = hostModel.isOffsetCollapsed(sideEditor.toHostOffsetApproximate(offset))
+
+    override fun getCollapsedRegionAtOffset(offset: Int): FoldRegion? =
+      hostModel.getCollapsedRegionAtOffset(sideEditor.toHostOffsetApproximate(offset))?.let { wrap(it) }
+
+    override fun getFoldRegion(startOffset: Int, endOffset: Int): FoldRegion? {
+      val hostRange = sideEditor.toHostRange(TextRange(startOffset, endOffset)) ?: return null
+      return hostModel.getFoldRegion(hostRange.startOffset, hostRange.endOffset)?.let { wrap(it) }
+    }
+
+    override fun addFoldRegion(startOffset: Int, endOffset: Int, placeholderText: String): FoldRegion? = null
+
+    override fun removeFoldRegion(region: FoldRegion): Unit = Unit
+
+    override fun runBatchFoldingOperation(operation: Runnable, allowMovingCaret: Boolean, keepRelativeCaretPosition: Boolean): Unit =
+      hostModel.runBatchFoldingOperation(operation, allowMovingCaret, keepRelativeCaretPosition)
+
+    override fun getModificationCount(): Long = (hostModel as? ModificationTracker)?.modificationCount ?: 0
+
+    private fun wrap(hostRegion: FoldRegion): SideFoldRegion? {
+      val lastOffset = maxOf(hostRegion.startOffset, hostRegion.endOffset - 1)
+      if (sideEditor.fromHostOffset(hostRegion.startOffset) == -1 || sideEditor.fromHostOffset(lastOffset) == -1) return null
+      return SideFoldRegion(sideEditor, hostRegion)
+    }
+  }
+
+  /**
+   * A view of a fold region of the host editor in the offsets of the side. Two views of one host region are equal.
+   */
+  private class SideFoldRegion(
+    private val sideEditor: UnifiedSideEditor,
+    private val hostRegion: FoldRegion,
+  ) : FoldRegion {
+    override fun equals(other: Any?): Boolean = other is SideFoldRegion && other.sideEditor === sideEditor && other.hostRegion == hostRegion
+
+    override fun hashCode(): Int = hostRegion.hashCode()
+
+    override fun getDocument(): Document = sideEditor.document
+
+    override fun getStartOffset(): Int = sideEditor.fromHostOffsetApproximate(hostRegion.startOffset)
+
+    override fun getEndOffset(): Int = sideEditor.fromHostOffsetApproximate(hostRegion.endOffset)
+
+    override fun getTextRange(): TextRange = TextRange(startOffset, endOffset)
+
+    override fun contains(offset: Int): Boolean = offset >= startOffset && offset < endOffset
+
+    override fun containsInclusive(offset: Int): Boolean = offset >= startOffset && offset <= endOffset
+
+    override fun getEditor(): Editor = sideEditor
+
+    override fun isValid(): Boolean = hostRegion.isValid
+
+    override fun isExpanded(): Boolean = hostRegion.isExpanded
+
+    override fun setExpanded(expanded: Boolean): Unit = hostRegion.setExpanded(expanded)
+
+    override fun getPlaceholderText(): String = hostRegion.placeholderText
+
+    override fun setPlaceholderText(text: String): Unit = hostRegion.setPlaceholderText(text)
+
+    override fun getGroup(): FoldingGroup? = hostRegion.group
+
+    override fun shouldNeverExpand(): Boolean = hostRegion.shouldNeverExpand()
+
+    override fun setInnerHighlightersMuted(value: Boolean): Unit = hostRegion.setInnerHighlightersMuted(value)
+
+    override fun areInnerHighlightersMuted(): Boolean = hostRegion.areInnerHighlightersMuted()
+
+    override fun setGutterMarkEnabledForSingleLine(value: Boolean): Unit = hostRegion.setGutterMarkEnabledForSingleLine(value)
+
+    override fun isGutterMarkEnabledForSingleLine(): Boolean = hostRegion.isGutterMarkEnabledForSingleLine
+
+    override fun isGreedyToLeft(): Boolean = hostRegion.isGreedyToLeft
+
+    override fun isGreedyToRight(): Boolean = hostRegion.isGreedyToRight
+
+    override fun setGreedyToLeft(greedy: Boolean): Unit = hostRegion.setGreedyToLeft(greedy)
+
+    override fun setGreedyToRight(greedy: Boolean): Unit = hostRegion.setGreedyToRight(greedy)
+
+    override fun setStickingToRight(value: Boolean): Unit = hostRegion.setStickingToRight(value)
+
+    override fun <T> getUserData(key: Key<T>): T? = hostRegion.getUserData(key)
+
+    override fun <T> putUserData(key: Key<T>, value: T?): Unit = hostRegion.putUserData(key, value)
+
+    /**
+     * The side editor does not remove the folding region of the host editor.
+     *
+     * It is also not a proper [com.intellij.openapi.util.Disposer] root: `Disposer.register(SideFoldRegion, child)` will leak.
+     */
+    override fun dispose(): Unit = Unit
+
+    override fun toString(): String = "UnifiedSideEditor.FoldRegion(${sideEditor.side}, $hostRegion)"
   }
 
   /** The scrolling model of the host editor, with a position mapped to it. */

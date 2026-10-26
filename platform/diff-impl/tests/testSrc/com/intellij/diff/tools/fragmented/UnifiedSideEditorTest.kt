@@ -149,6 +149,33 @@ internal class UnifiedSideEditorTest {
     assertSame(viewer.projection(Side.RIGHT), editor)
   }
 
+  /**
+   * The caret of the unified editor expands a collapsed block on its own when it lands inside the block.
+   * The first line of the block is the case that needs the folding model of the editor the navigation lands in.
+   */
+  @Test
+  fun `a navigation to the first line of a collapsed block expands it`() {
+    val settings = TextDiffSettings()
+    settings.isExpandByDefault = false
+    settings.contextRange = 1
+    val unchangedTail = (1..12).joinToString("\n") { "l$it" }
+    withViewer(leftText = "a\n$unchangedTail", rightText = "A\n$unchangedTail", settings = settings) { viewer ->
+      // the viewer nests several collapsed regions in one block, so the target is the first collapsed line
+      val hostDocument = viewer.editor.document
+      val blockStart = viewer.editor.foldingModel.allFoldRegions.filter { !it.isExpanded }.minOf { it.startOffset }
+      val line = hostDocument.getLineNumber(blockStart)
+      val lineRange = TextRange(hostDocument.getLineStartOffset(line), hostDocument.getLineEndOffset(line))
+
+      val right = viewer.projection(Side.RIGHT)
+      val rightFile = FileDocumentManager.getInstance().getFile(right.document)!!
+      OpenFileDescriptor(project, rightFile, right.fromHostOffset(blockStart)).navigateIn(right)
+
+      val collapsed = viewer.editor.foldingModel.allFoldRegions.filter { !it.isExpanded && lineRange.intersects(it) }
+      assertTrue(collapsed.isEmpty(), "the target line stayed collapsed: $collapsed")
+      assertEquals(blockStart, viewer.editor.caretModel.offset)
+    }
+  }
+
   private fun assertResolves(viewer: UnifiedDiffViewer, line: String, side: Side, offset: Int) {
     val hostOffset = viewer.hostOffsetOfLine(line)
     viewer.editor.caretModel.moveToOffset(hostOffset)
