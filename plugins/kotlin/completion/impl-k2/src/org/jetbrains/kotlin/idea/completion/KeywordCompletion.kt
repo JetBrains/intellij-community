@@ -718,7 +718,14 @@ class KeywordCompletion() {
                 keywordTokenType !is KtModifierKeywordToken -> return true
 
                 else -> {
-                    val container = (parent as? KtModifierList)?.parent ?: return true
+                    val modifierList = parent as? KtModifierList ?: return true
+                    // If we already have this modifier in the list we cannot use it a second time
+                    // Note: The modifier list will always contain the modifier being checked for, so we need to check `> 1`.
+                    // We skip 'override' because the OverrideKeywordHandler needs it.
+                    if (keywordTokenType != OVERRIDE_KEYWORD &&
+                        modifierList.allChildren.count { it.node.elementType == keywordTokenType } > 1
+                    ) return false
+                    val container = modifierList.parent ?: return true
                     val possibleTargets = when (container) {
                         is KtParameter -> {
                             if (container.ownerFunction is KtPrimaryConstructor)

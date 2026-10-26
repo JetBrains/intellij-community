@@ -568,6 +568,21 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
         runTest("../../completion/testData/keywords/Receiver.kt");
     }
 
+    @TestMetadata("RepeatedModifier.kt")
+    public void testRepeatedModifier() throws Exception {
+        runTest("../../completion/testData/keywords/RepeatedModifier.kt");
+    }
+
+    @TestMetadata("RepeatedModifierInsideClass.kt")
+    public void testRepeatedModifierInsideClass() throws Exception {
+        runTest("../../completion/testData/keywords/RepeatedModifierInsideClass.kt");
+    }
+
+    @TestMetadata("RepeatedModifierNotAdjacent.kt")
+    public void testRepeatedModifierNotAdjacent() throws Exception {
+        runTest("../../completion/testData/keywords/RepeatedModifierNotAdjacent.kt");
+    }
+
     @TestMetadata("Return1.kt")
     public void testReturn1() throws Exception {
         runTest("../../completion/testData/keywords/Return1.kt");
@@ -616,6 +631,11 @@ public class FirKeywordCompletionTestGenerated extends AbstractFirKeywordComplet
     @TestMetadata("Return9.kt")
     public void testReturn9() throws Exception {
         runTest("../../completion/testData/keywords/Return9.kt");
+    }
+
+    @TestMetadata("ReturnAfterReturn.kt")
+    public void testReturnAfterReturn() throws Exception {
+        runTest("../../completion/testData/keywords/ReturnAfterReturn.kt");
     }
 
     @TestMetadata("ReturnAsExpressionBody.kt")
