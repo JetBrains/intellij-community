@@ -3,18 +3,21 @@ package com.jetbrains.python.newProjectWizard.impl
 
 import com.intellij.ide.util.projectWizard.SettingsStep
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.ProjectGeneratorPeer
 import com.intellij.platform.eel.EelApi
+import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.newProjectWizard.PyV3BaseProjectSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificSettings
 import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.newProjectWizard.PyV3UIServices
 import com.jetbrains.python.newProjectWizard.impl.projectPath.ProjectPathImpl
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings>(
   baseSettings: PyV3BaseProjectSettings,
@@ -25,7 +28,17 @@ internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecifi
   private val settings = baseSettings
   private lateinit var pyV3UI: PyV3UI<*>
   private lateinit var projectPathField: TextFieldWithBrowseButton
-  private val panel = JPanel()
+  private lateinit var uiPlaceholder: Placeholder
+
+  /**
+   * Holds the [PyV3UI.mainPanel] of the current [eel] in [uiPlaceholder].
+   * The platform registers the validators of this panel, and the placeholder integrates each new [PyV3UI.mainPanel] into them.
+   */
+  private val panel: DialogPanel = panel {
+    row {
+      uiPlaceholder = placeholder().align(Align.FILL)
+    }
+  }
 
   /**
    * Lives as long as [pyV3UI]. Disposed when [showUIForEel] replaces the UI.
@@ -48,11 +61,7 @@ internal class PyV3GeneratorPeer<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecifi
     val uiDisposable = Disposer.newDisposable(projectPathField).also { this.uiDisposable = it }
     val projectPath = ProjectPathImpl(projectPathField, uiServices, eel.descriptor, parentDisposable = uiDisposable)
     pyV3UI = PyV3UI(settings, projectPath, specificUiAndSettings, eel = eel)
-    for (item in panel.components) {
-      panel.remove(item)
-    }
-    panel.add(pyV3UI.mainPanel)
-    panel.revalidate()
+    uiPlaceholder.component = pyV3UI.mainPanel
   }
 
   override fun buildUI(settingsStep: SettingsStep) = Unit

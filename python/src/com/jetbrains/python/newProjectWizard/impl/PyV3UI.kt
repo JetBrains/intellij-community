@@ -14,7 +14,6 @@ import com.jetbrains.python.newProjectWizard.PyV3ProjectTypeSpecificUI
 import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathProvider
 import com.jetbrains.python.sdk.add.v2.PySdkCreator
 import com.jetbrains.python.sdk.add.v2.PythonSdkPanelBuilderAndSdkCreator
-import javax.swing.JComponent
 
 internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> @RequiresEdt(generateAssertion = false /* IJPL-115548 */) constructor(
   baseSettings: PyV3BaseProjectSettings,
@@ -44,7 +43,7 @@ internal class PyV3UI<TYPE_SPECIFIC_SETTINGS : PyV3ProjectTypeSpecificSettings> 
     sdkPanelBuilderAndSdkCreator.onShownInitialization(_mainPanel)
   }
 
-  val mainPanel: JComponent = _mainPanel
+  val mainPanel: DialogPanel = _mainPanel
 
   fun applyAndGetSdkCreator(): PySdkCreator {
     _mainPanel.apply()
