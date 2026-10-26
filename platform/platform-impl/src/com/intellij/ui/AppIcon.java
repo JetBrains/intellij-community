@@ -18,6 +18,8 @@ import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -55,6 +57,8 @@ import java.nio.ByteOrder;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 /**
  * The class must be accessed only from EDT.
@@ -220,27 +224,47 @@ public abstract class AppIcon {
   @SuppressWarnings("UseJBColor")
   static final class MacAppIcon extends BaseIcon {
     private BufferedImage myAppImage;
+    private boolean myAppImageRequested;
     private final Map<Object, Pair<BufferedImage, Graphics2D>> myProgressImagesCache = new HashMap<>();
 
-    private BufferedImage getAppImage() {
+    /**
+     * Returns the dock icon image, or {@code null} until a background thread loads it.
+     * The first call starts the load. The EDT stores the result.
+     */
+    private @Nullable BufferedImage getAppImage() {
       EDT.assertIsEdt();
 
-      try {
-        if (myAppImage != null) return myAppImage;
+      if (myAppImage == null && !myAppImageRequested) {
+        myAppImageRequested = true;
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          BufferedImage appImage = loadAppImage();
+          if (appImage != null) {
+            SwingUtilities.invokeLater(() -> myAppImage = appImage);
+          }
+        });
+      }
+      return myAppImage;
+    }
 
+    /**
+     * Renders the dock icon into a plain image.
+     */
+    @RequiresBackgroundThread
+    private static @Nullable BufferedImage loadAppImage() {
+      try {
         if (!Taskbar.isTaskbarSupported()) return null;
         Image appImage = Taskbar.getTaskbar().getIconImage();
         if (appImage == null) return null;
 
         // [tav] expecting two resolution variants for the dock icon: 128x128, 256x256
         appImage = MultiResolutionImageProvider.getMaxSizeResolutionVariant(appImage);
-        myAppImage = ImageUtil.toBufferedImage(appImage);
+        return ImageUtil.toBufferedImage(appImage);
       }
       catch (Exception e) {
+        rethrowControlFlowException(e);
         LOG.error(e);
+        return null;
       }
-
-      return myAppImage;
     }
 
     @Override
