@@ -60,6 +60,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.EditorProjection;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ReadOnlyFragmentModificationException;
 import com.intellij.openapi.editor.ScrollType;
@@ -76,6 +77,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -167,6 +169,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
 
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
     mySideEditors = createSideEditors();
+    EditorProjection.registerProvider(myEditor, this::getSideEditor);
 
     myContentPanel = new OnesideContentPanel(myEditor.getComponent());
     if (getProject() != null) {
@@ -1214,6 +1217,12 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     super.uiDataSnapshot(sink);
     UnifiedDiffChange change = getCurrentChange();
     sink.set(DiffDataKeys.CURRENT_EDITOR, myEditor);
+
+    // the editor to navigate in, as TextEditorHolder sets it for a side-by-side editor:
+    // a target in the file of the caret side lands in the unified editor through the projection
+    UnifiedSideEditor sideEditor = getSideEditor(myEditor.getCaretModel().getOffset());
+    if (sideEditor != null) sink.set(OpenFileDescriptor.NAVIGATE_IN_EDITOR, sideEditor);
+
     if (change != null) {
       sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(change.getLine1(), change.getLine2()));
     }
@@ -1239,6 +1248,20 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     if (myProject == null) return null;
     if (!Registry.is("diff.unified.enable.imaginary.editor")) return null;
     return List.of(new UnifiedSideEditor(this, myProject, Side.LEFT), new UnifiedSideEditor(this, myProject, Side.RIGHT));
+  }
+
+  /**
+   * The editor of the side that shows the line at the offset of the unified document.
+   * A line of both sides belongs to the master side.
+   * Returns null while the unified document is out of date, and for a line that is on no side.
+   */
+  private @Nullable UnifiedSideEditor getSideEditor(int onesideOffset) {
+    if (mySideEditors == null) return null;
+    if (myStateIsOutOfDate || !myModel.isValid()) return null;
+
+    Pair<int[], Side> pair = transferLineFromOnesideStrict(LineCol.fromOffset(myDocument, onesideOffset).line);
+    if (pair == null) return null;
+    return pair.second.select(mySideEditors);
   }
 
   private class MyStatusPanel extends StatusPanel {
