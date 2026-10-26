@@ -507,6 +507,9 @@ public abstract class GitHandler {
       }
 
       prepareEnvironment();
+      if (!shouldSuppressReadLocks()) {
+        GitCommandLineCustomizer.apply(this, myCommandLine);
+      }
       myExecutable.patchCommandLine(this, myCommandLine, myExecutableContext);
 
       OUTPUT_LOG.debug(String.format("%s %% %s started: %s", getCommand(), this.hashCode(), myCommandLine));

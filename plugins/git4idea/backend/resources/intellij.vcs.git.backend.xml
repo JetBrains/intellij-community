@@ -1122,6 +1122,8 @@
                     qualifiedName="Git4Idea.worktreeAdditionalConfigCopier" dynamic="true"/>
     <extensionPoint interface="git4idea.workingTrees.dialog.GitWorktreeSettingsPanelProvider"
                     qualifiedName="Git4Idea.worktreeSettingsPanelProvider" dynamic="true"/>
+    <extensionPoint interface="git4idea.commands.GitCommandLineCustomizer"
+                    qualifiedName="Git4Idea.gitCommandLineCustomizer" dynamic="true"/>
   </extensionPoints>
 
   <applicationListeners>
