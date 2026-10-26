@@ -65,7 +65,7 @@ internal class ContentModuleByProductModeFilter(
   private val productModeMatcher by lazy { JpsProductModeMatcher(productMode) }
 
   override fun isOptionalModuleIncluded(moduleName: String, pluginMainModuleName: String?): Boolean {
-    if (bypassFilter) return true
+    if (bypassFilter && pluginMainModuleName != null) return true
     if (pluginMainModuleName != null && bundledPluginModules != null && !bundledPluginModules.contains(pluginMainModuleName)) {
       return true
     }
