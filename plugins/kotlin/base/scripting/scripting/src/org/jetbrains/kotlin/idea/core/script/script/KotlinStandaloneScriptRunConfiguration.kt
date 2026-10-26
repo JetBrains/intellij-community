@@ -29,7 +29,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.DefaultJDOMExternalizer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -45,7 +44,6 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.configurations.ScriptConfigurationsProviderImpl
-import org.jetbrains.kotlin.idea.core.script.ScriptAfterRunCallbackProvider
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.core.script.script.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -64,24 +62,14 @@ class KotlinStandaloneScriptRunConfiguration(
      * A path to the script file. Please use with caution!
      *
      * There is no guarantee about path format and separators. Using the value of this variable without preprocessing may lead to problems
-     * on specific platform. If possible, please don't read it directly, and use [systemIndependentPath] instead.
+     * on specific platform.
      */
     @JvmField
     @NlsSafe
     var filePath: String? = null
 
-    /**
-     * System-independent path to the script file.
-     */
-    val systemIndependentPath: String?
-        get() = filePath?.let { FileUtil.toSystemIndependentName(it) }
-
-    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState {
-        systemIndependentPath?.let {
-            executionEnvironment.callback = ScriptAfterRunCallbackProvider.getCallback(project, it)
-        }
-        return ScriptCommandLineState(executionEnvironment, this)
-    }
+    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState =
+        ScriptCommandLineState(executionEnvironment, this)
 
     override fun suggestedName() = filePath?.substringAfterLast('/')
 
