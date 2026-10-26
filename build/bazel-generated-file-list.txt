@@ -580,6 +580,7 @@ libraries/kotlinc/kotlin-compiler-common
 libraries/kotlinc/kotlin-compiler-fir
 libraries/kotlinc/kotlin-compiler-ir
 libraries/kotlinc/kotlin-dataframe-compiler-plugin
+libraries/kotlinc/kotlin-main-kts
 libraries/kotlinc/kotlin-script-runtime
 libraries/kotlinc/kotlin-scripting-common
 libraries/kotlinc/kotlin-scripting-compiler-impl

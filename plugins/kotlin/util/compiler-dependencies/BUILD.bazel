@@ -35,6 +35,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl",
         "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
+        "//libraries/kotlinc/kotlin-main-kts:libraries-kotlinc-kotlin-main-kts",
     ],
 )
 ### auto-generated section `build kotlin.util.compiler-dependencies` end

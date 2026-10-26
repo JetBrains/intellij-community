@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script.definitions
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.components.Service
@@ -14,6 +15,7 @@ import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.loggingReporter
+import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
@@ -78,6 +80,7 @@ class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvi
             ProjectRootModificationTracker.getInstance(project),
         ) {
             project.extensionArea.getExtensionPoint(ScriptDefinitionsProvider.EP_NAME).extensionList.asSequence().flatMap { provider ->
+                try {
                     scriptingInfoLog("processing definitions provider ${provider::class.java.name}")
                     val baseHostConfiguration = defaultJvmScriptingHostConfiguration
                     // TODO: rewrite load and discovery to return kotlin.script.experimental.host.ScriptDefinition to avoid unnecessary conversions
@@ -111,7 +114,12 @@ class ScriptDefinitionProviderImpl(val project: Project) : ScriptDefinitionProvi
                             ).apply {
                                 order = Int.MIN_VALUE
                             }
-                        }
+                        }.toList()
+                } catch (e: Throwable) {
+                    rethrowControlFlowException(e)
+                    scriptingErrorLog("cannot load definitions of provider ${provider::class.java.name}", e)
+                    emptyList()
+                }
                 }.toList() + project.defaultDefinition
         }
 

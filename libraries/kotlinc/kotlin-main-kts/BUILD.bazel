@@ -1,0 +1,24 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.main.kts` start
+jvm_library(
+    name = "libraries-kotlinc-kotlin-main-kts",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.libraries.kotlinc.kotlin.main.kts",
+    visibility = ["//visibility:public"],
+    exports = ["@lib//:libraries-kotlinc-kotlin-main-kts-kotlinc-kotlin-main-kts"],
+    runtime_deps = ["@lib//:libraries-kotlinc-kotlin-main-kts-kotlinc-kotlin-main-kts"],
+)
+### auto-generated section `build intellij.libraries.kotlinc.kotlin.main.kts` end
+
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.main.kts` start
+exports_files(
+    [
+        "intellij.libraries.kotlinc.kotlin.main.kts.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.libraries.kotlinc.kotlin.main.kts` end

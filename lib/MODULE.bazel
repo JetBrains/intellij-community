@@ -9136,6 +9136,20 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_kotlin-kotlin-main-kts-2_5_20-dev-3853_http",
+    downloaded_file_path = "kotlin-main-kts-2.5.20-dev-3853.jar",
+    sha256 = "bbe2f1e524be50888c4939042299f149d08201e625612a056a84cab4b54e654c",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-3853/kotlin-main-kts-2.5.20-dev-3853.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-main-kts-2_5_20-dev-3853-sources_http",
+    downloaded_file_path = "kotlin-main-kts-2.5.20-dev-3853-sources.jar",
+    sha256 = "00aa57721993dbfa14fc79ebfd1b85b5234b7d05daef29afa34909e3fb75af0f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-3853/kotlin-main-kts-2.5.20-dev-3853-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_kotlin-kotlin-script-runtime-2_5_20-dev-3853_http",
     downloaded_file_path = "kotlin-script-runtime-2.5.20-dev-3853.jar",
     sha256 = "7ddd8613f4abfe4253fc8fc5d69456138dfea2ffe6f99b49917c5bf9723f22e7",

@@ -1081,6 +1081,26 @@
             }
         },
         {
+            "destination": "lib/main-kts/kotlin-main-kts.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.libraries.kotlinc.kotlin.main.kts",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    },
+                    {
+                        "input": "@lib//:libraries-kotlinc-kotlin-main-kts-kotlinc-kotlin-main-kts",
+                        "kind": "library",
+                        "filter": "library-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "destination": "lib/kotlin-plugin.jar",
             "recipe": {
                 "sources": [

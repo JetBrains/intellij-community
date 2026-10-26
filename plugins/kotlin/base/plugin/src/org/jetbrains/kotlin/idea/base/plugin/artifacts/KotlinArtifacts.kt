@@ -142,10 +142,15 @@ object KotlinArtifacts {
         get() = kotlinStdlibJsPath.toFile()
 
     @JvmStatic
+    val ideKotlinMainKtsPath: Path
+        get() = KotlinPluginLayout.ideKotlinMainKtsPath
+
+    @Deprecated("Use ideKotlinMainKtsPath instead", ReplaceWith("ideKotlinMainKtsPath"))
+    @JvmStatic
     val kotlinMainKtsPath: Path = kotlincLibDirectoryPath.resolve(KotlinArtifactNames.KOTLIN_MAIN_KTS)
 
-    @Suppress("IO_FILE_USAGE")
-    @Deprecated("Use kotlinMainKtsPath instead", ReplaceWith("kotlinMainKtsPath"))
+    @Suppress("IO_FILE_USAGE", "DEPRECATION")
+    @Deprecated("Use ideKotlinMainKtsPath instead", ReplaceWith("ideKotlinMainKtsPath"))
     @JvmStatic
     val kotlinMainKts: File
         get() = kotlinMainKtsPath.toFile()

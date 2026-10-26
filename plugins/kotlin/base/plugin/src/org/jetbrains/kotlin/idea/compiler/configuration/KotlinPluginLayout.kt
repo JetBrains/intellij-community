@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants.OLD_FAT_JAR_KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.LazyZipUnpacker
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader.downloadArtifactForIdeFromSources
 import org.jetbrains.kotlin.idea.testFramework.TestKotlinArtifactsProvider
@@ -98,6 +99,9 @@ object KotlinPluginLayout {
     val jpsPluginClasspath: List<File>
         get() = jpsPluginClasspathPath.map(Path::toFile)
 
+    val ideKotlinMainKtsPath: Path
+        get() = kotlinMainKtsProvider.value
+
     val jsEngines: File? by lazy {
         kotlinc.resolve("lib").resolve("js.engines.jar").takeIf { it.exists() }
     }
@@ -119,6 +123,7 @@ object KotlinPluginLayout {
 
     private val kotlincProvider: Lazy<Path>
     private val jpsPluginClasspathProvider: Lazy<List<Path>>
+    private val kotlinMainKtsProvider: Lazy<Path>
     private val standaloneCompilerVersionProvider: Lazy<IdeKotlinVersion>
 
     private val bundledJpsVersion by lazy {
@@ -151,6 +156,7 @@ object KotlinPluginLayout {
                         provider.getKotlincCompilerCli()
                     }
                     jpsPluginClasspathProvider = lazy { provider.getJpsPluginClasspath() }
+                    kotlinMainKtsProvider = lazy { provider.getIdeKotlinMainKts() }
                     standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
                 else {
@@ -176,6 +182,9 @@ object KotlinPluginLayout {
 
                         listOf(jpsPluginArtifact)
                     }
+                    kotlinMainKtsProvider = lazy {
+                        KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, "kotlin-main-kts", KotlinCompilerVersion.VERSION)
+                    }
                     standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
                 }
             }
@@ -188,12 +197,14 @@ object KotlinPluginLayout {
 
                 kotlincProvider = lazy { resolve("kotlinc") }
                 jpsPluginClasspathProvider = lazy { listOf(resolve("lib/jps/kotlin-jps-plugin.jar")) }
+                kotlinMainKtsProvider = lazy { resolve("lib/main-kts/${KotlinArtifactNames.KOTLIN_MAIN_KTS}") }
                 standaloneCompilerVersionProvider = standaloneCompilerVersionDefaultProvider
             }
 
             KotlinPluginLayoutMode.LSP -> {
                 kotlincProvider = lazy { error("LSP doesn't not include kotlinc") }
                 jpsPluginClasspathProvider = lazy { error("LSP doesn't not include jps compiler") }
+                kotlinMainKtsProvider = lazy { error("LSP doesn't not include kotlin-main-kts") }
                 standaloneCompilerVersionProvider = lazy { ideCompilerVersion /*there is no standalone compiler in LSP */}
             }
         }

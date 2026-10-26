@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$" />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="kotlinc.kotlin-main-kts" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-main-kts:2.5.20-dev-3853">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-3853/kotlin-main-kts-2.5.20-dev-3853.jar">
+              <sha256sum>bbe2f1e524be50888c4939042299f149d08201e625612a056a84cab4b54e654c</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-3853/kotlin-main-kts-2.5.20-dev-3853.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-main-kts/2.5.20-dev-3853/kotlin-main-kts-2.5.20-dev-3853-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

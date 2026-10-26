@@ -22,13 +22,16 @@ class MainKtsScriptDefinitionsProvider(val project: Project) : ScriptDefinitions
     override val id: String = KotlinScriptDefinitionsProviderId.MAIN_KTS.id
 
     override fun getTemplateClasspath(): List<Path> = listOf(
-        KotlinArtifacts.kotlinMainKtsPath,
+        KotlinArtifacts.ideKotlinMainKtsPath,
         KotlinArtifacts.kotlinStdlibPath,
         KotlinArtifacts.kotlinScriptRuntimePath,
         KotlinArtifacts.kotlinReflectPath,
     )
 
-    override fun useDiscovery(): Boolean = true
+    // Without discovery, because the plugin build drops the directory entries of the jar.
+    override fun getDefinitionClasses(): List<String> = listOf("org.jetbrains.kotlin.mainKts.MainKtsScript")
+
+    override fun useDiscovery(): Boolean = false
 
     override fun provideDefinitions(
         baseHostConfiguration: ScriptingHostConfiguration,

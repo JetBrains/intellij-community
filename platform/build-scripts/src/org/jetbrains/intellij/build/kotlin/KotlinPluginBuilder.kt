@@ -4,10 +4,10 @@
 package org.jetbrains.intellij.build.kotlin
 
 import io.opentelemetry.api.trace.Span
+import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.ProductProperties
 import org.jetbrains.intellij.build.createBuildTasks
-import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.DataPluginVersionEvaluator
 import org.jetbrains.intellij.build.impl.DescriptorMarker
 import org.jetbrains.intellij.build.impl.DescriptorMarkerPatcher
@@ -78,6 +78,7 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       // KotlinPluginLayout.jpsPluginClasspath. `jps/` is not on the plugin classpath: the IDE hands the jar over to the
       // build process itself.
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
+      spec.withModule("intellij.libraries.kotlinc.kotlin.main.kts", "main-kts/kotlin-main-kts.jar")
       withKotlincInPluginDirectory(spec = spec)
       for (script in listOf("kotlin", "kotlinc", "kotlinc-js", "kotlinc-jvm")) {
         spec.withExecutable("kotlinc/bin/$script")

@@ -17,4 +17,6 @@ interface TestKotlinArtifactsProvider {
      * to satisfy FromKotlinDistForIdeByNameFallbackBundledFirCompilerPluginProvider
      */
     fun getKotlincCompilerCli(): Path
+
+    fun getIdeKotlinMainKts(): Path
 }

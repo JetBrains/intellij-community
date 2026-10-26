@@ -104,6 +104,7 @@ internal fun generateKotlincLibraries(preferences: GeneratorPreferences, isCommu
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-compiler-impl", kotlincCoordinates, convertedToModule = true)
         kotlincWithStandardNaming("kotlinc.kotlin-scripting-jvm", kotlincCoordinates, convertedToModule = true)
         kotlincWithStandardNaming("kotlinc.kotlin-script-runtime", kotlincCoordinates, transitive = true, convertedToModule = true)
+        kotlincWithStandardNaming("kotlinc.kotlin-main-kts", kotlincCoordinates)
 
         kotlincWithStandardNaming("kotlinc.kotlin-build-tools-api", kotlincCoordinates)
         kotlincWithStandardNaming("kotlinc.kotlin-build-tools-api-jps", kotlincCoordinates)
