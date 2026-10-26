@@ -84,7 +84,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
-import static com.jetbrains.python.sdk.SdkEelSupportKt.getEelNativeMode;
+import static com.jetbrains.python.sdk.EelNativeModeKt.getEelNativeMode;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
 /**

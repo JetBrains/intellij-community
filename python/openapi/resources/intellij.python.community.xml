@@ -17,4 +17,7 @@
     <module name="intellij.python.psi"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey defaultValue="true" description="Support eel for local SDK" key="python.eel.native"/>
+  </extensions>
 </idea-plugin>

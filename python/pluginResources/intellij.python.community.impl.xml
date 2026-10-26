@@ -154,7 +154,6 @@
                             implementation="com.jetbrains.python.requirements.widget.PyDependenciesFileStatusBarWidgetFactory"
                             order="after CodeStyleStatusBarWidget, after EvoPySdkStatusBarWidget, after pythonInterpreterWidget, after git, after hg, after JSONSchemaSelector, before ReadOnlyAttribute"/>
 
-    <registryKey defaultValue="true" description="Support eel for local SDK" key="python.eel.native"/>
     <registryKey defaultValue="20" description="How often conda environments cache must be refreshed (seconds)"
                  key="python.conda.envs.refresh.seconds" restartRequired="true"/>
     <registryKey defaultValue="60" description="TTL of conda environments cache (seconds)" key="python.conda.envs.cache.ttl.seconds"

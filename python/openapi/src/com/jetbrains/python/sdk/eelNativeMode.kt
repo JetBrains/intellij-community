@@ -2,8 +2,12 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.python.PyInternalExecApi
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Support unified local/eel-based development approach
  */
-internal val eelNativeMode: Boolean get() = Registry.`is`("python.eel.native")
+@PyInternalExecApi
+@get:ApiStatus.Internal
+val eelNativeMode: Boolean get() = Registry.`is`("python.eel.native")
