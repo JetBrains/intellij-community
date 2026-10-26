@@ -152,6 +152,19 @@ internal class StructuralChangesViewModifierTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `a tree with more changed files than the limit shows no hunks`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val change = change("first=0", "first=1")
+    val limit = RegistryManager.getInstance().get("vcs.show.structural.changes.max.files")
+    limit.setValue(1, disposable)
+    assertEquals(1, build(change).size)
+
+    limit.setValue(0, disposable)
+    assertTrue(build(change).isEmpty())
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `a rebuild names again only a file whose version changed`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val change = change("first=0", "first=1")
