@@ -68,6 +68,7 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//libraries/assertj-swing"],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
@@ -175,6 +176,7 @@ jvm_library(
         "//platform/execution:execution_test_lib",
         "//platform/xdebugger-impl/ui:ui_test_lib",
         "//platform/scratch:scratch_test_lib",
+        "//platform/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.featuresTrainer` end
