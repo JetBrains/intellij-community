@@ -6,6 +6,8 @@ import com.intellij.diff.comparison.ComparisonManager
 import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
@@ -196,6 +198,9 @@ private class HunkNode(
   /**
    * Runs the action with the tracker of the file. A file has a tracker only while an editor shows it, so a file without one gets a tracker
    * until the action ends. A partial state keeps the new tracker after the release.
+   *
+   * The manager reports the new tracker in any modality. The action can change the document, and only a write-safe context allows that,
+   * so the action runs later in the modality of this call.
    */
   @RequiresEdt
   fun withTracker(action: (PartialLocalLineStatusTracker) -> Unit) {
@@ -211,14 +216,17 @@ private class HunkNode(
       refreshTree()
       return
     }
+    val modality = ModalityState.defaultModalityState()
     ReadAction.computeBlocking<Unit, RuntimeException> { manager.requestTrackerFor(document, requester) }
     manager.invokeAfterUpdate {
-      try {
-        validTracker()?.let(action)
-      }
-      finally {
-        ReadAction.computeBlocking<Unit, RuntimeException> { manager.releaseTrackerFor(document, requester) }
-      }
+      ApplicationManager.getApplication().invokeLater({
+        try {
+          validTracker()?.let(action)
+        }
+        finally {
+          ReadAction.computeBlocking<Unit, RuntimeException> { manager.releaseTrackerFor(document, requester) }
+        }
+      }, modality, project.disposed)
     }
   }
 
