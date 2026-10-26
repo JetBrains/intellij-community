@@ -235,6 +235,28 @@ internal class StructuralHunkNamerTest {
   }
 
   @Test
+  fun `an initializer inserted before equal initializers is added`(): Unit = timeoutRunBlocking {
+    val name = nameHunks(
+      "class Sample {\n  static { a(); }\n  static { b(); }\n}",
+      "class Sample {\n  static { z(); }\n  static { a(); }\n  static { b(); }\n}",
+      HunkLines(1, 1, 1, 2),
+    ).single()
+
+    assertEquals(listOf(FileStatus.ADDED), name.parts.map { it.status })
+  }
+
+  @Test
+  fun `a changed initializer among equal initializers is modified`(): Unit = timeoutRunBlocking {
+    val name = nameHunks(
+      "class Sample {\n  static { a(); }\n  static { b(); }\n}",
+      "class Sample {\n  static { c(); }\n  static { b(); }\n}",
+      HunkLines(1, 2, 1, 2),
+    ).single()
+
+    assertEquals(listOf(FileStatus.MODIFIED), name.parts.map { it.status })
+  }
+
+  @Test
   fun `a deletion inside a method names the method`(): Unit = timeoutRunBlocking {
     val name = nameHunks(
       "class Sample {\n  int total() {\n    log();\n    return 1;\n  }\n}",
