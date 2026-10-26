@@ -57,8 +57,11 @@ private fun SdkFilter.filterAndSort(sdks: Collection<Sdk>): List<Sdk> =
 private fun Sdk.canBeUsedWith(filter: SdkFilter): Boolean = when (filter) {
   is SdkFilter.OnModuleOrProject -> {
     val targetModuleSitsOn = filter.targetModuleSitsOn
+    val target = targetEnvConfiguration
+    // An SDK with no target is on an eel, and sdkMatchesEel already says if that eel is the one of the project. The
+    // target of the module applies only to an SDK with a target (PY-93439).
     sdkMatchesEel(filter.eelMachine, this) &&
-    (targetModuleSitsOn == null || targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(targetEnvConfiguration))
+    (target == null || targetModuleSitsOn == null || targetModuleSitsOn.codeCouldProbablyBeRunWithConfig(target))
   }
   is SdkFilter.OnEelDescriptor -> {
     val machine = filter.resolvedMachine
