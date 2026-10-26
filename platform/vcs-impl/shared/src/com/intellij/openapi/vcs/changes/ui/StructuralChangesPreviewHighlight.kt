@@ -57,31 +57,34 @@ private class StructuralPreviewDimRenderer(private val selectedRange: TextRange,
     try {
       val clip = graphics.clipBounds ?: editor.scrollingModel.visibleArea
       val dimmedArea = Area(clip)
-      val folding = editor.foldingModel
-      val startOffset = folding.getCollapsedRegionAtOffset(selectedRange.startOffset)?.startOffset ?: selectedRange.startOffset
-      val lastOffset = maxOf(selectedRange.startOffset, selectedRange.endOffset - 1)
-      val endOffset = folding.getCollapsedRegionAtOffset(lastOffset)?.endOffset ?: selectedRange.endOffset
-      val start = editor.offsetToXY(startOffset, true, false)
-      val end = editor.offsetToXY(endOffset, false, true)
-      val lineHeight = editor.lineHeight
-
-      if (wholeLines) {
-        dimmedArea.subtract(Area(Rectangle(clip.x, start.y, clip.width, end.y - start.y + lineHeight)))
-      }
-      else if (start.y == end.y) {
-        dimmedArea.subtract(Area(Rectangle(minOf(start.x, end.x), start.y, kotlin.math.abs(end.x - start.x), lineHeight)))
-      }
-      else {
-        dimmedArea.subtract(Area(Rectangle(start.x, start.y, (clip.x + clip.width - start.x).coerceAtLeast(0), lineHeight)))
-        dimmedArea.subtract(Area(Rectangle(clip.x, start.y + lineHeight, clip.width, (end.y - start.y - lineHeight).coerceAtLeast(0))))
-        dimmedArea.subtract(Area(Rectangle(clip.x, end.y, (end.x - clip.x).coerceAtLeast(0), lineHeight)))
-      }
-
+      keepSelectedRange(editor, selectedRange, clip, dimmedArea)
       graphics.color = editor.colorsScheme.defaultBackground
       GraphicsUtil.paintWithAlpha(graphics, 0.65f) { graphics.fill(dimmedArea) }
     }
     finally {
       graphics.dispose()
+    }
+  }
+
+  private fun keepSelectedRange(editor: Editor, selectedRange: TextRange, clip: Rectangle, dimmedArea: Area) {
+    val folding = editor.foldingModel
+    val startOffset = folding.getCollapsedRegionAtOffset(selectedRange.startOffset)?.startOffset ?: selectedRange.startOffset
+    val lastOffset = maxOf(selectedRange.startOffset, selectedRange.endOffset - 1)
+    val endOffset = folding.getCollapsedRegionAtOffset(lastOffset)?.endOffset ?: selectedRange.endOffset
+    val start = editor.offsetToXY(startOffset, true, false)
+    val end = editor.offsetToXY(endOffset, false, true)
+    val lineHeight = editor.lineHeight
+
+    if (wholeLines) {
+      dimmedArea.subtract(Area(Rectangle(clip.x, start.y, clip.width, end.y - start.y + lineHeight)))
+    }
+    else if (start.y == end.y) {
+      dimmedArea.subtract(Area(Rectangle(minOf(start.x, end.x), start.y, kotlin.math.abs(end.x - start.x), lineHeight)))
+    }
+    else {
+      dimmedArea.subtract(Area(Rectangle(start.x, start.y, (clip.x + clip.width - start.x).coerceAtLeast(0), lineHeight)))
+      dimmedArea.subtract(Area(Rectangle(clip.x, start.y + lineHeight, clip.width, (end.y - start.y - lineHeight).coerceAtLeast(0))))
+      dimmedArea.subtract(Area(Rectangle(clip.x, end.y, (end.x - clip.x).coerceAtLeast(0), lineHeight)))
     }
   }
 }
