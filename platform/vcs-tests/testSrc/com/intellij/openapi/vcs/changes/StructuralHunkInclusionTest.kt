@@ -2,6 +2,10 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.registry.Registry
@@ -9,6 +13,7 @@ import com.intellij.openapi.vcs.BasePartiallyExcludedChangesTest
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
 import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingFactory
+import com.intellij.openapi.vcs.changes.ui.StructuralRollbackDeleteProvider
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.RangeExclusionState
@@ -17,6 +22,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.runAll
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
@@ -252,6 +258,26 @@ class StructuralHunkInclusionTest : BasePartiallyExcludedChangesTest() {
     val b = hunk(file, 10)
     assertFalse(b.hasInclusion)
     rollback(b)
+    waitForTracker()
+    assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
+
+    releaseUnneededTrackers()
+    file.assertNullTracker()
+  }
+
+  fun `test the Rollback action on a hunk reverts only the hunk`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed", 10 to "b-changed"), text(LINES))
+    refreshCLM()
+
+    val action = ActionManager.getInstance().getAction("ChangesView.Revert")
+    val context = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, requireNotNull(StructuralRollbackDeleteProvider.create(listOf(hunk(file, 10)))))
+      .build()
+    val event = TestActionEvent.createTestEvent(action, context)
+    action.update(event)
+    assertTrue(event.presentation.isEnabledAndVisible)
+    action.actionPerformed(event)
     waitForTracker()
     assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
 
