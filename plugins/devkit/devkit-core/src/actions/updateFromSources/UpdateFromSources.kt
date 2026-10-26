@@ -280,9 +280,22 @@ private fun generateUpdateCommand(builtDistDir: Path, workIdeHome: Path): Array<
       """.trimIndent())
     return arrayOf("cmd", "/c", updateScript.toAbsolutePath().toString(), ">${restartLogFile.toAbsolutePath()}", "2>&1")
   }
-  else {
+
+  // on macOS, the IDE home is the `Contents` directory of the app bundle; the copies stay next to the bundle, so its root holds only `Contents`
+  val stagingBase = if (OS.CURRENT == OS.macOS) workIdeHome.parent else workIdeHome
+  if (!Files.isWritable(stagingBase.parent) || !Files.isWritable(workIdeHome.parent)) {
     return arrayOf("/bin/sh", "-c", """rm -rf "${workIdeHome}"/* && cp -R "${builtDistDir}"/* "${workIdeHome}"""")
   }
+
+  // the new build is copied next to the IDE home and replaces it with two renames, so the IDE home stays complete until the copy succeeds
+  val newHome = stagingBase.resolveSibling("${stagingBase.name}.new")
+  val oldHome = stagingBase.resolveSibling("${stagingBase.name}.old")
+  val copy = if (OS.CURRENT == OS.macOS) "cp -cR" else "cp -R"
+  return arrayOf("/bin/sh", "-c",
+                 """rm -rf "${newHome}" "${oldHome}" && if ${copy} "${builtDistDir}" "${newHome}"; then """ +
+                 """if mv "${workIdeHome}" "${oldHome}"; then if mv "${newHome}" "${workIdeHome}"; then rm -rf "${oldHome}"; """ +
+                 """else mv "${oldHome}" "${workIdeHome}"; rm -rf "${newHome}"; exit 1; fi; else rm -rf "${newHome}"; exit 1; fi; """ +
+                 """else rm -rf "${newHome}"; exit 1; fi""")
 }
 
 private fun restartWithCommand(command: Array<String>, deployDirPath: Path, beforeRestart: () -> Unit) {
