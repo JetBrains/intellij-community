@@ -313,16 +313,26 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
                          boolean allowImmediateUpdate,
                          @NotNull GridRequestSource source,
                          @Nullable Object metadata) {
+    writeValue(v, row, column, allowImmediateUpdate, source, metadata, null);
+  }
+
+  /** Writes a value; after a write committed by {@code committingEditor}, the selection moves on unless the editor says otherwise. */
+  private void writeValue(@Nullable Object v,
+                          @NotNull ModelIndex<GridRow> row,
+                          @NotNull ModelIndex<GridColumn> column,
+                          boolean allowImmediateUpdate,
+                          @NotNull GridRequestSource source,
+                          @Nullable Object metadata,
+                          @Nullable GridTableCellEditor committingEditor) {
     SelectionModel<GridRow, GridColumn> selection = myResultPanel.getSelectionModel();
     boolean multi = isMultiEditingAllowed();
     ModelIndexSet<GridRow> rows = multi ? selection.getSelectedRows() : ModelIndexSet.forRows(myResultPanel, row.asInteger());
     ModelIndexSet<GridColumn> columns =
       multi ? selection.getSelectedColumns() : ModelIndexSet.forColumns(myResultPanel, column.asInteger());
-    // The editor of whichever table edits decides whether the selection moves on after the write.
-    GridTableCellEditor editor = ObjectUtils.tryCast(getCellEditor(), GridTableCellEditor.class);
     ViewIndex<GridRow> lastRow = rows.toView(myResultPanel).last();
     ViewIndex<GridColumn> lastColumn = columns.toView(myResultPanel).last();
-    Runnable moveToNextCell = editor != null && editor.shouldMoveFocus() ? () -> moveToNextCellLater(lastRow, lastColumn) : null;
+    Runnable moveToNextCell =
+      committingEditor != null && committingEditor.shouldMoveFocus() ? () -> moveToNextCellLater(lastRow, lastColumn) : null;
     myResultPanel.setValueAt(rows, columns, v, allowImmediateUpdate, moveToNextCell, source, metadata);
   }
 
@@ -1056,7 +1066,9 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     @Override
     public void setValueAt(@Nullable Object value, @NotNull ModelIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column,
                            boolean allowImmediateUpdate, @NotNull GridRequestSource source, @Nullable Object metadata) {
-      TableResultView.this.setValueAt(value, row, column, allowImmediateUpdate, source, metadata);
+      // The table still holds its editor here: Swing writes the committed value before it removes the editor.
+      GridTableCellEditor editor = ObjectUtils.tryCast(myTable.getCellEditor(), GridTableCellEditor.class);
+      writeValue(value, row, column, allowImmediateUpdate, source, metadata, editor);
     }
 
     @Override
