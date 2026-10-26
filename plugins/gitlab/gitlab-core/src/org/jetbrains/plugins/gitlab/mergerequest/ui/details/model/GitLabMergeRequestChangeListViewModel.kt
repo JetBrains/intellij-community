@@ -7,6 +7,7 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeDe
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeList
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
+import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.components.service
@@ -41,7 +42,14 @@ import java.util.concurrent.ConcurrentHashMap
 
 interface GitLabMergeRequestChangeListViewModel
   : CodeReviewChangeListViewModel.WithDetails,
-    CodeReviewChangeListViewModel.WithGrouping
+    CodeReviewChangeListViewModel.WithGrouping {
+  /**
+   * Test sources among the changes of the selected commit or of the whole merge request
+   */
+  val testSources: GitLabTestSources
+
+  fun setTestSourcesHidden(hidden: Boolean)
+}
 
 /**
  * A change list of the cumulative merge request diff.
@@ -54,12 +62,18 @@ interface GitLabMergeRequestCumulativeChangeListViewModel
   : GitLabMergeRequestChangeListViewModel,
     CodeReviewChangeListViewModel.WithViewedState
 
+/**
+ * [count] test sources, shown or not; [hidden] tells whether the change list leaves them out
+ */
+data class GitLabTestSources(val count: Int, val hidden: Boolean)
+
 internal abstract class GitLabMergeRequestChangeListViewModelBase(
   override val project: Project,
   parentCs: CoroutineScope,
   protected val mergeRequest: GitLabMergeRequest,
   protected val parsedChanges: GitBranchComparisonResult,
   changeList: CodeReviewChangeList,
+  override val testSources: GitLabTestSources,
 ) : CodeReviewChangeListViewModelBase(parentCs, changeList),
     GitLabMergeRequestChangeListViewModel {
   private val preferences = project.service<GitLabMergeRequestsPreferences>()
@@ -93,6 +107,23 @@ internal abstract class GitLabMergeRequestChangeListViewModelBase(
   override fun setGrouping(grouping: Collection<String>) {
     preferences.changesGrouping = grouping.toSet()
   }
+
+  override fun setTestSourcesHidden(hidden: Boolean) {
+    preferences.hideTestSources = hidden
+  }
+
+  fun selectNearestChange(selection: ChangesSelection.Precise) {
+    selection.findNearestChangeIn(changes)?.let(::selectChange)
+  }
+}
+
+/**
+ * Returns the selected change if [shown] holds it, else the first shown change after it, else the last shown change before it
+ */
+internal fun ChangesSelection.Precise.findNearestChangeIn(shown: List<RefComparisonChange>): RefComparisonChange? {
+  val following = changes.drop(selectedIdx)
+  val preceding = changes.take(selectedIdx).asReversed()
+  return (following + preceding).firstOrNull(shown::contains)
 }
 
 internal class GitLabMergeRequestCommitChangeListViewModelImpl(
@@ -101,7 +132,9 @@ internal class GitLabMergeRequestCommitChangeListViewModelImpl(
   mergeRequest: GitLabMergeRequest,
   parsedChanges: GitBranchComparisonResult,
   changeList: CodeReviewChangeList,
-) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList) {
+  testSources: GitLabTestSources,
+) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList,
+                                              testSources) {
   override val detailsByChange: StateFlow<Map<RefComparisonChange, CodeReviewChangeDetails>> =
     discussionsCountByChange.map { discussionsCount ->
       discussionsCount.mapValues { (_, discussions) -> CodeReviewChangeDetails(isRead = true, discussions = discussions) }
@@ -114,7 +147,9 @@ internal class GitLabMergeRequestCumulativeChangeListViewModelImpl(
   mergeRequest: GitLabMergeRequest,
   parsedChanges: GitBranchComparisonResult,
   changeList: CodeReviewChangeList,
-) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList),
+  testSources: GitLabTestSources,
+) : GitLabMergeRequestChangeListViewModelBase(project, parentCs, mergeRequest, parsedChanges, changeList,
+                                              testSources),
     GitLabMergeRequestCumulativeChangeListViewModel {
   private val persistentChangesViewedState = project.service<GitLabPersistentMergeRequestChangesViewedState>()
 
