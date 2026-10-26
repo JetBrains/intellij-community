@@ -24,10 +24,12 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -47,7 +49,9 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -355,6 +359,57 @@ class VfsRefreshTest {
     }
     assertThat(counter.get()).isEqualTo(8)
   }
+
+  @Test
+  fun `property change notification calls EDT listeners on EDT`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    val calls = collectEncodingChangeCalls { record ->
+      application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+        override fun before(events: List<VFileEvent>) = record("before, ${describeCurrentThread()}", events)
+
+        override fun after(events: List<VFileEvent>) = record("after, ${describeCurrentThread()}", events)
+      })
+    }
+    assertThat(calls).containsExactly(
+      "before, EDT: true, write access: true",
+      "after, EDT: true, write access: true",
+    )
+  }
+
+  @Test
+  fun `property change notification calls background listeners on background`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val calls = collectEncodingChangeCalls { record ->
+        application.messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
+          override fun before(events: List<VFileEvent>) = record("before, ${describeCurrentThread()}", events)
+
+          override fun after(events: List<VFileEvent>) = record("after, ${describeCurrentThread()}", events)
+        })
+      }
+      assertThat(calls).containsExactly(
+        "before, EDT: false, write access: true",
+        "after, EDT: false, write access: true",
+      )
+    }
+
+  private suspend fun collectEncodingChangeCalls(subscribe: (record: (String, List<VFileEvent>) -> Unit) -> Unit): List<String> {
+    val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(createTempFile())!!
+    // `setCharset` sends no event when the file has no stored charset
+    virtualFile.charset = StandardCharsets.UTF_8
+    val calls = ConcurrentLinkedQueue<String>()
+    subscribe { call, events ->
+      if (events.any { it is VFilePropertyChangeEvent && it.file == virtualFile && it.propertyName == VirtualFile.PROP_ENCODING }) {
+        calls.add(call)
+      }
+    }
+
+    virtualFile.charset = StandardCharsets.ISO_8859_1
+    // the notification goes through an asynchronous refresh session
+    waitUntil("VFS listener was never called") { calls.size == 2 }
+    return calls.toList()
+  }
+
+  private fun describeCurrentThread(): String =
+    "EDT: ${EDT.isCurrentThreadEdt()}, write access: ${application.isWriteAccessAllowed}"
 
   @Test
   fun `event processing can start regardless of active scan`() = concurrencyTest {

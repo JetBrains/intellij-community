@@ -256,6 +256,11 @@ public abstract class VirtualFileManager implements ModificationTracker {
   @Deprecated
   public abstract void removeVirtualFileManagerListener(@NotNull VirtualFileManagerListener listener);
 
+  /**
+   * Sends an asynchronous {@link com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent}
+   * for a property that the caller already changed.
+   * The listeners get the event after the change. See {@link VirtualFile#PROP_ENCODING}.
+   */
   public abstract void notifyPropertyChanged(
     @NotNull VirtualFile virtualFile,
     @VirtualFile.PropName @NotNull String property,

@@ -2595,6 +2595,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           case VirtualFile.PROP_SYMLINK_TARGET -> executeSetTarget(file, (String)newValue);
           case VirtualFile.PROP_CHILDREN_CASE_SENSITIVITY ->
             executeChangeCaseSensitivity((VirtualDirectoryImpl)file, ((CaseSensitivity)newValue).toBooleanOrFail());
+          // PROP_ENCODING has no case here: VirtualFile.setCharset() already stored the charset before it sent the event.
+          // The charset cannot wait for this method. Charset detection runs on any thread, often under a read lock only,
+          // and the caller decodes the content with the new charset at once.
+          // So the event is after-only. See VirtualFile.PROP_ENCODING.
         }
       }
     }

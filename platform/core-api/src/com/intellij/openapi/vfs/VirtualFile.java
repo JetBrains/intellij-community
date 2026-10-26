@@ -68,6 +68,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
 
   /// Used as a property name in the [VirtualFilePropertyEvent] fired when the encoding of a [VirtualFile] changes.
   ///
+  /// The event for this property is an after-only event.
+  /// [#setCharset] stores the new charset first, and then sends the event asynchronously.
+  /// Thus, both the "before" and the "after" listeners run after the change, and they see the new charset.
+  /// Handle this property only in the "after" listeners.
+  /// The event can also be stale: the charset can change again before the listeners run.
+  ///
   /// @see VirtualFileListener#propertyChanged
   /// @see VirtualFilePropertyEvent#getPropertyName
   public static final String PROP_ENCODING = "encoding";

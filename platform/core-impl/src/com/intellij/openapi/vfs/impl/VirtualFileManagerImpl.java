@@ -2,9 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -24,10 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener;
 import com.intellij.openapi.vfs.VirtualFileMoveEvent;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.CachingVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstanceEP;
@@ -46,8 +41,6 @@ import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.util.Collections.singletonList;
 
 @ApiStatus.Internal
 public class VirtualFileManagerImpl extends VirtualFileManager implements Disposable {
@@ -246,19 +239,7 @@ public class VirtualFileManagerImpl extends VirtualFileManager implements Dispos
                                     @VirtualFile.PropName @NotNull String property,
                                     Object oldValue,
                                     Object newValue) {
-    Application app = ApplicationManager.getApplication();
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (virtualFile.isValid()) {
-        ApplicationManager.getApplication().runWriteAction(() -> {
-          if (virtualFile.isValid()) {//re-check isValid under WA
-            List<VFileEvent> events = singletonList(new VFilePropertyChangeEvent(this, virtualFile, property, oldValue, newValue));
-            BulkFileListener listener = app.getMessageBus().syncPublisher(VFS_CHANGES);
-            listener.before(events);
-            listener.after(events);
-          }
-        });
-      }
-    }, ModalityState.nonModal());
+    LOG.error("The Core VFS does not send property change events: file = " + virtualFile + ", property = " + property);
   }
 
   @ApiStatus.Internal
