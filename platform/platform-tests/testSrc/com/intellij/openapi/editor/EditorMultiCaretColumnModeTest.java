@@ -323,6 +323,61 @@ public class EditorMultiCaretColumnModeTest {
   }
 
   @Test
+  public void testBlockSelectionSelectsCutTab() {
+    myFixture.runTest(() -> {
+      init("""
+             abcdef
+             a\tb
+             abcdef""");
+      myFixture.mouse().pressAt(0, 1).dragTo(2, 3).release();
+      myFixture.checkResultByText("""
+                          a<selection>bc<caret></selection>def
+                          a<selection>\t<caret></selection>b
+                          a<selection>bc<caret></selection>def""");
+      myFixture.mouse().clickAt(0, 6);
+      myFixture.mouse().pressAt(2, 3).dragTo(0, 1).release();
+      myFixture.checkResultByText("""
+                          a<selection><caret>bc</selection>def
+                          a<selection><caret>\t</selection>b
+                          a<selection><caret>bc</selection>def""");
+    });
+  }
+
+  @Test
+  public void testMoveRightWithSelectionSelectsTab() {
+    myFixture.runTest(() -> {
+      init("""
+             a<caret>bcdef
+             a\tb
+             abcdef""");
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+      myFixture.checkResultByText("""
+                          a<selection>b<caret></selection>cdef
+                          a<selection>\t<caret></selection>b
+                          a<selection>b<caret></selection>cdef""");
+    });
+  }
+
+  @Test
+  public void testMoveDownWithSelectionSelectsCutTab() {
+    myFixture.runTest(() -> {
+      init("""
+             a<caret>bcdef
+             a\tb
+             abcdef""");
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_RIGHT_WITH_SELECTION);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+      myFixture.executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
+      myFixture.checkResultByText("""
+                          a<selection>b<caret></selection>cdef
+                          a<selection>\t<caret></selection>b
+                          a<selection>b<caret></selection>cdef""");
+    });
+  }
+
+  @Test
   public void testTyping() {
     myFixture.runTest(() -> {
       init("""

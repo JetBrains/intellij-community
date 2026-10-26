@@ -121,6 +121,12 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
       else {
         LogicalPosition startPos = new LogicalPosition(line, editor.isColumnMode() ? startColumn : Math.min(startColumn, lineWidth));
         LogicalPosition endPos = new LogicalPosition(line, editor.isColumnMode() ? endColumn : Math.min(endColumn, lineWidth));
+        if (startPos.column < endPos.column) {
+          endPos = leanToNextLogicalPosition(editor, endPos);
+        }
+        else if (endPos.column < startPos.column) {
+          startPos = leanToNextLogicalPosition(editor, startPos);
+        }
         int startOffset = editor.logicalPositionToOffset(startPos);
         int endOffset = editor.logicalPositionToOffset(endPos);
         caretStates.add(new CaretState(endPos, startPos, endPos));
@@ -132,6 +138,16 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
       caretStates.removeIf(state -> Objects.equals(state.getSelectionStart(), state.getSelectionEnd()));
     }
     return caretStates;
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull LogicalPosition leanToNextLogicalPosition(@NotNull Editor editor, @NotNull LogicalPosition rightEdge) {
+    int offset = editor.logicalPositionToOffset(rightEdge);
+    if (offset < editor.getDocument().getLineEndOffset(rightEdge.line) &&
+        editor.offsetToLogicalPosition(offset).column < rightEdge.column) {
+      return editor.offsetToLogicalPosition(offset + 1);
+    }
+    return rightEdge;
   }
 
   public static boolean requestWriting(@NotNull Editor editor) {

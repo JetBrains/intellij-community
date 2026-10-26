@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.CaretState;
 import com.intellij.openapi.editor.CaretVisualAttributes;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.EditorThreading;
 import com.intellij.openapi.editor.FoldRegion;
@@ -266,7 +267,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
             newLeansRight = true;
           }
         }
-        if (!editorSettings.isCaretInsideTabs()) {
+        if (!editorSettings.isCaretInsideTabs() || myEditor.isColumnMode() && withSelection && columnShift != 0) {
           CharSequence text = myDocument.getCharsSequence();
           if (offset >= 0 && offset < myDocument.getTextLength()) {
             if (text.charAt(offset) == '\t' && (columnShift <= 0 || offset == oldOffset) && !isAtRtlLocation()) {
@@ -861,6 +862,7 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
     final VisualPosition newSelectionStartPosition;
     final VisualPosition newSelectionEndPosition;
     final boolean hasNewSelection;
+    LogicalPosition newCaretPosition = null;
     if (hasSelection() || myDesiredSelectionStartColumn >=0 || myDesiredSelectionEndColumn >= 0) {
       VisualPosition startPosition = getSelectionStartPosition();
       VisualPosition endPosition = getSelectionEndPosition();
@@ -873,6 +875,16 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       newSelectionEndColumn = myDesiredSelectionEndColumn < 0 ? selectionEnd.column : myDesiredSelectionEndColumn;
       LogicalPosition newSelectionStart = truncate(selectionStart.line + lineShift, newSelectionStartColumn);
       LogicalPosition newSelectionEnd = truncate(selectionEnd.line + lineShift, newSelectionEndColumn);
+      if (newSelectionStart.column < newSelectionEnd.column) {
+        LogicalPosition extendedEnd = EditorModificationUtil.leanToNextLogicalPosition(myEditor, newSelectionEnd);
+        if (!extendedEnd.equals(newSelectionEnd)) {
+          newSelectionEnd = extendedEnd;
+          newCaretPosition = extendedEnd;
+        }
+      }
+      else if (newSelectionEnd.column < newSelectionStart.column) {
+        newSelectionStart = EditorModificationUtil.leanToNextLogicalPosition(myEditor, newSelectionStart);
+      }
       newSelectionStartOffset = myEditor.logicalPositionToOffset(newSelectionStart);
       newSelectionEndOffset = myEditor.logicalPositionToOffset(newSelectionEnd);
       newSelectionStartPosition = myEditor.logicalToVisualPosition(newSelectionStart);
@@ -889,7 +901,10 @@ public final class CaretImpl extends UserDataHolderBase implements Caret, Dumpab
       newSelectionEndColumn = -1;
     }
     int targetColumn = myColumnNumberForCloning < 0 ? oldPosition.column : myColumnNumberForCloning;
-    clone.moveToLogicalPosition(new LogicalPosition(newLine, targetColumn, myLeansTowardsLargerOffsets), false, null, false, false);
+    if (newCaretPosition == null) {
+      newCaretPosition = new LogicalPosition(newLine, targetColumn, myLeansTowardsLargerOffsets);
+    }
+    clone.moveToLogicalPosition(newCaretPosition, false, null, false, false);
     clone.myDesiredX = myDesiredX >= 0 ? myDesiredX : getCurrentX();
     clone.myDesiredSelectionStartColumn = newSelectionStartColumn;
     clone.myDesiredSelectionEndColumn = newSelectionEndColumn;
