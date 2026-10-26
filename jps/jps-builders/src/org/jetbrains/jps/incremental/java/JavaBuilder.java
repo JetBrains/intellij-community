@@ -71,6 +71,7 @@ import org.jetbrains.jps.javac.ExternalJavacProcess;
 import org.jetbrains.jps.javac.InputFileDataProvider;
 import org.jetbrains.jps.javac.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.javac.JavacMain;
+import org.jetbrains.jps.javac.JavacOptions;
 import org.jetbrains.jps.javac.JpsInfoDiagnostic;
 import org.jetbrains.jps.javac.ModulePath;
 import org.jetbrains.jps.javac.OutputFileConsumer;
@@ -149,13 +150,12 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
   private static final String PROC_ONLY_OPTION = "-proc:only";
   private static final String PROC_FULL_OPTION = "-proc:full";
-  private static final String PROC_NONE_OPTION = "-proc:none";
+  private static final String PROC_NONE_OPTION = JavacOptions.PROC_NONE_OPTION;
   private static final String RELEASE_OPTION = "--release";
   private static final String TARGET_OPTION = "-target";
-  private static final String PROCESSORPATH_OPTION = "-processorpath";
+  private static final String PROCESSORPATH_OPTION = JavacOptions.PROCESSORPATH_OPTION;
   private static final String ENCODING_OPTION = "-encoding";
   private static final String ENABLE_PREVIEW_OPTION = "--enable-preview";
-  private static final String PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path";
   private static final String SOURCE_OPTION = "-source";
   private static final String SYSTEM_OPTION = "--system";
   private static final String PATCH_MODULE_OPTION = "--patch-module";
@@ -1118,28 +1118,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
    * @return true if annotation processing is enabled and corresponding options were added, false if profile is null or disabled
    */
   public static boolean addAnnotationProcessingOptions(List<? super String> options, @Nullable AnnotationProcessingConfiguration profile) {
-    if (profile == null || !profile.isEnabled()) {
-      options.add(PROC_NONE_OPTION);
-      return false;
-    }
-
-    // configuring annotation processing
-    if (!profile.isObtainProcessorsFromClasspath()) {
-      final String processorsPath = profile.getProcessorPath();
-      options.add(profile.isUseProcessorModulePath() ? PROCESSOR_MODULE_PATH_OPTION : PROCESSORPATH_OPTION);
-      options.add(FileUtil.toSystemDependentName(processorsPath.trim()));
-    }
-
-    final Set<String> processors = profile.getProcessors();
-    if (!processors.isEmpty()) {
-      options.add("-processor");
-      options.add(StringUtil.join(processors, ","));
-    }
-
-    for (Map.Entry<String, String> optionEntry : profile.getProcessorOptions().entrySet()) {
-      options.add("-A" + optionEntry.getKey() + "=" + optionEntry.getValue());
-    }
-    return true;
+    return JavacOptions.addAnnotationProcessingOptions(options, profile);
   }
 
   public static @NotNull String getUsedCompilerId(CompileContext context) {
