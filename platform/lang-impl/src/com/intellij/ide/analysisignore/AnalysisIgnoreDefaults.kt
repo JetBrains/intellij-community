@@ -16,8 +16,8 @@ internal const val ANALYSIS_IGNORE_DEFAULTS_ENABLED_KEY: String = "ide.analysisi
  * The exclusions of a project root without a [`.analysisignore`][ANALYSIS_IGNORE_FILE_NAME] file in the root directory. A
  * [default entity][AnalysisIgnoreDefaultEntitySource] holds [lines] for such a root, and the file in the root directory removes that
  * entity. A new file in the root directory gets the lines first, so that it states every exclusion of the root, and the user edits each of
- * them there. A file below the root gets no lines: its lines add to the defaults. The user edits [lines] in the
- * [defaults file][AnalysisIgnoreDefaultsFile].
+ * them there. A file below the root gets no lines: its lines add to the defaults. The user edits [lines] on the
+ * [Default Exclusions][AnalysisIgnoreDefaultsConfigurable] page.
  */
 @ApiStatus.Internal
 object AnalysisIgnoreDefaults {
@@ -54,18 +54,15 @@ object AnalysisIgnoreDefaults {
     "venv",
   )
 
-  /**
-   * The lines of the product, in the order of a file. [lines] are these lines while the [defaults file][AnalysisIgnoreDefaultsFile] is
-   * absent.
-   */
+  /** The lines of the product, in the order of a file. [lines] are these lines until the user edits them. */
   val BUILT_IN_LINES: List<String> = EXCLUDED_ANYWHERE + EXCLUDED_AT_ROOT.map { "/$it/" }
 
   /** The patterns of a [default entity][AnalysisIgnoreDefaultEntitySource], in the order of a file. */
   val lines: List<String>
-    get() = AnalysisIgnoreDefaultsFile.getInstance().lines
+    get() = AnalysisIgnoreDefaultsSettings.getInstance().lines
 
   /** Returns `true` while the [feature][ANALYSIS_IGNORE_ENABLED_KEY] and its [defaults][ANALYSIS_IGNORE_DEFAULTS_ENABLED_KEY] are on. */
-  fun areEnabled(): Boolean = Registry.`is`(ANALYSIS_IGNORE_ENABLED_KEY, true) && Registry.`is`(ANALYSIS_IGNORE_DEFAULTS_ENABLED_KEY, false)
+  fun areEnabled(): Boolean = Registry.`is`(ANALYSIS_IGNORE_ENABLED_KEY, true) && Registry.`is`(ANALYSIS_IGNORE_DEFAULTS_ENABLED_KEY, true)
 
   /**
    * Returns the default lines of a new file in [baseDir]. A new file in a project root directory gets [lines]. A file in any other
@@ -75,6 +72,12 @@ object AnalysisIgnoreDefaults {
     if (!areEnabled()) return emptyList()
     val isProjectRoot = WorkspaceModel.getInstance(project).currentSnapshot.entities<ProjectRootEntity>().any { it.root.url == baseDir.url }
     return if (isProjectRoot) lines else emptyList()
+  }
+
+  /** Returns `true` if [line] is a pattern that the format supports. A blank line and a comment are not patterns. */
+  fun isSupportedLine(line: String): Boolean {
+    val source = AnalysisIgnorePattern.patternSource(line) ?: return false
+    return source == line && AnalysisIgnorePattern.validate(source) == AnalysisIgnoreValidated.Supported
   }
 }
 

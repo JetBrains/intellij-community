@@ -557,6 +557,5 @@
       <reference ref="CompareFileWithEditor"/>
     </group>
     <action id="WelcomeNewEmptyFile" class="com.intellij.ide.actions.WelcomeNewEmptyFileAction" icon="AllIcons.FileTypes.Text" use-shortcut-of="NewScratchFile"/>
-    <action id="EditAnalysisIgnoreDefaults" class="com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsAction"/>
   </actions>
 </idea-plugin>

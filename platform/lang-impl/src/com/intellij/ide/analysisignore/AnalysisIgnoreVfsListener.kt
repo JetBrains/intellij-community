@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.analysisignore
 
-import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
@@ -22,7 +21,6 @@ internal class AnalysisIgnoreVfsListener : AsyncFileListener {
 
     return object : AsyncFileListener.ChangeApplier {
       override fun afterVfsChange() {
-        if (changes.defaultsFileChanged) serviceIfCreated<AnalysisIgnoreDefaultsFile>()?.reload()
         for (project in ProjectManager.getInstance().openProjects) {
           changes.applyTo(AnalysisIgnoreService.getInstance(project))
         }
@@ -34,10 +32,7 @@ internal class AnalysisIgnoreVfsListener : AsyncFileListener {
 @ApiStatus.Internal
 fun collectAnalysisIgnoreVfsChanges(events: List<VFileEvent>): AnalysisIgnoreVfsChanges? {
   val changes = AnalysisIgnoreVfsChanges()
-  // A service that does not exist yet reads the file when it starts.
-  val defaultsFile = serviceIfCreated<AnalysisIgnoreDefaultsFile>()
   for (event in events) {
-    if (defaultsFile != null && !changes.defaultsFileChanged && event.isAboutDefaultsFile(defaultsFile)) changes.defaultsFileChanged = true
     when (event) {
       is VFileCreateEvent -> {
         if (event.childName == ANALYSIS_IGNORE_FILE_NAME && !event.isDirectory) {
@@ -70,17 +65,6 @@ fun collectAnalysisIgnoreVfsChanges(events: List<VFileEvent>): AnalysisIgnoreVfs
   return if (changes.isEmpty()) null else changes
 }
 
-/** Returns `true` if the event creates, changes, removes, moves, or renames the file at [AnalysisIgnoreDefaultsFile.path]. */
-private fun VFileEvent.isAboutDefaultsFile(defaultsFile: AnalysisIgnoreDefaultsFile): Boolean = when (this) {
-  is VFileCreateEvent -> childName == ANALYSIS_IGNORE_DEFAULTS_FILE_NAME && defaultsFile.isDefaultsPath(path)
-  is VFileCopyEvent -> newChildName == ANALYSIS_IGNORE_DEFAULTS_FILE_NAME && defaultsFile.isDefaultsPath("${newParent.path}/$newChildName")
-  is VFilePropertyChangeEvent -> propertyName == VirtualFile.PROP_NAME &&
-                                 (defaultsFile.isDefaultsPath(oldPath) || defaultsFile.isDefaultsPath(newPath))
-  is VFileMoveEvent -> file.name == ANALYSIS_IGNORE_DEFAULTS_FILE_NAME &&
-                       (defaultsFile.isDefaultsPath(oldPath) || defaultsFile.isDefaultsPath(newPath))
-  else -> file?.name == ANALYSIS_IGNORE_DEFAULTS_FILE_NAME && defaultsFile.isDefaultsPath(path)
-}
-
 @ApiStatus.Internal
 class AnalysisIgnoreVfsChanges {
   val forgetBaseDirUrls: MutableList<String> = SmartList()
@@ -93,10 +77,7 @@ class AnalysisIgnoreVfsChanges {
    */
   val createEvents: MutableList<VFileCreateEvent> = SmartList()
 
-  /** `true` if an event touches the [defaults file][AnalysisIgnoreDefaultsFile], so that the file must be read again. */
-  var defaultsFileChanged: Boolean = false
-
-  fun isEmpty(): Boolean = forgetBaseDirUrls.isEmpty() && forgetSubtreeUrls.isEmpty() && readEvents.isEmpty() && !defaultsFileChanged
+  fun isEmpty(): Boolean = forgetBaseDirUrls.isEmpty() && forgetSubtreeUrls.isEmpty() && readEvents.isEmpty()
 
   fun applyTo(service: AnalysisIgnoreService) {
     service.scheduleChanges(

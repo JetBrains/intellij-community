@@ -853,13 +853,13 @@
 
     <registryKey key="ide.analysisignore.file.enabled" defaultValue="true" restartRequired="true"
                  description="Enable the '.analysisignore' file: a list of files and directories excluded from the IDE analysis."/>
-    <registryKey key="ide.analysisignore.defaults.enabled" defaultValue="false" restartRequired="true"
-                 description="Exclude the default names, as 'node_modules' and '.venv', from a project root without a '.analysisignore' file in the root directory."/>
+    <registryKey key="ide.analysisignore.defaults.enabled" defaultValue="true" restartRequired="true"
+                 description="Exclude the default names, as 'node_modules' and '.venv', from analysis and search."/>
     <workspaceModel.fileIndexContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreWorkspaceFileIndexContributor"/>
     <postStartupActivity implementation="com.intellij.ide.analysisignore.AnalysisIgnoreStartupActivity"/>
     <vfs.asyncListenerBackgroundable implementation="com.intellij.ide.analysisignore.AnalysisIgnoreVfsListener"/>
     <editorFactoryDocumentListener implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDocumentListener"/>
-    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore;default.analysisignore" fieldName="INSTANCE"
+    <fileType name="AnalysisIgnore" language="AnalysisIgnore" fileNames=".analysisignore" fieldName="INSTANCE"
               implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreFileType"/>
     <lang.parserDefinition language="AnalysisIgnore"
                            implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreParserDefinition"/>
@@ -867,8 +867,9 @@
                                    implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreSyntaxHighlighterFactory"/>
     <lang.commenter language="AnalysisIgnore" implementationClass="com.intellij.ide.analysisignore.lang.AnalysisIgnoreCommenter"/>
     <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreEditorNotificationProvider"/>
-    <editorNotificationProvider implementation="com.intellij.ide.analysisignore.AnalysisIgnoreDefaultsFileNotificationProvider"/>
-    <nonProjectFileWritingAccessExtension implementation="com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsAction$AccessExtension"/>
+    <applicationConfigurable parentId="language" id="analysis.ignore.defaults"
+                             bundle="messages.LangBundle" key="analysis.ignore.settings.defaults.display.name"
+                             provider="com.intellij.ide.analysisignore.AnalysisIgnoreDefaultsConfigurable$Provider"/>
     <statistics.projectUsagesCollector implementation="com.intellij.ide.analysisignore.AnalysisIgnoreUsagesCollector"/>
     <workspaceModel.optionalExclusionContributor implementation="com.intellij.ide.analysisignore.AnalysisIgnoreExclusionContributor"
                                                  order="last"/>

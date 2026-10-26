@@ -56,7 +56,7 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
 
   private val requests = Channel<Unit>(capacity = Channel.CONFLATED)
 
-  // A change of the default lines in the defaults file. The default entities then get the new lines, see [syncDefaultsOnChanges].
+  // A change of the default lines in the settings. The default entities then get the new lines, see [syncDefaultsOnChanges].
   private val defaultLinesChanges = Channel<Unit>(capacity = Channel.CONFLATED)
 
   init {
@@ -285,8 +285,6 @@ class AnalysisIgnoreService(private val project: Project, private val coroutineS
    */
   private suspend fun syncDefaultsOnChanges() {
     val model = project.serviceAsync<WorkspaceModel>()
-    // The defaults file service reads the file when it starts. Here it starts outside the lock of the Workspace Model.
-    serviceAsync<AnalysisIgnoreDefaultsFile>()
     updateDefaults(model)
     merge(
       model.eventLog.filter { it.getChanges(ProjectRootEntity::class.java).isNotEmpty() }.map { },

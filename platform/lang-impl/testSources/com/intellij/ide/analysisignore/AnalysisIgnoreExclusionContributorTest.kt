@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.analysisignore
 
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.projectView.actions.MarkExcludeRootAction
 import com.intellij.ide.projectView.actions.UnmarkRootAction
 import com.intellij.lang.LangBundle
@@ -14,15 +15,18 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.ShowSettingsUtil
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -31,6 +35,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.ide.OptionalExclusionUtil
@@ -46,6 +51,7 @@ import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.function.Consumer
 
 private const val ENABLED = "ide.analysisignore.file.enabled"
 
@@ -72,10 +78,7 @@ class AnalysisIgnoreExclusionContributorTest {
   private lateinit var projectRoot: VirtualFile
 
   @BeforeEach
-  fun setUp(@TestDisposable disposable: Disposable) {
-    // "Cancel Exclusion" of a default line writes the defaults file. The test keeps it out of the config directory.
-    AnalysisIgnoreDefaultsFile.getInstance()
-      .setPathForTests(projectModel.baseProjectDir.rootPath.resolve("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME"), disposable)
+  fun setUp() {
     projectRoot = projectModel.baseProjectDir.newVirtualDirectory("projectRoot")
     module = projectModel.createModule()
     ModuleRootModificationUtil.addContentRoot(module, projectRoot)
@@ -449,41 +452,39 @@ class AnalysisIgnoreExclusionContributorTest {
   @Test
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
-  fun `cancel exclusion of a name that the defaults exclude selects its line in the defaults file`(
+  fun `cancel exclusion of a name that the defaults exclude highlights its line on the Default Exclusions page`(
     @TestDisposable disposable: Disposable,
   ) = runBlocking {
     val nodeModules = dir("projectRoot/node_modules")
     assertFalse(isInContent(nodeModules))
     assertTrue(presentationOf(UnmarkRootAction(), nodeModules).isEnabledAndVisible)
     val notifications = collectNotifications(disposable)
+    val settingsRequests = interceptSettingsDialog(disposable)
 
     invoke(UnmarkRootAction(), nodeModules)
     dispatchEvents()
 
     assertNull(projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME), "No file appears in the project root")
     assertFalse(isInContent(nodeModules))
-    val defaultsFile = defaultsVirtualFile()
-    // The defaults file was absent, and thus it got its template.
-    assertEquals(AnalysisIgnoreDefaultsFile.getInstance().template(), VfsUtilCore.loadText(defaultsFile))
-    assertEquals("node_modules", selectedTextIn(defaultsFile))
+    assertEquals(listOf("node_modules"), settingsRequests.map(::highlightedDefaultExclusionOf))
     assertEquals(emptyList<Pair<String, String>>(), notifications)
-    closeEditorOf(defaultsFile)
   }
 
   @Test
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
-  fun `cancel exclusion of a root directory that the defaults exclude selects its anchored line`() = runBlocking {
+  fun `cancel exclusion of a root directory that the defaults exclude highlights its anchored line`(
+    @TestDisposable disposable: Disposable,
+  ) = runBlocking {
     val target = dir("projectRoot/target")
+    val settingsRequests = interceptSettingsDialog(disposable)
 
     invoke(UnmarkRootAction(), target)
     dispatchEvents()
 
     assertNull(projectRoot.findChild(ANALYSIS_IGNORE_FILE_NAME), "No file appears in the project root")
     assertFalse(isInContent(target))
-    val defaultsFile = defaultsVirtualFile()
-    assertEquals("/target/", selectedTextIn(defaultsFile))
-    closeEditorOf(defaultsFile)
+    assertEquals(listOf("/target/"), settingsRequests.map(::highlightedDefaultExclusionOf))
   }
 
   @Test
@@ -525,8 +526,23 @@ class AnalysisIgnoreExclusionContributorTest {
     withContext(Dispatchers.EDT) { FileEditorManager.getInstance(project).closeFile(file) }
   }
 
-  private fun defaultsVirtualFile(): VirtualFile =
-    requireNotNull(LocalFileSystem.getInstance().findFileByNioFile(AnalysisIgnoreDefaultsFile.getInstance().path)) { "No defaults file" }
+  /**
+   * Replaces the Settings dialog, which a headless test cannot show, until [disposable] goes away. Returns the Default Exclusions page of
+   * each request, after the configuration of the request.
+   */
+  private fun interceptSettingsDialog(disposable: Disposable): List<AnalysisIgnoreDefaultsConfigurable> {
+    val requests = ArrayList<AnalysisIgnoreDefaultsConfigurable>()
+    val settingsUtil = object : ShowSettingsUtilImpl() {
+      override fun <T : Configurable?> showSettingsDialog(project: Project?, configurableClass: Class<T>, additionalConfiguration: Consumer<in T>?) {
+        assertEquals(AnalysisIgnoreDefaultsConfigurable::class.java, configurableClass)
+        val configurable = configurableClass.getDeclaredConstructor().newInstance()
+        additionalConfiguration?.accept(configurable)
+        requests.add(configurable as AnalysisIgnoreDefaultsConfigurable)
+      }
+    }
+    ApplicationManager.getApplication().replaceService(ShowSettingsUtil::class.java, settingsUtil, disposable)
+    return requests
+  }
 
   private suspend fun invoke(action: AnAction, vararg files: VirtualFile) {
     withContext(Dispatchers.EDT) { action.actionPerformed(eventOf(action, files)) }

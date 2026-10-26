@@ -4,8 +4,6 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.analysisignore.AnalysisIgnoreDefaults;
-import com.intellij.ide.analysisignore.EditAnalysisIgnoreDefaultsActionKt;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
@@ -155,10 +153,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myIgnoreFilesPanel = new IgnoredFilesAndFoldersPanel();
     tabbedPane.add(FileTypesBundle.message("filetype.ignore.group"), myIgnoreFilesPanel);
 
-    if (!AnalysisIgnoreDefaults.INSTANCE.areEnabled()) {
-      return tabbedPane;
-    }
-    return EditAnalysisIgnoreDefaultsActionKt.addEditAnalysisIgnoreDefaultsLink(tabbedPane);
+    return tabbedPane;
   }
 
   private void updateAssociateMessageLabel(@NotNull @Nls String message, @Nullable Icon icon) {

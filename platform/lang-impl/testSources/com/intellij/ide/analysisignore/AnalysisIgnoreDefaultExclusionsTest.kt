@@ -5,21 +5,14 @@ import com.intellij.lang.LangBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.junit5.RegistryKey
@@ -37,6 +30,7 @@ import kotlinx.coroutines.withTimeout
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -61,7 +55,7 @@ class AnalysisIgnoreDefaultExclusionsTest {
   private val project get() = projectModel.project
   private val fileIndex get() = WorkspaceFileIndex.getInstance(project)
   private val service get() = AnalysisIgnoreService.getInstance(project)
-  private val defaultsFile get() = AnalysisIgnoreDefaultsFile.getInstance()
+  private val settings get() = AnalysisIgnoreDefaultsSettings.getInstance()
 
   private lateinit var module: Module
   private lateinit var projectRoot: VirtualFile
@@ -69,7 +63,6 @@ class AnalysisIgnoreDefaultExclusionsTest {
 
   @BeforeEach
   fun setUp(@TestDisposable disposable: Disposable) {
-    defaultsFile.setPathForTests(projectModel.baseProjectDir.rootPath.resolve("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME"), disposable)
     projectRoot = projectModel.baseProjectDir.newVirtualDirectory("projectRoot")
     module = projectModel.createModule()
     ModuleRootModificationUtil.addContentRoot(module, projectRoot)
@@ -81,6 +74,11 @@ class AnalysisIgnoreDefaultExclusionsTest {
         notificationContents.add(notification.content)
       }
     })
+  }
+
+  @AfterEach
+  fun tearDown() {
+    settings.setLines(AnalysisIgnoreDefaults.BUILT_IN_LINES)
   }
 
   @Test
@@ -447,7 +445,7 @@ class AnalysisIgnoreDefaultExclusionsTest {
     assertTrue(isInContent(buildDir))
     assertFalse(isInContent(nodeModules))
 
-    writeDefaultsFile("/build/")
+    settings.setLines(listOf("/build/"))
     // As the listener of the service does at once.
     service.processNow()
 
@@ -460,7 +458,7 @@ class AnalysisIgnoreDefaultExclusionsTest {
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
   fun `a change of the default lines syncs the default entity without a call`() = runBlocking {
-    writeDefaultsFile("/build/")
+    settings.setLines(listOf("/build/"))
 
     withTimeout(10.seconds) {
       while (defaultPatternsByRoot() != mapOf(projectRoot.url to listOf("/build/"))) {
@@ -473,7 +471,7 @@ class AnalysisIgnoreDefaultExclusionsTest {
   @RegistryKey(key = ENABLED, value = "true")
   @RegistryKey(key = DEFAULTS, value = "true")
   fun `a new empty file at the root gets the edited default lines`() = runBlocking {
-    writeDefaultsFile("/build/", "node_modules")
+    settings.setLines(listOf("/build/", "node_modules"))
     service.processNow()
 
     writeAnalysisIgnoreFile("projectRoot")
@@ -485,101 +483,36 @@ class AnalysisIgnoreDefaultExclusionsTest {
   }
 
   @Test
-  fun `without the defaults file the default lines are the built-in lines`() {
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, defaultsFile.lines)
+  fun `the settings store no lines for the built-in lines and drop an unsupported line`() {
+    settings.setLines(listOf("node_modules", "!keep", "[ab]"))
+    assertTrue(settings.isCustomized)
+    assertEquals(listOf("node_modules"), settings.lines)
+
+    // As the settings panel does: it sorts the lines.
+    settings.setLines(AnalysisIgnoreDefaults.BUILT_IN_LINES.sorted())
+    assertFalse(settings.isCustomized)
+    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, settings.lines)
   }
 
   @Test
-  fun `the defaults file skips a comment, a blank line, and an unsupported pattern`() {
-    writeDefaultsFile("# a comment", "", "node_modules", "!keep", "[ab]", "/build/  ")
-    assertEquals(listOf("node_modules", "/build/"), defaultsFile.lines)
+  fun `an empty list of the user stays empty`() {
+    settings.setLines(emptyList())
+    assertTrue(settings.isCustomized)
+    assertEquals(emptyList<String>(), settings.lines)
   }
 
   @Test
-  fun `an empty defaults file holds no default lines`() {
-    writeDefaultsFile()
-    assertEquals(emptyList<String>(), defaultsFile.lines)
-  }
-
-  @Test
-  fun `the template holds the built-in lines below a comment`() {
-    val template = defaultsFile.template()
-    assertTrue(template.startsWith("# "))
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, supportedPatternsOf("template", template))
-  }
-
-  @Test
-  @RegistryKey(key = ENABLED, value = "true")
-  @RegistryKey(key = DEFAULTS, value = "true")
-  fun `the defaults file in the VFS changes the default lines, and its deletion brings the built-in lines back`() = runBlocking {
-    val file = projectModel.baseProjectDir.newVirtualFile("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME", "/build/\n".toByteArray())
-    assertEquals(listOf("/build/"), defaultsFile.lines)
-    awaitDefaultPatterns(listOf("/build/"))
-
-    writeAction { file.delete(this@AnalysisIgnoreDefaultExclusionsTest) }
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, defaultsFile.lines)
-    awaitDefaultPatterns(AnalysisIgnoreDefaults.BUILT_IN_LINES)
-  }
-
-  @Test
-  @RegistryKey(key = ENABLED, value = "true")
-  @RegistryKey(key = DEFAULTS, value = "true")
-  fun `a change of the defaults file outside the IDE changes the default lines after a VFS refresh`() = runBlocking {
-    val file = projectModel.baseProjectDir.newVirtualFile("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME", "node_modules\n".toByteArray())
-    assertEquals(listOf("node_modules"), defaultsFile.lines)
-
-    Files.writeString(defaultsFile.path, "/build/\n")
-    assertEquals(listOf("node_modules"), defaultsFile.lines)
-
-    file.refresh(false, false)
-    assertEquals(listOf("/build/"), defaultsFile.lines)
-    awaitDefaultPatterns(listOf("/build/"))
-  }
-
-  @Test
-  @RegistryKey(key = ENABLED, value = "true")
-  @RegistryKey(key = DEFAULTS, value = "true")
-  fun `an unsaved edit of the defaults file changes the default lines`() = runBlocking {
-    val file = projectModel.baseProjectDir.newVirtualFile("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME", "node_modules\n".toByteArray())
-    val document = readAction { requireNotNull(FileDocumentManager.getInstance().getDocument(file)) }
-
-    withContext(Dispatchers.EDT) {
-      WriteCommandAction.runWriteCommandAction(project) { document.setText("/build/\n") }
-    }
-
-    assertEquals(listOf("/build/"), defaultsFile.lines)
-    awaitDefaultPatterns(listOf("/build/"))
-    assertTrue(FileDocumentManager.getInstance().isDocumentUnsaved(document))
-  }
-
-  @Test
-  fun `a read of an absent defaults file makes no refresh report its directory when it appears`(@TestDisposable disposable: Disposable) {
-    // The VFS knows the directory, but not its children. A refresh of such a directory checks its known children and each name that a
-    // search did not find.
-    val settingsDir = projectModel.baseProjectDir.rootPath.resolve("settings")
-    Files.createDirectories(settingsDir)
-    val settingsVirtualDir = requireNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(settingsDir))
-    defaultsFile.setPathForTests(settingsDir.resolve("options/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME"), disposable)
-    assertEquals(AnalysisIgnoreDefaults.BUILT_IN_LINES, defaultsFile.lines)
-
-    val reportedPaths = ArrayList<String>()
-    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
-      override fun after(events: List<VFileEvent>) {
-        events.mapTo(reportedPaths) { it.path }
-      }
-    })
-    Files.createDirectories(settingsDir.resolve("options"))
-    settingsVirtualDir.refresh(false, false)
-
-    assertEquals(emptyList<String>(), reportedPaths)
-  }
-
-  @Test
-  fun `the defaults file is writable without the warning about a file outside the project`() {
-    val file = projectModel.baseProjectDir.newVirtualFile("config/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME", ByteArray(0))
-    val otherFile = projectModel.baseProjectDir.newVirtualFile("other/$ANALYSIS_IGNORE_DEFAULTS_FILE_NAME", ByteArray(0))
-    assertTrue(EditAnalysisIgnoreDefaultsAction.AccessExtension().isWritable(file))
-    assertFalse(EditAnalysisIgnoreDefaultsAction.AccessExtension().isWritable(otherFile))
+  fun `a supported line is a pattern without a negation, a character class, or a trailing space`() {
+    assertTrue(AnalysisIgnoreDefaults.isSupportedLine("node_modules"))
+    assertTrue(AnalysisIgnoreDefaults.isSupportedLine("/target/"))
+    assertTrue(AnalysisIgnoreDefaults.isSupportedLine("**/*.log"))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine(""))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine("  "))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine("# comment"))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine("!keep"))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine("[ab]"))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine("name "))
+    assertFalse(AnalysisIgnoreDefaults.isSupportedLine("/"))
   }
 
   /** Returns the number of balloons that told the user about the default lines that a new file got. */
@@ -589,26 +522,6 @@ class AnalysisIgnoreDefaultExclusionsTest {
   /** The patterns of each [default entity][AnalysisIgnoreDefaultEntitySource], by the URL of its project root. */
   private fun defaultPatternsByRoot(): Map<String, List<String>> =
     WorkspaceModel.getInstance(project).currentSnapshot.defaultEntities().associate { it.baseDir.url to it.patterns }
-
-  /** Waits until the default entity of the project root holds [patterns], as the listener of the service syncs it. */
-  private suspend fun awaitDefaultPatterns(patterns: List<String>) {
-    withTimeout(10.seconds) {
-      while (defaultPatternsByRoot() != mapOf(projectRoot.url to patterns)) {
-        delay(10.milliseconds)
-      }
-    }
-  }
-
-  /**
-   * Writes [lines] into the defaults file past the VFS, and reads the file again. The action does the same after the dialog of the Welcome
-   * screen.
-   */
-  private fun writeDefaultsFile(vararg lines: String) {
-    val path = defaultsFile.path
-    Files.createDirectories(path.parent)
-    Files.writeString(path, lines.joinToString("\n"))
-    defaultsFile.reload()
-  }
 
   private suspend fun isInContent(file: VirtualFile): Boolean = readAction { fileIndex.isInContent(file) }
 

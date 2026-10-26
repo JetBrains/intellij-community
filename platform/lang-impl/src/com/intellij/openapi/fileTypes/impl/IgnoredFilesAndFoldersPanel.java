@@ -7,7 +7,9 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
@@ -19,6 +21,7 @@ import com.intellij.ui.components.fields.valueEditors.ValueEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +29,7 @@ import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -36,19 +40,55 @@ import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-final class IgnoredFilesAndFoldersPanel extends JPanel {
+@ApiStatus.Internal
+public final class IgnoredFilesAndFoldersPanel extends JPanel {
+  private static final SimpleTextAttributes SEARCH_MATCH_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_SEARCH_MATCH, null);
 
   private final DefaultListModel<String> myModel = new DefaultListModel<>();
   private final JBList<String> myPatternList;
-  private final PatternEditField myEditField = new PatternEditField();
+  private final Predicate<String> myValidator;
+  private final @Nls String myInvalidMessage;
+  private final boolean myLogInteractions;
+  private final PatternEditField myEditField;
+  // The pattern that the list paints with the highlight of the Settings search, see highlightPattern.
+  private @Nullable @NlsSafe String myHighlightedPattern;
 
   IgnoredFilesAndFoldersPanel() {
+    this(FileTypesBundle.message("filetype.ignore.text"), IgnoredFilesAndFoldersPanel::isValidFileNamePattern,
+         FileTypesBundle.message("filetype.ignore.error.invalid"), true);
+  }
+
+  /**
+   * @param hint the grey text below the list
+   * @param validator accepts a pattern that the list can hold
+   * @param invalidMessage the error for a pattern that {@code validator} rejects
+   * @param logInteractions {@code true} to log the add, edit, and remove actions in {@link FileTypeConfigurableInteractions}
+   */
+  public IgnoredFilesAndFoldersPanel(@NotNull @Nls String hint,
+                                     @NotNull Predicate<String> validator,
+                                     @NotNull @Nls String invalidMessage,
+                                     boolean logInteractions) {
+    myValidator = validator;
+    myInvalidMessage = invalidMessage;
+    myLogInteractions = logInteractions;
+    myEditField = new PatternEditField();
     setLayout(new BorderLayout());
     myPatternList = new JBList<>();
     myPatternList.setModel(myModel);
     myPatternList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    myPatternList.setCellRenderer(new ColoredListCellRenderer<>() {
+      @Override
+      protected void customizeCellRenderer(@NotNull JList<? extends String> list,
+                                           @NlsSafe String value,
+                                           int index,
+                                           boolean selected,
+                                           boolean hasFocus) {
+        append(value, value.equals(myHighlightedPattern) ? SEARCH_MATCH_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+    });
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myPatternList)
                                                  .setScrollPaneBorder(JBUI.Borders.empty())
                                                  .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
@@ -64,17 +104,34 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
     listPanel.add(scrollPane, BorderLayout.CENTER);
     scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
     add(listPanel, BorderLayout.CENTER);
-    JLabel label = new JLabel(FileTypesBundle.message("filetype.ignore.text"));
+    JLabel label = new JLabel(hint);
     label.setFont(JBUI.Fonts.smallFont());
     label.setForeground(JBColor.GRAY);
     label.setBorder(TitledSeparator.createEmptyBorder());
     add(label, BorderLayout.SOUTH);
   }
 
+  /**
+   * Selects {@code pattern} and paints it with the highlight of the Settings search, until the user edits or removes it. A pattern that the
+   * list does not hold gets no selection.
+   */
+  public void highlightPattern(@NotNull @NlsSafe String pattern) {
+    myHighlightedPattern = pattern;
+    myPatternList.setSelectedValue(pattern, true);
+    myPatternList.repaint();
+  }
+
+  private static boolean isValidFileNamePattern(@NotNull String value) {
+    if (value.isBlank()) return false;
+    String withoutWildcards = value.trim().replaceAll("\\*", "a").replaceAll("\\?", "a");
+    return PathUtil.isValidFileName(withoutWildcards, true);
+  }
+
   private void removePattern() {
     int index = myPatternList.getSelectedIndex();
     if (index >= 0) {
-      FileTypeConfigurableInteractions.ignorePatternRemoved.log();
+      forgetHighlight(myModel.get(index));
+      if (myLogInteractions) FileTypeConfigurableInteractions.ignorePatternRemoved.log();
       myModel.remove(index);
       if (!myModel.isEmpty()) {
         if (index >= myModel.size()) index = myModel.size() - 1;
@@ -84,21 +141,34 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
   }
 
   private void editPattern() {
-    FileTypeConfigurableInteractions.ignorePatternEdited.log();
+    if (myLogInteractions) FileTypeConfigurableInteractions.ignorePatternEdited.log();
+    forgetHighlight(myPatternList.getSelectedValue());
     myEditField.startEdit(myPatternList.getSelectedValue());
   }
 
   private void addPattern() {
-    FileTypeConfigurableInteractions.ignorePatternAdded.log();
+    if (myLogInteractions) FileTypeConfigurableInteractions.ignorePatternAdded.log();
     myEditField.startEdit("");
   }
 
+  private void forgetHighlight(@Nullable String pattern) {
+    if (pattern != null && pattern.equals(myHighlightedPattern)) myHighlightedPattern = null;
+  }
+
   @NotNull String getValues() {
-    return String.join(";", ArrayUtil.toStringArray(Collections.list(myModel.elements())));
+    return String.join(";", ArrayUtil.toStringArray(getPatterns()));
   }
 
   void setValues(@NotNull String values) {
-    fillList(Arrays.asList(values.split(";")));
+    setPatterns(Arrays.asList(values.split(";")));
+  }
+
+  public @NotNull List<String> getPatterns() {
+    return Collections.list(myModel.elements());
+  }
+
+  public void setPatterns(@NotNull List<String> patterns) {
+    fillList(patterns);
   }
 
   private void fillList(@NotNull List<String> patterns) {
@@ -181,7 +251,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
         return true;
       }
       else {
-        showError(FileTypesBundle.message("filetype.ignore.error.invalid"));
+        showError(myInvalidMessage);
         setBorder(false);
         return false;
       }
@@ -216,7 +286,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
     }
   }
 
-  private static final class PatternValueEditor extends TextFieldValueEditor<String> {
+  private final class PatternValueEditor extends TextFieldValueEditor<String> {
 
     PatternValueEditor(@NotNull JTextField field) {
       super(field, FileTypesBundle.message("filetype.ignore.pattern"), "");
@@ -226,7 +296,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
     public @NotNull String parseValue(@Nullable String text) throws InvalidDataException {
       if (text != null) {
         if (!isValid(text)) {
-          throw new InvalidDataException(FileTypesBundle.message("filetype.ignore.error.invalid"));
+          throw new InvalidDataException(myInvalidMessage);
         }
         return text;
       }
@@ -241,9 +311,7 @@ final class IgnoredFilesAndFoldersPanel extends JPanel {
 
     @Override
     public boolean isValid(@NotNull String value) {
-      if (value.isBlank()) return false;
-      String withoutWildcards = value.trim().replaceAll("\\*", "a").replaceAll("\\?", "a");
-      return PathUtil.isValidFileName(withoutWildcards, true);
+      return myValidator.test(value);
     }
   }
 }
