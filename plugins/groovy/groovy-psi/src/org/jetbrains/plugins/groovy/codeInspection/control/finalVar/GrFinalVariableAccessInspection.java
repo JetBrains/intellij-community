@@ -354,7 +354,7 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
     final GrTypeDefinition aClass = ((GrTypeDefinition)field.getContainingClass());
     if (aClass == null) return true;
-    
+
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     for (GrClassInitializer initializer : aClass.getInitializers()) {
       if (initializer.isStatic() != isStatic) continue;
@@ -481,7 +481,7 @@ public final class GrFinalVariableAccessInspection extends BaseInspection {
 
   private static @NotNull GroovyControlFlow getFlow(@NotNull PsiElement element) {
     return element instanceof GrControlFlowOwner owner
-           ? ControlFlowUtils.getGroovyControlFlow(owner)
+           ? owner.getGroovyControlFlow()
            : ControlFlowBuilder.buildControlFlow((GroovyPsiElement)element);
   }
 

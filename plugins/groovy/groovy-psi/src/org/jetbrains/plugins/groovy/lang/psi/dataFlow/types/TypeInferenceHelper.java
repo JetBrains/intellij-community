@@ -159,7 +159,7 @@ public final class TypeInferenceHelper {
     if (isFlatDFAAllowed()) {
       return CachedValuesManager.getCachedValue(scope, () -> Result.create(ControlFlowBuilder.buildFlatControlFlow(scope), MODIFICATION_COUNT));
     } else {
-      return ControlFlowUtils.getGroovyControlFlow(scope);
+      return scope.getGroovyControlFlow();
     }
   }
 

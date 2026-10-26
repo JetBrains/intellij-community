@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -230,7 +230,7 @@ public class GrIntroduceClosureParameterProcessor extends BaseRefactoringProcess
   private static Collection<PsiReference> findUsagesForLocal(GrClosableBlock initializer, final GrVariable var) {
     GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(initializer);
     if (owner == null) return Collections.emptyList();
-    final GroovyControlFlow flow = ControlFlowUtils.getGroovyControlFlow(owner);
+    final GroovyControlFlow flow = owner.getGroovyControlFlow();
     final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, var);
 
     Instruction writeInstr = null;

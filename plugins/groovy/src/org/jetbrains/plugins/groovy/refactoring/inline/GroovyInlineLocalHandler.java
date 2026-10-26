@@ -92,7 +92,7 @@ public final class GroovyInlineLocalHandler extends InlineActionHandler {
           GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(cur);
           if (controlFlowOwner == null) break;
 
-          flow = ControlFlowUtils.getGroovyControlFlow(controlFlowOwner);
+          flow = controlFlowOwner.getGroovyControlFlow();
 
           final List<BitSet> writes = ControlFlowUtils.inferWriteAccessMap(flow, variable);
           final PsiElement finalCur = cur;
@@ -125,7 +125,9 @@ public final class GroovyInlineLocalHandler extends InlineActionHandler {
       }
     }
     else {
-      flow = ControlFlowUtils.getGroovyControlFlow(ControlFlowUtils.findControlFlowOwner(variable));
+      GrControlFlowOwner owner = ControlFlowUtils.findControlFlowOwner(variable);
+      assert owner != null;
+      flow = owner.getGroovyControlFlow();
       initializer = variable.getInitializerGroovy();
       writeInstr = ContainerUtil.find(flow.getFlow(), instruction -> instruction.getElement() == variable);
     }
@@ -137,7 +139,7 @@ public final class GroovyInlineLocalHandler extends InlineActionHandler {
     }
 
     int writeInstructionNumber = writeInstr.num();
-    if (ApplicationManager.getApplication().isUnitTestMode() 
+    if (ApplicationManager.getApplication().isUnitTestMode()
         || !EditorSettingsRefactoringOptionsProvider.getInstance().isShowInlineLocalDialog()) {
       return new InlineLocalVarSettings(initializer, writeInstructionNumber, flow);
     }

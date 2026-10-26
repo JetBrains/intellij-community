@@ -1,5 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
@@ -101,10 +100,11 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
     return getGroovyControlFlow().getFlow();
   }
 
+  @Override
   public @NotNull GroovyControlFlow getGroovyControlFlow() {
     PsiUtilCore.ensureValid(this);
-    CachedValue<GroovyControlFlow> controlFlow = ConcurrencyUtil.computeIfAbsent(this, CONTROL_FLOW, ()->
-    CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
+    CachedValue<GroovyControlFlow> controlFlow = ConcurrencyUtil.computeIfAbsent(this, CONTROL_FLOW, () ->
+      CachedValuesManager.getManager(getProject()).createCachedValue(() -> {
         try {
           ResolveProfiler.start();
           final GroovyControlFlow flow = ControlFlowBuilder.buildControlFlow(this);

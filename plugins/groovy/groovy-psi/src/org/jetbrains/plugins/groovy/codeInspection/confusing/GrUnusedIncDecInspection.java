@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -73,8 +73,7 @@ public final class GrUnusedIncDecInspection extends BaseInspection {
       GrControlFlowOwner ownerOfDeclaration = ControlFlowUtils.findControlFlowOwner(resolved);
       if (ownerOfDeclaration != owner) return;
 
-      GroovyControlFlow groovyFlow = ControlFlowUtils.getGroovyControlFlow(owner);
-
+      GroovyControlFlow groovyFlow = owner.getGroovyControlFlow();
       final Instruction cur = ControlFlowUtils.findInstruction(operand, groovyFlow.getFlow());
 
       if (cur == null) {

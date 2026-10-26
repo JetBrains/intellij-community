@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.refactoring.inline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,11 +132,11 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
           toInline.add(new ClosureUsage(ref));
         }
       }
-      else if (element instanceof GrClosableBlock) {
+      else if (element instanceof GrClosableBlock block) {
         final BitSet prev = writes.get(instruction.num());
         if (writeInstructionNumber >= 0 && prev.cardinality() == 1 && prev.get(writeInstructionNumber) ||
             writeInstructionNumber == -1 && prev.cardinality() == 0) {
-          final GroovyControlFlow closureFlow = ControlFlowUtils.getGroovyControlFlow((GrClosableBlock)element);
+          final GroovyControlFlow closureFlow = block.getGroovyControlFlow();
           collectRefs(variable, closureFlow.getFlow(), ControlFlowUtils.inferWriteAccessMap(closureFlow, variable), -1, toInline);
         }
       }
@@ -158,7 +158,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
             public void visitMethod(@NotNull GrMethod method) {
               GrOpenBlock block = method.getBlock();
               if (block != null) {
-                GroovyControlFlow flow = ControlFlowUtils.getGroovyControlFlow(block);
+                GroovyControlFlow flow = block.getGroovyControlFlow();
                 collectRefs(variable, flow.getFlow(), ControlFlowUtils.inferWriteAccessMap(flow, variable), -1, toInline);
               }
             }
@@ -166,7 +166,7 @@ public class GroovyInlineLocalProcessor extends BaseRefactoringProcessor {
             @Override
             public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
               GrOpenBlock block = initializer.getBlock();
-              GroovyControlFlow flow = ControlFlowUtils.getGroovyControlFlow(block);
+              GroovyControlFlow flow = block.getGroovyControlFlow();
               collectRefs(variable, flow.getFlow(), ControlFlowUtils.inferWriteAccessMap(flow, variable), -1, toInline);
             }
           });

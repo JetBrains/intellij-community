@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.controlFlow;
 
 import com.intellij.openapi.editor.SelectionModel;
@@ -156,7 +156,7 @@ public class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
     final String path = getTestName(true) + ".test";
     final List<String> input = TestUtils.readInput(getTestDataPath() + path);
 
-    final String code = input.get(0);
+    final String code = input.getFirst();
     myFixture.configureByText(GroovyFileType.GROOVY_FILE_TYPE, code);
 
     final GroovyFile file = (GroovyFile)myFixture.getFile();
@@ -164,7 +164,7 @@ public class ControlFlowTest extends LightJavaCodeInsightFixtureTestCase {
     final PsiElement start = file.findElementAt(model.hasSelection() ? model.getSelectionStart() : 0);
     final PsiElement end = file.findElementAt(model.hasSelection() ? model.getSelectionEnd() - 1 : file.getTextLength() - 1);
     final GrControlFlowOwner owner = PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(start, end), GrControlFlowOwner.class, false);
-    final String cf = ControlFlowUtils.dumpControlFlow(ControlFlowUtils.getGroovyControlFlow(owner));
+    final String cf = ControlFlowUtils.dumpControlFlow(owner.getGroovyControlFlow());
     TestCase.assertEquals(input.get(1).trim(), cf.trim());
   }
 }

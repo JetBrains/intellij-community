@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
@@ -192,7 +192,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return getGroovyControlFlow().getFlow();
   }
 
-  public GroovyControlFlow getGroovyControlFlow() {
+  @Override
+  public @NotNull GroovyControlFlow getGroovyControlFlow() {
     assert isValid();
     GroovyControlFlow result = dereference(myControlFlow);
     if (result == null) {

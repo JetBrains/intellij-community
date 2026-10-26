@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -368,7 +368,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       checkPending(expression.getParent(), endClosure);
       myFunctionalScopeStack.removeLast();
     } else {
-      List<kotlin.Pair<ReadWriteVariableInstruction, VariableDescriptor>> reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(ControlFlowUtils.getGroovyControlFlow(body), false);
+      List<kotlin.Pair<ReadWriteVariableInstruction, VariableDescriptor>> reads =
+        ControlFlowBuilderUtil.getReadsWithoutPriorWrites(body.getGroovyControlFlow(), false);
       addReadFromNestedControlFlow(expression, reads);
     }
   }
@@ -395,7 +396,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         return;
       }
 
-      List<kotlin.Pair<ReadWriteVariableInstruction, VariableDescriptor>> reads = ControlFlowBuilderUtil.getReadsWithoutPriorWrites(ControlFlowUtils.getGroovyControlFlow(closure), false);
+      List<kotlin.Pair<ReadWriteVariableInstruction, VariableDescriptor>> reads =
+        ControlFlowBuilderUtil.getReadsWithoutPriorWrites(closure.getGroovyControlFlow(), false);
       addReadFromNestedControlFlow(closure, reads);
     }
   }
@@ -1465,13 +1467,13 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       public void visitMethod(@NotNull GrMethod method) {
         GrOpenBlock block = method.getBlock();
         if (block != null) {
-          collectVars(ControlFlowUtils.getGroovyControlFlow(block));
+          collectVars(block.getGroovyControlFlow());
         }
       }
 
       @Override
       public void visitClassInitializer(@NotNull GrClassInitializer initializer) {
-        collectVars(ControlFlowUtils.getGroovyControlFlow(initializer.getBlock()));
+        collectVars(initializer.getBlock().getGroovyControlFlow());
       }
     });
     return new ArrayList<>(vars);

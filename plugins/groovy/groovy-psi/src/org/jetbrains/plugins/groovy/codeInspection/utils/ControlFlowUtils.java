@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrLambdaBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
@@ -78,8 +77,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstructio
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileBaseImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks.GrBlockImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayDeque;
@@ -456,8 +453,8 @@ public final class ControlFlowUtils {
     if (element == null) return Collections.emptyList();
 
     final GroovyControlFlow flow;
-    if (element instanceof GrControlFlowOwner) {
-      flow = getGroovyControlFlow((GrControlFlowOwner)element);
+    if (element instanceof GrControlFlowOwner owner) {
+      flow = owner.getGroovyControlFlow();
     }
     else {
       flow = ControlFlowBuilder.buildControlFlow(element);
@@ -774,7 +771,7 @@ public final class ControlFlowUtils {
     final GrControlFlowOwner owner = findControlFlowOwner(place);
     assert owner != null;
 
-    GroovyControlFlow flow = getGroovyControlFlow(owner);
+    GroovyControlFlow flow = owner.getGroovyControlFlow();
     final Instruction cur = findInstruction(place, flow.getFlow());
 
     if (cur == null) {
@@ -897,18 +894,4 @@ public final class ControlFlowUtils {
 
     return ContainerUtil.map(new DFAEngine<>(groovyFlow.getFlow(), dfa, sem).performForceDFA(), set -> set == null ? neutral : set);
   }
-
-  public static @NotNull GroovyControlFlow getGroovyControlFlow(@NotNull GrControlFlowOwner owner) {
-    if (owner instanceof GroovyFileBaseImpl) {
-      return ((GroovyFileBaseImpl)owner).getGroovyControlFlow();
-    } else if (owner instanceof GrExpressionLambdaBody) {
-      return ControlFlowBuilder.buildControlFlow(owner);
-    } else if (owner instanceof GrBlockImpl) {
-      return ((GrBlockImpl)owner).getGroovyControlFlow();
-    } else {
-      LOG.error("Unrecognized control flow owner");
-      throw new IllegalStateException();
-    }
-  }
-
 }
