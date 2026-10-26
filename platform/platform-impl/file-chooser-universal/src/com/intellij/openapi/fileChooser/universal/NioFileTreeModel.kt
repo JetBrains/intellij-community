@@ -278,7 +278,7 @@ class NioFileTreeModel(
     val candidates = try {
       runInterruptible(Dispatchers.IO) {
         val found = ArrayList<ChildEntry>()
-        PlatformNioHelper.visitDirectory(directory, null) { childPath, attrsResult ->
+        PlatformNioHelper.visitDirectory(directory, null, false) { childPath, attrsResult ->
           found.add(ChildEntry(childPath, runCatching { attrsResult?.get() }.getOrNull()))
           true
         }
