@@ -268,7 +268,9 @@ private fun readTrackClickBehavior() =
     if (hostOs.isMacOS) {
         ScrollbarHelper.getInstance().trackClickBehaviorFlow.value
     } else {
-        TrackClickBehavior.JumpToSpot
+        // Only macOS has a system preference for this. Elsewhere the Swing scrollbar pages towards a
+        // primary click and reserves the jump for a middle click, see DefaultScrollBarUI.
+        TrackClickBehavior.NextPage
     }
 
 private fun readScrollbarVisibility() =
@@ -296,6 +298,8 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.macOs(
     expandAnimationDuration: Duration = trackColorAnimationDuration,
     thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
     lingerDuration: Duration = 700.milliseconds,
+    expandDelay: Duration = SWING_EXPAND_DELAY,
+    collapseDelay: Duration = SWING_COLLAPSE_DELAY,
 ): ScrollbarVisibility.WhenScrolling =
     ScrollbarVisibility.WhenScrolling(
         trackThickness = trackThickness,
@@ -306,6 +310,32 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.macOs(
         expandAnimationDuration = expandAnimationDuration,
         thumbColorAnimationDuration = thumbColorAnimationDuration,
         lingerDuration = lingerDuration,
+        expandDelay = expandDelay,
+        collapseDelay = collapseDelay,
+    )
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.WARNING)
+public fun ScrollbarVisibility.WhenScrolling.Companion.macOs(
+    trackThickness: Dp = 11.dp,
+    trackThicknessExpanded: Dp = 14.dp,
+    trackPadding: PaddingValues = PaddingValues(2.dp),
+    trackPaddingWithBorder: PaddingValues = PaddingValues(1.dp),
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility.WhenScrolling =
+    ScrollbarVisibility.WhenScrolling.macOs(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+        expandDelay = SWING_EXPAND_DELAY,
+        collapseDelay = SWING_COLLAPSE_DELAY,
     )
 
 /** Creates a [ScrollbarVisibility.WhenScrolling] configured with Windows/Linux-specific dimensions and animations. */
@@ -318,6 +348,8 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.windowsAndLinux(
     expandAnimationDuration: Duration = trackColorAnimationDuration,
     thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
     lingerDuration: Duration = 700.milliseconds,
+    expandDelay: Duration = SWING_EXPAND_DELAY,
+    collapseDelay: Duration = SWING_COLLAPSE_DELAY,
 ): ScrollbarVisibility.WhenScrolling =
     ScrollbarVisibility.WhenScrolling(
         trackThickness = trackThickness,
@@ -328,6 +360,32 @@ public fun ScrollbarVisibility.WhenScrolling.Companion.windowsAndLinux(
         expandAnimationDuration = expandAnimationDuration,
         thumbColorAnimationDuration = thumbColorAnimationDuration,
         lingerDuration = lingerDuration,
+        expandDelay = expandDelay,
+        collapseDelay = collapseDelay,
+    )
+
+@Deprecated("Kept for binary compatibility", level = DeprecationLevel.WARNING)
+public fun ScrollbarVisibility.WhenScrolling.Companion.windowsAndLinux(
+    trackThickness: Dp = 11.dp,
+    trackThicknessExpanded: Dp = 14.dp,
+    trackPadding: PaddingValues = PaddingValues(),
+    trackPaddingWithBorder: PaddingValues = trackPadding,
+    trackColorAnimationDuration: Duration = 125.milliseconds,
+    expandAnimationDuration: Duration = trackColorAnimationDuration,
+    thumbColorAnimationDuration: Duration = trackColorAnimationDuration,
+    lingerDuration: Duration = 700.milliseconds,
+): ScrollbarVisibility.WhenScrolling =
+    ScrollbarVisibility.WhenScrolling.windowsAndLinux(
+        trackThickness = trackThickness,
+        trackThicknessExpanded = trackThicknessExpanded,
+        trackPadding = trackPadding,
+        trackPaddingWithBorder = trackPaddingWithBorder,
+        trackColorAnimationDuration = trackColorAnimationDuration,
+        expandAnimationDuration = expandAnimationDuration,
+        thumbColorAnimationDuration = thumbColorAnimationDuration,
+        lingerDuration = lingerDuration,
+        expandDelay = SWING_EXPAND_DELAY,
+        collapseDelay = SWING_COLLAPSE_DELAY,
     )
 
 /** Creates the default [ScrollbarVisibility.AlwaysVisible] for the current platform: macOS or Windows/Linux. */
@@ -372,3 +430,13 @@ public fun ScrollbarVisibility.AlwaysVisible.Companion.windowsAndLinux(
         Color.Unspecified,
         Color.Unspecified,
     )
+
+/** How long the Swing scrollbar waits before expanding its track on hover: `ScrollBarPainter`'s `pauseForward`. */
+private val SWING_EXPAND_DELAY = 150.milliseconds
+
+/**
+ * How long the Swing scrollbar waits before collapsing its track again: `ScrollBarPainter`'s `pauseBackward`.
+ *
+ * Collapsing waits longer than expanding, so leaving the track briefly and coming back does not restart the animation.
+ */
+private val SWING_COLLAPSE_DELAY = 300.milliseconds

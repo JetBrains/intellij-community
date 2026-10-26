@@ -38,6 +38,9 @@ public interface ShowcaseAutomator {
     /** Clicks a node by its accessibility description, which is how the showcase's view switcher is addressable. */
     public suspend fun clickByContentDescription(description: String)
 
+    /** Scrolls the mouse wheel over the centre of the node with [tag]. */
+    public suspend fun scrollWheel(tag: String, wheelClicks: Int)
+
     /** Presses and releases [keyCode], an [java.awt.event.KeyEvent] `VK_` constant. */
     public suspend fun pressKey(keyCode: Int)
 
