@@ -7,11 +7,13 @@ import { test } from 'node:test'
 import { cn } from './lib/utils.ts'
 
 const tailwindCss = readFileSync(new URL('../styles/tailwind.css', import.meta.url), 'utf8')
-const steps = [...tailwindCss.matchAll(/^\s*--text-([\w-]+):\s*[\d.]+px;/gm)].map(match => match[1])
+const steps = [...tailwindCss.matchAll(/^\s*--text-([\w-]+):\s*[\d.]+rem;/gm)].map(match => match[1])
 
-test('the ramp has one whole-pixel step per role, from 10px to 38px', () => {
-  assert.deepEqual(steps, ['3xs', '2xs', 'xs', 'sm', 'md', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'])
-  assert.deepEqual([...tailwindCss.matchAll(/^\s*--text-[\w-]+:\s*([\d.]+)px;/gm)].map(match => Number(match[1])), [10, 11, 12, 13, 14, 15, 17, 22, 28, 34, 38])
+test('the ramp is the Tailwind default steps from xs to 4xl, and the root keeps the 16px of the browser', () => {
+  assert.deepEqual(steps, ['xs', 'sm', 'base', 'lg', 'xl', '2xl', '3xl', '4xl'])
+  assert.deepEqual([...tailwindCss.matchAll(/^\s*--text-[\w-]+:\s*([\d.]+)rem;/gm)].map(match => Number(match[1]) * 16), [12, 14, 16, 18, 20, 24, 30, 36])
+  assert.doesNotMatch(tailwindCss, /--text-\*:\s*initial/)
+  assert.doesNotMatch(tailwindCss, /^\s*font-size:/m)
 })
 
 test('cn keeps a text color next to each step of the ramp, and merges two steps', () => {

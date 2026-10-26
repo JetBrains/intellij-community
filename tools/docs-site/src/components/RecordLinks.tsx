@@ -58,7 +58,7 @@ export function RecordLinks({ source, baseDir, selfHref }: { source: string, bas
           key={link.href}
           href={link.href}
           {...(link.external ? { target: '_blank', rel: 'noreferrer' } : {})}
-          className="flex min-h-7 items-center gap-2 rounded-md px-1.5 py-1 leading-snug text-foreground hover:bg-hover hover:no-underline"
+          className="flex min-h-7 items-center gap-2 rounded-md px-1.5 py-1 leading-snug text-foreground hover:bg-accent no-underline"
         >
           <link.icon className="size-3.5 flex-none text-muted-foreground" aria-hidden />
           <span className="min-w-0 wrap-anywhere">{link.label}</span>

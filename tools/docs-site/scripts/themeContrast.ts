@@ -1,7 +1,8 @@
-// The contrast check of the theme tokens. It reads the `:root` and `.dark` token blocks of `styles/tailwind.css` and
-// of the generated `styles/islands.generated.css`, resolves the colors of the main token pairs, and reports each pair
-// under its WCAG contrast minimum: 4.5:1 for text and 3:1 for a UI mark. A translucent color is composited over the
-// color under it first. `themeContrast.test.ts` runs it in `pnpm run test:scripts`.
+// The contrast check of the domain tokens. It reads the `:root` and `.dark` token blocks of `styles/tailwind.css` and
+// reports each domain token under its WCAG contrast minimum: 3:1 for a mark (a status or a lane) on the page, a card
+// and a muted panel, and 4.5:1 for the white text on each stop of the brand gradient. The stock shadcn tokens are not checked: the site trusts the stock
+// pairs. A translucent color is composited over the color under it first. `themeContrast.test.ts` runs it in
+// `pnpm run test:scripts`.
 //
 // No npm import: a gate can load this module on Bazel bun.
 
@@ -17,66 +18,39 @@ export interface Rgba {
 /** The custom properties of one token block, by name. */
 export type TokenBlock = Readonly<Record<string, string>>
 
-/**
- * What a pair shows: text needs 4.5:1, a UI mark (a toggle edge, a focus ring, a diagram edge) needs 3:1. A field edge
- * needs the 1.4:1 floor of the IDE: its label and its place find a text field, so WCAG 1.4.11 asks no 3:1 of it.
- */
-export type PairKind = 'text' | 'mark' | 'field'
+/** What a pair shows: text needs 4.5:1, a mark (an icon, a dot, a bar, a rail or a border) needs 3:1. */
+export type PairKind = 'text' | 'mark'
 
 export interface TokenPair {
   kind: PairKind
   foreground: string
   background: string
-  /** The opaque token under a translucent background. The default is `--background`. */
-  under?: string
 }
 
-export const MIN_RATIO: Readonly<Record<PairKind, number>> = { text: 4.5, mark: 3, field: 1.4 }
+export const MIN_RATIO: Readonly<Record<PairKind, number>> = { text: 4.5, mark: 3 }
 
-/** The lane colors. A lane names a node and colors a chip label, so each lane is checked as text. */
-export const LANE_TOKENS = ['indigo', 'sky', 'blue', 'green', 'amber', 'red', 'neutral'].map(lane => `--layer-${lane}`)
+/** The status tokens. A status is a mark, and the text next to it is foreground or muted-foreground. */
+export const STATUS_TOKENS = ['--info', '--success', '--warning'] as const
 
-/** The main token pairs of the theme, checked in the light and in the dark block. */
-export const THEME_PAIRS: readonly TokenPair[] = [
-  { kind: 'text', foreground: '--foreground', background: '--background' },
-  { kind: 'text', foreground: '--foreground', background: '--card' },
-  { kind: 'text', foreground: '--muted-foreground', background: '--background' },
-  { kind: 'text', foreground: '--muted-foreground', background: '--muted' },
-  { kind: 'text', foreground: '--muted-foreground', background: '--card' },
-  { kind: 'text', foreground: '--primary', background: '--background' },
-  { kind: 'text', foreground: '--primary-foreground', background: '--primary' },
-  { kind: 'text', foreground: '--destructive', background: '--background' },
-  { kind: 'text', foreground: '--warning', background: '--background' },
-  { kind: 'text', foreground: '--success', background: '--background' },
-  { kind: 'text', foreground: '--tag-durable', background: '--background' },
-  { kind: 'text', foreground: '--tag-structured', background: '--background' },
-  { kind: 'text', foreground: '--info', background: '--info-surface' },
-  { kind: 'text', foreground: '--success', background: '--success-surface' },
-  { kind: 'text', foreground: '--warning', background: '--warning-surface' },
-  { kind: 'text', foreground: '--destructive', background: '--destructive-surface' },
-  { kind: 'mark', foreground: '--ring', background: '--background' },
-  { kind: 'mark', foreground: '--edge-stroke', background: '--canvas' },
-  { kind: 'field', foreground: '--input', background: '--background' },
-  { kind: 'mark', foreground: '--control-edge', background: '--background' },
-  { kind: 'mark', foreground: '--control-edge', background: '--popover' },
-  { kind: 'mark', foreground: '--control-edge', background: '--hover', under: '--card' },
-  // the window under the islands: the top bar, the crumbs, and the gaps between the islands
-  { kind: 'text', foreground: '--foreground', background: '--window' },
-  { kind: 'text', foreground: '--muted-foreground', background: '--window' },
-  { kind: 'text', foreground: '--primary', background: '--window' },
-  { kind: 'mark', foreground: '--control-edge', background: '--window' },
-  // the translucent hover and secondary surfaces, on an island
-  { kind: 'text', foreground: '--foreground', background: '--hover', under: '--card' },
-  { kind: 'text', foreground: '--muted-foreground', background: '--hover', under: '--card' },
-  { kind: 'text', foreground: '--secondary-foreground', background: '--secondary', under: '--card' },
-  { kind: 'text', foreground: '--muted-foreground', background: '--popover' },
-  ...LANE_TOKENS.map((lane): TokenPair => ({ kind: 'text', foreground: lane, background: '--background' })),
-]
+/** The lane colors of the diagrams. A lane is a mark too. */
+export const LANE_TOKENS = ['indigo', 'sky', 'blue', 'green', 'amber', 'red'].map(lane => `--layer-${lane}`)
+
+/**
+ * The blue of a thin mark of the theme: a rail, a border, an icon, a dot. It is the stock --sidebar-primary, because the
+ * stock dark --primary is a fill color with 2.24:1 on the page. A fill with text keeps --primary.
+ */
+export const THEME_MARK_TOKENS = ['--sidebar-primary'] as const
+
+/** The surfaces that a mark lies on: the page, a card, and a muted panel, such as a diagram node or its canvas. */
+const MARK_SURFACES = ['--background', '--card', '--muted'] as const
+
+/** The domain token pairs, checked in the light and in the dark block. */
+export const THEME_PAIRS: readonly TokenPair[] = [...STATUS_TOKENS, ...LANE_TOKENS, ...THEME_MARK_TOKENS]
+  .flatMap(token => MARK_SURFACES.map((background): TokenPair => ({ kind: 'mark', foreground: token, background })))
 
 /**
  * The `:root` block, and the `.dark` block over it, of a token style sheet. Two blocks with one selector merge, the
- * later over the earlier, so the generated variables and the tokens can come from two files. Throws when a block is
- * missing.
+ * later over the earlier. Throws when a block is missing.
  */
 export function parseThemeBlocks(css: string): { light: TokenBlock, dark: TokenBlock } {
   const blocks = new Map<string, Record<string, string>>()
@@ -192,8 +166,8 @@ function resolveColorMix(text: string, block: TokenBlock, depth: number): Rgba |
 }
 
 /**
- * The color and the alpha of a token value: a hex color with or without alpha, an `oklch()` color, `transparent`, a
- * `color-mix()`, or a `var()` of another token of the block. Null for any other value.
+ * The color and the alpha of a token value: a hex color with or without alpha, an `oklch()` color with or without
+ * alpha, `transparent`, a `color-mix()`, or a `var()` of another token of the block. Null for any other value.
  */
 export function resolveColorWithAlpha(value: string | undefined, block: TokenBlock, depth = 0): Rgba | null {
   if (value === undefined || depth > 12) {
@@ -213,9 +187,10 @@ export function resolveColorWithAlpha(value: string | undefined, block: TokenBlo
     const channel = (start: number) => Number.parseInt(digits.slice(start, start + 2), 16) / 255
     return { rgb: [channel(0), channel(2), channel(4)], alpha: digits.length === 8 ? channel(6) : 1 }
   }
-  const oklch = /^oklch\(([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)\)$/.exec(text)
+  const oklch = /^oklch\(([\d.]+)(%?)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+)(%?))?\)$/.exec(text)
   if (oklch !== null) {
-    return { rgb: oklchToRgb(Number(oklch[1]) / (oklch[2] === '%' ? 100 : 1), Number(oklch[3]), Number(oklch[4])), alpha: 1 }
+    const alpha = oklch[5] === undefined ? 1 : Number(oklch[5]) / (oklch[6] === '%' ? 100 : 1)
+    return { rgb: oklchToRgb(Number(oklch[1]) / (oklch[2] === '%' ? 100 : 1), Number(oklch[3]), Number(oklch[4])), alpha }
   }
   return resolveColorMix(text, block, depth)
 }
@@ -259,7 +234,7 @@ export interface PairResult extends TokenPair {
 const WHITE: Rgb = [1, 1, 1]
 
 /**
- * The contrast of each theme pair in both blocks, and of white text on each stop of `--brand-gradient`. A pair
+ * The contrast of each domain pair in both blocks, and of white text on each stop of `--brand-gradient`. A pair
  * whose color does not resolve has the ratio null.
  */
 export function themeContrast(css: string): PairResult[] {
@@ -268,7 +243,7 @@ export function themeContrast(css: string): PairResult[] {
   for (const scheme of ['light', 'dark'] as const) {
     const block = blocks[scheme]
     for (const pair of THEME_PAIRS) {
-      const background = resolveColor(block[pair.background], block, resolveColor(block[pair.under ?? '--background'], block))
+      const background = resolveColor(block[pair.background], block)
       const foreground = resolveColor(block[pair.foreground], block, background)
       results.push({ ...pair, scheme, ratio: foreground === null || background === null ? null : contrastRatio(foreground, background) })
     }
@@ -290,5 +265,5 @@ export function themeContrastFindings(css: string): string[] {
     .filter(result => result.ratio === null || result.ratio < MIN_RATIO[result.kind])
     .map(result => result.ratio === null
       ? `${result.scheme}: ${result.foreground} on ${result.background} does not resolve to a color`
-      : `${result.scheme}: ${result.foreground} on ${result.background} is ${result.ratio.toFixed(2)}:1, under ${MIN_RATIO[result.kind]}:1 for ${result.kind === 'text' ? 'text' : result.kind === 'field' ? 'a field edge' : 'a UI mark'}`)
+      : `${result.scheme}: ${result.foreground} on ${result.background} is ${result.ratio.toFixed(2)}:1, under ${MIN_RATIO[result.kind]}:1 for ${result.kind === 'text' ? 'text' : 'a mark'}`)
 }

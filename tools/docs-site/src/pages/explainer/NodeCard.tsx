@@ -107,7 +107,7 @@ export function NodeCard({ diagram, node, laneTitle, color, baseDir, onStep, onC
           <div className="flex flex-wrap gap-1">
             {steps.map(step => (
               <Button key={step.number} variant="outline" size="sm" className="h-auto py-1 text-xs" onClick={() => onStep(step.number)}>
-                <i className="mr-1 grid size-4 place-items-center rounded-full bg-primary text-3xs font-bold not-italic text-background">{step.number}</i>
+                <i className="mr-1 grid size-4 place-items-center rounded-full bg-primary text-xs font-bold not-italic text-primary-foreground">{step.number}</i>
                 {step.title}
               </Button>
             ))}

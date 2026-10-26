@@ -47,7 +47,7 @@ export function createDiagramNode(diagram: SiteConfig['diagram']) {
         <Handles />
         <StepBadges data={{ stepBadges: data.stepBadges }} />
         {node.planned !== null && (
-          <em className="diagram-node-planned text-3xs font-bold tracking-[0.05em] not-italic uppercase text-primary">{plannedBadge.get(node.planned) ?? node.planned}</em>
+          <em className="diagram-node-planned text-xs font-bold tracking-[0.05em] not-italic uppercase text-muted-foreground">{plannedBadge.get(node.planned) ?? node.planned}</em>
         )}
         <span className="flex items-start gap-1.5">
           {style.glyph !== null && <i className="diagram-node-glyph flex-none not-italic text-muted-foreground" aria-hidden="true">{style.glyph}</i>}

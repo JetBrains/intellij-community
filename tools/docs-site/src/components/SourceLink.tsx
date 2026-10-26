@@ -24,7 +24,7 @@ export function SourceLink({ file, line }: { file: string, line?: number | null 
   const { href, external } = sourceHref(file, line)
   return (
     <a
-      className="source-link [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-muted-foreground [&:hover_code]:text-primary"
+      className="source-link [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-muted-foreground [&:hover_code]:text-foreground"
       href={href}
       {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
       title={sourceTitle(file, line, external)}

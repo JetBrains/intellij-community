@@ -1,5 +1,5 @@
-// The app shell of a docs site: the top bar on the window (the brand, the top nav, the mobile nav, the palette button,
-// the theme toggle), and the route outlet with the islands of the page layout (pageLayout.tsx). The kernel renders its
+// The app shell of a docs site: the top bar (the brand, the top nav, the mobile nav, the palette button, the theme
+// toggle), and the route outlet with the columns of the page layout (pageLayout.tsx). The kernel renders its
 // own pages; a site gives its home page and the renderers of its own pages. Every routed page is a lazy chunk: only
 // the shell (nav, palette, furniture, data) loads eagerly, so the entry stays small and shared modules split into
 // common chunks.
@@ -8,10 +8,10 @@ import { SearchIcon } from 'lucide-react'
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import type { SiteConfig } from '../scripts/siteConfig.ts'
-import { Island } from './components/Island'
 import { MobileNav } from './components/MobileNav'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TopNav } from './components/TopNav'
+import { Button } from './components/ui/button'
 import { Kbd } from './components/ui/kbd'
 import { TooltipProvider } from './components/ui/tooltip'
 import { crumbsForRoute } from './crumbs'
@@ -62,7 +62,7 @@ export interface ShellParts {
   /** The renderers of the site pages, by route page. The layout of a page comes from its entry in the route table. */
   pages: Readonly<Record<string, PageRenderer>>
   /**
-   * The section trees of the site sections, by route page: the left island of a reading page. They come before the
+   * The section trees of the site sections, by route page: the left column of a reading page. They come before the
    * kernel trees of the guides and the decisions. A reading page without a tree keeps an empty column.
    */
   sectionTrees?: Readonly<Record<string, SectionTreeSource>>
@@ -197,23 +197,22 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
   // the fallback must not carry marker classes (.doc-page etc.): the e2e readiness helpers select on them and would
   // take the fallback for the routed page
   const routed = (
-    <Suspense fallback={<Island className="route-loading p-10 text-muted-foreground">Loading…</Island>}>
+    <Suspense fallback={<div className="route-loading p-10 text-muted-foreground">Loading…</div>}>
       {renderPage()}
     </Suspense>
   )
 
   return (
     <TooltipProvider delay={600}>
-      <div className="app-shell flex h-svh min-h-svh min-w-0 flex-col overflow-hidden bg-window [--topbar-height:44px]" onClick={handleAppClick}>
-        {/* the main toolbar of the IDE lies on the window, so the top bar is no island and has no border */}
-        <header className="topbar flex h-(--topbar-height) flex-none items-center gap-2 px-2 md:px-3">
+      <div className="app-shell flex h-svh min-h-svh min-w-0 flex-col overflow-hidden bg-background [--topbar-height:56px]" onClick={handleAppClick}>
+        <header className="topbar flex h-(--topbar-height) flex-none items-center gap-2 border-b border-border bg-background px-3 md:px-4">
           <MobileNav nav={parts.nav} route={route} />
           <a
-            className="brand flex flex-none items-center gap-2 rounded-md p-1 font-semibold text-foreground hover:no-underline"
+            className="brand flex flex-none items-center gap-2 rounded-md p-1 font-semibold text-foreground no-underline"
             href={homeRoute()}
           >
             <span
-              className="product-mark inline-grid h-6 min-w-6 flex-none place-items-center rounded-md px-0.5 bg-(image:--brand-gradient) text-3xs font-bold tracking-[0.04em] text-white shadow-sm"
+              className="product-mark inline-grid h-6 min-w-6 flex-none place-items-center rounded-md px-0.5 bg-(image:--brand-gradient) text-xs font-bold tracking-[0.04em] text-white shadow-sm"
               aria-hidden="true"
             >
               {config.brandMark}
@@ -222,23 +221,23 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
           </a>
           <TopNav nav={parts.nav} route={route} />
           <div className="topbar-actions ml-auto flex flex-none items-center gap-2">
-            {/* a search field on the window, as the search of the IDE toolbar: the island color with a ring */}
-            <button
-              type="button"
-              className="palette-button inline-flex h-7 w-[248px] items-center gap-2 rounded-md bg-background pr-1 pl-2 text-muted-foreground ring-1 ring-foreground/10 hover:text-foreground focus-visible:outline-2 focus-visible:outline-ring max-lg:w-auto"
+            <Button
+              variant="outline"
+              size="sm"
+              className="palette-button font-normal text-muted-foreground"
               onClick={() => setPaletteOpen(true)}
             >
-              <SearchIcon className="size-3.5" aria-hidden="true" />
-              <span className="flex-1 text-left max-sm:sr-only">Search the docs</span>
-              <Kbd className="bg-hover text-2xs max-md:hidden">{navigator.platform.startsWith('Mac') ? '⌘K' : 'Ctrl K'}</Kbd>
-            </button>
+              <SearchIcon data-icon="inline-start" />
+              <span className="max-sm:sr-only">Search the docs</span>
+              <Kbd className="max-md:hidden">{navigator.platform.startsWith('Mac') ? '⌘K' : 'Ctrl K'}</Kbd>
+            </Button>
             <ThemeToggle />
           </div>
         </header>
 
         <PageChromeProvider value={chrome}>
           {layout === 'canvas'
-            ? <div className="route-outlet route-outlet-canvas flex min-h-0 flex-1 flex-col overflow-hidden px-2 pb-2 text-sm">{routed}</div>
+            ? <div className="route-outlet route-outlet-canvas flex min-h-0 flex-1 flex-col overflow-hidden text-sm">{routed}</div>
             : (
                 <div className="route-outlet min-h-0 flex-1 overflow-y-auto">
                   {layout === 'reading' ? <ReadingLayout>{routed}</ReadingLayout> : <ToolLayout>{routed}</ToolLayout>}

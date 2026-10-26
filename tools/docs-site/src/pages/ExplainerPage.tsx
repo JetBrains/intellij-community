@@ -4,7 +4,6 @@
 // The step bar walks the whole explainer: past the last step it hands off to the next chapter.
 
 import { lazy, Suspense, useEffect, useRef } from 'react'
-import { Island } from '../components/Island'
 import { PageBreadcrumb } from '../components/PageBreadcrumb'
 import { cn } from '../lib/utils'
 import type { HarvestedDiagramStep } from '../../scripts/diagram.ts'
@@ -36,11 +35,11 @@ function StepList({ steps, active, onGo }: { steps: HarvestedDiagramStep[], acti
               aria-current={current ? 'step' : undefined}
               className={cn(
                 'step-card flex w-full cursor-pointer items-start gap-2.5 rounded-lg border px-3 py-2 text-left text-xs leading-snug transition-colors',
-                current ? 'active border-primary bg-primary/8' : 'border-border bg-card hover:border-control-edge',
+                current ? 'active border-sidebar-primary bg-primary/8' : 'border-border bg-card hover:border-muted-foreground',
               )}
               onClick={() => onGo(number)}
             >
-              <i className={cn('mt-0.5 grid size-4.5 flex-none place-items-center rounded-full text-3xs font-bold not-italic', current ? 'bg-primary text-background' : 'bg-muted text-muted-foreground')}>{number}</i>
+              <i className={cn('mt-0.5 grid size-4.5 flex-none place-items-center rounded-full text-xs font-bold not-italic', current ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground')}>{number}</i>
               <span>
                 <strong className="mr-1">{step.title}.</strong>
                 <span className="text-muted-foreground">{step.caption.replace(/`/g, '')}</span>
@@ -79,7 +78,7 @@ function stepBarWalk(model: ExplainerRouteModel, atEnd: boolean): StepBarWalk {
       ? undefined
       : `Pick a step, or press → to walk through. ← returns to ${previous.title}.`,
     eyebrow: (
-      <div className="diagram-step-chapter hidden min-w-0 items-baseline gap-1.5 text-2xs text-muted-foreground md:flex">
+      <div className="diagram-step-chapter hidden min-w-0 items-baseline gap-1.5 text-xs text-muted-foreground md:flex">
         <span className="flex-none font-bold tracking-[0.07em] uppercase">{`Chapter ${model.index + 1} of ${model.chapters.length}`}</span>
         <span aria-hidden="true">·</span>
         <span className="truncate">{model.chapter.title}</span>
@@ -128,7 +127,7 @@ export function ExplainerPage({ slug, chapter, step, node }: { slug: string, cha
       <MarkdownDoc source={current.markdown} baseDir={explainersDir} />
       {diagram !== null && diagram.steps.length > 0 && (
         <section className="explainer-step-section mt-4">
-          <h3 className="mt-0 mb-2 text-2xs font-bold tracking-[0.07em] uppercase text-muted-foreground">Step through the picture</h3>
+          <h3 className="mt-0 mb-2 text-xs font-bold tracking-[0.07em] uppercase text-muted-foreground">Step through the picture</h3>
           <StepList steps={diagram.steps} active={model.step} onGo={model.goStep} />
         </section>
       )}
@@ -138,20 +137,20 @@ export function ExplainerPage({ slug, chapter, step, node }: { slug: string, cha
   if (diagram === null) {
     // the route outlet of an explainer does not scroll, so this pane does
     return (
-      <Island ref={proseRef} className="explainer-page-scroll min-h-0 flex-1 overflow-y-auto text-base">
+      <div ref={proseRef} className="explainer-page-scroll min-h-0 flex-1 overflow-y-auto text-base">
         <DocPage className="explainer-page explainer-page-prose">
           {prose}
         </DocPage>
-      </Island>
+      </div>
     )
   }
-  // two islands, as a tool window beside the editor: the prose, and the diagram on its canvas
+  // two panes: the prose, and the diagram on its canvas
   return (
-    <div className="explainer-page grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,45%)_minmax(0,1fr)] gap-2 md:grid-cols-[minmax(360px,440px)_1fr] md:grid-rows-none">
-      <Island ref={proseRef} className="explainer-prose row-start-2 overflow-y-auto text-base p-3.5 md:row-start-auto md:p-5.5">
+    <div className="explainer-page grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,45%)_minmax(0,1fr)] gap-0 md:grid-cols-[minmax(360px,440px)_1fr] md:grid-rows-none">
+      <div ref={proseRef} className="explainer-prose row-start-2 overflow-y-auto border-t border-border text-base p-3.5 md:row-start-auto md:border-t-0 md:border-r md:p-5.5">
         {prose}
-      </Island>
-      <Island className="explainer-canvas-pane sticky top-0 row-start-1 flex h-full min-h-0 min-w-0 overflow-hidden md:col-start-2 md:row-start-auto">
+      </div>
+      <div className="explainer-canvas-pane sticky top-0 row-start-1 flex h-full min-h-0 min-w-0 overflow-hidden md:col-start-2 md:row-start-auto">
         <div className="relative min-w-0 flex-1">
           <Suspense fallback={<div className="diagram-loading grid h-full place-items-center text-muted-foreground">Loading…</div>}>
             <HandLaidCanvas diagram={diagram} step={model.step} selected={model.node} onStep={model.goStep} onSelect={model.select} walk={stepBarWalk(model, atEnd)} />
@@ -168,7 +167,7 @@ export function ExplainerPage({ slug, chapter, step, node }: { slug: string, cha
             onClose={() => model.select(null)}
           />
         )}
-      </Island>
+      </div>
     </div>
   )
 }

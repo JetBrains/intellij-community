@@ -68,12 +68,12 @@ export interface RouteParent {
 }
 
 /**
- * How the shell lays out a page on the window (Air ADR "The docs site lays out a page as islands on the window").
- * - `reading`: the section tree, the document, and the table of contents, each an island. The document has the measure
+ * How the shell lays out a page (Air ADR "The docs site lays out each page by its route").
+ * - `reading`: the section tree, the document, and the table of contents, each a column. The document has the measure
  *   of prose, 70ch. The outlet scrolls.
  * - `catalog`: the reading layout with a wide document, about 960px, for a page of cards, tiles and chip rows.
- * - `tool`: one island across the window, at the density of the IDE. The outlet scrolls.
- * - `canvas`: the page fills the outlet with its own islands, and the outlet does not scroll. The page owns its trail.
+ * - `tool`: one column across the page, at text-sm. The outlet scrolls.
+ * - `canvas`: the page fills the outlet with its own panes, and the outlet does not scroll. The page owns its trail.
  */
 export type PageLayout = 'reading' | 'catalog' | 'tool' | 'canvas'
 

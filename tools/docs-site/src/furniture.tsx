@@ -6,7 +6,6 @@
 // with `[&_…]` descendant variants so call sites keep their natural markup.
 
 import {Children, type ReactNode} from 'react'
-import {Island} from './components/Island'
 import {Badge} from './components/ui/badge'
 import {Button} from './components/ui/button'
 import {Card} from './components/ui/card'
@@ -24,20 +23,19 @@ import {sourceHref} from './sourceRef'
 
 /**
  * The width of a reading page: the document and, at the toc breakpoint, the 220px table of contents with its 8px gap.
- * The prose document is 742px: 70ch of the 15px prose (662px) and its padding. It is in px, because the page box has
- * the 13px of the chrome, where 70ch would be narrower. The wide document is 960px. The literal classes let Tailwind
- * see each width.
+ * The prose document is 786px: 70ch of the 16px prose (706px) and its padding. The wide document is 960px. The literal
+ * classes let Tailwind see each width.
  */
 const READING_WIDTH: Record<PageMeasure, { alone: string, withToc: string }> = {
-  prose: { alone: 'w-[742px]', withToc: 'w-[742px] toc:w-[970px]' },
+  prose: { alone: 'w-[786px]', withToc: 'w-[786px] toc:w-[1014px]' },
   wide: { alone: 'w-[960px]', withToc: 'w-[960px] toc:w-[1188px]' },
 }
 
 /**
  * The page box of a doc page; `toc` gives the table of contents its column (content first child, TocAside second).
- * In the reading layout the page draws two islands: the document with the crumb row, and the table of contents. The
+ * In the reading layout the page draws two columns: the document with the crumb row, and the table of contents. The
  * measure of the route gives the width of the document. In the tool and the canvas layout the page is a centered box
- * inside the island of the layout.
+ * inside the column of the layout.
  */
 export function DocPage({ toc = false, className, children }: { toc?: boolean, className?: string, children: ReactNode }) {
   const { layout, measure } = usePageChrome()
@@ -46,10 +44,10 @@ export function DocPage({ toc = false, className, children }: { toc?: boolean, c
     const width = READING_WIDTH[measure]
     return (
       <div className={cn('doc-page flex max-w-full items-start gap-2 **:scroll-mt-3', toc ? width.withToc : width.alone, toc && 'has-toc', className)} data-measure={measure}>
-        <Island as="article" className="doc-island min-w-0 flex-1 text-base px-10 pt-5 pb-20 max-md:px-4 max-md:pt-3 max-md:pb-15">
+        <article className="doc-article min-w-0 flex-1 text-base px-10 pt-5 pb-20 max-md:px-4 max-md:pt-3 max-md:pb-15">
           <PageCrumbRow />
           {content}
-        </Island>
+        </article>
         {aside}
       </div>
     )
@@ -71,8 +69,8 @@ export function NotFoundPage({ kind, name, backHref, backLabel }: { kind: string
       <p>Unknown {kind}: <code>{name}</code>. <a href={backHref}>{backLabel}</a></p>
     </DocPage>
   )
-  // a canvas page draws its own islands, so its missing page needs one
-  return usePageChrome().layout === 'canvas' ? <Island className="min-h-0 flex-1">{page}</Island> : page
+  // a canvas page draws its own panes, so its missing page needs one
+  return usePageChrome().layout === 'canvas' ? <div className="min-h-0 flex-1">{page}</div> : page
 }
 
 /** End-of-content reference to the markdown file behind a prose page (guides, ADRs, specs). */
@@ -92,7 +90,7 @@ export function SourceFooter({ path }: { path: string }) {
 
 const DECISION_STATUS_CLASS: Record<AdrStatus, string> = {
   'accepted': 'text-muted-foreground',
-  'proposed': 'border-primary/50 text-primary',
+  'proposed': 'border-sidebar-primary text-foreground',
   'partly-superseded': 'border-warning/60 text-foreground',
   'superseded': 'border-dashed text-muted-foreground',
 }
@@ -125,7 +123,7 @@ export function RecordChip({ href, external = false, className, children, ...res
       variant="outline"
       className={cn(
         'record-chip h-6 gap-1.5 px-2.5 text-xs font-medium text-foreground/80 [&>svg]:size-3.5! [&>svg]:text-muted-foreground',
-        href !== undefined && 'text-primary hover:no-underline [a]:hover:bg-hover [a]:hover:text-primary [&>svg]:text-current',
+        href !== undefined && 'text-foreground no-underline [a]:hover:bg-accent [&>svg]:text-sidebar-primary',
         className,
       )}
       render={href === undefined ? undefined : <a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} />}
@@ -183,7 +181,7 @@ export function SpecStatusChip({ status, className }: { status: string | null, c
     return null
   }
   return (
-    <Badge variant="secondary" className={cn('spec-status-chip justify-self-start text-3xs font-bold uppercase tracking-[0.05em] text-muted-foreground', className)}>
+    <Badge variant="secondary" className={cn('spec-status-chip justify-self-start text-xs font-bold uppercase tracking-[0.05em] text-muted-foreground', className)}>
       {status}
     </Badge>
   )
@@ -222,7 +220,7 @@ export function EntityAction({ href, external = false, link = false, children }:
       size="xs"
       className={cn(
         'entity-action font-normal',
-        link ? 'action-link h-auto p-0' : 'rounded-full text-muted-foreground hover:border-primary hover:text-primary hover:no-underline',
+        link ? 'action-link h-auto p-0 text-foreground underline' : 'rounded-full text-muted-foreground hover:border-sidebar-primary hover:text-foreground no-underline',
       )}
       render={<a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} />}
       nativeButton={false}
@@ -252,7 +250,7 @@ export function ChipLink({ href, external = false, className, children }: {
     <Badge
       variant="outline"
       className={cn(
-        'chip-link h-auto min-h-5 whitespace-normal font-mono font-normal hover:border-primary hover:no-underline [a]:hover:text-foreground [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[length:inherit]',
+        'chip-link h-auto min-h-5 whitespace-normal font-mono font-normal hover:border-sidebar-primary no-underline [a]:hover:text-foreground [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[length:inherit]',
         className,
       )}
       render={<a href={href} {...(external ? { target: '_blank', rel: 'noreferrer' } : {})} />}
@@ -262,8 +260,8 @@ export function ChipLink({ href, external = false, className, children }: {
   )
 }
 
-/** Sticky catalog filter bar; children compose Input / FilterChips / Select / FilterCount. The bar is the toolbar of
- *  its island, so its controls take the 13px of the IDE on a reading page too. */
+/** Sticky catalog filter bar; children compose Input / FilterChips / Select / FilterCount. The bar is a toolbar, so
+ *  its controls take text-sm on a reading page too. */
 export function FilterBar({ children }: { children: ReactNode }) {
   return (
     <div className="ep-filters sticky top-0 z-10 mb-5.5 flex flex-wrap items-center gap-2 border-b border-border bg-background/85 py-2 text-sm backdrop-blur [&_[data-slot=input]]:min-w-55 [&_[data-slot=input]]:flex-1 [&_.filter-chips]:order-last [&_.filter-chips]:basis-full">
@@ -370,11 +368,10 @@ export function LinkListItem({ detail, children }: { detail?: ReactNode, childre
 }
 
 /** Anchored entry card (features, concepts, glossary terms) — the `feature-entry` skin.
- *  `text-base` restores the root size that Card's own `text-sm` would shrink. A Card is a panel inside an island:
- *  the stock ring of Card, no border and no shadow, and less round than the island. */
+ *  `text-base` restores the root size that Card's own `text-sm` would shrink. The card keeps the stock ring of Card. */
 export function EntryCard({ id, className, children }: { id?: string, className?: string, children: ReactNode }) {
   return (
-    <Card id={id} className={cn('grid gap-2 rounded-lg bg-muted px-3.5 py-3 text-base', className)}>
+    <Card id={id} className={cn('grid gap-2 rounded-lg px-3.5 py-3 text-base', className)}>
       {children}
     </Card>
   )
@@ -392,13 +389,13 @@ export function EntryCardLink({ href, title, description, meta, className }: {
   return (
     <Item
       variant="outline"
-      className={cn('bg-card text-foreground ring-1 ring-edge-highlight hover:border-primary hover:no-underline', className)}
+      className={cn('bg-card text-foreground hover:border-sidebar-primary no-underline', className)}
       render={<a href={href} />}
     >
       <ItemContent className="min-w-0">
         <ItemTitle className="line-clamp-none">{title}</ItemTitle>
         {description && <ItemDescription className="line-clamp-none">{description}</ItemDescription>}
-        {meta && <ItemFooter className="justify-start text-2xs text-muted-foreground [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[length:inherit]">{meta}</ItemFooter>}
+        {meta && <ItemFooter className="justify-start text-xs text-muted-foreground [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-[length:inherit]">{meta}</ItemFooter>}
       </ItemContent>
     </Item>
   )
@@ -416,7 +413,7 @@ export function KdocEntry({ id, children }: { id?: string, children: ReactNode }
 /** Symbol line of a KdocEntry; a tag pill must hug its content in the single-column grid. */
 export function KdocSymbol({ children }: { children: ReactNode }) {
   return (
-    <div className="kdoc-symbol mb-1.5 grid gap-0.5 [&_.tag]:justify-self-start [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-2xs [&_code]:text-muted-foreground">
+    <div className="kdoc-symbol mb-1.5 grid gap-0.5 [&_.tag]:justify-self-start [&_code]:bg-transparent [&_code]:p-0 [&_code]:text-xs [&_code]:text-muted-foreground">
       {children}
     </div>
   )
@@ -429,7 +426,7 @@ export function KdocSymbol({ children }: { children: ReactNode }) {
  */
 export function KdocFacts({ children }: { children: ReactNode }) {
   return (
-    <dl className="kdoc-facts m-0 mb-1.5 grid gap-0.5 [&>div]:grid [&>div]:grid-cols-[64px_1fr] [&>div]:items-baseline [&>div]:gap-2 [&_dt]:text-2xs [&_dt]:font-medium [&_dt]:tracking-[0.05em] [&_dt]:uppercase [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:text-xs [&_dd_code]:bg-transparent [&_dd_code]:p-0 [&_dd_code]:text-2xs [&_dd_code]:wrap-anywhere">
+    <dl className="kdoc-facts m-0 mb-1.5 grid gap-0.5 [&>div]:grid [&>div]:grid-cols-[64px_1fr] [&>div]:items-baseline [&>div]:gap-2 [&_dt]:text-xs [&_dt]:font-medium [&_dt]:tracking-[0.05em] [&_dt]:uppercase [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:text-xs [&_dd_code]:bg-transparent [&_dd_code]:p-0 [&_dd_code]:text-xs [&_dd_code]:wrap-anywhere">
       {children}
     </dl>
   )
@@ -444,8 +441,8 @@ export function StatTiles({ stats }: { stats: { label: string, value: number | s
   return (
     <dl className="catalog-stats m-0 mb-5.5 grid grid-cols-2 gap-3 sm:grid-cols-4">
       {stats.map(stat => (
-        <Card key={stat.label} className="block rounded-lg bg-muted px-4 py-3">
-          <dt className="text-2xs font-medium tracking-[0.05em] uppercase text-muted-foreground">{stat.label}</dt>
+        <Card key={stat.label} className="block rounded-lg px-4 py-3">
+          <dt className="text-xs font-medium tracking-[0.05em] uppercase text-muted-foreground">{stat.label}</dt>
           <dd className="m-0 mt-0.5 text-xl font-semibold tracking-tight">{stat.value}</dd>
         </Card>
       ))}
@@ -459,7 +456,7 @@ export function StatTiles({ stats }: { stats: { label: string, value: number | s
  */
 export function FactList({ children }: { children: ReactNode }) {
   return (
-    <dl className="fact-list m-0 grid border-t border-border [&>div]:grid [&>div]:grid-cols-[140px_1fr] [&>div]:items-baseline [&>div]:gap-3 [&>div]:border-b [&>div]:border-border [&>div]:py-2 [&_dt]:text-xs [&_dt]:font-medium [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:text-sm [&_dd_code]:text-2xs [&_dd_code]:wrap-anywhere">
+    <dl className="fact-list m-0 grid border-t border-border [&>div]:grid [&>div]:grid-cols-[140px_1fr] [&>div]:items-baseline [&>div]:gap-3 [&>div]:border-b [&>div]:border-border [&>div]:py-2 [&_dt]:text-xs [&_dt]:font-medium [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:text-sm [&_dd_code]:text-xs [&_dd_code]:wrap-anywhere">
       {children}
     </dl>
   )

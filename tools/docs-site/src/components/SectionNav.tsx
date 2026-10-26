@@ -1,10 +1,9 @@
-// The section tree of a reading page (sectionTree.ts): the left island at the section-nav breakpoint, and a Sheet
+// The section tree of a reading page (sectionTree.ts): the left column at the section-nav breakpoint, and a Sheet
 // behind a button of the crumb row below it. The links are plain <a> elements, so the app-level click handler of the
 // shell navigates; a Sheet portal still bubbles the click through the React tree.
 
 import { ChevronRightIcon, PanelLeftIcon } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { Island } from './Island'
 import { StatusDot } from './StatusDot'
 import { Button } from './ui/button'
 import { ScrollArea } from './ui/scroll-area'
@@ -20,8 +19,8 @@ function initiallyOpen(tree: SectionTree, active: SectionTreeLink | null): Set<s
   return new Set(tree.groups.filter(group => size <= OPEN_ALL_LIMIT || (active !== null && group.links.includes(active))).map(group => group.id))
 }
 
-/* prose.css themes bare <a> in --primary; tree rows stay neutral, as the rows of the Project view */
-const ROW = 'flex min-h-7 items-center gap-1.5 rounded-md px-2 py-0.5 text-foreground hover:bg-hover hover:no-underline'
+/* prose.css themes bare <a> in --primary; tree rows stay neutral, as the rows of a stock sidebar menu */
+const ROW = 'flex min-h-7 items-center gap-1.5 rounded-md px-2 py-0.5 text-foreground hover:bg-accent no-underline'
 
 function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: string }) {
   const active = activeTreeLink(tree, currentHref)
@@ -46,7 +45,7 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
       <a
         href={tree.href}
         aria-current={indexActive ? 'page' : undefined}
-        className={cn(ROW, 'section-tree-head font-semibold', indexActive && 'bg-selection')}
+        className={cn(ROW, 'section-tree-head font-semibold', indexActive && 'bg-sidebar-accent text-sidebar-accent-foreground')}
       >
         <span className="min-w-0 flex-1 truncate">{tree.label}</span>
         <span className="text-xs font-normal text-muted-foreground tabular-nums">{tree.groups.reduce((sum, group) => sum + group.links.length, 0)}</span>
@@ -71,7 +70,7 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
                     href={link.href}
                     title={link.label}
                     aria-current={link === active ? 'page' : undefined}
-                    className={cn(ROW, 'pl-6 text-muted-foreground', link === active && 'bg-selection font-medium text-foreground')}
+                    className={cn(ROW, 'pl-6 text-muted-foreground', link === active && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground')}
                   >
                     {link.status !== undefined && <StatusDot status={link.status} />}
                     {link.detail !== undefined && <span className="flex-none font-mono text-xs text-muted-foreground tabular-nums">{link.detail}</span>}
@@ -88,12 +87,12 @@ function TreeLinks({ tree, currentHref }: { tree: SectionTree, currentHref: stri
 }
 
 /**
- * The left island of the reading layout. It sticks under the top bar and scrolls by itself. The shell keeps it mounted
+ * The left column of the reading layout. It sticks under the top bar and scrolls by itself. The shell keeps it mounted
  * within one section, so its open groups and its scroll position stay when the reader opens another page.
  */
 export function SectionNav({ tree, currentHref }: { tree: SectionTree, currentHref: string }) {
   const ref = useRef<HTMLElement>(null)
-  // keep the current page in view by a scroll of the island only; scrollIntoView would scroll the route outlet too
+  // keep the current page in view by a scroll of the tree only; scrollIntoView would scroll the route outlet too
   useEffect(() => {
     const nav = ref.current
     const link = nav?.querySelector('[aria-current="page"]')
@@ -107,14 +106,13 @@ export function SectionNav({ tree, currentHref }: { tree: SectionTree, currentHr
     }
   }, [currentHref])
   return (
-    <Island
-      as="nav"
+    <nav
       ref={ref}
       aria-label={`${tree.label} pages`}
-      className="section-nav sticky top-0 max-h-[calc(100svh-var(--topbar-height)-8px)] overflow-y-auto p-2 [view-transition-name:section-nav]"
+      className="section-nav sticky top-0 max-h-[calc(100svh-var(--topbar-height))] overflow-y-auto px-2 py-5 [view-transition-name:section-nav]"
     >
       <TreeLinks tree={tree} currentHref={currentHref} />
-    </Island>
+    </nav>
   )
 }
 

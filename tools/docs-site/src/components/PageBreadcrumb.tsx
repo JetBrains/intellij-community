@@ -1,5 +1,5 @@
 // The one in-page breadcrumb. DocPage shows it in the crumb row at the top of the document
-// (PageCrumbRow of pageLayout.tsx); a canvas page, such as a flow, mounts it in its prose island.
+// (PageCrumbRow of pageLayout.tsx); a canvas page, such as a flow, mounts it in its prose pane.
 // Trails come from crumbsForRoute.
 
 import { Fragment } from 'react'

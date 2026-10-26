@@ -1,4 +1,4 @@
-// The section tree of a reading page: the left island of the reading layout, as the Project view of the IDE. A tree
+// The section tree of a reading page: the left column of the reading layout, as a stock sidebar menu. A tree
 // lists the pages of one section in groups: the guides by group, the decision records by topic. A site adds the trees
 // of its own sections through the `sectionTrees` part of `createSite`.
 

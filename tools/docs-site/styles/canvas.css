@@ -2,8 +2,8 @@
    node wrappers), walkthrough/selection STATE rules (classes React Flow applies to its wrapper
    DOM — these deliberately override the node components' utility classes: unlayered CSS beats
    the utilities layer), SVG presentation (var() doesn't resolve in SVG attributes), and the
-   layer and tag class→variable color maps (--layer-color, --tag-color; the chip chrome itself is
-   TagBadge and LayerBadge in src/chips.tsx). Node/panel base chrome lives as utilities in
+   layer class→variable color map (--layer-color; the chip chrome itself is LayerBadge of
+   src/components/LayerBadge.tsx). Node/panel base chrome lives as utilities in
    src/graph/nodes.tsx, MapCanvas.tsx, FlowDiagram.tsx, and panels/DetailPanel.tsx. */
 
 .react-flow {
@@ -22,8 +22,8 @@
 
 /* selection state — React Flow toggles `selected`; overrides the nodes' utility borders */
 .arch-node.selected {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 35%, transparent);
+  border-color: var(--sidebar-primary);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--sidebar-primary) 35%, transparent);
 }
 
 /* dynamic layer accent consumed by node skins, minimap fills, and layer chips */
@@ -33,16 +33,7 @@
 .layer-green { --layer-color: var(--layer-green); }
 .layer-amber { --layer-color: var(--layer-amber); }
 .layer-red { --layer-color: var(--layer-red); }
-.layer-neutral { --layer-color: var(--layer-neutral); }
-
-/* concept tag pills (TagBadge in chips.tsx): the class→variable map only; a pill without a tag reads muted */
-.tag { --tag-color: var(--muted-foreground); }
-.tag-target { --tag-color: var(--tag-target); }
-.tag-durable { --tag-color: var(--tag-durable); }
-.tag-live { --tag-color: var(--tag-live); }
-.tag-ui { --tag-color: var(--tag-ui); }
-.tag-terminalBacked { --tag-color: var(--tag-terminalBacked); }
-.tag-structured { --tag-color: var(--tag-structured); }
+.layer-neutral { --layer-color: var(--muted-foreground); }
 
 /* the detail panel embeds markdown at node size (must beat .markdown-body's font-size: inherit) */
 .detail-panel .markdown-body {
@@ -52,17 +43,17 @@
 /* ---- edges ---------------------------------------------------------------------------------- */
 
 .react-flow__edge-path {
-  stroke: var(--edge-stroke);
+  stroke: var(--muted-foreground);
 }
 
 /* map/mini/embedded arrowhead (src/graph/edges.tsx) — drawn inside the edge element so it
    follows the edge's color state, unlike React Flow's shared marker defs */
 .arch-edge-arrow {
-  fill: var(--edge-stroke);
+  fill: var(--muted-foreground);
 }
 
 .react-flow__edge.sel-active .arch-edge-arrow {
-  fill: var(--primary);
+  fill: var(--sidebar-primary);
 }
 
 .react-flow__edge.edge-realizes .react-flow__edge-path {
@@ -79,7 +70,7 @@
 }
 
 .react-flow__edge.edge-ep .react-flow__edge-path {
-  stroke: color-mix(in srgb, var(--primary) 60%, transparent);
+  stroke: color-mix(in srgb, var(--sidebar-primary) 60%, transparent);
   stroke-dasharray: 2 4;
 }
 
@@ -107,7 +98,7 @@
 
 .arch-edge-label.sel-active {
   font-weight: 700;
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 /* --- map selection highlight ---------------------------------------------------------------- */
@@ -123,7 +114,7 @@
 }
 
 .react-flow__edge.sel-active .react-flow__edge-path {
-  stroke: var(--primary);
+  stroke: var(--sidebar-primary);
   stroke-width: 2.5;
 }
 
@@ -143,13 +134,13 @@
 
 /* clickable-canvas affordance; the active glow and selection ring stay stronger */
 .flow-diagram .arch-node {
-  box-shadow: var(--shadow-1);
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .flow-diagram .react-flow__node.flow-node-actionable:not(.step-active):hover .arch-node:not(.selected) {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--control-edge));
-  box-shadow: 0 2px 8px var(--shadow-tint);
+  border-color: color-mix(in srgb, var(--sidebar-primary) 45%, var(--muted-foreground));
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
 }
 
 .flow-diagram .decision-shape polygon {
@@ -157,7 +148,7 @@
 }
 
 .flow-diagram .react-flow__node.flow-node-actionable:not(.step-active):hover .decision-shape polygon {
-  stroke: var(--primary);
+  stroke: var(--sidebar-primary);
 }
 
 .flow-edge .flow-edge-hit {
@@ -168,18 +159,18 @@
 
 .flow-edge .flow-edge-path {
   fill: none;
-  stroke: var(--primary);
+  stroke: var(--sidebar-primary);
   stroke-width: 1.8;
   stroke-linecap: round;
 }
 
 .flow-edge .flow-edge-arrow {
-  fill: var(--primary);
+  fill: var(--sidebar-primary);
 }
 
 /* walkthrough phases: past steps stay lit; future steps stay readable; excluded branches are dashed */
 .react-flow__node.step-dimmed .arch-node {
-  border-color: color-mix(in srgb, var(--control-edge) 72%, var(--primary));
+  border-color: color-mix(in srgb, var(--muted-foreground) 72%, var(--sidebar-primary));
   background: color-mix(in srgb, var(--primary) 4%, var(--muted));
 }
 
@@ -207,8 +198,8 @@
 }
 
 .react-flow__node.step-active .arch-node {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 45%, transparent);
+  border-color: var(--sidebar-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sidebar-primary) 45%, transparent);
 }
 
 /* the hop to/from an off-page connector crosses a flow boundary — dashed */
@@ -218,11 +209,11 @@
 
 /* alternate branches are peer paths (different entry points): full contrast, neutral color */
 .flow-edge.step-alt .flow-edge-path {
-  stroke: var(--edge-stroke);
+  stroke: var(--muted-foreground);
 }
 
 .flow-edge.step-alt .flow-edge-arrow {
-  fill: var(--edge-stroke);
+  fill: var(--muted-foreground);
 }
 
 /* A branch the scenario excludes still has to be there — the bird's-eye view is the point — but it
@@ -231,14 +222,14 @@
    flat, unaccented, and down to its title. */
 .react-flow__node.step-unavailable .arch-node {
   border-style: dashed;
-  border-color: color-mix(in srgb, var(--edge-stroke) 78%, var(--muted));
-  background: color-mix(in srgb, var(--edge-stroke) 5%, var(--muted));
+  border-color: color-mix(in srgb, var(--muted-foreground) 78%, var(--muted));
+  background: color-mix(in srgb, var(--muted-foreground) 5%, var(--muted));
   box-shadow: none;
   opacity: 0.72;
 }
 
 .react-flow__node.step-unavailable .flow-step-node {
-  border-left-color: var(--edge-stroke);
+  border-left-color: var(--muted-foreground);
   border-left-width: 1px;
 }
 
@@ -252,89 +243,89 @@
 
 /* peer branches keep full contrast but no accent — they are alternatives, not the current path */
 .react-flow__node.step-alt .flow-step-node {
-  border-left-color: color-mix(in srgb, var(--primary) 35%, var(--control-edge));
+  border-left-color: color-mix(in srgb, var(--sidebar-primary) 35%, var(--muted-foreground));
 }
 
 .flow-edge.step-unavailable .flow-edge-path {
-  stroke: var(--edge-stroke);
+  stroke: var(--muted-foreground);
   stroke-dasharray: 6 5;
   stroke-opacity: 0.58;
 }
 
 .flow-edge.step-unavailable .flow-edge-arrow {
-  fill: var(--edge-stroke);
+  fill: var(--muted-foreground);
   opacity: 0.58;
 }
 
 /* C4-dynamic interaction chip states (base chrome is utilities in FlowDiagram.tsx) */
 .step-edge-chip.step-alt {
   padding-left: 9px;
-  border-color: var(--control-edge);
+  border-color: var(--muted-foreground);
 }
 
 .step-edge-chip.step-unavailable {
   padding-left: 9px;
   border-style: dashed;
-  border-color: var(--control-edge);
-  background: color-mix(in srgb, var(--edge-stroke) 8%, var(--muted));
+  border-color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--muted-foreground) 8%, var(--muted));
 }
 
 .step-edge-chip.step-active {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 35%, transparent);
+  border-color: var(--sidebar-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sidebar-primary) 35%, transparent);
   font-weight: 600;
 }
 
 /* compact yes/no chips on guard edges; polarity scans at a glance — yes tinted, no neutral */
 .step-edge-chip.chip-small {
   padding: 1px 8px;
-  font-size: var(--text-3xs);
+  font-size: var(--text-xs);
 }
 
 .step-edge-chip.chip-yes {
-  border-color: color-mix(in srgb, var(--primary) 55%, var(--control-edge));
+  border-color: color-mix(in srgb, var(--sidebar-primary) 55%, var(--muted-foreground));
   background: color-mix(in srgb, var(--primary) 10%, var(--muted));
 }
 
 .step-edge-chip.chip-no {
-  border-color: var(--control-edge);
+  border-color: var(--muted-foreground);
 }
 
 /* diamond walkthrough phases (box-shadow cannot follow a diamond, so strokes carry them);
    var() does not resolve in SVG presentation attributes, so the polygon is styled here */
 .decision-shape polygon {
-  fill: color-mix(in srgb, var(--primary) 7%, var(--muted));
-  stroke: color-mix(in srgb, var(--primary) 55%, var(--control-edge));
+  fill: color-mix(in srgb, var(--sidebar-primary) 7%, var(--muted));
+  stroke: color-mix(in srgb, var(--sidebar-primary) 55%, var(--muted-foreground));
   stroke-width: 1.4;
   vector-effect: non-scaling-stroke;
 }
 
 .react-flow__node.step-dimmed .decision-shape polygon {
-  fill: color-mix(in srgb, var(--primary) 4%, var(--muted));
-  stroke: color-mix(in srgb, var(--control-edge) 72%, var(--primary));
+  fill: color-mix(in srgb, var(--sidebar-primary) 4%, var(--muted));
+  stroke: color-mix(in srgb, var(--muted-foreground) 72%, var(--sidebar-primary));
 }
 
 .react-flow__node.step-active .decision-shape polygon {
-  stroke: var(--primary);
+  stroke: var(--sidebar-primary);
   stroke-width: 2.2;
-  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--primary) 45%, transparent));
+  filter: drop-shadow(0 0 3px color-mix(in srgb, var(--sidebar-primary) 45%, transparent));
 }
 
 .react-flow__node.step-unavailable .decision-shape polygon {
-  fill: color-mix(in srgb, var(--edge-stroke) 7%, var(--muted));
-  stroke: color-mix(in srgb, var(--edge-stroke) 78%, var(--muted));
+  fill: color-mix(in srgb, var(--muted-foreground) 7%, var(--muted));
+  stroke: color-mix(in srgb, var(--muted-foreground) 78%, var(--muted));
   stroke-dasharray: 6 5;
 }
 
 /* the `no` path around an optional step: ghosted while the guard holds */
 .flow-edge.step-bypass .flow-edge-path {
-  stroke: var(--edge-stroke);
+  stroke: var(--muted-foreground);
   stroke-dasharray: 4 5;
   stroke-opacity: 0.5;
 }
 
 .flow-edge.step-bypass .flow-edge-arrow {
-  fill: var(--edge-stroke);
+  fill: var(--muted-foreground);
   opacity: 0.5;
 }
 
@@ -348,18 +339,18 @@
 }
 
 .react-flow__node.step-unavailable .flow-step-node.actor-user {
-  border-left-color: var(--edge-stroke);
+  border-left-color: var(--muted-foreground);
 }
 
 /* --- the marks of a recorded run (FlowDiagram.tsx `runMarkOf`) -------------------------------- */
 
 /* A failed step carries a destructive ring. The ring stays inside the active glow, so a failed active card shows both. */
 .react-flow__node.run-failed .flow-step-node {
-  box-shadow: 0 0 0 2px var(--destructive), var(--shadow-1);
+  box-shadow: 0 0 0 2px var(--destructive), 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
 }
 
 .react-flow__node.step-active.run-failed .flow-step-node {
-  box-shadow: 0 0 0 2px var(--destructive), 0 0 0 5px color-mix(in srgb, var(--primary) 45%, transparent);
+  box-shadow: 0 0 0 2px var(--destructive), 0 0 0 5px color-mix(in srgb, var(--sidebar-primary) 45%, transparent);
 }
 
 /* the run stopped inside this step */
@@ -370,7 +361,7 @@
 
 /* the run never reached this step: the look of a future step */
 .react-flow__node.run-pending .flow-step-node {
-  border-color: color-mix(in srgb, var(--control-edge) 72%, var(--primary));
+  border-color: color-mix(in srgb, var(--muted-foreground) 72%, var(--sidebar-primary));
   background: color-mix(in srgb, var(--primary) 4%, var(--muted));
 }
 
@@ -386,17 +377,17 @@
 }
 
 .phase-mark .phase-index {
-  border-color: var(--control-edge);
+  border-color: var(--muted-foreground);
 }
 
 .react-flow__node.phase-active .phase-mark {
-  color: var(--primary);
+  color: var(--foreground);
 }
 
 .react-flow__node.phase-active .phase-index {
   border-color: var(--primary);
   background: var(--primary);
-  color: var(--background);
+  color: var(--primary-foreground);
 }
 
 /* --- legend ----------------------------------------------------------------------------------- */
@@ -414,11 +405,11 @@
   width: 18px;
   height: 0;
   flex: none;
-  border-top: 2px solid var(--edge-stroke);
+  border-top: 2px solid var(--muted-foreground);
 }
 
 .legend-swatch.legend-spine {
-  border-top-color: var(--primary);
+  border-top-color: var(--sidebar-primary);
 }
 
 .legend-swatch.legend-unavailable {
@@ -434,7 +425,7 @@
   width: 18px;
   flex: none;
   text-align: center;
-  color: color-mix(in srgb, var(--primary) 70%, var(--foreground));
+  color: color-mix(in srgb, var(--sidebar-primary) 70%, var(--foreground));
 }
 
 .legend-actor {
@@ -446,7 +437,7 @@
 
 /* var() does not resolve in SVG fill attributes, so minimap colors go through classes */
 .react-flow__minimap-node.mini-layer {
-  fill: color-mix(in srgb, var(--layer-color, var(--layer-neutral)) 70%, var(--muted));
+  fill: color-mix(in srgb, var(--layer-color, var(--muted-foreground)) 70%, var(--muted));
 }
 
 .react-flow__minimap-node.mini-ext {
@@ -454,11 +445,11 @@
 }
 
 .react-flow__minimap-node.mini-decision {
-  fill: color-mix(in srgb, var(--primary) 35%, var(--muted));
+  fill: color-mix(in srgb, var(--sidebar-primary) 35%, var(--muted));
 }
 
 .react-flow__minimap-node.mini-flow-step {
-  fill: color-mix(in srgb, var(--primary) 55%, var(--muted));
+  fill: color-mix(in srgb, var(--sidebar-primary) 55%, var(--muted));
 }
 
 .react-flow__minimap-node.mini-run-failed {
@@ -488,7 +479,7 @@
 
 .react-flow__edge-text {
   fill: var(--muted-foreground);
-  font-size: var(--text-2xs);
+  font-size: var(--text-xs);
 }
 
 /* the minimap eats too much of a phone canvas (below Tailwind's md) */

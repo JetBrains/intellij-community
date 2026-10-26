@@ -1,15 +1,14 @@
-// The layers of the Islands theme of the IDE: the window (`bg-window`) behind the islands, and each page area as an
-// island on it. The route table gives each page its layout (`PageLayout` of routeTable.ts); this module draws it.
+// The page layouts of the docs sites: a flat page on --background under the top bar. The route table gives each page its
+// layout (`PageLayout` of routeTable.ts); this module draws it.
 //
-// - reading: the section tree, the document, and the table of contents, three islands 8px apart. The shell draws the
+// - reading: the section tree, the document, and the table of contents, three columns 8px apart. The shell draws the
 //   tree, and `DocPage` of furniture.tsx draws the document and the table of contents.
-// - tool: one island across the window. `DocPage` inside it draws no island of its own.
-// - canvas: the page fills the outlet and draws its own islands, for example the prose and the diagram of a flow.
+// - tool: one column across the page, at text-sm.
+// - canvas: the page fills the outlet and draws its own panes, for example the prose and the diagram of a flow.
 //
-// The route outlet is the one scroller of a reading and a tool page. The side islands stick under the top bar.
+// The route outlet is the one scroller of a reading and a tool page. The side columns stick under the top bar.
 
 import { createContext, use, type ReactNode } from 'react'
-import { Island } from './components/Island'
 import { PageBreadcrumb } from './components/PageBreadcrumb'
 import { SectionNav, SectionNavSheet } from './components/SectionNav'
 import type { RouteCrumb } from './crumbs'
@@ -60,7 +59,7 @@ export function PageCrumbRow({ className }: { className?: string }) {
 }
 
 /**
- * The reading layout: the section tree, then the page, as one group in the middle of the window. The shell keeps it
+ * The reading layout: the section tree, then the page, as one group in the middle of the page. The shell keeps it
  * mounted across the pages of one section, so the tree does not blink and keeps its state. A page without a tree has
  * no tree column, so the document and the table of contents take the room. The page (DocPage) gives the width of the
  * group: its measure and its table of contents.
@@ -68,7 +67,7 @@ export function PageCrumbRow({ className }: { className?: string }) {
 export function ReadingLayout({ children }: { children: ReactNode }) {
   const { tree, href } = usePageChrome()
   return (
-    <div className="reading-layout flex items-start justify-center gap-2 px-2 pb-2">
+    <div className="reading-layout flex items-start justify-center gap-2 px-2">
       {tree !== null && (
         <div className="hidden w-[240px] flex-none self-stretch section-nav:block">
           <SectionNav key={tree.id} tree={tree} currentHref={href} />
@@ -81,13 +80,7 @@ export function ReadingLayout({ children }: { children: ReactNode }) {
   )
 }
 
-/** The tool layout: one island across the window, at least as tall as the outlet, at the 13px of the IDE. */
+/** The tool layout: one column across the page, at least as tall as the outlet, at the text-sm of a stock tool page. */
 export function ToolLayout({ children }: { children: ReactNode }) {
-  return (
-    <div className="tool-layout min-h-full px-2 pb-2">
-      <Island className="tool-island min-h-[calc(100svh-var(--topbar-height)-8px)] text-sm">
-        {children}
-      </Island>
-    </div>
-  )
+  return <div className="tool-layout min-h-full text-sm">{children}</div>
 }

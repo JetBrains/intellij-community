@@ -207,22 +207,23 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
     const currentTreeLink = (page: Page) => page.locator('.section-nav a[aria-current="page"]')
     const background = (page: Page, selector: string) => page.locator(selector).first().evaluate(element => getComputedStyle(element).backgroundColor)
 
-    test('a guide page lies in three islands on the window: the section tree, the document, and the table of contents', async ({ page }) => {
+    test('a guide page lies flat on the page in three columns: the section tree, the document, and the table of contents', async ({ page }) => {
       assert.ok(first, 'no guide group of the site has two guides')
       await open(page, guideRoute(first))
       await expect(page.locator('.section-nav')).toBeVisible()
       await expect(currentTreeLink(page)).toHaveAttribute('href', guideRoute(first))
-      await expect(page.locator('.doc-island .page-breadcrumb')).toContainText('Guides')
-      const window = await background(page, '.app-shell')
-      assert.notStrictEqual(await background(page, '.doc-island'), window)
-      assert.notStrictEqual(await background(page, '.section-nav'), window)
-      // the top bar is the main toolbar of the IDE: it lies on the window and has no border
-      assert.strictEqual(await background(page, '.topbar'), 'rgba(0, 0, 0, 0)')
-      assert.strictEqual(await page.locator('.topbar').evaluate(element => getComputedStyle(element).borderBottomWidth), '0px')
+      await expect(page.locator('.doc-article .page-breadcrumb')).toContainText('Guides')
+      // the page has the one --background: the columns have no fill of their own
+      assert.notStrictEqual(await background(page, '.app-shell'), 'rgba(0, 0, 0, 0)')
+      assert.strictEqual(await background(page, '.doc-article'), 'rgba(0, 0, 0, 0)')
+      assert.strictEqual(await background(page, '.section-nav'), 'rgba(0, 0, 0, 0)')
+      // the top bar is a stock site header: the page background and a bottom border
+      assert.strictEqual(await background(page, '.topbar'), await background(page, '.app-shell'))
+      assert.strictEqual(await page.locator('.topbar').evaluate(element => getComputedStyle(element).borderBottomWidth), '1px')
       const tree = await page.locator('.section-nav').boundingBox()
-      const doc = await page.locator('.doc-island').boundingBox()
+      const doc = await page.locator('.doc-article').boundingBox()
       assert.ok(tree && doc)
-      assert.ok(Math.abs(doc.x - (tree.x + tree.width) - 8) < 1, `the islands are ${doc.x - tree.x - tree.width}px apart, not 8px`)
+      assert.ok(Math.abs(doc.x - (tree.x + tree.width) - 8) < 1, `the columns are ${doc.x - tree.x - tree.width}px apart, not 8px`)
     })
 
     test('the section tree sticks under the top bar and stays mounted within its section', async ({ page }) => {
@@ -248,16 +249,16 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await expect(page.locator(`.section-tree-group[data-group="${topic.id}"] button`)).toHaveAttribute('aria-expanded', 'true')
     })
 
-    test('a doc page has no section tree, and a tool page is one island across the window', async ({ page }) => {
+    test('a doc page has no section tree, and a tool page is one column across the page', async ({ page }) => {
       const doc = harvest.docs.find(entry => !entry.path.startsWith(`${config.docs.root}/`) && entry.adr === undefined && entry.kind !== 'explainer')
       if (doc !== undefined) {
         await open(page, app(`/doc/${encodeURIComponent(doc.path)}`))
-        await expect(page.locator('.doc-island')).toBeVisible()
+        await expect(page.locator('.doc-article')).toBeVisible()
         await expect(page.locator('.section-nav, .section-nav-trigger')).toHaveCount(0)
       }
       await open(page, app('/'))
-      await expect(page.locator('.tool-island')).toHaveCount(1)
-      await expect(page.locator('.section-nav, .doc-island')).toHaveCount(0)
+      await expect(page.locator('.tool-layout')).toHaveCount(1)
+      await expect(page.locator('.section-nav, .doc-article')).toHaveCount(0)
     })
 
     test('below the section-nav breakpoint the tree opens in a sheet from the crumb row', async ({ page }) => {
@@ -265,7 +266,7 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await page.setViewportSize({ width: 1000, height: 900 })
       await open(page, guideRoute(first))
       await expect(page.locator('.section-nav')).toBeHidden()
-      await page.locator('.doc-island .section-nav-trigger').click()
+      await page.locator('.doc-article .section-nav-trigger').click()
       const sheet = page.locator('.section-nav-sheet')
       await expect(sheet.locator('a[aria-current="page"]')).toHaveAttribute('href', guideRoute(first))
       await sheet.locator(`a[href="${guideRoute(second)}"]`).click()

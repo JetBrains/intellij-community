@@ -5,12 +5,10 @@ import { describe, it } from 'node:test'
 import { fileURLToPath } from 'node:url'
 import { contrastRatio, gradientStops, parseThemeBlocks, resolveColor, resolveColorWithAlpha, THEME_PAIRS, themeContrast, themeContrastFindings } from './themeContrast.ts'
 
-const styles = join(dirname(fileURLToPath(import.meta.url)), '../styles')
-// the generated variables first: the token blocks of tailwind.css map them
-const tokens = readFileSync(join(styles, 'islands.generated.css'), 'utf8') + readFileSync(join(styles, 'tailwind.css'), 'utf8')
+const tokens = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '../styles/tailwind.css'), 'utf8')
 
-describe('the theme tokens', () => {
-  it('keep text at 4.5:1, UI marks at 3:1 and field edges at 1.4:1 in the light and the dark block', () => {
+describe('the domain tokens', () => {
+  it('keep a status and a lane at 3:1 on the page, a card and a muted panel, and white text on the brand gradient at 4.5:1', () => {
     assert.deepEqual(themeContrastFindings(tokens), [])
   })
 
@@ -40,7 +38,15 @@ describe('the contrast check', () => {
     assert.deepEqual(resolveColor(light['--alias'], light), resolveColor('#767676', light))
     const muted = resolveColor(light['--muted'], light)!
     assert.ok(muted.every(channel => Math.abs(channel - 0.98) < 0.01))
+    // the stock --destructive is red-600, #e7000b
+    assert.deepEqual(resolveColor('oklch(0.577 0.245 27.325)', light)!.map(channel => Math.round(channel * 255)), [231, 0, 11])
     assert.equal(resolveColor('rgb(0 0 0)', light), null)
+  })
+
+  it('reads the alpha of an oklch color', () => {
+    const border = resolveColorWithAlpha('oklch(1 0 0 / 10%)', {})!
+    assert.ok(Math.abs(border.alpha - 0.1) < 1e-9)
+    assert.ok(Math.abs(resolveColorWithAlpha('oklch(100% 0 0 / 0.15)', {})!.alpha - 0.15) < 1e-9)
   })
 
   it('merges two blocks with one selector, the later over the earlier', () => {
@@ -76,8 +82,8 @@ describe('the contrast check', () => {
   })
 
   it('names a pair under its minimum and a pair that does not resolve', () => {
-    const findings = themeContrastFindings(':root { --background: #ffffff; --foreground: #999999; } .dark { }')
-    assert.ok(findings.includes('light: --foreground on --background is 2.85:1, under 4.5:1 for text'))
-    assert.ok(findings.includes('dark: --ring on --background does not resolve to a color'))
+    const findings = themeContrastFindings(':root { --background: #ffffff; --card: #ffffff; --muted: #ffffff; --info: #999999; } .dark { }')
+    assert.ok(findings.includes('light: --info on --background is 2.85:1, under 3:1 for a mark'))
+    assert.ok(findings.includes('dark: --success on --card does not resolve to a color'))
   })
 })

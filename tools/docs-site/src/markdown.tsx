@@ -337,7 +337,7 @@ export function renderMarkdown(source: string, baseDir: string, anchorHref?: Anc
 const proseClassName = [
   'markdown-body prose max-w-none',
   // tinted always-on underline that saturates on hover (Syntax-template treatment)
-  'prose-a:font-normal prose-a:underline prose-a:decoration-primary/30 prose-a:underline-offset-2 hover:prose-a:decoration-primary',
+  'prose-a:font-normal prose-a:underline prose-a:underline-offset-4',
   // inline code renders as chips (base layer), not prose's bold backtick-quoted style
   'prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
   // plain dim citation blocks, not prose's italic quoted style
@@ -423,7 +423,7 @@ function renderDocSegments(source: string, baseDir: string, anchorHref?: AnchorH
 
 /** The inline error of a fence that does not parse. A site fence renderer shows its errors with it too. */
 export function fenceError(className: string, label: string, errors: string[]): ReactNode {
-  return <pre className={`${className} rounded-md border border-(--tag-ui) px-3.5 py-2 text-sm whitespace-pre-wrap text-(--tag-ui)`}>{label}: {errors.join('; ')}</pre>
+  return <pre className={`${className} rounded-md border border-destructive px-3.5 py-2 text-sm whitespace-pre-wrap text-destructive`}>{label}: {errors.join('; ')}</pre>
 }
 
 /** A ```diagram fence: the hand-laid figure from the lazy React Flow chunk. The harvest already checked that the id exists. */
@@ -434,7 +434,7 @@ function DiagramSegment({ body }: { body: string }) {
     return fenceError('air-diagram-error', 'air-diagram block error', spec === null ? errors : [`no diagram '${spec.id}'`])
   }
   return (
-    <Suspense fallback={<div className="mini-graph my-5.5 overflow-hidden rounded-lg border border-border bg-canvas" style={{ height: spec.height ?? 360 }} aria-hidden="true" />}>
+    <Suspense fallback={<div className="mini-graph my-5.5 overflow-hidden rounded-lg border border-border bg-muted" style={{ height: spec.height ?? 360 }} aria-hidden="true" />}>
       <HandLaidFigure diagram={diagram} initialStep={spec.step} height={spec.height} title={spec.title} />
     </Suspense>
   )

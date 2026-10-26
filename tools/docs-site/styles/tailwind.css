@@ -10,13 +10,11 @@
    block aliases them into shadcn's standard utility vocabulary (bg-background,
    text-muted-foreground, border-input, …), so color utilities emit var(--…) and follow the
    theme switch at runtime. Never hard-code px font sizes or use text-[..px] arbitrary values —
-   extend the @theme ramp instead. */
+   use a step of the @theme ramp instead. */
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-/* the --islands-* variables that the token blocks below map */
-@import './islands.generated.css';
 
 @plugin '@tailwindcss/typography';
 
@@ -26,248 +24,212 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ── design tokens ────────────────────────────────────────────────────────────
-   The tokens map the Islands theme of the IDE. islands.generated.css holds its values as --islands-* variables, and
-   scripts/islandsTheme.ts writes that file from ManyIslandsLight.theme.json and ManyIslandsDark.theme.json. The
-   blocks below name the Islands key of each token; a palette step names a value outside the keys, and its comment
-   gives the reason.
+   The shadcn tokens are the stock values of `shadcn init` with the style Nova, the base color neutral, the theme blue,
+   and the stock radius. The theme sets --primary, --secondary, --sidebar-primary and their foregrounds. A text stays
+   foreground or muted-foreground. A fill with text is --primary with --primary-foreground. A thin mark (a rail, a
+   border, an icon, a dot) is --sidebar-primary, because the stock dark --primary is 2.24:1 on the page, under the 3:1
+   of a mark. The tokens below them are the domain tokens that shadcn has no token for:
 
-   The layers are the Islands layers: --window is the main window behind the islands, --background and --card are
-   the island, --popover is a popup. --muted is an opaque panel inside an island; the diagram nodes lie on it.
-   --hover, --secondary and --accent are one translucent tint of the text, so one hover reads on every layer.
+   - --info, --success, --warning: a status. A status is a mark (an icon, a dot, a bar, a rail or a border), and the
+     text next to it is foreground or muted-foreground. Each takes the Tailwind step of the stock --destructive in its
+     own hue: step 600 in light, step 400 in dark. A mark needs 3:1. Green and amber take step 700 in light, because
+     a mark lies on --muted too, and step 600 is 2.95:1 there.
+   - --layer-*: the six lane colors of the diagrams, by the same rule. They keep their names, because the site configs
+     and the diagrams name them: indigo is purple, sky is teal, blue is pink.
+   - --brand-gradient: the product mark behind white text, in the two dark stops of the Air app icon.
+   - --primary-hover, --primary-pressed, --primary-disabled and the --*-surface and --*-border tints: the host contract
+     of the GenUI catalog, whose primitives this site renders (Air ADR 0218). The values are the stock states and tints:
+     bg-primary/80, 50 % for disabled, bg-<tone>/10 and border-<tone>/20.
 
-   The accents are one rule: a palette step 70 in light, 100 in dark. Step 70 keeps 5:1 on the window and on a
-   status surface. The lane colors (--layer-*) keep their names, because the site configs and the diagrams name
-   them: indigo is purple, sky is teal, blue is magenta.
-
-   scripts/themeContrast.test.ts checks the main token pairs of both blocks: text at 4.5:1, UI marks at 3:1, on the
-   island and on the window. Components and canvas.css use only the semantic tokens. */
+   scripts/themeContrast.test.ts checks only the status, lane and --sidebar-primary marks at 3:1 on the background, the
+   card and the muted panel, and white text at 4.5:1 on each stop of the brand gradient. */
 
 :root {
   color-scheme: light;
 
-  /* the layers */
-  --window: var(--islands-main-window-bg-light);
-  --background: var(--islands-tool-window-bg-light);
-  --foreground: var(--islands-text-default-light);
-  --card: var(--islands-tool-window-bg-light);
-  --card-foreground: var(--foreground);
-  --popover: var(--islands-popup-bg-light);
-  --popover-foreground: var(--foreground);
-  --muted: var(--islands-layer-1-bg-light);
-  --muted-foreground: var(--islands-text-muted-light);
-  --hover: var(--islands-core-bg-transparent-hovered-light);
-  --secondary: var(--hover);
-  --secondary-foreground: var(--foreground);
-  --accent: var(--hover);
-  --accent-foreground: var(--foreground);
-  --border: var(--islands-tool-window-border-light);
-  /* a field border: control-border, as the IDE draws a text field and an outline button. A field is found by its label
-     and its place, so WCAG 1.4.11 asks no 3:1 of its edge */
-  --input: var(--islands-control-border-light);
-  /* the edge of a toggle (a checkbox, a radio, a switch) and of a diagram mark: gray-80, so it keeps 3:1 on the island,
-     on a popup, on the window, and on a hover row */
-  --control-edge: var(--islands-gray-80);
-  --ring: var(--islands-accent-brand-border-light);
-  --disabled: var(--islands-text-disabled-light);
-  /* the base radius of the shadcn formulas in the vendored components: the button arc */
-  --radius: var(--islands-button-radius);
-
-  /* the link and the primary action */
-  --primary: var(--islands-text-link-light);
-  --primary-foreground: var(--islands-text-over-accent-light);
-  --primary-tint: color-mix(in srgb, var(--primary) 8%, transparent);
-  /* the default button states of the GenUI catalog (ADR 0218), with the catalog fallback formulas */
-  --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
-  --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
-  --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
-  /* the brand fill behind white text (the product mark, the Home hero) */
-  --brand-gradient: linear-gradient(135deg, var(--islands-blue-70), var(--islands-purple-70));
-
-  /* the statuses: step 70, not the text-* step 80, so the text keeps 5:1 on its surface (feedback-*) */
-  --info: var(--islands-blue-70);
-  --info-surface: var(--islands-feedback-brand-bg-light);
-  --info-border: var(--islands-feedback-brand-border-light);
-  --success: var(--islands-green-70);
-  --success-surface: var(--islands-feedback-success-bg-light);
-  --success-border: var(--islands-feedback-success-border-light);
-  --warning: var(--islands-yellow-70);
-  --warning-surface: var(--islands-feedback-warning-bg-light);
-  --warning-border: var(--islands-feedback-warning-border-light);
-  --destructive: var(--islands-red-70);
-  --destructive-surface: var(--islands-feedback-error-bg-light);
-  --destructive-border: var(--islands-feedback-error-border-light);
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 
   /* domain tokens */
-  /* the diagram surface inside an island */
-  --canvas: var(--islands-tool-window-bg-inline-light);
-  --module-bg: var(--islands-selection-bg-inactive-light);
-  /* the selected row of a tree or a list, as the selection of the IDE */
-  --selection: var(--islands-selection-bg-active-light);
-  --edge-stroke: var(--islands-gray-80);
-  --code-bg: var(--hover);
+  --info: oklch(0.546 0.245 262.881); /* blue-600 */
+  --success: oklch(0.527 0.154 150.069); /* green-700 */
+  --warning: oklch(0.555 0.163 48.998); /* amber-700 */
 
-  /* hairline ring on raised/floating surfaces — the templates' dark ring-white/10 elevation
-     idiom; deliberately a no-op (transparent) in light, where borders + shadows carry depth */
-  --edge-highlight: transparent;
+  --layer-indigo: oklch(0.558 0.288 302.321); /* purple-600 */
+  --layer-sky: oklch(0.6 0.118 184.704); /* teal-600 */
+  --layer-blue: oklch(0.592 0.249 0.584); /* pink-600 */
+  --layer-green: oklch(0.527 0.154 150.069); /* green-700 */
+  --layer-amber: oklch(0.555 0.163 48.998); /* amber-700 */
+  --layer-red: oklch(0.577 0.245 27.325); /* red-600, the stock --destructive */
 
-  --shadow-tint: rgb(0 0 0 / 10%);
-  --shadow-tint-strong: rgb(0 0 0 / 18%);
-  --shadow-1: 0 1px 3px var(--shadow-tint);
-  --shadow-2: 0 8px 32px var(--shadow-tint-strong);
+  /* the Air app icon (fleet/resources/artwork/air/air-appicon.svg) fades from #1e6296 up to #000 */
+  --brand-gradient: linear-gradient(to top, #1e6296, #000);
 
-  --layer-indigo: var(--islands-purple-70);
-  --layer-sky: var(--islands-teal-70);
-  --layer-blue: #b5307a; /* magenta, outside the palette */
-  --layer-green: var(--islands-green-70);
-  --layer-amber: var(--islands-yellow-70);
-  --layer-red: var(--islands-red-70);
-  --layer-neutral: var(--muted-foreground);
-
-  /* a tag is one step darker than its lane, so a tag and a lane of one hue differ */
-  --tag-target: var(--islands-purple-60);
-  --tag-durable: var(--islands-green-60);
-  --tag-live: var(--islands-blue-60);
-  --tag-ui: var(--islands-red-60);
-  --tag-terminalBacked: var(--islands-orange-70);
-  --tag-structured: var(--islands-teal-60);
-
-  /* structural scales (type ramp, radii, spacing) live in the @theme blocks below; font families
-     are 'Inter Variable' / 'JetBrains Mono Variable' from @fontsource-variable packages imported
-     in main.tsx */
-  font-family: var(--font-sans), sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
+  /* the host contract of the GenUI catalog (catalog.css): each reads the token of the block where it applies */
+  --primary-hover: color-mix(in oklab, var(--primary) 80%, transparent);
+  --primary-pressed: color-mix(in oklab, var(--primary) 80%, transparent);
+  --primary-disabled: color-mix(in oklab, var(--primary) 50%, transparent);
+  --info-surface: color-mix(in oklab, var(--info) 10%, transparent);
+  --info-border: color-mix(in oklab, var(--info) 20%, transparent);
+  --success-surface: color-mix(in oklab, var(--success) 10%, transparent);
+  --success-border: color-mix(in oklab, var(--success) 20%, transparent);
+  --warning-surface: color-mix(in oklab, var(--warning) 10%, transparent);
+  --warning-border: color-mix(in oklab, var(--warning) 20%, transparent);
+  --destructive-surface: color-mix(in oklab, var(--destructive) 10%, transparent);
+  --destructive-border: color-mix(in oklab, var(--destructive) 20%, transparent);
 }
 
 .dark {
   color-scheme: dark;
 
-  /* in Islands Dark the window is lighter than the islands, and a popup is lighter than its island */
-  --window: var(--islands-main-window-bg-dark);
-  --background: var(--islands-tool-window-bg-dark);
-  --foreground: var(--islands-text-default-dark);
-  --card: var(--islands-tool-window-bg-dark);
-  --popover: var(--islands-popup-bg-dark);
-  --muted: var(--islands-layer-1-bg-dark);
-  --muted-foreground: var(--islands-text-muted-dark);
-  --hover: var(--islands-core-bg-transparent-hovered-dark);
-  --border: var(--islands-tool-window-border-dark);
-  --input: var(--islands-control-border-dark);
-  /* gray-90: gray-80 is 2.96:1 on a hover row of the dark island */
-  --control-edge: var(--islands-gray-90);
-  --ring: var(--islands-accent-brand-border-dark);
-  --disabled: var(--islands-text-disabled-dark);
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.424 0.199 265.638);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 
-  --primary: var(--islands-text-link-dark);
-  --primary-foreground: var(--islands-tool-window-bg-dark);
-  --primary-tint: color-mix(in srgb, var(--primary) 12%, transparent);
-  --brand-gradient: linear-gradient(135deg, var(--islands-blue-60), var(--islands-purple-60));
+  --info: oklch(0.707 0.165 254.624); /* blue-400 */
+  --success: oklch(0.792 0.209 151.711); /* green-400 */
+  --warning: oklch(0.828 0.189 84.429); /* amber-400 */
 
-  /* the text-* step 100 keeps 4.7:1 on its surface (feedback-*, step 40) */
-  --info: var(--islands-blue-100);
-  --info-surface: var(--islands-feedback-brand-bg-dark);
-  --info-border: var(--islands-feedback-brand-border-dark);
-  --success: var(--islands-text-success-dark);
-  --success-surface: var(--islands-feedback-success-bg-dark);
-  --success-border: var(--islands-feedback-success-border-dark);
-  --warning: var(--islands-text-warning-dark);
-  --warning-surface: var(--islands-feedback-warning-bg-dark);
-  --warning-border: var(--islands-feedback-warning-border-dark);
-  --destructive: var(--islands-text-error-dark);
-  --destructive-surface: var(--islands-feedback-error-bg-dark);
-  --destructive-border: var(--islands-feedback-error-border-dark);
-
-  --canvas: var(--islands-tool-window-bg-inline-dark);
-  --module-bg: var(--islands-selection-bg-inactive-dark);
-  --selection: var(--islands-selection-bg-active-dark);
-  --edge-stroke: var(--islands-gray-80);
-  --edge-highlight: rgb(255 255 255 / 8%);
-
-  --shadow-tint: rgb(0 0 0 / 40%);
-  --shadow-tint-strong: rgb(0 0 0 / 55%);
-
-  --layer-indigo: var(--islands-purple-100);
-  --layer-sky: var(--islands-teal-100);
-  --layer-blue: #e58ac0; /* magenta, outside the palette */
-  --layer-green: var(--islands-green-100);
-  --layer-amber: var(--islands-yellow-100);
-  --layer-red: var(--islands-red-100);
-  --layer-neutral: var(--muted-foreground);
-
-  --tag-target: var(--islands-purple-110);
-  --tag-durable: var(--islands-green-110);
-  --tag-live: var(--islands-blue-110);
-  --tag-ui: var(--islands-red-110);
-  --tag-terminalBacked: var(--islands-orange-100);
-  --tag-structured: var(--islands-teal-110);
+  --layer-indigo: oklch(0.714 0.203 305.504); /* purple-400 */
+  --layer-sky: oklch(0.777 0.152 181.912); /* teal-400 */
+  --layer-blue: oklch(0.718 0.202 349.761); /* pink-400 */
+  --layer-green: oklch(0.792 0.209 151.711); /* green-400 */
+  --layer-amber: oklch(0.828 0.189 84.429); /* amber-400 */
+  --layer-red: oklch(0.704 0.191 22.216); /* red-400, the stock --destructive */
 }
 
 /* static: the plain CSS files (canvas/prose/source) consume var(--text-*)/var(--font-*) outside
    the Tailwind pipeline, so every step must be emitted even when no utility uses it */
 @theme static {
-  /* the dense type ramp of an IDE, one role per step, whole pixels; sizes only, line-height inherits the root 1.55.
-     Each step name is one that cn (tailwind-merge) knows as a size, so cn keeps a color next to it
-     (src/typeRamp.test.ts). */
-  --text-*: initial;
-  /* a badge, a kicker, a step number */
-  --text-3xs: 10px;
-  /* a chip, a meta line, a canvas subtitle */
-  --text-2xs: 11px;
-  /* a detail line, a table of contents, a crumb */
-  --text-xs: 12px;
-  /* a control, a tree row, a diagram node: the 13px of the IDE */
-  --text-sm: 13px;
-  /* a lead line */
-  --text-md: 14px;
-  /* the prose */
-  --text-base: 15px;
-  --text-lg: 17px;
-  --text-xl: 22px;
-  --text-2xl: 28px;
-  /* the title of a reading document: a decision record, a guide, a spec */
-  --text-3xl: 34px;
-  /* the Home hero headline only */
-  --text-4xl: 38px;
+  /* the Tailwind default steps; each keeps its default line height */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
 
-  --font-sans: 'Inter Variable', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter Variable', sans-serif;
+  /* the editor font of the IDE, for the code in the IDE colors of shikiThemes.ts */
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* the wide-viewport threshold where doc pages gain the TOC aside column (toc: variant) */
   --breakpoint-toc: 1150px;
-  /* the width that holds the three islands of a reading page: the 240px section tree, the 70ch document and the
-     220px table of contents, with the gaps and a classic scrollbar (section-nav: variant) */
-  --breakpoint-section-nav: 1260px;
+  /* the width that holds the three columns of a reading page: the 240px section tree, the 786px document of 70ch and
+     the 220px table of contents, with the gaps and a classic scrollbar (section-nav: variant) */
+  --breakpoint-section-nav: 1300px;
 }
 
 @theme inline {
-  /* shadcn semantic vocabulary — tokens defined in the :root/.dark blocks above */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
-  --color-primary-tint: var(--primary-tint);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+
+  /* domain tokens */
+  --color-info: var(--info);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  /* the host contract of the GenUI catalog */
   --color-primary-hover: var(--primary-hover);
   --color-primary-pressed: var(--primary-pressed);
   --color-primary-disabled: var(--primary-disabled);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-warning: var(--warning);
-  --color-success: var(--success);
-  --color-border: var(--border);
-  --color-input: var(--input);
-  --color-control-edge: var(--control-edge);
-  --color-ring: var(--ring);
-  /* the status surfaces of the GenUI catalog */
-  --color-info: var(--info);
   --color-info-surface: var(--info-surface);
   --color-info-border: var(--info-border);
   --color-success-surface: var(--success-surface);
@@ -276,32 +238,6 @@
   --color-warning-border: var(--warning-border);
   --color-destructive-surface: var(--destructive-surface);
   --color-destructive-border: var(--destructive-border);
-  --color-disabled: var(--disabled);
-  --color-window: var(--window);
-  --color-hover: var(--hover);
-  --color-selection: var(--selection);
-
-  /* the radius scale of the IDE: the scale that GenUiThemes.kt sends to the GenUI catalog (md the component arc,
-     lg the button arc, xl the island arc), so a catalog primitive has the same corners on the site and in the IDE */
-  --radius-xs: calc(var(--islands-component-radius) / 2);
-  --radius-sm: calc(var(--islands-component-radius) - 1px);
-  --radius-md: var(--islands-component-radius);
-  --radius-lg: var(--islands-button-radius);
-  --radius-xl: var(--islands-island-radius);
-  --radius-2xl: var(--islands-island-radius);
-  --radius-3xl: var(--islands-island-radius);
-  --radius-4xl: 9999px;
-
-  /* vendored Nova components use font-heading; the site has a single family */
-  --font-heading: var(--font-sans);
-
-  /* domain tokens */
-  --color-canvas: var(--canvas);
-  --color-module: var(--module-bg);
-  --color-code: var(--code-bg);
-  --color-edge-highlight: var(--edge-highlight);
-  --shadow-card: var(--shadow-1);
-  --shadow-pop: var(--shadow-2);
 }
 
 @layer base {

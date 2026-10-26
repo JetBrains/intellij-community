@@ -1,11 +1,10 @@
 // Sticky right-hand "On this page" table of contents. Links are routed anchor hrefs — the
 // route change drives the host page's useAnchorScroll; pages that render it add `has-toc` to
 // their .doc-page for the two-column layout (content first child, aside second). In the reading
-// layout the aside is an island of its own; in the tool layout it is a column of the one island.
+// layout the aside is a column of its own; in the tool layout it is a column of the one page column.
 // Scroll-spy tracks the section nearest the top of the scrolling route outlet.
 
 import { Fragment, type ReactNode, useEffect, useRef, useState } from 'react'
-import { Island } from '../components/Island'
 import { DocPage } from '../furniture'
 import { cn } from '../lib/utils'
 import { type AnchorHref, extractMarkdownHeadings } from '../markdown'
@@ -47,7 +46,7 @@ function anchorIdOf(href: string): string {
 /** The table of contents; `extra` is a block under the list, such as the links of a decision record. */
 export function TocAside({ items, extra }: { items: TocItem[], extra?: ReactNode }) {
   const ref = useRef<HTMLElement>(null)
-  const island = usePageChrome().layout === 'reading'
+  const reading = usePageChrome().layout === 'reading'
   const [active, setActive] = useState(0)
 
   useEffect(() => {
@@ -104,15 +103,15 @@ export function TocAside({ items, extra }: { items: TocItem[], extra?: ReactNode
       {items.map((item, index) => (
         <Fragment key={item.href}>
           {item.group != null && item.group !== items[index - 1]?.group && (
-            <div className="mt-2 mb-0.5 text-3xs uppercase tracking-[0.05em] text-muted-foreground">{item.group}</div>
+            <div className="mt-2 mb-0.5 text-xs uppercase tracking-[0.05em] text-muted-foreground">{item.group}</div>
           )}
           <a
             href={item.href}
             aria-current={index === active ? 'location' : undefined}
             className={cn(
-              'block py-1 pl-3 hover:no-underline',
+              'block py-1 pl-3 no-underline',
               index === active
-                ? 'font-medium text-foreground shadow-[inset_2px_0_0_var(--primary)]'
+                ? 'font-medium text-foreground shadow-[inset_2px_0_0_var(--sidebar-primary)]'
                 : 'text-muted-foreground shadow-[inset_1px_0_0_var(--border)] hover:text-foreground',
             )}
           >
@@ -126,7 +125,7 @@ export function TocAside({ items, extra }: { items: TocItem[], extra?: ReactNode
      scrollTop; a ScrollArea would move scrolling into an inner viewport and silently kill
      the keep-active-link-visible math */
   const box = 'toc-aside hidden toc:block w-[220px] flex-none sticky self-start overflow-y-auto'
-  return island
-    ? <Island as="aside" ref={ref} className={cn(box, 'top-0 max-h-[calc(100svh-var(--topbar-height)-8px)] px-3.5 py-3.5')}>{links}{extra}</Island>
+  return reading
+    ? <aside ref={ref} className={cn(box, 'top-0 max-h-[calc(100svh-var(--topbar-height))] px-3.5 py-5')}>{links}{extra}</aside>
     : <aside ref={ref} className={cn(box, 'top-6 max-h-[calc(100svh-var(--topbar-height)-48px)]')}>{links}{extra}</aside>
 }

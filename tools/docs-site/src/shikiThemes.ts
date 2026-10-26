@@ -1,7 +1,8 @@
-// The editor schemes of the Islands themes as shiki TextMate themes, used as a dual light/dark pair by the
-// source viewer. Islands Light uses the Light scheme (community/platform/platform-resources/src/themes/expUI/
-// expUI_lightScheme.xml); Islands Dark uses islands/IslandSchemeDark.xml over Darcula, with the editor background
-// of the island (#191a1c, editor-bg of ManyIslandsDark.theme.json). Scopes without an entry
+// The editor schemes of the default IDE themes as shiki TextMate themes, used as a dual light/dark pair by the
+// source viewer, so the code on the site has the colors of the code in the IDE. The light theme uses the Light scheme
+// (community/platform/platform-resources/src/themes/expUI/expUI_lightScheme.xml); the dark theme uses
+// islands/IslandSchemeDark.xml over Darcula, with the editor background #191a1c (editor-bg of
+// ManyIslandsDark.theme.json). Scopes without an entry
 // inherit the default foreground, matching IntelliJ (function calls, class names, parameters and
 // punctuation are plain text in both schemes).
 
