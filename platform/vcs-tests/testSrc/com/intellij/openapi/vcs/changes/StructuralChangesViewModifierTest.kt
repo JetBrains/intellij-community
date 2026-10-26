@@ -168,11 +168,12 @@ internal class StructuralChangesViewModifierTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `hunks follow the file inclusion until the file has a tracker`(): Unit = timeoutRunBlocking {
+  fun `a hunk of a file without partial commits has no checkbox and follows the file inclusion`(): Unit = timeoutRunBlocking {
     setSelected(true)
     val node = build(change("first=1", "first=2")).single()
 
-    assertTrue(node.hasInclusion)
+    // The test project has no VCS, so the commit cannot include the hunks of the file one by one.
+    assertFalse(node.hasInclusion)
     withContext(Dispatchers.EDT) {
       assertEquals(ThreeStateCheckBox.State.SELECTED, node.getInclusionState(ThreeStateCheckBox.State.SELECTED))
       assertEquals(ThreeStateCheckBox.State.NOT_SELECTED, node.getInclusionState(ThreeStateCheckBox.State.NOT_SELECTED))

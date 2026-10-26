@@ -47,6 +47,7 @@ class StructuralHunkInclusionTest : BasePartiallyExcludedChangesTest() {
       lstm.waitUntilBaseContentsLoaded()
       val a = hunk(file, 5)
       val b = hunk(file, 10)
+      assertTrue(b.hasInclusion)
 
       b.setIncluded(false)
       assertEquals(listOf("5-6 5-6 included", "10-11 10-11 excluded"), ranges(file))
@@ -232,6 +233,21 @@ class StructuralHunkInclusionTest : BasePartiallyExcludedChangesTest() {
       LaterInvocator.leaveModal(dialog)
     }
     UIUtil.dispatchAllInvocationEvents()
+    assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
+
+    releaseUnneededTrackers()
+    file.assertNullTracker()
+  }
+
+  fun `test without partial changelists a hunk has no checkbox and Delete reverts it`() {
+    arePartialChangelistsSupported = false
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed", 10 to "b-changed"), text(LINES))
+    refreshCLM()
+
+    val b = hunk(file, 10)
+    assertFalse(b.hasInclusion)
+    rollback(b)
+    waitForTracker()
     assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
 
     releaseUnneededTrackers()
