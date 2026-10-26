@@ -4,6 +4,7 @@ import {cwd, env} from 'node:process'
 import {fileURLToPath} from 'node:url'
 import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js'
+import type {Implementation} from '@modelcontextprotocol/sdk/types.js'
 import {
   CallToolRequestSchema,
   InitializeRequestSchema,
@@ -163,6 +164,8 @@ const BASE_BLOCKED_TOOL_NAMES = new Set([...BLOCKED_TOOL_NAMES, ...REPLACED_TOOL
 let ideaUpstream: UpstreamConnection | null = null
 let riderUpstream: UpstreamConnection | null = null
 let discoveryPromise: Promise<void> | null = null
+// Replaced by the downstream client's own on `initialize`, before any upstream connects
+let upstreamClientInfo: Implementation = {name: 'ij-mcp-proxy', version: '1.0.0'}
 
 type ProxyToolCaller = (toolName: string, args: ToolArgs) => Promise<unknown>
 
@@ -305,6 +308,7 @@ function createUpstreamForUrl(url: string): UpstreamConnection {
 
   const conn = new UpstreamConnection({
     transport,
+    clientInfo: upstreamClientInfo,
     projectPath,
     defaultProjectPathKey,
     connectTimeoutMs,
@@ -530,6 +534,7 @@ const serverCapabilities = {
 const proxyServer = new Server(serverInfo, {capabilities: serverCapabilities})
 
 proxyServer.setRequestHandler(InitializeRequestSchema, async (request) => {
+  upstreamClientInfo = request.params.clientInfo
   // Discover IDEs eagerly — no IDE means no reason to run
   await activateDetectedContainerSession()
   await performDiscovery()

@@ -3,6 +3,7 @@
 import {AsyncLocalStorage} from 'node:async_hooks'
 import {Client} from '@modelcontextprotocol/sdk/client/index.js'
 import {ResultSchema} from '@modelcontextprotocol/sdk/types.js'
+import type {Implementation} from '@modelcontextprotocol/sdk/types.js'
 import {createProjectPathManager} from './project-path'
 import {resolveUpstreamToolSupport} from './proxy-tools/tooling'
 import {extractTextFromResult} from './proxy-tools/shared'
@@ -21,6 +22,8 @@ export const requestContext = new AsyncLocalStorage<RequestContext>()
 
 export interface UpstreamConnectionOptions {
   transport: McpStreamTransport
+  /** Announced to the IDE, which tells agents apart by it; the proxy passes on its own client's. */
+  clientInfo: Implementation
   projectPath: string
   defaultProjectPathKey: 'project_path' | 'projectPath' | 'rootFolder'
   connectTimeoutMs: number
@@ -87,7 +90,7 @@ export class UpstreamConnection {
       forceInject: this._forceInjectProjectPath
     })
 
-    this.client = new Client({name: 'ij-mcp-proxy', version: '1.0.0'})
+    this.client = new Client(options.clientInfo)
     this.client.onerror = (error) => {
       this._warn(`Upstream client error: ${error.message}`)
     }

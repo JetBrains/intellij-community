@@ -10,6 +10,7 @@ import {fileURLToPath} from 'node:url'
 import {Server} from '@modelcontextprotocol/sdk/server/index.js'
 import {StreamableHTTPServerTransport} from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import {CallToolRequestSchema, ListToolsRequestSchema} from '@modelcontextprotocol/sdk/types.js'
+import type {Implementation} from '@modelcontextprotocol/sdk/types.js'
 import {BLOCKED_TOOL_NAMES, getReplacedToolNames} from './proxy-tools/registry'
 import type {ToolAnnotationsLike, ToolSpecLike} from './proxy-tools/types'
 
@@ -34,6 +35,7 @@ interface ToolCall {
 export interface FakeServerInstance {
   port: number
   requestHeaders: IncomingHttpHeaders[]
+  clientInfo: () => Implementation | undefined
   waitForToolCall: () => Promise<ToolCall>
   close: () => Promise<void>
 }
@@ -308,6 +310,7 @@ export async function startFakeMcpServer(
   return {
     port: boundPort,
     requestHeaders,
+    clientInfo: () => mcpServer.getClientVersion(),
     waitForToolCall(): Promise<ToolCall> {
       return new Promise((resolve) => {
         if (toolCallQueue.length > 0) {
