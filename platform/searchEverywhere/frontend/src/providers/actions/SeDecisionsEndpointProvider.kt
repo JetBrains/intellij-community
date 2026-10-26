@@ -41,4 +41,11 @@ interface SeDecisionsEndpointLease {
   val url: String
   val headers: Map<String, String>
   suspend fun close()
+
+  /**
+   * Search Everywhere calls it once when the endpoint refuses a request with [statusCode] 401, 403 or 429.
+   * More requests through this lease would get the same answer, thus Search Everywhere sends no more of them for the popup.
+   * The owner of a credential can tell the user, or stop serving the credential.
+   */
+  fun refused(statusCode: Int) {}
 }

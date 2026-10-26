@@ -11,6 +11,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
     <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.credentialStore"/>
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -36,6 +37,10 @@
   <actions resource-bundle="messages.searchEverywhereFrontendBundle">
     <action id="SeNewSearchToggleAction"
             class="com.intellij.platform.searchEverywhere.frontend.actions.SeNewSearchToggleAction"
+            internal="true"
+    />
+    <action id="SeSetOpenAiKeyAction"
+            class="com.intellij.platform.searchEverywhere.frontend.actions.SeSetOpenAiKeyAction"
             internal="true"
     />
     <action id="SearchEverywhereComponent"
@@ -81,6 +86,12 @@
                  restartRequired="false"
                  description="The model of the Decision API ranker of Search Everywhere. An empty value selects gpt-6-luna."/>
     <searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeDecisionsActionsRanker"/>
+    <notificationGroup id="Search Everywhere Actions Ranker"
+                       displayType="BALLOON"
+                       bundle="messages.searchEverywhereFrontendBundle"
+                       key="notification.group.search.everywhere.actions.ranker"/>
+    <searchEverywhere.decisionsEndpointProvider order="first"
+                                                implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeOpenAiDecisionsEndpointProvider"/>
     <!--<searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeMockActionsRanker"/>-->
 
     <searchEverywhere.tabFactory implementation="com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTabFactory"/>

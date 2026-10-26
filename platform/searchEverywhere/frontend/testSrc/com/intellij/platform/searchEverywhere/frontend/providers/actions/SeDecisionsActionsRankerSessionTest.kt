@@ -2,6 +2,7 @@
 package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.net.PlatformHttpClient
 import com.sun.net.httpserver.HttpServer
@@ -15,6 +16,8 @@ import org.junit.jupiter.api.Test
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.http.HttpClient
+import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.atomic.AtomicInteger
 
 @TestApplication
 class SeDecisionsActionsRankerSessionTest {
@@ -39,15 +42,22 @@ class SeDecisionsActionsRankerSessionTest {
   @Volatile
   private var requestBody: String = ""
 
+  private val requestCount = AtomicInteger()
+
   @BeforeEach
   fun startServer() {
     server = HttpServer.create(InetSocketAddress(InetAddress.getLoopbackAddress(), 0), 0)
     server.createContext("/") { exchange ->
+      requestCount.incrementAndGet()
       requestPath = exchange.requestURI.path
       requestKey = exchange.requestHeaders.getFirst(KEY_HEADER)
       requestAuthorization = exchange.requestHeaders.getFirst("Authorization")
       requestBody = exchange.requestBody.readAllBytes().decodeToString()
       val bytes = responseBody.encodeToByteArray()
+      if (responseStatus == 401) {
+        // The OpenAI API sends this challenge. Without it, the JDK client with an authenticator throws an IOException instead of the status.
+        exchange.responseHeaders.add("WWW-Authenticate", """Bearer realm="OpenAI API"""")
+      }
       exchange.sendResponseHeaders(responseStatus, bytes.size.toLong())
       exchange.responseBody.use { it.write(bytes) }
     }
@@ -141,6 +151,58 @@ class SeDecisionsActionsRankerSessionTest {
   }
 
   @Test
+  fun `a refusing status tells the lease once and stops the requests of the popup`() = runBlocking {
+    for (status in listOf(401, 403, 429)) {
+      responseStatus = status
+      requestCount.set(0)
+      val lease = TestLease(endpointUrl())
+      val session = SeDecisionsActionsRankerSession(lease, "test-model", client, this)
+
+      session.rank(QUERY, CANDIDATES)
+      session.rank(QUERY, CANDIDATES)
+
+      assertEquals(listOf(status), lease.refusedStatusCodes, "status $status")
+      assertEquals(1, requestCount.get(), "status $status")
+    }
+  }
+
+  @Test
+  fun `a server error does not stop the requests of the popup`() = runBlocking {
+    responseStatus = 500
+    val lease = TestLease(endpointUrl())
+    val session = SeDecisionsActionsRankerSession(lease, "test-model", client, this)
+
+    session.rank(QUERY, CANDIDATES)
+    session.rank(QUERY, CANDIDATES)
+
+    assertEquals(emptyList<Int>(), lease.refusedStatusCodes)
+    assertEquals(2, requestCount.get())
+  }
+
+  @Test
+  fun `a header value that is not valid sends nothing and reaches no log`() = runBlocking {
+    val secret = "sk-\u200Bsecret"
+    val lease = TestLease(endpointUrl(), mapOf("Authorization" to "Bearer $secret"))
+    val logged = CopyOnWriteArrayList<String>()
+    val processor = object : LoggedErrorProcessor() {
+      override fun processWarn(category: String, message: String, t: Throwable?): Boolean {
+        logged += message
+        logged += t?.stackTraceToString().orEmpty()
+        return false
+      }
+    }
+
+    val ranked = LoggedErrorProcessor.executeWith(processor).use {
+      SeDecisionsActionsRankerSession(lease, "test-model", client, this).rank(QUERY, CANDIDATES)
+    }
+
+    assertEquals(emptyList<String>(), ranked)
+    assertEquals(0, requestCount.get())
+    assertTrue(logged.isNotEmpty())
+    assertTrue(logged.none { it.contains("secret") }, logged.toString())
+  }
+
+  @Test
   fun `the disposal closes the lease`() {
     val lease = TestLease(endpointUrl())
 
@@ -167,8 +229,14 @@ class SeDecisionsActionsRankerSessionTest {
     var closed: Boolean = false
       private set
 
+    val refusedStatusCodes: MutableList<Int> = CopyOnWriteArrayList()
+
     override suspend fun close() {
       closed = true
+    }
+
+    override fun refused(statusCode: Int) {
+      refusedStatusCodes += statusCode
     }
   }
 

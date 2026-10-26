@@ -65,6 +65,7 @@ jvm_library(
         "//fleet/rpc",
         "//libraries/kotlinx/serialization/core",
         "//libraries/kotlinx/serialization/json",
+        "//platform/credential-store",
     ],
 )
 
@@ -114,6 +115,7 @@ jvm_library(
         "//fleet/rpc:rpc_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//platform/credential-store:credential-store_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend` end
@@ -192,6 +194,8 @@ jvm_library(
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/ide-core",
+        "//platform/credential-store",
+        "//platform/credential-store:credential-store_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.searchEverywhere.frontend.tests` end

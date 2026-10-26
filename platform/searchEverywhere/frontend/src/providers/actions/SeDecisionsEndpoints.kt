@@ -14,7 +14,8 @@ private val LOG = logger<SeDecisionsEndpointProvider>()
 /**
  * Acquires the Decision API endpoint for one Search Everywhere popup, or returns `null` when nothing serves one now.
  *
- * Search Everywhere holds no credential of its own. The [SeDecisionsEndpointProvider] extensions answer. See [selectDecisionsEndpoint].
+ * The [SeDecisionsEndpointProvider] extensions answer. See [selectDecisionsEndpoint].
+ * The only credential that Search Everywhere keeps is the personal OpenAI key of the user, see [SeOpenAiDecisionsEndpointProvider].
  */
 internal suspend fun acquireDecisionsEndpoint(): SeDecisionsEndpointLease? {
   return selectDecisionsEndpoint(SeDecisionsEndpointProvider.EP_NAME.extensionList)

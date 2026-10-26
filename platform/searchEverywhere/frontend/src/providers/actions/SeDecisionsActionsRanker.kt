@@ -38,6 +38,9 @@ private const val MAX_DESCRIPTION_LENGTH: Int = 200
 private const val MAX_CHOICES: Int = 255
 private const val MAX_LOGGED_ERROR_BODY_LENGTH: Int = 1000
 
+/** After one of these statuses, the session sends no more requests: a rejected credential, or a rate or a quota limit. */
+private val REFUSAL_STATUS_CODES: Set<Int> = setOf(401, 403, 429)
+
 /** The ranker drops the candidates whose probability is lower. */
 private const val MIN_PROBABILITY: Double = 0.01
 
@@ -90,6 +93,7 @@ internal class SeDecisionsActionsRankerService(val scope: CoroutineScope) : Disp
  * The Decision API ranking of one Search Everywhere popup. It holds the endpoint [lease] until [dispose].
  *
  * [dispose] closes the lease in [scope], because a lease closes in a coroutine and a disposal cannot suspend.
+ * After the endpoint refuses a request with a status of [REFUSAL_STATUS_CODES], the session tells the lease once and sends no more requests.
  */
 internal class SeDecisionsActionsRankerSession(
   private val lease: SeDecisionsEndpointLease,
@@ -98,11 +102,14 @@ internal class SeDecisionsActionsRankerSession(
   private val scope: CoroutineScope,
 ) : SeActionsRankerSession {
   private val failureReported = AtomicBoolean()
+  private val isRefused = AtomicBoolean()
 
   /** One choice of the question is the choice that says that no action matches. */
   override val maxCandidates: Int get() = MAX_CHOICES - 1
 
   override suspend fun rank(query: String, candidates: List<SeActionsRankerCandidate>): List<String> {
+    if (isRefused.get()) return emptyList()
+
     val idsByValue = HashMap<String, String>(candidates.size)
     val choices = ArrayList<DecisionsChoice>(candidates.size + 1)
     for ((index, candidate) in candidates.withIndex()) {
@@ -151,6 +158,8 @@ internal class SeDecisionsActionsRankerSession(
    * A cancellation interrupts the thread, and the HTTP client then cancels the request.
    */
   private suspend fun send(request: DecisionsRequest): DecisionsResponse? {
+    val httpRequest = buildHttpRequest(JSON.encodeToString(request)) ?: return null
+
     // PlatformHttpClient.send throws for an error status and drops the body, which names the reason of the gateway.
     val errorBody = AtomicReference<String>()
     val bodyHandler = HttpResponse.BodyHandler { info ->
@@ -161,11 +170,6 @@ internal class SeDecisionsActionsRankerSession(
     }
 
     return try {
-      val httpRequest = PlatformHttpClient.requestBuilder(URI.create(lease.url.trimEnd('/') + "/decisions"))
-        .header("Content-Type", "application/json")
-        .apply { lease.headers.forEach { (name, value) -> setHeader(name, value) } }
-        .POST(HttpRequest.BodyPublishers.ofString(JSON.encodeToString(request)))
-        .build()
       val body = runInterruptible(Dispatchers.IO) {
         PlatformHttpClient.send(client, httpRequest, bodyHandler)
       }
@@ -173,26 +177,59 @@ internal class SeDecisionsActionsRankerSession(
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
-      reportFailure(e, errorBody.get())
+      val statusCode = (e as? HttpStatusException)?.statusCode
+      if (statusCode != null && statusCode in REFUSAL_STATUS_CODES && isRefused.compareAndSet(false, true)) {
+        tellRefused(statusCode)
+      }
+      val status = statusCode?.let { " with the HTTP status $it" }.orEmpty()
+      val details = errorBody.get()?.takeIf { it.isNotBlank() }?.let { ": ${it.take(MAX_LOGGED_ERROR_BODY_LENGTH).replace('\n', ' ')}" }.orEmpty()
+      reportFailure("The Decision API request through $lease failed$status$details", e)
       null
     }
   }
 
   /**
+   * Builds the HTTP request with the [json] body, or returns `null` when the endpoint has a URL or a header that is not valid.
+   *
+   * The report omits the exception, because the exception of a header that is not valid quotes the header value.
+   * A header can carry a credential.
+   */
+  private fun buildHttpRequest(json: String): HttpRequest? {
+    return try {
+      PlatformHttpClient.requestBuilder(URI.create(lease.url.trimEnd('/') + "/decisions"))
+        .header("Content-Type", "application/json")
+        .apply { lease.headers.forEach { (name, value) -> setHeader(name, value) } }
+        .POST(HttpRequest.BodyPublishers.ofString(json))
+        .build()
+    }
+    catch (_: IllegalArgumentException) {
+      reportFailure("The Decision API request through $lease has a URL or a header that is not valid", cause = null)
+      null
+    }
+  }
+
+  /** Tells the lease about the refusal. A failure of the lease owner does not stop the ranking. */
+  private fun tellRefused(statusCode: Int) {
+    try {
+      lease.refused(statusCode)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.warn("$lease could not handle the HTTP status $statusCode", e)
+    }
+  }
+
+  /**
    * Reports the first failure of the session as a warning, and the next ones on the debug level.
-   * The report contains the start of the [errorBody] of the response, when the response has one.
    *
    * A failing endpoint fails each query, thus a warning for each query would flood the log.
    */
-  private fun reportFailure(e: Exception, errorBody: String?) {
-    val status = (e as? HttpStatusException)?.statusCode?.let { " with the HTTP status $it" }.orEmpty()
-    val details = errorBody?.takeIf { it.isNotBlank() }?.let { ": ${it.take(MAX_LOGGED_ERROR_BODY_LENGTH).replace('\n', ' ')}" }.orEmpty()
-    val message = "The Decision API request through $lease failed$status$details"
+  private fun reportFailure(message: String, cause: Exception?) {
     if (failureReported.compareAndSet(false, true)) {
-      LOG.warn(message, e)
+      LOG.warn(message, cause)
     }
     else {
-      LOG.debug(e) { message }
+      LOG.debug(cause) { message }
     }
   }
 }
