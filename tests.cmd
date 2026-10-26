@@ -18,6 +18,7 @@ show_help() {
   echo "Required:"
   echo "  --module <module>    Name of the JPS module which contains the test classes"
   echo "  --test <pattern>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test) or exact FQN#methodName"
+  echo "                       Several class patterns go into one --test, separated by ';' (e.g. 'com.a.FooTest;com.b.BarTest'), but not with #methodName"
   echo ""
   echo "Options:"
   echo "  --debug              Debug build scripts JVM process"
@@ -310,6 +311,7 @@ echo.
 echo Required:
 echo   --module ^<module^>    Name of the JPS module which contains the test classes
 echo   --test ^<pattern^>     Full test class name (FQN) or wild card pattern (e.g. com.intellij.*Test) or exact FQN#methodName
+echo                        Several class patterns go into one --test, separated by ';' (e.g. "com.a.FooTest;com.b.BarTest"), but not with #methodName
 echo.
 echo Options:
 echo   --debug              Debug build scripts JVM process
