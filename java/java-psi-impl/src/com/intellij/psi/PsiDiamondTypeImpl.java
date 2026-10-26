@@ -458,7 +458,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
       String result = generator.generateUniqueName(typeParameter.getName());
       final PsiClassType[] extendsListTypes = typeParameter.getSuperTypes();
       if (extendsListTypes.length > 0 &&
-          (extendsListTypes.length != 1 || !CommonClassNames.JAVA_LANG_OBJECT.equals(extendsListTypes[0].getCanonicalText()))) {
+          (extendsListTypes.length != 1 || !CommonClassNames.JAVA_LANG_OBJECT.equals(extendsListTypes[0].getCanonicalText(true)))) {
         result += " extends " + StringUtil.join(extendsListTypes, type -> type.getCanonicalText(true), "&");
       }
       return result;
