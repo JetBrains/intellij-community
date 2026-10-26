@@ -27,7 +27,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6.jupiter" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.jsr223" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide.kotlinc" scope="TEST" />
   </component>
-  <component name="TestModuleProperties" production-module="intellij.kotlin.jsr223" />
+  <component name="TestModuleProperties" production-module="intellij.kotlin.ide.kotlinc" />
 </module>

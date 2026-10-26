@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.jsr223
+package org.jetbrains.kotlin.ide.kotlinc
 
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -17,35 +17,35 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
 
-class Jsr223KotlincProviderTest {
+class AnalyzerKotlincProviderTest {
     private val ideVersion: String get() = KotlinCompilerVersion.VERSION
 
     @Test
     fun `the plugin keeps kotlinc next to lib`(@TempDir root: Path) {
         kotlincHome(root.resolve("kotlinc"), ideVersion)
         val pluginJar = file(root.resolve("lib/kotlin-scripting-plugin.jar"))
-        assertEquals(root.resolve("kotlinc"), Jsr223KotlincProvider.bundledKotlinc(pluginJar))
+        assertEquals(root.resolve("kotlinc"), AnalyzerKotlincProvider.bundledKotlinc(pluginJar))
     }
 
     @Test
     fun `a content module jar sits one level deeper`(@TempDir root: Path) {
         kotlincHome(root.resolve("kotlinc"), ideVersion)
-        val pluginJar = file(root.resolve("lib/modules/intellij.kotlin.jsr223.jar"))
-        assertEquals(root.resolve("kotlinc"), Jsr223KotlincProvider.bundledKotlinc(pluginJar))
+        val pluginJar = file(root.resolve("lib/modules/intellij.kotlin.ide.kotlinc.jar"))
+        assertEquals(root.resolve("kotlinc"), AnalyzerKotlincProvider.bundledKotlinc(pluginJar))
     }
 
     @Test
     fun `a jar outside lib is not a plugin`(@TempDir root: Path) {
         kotlincHome(root.resolve("kotlinc"), ideVersion)
-        val classesDir = file(root.resolve("out/production/intellij.kotlin.jsr223.jar"))
-        assertNull(Jsr223KotlincProvider.bundledKotlinc(classesDir))
+        val classesDir = file(root.resolve("out/production/intellij.kotlin.ide.kotlinc.jar"))
+        assertNull(AnalyzerKotlincProvider.bundledKotlinc(classesDir))
     }
 
     @Test
     fun `the bundled kotlinc must match the analyzer`(@TempDir root: Path) {
         kotlincHome(root.resolve("kotlinc"), "1.0.0-release-1")
         val pluginJar = file(root.resolve("lib/kotlin-scripting-plugin.jar"))
-        assertNull(Jsr223KotlincProvider.bundledKotlinc(pluginJar))
+        assertNull(AnalyzerKotlincProvider.bundledKotlinc(pluginJar))
     }
 
     @Test
@@ -53,10 +53,10 @@ class Jsr223KotlincProviderTest {
         val distJar = distJar(root.resolve("dist.jar"), "first")
         val target = root.resolve("unpacked")
 
-        Jsr223KotlincProvider.unpackKotlinDistForIde(distJar, target)
+        AnalyzerKotlincProvider.unpackKotlinDistForIde(distJar, target)
         target.resolve(COMPILER_JAR).writeText("touched by hand")
 
-        Jsr223KotlincProvider.unpackKotlinDistForIde(distJar, target)
+        AnalyzerKotlincProvider.unpackKotlinDistForIde(distJar, target)
         assertEquals("touched by hand", target.resolve(COMPILER_JAR).readText())
     }
 
@@ -65,14 +65,14 @@ class Jsr223KotlincProviderTest {
         val distJar = root.resolve("dist.jar")
         val target = root.resolve("unpacked")
 
-        Jsr223KotlincProvider.unpackKotlinDistForIde(distJar(distJar, "first"), target)
+        AnalyzerKotlincProvider.unpackKotlinDistForIde(distJar(distJar, "first"), target)
         assertEquals("first", target.resolve(COMPILER_JAR).readText())
 
         // The cooperative development version never changes, so only the jar itself marks the new dist.
         distJar(distJar, "second")
         Files.setLastModifiedTime(distJar, FileTime.fromMillis(Files.getLastModifiedTime(distJar).toMillis() + 5_000))
 
-        Jsr223KotlincProvider.unpackKotlinDistForIde(distJar, target)
+        AnalyzerKotlincProvider.unpackKotlinDistForIde(distJar, target)
         assertEquals("second", target.resolve(COMPILER_JAR).readText())
     }
 

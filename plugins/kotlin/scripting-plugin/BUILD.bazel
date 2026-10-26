@@ -55,6 +55,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/kotlin/jsr223",
+        "//plugins/kotlin/ide-kotlinc",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-common_provided",
         ":libraries_kotlinc_libraries-kotlinc-kotlin-scripting-jvm_provided",
     ],

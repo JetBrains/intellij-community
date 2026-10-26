@@ -986,6 +986,21 @@
             }
         },
         {
+            "destination": "lib/intellij.kotlin.ide.kotlinc.jar",
+            "recipe": {
+                "sources": [
+                    {
+                        "input": "intellij.kotlin.ide.kotlinc",
+                        "kind": "module",
+                        "filter": "module-v1"
+                    }
+                ],
+                "writer": {
+                    "mergeEntities": true
+                }
+            }
+        },
+        {
             "destination": "lib/intellij.libraries.kotlinc.kotlin.scripting.compiler.impl.jar",
             "recipe": {
                 "sources": [

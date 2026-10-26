@@ -997,6 +997,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/intellij.kotlin.i18n.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/intellij.kotlin.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/tests/intellij.kotlin.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/tests/intellij.kotlin.i18n.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.ide/intellij.kotlin.ide.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.ide/intellij.kotlin.ide.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/ide-kotlinc/intellij.kotlin.ide.kotlinc.iml" filepath="$PROJECT_DIR$/plugins/kotlin/ide-kotlinc/intellij.kotlin.ide.kotlinc.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/ide-kotlinc/intellij.kotlin.ide.kotlinc.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/ide-kotlinc/intellij.kotlin.ide.kotlinc.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/k2/intellij.kotlin.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/k2/intellij.kotlin.injection.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/injection/k2/tests/intellij.kotlin.injection.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/injection/k2/tests/intellij.kotlin.injection.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/internal/intellij.kotlin.internal.iml" filepath="$PROJECT_DIR$/plugins/kotlin/internal/intellij.kotlin.internal.iml" />
@@ -1006,7 +1008,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/util/runtime/intellij.kotlin.jps.util.runtime.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/util/runtime/intellij.kotlin.jps.util.runtime.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-plugin/intellij.kotlin.jsr223.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-plugin/intellij.kotlin.jsr223.plugin.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/base/util/intellij.kotlin.jvm.debugger.base.util.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/base/util/intellij.kotlin.jvm.debugger.base.util.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/intellij.kotlin.jvm.debugger.core.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/core/intellij.kotlin.jvm.debugger.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/coroutines/intellij.kotlin.jvm.debugger.coroutines.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/coroutines/intellij.kotlin.jvm.debugger.coroutines.iml" />

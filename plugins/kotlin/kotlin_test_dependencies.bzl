@@ -265,6 +265,12 @@ download_file(
 )
 
 download_file(
+    name = "kotlin-dist-for-ide-analyzer.jar",
+    url = "{0}/org/jetbrains/kotlin/kotlin-dist-for-ide/{1}/kotlin-dist-for-ide-{1}.jar".format(kotlincRepositoryUrl, kotlinCompilerCliVersion),
+    sha256 = "0ca16e44151d7b5b83cc2192a0558c7517f16912b6de609340dbd62bb4b94f0e",
+)
+
+download_file(
     name = "kotlin-dom-api-compat.klib",
     url = "{0}/org/jetbrains/kotlin/kotlin-dom-api-compat/{1}/kotlin-dom-api-compat-{1}.klib".format(kotlincRepositoryUrl, kotlinCompilerCliVersion),
     sha256 = "e12957c7461f8f5d985876cda4e3e342053a1eacbef6931c519008bf8780c922",

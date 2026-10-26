@@ -1597,6 +1597,7 @@ plugins/kotlin/highlighting/highlighting-k2
 plugins/kotlin/highlighting/highlighting-minimal
 plugins/kotlin/i18n
 plugins/kotlin/i18n/tests
+plugins/kotlin/ide-kotlinc
 plugins/kotlin/idea/tests
 plugins/kotlin/injection/base
 plugins/kotlin/injection/base/tests

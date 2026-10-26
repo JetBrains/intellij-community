@@ -14,13 +14,9 @@ import kotlin.script.experimental.jvm.jsr223.base.KotlinJsr223ScriptEngineFactor
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 
 /**
- * The IDE's JSR-223 engine factory: produces a [KotlinJsr223DaemonScriptEngineImpl], i.e. an engine
- * that compiles every snippet **out-of-process**, in a Kotlin compile daemon spawned from the
- * `kotlinc` distribution [kotlincDirProvider] points at (see [Jsr223KotlincProvider]), so the IDE
- * process itself never hosts a Kotlin compiler for JSR-223 evaluation.
+ * Compiles every snippet in a Kotlin compile daemon, not in the IDE process.
  *
- * @param kotlincDirProvider the `kotlinc` home directory (the one containing `lib/` and `build.txt`)
- *   the compile daemon is spawned/identified with.
+ * @param kotlincDirProvider the kotlinc home that the daemon starts from.
  */
 abstract class KotlinJsr223StandardScriptEngineFactory4IdeaBase(
     private val kotlincDirProvider: () -> File,
@@ -36,14 +32,10 @@ abstract class KotlinJsr223StandardScriptEngineFactory4IdeaBase(
     override fun getScriptEngine(): ScriptEngine {
         val kotlinPaths = KotlinPathsFromHomeDir(kotlincDirProvider.invoke())
 
-        // The classpath the daemon is spawned/identified with: the compiler itself plus the plain,
-        // unshaded scripting compiler plugin jars, so the daemon discovers the scripting plugin
-        // through its own META-INF/services entries -- see DaemonReplCompiler's KDoc.
+        // The unshaded scripting plugin jars, so the daemon finds the plugin through their META-INF/services.
         val compilerClasspath = kotlinPaths.classPath(KotlinPaths.ClassPaths.CompilerWithScripting)
 
-        // Every snippet's own compile classpath: the stdlib (which the daemon compile does not add
-        // implicitly) and the script runtime (which supplies ScriptTemplateWithBindings, one of the
-        // implicit receivers the bindings-exposing synthetic snippet compiles against).
+        // The daemon does not add the stdlib. The script runtime has `ScriptTemplateWithBindings` for the binding snippet.
         val stdlibClasspath = kotlinPaths.classPath(KotlinPaths.Jar.StdLib, KotlinPaths.Jar.ScriptRuntime)
 
         val missingJars = (compilerClasspath + stdlibClasspath).filterNot { it.exists() }

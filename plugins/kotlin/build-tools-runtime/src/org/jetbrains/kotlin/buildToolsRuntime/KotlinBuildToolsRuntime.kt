@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi
 import org.jetbrains.kotlin.buildtools.api.KotlinToolchains
 import org.jetbrains.kotlin.buildtools.api.SharedApiClassesClassLoader
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.jsr223.Jsr223KotlincProvider
+import org.jetbrains.kotlin.ide.kotlinc.AnalyzerKotlincProvider
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
@@ -23,7 +23,7 @@ import java.nio.file.Path
  * Callers pick an execution policy ([daemonExecutionPolicy] / [inProcessExecutionPolicy]) and own their
  * [KotlinToolchains.BuildSession]s.
  *
- * Everything here is keyed by the compiler version alone. [Jsr223KotlincProvider] resolves the for-ide
+ * Everything here is keyed by the compiler version alone. [AnalyzerKotlincProvider] resolves the for-ide
  * dist, which the plugin bundles or downloads from the JetBrains mirrors. The toolchain is therefore
  * cached app-wide and needs no project context. Note that the first call can block on that download.
  * Run it off the EDT.
@@ -62,7 +62,7 @@ class KotlinBuildToolsRuntime {
    * plugin/platform (as CRI does), build your own toolchain from [runtimeClasspath].
    */
   fun createToolchains(additionalClasspath: List<Path> = emptyList()): KotlinToolchains {
-    val daemonJvmOrder = kotlinHomeClasspath(Jsr223KotlincProvider.ideKotlinc)
+    val daemonJvmOrder = kotlinHomeClasspath(AnalyzerKotlincProvider.getKotlincHomeBlocking())
     // In-process closure = plugin jars first (so `build-tools-impl` resolves the exact `-for-ide`
     // classes it was compiled against) + the dist (supplies `kotlin-stdlib` and the rest
     // of the compiler, which this module doesn't bundle).

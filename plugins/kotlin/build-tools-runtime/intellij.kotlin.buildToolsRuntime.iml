@@ -16,6 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
-    <orderEntry type="module" module-name="intellij.kotlin.jsr223" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide.kotlinc" />
   </component>
 </module>

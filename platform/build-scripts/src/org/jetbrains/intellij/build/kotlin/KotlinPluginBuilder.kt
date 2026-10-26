@@ -132,6 +132,7 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
       spec.mainJarName = "kotlin-scripting-plugin.jar"
 
       spec.withModule("intellij.kotlin.jsr223")
+      spec.withModule("intellij.kotlin.ide.kotlinc")
 
       withKotlincInPluginDirectory(spec = spec)
 

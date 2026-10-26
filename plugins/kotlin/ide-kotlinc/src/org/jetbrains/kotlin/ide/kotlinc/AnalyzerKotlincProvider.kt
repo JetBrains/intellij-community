@@ -1,6 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.jsr223
+package org.jetbrains.kotlin.ide.kotlinc
 
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -8,24 +7,33 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.BazelEnvironmentUtil
 import com.intellij.util.io.Decompressor
 import com.intellij.util.net.NetUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
+import org.jetbrains.kotlin.ide.kotlinc.testFramework.AnalyzerKotlincTestHomeProvider
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.util.ServiceLoader
 import kotlin.io.path.exists
 import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 import kotlin.io.path.outputStream
 
-object Jsr223KotlincProvider {
+/** Finds or downloads the kotlinc of the analyzer version. */
+object AnalyzerKotlincProvider {
     private const val KOTLINC_DIR_NAME = "kotlinc"
     private const val KOTLIN_DIST_FOR_IDE = "kotlin-dist-for-ide"
     private const val KOTLIN_MAVEN_GROUP_PATH = "org/jetbrains/kotlin"
@@ -36,30 +44,65 @@ object Jsr223KotlincProvider {
     private const val CONNECT_TIMEOUT_MS = 10_000
     private const val READ_TIMEOUT_MS = 60_000
 
-    private val LOG = logger<Jsr223KotlincProvider>()
+    private val LOG = logger<AnalyzerKotlincProvider>()
     private val kotlinDistForIdeJar = "$KOTLIN_DIST_FOR_IDE-${KotlinCompilerVersion.VERSION}.jar"
 
-    val ideKotlinc: Path by lazy {
-        val kotlinc = bundledKotlinc() ?: unpackKotlinDistForIdeWithProgress()
-        LOG.info("The JSR-223 kotlinc home is $kotlinc")
-        kotlinc
+    @Volatile
+    private var kotlincHome: Path? = null
+    private val mutex = Mutex()
+
+    /** Downloads the kotlinc under the progress of the caller, if necessary. */
+    suspend fun getKotlincHome(): Path = getKotlincHome(callerIndicator = null)
+
+    /** Shows a modal progress on the EDT, and uses the progress indicator of the caller elsewhere. */
+    fun getKotlincHomeBlocking(): Path {
+        kotlincHome?.let { return it }
+        if (ApplicationManager.getApplication()?.isDispatchThread == true) {
+            // Not `runWithModalProgressBlocking`, because it fails under a read lock.
+            return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                ThrowableComputable { getKotlincHomeUnderCallerIndicator() },
+                IdeKotlincBundle.message("progress.title.preparing.kotlin.compiler"),
+                true,
+                null,
+            )
+        }
+        return getKotlincHomeUnderCallerIndicator()
     }
 
-    // The dist can need a download of about 100 MB. The script engine asks for it on the UI thread.
-    private fun unpackKotlinDistForIdeWithProgress(): Path = ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        ThrowableComputable { unpackKotlinDistForIde() },
-        KotlinJsr223Bundle.message("progress.title.preparing.kotlin.compiler"),
-        true,
-        null,
-    ) ?: error("Kotlin JSR-223 kotlinc distribution is not found for ${KotlinCompilerVersion.VERSION}")
+    private fun getKotlincHomeUnderCallerIndicator(): Path {
+        val callerIndicator = ProgressManager.getGlobalProgressIndicator()
+        return runBlockingMaybeCancellable { getKotlincHome(callerIndicator) }
+    }
+
+    private suspend fun getKotlincHome(callerIndicator: ProgressIndicator?): Path {
+        kotlincHome?.let { return it }
+        return mutex.withLock {
+            kotlincHome ?: withContext(Dispatchers.IO) {
+                // runBlockingMaybeCancellable does not pass the text and the fraction to the caller indicator.
+                if (callerIndicator != null) findOrUnpack(callerIndicator)
+                else coroutineToIndicator { findOrUnpack(ProgressManager.getGlobalProgressIndicator()) }
+            }.also {
+                LOG.info("The IDE kotlinc home is $it")
+                kotlincHome = it
+            }
+        }
+    }
+
+    private fun findOrUnpack(indicator: ProgressIndicator?): Path = testKotlincHome() ?: bundledKotlinc() ?: unpackKotlinDistForIde(indicator)
+    ?: error("Kotlin compiler distribution is not found for ${KotlinCompilerVersion.VERSION}")
+
+    private fun testKotlincHome(): Path? {
+        if (ApplicationManager.getApplication()?.isUnitTestMode != true) return null
+        val providerClass = AnalyzerKotlincTestHomeProvider::class.java
+        return ServiceLoader.load(providerClass, providerClass.classLoader).firstOrNull()?.kotlincHome()
+    }
 
     private fun bundledKotlinc(): Path? {
-        val kotlinPluginJar = PathManager.getJarForClass(Jsr223KotlincProvider::class.java) ?: return null
+        val kotlinPluginJar = PathManager.getJarForClass(AnalyzerKotlincProvider::class.java) ?: return null
         return bundledKotlinc(kotlinPluginJar)
     }
 
-    // Repeats `com.intellij.ide.plugins.getPluginDistDirByClass`.
-    // That function reads the plugin path from the class loader first. This copy has only the path walk.
+    // The path walk of `com.intellij.ide.plugins.getPluginDistDirByClass`, without its class loader lookup.
     internal fun bundledKotlinc(pluginJar: Path): Path? {
         val pluginRoot = pluginJar
             .parent
@@ -68,41 +111,40 @@ object Jsr223KotlincProvider {
         val bundled = pluginRoot.resolve(KOTLINC_DIR_NAME).takeIf(::isKotlincHome) ?: return null
         val build = buildNumber(bundled)
         if (build?.startsWith(KotlinCompilerVersion.VERSION) != true) {
-            LOG.info("The bundled kotlinc is $build, the JSR-223 engine needs ${KotlinCompilerVersion.VERSION}")
+            LOG.info("The bundled kotlinc is $build, the IDE needs ${KotlinCompilerVersion.VERSION}")
             return null
         }
         return bundled
     }
 
-    private fun unpackKotlinDistForIde(): Path? {
+    private fun unpackKotlinDistForIde(indicator: ProgressIndicator?): Path? {
         val target = PathManager.getSystemDir()
             .resolve(KOTLIN_DIST_FOR_IDE)
             .resolve(KotlinCompilerVersion.VERSION)
 
-        // The cooperative development version is a constant, so a republished dist keeps the same target.
-        // A downloaded dist cannot change, because the Maven coordinates are immutable.
+        // Only a snapshot dist can change under the same version. The stamp comes last, so an interrupted unpack has none.
         val snapshotJar = snapshotKotlinDistForIdeJar()
-        if (snapshotJar == null && isKotlincHome(target)) return target
+        if (snapshotJar == null && isKotlincHome(target) && target.resolve(DIST_SOURCE_TXT).exists()) return target
 
-        val distJar = snapshotJar ?: downloadKotlinDistForIdeJar() ?: return null
-        LOG.info("The JSR-223 kotlinc dist comes from $distJar")
-        return unpackKotlinDistForIde(distJar, target)
+        val distJar = snapshotJar ?: downloadKotlinDistForIdeJar(indicator) ?: return null
+        LOG.info("The IDE kotlinc dist comes from $distJar")
+        return unpackKotlinDistForIde(distJar, target, indicator)
     }
 
-    /** Unpacks [distJar] into [target], and keeps an existing unpacked dist when the same jar produced it. */
-    internal fun unpackKotlinDistForIde(distJar: Path, target: Path): Path {
+    /** Keeps [target] when the same [distJar] unpacked it. */
+    internal fun unpackKotlinDistForIde(distJar: Path, target: Path, indicator: ProgressIndicator? = null): Path {
         val distSource = target.resolve(DIST_SOURCE_TXT)
         val distStamp = Files.getLastModifiedTime(distJar).toMillis().toString()
         if (!isKotlincHome(target) || runCatching { Files.readString(distSource) }.getOrNull() != distStamp) {
-            LOG.info("Unpacking the JSR-223 kotlinc dist into $target")
-            indicator?.text = KotlinJsr223Bundle.message("progress.text.unpacking.kotlinc.dist")
+            LOG.info("Unpacking the IDE kotlinc dist into $target")
+            indicator?.text = IdeKotlincBundle.message("progress.text.unpacking.kotlinc.dist")
             NioFiles.deleteRecursively(target)
             Files.createDirectories(target)
             Decompressor.Zip(distJar).overwrite(true).extract(target)
             Files.writeString(distSource, distStamp)
         }
 
-        check(isKotlincHome(target)) { "Kotlin JSR-223 kotlinc distribution is incomplete: $target" }
+        check(isKotlincHome(target)) { "Kotlin compiler distribution is incomplete: $target" }
         return target
     }
 
@@ -116,19 +158,14 @@ object Jsr223KotlincProvider {
             .takeIf { it.isRegularFile() }
     }
 
-    // `getInstance` throws without an application, and the dist is also unpacked outside of progress.
-    private val indicator: ProgressIndicator?
-        get() = ProgressManager.getInstanceOrNull()?.progressIndicator
-
     private fun isKotlincHome(path: Path): Boolean {
         return path.resolve(BUILD_TXT).exists() && path.resolve("lib").exists()
     }
 
-    private fun buildNumber(kotlincHome: Path): String? {
-        return runCatching { Files.readString(kotlincHome.resolve(BUILD_TXT)).trim() }.getOrNull()
-    }
+    private fun buildNumber(kotlincHome: Path): String? =
+        runCatching { Files.readString(kotlincHome.resolve(BUILD_TXT)).trim() }.getOrNull()
 
-    private fun downloadKotlinDistForIdeJar(): Path? {
+    private fun downloadKotlinDistForIdeJar(indicator: ProgressIndicator?): Path? {
         val target = PathManager.getSystemDir()
             .resolve(KOTLIN_DIST_FOR_IDE)
             .resolve("downloads")
@@ -136,28 +173,26 @@ object Jsr223KotlincProvider {
         if (target.exists()) return target
 
         Files.createDirectories(target.parent)
-        // A unique name, because a second IDE on the same installation downloads into the same directory.
+        // Another IDE can download into the same directory.
         val temp = Files.createTempFile(target.parent, target.name, ".tmp")
         try {
             for (url in kotlinDistForIdeUrls) {
                 try {
-                    downloadTo(url, temp)
+                    downloadTo(url, temp, indicator)
                     Files.move(temp, target, StandardCopyOption.REPLACE_EXISTING)
                     return target
-                }
-                catch (e: IOException) {
-                    LOG.info("The JSR-223 kotlinc dist download failed: $url", e)
+                } catch (e: IOException) {
+                    LOG.info("The IDE kotlinc dist download failed: $url", e)
                 }
             }
             return null
-        }
-        finally {
+        } finally {
             Files.deleteIfExists(temp)
         }
     }
 
-    private fun downloadTo(url: String, target: Path) {
-        indicator?.text = KotlinJsr223Bundle.message("progress.text.downloading.kotlinc.dist")
+    private fun downloadTo(url: String, target: Path, indicator: ProgressIndicator?) {
+        indicator?.text = IdeKotlincBundle.message("progress.text.downloading.kotlinc.dist")
         val connection = URI(url).toURL().openConnection()
         connection.connectTimeout = CONNECT_TIMEOUT_MS
         connection.readTimeout = READ_TIMEOUT_MS
@@ -173,45 +208,26 @@ object Jsr223KotlincProvider {
                     )
                 }
             }
-        }
-        finally {
+        } finally {
             (connection as? HttpURLConnection)?.disconnect()
         }
     }
 
-    /**
-     * The URLs to try for the 'kotlin-dist-for-ide' artifact, in order.
-     *
-     * The repository list is copied from
-     * `community/plugins/kotlin/base/plugin/src/org/jetbrains/kotlin/idea/compiler/configuration/KotlinArtifactsDownloader.kt`,
-     * because the Kotlin Scripting plugin used in Qodana does not depend on the Kotlin plugin.
-     */
+    // A copy of the repositories in `KotlinArtifactsDownloader`, because the KotlinScripting plugin does not depend on the Kotlin plugin.
     private val kotlinDistForIdeUrls: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        // For example: org/jetbrains/kotlin/kotlin-dist-for-ide/2.5.0-dev-6810/kotlin-dist-for-ide-2.5.0-dev-6810.jar
         val artifactPath = "$KOTLIN_MAVEN_GROUP_PATH/$KOTLIN_DIST_FOR_IDE/${KotlinCompilerVersion.VERSION}/$kotlinDistForIdeJar"
         buildList {
             add("https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies")
             add("https://cache-redirector.jetbrains.com/intellij-dependencies")
             add("https://cache-redirector.jetbrains.com/repo1.maven.org/maven2")
 
-            // This aims to cover tests when run both from sources and binaries, and the debug IDE in various configurations
             val isTestLikeRun = ApplicationManager.getApplication().isUnitTestMode
                     || AppMode.isRunningFromDevBuild()
                     || BazelEnvironmentUtil.isBazelTestRun()
 
             if (isTestLikeRun) {
-                // Do not use the experimental repository in production
                 add("https://packages.jetbrains.team/maven/p/kt/experimental")
             }
         }.map { "$it/$artifactPath" }
     }
-
 }
-
-@Suppress("IO_FILE_USAGE")
-class Jsr223KotlincScriptEngineFactory :
-    KotlinJsr223StandardScriptEngineFactory4IdeaBase({ Jsr223KotlincProvider.ideKotlinc.toFile() }) {
-    override fun getNames(): List<String> = super.getNames() + KOTLIN_IDE_JSR223_SCRIPT_ENGINE_NAME
-}
-
-private const val KOTLIN_IDE_JSR223_SCRIPT_ENGINE_NAME = "kotlin-ide-jsr223"

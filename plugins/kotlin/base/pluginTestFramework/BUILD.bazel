@@ -65,6 +65,7 @@ jvm_library(
         "//platform/build-scripts/downloader",
         "//plugins/kotlin/util/project-model-updater",
         "//plugins/kotlin/base/plugin",
+        "//plugins/kotlin/ide-kotlinc",
         "//java/testFramework/shared",
         "//java/java-psi-api:psi",
     ],

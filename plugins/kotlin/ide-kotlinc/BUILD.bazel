@@ -1,0 +1,123 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.ide.kotlinc` start
+content_module_jar(module = ":ide-kotlinc")
+### auto-generated section `dev intellij.kotlin.ide.kotlinc` end
+
+### auto-generated section `build intellij.kotlin.ide.kotlinc` start
+create_kotlinc_options(
+    name = "custom_ide-kotlinc",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "ide-kotlinc",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_ide-kotlinc",
+    module_name = "intellij.kotlin.ide.kotlinc",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/platform-util-io:ide-util-io",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+    ],
+)
+### auto-generated section `build intellij.kotlin.ide.kotlinc` end
+
+### auto-generated section `iml intellij.kotlin.ide.kotlinc` start
+exports_files(
+    [
+        "intellij.kotlin.ide.kotlinc.iml",
+        "resources/intellij.kotlin.ide.kotlinc.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.ide.kotlinc` end
+
+### auto-generated section `build intellij.kotlin.ide.kotlinc.tests` start
+create_kotlinc_options(
+    name = "custom_ide-kotlinc-tests",
+    opt_in = [
+        "org.jetbrains.kotlin.psi.KtExperimentalApi",
+        "org.jetbrains.kotlin.psi.KtNonPublicApi",
+        "org.jetbrains.kotlin.psi.KtIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaExperimentalApi",
+        "org.jetbrains.kotlin.analysis.api.KaIdeApi",
+        "org.jetbrains.kotlin.analysis.api.KaPlatformInterface",
+        "org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaUnstableDiagnosticApi",
+        "org.jetbrains.kotlin.analysis.api.KaNonPublicApi",
+        "org.jetbrains.kotlin.analysis.api.KaContextParameterApi",
+        "org.jetbrains.kotlin.analysis.api.permissions.KaAllowProhibitedAnalyzeFromWriteAction",
+    ],
+    x_context_parameters = True,
+)
+
+jvm_library(
+    name = "ide-kotlinc-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//plugins/kotlin/ide-kotlinc"],
+    kotlinc_opts = ":custom_ide-kotlinc-tests",
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/junit6",
+        "//libraries/junit6-jupiter",
+    ],
+)
+### auto-generated section `build intellij.kotlin.ide.kotlinc.tests` end
+
+### auto-generated section `iml intellij.kotlin.ide.kotlinc.tests` start
+exports_files(
+    [
+        "intellij.kotlin.ide.kotlinc.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.ide.kotlinc.tests` end
+
+### auto-generated section `test intellij.kotlin.ide.kotlinc.tests` start
+jps_test(
+    name = "ide-kotlinc-tests_test",
+    runtime_deps = [":ide-kotlinc-tests_test_lib"],
+)
+### auto-generated section `test intellij.kotlin.ide.kotlinc.tests` end

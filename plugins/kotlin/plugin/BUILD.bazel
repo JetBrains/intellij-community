@@ -175,6 +175,7 @@ dev_dist_plugin(
         "intellij.libraries.kotlin.tooling.core",
         "intellij.libraries.completion.ranking.kotlin",
         "intellij.kotlin.jsr223",
+        "intellij.kotlin.ide.kotlinc",
         "intellij.libraries.kotlinc.kotlin.scripting.compiler.impl",
         "intellij.libraries.kotlinc.kotlin.scripting.common",
         "intellij.libraries.kotlinc.kotlin.scripting.jvm",
@@ -369,11 +370,13 @@ dev_dist_complex_plugin(
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_content_module_jar",
         "//plugins/kotlin/build-tools-runtime:build-tools-runtime_content_module_jar",
         "//plugins/kotlin/jsr223:jsr223_content_module_jar",
+        "//plugins/kotlin/ide-kotlinc:ide-kotlinc_content_module_jar",
     ],
     independent_destinations = {
         "intellij.kotlin.jps.util.runtime": "lib/intellij.kotlin.jps.util.runtime.jar",
         "intellij.kotlin.buildToolsRuntime": "lib/intellij.kotlin.buildToolsRuntime.jar",
         "intellij.kotlin.jsr223": "lib/intellij.kotlin.jsr223.jar",
+        "intellij.kotlin.ide.kotlinc": "lib/intellij.kotlin.ide.kotlinc.jar",
     },
     libraries = {
         "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common": "@lib//:libraries-kotlinc-kotlin-compiler-common-kotlinc-kotlin-compiler-common",

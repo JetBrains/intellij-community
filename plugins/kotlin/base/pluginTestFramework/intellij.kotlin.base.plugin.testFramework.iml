@@ -51,6 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.updateChecker" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.base.plugin" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide.kotlinc" />
     <orderEntry type="module" module-name="intellij.java.testFramework.shared" />
     <orderEntry type="module" module-name="intellij.java.psi" />
   </component>

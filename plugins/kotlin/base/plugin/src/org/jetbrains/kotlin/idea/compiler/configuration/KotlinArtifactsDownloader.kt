@@ -471,7 +471,7 @@ private fun openStream(artifactCoordinates: String): InputStream? {
  * Returns the list of repository URLs to search for Kotlin artifacts.
  *
  * Sic! When you change implementation of [kotlinArtifactRepositoryCoordinates], also adjust
- * `community/plugins/kotlin/jsr223/src/org/jetbrains/kotlin/jsr223/Jsr223KotlincProvider.kt`.
+ * `community/plugins/kotlin/ide-kotlinc/src/org/jetbrains/kotlin/ide/kotlinc/AnalyzerKotlincProvider.kt`.
  */
 @get:ApiStatus.Internal
 val kotlinArtifactRepositoryCoordinates: List<String> by lazy(LazyThreadSafetyMode.PUBLICATION) {

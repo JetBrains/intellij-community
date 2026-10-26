@@ -13,23 +13,9 @@ import kotlin.script.experimental.jvm.jsr223.importAllBindings
 import kotlin.script.experimental.jvm.jsr223.jsr223
 
 /**
- * The compilation configuration every snippet of [KotlinJsr223DaemonScriptEngineImpl] is compiled
- * with -- the counterpart of the Kotlin project's own
- * `kotlin.script.experimental.jsr223.KotlinJsr223DefaultScriptCompilationConfiguration` (in the
- * `kotlin-scripting-jsr223` artifact, which is not published for the IDE).
+ * A copy of `KotlinJsr223DefaultScriptCompilationConfiguration`, because `kotlin-scripting-jsr223` is not published for the IDE.
  *
- * Unlike that one, this is *not* attached to a `@KotlinScript`-annotated template class: on the
- * out-of-process compile path the definition never reaches the compile daemon anyway (see
- * [KotlinJsr223DaemonScriptEngineImpl]'s KDoc), so only the parts that run **client-side** are
- * meaningful here -- namely the two bindings-exposure hooks:
- *  * `beforeCompiling` -> [configureExposedJsr223Context] adds the `ScriptContext`/
- *    `ScriptTemplateWithBindings` implicit receivers, whose *type names* [DaemonReplCompiler]
- *    forwards to the daemon through a dedicated CLI option;
- *  * `prependSyntheticSnippets` -> [generateBindingSnippetIfNeeded] generates the synthetic snippet
- *    that declares every JSR-223 binding as a typed property.
- *
- * A `jvm { jvmTarget(...) }` entry is deliberately *not* set here: it would have no effect, since
- * this configuration is never fed into the daemon's own compile arguments.
+ * The configuration does not reach the daemon, so only its client-side hooks take effect. For the same reason, `jvmTarget` is not set.
  */
 object Jsr223DefaultScriptCompilationConfiguration : ScriptCompilationConfiguration(
     {
@@ -43,11 +29,7 @@ object Jsr223DefaultScriptCompilationConfiguration : ScriptCompilationConfigurat
     }
 )
 
-/**
- * The evaluation configuration every compiled snippet is evaluated with: supplies the actual
- * implicit-receiver *instances* (the live `ScriptContext` and a `ScriptTemplateWithBindings` view
- * over its `ENGINE_SCOPE` bindings) matching the receiver types declared at compile time.
- */
+/** Supplies the `ScriptContext` and `ScriptTemplateWithBindings` instances of the implicit receivers. */
 object Jsr223DefaultScriptEvaluationConfiguration : ScriptEvaluationConfiguration(
     {
         refineConfigurationBeforeEvaluate(::configureExposedJsr223Context)

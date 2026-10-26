@@ -82,6 +82,16 @@ object TestKotlinArtifacts {
         targetDirectory
     }
 
+    internal val kotlinDistForIdeAnalyzerUnpacked: Path by lazy {
+        val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-analyzer.jar")
+        val targetDirectory = KotlinArtifactConstants.KOTLIN_DIST_LOCATION_PREFIX_PATH.resolve(artifact.nameWithoutExtension)
+        runBlocking(Dispatchers.IO) {
+            extractFile(artifact, targetDirectory, communityRoot)
+        }
+
+        targetDirectory
+    }
+
     @JvmStatic
     val kotlinDistForIdeUnpackedForIncrementalCompilation: Path by lazy {
         val artifact = getKotlinDepsByLabel("@kotlin_test_deps//:kotlin-dist-for-ide-increment-compilation.jar")

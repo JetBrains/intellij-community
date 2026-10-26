@@ -32,7 +32,7 @@ jvm_library(
         "//platform/util-class-loader:util-classLoader",
         "//platform/core-api:core",
         "//platform/util",
-        "//plugins/kotlin/jsr223",
+        "//plugins/kotlin/ide-kotlinc",
     ],
 )
 ### auto-generated section `build intellij.kotlin.buildToolsRuntime` end

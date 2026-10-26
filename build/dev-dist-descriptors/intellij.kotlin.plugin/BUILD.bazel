@@ -106,6 +106,7 @@ dev_dist_plugin_descriptor(
         "intellij.kotlin.highlighting.minimal",
         "intellij.kotlin.i18n",
         "intellij.kotlin.ide",
+        "intellij.kotlin.ide.kotlinc",
         "intellij.kotlin.injection",
         "intellij.kotlin.internal",
         "intellij.kotlin.j2k",
