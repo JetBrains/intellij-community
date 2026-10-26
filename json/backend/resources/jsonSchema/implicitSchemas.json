@@ -207,6 +207,17 @@
       "url": "https://raw.githubusercontent.com/Kitware/CMake/master/Help/manual/presets/schema.json"
     },
     {
+      "name": "dependabot-v2.json",
+      "description": "Dependabot v2 configuration files",
+      "fileMatch": [
+        "**/.azuredevops/dependabot.yml",
+        "**/.azuredevops/dependabot.yaml",
+        "**/.github/dependabot.yml",
+        "**/.github/dependabot.yaml"
+      ],
+      "url": "https://www.schemastore.org/dependabot-2.0.json"
+    },
+    {
       "name": "Devbox Config",
       "description": "Configuration for a Devbox shell environment",
       "fileMatch": ["devbox.json"],
@@ -250,6 +261,23 @@
         "lefthook-local.yml"
       ],
       "url": "https://raw.githubusercontent.com/evilmartians/lefthook/master/schema.json"
+    },
+    {
+      "name": "mise",
+      "description": "mise config, a polyglot dev tool manager",
+      "fileMatch": [
+        ".mise.toml",
+        ".mise.*.toml",
+        "mise.toml",
+        "mise.*.toml",
+        "**/.mise/config.toml",
+        "**/.mise/config.*.toml",
+        "**/.mise/conf.d/*.toml",
+        "**/mise/config.toml",
+        "**/mise/config.*.toml",
+        "**/mise/conf.d/*.toml"
+      ],
+      "url": "https://mise.jdx.dev/schema/mise.json"
     },
     {
       "name": "mkdocs.yml",

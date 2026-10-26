@@ -55,6 +55,32 @@ class JsonSchemaCatalogImplicitProviderFactoryTest {
   }
 
   @Test
+  fun testMiseConfigGetsImplicitSchema() {
+    val files = listOf("mise.toml", ".mise.local.toml", "sub/mise.toml", ".mise/config.toml").map { path ->
+      myFixture.addFileToProject(path, "[tools]\nnode = \"22\"\n").virtualFile
+    }
+
+    for (file in files) {
+      assertEquals(MISE_SCHEMA_URL, getImplicitProvider(file).remoteSource, file.path)
+    }
+  }
+
+  @Test
+  fun testDependabotConfigGetsImplicitSchema() {
+    val file = myFixture.addFileToProject(".github/dependabot.yml", "version: 2\n").virtualFile
+    val provider = getImplicitProvider(file)
+
+    assertEquals(DEPENDABOT_SCHEMA_URL, provider.remoteSource)
+  }
+
+  @Test
+  fun testDependabotFileNameOutsideGithubDirectoryGetsNoImplicitSchema() {
+    val file = myFixture.addFileToProject("dependabot.yml", "version: 2\n").virtualFile
+
+    assertTrue(getImplicitProviders(file).isEmpty())
+  }
+
+  @Test
   fun testIgnoredFileDisablesImplicitSchema() {
     val file = myFixture.addFileToProject("pyproject.toml", "[project]\nname = \"demo\"\n").virtualFile
 
@@ -157,8 +183,10 @@ class JsonSchemaCatalogImplicitProviderFactoryTest {
     file.putUserData(SchemaOrigin.URL_KEY, SchemaUrl.parse(retrievalUrl).value)
   }
 
-  private fun getImplicitProvider(file: VirtualFile): JsonSchemaFileProvider {
-    return runReadActionBlocking { JsonSchemaCatalogImplicitProviderFactory().getProviders(project).single { it.isAvailable(file) } }
+  private fun getImplicitProvider(file: VirtualFile): JsonSchemaFileProvider = getImplicitProviders(file).single()
+
+  private fun getImplicitProviders(file: VirtualFile): List<JsonSchemaFileProvider> {
+    return runReadActionBlocking { JsonSchemaCatalogImplicitProviderFactory().getProviders(project).filter { it.isAvailable(file) } }
   }
 
   private fun getSchemaUrls(file: VirtualFile): List<String> {
@@ -176,5 +204,7 @@ class JsonSchemaCatalogImplicitProviderFactoryTest {
     private const val PYPROJECT_SCHEMA_URL = "https://json.schemastore.org/pyproject.json"
     private const val PYPROJECT_SCHEMA_REDIRECT_URL = "https://www.schemastore.org/pyproject.json"
     private const val RUFF_SCHEMA_URL = "https://www.schemastore.org/ruff.json"
+    private const val MISE_SCHEMA_URL = "https://mise.jdx.dev/schema/mise.json"
+    private const val DEPENDABOT_SCHEMA_URL = "https://www.schemastore.org/dependabot-2.0.json"
   }
 }
