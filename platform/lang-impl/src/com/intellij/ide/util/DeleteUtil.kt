@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiDirectory
@@ -123,7 +124,7 @@ private fun generateDeleteWarningMessage(
     }
   }
 
-  if (safeDeleteApplicable) {
+  if (safeDeleteApplicable && !IdeProductMode.isLight) { // don't show warning about indexes in ijLight mode
     warningMessage +=
       LangBundle.message("dialog.message.warning.safe.delete.not.available.while.updates.indices.no.usages.will.be.checked",
                          ApplicationNamesInfo.getInstance().fullProductName)
