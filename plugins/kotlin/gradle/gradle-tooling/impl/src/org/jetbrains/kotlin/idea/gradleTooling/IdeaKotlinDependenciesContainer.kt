@@ -9,7 +9,10 @@ import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContext
 import org.jetbrains.kotlin.idea.gradleTooling.serialization.ideaKotlinSerializationContextOrNull
 import java.io.Serializable
+import java.lang.ref.ReferenceQueue
+import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
+import java.security.MessageDigest
 
 
 sealed interface IdeaKotlinDependenciesContainer {
@@ -85,6 +88,52 @@ class IdeaKotlinSerializedDependencyPool private constructor(
     }
 }
 
+/**
+ * De-duplicates dependencies entries to reduce memory usage.
+ *
+ * **Note**: The users must not change a decoded instance, because other models can share it.
+ */
+@ApiStatus.Internal
+class IdeaKotlinDecodedDependencyInterner<T : Any> {
+    private val referenceQueue = ReferenceQueue<T>()
+    private val referencesByDigest = HashMap<ByteBuffer, ValueReference<T>>()
+
+    /* A MessageDigest is not thread-safe, and the digest is computed outside the lock. */
+    private val sha256Digest = ThreadLocal.withInitial { MessageDigest.getInstance("SHA-256") }
+
+    private class ValueReference<T : Any>(
+        val digest: ByteBuffer,
+        value: T,
+        queue: ReferenceQueue<T>
+    ) : WeakReference<T>(value, queue)
+
+    fun intern(serialized: ByteArray, decode: (ByteArray) -> T?): T? {
+        val digest = ByteBuffer.wrap(sha256Digest.get().digest(serialized))
+        synchronized(this) {
+            removeCollectedReferences()
+            referencesByDigest[digest]?.get()?.let { return it }
+        }
+
+        /* Decode outside the lock, so the models can be deserialized in parallel */
+        val decoded = decode(serialized) ?: return null
+        synchronized(this) {
+            referencesByDigest[digest]?.get()?.let { return it }
+            referencesByDigest[digest] = ValueReference(digest, decoded, referenceQueue)
+            return decoded
+        }
+    }
+
+    private fun removeCollectedReferences() {
+        while (true) {
+            @Suppress("UNCHECKED_CAST")
+            val reference = referenceQueue.poll() as? ValueReference<T> ?: return
+            referencesByDigest.remove(reference.digest, reference)
+        }
+    }
+}
+
+private val decodedDependencyInterner = IdeaKotlinDecodedDependencyInterner<IdeaKotlinDependency>()
+
 private class IdeaKotlinDependenciesContainerSurrogate(
     private val pool: IdeaKotlinSerializedDependencyPool
 ) : Serializable {
@@ -93,8 +142,9 @@ private class IdeaKotlinDependenciesContainerSurrogate(
             return IdeaKotlinSerializedDependenciesContainer(pool.toDependenciesBySourceSet())
         }
 
-        /* Decode each distinct dependency once, so the source sets share the decoded instances */
-        val decodedDependencies = pool.dependencies.map { dependency -> ideaKotlinSerializationContext.IdeaKotlinDependency(dependency) }
+        val decodedDependencies = pool.dependencies.map { dependency ->
+            decodedDependencyInterner.intern(dependency) { ideaKotlinSerializationContext.IdeaKotlinDependency(it) }
+        }
         val deserializedDependencies = pool.dependencyIndexesBySourceSet.mapValues { (_, indexes) ->
             indexes.asList().mapNotNull { decodedDependencies[it] }.toSet()
         }
