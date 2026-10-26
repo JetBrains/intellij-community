@@ -25,6 +25,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.WildcardFileNameMatcher;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -42,6 +43,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.JBIterable;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -50,10 +52,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Creates files under a {@link RootType} the way scratch files are created: runs the {@link ScratchFileCreationHelper}
  * of the language, picks a free file name, writes the text, stores the language mapping and opens the file in an editor.
+ * {@link #createScratchOrTempFile} creates a temporary file instead when the scratch plugin is not loaded.
  * <p>
  * Stays in the platform because the welcome screen creates its files through it;
  * the scratch actions themselves live in the {@code intellij.platform.scratch} module.
@@ -202,6 +207,34 @@ public final class ScratchFileCreator {
     return rootType == null ? null : createScratchFile(project, fileName, language, text, option, rootType);
   }
 
+  /**
+   * Creates a file under the "Scratches" root when the scratch plugin is loaded.
+   * Otherwise it creates a file in a temporary directory, which the JVM deletes on exit.
+   * The temporary file takes the last segment of {@code fileName} and the default extension of {@code language},
+   * because only the extension selects the language outside the "Scratches" root.
+   * The method does not open an editor.
+   *
+   * @return the created file, or null when the file cannot be created
+   */
+  public static @Nullable VirtualFile createScratchOrTempFile(@Nullable Project project,
+                                                              @NotNull String fileName,
+                                                              @Nullable Language language,
+                                                              @NotNull String text) {
+    RootType rootType = ScratchUtil.findScratchesRootType();
+    if (rootType != null) {
+      return createScratchFile(project, fileName, language, text, ScratchFileService.Option.create_new_always, rootType);
+    }
+    LOG.info("The Scratches root is absent, a temporary file replaces the scratch file '" + fileName + "'");
+    String tempFileName = withLanguageExtension(PathUtil.getFileName(fileName), language);
+    return createFile(project, fileName, () -> {
+      VirtualFile dir = VfsUtil.findFile(TempDirHolder.get(), true);
+      if (dir == null) throw new IOException("Cannot find the temporary directory for scratch files in the VFS");
+      VirtualFile file = dir.createChildData(ScratchFileCreator.class, getNextAvailableName(dir, tempFileName));
+      VfsUtil.saveText(file, text);
+      return file;
+    });
+  }
+
   private static @Nullable RootType findScratchesRootTypeOrWarn() {
     RootType rootType = ScratchUtil.findScratchesRootType();
     if (rootType == null) {
@@ -216,27 +249,60 @@ public final class ScratchFileCreator {
                                                         @NotNull String text,
                                                         @NotNull ScratchFileService.Option option,
                                                         @NotNull RootType rootType) {
+    return createFile(project, fileName, () -> {
+      ScratchFileService fileService = ScratchFileService.getInstance();
+      VirtualFile file = fileService.findFile(rootType, fileName, option);
+      // save text should go before any other manipulations that load document,
+      // otherwise undo will be broken
+      VfsUtil.saveText(file, text);
+      if (language != null) {
+        Language fileLanguage = LanguageUtil.getFileLanguage(file);
+        fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
+      }
+      return file;
+    });
+  }
+
+  /** Runs {@code creator} in a global undoable write command. Shows the error dialog and returns null on an I/O error. */
+  private static @Nullable VirtualFile createFile(@Nullable Project project,
+                                                  @NotNull String fileName,
+                                                  @NotNull ThrowableComputable<VirtualFile, IOException> creator) {
     try {
       return
         WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
           .withGlobalUndo().shouldRecordActionForActiveDocument(false)
-          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
-            ScratchFileService fileService = ScratchFileService.getInstance();
-            VirtualFile file = fileService.findFile(rootType, fileName, option);
-            // save text should go before any other manipulations that load document,
-            // otherwise undo will be broken
-            VfsUtil.saveText(file, text);
-            if (language != null) {
-              Language fileLanguage = LanguageUtil.getFileLanguage(file);
-              fileService.getScratchesMapping().setMapping(file, fileLanguage == null || language == fileLanguage ? null : language);
-            }
-            return file;
-          });
+          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(creator);
     }
     catch (IOException e) {
       Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
                                  UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
       return null;
+    }
+  }
+
+  /** Appends the default extension of {@code language} when {@code fileName} does not map to the file type of the language. */
+  private static @NotNull String withLanguageExtension(@NotNull String fileName, @Nullable Language language) {
+    LanguageFileType fileType = language == null ? null : language.getAssociatedFileType();
+    if (fileType == null) return fileName;
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    if (getFileTypeFromName(fileName, fileTypeManager) == fileType) return fileName;
+    String extension = getFileTypeExtensions(fileType, true, fileTypeManager).first();
+    return extension == null ? fileName : PathUtil.makeFileName(fileName, extension);
+  }
+
+  /** Holds the temporary directory of the session for {@link #createScratchOrTempFile}. */
+  private static final class TempDirHolder {
+    private static @Nullable Path ourDir;
+
+    /** Creates the directory again when it is missing on the disk. The write lock serializes the callers. */
+    @RequiresWriteLock
+    static @NotNull Path get() throws IOException {
+      Path dir = ourDir;
+      if (dir == null || !Files.isDirectory(dir)) {
+        dir = FileUtil.createTempDirectory("scratch", null, true).toPath();
+        ourDir = dir;
+      }
+      return dir;
     }
   }
 

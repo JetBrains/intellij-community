@@ -11,7 +11,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
@@ -38,5 +40,11 @@ public class ScratchFileTest extends LightPlatformCodeInsightTestCase {
     WriteAction.run(() -> {
       assertTrue(FileTypeManager.getInstance().isFileOfType(createXmlScratch().getVirtualFile(), StdFileTypes.XML));
     });
+  }
+
+  public void testCreateScratchOrTempFileReturnsScratch() {
+    VirtualFile file = ScratchFileCreator.createScratchOrTempFile(getProject(), "report.txt", PlainTextLanguage.INSTANCE, "text");
+    assertNotNull(file);
+    assertTrue(ScratchUtil.isInScratchesRoot(file));
   }
 }
