@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.BasePartiallyExcludedChangesTest
@@ -208,6 +209,29 @@ class StructuralHunkInclusionTest : BasePartiallyExcludedChangesTest() {
 
     rollback(hunk(file, 10))
     waitForTracker()
+    assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
+
+    releaseUnneededTrackers()
+    file.assertNullTracker()
+  }
+
+  fun `test a rollback without a tracker waits for the modality of the call`() {
+    val changed = text(LINES, 5 to "a-changed", 10 to "b-changed")
+    val file = addLocalFile(FILE, changed, text(LINES))
+    refreshCLM()
+
+    rollback(hunk(file, 10))
+    // A dialog opens before the tracker loads. The rollback started outside the dialog, so it changes the document after the dialog.
+    val dialog = Any()
+    LaterInvocator.enterModal(dialog)
+    try {
+      waitForTracker()
+      assertEquals(changed, file.document.text)
+    }
+    finally {
+      LaterInvocator.leaveModal(dialog)
+    }
+    UIUtil.dispatchAllInvocationEvents()
     assertEquals(text(LINES, 5 to "a-changed"), file.document.text)
 
     releaseUnneededTrackers()
