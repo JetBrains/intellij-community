@@ -8,6 +8,7 @@
 # module of the Bazel Central Registry.
 
 load("@bazel_skylib//rules:write_file.bzl", "write_file")
+load("@community//tools/vm/aom:nasm.bzl", "nasm_object")
 load("@community//tools/vm/aom:sources.bzl", "AOM_ARM64_SOURCES", "AOM_SOURCES", "AOM_X86_64_ASM", "AOM_X86_64_SOURCES")
 load("@rules_cc//cc:cc_library.bzl", "cc_library")
 
@@ -86,26 +87,23 @@ write_file(
     for index, (flags, files) in enumerate(AOM_X86_64_SOURCES.items())
 ]
 
-# `-I` takes a directory with its trailing slash. The assembly includes `config/aom_config.asm`, `x86inc.asm` and
-# `x86_abi_support.asm` by these paths. ELF on Linux and Mach-O on an Intel Mac; `x86inc.asm` adds the Mach-O prefix.
+# The assembly includes `config/aom_config.asm`, `x86inc.asm` and `x86_abi_support.asm` by these paths. ELF on Linux
+# and Mach-O on an Intel Mac; `x86inc.asm` adds the Mach-O prefix.
 [
-    genrule(
+    nasm_object(
         name = "aom_asm_" + source.replace("/", "_").replace(".asm", ""),
-        srcs = [
-            source,
+        src = source,
+        out = source.replace(".asm", ".o"),
+        config = "@community//tools/vm/aom:config/x86_64/config/aom_config.asm",
+        format = select({
+            "@platforms//os:macos": "macho64",
+            "//conditions:default": "elf64",
+        }),
+        includes = [
             "aom_ports/x86_abi_support.asm",
             "third_party/x86inc/x86inc.asm",
-            "@community//tools/vm/aom:config/x86_64/config/aom_config.asm",
         ],
-        outs = [source.replace(".asm", ".o")],
-        cmd = select({
-                  "@platforms//os:macos": "FORMAT=macho64",
-                  "//conditions:default": "FORMAT=elf64",
-              }) + " && ROOT=$$(dirname $(execpath third_party/x86inc/x86inc.asm))/../.." +
-              " && CONFIG=$$(dirname $(execpath @community//tools/vm/aom:config/x86_64/config/aom_config.asm))/.." +
-              " && $(execpath @nasm//:nasm) -f $$FORMAT -I$$ROOT/ -I$$CONFIG/ -o $@ $(execpath %s)" % source,
         target_compatible_with = [_X86_64],
-        tools = ["@nasm"],
     )
     for source in AOM_X86_64_ASM
 ]
