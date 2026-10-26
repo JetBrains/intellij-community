@@ -67,29 +67,6 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
    */
   protected open fun FileTestFixture.Builder.configureProject() {}
 
-  override fun tearDown() {
-    runAll(
-      { KotlinSdkType.removeKotlinSdkInTests() },
-      { removeAndroidSdksInTests() },
-      { super.tearDown() }
-    )
-  }
-
-  /**
-   * The Gradle sync creates an Android SDK from the local Android SDK path, and the SDK leak tracker reports it.
-   * The name prefix is `com.android.tools.idea.sdk.AndroidSdks.SDK_NAME_PREFIX`, which this module cannot depend on.
-   */
-  private fun removeAndroidSdksInTests() {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        val jdkTable = ProjectJdkTable.getInstance()
-        jdkTable.allJdks
-          .filter { it.name.startsWith(ANDROID_SDK_NAME_PREFIX) }
-          .forEach(jdkTable::removeJdk)
-      }
-    }
-  }
-
   protected fun testComposeProject(test: () -> Unit) {
     test(GradleVersion.version(targetGradleVersion), composeProjectBuilder, test)
   }
@@ -178,6 +155,35 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
     fun unregisterLongRunningAndroidThreads() {
       longRunningAndroidThreads?.let(Disposer::dispose)
       longRunningAndroidThreads = null
+    }
+
+    /**
+     * Removes the SDKs that the Gradle sync created, once after the last test of the class.
+     * The tests of one class share the Gradle project fixture, and its modules need these SDKs until the last test.
+     * The SDK leak tracker of [GradleProjectTestApplication] runs after this method.
+     */
+    @JvmStatic
+    @AfterAll
+    fun removeSdksInTests() {
+      runAll(
+        { KotlinSdkType.removeKotlinSdkInTests() },
+        { removeAndroidSdksInTests() }
+      )
+    }
+
+    /**
+     * The Gradle sync creates an Android SDK from the local Android SDK path, and the SDK leak tracker reports it.
+     * The name prefix is `com.android.tools.idea.sdk.AndroidSdks.SDK_NAME_PREFIX`, which this module cannot depend on.
+     */
+    private fun removeAndroidSdksInTests() {
+      invokeAndWaitIfNeeded {
+        runWriteAction {
+          val jdkTable = ProjectJdkTable.getInstance()
+          jdkTable.allJdks
+            .filter { it.name.startsWith(ANDROID_SDK_NAME_PREFIX) }
+            .forEach(jdkTable::removeJdk)
+        }
+      }
     }
 
     private fun testDataFingerprint(root: Path): String {
