@@ -4,7 +4,6 @@ package org.intellij.plugins.markdown.editor.tables.inspections
 import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.idea.TestFor
 import com.intellij.markdown.backend.inspections.MarkdownIncorrectTableFormattingInspection
-import com.intellij.testFramework.InspectionTestUtil
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.withTableStyle
@@ -120,12 +119,10 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     | some   | some  |
     """.trimIndent()
     myFixture.configureByText("some.md", before)
-    val inspection = InspectionTestUtil.instantiateTool(MarkdownIncorrectTableFormattingInspection::class.java)
+    val inspection = MarkdownIncorrectTableFormattingInspection()
     myFixture.enableInspections(inspection)
     val targetText = InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName)
-    val intentions = myFixture.availableIntentions
-    val intention = intentions.find { it.text == targetText }
-    checkNotNull(intention) { "Failed to find fix with text '$targetText'" }
+    val intention = myFixture.findSingleIntention(targetText)
     myFixture.launchAction(intention)
     myFixture.checkResult(after)
   }

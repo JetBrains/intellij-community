@@ -2,6 +2,7 @@
 package com.intellij.markdown.backend.intentions
 
 import com.intellij.codeInspection.IntentionAndQuickFixAction
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.component1
@@ -35,6 +36,11 @@ internal class FixTableBordersIntention: IntentionAndQuickFixAction() {
     return TableUtils.findTable(psiFile, editor.caretModel.offset)?.hasCorrectBorders() == false
   }
 
+  override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+    val table = TableUtils.findTable(descriptor.psiElement) ?: return
+    fixTable(table, null)
+  }
+
   override fun applyFix(project: Project, psiFile: PsiFile, editor: Editor?) {
     val editor = editor ?: return
     val table = TableUtils.findTable(psiFile, editor.caretModel.offset) ?: return
@@ -55,7 +61,7 @@ internal class FixTableBordersIntention: IntentionAndQuickFixAction() {
     val project = table.project
     val file = table.containingFile
     val tableStyle = getTableStyle(file)
-    val document = editor?.document ?: PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+    val document = editor?.document ?: file.viewProvider.document ?: return
     if (!table.isCorrectlyFormatted(tableStyle)) {
       PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document)
       TableFormattingUtils.reformatAllColumns(

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.tables.inspections
 
+import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.markdown.backend.inspections.MarkdownNoTableBordersInspection
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import org.intellij.plugins.markdown.MarkdownBundle
@@ -98,6 +99,36 @@ class MarkdownNoTableBordersInspectionQuickFixTest: LightPlatformCodeInsightFixt
     val fix = myFixture.getAvailableIntention(targetText)
     assertNotNull(fix)
     myFixture.launchAction(fix!!)
+    myFixture.checkResult(after)
+  }
+
+  @Test
+  fun `applies fix to the whole file`() {
+    // language=Markdown
+    val before = """
+    none | none
+    -----|---
+    some | some
+
+    other | table
+    ------|---
+    value | value
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none | none |
+    |------|------|
+    | some | some |
+
+    | other | table |
+    |-------|-------|
+    | value | value |
+    """.trimIndent()
+    myFixture.configureByText("some.md", before)
+    val inspection = MarkdownNoTableBordersInspection()
+    myFixture.enableInspections(inspection)
+    val targetText = InspectionsBundle.message("fix.all.inspection.problems.in.file", inspection.displayName)
+    myFixture.launchAction(myFixture.findSingleIntention(targetText))
     myFixture.checkResult(after)
   }
 

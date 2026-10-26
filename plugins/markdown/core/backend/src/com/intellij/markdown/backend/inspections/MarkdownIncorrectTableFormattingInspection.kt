@@ -2,17 +2,21 @@
 package com.intellij.markdown.backend.inspections
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.editor.tables.TableFormattingUtils
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasValidAlignment
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorrectlyFormatted
+import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.updateAlignment
+import org.intellij.plugins.markdown.editor.tables.TableUtils.findCell
+import org.intellij.plugins.markdown.editor.tables.TableUtils.findTable
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getTableStyle
-import com.intellij.markdown.backend.intentions.IntentionOnElementAtCaretWrapper
-import com.intellij.markdown.backend.intentions.FixCellAlignmentIntention
-import com.intellij.markdown.backend.intentions.ReformatTableIntention
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
@@ -54,7 +58,28 @@ class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
     }
   }
 
-  private class ReformatTableFix: IntentionOnElementAtCaretWrapper(ReformatTableIntention())
+  private class ReformatTableFix: LocalQuickFix {
+    override fun getName(): String = MarkdownBundle.message("markdown.reformat.table.intention.text")
 
-  private class FixCellAlignmentFix: IntentionOnElementAtCaretWrapper(FixCellAlignmentIntention())
+    override fun getFamilyName(): String = name
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val table = findTable(descriptor.psiElement) ?: return
+      val document = table.containingFile.viewProvider.document ?: return
+      TableFormattingUtils.reformatAllColumns(table, document, getTableStyle(table.containingFile), trimToMaxContent = true)
+    }
+  }
+
+  private class FixCellAlignmentFix: LocalQuickFix {
+    override fun getName(): String = MarkdownBundle.message("markdown.fix.cell.alignment.intention.text")
+
+    override fun getFamilyName(): String = name
+
+    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+      val cell = findCell(descriptor.psiElement) ?: return
+      val table = cell.parentTable ?: return
+      val document = cell.containingFile.viewProvider.document ?: return
+      cell.updateAlignment(document, table.getColumnAlignment(cell.columnIndex), getTableStyle(cell.containingFile))
+    }
+  }
 }
