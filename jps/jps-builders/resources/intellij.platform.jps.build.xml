@@ -8,6 +8,7 @@
     <module name="intellij.libraries.jgoodies.forms"/>
     <module name="intellij.platform.backend"/>
     <module name="intellij.java.aetherDependencyResolver"/>
+    <module name="intellij.java.compiler.externalJavac"/>
     <module name="intellij.libraries.asm"/>
     <module name="intellij.libraries.caffeine"/>
     <module name="intellij.libraries.fastutil"/>

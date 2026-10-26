@@ -1,0 +1,14 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.libraries.jetbrains.annotations"/>
+    <module name="intellij.libraries.jps.javac.extension"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.libraries.netty.codec.protobuf"/>
+    <module name="intellij.libraries.protobuf"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+  </dependencies>
+  <!-- endregion -->
+
+</idea-plugin>

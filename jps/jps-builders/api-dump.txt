@@ -2241,14 +2241,6 @@ org.jetbrains.jps.indices.ModuleExcludeIndex
 - a:isExcluded(java.io.File):Z
 - a:isExcludedFromModule(java.io.File,org.jetbrains.jps.model.module.JpsModule):Z
 - a:isInContent(java.io.File):Z
-f:org.jetbrains.jps.javac.CompilationPaths
-- <init>(java.lang.Iterable,java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.javac.ModulePath,java.lang.Iterable):V
-- s:create(java.lang.Iterable,java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.javac.ModulePath,java.lang.Iterable):org.jetbrains.jps.javac.CompilationPaths
-- getClasspath():java.lang.Iterable
-- getModulePath():org.jetbrains.jps.javac.ModulePath
-- getPlatformClasspath():java.lang.Iterable
-- getSourcePath():java.lang.Iterable
-- getUpgradeModulePath():java.lang.Iterable
 org.jetbrains.jps.javac.JavacFileReferencesRegistrar
 - a:initialize():V
 - a:isEnabled():Z

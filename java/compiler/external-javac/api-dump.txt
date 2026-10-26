@@ -1,0 +1,8 @@
+f:org.jetbrains.jps.javac.CompilationPaths
+- <init>(java.lang.Iterable,java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.javac.ModulePath,java.lang.Iterable):V
+- s:create(java.lang.Iterable,java.lang.Iterable,java.lang.Iterable,org.jetbrains.jps.javac.ModulePath,java.lang.Iterable):org.jetbrains.jps.javac.CompilationPaths
+- getClasspath():java.lang.Iterable
+- getModulePath():org.jetbrains.jps.javac.ModulePath
+- getPlatformClasspath():java.lang.Iterable
+- getSourcePath():java.lang.Iterable
+- getUpgradeModulePath():java.lang.Iterable

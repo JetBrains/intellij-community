@@ -68,6 +68,7 @@
     <module name="intellij.java.uast.ide" required-if-available="intellij.platform.backend"/>
 
     <module name="intellij.platform.jps.build" required-if-available="intellij.platform.backend"/>
+    <module name="intellij.java.compiler.externalJavac" required-if-available="intellij.platform.backend"/>
     <module name="intellij.platform.jps.build.dependencyGraph" required-if-available="intellij.platform.backend"/>
     <module name="intellij.libraries.jps.javac.extension" loading="embedded"/>
     <module name="intellij.platform.jps.build.javac.rt" loading="embedded"/>

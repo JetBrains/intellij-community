@@ -43,8 +43,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.cmdline.ClasspathBootstrap;
-import org.jetbrains.jps.incremental.GlobalContextKey;
 import org.jetbrains.jps.javac.rpc.JavacRemoteProto;
 import org.jetbrains.jps.util.Iterators;
 
@@ -74,7 +72,6 @@ import java.util.function.Supplier;
 public class ExternalJavacManager extends ProcessAdapter {
   private static final Logger LOG = Logger.getInstance(ExternalJavacManager.class);
 
-  public static final GlobalContextKey<ExternalJavacManager> KEY = ExternalJavacManagerKey.KEY;
   public static final int DEFAULT_SERVER_PORT = 7878;
   public static final String STDOUT_LINE_PREFIX = "JAVAC_PROCESS[STDOUT]";
   public static final String STDERR_LINE_PREFIX = "JAVAC_PROCESS[STDERR]";
@@ -369,7 +366,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
 
     appendParam(cmdLine, "-classpath");
-    List<File> cp = ClasspathBootstrap.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
+    List<File> cp = ExternalJavacProcessClasspath.getExternalJavacProcessClasspath(sdkHomePath, compilingTool);
     String pathSeparator = launchWSL? ":" : File.pathSeparator;
     String classpath = String.join(pathSeparator, Iterators.map(cp, f -> wslSupport.convertPath(f.getPath())));
     if (launchWSL && !classpath.isEmpty()) {

@@ -1,0 +1,72 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.java.compiler.externalJavac` start
+content_module_jar(module = ":external-javac")
+### auto-generated section `dev intellij.java.compiler.externalJavac` end
+
+### auto-generated section `build intellij.java.compiler.externalJavac` start
+jvm_library(
+    name = "external-javac",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.compiler.externalJavac",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "//platform/util",
+        "@community//build:build-javac-rt",
+        "//libraries/jps-javac-extension",
+        "//libraries/protobuf",
+        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/netty/buffer",
+        "//libraries/jetbrains/annotations",
+    ],
+)
+
+jvm_library(
+    name = "external-javac_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k11",
+    module_name = "intellij.java.compiler.externalJavac",
+    visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        ":external-javac",
+        "//platform/util:util_test_lib",
+        "@community//build:build-javac-rt_test_lib",
+        "//libraries/jps-javac-extension:jps-javac-extension_test_lib",
+        "//libraries/protobuf:protobuf_test_lib",
+        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",
+        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
+        "//libraries/netty/buffer:buffer_test_lib",
+        "//libraries/jetbrains/annotations:annotations_test_lib",
+    ],
+)
+### auto-generated section `build intellij.java.compiler.externalJavac` end
+
+### auto-generated section `iml intellij.java.compiler.externalJavac` start
+exports_files(
+    [
+        "intellij.java.compiler.externalJavac.iml",
+        "resources/intellij.java.compiler.externalJavac.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.java.compiler.externalJavac` end

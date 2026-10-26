@@ -294,6 +294,7 @@ images/jcef
 java/codeserver/core
 java/codeserver/highlighting
 java/compiler
+java/compiler/external-javac
 java/compiler/forms-compiler
 java/compiler/heavy-tests
 java/compiler/impl

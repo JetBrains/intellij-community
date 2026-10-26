@@ -28,6 +28,7 @@ dev_dist_plugin_descriptor(
         "intellij.java.codeserver.highlighting",
         "intellij.java.compiler",
         "intellij.java.compiler.antTasks",
+        "intellij.java.compiler.externalJavac",
         "intellij.java.compiler.impl",
         "intellij.java.compiler.instrumentationUtil",
         "intellij.java.compiler.instrumentationUtil.java8",
@@ -216,6 +217,7 @@ dev_plugin(
     content_module_jars = [
         "//java/codeserver/core:core_content_module_jar",
         "//java/codeserver/highlighting:highlighting_content_module_jar",
+        "//java/compiler/external-javac:external-javac_content_module_jar",
         "//java/compiler/forms-compiler:java-guiForms-compiler_content_module_jar",
         "//java/compiler/impl:impl_content_module_jar",
         "//java/compiler/instrumentation-util-8:java-compiler-instrumentationUtil-java8_content_module_jar",

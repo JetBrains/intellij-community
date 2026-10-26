@@ -73,6 +73,7 @@ fun buildCommunityStandaloneJpsBuilder(
     "intellij.java.guiForms.compiler",
     "intellij.java.compiler.instrumentationUtil",
     "intellij.java.compiler.instrumentationUtil.java8",
+    "intellij.java.compiler.externalJavac",
     "intellij.platform.jps.build",
     "intellij.platform.jps.build.dependencyGraph",
     "intellij.tools.jps.build.standalone",

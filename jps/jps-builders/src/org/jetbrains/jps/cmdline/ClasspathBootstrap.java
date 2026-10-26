@@ -4,30 +4,20 @@ package org.jetbrains.jps.cmdline;
 import com.dynatrace.hash4j.hashing.Hashing;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.gson.Gson;
-import com.google.protobuf.Message;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.application.ArchivedCompilationContextUtil;
 import com.intellij.openapi.application.ClassPathUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.platform.eel.fs.EelFiles;
 import com.intellij.tracing.Tracer;
 import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.core.GridConstraints;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.lang.HashMapZipFile;
 import com.intellij.util.lang.JavaVersion;
 import com.jgoodies.forms.layout.CellConstraints;
 import com.thoughtworks.qdox.JavaProjectBuilder;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.channel.EventLoopGroup;
-import io.netty.handler.codec.ByteToMessageDecoder;
-import io.netty.handler.codec.protobuf.ProtobufDecoder;
-import io.netty.resolver.AddressResolverGroup;
-import io.netty.util.NetUtil;
 import kotlin.metadata.jvm.JvmMetadataUtil;
 import kotlinx.coroutines.Deferred;
 import net.n3.nanoxml.IXMLBuilder;
@@ -37,9 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
-import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.dependency.DependencyGraph;
+import org.jetbrains.jps.javac.ExternalJavacManager;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
+import org.jetbrains.jps.javac.ExternalJavacProcessClasspath;
 import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
@@ -47,12 +38,9 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -67,16 +55,6 @@ public final class ClasspathBootstrap {
   private static final Logger LOG = Logger.getInstance(ClasspathBootstrap.class);
 
   private ClasspathBootstrap() { }
-
-  private static final Class<?>[] COMMON_REQUIRED_CLASSES = new Class[]{
-    NetUtil.class, // netty common
-    EventLoopGroup.class, // netty transport
-    AddressResolverGroup.class, // netty resolver
-    ByteBufAllocator.class, // netty buffer
-    ByteToMessageDecoder.class, // netty codec http
-    ProtobufDecoder.class,  // netty codec protobuf
-    Message.class, // protobuf
-  };
 
   private static final String[] REFLECTION_OPEN_PACKAGES = {
     "java.base/sun.nio=ALL-UNNAMED",
@@ -137,6 +115,12 @@ public final class ClasspathBootstrap {
     }
   }
 
+  private static void addToClassPath(Set<String> cp, @NotNull Collection<? extends Class<?>> classes) {
+    for (Class<?> aClass : classes) {
+      addToClassPath(cp, aClass);
+    }
+  }
+
   public static @NotNull Collection<String> getBuildProcessApplicationClasspath() {
     // predictable order
     Set<String> cp = new LinkedHashSet<>();
@@ -144,6 +128,7 @@ public final class ClasspathBootstrap {
     addToClassPath(cp, BuildMain.class);
     addToClassPath(cp, ExternalJavacProcess.class);  // intellij.platform.jps.build.javac.rt part
     addToClassPath(cp, JavacReferenceCollector.class);  // jps-javac-extension library
+    addToClassPath(cp, ExternalJavacManager.class);  // intellij.java.compiler.externalJavac
     addToClassPath(cp, DependencyGraph.class);  // dep-graph
 
     // intellij.platform.util
@@ -155,7 +140,7 @@ public final class ClasspathBootstrap {
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, Deferred.class);  // kotlinx.coroutines, used intellij.platform.util, EnvironmentUtil
     addToClassPath(cp, JvmMetadataUtil.class);  // kotlin metadata parsing
-    addToClassPath(cp, COMMON_REQUIRED_CLASSES);
+    addToClassPath(cp, ExternalJavacProcessClasspath.getCommonRequiredClasses());
 
     addToClassPath(cp, ClassWriter.class);  // asm
     addToClassPath(cp, ClassVisitor.class);  // asm-commons
@@ -200,68 +185,7 @@ public final class ClasspathBootstrap {
   }
 
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
-    // Important! All dependencies must be java 8 compatible (the oldest supported javac to be launched)
-    final Set<File> cp = new LinkedHashSet<>();
-    cp.add(getResourceFile(ExternalJavacProcess.class)); // self
-    cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
-    cp.add(getResourceFile(SystemInfoRt.class)); // util_rt
-
-    for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
-      cp.add(getResourceFile(aClass));
-    }
-
-    try {
-      final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
-      cp.add(getResourceFile(cmdLineWrapper));  // idea_rt.jar
-    }
-    catch (Throwable th) {
-      LOG.info(th);
-    }
-
-    try {
-      final String localJavaHome = FileUtilRt.toSystemIndependentName(SystemProperties.getJavaHome());
-      // sdkHome is not the same as the sdk used to run this process
-      final File candidate = new File(sdkHome, "lib/tools.jar");
-      if (candidate.exists()) {
-        cp.add(candidate);
-      }
-      else {
-        // last resort
-        final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
-        Class<?> compilerClass;
-        if (systemCompiler != null) {
-          compilerClass = systemCompiler.getClass();
-        }
-        else {
-          compilerClass = Class.forName("com.sun.tools.javac.api.JavacTool", false, ClasspathBootstrap.class.getClassLoader());
-        }
-        final File resourceFile = getResourceFile(compilerClass);
-        if (resourceFile != null) {
-          String localJarPath = FileUtilRt.toSystemIndependentName(resourceFile.getPath());
-          String relPath = FileUtilRt.getRelativePath(localJavaHome, localJarPath, '/');
-          if (relPath != null) {
-            if (relPath.contains("..")) {
-              relPath = FileUtilRt.getRelativePath(FileUtilRt.toSystemIndependentName(new File(localJavaHome).getParent()), localJarPath, '/');
-            }
-            if (relPath != null) {
-              final File targetFile = new File(sdkHome, relPath);
-              cp.add(targetFile);  // tools.jar
-            }
-          }
-        }
-      }
-    }
-    catch (Throwable th) {
-      LOG.info(th);
-    }
-
-    cp.addAll(compilingTool.getAdditionalClasspath());
-
-    for (JavaSourceTransformer t : JavaSourceTransformer.getTransformers()) {
-      cp.add(getResourceFile(t.getClass()));
-    }
-
-    return new ArrayList<>(cp);
+    return ExternalJavacProcessClasspath.getExternalJavacProcessClasspath(sdkHome, compilingTool);
   }
 
   public static @Nullable String getResourcePath(@NotNull Class<?> aClass) {
