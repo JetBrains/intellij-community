@@ -24,7 +24,9 @@ internal object SpecificationUtils {
   private val SPECIFICATION_ANALYSIS_PROMOTION_LOCK = Key.create<Semaphore>("grazie.specification.analysis.promotion.lock")
 
   private val SPECIFICATION_LIKE_PATTERN = Regex(
-    "(agents|agent|ai|claude|copilot-instructions|prompt|skill|system[-_]prompt|spec|architecture)\\.md",
+    "(agents?|ai|architecture|checklist|claude|commands|copilot-instructions|design|" +
+      "implementation|instructions|memory|plans?|prompts?|references|research|requirements|session|" +
+      "skills?|specs?|summary|system([-_]prompt)?|tasks?|todo|tool|workflows?)\\.md",
     RegexOption.IGNORE_CASE,
   )
 
