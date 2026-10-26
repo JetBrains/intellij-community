@@ -77,6 +77,19 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     assertEquals(placeholder, images("![   ](image.png)").single().placeholderText)
   }
 
+  fun testOnlyAClosedMermaidFenceIsSpec() {
+    val fence = "```mermaid\ngraph LR\n  A --> B\n```"
+    val content = "Some `mermaid` code\n\n```\nval a = 1\n```\n\n$fence\n\n```mermaid\nopen\n"
+    myFixture.configureByText("test.md", content)
+
+    val spec = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
+      .filterIsInstance<MarkdownLivePreviewSpec.CodeFence>()
+      .single()
+
+    assertEquals(fence, content.substring(spec.range.startOffset, spec.range.endOffset))
+    assertEquals("graph LR\n  A --> B", spec.source)
+  }
+
   fun testImagesBetweenHeadersAreBothSpecs() {
     val content = "# Markdown WYSIWYG Demo\n\n![logo](image.png)\n\n![logo](image.png)\n\n# Markdown WYSIWYG Demo"
 
@@ -550,6 +563,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     is MarkdownLivePreviewSpec.HorizontalRule -> listOf(range)
     is MarkdownLivePreviewSpec.Heading -> listOf(range)
     is MarkdownLivePreviewSpec.Image -> listOf(range)
+    is MarkdownLivePreviewSpec.CodeFence -> emptyList()
     is MarkdownLivePreviewSpec.Bullet -> listOf(range)
     is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(range)
   }
@@ -559,7 +573,9 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     val elements = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
     for (element in elements) {
       val conceals = element.concealedRanges()
-      assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
+      if (element !is MarkdownLivePreviewSpec.CodeFence) {
+        assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
+      }
       assertTrue("An element must contain the markup it conceals: $element", conceals.all { element.range.contains(it) })
       if (element is MarkdownLivePreviewSpec.BlockQuote) {
         assertEquals("A rule must start at its marker: $element", element.markerRange.startOffset, element.ruleRange.startOffset)

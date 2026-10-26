@@ -1,11 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.editor.livepreview
 
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.LafManagerListener
 import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
+import com.intellij.markdown.frontend.editor.livepreview.CodeFencePainter
+import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
@@ -44,12 +48,14 @@ import com.intellij.util.ui.JBUI
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.publishSpecsAndWait
-import java.awt.Rectangle
 import java.awt.Color
 import java.awt.Font
+import java.awt.Graphics2D
+import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
 
 class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
@@ -1396,6 +1402,27 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.checkResult("![broken](broken.png)\n\n![missing](missing.png)\n\ntail")
   }
 
+  fun testMermaidFenceShowsItsDiagramBelowTheFence() {
+    val service = FixedCodeFenceRenderingService()
+    CodeFenceRenderingService.EP_NAME.point.registerExtension(service, testRootDisposable)
+    val fence = "```mermaid\ngraph LR\n  A --> B\n```"
+    configure("$fence\n\ntail<caret>")
+
+    PlatformTestUtil.waitWithEventsDispatching("The diagram did not arrive", { (mermaidInlays().singleOrNull()?.heightInPixels ?: 0) > 0 }, 10)
+    val inlay = mermaidInlays().single()
+    assertEquals(fence.length, inlay.offset)
+    assertEquals(fence, visibleText().substringBefore("\n\n"))
+
+    myFixture.type("!")
+    myFixture.doHighlighting()
+    waitForCurrentSpecs()
+    assertSame(inlay, mermaidInlays().single())
+    assertEquals(1, service.renders.get())
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(LafManagerListener.TOPIC).lookAndFeelChanged(LafManager.getInstance())
+    PlatformTestUtil.waitWithEventsDispatching("A new theme did not render the diagram again", { service.renders.get() == 2 }, 10)
+  }
+
   fun testImageRefreshesAfterVfsChange() {
     val image = addPng(100, 40)
     configureProjectFile("![alt](image.png)\n\ntail")
@@ -2090,5 +2117,23 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     return editor.inlayModel
       .getBlockElementsInRange(0, editor.document.textLength, MarkdownLivePreviewImageInlayRenderer::class.java)
       .filter { it.isValid }
+  }
+
+  private fun mermaidInlays(): List<Inlay<*>> =
+    myFixture.editor.inlayModel.getBlockElementsInRange(0, myFixture.editor.document.textLength).filter { it.isValid }
+}
+
+/** Renders every source as the same empty 40 by 20 diagram. */
+private class FixedCodeFenceRenderingService : CodeFenceRenderingService {
+  val renders = AtomicInteger()
+
+  override suspend fun render(language: String, source: String): CodeFencePainter {
+    renders.incrementAndGet()
+    return object : CodeFencePainter {
+      override val width: Float = 40f
+      override val height: Float = 20f
+
+      override fun paint(graphics: Graphics2D, bounds: Rectangle) = Unit
+    }
   }
 }

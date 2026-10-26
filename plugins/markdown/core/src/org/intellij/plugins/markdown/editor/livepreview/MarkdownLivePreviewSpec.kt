@@ -172,6 +172,14 @@ sealed interface MarkdownLivePreviewSpec {
     val source: ImageSource? = null,
   ) : MarkdownLivePreviewSpec
 
+  /** Renders an object under the code fence, if the [language] is supported */
+  @Serializable
+  data class CodeFence(
+    override val range: MarkdownLivePreviewRange,
+    val language: String,
+    val source: String,
+  ) : MarkdownLivePreviewSpec
+
   /** Replaces a list marker with a depth-aware bullet placeholder until a caret touches the marker. */
   @Serializable
   data class Bullet(

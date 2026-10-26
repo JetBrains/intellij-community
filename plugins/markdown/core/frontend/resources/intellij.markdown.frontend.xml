@@ -26,6 +26,11 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <extensionPoints>
+    <extensionPoint qualifiedName="org.intellij.markdown.codeFenceRenderingService"
+                    interface="com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService"
+                    dynamic="true"/>
+  </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.tables.ui.alignment.MarkdownTableAlignmentController$Listener"/>
     <editorFactoryListener implementation="com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewEditorListener"/>
