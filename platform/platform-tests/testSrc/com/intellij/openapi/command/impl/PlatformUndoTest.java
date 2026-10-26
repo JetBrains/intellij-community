@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.util.ref.GCWatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,6 +92,23 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     getUndoManager().dropHistoryInTests();
     assertEquals(0, getUndoManager().getStackSize(null, true));
     assertEquals(0, getUndoManager().getStackSize(null, false));
+  }
+
+  public void testUndoStackOfAnotherDocumentDoesNotKeepFileOfCurrentEditor() {
+    Document document = EditorFactory.getInstance().createDocument("");
+    GCWatcher currentEditorFile = changeWhileAnotherFileIsInCurrentEditor(document);
+    getUndoManager().flushCurrentCommandMerger();
+    currentEditorFile.ensureCollected();
+    assertEquals(1, getUndoManager().getStackSize(DocumentReferenceManager.getInstance().create(document), true));
+  }
+
+  private GCWatcher changeWhileAnotherFileIsInCurrentEditor(Document document) {
+    LightVirtualFile file = new LightVirtualFile(getTestName(false));
+    FileEditor currentEditor = new IncorrectFileEditor(file, EditorFactory.getInstance().createDocument(""));
+    runWithCurrentEditor(currentEditor, () -> WriteAction.run(() -> {
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> document.insertString(0, " "), "test", null);
+    }));
+    return GCWatcher.tracking(file);
   }
 
   private void undo() {

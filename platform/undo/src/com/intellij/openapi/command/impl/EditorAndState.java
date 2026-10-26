@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.Objects;
 
 final class EditorAndState {
@@ -24,15 +26,22 @@ final class EditorAndState {
   }
 
   private final @NotNull FileEditorState editorState;
-  private final VirtualFile virtualFile;
+  // An undo stack of another document can hold this state, so a strong reference would keep the file of a closed editor.
+  private final @Nullable Reference<VirtualFile> virtualFile;
 
   EditorAndState(@NotNull FileEditor editor, @NotNull FileEditorState state) {
-    virtualFile = editor.getFile();
+    VirtualFile file = editor.getFile();
+    virtualFile = file == null ? null : new WeakReference<>(file);
     editorState = state;
   }
 
   boolean canBeAppliedTo(@Nullable FileEditor editor) {
-    if (editor == null || !Objects.equals(virtualFile, editor.getFile())) {
+    if (editor == null) {
+      return false;
+    }
+    VirtualFile file = virtualFile == null ? null : virtualFile.get();
+    // A collected file has no editor.
+    if ((virtualFile != null && file == null) || !Objects.equals(file, editor.getFile())) {
       return false;
     }
     FileEditorState currentState = editor.getState(FileEditorStateLevel.UNDO);
