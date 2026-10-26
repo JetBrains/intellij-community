@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
 @State(name = "ExecutionTargetManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -81,14 +82,19 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   }
 
   private @Nullable RunManagerImpl myRunManager;
+  private @NotNull Supplier<? extends RunManagerImpl> myRunManagerProvider = this::getRunManagerService;
 
   private @NotNull RunManagerImpl getRunManager() {
     RunManagerImpl runManager = myRunManager;
     if (runManager == null) {
-      runManager = RunManagerImpl.getInstanceImpl(myProject);
+      runManager = myRunManagerProvider.get();
       myRunManager = runManager;
     }
     return runManager;
+  }
+
+  private @NotNull RunManagerImpl getRunManagerService() {
+    return RunManagerImpl.getInstanceImpl(myProject);
   }
 
   @TestOnly
@@ -119,8 +125,16 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
   @Override
   public @NotNull ExecutionTarget getActiveTarget() {
     synchronized (myActiveTargetLock) {
+      if (myActiveTarget != null) {
+        return myActiveTarget;
+      }
+    }
+
+    // Get the run manager outside the lock. Its initialization selects a configuration, and the listener takes the lock.
+    RunManagerImpl runManager = getRunManager();
+    synchronized (myActiveTargetLock) {
       if (myActiveTarget == null) {
-        updateActiveTarget();
+        updateActiveTarget(runManager.getSelectedConfiguration());
       }
       return myActiveTarget;
     }
@@ -128,8 +142,9 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   @Override
   public void setActiveTarget(@NotNull ExecutionTarget target) {
+    RunManagerImpl runManager = getRunManager();
     synchronized (myActiveTargetLock) {
-      updateActiveTarget(getRunManager().getSelectedConfiguration(), target);
+      updateActiveTarget(runManager.getSelectedConfiguration(), target);
     }
   }
 
@@ -305,5 +320,15 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     mySavedActiveTargetId = null;
     myActiveTarget = null;
     myRunManager = runManager;
+    myRunManagerProvider = this::getRunManagerService;
+  }
+
+  /**
+   * Resets the state. The manager calls {@code runManagerProvider} when it needs the run manager the first time.
+   */
+  @TestOnly
+  public void resetWithRunManagerProvider(@NotNull Supplier<? extends RunManagerImpl> runManagerProvider) {
+    reset(null);
+    myRunManagerProvider = runManagerProvider;
   }
 }
