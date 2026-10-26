@@ -112,8 +112,9 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
       if (reference != null) return reference
     }
     processQueue()
-    val reference = rootState(snapshot, initialRoot).rootReference
-    cachedRootReference = CachedRootReference(snapshot, reference)
+    val rootState = rootState(snapshot, initialRoot)
+    val reference = rootState.rootReference
+    cachedRootReference = CachedRootReference(snapshot, rootState)
     return reference
   }
 
@@ -236,9 +237,9 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   /** Caches the lookup without keeping the snapshot or its marker root alive. */
   private class CachedRootReference(
     snapshot: DocumentSnapshot,
-    reference: AtomicReference<PMarkerRoot>,
+    rootState: RootState,
   ) : WeakReference<DocumentSnapshot>(snapshot) {
-    val reference: WeakReference<AtomicReference<PMarkerRoot>> = WeakReference(reference)
+    val reference: WeakReference<AtomicReference<PMarkerRoot>> = rootState.weakRootReference
   }
 
   internal class CapturedRoot(
@@ -260,5 +261,6 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
     val affectedMarkerIds: LongList = LongLists.EMPTY_LIST,
   ) {
     val rootReference: AtomicReference<PMarkerRoot> = AtomicReference(root)
+    val weakRootReference: WeakReference<AtomicReference<PMarkerRoot>> = WeakReference(rootReference)
   }
 }
