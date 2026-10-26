@@ -22,7 +22,6 @@ import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.baseDir
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.statistics.InterpreterCreationMode
 import com.jetbrains.python.statistics.InterpreterType
 import kotlinx.coroutines.CoroutineScope
@@ -132,7 +131,6 @@ internal abstract class CustomNewEnvironmentCreator<P : PathHolder>(
       is EelOrTarget.IsTarget -> return null
     }
     return ActionLink(message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
-      PythonSdkFlavor.clearExecutablesCache()
       runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.install.fix.title", pyToolPresentableName)) {
         installExecutable(errorSink, eelDescriptor, pyTool)
       }

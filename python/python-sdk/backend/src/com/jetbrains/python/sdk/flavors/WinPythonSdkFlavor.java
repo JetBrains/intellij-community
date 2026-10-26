@@ -3,10 +3,8 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -116,19 +114,6 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor<PyFlavorData.Empty> {
 
     findInRegistry(candidates);
     candidates.addAll(myAppxCache.getValue());
-  }
-
-  @Override
-  public final boolean sdkSeemsValid(@NotNull Sdk sdk,
-                                     PyFlavorData.@NotNull Empty flavorData,
-                                     @Nullable TargetEnvironmentConfiguration targetConfig) {
-    if (super.sdkSeemsValid(sdk, flavorData, targetConfig) || targetConfig != null) {
-      // non-local, cant check for appx
-      return true;
-    }
-
-    String path = sdk.getHomePath();
-    return path != null && isValidSdkPath(Path.of(path));
   }
 
   @Override

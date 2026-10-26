@@ -49,7 +49,6 @@ import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.CREATE_N
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMode.CUSTOM
 import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.VIRTUALENV
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.ui.badgeIcon
@@ -523,7 +522,6 @@ internal fun <P : PathHolder> createInstallCondaFix(model: PythonAddInterpreterM
   if (!model.fileSystem.isLocal) return null
 
   return ActionLink(message("sdk.create.custom.venv.install.fix.title", "Miniconda")) {
-    PythonSdkFlavor.clearExecutablesCache()
     CondaInstallManager.installLatest(null)
     runWithModalProgressBlocking(ModalTaskOwner.guess(), message("sdk.create.custom.venv.progress.title.detect.executable")) {
       model.condaViewModel.toolValidator.autodetectExecutable()

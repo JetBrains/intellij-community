@@ -24,7 +24,6 @@ import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import com.intellij.python.sdk.backend.PySdkBundle
 import com.jetbrains.python.sdk.workingDirectory
 import com.jetbrains.python.venvReader.Directory
@@ -61,8 +60,6 @@ suspend fun createVenv(
   withContext(Dispatchers.EDT) {
     PySdkSettings.instance.preferredVirtualEnvBaseSdk = python.pathString
   }
-  // A new venv was just created, we need to clear cache to make sure it isn't marked as "broken" to prevent inspections
-  PythonSdkFlavor.clearExecutablesCache()
   return Result.success(venvPython)
 }
 

@@ -3,12 +3,8 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
 import com.jetbrains.python.sdk.add.v2.PathHolder;
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.execution.target.TargetConfigurationWithId;
-import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -19,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.community.execService.python.VersionParserKt;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.ui.EDT;
 import com.jetbrains.python.parser.icons.PythonParserIcons;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.run.CommandLinePatcher;
@@ -42,12 +37,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PythonBinaryKt.PYTHON_VERSION_ARG;
-import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionError;
-import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutionErrorOnEdt;
 
 
 /**
@@ -59,14 +51,6 @@ import static com.jetbrains.python.sdk.flavors.PySdkFlavorUtilKt.getFileExecutio
 public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   @ApiStatus.Internal
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
-  /**
-   * To prevent log pollution and slowness, we cache every {@link #isFileExecutable(String, TargetEnvironmentConfiguration)} call
-   * and only log it once
-   */
-  private static final Cache<@NotNull String, @NotNull Boolean> ourExecutableFiles = Caffeine.newBuilder()
-    .expireAfterWrite(10, TimeUnit.MINUTES)
-    .maximumSize(1000)
-    .build();
 
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
 
@@ -200,85 +184,6 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * Some flavors need current folder to be put in its environment variable.
-   *
-   * @return name of env variable to contain current folder.
-   * {@code null} if the flavor doesn't need it
-   */
-  @ApiStatus.Internal
-  public @Nullable String envPathParam() {
-    return null;
-  }
-
-  /**
-   * This flavour doesn't need special data and could be used with {@link PyFlavorData.Empty}
-   */
-  @ApiStatus.Internal
-  public boolean supportsEmptyData() {
-    return true;
-  }
-
-  /**
-   * If method is true, sdk may or may not be usable, but false means SDK is invalid
-   *
-   * @param targetConfig null of local target
-   */
-  public boolean sdkSeemsValid(@NotNull Sdk sdk, @NotNull D flavorData, @Nullable TargetEnvironmentConfiguration targetConfig) {
-    // Most flavours just execute homePath on target, hence file must be executable
-    var path = sdk.getHomePath();
-    if (path == null) {
-      LOG.warn("Sdk doesn't have homepath:" + sdk.getName());
-      return false;
-    }
-    return isFileExecutable(path, targetConfig);
-  }
-
-  /**
-   * False means file is not executable, but true means it is executable, or we do not know.
-   *
-   * @param fullPath full path on target
-   */
-  protected static boolean isFileExecutable(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration targetEnvConfig) {
-    var id = getIdForCache(fullPath, targetEnvConfig);
-    Boolean executable = ourExecutableFiles.getIfPresent(id);
-    if (executable != null) {
-      return executable;
-    }
-    var error = EDT.isCurrentThreadEdt()
-                ? getFileExecutionErrorOnEdt(fullPath, targetEnvConfig)
-                : getFileExecutionError(fullPath, targetEnvConfig);
-    if (error != null) {
-      Logger.getInstance(PythonSdkFlavor.class).warn(String.format("%s is not executable: %s", fullPath, error));
-    }
-    var newValue = error == null;
-    ourExecutableFiles.put(id, newValue);
-    return newValue;
-  }
-
-
-  @ApiStatus.Internal
-  public static void clearExecutablesCache() {
-    ourExecutableFiles.invalidateAll();
-  }
-
-  private static @NotNull String getIdForCache(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration configuration) {
-    var builder = new StringBuilder(fullPath);
-    builder.append(" ");
-    if (configuration instanceof TargetConfigurationWithId) {
-      var typeAndTargetId = ((TargetConfigurationWithId)configuration).getTargetAndTypeId();
-      builder.append(typeAndTargetId.component1());
-      builder.append(typeAndTargetId.getSecond());
-    }
-    else if (configuration != null) {
-      builder.append(configuration.getClass().getName());
-    }
-    else {
-      builder.append("local");
-    }
-    return builder.toString();
-  }
-
-  /**
    * List of flavors starting from platform-independent, so venv flavor goes before unix or windows flavor.
    * That could be used to find the first flavor that is {@link PythonSdkFlavor#isValidSdkPath(Path)} for example
    */
@@ -350,7 +255,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   }
 
   /**
-   * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
+   * It only validates path for local target
    */
   @ApiStatus.Internal
   public boolean isValidSdkPath(@NotNull Path pythonBinaryPath) {

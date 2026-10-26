@@ -3,9 +3,7 @@ package com.jetbrains.python.sdk.flavors.conda
 
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.intellij.python.community.impl.conda.CondaPyTool
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.python.community.impl.conda.common.icons.PythonCommunityImplCondaCommonIcons
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -38,15 +36,6 @@ internal object CondaEnvSdkFlavor : CPythonSdkFlavor<PyCondaFlavorData>() {
     return mutableListOf()
   }
 
-  override fun sdkSeemsValid(
-    sdk: Sdk,
-    flavorData: PyCondaFlavorData,
-    targetConfig: TargetEnvironmentConfiguration?,
-  ): Boolean {
-    val condaPath = flavorData.env.fullCondaPathOnTarget
-    return isFileExecutable(condaPath, targetConfig)
-  }
-
   override fun getUniqueId(): String {
     return "Conda"
   }
@@ -62,8 +51,6 @@ internal object CondaEnvSdkFlavor : CPythonSdkFlavor<PyCondaFlavorData>() {
    * Conda + Colorama doesn't play well with this var, see DS-4036
    */
   override fun providePyCharmHosted(): Boolean = false
-
-  override fun supportsEmptyData(): Boolean = false
 }
 
 internal class CondaEnvSdkFlavorProvider : PythonFlavorProvider {
