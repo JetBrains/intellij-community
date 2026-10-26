@@ -6,7 +6,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.testFramework.TrustedProjectsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
 import git4idea.commands.GitCommandNotTrustedException
+import git4idea.commands.GitCommandResult
+import git4idea.commands.GitLineHandler
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.gitPlatformContextFixture
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -14,6 +18,7 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
+import kotlin.io.path.createDirectories
 
 @TestApplication
 internal class GitExecutableManagerTrustCacheTest {
@@ -58,5 +63,33 @@ internal class GitExecutableManagerTrustCacheTest {
 
     val version = manager.identifyVersion(null, executable)
     assertTrue(version.isSupported)
+  }
+
+  @Test
+  fun `a command without a project runs in a trusted directory while the version cache is empty`(): Unit = with(context) {
+    TrustedProjectsTestUtil.enableTrustedProjectsCheck(testDisposable)
+    val directory = testNioRoot.resolve("trusted").createDirectories()
+    TrustedProjects.setProjectTrusted(directory, true)
+    GitExecutableManager.getInstance().dropVersionCache()
+
+    val result = runWithoutProject(directory, GitCommand.INIT).getOrThrow()
+    assertTrue(result.success(), result.errorOutputAsJoinedString)
+  }
+
+  @Test
+  fun `a command without a project is still rejected in an untrusted directory`(): Unit = with(context) {
+    TrustedProjectsTestUtil.enableTrustedProjectsCheck(testDisposable)
+    val directory = testNioRoot.resolve("untrusted").createDirectories()
+    assertFalse(TrustedProjects.isProjectTrusted(directory))
+
+    for (command in listOf(GitCommand.INIT, GitCommand.VERSION)) {
+      val outcome = runWithoutProject(directory, command)
+      assertTrue(outcome.exceptionOrNull() is GitCommandNotTrustedException, "$command: $outcome")
+    }
+  }
+
+  private fun runWithoutProject(directory: Path, command: GitCommand): Result<GitCommandResult> = runCatching {
+    val handler = GitLineHandler(null, directory, GitExecutableManager.getInstance().getExecutable(null), command, emptyList())
+    Git.getInstance().runCommand(handler)
   }
 }
