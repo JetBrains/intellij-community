@@ -1203,6 +1203,25 @@ fn an_agent_older_than_the_features_refuses_apply_before_the_run_and_warns_about
     );
 }
 
+/// A run that vanished on the host after it started (another client forgot it) may have run its command: the exit is no
+/// "not run", so a caller does not run the command again, and the client sends no forget for a run that is gone.
+#[test]
+fn a_run_that_vanished_on_the_host_is_no_run_that_did_not_run() {
+    let (setup, _) = agent_following(&[COMMIT], |_, channel| {
+        output(channel, Stream::Stderr, "building", 10);
+        let _ = channel.send(&Reply::refused("unknown_run", "the agent keeps no run"));
+    });
+    let refusal = run_in(&setup, &checkout(), &|_| {}, &calm, &fetch()).expect_err("vanished");
+    assert_eq!((refusal.code.as_ref(), refusal.exit), ("unknown_run", Exit::Refused));
+    assert!(
+        refusal.message.contains("whether its command ran is unknown"),
+        "{}",
+        refusal.message
+    );
+    assert!(refusal.message.contains("`yonder runs studio`"), "{}", refusal.message);
+    assert!(!kinds(&setup).contains(&"forget"), "{:?}", kinds(&setup));
+}
+
 #[test]
 fn a_refusal_before_the_command_is_not_run_and_one_after_it_is_not() {
     let refused_after = |phases: Vec<Phase>| {

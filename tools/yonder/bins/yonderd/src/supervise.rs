@@ -1,6 +1,6 @@
 //! `yonderd supervise <run dir> --lock-fd <descriptor>`: one run, from the lock of its holder to `exit.json`. It is the
 //! port of `remote.sh` of BT. `serve` starts it in a session of its own, so a restart or an upgrade of `serve` does not
-//! end the run. `serve` takes the flock of the run before the run is visible and hands its descriptor over. The
+//! end the run. It keeps the host awake for its whole life (`awake`), also when its client is gone. `serve` takes the flock of the run before the run is visible and hands its descriptor over. The
 //! supervisor holds it for its whole life, so a run is alive exactly while its supervisor is.
 //!
 //! The steps:
@@ -58,7 +58,7 @@ use crate::login_env::LoginEnv;
 use crate::refused::{AGENT_ERROR, CHECKOUT_FAILED, PACK_MISSING, PREPARE_FAILED, Refusal, SPAWN_FAILED, refused};
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir};
 use crate::watch::Watch;
-use crate::{config, git, login_env, prepare, run_env, tuning};
+use crate::{awake, config, git, login_env, prepare, run_env, tuning};
 
 /// How long a run waits for the other run of its holder.
 const LOCK_WAIT: Duration = Duration::from_secs(3600);
@@ -108,6 +108,7 @@ fn install_signal_handlers() {
 /// `serve` took. Without it, the supervisor takes the flock itself.
 pub(crate) fn supervise(home: &Home, run_dir: &Path, lock: Option<RawFd>) {
     install_signal_handlers();
+    awake::hold_for_life();
     if let Err(error) = run_env::raise_open_files() {
         eprintln!("yonderd supervise: cannot raise the open-files limit: {error}");
     }

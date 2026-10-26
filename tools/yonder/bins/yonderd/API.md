@@ -213,7 +213,8 @@ executable `(deleted)`.
 ## The test durations
 
 `YONDERD_TEST_SHELL` names a shell for the login environment in place of the one of the user. `none` turns the capture
-off. A process test shortens these durations through the environment of `serve`, in milliseconds:
+off. `YONDERD_TEST_CAFFEINATE` names the program of the power assertions in place of `/usr/bin/caffeinate`, and `none`
+turns them off. A process test shortens these durations through the environment of `serve`, in milliseconds:
 
 | Variable | Duration | Default |
 |---|---|---|

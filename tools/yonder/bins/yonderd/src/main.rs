@@ -8,6 +8,7 @@
 //! - `watchdog <binary>`: restores the previous binary when the new one does not listen in time.
 //! - `dump-env <file>`: the last command of the login shell that `login_env` starts.
 
+mod awake;
 mod bd;
 mod child;
 mod cleanup;

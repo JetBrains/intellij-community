@@ -36,6 +36,14 @@ launchd starts the new one. A watchdog there brings back the old binary when the
 goes on. An agent that knows no upgrade request gets one run that carries the binary in `yonder-upgrade/` of the
 working tree, and the binary installs itself there. `bins/yonderd/API.md` has the steps, and `crates/yonder-client/API.md` the refusals.
 
+## Sleep
+
+A Mac that a connection woke sleeps again when it is idle, and a running build does not count as activity. So `serve`
+holds the power assertions of `caffeinate -i -s` while a client has a connection after its hello (a follow sends a
+heartbeat every 15 s, so a gone client loses its connection and lets the host sleep), and each supervisor holds them
+for its whole life, so a command runs to its end without its client. `-w` ends each `caffeinate` with the process it
+watches. Elsewhere than on macOS nothing holds them.
+
 ## The warm lease
 
 The lease holder of a run is one per local checkout path (`yonder-<hash>`, or `--holder`), so the runs of a checkout

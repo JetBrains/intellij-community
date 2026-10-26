@@ -497,7 +497,8 @@ impl Client<'_> {
 
     /// Follows a started run to its end, then copies its files and removes it on the host. A run that the agent refused
     /// is removed too, and its failure carries the steps of the host. A refusal whose steps have no `command` is
-    /// [`Exit::NotRun`].
+    /// [`Exit::NotRun`], but for a run that vanished on the host after it started ([`UNKNOWN_RUN`]): whether its command
+    /// ran is unknown, so it is [`Exit::Refused`], and a caller never runs the command a second time.
     fn follow_and_fetch(
         &self,
         host: &mut Host,
@@ -509,6 +510,9 @@ impl Client<'_> {
         let alias = host.alias().to_owned();
         let followed = match self.follow(host, run, true, watch) {
             Ended::Exit(followed) => followed,
+            Ended::Refused(refusal, steps) if refusal.code == UNKNOWN_RUN => {
+                return Err((vanished(refusal, run, &alias), steps));
+            }
             Ended::Refused(refusal, steps) => {
                 self.forget_or_say(host, run);
                 let ran = steps.iter().any(|step| step.name == "command");
@@ -1006,6 +1010,23 @@ pub(crate) struct Fetched {
 }
 
 /// A refusal before the command of a run: the host did not run it. Ctrl+C keeps its own exit.
+/// The refusal of the agent that keeps no run of the id (`API.md` of `yonder-link`). After a start it means that the run
+/// was removed on the host, by a `yonder forget` or by the expiry of a day after its end.
+const UNKNOWN_RUN: &str = "unknown_run";
+
+/// The refusal of a run that vanished on the host after it started: the command may have run, so the exit is no
+/// [`Exit::NotRun`], and there is nothing left to forget.
+fn vanished(refusal: Refusal, run: &str, alias: &str) -> Refusal {
+    Refusal::new(
+        refusal.code,
+        Exit::Refused,
+        format!(
+            "{}: the run {run} started on {alias} and is gone there, so whether its command ran is unknown. `yonder runs {alias}` lists the runs that {alias} keeps",
+            refusal.message
+        ),
+    )
+}
+
 fn not_run(refusal: Refusal) -> Refusal {
     let exit = if refusal.code == code::INTERRUPTED {
         Exit::Interrupted

@@ -5,7 +5,7 @@
 //! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
 //! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
 //! raises its open-files limit, which each run inherits, and a thread captures the login environment of the user
-//! (`login_env`). Once it listens, it writes the listening file with the SHA-256 of its binary, for the watchdog of an
+//! (`login_env`). A client after its hello keeps the host awake until its request ends (`awake`). Once it listens, it writes the listening file with the SHA-256 of its binary, for the watchdog of an
 //! upgrade (`upgrade`). After an upgrade it waits for its other requests and exits, so that launchd starts the new
 //! binary.
 
@@ -23,6 +23,7 @@ use yonder_link::digest::{is_sha256, sha256_file};
 use yonder_link::proto::{MAX_BINARY, Reply, Request, SCHEMA_VERSION};
 use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 
+use crate::awake::{self, Awake};
 use crate::child::never;
 use crate::files::private_dir;
 use crate::git::NotRepo;
@@ -79,6 +80,8 @@ pub(crate) struct Agent {
     busy: AtomicUsize,
     /// Set while an upgrade goes on, so a second one refuses.
     upgrading: AtomicBool,
+    /// Keeps the host awake while a client has a connection after its hello (`awake`).
+    awake: Awake,
 }
 
 /// Listens on `bind:port` and serves each connection. Prints one JSON line with the address and the fingerprint on
@@ -222,6 +225,7 @@ impl Agent {
             launchctl,
             busy: AtomicUsize::new(0),
             upgrading: AtomicBool::new(false),
+            awake: Awake::new(awake::program()),
         }
     }
 
@@ -276,6 +280,8 @@ impl Agent {
                     .map(|()| false);
             }
         }
+        // A client after its hello: the host stays awake until its request ends, the follow of a long run included.
+        let _awake = self.awake.hold();
         let request = channel.recv::<Request>()?;
         if let Request::Upgrade { size, sha256, force } = &request {
             return self.upgrade(channel, *size, sha256, *force);
@@ -299,7 +305,11 @@ impl Agent {
             Request::Follow { run, offset } => self.follow(channel, &run, offset),
             Request::Cancel { run } => answer(channel, self.cancel(&run)),
             Request::Fetch { run } => self.fetch(channel, &run),
-            Request::Forget { run } => answer(channel, self.forget(&run)),
+            Request::Forget { run } => {
+                // Who removed a run, for a client that finds it gone (`unknown_run`).
+                log(&format!("{} forgets the run {run}", channel.peer().short()));
+                answer(channel, self.forget(&run))
+            }
             Request::Runs => answer(channel, Ok(self.list_runs())),
             Request::Lease { repo, holder } => self.lease(channel, &repo, &holder, false),
             Request::Release { repo, holder } => self.lease(channel, &repo, &holder, true),

@@ -7,6 +7,7 @@
 
 #![expect(clippy::tests_outside_test_module, reason = "a Cargo integration test has no #[cfg(test)] module")]
 
+use std::collections::BTreeSet;
 use std::ffi::OsString;
 use std::fs;
 use std::io::{BufRead, BufReader, Read, Write};
@@ -200,7 +201,9 @@ impl World {
             .env("FAKE_BD_DIR", self.bd_dir())
             .env("GIT_CONFIG_NOSYSTEM", "1")
             // The login shell of the developer stays out of the tests; a test that needs one names its own.
-            .env("YONDERD_TEST_SHELL", "none");
+            .env("YONDERD_TEST_SHELL", "none")
+            // The power assertions of the developer's Mac stay out of the tests; a test that checks them names a fake.
+            .env("YONDERD_TEST_CAFFEINATE", "none");
         command
     }
 
@@ -2135,4 +2138,34 @@ fn the_watchdog_restores_the_previous_binary_and_restarts_the_agent_when_no_serv
 
 fn previous_path(target: &Path) -> PathBuf {
     PathBuf::from(format!("{}.previous", target.display()))
+}
+
+/// The host stays awake while a client talks to the agent and while a run goes on: `serve` and the supervisor of the run
+/// each start the program of the power assertions, which watches their process and ends with it.
+#[test]
+fn serve_and_the_supervisor_keep_the_host_awake() {
+    let world = World::new();
+    let log = world.dir.path().join("caffeinate.log");
+    let fake = world.dir.path().join("caffeinate");
+    write_script(
+        &fake,
+        &format!(
+            "#!/bin/sh\necho \"$*\" >>'{}'\nwhile kill -0 \"$4\" 2>/dev/null; do sleep 0.05; done\n",
+            log.display()
+        ),
+    );
+    let agent = world.serve_with(&[("YONDERD_TEST_CAFFEINATE", &fake.to_string_lossy())]);
+    let world = &agent.world;
+    git(&world.repo(), &["update-ref", "refs/yonder/30-1", &world.commit]);
+    agent.start(world.spec("30-1", HOLDER, "echo ran"));
+    let followed = agent.follow("30-1", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("30-1"));
+    let lines = fs::read_to_string(&log).expect("the log of the fake");
+    let watched: BTreeSet<&str> = lines
+        .lines()
+        .map(|line| line.strip_prefix("-i -s -w ").unwrap_or_else(|| panic!("the arguments: {line}")))
+        .collect();
+    let serve = agent.child.id().to_string();
+    assert!(watched.contains(serve.as_str()), "serve: {lines}");
+    assert!(watched.iter().any(|pid| *pid != serve), "the supervisor: {lines}");
 }
