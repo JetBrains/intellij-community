@@ -848,6 +848,7 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
         val task = suspend {
           semaphore.withPermit {
             project.stateStore.reloadState(RunManagerImpl::class.java)
+            reloadSharedConfigurations(extension)
           }
         }
 
@@ -1001,6 +1002,27 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, priva
     }
   }
 
+  /**
+   * Re-reads the shared configurations of [type] that were loaded while [type] was not registered.
+   * A state reload re-reads the workspace configurations only, see [loadState].
+   */
+  private fun reloadSharedConfigurations(type: ConfigurationType) {
+    val settingsToReload = lock.read {
+      idToSettings.values.filter { it.isShared && (it.configuration as? UnknownRunConfiguration)?.configurationTypeId == type.id }
+    }
+    for (settings in settingsToReload) {
+      settings as RunnerAndConfigurationSettingsImpl
+      val element = (settings.configuration as UnknownRunConfiguration).storedElement?.clone() ?: continue
+      val oldId = settings.uniqueID
+      val filePath = settings.pathIfStoredInArbitraryFileInProject
+      settings.readExternal(element, isStoredInDotIdeaFolder = true, configFilePath = filePath)
+      if (filePath != null) {
+        settings.storeInArbitraryFileInProject(filePath)
+      }
+      iconAndInvalidCache.remove(oldId)
+      addConfiguration(settings)
+    }
+  }
   private fun runConfigurationFirstLoaded() {
     // Do not load run configurations for JetBrains Client, they are loaded from the backend
     if (project.isDefault || PlatformUtils.isJetBrainsClient()) {

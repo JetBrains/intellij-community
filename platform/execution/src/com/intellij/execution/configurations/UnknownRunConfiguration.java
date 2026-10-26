@@ -19,6 +19,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,11 +102,19 @@ public final class UnknownRunConfiguration implements RunConfiguration, WithoutO
     return myName;
   }
 
-  private @Nullable String getConfigurationTypeId() {
+  /** The type id in the stored element, or {@code null} without a stored element. */
+  @ApiStatus.Internal
+  public @Nullable String getConfigurationTypeId() {
     if (myStoredElement != null) {
       return myStoredElement.getAttributeValue("type");
     }
     return null;
+  }
+
+  /** The immutable element that {@link #readExternal} stored, or {@code null} for a template. */
+  @ApiStatus.Internal
+  public @Nullable Element getStoredElement() {
+    return myStoredElement;
   }
 
   @Override
