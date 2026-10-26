@@ -12,18 +12,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
-import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ValueSource
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.WRITE
 
-@ParameterizedClass(name = "with cache: {0}")
-@ValueSource(booleans = [true, false])
 @TestApplication //needed for recovery since it wants notifications
-internal class BufferingPersistentChangeListStorageTest(
-  private val useCache: Boolean,
-) {
+internal class BufferingPersistentChangeListStorageTest {
   @TempDir
   private lateinit var tempDir: Path
 
@@ -31,7 +25,6 @@ internal class BufferingPersistentChangeListStorageTest(
 
   private fun createStorage() = BufferingPersistentChangeListStorage(
     storageDir = tempDir.resolve("storage"),
-    getUseWriteCache = { useCache },
     getCurrentFsTimestamp = { 0 },
     unitTestMode = true,
   )

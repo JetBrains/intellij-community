@@ -9,7 +9,6 @@ import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.util.io.ClosedStorageException
 import com.intellij.util.io.delete
@@ -24,7 +23,6 @@ private const val START_ID_LIMIT = 1L shl 62
 
 internal class BufferingPersistentChangeListStorage(
   private val storageDir: Path,
-  private val getUseWriteCache: () -> Boolean = { Registry.`is`("lvcs.store.write.cache.in.memory", true) },
   private val getCurrentFsTimestamp: () -> Long = { ManagingFS.getInstance().creationTimestamp },
   private val unitTestMode: Boolean = ApplicationManager.getApplication().isUnitTestMode(),
 ) : ChangeListStorage {
@@ -149,12 +147,7 @@ internal class BufferingPersistentChangeListStorage(
   @Synchronized
   override fun writeNextSet(changeSet: ChangeSet) {
     if (isCompletelyBroken) return
-    if (getUseWriteCache()) {
-      pendingChangeSets.add(changeSet)
-    }
-    else {
-      doWriteNextSet(changeSet)
-    }
+    pendingChangeSets.add(changeSet)
   }
 
   private fun flushPending() {
