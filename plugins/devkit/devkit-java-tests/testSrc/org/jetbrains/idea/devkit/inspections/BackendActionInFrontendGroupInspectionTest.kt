@@ -44,7 +44,7 @@ internal class BackendActionInFrontendGroupInspectionTest : JavaCodeInsightFixtu
   fun testBackendActionAddedToFrontendGroup() {
     addDescriptor("frontend.module", "frontend", """
       <idea-plugin>
-        <dependencies><module name="intellij.platform.frontend"/></dependencies>
+        <dependencies><module name="intellij.platform.frontend"/><module name="intellij.platform.rpc"/></dependencies>
         <actions><group id="FrontendGroup"/></actions>
       </idea-plugin>
     """.trimIndent())
@@ -84,7 +84,7 @@ internal class BackendActionInFrontendGroupInspectionTest : JavaCodeInsightFixtu
   fun testFrontendActionAddedToFrontendGroup() {
     val frontend = addDescriptor("frontend.module", "frontend", """
       <idea-plugin>
-        <dependencies><module name="intellij.platform.frontend"/></dependencies>
+        <dependencies><module name="intellij.platform.frontend"/><module name="intellij.platform.rpc"/></dependencies>
         <actions>
           <group id="FrontendGroup"/>
           <action id="FrontendAction" class="com.example.TestAction">
@@ -107,7 +107,7 @@ internal class BackendActionInFrontendGroupInspectionTest : JavaCodeInsightFixtu
     """.trimIndent())
     val frontend = addDescriptor("frontend.module", "frontend", """
       <idea-plugin>
-        <dependencies><module name="intellij.platform.frontend"/></dependencies>
+        <dependencies><module name="intellij.platform.frontend"/><module name="intellij.platform.rpc"/></dependencies>
         <actions>
           <group id="FrontendGroup">
             <reference
@@ -130,7 +130,7 @@ internal class BackendActionInFrontendGroupInspectionTest : JavaCodeInsightFixtu
     """.trimIndent())
     addDescriptor("frontend.module", "frontend", """
       <idea-plugin>
-        <dependencies><module name="intellij.platform.frontend"/></dependencies>
+        <dependencies><module name="intellij.platform.frontend"/><module name="intellij.platform.rpc"/></dependencies>
         <actions><group id="FrontendGroup"/></actions>
       </idea-plugin>
     """.trimIndent())

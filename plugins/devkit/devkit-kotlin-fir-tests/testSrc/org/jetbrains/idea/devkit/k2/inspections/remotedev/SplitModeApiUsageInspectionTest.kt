@@ -290,6 +290,33 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
     myFixture.checkHighlighting()
   }
 
+  fun testCodeInspectionIsSkippedForLiteFrontendModule() {
+    configurePluginXml(
+      """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+    """.trimIndent()
+    )
+
+    myFixture.configureByText(
+      "LiteFrontendService.kt", """
+      package com.example.frontend
+
+      import com.intellij.openapi.vfs.VirtualFileManager
+
+      class LiteFrontendService {
+        fun doStuff() {
+          VirtualFileManager.getInstance()
+        }
+      }
+    """.trimIndent()
+    )
+    myFixture.checkHighlighting()
+  }
+
   fun testCodeInspectionIsSkippedForPluginIdWithPredefinedModuleKind() {
     configurePluginXml(
       """
@@ -355,6 +382,7 @@ Predefined module kind for plugin/module id 'com.intellij.modules.lang'">Virtual
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()
@@ -393,6 +421,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()
@@ -498,6 +527,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()
@@ -526,6 +556,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()
@@ -554,6 +585,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'plugin.xml' in
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()
@@ -592,6 +624,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'light_idea_tes
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()
@@ -877,6 +910,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
         <dependencies>
           <module name="intellij.platform.core"/>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
           <plugin id="com.intellij.jetbrains.client"/>
         </dependencies>
       </idea-plugin>
@@ -919,6 +953,7 @@ No frontend or backend dependencies were found for module 'light_idea_test_case'
         <dependencies>
           <module name="intellij.platform.core"/>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent()

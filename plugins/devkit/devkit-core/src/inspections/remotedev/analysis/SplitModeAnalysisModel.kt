@@ -43,16 +43,22 @@ internal data class DependencyInfo(
     get() = trace.description
 }
 
+/**
+ * @property rpcEvidence a dependency path to `intellij.platform.rpc`.
+ * Without it, a frontend module resolves to [SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND].
+ */
 internal data class DependencyFacts(
   val frontendEvidence: DependencyInfo? = null,
   val backendEvidence: DependencyInfo? = null,
   val monolithEvidence: DependencyInfo? = null,
+  val rpcEvidence: DependencyInfo? = null,
 ) {
   fun evidence(kind: SplitModeApiRestrictionsService.ModuleKind): DependencyInfo? {
     return when (kind) {
       SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> frontendEvidence
       SplitModeApiRestrictionsService.ModuleKind.BACKEND -> backendEvidence
       SplitModeApiRestrictionsService.ModuleKind.MONOLITH -> monolithEvidence
+      SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
       SplitModeApiRestrictionsService.ModuleKind.MIXED,
       SplitModeApiRestrictionsService.ModuleKind.SHARED,
       is SplitModeApiRestrictionsService.ModuleKind.Composite,
@@ -61,7 +67,7 @@ internal data class DependencyFacts(
   }
 
   fun representativeDependencies(): List<DependencyInfo> {
-    return listOfNotNull(monolithEvidence, frontendEvidence, backendEvidence)
+    return listOfNotNull(monolithEvidence, frontendEvidence, backendEvidence, rpcEvidence)
   }
 
   fun mapTraces(transform: (DependencyTrace) -> DependencyTrace): DependencyFacts {
@@ -69,6 +75,7 @@ internal data class DependencyFacts(
       frontendEvidence = frontendEvidence?.let { it.copy(trace = transform(it.trace)) },
       backendEvidence = backendEvidence?.let { it.copy(trace = transform(it.trace)) },
       monolithEvidence = monolithEvidence?.let { it.copy(trace = transform(it.trace)) },
+      rpcEvidence = rpcEvidence?.let { it.copy(trace = transform(it.trace)) },
     )
   }
 }

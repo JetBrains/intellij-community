@@ -90,6 +90,7 @@ internal class PluginDescriptorSplitModeIconsTest {
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent())
@@ -97,6 +98,7 @@ internal class PluginDescriptorSplitModeIconsTest {
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
     """.trimIndent())

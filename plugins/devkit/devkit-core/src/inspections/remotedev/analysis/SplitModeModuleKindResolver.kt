@@ -168,14 +168,8 @@ internal object SplitModeModuleKindResolver {
       )
       dependencyAnalysis.lacksOwnDependencies
       && dependencyAnalysis.hasContainingPlugins
-      && dependencyAnalysis.containingPluginKind == SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> ResolvedModuleKind(
-        SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
-        dependencyAnalysis.buildContainingPluginsReasoning(),
-      )
-      dependencyAnalysis.lacksOwnDependencies
-      && dependencyAnalysis.hasContainingPlugins
-      && dependencyAnalysis.containingPluginKind == SplitModeApiRestrictionsService.ModuleKind.BACKEND -> ResolvedModuleKind(
-        SplitModeApiRestrictionsService.ModuleKind.BACKEND,
+      && dependencyAnalysis.inheritedModuleKind != null -> ResolvedModuleKind(
+        dependencyAnalysis.inheritedModuleKind,
         dependencyAnalysis.buildContainingPluginsReasoning(),
       )
       dependencyAnalysis.lacksOwnDependencies && dependencyAnalysis.hasContainingPlugins -> ResolvedModuleKind(
@@ -186,18 +180,12 @@ internal object SplitModeModuleKindResolver {
         SplitModeApiRestrictionsService.ModuleKind.MIXED,
         dependencyAnalysis.buildMixedReasoning(),
       )
-      dependencyAnalysis.hasOwnExplicitFrontendDependency -> ResolvedModuleKind(
-        SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
-        dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, true),
-      )
+      dependencyAnalysis.hasOwnExplicitFrontendDependency -> dependencyAnalysis.resolveFrontendKind(true)
       dependencyAnalysis.hasOwnExplicitBackendDependency -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.BACKEND,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.BACKEND, true),
       )
-      dependencyAnalysis.hasOwnFrontendEvidence -> ResolvedModuleKind(
-        SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
-        dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, false),
-      )
+      dependencyAnalysis.hasOwnFrontendEvidence -> dependencyAnalysis.resolveFrontendKind(false)
       dependencyAnalysis.hasOwnBackendEvidence -> ResolvedModuleKind(
         SplitModeApiRestrictionsService.ModuleKind.BACKEND,
         dependencyAnalysis.buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.BACKEND, false),
@@ -309,6 +297,26 @@ private class DependencyAnalysis(
 
   val hasOwnBackendEvidence: Boolean = ownFacts.backendEvidence != null
 
+  private val hasOwnRpcEvidence: Boolean = ownFacts.rpcEvidence != null
+
+  /**
+   * The kind that a module without own frontend or backend dependencies takes from its containing plugins.
+   * [SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND] becomes a regular frontend kind
+   * when the module itself depends on `intellij.platform.rpc`.
+   */
+  val inheritedModuleKind: SplitModeApiRestrictionsService.ModuleKind? = when (containingPluginKind) {
+    SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
+    SplitModeApiRestrictionsService.ModuleKind.BACKEND,
+      -> containingPluginKind
+    SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND ->
+      if (hasOwnRpcEvidence) SplitModeApiRestrictionsService.ModuleKind.FRONTEND else containingPluginKind
+    SplitModeApiRestrictionsService.ModuleKind.MONOLITH,
+    SplitModeApiRestrictionsService.ModuleKind.MIXED,
+    SplitModeApiRestrictionsService.ModuleKind.SHARED,
+    is SplitModeApiRestrictionsService.ModuleKind.Composite,
+      -> null
+  }
+
   val hasFrontendDependencies: Boolean =
     hasOwnFrontendEvidence || containingFacts.frontendEvidence != null
 
@@ -337,6 +345,23 @@ private class DependencyAnalysis(
 
   fun buildOwnReasoning(kind: SplitModeApiRestrictionsService.ModuleKind, explicitOnly: Boolean): String {
     return collectOwnReasoningLines(kind, explicitOnly).joinToString("\n")
+  }
+
+  /**
+   * Resolves a frontend module to [SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND]
+   * when it does not depend on `intellij.platform.rpc`.
+   */
+  fun resolveFrontendKind(explicitOnly: Boolean): ResolvedModuleKind {
+    val reasoning = buildOwnReasoning(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, explicitOnly)
+    if (hasOwnRpcEvidence) {
+      return ResolvedModuleKind(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, reasoning)
+    }
+
+    val noRpcReasoning = "No dependency on '$RPC_MODULE_NAME' was found"
+    return ResolvedModuleKind(
+      SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
+      if (reasoning.isEmpty()) noRpcReasoning else "$reasoning\n$noRpcReasoning",
+    )
   }
 
   fun buildMixedReasoning(): String {
@@ -427,13 +452,13 @@ private fun computeContainingPluginsKind(containingPlugins: List<ContainingPlugi
     return SplitModeApiRestrictionsService.ModuleKind.SHARED
   }
 
-  val firstKind = containingPlugins.first().moduleKind.kind
-  for ((_, _, moduleKind) in containingPlugins) {
-    if (moduleKind.kind != firstKind) {
-      return SplitModeApiRestrictionsService.ModuleKind.MIXED
-    }
+  val kinds = containingPlugins.mapTo(LinkedHashSet()) { it.moduleKind.kind }
+  return when {
+    kinds.size == 1 -> kinds.single()
+    kinds == setOf(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND) ->
+      SplitModeApiRestrictionsService.ModuleKind.FRONTEND
+    else -> SplitModeApiRestrictionsService.ModuleKind.MIXED
   }
-  return firstKind
 }
 
 private fun collectContainingPluginFacts(containingPlugins: List<ContainingPlugin>): DependencyFacts {

@@ -43,6 +43,18 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCod
   fun testShouldNotCrashOnCyclicDependencyInFrontend() = testShouldNotCrashOnCyclicDependency("frontend")
   fun testShouldNotCrashOnCyclicDependencyInBackend() = testShouldNotCrashOnCyclicDependency("backend")
 
+  fun testShouldNotReportInLiteFrontendModuleWithBackendSuffix() {
+    val testedFile = myFixture.addXmlFile("intellij.test.feature.backend.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+    testHighlighting(testedFile)
+  }
+
   private fun testReportDependency(frontendOrBackend: String) {
     val testedFile = myFixture.addXmlFile("intellij.test.feature.$frontendOrBackend.xml", """
       <idea-plugin>
@@ -70,6 +82,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCod
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.$frontendOrBackend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
       """.trimIndent()
@@ -83,6 +96,7 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspectionTest : JavaCod
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.$frontendOrBackend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
       """.trimIndent()

@@ -67,6 +67,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
             <<warning descr="'com.intellij.localInspection' should be used in 'backend' module type. Actual module type is 'frontend'.
@@ -237,6 +238,7 @@ No frontend or backend dependencies were found for descriptor 'plugin.xml' in mo
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
             <<warning descr="'com.intellij.localInspection' should be used in 'backend' module type. Actual module type is 'frontend'.
@@ -303,6 +305,7 @@ Module 'unique.module.name.5'  -> backend">typedHandler</warning>/>
           <id>com.example.frontend.plugin</id>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <content>
             <module name="unique.module.name.9"/>
@@ -356,6 +359,7 @@ Module 'unique.module.name.8'  -> backend">localInspection</warning>/>
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -392,6 +396,7 @@ via dependency 'unique.module.name.11' -> descriptor 'unique.module.name.11.xml'
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -446,6 +451,7 @@ via dependency 'unique.module.name.23' -> descriptor 'unique.module.name.23.xml'
         <idea-plugin>
           <dependencies>
             <module name="unique.module.name.40"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
             <<warning descr="'com.intellij.localInspection' should be used in 'backend' module type. Actual module type is 'frontend'.
@@ -493,6 +499,7 @@ via dependency 'unique.module.name.40' -> required content module Predefined mod
           <id>com.example.frontend.plugin.one</id>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <content>
             <module name="unique.module.name.16"/>
@@ -508,6 +515,7 @@ via dependency 'unique.module.name.40' -> required content module Predefined mod
           <id>com.example.frontend.plugin.two</id>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <content>
             <module name="unique.module.name.16"/>
@@ -690,6 +698,7 @@ via dependency 'unique.module.name.26' -> descriptor 'unique.module.name.26.xml'
           <dependencies>
             <module name="unique.module.name.25"/>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -987,6 +996,7 @@ via dependency 'unique.module.name.40' -> descriptor 'unique.module.name.40.xml'
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -1160,6 +1170,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
             <<warning descr="'com.intellij.lang.parserDefinition' should be used in 'shared' module type. Actual module type is 'frontend'.

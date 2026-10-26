@@ -9,6 +9,7 @@ import org.jetbrains.idea.devkit.inspections.DevKitPluginXmlInspectionBase
 import org.jetbrains.idea.devkit.DevKitBundle.message
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.BACKEND_PLATFORM_MODULE_BASE_NAME
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.FRONTEND_PLATFORM_MODULE_BASE_NAME
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeDescriptorDependencyAnalyzer
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeQodanaInspectionScopeLimiter
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeExplicitDependencyKind
@@ -26,6 +27,8 @@ internal class MissingFrontendOrBackendRuntimeDependencyInspection : DevKitPlugi
     val inspectedFile = holder.fileElement.file
     return super.isAllowed(holder)
            && SplitModeQodanaInspectionScopeLimiter.getInstance(inspectedFile.project).shouldInspectFileInQodanaMode(inspectedFile)
+           && SplitModeInspectionUtil.ensureRestrictionsServiceIsLoaded(SplitModeApiRestrictionsService.getInstance(inspectedFile.project))
+           && !SplitModeInspectionUtil.shouldSuppressForLiteModuleKind(inspectedFile)
   }
 
   override fun checkDomElement(element: DomElement, holder: DomElementAnnotationHolder, helper: DomHighlightingHelper) {

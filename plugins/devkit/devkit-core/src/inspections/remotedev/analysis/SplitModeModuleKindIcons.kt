@@ -41,7 +41,8 @@ object SplitModeModuleKindIcons {
       kindId == SplitModeApiRestrictionsService.ModuleKind.SHARED && descriptorFileName == "plugin.xml" -> AllIcons.Nodes.Plugin
       kindId == SplitModeApiRestrictionsService.ModuleKind.SHARED && followsSharedModuleNamingConvention(descriptorFileName) -> SharedModule
       kindId == SplitModeApiRestrictionsService.ModuleKind.SHARED -> null
-      kindId == SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> FrontendModule
+      kindId == SplitModeApiRestrictionsService.ModuleKind.FRONTEND
+      || kindId == SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND -> FrontendModule
       kindId == SplitModeApiRestrictionsService.ModuleKind.BACKEND -> BackendModule
       else -> null
     }

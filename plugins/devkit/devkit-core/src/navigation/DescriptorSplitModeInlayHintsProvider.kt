@@ -89,6 +89,7 @@ private fun getPresentableModuleKind(kind: ModuleKind): String {
   val presentableId = when (kind) {
     ModuleKind.FRONTEND -> ModuleKind.FRONTEND.id
     ModuleKind.BACKEND -> ModuleKind.BACKEND.id
+    ModuleKind.LITE_FRONTEND -> ModuleKind.LITE_FRONTEND.id
     ModuleKind.SHARED -> ModuleKind.SHARED.id
     ModuleKind.MONOLITH,
     ModuleKind.MIXED,
@@ -102,6 +103,7 @@ private fun getCompatibilityTarget(kind: ModuleKind): String {
   val messageKey = when (kind) {
     ModuleKind.FRONTEND -> "inlay.split.mode.module.kind.compatibility.frontend"
     ModuleKind.BACKEND -> "inlay.split.mode.module.kind.compatibility.backend"
+    ModuleKind.LITE_FRONTEND -> "inlay.split.mode.module.kind.compatibility.lite.frontend"
     ModuleKind.SHARED -> "inlay.split.mode.module.kind.compatibility.shared"
     ModuleKind.MONOLITH,
     ModuleKind.MIXED,

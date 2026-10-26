@@ -67,6 +67,12 @@ class SplitModeApiRestrictionsService(
 
     object FRONTEND : ModuleKind("frontend")
     object BACKEND : ModuleKind("backend")
+
+    /**
+     * A frontend module that does not depend on `intellij.platform.rpc`.
+     * It can work in any frontend, including a frontend without the regular RPC.
+     */
+    object LITE_FRONTEND : ModuleKind("liteFrontend")
     object MONOLITH : ModuleKind("monolith")
     object MIXED : ModuleKind("mixed")
     object SHARED : ModuleKind("shared")

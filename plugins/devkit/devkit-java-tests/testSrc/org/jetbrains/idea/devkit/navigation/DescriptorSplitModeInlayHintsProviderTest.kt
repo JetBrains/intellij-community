@@ -37,6 +37,7 @@ internal class DescriptorSplitModeInlayHintsProviderTest : JavaCodeInsightFixtur
       <idea-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
       """.trimIndent()
@@ -49,6 +50,39 @@ internal class DescriptorSplitModeInlayHintsProviderTest : JavaCodeInsightFixtur
         descriptorKind = "content module",
         compatibilityTarget = "frontend IDE",
         reason = "Frontend dependency 'intellij.platform.frontend' from descriptor 'test.module.xml' in module 'test.module'",
+      ),
+    )
+  }
+
+  fun testLiteFrontendContentModuleInlay() {
+    createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
+      <idea-plugin>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testDescriptorInlay(
+      descriptorPath = "test.module/test.module.xml",
+      expectedInlayText = "LiteFrontend content module",
+      expectedTooltip = expectedTooltip(
+        descriptorKind = "content module",
+        compatibilityTarget = "lite frontend IDE",
+        reason = """
+          Frontend dependency 'intellij.platform.frontend' from descriptor 'test.module.xml' in module 'test.module'
+          No dependency on 'intellij.platform.rpc' was found
+        """.trimIndent(),
       ),
     )
   }

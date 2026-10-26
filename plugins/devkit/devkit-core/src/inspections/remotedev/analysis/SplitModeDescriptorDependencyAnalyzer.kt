@@ -89,6 +89,10 @@ internal object SplitModeDescriptorDependencyAnalyzer {
     val directDependencies = collectDirectDependencies(ideaPlugin).toList()
     for (dependency in directDependencies) {
       val dependencyName = dependency.name
+      if (isRpcDependency(dependencyName)) {
+        accumulator.record(DependencyInfo(dependencyName, directDependencyTrace(descriptorLocation)))
+        continue
+      }
       val dependencyDescriptors = dependency.resolveDescriptors()
       var hasPredefinedDependencyFacts = false
       for (dependencyDescriptor in dependencyDescriptors) {
@@ -234,8 +238,11 @@ private fun getDirectPredefinedDependencyFacts(
 ): DependencyFacts? {
   val project = ideaPlugin.xmlElement?.project ?: return null
   val dependencyInfo = DependencyInfo(dependencyName, directDependencyTrace(descriptorLocation))
-  return when (SplitModeApiRestrictionsService.getInstance(project).getPredefinedDependencyKind(dependencyName)) {
-    SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> DependencyFacts(frontendEvidence = dependencyInfo)
+  val predefinedDependencyKind =
+    SplitModeApiRestrictionsService.getInstance(project).getPredefinedDependencyKind(dependencyName) ?: return null
+  val rpcEvidence = createImpliedRpcDependencyInfo(dependencyName, predefinedDependencyKind, dependencyInfo.trace)
+  return when (predefinedDependencyKind) {
+    SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> DependencyFacts(frontendEvidence = dependencyInfo, rpcEvidence = rpcEvidence)
     SplitModeApiRestrictionsService.ModuleKind.BACKEND -> DependencyFacts(backendEvidence = dependencyInfo)
     SplitModeApiRestrictionsService.ModuleKind.MONOLITH -> DependencyFacts(monolithEvidence = dependencyInfo)
     else -> null
@@ -248,16 +255,25 @@ private fun getPredefinedDependencyFacts(ideaPlugin: IdeaPlugin): DependencyFact
   val predefinedModuleKind =
     SplitModeApiRestrictionsService.getInstance(descriptorFile.project).getPredefinedModuleKind(module, descriptorFile, ideaPlugin)
     ?: return null
-  return createPredefinedDependencyFacts(predefinedModuleKind)
+  return createPredefinedDependencyFacts(module.name, predefinedModuleKind)
 }
 
 private fun createPredefinedDependencyFacts(
+  moduleName: String,
   predefinedModuleKind: SplitModeApiRestrictionsService.PredefinedModuleKindMatch,
 ): DependencyFacts {
   return when (predefinedModuleKind.moduleKind) {
-    SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> DependencyFacts(
-      frontendEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, predefinedModuleKind),
-    )
+    SplitModeApiRestrictionsService.ModuleKind.FRONTEND -> {
+      val frontendEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.FRONTEND, predefinedModuleKind)
+      DependencyFacts(
+        frontendEvidence = frontendEvidence,
+        rpcEvidence = createImpliedRpcDependencyInfo(
+          moduleName,
+          SplitModeApiRestrictionsService.ModuleKind.FRONTEND,
+          frontendEvidence.trace,
+        ),
+      )
+    }
     SplitModeApiRestrictionsService.ModuleKind.BACKEND -> DependencyFacts(
       backendEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.BACKEND, predefinedModuleKind),
     )
@@ -265,10 +281,29 @@ private fun createPredefinedDependencyFacts(
       monolithEvidence = createPredefinedDependencyInfo(SplitModeApiRestrictionsService.ModuleKind.MONOLITH, predefinedModuleKind),
     )
     SplitModeApiRestrictionsService.ModuleKind.SHARED -> DependencyFacts()
+    SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
     SplitModeApiRestrictionsService.ModuleKind.MIXED,
     is SplitModeApiRestrictionsService.ModuleKind.Composite,
       -> error("Unsupported predefined module kind: ${predefinedModuleKind.moduleKind}")
   }
+}
+
+private fun createImpliedRpcDependencyInfo(
+  predefinedDependencyName: String,
+  predefinedModuleKind: SplitModeApiRestrictionsService.ModuleKind,
+  predefinedDependencyTrace: DependencyTrace,
+): DependencyInfo? {
+  if (!isRpcImpliedByPredefinedDependency(predefinedDependencyName, predefinedModuleKind)) {
+    return null
+  }
+  return DependencyInfo(
+    name = RPC_MODULE_NAME,
+    trace = DependencyTrace(
+      cacheKey = "implied-rpc|$predefinedDependencyName|${predefinedDependencyTrace.cacheKey}",
+      description = "${predefinedDependencyTrace.description}\n" +
+                    "via predefined ${predefinedModuleKind.id} dependency '$predefinedDependencyName'",
+    ),
+  )
 }
 
 private fun createPredefinedDependencyInfo(
@@ -291,8 +326,13 @@ private class DependencyFactsAccumulator(
   private var frontendEvidence: DependencyInfo? = null
   private var backendEvidence: DependencyInfo? = null
   private var monolithEvidence: DependencyInfo? = null
+  private var rpcEvidence: DependencyInfo? = null
 
   fun record(dependencyInfo: DependencyInfo) {
+    if (isRpcDependency(dependencyInfo.name)) {
+      recordRpc(dependencyInfo)
+      return
+    }
     val dependencyKind = when {
       isExplicitMonolithDependency(dependencyInfo.name) -> SplitModeApiRestrictionsService.ModuleKind.MONOLITH
       isFrontendDependency(dependencyInfo.name) -> SplitModeApiRestrictionsService.ModuleKind.FRONTEND
@@ -306,6 +346,14 @@ private class DependencyFactsAccumulator(
     dependencyFacts.frontendEvidence?.let { record(it, SplitModeApiRestrictionsService.ModuleKind.FRONTEND) }
     dependencyFacts.backendEvidence?.let { record(it, SplitModeApiRestrictionsService.ModuleKind.BACKEND) }
     dependencyFacts.monolithEvidence?.let { record(it, SplitModeApiRestrictionsService.ModuleKind.MONOLITH) }
+    dependencyFacts.rpcEvidence?.let(::recordRpc)
+  }
+
+  private fun recordRpc(dependencyInfo: DependencyInfo) {
+    if (!seenDependencyNames.add(dependencyInfo.name)) {
+      return
+    }
+    rpcEvidence = dependencyInfo
   }
 
   private fun record(
@@ -329,6 +377,7 @@ private class DependencyFactsAccumulator(
         backendEvidence = pickPreferredEvidence(backendEvidence, dependencyInfo, ::isExplicitBackendDependency)
       }
       null,
+      SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
       SplitModeApiRestrictionsService.ModuleKind.MIXED,
       SplitModeApiRestrictionsService.ModuleKind.SHARED,
       is SplitModeApiRestrictionsService.ModuleKind.Composite,
@@ -367,7 +416,7 @@ private class DependencyFactsAccumulator(
   }
 
   fun toDependencyFacts(): DependencyFacts {
-    return DependencyFacts(frontendEvidence, backendEvidence, monolithEvidence)
+    return DependencyFacts(frontendEvidence, backendEvidence, monolithEvidence, rpcEvidence)
   }
 
   private fun pickPreferredEvidence(

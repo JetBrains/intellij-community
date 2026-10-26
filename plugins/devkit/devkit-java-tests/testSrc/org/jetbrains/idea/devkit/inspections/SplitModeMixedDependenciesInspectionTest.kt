@@ -94,6 +94,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <depends optional="true" config-file="optional-backend.xml">intellij.platform.backend</depends>
         </idea-plugin>
@@ -136,6 +137,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'unique.module.na
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
             <module name="intellij.platform.plugins.frontend.split"/>
             <plugin id="com.intellij.jetbrains.client"/>
           </dependencies>
@@ -194,6 +196,7 @@ Backend dependency 'intellij.platform.backend' from containing plugin descriptor
           <id>com.example.frontend.plugin</id>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <content>
             <module name="unique.module.name.24"/>
@@ -232,6 +235,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'unique.module.na
           <id>com.example.frontend.plugin</id>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <content>
             <module name="unique.module.name.27"/>
@@ -296,6 +300,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'unique.module.na
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -375,6 +380,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
           <module value="unique.module.name.53.shared.alias"/>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -427,6 +433,7 @@ via dependency 'unique.module.name.52.backend.support' -> descriptor 'unique.mod
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()
@@ -537,6 +544,7 @@ via dependency 'unique.module.name.51.backend.support' -> descriptor 'unique.mod
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent()

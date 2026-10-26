@@ -49,6 +49,7 @@ internal class SplitModeXmlApiUsageInspectionSuppressionTest : JavaCodeInsightFi
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent(),
@@ -155,6 +156,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'unique.module.
 Backend dependency 'intellij.platform.backend' from containing plugin descriptor 'unique.module.name.22.xml' in module 'unique.module.name.22'">idea-plugin</error>>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <content>
             <module name="unique.module.name.22"/>
@@ -193,6 +195,7 @@ Backend dependency 'intellij.platform.backend' from containing plugin descriptor
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
           <extensions defaultExtensionNs="com.intellij">
             <<warning descr="'com.intellij.localInspection' should be used in 'backend' module type. Actual module type is 'frontend'.
@@ -241,6 +244,7 @@ Backend dependency 'intellij.platform.backend' from descriptor 'plugin.xml' in m
         <idea-plugin>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent(),
@@ -309,6 +313,7 @@ Frontend dependency 'intellij.platform.frontend' from descriptor 'unique.module.
 Backend dependency 'intellij.platform.backend' from containing plugin required content module descriptor 'unique.module.name.36.xml' in module 'unique.module.name.36'">idea-plugin</error>>
           <dependencies>
             <module name="intellij.platform.frontend"/>
+            <module name="intellij.platform.rpc"/>
           </dependencies>
         </idea-plugin>
       """.trimIndent(),

@@ -115,6 +115,7 @@ internal object SplitModeDependencyQuickFixes {
       SplitModeApiRestrictionsService.ModuleKind.BACKEND,
         -> hasRuntimeDependencyToRemove(availableDependencies, desiredModuleKind)
             || hasCompileDependencyToRemove(availableDependencies, desiredModuleKind)
+      SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
       SplitModeApiRestrictionsService.ModuleKind.MONOLITH,
       SplitModeApiRestrictionsService.ModuleKind.MIXED,
       SplitModeApiRestrictionsService.ModuleKind.SHARED,
@@ -138,6 +139,7 @@ internal object SplitModeDependencyQuickFixes {
         && !hasCompileDependencyToRemove(availableDependencies, desiredModuleKind)
         && isExplicitDependencyActionable(availableDependencies, desiredModuleKind)
       }
+      SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
       SplitModeApiRestrictionsService.ModuleKind.MONOLITH,
       SplitModeApiRestrictionsService.ModuleKind.MIXED,
       SplitModeApiRestrictionsService.ModuleKind.SHARED,
@@ -716,6 +718,7 @@ private fun SplitModeApiRestrictionsService.ModuleKind.toFixableSplitKinds(): Li
     SplitModeApiRestrictionsService.ModuleKind.BACKEND,
       -> listOf(this)
     is SplitModeApiRestrictionsService.ModuleKind.Composite -> moduleKinds.flatMap { it.toFixableSplitKinds() }.distinct()
+    SplitModeApiRestrictionsService.ModuleKind.LITE_FRONTEND,
     SplitModeApiRestrictionsService.ModuleKind.MONOLITH,
     SplitModeApiRestrictionsService.ModuleKind.MIXED,
     SplitModeApiRestrictionsService.ModuleKind.SHARED,

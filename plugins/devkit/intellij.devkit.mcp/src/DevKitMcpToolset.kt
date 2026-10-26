@@ -90,7 +90,8 @@ class DevKitMcpToolset : McpToolset {
       |Recognizes the effective Split Mode module kind for a plugin.xml or content-module descriptor
       |using the same DevKit analysis as the remdev inspections.
       |Returns the effective kind and the reasoning used to compute it.
-      |Possible kinds include `shared`, `frontend`, `backend`, `monolith`, and `mixed`.
+      |Possible kinds include `shared`, `frontend`, `liteFrontend`, `backend`, `monolith`, and `mixed`.
+      |`liteFrontend` means a frontend module without a dependency on `intellij.platform.rpc`.
     """
   )
   @Suppress("unused", "FunctionName")
@@ -292,7 +293,9 @@ class DevKitMcpToolset : McpToolset {
     val moduleName: String,
     @property:McpDescription("Descriptor path that was analyzed, relative to the project root when provided that way.")
     val descriptorPath: String,
-    @property:McpDescription("Effective Split Mode module kind. One of: `shared`, `frontend`, `backend`, `monolith`, `mixed`.")
+    @property:McpDescription(
+      "Effective Split Mode module kind. One of: `shared`, `frontend`, `liteFrontend`, `backend`, `monolith`, `mixed`."
+    )
     val kindId: String,
     @property:McpDescription("Reasoning produced by the same DevKit module-kind analysis used by the remdev inspections.")
     val reasoning: String,

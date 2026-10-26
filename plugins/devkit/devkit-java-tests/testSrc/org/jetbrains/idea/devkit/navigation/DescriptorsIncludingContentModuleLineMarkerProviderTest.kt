@@ -190,6 +190,7 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
       <idea<caret>-plugin>
         <dependencies>
           <module name="intellij.platform.frontend"/>
+          <module name="intellij.platform.rpc"/>
         </dependencies>
       </idea-plugin>
       """.trimIndent()
@@ -197,6 +198,34 @@ class DescriptorsIncludingContentModuleLineMarkerProviderTest : JavaCodeInsightF
 
     testGutterTargets(
       tooltip = "Frontend content module test.module is included in 1 plugin XML descriptors",
+      expectedIcon = DevkitCoreIcons.FrontendModule,
+      expectedTargets = listOf(
+        "declaring.module.xml | <module name=\"test.module\"/>"
+      )
+    )
+  }
+
+  fun testLiteFrontendContentModuleTooltipAndIcon() {
+    createModuleWithModuleDescriptor("declaring.module", "declaring.module.xml", """
+      <idea-plugin>
+        <content>
+          <module name="test.module"/>
+        </content>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    createModuleWithModuleDescriptor("test.module", "test.module.xml", """
+      <idea<caret>-plugin>
+        <dependencies>
+          <module name="intellij.platform.frontend"/>
+        </dependencies>
+      </idea-plugin>
+      """.trimIndent()
+    )
+
+    testGutterTargets(
+      tooltip = "LiteFrontend content module test.module is included in 1 plugin XML descriptors",
       expectedIcon = DevkitCoreIcons.FrontendModule,
       expectedTargets = listOf(
         "declaring.module.xml | <module name=\"test.module\"/>"

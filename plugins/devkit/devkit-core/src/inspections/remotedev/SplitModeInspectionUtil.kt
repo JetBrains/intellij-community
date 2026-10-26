@@ -26,6 +26,8 @@ import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ModuleAnalysis
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.ResolvedModuleKind
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeAnalysisFlags
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeApiRestrictionsService
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindResolver
+import org.jetbrains.idea.devkit.inspections.remotedev.analysis.isLiteModuleKind
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
 
@@ -150,7 +152,25 @@ internal object SplitModeInspectionUtil {
     if (shouldSuppressForPredefinedModuleKind(file, restrictionsService)) {
       return false
     }
+    if (shouldSuppressForLiteModuleKind(file)) {
+      return false
+    }
     return true
+  }
+
+  /**
+   * Returns `true` when [file] belongs to a module of a lite kind. The split-mode inspections do not check such a module.
+   * Call it only after [ensureRestrictionsServiceIsLoaded], because the module kind depends on the predefined module kinds.
+   */
+  fun shouldSuppressForLiteModuleKind(file: PsiFile): Boolean {
+    val moduleAnalysis = if (file is XmlFile) {
+      SplitModeModuleKindResolver.getOrComputeDescriptorAnalysis(file)
+    }
+    else {
+      val module = ModuleUtilCore.findModuleForPsiElement(file) ?: return false
+      SplitModeModuleKindResolver.getOrComputeModuleAnalysis(module)
+    }
+    return isLiteModuleKind(moduleAnalysis.resolvedModuleKind.kind)
   }
 
   /**
