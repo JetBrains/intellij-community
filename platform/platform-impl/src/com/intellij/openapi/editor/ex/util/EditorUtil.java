@@ -41,6 +41,7 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.InlayProperties;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.EditorProjection;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ScrollingModel;
 import com.intellij.openapi.editor.SelectionModel;
@@ -57,6 +58,7 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.BreakpointArea;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -64,7 +66,6 @@ import com.intellij.openapi.editor.impl.InterLineBreakpointConfiguration;
 import com.intellij.openapi.editor.impl.InterLineBreakpointConfigurationProvider;
 import com.intellij.openapi.editor.impl.InterLineBreakpointHitArea;
 import com.intellij.openapi.editor.impl.Interval;
-import com.intellij.openapi.editor.impl.BreakpointArea;
 import com.intellij.openapi.editor.impl.ScrollingModelImpl;
 import com.intellij.openapi.editor.impl.TextRangeInterval;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
@@ -91,9 +92,9 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.JdkConstants;
 import com.intellij.util.ui.UIUtil;
 import kotlinx.coroutines.CoroutineScope;
-import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1155,6 +1156,10 @@ public final class EditorUtil {
       // for injected editors disposal will happen only when host editor is disposed,
       // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
       Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+      // a projection lives as long as the editor that shows its document
+      if (hostEditor instanceof EditorProjection projection) {
+        hostEditor = projection.getHostEditor();
+      }
       if (hostEditor instanceof EditorImpl editorImpl) {
         //noinspection deprecation
         if (!Disposer.tryRegister(editorImpl.getDisposable(), disposable)) {
