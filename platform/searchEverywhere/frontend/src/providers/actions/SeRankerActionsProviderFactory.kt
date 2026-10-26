@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.searchEverywhere.SeItemsProvider
 import com.intellij.platform.searchEverywhere.SeItemsProviderFactory
 import com.intellij.platform.searchEverywhere.SeProviderIdUtils
@@ -20,6 +21,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
+import kotlin.time.Duration.Companion.milliseconds
+
+private const val DEBOUNCE_REGISTRY_KEY: String = "search.everywhere.actions.ranker.debounce.ms"
 
 /**
  * Creates [SeRankerActionsProvider] when the `search.everywhere.actions.ranker` registry key selects a [SeActionsRanker].
@@ -43,7 +47,8 @@ class SeRankerActionsProviderFactory : SeItemsProviderFactory, SeFrontendOnlyIte
     return SeRankerActionsProvider(SeActionsAdaptedProvider(SeAsyncContributorWrapper(contributor)),
                                    contributor.actionModel,
                                    ranker,
-                                   SeActionsCandidatesStrategy.findSelected())
+                                   SeActionsCandidatesStrategy.findSelected(),
+                                   RegistryManager.getInstanceAsync().intValue(DEBOUNCE_REGISTRY_KEY).coerceAtLeast(0).milliseconds)
   }
 }
 

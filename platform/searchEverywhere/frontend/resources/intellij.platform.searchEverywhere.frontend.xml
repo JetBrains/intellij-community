@@ -81,6 +81,10 @@
                  defaultValue="[popularity*|splitAndMerge|unlimited]"
                  restartRequired="false"
                  description="How the actions ranker of Search Everywhere gets the candidates when there are more candidates than the ranker accepts. 'popularity' sends only the most popular actions. 'splitAndMerge' ranks all actions in parts, then ranks the best actions of all parts again. 'unlimited' sends all actions in one call."/>
+    <registryKey key="search.everywhere.actions.ranker.debounce.ms"
+                 defaultValue="400"
+                 restartRequired="false"
+                 description="How long the actions ranker of Search Everywhere waits after the last keystroke before it sends the query, in milliseconds. A new keystroke cancels the wait. The value applies from the next popup."/>
     <registryKey key="search.everywhere.actions.ranker.decisions.model"
                  defaultValue="gpt-6-luna"
                  restartRequired="false"

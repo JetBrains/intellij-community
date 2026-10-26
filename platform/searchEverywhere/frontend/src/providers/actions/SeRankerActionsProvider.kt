@@ -22,6 +22,7 @@ import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.platform.searchEverywhere.providers.getExtendedInfo
 import com.intellij.platform.util.coroutines.mapNotNullConcurrent
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeoutOrNull
@@ -44,6 +45,9 @@ private val RANKER_TIMEOUT: Duration = 3.seconds
  * The provider uses [actionsProvider] for the item selection, the extended action and the item data.
  * It takes the actions and their presentations from [actionModel], the model of the [actionsProvider] contributor.
  * The [candidatesStrategy] decides which candidates each ranker call gets.
+ *
+ * Search Everywhere starts a search on each keystroke and cancels the previous one.
+ * The provider waits [debounce] before it asks the ranker, thus the ranker gets a query only after the user stops typing.
  */
 @Internal
 class SeRankerActionsProvider internal constructor(
@@ -51,6 +55,7 @@ class SeRankerActionsProvider internal constructor(
   private val actionModel: GotoActionModel,
   private val ranker: SeActionsRanker,
   private val candidatesStrategy: SeActionsCandidatesStrategy,
+  private val debounce: Duration,
 ) : SeItemsProvider by actionsProvider, SeExtendedInfoProvider {
   private val allCandidatesMutex = Mutex()
   private var allCandidates: List<Candidate>? = null
@@ -64,6 +69,8 @@ class SeRankerActionsProvider internal constructor(
   override suspend fun collectItems(params: SeParams, collector: SeItemsProvider.Collector) {
     val query = params.inputQuery.trim().take(MAX_QUERY_LENGTH)
     if (query.isEmpty()) return
+
+    delay(debounce)
 
     // Do not use withTimeout: SeLocalItemDataProvider retries a search that throws CancellationException.
     val session = withTimeoutOrNull(RANKER_TIMEOUT) { getSession() } ?: return
