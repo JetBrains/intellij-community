@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.registry.RegistryManager
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 
 private const val RANKER_REGISTRY_KEY: String = "search.everywhere.actions.ranker"
 private const val DEFAULT_MAX_CANDIDATES: Int = 256
@@ -22,6 +23,12 @@ interface SeActionsRanker {
    * The value of the `search.everywhere.actions.ranker` registry key that selects this ranker.
    */
   val id: String
+
+  /**
+   * The name of the ranker in the diagnostic text of its items. The default name is the [id].
+   * The result list shows the text when the `search.everywhere.new.show.diagnostics` registry key is on.
+   */
+  val diagnosticName: @NonNls String get() = id
 
   /**
    * Opens a session for one Search Everywhere popup, or returns `null` when the ranker cannot rank now.

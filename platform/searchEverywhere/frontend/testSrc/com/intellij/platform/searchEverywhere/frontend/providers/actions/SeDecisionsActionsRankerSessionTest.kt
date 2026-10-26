@@ -203,6 +203,50 @@ class SeDecisionsActionsRankerSessionTest {
   }
 
   @Test
+  fun `the System One request takes the query in the state and the choices as criteria`() = runBlocking {
+    createSession(this, SeDecisionsApi.TYPESAFE).rank(QUERY, CANDIDATES)
+
+    assertEquals("/v1/systemone", requestPath)
+    assertEquals(KEY_VALUE, requestKey)
+    assertTrue(requestBody.contains(""""model":"test-model""""), requestBody)
+    assertTrue(requestBody.contains(""""state":{"request":"$QUERY"}"""), requestBody)
+    assertTrue(requestBody.contains(""""questions":{"action":{"type":"choice","instructions":"""), requestBody)
+    assertTrue(requestBody.contains(""""criteria":{"a0":"Zoom In: Increase the IDE scale","a1":"Zoom Out","a2":"""), requestBody)
+    assertTrue(requestBody.contains(""""a2":"Find: Find text in the file","none":"""), requestBody)
+  }
+
+  @Test
+  fun `the OpenRouter request goes to the decisions operation with the System One body`() = runBlocking {
+    createSession(this, SeDecisionsApi.OPENROUTER).rank(QUERY, CANDIDATES)
+
+    assertEquals("/v1/decisions", requestPath)
+    assertTrue(requestBody.contains(""""state":{"request":"$QUERY"}"""), requestBody)
+    assertTrue(requestBody.contains(""""criteria":{"""), requestBody)
+  }
+
+  @Test
+  fun `orders the System One answer by probability and drops the unlikely and unknown choices`() = runBlocking {
+    responseBody = """
+      {"answers":{"action":{"type":"choice","choice":"a0","confidence":0.7,"probabilities":{
+        "a2":0.08,"none":0.2,"a0":0.7,"a1":0.005,"unknown":0.015
+      }}},"model":"jev-1.14","usage":{"input_tokens":476,"output_tokens":70}}
+    """.trimIndent()
+
+    val ranked = createSession(this, SeDecisionsApi.TYPESAFE).rank(QUERY, CANDIDATES)
+
+    assertEquals(listOf(SeActionsRankerMatch("ZoomIn", 0.7), SeActionsRankerMatch("Find", 0.08)), ranked)
+  }
+
+  @Test
+  fun `returns nothing for a System One refusal`() = runBlocking {
+    responseBody = """{"answers":{"action":{"type":"refusal"}},"model":"jev-1.14"}"""
+
+    val ranked = createSession(this, SeDecisionsApi.TYPESAFE).rank(QUERY, CANDIDATES)
+
+    assertEquals(emptyList<SeActionsRankerMatch>(), ranked)
+  }
+
+  @Test
   fun `the disposal closes the lease`() {
     val lease = TestLease(endpointUrl())
 
@@ -214,8 +258,8 @@ class SeDecisionsActionsRankerSessionTest {
     assertTrue(lease.closed)
   }
 
-  private fun createSession(scope: CoroutineScope): SeDecisionsActionsRankerSession {
-    return SeDecisionsActionsRankerSession(TestLease(endpointUrl()), "test-model", client, scope)
+  private fun createSession(scope: CoroutineScope, api: SeDecisionsApi = SeDecisionsApi.OPENAI): SeDecisionsActionsRankerSession {
+    return SeDecisionsActionsRankerSession(TestLease(endpointUrl()), "test-model", client, scope, api)
   }
 
   private fun endpointUrl(): String = "http://127.0.0.1:${server.address.port}/v1"

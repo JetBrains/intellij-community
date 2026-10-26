@@ -4,7 +4,6 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 import com.intellij.openapi.components.serviceAsync
 
 private const val OPENAI_API_URL: String = "https://api.openai.com/v1"
-private const val AUTHORIZATION_HEADER: String = "Authorization"
 
 /**
  * Serves the Decision API ranker straight from the OpenAI API with the personal OpenAI API key of the user.
@@ -24,18 +23,4 @@ internal class SeOpenAiDecisionsEndpointProvider : SeDecisionsEndpointProvider {
 }
 
 /** Returns the endpoint of the OpenAI API that sends each request with [key]. It reports a refusal to [keyStore]. */
-internal fun openAiKeyLease(key: String, keyStore: SeOpenAiKeyStore): SeDecisionsEndpointLease = SeOpenAiKeyLease(key, keyStore)
-
-/** The endpoint of the OpenAI API with a personal key. It holds nothing to release. */
-private class SeOpenAiKeyLease(private val key: String, private val keyStore: SeOpenAiKeyStore) : SeDecisionsEndpointLease {
-  override val url: String get() = OPENAI_API_URL
-  override val headers: Map<String, String> = mapOf(AUTHORIZATION_HEADER to "Bearer $key")
-
-  override suspend fun close() {}
-
-  override fun refused(statusCode: Int) {
-    keyStore.refused(key, statusCode)
-  }
-
-  override fun toString(): String = "the OpenAI API with the personal key (url=$url, headers=${headers.keys})"
-}
+internal fun openAiKeyLease(key: String, keyStore: SeOpenAiKeyStore): SeDecisionsEndpointLease = apiKeyLease(OPENAI_API_URL, key, keyStore)

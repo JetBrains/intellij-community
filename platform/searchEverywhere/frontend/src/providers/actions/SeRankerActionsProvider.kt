@@ -87,7 +87,8 @@ class SeRankerActionsProvider internal constructor(
     val candidatesById = candidates.associateBy { it.rankerCandidate.id }
     for ((index, match) in matches.withIndex()) {
       val candidate = candidatesById[match.id] ?: continue
-      val item = createItem(candidate.actionWrapper, matches.size - index, params.inputQuery, rankerDiagnostics(match))
+      val diagnostics = rankerDiagnostics(ranker.diagnosticName, match)
+      val item = createItem(candidate.actionWrapper, matches.size - index, params.inputQuery, diagnostics)
       if (!collector.put(item)) return
     }
   }
@@ -186,9 +187,10 @@ class SeRankerActionsProvider internal constructor(
 }
 
 /**
- * Returns the diagnostic text of [match] for the result list, or `null` when the ranker gave no probability.
+ * Returns the diagnostic text of [match] for the result list: the [rankerName], and the probability when the ranker gave one.
  * See [com.intellij.platform.searchEverywhere.SeItemWithDiagnostics].
  */
-internal fun rankerDiagnostics(match: SeActionsRankerMatch): @NonNls String? {
-  return match.probability?.let { String.format(Locale.ROOT, "p=%.3f", it) }
+internal fun rankerDiagnostics(rankerName: @NonNls String, match: SeActionsRankerMatch): @NonNls String {
+  val probability = match.probability ?: return rankerName
+  return String.format(Locale.ROOT, "%s p=%.3f", rankerName, probability)
 }

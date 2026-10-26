@@ -78,7 +78,7 @@ fun LcrRow<SeResultListRow>.weightTextIfEnabled(row: SeResultListRow) {
     item.composedWeight.toString(),
     if (item.isExactMatch) "Exact" else null,
     if (item.isSemantic) "Sem" else null,
-    item.providerId.value.replace("SearchEverywhereContributor", ""),
+    item.providerId.value.replace("SearchEverywhereContributor", "").removeSuffix("Provider"),
     item.diagnostics,
   ).joinToString(" - ")
 

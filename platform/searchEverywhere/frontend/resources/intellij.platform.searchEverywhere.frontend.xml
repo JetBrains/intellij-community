@@ -43,6 +43,10 @@
             class="com.intellij.platform.searchEverywhere.frontend.actions.SeSetOpenAiKeyAction"
             internal="true"
     />
+    <action id="SeSetJevKeyAction"
+            class="com.intellij.platform.searchEverywhere.frontend.actions.SeSetJevKeyAction"
+            internal="true"
+    />
     <action id="SearchEverywhereComponent"
             class="com.intellij.platform.searchEverywhere.frontend.toolbar.SearchEverywhereComponentAction"
             icon="AllIcons.Actions.Search"
@@ -76,7 +80,7 @@
     <registryKey key="search.everywhere.actions.ranker"
                  defaultValue=""
                  restartRequired="false"
-                 description="The id of the ranker that finds actions for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off. The value 'decisions' selects the OpenAI Decision API. The value 'mock' selects a local ranker for development."/>
+                 description="The id of the ranker that finds actions for natural-language queries in the Actions tab of Search Everywhere. An empty value turns the ranker off. The value 'decisions' selects the OpenAI Decision API. The value 'jev' selects a Jev model of TypeSafe. The value 'mock' selects a local ranker for development."/>
     <registryKey key="search.everywhere.actions.ranker.candidates"
                  defaultValue="[popularity*|splitAndMerge|unlimited]"
                  restartRequired="false"
@@ -90,6 +94,11 @@
                  restartRequired="false"
                  description="The model of the Decision API ranker of Search Everywhere. An empty value selects gpt-6-luna."/>
     <searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeDecisionsActionsRanker"/>
+    <registryKey key="search.everywhere.actions.ranker.jev.model"
+                 defaultValue=""
+                 restartRequired="false"
+                 description="The model of the Jev ranker of Search Everywhere. An empty value selects jev-latest for a TypeSafe key and ~typesafe/jev-latest for an OpenRouter key."/>
+    <searchEverywhere.actionsRanker implementation="com.intellij.platform.searchEverywhere.frontend.providers.actions.SeJevActionsRanker"/>
     <notificationGroup id="Search Everywhere Actions Ranker"
                        displayType="BALLOON"
                        bundle="messages.searchEverywhereFrontendBundle"
