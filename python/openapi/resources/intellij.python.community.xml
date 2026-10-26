@@ -19,5 +19,6 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <iconMapper mappingFile="PythonIconMappings.json"/>
+    <registryKey defaultValue="true" description="Support eel for local SDK" key="python.eel.native"/>
   </extensions>
 </idea-plugin>
