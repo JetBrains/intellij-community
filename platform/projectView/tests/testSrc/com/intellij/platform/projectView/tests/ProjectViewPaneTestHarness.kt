@@ -134,6 +134,28 @@ internal class ProjectViewPaneTester internal constructor(
     return sb.toString().trimEnd()
   }
 
+  /** Suspends until the [dumpTree] output satisfies [condition], then returns that output. */
+  suspend fun awaitTree(condition: (String) -> Boolean): String {
+    while (true) {
+      val seen = applied.value
+      val dump = dumpTree()
+      if (condition(dump)) return dump
+      applied.first { it > seen }
+    }
+  }
+
+  /** Returns the first loaded node with [mainText], depth first, without a request to load more nodes. */
+  fun findLoadedNode(mainText: String): Node? {
+    fun find(node: Node): Node? {
+      if (node.presentation.mainText == mainText) return node
+      return node.children().asSequence().filterIsInstance<Node>().firstNotNullOfOrNull { find(it) }
+    }
+    return (model.treeModel.root as? Node)?.let { find(it) }
+  }
+
+  /** Sends the request that the frontend sends when this pane becomes the selected one. */
+  fun select(): Unit = model.setCurrent(true)
+
   suspend fun assertTree(expected: String, maxDepth: Int = Int.MAX_VALUE) {
     Assertions.assertEquals(expected.trimIndent().trimEnd(), dumpTree(maxDepth))
   }

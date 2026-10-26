@@ -144,6 +144,9 @@ interface ProjectViewTreeNodeProvider<T : ProjectViewNodeUserObject> {
 abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(override val project: Project) : ProjectViewPaneModel {
   private val currentTreeState = AtomicReference<ProjectViewPaneTreeState?>(null)
 
+  // Not a part of the tree state, because a session can resume the tree of the previous one, see manageState.
+  private val lastNodeId = AtomicLong(0L)
+
   override val cutCopyPasteDeleteHandler: ProjectViewPaneCutCopyPasteDeleteHandler = MyCutCopyPasteDeleteHandler()
   
   private val dndHandlerReference = AtomicReference<ProjectViewPaneDnDHandler?>(null)
@@ -184,6 +187,12 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
 
   protected abstract fun createSelectNodeVisitorProvider(): ProjectViewSelectNodeVisitorProvider<T>
 
+  /**
+   * Keeps the state in the [builder] up to date until cancelled.
+   *
+   * An implementation can call this function again for the same [builder] without clearing it.
+   * Then the new session resumes the tree of the previous one: it keeps the node IDs and refreshes the loaded nodes.
+   */
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
     val treeState = ProjectViewPaneTreeState(id(), builder, createNodeProvider(builder.asSettingsAccessor()))
     currentTreeState.store(treeState)
@@ -478,8 +487,6 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     private val retryActivities = ConcurrentHashMap<Long, RetryActivity>()
 
     private val sessionFinished = CompletableDeferred<Unit>()
-
-    private var nextId = 1L
 
     /** Debug description of the node. */
     private fun n(nodeId: Long): String {
@@ -957,9 +964,18 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     }
 
     suspend fun initialize() {
-      LOG.debug { "Initializing the root of $id" }
-      val root = runInitLoop { updateRoot() }
-      if (root != null) {
+      val root = if (suspendingState.getChildren(null) == null) {
+        lastNodeId.store(0L)
+        LOG.debug { "Initializing the root of $id" }
+        runInitLoop { updateRoot() }
+      }
+      else {
+        LOG.debug { "Resuming the tree of the previous session of $id" }
+        updateChildrenWithRetry(SUPER_ROOT_ID, allowLoading = false, deep = true)
+        suspendingState.getChildren(null)?.firstOrNull()
+      }
+      // The previous session could stop before it loaded the top level nodes.
+      if (root != null && suspendingState.getChildren(root) == null) {
         LOG.debug { "Initializing the top level nodes of $id" }
         runInitLoop {
           updateChildren(root, allowLoading = true, deep = false)
@@ -1247,7 +1263,7 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
     }
 
     private suspend fun createNewModel(node: T): BackendProjectViewNodeModel<T>? {
-      val id = nextId++
+      val id = lastNodeId.incrementAndFetch()
       // Return the first value, compute the full presentation async.
       val computation = NodeModelComputation(id, node)
       modelComputations[id] = computation
