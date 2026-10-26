@@ -2,9 +2,11 @@
 package org.jetbrains.kotlin.idea.core.script.settings
 
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.ide.BrowserUtil
 import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.thisLogger
@@ -19,24 +21,20 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ide.setToolTipText
 import com.intellij.openapi.ui.setEmptyState
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.ui.CollectionListModel
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -54,17 +52,13 @@ import org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingSettingsC
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.DefaultListCellRenderer
-import javax.swing.JList
-import javax.swing.JButton
 import javax.swing.JComponent
+import javax.swing.JList
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
 private const val MAX_VISIBLE_LIST_ROWS: Int = 4
-
-private val reloadDisabledTooltip: HtmlChunk
-    get() = HtmlChunk.text(KotlinBaseScriptingBundle.message("script.definitions.reload.disabled.tooltip"))
 
 internal const val DISCOVERY_DOCUMENTATION_URL: String = "https://kotlinlang.org/docs/custom-script-deps-tutorial.html"
 
@@ -111,16 +105,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         .disableUpDownActions()
         .createPanel()
 
-    private val reloadButton = JButton(
-        KotlinBaseScriptingBundle.message("script.definitions.reload.button"), AllIcons.Actions.Refresh
-    ).apply {
-        addActionListener { reloadDefinitions() }
-    }
-
-    private val reloadButtonPanel = Wrapper(reloadButton).apply {
-        setToolTipText(reloadDisabledTooltip)
-    }
-
     private var appliedSnapshot = ScriptDefinitionsSnapshot(emptyList(), emptyList(), emptyList())
 
     override fun createComponent(): JComponent {
@@ -131,11 +115,14 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
                 row {
                     text(KotlinBaseScriptingBundle.message("script.definitions.discovery.explanation")) {
                         BrowserUtil.browse(DISCOVERY_DOCUMENTATION_URL)
-                    }.resizableColumn()
-                    cell(reloadButtonPanel).align(AlignX.RIGHT).align(AlignY.CENTER)
+                    }
                 }.customize(UnscaledGapsY(top = 8))
                 row {
-                    cell(ToolbarDecorator.createDecorator(tableView).disableAddAction().disableRemoveAction().createPanel())
+                    cell(ToolbarDecorator.createDecorator(tableView)
+                        .disableAddAction()
+                        .disableRemoveAction()
+                        .addExtraAction(ReloadDefinitionsAction())
+                        .createPanel())
                         .align(Align.FILL)
                 }.customize(UnscaledGapsY(top = 12))
                 row {
@@ -158,7 +145,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         }
 
 
-        installDirtyListeners()
         bindCompactHeight(definitionClassesList, definitionClassesModel, definitionClassesPanel)
         bindCompactHeight(classpathList, classpathModel, classpathPanel)
         reset()
@@ -177,7 +163,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         reportChanges(edited)
         KotlinScriptingSettings.getInstance(project).update { edited.toSettingsState() }
         appliedSnapshot = edited.detached()
-        updateReloadAvailability()
 
         KotlinScriptService.getInstance(project).scheduleReloadOpenScripts()
     }
@@ -202,21 +187,21 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
 
     override fun getId(): String = KOTLIN_SCRIPTING_SETTINGS_ID
 
-    private fun reloadDefinitions() {
+    private fun reloadDefinitions(anchor: JComponent) {
         KotlinScriptingSettingsCollector.logDefinitionsReloaded(project)
 
-        val modality = ModalityState.stateForComponent(reloadButton)
+        val modality = ModalityState.stateForComponent(anchor)
         KotlinScriptService.getInstance(project).scheduleReloadOpenScripts().invokeOnCompletion { failure ->
             if (failure != null) return@invokeOnCompletion
             ApplicationManager.getApplication().invokeLater({
-                showReloadDoneBalloon()
+                showReloadDoneBalloon(anchor)
                 showSnapshot(readSnapshot() ?: return@invokeLater)
             }, modality, project.disposed)
         }
     }
 
     @Suppress("SplitModeApiUsage")
-    private fun showReloadDoneBalloon() {
+    private fun showReloadDoneBalloon(anchor: JComponent) {
         JBPopupFactory.getInstance()
             .createHtmlTextBalloonBuilder(
                 KotlinBaseScriptingBundle.message("script.definitions.reload.done"),
@@ -225,7 +210,7 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
             )
             .setFadeoutTime(3000)
             .createBalloon()
-            .show(RelativePoint.getSouthOf(reloadButton), Balloon.Position.below)
+            .show(RelativePoint.getSouthOf(anchor), Balloon.Position.below)
     }
 
     private fun readSnapshot(): ScriptDefinitionsSnapshot? =
@@ -260,7 +245,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
         classpathModel.replaceAll(snapshot.classpath)
 
         appliedSnapshot = snapshot.detached()
-        updateReloadAvailability()
     }
 
     private fun currentSnapshot(): ScriptDefinitionsSnapshot = ScriptDefinitionsSnapshot(
@@ -270,25 +254,6 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
     )
 
     private fun ScriptDefinitionsSnapshot.detached(): ScriptDefinitionsSnapshot = copy(definitions = definitions.map { it.copy() })
-
-    private fun installDirtyListeners() {
-        tableView.listTableModel.addTableModelListener { updateReloadAvailability() }
-
-        val listListener = object : ListDataListener {
-            override fun intervalAdded(e: ListDataEvent) = updateReloadAvailability()
-            override fun intervalRemoved(e: ListDataEvent) = updateReloadAvailability()
-            override fun contentsChanged(e: ListDataEvent) = updateReloadAvailability()
-        }
-        definitionClassesModel.addListDataListener(listListener)
-        classpathModel.addListDataListener(listListener)
-    }
-
-    private fun updateReloadAvailability() {
-        val clean = !isModified()
-        reloadButton.isEnabled = clean
-        // An enabled button needs no reason, so the text goes away with the disabled state.
-        reloadButton.setToolTipText(if (clean) null else reloadDisabledTooltip)
-    }
 
     private fun bindCompactHeight(list: JBList<String>, model: CollectionListModel<String>, panel: JComponent) {
         fun refresh() {
@@ -361,6 +326,26 @@ internal class KotlinScriptingSettingsConfigurable(val project: Project) : Searc
             }
         },
     )?.trim()?.takeIf { it.isNotEmpty() }
+
+    /** Reloads the definitions. Pending changes come first, because a reload shows the applied settings. */
+    private inner class ReloadDefinitionsAction : DumbAwareAction(
+        KotlinBaseScriptingBundle.message("script.definitions.reload.button"),
+        null,
+        AllIcons.Actions.Refresh,
+    ), TooltipDescriptionProvider {
+        override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+        override fun update(e: AnActionEvent) {
+            val clean = !isModified()
+            e.presentation.isEnabled = clean
+            // An enabled action needs no reason, so the text goes away with the disabled state.
+            e.presentation.description = if (clean) null else KotlinBaseScriptingBundle.message("script.definitions.reload.disabled.tooltip")
+        }
+
+        override fun actionPerformed(e: AnActionEvent) {
+            reloadDefinitions(e.inputEvent?.component as? JComponent ?: tableView)
+        }
+    }
 
     private inner class AddClasspathDirectoryAction : DumbAwareAction(
         KotlinBaseScriptingBundle.message("manual.loading.definition.classpath.add.directory"),

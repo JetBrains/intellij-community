@@ -13,6 +13,7 @@ import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScratchFileOptionsByFile
 import org.jetbrains.kotlin.idea.core.script.configurations.defaultJavaHome
+import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
 import org.jetbrains.kotlin.idea.core.script.definition.jdkSupplier
 import org.jetbrains.kotlin.idea.core.script.definition.moduleSupplier
 import org.jetbrains.kotlin.idea.core.script.definition.scriptClassPath
@@ -58,6 +59,8 @@ class KotlinScratchDefinitionProvider(val project: Project) : ScriptDefinitionsP
             jdkHome?.takeIf { it.isNotBlank() }?.let(::File)
         }
         ide.moduleSupplier { _, virtualFile -> ScratchFileOptionsByFile[project, virtualFile].selectedModule?.let(::ModuleId) }
+        // KotlinScratchFileEditorWithPreview shows its own toolbar
+        ide.editorToolbar(null)
     }
 
     private fun scratchPathPattern(): String {

@@ -10,19 +10,19 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
-import com.intellij.openapi.ui.popup.JBPopup
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.ui.SeparatorComponent
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -42,8 +42,6 @@ import javax.swing.SwingConstants
  * Marks a `@KotlinScript` class or object in the gutter.
  *
  * The icon fades while no marker file declares the class, so the user sees the state without a click.
- * A script file carries no marker here, because [KotlinScriptDefinitionCodeVisionProvider] already
- * names its definition above the first line.
  */
 class KotlinScriptDefinitionLineMarkerProvider : LineMarkerProviderDescriptor() {
 

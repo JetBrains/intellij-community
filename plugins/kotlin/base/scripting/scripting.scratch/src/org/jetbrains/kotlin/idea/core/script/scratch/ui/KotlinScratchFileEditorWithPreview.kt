@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.ToggleAction
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.VisibleAreaListener
@@ -99,7 +100,7 @@ class KotlinScratchFileEditorWithPreview(
         ExplainCodeModeToggleAction(),
     )
 
-    private inner class MakeBeforeRunToggleAction : ToggleAction() {
+    private inner class MakeBeforeRunToggleAction : ToggleAction(), TooltipDescriptionProvider {
         init {
             templatePresentation.text = KotlinScratchBundle.message("scratch.toggle.make.before.run.text")
             templatePresentation.description = KotlinScratchBundle.message("scratch.toggle.make.before.run.description")
@@ -139,7 +140,7 @@ class KotlinScratchFileEditorWithPreview(
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
     }
 
-    private inner class InteractiveModeToggleAction : ToggleAction() {
+    private inner class InteractiveModeToggleAction : ToggleAction(), TooltipDescriptionProvider {
         init {
             templatePresentation.text = KotlinScratchBundle.message("scratch.toggle.interactive.mode.text")
             templatePresentation.description = KotlinScratchBundle.message(
@@ -169,7 +170,7 @@ class KotlinScratchFileEditorWithPreview(
         override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
     }
 
-    private inner class ExplainCodeModeToggleAction : ToggleAction() {
+    private inner class ExplainCodeModeToggleAction : ToggleAction(), TooltipDescriptionProvider {
         init {
             templatePresentation.text = KotlinScratchBundle.message("scratch.toggle.explain.mode.text")
             templatePresentation.description = KotlinScratchBundle.message("scratch.toggle.explain.mode.description")

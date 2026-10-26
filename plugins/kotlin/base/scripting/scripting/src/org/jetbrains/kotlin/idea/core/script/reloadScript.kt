@@ -10,69 +10,36 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonDataKeys.PROJECT
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.editor.toolbar.floating.AbstractFloatingToolbarProvider
-import com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import com.intellij.util.application
-import com.intellij.util.messages.Topic
+import com.intellij.ui.IconManager
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.intellij.lang.annotations.Language
-import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.core.script.ReloadScriptConfigurationService.Companion.TOPIC
+import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.core.script.configurations.KotlinScriptService
+import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
 import org.jetbrains.kotlin.idea.core.script.statistics.KotlinScriptingSettingsCollector
-import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
-import org.jetbrains.kotlin.idea.core.script.definition.reloadable
-import org.jetbrains.kotlin.idea.core.script.scriptDiagnostics
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
+import javax.swing.Icon
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.ide
 
-@Language("devkit-action-id")
-private const val ACTION_GROUP = "KotlinScripts.ReloadConfigurationActionGroup"
-
 private val SHOW_NOTIFICATION = Key.create<Boolean>("SHOW_NOTIFICATION")
 
-@ApiStatus.Internal
-class ScriptConfigurationFloatingToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
-    override val autoHideable: Boolean = false
-
-    override fun isApplicable(dataContext: DataContext): Boolean {
-        val ktFile = getProjectKtFile(dataContext) ?: return false
-        return ktFile.name.endsWith(".kts")
-    }
-
-    override fun register(dataContext: DataContext, component: FloatingToolbarComponent, parentDisposable: Disposable) {
-        val project = dataContext.getData(PROJECT) ?: return
-        val service = ReloadScriptConfigurationService.getInstance(project)
-
-        application.messageBus.connect(parentDisposable)
-            .subscribe(TOPIC, object : ReloadScriptConfigurationService.Listener {
-                override fun onNotificationChanged(virtualFile: VirtualFile) {
-                    service.handleFloatingToolbarComponent(virtualFile, component)
-                }
-            })
-    }
-}
+private val RELOAD_NEEDED_ICON: Icon = IconManager.getInstance().withIconBadge(KotlinIcons.LOAD_SCRIPT_CONFIGURATION, JBUI.CurrentTheme.IconBadge.INFORMATION)
 
 internal class ReloadScriptConfigurationAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
@@ -84,12 +51,15 @@ internal class ReloadScriptConfigurationAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val ktFile = getProjectKtFile(e.dataContext)
-        if (ktFile != null && ktFile.name.endsWith(".kts") && (ktFile.findScriptDefinition()?.compilationConfiguration?.get(ScriptCompilationConfiguration.ide.reloadable) ?: true)) {
-            e.presentation.isEnabledAndVisible = true
-            e.presentation.text = KotlinBaseScriptingBundle.message("reload.script.configuration.text", ktFile.name)
-        } else {
+        val configuration = ktFile?.findScriptDefinition()?.compilationConfiguration
+        if (ktFile == null || configuration?.get(ScriptCompilationConfiguration.ide.editorToolbar) == null) {
             e.presentation.isEnabledAndVisible = false
+            return
         }
+        e.presentation.isEnabledAndVisible = true
+        e.presentation.text = KotlinBaseScriptingBundle.message("reload.script.configuration.text", ktFile.name)
+        val reloadNeeded = !ktFile.alwaysVirtualFile.scriptDiagnostics.isNullOrEmpty() || ktFile.getUserData(SHOW_NOTIFICATION) == true
+        e.presentation.icon = if (reloadNeeded) RELOAD_NEEDED_ICON else KotlinIcons.LOAD_SCRIPT_CONFIGURATION
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -105,10 +75,7 @@ class ReloadScriptConfigurationService(private val project: Project, private val
                     if (virtualFile == null || virtualFile.isNonScript() || !virtualFile.name.endsWith(".main.kts")) return@launch
 
                     val ktFile = readAction { PsiManager.getInstance(project).findFile(virtualFile) } as? KtFile
-                    if (ktFile != null) {
-                        ktFile.putUserData(SHOW_NOTIFICATION, true)
-                        ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).onNotificationChanged(virtualFile)
-                    }
+                    ktFile?.putUserData(SHOW_NOTIFICATION, true)
                 }
             }
         }, this)
@@ -140,36 +107,12 @@ class ReloadScriptConfigurationService(private val project: Project, private val
             }
 
             ktFile.putUserData(SHOW_NOTIFICATION, false)
-            ApplicationManager.getApplication().messageBus.syncPublisher(TOPIC).onNotificationChanged(virtualFile)
-        }
-    }
-
-    fun handleFloatingToolbarComponent(virtualFile: VirtualFile, component: FloatingToolbarComponent) {
-        scope.launch {
-            val ktFile = readAction { PsiManager.getInstance(project).findFile(virtualFile) } as? KtFile
-            val shouldShow = !virtualFile.scriptDiagnostics.isNullOrEmpty() || ktFile?.getUserData(SHOW_NOTIFICATION) ?: false
-
-            withContext(Dispatchers.EDT) {
-                if (shouldShow) {
-                    component.scheduleShow()
-                } else {
-                    component.scheduleHide()
-                }
-            }
         }
     }
 
     override fun dispose() {}
 
-    interface Listener {
-        fun onNotificationChanged(virtualFile: VirtualFile) {}
-    }
-
     companion object {
-        @JvmField
-        @Topic.ProjectLevel
-        val TOPIC: Topic<Listener> = Topic.create("ReloadScriptConfigurationService", Listener::class.java)
-
         @JvmStatic
         fun getInstance(project: Project): ReloadScriptConfigurationService = project.service()
     }

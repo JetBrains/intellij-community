@@ -3,9 +3,8 @@ package org.jetbrains.kotlin.gradle.scripting.definition
 
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.definition.canBeSwitchedOff
-import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptDefinitionInlayHint
+import org.jetbrains.kotlin.idea.core.script.definition.editorToolbar
 import org.jetbrains.kotlin.idea.core.script.definition.kotlinScriptTemplate
-import org.jetbrains.kotlin.idea.core.script.definition.reloadable
 import kotlin.script.experimental.api.ide
 
 
@@ -17,8 +16,7 @@ fun GradleScriptDefinition.withIdeKeys(): GradleScriptDefinition = with {
             templateName = "Kotlin Script Gradle"
             description = KotlinBundle.message("action.new.script.description.gradle.kts")
         }
-        kotlinScriptDefinitionInlayHint(null)
-        reloadable(false)
+        editorToolbar(null)
         canBeSwitchedOff(false)
     }
 }

@@ -9,26 +9,27 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.caches.project.cacheByClass
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.definition.loadDefinitionsFromTemplates
 import org.jetbrains.kotlin.idea.core.script.loggingReporter
 import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
+import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.script.settings.parsedClassNames
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsFromClasspathDiscoverySource
 import java.io.File
 import java.nio.file.Path
-import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.IdeScriptCompilationConfigurationKeys
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
-import kotlin.script.experimental.api.ide
-import kotlin.script.experimental.api.with
+import kotlin.script.experimental.api.ScriptEvaluationConfiguration
 import kotlin.script.experimental.api.SourceCode
 import kotlin.script.experimental.api.baseClass
 import kotlin.script.experimental.api.hostConfiguration
+import kotlin.script.experimental.api.ide
+import kotlin.script.experimental.api.with
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.intellij.ScriptDefinitionsProvider
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
@@ -48,7 +49,13 @@ import kotlin.script.experimental.util.PropertiesCollection
 internal val IdeScriptCompilationConfigurationKeys.providerId: PropertiesCollection.Key<String> by PropertiesCollection.key()
 
 @Service(Service.Level.PROJECT)
-class ScriptDefinitionsModificationTracker : SimpleModificationTracker() {
+class ScriptDefinitionsModificationTracker(private val project: Project) : SimpleModificationTracker() {
+    /** A script file can get another definition, so its editor toolbar is built again. */
+    override fun incModificationCount() {
+        super.incModificationCount()
+        EditorNotifications.getInstance(project).updateAllNotifications()
+    }
+
     companion object {
         @JvmStatic
         fun getInstance(project: Project): ScriptDefinitionsModificationTracker = project.service()
