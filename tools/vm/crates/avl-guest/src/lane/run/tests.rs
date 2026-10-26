@@ -223,6 +223,30 @@ fn a_run_of_more_than_one_shard_is_refused() {
     refuse_shards(&environment(&[])).unwrap();
 }
 
+// A run under a Bazel test that lane-run refuses before its end writes a run result that names the refusal, so the
+// TeamCity step sends why no scenario ran. A result that is there already stays, and a plan writes none.
+#[test]
+fn a_refused_run_under_a_bazel_test_writes_its_refusal_as_the_run_result() {
+    let outputs = tempfile::tempdir().unwrap();
+    let directory = outputs.path().to_str().unwrap().to_owned();
+    let variables = [("TEST_TOTAL_SHARDS", "6"), ("TEST_UNDECLARED_OUTPUTS_DIR", directory.as_str())];
+    let refused = run(&args(&[]), &environment(&variables)).unwrap_err();
+    let file = run_result::path(Some(outputs.path()), outputs.path());
+    let document: serde_json::Value = serde_json::from_str(&fs::read_to_string(&file).unwrap()).unwrap();
+    assert_eq!(document["lane"], "ui");
+    assert_eq!(document["green"], false);
+    assert_eq!(document["refusal"]["code"], SHARDED_CODE);
+    assert_eq!(document["refusal"]["message"], refused.message.as_str());
+
+    fs::write(&file, "{}").unwrap();
+    run(&args(&[]), &environment(&variables)).unwrap_err();
+    assert_eq!(fs::read_to_string(&file).unwrap(), "{}", "the result of the end of a run stays");
+
+    fs::remove_file(&file).unwrap();
+    run(&args(&["--plan-only"]), &environment(&variables)).unwrap_err();
+    assert!(!file.exists(), "a plan writes no run result");
+}
+
 /// The `--jvm_flag` arguments of the UI job of TeamCity build 1097187017, for the runner with index `index`.
 fn teamcity_flags(index: u32) -> Vec<String> {
     [

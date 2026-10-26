@@ -89,8 +89,28 @@ fn a_green_run_has_no_failed_test() {
             failed_tests: Vec::new(),
             summaries: BTreeMap::new(),
             performance: Vec::new(),
+            refusal: None,
         }
     );
+}
+
+// A run that lane-run refused before its end names the code and the message of the refusal, and no test. The field is
+// absent from the result of a run that ended.
+#[test]
+fn a_refused_run_names_its_refusal() {
+    let out = tempfile::tempdir().unwrap();
+    let result = refused("ui-perf", "linux_window_manager_missing", "  the display :0 has no window manager ");
+    assert!(!result.green);
+    assert!(result.failed_tests.is_empty());
+    let file = path(Some(out.path()), Path::new("/unused"));
+    write(&file, &result).unwrap();
+    let document: Value = serde_json::from_str(&fs::read_to_string(&file).unwrap()).unwrap();
+    assert_eq!(
+        document["refusal"],
+        json!({"code": "linux_window_manager_missing", "message": "the display :0 has no window manager"})
+    );
+    let ended = serde_json::to_value(run_result("ui-perf", true, &[], None, Vec::new())).unwrap();
+    assert!(ended.get("refusal").is_none(), "{ended}");
 }
 
 // The run result goes to the evidence directory of a Bazel test, else to the run directory.

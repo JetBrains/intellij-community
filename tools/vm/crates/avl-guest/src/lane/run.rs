@@ -216,6 +216,27 @@ pub(crate) fn session_logs(
 /// Runs one iteration of `args`, and answers the exit status: 0 for a green run, 1 for any other. `variable` reads the
 /// environment.
 pub(crate) fn run(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
+    run_lane(args, variable).inspect_err(|refusal| record_refusal(args, variable, refusal))
+}
+
+/// Writes the run result of a run under a Bazel test that `lane-run` refused before the end of the run wrote one, such
+/// as a host probe that found no window manager. Without it, the TeamCity step reads no run result and sends an event
+/// with no failed test and no summary, which does not say why no scenario ran. A result that the end of the run wrote
+/// stays.
+fn record_refusal(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>, refusal: &AgentRefusal) {
+    let Some(outputs) = bazel_outputs(variable).filter(|_| !args.plan_only) else {
+        return;
+    };
+    let file = run_result::path(Some(&outputs), &outputs);
+    if file.exists() {
+        return;
+    }
+    if let Err(error) = run_result::write(&file, &run_result::refused(&args.lane, &refusal.code, &refusal.message)) {
+        eprintln!("lane-run: cannot write the run result {} of the refusal {}: {error}", file.display(), refusal.code);
+    }
+}
+
+fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
     let started = Instant::now();
     let flags = jvm_flags(&args.jvm_flags)?;
     refuse_shards(variable)?;

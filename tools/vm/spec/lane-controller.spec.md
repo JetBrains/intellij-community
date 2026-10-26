@@ -1769,6 +1769,13 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`the_run_result_goes_to_the_lane_outputs_or_to_the_run_directory`)
   [@test] ../crates/avl-junit/src/tests.rs (`the_failed_cases_are_those_that_fail_the_xml_with_its_failure`)
 
+- Under a Bazel test, a run that `lane-run` refuses before its end writes a result also. A host probe that finds no
+  window manager is such a refusal. Then `green` is false, no test fails, and `refusal` holds the `code` and the
+  `message` of the refusal, capped as a failure is. The result that the end of a run writes has no `refusal`, and it stays
+  when a later step refuses. A `--plan-only` run writes no result.
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`a_refused_run_names_its_refusal`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_refused_run_under_a_bazel_test_writes_its_refusal_as_the_run_result`)
+
 - The hard stop of the monitor writes the IJ Perf files and the result of the run too, from the records so far. Then
   `green` is false, and the open scenario is a failed test. A metric of a scenario that ended before the hard stop
   keeps its IJ Perf file.

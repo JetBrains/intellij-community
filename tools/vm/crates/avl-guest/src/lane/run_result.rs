@@ -10,6 +10,8 @@
 //!   the failure that the XML writes.
 //! - `summaries`: the text of each `summary.txt` of the authored artifacts of the iteration, by `<scenario>/<part>`.
 //! - `performance`: each IJ Perf file and part file of the run, as `file` and `artifactPath`.
+//! - `refusal`: only for a run that `lane-run` refused before its end wrote a result, such as a host probe that found
+//!   no window manager. It holds the `code` and the `message` of the refusal, so the event says why no test ran.
 //!
 //! A text holds at most [`TEXT_CAP`] bytes, cut at a character boundary.
 //!
@@ -49,6 +51,16 @@ pub(crate) struct RunResult {
     pub failed_tests: Vec<FailedTest>,
     pub summaries: BTreeMap<String, String>,
     pub performance: Vec<Published>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub refusal: Option<RunRefusal>,
+}
+
+/// The refusal that ended a run before its end wrote a result.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub(crate) struct RunRefusal {
+    pub code: String,
+    /// The message of the refusal, capped.
+    pub message: String,
 }
 
 /// One case that fails the JUnit XML.
@@ -75,6 +87,22 @@ pub(crate) fn run_result(lane: &str, green: bool, events: &[RunEvent], artifacts
             .collect(),
         summaries: artifacts.map(summaries).unwrap_or_default(),
         performance,
+        refusal: None,
+    }
+}
+
+/// The result of a run of `lane` that `lane-run` refused with `code` and `message` before the end of the run.
+pub(crate) fn refused(lane: &str, code: &str, message: &str) -> RunResult {
+    RunResult {
+        lane: lane.to_owned(),
+        green: false,
+        failed_tests: Vec::new(),
+        summaries: BTreeMap::new(),
+        performance: Vec::new(),
+        refusal: Some(RunRefusal {
+            code: code.to_owned(),
+            message: capped(message.trim()),
+        }),
     }
 }
 
