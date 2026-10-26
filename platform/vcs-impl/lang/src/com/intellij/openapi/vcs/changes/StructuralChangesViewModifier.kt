@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
@@ -55,6 +56,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.ThreeStateCheckBox
+import org.jetbrains.annotations.Nls
 import java.util.BitSet
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
@@ -372,15 +374,46 @@ private class HunkNode(
   }
 
   override fun getTextPresentation(): String {
-    if (hunk.name.parts.isEmpty()) return VcsBundle.message("changes.structural.blank.lines")
-    return joinedParts()
+    val parts = hunk.name.parts
+    if (parts.isEmpty()) return VcsBundle.message("changes.structural.blank.lines")
+    val shown = shownPartCount()
+    val text = joinedParts(parts.take(shown))
+    return if (shown < parts.size) text + " " + VcsBundle.message("changes.structural.more.parts", parts.size - shown) else text
+  }
+
+  /**
+   * The number of parts in the row: the parts that fit [MAX_ROW_LENGTH] characters, and at least one. A hunk can change hundreds of
+   * elements, as a rename of many methods does, so the row gives the count of the other parts.
+   */
+  private fun shownPartCount(): Int {
+    var length = 0
+    hunk.name.parts.forEachIndexed { index, part ->
+      length += partText(part).length + if (index > 0) SEPARATOR.length else 0
+      if (index > 0 && length > MAX_ROW_LENGTH) return index
+    }
+    return hunk.name.parts.size
   }
 
   /** The parts are source text, and the separators are symbols, so the text needs no translation. */
-  private fun joinedParts(): @NlsSafe String =
-    hunk.name.parts.joinToString(", ") { part -> part.previousText?.let { "$it → ${part.text}" } ?: part.text }
+  private fun joinedParts(parts: List<HunkNamePart>): @NlsSafe String = parts.joinToString(SEPARATOR, transform = ::partText)
 
-  private fun tooltip(): @NlsSafe String = listOfNotNull(getTextPresentation(), hunk.name.detail?.text).joinToString("  ")
+  private fun partText(part: HunkNamePart): @NlsSafe String = part.previousText?.let { "$it → ${part.text}" } ?: part.text
+
+  /** Lists the parts one per line, at most [MAX_TOOLTIP_PARTS] of them, and then the detail. */
+  private fun tooltip(): @Nls String {
+    val parts = hunk.name.parts
+    val builder = HtmlBuilder()
+    if (parts.isEmpty()) builder.append(VcsBundle.message("changes.structural.blank.lines"))
+    parts.take(MAX_TOOLTIP_PARTS).forEachIndexed { index, part ->
+      if (index > 0) builder.br()
+      builder.append(partText(part))
+    }
+    if (parts.size > MAX_TOOLTIP_PARTS) {
+      builder.br().append(VcsBundle.message("changes.structural.more.parts", parts.size - MAX_TOOLTIP_PARTS))
+    }
+    hunk.name.detail?.let { builder.br().append(it.text) }
+    return builder.wrapWithHtmlBody().toString()
+  }
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     val name = hunk.name
@@ -389,13 +422,17 @@ private class HunkNode(
       renderer.append(VcsBundle.message("changes.structural.blank.lines"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
       return
     }
-    name.parts.forEachIndexed { index, part ->
-      if (index > 0) renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+    val shown = shownPartCount()
+    name.parts.take(shown).forEachIndexed { index, part ->
+      if (index > 0) renderer.append(SEPARATOR, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       part.previousText?.let {
         renderer.append(it, attributes(FileStatus.DELETED))
         renderer.append(" → ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
       renderer.append(part.text, attributes(part.status))
+    }
+    if (shown < name.parts.size) {
+      renderer.append(" " + VcsBundle.message("changes.structural.more.parts", name.parts.size - shown), SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
     if (name.isWhitespaceOnly) {
       renderer.append("  " + VcsBundle.message("changes.structural.whitespace.only"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
@@ -418,6 +455,9 @@ private class HunkNode(
 
   private companion object {
     const val HUNK_SORT_WEIGHT = 9
+    const val MAX_ROW_LENGTH = 80
+    const val MAX_TOOLTIP_PARTS = 20
+    const val SEPARATOR = ", "
   }
 }
 
