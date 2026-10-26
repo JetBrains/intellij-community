@@ -46,6 +46,10 @@
     <extensionPoint qualifiedName="com.intellij.compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.compiler.task" area="IDEA_PROJECT" beanClass="com.intellij.compiler.CompileTaskBean"
+                    dynamic="true">
+      <with attribute="implementation" implements="com.intellij.openapi.compiler.CompileTask"/>
+    </extensionPoint>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <projectService
