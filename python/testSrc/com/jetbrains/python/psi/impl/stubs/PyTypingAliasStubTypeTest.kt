@@ -6,10 +6,12 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
+import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyFileImpl
+import com.jetbrains.python.psi.types.TypeEvalContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
@@ -90,6 +92,63 @@ class PyTypingAliasStubTypeTest : PyCodeInsightTestCase() {
 
     assertEquals(expected, astValues)
     assertEquals(expected, stubValues)
+  }
+
+  @Test
+  @TestFor(issues = ["PY-93428"])
+  fun `type parameters of an alias are the same with the stub and with the AST`() {
+    val aliasFile = myFixture.addFileToProject("aliases.py", """
+      from typing import Protocol, TypeAlias
+      from typing_extensions import TypeVar
+
+      T = TypeVar("T")
+      U = TypeVar("U", default=None)
+
+
+      class Box(Protocol[T, U]):
+          def get(self, item: T) -> U: ...
+
+
+      Explicit: TypeAlias = (
+          Box[T, U]
+          | int
+      )
+      Implicit = Box[T, U] | int
+    """.trimIndent()).virtualFile
+    val mainFile = myFixture.addFileToProject("main.py", """
+      from aliases import Explicit, Implicit
+
+      explicit: Explicit[str, bytes]
+      implicit: Implicit[str, bytes]
+      explicit_default: Explicit[str]
+      implicit_default: Implicit[str]
+    """.trimIndent()).virtualFile
+    val expected = mapOf(
+      "explicit" to "Box[str, bytes] | int",
+      "implicit" to "Box[str, bytes] | int",
+      "explicit_default" to "Box[str, None] | int",
+      "implicit_default" to "Box[str, None] | int",
+    )
+
+    fun types(): Map<String, String> = runReadActionBlocking {
+      val main = myFixture.psiManager.findFile(mainFile) as PyFile
+      val context = TypeEvalContext.codeAnalysis(myFixture.project, main)
+      expected.keys.associateWith { name ->
+        PythonDocumentationProvider.getTypeName(context.getType(main.findTopLevelAttribute(name)!!), context)
+      }
+    }
+
+    val aliases = runReadActionBlocking { myFixture.psiManager.findFile(aliasFile) as PyFileImpl }
+    val stubTypes = types()
+    runReadActionBlocking { assertNull(aliases.treeElement, "The AST of the aliases must not be loaded") }
+
+    val ast = runReadActionBlocking { aliases.node }
+    WriteAction.runAndWait<Throwable> { myFixture.psiManager.dropPsiCaches() }
+    val astTypes = types()
+    runReadActionBlocking { assertNotNull(ast.psi) }
+
+    assertEquals(expected, astTypes)
+    assertEquals(expected, stubTypes)
   }
 
   private fun findTarget(file: PyFile, name: String): PyTargetExpression {

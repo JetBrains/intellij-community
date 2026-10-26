@@ -3215,6 +3215,7 @@ class PyTypeAnnotationTest : PyCodeInsightTestCase() {
   @Test
   @TestFor(issues = ["PY-76820"])
   // Duplicates the test from conformance test suite but in multi-file context
+  @TestCaseOptions(assertRecursionPrevention = false)
   fun `explicit type aliases multi-file`() = test(
     """
     from util import *
