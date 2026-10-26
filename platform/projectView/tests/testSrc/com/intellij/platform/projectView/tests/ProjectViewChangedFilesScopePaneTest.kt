@@ -156,9 +156,8 @@ internal class ProjectViewChangedFilesScopePaneTest : AbstractProjectViewPaneTes
     src: VirtualFile,
     changed: List<String>,
   ): TestChangeProvider {
-    // Otherwise whether ScopeViewTreeModel groups the content roots under a module node depends on when the
-    // pane's settings accessor answers isShowModules, which makes the rendered tree non-deterministic. Set the
-    // per-project state only, the way ProjectViewPaneCompactPackagesTest does.
+    // Otherwise ScopeViewTreeModel groups the content roots under a module node, and assertTreeWithContentRoot
+    // needs them under the root. Set the per-project state only, the way ProjectViewPaneCompactPackagesTest does.
     ProjectViewState.getInstance(project).showModules = false
 
     val provider = TestChangeProvider(src)

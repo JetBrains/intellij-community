@@ -57,6 +57,7 @@ internal class ScopePaneProvider : ProjectViewPaneProvider {
 
 private class ScopePaneManager(private val project: Project, private val holders: Array<NamedScopesHolder>) {
   private val panes = hashMapOf<ProjectViewPaneId, ScopePaneModel>()
+  private val sharedModel = SharedScopeViewTreeModel(project)
 
   suspend fun updatePanes(): List<ProjectViewPaneModel> {
     val filters = readAction { NamedScopeFilter.list(*holders) }
@@ -73,7 +74,7 @@ private class ScopePaneManager(private val project: Project, private val holders
       if (existingPane == null) {
         // A brand-new scope: this is also where a renamed scope shows up, because the name is part of the ID.
         LOG.debug { "A new scope pane: $id" }
-        val newPane = ScopePaneModel(project, filter)
+        val newPane = ScopePaneModel(project, filter, sharedModel)
         panes[id] = newPane
         result += newPane
       }

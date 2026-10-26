@@ -3,8 +3,6 @@
 
 package com.intellij.platform.projectView.backend.impl.scope
 
-import com.intellij.ide.projectView.impl.CompoundProjectViewNodeDecorator
-import com.intellij.ide.projectView.impl.CompoundTreeStructureProvider
 import com.intellij.ide.scopeView.NamedScopeFilter
 import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.scopeView.ScopeViewTreeModel
@@ -16,7 +14,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.FileStatusListener
 import com.intellij.openapi.vcs.FileStatusManager
-import com.intellij.platform.projectView.impl.ProjectViewPaneViewSettings
 import com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
 import com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
 import com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
@@ -25,16 +22,26 @@ import com.intellij.platform.projectView.impl.TreeBasedProjectViewPaneModel
 import com.intellij.platform.projectView.impl.TreeStructureProjectViewNode
 import com.intellij.platform.projectView.impl.TreeStructureSelectNodeVisitorProvider
 import com.intellij.platform.projectView.impl.navigateToTreeStructureNodes
+import com.intellij.platform.projectView.pane.ProjectViewNodePath
 import com.intellij.platform.projectView.pane.ProjectViewPaneId
+import com.intellij.platform.projectView.pane.ProjectViewPaneLoadChildrenOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneNavigateOptions
+import com.intellij.platform.projectView.pane.ProjectViewPaneSelectionOptions
 import com.intellij.platform.projectView.pane.ProjectViewPaneStateBuilder
+import com.intellij.platform.projectView.pane.SelectInRequest
+import com.intellij.platform.projectView.pane.SuspendingBackendProjectViewPaneStateAccessor
 import com.intellij.platform.projectView.pane.projectViewPaneId
 import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.getAndUpdate
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.coroutines.resume
@@ -46,18 +53,36 @@ import kotlin.coroutines.resume
  * [com.intellij.ide.util.treeView.AbstractTreeStructure] (it's a structure of its own, with its own change tracking
  * and its own thread), which is why this pane doesn't extend [com.intellij.platform.projectView.impl.TreeStructureBasedProjectViewPaneModel] and has a
  * dedicated node provider and updater instead.
+ *
+ * All scope panes share one model, see [SharedScopeViewTreeModel]. A managed pane is live or frozen.
+ * A live pane runs a session on the model. A frozen pane keeps its last tree and resumes it when it becomes live again.
  */
 @ApiStatus.Internal
-class ScopePaneModel(
+class ScopePaneModel internal constructor(
   project: Project,
   filter: NamedScopeFilter,
+  private val sharedModel: SharedScopeViewTreeModel,
 ) : TreeBasedProjectViewPaneModel<TreeStructureProjectViewNode>(project) {
   /**
    * The pane ID never changes, but the filter behind it does: a scope keeps its name while its contents are
    * edited, and the holder hands out a new [NamedScopeFilter] every time that happens.
    */
   private val currentFilter = AtomicReference(filter)
+
+  /** The shared model, only while this pane is live. */
   private val treeModel = AtomicReference<ScopeViewTreeModel?>(null)
+
+  /** Guards the changes of [treeModel] and the calls to [ScopeViewTreeModel.setFilter], see [applyFilterIfLive]. */
+  private val filterLock = Any()
+
+  private val sessionState = MutableStateFlow(SessionState.UNMANAGED)
+
+  /**
+   * The nodes whose children the frontend has requested, until the backend loads them.
+   * A request that comes while this pane is frozen, or while its session stops, has no session to run in.
+   * So the next live session loads these children again.
+   */
+  private val requestedChildren = ConcurrentHashMap<Long, ProjectViewPaneLoadChildrenOptions>()
 
   private val paneId = paneId(filter)
 
@@ -75,33 +100,101 @@ class ScopePaneModel(
    */
   fun updateFilter(filter: NamedScopeFilter) {
     currentFilter.store(filter)
-    treeModel.load()?.setFilter(filter)
+    applyFilterIfLive()
+  }
+
+  /** The model shows the scope of the live pane, so a frozen pane must not set its filter on it. */
+  private fun applyFilterIfLive() {
+    synchronized(filterLock) {
+      treeModel.load()?.setFilter(currentFilter.load())
+    }
   }
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
-    // The model is created per management session, so that it (and its VFS/PSI listeners) only exists
-    // while somebody is actually looking at this pane.
-    val model = ScopeViewTreeModel(project, ProjectViewPaneViewSettings(builder.asSettingsAccessor())).apply {
-      setStructureProvider(CompoundTreeStructureProvider.get(project))
-      setNodeDecorator(CompoundProjectViewNodeDecorator.get(project))
-      setFilter(currentFilter.load())
+    sessionState.value = SessionState.FROZEN
+    try {
+      sharedModel.manage(this) { model ->
+        runLiveSession(model, builder)
+      }
     }
-    treeModel.store(model)
-    // Updates for VCS-based scopes like "All Changed Files".
-    FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
-      override fun fileStatusesChanged() {
+    finally {
+      sessionState.value = SessionState.UNMANAGED
+      requestedChildren.clear() // the service clears the builder, so these node IDs mean nothing now
+    }
+  }
+
+  private suspend fun runLiveSession(model: ScopeViewTreeModel, builder: ProjectViewPaneStateBuilder) {
+    val sessionDisposable = Disposer.newDisposable("The live session of the scope pane $paneId")
+    try {
+      synchronized(filterLock) {
+        treeModel.store(model)
         model.setFilter(currentFilter.load())
       }
-    }, model)
-    LOG.debug { "Created the scope tree model for $paneId" }
-    try {
+      // Updates for VCS-based scopes like "All Changed Files".
+      FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
+        override fun fileStatusesChanged() {
+          applyFilterIfLive()
+        }
+      }, sessionDisposable)
+      LOG.debug { "The scope pane $paneId is live" }
+      // If this pane was live before, the builder still has that tree, and this session resumes it.
       super.manageState(builder)
     }
     finally {
-      treeModel.store(null)
-      Disposer.dispose(model)
-      LOG.debug { "Disposed the scope tree model for $paneId" }
+      synchronized(filterLock) {
+        treeModel.store(null)
+      }
+      Disposer.dispose(sessionDisposable)
+      sessionState.value = SessionState.FROZEN
+      LOG.debug { "The scope pane $paneId is frozen" }
     }
+  }
+
+  override suspend fun onStateChanged(state: SuspendingBackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>) {
+    val resumed = sessionState.getAndUpdate { SessionState.LIVE } != SessionState.LIVE
+    for ((parentId, options) in requestedChildren) {
+      val parent = state.getNodeById(parentId)
+      if (parent == null || state.getChildren(parent) != null) {
+        requestedChildren.remove(parentId)
+      }
+      else if (resumed) {
+        super.loadChildren(parentId, options)
+      }
+    }
+  }
+
+  override suspend fun setPaneSelected(isSelected: Boolean, options: ProjectViewPaneSelectionOptions) {
+    if (!isSelected) return
+    sharedModel.select(this)
+    awaitLive()
+  }
+
+  override suspend fun loadChildren(parentId: Long, options: ProjectViewPaneLoadChildrenOptions) {
+    requestedChildren[parentId] = options
+    super.loadChildren(parentId, options)
+  }
+
+  override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
+    sharedModel.claim(this)
+    try {
+      awaitLive()
+      return super.findNodeForSelectIn(selectInRequest)
+    }
+    finally {
+      // The search doesn't select this pane. When the frontend selects it to show the found node, it claims the model again.
+      sharedModel.claimForSelectedPane()
+    }
+  }
+
+  /**
+   * Suspends until this pane is live.
+   * Returns earlier if this pane isn't managed, because its next session claims the model anyway.
+   * Also returns earlier if another pane has claimed the model since.
+   */
+  private suspend fun awaitLive() {
+    combine(sessionState, sharedModel.livePane) { state, livePane ->
+      state != SessionState.FROZEN || livePane !== this
+    }.first { it }
   }
 
   override suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<TreeStructureProjectViewNode> {
@@ -115,30 +208,14 @@ class ScopePaneModel(
   }
 
   private fun requireTreeModel(): ScopeViewTreeModel = requireNotNull(treeModel.load()) {
-    "The scope tree model of $paneId is only available while the pane is being managed"
+    "The scope tree model of $paneId is only available while the pane is live"
   }
 
   override suspend fun navigate(nodeIds: List<Long>, options: ProjectViewPaneNavigateOptions): Boolean {
     return navigateToTreeStructureNodes(project, nodeIds.mapNotNull { suspendingState?.getNodeById(it) }, options)
   }
 
-  override fun supportsOption(option: ProjectViewPaneOption): Boolean {
-    val settings = ProjectViewPaneSettingsService.getInstance(project)
-    return when (option) {
-      is ProjectViewPaneOption.AbbreviatePackageNames -> false
-      is ProjectViewPaneOption.FlattenModules ->
-        PlatformUtils.isIntelliJ() &&
-        isQualifiedModuleNamesEnabled(project) &&
-        settings.isOptionSelected(ProjectViewPaneOption.ShowModules)
-      is ProjectViewPaneOption.HideEmptyMiddlePackages -> settings.isOptionSelected(ProjectViewPaneOption.FlattenPackages)
-      is ProjectViewPaneOption.ShowModules -> PlatformUtils.isIntelliJ()
-      is ProjectViewPaneOption.CompactDirectories -> false
-      is ProjectViewPaneOption.ShowExcludedFiles -> false
-      is ProjectViewPaneOption.ShowLibraryContents -> false
-      is ProjectViewPaneOption.ShowScratchesAndConsoles -> false
-      else -> true
-    }
-  }
+  override fun supportsOption(option: ProjectViewPaneOption): Boolean = isOptionSupportedByScopePane(project, option)
 
   override fun supportsFileNesting(): Boolean = true
 
@@ -162,6 +239,36 @@ class ScopePaneModel(
   companion object {
     fun paneId(filter: NamedScopeFilter): ProjectViewPaneId = projectViewPaneId("${ScopeViewPane.ID}:$filter")
   }
+}
+
+/** The options of [ScopePaneModel]. [SharedScopeViewTreeModel] needs them without a pane. */
+internal fun isOptionSupportedByScopePane(project: Project, option: ProjectViewPaneOption): Boolean {
+  val settings = ProjectViewPaneSettingsService.getInstance(project)
+  return when (option) {
+    is ProjectViewPaneOption.AbbreviatePackageNames -> false
+    is ProjectViewPaneOption.FlattenModules ->
+      PlatformUtils.isIntelliJ() &&
+      isQualifiedModuleNamesEnabled(project) &&
+      settings.isOptionSelected(ProjectViewPaneOption.ShowModules)
+    is ProjectViewPaneOption.HideEmptyMiddlePackages -> settings.isOptionSelected(ProjectViewPaneOption.FlattenPackages)
+    is ProjectViewPaneOption.ShowModules -> PlatformUtils.isIntelliJ()
+    is ProjectViewPaneOption.CompactDirectories -> false
+    is ProjectViewPaneOption.ShowExcludedFiles -> false
+    is ProjectViewPaneOption.ShowLibraryContents -> false
+    is ProjectViewPaneOption.ShowScratchesAndConsoles -> false
+    else -> true
+  }
+}
+
+private enum class SessionState {
+  /** The service doesn't manage this pane, and the builder is empty. */
+  UNMANAGED,
+
+  /** Another pane is live, or this pane waits for its session to start. The builder keeps the last tree. */
+  FROZEN,
+
+  /** The session of this pane runs on the shared model. */
+  LIVE,
 }
 
 private val LOG = logger<ScopePaneModel>()

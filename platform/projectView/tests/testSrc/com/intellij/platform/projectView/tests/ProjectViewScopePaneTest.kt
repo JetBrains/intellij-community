@@ -1,8 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.projectView.tests
 
+import com.intellij.ide.projectView.impl.ProjectViewState
 import com.intellij.ide.scopeView.NamedScopeFilter
+import com.intellij.ide.scratch.RootType
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.platform.projectView.backend.impl.scope.ScopePaneModel
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
@@ -12,15 +16,20 @@ import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
+import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import com.intellij.ui.tree.project.ProjectFileTreeModel
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.time.Duration.Companion.seconds
@@ -39,6 +48,12 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
       pathFixture = tempPathFixture(subdirName = "src"),
       blueprintResourcePath = blueprint,
     )
+  }
+
+  @BeforeEach
+  fun hideModules() {
+    // Otherwise ScopeViewTreeModel groups the content roots under a module node, and assertTreeWithContentRoot needs them under the root.
+    ProjectViewState.getInstance(project.get()).showModules = false
   }
 
   @AfterEach
@@ -86,6 +101,56 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
     holder.removeAllSets()
     aggregator.awaitPaneGone(paneId)
   }
+
+  @Test
+  fun `a frozen scope pane resumes its tree when it is selected again`() = timeoutRunBlocking(60.seconds) {
+    val src = srcRoot.get().virtualFile
+    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
+    val holder = NamedScopeManager.getInstance(project.get())
+    val helloScope = NamedScope("Hello Files", FilePatternPackageSet(null, "*Hello.txt"))
+    val textScope = NamedScope("Text Files", FilePatternPackageSet(null, "*.txt"))
+    holder.addScope(helloScope)
+    holder.addScope(textScope)
+    val helloPaneId = ScopePaneModel.paneId(NamedScopeFilter(holder, helloScope))
+    val textPaneId = ScopePaneModel.paneId(NamedScopeFilter(holder, textScope))
+    aggregator.awaitPane(helloPaneId)
+    aggregator.awaitPane(textPaneId)
+
+    try {
+      withProjectViewPane(project.get(), helloPaneId) { hello ->
+        hello.select()
+        hello.awaitTree { "Hello.txt" in it.names() }
+        val helloNodeId = hello.findLoadedNode("Hello.txt")!!.projectViewNode.id
+
+        withProjectViewPane(project.get(), textPaneId) { text ->
+          text.select()
+          text.awaitTree { "World.txt" in it.names() }
+          edtWriteAction { src.createChildData(this@ProjectViewScopePaneTest, "NewHello.txt") }
+          // The text pane shows the new file, so the shared model has processed it. The frozen hello pane gets no update.
+          text.awaitTree { "NewHello.txt" in it.names() }
+          assertNull(hello.findLoadedNode("NewHello.txt"), "The frozen hello pane shows a file created after it was frozen")
+        }
+
+        hello.select()
+        val tree = hello.awaitTree { "NewHello.txt" in it.names() }
+        assertFalse("World.txt" in tree.names(), "The hello pane shows a file of the text scope:\n$tree")
+        assertEquals(helloNodeId, hello.findLoadedNode("Hello.txt")!!.projectViewNode.id, "The resumed tree has a new node ID")
+      }
+    }
+    finally {
+      edtWriteAction { src.findChild("NewHello.txt")?.delete(this@ProjectViewScopePaneTest) }
+    }
+  }
+
+  @Test
+  fun `a disposed project file tree model does not leak`() {
+    val model = ProjectFileTreeModel(project.get())
+    Disposer.dispose(model)
+    // The models of other scope panes can still be alive and registered. Only a disposed model is a leak.
+    LeakHunter.checkLeak(RootType.ROOT_EP.point, ProjectFileTreeModel::class.java) { it.isDisposed }
+  }
+
+  private fun String.names(): List<String> = lines().map { it.trim() }
 
   /**
    * The pane ID is derived from the scope and its package set (that's what the legacy Scope pane uses as its

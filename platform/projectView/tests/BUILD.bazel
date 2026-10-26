@@ -42,6 +42,7 @@ jvm_library(
         ":tests",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
+        "//platform/platform-impl/concurrency:concurrency_test_lib",
     ],
     deps = [
         # do not sort,
@@ -71,6 +72,7 @@ jvm_library(
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core",
         "//platform/platform-impl:ide-impl",
+        "//platform/platform-impl/concurrency",
         "//platform/lang-api:lang",
         "//platform/lang-api:lang_test_lib",
         "//platform/lang-impl",
