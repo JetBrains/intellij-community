@@ -7,10 +7,12 @@ import com.intellij.xdebugger.XDebugProcessStarter
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionBuilder
 import com.intellij.xdebugger.XSessionStartedResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-internal class XSessionStartedResultImpl(
+@ApiStatus.Internal
+class XSessionStartedResultImpl(
   override val session: XDebugSession,
   override val runContentDescriptor: RunContentDescriptor?,
 ) : XSessionStartedResult

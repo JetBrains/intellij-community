@@ -1,3 +1,6 @@
+*:com.intellij.xdebugger.attach.XAsyncAttachDebugger
+- com.intellij.xdebugger.attach.XAttachDebugger
+- a:attachDebugSessionAsync(com.intellij.openapi.project.Project,com.intellij.xdebugger.attach.XAttachHost,com.intellij.execution.process.ProcessInfo,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.xdebugger.impl.ThreadsActionsProvider
 - getFreezeActiveThreadHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 - getFreezeInactiveThreadsAmongSelectedHandler():com.intellij.xdebugger.impl.actions.DebuggerActionHandler
