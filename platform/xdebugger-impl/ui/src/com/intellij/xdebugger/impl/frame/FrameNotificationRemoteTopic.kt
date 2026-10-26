@@ -6,10 +6,10 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.debugger.impl.rpc.FRAME_NOTIFICATION_REMOTE_TOPIC
 import com.intellij.platform.debugger.impl.rpc.FrameNotificationRequest
 import com.intellij.platform.debugger.impl.shared.proxy.XDebugSessionProxy
 import com.intellij.platform.debugger.impl.ui.XDebuggerEntityConverter
-import com.intellij.platform.rpc.topics.ProjectRemoteTopic
 import com.intellij.platform.rpc.topics.sendToClient
 import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.util.asDisposable
@@ -24,8 +24,6 @@ import javax.swing.plaf.basic.BasicArrowButton
 
 @ApiStatus.Internal
 object FrameNotificationUtils {
-  val FRAME_NOTIFICATION_REMOTE_TOPIC: ProjectRemoteTopic<FrameNotificationRequest> = ProjectRemoteTopic("xdebugger.show.frame.notification", FrameNotificationRequest.serializer())
-
   @JvmStatic
   fun showNotification(project: Project, session: XDebugSession?, @NlsSafe content: String) {
     val proxy = session?.let { XDebuggerEntityConverter.asProxy(it) }
