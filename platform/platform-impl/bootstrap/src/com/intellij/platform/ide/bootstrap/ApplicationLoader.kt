@@ -62,6 +62,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.editor.impl.warmUpEditor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
@@ -449,6 +450,9 @@ private suspend fun initLafManagerAndCss(app: ApplicationImpl, asyncScope: Corou
       asyncScope.launch {
         // preload EditorColorsManager only when LafManager is ready - that's why out of coroutineScope
         initGlobalStyleSheet()
+        if (System.getProperty("ide.startup.editor.warmup").toBoolean()) {
+          warmUpEditor()
+        }
       }
     }
   }
