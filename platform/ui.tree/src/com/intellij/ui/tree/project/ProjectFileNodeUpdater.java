@@ -132,7 +132,7 @@ public abstract class ProjectFileNodeUpdater {
         updateFromElement(event.getNewParent(), ProjectViewUpdateCause.PSI_MOVE);
       }
     }, invoker);
-    RootType.ROOT_EP.addChangeListener(() -> updateFromRoot(ProjectViewUpdateCause.ROOTS_EP), project);
+    RootType.ROOT_EP.addChangeListener(() -> updateFromRoot(ProjectViewUpdateCause.ROOTS_EP), invoker);
     connection.subscribe(VirtualFileAppearanceListener.TOPIC, new VirtualFileAppearanceListener() {
       @Override
       public void virtualFileAppearanceChanged(@NotNull VirtualFile virtualFile) {
