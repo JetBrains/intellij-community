@@ -26,7 +26,10 @@ internal class PendingSoundSignals(private val screenReader: () -> Boolean = { G
   }
 
   fun choose(choices: Map<String, Boolean>) {
-    this.choices += choices
+    val withoutChoices = SoundSignalsPolicy(screenReader(), settings.state.soundSignals)
+    for ((id, on) in choices) {
+      this.choices = if (withoutChoices.isSignalOn(id) == on) this.choices - id else this.choices + (id to on)
+    }
     render()
   }
 

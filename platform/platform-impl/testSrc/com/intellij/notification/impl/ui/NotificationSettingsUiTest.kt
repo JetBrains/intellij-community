@@ -60,6 +60,17 @@ class NotificationSettingsUiTest {
   }
 
   @Test
+  fun `Play sound checked and unchecked again leaves the page unmodified`(): Unit = uiTest {
+    val page = Page(wrapper(BOUND_GROUP))
+
+    page.playSound.doClick()
+    page.playSound.doClick()
+
+    assertThat(page.playSound.isSelected).isFalse()
+    assertThat(page.soundSignals.isModified()).isFalse()
+  }
+
+  @Test
   fun `groups bound to one signal show the same choice`(): Unit = uiTest {
     val page = Page(wrapper(BOUND_GROUP))
     page.playSound.doClick()

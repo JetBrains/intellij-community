@@ -95,7 +95,7 @@ class SoundSignalsSettingsGroupTest {
   }
 
   @Test
-  fun `a group click toggles every child and stores explicit per-signal values`() = playingTest(
+  fun `a group click toggles every child and stores only the children it changes`() = playingTest(
     listOf(IdeSoundSignals.WARNING_CARET),
   ) { page ->
     val group = page.group(IdeSoundSignals.CODE_HIGHLIGHTING_GROUP)
@@ -111,7 +111,7 @@ class SoundSignalsSettingsGroupTest {
 
     group.doClick()
     page.panel.apply()
-    assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(CODE_HIGHLIGHTING_SIGNALS.associate { it.id to true })
+    assertThat(service<AccessibilitySettings>().soundSignals.signals).containsExactlyInAnyOrderEntriesOf(mapOf(IdeSoundSignals.WARNING_CARET.id to true))
   }
 
   @Test

@@ -26,8 +26,9 @@ class PendingSoundSignalsTest {
 
   @Test
   fun `a choice that another page has applied is no longer a modification`() = pendingTest { settings ->
-    val notifications = PendingSoundSignals()
+    val notifications = PendingSoundSignals { true }
     notifications.choose(mutedChoices)
+    assertThat(notifications.isModified()).isTrue()
 
     settings.loadSoundSignals(muted)
 
@@ -35,8 +36,21 @@ class PendingSoundSignalsTest {
   }
 
   @Test
-  fun `an apply without a choice writes nothing`() = pendingTest { settings ->
+  fun `a choice back to the calculated default is no edit`() = pendingTest { settings ->
+    setSupportScreenReaders(false)
     val pending = PendingSoundSignals()
+    pending.choose(mapOf("error.line" to true))
+    assertThat(pending.isModified()).isTrue()
+
+    pending.choose(mutedChoices)
+    assertThat(pending.isModified()).isFalse()
+    pending.apply()
+    assertThat(settings.soundSignals).isEqualTo(SoundSignalsSettingsState())
+  }
+
+  @Test
+  fun `an apply without a choice writes nothing`() = pendingTest { settings ->
+    val pending = PendingSoundSignals { true }
     pending.choose(mutedChoices)
     pending.apply()
     assertThat(settings.soundSignals).isEqualTo(muted)
