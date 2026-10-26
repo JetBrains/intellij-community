@@ -16,6 +16,7 @@ import com.intellij.tools.ide.util.common.replaceSpecialCharactersWithHyphens
 import com.intellij.tools.ide.util.common.withRetryBlocking
 import org.apache.http.HttpRequest
 import org.apache.http.auth.UsernamePasswordCredentials
+import org.apache.http.client.config.RequestConfig
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.auth.BasicScheme
 import org.kodein.di.direct
@@ -29,6 +30,8 @@ import kotlin.io.path.createDirectories
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 fun <T : HttpRequest> T.withAuth(): T = this.apply {
   val teamCityCI by lazy { CIServer.instance.asTeamCity() }
@@ -44,19 +47,46 @@ object TeamCityClient {
   // temporary directory, where artifact will be moved for preparation for publishing
   val artifactForPublishingDir: Path by lazy { GlobalPaths.instance.testsDirectory / "teamcity-artifacts-for-publish" }
 
-  val restUri: URI = teamCityURI.resolve("/app/rest/")
+  /**
+   * The server the agent was given in `teamcity.serverUrl`, a proxy next to the agent pool. Agents can't always use
+   * [teamCityURI] directly: on Hetzner it sometimes answers with the SSO page and HTTP 401 (AT-5406).
+   */
+  private val agentServerUri: URI? by lazy {
+    val proxy = (CIServer.instance as? TeamCityCIServer)?.getBuildParam("teamcity.serverUrl")
+      ?.let { runCatching { URI(it.trim().trimEnd('/')).normalize() }.getOrNull() }
+      ?.takeIf { it.host != null && it.host != teamCityURI.host }
+    if (proxy != null) logOutput("TeamCity REST requests go through $proxy, with $teamCityURI as the fallback")
+    proxy
+  }
+
+  val restUri: URI by lazy { (agentServerUri ?: teamCityURI).resolve("/app/rest/") }
   val guestAuthUri: URI = teamCityURI.resolve("/guestAuth/app/rest/")
 
   fun get(fullUrl: URI, additionalRequestActions: (HttpRequest) -> HttpRequest = { it }): JsonNode {
+    val onDefaultServer = onDefaultServer(fullUrl)
+    val result = sendGet(fullUrl, additionalRequestActions, timeout = if (onDefaultServer != null) 30.seconds else null)
+                 ?: onDefaultServer?.let {
+                   logOutput("Request through the agent proxy failed, retrying on $it")
+                   sendGet(it, additionalRequestActions, timeout = null)
+                 }
+
+    return checkNotNull(result) { "Request $fullUrl failed" }
+  }
+
+  private fun sendGet(fullUrl: URI, additionalRequestActions: (HttpRequest) -> HttpRequest, timeout: Duration?): JsonNode? {
     val request = HttpGet(fullUrl).apply {
       addHeader("Content-Type", "application/json")
       addHeader("Accept", "application/json")
+      if (timeout != null) {
+        val millis = timeout.inWholeMilliseconds.toInt()
+        config = RequestConfig.custom().setConnectTimeout(millis).setSocketTimeout(millis).build()
+      }
       additionalRequestActions(this)
     }
 
     logger.debug("Request to TeamCity: $fullUrl")
 
-    val result = withRetryBlocking(messageOnFailure = "Failure during request to TeamCity") {
+    return withRetryBlocking(messageOnFailure = "Failure during request to TeamCity") {
       HttpClient.sendRequest(request) {
         if (it.statusLine.statusCode != 200) {
           logError(InputStreamReader(it.entity.content).readText())
@@ -66,8 +96,13 @@ object TeamCityClient {
         jacksonObjectMapper().readTree(it.entity.content)
       }
     }
+  }
 
-    return requireNotNull(result) { "Request ${request.uri} failed" }
+  /** @return [uri] moved from the agent proxy to [teamCityURI], or null if [uri] doesn't go through the proxy */
+  private fun onDefaultServer(uri: URI): URI? {
+    val proxy = agentServerUri ?: return null
+    if (uri.host != proxy.host || uri.port != proxy.port) return null
+    return URI(teamCityURI.toString().trimEnd('/') + uri.rawPath + (uri.rawQuery?.let { "?$it" } ?: ""))
   }
 
   /**
