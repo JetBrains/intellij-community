@@ -13,9 +13,14 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiManager
+import com.intellij.testFramework.DumbModeTestUtils
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.runAll
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UIUtil
+import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * The commit checkboxes of the hunk nodes with a real partial tracker. The commit includes the file, so a new tracker includes its ranges.
@@ -252,6 +257,60 @@ class StructuralHunkInclusionTest : BasePartiallyExcludedChangesTest() {
 
     releaseUnneededTrackers()
     file.assertNullTracker()
+  }
+
+  fun `test the updates start with the first tree build that shows hunks`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed"), text(LINES))
+    refreshCLM()
+    val refreshes = countTreeRefreshes()
+
+    PropertiesComponent.getInstance(project).setValue(OPTION_ID, false)
+    assertTrue(hunks(file).isEmpty())
+    edit(file)
+    assertEquals("A tree build with the structural tree off starts no listener", 0, refreshes.get())
+
+    PropertiesComponent.getInstance(project).setValue(OPTION_ID, true)
+    hunks(file)
+    edit(file)
+    assertTrue(refreshes.get() > 0)
+  }
+
+  fun `test an edit of a file without a change does not refresh the tree`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed"), text(LINES))
+    val other = createLocalFile("other.txt", "other")
+    refreshCLM()
+    hunks(file)
+    val refreshes = countTreeRefreshes()
+
+    edit(other)
+    assertEquals(0, refreshes.get())
+  }
+
+  fun `test the end of indexing refreshes the tree`() {
+    val file = addLocalFile(FILE, text(LINES, 5 to "a-changed"), text(LINES))
+    refreshCLM()
+    hunks(file)
+    val refreshes = countTreeRefreshes()
+
+    DumbModeTestUtils.runInDumbModeSynchronously(project) { }
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    assertTrue(refreshes.get() > 0)
+  }
+
+  /** Edits the file and commits its PSI. The PSI changes, so a listener of the PSI sees the edit. */
+  private fun edit(file: VirtualFile) {
+    assertNotNull(PsiManager.getInstance(project).findFile(file))
+    runCommand { file.document.insertString(0, PREFIX) }
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+  }
+
+  /** Counts the requests to refresh the Changes tree. */
+  private fun countTreeRefreshes(): AtomicInteger {
+    val refreshes = AtomicInteger()
+    project.messageBus.connect(testRootDisposable).subscribe(ChangesViewModifier.TOPIC, ChangesViewModifier.ChangesViewModifierListener {
+      refreshes.incrementAndGet()
+    })
+    return refreshes
   }
 
   /** Reverts the hunks as Delete in the tree does. */
