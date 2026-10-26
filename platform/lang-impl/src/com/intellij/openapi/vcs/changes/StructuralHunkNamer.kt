@@ -48,7 +48,8 @@ data class HunkName(val parts: List<HunkNamePart>, val detail: HunkNamePart?, va
  * The current lines of a hunk select added and modified elements; its base lines select removed elements. An element counts only when it
  * starts its line, so an object literal property or a lambda inside a line belongs to its parent. A container counts only for a change in
  * its header, before its first child. A changed line outside all named elements names the hunk by its own text; the first line with a word
- * that the other side of the hunk does not have comes first.
+ * that the other side of the hunk does not have comes first. A hunk that nothing else names gets its changed words, as a rename shows
+ * them, so only a hunk of blank lines or bare brackets has no name.
  */
 @ApiStatus.Internal
 object StructuralHunkNamer {
@@ -264,6 +265,7 @@ object StructuralHunkNamer {
         if (part.element !in renamed) entries.add(Entry(part.line, HunkNamePart(label(part), part.status), part))
       }
       looseLine(named)?.let { entries.add(it) }
+      if (entries.isEmpty()) unnamedChange()?.let { entries.add(it) }
       entries.sortBy { it.line }
       // Two elements on one line can show the same text, as a Vue component option and its property do.
       val labels = HashSet<Pair<String, String?>>()
@@ -397,6 +399,30 @@ object StructuralHunkNamer {
       val line = candidates.firstOrNull { hasWord(side, it, if (isBase) removedWords else newWords) } ?: candidates.firstOrNull() ?: return null
       return Entry(line - from, HunkNamePart(lineLabel(side.lines.line(line)), status), null)
     }
+
+    /**
+     * Names a change that no element and no line outside the elements names: a changed enum constant among others on one line, for
+     * example. The constant does not start its line, and the line belongs to the first constant. The name shows the changed words as a
+     * rename does, or the first changed line when only spaces or symbols change.
+     */
+    private fun unnamedChange(): Entry? {
+      val removed = wordsInOrder(base, hunk.vcsLine1, hunk.vcsLine2, removedWords)
+      val added = wordsInOrder(current, hunk.line1, hunk.line2, newWords)
+      val name = when {
+        added.isNotEmpty() && removed.isNotEmpty() -> HunkNamePart(lineLabel(added.joinToString(", ")), FileStatus.MODIFIED,
+                                                                  lineLabel(removed.joinToString(", ")))
+        added.isNotEmpty() -> HunkNamePart(lineLabel(added.joinToString(", ")), FileStatus.ADDED)
+        removed.isNotEmpty() -> HunkNamePart(lineLabel(removed.joinToString(", ")), FileStatus.DELETED)
+        else -> {
+          val line = (hunk.line1 until hunk.line2).firstOrNull { !isTrivial(current.lines.line(it)) } ?: return null
+          HunkNamePart(lineLabel(current.lines.line(line)), FileStatus.MODIFIED)
+        }
+      }
+      return Entry(0, name, null)
+    }
+
+    private fun wordsInOrder(side: Side, from: Int, to: Int, words: Set<String>): List<String> =
+      (from until to).flatMap { line -> WORD.findAll(side.lines.line(line)).map { it.value }.filter { it in words }.toList() }.distinct()
 
     private fun detail(entries: List<Entry>): HunkNamePart? {
       val entry = entries.singleOrNull() ?: return null
