@@ -44,6 +44,13 @@ abstract class ComponentPredicate : () -> Boolean {
       }
     }
   }
+
+  // a private nested class, so that only the static initializer of ComponentPredicate initializes it
+  private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) = Unit
+
+    override fun invoke(): Boolean = value
+  }
 }
 
 val AbstractButton.selected: ComponentPredicate
@@ -167,12 +174,6 @@ private class NotPredicate(private val that: ComponentPredicate) : ComponentPred
     val notListener: (Boolean) -> Unit = { listener(!that.invoke()) }
     that.addListener(notListener)
   }
-}
-
-private class ConstantComponentPredicate(private val value: Boolean) : ComponentPredicate() {
-  override fun addListener(listener: (Boolean) -> Unit) = Unit
-
-  override fun invoke(): Boolean = value
 }
 
 class AdvancedSettingsPredicate(val id: String, val disposable: Disposable) : ComponentPredicate() {

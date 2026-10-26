@@ -229,7 +229,7 @@ internal val COMMON_FRAME_CLASS_NAMES: List<String> = listOf(
   ),
   classNames(
     "com.intellij.ui.layout.",
-    "ComponentPredicate", "ValueComponentPredicate", "ComponentPredicate\$Companion", "ConstantComponentPredicate",
+    "ComponentPredicate", "ValueComponentPredicate", "ComponentPredicate\$Companion",
   ),
   classNames(
     "com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.",
@@ -658,6 +658,9 @@ internal val OTHER_OS_FRAME_CLASS_NAMES: List<String> = listOf(
 /**
  * The classes that the warm-up only loads. Their static initializers start the native scroll bar observer, paint the background,
  * create images, set up the HTML kit, or read the toolkit, so they run on the EDT as before.
+ * The initializers of [com.intellij.util.animation.Easing] and [com.intellij.util.animation.CubicBezierEasing] need each other,
+ * and the initializer of `Easing.Stateful` starts the one of `Easing`. Two threads that enter this cycle at different classes
+ * wait for each other forever.
  */
 @VisibleForTesting
 internal val LOAD_ONLY_FRAME_CLASS_NAMES: Set<String> = listOf(
@@ -695,6 +698,10 @@ internal val LOAD_ONLY_FRAME_CLASS_NAMES: Set<String> = listOf(
   classNames(
     "com.intellij.ui.mac.foundation.",
     "MacUtil",
+  ),
+  classNames(
+    "com.intellij.util.animation.",
+    "Easing", "CubicBezierEasing", "Easing\$Stateful",
   ),
 ).flatten().toHashSet() + OTHER_OS_FRAME_CLASS_NAMES
 
