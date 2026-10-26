@@ -20,11 +20,13 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandNotTrustedException;
 import git4idea.commands.GitCommandResult;
+import git4idea.commands.GitHandler;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -156,7 +158,7 @@ class GitExecutableFileTester {
       .map(Project::getBasePath)
       .map(Path::of)
       .map(p -> Files.exists(p) ? p : null)
-      .orElse(Path.of("."));
+      .orElseGet(GitExecutableFileTester::getVersionCheckDirectory);
 
     if (executable instanceof GitExecutable.Unknown) {
       type = GitVersion.Type.UNDEFINED;
@@ -192,6 +194,18 @@ class GitExecutableFileTester {
     GitVersion version = GitVersion.parse(rawResult, type);
     LOG.info("Git version for " + executable + ": " + version);
     return version;
+  }
+
+  private static @NotNull Path getVersionCheckDirectory() {
+    Path directory = GitHandler.getVersionCheckDirectory();
+    try {
+      Files.createDirectories(directory);
+      return directory;
+    }
+    catch (IOException e) {
+      LOG.warn("Cannot create " + directory, e);
+      return Path.of(".");
+    }
   }
 
   public static class TestResult {

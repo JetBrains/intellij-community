@@ -5,6 +5,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -35,6 +36,7 @@ import git4idea.config.GitExecutableContext;
 import git4idea.config.GitExecutableManager;
 import git4idea.telemetry.GitBackendTelemetrySpan;
 import io.opentelemetry.api.trace.SpanBuilder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,6 +185,22 @@ public abstract class GitHandler {
   @Nullable
   Path getWorkingDirectory() {
     return myCommandLine.getWorkingDirectory();
+  }
+
+  /**
+   * Returns the directory where the Git version check runs when there is no project.
+   * The IDE owns this directory, so the check does not depend on the trust of the process working directory.
+   */
+  @ApiStatus.Internal
+  public static @NotNull Path getVersionCheckDirectory() {
+    return PathManager.getSystemDir().resolve("git-version-check");
+  }
+
+  private boolean isVersionCheckInIdeDirectory() {
+    Path workingDirectory = getWorkingDirectory();
+    return myCommand == GitCommand.VERSION &&
+           workingDirectory != null &&
+           workingDirectory.toAbsolutePath().normalize().equals(getVersionCheckDirectory().toAbsolutePath().normalize());
   }
 
   public VcsExecutableContext getExecutableContext() {
@@ -464,7 +482,9 @@ public abstract class GitHandler {
   }
 
   private void start() throws IOException {
-    if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
+    if (myProject == null &&
+        !isVersionCheckInIdeDirectory() &&
+        !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
       throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
                                               "Pass Project to GitHandler constructor if applicable.");
     }

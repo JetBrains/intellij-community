@@ -9,9 +9,11 @@ import com.intellij.testFramework.junit5.TestDisposable
 import git4idea.commands.GitCommandNotTrustedException
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.gitPlatformContextFixture
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.nio.file.Path
 
 @TestApplication
 internal class GitExecutableManagerTrustCacheTest {
@@ -42,6 +44,19 @@ internal class GitExecutableManagerTrustCacheTest {
     // would be replayed here even though the project is now trusted.
     TrustedProjects.setProjectTrusted(project, true)
     val version = manager.identifyVersion(project, executable)
+    assertTrue(version.isSupported)
+  }
+
+  @Test
+  fun `the version check without a project does not depend on the trust of the process working directory`(): Unit = with(context) {
+    TrustedProjectsTestUtil.enableTrustedProjectsCheck(testDisposable)
+    assertFalse(TrustedProjects.isProjectTrusted(Path.of("").toAbsolutePath()))
+
+    val manager = GitExecutableManager.getInstance()
+    val executable = manager.getExecutable(null)
+    manager.dropVersionCache(executable)
+
+    val version = manager.identifyVersion(null, executable)
     assertTrue(version.isSupported)
   }
 }
