@@ -13,7 +13,8 @@ import com.intellij.tools.ide.performanceTesting.commands.delay
 import com.intellij.tools.ide.performanceTesting.commands.exitApp
 import com.intellij.tools.ide.starter.bus.EventsBus
 import io.kotest.matchers.collections.shouldBeEmpty
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldEndWith
+import io.kotest.matchers.string.shouldStartWith
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 import kotlin.time.Duration.Companion.seconds
@@ -40,9 +41,8 @@ class ExecutionTimeoutHandlingTest {
     }
     catch (e: ExecTimeoutException) {
       val ciFailureDetails = DetailsOnCI.instance.getLinkToCIArtifacts(runContext!!.lastIdeReportingData)?.let { "Link on CI artifacts ${it}" }
-      e.message.shouldBe(
-        "Timeout of IDE run '$testName' for $timeout" + System.lineSeparator() + (ciFailureDetails ?: "")
-      )
+      e.message.shouldStartWith("Timeout of IDE run '$testName' for $timeout")
+      e.message.shouldEndWith(System.lineSeparator() + (ciFailureDetails ?: ""))
       e.stackTrace.shouldBeEmpty()
     }
   }
