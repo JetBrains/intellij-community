@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewModelBase
 import com.intellij.ide.structureView.StructureViewTreeElement
@@ -57,6 +58,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -330,6 +332,20 @@ internal class StructuralChangesViewModifierTest {
 
     assertEquals(listOf("second=3, unsaved=4"), nodes.map { it.textPresentation })
     assertEquals(1, (nodes.single().getNavigatable() as OpenFileDescriptor).line)
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `a hunk without an element icon shows the text icon`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val node = build(change("first=0", "first=1")).single()
+
+    val icon = withContext(Dispatchers.EDT) {
+      val renderer = ChangesBrowserNodeRenderer(project, { false }, false)
+      renderer.getTreeCellRendererComponent(JTree(DefaultTreeModel(node)), node, false, false, true, 0, false)
+      renderer.icon
+    }
+    assertSame(AllIcons.FileTypes.Text, icon)
   }
 
   @Test
