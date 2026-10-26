@@ -165,18 +165,6 @@ public class GenerateToStringWorker {
   }
 
   /**
-   * This method gets the choice if there is an existing {@code toString} method.
-   * <br/> 1) If there is a settings to always override use this.
-   * <br/> 2) Prompt a dialog and let the user decide.
-   *
-   * @param template the chosen template to use
-   * @return the policy the user selected (never null)
-   */
-  protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
-    return chooseConflictPolicy(findExistingMethodName(template));
-  }
-
-  /**
    * Looks for an existing {@code toString} method that conflicts with the generated one.
    * Slow: call it in a read action on a background thread.
    *
