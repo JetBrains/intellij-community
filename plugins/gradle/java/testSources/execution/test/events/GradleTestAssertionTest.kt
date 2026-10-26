@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import org.assertj.core.api.Assertions.assertThat
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE
@@ -1918,7 +1919,12 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
       executeTasks(":test", isRunAsTest = true)
       assertTestConsoleDoesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
-      assertTestConsoleContains("TEST_CLASSPATH: " + projectRoot.toNioPath())
+      assertTestConsoleDoesNotContain("TEST_CLASSPATH: " + projectRoot.toNioPath())
+
+      assertBuildViewTestTaskNodeText {
+        assertThat(it).contains("TEST_CLASSPATH: " + projectRoot.toNioPath())
+        assertThat(it).doesNotContain("DAEMON_CLASSPATH: " + projectRoot.toNioPath())
+      }
     }
   }
 }

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.execution.testframework.AbstractTestProxy
 import com.intellij.gradle.testFramework.GradleExecutionTestCase
+import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
+import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.platform.testFramework.assertion.treeAssertion.SimpleTreeAssertion
 import com.intellij.testFramework.RunAll.Companion.runAll
 import org.assertj.core.api.Assertions
@@ -81,6 +83,12 @@ abstract class GradleTestExecutionBaseTestCase : GradleExecutionTestCase() {
   ) {
     assertValue { testProxy ->
       TestProxyAssertions.assertPsiLocation(project, testProxy, className, methodName, parameterName)
+    }
+  }
+
+  fun assertBuildViewTestTaskNodeText(assertation: (String) -> Unit) {
+    assertBuildViewNode(buildView, ":test") {
+      assertation(it.consoleText)
     }
   }
 }

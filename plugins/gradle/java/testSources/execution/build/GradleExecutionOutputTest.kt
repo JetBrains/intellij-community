@@ -98,7 +98,7 @@ class GradleExecutionOutputTest : GradleExecutionTestCase() {
         }
       }
       assertBuildViewNode(runView, "java.lang.Exception: Task failure") {
-        if (isPerTaskOutputSupported()) {
+        if (isPerTaskOutputSupported() && !singleConsole) {
           Assertions.assertThat(it.consoleText)
             .contains("Task failure")
         }
