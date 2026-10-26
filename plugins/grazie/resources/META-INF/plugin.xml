@@ -4,8 +4,6 @@
   <vendor>JetBrains</vendor>
   <category>Languages</category>
 
-  <incompatible-with>com.intellij.jetbrains.client</incompatible-with>
-
   <description><![CDATA[
     <p>Intelligent spelling and grammar checks for any text you write in the IDE.</p>
     <ul>
