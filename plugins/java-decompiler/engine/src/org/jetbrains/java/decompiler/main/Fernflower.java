@@ -112,6 +112,10 @@ public class Fernflower implements IDecompiledData {
     structContext.addSpace(source, true);
   }
 
+  public void addSourceFile(File source) {
+    structContext.addClassFile(source, true);
+  }
+
   public void addLibrary(File library) {
     structContext.addSpace(library, false);
   }

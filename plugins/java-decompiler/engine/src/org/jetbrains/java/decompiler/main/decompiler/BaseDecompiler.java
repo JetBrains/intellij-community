@@ -28,6 +28,10 @@ public class BaseDecompiler {
     engine.addSource(source);
   }
 
+  public void addSourceFile(File source) {
+    engine.addSourceFile(source);
+  }
+
   public void addLibrary(File library) {
     engine.addLibrary(library);
   }

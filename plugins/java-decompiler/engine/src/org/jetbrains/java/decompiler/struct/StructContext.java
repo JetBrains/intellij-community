@@ -78,48 +78,56 @@ public class StructContext {
       }
     }
     else {
-      String filename = file.getName();
+      addFile(path, file, isOwn);
+    }
+  }
 
-      boolean isArchive = false;
-      try {
-        if (filename.endsWith(".jar")) {
-          isArchive = true;
-          addArchive(path, file, ContextUnit.TYPE_JAR, isOwn);
-        }
-        else if (filename.endsWith(".zip")) {
-          isArchive = true;
-          addArchive(path, file, ContextUnit.TYPE_ZIP, isOwn);
-        }
+  public void addClassFile(File file, boolean isOwn) {
+    addFile("", file, isOwn);
+  }
+
+  private void addFile(String path, File file, boolean isOwn) {
+    String filename = file.getName();
+
+    boolean isArchive = false;
+    try {
+      if (filename.endsWith(".jar")) {
+        isArchive = true;
+        addArchive(path, file, ContextUnit.TYPE_JAR, isOwn);
+      }
+      else if (filename.endsWith(".zip")) {
+        isArchive = true;
+        addArchive(path, file, ContextUnit.TYPE_ZIP, isOwn);
+      }
+    }
+    catch (IOException ex) {
+      String message = "Corrupted archive file: " + file;
+      DecompilerContext.getLogger().writeMessage(message, ex);
+    }
+    if (isArchive) {
+      return;
+    }
+
+    ContextUnit unit = units.get(path);
+    if (unit == null) {
+      unit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, path, isOwn, saver, decompiledData);
+      units.put(path, unit);
+    }
+
+    if (filename.endsWith(".class")) {
+      try (DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null)) {
+        StructClass cl = StructClass.create(in, isOwn, loader);
+        classes.put(cl.qualifiedName, cl);
+        unit.addClass(cl, filename);
+        loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(file.getAbsolutePath(), null));
       }
       catch (IOException ex) {
-        String message = "Corrupted archive file: " + file;
+        String message = "Corrupted class file: " + file;
         DecompilerContext.getLogger().writeMessage(message, ex);
       }
-      if (isArchive) {
-        return;
-      }
-
-      ContextUnit unit = units.get(path);
-      if (unit == null) {
-        unit = new ContextUnit(ContextUnit.TYPE_FOLDER, null, path, isOwn, saver, decompiledData);
-        units.put(path, unit);
-      }
-
-      if (filename.endsWith(".class")) {
-        try (DataInputFullStream in = loader.getClassStream(file.getAbsolutePath(), null)) {
-          StructClass cl = StructClass.create(in, isOwn, loader);
-          classes.put(cl.qualifiedName, cl);
-          unit.addClass(cl, filename);
-          loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(file.getAbsolutePath(), null));
-        }
-        catch (IOException ex) {
-          String message = "Corrupted class file: " + file;
-          DecompilerContext.getLogger().writeMessage(message, ex);
-        }
-      }
-      else {
-        unit.addOtherEntry(file.getAbsolutePath(), filename);
-      }
+    }
+    else {
+      unit.addOtherEntry(file.getAbsolutePath(), filename);
     }
   }
 

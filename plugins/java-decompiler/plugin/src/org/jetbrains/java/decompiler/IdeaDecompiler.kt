@@ -153,7 +153,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
       val maxSecProcessingMethod = options[IFernflowerPreferences.MAX_PROCESSING_METHOD]?.toString()?.toIntOrNull() ?: 0
       val decompiler = BaseDecompiler(provider, saver, options, IdeaLogger(), IdeaCancellationManager(maxSecProcessingMethod))
-      files.forEach { decompiler.addSource(java.io.File(it.path)) }
+      files.forEach { decompiler.addSourceFile(java.io.File(it.path)) }
       try {
         decompiler.decompileContext()
       }
