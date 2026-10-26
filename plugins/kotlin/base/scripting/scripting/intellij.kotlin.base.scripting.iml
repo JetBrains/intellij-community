@@ -97,6 +97,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.ide" />
     <orderEntry type="module" module-name="intellij.kotlin.navigation" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" />
+    <orderEntry type="module" module-name="intellij.kotlin.ide.kotlinc" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" />
     <orderEntry type="module" module-name="intellij.kotlin.jps.util.runtime" />

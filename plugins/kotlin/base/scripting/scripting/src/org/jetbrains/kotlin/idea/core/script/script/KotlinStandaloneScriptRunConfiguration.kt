@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.script
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.CantRunException
 import com.intellij.execution.CommonJavaRunConfigurationParameters
 import com.intellij.execution.ExecutionBundle
@@ -38,14 +39,15 @@ import com.intellij.util.PathUtil
 import com.intellij.util.lang.JavaVersion
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
+import org.jetbrains.kotlin.ide.kotlinc.AnalyzerKotlincProvider
 import org.jetbrains.kotlin.idea.KotlinRunConfigurationsBundle
-import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactNames
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.core.script.configurations.ScriptConfigurationsProviderImpl
-import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.core.script.script.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
+import org.jetbrains.kotlin.idea.core.script.scriptingInfoLog
+import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -178,18 +180,25 @@ private class ScriptCommandLineState(
         val virtualFile = StandardFileSystems.local().findFileByPath(File(filePath).absolutePath)
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
-        params.classPath.add(KotlinArtifacts.kotlinCompilerPath)
+        val kotlinc = try {
+            AnalyzerKotlincProvider.getKotlincHomeBlocking()
+        } catch (e: Exception) {
+            rethrowControlFlowException(e)
+            throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.kotlin.compiler.not.prepared", e.message.orEmpty()), e)
+        }
+        scriptingInfoLog("running $filePath with kotlinc $kotlinc")
+        params.classPath.add(kotlinc.resolve("lib/${KotlinArtifactNames.KOTLIN_COMPILER}"))
         params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
         params.silenceCompilerJdkWarnings()
 
-        ScriptDefinitionProvider.getInstance(environment.project)?.findDefinition(VirtualFileScriptSource(virtualFile))?.let {
+        ScriptDefinitionProvider.getInstance(environment.project)?.findDefinition(VirtualFileScriptSource(virtualFile))?.takeUnless { it.isDefault }?.let {
             params.programParametersList.prepend("plugin:kotlin.scripting:script-definitions=${it.baseClassType.typeName}")
             params.programParametersList.prepend("-P")
         }
 
         params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
         params.programParametersList.prepend("-script")
-        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinPluginLayout.kotlinc.absolutePath))
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(kotlinc.toAbsolutePath().toString()))
         params.programParametersList.prepend("-kotlin-home")
 
         val classpath = buildSet {

@@ -121,6 +121,7 @@ jvm_library(
         "//plugins/kotlin/kotlin.ide",
         "//plugins/kotlin/navigation",
         "//plugins/kotlin/base/indices",
+        "//plugins/kotlin/ide-kotlinc",
         "//platform/platform-api:ide",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
         "//plugins/kotlin/jps/util/runtime",

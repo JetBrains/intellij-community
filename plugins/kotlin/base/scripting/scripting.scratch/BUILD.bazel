@@ -82,6 +82,7 @@ jvm_library(
         "//plugins/kotlin/base/project-structure",
         "//java/java-psi-api:psi",
         "//plugins/kotlin/base/scripting/scripting",
+        "//plugins/kotlin/ide-kotlinc",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
         "//platform/statistics",
