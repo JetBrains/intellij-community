@@ -42,6 +42,7 @@ dev_plugin(
     name = "intellij.platform.testRunner.plugin_dev_plugin",
     content_module_jars = [
         "//platform/smRunner/dashboard:dashboard_content_module_jar",
+        "//platform/smRunner/vcs:vcs_content_module_jar",
         "//platform/smRunner:smRunner_content_module_jar",
         "//platform/testRunner:testRunner_content_module_jar",
     ],
@@ -49,12 +50,10 @@ dev_plugin(
     jars = {
         "lib/platform-testRunner-plugin.jar": [
             "intellij.platform.testRunner.plugin",
-            "intellij.platform.smRunner.vcs",
         ],
     },
     main_module = "intellij.platform.testRunner.plugin",
     modules = {
-        "//platform/smRunner/vcs": "intellij.platform.smRunner.vcs",
         "//platform/testRunner/plugin": "intellij.platform.testRunner.plugin",
     },
     plugin_directory = "plugins/platform-testRunner-plugin",
