@@ -53,7 +53,7 @@ import com.intellij.platform.execution.dashboard.splitApi.frontend.RunDashboardU
 import com.intellij.ui.content.Content;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.remdev.BackendApi;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.flow.Flow;
@@ -151,9 +151,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         updateDashboard(true);
       }
     };
-    CUSTOMIZER_EP_NAME.addExtensionPointListener(dashboardUpdater, myProject);
+    CUSTOMIZER_EP_NAME.addExtensionPointListener(myScope, dashboardUpdater);
 
-    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
+    DEFAULT_TYPES_PROVIDER_EP_NAME.addExtensionPointListener(myScope, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(RunDashboardDefaultTypesProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
         Set<String> types = new HashSet<>(getTypes());
@@ -168,9 +168,9 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         setTypes(types);
         dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
       }
-    }, myProject);
+    });
 
-    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(new ExtensionPointListener<>() {
+    ConfigurationType.CONFIGURATION_TYPE_EP.addExtensionPointListener(myScope, new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(ConfigurationType extension, @NotNull PluginDescriptor pluginDescriptor) {
         setTypes(new HashSet<>(getTypes()));
@@ -183,13 +183,13 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
         setTypes(types);
         dashboardUpdater.extensionRemoved(extension, pluginDescriptor);
       }
-    }, myProject);
+    });
   }
 
   private void initServiceContentListeners() {
     if (!myListenersInitialized.compareAndSet(false, true)) return;
 
-    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    SimpleMessageBusConnection connection = myProject.getMessageBus().connect(myScope);
     connection.subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       private final BackendRunDashboardUpdatesQueue synchronizationScheduler
         = new BackendRunDashboardUpdatesQueue(
