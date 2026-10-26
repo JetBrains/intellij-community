@@ -68,6 +68,8 @@ internal fun KotlinMppGradleProjectResolver.Context.populateModuleDependenciesWi
         extensionInstance.afterPopulateSourceSetDependencies(
             this, sourceSetDataNode, sourceSet, substitutedSourceSetDependencies, createdDependencyNodes
         )
+
+        shareProjectLibraryTargets(projectDataNode, createdDependencyNodes)
     }
 }
 

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
@@ -106,6 +107,29 @@ private fun tryLinkProjectLibrary(projectNode: DataNode<ProjectData>, library: L
             ?: return false
     }
     return projectLibrary.getPaths(LibraryPathType.BINARY).containsAll(library.getPaths(LibraryPathType.BINARY))
+}
+
+/**
+ * Replaces the target of each project-level library dependency in [dependencyNodes] with the project library of the same internal name,
+ * so memory usage inside data nodes is reduced.
+ *
+ * This function should be called only when the source set has all its dependencies.
+ */
+internal fun shareProjectLibraryTargets(
+    projectNode: DataNode<ProjectData>,
+    dependencyNodes: List<DataNode<out AbstractDependencyData<*>>>
+) {
+    val projectLibraries = projectNode.putUserDataIfAbsent(PROJECT_LIBRARIES_BY_INTERNAL_NAME, HashMap())
+    for (dependencyNode in dependencyNodes) {
+        val dependency = dependencyNode.data as? LibraryDependencyData ?: continue
+        if (dependency.level != LibraryLevel.PROJECT) continue
+        val internalName = dependency.target.internalName
+        val projectLibrary = projectLibraries[internalName]
+            ?: ExternalSystemApiUtil.findChild(projectNode, ProjectKeys.LIBRARY) { it.data.internalName == internalName }?.data
+                ?.also { projectLibraries[internalName] = it }
+            ?: continue
+        dependency.target = projectLibrary
+    }
 }
 
 private fun addToDependencyNode(
