@@ -28,6 +28,7 @@ private val SCRIPT_LOCATION_EXPRESSION = "(?:[Bb]uild file|[Ss]ettings file|Init
   .format(FILE_PATH_MACROS, LINE_MACROS)
 private val FILE_LOCATION_EXPRESSION = "%s:%s(?::%s)?".format(FILE_PATH_MACROS, LINE_MACROS, COLUMN_MACROS)
 
+@Suppress("SplitModeApiUsage")
 class GradleConsoleFilterProvider : ConsoleFilterProvider {
 
   class GradleFileLocationRegexpFilter(project: Project) : RegexpFilter(project, FILE_LOCATION_EXPRESSION)
