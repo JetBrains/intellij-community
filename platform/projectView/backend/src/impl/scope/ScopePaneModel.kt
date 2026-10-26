@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
 import com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
+import com.intellij.platform.projectView.impl.ProjectViewPsiSelectTarget
 import com.intellij.platform.projectView.impl.ProjectViewSelectNodeVisitorProvider
 import com.intellij.platform.projectView.impl.ProjectViewSelectTarget
 import com.intellij.platform.projectView.impl.ProjectViewTreeNodeProvider
@@ -184,9 +185,11 @@ class ScopePaneModel internal constructor(
    */
   override suspend fun findNodeForSelectIn(selectInRequest: SelectInRequest): ProjectViewNodePath? {
     val target = computeSelectTarget(selectInRequest) ?: return null
-    val pane = findPaneThatAccepts(target.file) ?: return null
+    // The scope panes don't override computeSelectTarget, so the target is the default one.
+    val file = (target as? ProjectViewPsiSelectTarget)?.file
+    val pane = findPaneThatAccepts(file) ?: return null
     if (pane === this) return findNodeInThisPane(target)
-    LOG.debug { "The scope of $paneId doesn't contain ${target.file}, searching ${pane.paneId} instead" }
+    LOG.debug { "The scope of $paneId doesn't contain $file, searching ${pane.paneId} instead" }
     return BackendProjectViewPaneService.getInstance(project).withPaneActive(pane.paneId) {
       pane.findNodeInThisPane(target)
     }
