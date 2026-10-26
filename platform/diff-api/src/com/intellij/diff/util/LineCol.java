@@ -6,8 +6,15 @@ import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * A line and a column of a document, both counted from zero. The column is a number of characters from the start of the line.
+ * <p>
+ * The diff code uses {@link LineCol} instead of {@link com.intellij.openapi.editor.LogicalPosition}.
+ * A logical position is the position of the caret, that can be out of sync with the text offset: a file that uses `\t` as indent can put
+ * caret in the middle of the tabulation, and thus gains imaginary columns. We need Editor-setting-agnostic representation
+ * that is directly mapped to the Document offsets.
+ */
 public class LineCol {
-  // counting from zero
   public final int line;
   public final int column;
 
@@ -45,6 +52,7 @@ public class LineCol {
     return String.format("{ line: %s, column: %s }", line, column);
   }
 
+  /** The position of {@code offset}. An offset at or past the end of the text gives the end of the last line. */
   public static @NotNull LineCol fromOffset(@NotNull Document document, int offset) {
     if (offset < document.getTextLength()) {
       int line = document.getLineNumber(offset);
@@ -58,6 +66,7 @@ public class LineCol {
     }
   }
 
+  /** The position of the primary caret of {@code editor} */
   public static @NotNull LineCol fromCaret(@NotNull Editor editor) {
     return fromOffset(editor.getDocument(), editor.getCaretModel().getOffset());
   }
