@@ -21,11 +21,12 @@ import org.jetbrains.kotlin.analysis.api.resolution.single
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
-import org.jetbrains.kotlin.idea.core.script.isMainKtsScript
 import org.jetbrains.kotlin.idea.core.script.KotlinBaseScriptingBundle
+import org.jetbrains.kotlin.idea.core.script.definition.BundledScriptDefinition
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtVisitorVoid
+import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
 
 private val MAIN_KTS_ANNOTATION_FQ_NAMES = setOf(
     FqName("kotlin.script.experimental.dependencies.DependsOn"),
@@ -43,7 +44,7 @@ class MainKtsAnnotationUsageInPlainKtsInspection : KotlinApplicableInspectionBas
 
     override fun isApplicableByPsi(element: KtAnnotationEntry): Boolean {
         val shortName = element.shortName?.asString() ?: return false
-        return shortName in MAIN_KTS_ANNOTATION_SHORT_NAMES && !element.containingKtFile.isMainKtsScript()
+        return shortName in MAIN_KTS_ANNOTATION_SHORT_NAMES && element.containingKtFile.findScriptDefinition() is BundledScriptDefinition
     }
 
     context(session: KaSession)
