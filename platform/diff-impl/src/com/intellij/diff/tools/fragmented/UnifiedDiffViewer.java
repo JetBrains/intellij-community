@@ -132,6 +132,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   private final @NotNull MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
   private final @NotNull UnifiedFoldingModel myFoldingModel;
   private final @NotNull MarkupUpdater myMarkupUpdater;
+  private final @Nullable List<UnifiedSideEditor> mySideEditors;
 
   protected final @NotNull TwosideTextDiffProvider.NoIgnore myTextDiffProvider;
 
@@ -165,6 +166,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     myDocument = EditorFactory.getInstance().createDocument("");
 
     myEditor = DiffUtil.createEditor(myDocument, myProject, true, true);
+    mySideEditors = createSideEditors();
 
     myContentPanel = new OnesideContentPanel(myEditor.getComponent());
     if (getProject() != null) {
@@ -1227,31 +1229,16 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   public @NotNull List<? extends Editor> getHighlightEditors() {
     if (myProject == null) return Collections.emptyList();
 
-    return ReadAction.computeBlocking(() -> {
-      List<Editor> result = new ArrayList<>();
-      result.add(myEditor);
-      ContainerUtil.addIfNotNull(result, createImaginaryEditor(Side.LEFT));
-      ContainerUtil.addIfNotNull(result, createImaginaryEditor(Side.RIGHT));
-      return result;
-    });
+    List<Editor> result = new ArrayList<>();
+    result.add(myEditor);
+    if (mySideEditors != null) result.addAll(mySideEditors);
+    return result;
   }
 
-  private @Nullable Editor createImaginaryEditor(@NotNull Side side) {
+  private @Nullable List<UnifiedSideEditor> createSideEditors() {
     if (myProject == null) return null;
-    if (UnifiedSideEditor.isDisabled()) return null;
     if (!Registry.is("diff.unified.enable.imaginary.editor")) return null;
-
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    LineCol caretPosition = LineCol.fromOffset(myDocument, caretOffset);
-
-    Document sideDocument = getDocument(side);
-    UnifiedSideEditor editor = new UnifiedSideEditor(this, myProject, side);
-
-    int sideLine = transferLineFromOnesideStrict(side, caretPosition.line);
-    if (sideLine != -1) {
-      editor.getCaretModel().moveToOffset(LineCol.toOffset(sideDocument, sideLine, caretPosition.column));
-    }
-    return editor;
+    return List.of(new UnifiedSideEditor(this, myProject, Side.LEFT), new UnifiedSideEditor(this, myProject, Side.RIGHT));
   }
 
   private class MyStatusPanel extends StatusPanel {

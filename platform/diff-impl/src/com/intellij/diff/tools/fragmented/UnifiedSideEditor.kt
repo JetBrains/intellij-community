@@ -3,70 +3,101 @@ package com.intellij.diff.tools.fragmented
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.editor.Caret
+import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorGutter
+import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.EditorSettings
 import com.intellij.openapi.editor.FoldingModel
 import com.intellij.openapi.editor.IndentsModel
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.EditorProjection
+import com.intellij.openapi.editor.ScrollType
+import com.intellij.openapi.editor.ScrollingModel
 import com.intellij.openapi.editor.VisualPosition
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.event.EditorMouseEventArea
+import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.event.EditorMouseMotionListener
+import com.intellij.openapi.editor.event.VisibleAreaListener
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EmptyFoldingModel
 import com.intellij.openapi.editor.impl.EmptyImmutableMarkupModel
 import com.intellij.openapi.editor.impl.EmptyIndentsModel
+import com.intellij.openapi.editor.impl.ImaginaryCaret
+import com.intellij.openapi.editor.impl.ImaginaryCaretModel
 import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.editor.markup.MarkupModel
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.textarea.EmptyInlayModel
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ProperTextRange
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Insets
 import java.awt.Point
+import java.awt.Rectangle
+import java.awt.event.MouseEvent
 import java.awt.geom.Point2D
-import java.util.concurrent.ConcurrentHashMap
 import javax.swing.JComponent
+import javax.swing.border.Border
 
 /**
- * The imaginary editor of one side of a [UnifiedDiffViewer]. The daemon highlights the side document through it.
+ * The editor of one side of a [UnifiedDiffViewer].
+ *
+ * The unified editor shows the lines of both sides in one document, that cannot be parsed by normal language parsers.
+ *
+ * This editor is over the side document, so PSI, code insight and the daemon see the real file.
+ * The caret, the selection, the scrolling and the geometry map to the unified editor line by line.
+ *
+ * The Document highlighting is then copied into the host editor by [com.intellij.diff.tools.fragmented.UnifiedDiffViewer.MarkupUpdater].
+ *
+ * The [UnifiedSideEditor] is being passed to the code navigation actions, and passes the navigation requests to the host.
+ * So it requires much deeper imitation of a proper [com.intellij.openapi.editor.impl.EditorImpl] than the [ImaginaryEditor] does.
+ *
+ * The [UnifiedSideEditor] shares lifetime with its host editor.
  */
 @ApiStatus.Internal
 class UnifiedSideEditor(
   private val viewer: UnifiedDiffViewer,
   project: Project,
   val side: Side,
-) : ImaginaryEditor(project, viewer.getDocument(side)) {
-  override fun notImplemented(): RuntimeException {
-    isDisabled = true
-    return UnsupportedOperationException("Not implemented. UnifiedDiffViewer.UnifiedSideEditor will be disabled.")
-  }
+) : ImaginaryEditor(project, viewer.getDocument(side)), EditorProjection {
+  private val sideCaretModel = SideCaretModel(this)
+  private val sideScrollingModel = SideScrollingModel(this)
 
-  private fun warnMockImplementation(methodName: String) {
-    if (reportedMockMethods.add(methodName)) {
-      val message = "Method '$methodName' is not applicable. Consider using 'editor instanceOf ImaginaryEditor'"
-      if (ApplicationManager.getApplication().isInternal || ApplicationManager.getApplication().isUnitTestMode) {
-        LOG.error(message)
-      }
-      else {
-        LOG.warn(message)
-      }
-    }
-  }
+  private val host: EditorEx
+    get() = viewer.editor
 
-  override fun getVirtualFile(): VirtualFile? = FileDocumentManager.getInstance().getFile(document)
+  override val hostEditor: Editor
+    get() = viewer.editor
 
-  override fun isViewer(): Boolean = true
+  override fun toHostOffset(offset: Int): Int = viewer.transferOffsetToOnesideStrict(side, offset)
 
-  override fun isOneLineMode(): Boolean = false
+  override fun fromHostOffset(hostOffset: Int): Int = viewer.transferOffsetFromOnesideStrict(side, hostOffset)
 
-  override fun getColorsScheme(): EditorColorsScheme = viewer.editor.colorsScheme
+  override fun toHostRange(range: TextRange): TextRange? = viewer.transferRangeToOnesideStrict(side, range)
 
-  override fun getSettings(): EditorSettings = viewer.editor.settings
+  /** The host offset for a caret move or a scroll: the nearest shown line when the exact line is not known. */
+  private fun toHostOffsetApproximate(offset: Int): Int = viewer.transferOffsetToOneside(side, offset).coerceAtLeast(0)
 
-  override fun getComponent(): JComponent = viewer.editor.component // isShowing() checks
+  private fun fromHostOffsetApproximate(hostOffset: Int): Int = viewer.transferOffsetFromOneside(side, hostOffset).coerceAtLeast(0)
 
-  override fun getContentComponent(): JComponent = viewer.editor.contentComponent // isShowing() checks
+  private fun toHostPosition(pos: LogicalPosition): LogicalPosition =
+    host.offsetToLogicalPosition(toHostOffsetApproximate(logicalPositionToOffset(pos)))
+
+  private fun fromHostPosition(pos: LogicalPosition): LogicalPosition =
+    offsetToLogicalPosition(fromHostOffsetApproximate(host.logicalPositionToOffset(pos)))
+
+  override fun getCaretModel(): CaretModel = sideCaretModel
+
+  override fun getScrollingModel(): ScrollingModel = sideScrollingModel
+
+  override fun getFoldingModel(): FoldingModel = EmptyFoldingModel()
 
   override fun getMarkupModel(): MarkupModel = EmptyImmutableMarkupModel(document)
 
@@ -74,66 +105,71 @@ class UnifiedSideEditor(
 
   override fun getInlayModel(): InlayModel = EmptyInlayModel()
 
-  override fun getFoldingModel(): FoldingModel = EmptyFoldingModel()
+  override fun getVirtualFile(): VirtualFile? = FileDocumentManager.getInstance().getFile(document)
+
+  override fun getEditorKind(): EditorKind = EditorKind.DIFF
+
+  override fun isViewer(): Boolean = true
+
+  override fun isOneLineMode(): Boolean = false
+
+  override fun isDisposed(): Boolean = viewer.isDisposed || host.isDisposed
+
+  override fun getColorsScheme(): EditorColorsScheme = host.colorsScheme
+
+  override fun getSettings(): EditorSettings = host.settings
+
+  override fun getComponent(): JComponent = host.component
+
+  override fun getContentComponent(): JComponent = host.contentComponent
+
+  /** The unified editor owns its border. */
+  override fun setBorder(border: Border?): Unit = Unit
+
+  override fun getInsets(): Insets = host.insets
+
+  override fun getGutter(): EditorGutter = host.gutter
+
+  override fun getMouseEventArea(e: MouseEvent): EditorMouseEventArea? = host.getMouseEventArea(e)
 
   override fun hasHeaderComponent(): Boolean = false
 
   override fun getHeaderComponent(): JComponent? = null
 
-  override fun setHeaderComponent(header: JComponent?) {
-    warnMockImplementation("setHeaderComponent")
-  }
+  /** The unified editor owns its header. */
+  override fun setHeaderComponent(header: JComponent?): Unit = Unit
 
-  override fun getLineHeight(): Int {
-    warnMockImplementation("getLineHeight")
-    return viewer.editor.lineHeight
-  }
+  override fun getLineHeight(): Int = host.lineHeight
 
-  override fun visualToLogicalPosition(visiblePos: VisualPosition): LogicalPosition {
-    warnMockImplementation("visualToLogicalPosition")
-    return LogicalPosition(0, 0)
-  }
+  override fun addEditorMouseListener(listener: EditorMouseListener): Unit = host.addEditorMouseListener(listener)
 
-  override fun xyToLogicalPosition(p: Point): LogicalPosition {
-    warnMockImplementation("xyToLogicalPosition")
-    return LogicalPosition(0, 0)
-  }
+  override fun removeEditorMouseListener(listener: EditorMouseListener): Unit = host.removeEditorMouseListener(listener)
 
-  override fun logicalToVisualPosition(logicalPos: LogicalPosition): VisualPosition {
-    warnMockImplementation("logicalToVisualPosition")
-    return VisualPosition(0, 0)
-  }
+  override fun addEditorMouseMotionListener(listener: EditorMouseMotionListener): Unit = host.addEditorMouseMotionListener(listener)
 
-  override fun xyToVisualPosition(p: Point): VisualPosition {
-    warnMockImplementation("xyToVisualPosition")
-    return VisualPosition(0, 0)
-  }
+  override fun removeEditorMouseMotionListener(listener: EditorMouseMotionListener): Unit = host.removeEditorMouseMotionListener(listener)
 
-  override fun xyToVisualPosition(p: Point2D): VisualPosition {
-    warnMockImplementation("xyToVisualPosition")
-    return VisualPosition(0, 0)
-  }
+  override fun logicalPositionToXY(pos: LogicalPosition): Point = host.logicalPositionToXY(toHostPosition(pos))
 
-  override fun logicalPositionToXY(pos: LogicalPosition): Point {
-    warnMockImplementation("logicalPositionToXY")
-    return Point(0, 0)
-  }
+  override fun logicalToVisualPosition(logicalPos: LogicalPosition): VisualPosition = host.logicalToVisualPosition(toHostPosition(logicalPos))
 
-  override fun visualPositionToXY(visible: VisualPosition): Point {
-    warnMockImplementation("visualPositionToXY")
-    return Point(0, 0)
-  }
+  override fun visualToLogicalPosition(visiblePos: VisualPosition): LogicalPosition = fromHostPosition(host.visualToLogicalPosition(visiblePos))
 
-  override fun visualPositionToPoint2D(pos: VisualPosition): Point2D {
-    warnMockImplementation("visualPositionToPoint2D")
-    return Point(0, 0)
-  }
+  override fun visualPositionToXY(visible: VisualPosition): Point = host.visualPositionToXY(visible)
+
+  override fun visualPositionToPoint2D(pos: VisualPosition): Point2D = host.visualPositionToPoint2D(pos)
+
+  override fun xyToLogicalPosition(p: Point): LogicalPosition = fromHostPosition(host.xyToLogicalPosition(p))
+
+  override fun xyToVisualPosition(p: Point): VisualPosition = host.xyToVisualPosition(p)
+
+  override fun xyToVisualPosition(p: Point2D): VisualPosition = host.xyToVisualPosition(p)
 
   override fun calculateVisibleRange(): ProperTextRange {
     if (viewer.diffChanges == null) return ProperTextRange(0, 0)
 
-    val hostDocument = viewer.editor.document
-    val hostRange = viewer.editor.calculateVisibleRange()
+    val hostDocument = host.document
+    val hostRange = host.calculateVisibleRange()
     val hostLine1 = hostDocument.getLineNumber(hostRange.startOffset)
     val hostLine2 = hostDocument.getLineNumber(hostRange.endOffset)
 
@@ -145,13 +181,107 @@ class UnifiedSideEditor(
     return ProperTextRange.create(sideRange.startOffset, sideRange.endOffset)
   }
 
-  companion object {
-    private val LOG = logger<UnifiedSideEditor>()
-    private val reportedMockMethods: MutableSet<String> = ConcurrentHashMap.newKeySet()
+  override fun toString(): String = "UnifiedSideEditor($side, $document)"
 
-    /** Set when a caller needs a method that this editor does not implement. The viewer then creates no editor of this class. */
-    @JvmStatic
-    var isDisabled: Boolean = false
-      private set
+  /** One caret, which is a view of the primary caret of the host editor. */
+  private class SideCaretModel(val sideEditor: UnifiedSideEditor) : ImaginaryCaretModel(sideEditor) {
+    private val caret = SideCaret(sideEditor, this)
+
+    override fun getPrimaryCaret(): Caret = caret
+
+    override fun getTextAttributes(): TextAttributes? = sideEditor.host.caretModel.textAttributes
+
+    override fun runBatchCaretOperation(runnable: Runnable): Unit = sideEditor.host.caretModel.runBatchCaretOperation(runnable)
+  }
+
+  private class SideCaret(val sideEditor: UnifiedSideEditor, caretModel: SideCaretModel) : ImaginaryCaret(caretModel) {
+    private val hostCaret: Caret
+      get() = sideEditor.host.caretModel.primaryCaret
+
+    override fun getOffset(): Int = sideEditor.fromHostOffsetApproximate(hostCaret.offset)
+
+    override fun moveToOffset(offset: Int, locateBeforeSoftWrap: Boolean) {
+      hostCaret.moveToOffset(sideEditor.toHostOffsetApproximate(offset.coerceIn(0, sideEditor.document.textLength)), locateBeforeSoftWrap)
+    }
+
+    override fun getLogicalPosition(): LogicalPosition = sideEditor.offsetToLogicalPosition(getOffset())
+
+    override fun getVisualPosition(): VisualPosition = hostCaret.visualPosition
+
+    override fun isUpToDate(): Boolean = hostCaret.isUpToDate
+
+    override fun isValid(): Boolean = !sideEditor.isDisposed && hostCaret.isValid
+
+    override fun getSelectionStart(): Int = sideEditor.fromHostOffsetApproximate(hostCaret.selectionStart)
+
+    override fun getSelectionEnd(): Int = sideEditor.fromHostOffsetApproximate(hostCaret.selectionEnd)
+
+    override fun hasSelection(): Boolean = hostCaret.hasSelection() && selectionStart < selectionEnd
+
+    override fun getSelectionStartPosition(): VisualPosition = hostCaret.selectionStartPosition
+
+    override fun getSelectionEndPosition(): VisualPosition = hostCaret.selectionEndPosition
+
+    override fun getSelectedText(): String = sideEditor.document.getText(TextRange(selectionStart, selectionEnd))
+
+    override fun getLeadSelectionOffset(): Int = sideEditor.fromHostOffsetApproximate(hostCaret.leadSelectionOffset)
+
+    override fun setSelection(startOffset: Int, endOffset: Int): Unit = setSelection(startOffset, endOffset, true)
+
+    override fun setSelection(startOffset: Int, endOffset: Int, updateSystemSelection: Boolean) {
+      hostCaret.setSelection(sideEditor.toHostOffsetApproximate(startOffset),
+                             sideEditor.toHostOffsetApproximate(endOffset),
+                             updateSystemSelection)
+    }
+
+    override fun removeSelection(): Unit = hostCaret.removeSelection()
+
+    override fun moveCaretRelatively(columnShift: Int, lineShift: Int, withSelection: Boolean, scrollToCaret: Boolean) {
+      val anchor = if (withSelection && hasSelection()) leadSelectionOffset else getOffset()
+      val target = if (lineShift == 0) {
+        getOffset() + columnShift
+      }
+      else {
+        val position = logicalPosition
+        sideEditor.logicalPositionToOffset(LogicalPosition(position.line + lineShift, position.column + columnShift))
+      }
+      moveToOffset(target)
+      if (withSelection) setSelection(minOf(anchor, getOffset()), maxOf(anchor, getOffset()))
+      if (scrollToCaret) sideEditor.scrollingModel.scrollToCaret(ScrollType.RELATIVE)
+    }
+  }
+
+  /** The scrolling model of the host editor, with a position mapped to it. */
+  private class SideScrollingModel(private val sideEditor: UnifiedSideEditor) : ScrollingModel {
+    private val hostModel: ScrollingModel
+      get() = sideEditor.hostEditor.scrollingModel
+
+    override fun getVisibleArea(): Rectangle = hostModel.visibleArea
+
+    override fun getVisibleAreaOnScrollingFinished(): Rectangle = hostModel.visibleAreaOnScrollingFinished
+
+    override fun scrollToCaret(scrollType: ScrollType): Unit = hostModel.scrollToCaret(scrollType)
+
+    override fun scrollTo(pos: LogicalPosition, scrollType: ScrollType): Unit = hostModel.scrollTo(sideEditor.toHostPosition(pos), scrollType)
+
+    override fun runActionOnScrollingFinished(action: Runnable): Unit = hostModel.runActionOnScrollingFinished(action)
+
+    override fun disableAnimation(): Unit = hostModel.disableAnimation()
+
+    override fun enableAnimation(): Unit = hostModel.enableAnimation()
+
+    override fun getVerticalScrollOffset(): Int = hostModel.verticalScrollOffset
+
+    override fun getHorizontalScrollOffset(): Int = hostModel.horizontalScrollOffset
+
+    override fun scrollVertically(scrollOffset: Int): Unit = hostModel.scrollVertically(scrollOffset)
+
+    override fun scrollHorizontally(scrollOffset: Int): Unit = hostModel.scrollHorizontally(scrollOffset)
+
+    override fun scroll(horizontalOffset: Int, verticalOffset: Int): Unit = hostModel.scroll(horizontalOffset, verticalOffset)
+
+    override fun addVisibleAreaListener(listener: VisibleAreaListener): Unit = hostModel.addVisibleAreaListener(listener)
+
+    override fun removeVisibleAreaListener(listener: VisibleAreaListener): Unit = hostModel.removeVisibleAreaListener(listener)
   }
 }
