@@ -33,8 +33,11 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static com.intellij.reference.SoftReference.dereference;
@@ -49,6 +52,8 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
   private final Key<WeakReference<SmartPointerTracker>> LIGHT_TRACKER_KEY;
   private final IncrementInWriteActionOnlyModTracker myPossiblyInvalidationModCounter = new IncrementInWriteActionOnlyModTracker();
   private final ConcurrentMap<VirtualFile, SmartPointerTracker> myPhysicalTrackers = CollectionFactory.createConcurrentWeakValueMap();
+  /** The trackers of light files. A light file keeps its tracker in its user data, so {@link #dispose} reaches them only here. Guarded by {@link #myPhysicalTrackers}. */
+  private final Set<SmartPointerTracker> myLightTrackers = Collections.newSetFromMap(new WeakHashMap<>());
 
   public SmartPointerManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -65,6 +70,10 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
           tracker.clearPendingState();
         }
       }
+      for (SmartPointerTracker tracker : myLightTrackers) {
+        tracker.clearPendingState();
+      }
+      myLightTrackers.clear();
     }
   }
 
@@ -218,6 +227,7 @@ public final class SmartPointerManagerImpl extends SmartPointerManagerEx {
         tracker = new SmartPointerTracker(myPossiblyInvalidationModCounter.getModificationCount());
         if (file instanceof LightVirtualFile) {
           file.putUserData(LIGHT_TRACKER_KEY, new WeakReference<>(tracker));
+          myLightTrackers.add(tracker);
         }
         else {
           myPhysicalTrackers.put(file, tracker);
