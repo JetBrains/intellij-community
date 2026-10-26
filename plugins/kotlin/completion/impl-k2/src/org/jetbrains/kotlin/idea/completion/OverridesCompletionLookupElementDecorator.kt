@@ -22,10 +22,12 @@ import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -146,14 +148,24 @@ class OverridesCompletionLookupElementDecorator(
      * and copies them from [from] to [to], skipping annotations already present on [to].
      */
     private fun InsertionContext.copyRetainedAnnotations(from: KtModifierList, to: KtModifierList) {
-        val existingAnnotationShortNames = to.annotationEntries
-            .filter { it.typeReference != null }
-            .mapNotNullTo(hashSetOf()) { it.shortName }
+        // Generated annotations have qualified names, but existing annotations can use import aliases.
+        // Look up aliases in the source file because these modifier lists are detached from it.
+        // Ignore use-site targets when checking for duplicates.
+        val existingAnnotationNames = to.annotationEntries.mapNotNullTo(hashSetOf()) { entry ->
+            val typeReference = entry.typeReference ?: return@mapNotNullTo null
+            val shortName = entry.shortName?.asString() ?: return@mapNotNullTo null
+            if ((typeReference.typeElement as? KtUserType)?.qualifier != null) {
+                typeReference.text
+            } else {
+                (file as? KtFile)?.findImportByAlias(shortName)?.importedFqName?.asString() ?: shortName
+            }
+        }
         val annotationsToAdd = from.annotationEntries.filter { entry ->
             val typeReference = entry.typeReference
             typeReference != null &&
                     OverrideImplementsAnnotationsFilter.keepAnnotationOnOverrideMember(typeReference.text, file) &&
-                    entry.shortName !in existingAnnotationShortNames
+                    typeReference.text !in existingAnnotationNames &&
+                    entry.shortName?.asString() !in existingAnnotationNames
         }
         // Insert in reverse order so the resulting order matches the source order,
         // since each annotation is inserted before the current first child.

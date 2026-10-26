@@ -1,15 +1,25 @@
-// RETAIN_OVERRIDE_ANNOTATIONS: "dependency.Annotation"
+// RETAIN_OVERRIDE_ANNOTATIONS: "dependency.Annotation,dependency.OtherAnnotation,dependency.Aliased,dependency.Collision"
 // FIR_IDENTICAL
 // FIR_COMPARISON
 import dependency.Annotation
+import dependency.Collision
+import dependency.Other
+import dependency.OtherAnnotation as Aliased
 
 interface I {
     @Annotation
+    @Aliased
+    @dependency.Aliased
+    @dependency.Collision
     fun foo(p: Int)
 }
 
 class A : I {
+    @dependency.Aliased
+    @Collision
     @Annotation
+    @Aliased
+    @Other.Collision
     override fun foo(p: Int) {
         <caret><selection>TODO("Not yet implemented")</selection>
     }
