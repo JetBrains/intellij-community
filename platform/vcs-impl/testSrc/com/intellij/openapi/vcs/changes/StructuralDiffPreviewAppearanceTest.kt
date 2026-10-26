@@ -74,16 +74,15 @@ internal class StructuralDiffPreviewAppearanceTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
-  fun `the side-by-side Commit diff tab shows a gutter without icons and a color for each side`(): Unit = timeoutRunBlocking {
+  fun `the side-by-side Commit diff tab shows a gutter without icons and a blue change on both sides`(): Unit = timeoutRunBlocking {
     withViewer(::SimpleDiffViewer, commitTab = true) { viewer ->
       for (side in Side.entries) {
         val editor = viewer.getEditor(side)
         assertIconFreeGutter(editor)
-        assertLineColor(editor, DiffColors.DIFF_DELETED, removed = true)
-        assertLineColor(editor, DiffColors.DIFF_INSERTED, removed = false)
+        assertLineColor(editor, DiffColors.DIFF_DELETED, Hue.RED)
+        assertLineColor(editor, DiffColors.DIFF_INSERTED, Hue.GREEN)
+        assertLineColor(editor, DiffColors.DIFF_MODIFIED, Hue.BLUE)
       }
-      assertLineColor(viewer.getEditor(Side.LEFT), DiffColors.DIFF_MODIFIED, removed = true)
-      assertLineColor(viewer.getEditor(Side.RIGHT), DiffColors.DIFF_MODIFIED, removed = false)
     }
   }
 
@@ -94,8 +93,9 @@ internal class StructuralDiffPreviewAppearanceTest {
       val editor = viewer.editor
       assertIconFreeGutter(editor)
       assertNotNull(editor.gutterComponentEx.additionalLineNumberConverter)
-      assertLineColor(editor, DiffColors.DIFF_DELETED, removed = true)
-      assertLineColor(editor, DiffColors.DIFF_INSERTED, removed = false)
+      assertLineColor(editor, DiffColors.DIFF_DELETED, Hue.RED)
+      assertLineColor(editor, DiffColors.DIFF_INSERTED, Hue.GREEN)
+      assertLineColor(editor, DiffColors.DIFF_MODIFIED, Hue.BLUE)
     }
   }
 
@@ -144,13 +144,16 @@ internal class StructuralDiffPreviewAppearanceTest {
   private fun hasArrows(editor: EditorEx): Boolean = editor.markupModel.allHighlighters.any { it.gutterIconRenderer is DiffGutterRenderer }
 
   /** The diff paints a line with changed words in the foreground color of the key, and the words in its background color. */
-  private fun assertLineColor(editor: EditorEx, key: TextAttributesKey, removed: Boolean) {
+  private fun assertLineColor(editor: EditorEx, key: TextAttributesKey, hue: Hue) {
     val attributes = editor.colorsScheme.getAttributes(key)
     for (color in listOf(attributes.foregroundColor, attributes.backgroundColor)) {
-      if (removed) assertTrue(color.red > color.green, "${key.externalName} is red: $color")
-      else assertTrue(color.green > color.red, "${key.externalName} is green: $color")
+      val channels = listOf(color.red, color.green, color.blue)
+      assertEquals(hue.ordinal, channels.indexOf(channels.max()), "${key.externalName} is ${hue.name.lowercase()}: $color")
     }
   }
+
+  /** The strongest channel of a color. */
+  private enum class Hue { RED, GREEN, BLUE }
 
   private class TestDiffContext(private val project: Project) : DiffContext() {
     override fun getProject(): Project = project
