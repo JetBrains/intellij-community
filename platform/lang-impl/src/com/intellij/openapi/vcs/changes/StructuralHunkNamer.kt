@@ -81,7 +81,7 @@ object StructuralHunkNamer {
   fun name(before: PsiFile?, after: PsiFile, hunks: List<HunkLines>): List<HunkName> {
     val base = before?.let(::readSide) ?: Side(LineTable(""), emptyList())
     val current = readSide(after)
-    assignIds(base.roots, current.roots, "")
+    assignIds(base.roots, current.roots, "", LineMapping(hunks))
     base.index()
     current.index()
     return hunks.map { HunkNameBuilder(base, current, it).build() }
@@ -164,33 +164,65 @@ object StructuralHunkNamer {
   }
 
   /**
-   * Matches elements by kind and name. Duplicate names fall back to the presentation and the position among the duplicates. The
-   * presentation leaves out the compared value, so a duplicate property keeps its identity when its value changes.
+   * Matches elements by kind and name. Duplicate names fall back to the presentation. The presentation leaves out the compared value, so a
+   * duplicate property keeps its identity when its value changes. A current duplicate takes the identity of the base duplicate on the same
+   * line of the line diff, and the other duplicates pair in their order. So an inserted duplicate gets a new identity.
    */
-  private fun assignIds(before: List<Element>, after: List<Element>, parentId: String) {
+  private fun assignIds(before: List<Element>, after: List<Element>, parentId: String, lines: LineMapping) {
     val oldGroups = before.groupBy { it.key }
     val groups = after.groupBy { it.key }
     for (key in oldGroups.keys + groups.keys) {
       val oldGroup = oldGroups[key].orEmpty()
       val group = groups[key].orEmpty()
       val usePresentation = oldGroup.size > 1 || group.size > 1
-      for (siblings in listOf(oldGroup, group)) {
-        val occurrences = HashMap<String, Int>()
-        for (element in siblings) {
-          val identity = if (usePresentation) key + ":" + element.presentation else key
-          val occurrence = occurrences.getOrDefault(identity, 0)
-          occurrences[identity] = occurrence + 1
-          element.id = "$parentId/${identity.length}:$identity:$occurrence"
+      fun identity(element: Element) = if (usePresentation) key + ":" + element.presentation else key
+      val occurrences = HashMap<String, Int>()
+      fun newId(element: Element): String {
+        val identity = identity(element)
+        val occurrence = occurrences.getOrDefault(identity, 0)
+        occurrences[identity] = occurrence + 1
+        return "$parentId/${identity.length}:$identity:$occurrence"
+      }
+      for (element in oldGroup) element.id = newId(element)
+      val unpaired = oldGroup.toMutableList()
+      val byCurrentLine = oldGroup.associateBy { lines.current(it.startLine) }
+      val rest = ArrayList<Element>()
+      for (element in group) {
+        val old = byCurrentLine[element.startLine]?.takeIf { it in unpaired && identity(it) == identity(element) }
+        if (old == null) {
+          rest.add(element)
+          continue
         }
+        element.id = old.id
+        unpaired.remove(old)
+      }
+      for (element in rest) {
+        val old = unpaired.firstOrNull { identity(it) == identity(element) }
+        if (old != null) unpaired.remove(old)
+        element.id = old?.id ?: newId(element)
       }
       val previous = oldGroup.associateBy { it.id }
       for (element in group) {
-        assignIds(previous[element.id]?.children.orEmpty(), element.children, element.id)
+        assignIds(previous[element.id]?.children.orEmpty(), element.children, element.id, lines)
       }
       val currentIds = group.mapTo(HashSet()) { it.id }
       for (element in oldGroup) {
-        if (element.id !in currentIds) assignIds(element.children, emptyList(), element.id)
+        if (element.id !in currentIds) assignIds(element.children, emptyList(), element.id, lines)
       }
+    }
+  }
+
+  /** Maps a base line outside the hunks to its line in the current version. A base line inside a hunk has no counterpart. */
+  private class LineMapping(hunks: List<HunkLines>) {
+    private val hunks = hunks.sortedBy { it.vcsLine1 }
+
+    fun current(baseLine: Int): Int? {
+      // The last hunk that starts at or before the line gives the shift.
+      val found = hunks.binarySearch { it.vcsLine1.compareTo(baseLine) }
+      val index = if (found >= 0) found else -found - 2
+      if (index < 0) return baseLine
+      val hunk = hunks[index]
+      return if (baseLine < hunk.vcsLine2) null else baseLine + hunk.line2 - hunk.vcsLine2
     }
   }
 
