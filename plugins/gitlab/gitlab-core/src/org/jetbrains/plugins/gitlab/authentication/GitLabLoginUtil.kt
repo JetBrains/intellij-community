@@ -327,7 +327,8 @@ object GitLabLoginUtil {
     return try {
       runWithModalProgressBlocking(project, title) {
         try {
-          val credentials = GitLabOAuthService.instance.authorizeToGitLabDotCom()
+          val rootNamespaceId = getStoredRootNamespaceId(project, GitLabServerPath.DEFAULT_SERVER.uri)
+          val credentials = GitLabOAuthService.instance.authorizeToGitLabDotCom(rootNamespaceId)
           val username = GitLabSecurityUtil.validateAndResolveUsername(requiredUsername,
                                                                        GitLabServerPath.DEFAULT_SERVER,
                                                                        credentials.accessToken,
@@ -416,6 +417,10 @@ object GitLabLoginUtil {
 
   fun isAccountUnique(accounts: Collection<GitLabAccount>, server: GitLabServerPath, username: String): Boolean =
     accounts.none { it.server.toHttpsNormalizedURI() == server.toHttpsNormalizedURI() && it.name == username }
+
+  internal fun getStoredRootNamespaceId(project: Project, normalizedServerUri: String): Int? {
+    return GitLabOAuthSettings.getInstance(project).state.customServers.find { it.serverUri == normalizedServerUri }?.rootNamespaceId
+  }
 }
 
 sealed interface LoginResult {
