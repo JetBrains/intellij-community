@@ -456,6 +456,14 @@ class LineStatusTrackerManager(
     return vcs != null && vcs.arePartialChangelistsSupported()
   }
 
+  /**
+   * True when a new tracker of the file is a partial one, so that a commit can include the changed ranges of the file one by one. The answer
+   * depends on the VCS, the settings, and the file status.
+   */
+  @ApiStatus.Internal
+  fun canCreatePartialTracker(virtualFile: VirtualFile, document: Document): Boolean =
+    getTrackerProvider(virtualFile, document) is ChangelistsAwareLocalStatusTrackerProvider
+
 
   private fun switchTracker(
     virtualFile: VirtualFile, document: Document,

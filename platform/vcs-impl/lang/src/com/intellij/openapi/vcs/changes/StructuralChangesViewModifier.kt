@@ -36,8 +36,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
 import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.ex.LineStatusTrackerI
 import com.intellij.openapi.vcs.ex.LocalRange
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
@@ -76,10 +78,10 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
         if (baseContent.length > MAX_CONTENT_LENGTH) continue
         val changeListId = (change as? ChangeListChange)?.changeListId
         val baseRevision = beforeRevision.revisionNumber
-        val hunks = ReadAction.nonBlocking(Callable { collectHunks(file, baseContent, baseRevision, changeListId) })
-          .expireWith(project).executeSynchronously()
-        for (hunk in hunks) {
-          node.add(HunkNode(project, file, path, changeListId, hunk))
+        val fileHunks = ReadAction.nonBlocking(Callable { collectHunks(file, baseContent, baseRevision, changeListId) })
+          .expireWith(project).executeSynchronously() ?: continue
+        for (hunk in fileHunks.hunks) {
+          node.add(HunkNode(project, file, path, changeListId, hunk, fileHunks.partialCommit))
         }
       }
       catch (e: Exception) {
@@ -89,20 +91,25 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     }
   }
 
-  private fun collectHunks(file: VirtualFile, baseContent: String, baseRevision: VcsRevisionNumber, changeListId: String?): List<Hunk> {
-    if (DumbService.isDumb(project) || !file.isValid) return emptyList()
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return emptyList()
-    val documentModificationStamp = document.modificationStamp
+  /**
+   * The hunks of a file, and whether the commit can include them one by one. The commit needs a partial tracker for that, and only some
+   * VCSs, settings, and file statuses give one.
+   */
+  private fun collectHunks(file: VirtualFile, baseContent: String, baseRevision: VcsRevisionNumber, changeListId: String?): FileHunks? {
+    if (DumbService.isDumb(project) || !file.isValid) return null
+    val document = FileDocumentManager.getInstance().getDocument(file) ?: return null
+    val partialCommit = LineStatusTrackerManager.getInstanceImpl(project).canCreatePartialTracker(file, document)
     // The ranges of a valid tracker are the ones that the commit uses.
-    val diff = PartialChangesUtil.getPartialTracker(project, file)?.takeIf { it.isValid() }?.let { readTracker(it, changeListId) }
-               ?: compareLines(file, document, baseContent)
-    if (diff.currentText.length > MAX_CONTENT_LENGTH) return emptyList()
-    val original = PsiManager.getInstance(project).findFile(file) ?: return emptyList()
-    val before = StructuralHunkNamer.createSnapshot(original, diff.baseText) ?: return emptyList()
-    val after = StructuralHunkNamer.createSnapshot(original, diff.currentText) ?: return emptyList()
+    val trackerDiff = PartialChangesUtil.getPartialTracker(project, file)?.takeIf { it.isValid() }?.let { readTracker(it, changeListId) }
+    val version = FileVersion(document.modificationStamp, baseRevision.asString(), trackerDiff?.trackerBaseHash)
+    val diff = trackerDiff ?: compareLines(file, document, baseContent)
+    if (diff.currentText.length > MAX_CONTENT_LENGTH) return null
+    val original = PsiManager.getInstance(project).findFile(file) ?: return null
+    val before = StructuralHunkNamer.createSnapshot(original, diff.baseText) ?: return null
+    val after = StructuralHunkNamer.createSnapshot(original, diff.currentText) ?: return null
     val names = StructuralHunkNamer.name(before, after, diff.hunks)
-    val version = FileVersion(documentModificationStamp, baseRevision.asString(), diff.trackerBaseHash)
-    return diff.hunks.zip(names) { lines, name -> Hunk(lines, name, version) }
+    val hunks = diff.hunks.zip(names) { lines, name -> Hunk(lines, name, version) }
+    return FileHunks(hunks, partialCommit)
   }
 
   private fun readTracker(tracker: PartialLocalLineStatusTracker, changeListId: String?): FileDiff? = tracker.readLock {
@@ -124,6 +131,8 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
   /** The hunks of a file. A diff of a tracker has the hash of the tracker base text. */
   private class FileDiff(val baseText: String, val currentText: String, val hunks: List<HunkLines>, val trackerBaseHash: Int?)
 
+  private class FileHunks(val hunks: List<Hunk>, val partialCommit: Boolean)
+
   private companion object {
     const val MAX_CONTENT_LENGTH = 1_000_000
   }
@@ -140,23 +149,25 @@ private class FileVersion(val documentModificationStamp: Long, val baseRevision:
 /** Identifies a hunk across tree rebuilds, so that the tree keeps the selection while the lines stay the same. */
 private data class HunkKey(val path: FilePath, val changeListId: String?, val lines: HunkLines)
 
-/** Reverts the selected hunks file by file. */
+/** Reverts the selected hunks file by file. Any tracker can revert, so the hunks of a file without a partial tracker revert too. */
 private object HunkRollback : ChangesBrowserStructuralNode.Rollback {
   override fun rollback(nodes: List<ChangesBrowserStructuralNode<*>>) {
     for (hunks in nodes.filterIsInstance<HunkNode>().groupBy { it.file }.values) {
       val first = hunks.first()
-      first.withTracker { tracker -> first.rollback(tracker, hunks) }
+      first.withTracker(first::validTracker) { tracker -> first.rollback(tracker, hunks) }
     }
   }
 }
 
+/** A hunk of a modified file. It has a commit checkbox only when the commit can include the hunks of the file one by one. */
 private class HunkNode(
   private val project: Project,
   val file: VirtualFile,
   path: FilePath,
   private val changeListId: String?,
   private val hunk: Hunk,
-) : ChangesBrowserStructuralNode<HunkKey>(HunkKey(path, changeListId, hunk.lines), hasInclusion = true) {
+  partialCommit: Boolean,
+) : ChangesBrowserStructuralNode<HunkKey>(HunkKey(path, changeListId, hunk.lines), hasInclusion = partialCommit) {
   private val lines = hunk.lines
   private val navigatable = OpenFileDescriptor(project, file, lines.line1, 0)
 
@@ -177,9 +188,9 @@ private class HunkNode(
   override fun getDiffLines(): DiffLines = DiffLines(LineRange(lines.vcsLine1, lines.vcsLine2), LineRange(lines.line1, lines.line2))
 
   override fun getInclusionState(fileState: ThreeStateCheckBox.State): ThreeStateCheckBox.State {
-    val tracker = validTracker() ?: return fileState
+    val tracker = validPartialTracker() ?: return fileState
     if (tracker.document.modificationStamp != hunk.version.documentModificationStamp) return fileState
-    val range = findRanges(tracker).singleOrNull() ?: return fileState
+    val range = findRanges(tracker).singleOrNull() as? LocalRange ?: return fileState
     val exclusion = range.exclusionState
     return when {
       !exclusion.hasExcluded -> ThreeStateCheckBox.State.SELECTED
@@ -190,23 +201,22 @@ private class HunkNode(
 
   @RequiresEdt
   override fun setIncluded(included: Boolean) {
-    withTracker { setExcluded(it, !included) }
+    withTracker(::validPartialTracker) { setExcluded(it, !included) }
   }
 
   override fun getRollback(): Rollback = HunkRollback
 
   /**
-   * Runs the action with the tracker of the file. A file has a tracker only while an editor shows it, so a file without one gets a tracker
-   * until the action ends. A partial state keeps the new tracker after the release.
+   * Runs the action with the tracker that [find] gives. A file has a tracker only while an editor shows it, so a file without one gets a
+   * tracker until the action ends. A partial state keeps the new tracker after the release.
    *
    * The manager reports the new tracker in any modality. The action can change the document, and only a write-safe context allows that,
    * so the action runs later in the modality of this call.
    */
   @RequiresEdt
-  fun withTracker(action: (PartialLocalLineStatusTracker) -> Unit) {
-    val tracker = validTracker()
-    if (tracker != null) {
-      action(tracker)
+  fun <T : LineStatusTrackerI<*>> withTracker(find: () -> T?, action: (T) -> Unit) {
+    find()?.let {
+      action(it)
       return
     }
     val manager = LineStatusTrackerManager.getInstanceImpl(project)
@@ -221,7 +231,7 @@ private class HunkNode(
     manager.invokeAfterUpdate {
       ApplicationManager.getApplication().invokeLater({
         try {
-          validTracker()?.let(action)
+          find()?.let(action)
         }
         finally {
           ReadAction.computeBlocking<Unit, RuntimeException> { manager.releaseTrackerFor(document, requester) }
@@ -235,7 +245,7 @@ private class HunkNode(
    * stale hunk reverts nothing and refreshes the tree.
    */
   @RequiresEdt
-  fun rollback(tracker: PartialLocalLineStatusTracker, hunks: List<HunkNode>) {
+  fun rollback(tracker: LineStatusTrackerI<*>, hunks: List<HunkNode>) {
     if (hunks.any { !it.describes(tracker) }) {
       refreshTree()
       return
@@ -264,7 +274,7 @@ private class HunkNode(
   }
 
   /** True while the tracker compares the document version of the hunk with the base of the hunk. */
-  private fun describes(tracker: PartialLocalLineStatusTracker): Boolean {
+  private fun describes(tracker: LineStatusTrackerI<*>): Boolean {
     val version = hunk.version
     if (tracker.document.modificationStamp != version.documentModificationStamp) return false
     val trackerBaseHash = version.trackerBaseHash
@@ -276,11 +286,21 @@ private class HunkNode(
     project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
   }
 
-  private fun validTracker(): PartialLocalLineStatusTracker? = PartialChangesUtil.getPartialTracker(project, file)?.takeIf { it.isValid() }
+  /** A tracker of the file that follows the document. Any tracker can revert a hunk. */
+  fun validTracker(): LineStatusTrackerI<*>? =
+    LineStatusTrackerManager.getInstance(project).getLineStatusTracker(file)?.takeIf { it.isValid() }
 
-  /** The tracker range with the same lines, or the ranges that overlap the lines when the tracker diff differs from the tree. */
-  private fun findRanges(tracker: PartialLocalLineStatusTracker): List<LocalRange> {
-    val ranges = tracker.getRanges()?.filter { changeListId == null || it.changelistId == changeListId } ?: return emptyList()
+  /** A partial tracker of the file that follows the document. Only a partial tracker can keep a hunk out of the commit. */
+  private fun validPartialTracker(): PartialLocalLineStatusTracker? =
+    PartialChangesUtil.getPartialTracker(project, file)?.takeIf { it.isValid() }
+
+  /**
+   * The tracker range with the same lines, or the ranges that overlap the lines when the tracker diff differs from the tree. Only the
+   * ranges of a partial tracker have a changelist. A file without a partial tracker has all its ranges in one changelist.
+   */
+  private fun findRanges(tracker: LineStatusTrackerI<*>): List<Range> {
+    val ranges = tracker.getRanges()?.filter { changeListId == null || it !is LocalRange || it.changelistId == changeListId }
+                 ?: return emptyList()
     ranges.firstOrNull { it.line1 == lines.line1 && it.line2 == lines.line2 && it.vcsLine1 == lines.vcsLine1 && it.vcsLine2 == lines.vcsLine2 }
       ?.let { return listOf(it) }
     return ranges.filter {
