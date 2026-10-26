@@ -1,15 +1,26 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class TimelineCompletionTest : MermaidBaseTestCase("completion/diagrams/timeline") {
+@TestApplication
+class TimelineCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test right after header`() = doTest("title")
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/timeline")
 
-  fun `test in line`() = doTest("title", "section")
+  @Test
+  fun `test right after header`(): Unit = doTest("title")
+
+  @Test
+  fun `test in line`(): Unit = doTest("title", "section")
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

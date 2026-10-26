@@ -1,22 +1,37 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.psi.impl.DebugUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 import java.io.File
 
-class MarkdownCodeFenceCompletionTest : MermaidBaseTestCase("completion/markdown") {
-  fun `test at first line`() = doTest()
+@TestApplication
+class MarkdownCodeFenceCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test at mid line`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "completion/markdown")
 
-  fun `test at last line`() = doTest()
+  @Test
+  fun `test at first line`(): Unit = doTest()
+
+  @Test
+  fun `test at mid line`(): Unit = doTest()
+
+  @Test
+  fun `test at last line`(): Unit = doTest()
 
   private fun doTest() {
-    val testName = getTestName(true)
+    val testName = mermaid.getTestName(true)
 
-    myFixture.testCompletion("${testName}_before.md", "${testName}_after.md")
+    mermaid.fixture.testCompletion("${testName}_before.md", "${testName}_after.md")
 
-    val actual = DebugUtil.psiToString(myFixture.file, true, true)
-    assertSameLinesWithFile("${testDataPath}${File.separatorChar}${testName}.txt", actual)
+    val actual = runReadActionBlocking { DebugUtil.psiToString(mermaid.fixture.file, true, true) }
+    PlatformTestUtil.assertSameLinesWithFile("${mermaid.testDataPath}${File.separatorChar}${testName}.txt", actual)
   }
 }

@@ -1,49 +1,77 @@
 package com.intellij.mermaid.lang.formatter
 
 import com.intellij.application.options.CodeStyle
-import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
+import com.intellij.mermaid.lang.mermaidFixture
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
-  fun `test flowchart`() = doTest()
+@TestApplication
+class MermaidFormatterTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test sequence`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "formatter")
 
-  fun `test class`() = doTest()
+  @Test
+  fun `test flowchart`(): Unit = doTest()
 
-  fun `test state`() = doTest()
+  @Test
+  fun `test sequence`(): Unit = doTest()
 
-  fun `test er`() = doTest()
+  @Test
+  fun `test class`(): Unit = doTest()
 
-  fun `test journey`() = doTest()
+  @Test
+  fun `test state`(): Unit = doTest()
 
-  fun `test gantt`() = doTest()
+  @Test
+  fun `test er`(): Unit = doTest()
 
-  fun `test pie`() = doTest()
+  @Test
+  fun `test journey`(): Unit = doTest()
 
-  fun `test requirement`() = doTest()
+  @Test
+  fun `test gantt`(): Unit = doTest()
 
-  fun `test gitgraph`() = doTest()
+  @Test
+  fun `test pie`(): Unit = doTest()
 
-  fun `test c4`() = doTest()
+  @Test
+  fun `test requirement`(): Unit = doTest()
 
-  fun `test mindmap`() = doTest()
+  @Test
+  fun `test gitgraph`(): Unit = doTest()
 
-  fun `test timeline`() = doTest()
+  @Test
+  fun `test c4`(): Unit = doTest()
 
-  fun `test quadrant`() = doTest()
+  @Test
+  fun `test mindmap`(): Unit = doTest()
 
-  fun `test sankey`() = doTest()
+  @Test
+  fun `test timeline`(): Unit = doTest()
 
-  fun `test xychart`() = doTest()
+  @Test
+  fun `test quadrant`(): Unit = doTest()
 
-  fun `test block`() = doTest()
+  @Test
+  fun `test sankey`(): Unit = doTest()
+
+  @Test
+  fun `test xychart`(): Unit = doTest()
+
+  @Test
+  fun `test block`(): Unit = doTest()
   
-  fun `test semicolon as separator`() = doTest {
+  @Test
+  fun `test semicolon as separator`(): Unit = doTest {
     getLanguageIndentOptions(MermaidLanguage).apply {
       INDENT_SIZE = 2
       TAB_SIZE = 2
@@ -71,8 +99,8 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
   }
   
   private fun doTest(codeStyleSettings: CodeStyleSettings.() -> Unit) {
-    val before = getTestName(true) + "_before.mermaid"
-    val after = getTestName(true) + "_after.mermaid"
+    val before = mermaid.getTestName(true) + "_before.mermaid"
+    val after = mermaid.getTestName(true) + "_after.mermaid"
     runWithTemporaryStyleSettings { settings ->
       settings.apply(codeStyleSettings)
       doReformatTest(before, after)
@@ -82,15 +110,15 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
   }
 
   private fun runWithTemporaryStyleSettings(block: (CodeStyleSettings) -> Unit) {
-    val settings = CodeStyle.getSettings(project)
-    CodeStyle.doWithTemporarySettings(project, settings, block)
+    val settings = CodeStyle.getSettings(mermaid.project)
+    CodeStyle.doWithTemporarySettings(mermaid.project, settings, block)
   }
 
   private fun doReformatTest(before: String, after: String) {
-    myFixture.configureByFile(before)
-    WriteCommandAction.runWriteCommandAction(project) {
-      CodeStyleManager.getInstance(project).reformat(myFixture.file)
+    mermaid.fixture.configureByFile(before)
+    WriteCommandAction.runWriteCommandAction(mermaid.project) {
+      CodeStyleManager.getInstance(mermaid.project).reformat(mermaid.fixture.file)
     }
-    myFixture.checkResultByFile(after)
+    mermaid.fixture.checkResultByFile(after)
   }
 }

@@ -1,37 +1,59 @@
 package com.intellij.mermaid.lang.intention.gitgraph
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.mermaid.lang.intention.GitGraphInspection
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class GitGraphInspectionTest : MermaidBaseTestCase("intention/gitgraph") {
-  fun `test merge`() = doTest()
+@TestApplication
+class GitGraphInspectionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test merge no commits`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "intention/gitgraph")
 
-  fun `test merge itself`() = doTest()
+  @Test
+  fun `test merge`(): Unit = doTest()
 
-  fun `test merge using existing id`() = doTest()
+  @Test
+  fun `test merge no commits`(): Unit = doTest()
 
-  fun `test merge same heads`() = doTest()
+  @Test
+  fun `test merge itself`(): Unit = doTest()
 
-  fun `test checkout`() = doTest()
+  @Test
+  fun `test merge using existing id`(): Unit = doTest()
 
-  fun `test cherry-pick`() = doTest()
+  @Test
+  fun `test merge same heads`(): Unit = doTest()
 
-  fun `test commit`() = doTest()
+  @Test
+  fun `test checkout`(): Unit = doTest()
 
-  fun `test branch`() = doTest()
+  @Test
+  fun `test cherry-pick`(): Unit = doTest()
 
-  fun `test no conflicts`() = doTest()
+  @Test
+  fun `test commit`(): Unit = doTest()
 
-  fun `test cherry-pick of merge commit without parent`() = doTest()
+  @Test
+  fun `test branch`(): Unit = doTest()
 
-  fun `test cherry-pick of merge commit with wrong parent`() = doTest()
+  @Test
+  fun `test no conflicts`(): Unit = doTest()
+
+  @Test
+  fun `test cherry-pick of merge commit without parent`(): Unit = doTest()
+
+  @Test
+  fun `test cherry-pick of merge commit with wrong parent`(): Unit = doTest()
 
   private fun doTest() {
-    val testName = getTestName(true)
-    myFixture.configureByFile("${testName}.mermaid")
-    myFixture.enableInspections(GitGraphInspection())
-    myFixture.checkHighlighting()
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.configureByFile("${testName}.mermaid")
+    mermaid.fixture.enableInspections(GitGraphInspection())
+    mermaid.fixture.checkHighlighting()
   }
 }

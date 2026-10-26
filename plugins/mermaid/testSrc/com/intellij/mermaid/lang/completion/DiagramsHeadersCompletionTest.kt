@@ -1,8 +1,18 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams") {
+@TestApplication
+class DiagramsHeadersCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams")
+
   val diagrams = arrayOf(
     "pie",
     "journey",
@@ -50,12 +60,14 @@ class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams")
     "wardley-beta",
   )
 
-  fun `test diagrams headers`() = doTest(*diagrams)
+  @Test
+  fun `test diagrams headers`(): Unit = doTest(*diagrams)
 
-  fun `test diagrams headers after frontmatter`() = doTest(*diagrams)
+  @Test
+  fun `test diagrams headers after frontmatter`(): Unit = doTest(*diagrams)
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

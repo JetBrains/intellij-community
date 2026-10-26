@@ -1,17 +1,29 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class IdentifierReferenceCompletionTest : MermaidBaseTestCase("completion/identifier") {
+@TestApplication
+class IdentifierReferenceCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test completion for reference without declaration`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "completion/identifier")
 
-  fun `test completion for declaration without usages`() = doTest()
+  @Test
+  fun `test completion for reference without declaration`(): Unit = doTest()
 
-  fun `test completion for multi declaration`() = doTest()
+  @Test
+  fun `test completion for declaration without usages`(): Unit = doTest()
+
+  @Test
+  fun `test completion for multi declaration`(): Unit = doTest()
 
   private fun doTest() {
-    val testName = getTestName(true)
-    myFixture.testCompletion("${testName}_before.mermaid", "${testName}_after.mermaid")
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletion("${testName}_before.mermaid", "${testName}_after.mermaid")
   }
 }

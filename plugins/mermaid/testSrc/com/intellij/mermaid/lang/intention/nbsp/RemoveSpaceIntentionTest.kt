@@ -1,21 +1,30 @@
 package com.intellij.mermaid.lang.intention.nbsp
 
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class RemoveSpaceIntentionTest : MermaidBaseTestCase("intention/nbsp/remove_space") {
-  fun `test state diagram`() = doTest()
+@TestApplication
+class RemoveSpaceIntentionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test flowchart`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "intention/nbsp/remove_space")
+
+  @Test
+  fun `test state diagram`(): Unit = doTest()
+
+  @Test
+  fun `test flowchart`(): Unit = doTest()
 
   private fun doTest() {
-    val testName = getTestName(true)
-    myFixture.configureByFile("${testName}_before.mermaid")
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.configureByFile("${testName}_before.mermaid")
 
-    val targetText = MermaidBundle.message("fix.remove.space")
-    val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
-    assertNotNull(fix)
-    myFixture.checkPreviewAndLaunchAction(fix!!)
-    myFixture.checkResultByFile("${testName}_after.mermaid")
+    mermaid.checkPreviewAndLaunchQuickFix(MermaidBundle.message("fix.remove.space"))
+    mermaid.fixture.checkResultByFile("${testName}_after.mermaid")
   }
 }

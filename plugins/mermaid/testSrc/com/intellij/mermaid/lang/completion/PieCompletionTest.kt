@@ -1,19 +1,32 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class PieCompletionTest : MermaidBaseTestCase("completion/diagrams/pie") {
+@TestApplication
+class PieCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test right after header`() = doTest("showData", "title")
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/pie")
 
-  fun `test at first line`() = doTest("showData", "title")
+  @Test
+  fun `test right after header`(): Unit = doTest("showData", "title")
 
-  fun `test at mid line`() = doTest("title")
+  @Test
+  fun `test at first line`(): Unit = doTest("showData", "title")
 
-  fun `test inside statement`() = doTest()
+  @Test
+  fun `test at mid line`(): Unit = doTest("title")
+
+  @Test
+  fun `test inside statement`(): Unit = doTest()
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

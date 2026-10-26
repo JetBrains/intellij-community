@@ -1,21 +1,35 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class FlowchartCompletionTest : MermaidBaseTestCase("completion/diagrams/flowchart") {
+@TestApplication
+class FlowchartCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/flowchart")
+
   private val directions = arrayOf("LR", "RL", "TB", "BT")
   private val extendedDirections = arrayOf("LR", "RL", "TB", "BT", "TD", "BR", "<", ">", "^", "v")
 
-  fun `test direction at header`() = doTest(*extendedDirections)
+  @Test
+  fun `test direction at header`(): Unit = doTest(*extendedDirections)
 
-  fun `test keyword at top level`() = doTest("subgraph")
+  @Test
+  fun `test keyword at top level`(): Unit = doTest("subgraph")
 
-  fun `test keyword in subgraph`() = doTest("direction", "subgraph", "name")
+  @Test
+  fun `test keyword in subgraph`(): Unit = doTest("direction", "subgraph", "name")
 
-  fun `test direction at statement`() = doTest(*directions)
+  @Test
+  fun `test direction at statement`(): Unit = doTest(*directions)
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

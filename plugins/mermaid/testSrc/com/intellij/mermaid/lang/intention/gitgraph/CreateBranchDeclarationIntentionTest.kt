@@ -1,25 +1,35 @@
 package com.intellij.mermaid.lang.intention.gitgraph
 
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.mermaid.lang.intention.GitGraphInspection
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class CreateBranchDeclarationIntentionTest : MermaidBaseTestCase("intention/gitgraph/create_branch") {
-  fun `test merge`() = doTest()
+@TestApplication
+class CreateBranchDeclarationIntentionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test checkout`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "intention/gitgraph/create_branch")
 
-  fun `test quoted`() = doTest()
+  @Test
+  fun `test merge`(): Unit = doTest()
+
+  @Test
+  fun `test checkout`(): Unit = doTest()
+
+  @Test
+  fun `test quoted`(): Unit = doTest()
 
   private fun doTest() {
-    val testName = getTestName(true)
-    myFixture.configureByFile("${testName}_before.mermaid")
-    myFixture.enableInspections(GitGraphInspection())
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.configureByFile("${testName}_before.mermaid")
+    mermaid.fixture.enableInspections(GitGraphInspection())
 
-    val targetText = MermaidBundle.message("fix.create.branch.declaration", "master")
-    val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
-    assertNotNull(fix)
-    myFixture.checkPreviewAndLaunchAction(fix!!)
-    myFixture.checkResultByFile("${testName}_after.mermaid")
+    mermaid.checkPreviewAndLaunchQuickFix(MermaidBundle.message("fix.create.branch.declaration", "master"))
+    mermaid.fixture.checkResultByFile("${testName}_after.mermaid")
   }
 }

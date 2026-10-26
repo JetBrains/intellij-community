@@ -1,18 +1,32 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class BlockCompletionTest : MermaidBaseTestCase("completion/diagrams/block") {
-  fun `test at line`() = doTest("block", "columns", "space")
+@TestApplication
+class BlockCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test after columns`() = doTest("auto", "space")
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/block")
 
-  fun `test after block`() = doTest("end", "space")
+  @Test
+  fun `test at line`(): Unit = doTest("block", "columns", "space")
 
-  fun `test inside block`() = doTest("block", "columns", "space")
+  @Test
+  fun `test after columns`(): Unit = doTest("auto", "space")
+
+  @Test
+  fun `test after block`(): Unit = doTest("end", "space")
+
+  @Test
+  fun `test inside block`(): Unit = doTest("block", "columns", "space")
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

@@ -1,23 +1,38 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class GitgraphCompletionTest : MermaidBaseTestCase("completion/diagrams/gitgraph") {
+@TestApplication
+class GitgraphCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test at top level`() = doTest("commit", "branch", "checkout", "merge", "cherry-pick")
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/gitgraph")
 
-  fun `test commit`() = doTest("id", "tag", "type", "msg")
+  @Test
+  fun `test at top level`(): Unit = doTest("commit", "branch", "checkout", "merge", "cherry-pick")
 
-  fun `test merge`() = doTest("id", "tag", "type")
+  @Test
+  fun `test commit`(): Unit = doTest("id", "tag", "type", "msg")
 
-  fun `test cherry-pick`() = doTest("id", "tag", "parent")
+  @Test
+  fun `test merge`(): Unit = doTest("id", "tag", "type")
 
-  fun `test commit type`() = doTest("NORMAL", "REVERSE", "HIGHLIGHT")
+  @Test
+  fun `test cherry-pick`(): Unit = doTest("id", "tag", "parent")
 
-  fun `test dir`() = doTest("LR", "BT")
+  @Test
+  fun `test commit type`(): Unit = doTest("NORMAL", "REVERSE", "HIGHLIGHT")
+
+  @Test
+  fun `test dir`(): Unit = doTest("LR", "BT")
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

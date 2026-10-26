@@ -1,20 +1,27 @@
 package com.intellij.mermaid.lang.intention.declarations
 
 import com.intellij.mermaid.MermaidBundle
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class CreateClassDeclarationIntentionTest : MermaidBaseTestCase("intention/declarations/create_class") {
+@TestApplication
+class CreateClassDeclarationIntentionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
 
-  fun `test annotation statement`() = doTest()
+  private val mermaid by mermaidFixture(projectFixture, "intention/declarations/create_class")
+
+  @Test
+  fun `test annotation statement`(): Unit = doTest()
 
   private fun doTest() {
-    val testName = getTestName(true)
-    myFixture.configureByFile("${testName}_before.mermaid")
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.configureByFile("${testName}_before.mermaid")
 
-    val targetText = MermaidBundle.message("fix.create.class.declaration", "A")
-    val fix = myFixture.getAllQuickFixes().find { it.text == targetText }
-    assertNotNull(fix)
-    myFixture.checkPreviewAndLaunchAction(fix!!)
-    myFixture.checkResultByFile("${testName}_after.mermaid")
+    mermaid.checkPreviewAndLaunchQuickFix(MermaidBundle.message("fix.create.class.declaration", "A"))
+    mermaid.fixture.checkResultByFile("${testName}_after.mermaid")
   }
 }

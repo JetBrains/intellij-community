@@ -1,25 +1,41 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class ClassCompletionTest : MermaidBaseTestCase("completion/diagrams/class") {
+@TestApplication
+class ClassCompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/class")
+
   private val directions = arrayOf("LR", "RL", "TB", "BT")
   private val keywords = arrayOf("class", "direction", "namespace", "style")
 
-  fun `test at top level`() = doTest(*keywords)
+  @Test
+  fun `test at top level`(): Unit = doTest(*keywords)
 
-  fun `test inside class`() = doTest()
+  @Test
+  fun `test inside class`(): Unit = doTest()
 
-  fun `test annotation`() = doTest("interface", "abstract", "service", "enumeration")
+  @Test
+  fun `test annotation`(): Unit = doTest("interface", "abstract", "service", "enumeration")
 
-  fun `test at top level with frontmatter`() = doTest(*keywords)
+  @Test
+  fun `test at top level with frontmatter`(): Unit = doTest(*keywords)
 
-  fun `test at top level at mid line with frontmatter`() = doTest(*keywords)
+  @Test
+  fun `test at top level at mid line with frontmatter`(): Unit = doTest(*keywords)
 
-  fun `test directions`() = doTest(*directions)
+  @Test
+  fun `test directions`(): Unit = doTest(*directions)
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }

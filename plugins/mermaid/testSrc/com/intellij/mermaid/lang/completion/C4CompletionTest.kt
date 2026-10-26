@@ -1,8 +1,18 @@
 package com.intellij.mermaid.lang.completion
 
-import com.intellij.mermaid.lang.MermaidBaseTestCase
+import com.intellij.mermaid.lang.mermaidFixture
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.projectFixture
+import org.junit.jupiter.api.Test
 
-class C4CompletionTest : MermaidBaseTestCase("completion/diagrams/c4") {
+@TestApplication
+class C4CompletionTest {
+  companion object {
+    private val projectFixture = projectFixture(openAfterCreation = true)
+  }
+
+  private val mermaid by mermaidFixture(projectFixture, "completion/diagrams/c4")
+
   private val simpleKeywords = arrayOf(
     "Person_Ext",
     "Person",
@@ -57,14 +67,17 @@ class C4CompletionTest : MermaidBaseTestCase("completion/diagrams/c4") {
     "Container_Boundary"
   )
 
-  fun `test at first line`() = doTest("title", *simpleKeywords, *boundaryKeywords)
+  @Test
+  fun `test at first line`(): Unit = doTest("title", *simpleKeywords, *boundaryKeywords)
 
-  fun `test right after header`() = doTest()
+  @Test
+  fun `test right after header`(): Unit = doTest()
 
-  fun `test inside statement`() = doTest(*simpleKeywords, *boundaryKeywords)
+  @Test
+  fun `test inside statement`(): Unit = doTest(*simpleKeywords, *boundaryKeywords)
 
   private fun doTest(vararg variants: String) {
-    val testName = getTestName(true)
-    myFixture.testCompletionVariants("${testName}.mermaid", *variants)
+    val testName = mermaid.getTestName(true)
+    mermaid.fixture.testCompletionVariants("${testName}.mermaid", *variants)
   }
 }
