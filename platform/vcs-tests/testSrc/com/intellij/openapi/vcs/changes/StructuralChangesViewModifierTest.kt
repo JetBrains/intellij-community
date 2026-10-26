@@ -152,6 +152,32 @@ internal class StructuralChangesViewModifierTest {
 
   @Test
   @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
+  fun `a hunk with many changed elements names the first ones and counts the others`(): Unit = timeoutRunBlocking {
+    setSelected(true)
+    val before = (0 until 30).joinToString("\n") { "k$it=0" }
+    val after = (0 until 30).joinToString("\n") { "k$it=1" }
+    val node = build(change(before, after)).single()
+
+    // The parts come in source order. The namer decides whether a part shows the value too, so the checks read only the key.
+    val text = node.textPresentation
+    val (shownText, hidden) = checkNotNull(Regex("(.+) and (\\d+) more").matchEntire(text)) { text }.destructured
+    val shown = shownText.split(", ").map { it.substringBefore('=') }
+    assertEquals(shown.indices.map { "k$it" }, shown)
+    assertEquals(30, shown.size + hidden.toInt())
+    assertTrue(text.length <= 100, text)
+
+    val tooltip = withContext(Dispatchers.EDT) {
+      val renderer = ChangesBrowserNodeRenderer(project, { false }, false)
+      renderer.getTreeCellRendererComponent(JTree(DefaultTreeModel(node)), node, false, false, true, 0, false)
+      checkNotNull(renderer.toolTipText)
+    }
+    val lines = tooltip.removePrefix("<html><body>").removeSuffix("</body></html>").split(Regex("<br/?>"))
+    assertEquals((0 until 20).map { "k$it" }, lines.take(20).map { it.substringBefore('=') }, tooltip)
+    assertEquals("and 10 more", lines[20], tooltip)
+  }
+
+  @Test
+  @RegistryKey(key = StructuralChangesViewSettings.REGISTRY_KEY, value = "true")
   fun `a tree with more changed files than the limit shows no hunks`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     setSelected(true)
     val change = change("first=0", "first=1")
