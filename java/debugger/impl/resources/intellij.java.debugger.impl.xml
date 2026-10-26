@@ -11,6 +11,7 @@
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.codeserver.highlighting"/>
     <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.externalJavac"/>
     <module name="intellij.java.compiler.impl"/>
     <module name="intellij.java.debugger"/>
     <module name="intellij.java.debugger.libraries.jb.jdi"/>

@@ -9,12 +9,8 @@ import com.intellij.compiler.impl.OneProjectItemCompileScope;
 import com.intellij.compiler.impl.ProjectCompileScope;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.concurrency.ThreadContext;
-import com.intellij.execution.process.ProcessIOExecutorService;
-import com.intellij.execution.wsl.WSLDistribution;
-import com.intellij.ide.IdleTracker;
 import com.intellij.java.JavaPluginDisposable;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.java.compiler.fragments.ForkedJavacCompiler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilableFileTypesProvider;
@@ -27,7 +23,6 @@ import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.CompilerFactory;
 import com.intellij.openapi.compiler.CompilerManager;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.compiler.CompilerPaths;
 import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.compiler.FileProcessingCompiler;
@@ -35,7 +30,6 @@ import com.intellij.openapi.compiler.SourceInstrumentingCompiler;
 import com.intellij.openapi.compiler.Validator;
 import com.intellij.openapi.compiler.util.InspectionValidator;
 import com.intellij.openapi.compiler.util.InspectionValidatorWrapper;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -46,49 +40,24 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WatchRoots;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.EDT;
 import kotlin.Unit;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.jps.api.CanceledStatus;
-import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
-import org.jetbrains.jps.incremental.BinaryContent;
-import org.jetbrains.jps.javac.CompilationPaths;
-import org.jetbrains.jps.javac.DiagnosticOutputConsumer;
-import org.jetbrains.jps.javac.ExternalJavacManager;
-import org.jetbrains.jps.javac.ModulePath;
-import org.jetbrains.jps.javac.OutputFileConsumer;
-import org.jetbrains.jps.javac.OutputFileObject;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,10 +65,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -108,8 +75,6 @@ public class CompilerManagerImpl extends CompilerManager {
   private static final ProjectExtensionPointName<CompilerFactory> COMPILER_FACTORY_EP = new ProjectExtensionPointName<>("com.intellij.compilerFactory");
   private static final ProjectExtensionPointName<CompileTaskBean> COMPILER_TASK_EP = new ProjectExtensionPointName<>("com.intellij.compiler.task");
   private static final ProjectExtensionPointName<CompilableFileTypesProvider> COMPILABLE_TYPE_EP = new ProjectExtensionPointName<>("com.intellij.compilableFileTypesProvider");
-
-  private static final Logger LOG = Logger.getInstance(CompilerManagerImpl.class);
 
   private final Project myProject;
 
@@ -123,7 +88,7 @@ public class CompilerManagerImpl extends CompilerManager {
   private final Semaphore myCompilationSemaphore = new Semaphore(1, true);
   private final Set<ModuleType<?>> myValidationDisabledModuleTypes = new HashSet<>();
   private final WatchRoots.Token myWatchRoot;
-  private volatile ExternalJavacManager myExternalJavacManager;
+  private final ForkedJavacCompiler myJavac;
 
   public CompilerManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -159,15 +124,13 @@ public class CompilerManagerImpl extends CompilerManager {
       }
     }, true, null);
 
+    myJavac = new ForkedJavacCompiler(project, this::getJavacCompilerWorkingDir);
+
     final File projectGeneratedSrcRoot = CompilerPaths.getGeneratedDataDirectory(project);
     projectGeneratedSrcRoot.mkdirs();
     myWatchRoot = WatchRoots.getInstance().watch(FileUtil.toCanonicalPath(projectGeneratedSrcRoot.getPath()), true);
     Disposer.register(JavaPluginDisposable.getInstance(project), () -> {
-      final ExternalJavacManager manager = myExternalJavacManager;
-      myExternalJavacManager = null;
-      if (manager != null) {
-        manager.stop();
-      }
+      myJavac.stop();
       myWatchRoot.close();
       if (ApplicationManager.getApplication().isUnitTestMode()) {    // force cleanup for created compiler system directory with generated sources
         FileUtil.delete(CompilerPaths.getCompilerSystemDirectory(project));
@@ -178,13 +141,11 @@ public class CompilerManagerImpl extends CompilerManager {
   // returns true if all javacs terminated
   @TestOnly
   public boolean waitForExternalJavacToTerminate(long time, @NotNull TimeUnit unit) {
-    ExternalJavacManager externalJavacManager = myExternalJavacManager;
-    return externalJavacManager == null || externalJavacManager.waitForAllProcessHandlers(time, unit);
+    return myJavac.waitForExternalJavacToTerminate(time, unit);
   }
   @TestOnly
   public boolean awaitNettyThreadPoolTermination(long time, @NotNull TimeUnit unit) {
-    ExternalJavacManager externalJavacManager = myExternalJavacManager;
-    return externalJavacManager == null || externalJavacManager.awaitNettyThreadPoolTermination(time, unit);
+    return myJavac.awaitNettyThreadPoolTermination(time, unit);
   }
 
   public Semaphore getCompilationSemaphore() {
@@ -458,182 +419,18 @@ public class CompilerManagerImpl extends CompilerManager {
                                                  Collection<? extends File> sourcePath,
                                                  Collection<? extends File> files,
                                                  File outputDir) throws IOException, CompilationException {
-    final Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
-
-    final Sdk sdk = runtime.getFirst();
-    final SdkTypeId type = sdk.getSdkType();
-    String javaHome = null;
-    if (type instanceof JavaSdkType) {
-      javaHome = sdk.getHomePath();
-      if (!isJdkOrJre(javaHome)) {
-        // this can be a java-dependent SDK, implementing JavaSdkType
-        // hack, because there is no direct way to obtain the java sdk, this sdk depends on
-        final String binPath = ((JavaSdkType)type).getBinPath(sdk);
-        javaHome = binPath != null? new File(binPath).getParent() : null;
-        if (!isJdkOrJre(javaHome)) {
-          javaHome = null;
-        }
-      }
-    }
-    if (javaHome == null) {
-      throw new IOException("Was not able to determine JDK for project " + myProject.getName());
-    }
-
-    final OutputCollector outputCollector = new OutputCollector();
-    DiagnosticCollector diagnostic = new DiagnosticCollector();
-
-    final Set<File> sourceRoots = FileCollectionFactory.createCanonicalFileSet();
-    if (!sourcePath.isEmpty()) {
-      sourceRoots.addAll(sourcePath);
-    }
-    else {
-      for (File file : files) {
-        final File parentFile = file.getParentFile();
-        if (parentFile != null) {
-          sourceRoots.add(parentFile);
-        }
-      }
-    }
-    final Map<File, Set<File>> outs = Collections.singletonMap(outputDir, sourceRoots);
-
-    final ExternalJavacManager javacManager = getJavacManager();
-    final CompilationPaths paths = CompilationPaths.create(platformCp, classpath, upgradeModulePath, ModulePath.create(modulePath), sourcePath);
-    // do not keep process alive in tests since every test expects all spawned processes to terminate in teardown
-    boolean compiledOk = javacManager != null && javacManager.forkJavac(
-      javaHome, -1, Collections.emptyList(), options, paths, files, outs, diagnostic, outputCollector,
-      new JavacCompilerTool(), CanceledStatus.NULL, !ApplicationManager.getApplication().isUnitTestMode()
-    ).get();
-
-    if (!compiledOk) {
-      final List<CompilationException.Message> messages = new SmartList<>();
-      for (Diagnostic<? extends JavaFileObject> d : diagnostic.getDiagnostics()) {
-        final JavaFileObject source = d.getSource();
-        final URI uri = source != null ? source.toUri() : null;
-        messages.add(new CompilationException.Message(
-          kindToCategory(d.getKind()), d.getMessage(Locale.US), uri != null? uri.toURL().toString() : null, (int)d.getLineNumber(), (int)d.getColumnNumber()
-        ));
-      }
-      throw new CompilationException("Compilation failed", messages);
-    }
-
-    final List<ClassObject> result = new ArrayList<>();
-    for (OutputFileObject fileObject : outputCollector.getCompiledClasses()) {
-      final BinaryContent content = fileObject.getContent();
-      result.add(new CompiledClass(fileObject.getName(), fileObject.getClassName(), content != null ? content.toByteArray() : null));
-    }
-    return result;
-  }
-
-  private static boolean isJdkOrJre(@Nullable String path) {
-    return path != null && (JdkUtil.checkForJre(path) || JdkUtil.checkForJdk(path));
-  }
-
-  private static CompilerMessageCategory kindToCategory(Diagnostic.Kind kind) {
-    return switch (kind) {
-      case ERROR -> CompilerMessageCategory.ERROR;
-      case MANDATORY_WARNING, WARNING -> CompilerMessageCategory.WARNING;
-      default -> CompilerMessageCategory.INFORMATION;
-    };
-  }
-
-
-  private @Nullable ExternalJavacManager getJavacManager() throws IOException {
-    ExternalJavacManager manager = myExternalJavacManager;
-    if (manager == null) {
-      synchronized (this) {
-        manager = myExternalJavacManager;
-        if (manager == null) {
-          final File compilerWorkingDir = getJavacCompilerWorkingDir();
-          if (compilerWorkingDir == null) {
-            return null; // should not happen for real projects
-          }
-          final int listenPort = NetUtils.findAvailableSocketPort();
-          // the manager lives as long as the project, so its event loop must not become a child of the first caller's job (e.g. the debugger's)
-          try {
-            manager = ThreadContext.resetThreadContext(() -> {
-              try {
-                return startJavacManager(compilerWorkingDir, listenPort);
-              }
-              catch (IOException e) {
-                throw new UncheckedIOException(e);
-              }
-            });
-          }
-          catch (UncheckedIOException e) {
-            throw e.getCause();
-          }
-          myExternalJavacManager = manager;
-        }
-      }
-    }
-    return manager;
-  }
-
-  private static @NotNull ExternalJavacManager startJavacManager(@NotNull File compilerWorkingDir, int listenPort) throws IOException {
-    ExternalJavacManager manager = new ExternalJavacManager(
-      compilerWorkingDir, ProcessIOExecutorService.INSTANCE, Registry.intValue("compiler.external.javac.keep.alive.timeout", 5*60*1000)
-    );
-    manager.setWslExecutablePath(WSLDistribution.findWslExe());
-    manager.start(listenPort);
-    IdleTask task = new IdleTask(manager);
-    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      // IdleTracker starts the Swing event queue, which a headless app must not do
-      ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService()
-        .scheduleWithFixedDelay(task, IdleTask.CHECK_PERIOD, IdleTask.CHECK_PERIOD, TimeUnit.MILLISECONDS);
-      task.removeIdleListener = new AccessToken() {
-        @Override
-        public void finish() {
-          future.cancel(false);
-        }
-      };
-    }
-    else {
-      task.removeIdleListener = IdleTracker.getInstance().addIdleListener(IdleTask.CHECK_PERIOD, task);
-    }
-    return manager;
+    Sdk sdk = BuildManager.getJavacRuntimeSdk(myProject).getFirst();
+    return myJavac.compile(sdk, options, platformCp, classpath, upgradeModulePath, modulePath, sourcePath, files, outputDir);
   }
 
   @Override
   public @Nullable File getJavacCompilerWorkingDir() {
-    // a project without a presentable URL (e.g. in the language server) has no build system directory
+    // a project without a presentable URL has no build system directory
     final File projectBuildDir = myProject.getPresentableUrl() != null
                                  ? BuildManager.getInstance().getProjectSystemDirectory(myProject)
                                  : new File(CompilerPaths.getCompilerSystemDirectory(myProject), "javac");
     projectBuildDir.mkdirs();
     return projectBuildDir;
-  }
-
-  @ApiStatus.Internal
-  public static final class CompiledClass implements ClassObject {
-    private final String myPath;
-    private final String myClassName;
-    private final byte[] myBytes;
-
-    public CompiledClass(String path, String className, byte[] bytes) {
-      myPath = path;
-      myClassName = className;
-      myBytes = bytes;
-    }
-
-    @Override
-    public String getPath() {
-      return myPath;
-    }
-
-    @Override
-    public String getClassName() {
-      return myClassName;
-    }
-
-    @Override
-    public byte @Nullable [] getContent() {
-      return myBytes;
-    }
-
-    @Override
-    public String toString() {
-      return getClassName();
-    }
   }
 
   private final class ListenerNotificator implements CompileStatusNotification {
@@ -650,76 +447,6 @@ public class CompilerManagerImpl extends CompilerManager {
       }
       if (myDelegate != null) {
         myDelegate.finished(aborted, errors, warnings, compileContext);
-      }
-    }
-  }
-
-  private static class DiagnosticCollector implements DiagnosticOutputConsumer {
-    private final List<Diagnostic<? extends JavaFileObject>> myDiagnostics = new ArrayList<>();
-    @Override
-    public void outputLineAvailable(String line) {
-      // for debugging purposes uncomment this line
-      //System.out.println(line);
-      if (line != null && line.startsWith(ExternalJavacManager.STDERR_LINE_PREFIX)) {
-        LOG.info(line.trim());
-      }
-    }
-
-    @Override
-    public void registerJavacFileData(JavacFileData data) {
-      // ignore
-    }
-
-    @Override
-    public void javaFileLoaded(File file) {
-      // ignore
-    }
-
-    @Override
-    public void customOutputData(String pluginId, String dataName, byte[] data) {
-    }
-
-    @Override
-    public void report(Diagnostic<? extends JavaFileObject> diagnostic) {
-      myDiagnostics.add(diagnostic);
-    }
-
-    public List<Diagnostic<? extends JavaFileObject>> getDiagnostics() {
-      return myDiagnostics;
-    }
-  }
-
-
-  private static class OutputCollector implements OutputFileConsumer {
-    private final List<OutputFileObject> myClasses = new ArrayList<>();
-
-    @Override
-    public void save(@NotNull OutputFileObject fileObject) {
-      myClasses.add(fileObject);
-    }
-
-    List<OutputFileObject> getCompiledClasses() {
-      return myClasses;
-    }
-  }
-
-  private static final class IdleTask implements Runnable {
-    // check idle javac processes every 10 seconds when IDE is idle
-    private static final int CHECK_PERIOD = 10_000;
-    private final ExternalJavacManager myManager;
-    AccessToken removeIdleListener;
-
-    IdleTask(@NotNull ExternalJavacManager manager) {
-      myManager = manager;
-    }
-
-    @Override
-    public void run() {
-      if (myManager.isRunning()) {
-        myManager.shutdownIdleProcesses();
-      }
-      else if (removeIdleListener != null) {
-        removeIdleListener.close();
       }
     }
   }

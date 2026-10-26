@@ -9,6 +9,7 @@
     <module name="intellij.java.analysis.impl"/>
     <module name="intellij.java.compiler"/>
     <module name="intellij.java.compiler.externalJavac"/>
+    <module name="intellij.java.compiler.fragments"/>
     <module name="intellij.java.impl"/>
     <module name="intellij.java.indexing"/>
     <module name="intellij.java.psi"/>
@@ -145,6 +146,9 @@
 
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
+    <projectService serviceInterface="com.intellij.openapi.compiler.JavaFragmentCompiler"
+                    serviceImplementation="com.intellij.compiler.CompilerManagerJavaFragmentCompiler"
+                    overrides="true"/>
     <projectService serviceImplementation="com.intellij.compiler.options.ValidationConfiguration"/>
     <projectService serviceImplementation="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"

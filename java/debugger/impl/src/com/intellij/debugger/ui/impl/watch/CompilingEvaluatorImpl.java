@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.server.BuildManager;
 import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.evaluation.AdditionalContextProvider;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -13,8 +11,8 @@ import com.intellij.execution.configurations.RunProfileWithCompileBeforeLaunchOp
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.compiler.JavaFragmentCompiler;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -45,7 +43,7 @@ import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.javac.JavacOptions;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
@@ -120,7 +118,8 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
       Set<File> platformClasspath = compilerInputs.platformClasspath();
       Set<File> classpath = compilerInputs.classpath();
 
-      Pair<Sdk, JavaSdkVersion> runtime = BuildManager.getJavacRuntimeSdk(myProject);
+      JavaFragmentCompiler compiler = JavaFragmentCompiler.getInstance(myProject);
+      Pair<Sdk, JavaSdkVersion> runtime = compiler.getJavacRuntimeSdk();
       JavaSdkVersion buildRuntimeVersion = runtime.getSecond();
       // if compiler or debuggee version or both are unknown, let source and target be the compiler's defaults
       if (buildRuntimeVersion != null && debuggeeVersion != null) {
@@ -132,17 +131,15 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
         options.add(sourceOption);
       }
 
-      CompilerManager compilerManager = CompilerManager.getInstance(myProject);
-
       File sourceFile = null;
       try {
-        sourceFile = generateTempSourceFile(compilerManager.getJavacCompilerWorkingDir());
+        sourceFile = generateTempSourceFile(compiler.getJavacCompilerWorkingDir());
         File srcDir = sourceFile.getParentFile();
         List<File> sourcePath = Collections.emptyList();
         Set<File> sources = Collections.singleton(sourceFile);
 
         myCompiledClasses =
-          compilerManager.compileJavaCode(options, platformClasspath, classpath, Collections.emptyList(), Collections.emptyList(), sourcePath, sources, srcDir);
+          compiler.compile(options, platformClasspath, classpath, Collections.emptyList(), Collections.emptyList(), sourcePath, sources, srcDir);
       }
       catch (CompilationException e) {
         StringBuilder res = new StringBuilder("Compilation failed:\n");
@@ -172,11 +169,12 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     options.add("UTF-8");
     Set<File> platformClasspath = new LinkedHashSet<>();
     Set<File> classpath = new LinkedHashSet<>();
+    JavaFragmentCompiler compiler = JavaFragmentCompiler.getInstance(myProject);
     AnnotationProcessingConfiguration profile = null;
     for (Module module : myModules) {
       assert myProject.equals(module.getProject()) : module + " is from another project";
       if (profile == null) {
-        profile = CompilerConfiguration.getInstance(myProject).getAnnotationProcessingConfiguration(module);
+        profile = compiler.getAnnotationProcessingConfiguration(module);
       }
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
       for (String path : rootManager.orderEntries().compileOnly().recursively().exportedOnly().withoutSdk().getPathsList().getPathList()) {
@@ -190,7 +188,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     if (myLanguageLevel != null && myLanguageLevel.isPreview()) {
       options.add(JavaParameters.JAVA_ENABLE_PREVIEW_PROPERTY);
     }
-    JavaBuilder.addAnnotationProcessingOptions(options, profile);
+    JavacOptions.addAnnotationProcessingOptions(options, profile);
     return new CompilerInputs(
       List.copyOf(options),
       Collections.unmodifiableSet(platformClasspath),

@@ -296,6 +296,7 @@ java/codeserver/highlighting
 java/compiler
 java/compiler/external-javac
 java/compiler/forms-compiler
+java/compiler/fragments
 java/compiler/heavy-tests
 java/compiler/impl
 java/compiler/instrumentation-util

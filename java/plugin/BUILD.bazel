@@ -52,6 +52,7 @@ dev_dist_plugin(
         "intellij.java.uast.ide",
         "intellij.platform.jps.build",
         "intellij.java.compiler.externalJavac",
+        "intellij.java.compiler.fragments",
         "intellij.platform.jps.build.dependencyGraph",
         "intellij.libraries.jps.javac.extension",
         "intellij.platform.jps.build.javac.rt",

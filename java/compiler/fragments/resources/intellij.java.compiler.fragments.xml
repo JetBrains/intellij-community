@@ -1,0 +1,23 @@
+<idea-plugin visibility="internal">
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.java"/>
+    <module name="intellij.java.compiler"/>
+    <module name="intellij.java.compiler.externalJavac"/>
+    <module name="intellij.java.syntax"/>
+    <module name="intellij.libraries.jps.javac.extension"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.eel.provider"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.jps.build.javac.rt"/>
+    <module name="intellij.platform.lang.core"/>
+    <module name="intellij.platform.projectModel"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.openapi.compiler.JavaFragmentCompiler"
+                    serviceImplementation="com.intellij.java.compiler.fragments.DefaultJavaFragmentCompiler"
+                    open="true"/>
+  </extensions>
+</idea-plugin>
