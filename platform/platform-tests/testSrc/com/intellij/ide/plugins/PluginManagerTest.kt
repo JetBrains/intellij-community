@@ -234,6 +234,7 @@ class PluginManagerTest {
         "- intellij.platform.frontend",
         "- intellij.platform.frontend.split",
         "- intellij.platform.frontend.split.baseline",
+        "- intellij.platform.jps.build.dependencyGraph",
         "- intellij.platform.split",
       ),
     )

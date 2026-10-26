@@ -38,10 +38,7 @@ object ProductModeEnvironmentModules {
         this["intellij.platform.split"] = mode == ProductMode.FRONTEND || mode == ProductMode.BACKEND
         this["intellij.platform.frontend.split"] = mode == ProductMode.FRONTEND
       }
-      // this condition is a workaround for LSP-1549
-      if (mode != ProductMode.LANGUAGE_SERVER) {
-        this["intellij.platform.jps.build.dependencyGraph"] = providesBackend
-      }
+      this["intellij.platform.jps.build.dependencyGraph"] = providesBackend && mode != ProductMode.LANGUAGE_SERVER
     }
   }
 
