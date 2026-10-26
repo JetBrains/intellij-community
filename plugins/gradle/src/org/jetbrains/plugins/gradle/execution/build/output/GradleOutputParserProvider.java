@@ -32,6 +32,7 @@ public final class GradleOutputParserProvider implements ExternalSystemOutputPar
     }
     parsers.add(new GradleCompilationReportParser());
     parsers.add(new GradleBuildScriptErrorParser());
+    parsers.add(new GradleKotlinErrorReporterOutputParser());
     parsers.add(new JavacOutputParser("java", "scala"));
     parsers.add(new KotlincOutputParser());
     parsers.add(new GroovycOutputParser());
