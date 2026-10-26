@@ -14,7 +14,7 @@ internal fun AbstractPythonRunConfiguration<*>.useRunTool(sdk: Sdk): Boolean {
 
 /**
  * The tool this configuration will actually be run through, or `null` when it will be run by the interpreter itself.
- * Backs everything the run configuration says about that tool, so the name and the icon cannot disagree.
+ * Backs everything the run configuration says about that tool.
  */
 internal fun AbstractPythonRunConfiguration<*>.activeRunToolData(): PyRunToolData? {
   if (!enableRunTool) return null

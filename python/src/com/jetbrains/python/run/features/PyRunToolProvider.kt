@@ -18,7 +18,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.nio.file.Path
-import javax.swing.Icon
 
 /**
  * Feature flag for Python "Run with …" tool integration.
@@ -50,7 +49,6 @@ data class PyRunToolData(
   @param:Nls val name: String,
   @param:Nls val group: String,
   @param:Nls @get:Nls val label: String,
-  val icon: Icon,
   @param:NonNls val idForStatistics: String = id.value,
 )
 
