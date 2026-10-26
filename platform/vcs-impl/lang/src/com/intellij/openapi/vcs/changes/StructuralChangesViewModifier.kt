@@ -47,8 +47,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.pom.Navigatable
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
-import com.intellij.psi.util.PsiModificationTracker
+import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
@@ -56,6 +57,7 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import java.util.BitSet
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Adds a node for each change of a modified file. The structure of the file names the changes; the commit can include them one by one. */
 internal class StructuralChangesViewModifier(private val project: Project) : ChangesViewModifier {
@@ -64,11 +66,11 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
 
   override fun modifyTreeModelBuilder(builder: ChangesViewModelBuilder) {
     if (builder !is TreeModelBuilder) return
-    project.service<StructuralChangesViewUpdates>()
     if (!StructuralChangesViewSettings.isEnabled(project)) {
       hunkCache.clear()
       return
     }
+    StructuralChangesViewUpdates.getInstance(project).start()
 
     val sources = HashSet<HunkSource>()
     val changeNodes = builder.myRoot.traverse().filter(ChangesBrowserChangeNode::class.java).toList()
@@ -411,10 +413,27 @@ private class HunkNode(
   }
 }
 
+/**
+ * Refreshes the Changes tree when the hunks can change: on a change of the PSI of a modified file, at the end of indexing, and on a change
+ * of the registry key. The first tree build with structural changes starts it, so the listeners exist only after the structural tree was on.
+ */
 @Service(Service.Level.PROJECT)
 internal class StructuralChangesViewUpdates(private val project: Project) : Disposable {
-  init {
-    project.messageBus.connect(this).subscribe(PsiModificationTracker.TOPIC, PsiModificationTracker.Listener { refresh() })
+  private val started = AtomicBoolean()
+
+  /** Starts the listeners once. Before the first start, a change of the registry key shows the hunks with the next refresh of the tree. */
+  fun start() {
+    if (!started.compareAndSet(false, true)) return
+    PsiManager.getInstance(project).addPsiTreeChangeListener(object : PsiTreeAnyChangeAbstractAdapter() {
+      override fun onChange(file: PsiFile?) {
+        val virtualFile = file?.virtualFile ?: return
+        if (ChangeListManager.getInstance(project).getChange(virtualFile) != null) refresh()
+      }
+    }, this)
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+      // A tree build in dumb mode shows no hunks.
+      override fun exitDumbMode() = refresh()
+    })
     RegistryManager.getInstance().get(StructuralChangesViewSettings.REGISTRY_KEY).addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) {
         if (!project.isDisposed) project.messageBus.syncPublisher(ChangesViewModifier.TOPIC).updated()
@@ -429,4 +448,8 @@ internal class StructuralChangesViewUpdates(private val project: Project) : Disp
   }
 
   override fun dispose() {}
+
+  companion object {
+    fun getInstance(project: Project): StructuralChangesViewUpdates = project.service()
+  }
 }
