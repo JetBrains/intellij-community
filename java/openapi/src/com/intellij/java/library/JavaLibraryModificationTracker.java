@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.library;
 
 import com.intellij.openapi.Disposable;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.ForcefulReparseModificationTracker;
+import com.intellij.util.StackTraceSnapshot;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +36,7 @@ public final class JavaLibraryModificationTracker implements ModificationTracker
   private final ModificationTracker myForcefulReparseModificationTracker;  // PsiClass from libraries may become invalid on reparse
   private final SimpleModificationTracker myOnContentReloadModificationTracker = new SimpleModificationTracker();
   private static final ThrottledLogger THROTTLED_LOG = new ThrottledLogger(Logger.getInstance(JavaLibraryModificationTracker.class), SECONDS.toMillis(30));
-  private final Throwable creationStack = new Throwable();
+  private final StackTraceSnapshot creationStack = StackTraceSnapshot.capture();
 
   public JavaLibraryModificationTracker(Project project) {
     myProjectRootManager = ProjectRootManager.getInstance(project);
@@ -51,7 +52,7 @@ public final class JavaLibraryModificationTracker implements ModificationTracker
         if (!project.isInitialized()) {
           THROTTLED_LOG.warn("SearchScope.contains(file) would log an error because WorkspaceFileIndex is not yet initialized. " +
                              "Probably JavaLibraryModificationTracker was created too early. " +
-                             "See JavaLibraryModificationTracker creation stacktrace: ", creationStack);
+                             "See JavaLibraryModificationTracker creation stacktrace: ", creationStack.toThrowable());
           return;
         }
         if (projectLibraryScope.contains(file)) {
