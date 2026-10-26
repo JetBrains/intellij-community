@@ -60,6 +60,8 @@ import javax.swing.Icon
 import com.intellij.python.sdk.common.evolution.requestEvoShowToolProcessOutput
 import kotlinx.coroutines.launch
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.sdk.common.evolution.PyEvoRegistry
 
 private val managePackagesAction = object : AnAction(
   { PySdkFrontendBundle.message("evo.sdk.python.packaging.interpreter.widget.manage.packages") },
@@ -480,8 +482,10 @@ class EvoPySdkSwitchPopupFactory(
       // The rebuild leads, because it acts on the environment itself while the rows under it act on its packages. It
       // opens a list of Pythons rather than doing anything, and the confirmation is behind that, so leading costs a
       // mis-click nothing.
+      // A rebuild runs a tool, so it is left out where the tools are (PY-93438). The backend leaves out the
+      // package-manager rows there by itself.
       elements = buildList {
-        add(recreateCurrentEnvNode(traceId))
+        if (PyEvoRegistry.areToolsEnabledFor(project.getEelDescriptor())) add(recreateCurrentEnvNode(traceId))
         addAll(packageManagerRows())
         add(EvoTreeLeafElement(managePackagesAction))
       },
