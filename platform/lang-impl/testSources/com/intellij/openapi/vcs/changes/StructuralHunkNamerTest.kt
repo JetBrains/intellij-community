@@ -235,6 +235,17 @@ internal class StructuralHunkNamerTest {
   }
 
   @Test
+  fun `a changed constant among others on one line names the changed words`(): Unit = timeoutRunBlocking {
+    val name = nameHunks(
+      "enum Color {\n  RED, GREEN, BLUE\n}",
+      "enum Color {\n  RED, TEAL, BLUE\n}",
+      HunkLines(1, 2, 1, 2),
+    ).single()
+
+    assertEquals(listOf(Triple("TEAL", FileStatus.MODIFIED, "GREEN")), name.parts.map { Triple(it.text, it.status, it.previousText) })
+  }
+
+  @Test
   fun `an initializer inserted before equal initializers is added`(): Unit = timeoutRunBlocking {
     val name = nameHunks(
       "class Sample {\n  static { a(); }\n  static { b(); }\n}",
