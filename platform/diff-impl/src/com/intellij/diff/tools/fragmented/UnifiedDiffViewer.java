@@ -626,31 +626,81 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
   }
 
   /*
-   * These convertors map an offset by its line and column. The column is kept, because a line has the same text in both documents.
-   * They return -1 when the line convertor returns -1.
+   * These convertors map an offset by its line and column. They return -1 when the line convertor returns -1.
+   * The unified document shows a shared line with the text of the master side. When the comparison ignores whitespace,
+   * the line of the other side can differ in it, and the column then follows the words, see transferColumn().
+   * A strict convertor also returns -1 when the two lines differ in more than whitespace.
    */
   public int transferOffsetToOnesideStrict(@NotNull Side side, int offset) {
     LineCol position = LineCol.fromOffset(getDocument(side), offset);
     int line = transferLineToOnesideStrict(side, position.line);
-    return line != -1 ? LineCol.toOffset(myDocument, line, position.column) : -1;
+    if (line == -1) return -1;
+    return toOnesideOffset(side, position, line, true);
   }
 
   public int transferOffsetToOneside(@NotNull Side side, int offset) {
     LineCol position = LineCol.fromOffset(getDocument(side), offset);
     int line = transferLineToOneside(side, position.line);
-    return line != -1 ? LineCol.toOffset(myDocument, line, position.column) : -1;
+    if (line == -1) return -1;
+    return toOnesideOffset(side, position, line, false);
   }
 
   public int transferOffsetFromOnesideStrict(@NotNull Side side, int offset) {
     LineCol position = LineCol.fromOffset(myDocument, offset);
     int line = transferLineFromOnesideStrict(side, position.line);
-    return line != -1 ? LineCol.toOffset(getDocument(side), line, position.column) : -1;
+    if (line == -1) return -1;
+    return fromOnesideOffset(side, position, line, true);
   }
 
   public int transferOffsetFromOneside(@NotNull Side side, int offset) {
     LineCol position = LineCol.fromOffset(myDocument, offset);
     int line = transferLineFromOneside(side, position.line);
-    return line != -1 ? LineCol.toOffset(getDocument(side), line, position.column) : -1;
+    if (line == -1) return -1;
+    return fromOnesideOffset(side, position, line, false);
+  }
+
+  private int toOnesideOffset(@NotNull Side side, @NotNull LineCol sidePosition, int onesideLine, boolean strict) {
+    int column = transferColumn(getDocument(side), myDocument, sidePosition, onesideLine, strict);
+    if (column == -1) return -1;
+    return LineCol.toOffset(myDocument, onesideLine, column);
+  }
+
+  private int fromOnesideOffset(@NotNull Side side, @NotNull LineCol onesidePosition, int sideLine, boolean strict) {
+    int column = transferColumn(myDocument, getDocument(side), onesidePosition, sideLine, strict);
+    if (column == -1) return -1;
+    return LineCol.toOffset(getDocument(side), sideLine, column);
+  }
+
+  /**
+   * Converts a column between two sides.
+   * <p>
+   * The line texts may not match if {@link com.intellij.diff.tools.util.base.IgnorePolicy} is set and needs to be adjusted.
+   *
+   * @param strict if we should return -1 if exact matching is impossible
+   */
+  private static int transferColumn(@NotNull Document fromDocument,
+                                    @NotNull Document toDocument,
+                                    @NotNull LineCol fromPosition,
+                                    int toLine,
+                                    boolean strict) {
+    CharSequence fromText = getLineText(fromDocument, fromPosition.line);
+    CharSequence toText = getLineText(toDocument, toLine);
+
+    if (StringUtil.equals(fromText, toText)) return fromPosition.column;
+    if (fromPosition.column > fromText.length()) {
+      return toText.length() + 1; // 'end of this line' offset
+    }
+
+    Integer transferred = LineColumnTransfer.transferColumn(fromText, toText, fromPosition.column);
+    if (transferred != null) return transferred;
+
+    if (strict) return -1;
+    return Math.min(fromPosition.column, toText.length());
+  }
+
+  private static @NotNull CharSequence getLineText(@NotNull Document document, int line) {
+    if (line >= DiffUtil.getLineCount(document)) return "";
+    return DiffUtil.getLinesContent(document, line, line + 1);
   }
 
   /*
@@ -661,27 +711,34 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase implements EditorD
     Pair<int[], Side> pair = transferLineFromOneside(position.line);
     Side side = pair.second;
     int line = side.select(pair.first);
-    return line != -1 ? Pair.create(LineCol.toOffset(getDocument(side), line, position.column), side) : null;
+    if (line == -1) return null;
+    return Pair.create(fromOnesideOffset(side, position, line, false), side);
   }
 
   /*
    * This convertor returns null if exact matching is impossible, or if the unified document shows lines of the other side inside the range.
-   * The text of a line is the same in both documents, so only the lines in between can differ.
    * The end offset is exclusive, so a range that ends with a line break stays on the line of that line break.
    */
   public @Nullable TextRange transferRangeToOnesideStrict(@NotNull Side side, @NotNull TextRange range) {
     Document sideDocument = getDocument(side);
-    int startLine = sideDocument.getLineNumber(range.getStartOffset());
+    LineCol start = LineCol.fromOffset(sideDocument, range.getStartOffset());
+    // the end is exclusive: the line of the last character, with a column past the line end for a line break
     int endLine = sideDocument.getLineNumber(Math.max(range.getStartOffset(), range.getEndOffset() - 1));
+    LineCol end = new LineCol(endLine, range.getEndOffset() - sideDocument.getLineStartOffset(endLine));
 
-    int onesideStartLine = transferLineToOnesideStrict(side, startLine);
-    int onesideEndLine = transferLineToOnesideStrict(side, endLine);
+    int onesideStartLine = transferLineToOnesideStrict(side, start.line);
+    int onesideEndLine = transferLineToOnesideStrict(side, end.line);
     if (onesideStartLine == -1 || onesideEndLine == -1) return null;
-    if (onesideEndLine - onesideStartLine != endLine - startLine) return null;
+    if (onesideEndLine - onesideStartLine != end.line - start.line) return null;
 
-    int start = myDocument.getLineStartOffset(onesideStartLine) + range.getStartOffset() - sideDocument.getLineStartOffset(startLine);
-    int end = myDocument.getLineStartOffset(onesideEndLine) + range.getEndOffset() - sideDocument.getLineStartOffset(endLine);
-    return new TextRange(start, end);
+    int onesideStartColumn = transferColumn(sideDocument, myDocument, start, onesideStartLine, true);
+    int onesideEndColumn = transferColumn(sideDocument, myDocument, end, onesideEndLine, true);
+    if (onesideStartColumn == -1 || onesideEndColumn == -1) return null;
+
+    int onesideStart = new LineCol(onesideStartLine, onesideStartColumn).toOffset(myDocument);
+    // LineCol.toOffset would clamp the column to the line end and lose the line break
+    int onesideEnd = Math.min(myDocument.getLineStartOffset(onesideEndLine) + onesideEndColumn, myDocument.getTextLength());
+    return new TextRange(onesideStart, Math.max(onesideStart, onesideEnd));
   }
 
   @RequiresEdt
