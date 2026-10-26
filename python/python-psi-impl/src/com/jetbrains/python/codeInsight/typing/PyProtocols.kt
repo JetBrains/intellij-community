@@ -11,13 +11,16 @@ import com.jetbrains.python.psi.PyKnownDecorator.TYPING_RUNTIME_CHECKABLE_EXT
 import com.jetbrains.python.psi.PyKnownDecorator.TYPING_RUNTIME_EXT
 import com.jetbrains.python.psi.PyKnownDecoratorUtil
 import com.jetbrains.python.psi.PyPossibleClassMember
+import com.jetbrains.python.psi.PyPsiFacade
 import com.jetbrains.python.psi.PyTypeParameter
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyClassTypeImpl
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -88,8 +91,16 @@ private fun PyClassType.findProtocolMember(name: String, context: TypeEvalContex
       }
     }
   }
-  return this.findMember(name, resolveContext)
+  val members = this.findMember(name, resolveContext)
+  if (members.isEmpty() && this is PyTypedDictType) {
+    // A TypedDict type is based on `dict`, but members such as `__required_keys__` belong to the TypedDict fallback class of typeshed
+    val fallbackClass = PyPsiFacade.getInstance(pyClass.project).createClassByQName(TYPED_DICT_FALLBACK, pyClass) ?: return members
+    return PyClassTypeImpl(fallbackClass, isDefinition).findMember(name, resolveContext)
+  }
+  return members
 }
+
+private const val TYPED_DICT_FALLBACK = "_typeshed._type_checker_internals.TypedDictFallback"
 
 fun PyClassLikeType.getProtocolMembers(context: TypeEvalContext): List<PyTypeMember> {
   val resolveContext = PyResolveContext.defaultContext(context)

@@ -657,6 +657,31 @@ class PyProtocolTypeTest : PyCodeInsightTestCase() {
       accepts_protocol(obj)
       """.trimIndent())
 
+    @TestFor(issues = ["PY-93429"])
+    @Test
+    fun `TypedDict matches a protocol with the class variables of the TypedDict fallback`() = test("""
+      from typing import ClassVar, Protocol, TypedDict
+
+
+      class TypedDictLike(Protocol):
+          __required_keys__: ClassVar[frozenset[str]]
+          __optional_keys__: ClassVar[frozenset[str]]
+
+
+      class TypedDictInstanceLike(Protocol):
+          __required_keys__: frozenset[str]
+
+
+      class Movie(TypedDict):
+          name: str
+
+
+      instance: TypedDictLike = Movie(name="")
+      definition: type[TypedDictLike] = Movie
+      not_class_variable: TypedDictInstanceLike = Movie(name="")
+      #                                           ^^^^^^^^^^^^^^ WARNING Expected type 'TypedDictInstanceLike', got 'Movie' instead
+      """.trimIndent())
+
     @TestFor(issues = ["PY-53104"])
     @Test
     fun `protocol method returning Self matches concrete returning subclass`() = test("""
