@@ -188,6 +188,8 @@ jvm_library(
         "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
         "//platform/vcs/plugin",
         "//platform/vcs/plugin:plugin_test_lib",
+        "//platform/analysis-api:analysis",
+        "//platform/analysis-api:analysis_test_lib",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/vcs-impl/shared:vcs-impl-shared-tests",
