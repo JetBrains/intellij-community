@@ -36,7 +36,7 @@ internal class SnapshotLazyRangeMarker(
 
   override fun isValid(): Boolean {
     if (!super.isValid()) return false
-    val file = checkNotNull(fileRoot).file
+    val file = fileRoot!!.file
     if (FileDocumentManager.getInstance().getCachedDocument(file) != null) return true
     if (file.isDirectory || FileDocumentManagerBase.isBinaryWithoutDecompiler(file)) return false
     return !file.fileType.isBinary || !file.isTooLarge()

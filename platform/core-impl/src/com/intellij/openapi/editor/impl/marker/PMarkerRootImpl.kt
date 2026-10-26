@@ -975,7 +975,7 @@ open class PMarkerRootImpl private constructor(
       val factor = balanceFactor(editor, root)
 
       if (factor > 1) {
-        val leftId = checkNotNull(root.leftId)
+        val leftId = checkNotNullNode(root.leftId)
         val left = push(editor, leftId)
         if (balanceFactor(editor, left) < 0) {
           val newLeft = rotateLeft(editor, leftId)
@@ -986,7 +986,7 @@ open class PMarkerRootImpl private constructor(
       }
 
       if (factor < -1) {
-        val rightId = checkNotNull(root.rightId)
+        val rightId = checkNotNullNode(root.rightId)
         val right = push(editor, rightId)
         if (balanceFactor(editor, right) > 0) {
           val newRight = rotateRight(editor, rightId)
@@ -1072,7 +1072,7 @@ open class PMarkerRootImpl private constructor(
       return ExtractMinimumResult(remainingRoot, minimumId)
     }
 
-    private fun checkNotNull(id: Long): Long {
+    private fun checkNotNullNode(id: Long): Long {
       check(id != NULL_NODE)
       return id
     }
