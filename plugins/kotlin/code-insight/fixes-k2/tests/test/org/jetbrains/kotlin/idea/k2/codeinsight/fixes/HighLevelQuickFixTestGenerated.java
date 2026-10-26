@@ -15046,6 +15046,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/class.kt");
         }
 
+        @TestMetadata("classWithCompanionObjectAndInvoke.kt")
+        public void testClassWithCompanionObjectAndInvoke() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/classWithCompanionObjectAndInvoke.kt");
+        }
+
+        @TestMetadata("classWithoutCompanionObjectAndInvoke.kt")
+        public void testClassWithoutCompanionObjectAndInvoke() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/classWithoutCompanionObjectAndInvoke.kt");
+        }
+
         @TestMetadata("conflictingSignatures.kt")
         public void testConflictingSignatures() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/specifyAllRemainingArgumentsByName/conflictingSignatures.kt");

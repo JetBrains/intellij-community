@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallCandidate
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitInvokeCall
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.collectCallCandidates
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulCall
@@ -276,8 +277,8 @@ object SpecifyRemainingArgumentsByNameUtil {
     }
 
     /**
-     * Given the list of [allCalls] that are possible, this function returns the [RemainingArgumentsData] from the
-     * overload with the fewest required (not default) value parameters.
+     * This function prefers direct calls. It uses implicit `invoke` calls only when no direct call is available.
+     * It returns data from the candidate with the fewest required value parameters.
      */
     context(session: KaSession)
     private fun getRemainingArgumentsData(allCalls: List<KaCallCandidate>, existingArgumentsCount: Int): RemainingArgumentsData? {
@@ -288,7 +289,8 @@ object SpecifyRemainingArgumentsByNameUtil {
         val validPossibleCalls = allFunctionCalls.filter { it.symbol.hasStableParameterNames && isValidArgumentMapping(it.valueArgumentMapping) }
         if (validPossibleCalls.isEmpty()) return null
 
-        return validPossibleCalls
+        val directCalls = validPossibleCalls.filterNot { it is KaImplicitInvokeCall }.ifEmpty { validPossibleCalls }
+        return directCalls
             .minBy { call -> call.symbol.valueParameters.count { !it.hasDeclaredDefaultValue } }
             .getRemainingArgumentsData(existingArgumentsCount)
     }
