@@ -31,7 +31,7 @@ object ProductModeEnvironmentModules {
         }
         this["intellij.platform.debugger"] = false
         // the property is temporary
-        this["intellij.platform.execution"] = getBooleanProperty("intellij.platform.light.mode.enable.execution", true)
+        this["intellij.platform.execution"] = getBooleanProperty("intellij.platform.light.mode.enable.execution", false)
         this["intellij.platform.split.connection"] = mode == ProductMode.LIGHT_WITH_RD_CONNECTION
       }
       else {
