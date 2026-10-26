@@ -5,11 +5,6 @@ field3: value detail detail detail detail generated detail reference generated d
 ---
 
 
-<!-- synthetic comment
-synthetic comment detail detail detail detail generated detail reference generated detail reference generated detail reference
-
-synthetic comment detail detail detail detail generated detail reference generated detail reference generated detail reference
-synthetic comment --> detail detail detail detail
 
 # Generated reference
 
@@ -25,13 +20,7 @@ detail detail detail detail detail generated detail reference generated detail r
 [r](#) detail
 [r](#) detail
 
-<!-- synthetic comment -->
-<!-- synthetic comment -->
-<!-- synthetic comment -->
 
-<!-- synthetic comment -->
-<!-- synthetic comment -->
-<!-- synthetic comment -->
 
 ## Section 2 `v`
 

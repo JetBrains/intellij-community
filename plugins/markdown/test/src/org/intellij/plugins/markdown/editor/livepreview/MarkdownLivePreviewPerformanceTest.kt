@@ -144,7 +144,7 @@ internal class MarkdownLivePreviewPerformanceTest {
   @Suppress("unused")
   enum class Sample(val file: String, vararg val caretOffsets: Int) {
     CHANGELOG("CHANGELOG.md", 28),
-    INDEX("index.md", 708, 2025);
+    INDEX("index.md", 380, 1536);
 
     override fun toString(): String = file
   }
