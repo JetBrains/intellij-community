@@ -124,6 +124,7 @@ public final class CompletionAssertions {
     Throwable invalidateTrace;
     DocumentEvent killer;
     private RangeMarkerSpy spy;
+    private boolean watchingStopped;
 
     WatchingInsertionContext(@NotNull OffsetMap offsetMap,
                              @NotNull PsiFile file,
@@ -147,7 +148,8 @@ public final class CompletionAssertions {
     }
 
     private void watchTail(int offset) {
-      stopWatching();
+      if (watchingStopped) return;
+      stopTailWatcher();
       tailWatcher = (RangeMarkerEx)getDocument().createRangeMarker(offset, offset);
       if (!tailWatcher.isValid()) {
         throw new AssertionError(getDocument() + "; offset=" + offset);
@@ -157,14 +159,21 @@ public final class CompletionAssertions {
       getDocument().addDocumentListener(spy);
     }
 
+    /** Stops the tail watch for good. A later read or write of the tail offset does not add a listener to the document again. */
     @ApiStatus.Internal
     public void stopWatching() {
+      watchingStopped = true;
+      stopTailWatcher();
+    }
+
+    private void stopTailWatcher() {
       if (tailWatcher != null) {
         if (spy != null) {
           getDocument().removeDocumentListener(spy);
           spy = null;
         }
         tailWatcher.dispose();
+        tailWatcher = null;
       }
     }
 
@@ -175,7 +184,7 @@ public final class CompletionAssertions {
       }
 
       int offset = super.getTailOffset();
-      if (tailWatcher.getStartOffset() != tailWatcher.getEndOffset() && offset > 0) {
+      if (tailWatcher != null && tailWatcher.getStartOffset() != tailWatcher.getEndOffset() && offset > 0) {
         watchTail(offset);
       }
 

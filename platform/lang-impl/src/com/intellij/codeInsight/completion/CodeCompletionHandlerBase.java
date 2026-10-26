@@ -741,6 +741,7 @@ public class CodeCompletionHandlerBase {
       // No additional special handling should be performed; 
       // everything is already done inside LookupImpl::insertItem
       context.setAddCompletionChar(false);
+      context.stopWatching();
       return context;
     }
     ApplicationManager.getApplication().runWriteAction(() -> {
