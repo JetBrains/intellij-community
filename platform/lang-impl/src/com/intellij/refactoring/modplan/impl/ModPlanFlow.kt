@@ -47,6 +47,11 @@ import org.jetbrains.annotations.VisibleForTesting
  * confirms. With no conflicts, they are shown in a preview where the user chooses to go on. The legacy safe delete shows them in the same
  * way.
  *
+ * If the request answers [ModPlanRefactoring.PREVIEW], as the Preview button of a legacy dialog does, the preview shows the usages of the
+ * plan as well, and the user may exclude some: the chain runs again with them in [ModPlanRefactoring.EXCLUDED_USAGES], and the
+ * refactoring leaves them as they are. If the user cancels the conflicts after the chain asked its questions, the questions are asked
+ * again, as the legacy dialog stays open under the conflicts.
+ *
  * A refusal [ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED] can also come after the questions. The cause is an element that a question
  * adds, or a usage that the engine cannot edit. Then the flow returns [Result.LEGACY], and the legacy flow asks its questions and searches
  * the usages again.
@@ -87,7 +92,7 @@ object ModPlanFlow {
 
     val run = FlowRun(refactoring, request, interactive, ui, askedFiles, onApplied)
     val planned = run.plan(request) ?: return Result.CANCELLED
-    return run.proceed(planned, previewNonCodeUsages = true)
+    return run.proceed(planned, preview = true)
   }
 
   /**
@@ -169,13 +174,13 @@ object ModPlanFlow {
     }
 
     /**
-     * The steps after the questions: the conflicts, the preview of the non-code usages, and the write of the plan.
+     * The steps after the questions: the conflicts, the preview, and the write of the plan.
      *
-     * @param previewNonCodeUsages whether the non-code usages that the refactoring leaves are shown in a preview before the write. The
-     * preview writes the plan it shows, and a rerun runs the chain again with the answers of this run
+     * @param preview whether a preview is shown before the write: [previewUsages] if the answers ask for it with
+     * [ModPlanRefactoring.PREVIEW], else [previewNonCodeUsages]
      */
     @RequiresEdt
-    fun proceed(plannedRun: PlannedRun, previewNonCodeUsages: Boolean): Result {
+    fun proceed(plannedRun: PlannedRun, preview: Boolean): Result {
       val readyOutcome = when (val plannedOutcome = plannedRun.planned) {
         is Planned.Refused -> {
           if (plannedOutcome.refusedPlan.reason == ModPlanAnalysisResult.RefusedReason.NOT_SUPPORTED) return Result.LEGACY
@@ -192,26 +197,27 @@ object ModPlanFlow {
         val data = RefactoringEventData()
         data.putUserData(RefactoringEventData.CONFLICTS_KEY, conflicts.values())
         project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).conflictsDetected(refactoring.id(), data)
-        if (!ui.confirmConflicts(project, conflicts)) return Result.CANCELLED
+        if (!ui.confirmConflicts(project, conflicts)) {
+          // The questions stand for the legacy dialog, which stays open under its conflicts: the user goes back to them.
+          if (plannedRun.answers == request.optionValues()) return Result.CANCELLED
+          return plan(request)?.let { proceed(it, preview = true) } ?: Result.CANCELLED
+        }
       }
-      // The conflicts that the user accepted already listed the non-code usages, so nothing is previewed after them.
-      if (previewNonCodeUsages && readyOutcome.conflicts == null &&
-          ui.previewNonCodeUsages(project, refactoring, readyOutcome.plan.execution.commandName, readyOutcome.targets,
-                                  readyOutcome.nonCodeUsages) { previewAgain ->
-            if (previewAgain) {
-              plan(ModPlanChain.withOptionValues(request, plannedRun.answers))?.let { proceed(it, previewNonCodeUsages = true) }
-            }
-            else {
-              proceed(plannedRun, previewNonCodeUsages = false)
-            }
-          }) {
-        return Result.CANCELLED
+      if (preview) {
+        val shown = if (plannedRun.answers.get(ModPlanRefactoring.PREVIEW)) {
+          previewUsages(plannedRun, readyOutcome)
+        }
+        else {
+          previewNonCodeUsages(plannedRun, readyOutcome)
+        }
+        if (shown) return Result.CANCELLED
       }
       val files = readyOutcome.files.filter { it !in askedFiles }
       if (files.isNotEmpty() && !ReadonlyStatusHandler.ensureFilesWritable(project, *files.toTypedArray())) return Result.CANCELLED
       // A file that changed since the plan makes the execution stale, and then nothing is written, as for a file that cannot be written.
       val executeStart = System.currentTimeMillis()
-      val executionResult = ModPlanExecutor.execute(readyOutcome.plan.execution, isGlobalUndo())
+      val answeredRequest = ModPlanChain.withOptionValues(request, plannedRun.answers)
+      val executionResult = ModPlanExecutor.execute(readyOutcome.plan.execution, isGlobalUndo()) { readyOutcome.plan.writeEvents?.get() ?: refactoring.writeEvents(answeredRequest) }
       RefactoringUsageCollector.EXECUTED.log(refactoring.javaClass, System.currentTimeMillis() - executeStart)
       return when (executionResult) {
         is ModPlanExecutionResult.Applied -> {
@@ -223,6 +229,57 @@ object ModPlanFlow {
           Result.FAILED
         }
       }
+    }
+
+    /**
+     * The preview that the flow shows by itself, as the legacy safe delete does: the non-code usages that the refactoring leaves as they
+     * are. It is not shown after conflicts: the conflicts dialog already listed them. The user excludes nothing, as nothing of it is
+     * written: the user goes on with the plan, or plans again.
+     *
+     * @return true if the preview is shown; the user's choice comes later
+     */
+    @RequiresEdt
+    private fun previewNonCodeUsages(plannedRun: PlannedRun, readyOutcome: Planned.Ready): Boolean {
+      if (readyOutcome.conflicts != null) return false
+      val commandName = readyOutcome.plan.execution.commandName
+      return ui.previewNonCodeUsages(project, refactoring, commandName, readyOutcome.targets, readyOutcome.nonCodeUsages) { previewAgain ->
+        if (previewAgain) {
+          planAgain(plannedRun.answers)
+        }
+        else {
+          proceed(plannedRun, preview = false)
+        }
+      }
+    }
+
+    /**
+     * The preview that the user asked for with [ModPlanRefactoring.PREVIEW], as the Preview button of a legacy dialog: the usages that the
+     * plan changes, and the non-code usages. It is shown also after conflicts, as in the legacy flow. The user may exclude usages: then the
+     * chain runs again with them in [ModPlanRefactoring.EXCLUDED_USAGES], and its plan is written with no preview; else the shown plan is
+     * written.
+     *
+     * @return true if the preview is shown; the user's choice comes later
+     */
+    @RequiresEdt
+    private fun previewUsages(plannedRun: PlannedRun, readyOutcome: Planned.Ready): Boolean {
+      val commandName = readyOutcome.plan.execution.commandName
+      return ui.previewUsages(project, refactoring, commandName, readyOutcome.targets, readyOutcome.plan.usages,
+                              readyOutcome.nonCodeUsages) { previewAgain, excludedUsages ->
+        when {
+          previewAgain -> planAgain(plannedRun.answers)
+          excludedUsages.isEmpty() -> proceed(plannedRun, preview = false)
+          else -> {
+            val answers = plannedRun.answers.with(ModPlanRefactoring.EXCLUDED_USAGES, ModPlanRefactoring.excludedUsagesOf(excludedUsages))
+            plan(ModPlanChain.withOptionValues(request, answers))?.let { proceed(it, preview = false) }
+          }
+        }
+      }
+    }
+
+    /** Runs the chain again with [answers] and shows the preview of its plan, for the rerun of a preview. */
+    @RequiresEdt
+    private fun planAgain(answers: ModPlanOptionValues) {
+      plan(ModPlanChain.withOptionValues(request, answers))?.let { proceed(it, preview = true) }
     }
   }
 

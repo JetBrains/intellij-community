@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan
 
+import com.intellij.modcommand.FutureVirtualFile
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCreateFile
 import com.intellij.modcommand.ModDeleteFile
@@ -29,7 +30,7 @@ class ModPlanEditTest : BasePlatformTestCase() {
     return PlatformTestUtil.waitForFuture(ApplicationManager.getApplication().executeOnPooledThread(Callable {
       runCatching {
         runReadActionBlocking {
-          val plan = ModPlan.createPlan(edits.toList(), ModPlanConflicts(emptyList()), emptyList(), "test", "test", root(), false)
+          val plan = ModPlan.createPlan(edits.toList(), ModPlanConflicts(emptyList()), "test", "test", root(), false)
           (plan as? ModPlan.AcceptedPlan)?.execution?.command
         }
       }
@@ -168,6 +169,24 @@ class ModPlanEditTest : BasePlatformTestCase() {
     val parts = command!!.unpack()
     assertEquals(listOf("n.txt"), parts.filterIsInstance<ModCreateFile>().map { it.file().name })
     assertEquals(listOf("m.txt"), parts.filterIsInstance<ModMoveFile>().map { it.targetFile().name })
+  }
+
+  fun `test creates destination directories without changing the project`() {
+    val a = myFixture.addFileToProject("a.txt", "a")
+    val parent = a.virtualFile.parent
+    val destination = FutureVirtualFile(parent, "target", null)
+    val nested = FutureVirtualFile(destination, "nested", null)
+
+    val command = toCommand(
+      ModPlanEdit.CreateDirectory(destination),
+      ModPlanEdit.CreateDirectory(nested),
+      ModPlanEdit.Move(a.virtualFile, nested, a.name),
+    )!!
+
+    assertNull(parent.findChild("target"))
+    assertSame(parent, a.virtualFile.parent)
+    assertEquals(listOf(destination, nested), command.unpack().filterIsInstance<ModCreateFile>().map { it.file() })
+    assertTrue(command.unpack().filterIsInstance<ModCreateFile>().all { it.content() is ModCreateFile.Directory })
   }
 
   fun `test a physical element is not replaced by its navigation element`() {

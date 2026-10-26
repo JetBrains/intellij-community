@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SmartPsiFileRange
 import com.intellij.refactoring.modplan.ModPlanOptionValues
 import com.intellij.refactoring.modplan.ModPlanQuestion
 import com.intellij.refactoring.modplan.ModPlanRefactoring
@@ -52,6 +53,23 @@ interface ModPlanFlowUi {
     targets: Array<out UsageTarget>,
     usages: Array<UsageInfo>,
     proceed: (previewAgain: Boolean) -> Unit,
+  ): Boolean
+
+  /**
+   * Shows the [usages] that the refactoring changes and the [nonCodeUsages] that it leaves as they are, as [previewNonCodeUsages] does.
+   * The user may exclude usages: [proceed] gets the excluded ones of [usages] when the user goes on.
+   *
+   * @return false if there is nothing to show
+   */
+  @RequiresEdt
+  fun previewUsages(
+    project: Project,
+    refactoring: ModPlanRefactoring,
+    commandName: @NlsContexts.Command String,
+    targets: Array<out UsageTarget>,
+    usages: List<SmartPsiFileRange>,
+    nonCodeUsages: Array<UsageInfo>,
+    proceed: (previewAgain: Boolean, excludedUsages: Set<SmartPsiFileRange>) -> Unit,
   ): Boolean
 
   /** Tells the user that [refactoring] failed. */

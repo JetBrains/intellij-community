@@ -17,19 +17,20 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.psi.SmartPointerManager.getInstance
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.SmartPsiFileRange
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions
 import com.intellij.psi.createSmartFileRange
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.refactoring.modplan.ModPlan.Companion.toCommand
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
+import java.util.function.Supplier
 
 /**
  * The result of [ModPlanRefactoring.plan]: a [RefusedPlan], or what the refactoring would do and the execution that does it.
@@ -41,22 +42,36 @@ sealed interface ModPlan {
    * Why a ModPlan refactoring cannot run at all: the plan of a refactoring that can do nothing.
    *
    * @property location the place of the element that caused the refusal; null if the element is gone
+   * @property message the explanation of the refusal for the user, as the language or the platform gives it; null if there is none
    */
-  class RefusedPlan(val reason: ModPlanAnalysisResult.RefusedReason, val location: SmartPsiFileRange?) : ModPlan {
+  class RefusedPlan(
+    val reason: ModPlanAnalysisResult.RefusedReason,
+    val location: SmartPsiFileRange?,
+    val message: @NlsContexts.DialogMessage String?,
+  ) : ModPlan {
     /**
      * @param element the element that caused the refusal; null if it is gone
      */
     @RequiresReadLock
-    constructor(reason: ModPlanAnalysisResult.RefusedReason, element: PsiElement?) :
-      this(reason, element?.createSmartFileRange())
+    constructor(reason: ModPlanAnalysisResult.RefusedReason, element: PsiElement?, message: @NlsContexts.DialogMessage String?) :
+      this(reason, element?.createSmartFileRange(), message)
   }
 
   /**
    * @property conflicts the conflicts of the refactoring, and the non-code usages of the changed elements, such as comments and strings;
    * they are never edited, see [ModPlanConflicts.nonCodeUsages]
    * @property execution what [ModPlanExecutor] runs; its [ModPlanExecution.affectedFiles] are the files that change
+   * @property usages the places that the execution changes, which a preview shows and the user may exclude, see
+   * [ModPlanRefactoring.EXCLUDED_USAGES]; empty if the refactoring shows none
+   * @property writeEvents what the write tells the listeners, if the analysis knows it better than the request does; null to use
+   * [ModPlanRefactoring.writeEvents]. It runs in the command of the writes, so it keeps smart pointers, not PSI.
    */
-  class AcceptedPlan(val conflicts: ModPlanConflicts, val execution: ModPlanExecution) : ModPlan
+  class AcceptedPlan(
+    val conflicts: ModPlanConflicts,
+    val execution: ModPlanExecution,
+    val usages: List<SmartPsiFileRange>,
+    val writeEvents: Supplier<ModPlanRefactoring.WriteEvent>?,
+  ) : ModPlan
 
   companion object {
     /**
@@ -64,28 +79,25 @@ sealed interface ModPlan {
      * action.
      *
      * @param edits the edits of the refactoring, which run in the given order, see [toCommand]
-     * @param eventElements the elements that the refactoring events report
      * @param anchor the element the refactoring was invoked on, see [toCommand]
      * @param trashDeletedFiles whether [ModPlanExecutor] moves the deleted files to the trash if the user deletes to it in the settings.
      * A directory is always deleted.
+     * @param usages the places that the edits change, for the preview, see [AcceptedPlan.usages]
+     * @param writeEvents see [AcceptedPlan.writeEvents]
      * @return a [AcceptedPlan], or a [ModPlanAnalysisResult.RefusedReason.EDIT_FAILED] refusal if an edit failed, see [toCommand]
      */
+    @JvmStatic
+    @JvmOverloads
     @RequiresReadLock
-    fun createPlan(edits: List<ModPlanEdit>, conflicts: ModPlanConflicts, eventElements: List<PsiElement>,
+    fun createPlan(edits: List<ModPlanEdit>, conflicts: ModPlanConflicts,
                    commandName: @NlsContexts.Command String, refactoringId: @NonNls String, anchor: PsiElement,
-                   trashDeletedFiles: Boolean): ModPlan {
-      val project = anchor.project
+                   trashDeletedFiles: Boolean, usages: List<SmartPsiFileRange> = emptyList(),
+                   writeEvents: Supplier<ModPlanRefactoring.WriteEvent>? = null): ModPlan {
       val command = toCommand(edits, anchor)
-                    ?: return RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, anchor)
+                    ?: return RefusedPlan(ModPlanAnalysisResult.RefusedReason.EDIT_FAILED, anchor, null)
       val fileWrites = command.unpack().filterNot { it is ModNothing || it is ModUpdateFileText && it.isEmpty }
-      val stamps = fileWrites.filter { it is ModDeleteFile || it is ModMoveFile }.map { ModPlanExecution.writtenFile(it) }
-        .associateWith { ModPlanExecution.stampOf(it) }
-      val smartPointerManager = getInstance(project)
-      val execution = ModPlanExecution(
-        project, commandName, refactoringId, fileWrites, stamps,
-        eventElements.map { smartPointerManager.createSmartPsiElementPointer(it) }, trashDeletedFiles,
-      )
-      return AcceptedPlan(conflicts, execution)
+      val execution = ModPlanExecution(anchor.project, commandName, refactoringId, fileWrites, trashDeletedFiles)
+      return AcceptedPlan(conflicts, execution, usages, writeEvents)
     }
 
     /** A write on the copies of [elements], which the engine hands to [write] in the same order. */
@@ -104,6 +116,8 @@ sealed interface ModPlan {
     private fun toCommand(edits: List<ModPlanEdit>, anchor: PsiElement): ModCommand? {
       val deletedFiles = edits.filterIsInstance<ModPlanEdit.Delete>().map { it.file() }
       if (deletedFiles.any { !it.isValid }) return null
+      // A file that moves out of a deleted directory keeps its updates, as a file of a directory that the move leaves empty.
+      val movedFiles = edits.filterIsInstance<ModPlanEdit.Move>().map { it.file() }
       val writtenFiles = HashSet<VirtualFile>()
       val fileWrites = ArrayList<ModCommand>()
       val psiWrites = ArrayList<PsiWrite>()
@@ -111,7 +125,10 @@ sealed interface ModPlan {
         when (edit) {
           is ModPlanEdit.Update -> {
             val write = mapUpdate(edit) ?: return null
-            if (!write.elements.all { isInsideDeletedFile(PsiUtilCore.getVirtualFile(it), it is PsiFileSystemItem, deletedFiles) }) {
+            if (!write.elements.all {
+                val file = PsiUtilCore.getVirtualFile(it)
+                isInsideDeletedFile(file, it is PsiFileSystemItem, deletedFiles) && !isInsideDeletedFile(file, false, movedFiles)
+              }) {
               psiWrites.add(write)
             }
           }
@@ -123,6 +140,9 @@ sealed interface ModPlan {
           is ModPlanEdit.Create -> {
             val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(edit.name())
             fileWrites.add(ModCreateFile(FutureVirtualFile(edit.parent(), edit.name(), fileType), ModCreateFile.Text(edit.text())))
+          }
+          is ModPlanEdit.CreateDirectory -> {
+            fileWrites.add(ModCreateFile(edit.directory(), ModCreateFile.Directory()))
           }
           is ModPlanEdit.Move -> {
             val fileType = if (edit.file().isDirectory) {
@@ -219,8 +239,6 @@ sealed interface ModPlan {
  * @property project the project of the writes, see [ModPlanExecutor]
  * @property refactoringId the id of the refactoring events
  * @property writes the writes, in the order of the edits, see [ModPlan.createPlan]
- * @property stamps the stamps of the files that are moved or deleted, as the analysis saw them, to detect a stale file, see [stampOf]
- * @property elements the elements that the events report
  * @property trashDeletedFiles whether the deleted files go to the trash, see [ModPlan.createPlan]
  */
 class ModPlanExecution internal constructor(
@@ -228,8 +246,6 @@ class ModPlanExecution internal constructor(
   val commandName: @NlsContexts.Command String,
   internal val refactoringId: @NonNls String,
   internal val writes: List<ModCommand>,
-  internal val stamps: Map<VirtualFile, Long>,
-  internal val elements: List<SmartPsiElementPointer<PsiElement>>,
   internal val trashDeletedFiles: Boolean,
 ) {
   /** Every existing file that the execution writes, in the order of the writes; a created file is not one of them. */
@@ -242,7 +258,63 @@ class ModPlanExecution internal constructor(
    */
   val command: ModCommand = ModCompositeCommand(writes)
 
+  private val snapshots: Map<VirtualFile, FileSnapshot> = snapshotsOf(writes)
+
+  /**
+   * The files that the execution keeps as the analysis saw them, see [isUnchanged]: every moved or deleted file, everything inside a
+   * moved or deleted directory, and every existing directory that a file is created or moved into.
+   */
+  internal val snapshotFiles: Set<VirtualFile>
+    get() = snapshots.keys
+
+  /**
+   * Whether [file] is as the analysis saw it: at the same path, with the same stamp, and for a directory with the same children. The
+   * stamp does not change when a file is renamed or a directory gets a new child. A directory that a file is created or moved into is
+   * only at the same path. A file that the execution does not keep is unchanged.
+   */
+  internal fun isUnchanged(file: VirtualFile): Boolean {
+    val snapshot = snapshots[file] ?: return true
+    if (!file.isValid || file.path != snapshot.path) return false
+    if (snapshot.children != null) return file.children.toSet() == snapshot.children
+    return snapshot.stamp == null || stampOf(file) == snapshot.stamp
+  }
+
+  /**
+   * A file as the analysis saw it.
+   *
+   * @param withContent whether the stamp and the children are kept too; else only the path
+   */
+  private class FileSnapshot(file: VirtualFile, withContent: Boolean) {
+    val path: String = file.path
+    /** The stamp; null if only the path is kept. */
+    val stamp: Long? = if (withContent) stampOf(file) else null
+    /** The children of a directory; null for a file, and if only the path is kept. */
+    val children: Set<VirtualFile>? = if (withContent && file.isDirectory) file.children.toSet() else null
+  }
+
   companion object {
+    /** The snapshots of [snapshotFiles]: the moved and deleted files first, in the order of [writes], then the destinations. */
+    private fun snapshotsOf(writes: List<ModCommand>): Map<VirtualFile, FileSnapshot> {
+      val snapshots = LinkedHashMap<VirtualFile, FileSnapshot>()
+      for (write in writes) {
+        if (write is ModDeleteFile || write is ModMoveFile) {
+          VfsUtilCore.visitChildrenRecursively(writtenFile(write), object : VirtualFileVisitor<Unit>(NO_FOLLOW_SYMLINKS) {
+            override fun visitFile(file: VirtualFile): Boolean = snapshots.putIfAbsent(file, FileSnapshot(file, true)) == null
+          })
+        }
+      }
+      for (write in writes) {
+        val destination = when (write) {
+          is ModCreateFile -> write.file().parent
+          is ModMoveFile -> write.targetFile().parent
+          else -> continue
+        }
+        val existingDestination = existingAncestor(destination)
+        snapshots.putIfAbsent(existingDestination, FileSnapshot(existingDestination, false))
+      }
+      return snapshots
+    }
+
     /** The path of [file], also of a file that does not exist yet. */
     internal fun pathOf(file: VirtualFile): String {
       return if (file is FutureVirtualFile) {
@@ -253,9 +325,21 @@ class ModPlanExecution internal constructor(
       }
     }
 
-    /** The stamp of the document of [file], which also moves with the unsaved edits; of the file if it has no document, as a directory. */
-    internal fun stampOf(file: VirtualFile): Long =
-      FileDocumentManager.getInstance().getDocument(file)?.modificationStamp ?: file.modificationStamp
+    /**
+     * The stamp of the document of [file], which also moves with the unsaved edits; of the file if it has no document, as a directory.
+     * A document that nobody loaded has the stamp of the file, so this does not load one.
+     */
+    private fun stampOf(file: VirtualFile): Long =
+      FileDocumentManager.getInstance().getCachedDocument(file)?.modificationStamp ?: file.modificationStamp
+
+    /** [file], or the first of its parents that exists, if [file] does not exist yet. */
+    internal fun existingAncestor(file: VirtualFile): VirtualFile {
+      var result = file
+      while (result is FutureVirtualFile) {
+        result = result.parent
+      }
+      return result
+    }
 
     internal fun writtenFile(write: ModCommand): VirtualFile {
       return when (write) {

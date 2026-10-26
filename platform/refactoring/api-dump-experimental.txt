@@ -54,18 +54,27 @@
 - a:createUsageInfo(com.intellij.refactoring.changeSignature.ChangeInfo,com.intellij.psi.PsiReference,com.intellij.psi.PsiElement,Z,Z):com.intellij.usageView.UsageInfo
 *:com.intellij.refactoring.modplan.ModPlan
 - *sf:Companion:com.intellij.refactoring.modplan.ModPlan$Companion
+- *s:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z):com.intellij.refactoring.modplan.ModPlan
+- *s:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z,java.util.List):com.intellij.refactoring.modplan.ModPlan
+- *s:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z,java.util.List,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlan
 *f:com.intellij.refactoring.modplan.ModPlan$AcceptedPlan
 - com.intellij.refactoring.modplan.ModPlan
-- <init>(com.intellij.refactoring.modplan.ModPlanConflicts,com.intellij.refactoring.modplan.ModPlanExecution):V
+- <init>(com.intellij.refactoring.modplan.ModPlanConflicts,com.intellij.refactoring.modplan.ModPlanExecution,java.util.List,java.util.function.Supplier):V
 - f:getConflicts():com.intellij.refactoring.modplan.ModPlanConflicts
 - f:getExecution():com.intellij.refactoring.modplan.ModPlanExecution
+- f:getUsages():java.util.List
+- f:getWriteEvents():java.util.function.Supplier
 *f:com.intellij.refactoring.modplan.ModPlan$Companion
-- f:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.util.List,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z):com.intellij.refactoring.modplan.ModPlan
+- f:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z):com.intellij.refactoring.modplan.ModPlan
+- f:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z,java.util.List):com.intellij.refactoring.modplan.ModPlan
+- f:createPlan(java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z,java.util.List,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlan
+- bs:createPlan$default(com.intellij.refactoring.modplan.ModPlan$Companion,java.util.List,com.intellij.refactoring.modplan.ModPlanConflicts,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,Z,java.util.List,java.util.function.Supplier,I,java.lang.Object):com.intellij.refactoring.modplan.ModPlan
 *f:com.intellij.refactoring.modplan.ModPlan$RefusedPlan
 - com.intellij.refactoring.modplan.ModPlan
-- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,com.intellij.psi.PsiElement):V
-- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,com.intellij.psi.SmartPsiFileRange):V
+- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,com.intellij.psi.PsiElement,java.lang.String):V
+- <init>(com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason,com.intellij.psi.SmartPsiFileRange,java.lang.String):V
 - f:getLocation():com.intellij.psi.SmartPsiFileRange
+- f:getMessage():java.lang.String
 - f:getReason():com.intellij.refactoring.modplan.ModPlanAnalysisResult$RefusedReason
 *:com.intellij.refactoring.modplan.ModPlanAnalysisResult
 *f:com.intellij.refactoring.modplan.ModPlanAnalysisResult$Found
@@ -186,6 +195,13 @@
 - name():java.lang.String
 - parent():com.intellij.openapi.vfs.VirtualFile
 - text():java.lang.String
+*f:com.intellij.refactoring.modplan.ModPlanEdit$CreateDirectory
+- java.lang.Record
+- com.intellij.refactoring.modplan.ModPlanEdit
+- <init>(com.intellij.modcommand.FutureVirtualFile):V
+- directory():com.intellij.modcommand.FutureVirtualFile
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
 *f:com.intellij.refactoring.modplan.ModPlanEdit$Delete
 - java.lang.Record
 - com.intellij.refactoring.modplan.ModPlanEdit
@@ -252,6 +268,7 @@
 *f:com.intellij.refactoring.modplan.ModPlanExecutor
 - sf:INSTANCE:com.intellij.refactoring.modplan.ModPlanExecutor
 - sf:execute(com.intellij.refactoring.modplan.ModPlanExecution,Z):com.intellij.refactoring.modplan.ModPlanExecutionResult
+- sf:execute(com.intellij.refactoring.modplan.ModPlanExecution,Z,java.util.function.Supplier):com.intellij.refactoring.modplan.ModPlanExecutionResult
 *:com.intellij.refactoring.modplan.ModPlanFinalStep
 - a:run(com.intellij.refactoring.modplan.ModPlanRequest):java.lang.Object
 *f:com.intellij.refactoring.modplan.ModPlanOption
@@ -308,14 +325,45 @@
 - a:load(com.intellij.refactoring.modplan.ModPlanOptionValues):com.intellij.refactoring.modplan.ModPlanOptionValues
 - a:store(com.intellij.refactoring.modplan.ModPlanOptionValues):V
 *:com.intellij.refactoring.modplan.ModPlanRefactoring
+- sf:EXCLUDED_USAGES:com.intellij.refactoring.modplan.ModPlanOption
+- sf:PREVIEW:com.intellij.refactoring.modplan.ModPlanOption
 - a:chain(com.intellij.refactoring.modplan.ModPlanChainBuilder):com.intellij.refactoring.modplan.ModPlanChain
+- s:excludedUsagesOf(java.util.Collection):java.lang.String
 - a:id():java.lang.String
+- s:isExcluded(com.intellij.refactoring.modplan.ModPlanRequest,com.intellij.psi.SmartPsiFileRange):Z
 - s:isInReadOnlyContainer(com.intellij.psi.PsiElement):Z
 - isSupported(com.intellij.refactoring.modplan.ModPlanRequest):Z
 - nonCodeUsagesHeader(I,I):java.lang.String
 - plan(com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlan
 - targetsNodeText():java.lang.String
 - a:title():java.lang.String
+- writeEvents(com.intellij.refactoring.modplan.ModPlanRequest):com.intellij.refactoring.modplan.ModPlanRefactoring$WriteEvent
+*f:com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange
+- java.lang.Record
+- <init>(com.intellij.psi.PsiElement,com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind,java.util.function.Supplier):V
+- after():java.util.function.Supplier
+- before():com.intellij.psi.PsiElement
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- kind():com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind
+*e:com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind
+- java.lang.Enum
+- sf:MOVED:com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind
+- sf:RENAMED:com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind
+- s:valueOf(java.lang.String):com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind
+- s:values():com.intellij.refactoring.modplan.ModPlanRefactoring$ElementChange$Kind[]
+*f:com.intellij.refactoring.modplan.ModPlanRefactoring$WriteEvent
+- java.lang.Record
+- sf:DEFAULT:com.intellij.refactoring.modplan.ModPlanRefactoring$WriteEvent
+- <init>(com.intellij.refactoring.listeners.RefactoringEventData,java.util.List,java.util.function.Supplier):V
+- <init>(com.intellij.refactoring.listeners.RefactoringEventData,java.util.List,java.util.function.Supplier,java.lang.Runnable):V
+- afterData():java.util.function.Supplier
+- afterWrites():java.lang.Runnable
+- beforeData():com.intellij.refactoring.listeners.RefactoringEventData
+- elementChanges():java.util.List
+- f:equals(java.lang.Object):Z
+- f:hashCode():I
+- s:ofElements(java.util.List):java.util.function.Supplier
 *:com.intellij.refactoring.modplan.ModPlanRefactoringListener
 - *sf:Companion:com.intellij.refactoring.modplan.ModPlanRefactoringListener$Companion
 - a:onRefactoringDone(com.intellij.psi.PsiFile):V

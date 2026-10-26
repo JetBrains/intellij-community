@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.modplan;
 
+import com.intellij.modcommand.FutureVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -57,6 +58,19 @@ public sealed interface ModPlanEdit {
    * @param text   the content of the new file
    */
   record Create(@NotNull VirtualFile parent, @NotNull @NonNls String name, @NotNull String text) implements ModPlanEdit {
+  }
+
+  /**
+   * Creates a directory.
+   *
+   * @param directory the new directory, whose parent exists or is created by an earlier edit
+   */
+  record CreateDirectory(@NotNull FutureVirtualFile directory) implements ModPlanEdit {
+    public CreateDirectory {
+      if (!directory.isDirectory()) {
+        throw new IllegalArgumentException("Not a directory: " + directory);
+      }
+    }
   }
 
   /**

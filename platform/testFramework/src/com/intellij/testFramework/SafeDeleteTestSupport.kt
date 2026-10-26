@@ -115,7 +115,7 @@ object SafeDeleteTestSupport {
         plan.conflicts.nonCodeUsages().forEach { nonCodeUsage -> nonCodeUsage.location?.let { recorder.add(it.virtualFile, it.range?.let { range -> TextRange.create(range) }) } }
       }
     }
-    assertTrue(ModPlanExecutor.execute(plan.execution, true) is ModPlanExecutionResult.Applied)
+    assertTrue(ModPlanExecutor.execute(plan.execution, true, checkNotNull(plan.writeEvents)) is ModPlanExecutionResult.Applied)
     return plan
   }
 
