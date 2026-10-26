@@ -345,8 +345,8 @@ public final class LocalHintManager implements ClientHintManager {
   public Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @HintManager.PositionFlags short constraint) {
     EDT.assertIsEdt();
     LogicalPosition pos = editor.getCaretModel().getLogicalPosition();
-    final DataContext dataContext = ((EditorEx)editor).getDataContext();
-    final Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext);
+    final DataContext dataContext = editor instanceof EditorEx editorEx ? editorEx.getDataContext() : null;
+    final Rectangle dominantArea = dataContext != null ? PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(dataContext) : null;
 
     if (dominantArea != null) {
       return HintManagerImpl.getHintPositionRelativeTo(hint, editor, constraint, dominantArea, pos);
