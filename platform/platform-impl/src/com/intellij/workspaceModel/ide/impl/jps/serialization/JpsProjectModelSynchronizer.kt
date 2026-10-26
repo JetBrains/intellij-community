@@ -29,9 +29,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.getExternalConfigurationDir
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.ProjectBulkFileListener
+import com.intellij.openapi.vfs.ProjectBulkFileListenerRegistry
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
@@ -317,9 +317,10 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       return parent != null && isParentOfStorageFiles(parent)
     }
 
-    val connection = project.messageBus.connect(this)
-    connection.subscribe(VirtualFileManager.VFS_CHANGES_BG, object : BulkFileListenerBackgroundable {
-      override fun after(events: List<VFileEvent>) {
+    // MAYBE IM: technically, .iml files can be out of project, but still define modules in it.
+    // This sound very unlikely, so it is not covered
+    ProjectBulkFileListenerRegistry.getInstance(project).addListener(object : ProjectBulkFileListener {
+      override fun afterVfsChange(events: List<VFileEvent>, project: Project) {
         //todo support move/rename
         //todo optimize: filter events before creating lists
         var addedUrls: MutableList<UrlAndChangeRequestor>? = null
@@ -367,7 +368,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
           project.serviceIfCreated<StoreReloadManager>()?.scheduleProcessingChangedFiles()
         }
       }
-    })
+    }, this)
+    val connection = project.messageBus.connect(this)
     val listener = object : WorkspaceModelChangeListener {
       override fun changed(event: VersionedStorageChange) {
         LOG.debug("Marking changed entities for save")
