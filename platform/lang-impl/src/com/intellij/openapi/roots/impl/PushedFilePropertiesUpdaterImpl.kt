@@ -167,13 +167,7 @@ class PushedFilePropertiesUpdaterImpl(private val myProject: Project) : PushedFi
       queueTasks(delayedTasks, "Push on VFS changes")
     }
     if (pushingSomethingSynchronously) {
-      val app = ApplicationManager.getApplication()
-      if (app.isDispatchThread) {
-        scheduleDumbModeReindexingIfNeeded()
-      }
-      else {
-        app.invokeLater({ this.scheduleDumbModeReindexingIfNeeded() }, myProject.disposed)
-      }
+      scheduleDumbModeReindexingIfNeeded()
     }
   }
 
