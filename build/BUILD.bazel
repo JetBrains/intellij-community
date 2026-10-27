@@ -1,3 +1,4 @@
+load("@bazel_skylib//rules:common_settings.bzl", "bool_flag")
 load("@intellij_add_opens//:intellij_add_opens.bzl", "INTELLIJ_ADD_OPENS")
 load("@jps_dynamic_deps_community//:targets.bzl", "ALL_COMMUNITY_IML_TARGETS", "ALL_COMMUNITY_MODULE_DESCRIPTOR_TARGETS", "ALL_COMMUNITY_PLUGIN_DISTRIBUTION_TARGETS", "ALL_COMMUNITY_TARGETS", "ALL_LIBRARY_COMMUNITY_TARGETS", "ALL_PRODUCTION_COMMUNITY_TARGETS", "ALL_TEST_COMMUNITY_TARGETS", "BAZEL_TARGETS_JSON_COMMUNITY", "JPS_TO_BAZEL_TREAT_KOTLIN_DEV_VERSION_AS_SNAPSHOT")
 load("@rules_java//java:defs.bzl", "java_binary")
@@ -22,6 +23,20 @@ dev_launch_dependencies_test_suite(name = "dev_launch_dependencies_test")
 intellij_add_opens_test_suite(name = "intellij_add_opens_test")
 
 dev_run_configuration_test_suite(name = "dev_run_configuration_test")
+
+# Whether the community repository is loaded inside the ultimate repository. The `.bazelrc` of the ultimate repository sets it.
+# A target in the community repository uses `:is_inside_ultimate` to select a dependency on a target of the ultimate repository.
+bool_flag(
+    name = "inside_ultimate",
+    build_setting_default = False,
+    visibility = ["//visibility:public"],
+)
+
+config_setting(
+    name = "is_inside_ultimate",
+    flag_values = {":inside_ultimate": "true"},
+    visibility = ["//visibility:public"],
+)
 
 # The pinned build-dependency versions, for tests that gate shared dev-launch dependency sets
 # against version bumps, and for a dev assembly that reads them out of a materialized project tree
