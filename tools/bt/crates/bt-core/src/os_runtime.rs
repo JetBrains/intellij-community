@@ -695,7 +695,10 @@ impl Runtime for OsRuntime {
             .filter(|upstream| !upstream.is_empty());
         let upstream = match tracked {
             Some(upstream) => upstream,
-            None => self.git(&["rev-parse", "--verify", "--quiet", "refs/remotes/origin/HEAD"])?.trim().to_owned(),
+            None => self
+                .git(&["rev-parse", "--verify", "--quiet", "refs/remotes/origin/HEAD"])?
+                .trim()
+                .to_owned(),
         };
         Ok(self.git(&["merge-base", "HEAD", &upstream])?.trim().to_owned())
     }
