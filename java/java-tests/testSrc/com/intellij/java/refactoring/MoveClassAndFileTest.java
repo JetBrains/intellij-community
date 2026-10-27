@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 import com.intellij.refactoring.LightMultiFileTestCase;
 import com.intellij.refactoring.move.moveFilesOrDirectories.JavaMoveFilesOrDirectoriesHandler;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 
 public class MoveClassAndFileTest extends LightMultiFileTestCase {
   @Override
@@ -32,6 +33,23 @@ public class MoveClassAndFileTest extends LightMultiFileTestCase {
 
   public void testNestedClassesInFile() {
     doTest("t", null, "s.MyClass.F1", "s.MyClass.F2");
+  }
+
+  public void testFileToOwnDirectory() {
+    var file = myFixture.addFileToProject("s/Own.java", "package s; class Own {}");
+    var dir = file.getContainingDirectory();
+    MoveFilesOrDirectoriesUtil.doMove(getProject(), new PsiElement[]{file}, new PsiElement[]{dir}, null, null);
+    assertTrue(file.isValid());
+    assertEquals(dir, file.getContainingDirectory());
+  }
+
+  public void testDirectoryToOwnParent() {
+    var file = myFixture.addFileToProject("s/own/Own.java", "package s.own; class Own {}");
+    var dir = file.getContainingDirectory();
+    var parent = dir.getParentDirectory();
+    MoveFilesOrDirectoriesUtil.doMove(getProject(), new PsiElement[]{dir}, new PsiElement[]{parent}, null, null);
+    assertTrue(dir.isValid());
+    assertEquals(parent, dir.getParentDirectory());
   }
 
   private void doTest(String newPackageName, String fileNameNearFirstClass, String... classNames) {

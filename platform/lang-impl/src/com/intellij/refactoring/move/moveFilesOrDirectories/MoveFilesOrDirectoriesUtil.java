@@ -150,6 +150,10 @@ public final class MoveFilesOrDirectoriesUtil {
       new MoveFilesOrDirectoriesDialog(project, adjustedElements, initialTargetDirectory) {
         @Override
         protected void performMove(@NotNull PsiDirectory targetDirectory) {
+          if (ContainerUtil.and(adjustedElements, e -> isInDirectory(e, targetDirectory))) {
+            setErrorText(RefactoringBundle.message("move.target.is.current.directory"));
+            return;
+          }
           var doneCallback = (Runnable)this::closeOKAction;
           doMove(project, elements, adjustedElements, targetDirectory, moveCallback, doneCallback);
         }
@@ -178,6 +182,7 @@ public final class MoveFilesOrDirectoriesUtil {
         var choice = elements.length > 1 || elements[0] instanceof PsiDirectory ? new int[]{-1} : null;
         var els = new ArrayList<PsiElement>();
         for (var psiElement : adjustedElements) {
+          if (isInDirectory(psiElement, targetDirectory)) continue;
           if (psiElement instanceof PsiFile file) {
             if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), RefactoringBundle.message("command.name.move"))) {
               continue;
@@ -202,6 +207,7 @@ public final class MoveFilesOrDirectoriesUtil {
           WriteCommandAction.runWriteCommandAction(project, RefactoringBundle.message("move.title"), null, () -> {
             try {
               for (var element : elements) {
+                if (isInDirectory(element, targetDirectory)) continue;
                 if (element instanceof PsiDirectory) {
                   doJustMoveDirectory((PsiDirectory)element, targetDirectory, MoveFilesOrDirectoriesUtil.class);
                 }
@@ -239,11 +245,15 @@ public final class MoveFilesOrDirectoriesUtil {
       }
       catch (IncorrectOperationException e) {
         var cause = e.getCause();
-        if (cause == null) throw e;
-        var message = IoErrorText.message(cause);
+        var message = cause != null ? IoErrorText.message(cause) : e.getMessage();
+        if (message == null || message.isEmpty()) message = RefactoringBundle.message("cannot.perform.refactoring");
         CommonRefactoringUtil.showErrorMessage(RefactoringBundle.message("error.title"), message, "refactoring.moveFile", project);
       }
     }, MoveHandler.getRefactoringName(), null);
+  }
+
+  private static boolean isInDirectory(PsiElement element, PsiDirectory directory) {
+    return element instanceof PsiFileSystemItem item && directory.equals(item.getParent());
   }
 
   private static void addFilePointers(Set<SmartPsiElementPointer<PsiFile>> pointers, PsiElement element, SmartPointerManager manager) {
