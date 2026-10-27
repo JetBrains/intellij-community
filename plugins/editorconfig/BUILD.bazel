@@ -1,3 +1,4 @@
+load("@community//platform/build-scripts/bazel-rules:ij_plugin.bzl", "ij_plugin")
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
@@ -42,6 +43,31 @@ jvm_library(
     runtime_deps = [":editorconfig-plugin"],
 )
 ### auto-generated section `build intellij.editorconfig.plugin` end
+
+### auto-generated section `plugin intellij.editorconfig.plugin` start
+ij_plugin(
+    name = "editorconfig-plugin_plugin",
+    descriptor_module = ":editorconfig-plugin",
+    content_modules = [
+        # do not sort,
+        "//plugins/editorconfig/common",
+        "//plugins/editorconfig/frontend",
+        "//plugins/editorconfig/backend",
+        "//plugins/editorconfig/backend.spellchecking",
+        "//libraries/ec4j/core:core_plugin_module",
+    ] + select({
+        "@community//build:is_inside_ultimate": [
+            "@@//remote-dev/cwm-guest/plugins/editorconfig.frontend.split",
+        ],
+        "//conditions:default": [],
+    }),
+    skip_unresolved_optional_modules = select({
+        "@community//build:is_inside_ultimate": False,
+        "//conditions:default": True,
+    }),
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `plugin intellij.editorconfig.plugin` end
 
 ### auto-generated section `iml intellij.editorconfig.plugin` start
 exports_files(
