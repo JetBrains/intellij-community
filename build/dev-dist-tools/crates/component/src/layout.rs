@@ -1,12 +1,7 @@
 //! `local-layout.json`: the file that names the runfile of each distribution file instead of a copy. The composer
-//! writes it for local launch metadata. [`read_local_layout`] reads it.
+//! writes it for local launch metadata.
 
-use std::path::Path;
-
-use anyhow::Result;
 use serde::{Deserialize, Serialize};
-
-use crate::json;
 
 /// The name of the layout file in the metadata tree.
 pub const LOCAL_LAYOUT_FILE: &str = "local-layout.json";
@@ -54,9 +49,4 @@ impl LocalLayoutFile {
     pub fn is_directory(&self) -> bool {
         self.kind == Some(LocalFileKind::Directory)
     }
-}
-
-/// Reads a local layout. The error names the file. The caller checks the version.
-pub fn read_local_layout(path: &Path) -> Result<LocalLayout> {
-    json::read(path)
 }

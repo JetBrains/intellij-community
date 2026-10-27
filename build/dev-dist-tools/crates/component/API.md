@@ -100,5 +100,3 @@ The collector writes and checks the record of each plugin component. The compose
   only for a directory.
 - `LocalFileKind { Directory }`: the JSON `kind`, which is `directory`.
 - `LocalLayoutFile::is_directory() -> bool`: `kind` is `Directory`.
-- `layout::read_local_layout(path) -> Result<LocalLayout>`: decodes the layout by the JSON rules. No tool calls it now,
-  because a row links its home from the placement and not from this file.
