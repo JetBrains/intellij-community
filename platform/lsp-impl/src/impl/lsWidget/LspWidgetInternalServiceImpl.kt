@@ -17,6 +17,7 @@ import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.serviceView.ShowLspServerLogWidgetAction
 import com.intellij.testFramework.LightVirtualFile
 
 /**
@@ -30,6 +31,8 @@ internal class LspWidgetInternalServiceImpl : LspWidgetInternalService() {
     lspClient.errorOutput ?: return null
     return OpenLspErrorOutputAction(lspClient)
   }
+
+  override fun createShowServerLogAction(lspClient: LspClient): AnAction = ShowLspServerLogWidgetAction(lspClient)
 
   override fun restartLspClient(lspClient: LspClient) {
     LanguageServiceWidgetUsagesCollector
