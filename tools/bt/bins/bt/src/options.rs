@@ -14,6 +14,11 @@ Usage:
   bt <selector> [options] [-- <raw bazel args>...]
   bt --lane <name> [options] [-- <raw bazel args>...]
   bt --module <jps module> [options] [-- <raw bazel args>...]
+  bt build <pattern>... [options] [-- <raw bazel args>...]   (see bt build --help)
+
+A green run in a linked work tree, such as a lease, records the tree that it saw, for
+`bd lease pick`: one line in bd-checks.jsonl of the git directory. A run during which the files
+changed records nothing. A raw ./bazel.cmd run records nothing either.
 
 Selectors (at most one):
   ClassName                  bare simple name; resolves the label and the FQN
@@ -86,6 +91,38 @@ Examples:
 
 Exit codes: 0 green, 2 usage, 3 tests failed, 4 zero tests executed,
             5 build failure before tests, 6 infrastructure."#;
+
+/// The help text of `bt build`.
+const BUILD_USAGE: &str = r"Agent-friendly wrapper over `bazel build`.
+
+Usage:
+  bt build <pattern>... [options] [-- <raw bazel args>...]
+
+Builds the target patterns with -k and the UI of bazel silenced, and answers one digest: BUILD OK,
+or BUILD FAILED with the compile errors. A green build in a linked work tree, such as a lease,
+records the tree that it saw, for `bd lease pick`: one line in bd-checks.jsonl of the git
+directory. A build during which the files changed records nothing. A raw ./bazel.cmd build
+records nothing either.
+
+Patterns:
+  //pkg:target   //pkg/...   @repo//pkg/...
+
+Options:
+  --json                   emit one JSON object on stdout and nothing else
+  --dry-run                print the argv; run nothing
+  --verbose                also echo bazel's own captured output
+  --host <ssh alias>       build the committed HEAD on that machine, as bt --host does
+  --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO)
+  --help
+
+Examples:
+  bt build //plugins/air/...
+  bt build //plugins/air/frontend/llm:air-frontend-llm //plugins/air/shared/core/...
+
+Exit codes: 0 green, 2 usage, 5 build failure, 6 infrastructure.";
+
+/// The verb of `bt build`, the first argument.
+pub(crate) const BUILD_VERB: &str = "build";
 
 /// The column a lane's description starts at, and the width it wraps at.
 const LANE_COLUMN: usize = 13;
@@ -195,6 +232,38 @@ pub(crate) struct Args {
     pub(crate) passthrough: Vec<String>,
 }
 
+/// One parsed invocation of `bt build`.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Parser)]
+#[command(name = "bt build", disable_version_flag = true, arg_required_else_help = true)]
+pub(crate) struct BuildArgs {
+    /// The target patterns, as bazel takes them.
+    #[arg(required = true, value_parser = target_pattern)]
+    pub(crate) patterns: Vec<String>,
+    #[arg(long, overrides_with = "json")]
+    pub(crate) json: bool,
+    #[arg(long, overrides_with = "dry_run")]
+    pub(crate) dry_run: bool,
+    #[arg(long, overrides_with = "verbose")]
+    pub(crate) verbose: bool,
+    /// An ssh alias: the build goes to that machine.
+    #[arg(long, allow_hyphen_values = true, value_parser = flag_value)]
+    pub(crate) host: Option<String>,
+    /// The main repository on the `--host` machine, as for a test run.
+    #[arg(long, env = "BT_HOST_REPO", allow_hyphen_values = true, value_parser = flag_value)]
+    pub(crate) host_repo: Option<String>,
+    #[arg(last = true)]
+    pub(crate) passthrough: Vec<String>,
+}
+
+/// A target pattern: a label or a pattern from the root of a repository. A relative pattern resolves against the
+/// working directory of bazel, which is the checkout root, so it is refused as the likely typo of a selector.
+fn target_pattern(value: &str) -> Result<String, String> {
+    if value.starts_with("//") || value.starts_with('@') {
+        return Ok(value.to_owned());
+    }
+    Err(format!("a target pattern starts with // or @, and {value} does not"))
+}
+
 /// A flag's value, refused when it is another long flag (or the `--` separator) rather than a value.
 fn flag_value(value: &str) -> Result<String, String> {
     if value.starts_with("--") {
@@ -223,6 +292,7 @@ fn count_parser(max: u32) -> impl Fn(&str) -> Result<u32, String> + Clone + Send
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) enum Invocation {
     Run(Args),
+    Build(BuildArgs),
     /// `--help` is green; no arguments at all is a usage failure that still prints the help, because the help is
     /// the answer to it.
     Help {
@@ -237,20 +307,30 @@ where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
-    let argv = std::iter::once(OsString::from("bt")).chain(argv.into_iter().map(Into::into));
-    match Args::try_parse_from(argv) {
-        Ok(args) => Ok(Invocation::Run(args)),
-        Err(error) => match error.kind() {
-            ErrorKind::DisplayHelp | ErrorKind::DisplayVersion => Ok(Invocation::Help {
-                text: usage(areas),
-                exit: exit::GREEN,
-            }),
-            ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => Ok(Invocation::Help {
-                text: usage(areas),
-                exit: exit::USAGE,
-            }),
-            _ => Err(fail_usage(usage_message(&error))),
-        },
+    let mut argv = argv.into_iter().map(Into::<OsString>::into).peekable();
+    if argv.next_if(|first| first.as_os_str() == BUILD_VERB).is_some() {
+        let argv = std::iter::once(OsString::from("bt build")).chain(argv);
+        return BuildArgs::try_parse_from(argv).map_or_else(
+            |error| help_or_refusal(&error, BUILD_USAGE.to_owned()),
+            |args| Ok(Invocation::Build(args)),
+        );
+    }
+    let argv = std::iter::once(OsString::from("bt")).chain(argv);
+    Args::try_parse_from(argv).map_or_else(|error| help_or_refusal(&error, usage(areas)), |args| Ok(Invocation::Run(args)))
+}
+
+/// A parse error of clap as the help it asked for, or as a usage refusal with its message.
+fn help_or_refusal(error: &clap::Error, help: String) -> Result<Invocation, Refusal> {
+    match error.kind() {
+        ErrorKind::DisplayHelp | ErrorKind::DisplayVersion => Ok(Invocation::Help {
+            text: help,
+            exit: exit::GREEN,
+        }),
+        ErrorKind::DisplayHelpOnMissingArgumentOrSubcommand => Ok(Invocation::Help {
+            text: help,
+            exit: exit::USAGE,
+        }),
+        _ => Err(fail_usage(usage_message(error))),
     }
 }
 

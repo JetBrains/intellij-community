@@ -309,48 +309,69 @@ fn git_available() -> bool {
         .is_ok_and(|output| output.status.success())
 }
 
+/// The directory of a test repository, or `None` where no git is installed: nothing here can stand in for git.
+fn repository_dir() -> Option<tempfile::TempDir> {
+    if !git_available() {
+        eprintln!("skipped: no git on this host");
+        return None;
+    }
+    Some(tempfile::tempdir().expect("a temporary directory"))
+}
+
+/// Writes a file of the repository, with its directories.
+fn write_in(repo: &Path, path: &str, text: &str) {
+    let full = repo.join(path);
+    std::fs::create_dir_all(full.parent().expect("a nested path")).expect("mkdir");
+    std::fs::write(full, text).expect("write");
+}
+
+/// Runs git in `repo`, and answers its stdout without the line end. It is isolated from the configuration of the
+/// host, which may sign, hook or template a repository.
+fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
+    let mut command = Command::new("git");
+    command
+        .arg("-C")
+        .arg(repo)
+        .args(["-c", "user.name=bt", "-c", "user.email=bt@example.com"])
+        .args(args)
+        .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
+        .env("GIT_CONFIG_NOSYSTEM", "1");
+    if let Some(index) = index {
+        command.env("GIT_INDEX_FILE", index);
+    }
+    let output = command.output().expect("git runs");
+    assert!(output.status.success(), "git {args:?}: {output:?}");
+    String::from_utf8(output.stdout).expect("UTF-8").trim_end().to_owned()
+}
+
 /// The listing is git's, so the case needs a real repository: a tracked file, an untracked one, an ignored one, and
 /// a tracked file that is gone from the disk. Skipped where no git is installed, because nothing here can stand in
 /// for it.
 #[test]
 fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
-    if !git_available() {
-        eprintln!("skipped: no git on this host");
+    let Some(dir) = repository_dir() else {
         return;
-    }
-    let dir = tempfile::tempdir().expect("a temporary directory");
+    };
     let repo = dir.path();
-    let write = |path: &str, text: &str| {
-        let full = repo.join(path);
-        std::fs::create_dir_all(full.parent().expect("a nested path")).expect("mkdir");
-        std::fs::write(full, text).expect("write");
-    };
-    let git = |args: &[&str]| {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(repo)
-            .args(args)
-            // Isolated from the host's own configuration, which may sign, hook or template a repository.
-            .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
-            .env("GIT_CONFIG_NOSYSTEM", "1")
-            .output()
-            .expect("git runs");
-        assert!(output.status.success(), "git {args:?}: {output:?}");
-    };
+    let write = |path: &str, text: &str| write_in(repo, path, text);
     write(".gitignore", "out/\n");
     write("module/src/Tracked.kt", "tracked");
     write("module/src/Gone.kt", "gone");
     write("module/src/with space.kt", "untracked");
     write("module/out/Built.class", "ignored");
     write("other/Outside.kt", "outside the directory");
-    git(&["init", "-q"]);
-    git(&[
-        "add",
-        ".gitignore",
-        "module/src/Tracked.kt",
-        "module/src/Gone.kt",
-        "other/Outside.kt",
-    ]);
+    git_in(repo, &["init", "-q"], None);
+    git_in(
+        repo,
+        &[
+            "add",
+            ".gitignore",
+            "module/src/Tracked.kt",
+            "module/src/Gone.kt",
+            "other/Outside.kt",
+        ],
+        None,
+    );
     std::fs::remove_file(repo.join("module/src/Gone.kt")).expect("remove");
 
     let module = repo.join("module");
@@ -435,6 +456,90 @@ fn a_directory_git_cannot_list_is_an_error() {
         .list_files(&absent)
         .expect_err("an absent directory is not listable");
     assert!(error.to_string().contains(&absent.display().to_string()), "{error}");
+}
+
+/// Only a linked work tree has a tree: no git and a main checkout answer none. The tree of a clean work tree is the
+/// tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new file, a
+/// deleted file, and no ignored file. The index of the work tree stays as it was.
+#[test]
+fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let main = dir.path().join("main");
+    let main_runtime = OsRuntime::builder(&main).build();
+    for (path, text) in [
+        (".gitignore", "out/\n"),
+        ("src/Changed.kt", "before"),
+        ("src/Deleted.kt", "deleted"),
+    ] {
+        write_in(&main, path, text);
+    }
+    assert_eq!(main_runtime.checkout_tree().expect("no git is no error"), None);
+
+    git_in(&main, &["init", "-q"], None);
+    git_in(&main, &["add", "-A"], None);
+    git_in(&main, &["commit", "-q", "-m", "first"], None);
+    assert_eq!(main_runtime.checkout_tree().expect("a main checkout is no error"), None);
+    git_in(&main, &["worktree", "add", "-q", "--detach", "../lease"], None);
+    let repo = &dir.path().join("lease");
+    let runtime = OsRuntime::builder(repo).build();
+    let head = git_in(repo, &["rev-parse", "HEAD"], None);
+    let head_tree = git_in(repo, &["rev-parse", "HEAD^{tree}"], None);
+
+    let clean = runtime
+        .checkout_tree()
+        .expect("git reads a clean checkout")
+        .expect("a linked work tree");
+    assert_eq!(
+        clean,
+        CheckoutTree {
+            head: head.clone(),
+            tree: head_tree.clone(),
+            changed: Vec::new(),
+        }
+    );
+    assert_eq!(runtime.commit_tree(&head).expect("the tree of HEAD"), head_tree);
+    let records = runtime.git_path("bd-checks.jsonl").expect("a git path");
+    assert!(records.ends_with(".git/worktrees/lease/bd-checks.jsonl"), "{}", records.display());
+
+    for (path, text) in [
+        ("src/Changed.kt", "after"),
+        ("src/with space.kt", "new"),
+        ("out/Built.class", "ignored"),
+    ] {
+        write_in(repo, path, text);
+    }
+    std::fs::remove_file(repo.join("src/Deleted.kt")).expect("remove");
+    let status = git_in(repo, &["status", "--porcelain"], None);
+
+    let dirty = runtime
+        .checkout_tree()
+        .expect("git reads a changed checkout")
+        .expect("a git checkout");
+
+    // Outside the checkout, so `add -A` does not stage the index file itself.
+    let scratch = tempfile::tempdir().expect("a temporary directory");
+    let expected_index = scratch.path().join("expected-index");
+    git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
+    git_in(repo, &["add", "-A"], Some(&expected_index));
+    let expected = git_in(repo, &["write-tree"], Some(&expected_index));
+    assert_eq!(
+        dirty,
+        CheckoutTree {
+            head,
+            tree: expected,
+            changed: ["src/Changed.kt", "src/Deleted.kt", "src/with space.kt"]
+                .map(str::to_owned)
+                .to_vec(),
+        }
+    );
+    assert_ne!(dirty.tree, head_tree);
+    assert_eq!(
+        git_in(repo, &["status", "--porcelain"], None),
+        status,
+        "the index of the checkout changed"
+    );
 }
 
 /// The kept evidence of a run: a copy creates its directories, a copy of a read-only bazel output is a file the

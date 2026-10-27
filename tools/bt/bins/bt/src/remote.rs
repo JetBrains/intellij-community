@@ -19,6 +19,7 @@ use bt_core::runtime::{Runtime, repo_file};
 use bt_core::{Refusal, exit};
 use yonder_client::{AgentInfo, Client, Config, OsProcesses, PrepareRequest, Prepared, RunOutcome, RunRequest, interrupt, phases_line};
 
+use crate::check::{Check, CheckCommand, record_host_run};
 use crate::execute::{JsonPayload, Outcome};
 
 /// The main repository on the host for `--prepare` when `--host-repo` and `BT_HOST_REPO` name none. A run without
@@ -98,9 +99,11 @@ impl HostLink for Yonder<'_> {
     }
 }
 
-/// One run on the host, given as the whole local command line.
+/// One run on the host, given as the whole local command line. A green run records the tree of the commit that the
+/// host ran, when yonder names that commit.
 pub(crate) fn run_on_host(
     host: &Host<'_>,
+    check: CheckCommand,
     json: bool,
     argv: &[OsString],
     runtime: &dyn Runtime,
@@ -109,6 +112,12 @@ pub(crate) fn run_on_host(
     let forwarded = host_args(argv);
     runtime.write_error(&format!("> {}: bt {}", host.alias, forwarded.join(" ")));
     let command: Vec<String> = std::iter::once(COMMAND.to_owned()).chain(forwarded).collect();
+    // The record names the command apart, so the patterns of a build go without the verb.
+    let patterns = match check {
+        CheckCommand::Build => command.get(2..),
+        CheckCommand::Test => command.get(1..),
+    }
+    .unwrap_or_default();
     let holder = holder(runtime);
     let fetch = [RUNS_DIR.to_owned()];
     let request = RunRequest {
@@ -134,7 +143,16 @@ pub(crate) fn run_on_host(
     if !ran.phases.is_empty() {
         runtime.write_error(&phases_line(&ran.phases));
     }
-    answer(runtime, host.alias, json, &ran)
+    let answered = answer(runtime, host.alias, json, &ran)?;
+    if answered.exit_code == exit::GREEN && !ran.commit.is_empty() {
+        let check = Check {
+            command: check,
+            patterns,
+            host: Some(host.alias),
+        };
+        record_host_run(runtime, &ran.commit, &check);
+    }
+    Ok(answered)
 }
 
 /// The `--json` payload of a run that a second Ctrl+C stopped: an infrastructure outcome that says nothing about the

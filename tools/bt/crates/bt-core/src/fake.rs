@@ -17,7 +17,7 @@ use refusal::Refusal;
 
 use crate::areas::{AREAS_FILE, Area, Areas};
 use crate::lanes::Lanes;
-use crate::runtime::{DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
+use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
 
 pub const REPO_ROOT: &str = "/repo";
 
@@ -102,6 +102,11 @@ pub struct State {
     pub revisions: BTreeMap<String, BTreeMap<String, String>>,
     /// The answer of [`Runtime::upstream_base`]: `None` stands for a checkout without an upstream.
     pub upstream_base: Option<String>,
+    /// The answers of the next [`Runtime::checkout_tree`] calls, in order. A call takes the first one, and answers
+    /// `None`, a checkout that is no linked work tree, when none is left.
+    pub checkout_trees: VecDeque<CheckoutTree>,
+    /// The tree of each commit, for [`Runtime::commit_tree`].
+    pub commit_trees: BTreeMap<String, String>,
 }
 
 pub struct FakeRuntime {
@@ -319,6 +324,23 @@ impl Runtime for FakeRuntime {
         let prefix = format!("{path}/");
         let state = self.state();
         state.files.contains_key(&path) || state.files.keys().any(|held| held.starts_with(&prefix))
+    }
+
+    fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
+        Ok(self.state().checkout_trees.pop_front())
+    }
+
+    fn commit_tree(&self, commit: &str) -> io::Result<String> {
+        self.state()
+            .commit_trees
+            .get(commit)
+            .cloned()
+            .ok_or_else(|| io::Error::other(format!("fatal: Needed a single revision: {commit}^{{tree}}")))
+    }
+
+    /// The spelling of a main checkout: the git directory is `.git` of the root.
+    fn git_path(&self, name: &str) -> io::Result<PathBuf> {
+        Ok(self.root.join(".git").join(name))
     }
 
     /// Records the argv, beats once as a 30 s run would, and answers the scripted result.

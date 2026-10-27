@@ -59,6 +59,19 @@ bt gives all arguments after `--` to Bazel without a change. Run `./community/to
 | 5 | The build failed before the tests. |
 | 6 | Infrastructure failure. |
 
+### The check record and `bt build`
+
+A green bt run in a linked work tree, such as a Branch Deck lease, records the tree that it saw: one line in `bd-checks.jsonl` of the git directory. `bd lease pick` reads the record. A repository can set `pick_requires_check` in `.branchdeck.toml`, and then the pick refuses a lease whose tree has no green build or test. A run during which the files changed records nothing. A red run records nothing.
+
+Check the last tree with bt, not with a raw `./bazel.cmd build`. `bazel.cmd` gives the process to bazelisk, so it leaves no record. Commit or delete scratch files before the last check: a record of local changes counts only for a commit of the same files, and bt names those files on the stderr.
+
+```bash
+./community/tools/bt.cmd build //plugins/air/...     # bazel build -k, one digest line, and the record
+./community/tools/bt.cmd build //plugins/air/... --host studio
+```
+
+`bt build` exits 0 for a green build, 5 for a build failure, and 6 for an infrastructure failure. A `--host` run records the tree of the commit that ran on the host. The [bt README](../../../tools/bt/README.md#the-check-record) gives the record format.
+
 ### When bt refuses the module
 
 bt refuses a module whose tests do not run under Bazel yet. It exits with code 2 and prints the `tests.cmd` command. Run that command:

@@ -50,6 +50,17 @@ pub struct SpawnResult {
     pub output: String,
 }
 
+/// The content of a checkout as git names it: the commit of HEAD, and the tree of the files with the local changes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CheckoutTree {
+    pub head: String,
+    /// `HEAD^{tree}` for a clean checkout. With local changes, the tree that `git add -A` and `git write-tree` would
+    /// give, untracked files included and ignored files left out.
+    pub tree: String,
+    /// The paths with local changes, repo-relative with `/`, as `git status` names them. Empty for a clean checkout.
+    pub changed: Vec<String>,
+}
+
 /// The exit code of a child that [`Runtime::spawn_watched`] stopped, as the `timeout` command answers it.
 pub const STOPPED_IDLE: i32 = 124;
 
@@ -99,6 +110,20 @@ pub trait Runtime: Sync {
 
     /// Answers for a directory as well as a file: every test source root this crate probes is a directory.
     fn exists(&self, path: &Path) -> bool;
+
+    /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git. Only a
+    /// linked work tree, such as a lease of Branch Deck, is landed by `bd lease pick`, so only it needs the tree.
+    ///
+    /// It changes neither the index nor the work tree of the checkout. It writes the blobs and the trees of the local
+    /// changes into the object database, so a later reader can compare two trees.
+    fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>>;
+
+    /// The tree of a commit of the checkout.
+    fn commit_tree(&self, commit: &str) -> io::Result<String>;
+
+    /// The path of a file in the git directory of the checkout, as `git rev-parse --git-path` gives it. A linked work
+    /// tree gives its own directory under `.git/worktrees/`.
+    fn git_path(&self, name: &str) -> io::Result<PathBuf>;
 
     /// Runs a child to completion and never fails: a command that could not start is a [`SpawnResult`] with exit
     /// code 127, a run outcome the classifier can reason about rather than an error to re-classify.

@@ -669,6 +669,15 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn exists(&self, path: &Path) -> bool {
             self.0.exists(path)
         }
+        fn checkout_tree(&self) -> std::io::Result<Option<bt_core::runtime::CheckoutTree>> {
+            self.0.checkout_tree()
+        }
+        fn commit_tree(&self, commit: &str) -> std::io::Result<String> {
+            self.0.commit_tree(commit)
+        }
+        fn git_path(&self, name: &str) -> std::io::Result<PathBuf> {
+            self.0.git_path(name)
+        }
         fn spawn(&self, command: &[OsString], heartbeat: Option<bt_core::runtime::Heartbeat<'_>>) -> SpawnResult {
             self.0.spawn(command, heartbeat)
         }

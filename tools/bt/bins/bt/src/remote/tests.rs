@@ -12,13 +12,24 @@ const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 /// A green payload as the host writes it with `--json`.
 const PAYLOAD: &str = r#"{"status":"PASS","exitCode":0,"durationMs":5,"cachedTargets":0,"ranTargets":1,"targets":[],"failures":[],"flaky":[],"errors":[],"degraded":false}"#;
 
-/// A checkout with `bt.json`.
+/// The tree of [`COMMIT`].
+const TREE: &str = "fedcba9876543210fedcba9876543210fedcba98";
+
+/// Where the check records of the fake checkout go.
+const RECORDS: &str = "/repo/.git/bd-checks.jsonl";
+
+/// A checkout with `bt.json`, whose git knows the tree of [`COMMIT`].
 fn checkout() -> FakeRuntime {
     let fake = FakeRuntime::new([]);
     for (path, text) in area_files() {
         fake.put(&path, &text);
     }
+    fake.state().commit_trees.insert(COMMIT.to_owned(), TREE.to_owned());
     fake
+}
+
+fn records(fake: &FakeRuntime) -> Option<String> {
+    fake.state().files.get(RECORDS).cloned()
 }
 
 /// A link whose run ends with `code`, `stdout` and the fetched files.
@@ -253,6 +264,56 @@ fn a_second_ctrl_c_is_infrastructure_with_a_json_payload() {
 
     let failure = refusal(execute_with(["--host", "studio", "FooTest"], &fake, &link));
     assert_eq!((failure.code.as_ref(), failure.exit), ("host_interrupted", exit::INFRA));
+}
+
+/// A green run on the host records the tree of the commit that the host ran, with the arguments of bt there.
+#[test]
+fn a_green_run_on_a_host_records_the_tree_of_the_commit_it_ran() {
+    let fake = checkout();
+    let link = link_ending(0, "PASS  12 tests\n", &[]);
+    outcome(&["--host", "studio", "--lane", "fast"], &fake, &link);
+    assert_eq!(
+        records(&fake).as_deref(),
+        Some(
+            format!(
+                r#"{{"schema":1,"tree":"{TREE}","head":"{COMMIT}","tool":"bt","command":"test","patterns":["--lane","fast"],"exit":0,"at":1000,"host":"studio"}}
+"#
+            )
+            .as_str()
+        )
+    );
+
+    let fake = checkout();
+    let link = link_ending(0, "BUILD OK  //plugins/air/...  3.0s\n", &[]);
+    outcome(&["build", "//plugins/air/...", "--host", "studio"], &fake, &link);
+    assert_eq!(link.runs()[0].command, ["./community/tools/bt.cmd", "build", "//plugins/air/..."]);
+    let text = records(&fake).expect("a record of the build");
+    assert!(text.contains(r#""command":"build","patterns":["//plugins/air/..."]"#), "{text}");
+}
+
+/// A red run records nothing, and neither does a run whose commit yonder does not name.
+#[test]
+fn a_red_run_on_a_host_or_one_without_a_commit_records_nothing() {
+    let fake = checkout();
+    outcome(
+        &["--host", "studio", "FooTest"],
+        &fake,
+        &link_ending(3, "FAIL  1 of 3 tests failed\n", &[]),
+    );
+    assert_eq!(records(&fake), None);
+
+    let fake = checkout();
+    let link = FakeLink::default();
+    link.answer_run(Ok(RunOutcome {
+        run: "1000-1".to_owned(),
+        commit: String::new(),
+        code: 0,
+        stdout: "PASS\n".to_owned(),
+        fetched: Vec::new(),
+        phases: Vec::new(),
+    }));
+    outcome(&["--host", "studio", "FooTest"], &fake, &link);
+    assert_eq!(records(&fake), None);
 }
 
 #[test]

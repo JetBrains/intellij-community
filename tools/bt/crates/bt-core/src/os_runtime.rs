@@ -16,7 +16,7 @@ use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use crate::runtime::{DirEntry, Heartbeat, Platform, Runtime, STOPPED_IDLE, SpawnResult};
+use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, STOPPED_IDLE, SpawnResult};
 
 /// How much of a child's output is kept.
 ///
@@ -514,6 +514,57 @@ impl Tail {
     }
 }
 
+/// The environment and the stdin of one [`git`] command.
+#[derive(Clone, Copy, Default)]
+struct Git<'a> {
+    /// The index file the command reads and writes, in place of the index of the checkout.
+    index: Option<&'a Path>,
+    input: Option<&'a [u8]>,
+}
+
+/// Runs one git command in `root`, and answers its stdout. An error names the command and gives its stderr.
+///
+/// `GIT_OPTIONAL_LOCKS=0` keeps `git status` from a refresh of the index, which would take `index.lock` from a commit
+/// that runs at the same time.
+fn git(root: &Path, args: &[&str], with: &Git<'_>) -> io::Result<Vec<u8>> {
+    let mut command = Command::new("git");
+    command
+        .arg("-C")
+        .arg(root)
+        .args(args)
+        .env("GIT_OPTIONAL_LOCKS", "0")
+        .stdin(if with.input.is_some() { Stdio::piped() } else { Stdio::null() })
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(index) = with.index {
+        command.env("GIT_INDEX_FILE", index);
+    }
+    let refused = |said: String| io::Error::other(format!("git {} in {}: {said}", args.join(" "), root.display()));
+    let mut child = command.spawn().map_err(|error| refused(error.to_string()))?;
+    let stdin = child.stdin.take();
+    // From a thread, so a child that writes before it reads to the end cannot block on a full pipe.
+    let finished = thread::scope(|scope| {
+        if let (Some(mut stdin), Some(input)) = (stdin, with.input) {
+            scope.spawn(move || {
+                // A child that exits before it reads everything closes the pipe; its exit code tells the rest.
+                let _ = stdin.write_all(input);
+            });
+        }
+        child.wait_with_output()
+    });
+    let finished = finished.map_err(|error| refused(error.to_string()))?;
+    if !finished.status.success() {
+        let stderr = String::from_utf8_lossy(&finished.stderr).trim().to_owned();
+        return Err(refused(if stderr.is_empty() { finished.status.to_string() } else { stderr }));
+    }
+    Ok(finished.stdout)
+}
+
+/// [`git`] for a command that answers one line of text.
+fn git_text(root: &Path, args: &[&str], with: &Git<'_>) -> io::Result<String> {
+    Ok(String::from_utf8_lossy(&git(root, args, with)?).trim_end().to_owned())
+}
+
 /// The lines of a file, streaming: the file it exists for is bazel's BEP, which is tens of MB on a lane run and holds
 /// single JSON lines of any length.
 ///
@@ -651,6 +702,87 @@ impl Runtime for OsRuntime {
 
     fn exists(&self, path: &Path) -> bool {
         path.exists()
+    }
+
+    /// Asks git, not through the injected spawn, for the reason of [`OsRuntime::list_files`].
+    ///
+    /// A checkout whose `.git` is no file is not a linked work tree, and it costs one stat. A clean linked work tree
+    /// costs one `git status`. With local changes, a copy of the index takes the changed paths that the status names,
+    /// and `git write-tree` writes the tree of the copy. The index of the checkout stays as it was.
+    ///
+    /// Two cases differ from `git add -A`. An untracked nested checkout (`?? dir/`) is left out, where `add -A` would
+    /// add a gitlink. A directory replaced by a symbolic link makes `update-index` fail, so the answer is an error.
+    fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
+        let root = &self.repo_root;
+        if !root.join(".git").is_file() {
+            return Ok(None);
+        }
+        // `HEAD:` is the root tree of HEAD.
+        let named = git_text(root, &["rev-parse", "HEAD", "HEAD:", "--git-path", "index"], &Git::default())?;
+        let mut lines = named.lines();
+        let (Some(head), Some(head_tree), Some(index)) = (lines.next(), lines.next(), lines.next()) else {
+            return Err(io::Error::other(format!(
+                "git rev-parse named no HEAD, tree and index in {}",
+                root.display()
+            )));
+        };
+        let status = git(
+            root,
+            &["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"],
+            &Git::default(),
+        )?;
+        // Each entry is `XY <path>`. A path that ends with `/` is a nested checkout, which `update-index` refuses.
+        let mut input = Vec::new();
+        let mut changed = Vec::new();
+        for entry in status.split(|byte| *byte == 0) {
+            if let Some(path) = entry.get(3..).filter(|path| !path.is_empty() && !path.ends_with(b"/")) {
+                input.extend_from_slice(path);
+                input.push(0);
+                changed.push(String::from_utf8_lossy(path).into_owned());
+            }
+        }
+        if changed.is_empty() {
+            return Ok(Some(CheckoutTree {
+                head: head.to_owned(),
+                tree: head_tree.to_owned(),
+                changed,
+            }));
+        }
+        // Git replaces its index by a rename, so the copy is the index before a concurrent commit or after it.
+        let copy = tempfile::Builder::new().prefix("bt-check-index-").tempfile()?;
+        std::fs::copy(root.join(index), copy.path())?;
+        let with_copy = Git {
+            index: Some(copy.path()),
+            input: None,
+        };
+        git(
+            root,
+            &["update-index", "--add", "--remove", "-z", "--stdin"],
+            &Git {
+                input: Some(&input),
+                ..with_copy
+            },
+        )?;
+        let tree = git_text(root, &["write-tree"], &with_copy)?;
+        Ok(Some(CheckoutTree {
+            head: head.to_owned(),
+            tree,
+            changed,
+        }))
+    }
+
+    fn commit_tree(&self, commit: &str) -> io::Result<String> {
+        git_text(
+            &self.repo_root,
+            &["rev-parse", "--verify", &format!("{commit}^{{tree}}")],
+            &Git::default(),
+        )
+    }
+
+    fn git_path(&self, name: &str) -> io::Result<PathBuf> {
+        let path = git_text(&self.repo_root, &["rev-parse", "--git-path", name], &Git::default())?;
+        // Relative to the checkout root in a main checkout, absolute in a linked work tree.
+        Ok(self.repo_root.join(path))
     }
 
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
