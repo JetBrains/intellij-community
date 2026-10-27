@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-build-tools-api" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-api:2.5.0-ij263-18">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-api:2.5.0-ij263-40">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.0-ij263-18/kotlin-build-tools-api-2.5.0-ij263-18.jar">
-          <sha256sum>a4e16a28a3e669930549b5d76b0cd5ca39a1b70d3134f352e60d1f99501ba44c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.0-ij263-40/kotlin-build-tools-api-2.5.0-ij263-40.jar">
+          <sha256sum>58e6552171bf399ae7fe53f65782a79f11fcdb7d83bcb11aa34b3291eba9babd</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.0-ij263-18/kotlin-build-tools-api-2.5.0-ij263-18.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.0-ij263-40/kotlin-build-tools-api-2.5.0-ij263-40.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.0-ij263-18/kotlin-build-tools-api-2.5.0-ij263-18-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api/2.5.0-ij263-40/kotlin-build-tools-api-2.5.0-ij263-40-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

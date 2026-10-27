@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-tests" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:2.5.0-ij263-18">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-tests-for-ide:2.5.0-ij263-40">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.0-ij263-18/kotlin-compiler-tests-for-ide-2.5.0-ij263-18.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.0-ij263-40/kotlin-compiler-tests-for-ide-2.5.0-ij263-40.jar">
           <sha256sum>575660c57917134d3daec018c6feb9f9d300a6b53e71a463b384bead0befff9b</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.0-ij263-18/kotlin-compiler-tests-for-ide-2.5.0-ij263-18.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.0-ij263-40/kotlin-compiler-tests-for-ide-2.5.0-ij263-40.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.0-ij263-18/kotlin-compiler-tests-for-ide-2.5.0-ij263-18-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-tests-for-ide/2.5.0-ij263-40/kotlin-compiler-tests-for-ide-2.5.0-ij263-40-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

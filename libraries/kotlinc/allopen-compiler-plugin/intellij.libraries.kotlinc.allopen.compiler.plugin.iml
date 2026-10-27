@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.allopen-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:2.5.0-ij263-18">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:allopen-compiler-plugin-for-ide:2.5.0-ij263-40">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.0-ij263-18/allopen-compiler-plugin-for-ide-2.5.0-ij263-18.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.0-ij263-40/allopen-compiler-plugin-for-ide-2.5.0-ij263-40.jar">
               <sha256sum>40419e3a5e9426055c12536192b48a7f1357e72b148618f27bbe07929dfa4e9f</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.0-ij263-18/allopen-compiler-plugin-for-ide-2.5.0-ij263-18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.0-ij263-40/allopen-compiler-plugin-for-ide-2.5.0-ij263-40.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.0-ij263-18/allopen-compiler-plugin-for-ide-2.5.0-ij263-18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/allopen-compiler-plugin-for-ide/2.5.0-ij263-40/allopen-compiler-plugin-for-ide-2.5.0-ij263-40-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-script-runtime" type="repository">
-        <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.5.0-ij263-18">
+        <properties maven-id="org.jetbrains.kotlin:kotlin-script-runtime:2.5.0-ij263-40">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-ij263-18/kotlin-script-runtime-2.5.0-ij263-18.jar">
-              <sha256sum>8ce6bd0b58a5e0f499325e3992c54fdfff2acf26f29f32896928ee1d44c2f076</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-ij263-40/kotlin-script-runtime-2.5.0-ij263-40.jar">
+              <sha256sum>ccfa97c2501c4a9c68439de25fbf27e62237deb60200c21823e57799cbecdf4e</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-ij263-18/kotlin-script-runtime-2.5.0-ij263-18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-ij263-40/kotlin-script-runtime-2.5.0-ij263-40.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-ij263-18/kotlin-script-runtime-2.5.0-ij263-18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-script-runtime/2.5.0-ij263-40/kotlin-script-runtime-2.5.0-ij263-40-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
