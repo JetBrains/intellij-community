@@ -49,8 +49,9 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
   val dataPack: VcsLogDataPack get() = dataPackProvider()
   val visibleRoots: Collection<VirtualFile>? get() = visibleRootsProvider()
 
-  private fun createBranchFilter(values: List<String>): VcsLogBranchFilter {
-    return VcsLogFilterObject.fromBranchPatterns(values, dataPack.refs.branches.mapTo(mutableSetOf()) { it.name })
+  private fun createBranchFilter(values: List<String>, excludeNotMatched: Boolean = false): VcsLogBranchFilter {
+    return VcsLogFilterObject.fromBranchPatterns(values, dataPack.refs.branches.mapTo(mutableSetOf()) { it.name },
+                                                 excludeNotMatched)
   }
 
   private fun createRevisionFilter(values: List<String>): VcsLogRevisionFilter {
@@ -92,7 +93,7 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
     return null
   }
 
-  fun createFilterFromPresentation(values: List<String>): VcsLogFilterCollection {
+  fun createFilterFromPresentation(values: List<String>, excludeNotMatchedBranches: Boolean = false): VcsLogFilterCollection {
     val hashes = mutableListOf<String>()
     val branches = mutableListOf<String>()
     val ranges = mutableListOf<String>()
@@ -108,7 +109,11 @@ class BranchFilterModel internal constructor(private val dataPackProvider: () ->
         branches.add(s)
       }
     }
-    val branchFilter = if (branches.isEmpty()) null else createBranchFilter(branches)
+    val branchFilter = if (branches.isEmpty()) null
+    else {
+      val it = createBranchFilter(branches, excludeNotMatchedBranches)
+      if (excludeNotMatchedBranches && it.textPresentation.isEmpty()) null else it
+    }
     val hashFilter = if (hashes.isEmpty()) null else createRevisionFilter(hashes)
     val refDiffFilter = if (ranges.isEmpty()) null else createRangeFilter(ranges)
     return VcsLogFilterObject.collection(branchFilter, hashFilter, refDiffFilter)
