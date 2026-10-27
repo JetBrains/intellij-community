@@ -15,7 +15,6 @@ private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
  */
 open class TestingOptions {
   companion object {
-    const val ALL_EXCLUDE_DEFINED_GROUP: String = "ALL_EXCLUDE_DEFINED"
     const val PERFORMANCE_TESTS_ONLY_FLAG: String = "idea.performance.tests"
     const val TEST_JRE_PROPERTY: String = "intellij.build.test.jre"
     const val REDIRECT_STDOUT_TO_FILE: String = "intellij.build.test.redirectStdoutToFile"
