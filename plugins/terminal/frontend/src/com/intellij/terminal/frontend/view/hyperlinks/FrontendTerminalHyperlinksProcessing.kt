@@ -21,6 +21,7 @@ import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.asDisposable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -148,8 +149,11 @@ private suspend fun createHyperlinksSession(
     TerminalHyperlinksRemoteApi.getInstance().createNewSession(request)
   }
   coroutineScope.awaitCancellationAndInvoke(Dispatchers.Default) {
-    durable {
+    try {
       TerminalHyperlinksRemoteApi.getInstance().closeSession(project.projectId(), sessionId)
+    }
+    catch (_: RpcClientDisconnectedException) {
+      // The backend connection is already gone, so there is no remote session to close.
     }
   }
 
