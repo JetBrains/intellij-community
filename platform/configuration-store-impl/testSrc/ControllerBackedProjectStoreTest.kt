@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.settings.DelegatedSettingsController
 import com.intellij.platform.settings.GetResult
+import com.intellij.platform.settings.OldLocalValueSupplierTag
 import com.intellij.platform.settings.SetResult
 import com.intellij.platform.settings.SettingDescriptor
 import com.intellij.platform.settings.SettingsController
@@ -26,8 +27,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
+import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.jdomToJson
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -150,6 +154,130 @@ class ControllerBackedProjectStoreTest {
   }
 
   @Test
+  fun `unchanged numeric and boolean attributes preserve explicit defaults`(): Unit = timeoutRunBlocking(context = ClientId.localId.asContextElement()) {
+    @State(name = BEAN_COMPONENT_NAME, storages = [Storage(FILE_NAME)], allowLoadInTests = true)
+    class PrimitiveComponent : SerializablePersistentStateComponent<PrimitiveState>(PrimitiveState())
+
+    val file = writeSettings("""<component name="$BEAN_COMPONENT_NAME" count="5" enabled="true" marker="" converted="value-5" />""")
+    val originalXml = JDOMUtil.load(file)
+    val values = hashMapOf<String, JsonElement?>(
+      "$BEAN_COMPONENT_NAME.count" to JsonPrimitive(5),
+      "$BEAN_COMPONENT_NAME.enabled" to JsonPrimitive(true),
+      "$BEAN_COMPONENT_NAME.converted" to JsonPrimitive("value-5"),
+    )
+    val expectedLocalValues = mapOf(
+      "$BEAN_COMPONENT_NAME.count" to JsonPrimitive("5"),
+      "$BEAN_COMPONENT_NAME.enabled" to JsonPrimitive("true"),
+      "$BEAN_COMPONENT_NAME.converted" to JsonPrimitive("value-5"),
+    )
+    val receivedLocalValues = HashMap<String, JsonElement?>()
+    val controller = createController(values) { key ->
+      receivedLocalValues[key.key] = key.tags.filterIsInstance<OldLocalValueSupplierTag>().single().value
+    }
+    val store = TestProjectStore(project.get(), file.parent, controller)
+    val component = PrimitiveComponent()
+    store.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+    assertThat(receivedLocalValues).isEqualTo(expectedLocalValues)
+    store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+    val info = store.getComponents().getValue(BEAN_COMPONENT_NAME)
+    assertThat(info.lastModificationCount).isEqualTo(info.currentModificationCount)
+    store.save(forceSavingAllSettings = false)
+    assertThat(JDOMUtil.load(file)).isEqualTo(originalXml)
+
+    values["$BEAN_COMPONENT_NAME.count"] = JsonPrimitive("5")
+    values["$BEAN_COMPONENT_NAME.enabled"] = JsonPrimitive("true")
+    store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+    assertThat(info.lastModificationCount).isEqualTo(info.currentModificationCount)
+    store.save(forceSavingAllSettings = false)
+    assertThat(JDOMUtil.load(file)).isEqualTo(originalXml)
+
+    values["$BEAN_COMPONENT_NAME.count"] = JsonPrimitive(6)
+    store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+    store.save(forceSavingAllSettings = false)
+    assertThat(component.state.count).isEqualTo(6)
+    assertThat(component.state.enabled).isTrue()
+    assertThat(JDOMUtil.load(file).getChild("component").getAttributeValue("count")).isEqualTo("6")
+    assertThat(JDOMUtil.load(file).getChild("component").getAttributeValue("enabled")).isEqualTo("true")
+
+    values["$BEAN_COMPONENT_NAME.enabled"] = JsonPrimitive(false)
+    store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+    store.save(forceSavingAllSettings = false)
+    assertThat(component.state.count).isEqualTo(6)
+    assertThat(component.state.enabled).isFalse()
+    assertThat(JDOMUtil.load(file).getChild("component").getAttributeValue("count")).isEqualTo("6")
+    assertThat(JDOMUtil.load(file).getChild("component").getAttributeValue("enabled")).isNull()
+  }
+
+  @Test
+  fun `controller changes to a collection without a wrapper are saved locally`(): Unit = timeoutRunBlocking(context = ClientId.localId.asContextElement()) {
+    @State(name = BEAN_COMPONENT_NAME, storages = [Storage(FILE_NAME)], allowLoadInTests = true)
+    class ListComponent : SerializablePersistentStateComponent<ListState>(ListState())
+
+    for (resetValue in listOf(null, JsonNull)) {
+      val file = writeSettings("""<component name="$BEAN_COMPONENT_NAME" marker="keep"><item value="a" /><item value="b" /></component>""")
+      val values = HashMap<String, JsonElement?>()
+      val originalItems = Json.parseToJsonElement("""["a", "b"]""")
+      var receivedLocalItems: JsonElement? = null
+      val controller = createController(values) { key ->
+        receivedLocalItems = key.tags.filterIsInstance<OldLocalValueSupplierTag>().single().value
+      }
+      val store = TestProjectStore(project.get(), file.parent, controller)
+      val component = ListComponent()
+      store.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+      assertThat(component.state.items).containsExactly("a", "b")
+
+      values["$BEAN_COMPONENT_NAME.items"] = resetValue
+      store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+      assertThat(receivedLocalItems).isEqualTo(originalItems)
+      assertThat(component.state.items).isNullOrEmpty()
+      store.save(forceSavingAllSettings = false)
+      assertThat(JDOMUtil.load(file).getChild("component")).isEqualTo("""<component name="$BEAN_COMPONENT_NAME" marker="keep" />""")
+
+      val reloaded = ListComponent()
+      TestProjectStore(project.get(), file.parent, createController(emptyMap())).initComponent(
+        reloaded, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID,
+      )
+      assertThat(reloaded.state.items).isEmpty()
+
+      values["$BEAN_COMPONENT_NAME.items"] = originalItems
+      store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+      assertThat(receivedLocalItems).isNull()
+      store.save(forceSavingAllSettings = false)
+      store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+      assertThat(receivedLocalItems).isEqualTo(originalItems)
+      val info = store.getComponents().getValue(BEAN_COMPONENT_NAME)
+      assertThat(info.lastModificationCount).isEqualTo(info.currentModificationCount)
+
+      values["$BEAN_COMPONENT_NAME.items"] = Json.parseToJsonElement("""["c"]""")
+      store.reloadStates(setOf(BEAN_COMPONENT_NAME))
+      store.save(forceSavingAllSettings = false)
+      assertThat(JDOMUtil.load(file).getChild("component").getChildren("item").map { it.getAttributeValue("value") }).containsExactly("c")
+    }
+  }
+
+  @Test
+  fun `an existing override skips local comparisons and still loads controller values`() {
+    val localState = object : Element("component") {
+      override fun getAttributes(): MutableList<org.jdom.Attribute> = error("The comparison must not read the local XML.")
+    }
+    val tracker = ControllerOverrideTracker()
+    tracker.onResolved(controllerValue = JsonPrimitive("remote"), localValue = JsonPrimitive("local"))
+
+    val state = deserializeStateWithController(
+      stateElement = localState,
+      stateClass = ComparisonListState::class.java,
+      mergeInto = null,
+      controller = createController(mapOf("$BEAN_COMPONENT_NAME.items" to Json.parseToJsonElement("""["remote"]"""))),
+      componentName = BEAN_COMPONENT_NAME,
+      pluginId = PluginManagerCore.CORE_ID,
+      roamingType = null,
+      overrideTracker = tracker,
+    )
+
+    assertThat(state!!.items).containsExactly("remote")
+  }
+
+  @Test
   fun `the explicit encoding default survives project load and reload`(): Unit = timeoutRunBlocking(context = ClientId.localId.asContextElement()) {
     @State(name = "Encoding", storages = [Storage("encodings.xml")], allowLoadInTests = true)
     class EncodingComponent : PersistentStateComponent<Element> {
@@ -166,8 +294,8 @@ class ControllerBackedProjectStoreTest {
       }
     }
 
-    for (resolveLocalValue in listOf(false, true)) {
-      val configDir = fsRule.fs.getPath("/project-$resolveLocalValue/.idea")
+    for (controllerRootName in listOf(null, "component", "x")) {
+      val configDir = fsRule.fs.getPath("/project-$controllerRootName/.idea")
       val file = configDir.resolve("encodings.xml")
       val xml = """
         <project version="4">
@@ -175,11 +303,9 @@ class ControllerBackedProjectStoreTest {
         </project>
       """.trimIndent()
       file.write(xml)
-      val values = if (resolveLocalValue) {
-        mapOf("Encoding" to jdomToJson(JDOMUtil.load("""<component addBOMForNewFiles="with NO BOM" />""")))
-      }
-      else {
-        emptyMap()
+      val values = HashMap<String, JsonElement?>()
+      if (controllerRootName != null) {
+        values["Encoding"] = jdomToJson(Element(controllerRootName).setAttribute("addBOMForNewFiles", "with NO BOM"))
       }
       val store = TestProjectStore(project.get(), configDir, createController(values))
       store.initComponent(EncodingComponent(), serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
@@ -188,6 +314,13 @@ class ControllerBackedProjectStoreTest {
       store.reloadStates(setOf("Encoding"))
       store.save(forceSavingAllSettings = false)
       assertThat(JDOMUtil.load(file)).isEqualTo(xml)
+
+      if (controllerRootName != null) {
+        values["Encoding"] = jdomToJson(Element(controllerRootName).setAttribute("addBOMForNewFiles", "with BOM"))
+        store.reloadStates(setOf("Encoding"))
+        store.save(forceSavingAllSettings = false)
+        assertThat(JDOMUtil.load(file).getChild("component")).isEqualTo("""<component name="Encoding" addBOMForNewFiles="with BOM" />""")
+      }
     }
   }
 
@@ -239,13 +372,17 @@ class ControllerBackedProjectStoreTest {
     return file
   }
 
-  private fun createController(remoteValues: Map<String, JsonElement?>): SettingsController {
+  private fun createController(
+    remoteValues: Map<String, JsonElement?>,
+    onResolved: (SettingDescriptor<*>) -> Unit = {},
+  ): SettingsController {
     return SettingsControllerMediator(
       controllers = listOf(object : DelegatedSettingsController {
         override fun <T : Any> getItem(key: SettingDescriptor<T>): GetResult<T?> {
           if (!remoteValues.containsKey(key.key)) {
             return GetResult.inapplicable()
           }
+          onResolved(key)
           @Suppress("UNCHECKED_CAST")
           return GetResult.resolved(remoteValues.get(key.key) as T?)
         }
@@ -270,6 +407,28 @@ class ControllerBackedProjectStoreTest {
     @JvmField @Attribute var foo: String = "",
     @JvmField @Attribute var bar: String = "",
   )
+
+  private class NumberConverter : Converter<Int>() {
+    override fun fromString(value: String): Int = value.removePrefix("value-").toInt()
+
+    override fun toString(value: Int): String = "value-$value"
+  }
+
+  private class PrimitiveState {
+    @JvmField @Attribute var count = 0
+    @JvmField @Attribute var enabled = false
+    @JvmField @Attribute var marker = ""
+    @JvmField @Attribute(converter = NumberConverter::class) var converted = 0
+  }
+
+  private class ListState {
+    @JvmField @Attribute var marker = ""
+    @JvmField @Property(surroundWithTag = false) @XCollection(elementName = "item") var items: List<String>? = emptyList()
+  }
+
+  private class ComparisonListState {
+    @JvmField @Property(surroundWithTag = false) @XCollection(elementName = "item") var items: List<String> = emptyList()
+  }
 
   @Serializable
   private data class KotlinxState(var foo: String = "", var bar: String = "")

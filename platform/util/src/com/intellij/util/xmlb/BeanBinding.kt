@@ -533,7 +533,7 @@ fun deserializeNestedBindingToJson(element: Element, binding: NestedBinding): Js
   }
 
   if (data != null) {
-    (binding as MultiNodeBinding).deserializeListToJson(elements = data)
+    return (binding as MultiNodeBinding).deserializeListToJson(elements = data)
   }
 
   return null

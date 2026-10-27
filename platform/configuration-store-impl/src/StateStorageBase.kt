@@ -42,6 +42,8 @@ import com.intellij.util.xmlb.isPropertySkipped
 import com.intellij.util.xmlb.jdomToJson
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.atomic.AtomicReference
@@ -353,7 +355,7 @@ internal fun <T : Any> deserializeStateWithController(
         })),
       )
       if (element !== stateElement) {
-        overrideTracker?.onResolved(controllerValue = element?.let(::jdomToJson), localValue = stateElement?.let(::jdomToJson))
+        overrideTracker?.onResolved(controllerValue = element?.let(::elementToJsonForComparison), localValue = stateElement?.let(::elementToJsonForComparison))
       }
       return element as T? ?: mergeInto
     }
@@ -438,6 +440,11 @@ internal fun <T : Any> deserializeStateWithController(
 
 private val NULL_OLD_LOCAL_VALUE_SUPPLIER = OldLocalValueSupplierTag { null }
 
+private fun elementToJsonForComparison(element: Element): JsonElement = JsonObject(jdomToJson(element) - "name")
+
+private fun JsonElement?.normalizePrimitiveForComparison(): JsonElement? =
+  if (this is JsonPrimitive && !isString && this != JsonNull) JsonPrimitive(content) else this
+
 private fun <T : Any> getXmlSerializedState(
   oldData: Element?,
   mergeInto: T?,
@@ -495,8 +502,13 @@ private fun <T : Any> getXmlSerializedState(
 
     if (value.isResolved) {
       val jsonElement = value.get()
-      overrideTracker?.onResolved(controllerValue = jsonElement, localValue = oldDataSupplierLazyValue?.value) {
-        isStoredValueDefault(element = oldData!!, binding = binding, rootBinding = rootBinding)
+      if (overrideTracker != null && !overrideTracker.isLocalValueOverridden) {
+        overrideTracker.onResolved(
+          controllerValue = jsonElement.normalizePrimitiveForComparison(),
+          localValue = (oldDataSupplierLazyValue?.value).normalizePrimitiveForComparison(),
+        ) {
+          isStoredValueDefault(element = oldData!!, binding = binding, rootBinding = rootBinding)
+        }
       }
       if (jsonElement != null) {
         if (result == null) {

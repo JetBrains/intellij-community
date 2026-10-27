@@ -41,6 +41,8 @@ import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
 import com.intellij.util.xmlb.SettingsInternalApi
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Property
+import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.Text
 import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.util.xmlb.jdomToJson
@@ -501,6 +503,42 @@ class ControllerBackedStoreTest {
     assertThat(component.state.bean.foo).isEqualTo("test")
   }
 
+  @Test
+  fun `a controller can use a local collection without a wrapper`(): Unit = timeoutRunBlocking {
+    @State(name = "TestState", storages = [Storage(TEST_COMPONENT_FILE_NAME)], allowLoadInTests = true)
+    class ListComponent : SerializablePersistentStateComponent<UnwrappedListState>(UnwrappedListState())
+
+    for (hasLocalItems in listOf(false, true)) {
+      if (hasLocalItems) {
+        writeConfig(TEST_COMPONENT_FILE_NAME, """
+          <application>
+            <component name="TestState">
+              <item name="a" enabled="true" />
+              <item name="b" />
+            </component>
+          </application>
+        """.trimIndent())
+      }
+      val expectedLocalValue = if (hasLocalItems) Json.parseToJsonElement("""[{"name":"a","enabled":true},{"name":"b"}]""") else null
+      var localValueRequested = false
+      var receivedLocalValue: JsonElement? = null
+      val store = createStore { key ->
+        val localValue = key.tags.filterIsInstance<OldLocalValueSupplierTag>().single().value
+        localValueRequested = true
+        receivedLocalValue = localValue
+        GetResult.resolved(localValue)
+      }
+      val component = ListComponent()
+      store.initComponent(component, serviceDescriptor = null, pluginId = PluginManagerCore.CORE_ID)
+
+      assertThat(localValueRequested).isTrue()
+      assertThat(receivedLocalValue).isEqualTo(expectedLocalValue)
+      assertThat(component.state.items).isEqualTo(
+        if (hasLocalItems) listOf(ControllerListItem(name = "a", enabled = true), ControllerListItem(name = "b")) else emptyList(),
+      )
+    }
+  }
+
   @Suppress("unused")
   @Test
   fun kotlinx_serialization() = runBlocking<Unit>(Dispatchers.Default) {
@@ -715,6 +753,16 @@ private data class ControllerTestState(
   @JvmField @Attribute var bar: String? = "",
   @JvmField @Text var text: String = "",
   @JvmField @XCollection val list: List<String> = emptyList(),
+)
+
+private data class UnwrappedListState(
+  @JvmField @Property(surroundWithTag = false) @XCollection var items: List<ControllerListItem> = emptyList(),
+)
+
+@Tag("item")
+private data class ControllerListItem(
+  @JvmField @Attribute var name: String = "",
+  @JvmField @Attribute var enabled: Boolean = false,
 )
 
 @State(name = "TestState", storages = [Storage(TEST_COMPONENT_FILE_NAME)], perClient = true, allowLoadInTests = true)
