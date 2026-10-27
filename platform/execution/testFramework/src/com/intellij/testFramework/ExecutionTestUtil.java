@@ -30,12 +30,9 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.junit.Assert;
 
 import java.util.function.Consumer;
-
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
 
 @TestOnly
 public final class ExecutionTestUtil {
@@ -95,7 +92,7 @@ public final class ExecutionTestUtil {
   ) throws InterruptedException {
     var result = executeConfiguration(runConfiguration, executorId, null);
     var processHandler = result.second.getProcessHandler();
-    assertNotNull("Process handler must not be null!", processHandler);
+    Assert.assertNotNull("Process handler must not be null!", processHandler);
     PlatformTestUtil.waitWithEventsDispatching(
       () -> "Process failed to finish in " + timeoutInSeconds + " seconds: " + processHandler,
       () -> processHandler.isProcessTerminated() && processHandler.getExitCode() != null, Math.toIntExact(timeoutInSeconds),
@@ -118,7 +115,7 @@ public final class ExecutionTestUtil {
     @Nullable Consumer<? super RunContentDescriptor> contentDescriptorProcessor
   ) throws InterruptedException {
     var executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
-    assertNotNull("Unable to find executor: " + executorId, executor);
+    Assert.assertNotNull("Unable to find executor: " + executorId, executor);
     return executeConfiguration(runConfiguration, executor, contentDescriptorProcessor);
   }
 
@@ -136,12 +133,12 @@ public final class ExecutionTestUtil {
     var project = runConfiguration.getProject();
     var factory = runConfiguration.getFactory();
     if (factory == null) {
-      fail("No factory found for: " + runConfiguration);
+      Assert.fail("No factory found for: " + runConfiguration);
     }
     var runnerAndConfigurationSettings = RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
     var runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
     if (runner == null) {
-      fail("No runner found for: " + executor.getId() + " and " + runConfiguration);
+      Assert.fail("No runner found for: " + executor.getId() + " and " + runConfiguration);
     }
     var refRunContentDescriptor = new Ref<RunContentDescriptor>();
     var executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
@@ -159,7 +156,7 @@ public final class ExecutionTestUtil {
         if (descriptorProcessor != null) {
           descriptorProcessor.accept(descriptor);
         }
-        assertNotNull(processHandler);
+        Assert.assertNotNull(processHandler);
         processHandler.addProcessListener(new ProcessListener() {
           @Override
           public void startNotified(@NotNull ProcessEvent event) {
@@ -181,7 +178,7 @@ public final class ExecutionTestUtil {
     });
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     PlatformTestUtil.waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull() || failure[0], 60);
-    assertFalse("Process could not start for configuration: " + runConfiguration, failure[0]);
+    Assert.assertFalse("Process could not start for configuration: " + runConfiguration, failure[0]);
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 }

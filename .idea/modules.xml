@@ -1644,6 +1644,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/execution.serviceView/backend/intellij.platform.execution.serviceView.backend.iml" filepath="$PROJECT_DIR$/platform/execution.serviceView/backend/intellij.platform.execution.serviceView.backend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution.serviceView/frontend/intellij.platform.execution.serviceView.frontend.iml" filepath="$PROJECT_DIR$/platform/execution.serviceView/frontend/intellij.platform.execution.serviceView.frontend.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution.serviceView/plugin/intellij.platform.execution.serviceView.plugin.iml" filepath="$PROJECT_DIR$/platform/execution.serviceView/plugin/intellij.platform.execution.serviceView.plugin.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/execution/testFramework/intellij.platform.execution.testFramework.iml" filepath="$PROJECT_DIR$/platform/execution/testFramework/intellij.platform.execution.testFramework.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.tests.iml" filepath="$PROJECT_DIR$/platform/execution-impl/intellij.platform.execution.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/experiment/intellij.platform.experiment.iml" filepath="$PROJECT_DIR$/platform/experiment/intellij.platform.experiment.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/experiment/intellij.platform.experiment.tests.iml" filepath="$PROJECT_DIR$/platform/experiment/intellij.platform.experiment.tests.iml" />

@@ -304,6 +304,8 @@ jvm_library(
         "//platform/platform-impl/concurrency",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
+        "//platform/execution/testFramework",
+        "//platform/execution/testFramework:testFramework_test_lib",
         "//java/testFramework",
         "//java/testFramework:testFramework_test_lib",
         "//platform/core-ui",
