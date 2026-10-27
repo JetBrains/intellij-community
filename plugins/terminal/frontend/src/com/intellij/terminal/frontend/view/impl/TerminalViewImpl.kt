@@ -486,7 +486,8 @@ class TerminalViewImpl(
   }
 
   private fun listenPanelSizeChanges() {
-    component.addComponentListener(object : ComponentAdapter() {
+    // Top components shrink the editor without resizing the whole panel, so listen to the editor's container.
+    terminalPanel.layeredPane.addComponentListener(object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
         sendResizeEvent()
       }
@@ -768,7 +769,7 @@ class TerminalViewImpl(
   }
 
   private inner class TerminalPanel(initialContent: Editor) : BorderLayoutPanel(), UiDataProvider, TerminalPanelMarker {
-    private val layeredPane = TerminalLayeredPane(initialContent)
+    val layeredPane = TerminalLayeredPane(initialContent)
     private var curEditor: Editor = initialContent
     private var topComponentsPanel: JPanel? = null
 

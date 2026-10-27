@@ -92,11 +92,11 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
       rows * editor.lineHeight
     )
 
-    // The viewport change above isn't a resize of the top component TerminalViewImpl listens on, so nudge that
-    // separately; its listener re-reads the (already correct) grid size from the editor and reports it, exactly
+    // The viewport change above isn't a resize of the editor's container that TerminalViewImpl listens on, so nudge
+    // that separately; its listener re-reads the (already correct) grid size from the editor and reports it, exactly
     // as it would for a real window resize.
-    val panel = view.component
-    panel.setSize(panel.width + 1, panel.height + 1)
+    val container = checkNotNull(editor.component.parent) { "The editor is not added to the terminal view" }
+    container.setSize(container.width + 1, container.height + 1)
     dispatchAllEventsInIdeEventQueue()
   }
 
