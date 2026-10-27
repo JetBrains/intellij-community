@@ -527,7 +527,7 @@ internal class UnifiedPluginsPageView @RequiresEdt(generateAssertion = false /* 
     stickyHeaderHost.showGradient = stickyY == viewportOrigin.y &&
                                         stickySection.hasItemsBehindHeader(sectionsPanel, viewRect.y, headerHeight)
     val stickyX = headerBounds.x - viewRect.x + viewportOrigin.x
-    val stickyWidth = headerBounds.width
+    val stickyWidth = viewRect.width
     stickyHeaderHost.updateOverflow(headerHeight)
     val stickyBounds = Rectangle(
       stickyX,

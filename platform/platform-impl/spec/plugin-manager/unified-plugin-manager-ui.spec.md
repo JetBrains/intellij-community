@@ -68,7 +68,7 @@ targets:
 # Unified Plugin Manager UI
 
 Status: Active
-Date: 2026-10-13
+Date: 2026-10-27
 
 ## Purpose
 
@@ -650,6 +650,12 @@ Untested: No focused test verifies Shift-selection across sections.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
     `sticky header is pushed off by the next section without duplicating controls`;
     `sticky expansion control collapses its section`
+  )
+
+- A section header must remain visible after the first layout, a section replacement, and a resize.
+  [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (
+    `initial layout keeps the repository header visible`;
+    `new repository header stays visible after a section replacement`
   )
 
 - A long section title must yield space to its count and actions.
