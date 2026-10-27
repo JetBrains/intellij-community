@@ -1,6 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::ffi::{c_char, c_int, c_void, CStr, CString};
+use std::ffi::{c_char, c_int, c_void, CStr, CString, VaList};
 use std::path::Path;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Mutex;
@@ -37,10 +37,10 @@ const JVM_LIB_REL_PATH: &str = "lib/server/libjvm.so";
 static DEBUG_MODE: AtomicBool = AtomicBool::new(true);
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
-extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> jint {
+extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: VaList<'_>) -> jint {
     unsafe extern "C" {
-        fn vfprintf(fp: *const c_void, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
-        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: va_list::VaList<'_>) -> c_int;
+        fn vfprintf(fp: *const c_void, format: *const c_char, args: VaList<'_>) -> c_int;
+        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: VaList<'_>) -> c_int;
     }
 
     match &mut *HOOK_MESSAGES.lock().unwrap() {

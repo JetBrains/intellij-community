@@ -771,12 +771,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3354b9ac3fae1ff6755cb6db53683adb661634f67557942dea4facebec0fee4b"
 
 [[package]]
-name = "va_list"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "13275e7e3c4927837229a3ed716eb9ae0b589fb071499617533509b20d429428"
-
-[[package]]
 name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1194,7 +1188,6 @@ dependencies = [
  "sha1",
  "shell-words",
  "tempfile",
- "va_list",
  "windows",
  "winreg",
  "winresource",
