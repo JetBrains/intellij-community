@@ -108,6 +108,8 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 ## Error Handling
 
 - A provider that throws during a load is logged and skipped. The other providers still load.
+- A provider that throws from `storageContext` fails the operation that asks it. The vault does not catch it.
+  See [ADR 0158](../adr/0158-a-failure-of-the-storage-context-mapping-of-a-provider-propagates.md).
 
 ## Open Questions / Risks
 
