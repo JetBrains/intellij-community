@@ -41,7 +41,7 @@ internal class ScopePaneService(private val project: Project, coroutineScope: Co
     fun getInstance(project: Project): ScopePaneService = project.service()
   }
 
-  private val sharedModel = SharedScopeViewTreeModel(project)
+  private val sharedModel = SharedScopeViewTreeModel(project, coroutineScope)
 
   /** `null` until the first list is computed, so that nobody takes the start value for "no scopes". */
   private val currentPanes: StateFlow<List<ScopePaneModel>?> = paneUpdates().stateIn(coroutineScope, SharingStarted.Lazily, null)

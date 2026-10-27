@@ -100,7 +100,7 @@ class ScopePaneModel internal constructor(
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
     sessionState.value = SessionState.FROZEN
     try {
-      sharedModel.manage(this) { model ->
+      sharedModel.runWithManagedPane(this) { model ->
         runLiveSession(model, builder)
       }
     }
@@ -131,6 +131,9 @@ class ScopePaneModel internal constructor(
 
   override suspend fun onStateChanged(state: SuspendingBackendProjectViewPaneStateAccessor<TreeStructureProjectViewNode>) {
     val resumed = sessionState.getAndUpdate { SessionState.LIVE } != SessionState.LIVE
+    if (resumed) {
+      sharedModel.setHasTree(this)
+    }
     for ((parentId, options) in requestedChildren) {
       val parent = state.getNodeById(parentId)
       if (parent == null || state.getChildren(parent) != null) {
@@ -175,22 +178,22 @@ class ScopePaneModel internal constructor(
     return panes.firstOrNull { pane -> readAction { pane.currentFilter.value.accept(file) } }
   }
 
+  /**
+   * The search doesn't select this pane.
+   * When the frontend selects this pane to show the found node, the pane becomes live again.
+   */
   private suspend fun findNodeInThisPane(target: ProjectViewSelectTarget): ProjectViewNodePath? {
-    sharedModel.claim(this)
-    try {
-      awaitLive()
-      return findNodeForSelectTarget(target)
-    }
-    finally {
-      // The search doesn't select this pane. When the frontend selects it to show the found node, it claims the model again.
-      sharedModel.claimForSelectedPane()
+    return sharedModel.runFindRequest(this) {
+      // The session of this pane starts in the same live period. A pane that isn't managed has no session.
+      sessionState.first { it != SessionState.FROZEN }
+      findNodeForSelectTarget(target)
     }
   }
 
   /**
    * Suspends until this pane is live.
-   * Returns earlier if this pane isn't managed, because its next session claims the model anyway.
-   * Also returns earlier if another pane has claimed the model since.
+   * Returns earlier if this pane isn't managed, because its next session can make it live anyway.
+   * Also returns earlier if the rules of the shared model choose another pane since.
    */
   private suspend fun awaitLive() {
     combine(sessionState, sharedModel.livePane) { state, livePane ->
