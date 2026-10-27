@@ -497,6 +497,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_FOCUS_EDITOR:java.lang.String
 - sf:ACTION_GOTO_BACK:java.lang.String
 - sf:ACTION_GOTO_DECLARATION:java.lang.String
+- sf:ACTION_GOTO_DECLARATION_ONLY:java.lang.String
 - sf:ACTION_GOTO_FORWARD:java.lang.String
 - sf:ACTION_GOTO_IMPLEMENTATION:java.lang.String
 - sf:ACTION_GOTO_LAST_CHANGE:java.lang.String

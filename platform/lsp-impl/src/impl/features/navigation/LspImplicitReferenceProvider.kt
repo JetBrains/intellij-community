@@ -50,13 +50,13 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     // There are several places in the IntelliJ codebase that call `getImplicitReference()` function.
     // For example, `IdentifierHighlighterPass.highlightReferencesAndDeclarations`, it calls this function on caret movement.
     // No need to send requests to the LSP server for features that won't work anyway.
-    // We care only about the "Go To Declaration" and "Go To Type Declaration" actions, and about Ctrl+hover, which asks
-    // for the same information without performing either of them.
+    // We care only about the "Go To Declaration", "Go To Declaration (only)" and "Go To Type Declaration" actions.
+    // We also care about Ctrl+hover, which asks for the same information without performing an action.
     val request = currentRequest() ?: return null
     return when (request.actionId) {
-      IdeActions.ACTION_GOTO_DECLARATION ->
+      IdeActions.ACTION_GOTO_DECLARATION, IdeActions.ACTION_GOTO_DECLARATION_ONLY ->
         createResolvedReference(psiFile, offsetInElement, request.isCtrlHover, ::requestElementDefinitions,
-                                fallbackToShowUsagesOnSelfDefinition = true)
+                                fallbackToShowUsagesOnSelfDefinition = request.actionId == IdeActions.ACTION_GOTO_DECLARATION)
       IdeActions.ACTION_GOTO_TYPE_DECLARATION ->
         createResolvedReference(psiFile, offsetInElement, request.isCtrlHover, ::requestTypeDefinitions,
                                 fallbackToShowUsagesOnSelfDefinition = false)
