@@ -25,7 +25,8 @@ import java.awt.Font
 
 /**
  * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers and the colors of the changes, but no icons:
- * the hunks in the tree have the checkboxes and the rollback. Removed lines are red, added lines are green, and changed lines are blue.
+ * the hunks in the tree have the checkboxes and the rollback. The scroll bar shows the marks of errors and warnings, but no marks of the
+ * changes, because the tree lists them. Removed lines are red, added lines are green, and changed lines are blue.
  */
 internal class StructuralDiffPreviewAppearance : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -82,7 +83,8 @@ private class StructuralDiffColors(delegate: EditorColorsScheme) : DelegateColor
     // The diff reads the foreground of a diff key as the background of a line with changed words.
     val line = ColorUtil.mix(background, tint.color, tint.line)
     val word = ColorUtil.mix(background, tint.color, tint.word)
-    return TextAttributes(line, word, null, null, Font.PLAIN).also { it.errorStripeColor = tint.color }
+    // No error stripe color: the tree lists the changes, so the scroll bar shows only the marks of errors and warnings.
+    return TextAttributes(line, word, null, null, Font.PLAIN)
   }
 
   /** A color and its shares in the background of a changed line and of a changed word. */
