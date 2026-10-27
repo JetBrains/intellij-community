@@ -10,6 +10,7 @@ import com.intellij.openapi.compiler.CompilerMessage;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -221,9 +222,23 @@ public abstract class ExecutionTestCase extends JavaProjectTestCase {
         LOG.error("process was running over " + myTimeoutMillis / 1000 + " seconds. Interrupted. ");
       }
     }, myTimeoutMillis);
-    processHandler.waitFor();
-    isRunning.set(false);
-    Disposer.dispose(alarm);
+    try {
+      while (!processHandler.waitFor(100)) {
+        ProgressManager.checkCanceled();
+        if (!areLogErrorsIgnored() && TestLoggerFactory.getRethrowErrorNumber() != 0) {
+          processHandler.destroyProcess();
+          if (!processHandler.waitFor(1_000) && processHandler instanceof KillableProcess killable && killable.canKillProcess()) {
+            killable.killProcess();
+          }
+          assertTrue("The process did not stop after a logged error. See the test log.", processHandler.waitFor(10_000));
+          fail("An error was logged during process execution. See the test log.");
+        }
+      }
+    }
+    finally {
+      isRunning.set(false);
+      Disposer.dispose(alarm);
+    }
   }
 
   public void waitFor(Runnable r) {
