@@ -15,7 +15,6 @@
 //!    expiry marker of the token of each server, which `IJPrivatePackagesAuthorizer` reads. An expired or missing local
 //!    marker asks for a renewed local token first. The copy needs a yes at the terminal or `--yes`, and it
 //!    refuses without a terminal, so an agent cannot start it. Then the remote cache must answer 404, not 401.
-//! 7. With `--take-lease`, the warm lease of this checkout, so the first run does not wait for `bd lease get`.
 
 use std::ffi::OsString;
 use std::fmt::Write as _;
@@ -33,7 +32,7 @@ use crate::credentials::{
 };
 use crate::digest::tail_lines;
 use crate::execute::Outcome;
-use crate::remote::{DEFAULT_HOST_REPO, Host, HostLink, holder};
+use crate::remote::{DEFAULT_HOST_REPO, Host, HostLink};
 use crate::ssh::{COPY_IDLE, host_path_word, host_repo, push_url, remote_call, scp, ssh, ssh_git_config, watched_git};
 
 /// What `--prepare` may do.
@@ -42,8 +41,6 @@ pub(crate) struct Prepare {
     pub(crate) change: bool,
     /// `--yes`: copy the credentials without the question.
     pub(crate) yes: bool,
-    /// `--take-lease`.
-    pub(crate) take_lease: bool,
 }
 
 /// The outcome of one step.
@@ -121,9 +118,6 @@ pub(crate) fn prepare_host(host: &Host<'_>, prepare: &Prepare, runtime: &dyn Run
         check_tools(runtime, host.alias, &mut report);
         prepare_agent(runtime, host, prepare, link, &mut report);
         prepare_credentials(runtime, host.alias, prepare, &mut report);
-        if prepare.take_lease {
-            take_lease(runtime, host, prepare, link, &mut report);
-        }
     }
     Outcome {
         exit_code: if report.has_missing() { exit::INFRA } else { exit::GREEN },
@@ -744,30 +738,6 @@ fn copy_markers(runtime: &dyn Runtime, alias: &str, markers: &[String]) -> Strin
         format!("copied {} token expiry markers", markers.len())
     } else {
         "cannot copy the token expiry markers".to_owned()
-    }
-}
-
-fn take_lease(runtime: &dyn Runtime, host: &Host<'_>, prepare: &Prepare, link: &dyn HostLink, report: &mut Report) {
-    const STEP: &str = "lease";
-    if !prepare.change {
-        report.add(
-            Status::Missing,
-            STEP,
-            "--take-lease takes the warm lease of this checkout without --dry-run",
-        );
-        return;
-    }
-    let holder = holder(runtime);
-    match link.lease(host.alias, host.repo, &holder) {
-        Ok(leased) => {
-            let fresh = if leased.fresh { "new" } else { "warm" };
-            report.add(
-                Status::Done,
-                STEP,
-                format!("the lease {} of {holder} is {} ({fresh})", leased.lease_id, leased.slot),
-            );
-        }
-        Err(refusal) => report.add(Status::Missing, STEP, format!("cannot take the lease: {}", refusal.message)),
     }
 }
 

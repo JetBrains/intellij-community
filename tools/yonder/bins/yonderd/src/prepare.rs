@@ -1,8 +1,9 @@
 //! The prepare steps of `.yonder.toml`. A step runs before the command when its fingerprint differs from the one of its
-//! last success in the lease, or when a path that it creates is missing. The fingerprint covers the command of the step,
-//! the paths of its inputs and their object ids at the commit of the run, so a step runs again when one of its inputs
-//! changed. The lease file keeps the fingerprints, so a new lease runs each step once: the agent cannot know what an
-//! earlier holder of the slot did to it.
+//! last success in the host slot, or when a path that it creates is missing. The fingerprint covers the command of the
+//! step, the paths of its inputs and their object ids at the commit of the run, so a step runs again when one of its
+//! inputs changed. The fingerprints are kept per slot (`slots::Prepared`), by its lease id and the generation of its
+//! files, so a new slot, or a slot whose files a give-back or a clean removed, runs each step once: the agent cannot
+//! know what was done to it before.
 
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -15,7 +16,7 @@ pub(crate) fn reason(step: &Step, fingerprint: &str, prepared: &BTreeMap<String,
         return Some(format!("{missing} is missing"));
     }
     match prepared.get(&key(step)) {
-        None => Some("the first run of this lease".to_owned()),
+        None => Some("the first run in this slot".to_owned()),
         Some(recorded) if recorded != fingerprint => Some(if step.inputs.is_empty() {
             "its command changed".to_owned()
         } else {
@@ -25,7 +26,7 @@ pub(crate) fn reason(step: &Step, fingerprint: &str, prepared: &BTreeMap<String,
     }
 }
 
-/// The key of a step in the lease file: a hash of its name.
+/// The key of a step among the fingerprints of a slot: a hash of its name.
 pub(crate) fn key(step: &Step) -> String {
     format!("{:016x}", fnv(step.name.as_bytes(), FNV_OFFSET))
 }

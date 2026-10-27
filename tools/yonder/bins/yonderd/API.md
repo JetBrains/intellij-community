@@ -26,8 +26,13 @@ exits with 1. A usage error exits with 2.
 | A failed `launchctl print`, `bootstrap`, `bootout` or `kickstart` | `launchd_failed` |
 | An `upgrade` or a `watchdog` that refuses, see [The upgrade](#the-upgrade) | `bad_binary`, `plist_changed`, `downgrade`, `upgrade_failed`, `launchd_failed` |
 
-`setup` moves each lease file of `~/.cache/bt-remote/leases/` into `~/.cache/yonderd/leases/` when the agent has no
-file of that holder.
+A run borrows a host slot of the pool of Branch Deck for its run only, through `bd lease host` (`lend`, `give-back`,
+`fill`, `reclaim`; the "Host slots" of `spec/cli/lease.spec.md` in the Branch Deck repository). The bd of the host
+must name `lease_host_lend` in `bd schema`; else a run refuses with `lease_failed`. The keeper of `serve` wakes once a
+minute and at each `Start` of a repository: it returns each lease that a holder kept in `~/.cache/yonderd/leases/`
+before the host slots (`bd lease return --confirm-preserved`, once no old supervisor holds the lock of the holder),
+then runs `bd lease host reclaim`, then `bd lease host fill` once no such lease of the repository is left. A failed
+fill waits 1, 5, then 15 minutes.
 
 ## The requests
 
@@ -44,7 +49,9 @@ file of that holder.
 | A fetch or a forget of a run that goes on | `bad_request` |
 | A repository path that is no directory, or that git says is no repository | `repo_missing`, with the words of git |
 | A repository check that cannot run, such as a git that cannot start | `agent_error`, with the error of the start |
-| A lease request for a holder whose lease file names another repository | `lease_failed`, and the file stays |
+| A `Lease` request of an older client | `bad_request`: host slots are lent per run (a `Release` answers `Done`) |
+| A run whose bd lacks `bd lease host`, or whose lend fails | `lease_failed` |
+| A run that got no host slot within an hour | `lock_timeout` |
 | A run whose commit the repository lacks, and whose pack does not come within 30 min, or sends no chunk for 2 min | `pack_missing`, as the end of the run |
 | A `.yonder.toml` of the commit with an unknown key or a value of the wrong shape | `bad_config`, as the end of the run, before the command |
 | A prepare step of `.yonder.toml` that exits with a code other than 0 | `prepare_failed`, as the end of the run, before the command |
@@ -56,13 +63,17 @@ file of that holder.
 | An upgrade on Linux, without a LaunchAgent of the shape of `setup`, while a watchdog lives, during another upgrade, or with a failed file call | `upgrade_failed` |
 
 - Each git, bd and launchctl child of the agent runs in a process group of its own. A deadline or a cancel kills the
-  whole group, so a stopped `bd lease get` leaves no clone behind.
-- A `Lease` or `Release` waits up to 50 s for a run of the same holder, then refuses with `lock_timeout`. A run waits
-  up to an hour.
-- `Lease` makes no idle sweep, because the request has no idle hours. Only a run returns the idle leases of other
-  holders, after its `exit.json`, so no run waits for the sweep. The lines of the sweep go to `supervisor.log`.
-- `Have`, `Lease`, `Release` and the end of `Pack` send `Reply::Heartbeat` while they wait.
-- A `Start` can come before the `Pack` of its ref. The run takes the lock and the lease, then waits for the pack
+  whole group, so a stopped `bd lease host fill` leaves no clone behind.
+- A run lends a slot with the pid of its supervisor and the holder of its spec as the affinity: the slot that holder
+  used last, else the one used longest ago, else a place in the queue. While every slot is lent it asks again every
+  2 s, writes `yonder: waiting for a host slot of <repo>: …` to its log at the start and once a minute, and refuses
+  with `lock_timeout` after an hour. A cancel ends the wait.
+- On every way out, after its `exit.json`, a run gives its slot back (`bd lease host give-back --run`): the processes
+  that it left in the slot stop and its changes go; a run that got no slot leaves the queue. No signal cuts the
+  give-back, and its lines go to `supervisor.log`. Nothing reads the slot after the run: the stage holds what comes
+  back.
+- `Have` and the end of `Pack` send `Reply::Heartbeat` while they wait.
+- A `Start` can come before the `Pack` of its ref. The run borrows its slot, then waits for the pack
   before the checkout. A commit that the repository has already needs no pack. Else the wait ends when the pack has
   landed: the pack writes `packed` in the run directory after the start ref. Each chunk of the pack writes `packing`,
   at most once a second, and a wait without a chunk for `PACK_STALL_SECONDS` ends the run, because its client is
@@ -70,8 +81,8 @@ file of that holder.
   `yonder: waiting for the pack of <commit>` to the log. A cancel ends the wait too.
 - A pack that comes after the end of its run makes no ref. Its objects land.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
-  the phases that have ended so far. The phases are `lock`, `lease`, `pack_wait`, `checkout`, `prepare`, `command` and
-  `stage`, in this order. A run that ends early has only the phases up to its last step.
+  the phases that have ended so far. The phases are `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`,
+  in this order. A run that ends early has only the phases up to its last step.
 - The hello lists the features of the agent: `config`, `login_env`, `nice` and `changes`, and `upgrade` on macOS
   (`proto::feature`). It names the SHA-256 of the binary of the agent too. An agent
   ignores a field of a start that it does not know, so a client checks the feature first.
@@ -128,7 +139,7 @@ E2E_PORT = { port = 3100 }                    # 3100 plus the number of the slot
 CI = { unset = true }                         # removed
 
 # A step that prepares the slot. It runs before the command when its fingerprint differs from the one of its last
-# success in the lease, or when a path of `creates` is missing.
+# success in the slot, or when a path of `creates` is missing.
 [[prepare]]
 name = "pnpm install"                         # the name in the log; the command line when missing
 run = ["pnpm", "install", "--frozen-lockfile"]
@@ -141,8 +152,9 @@ creates = ["node_modules"]
   the slot root, such as `node_modules/.bin`.
 - The fingerprint of a step covers its `run`, and each path of `inputs` with its object id at the commit of the run: a
   file is its blob, and a directory its tree. A path that the commit lacks counts as missing. A step without `inputs`
-  runs once per lease. The lease file keeps the fingerprints, so a new lease runs each step once: the agent cannot know
-  what an earlier holder did to the slot.
+  runs once per slot. `~/.cache/yonderd/slots/<lease id>.prepared` keeps the fingerprints of a slot with the
+  `generation` of its files that the lend answered. Branch Deck moves it with each give-back that discarded changes and
+  each clean, before the slot is idle again, so a new slot, or a slot whose files were removed, runs each step once.
 - A step and the command use the tools of the login environment of the host. The host provides them, as its setup
   does git and bd: a repository whose steps call pnpm needs a pnpm on the login `PATH` of the host (`brew install
   pnpm`; pnpm itself switches to the version of `packageManager`). `.yonder.toml` installs no tool of the host.
@@ -170,8 +182,9 @@ nor changes gets only the staged entries, as an older agent sends them.
 
 Each directory of the agent has the mode 0700, and each file that it writes has the mode 0600. A staged entry keeps
 the mode that it had in the slot. A copy across two file systems gives each staged file 0600, or 0700 when it is
-executable. A run directory adds `outputs/` and `outputs.json` for the outputs and `changes.patch` for the changes. A
-lease file adds a `prepared.<key>=<fingerprint>` line for each prepare step that succeeded in its slot.
+executable. A run directory adds `outputs/` and `outputs.json` for the outputs and `changes.patch` for the changes.
+The fingerprints of a slot are a `generation=` line and a `prepared.<key>=<fingerprint>` line for each prepare step
+that succeeded in it.
 
 ## The upgrade
 

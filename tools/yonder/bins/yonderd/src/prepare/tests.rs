@@ -24,7 +24,7 @@ fn a_step_runs_first_then_only_when_an_input_or_a_created_path_changed() {
     std::fs::create_dir(slot.path().join("node_modules")).expect("node_modules");
     assert_eq!(
         reason(&step, &first, &prepared, slot.path()).as_deref(),
-        Some("the first run of this lease")
+        Some("the first run in this slot")
     );
     prepared.insert(key(&step), first.clone());
     assert_eq!(reason(&step, &first, &prepared, slot.path()), None);

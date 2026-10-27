@@ -58,22 +58,18 @@ Options:
   --list                   print the resolution candidates for the selector; run nothing
   --verbose                also echo bazel's own captured output
   --host <ssh alias>       run the committed HEAD on that machine over yonder: send the missing git
-                           objects, check the commit out in the Branch Deck lease that this checkout
-                           keeps there, run the same command, stream its output, copy back the kept
-                           logs of out/bt-runs; Ctrl+C cancels the run there; refused when the
+                           objects, check the commit out in a host slot that the machine lends to
+                           this run only, run the same command, stream its output, copy back the
+                           kept logs of out/bt-runs; Ctrl+C cancels the run there; refused when the
                            checkout has local changes; --prepare installs the agent first
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
                            the one of the host file of --prepare, ~/projects/idea-1)
-  --host-idle-hours <n>    a run on the --host machine returns each lease of another checkout that
-                           no run used for n hours (env BT_HOST_IDLE_HOURS, default 8)
-  --release                with --host: return the lease that the runs of this checkout keep there
   --prepare                with --host: make that machine ready, step by step (ssh, the repository,
                            bd and its PATH, the tools, the yonder agent, the credentials, the remote
                            cache), and say ok, done or missing for each; --dry-run changes nothing.
                            Run it in a terminal: the credential copy asks y/N and refuses without a
                            terminal
   --yes                    with --prepare: copy the missing credentials without the question
-  --take-lease             with --prepare: take the warm lease of this checkout
   --help
 
 Examples:
@@ -189,21 +185,12 @@ pub(crate) struct Args {
     /// changes no local run.
     #[arg(long, env = "BT_HOST_REPO", allow_hyphen_values = true, value_parser = flag_value)]
     pub(crate) host_repo: Option<String>,
-    /// How many hours a lease of another checkout may stay unused on the `--host` machine.
-    #[arg(long, env = "BT_HOST_IDLE_HOURS", allow_hyphen_values = true, value_parser = count_parser(720))]
-    pub(crate) host_idle_hours: Option<u32>,
-    /// Returns the lease of this checkout on the `--host` machine, and runs nothing.
-    #[arg(long, overrides_with = "release")]
-    pub(crate) release: bool,
     /// Makes the `--host` machine ready for runs, and runs nothing.
-    #[arg(long, overrides_with = "prepare", conflicts_with = "release")]
+    #[arg(long, overrides_with = "prepare")]
     pub(crate) prepare: bool,
     /// With `--prepare`: copy the missing credentials without the question.
     #[arg(long, overrides_with = "yes")]
     pub(crate) yes: bool,
-    /// With `--prepare`: take the warm lease of this checkout.
-    #[arg(long, overrides_with = "take_lease")]
-    pub(crate) take_lease: bool,
     #[arg(last = true)]
     pub(crate) passthrough: Vec<String>,
 }

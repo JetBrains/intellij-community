@@ -24,15 +24,13 @@ use yonder_link::proto::{MAX_BINARY, Reply, Request, SCHEMA_VERSION};
 use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 
 use crate::awake::{self, Awake};
-use crate::child::never;
 use crate::files::private_dir;
 use crate::git::NotRepo;
 use crate::home::Home;
-use crate::lease::{Leases, now_seconds};
-use crate::refused::{AGENT_ERROR, BAD_REQUEST, LOCK_TIMEOUT, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, UPGRADE_FAILED, refused, reply};
+use crate::refused::{AGENT_ERROR, BAD_REQUEST, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, UPGRADE_FAILED, refused, reply};
 use crate::run::{RunDir, Runs};
 use crate::upgrade::{Install, Staging};
-use crate::{cleanup, git, login_env, run_env, tuning, upgrade};
+use crate::{cleanup, git, keeper, login_env, run_env, tuning, upgrade};
 
 /// The deadline of each read of the handshake and of a request.
 const READ_DEADLINE: Duration = Duration::from_secs(10);
@@ -50,8 +48,8 @@ const PACK_READ_DEADLINE: Duration = Duration::from_secs(60);
 /// The shortest time between two progress notes of a pack.
 const PACK_PROGRESS_EVERY: Duration = Duration::from_secs(1);
 
-/// How long a lease request waits for a run of the same holder.
-const LEASE_LOCK_WAIT: Duration = Duration::from_secs(50);
+/// The answer to a lease or a release of a holder, which an older client sends.
+const NO_HOLDER_LEASES: &str = "host slots are lent per run on this host (bd lease host); there is no lease of a holder to take or release";
 
 /// The most commits of one [`Request::Have`].
 const MAX_HAVE: usize = 1024;
@@ -82,6 +80,9 @@ pub(crate) struct Agent {
     upgrading: AtomicBool,
     /// Keeps the host awake while a client has a connection after its hello (`awake`).
     awake: Awake,
+    /// Wakes the keeper of the host slots for the repository of a run that starts (`keeper`); none before `serve`
+    /// starts it.
+    keeper: Mutex<Option<mpsc::Sender<PathBuf>>>,
 }
 
 /// Listens on `bind:port` and serves each connection. Prints one JSON line with the address and the fingerprint on
@@ -109,6 +110,7 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out
     }
     let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
     let agent = Arc::new(Agent::new(home, tls, exe, launchctl));
+    *agent.keeper.lock().unwrap_or_else(PoisonError::into_inner) = Some(keeper::start(agent.home.clone()));
 
     // The login environment of the user, for the runs. A shell profile can take seconds, so it does not hold the
     // listener.
@@ -226,6 +228,14 @@ impl Agent {
             busy: AtomicUsize::new(0),
             upgrading: AtomicBool::new(false),
             awake: Awake::new(awake::program()),
+            keeper: Mutex::new(None),
+        }
+    }
+
+    /// Wakes the keeper of the host slots for `repo`.
+    pub(crate) fn wake_keeper(&self, repo: PathBuf) {
+        if let Some(keeper) = self.keeper.lock().unwrap_or_else(PoisonError::into_inner).as_ref() {
+            let _ = keeper.send(repo);
         }
     }
 
@@ -311,8 +321,14 @@ impl Agent {
                 answer(channel, self.forget(&run))
             }
             Request::Runs => answer(channel, Ok(self.list_runs())),
-            Request::Lease { repo, holder } => self.lease(channel, &repo, &holder, false),
-            Request::Release { repo, holder } => self.lease(channel, &repo, &holder, true),
+            // A run borrows a host slot for its run only (`slots`), so there is nothing to take or keep
+            Request::Lease { .. } => answer(channel, Err(refused(BAD_REQUEST, NO_HOLDER_LEASES))),
+            Request::Release { .. } => answer(
+                channel,
+                Ok(Reply::Done {
+                    message: NO_HOLDER_LEASES.to_owned(),
+                }),
+            ),
             Request::Upgrade { .. } => answer(
                 channel,
                 Err(refused(BAD_REQUEST, "an upgrade comes as the request of its connection")),
@@ -533,40 +549,6 @@ impl Agent {
             Ok(()) => channel.send(&Reply::Packed),
             Err(message) => channel.send(&Reply::refused(PACK_FAILED, message)),
         }
-    }
-
-    /// Takes the lease of `holder`, or returns it with `release`. Heartbeats go out while it waits for the lock of the
-    /// holder or for bd. A lease request makes no idle sweep, because it names no idle hours.
-    fn lease(&self, channel: &mut Channel, repo: &str, holder: &str, release: bool) -> Result<(), LinkError> {
-        let checked = self.repo(repo).and_then(|repo| check_holder(holder).map(|()| repo));
-        let repo = match checked {
-            Ok(repo) => repo,
-            Err(refusal) => return channel.send(&reply(&refusal)),
-        };
-        let leases = Leases::new(self.home.leases_dir(), repo);
-        let holder = holder.to_owned();
-        let result = with_heartbeats(channel, &mut || {}, move || {
-            let lock = leases
-                .lock(&holder, LEASE_LOCK_WAIT, &never, &mut |line| log(line))?
-                .ok_or_else(|| refused(LOCK_TIMEOUT, format!("the lock of {holder} is held")))?;
-            let answer = if release {
-                leases.release(&holder, &never).map(|message| Reply::Done { message })
-            } else {
-                leases.acquire(&holder, &never, &mut |line| log(line)).and_then(|lease| {
-                    leases
-                        .record(&holder, &lease, now_seconds())
-                        .map_err(|error| refused(AGENT_ERROR, format!("cannot write the lease file of {holder}: {error}")))?;
-                    Ok(Reply::Leased {
-                        slot: lease.slot.display().to_string(),
-                        lease_id: lease.lease_id,
-                        fresh: lease.fresh,
-                    })
-                })
-            };
-            drop(lock);
-            answer
-        })?;
-        answer(channel, result)
     }
 }
 

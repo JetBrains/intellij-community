@@ -13,7 +13,7 @@ use crate::digest::{
 };
 use crate::options::{Args, Invocation, parse_args};
 use crate::prepare::{Prepare, prepare_host};
-use crate::remote::{DEFAULT_IDLE_HOURS, Host, HostLink, Yonder, release_on_host, run_on_host};
+use crate::remote::{Host, HostLink, Yonder, run_on_host};
 use bt_core::bep::parse_bep;
 use bt_core::evidence::keep_failed_evidence;
 use bt_core::lanes::{
@@ -149,16 +149,11 @@ where
                 let host = Host {
                     alias,
                     repo: args.host_repo.as_deref(),
-                    idle_hours: args.host_idle_hours.unwrap_or(DEFAULT_IDLE_HOURS),
                 };
-                if args.release {
-                    return release_on_host(&host, runtime, link);
-                }
                 if args.prepare {
                     let prepare = Prepare {
                         change: !args.dry_run,
                         yes: args.yes,
-                        take_lease: args.take_lease,
                     };
                     return Ok(prepare_host(&host, &prepare, runtime, link));
                 }
@@ -167,7 +162,7 @@ where
                 }
                 run_on_host(&host, args.json, &argv, runtime, link)
             }
-            None if args.release || args.prepare => Err(fail_usage("--release and --prepare need --host")),
+            None if args.prepare => Err(fail_usage("--prepare needs --host")),
             None => execute_args(&args, runtime, &areas),
         },
     }

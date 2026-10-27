@@ -1,6 +1,6 @@
 # yonder: run a commit on another machine
 
-yonder runs a command of a checkout on another machine of the user, in a warm Branch Deck lease there. `bt --host` runs
+yonder runs a command of a checkout on another machine of the user, in a warm host slot of Branch Deck there. `bt --host` runs
 the committed HEAD. `yonder run <alias> -- <command>` runs the working tree, committed or not, in any repository: the
 output streams back, and the exit code is the one of the command, or 75 when the host did not run it. A repository asks
 the host for prepare steps, an environment and outputs with `.yonder.toml` in its root, and `--apply` brings the changes
@@ -17,8 +17,8 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 |---|---|---|
 | `crates/yonder-link` | The identity files, the TLS 1.3 channel with pinned certificates, the frames, and the protocol. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-link:yonder-link_test` |
 | `crates/yonder-client` | The client: the host files, the address choice, a run with its thin pack, its output and its fetch, `prepare` over ssh, and `upgrade` over the link. `bt --host` links it. `API.md` lists the refusal codes. | `@community//tools/yonder/crates/yonder-client:yonder-client_test` |
-| `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `lease`, `release`, `prepare` and `upgrade`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
-| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a warm lease, `setup` starts the agent under launchd, `upgrade` and `watchdog` replace its binary. `API.md` lists the commands, the refusals, the environment of a run and the format of `.yonder.toml`. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
+| `bins/yonder` | The client CLI: `run`, `attach`, `cancel`, `runs`, `fetch`, `forget`, `prepare` and `upgrade`. `:yonder` in `BUILD.bazel` is its optimized binary. | `@community//tools/yonder/bins/yonder:yonder_test` |
+| `bins/yonderd` | The agent on a host: macOS and Linux. `serve` answers the requests, `supervise` runs one run in a host slot that it borrows, `setup` starts the agent under launchd, `upgrade` and `watchdog` replace its binary. `API.md` lists the commands, the refusals, the environment of a run and the format of `.yonder.toml`. | `@community//tools/yonder/bins/yonderd:yonderd_test`, `:yonderd_cli_test` |
 
 ## The host
 
@@ -44,12 +44,15 @@ heartbeat every 15 s, so a gone client loses its connection and lets the host sl
 for its whole life, so a command runs to its end without its client. `-w` ends each `caffeinate` with the process it
 watches. Elsewhere than on macOS nothing holds them.
 
-## The warm lease
+## The host slots
 
-The lease holder of a run is one per local checkout path (`yonder-<hash>`, or `--holder`), so the runs of a checkout
-follow each other in the same warm slot on the host, with its build outputs. The lease stays after a run.
-`yonder release <alias>` returns it at once. A run of another holder returns a lease that no run used for
-`--idle-hours` (8 by default).
+The host keeps a fixed set of warm slots per repository (`branchdeck.hostSlots` of its git config, 4 by default), and a
+run borrows one for its run only, through `bd lease host` of Branch Deck: the slot that its holder (`yonder-<hash of
+the checkout path>`, `bt-remote-<hash>`, or `--holder`) used last, else the one used longest ago, else it waits in a
+queue and says so once a minute. A remote slot holds no state of its own: the commit comes from the client, and the
+stage carries the outputs back. So nothing on the client keeps or returns a slot, and the slot count never grows with
+the checkouts. The give-back at the end of each run stops what the run left in the slot and discards its changes; the
+ignored files stay as the warm cache. The keeper of the agent fills the slots and takes up what a gone run left.
 
 ## The link
 

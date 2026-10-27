@@ -47,7 +47,7 @@ fn the_flags_of_the_host_stay_here_and_the_rest_goes_to_the_host() {
         .collect();
     assert_eq!(host_args(&argv), ["FooTest", "--json", "--", "--host", "x"]);
 
-    let after: Vec<OsString> = ["--lane", "fast", "--host=studio", "--host-idle-hours", "2"]
+    let after: Vec<OsString> = ["--lane", "fast", "--host=studio", "--host-repo", "~/r"]
         .into_iter()
         .map(OsString::from)
         .collect();
@@ -84,7 +84,6 @@ fn a_run_goes_to_yonder_with_the_wrapper_and_answers_its_payload() {
                 .map(str::to_owned)
                 .to_vec(),
             fetch: vec!["out/bt-runs".to_owned()],
-            idle_hours: 8,
         }]
     );
     assert!(fake.spawned().is_empty(), "bt starts no child for a run: {:#?}", fake.spawned());
@@ -130,16 +129,12 @@ fn the_steps_of_a_run_go_to_the_stderr_and_the_payload_stays_alone_on_the_stdout
 }
 
 #[test]
-fn the_repository_and_the_idle_hours_of_the_command_line_reach_yonder() {
+fn the_repository_of_the_command_line_reaches_yonder() {
     let fake = checkout();
     let link = link_ending(0, "PASS\n", &[]);
-    outcome(
-        &["--host", "studio", "--host-repo", "/w/idea", "--host-idle-hours", "2", "FooTest"],
-        &fake,
-        &link,
-    );
+    outcome(&["--host", "studio", "--host-repo", "/w/idea", "FooTest"], &fake, &link);
     let run = &link.runs()[0];
-    assert_eq!((run.repo.as_deref(), run.idle_hours), (Some("/w/idea"), 2));
+    assert_eq!(run.repo.as_deref(), Some("/w/idea"));
     assert_eq!(run.command, ["./community/tools/bt.cmd", "FooTest"]);
 }
 
@@ -211,20 +206,19 @@ fn host_without_a_selector_is_a_usage_failure() {
     assert!(link.calls().is_empty());
 }
 
-/// A release needs no clean checkout: it only returns the lease of this checkout on the host.
+/// The host lends a slot per run, so the flags of the warm lease of a checkout are gone and refused
 #[test]
-fn a_release_returns_the_lease_of_this_checkout_and_runs_nothing_else() {
-    let fake = checkout();
-    let link = FakeLink::default();
-    link.answer_release(Ok("released the lease L1 of /pool/1/idea-1".to_owned()));
-    let answer = outcome(&["--host", "studio", "--release"], &fake, &link);
-    assert_eq!(answer.exit_code, exit::GREEN);
-    assert_eq!(answer.text, "released the lease L1 of /pool/1/idea-1");
-    assert_eq!(link.calls(), [format!("release studio None {}", holder(&fake))]);
-    assert!(fake.spawned().is_empty());
-
-    let failure = refusal(execute_with(["--release"], &checkout(), &FakeLink::default()));
-    assert_eq!(failure.exit, exit::USAGE);
+fn the_flags_of_the_warm_lease_are_refused() {
+    for flags in [
+        &["--host", "studio", "--release"][..],
+        &["--host", "studio", "--host-idle-hours", "2", "FooTest"],
+        &["--host", "studio", "--prepare", "--take-lease"],
+    ] {
+        let link = FakeLink::default();
+        let failure = refusal(execute_with(flags.iter().copied(), &checkout(), &link));
+        assert_eq!(failure.exit, exit::USAGE, "{flags:?}");
+        assert!(link.calls().is_empty(), "{flags:?}");
+    }
 }
 
 /// One holder per checkout, named as the leases of the runs over ssh were.

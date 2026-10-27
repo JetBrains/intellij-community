@@ -50,6 +50,11 @@ pub(crate) fn follow_hold() -> Option<PathBuf> {
     std::env::var_os("YONDERD_TEST_FOLLOW_HOLD").map(PathBuf::from)
 }
 
+/// How often the keeper of the host slots wakes without a start: `YONDERD_TEST_KEEPER_MS`, else 60 s.
+pub(crate) fn keeper_tick() -> Duration {
+    from_env("YONDERD_TEST_KEEPER_MS", Duration::from_secs(60))
+}
+
 fn from_env(name: &str, default: Duration) -> Duration {
     std::env::var(name)
         .ok()

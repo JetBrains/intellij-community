@@ -177,7 +177,6 @@ impl Client<'_> {
             holder: request.holder,
             command: &command,
             fetch: &[],
-            idle_hours: 8,
         };
         let options = RunOptions {
             working_tree: true,

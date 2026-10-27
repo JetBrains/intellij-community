@@ -29,8 +29,8 @@ completes a byte stream.
 | `unknown_run` | No kept run has the id. |
 | `repo_missing` | The repository path is not a git repository on the host. |
 | `pack_failed` | `git index-pack` or `git update-ref` failed. |
-| `lock_timeout` | Another run of the holder held the lease too long: an hour for a run, 50 s for a lease or a release. |
-| `lease_failed` | `bd lease get` or `bd lease return` failed. |
+| `lock_timeout` | A run got no host slot within an hour. |
+| `lease_failed` | `bd lease host lend` failed, or the bd of the host lacks it. |
 | `pack_missing` | The commit of a run did not come in a pack within `PACK_WAIT_SECONDS`. |
 | `checkout_failed` | The commit cannot be checked out in the slot. |
 | `spawn_failed` | The command cannot start. |

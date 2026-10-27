@@ -130,11 +130,6 @@ pub(crate) fn pack_refs(repo: &Path) -> Result<Vec<String>, String> {
     Ok(output.stdout_text().lines().map(str::to_owned).collect())
 }
 
-/// The commit of HEAD in `repo`. `stop` kills the call early.
-pub(crate) fn head(repo: &Path, stop: Stop<'_>) -> Result<String, String> {
-    checked(child::run(git(repo).args(["rev-parse", "HEAD"]), QUICK, stop)).map(|output| output.stdout_text())
-}
-
 /// Points `reference` at `commit`.
 pub(crate) fn update_ref(repo: &Path, reference: &str, commit: &str) -> Result<(), String> {
     checked(child::run(git(repo).args(["update-ref", reference, commit]), QUICK, &never)).map(drop)

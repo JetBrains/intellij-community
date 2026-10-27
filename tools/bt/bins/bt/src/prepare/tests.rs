@@ -9,7 +9,7 @@ use bt_core::fake::{FakeRuntime, HOME_DIR, refusal};
 use crate::execute::execute_with;
 use crate::remote::fake::{FakeLink, agent_info, yonder_refusal};
 use crate::ssh::SSH_OPTIONS;
-use yonder_client::{Leased, Prepared};
+use yonder_client::Prepared;
 
 const LOCAL_MASTER: &str = "1111111111111111111111111111111111111111";
 const HOST_MASTER: &str = "2222222222222222222222222222222222222222";
@@ -444,27 +444,6 @@ fn a_missing_local_entry_is_reported_by_name() {
         outcome.text
     );
     assert_eq!(fake.state().inputs, ["fake-token-secret"], "no file was written");
-}
-
-#[test]
-fn take_lease_takes_the_warm_lease_of_this_checkout_through_yonder() {
-    let fake = ready();
-    let link = ready_link();
-    link.answer_lease(Ok(Leased {
-        slot: "/pool/1/idea-1".to_owned(),
-        lease_id: "L1".to_owned(),
-        fresh: true,
-    }));
-    let outcome = prepare_with(&["--take-lease"], &fake, &link);
-    let holder = holder(&fake);
-    assert!(
-        outcome
-            .text
-            .ends_with(&format!("done    lease: the lease L1 of {holder} is /pool/1/idea-1 (new)")),
-        "{}",
-        outcome.text
-    );
-    assert!(link.calls().contains(&format!("lease studio None {holder}")), "{:?}", link.calls());
 }
 
 /// The agent step builds `yonderd` with the Bazel launcher of bt and gives the built binary to `yonder prepare`.

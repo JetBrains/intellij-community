@@ -139,7 +139,6 @@ fn request<'a>(checkout: &'a Path, command: &'a [String], fetch: &'a [String]) -
         holder: "bt-remote-0123456789ab",
         command,
         fetch,
-        idle_hours: 8,
     }
 }
 
@@ -437,9 +436,7 @@ fn the_steps_of_a_run_outside_a_follow_are_out_of_turn() {
         let _ = channel.send(&Reply::Phases { phases: Vec::new() });
     });
     let processes = FakeProcesses::default();
-    let refusal = client(&setup, &processes, &|_| {}, &calm)
-        .lease(ALIAS, None, "h")
-        .expect_err("out of turn");
+    let refusal = client(&setup, &processes, &|_| {}, &calm).runs(ALIAS).expect_err("out of turn");
     assert_eq!(refusal.code, code::LINK);
 }
 
@@ -623,35 +620,15 @@ fn local_changes_start_no_run_and_refuse_at_once() {
 }
 
 #[test]
-fn lease_release_and_runs_answer_the_replies_of_the_agent() {
+fn runs_and_cancel_answer_the_replies_of_the_agent() {
     let setup = Setup::new(|request, channel| {
         let _ = match request {
-            Request::Lease { holder, .. } => channel.send(&Reply::Leased {
-                slot: format!("/pool/1/idea-1 of {holder}"),
-                lease_id: "L1".to_owned(),
-                fresh: true,
-            }),
-            Request::Release { repo, .. } => channel.send(&Reply::Done {
-                message: format!("released the lease L1 in {repo}"),
-            }),
             Request::Runs => channel.send(&Reply::Runs { runs: Vec::new() }),
             _ => channel.send(&Reply::refused("bad_request", "no")),
         };
     });
     let processes = FakeProcesses::default();
     let client = client(&setup, &processes, &|_| {}, &calm);
-    assert_eq!(
-        client.lease(ALIAS, None, "h").expect("leased"),
-        Leased {
-            slot: "/pool/1/idea-1 of h".to_owned(),
-            lease_id: "L1".to_owned(),
-            fresh: true,
-        }
-    );
-    assert_eq!(
-        client.release(ALIAS, Some("/w/idea"), "h").expect("released"),
-        "released the lease L1 in /w/idea"
-    );
     assert!(client.runs(ALIAS).expect("the runs").is_empty());
     assert_eq!(client.cancel(ALIAS, "r1").expect_err("refused").code, "bad_request");
 }
@@ -661,21 +638,17 @@ fn lease_release_and_runs_answer_the_replies_of_the_agent() {
 #[test]
 fn heartbeats_keep_a_waiting_request_alive() {
     let setup = Setup::new(|request, channel| {
-        if let Request::Lease { .. } = request {
+        if matches!(request, Request::Runs) {
             for _ in 0..4 {
                 thread::sleep(Duration::from_millis(1000));
                 let _ = channel.send(&Reply::Heartbeat { elapsed_ms: 1000 });
             }
-            let _ = channel.send(&Reply::Leased {
-                slot: "/pool/1/idea-1".to_owned(),
-                lease_id: "L1".to_owned(),
-                fresh: false,
-            });
+            let _ = channel.send(&Reply::Runs { runs: Vec::new() });
         }
     });
     let processes = FakeProcesses::default();
-    let leased = client(&setup, &processes, &|_| {}, &calm).lease(ALIAS, None, "h").expect("leased");
-    assert_eq!(leased.lease_id, "L1");
+    let runs = client(&setup, &processes, &|_| {}, &calm).runs(ALIAS).expect("the runs");
+    assert!(runs.is_empty());
 }
 
 /// A host without any of the candidate commits would need the whole history. The client refuses, names the count,
@@ -1353,43 +1326,4 @@ fn changes_that_did_not_come_refuse_with_the_fetch_that_copies_them() {
         "{}",
         refusal.message
     );
-}
-
-#[test]
-fn a_release_goes_to_the_repository_of_the_local_name_or_to_the_one_of_the_host_file() {
-    let setup = Setup::new(|request, channel| match request {
-        Request::Release { repo, .. } if repo == "~/projects/branch-deck" => {
-            let _ = channel.send(&Reply::refused("repo_missing", "~/projects/branch-deck is not a git repository"));
-        }
-        Request::Release { repo, .. } => done(channel, &format!("released in {repo}")),
-        _ => {
-            let _ = channel.send(&Reply::refused("bad_request", "not in this script"));
-        }
-    });
-    let processes = FakeProcesses::new(&[("--git-common-dir", ok("/u/projects/branch-deck/.git\n"))]);
-    let said = Said::default();
-    let say = |line: &str| said.push(line);
-    let checkout = setup.checkout();
-    let release = |repo: Option<&str>| {
-        client(&setup, &processes, &say, &calm)
-            .release_for(ALIAS, &checkout, repo, "yonder-h")
-            .expect("released")
-    };
-    assert_eq!(release(None), "released in ~/projects/idea-1");
-    let repos: Vec<String> = setup
-        .agent
-        .requests()
-        .into_iter()
-        .filter_map(|request| match request {
-            Request::Release { repo, .. } => Some(repo),
-            _ => None,
-        })
-        .collect();
-    assert_eq!(repos, ["~/projects/branch-deck", "~/projects/idea-1"]);
-    assert!(
-        said_starts(&said, "yonder: studio has no ~/projects/branch-deck; the request goes to"),
-        "{:#?}",
-        said.lines()
-    );
-    assert_eq!(release(Some("~/projects/other")), "released in ~/projects/other");
 }

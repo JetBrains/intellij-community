@@ -84,7 +84,7 @@ pub(crate) fn remember_repo(home: &Home, repo: &Path) -> io::Result<()> {
 }
 
 /// The repositories that a pack went to: one path per line of the repository list.
-fn repos(home: &Home) -> Vec<PathBuf> {
+pub(crate) fn repos(home: &Home) -> Vec<PathBuf> {
     fs::read_to_string(home.repos_file())
         .map(|text| text.lines().filter(|line| !line.is_empty()).map(PathBuf::from).collect())
         .unwrap_or_default()

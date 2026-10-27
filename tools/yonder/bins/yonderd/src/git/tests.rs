@@ -3,7 +3,6 @@ use std::path::PathBuf;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::child::never;
 use crate::testing;
 
 /// A repository with one commit. Answers the directory and the commit.
@@ -50,7 +49,6 @@ fn have_answers_the_commits_that_the_repository_has() {
     assert_eq!(check_repo(&repo), Ok(()));
     let missing = "1".repeat(40);
     assert_eq!(have(&repo, &[missing, commit.clone()]).expect("the answer"), vec![commit.clone()]);
-    assert_eq!(head(&repo, &never).expect("HEAD"), commit);
     assert!(has_commit(&repo, &commit).expect("the answer"));
     assert!(!has_commit(&repo, "refs/yonder/1-2").expect("the answer"));
     update_ref(&repo, "refs/yonder/1-2", &commit).expect("made");

@@ -81,13 +81,12 @@ agent `yonderd` on the host does the rest. No step of a run uses ssh.
 6. A host that has none of the commits near HEAD would need the whole history. bt refuses that with `host_behind`,
    and `--prepare` moves the master of the host.
 
-### The warm lease
+### The host slots
 
-Each local checkout is one lease holder on the host, `bt-remote-<hash of the checkout path>`. Its first run takes a
-lease with `bd lease get`. Each later run checks out its commit in the same slot, so the Bazel server and the output
-base of the slot stay warm. Two checkouts take two leases. A second run of the same checkout waits until the first one
-ends. `bt --host <alias> --release` returns the lease. Each run also returns the lease of every other checkout that no
-run used for 8 hours (`--host-idle-hours`, `BT_HOST_IDLE_HOURS`).
+The host lends each run a host slot of Branch Deck for that run only (`bd lease host`, the yonder README): the slot
+that this checkout (`bt-remote-<hash of the checkout path>`) used last, else the one used longest ago, else the run
+waits in a queue, one line a minute. The host keeps a fixed set of warm slots, so two checkouts never make it clone
+and nothing returns a slot by hand.
 
 ### Prepare a host
 
@@ -117,8 +116,6 @@ nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` boun
    Without a terminal it refuses, so an agent cannot start the copy. `credentials.rs` merges each entry into the host
    file and writes the file through the stdin of ssh, atomically and with mode 600. Then the remote cache must answer
    404, not 401.
-7. `--take-lease` takes the warm lease of this checkout through the agent, so that the first run does not wait for
-   `bd lease get`.
 
 A run without `--prepare` copies no credential.
 

@@ -3,7 +3,7 @@
 The client of yonder, for `yonder` and `bt --host`. `Client` holds the configuration directory, the seam of the local
 git and ssh calls (`Processes`), the sink of the stderr lines, the sink of the stdout lines of a run
 (`Client::with_stdout`; without it they come in `RunOutcome::stdout`), and the Ctrl+C question. Each operation opens a
-new connection per request: `run`, `run_with`, `attach`, `cancel`, `runs`, `lease`, `release`, `hello`, `prepare` and `upgrade`.
+new connection per request: `run`, `run_with`, `attach`, `cancel`, `runs`, `hello`, `prepare` and `upgrade`.
 
 ## The options of a run
 
@@ -15,7 +15,7 @@ new connection per request: `run`, `run_with`, `attach`, `cancel`, `runs`, `leas
 | `nice` | none | `--nice`, 10 by default | The niceness of the prepare steps and the command on the host. So the runs of `bt --host` go first. |
 | `outputs` | off | on | The outputs that `.yonder.toml` names come back, each in place of its local copy. |
 | `apply` | off | `--apply` | The changes that the command made to the files come back as a patch, and `git apply` applies it to the working tree. |
-| `repo_by_name` | off | on without `--repo` | The run goes to the repository of the same name as the local one beside the repository of the host file (`~/projects/branch-deck` beside `~/projects/idea-1`), or to the one of the host file when the host lacks it. `Client::lease_for` and `release_for`, and so `yonder lease` and `yonder release`, take the same repository. |
+| `repo_by_name` | off | on without `--repo` | The run goes to the repository of the same name as the local one beside the repository of the host file (`~/projects/branch-deck` beside `~/projects/idea-1`), or to the one of the host file when the host lacks it. |
 
 ### The commit of the working tree
 
@@ -126,7 +126,7 @@ root, and `./bazel.cmd info execution_root` names that root. The monorepo has no
    `working_tree`, the commit of the working tree first, then `Have`. A host that has none of the candidates refuses
    with `behind`. The hello of the agent names its features, so a run that needs one that the agent lacks refuses here.
    Ctrl+C up to here runs nothing on the host.
-2. `Start`. The host takes the lock and the lease at once. A start whose reply does not come is cancelled, and the
+2. `Start`. The host lends the run a host slot, or puts it in the queue of the slots. A start whose reply does not come is cancelled, and the
    run refuses with `link` or `timed_out`.
 3. `Follow` on a thread of its own, up to `Phases` and `Exit`. The lines of the host show while the pack builds.
 4. `Pack` on a connection of its own: the client opens it, builds the pack file meanwhile with an empty chunk every

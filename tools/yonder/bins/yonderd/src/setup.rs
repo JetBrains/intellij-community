@@ -1,7 +1,6 @@
 //! `yonderd setup`: the client runs it over ssh while the user is at the host. It creates the identity of the agent,
 //! adds the client to the allow list, writes the LaunchAgent, and starts or restarts `serve` under launchd. On a host
-//! without launchd it does not start the agent. It also moves each lease file of `remote.sh` of BT into the lease
-//! directory of the agent, when the agent has no file of that holder, so a warm lease of `bt --host` stays warm.
+//! without launchd it does not start the agent.
 
 use std::fs;
 use std::io::Write;
@@ -16,7 +15,6 @@ use yonder_link::{AllowList, Fingerprint, Identity};
 use crate::child;
 use crate::files::{private_dir, write_private};
 use crate::home::{Home, LAUNCHD_LABEL};
-use crate::lease;
 use crate::refused::{AGENT_ERROR, LAUNCHD_FAILED, Refusal, refused};
 
 /// The deadline of each launchctl call.
@@ -83,8 +81,6 @@ pub(crate) fn setup(home: &Home, setup: &Setup<'_>, out: &mut dyn Write) -> Resu
     let private = |dir: PathBuf| private_dir(&dir).map_err(|error| refused(AGENT_ERROR, format!("cannot make {}: {error}", dir.display())));
     private(identity_dir)?;
     private(home.cache_dir())?;
-    lease::migrate(&home.bt_remote_leases_dir(), &home.leases_dir())
-        .map_err(|error| refused(AGENT_ERROR, format!("cannot move the lease files of bt --host: {error}")))?;
     let allow_file = home.allow_file();
     let mut allow = AllowList::read(&allow_file).map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
     if allow.add(setup.client, setup.name) {

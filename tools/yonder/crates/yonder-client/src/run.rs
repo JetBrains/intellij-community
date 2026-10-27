@@ -75,6 +75,11 @@ const PATCH_KEEP: Duration = Duration::from_secs(7 * 24 * 3600);
 /// The file in the root of a checkout that asks the agent for prepare steps, an environment and outputs.
 const CONFIG_FILE: &str = ".yonder.toml";
 
+/// The idle hours of a run spec. The agent lends its host slots per run and ignores them; an agent of before the host
+/// slots returns, after each run, the leases of other holders that no run used for this long, so it is its old default
+/// and never 0, which would return every lease of the others.
+const OLD_AGENT_IDLE_HOURS: u32 = 8;
+
 /// What a run does, from the side of the client.
 #[derive(Clone, Copy, Debug)]
 pub struct RunRequest<'a> {
@@ -82,13 +87,13 @@ pub struct RunRequest<'a> {
     pub checkout: &'a Path,
     /// The main repository on the host, or `None` for the one of the host file.
     pub repo: Option<&'a str>,
-    /// The lease holder on the host: one per local checkout.
+    /// Who the run comes from: one per local checkout. The host lends the slot this holder used last first, and the base
+    /// ref of the thin packs is the holder's.
     pub holder: &'a str,
     /// The command and its arguments, run in the root of the slot.
     pub command: &'a [String],
     /// Directories relative to the slot root, such as `out/bt-runs`, whose new entries come back.
     pub fetch: &'a [String],
-    pub idle_hours: u32,
 }
 
 /// What a run adds to a [`RunRequest`]. The default is the run of `bt --host`: the committed HEAD of a checkout without
@@ -137,15 +142,6 @@ pub struct Followed {
     pub stdout: String,
     /// The steps of the run on the host, from `Reply::Phases`. Empty when the agent sent none.
     pub phases: Vec<Phase>,
-}
-
-/// The lease of a holder on a host.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct Leased {
-    pub slot: String,
-    pub lease_id: String,
-    /// `false` when the holder had the lease already.
-    pub fresh: bool,
 }
 
 /// Why one connection of `Follow` ended without the end of the run.
@@ -276,7 +272,7 @@ impl Client<'_> {
             reference: reference.clone(),
             command: request.command.to_vec(),
             fetch: request.fetch.to_vec(),
-            idle_hours: request.idle_hours,
+            idle_hours: OLD_AGENT_IDLE_HOURS,
             nice: options.nice,
             outputs: options.outputs,
             changes: options.apply,
@@ -608,75 +604,6 @@ impl Client<'_> {
             (_, Reply::Runs { runs }) => Ok(runs),
             (_, Reply::Refused { code, message }) => Err(host.agent_refusal(code, &message)),
             (_, reply) => Err(host.unexpected(&reply)),
-        }
-    }
-
-    /// Takes or reuses the lease of `holder` without a run.
-    pub fn lease(&self, alias: &str, repo: Option<&str>, holder: &str) -> Result<Leased, Refusal> {
-        let mut host = self.host(alias)?;
-        let repo = repo.unwrap_or(&host.file().repo).to_owned();
-        let request = Request::Lease {
-            repo,
-            holder: holder.to_owned(),
-        };
-        match host.request(&request, self.timing.read)? {
-            (_, Reply::Leased { slot, lease_id, fresh }) => Ok(Leased { slot, lease_id, fresh }),
-            (_, Reply::Refused { code, message }) => Err(host.agent_refusal(code, &message)),
-            (_, reply) => Err(host.unexpected(&reply)),
-        }
-    }
-
-    /// Returns the lease of `holder`.
-    pub fn release(&self, alias: &str, repo: Option<&str>, holder: &str) -> Result<String, Refusal> {
-        let mut host = self.host(alias)?;
-        let repo = repo.unwrap_or(&host.file().repo).to_owned();
-        let request = Request::Release {
-            repo,
-            holder: holder.to_owned(),
-        };
-        done(&mut host, &request, self.timing.read)
-    }
-
-    /// [`Client::lease`] for the checkout `checkout`: without `repo`, the repository of the same name as the local one
-    /// beside the repository of the host file, or the one of the host file when the host lacks it, as a run with
-    /// [`RunOptions::repo_by_name`] takes it.
-    pub fn lease_for(&self, alias: &str, checkout: &Path, repo: Option<&str>, holder: &str) -> Result<Leased, Refusal> {
-        self.by_name(alias, checkout, repo, |repo| self.lease(alias, repo, holder))
-    }
-
-    /// [`Client::release`] for the checkout `checkout`, with the repository of [`Client::lease_for`].
-    pub fn release_for(&self, alias: &str, checkout: &Path, repo: Option<&str>, holder: &str) -> Result<String, Refusal> {
-        self.by_name(alias, checkout, repo, |repo| self.release(alias, repo, holder))
-    }
-
-    /// Calls `call` with `repo`, or without it with the repository of the local name, and with the one of the host file
-    /// when the host lacks that.
-    fn by_name<T>(
-        &self,
-        alias: &str,
-        checkout: &Path,
-        repo: Option<&str>,
-        call: impl Fn(Option<&str>) -> Result<T, Refusal>,
-    ) -> Result<T, Refusal> {
-        if repo.is_some() {
-            return call(repo);
-        }
-        let default = self.host(alias)?.file().repo.clone();
-        let stop = || self.interrupted();
-        let named = repo_name(self.processes, checkout, &stop)
-            .and_then(|name| sibling(&default, &name))
-            .filter(|named| *named != default);
-        let Some(named) = named else {
-            return call(None);
-        };
-        match call(Some(&named)) {
-            Err(refusal) if refusal.code == "repo_missing" => {
-                (self.say)(&format!(
-                    "yonder: {alias} has no {named}; the request goes to {default}, the repository of its host file. --repo names another one"
-                ));
-                call(None)
-            }
-            other => other,
         }
     }
 

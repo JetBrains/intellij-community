@@ -40,7 +40,7 @@ pub use host::{AgentInfo, Host};
 pub use phases::{duration_text, phases_line, phases_short};
 pub use prepare::{PrepareRequest, Prepared};
 pub use process::{Call, Limit, OsProcesses, Processes, Ran, Stop, Stopped, never};
-pub use run::{Followed, Leased, RunOptions, RunOutcome, RunRequest};
+pub use run::{Followed, RunOptions, RunOutcome, RunRequest};
 pub use upgrade::{UpgradeRequest, UpgradeWay, Upgraded};
 pub use yonder_link::DEFAULT_PORT;
 pub use yonder_link::proto::{Phase, RunInfo};

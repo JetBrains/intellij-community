@@ -1,32 +1,37 @@
-//! `yonderd supervise <run dir> --lock-fd <descriptor>`: one run, from the lock of its holder to `exit.json`. It is the
-//! port of `remote.sh` of BT. `serve` starts it in a session of its own, so a restart or an upgrade of `serve` does not
-//! end the run. It keeps the host awake for its whole life (`awake`), also when its client is gone. `serve` takes the flock of the run before the run is visible and hands its descriptor over. The
-//! supervisor holds it for its whole life, so a run is alive exactly while its supervisor is.
+//! `yonderd supervise <run dir> --lock-fd <descriptor>`: one run, from the lend of its host slot to `exit.json`. It is
+//! the port of `remote.sh` of BT. `serve` starts it in a session of its own, so a restart or an upgrade of `serve` does
+//! not end the run. It keeps the host awake for its whole life (`awake`), also when its client is gone. `serve` takes
+//! the flock of the run before the run is visible and hands its descriptor over. The supervisor holds it for its whole
+//! life, so a run is alive exactly while its supervisor is.
 //!
 //! The steps:
 //!
-//! 1. Take the flock of the holder. A second run of the same holder waits for it, up to an hour.
-//! 2. Take the warm lease of the holder, or a new one from `bd lease get`.
-//! 3. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol, and up to `PACK_STALL_SECONDS` without a chunk
-//!    of it. A start can come before the pack of its reference, so the lock and the lease go on while the pack
-//!    travels. A commit that the main repository has already needs no pack. Else the run waits for the file `packed`,
-//!    which the pack writes after its ref. A watch of the run directory ends the wait at once.
-//! 4. Check out the commit in the slot. The slot belongs to the holder, so a file that the last run left changed is
-//!    discarded.
-//! 5. Prepare: read `.yonder.toml` of the commit, build the environment (`run_env`, with the login environment of
-//!    `login_env`), and run each prepare step whose inputs changed (`prepare`). For a client that asks for them, remove
-//!    the outputs of the config, and scan the tree of the slot before the command.
-//! 6. Run the command in the slot root, in its own process group, with stdin `/dev/null`, the environment of step 5
+//! 1. Borrow a host slot of the repository (`slots`, `bd lease host lend` with the pid of this process): the slot that
+//!    the holder used last, else the one used longest ago, else a place in the queue. While every slot is lent, it asks
+//!    again every 2 s and says so in the log once a minute, up to an hour.
+//! 2. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol, and up to `PACK_STALL_SECONDS` without a chunk
+//!    of it. A start can come before the pack of its reference, so the lend goes on while the pack travels. A commit
+//!    that the main repository has already needs no pack. Else the run waits for the file `packed`, which the pack
+//!    writes after its ref. A watch of the run directory ends the wait at once.
+//! 3. Check out the commit in the slot. The give-back of the last run discarded its changes; the ignored files stay as
+//!    the warm cache.
+//! 4. Prepare: read `.yonder.toml` of the commit, build the environment (`run_env`, with the login environment of
+//!    `login_env`), and run each prepare step whose inputs changed since its last success in this slot (`prepare`, the
+//!    fingerprints of `slots::Prepared`). For a client that asks for them, remove the outputs of the config, and scan
+//!    the tree of the slot before the command.
+//! 5. Run the command in the slot root, in its own process group, with stdin `/dev/null`, the environment of step 4
 //!    and the niceness of the spec. Its lines go to `events.log`. When the command exits, the other processes of its
 //!    group get SIGTERM, and SIGKILL 5 s later.
-//! 7. Stage: the patch of the changes of the command, the outputs, and the new entries of each `fetch` directory.
+//! 6. Stage: the patch of the changes of the command, the outputs, and the new entries of each `fetch` directory, into
+//!    the run directory: nothing reads the slot after the run.
 //!
-//! Each step is a phase: `lock`, `lease`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`. At the end of each
-//! step, whatever its outcome, the supervisor rewrites `phases.json` with the steps that have ended.
+//! Each step is a phase: `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`. At the end of each step,
+//! whatever its outcome, the supervisor rewrites `phases.json` with the steps that have ended.
 //!
-//! On every way out it writes the lease file, drops the lock of the holder, deletes the ref of the pack, and writes
-//! `exit.json` last. Then it drops the flock of the run, and returns the leases of the other holders that no run used
-//! for the idle hours of the run. That sweep can take minutes, so no run waits for it. Its lines go to
+//! On every way out it keeps the fingerprints of the slot, deletes the ref of the pack, and writes `exit.json` last.
+//! Then it drops the flock of the run and gives the slot back (`bd lease host give-back`): the processes that the run
+//! left in the slot stop, its changes go, and a run that got no slot leaves the queue. The give-back is never cut by a
+//! signal, and its lines go to
 //! `supervisor.log`. The `cancel` file of the run, or SIGINT, SIGTERM or SIGHUP, interrupts the run. Before the
 //! command starts, the run kills the bd, git or prepare child of the current step and ends with the exit code 130.
 //! After it started, the command group gets SIGINT, and SIGKILL after the grace time. Its progress lines go to
@@ -53,15 +58,23 @@ use yonder_link::proto::{Phase, RunSpec, Stream};
 use crate::child::{Stop, never};
 use crate::files::{FILE_MODE, open_private, private_dir, try_flock, write_private};
 use crate::home::Home;
-use crate::lease::{HolderLock, Lease, Leases, now_seconds};
 use crate::login_env::LoginEnv;
-use crate::refused::{AGENT_ERROR, CHECKOUT_FAILED, PACK_MISSING, PREPARE_FAILED, Refusal, SPAWN_FAILED, refused};
+use crate::refused::{
+    AGENT_ERROR, CHECKOUT_FAILED, LEASE_FAILED, LOCK_TIMEOUT, PACK_MISSING, PREPARE_FAILED, Refusal, SPAWN_FAILED, refused,
+};
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir};
+use crate::slots::{self, GaveBack, Lend, Lent, Prepared, Queued};
 use crate::watch::Watch;
-use crate::{awake, config, git, login_env, prepare, run_env, tuning};
+use crate::{awake, config, git, lease, login_env, prepare, run_env, tuning};
 
-/// How long a run waits for the other run of its holder.
-const LOCK_WAIT: Duration = Duration::from_secs(3600);
+/// How long a run waits for a host slot.
+const SLOT_WAIT: Duration = Duration::from_secs(3600);
+
+/// How often a run that waits for a host slot asks again.
+const SLOT_POLL: Duration = Duration::from_secs(2);
+
+/// How often the log of a run that waits for a host slot says so again.
+const SLOT_SAY_EVERY: Duration = Duration::from_secs(60);
 
 /// How often the supervisor looks at the command and at the cancel request.
 const POLL: Duration = Duration::from_millis(100);
@@ -120,7 +133,10 @@ pub(crate) fn supervise(home: &Home, run_dir: &Path, lock: Option<RawFd>) {
             return;
         }
     };
-    let exit = match run_to_end(home, &run) {
+    // Read before `exit.json`: once it exists, a client can forget the run and its directory goes.
+    let spec = run.spec().ok();
+    let outcome = run_to_end(home, &run);
+    let exit = match outcome {
         Ok(code) => ExitRecord::Code { code },
         Err(refusal) => ExitRecord::refused(&refusal),
     };
@@ -128,20 +144,30 @@ pub(crate) fn supervise(home: &Home, run_dir: &Path, lock: Option<RawFd>) {
         eprintln!("yonderd supervise: cannot write the end of {}: {error}", run_dir.display());
     }
     drop(lock);
-    sweep_idle_leases(home, &run);
+    if let Some(spec) = spec {
+        give_back(home, &spec);
+    }
 }
 
-/// Returns the leases of the holders other than the one of the run that no run used for the idle hours of the run.
-/// SIGINT, SIGTERM and SIGHUP end the sweep early.
-fn sweep_idle_leases(home: &Home, run: &RunDir) {
-    let Ok(spec) = run.spec() else {
-        return;
-    };
-    let leases = Leases::new(home.leases_dir(), home.expand(&spec.repo));
-    let stop = || SIGNALLED.load(Ordering::SeqCst);
-    leases.sweep(&spec.holder, spec.idle_hours, now_seconds(), &stop, &mut |line| {
-        eprintln!("yonderd supervise: {line}");
-    });
+/// Gives back the host slot of the run, or takes the run out of the queue when it got none. A signal does not cut it.
+fn give_back(home: &Home, spec: &RunSpec) {
+    match slots::give_back(&home.expand(&spec.repo), &spec.run) {
+        Ok(GaveBack {
+            n: Some(n),
+            stopped,
+            quarantined,
+        }) => {
+            eprintln!("yonderd supervise: gave back the slot {n}, {stopped} process(es) of the run stopped");
+            if !quarantined.is_empty() {
+                eprintln!(
+                    "yonderd supervise: the slot {n} stays in quarantine while these work in it: {}",
+                    quarantined.join(", ")
+                );
+            }
+        }
+        Ok(GaveBack { n: None, .. }) => {}
+        Err(error) => eprintln!("yonderd supervise: cannot give the slot of the run back: {error}"),
+    }
 }
 
 /// The flock of the run: the inherited descriptor, which the command must not inherit in turn, or a new one.
@@ -162,11 +188,10 @@ fn adopt_lock(run: &RunDir, descriptor: Option<RawFd>) -> io::Result<File> {
     Ok(unsafe { File::from_raw_fd(descriptor) })
 }
 
-/// What the cleanup of a run needs from its steps.
+/// What the cleanup of a run needs from its steps: the fingerprints of the prepare steps of its slot.
 #[derive(Default)]
 struct Held {
-    lock: Option<HolderLock>,
-    lease: Option<Lease>,
+    prepared: Option<Prepared>,
 }
 
 fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
@@ -183,7 +208,6 @@ fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
             return Err(refused(AGENT_ERROR, format!("cannot open the log of the run: {error}")));
         }
     };
-    let leases = Leases::new(home.leases_dir(), repo.clone());
     let say = |message: &str| log.write(Stream::Stderr, &format!("yonder: {message}"));
     let stop = || SIGNALLED.load(Ordering::SeqCst) || run.cancel_requested();
     let mut held = Held::default();
@@ -195,18 +219,16 @@ fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
         spec: &spec,
         run,
         repo: &repo,
-        leases: &leases,
         log: &log,
     };
     let outcome = panic::catch_unwind(AssertUnwindSafe(|| steps(&context, &stop, &mut held)))
         .unwrap_or_else(|payload| Err(refused(AGENT_ERROR, format!("the supervisor failed: {}", panic_text(&*payload)))));
 
-    if let Some(lease) = &held.lease
-        && let Err(error) = leases.record(&spec.holder, lease, now_seconds())
+    if let Some(prepared) = &held.prepared
+        && let Err(error) = prepared.save()
     {
-        say(&format!("cannot write the lease file of {}: {error}", spec.holder));
+        say(&format!("cannot keep the fingerprints of the prepare steps of the slot: {error}"));
     }
-    drop(held.lock);
     if let Err(error) = git::delete_ref(&repo, &spec.reference) {
         say(&format!("cannot delete {} in {}: {error}", spec.reference, repo.display()));
     }
@@ -222,7 +244,6 @@ struct Context<'a> {
     spec: &'a RunSpec,
     run: &'a RunDir,
     repo: &'a Path,
-    leases: &'a Leases,
     log: &'a Arc<EventLog>,
 }
 
@@ -245,26 +266,17 @@ struct Launch {
 }
 
 fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, Refusal> {
-    let (spec, run, leases) = (context.spec, context.run, context.leases);
+    let (spec, run) = (context.spec, context.run);
     let mut say = |message: &str| context.say(message);
     let stage = run.stage_path();
     private_dir(&stage).map_err(|error| refused(AGENT_ERROR, format!("cannot make {}: {error}", stage.display())))?;
     let mut phases = Phases { run, ended: Vec::new() };
 
-    let Some(lock) = phases.time("lock", || leases.lock(&spec.holder, LOCK_WAIT, stop, &mut say))? else {
+    let Some(lent) = phases.time("slot", || borrow(context, stop, &mut say))? else {
         return Ok(INTERRUPTED);
     };
-    held.lock = Some(lock);
-    if stop() {
-        return Ok(INTERRUPTED);
-    }
-    let lease = match phases.time("lease", || leases.acquire(&spec.holder, stop, &mut say)) {
-        Ok(lease) => lease,
-        Err(_) if stop() => return Ok(INTERRUPTED),
-        Err(refusal) => return Err(refusal),
-    };
-    let slot = lease.slot.clone();
-    held.lease = Some(lease);
+    let slot = lent.slot.clone();
+    held.prepared = Some(Prepared::load(&context.home.slots_dir(), &lent.lease_id, lent.generation));
     if stop() {
         return Ok(INTERRUPTED);
     }
@@ -308,6 +320,85 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     Ok(code)
 }
 
+/// Borrows a host slot for the run: a lend every `SLOT_POLL` while every slot is lent, a line in the log at the start
+/// of the wait and once a minute, `lock_timeout` after an hour. Answers `None` when a cancel ended the wait; the
+/// give-back at the end takes the run out of the queue then.
+fn borrow(context: &Context<'_>, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<Option<Lent>, Refusal> {
+    if !slots::supported() {
+        return Err(refused(LEASE_FAILED, slots::UNSUPPORTED));
+    }
+    let (spec, repo) = (context.spec, context.repo);
+    let started = Instant::now();
+    let mut said: Option<Instant> = None;
+    loop {
+        let lend = slots::lend(repo, &spec.run, std::process::id(), &spec.holder).map_err(|message| refused(LEASE_FAILED, message))?;
+        let queued = match lend {
+            Lend::Lent(lent) => {
+                say(&lent_line(&lent, repo));
+                return Ok(Some(lent));
+            }
+            Lend::Queued(queued) => queued,
+        };
+        if said.is_none_or(|at| at.elapsed() >= SLOT_SAY_EVERY) {
+            say(&waiting_line(&queued, repo));
+            said = Some(Instant::now());
+        }
+        if started.elapsed() >= SLOT_WAIT {
+            return Err(refused(
+                LOCK_TIMEOUT,
+                format!("no host slot of {} for {} s; giving up", repo.display(), SLOT_WAIT.as_secs()),
+            ));
+        }
+        let next = Instant::now() + SLOT_POLL;
+        while Instant::now() < next {
+            if stop() {
+                return Ok(None);
+            }
+            thread::sleep(POLL);
+        }
+    }
+}
+
+/// `slot 3 of idea-1 (last used by this checkout 12 min ago)`
+fn lent_line(lent: &Lent, repo: &Path) -> String {
+    let name = repo
+        .file_name()
+        .map_or_else(|| repo.display().to_string(), |name| name.to_string_lossy().into_owned());
+    let used = lent.last_used_by_holder_ms.map_or_else(
+        || "new to this checkout".to_owned(),
+        |ms| {
+            let ago = (lease::now_seconds() * 1000).saturating_sub(ms) / 60_000;
+            format!("last used by this checkout {ago} min ago")
+        },
+    );
+    format!("slot {} of {name}: {} ({used})", lent.n, lent.slot.display())
+}
+
+/// `waiting for a slot of idea-1: 4 of 4 lent (1792-81, …), 1 run ahead`, and the slots in quarantine
+fn waiting_line(queued: &Queued, repo: &Path) -> String {
+    let name = repo
+        .file_name()
+        .map_or_else(|| repo.display().to_string(), |name| name.to_string_lossy().into_owned());
+    let runs: Vec<&str> = queued.lent.iter().map(|(_, run)| run.as_str()).collect();
+    let mut line = format!(
+        "waiting for a host slot of {name}: {} of {} lent ({}), {} run(s) ahead",
+        queued.lent.len(),
+        queued.slots,
+        runs.join(", "),
+        queued.ahead
+    );
+    for (n, processes) in &queued.quarantined {
+        line.push_str(&format!(
+            "; slot {n} in quarantine while these work in it: {}",
+            processes.join(", ")
+        ));
+    }
+    if queued.slots == 0 {
+        line.push_str("; the host prepares its slots");
+    }
+    line
+}
+
 /// The prepare step of a run: the config of the slot, the environment, the prepare steps, and for a client that asks
 /// for them the removal of the outputs and the tree before the command. Answers `None` when a cancel ended it.
 fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut Held) -> Result<Option<Launch>, Refusal> {
@@ -324,8 +415,8 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
         before: None,
         login,
     };
-    let Some(lease) = held.lease.as_mut() else {
-        return Err(refused(AGENT_ERROR, "the prepare step has no lease"));
+    let Some(prepared) = held.prepared.as_mut() else {
+        return Err(refused(AGENT_ERROR, "the prepare step has no slot"));
     };
     for step in &config.prepare {
         if stop() {
@@ -338,7 +429,7 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
             )
         })?;
         let fingerprint = prepare::fingerprint(step, &ids);
-        let Some(why) = prepare::reason(step, &fingerprint, &lease.prepared, slot) else {
+        let Some(why) = prepare::reason(step, &fingerprint, &prepared.steps, slot) else {
             continue;
         };
         context.say(&format!("prepare: {} ({why})", step.name));
@@ -352,7 +443,7 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
                 format!("the prepare step {:?} exited with {code}; its output is above", step.name),
             ));
         }
-        lease.prepared.insert(prepare::key(step), fingerprint);
+        prepared.steps.insert(prepare::key(step), fingerprint);
     }
     for output in &launch.outputs {
         if let Err(error) = remove_entry(&slot.join(output)) {

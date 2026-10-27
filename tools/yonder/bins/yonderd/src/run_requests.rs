@@ -89,6 +89,7 @@ impl Agent {
             return Err(refusal);
         }
         log(&format!("started the run {} of {}", spec.run, spec.holder));
+        self.wake_keeper(self.home.expand(&spec.repo));
         Ok(Reply::Started { run: spec.run.clone() })
     }
 

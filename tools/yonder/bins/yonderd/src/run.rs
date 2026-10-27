@@ -43,6 +43,8 @@ const PID: &str = "pid";
 const LOCK: &str = "lock";
 const CANCEL: &str = "cancel";
 const PACKING: &str = "packing";
+/// Written by a supervisor that borrows a host slot (`slots`); a live run without it is one of an agent of before
+const BORROWS: &str = "borrows";
 const PACKED: &str = "packed";
 const STAGE: &str = "stage";
 const OUTPUTS: &str = "outputs";
@@ -193,6 +195,17 @@ impl RunDir {
         };
         let json = serde_json::to_vec(&file).map_err(io::Error::other)?;
         write_private(&self.path.join(EXIT), &json)
+    }
+
+    /// Marks the run as one that borrows a host slot, when it is made.
+    fn mark_borrows(&self) -> io::Result<()> {
+        write_private(&self.path.join(BORROWS), b"")
+    }
+
+    /// Whether the supervisor of the run is of an agent of before the host slots: alive, and without the mark. Such a
+    /// supervisor takes a lease of its holder with `bd lease get`, also while it still waits for the lock of its holder.
+    pub(crate) fn is_legacy(&self) -> bool {
+        self.is_alive() && !self.path.join(BORROWS).exists()
     }
 
     /// Writes the steps that have ended so far to `phases.json`.
@@ -349,6 +362,8 @@ impl Runs {
             })
             .and_then(|lock| {
                 let json = serde_json::to_vec(spec).map_err(io::Error::other)?;
+                // before the spec, so no reader sees a live run of this agent without the mark
+                run.mark_borrows()?;
                 append_private(&run.events_path())?;
                 write_private(&run.path.join(SPEC), &json)?;
                 Ok(lock)

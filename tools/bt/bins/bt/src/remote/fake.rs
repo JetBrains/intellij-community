@@ -3,7 +3,7 @@
 use std::path::PathBuf;
 use std::sync::{Mutex, PoisonError};
 
-use yonder_client::{AgentInfo, Exit, Leased, PrepareRequest, Prepared, RunOutcome, RunRequest};
+use yonder_client::{AgentInfo, Exit, PrepareRequest, Prepared, RunOutcome, RunRequest};
 
 use super::HostLink;
 
@@ -18,7 +18,6 @@ pub(crate) struct RecordedRun {
     pub(crate) holder: String,
     pub(crate) command: Vec<String>,
     pub(crate) fetch: Vec<String>,
-    pub(crate) idle_hours: u32,
 }
 
 /// One recorded prepare request.
@@ -38,8 +37,6 @@ pub(crate) struct FakeLink {
     pub(crate) runs: Mutex<Vec<RecordedRun>>,
     pub(crate) prepares: Mutex<Vec<RecordedPrepare>>,
     pub(crate) run: Answer<RunOutcome>,
-    pub(crate) lease: Answer<Leased>,
-    pub(crate) release: Answer<String>,
     pub(crate) hello: Answer<AgentInfo>,
     pub(crate) prepare: Answer<Prepared>,
 }
@@ -76,14 +73,6 @@ impl FakeLink {
         *self.run.lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
     }
 
-    pub(crate) fn answer_lease(&self, answer: Result<Leased, yonder_client::Refusal>) {
-        *self.lease.lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
-    }
-
-    pub(crate) fn answer_release(&self, answer: Result<String, yonder_client::Refusal>) {
-        *self.release.lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
-    }
-
     pub(crate) fn answer_hello(&self, answer: Result<AgentInfo, yonder_client::Refusal>) {
         *self.hello.lock().unwrap_or_else(PoisonError::into_inner) = Some(answer);
     }
@@ -115,19 +104,8 @@ impl HostLink for FakeLink {
             holder: request.holder.to_owned(),
             command: request.command.to_vec(),
             fetch: request.fetch.to_vec(),
-            idle_hours: request.idle_hours,
         });
         scripted(&self.run, "run")
-    }
-
-    fn lease(&self, alias: &str, repo: Option<&str>, holder: &str) -> Result<Leased, yonder_client::Refusal> {
-        self.record(format!("lease {alias} {repo:?} {holder}"));
-        scripted(&self.lease, "lease")
-    }
-
-    fn release(&self, alias: &str, repo: Option<&str>, holder: &str) -> Result<String, yonder_client::Refusal> {
-        self.record(format!("release {alias} {repo:?} {holder}"));
-        scripted(&self.release, "release")
     }
 
     fn hello(&self, alias: &str) -> Result<AgentInfo, yonder_client::Refusal> {

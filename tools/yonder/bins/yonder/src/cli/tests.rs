@@ -49,17 +49,10 @@ fn a_run_takes_its_command_after_the_separator() {
         "fast",
     ])
     .expect("parsed");
-    let Command::Run {
-        alias,
-        fetch,
-        command,
-        idle_hours,
-        ..
-    } = cli.command
-    else {
+    let Command::Run { alias, fetch, command, .. } = cli.command else {
         panic!("{cli:?}")
     };
-    assert_eq!((alias.as_str(), idle_hours), ("studio", 8));
+    assert_eq!(alias.as_str(), "studio");
     assert_eq!(fetch, ["out/bt-runs"]);
     assert_eq!(command, ["./bt.cmd", "--lane", "fast"]);
 }
