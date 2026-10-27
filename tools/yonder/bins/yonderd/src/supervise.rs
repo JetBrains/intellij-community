@@ -324,6 +324,9 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     }
     let before: Vec<BTreeSet<OsString>> = spec.fetch.iter().map(|dir| entries(&slot.join(dir))).collect();
     say(&start_line(&slot, &launch));
+    if let Some(warning) = host_git::login_shell_warning(&spec.command, &launch.git, cfg!(target_os = "macos")) {
+        say(&warning);
+    }
     let code = phases.time("command", || {
         run_group(&spec.command, &slot, &launch, context.log, stop, Stream::Stdout)
     })?;

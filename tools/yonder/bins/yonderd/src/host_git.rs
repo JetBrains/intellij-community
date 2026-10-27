@@ -39,9 +39,11 @@ use crate::refused::{LOCK_TIMEOUT, OLD_GIT, Refusal, refused};
 use crate::run::epoch_ms;
 use crate::serve::log;
 
-/// The lowest git of a host. It is the newest release of git when the user set the policy (2026-10-27): yonder runs
-/// on hosts of any repository, and one floor that moves only on purpose is simpler than a check of each git feature
-/// that the agent, bd and the commands use. Homebrew has the newest release, so `brew upgrade git` reaches it.
+/// The lowest git of a host. No feature of the agent or of bd needs this release: `core.fsmonitor=true` needs the
+/// builtin fsmonitor daemon of git 2.37, and the Apple Git 2.50.1 of the Mac Studio runs it. The floor is the newest
+/// release of git when the user set the policy (2026-10-27): "a minimum in the code, and `brew upgrade git`". yonder
+/// runs on hosts of any repository, and one floor that moves only on purpose is simpler than a check of each git
+/// feature that the agent, bd and the commands use. Homebrew has the newest release, so `brew upgrade git` reaches it.
 pub(crate) const MINIMUM: Version = Version::new(2, 56, 0);
 
 /// The variable that names a fake Homebrew for a test, or `none`.
@@ -288,6 +290,27 @@ pub(crate) fn for_command(run_env: &BTreeMap<OsString, OsString>) -> Result<Stri
             format!("the PATH of the run finds no git: {}", path.to_string_lossy()),
         )),
     }
+}
+
+/// A warning for a command that starts a login shell of bash or sh on macOS, such as `bash -lc '…'`: that shell runs
+/// `/etc/profile`, whose `path_helper` puts `/usr/bin` first, so the command gets the Apple Git of `/usr/bin` and not
+/// `git`, the one of the line before the command. zsh runs `path_helper` too, but `~/.zprofile` of a Homebrew user
+/// puts Homebrew first again. `None` for any other command, and elsewhere than on macOS.
+pub(crate) fn login_shell_warning(argv: &[String], git: &str, macos: bool) -> Option<String> {
+    let (program, arguments) = argv.split_first()?;
+    let name = Path::new(program).file_name()?.to_str()?;
+    if !macos || !matches!(name, "bash" | "sh") {
+        return None;
+    }
+    let login = arguments
+        .iter()
+        .take_while(|argument| argument.starts_with('-'))
+        .any(|argument| argument == "--login" || (!argument.starts_with("--") && argument.contains('l')));
+    login.then(|| {
+        format!(
+            "`{name} -l` runs /etc/profile, whose path_helper puts /usr/bin first: the command can get the Apple Git of /usr/bin, not {git}. Use `zsh -lc` or no login shell"
+        )
+    })
 }
 
 /// What the agent does about the git of its `PATH`.

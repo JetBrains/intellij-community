@@ -44,6 +44,14 @@ yonder run <host> [--head] [--fetch <dir>]... [--apply] [--nice <0-19>] [--repo 
   file. `--repo` names another one.
 - The command gets the login environment of the user on the host, 65536 open files, and `YONDER_RUN`,
   `YONDER_HOLDER`, `YONDER_COMMIT` and `YONDER_SLOT`. The tools come from the login `PATH` of the host.
+- The command needs no login shell: it has the login environment already. A shell line goes through `zsh -c` or
+  `zsh -lc`. On macOS never use `bash -lc` or `sh -lc`: they run `/etc/profile`, whose `path_helper` puts `/usr/bin`
+  first, so the command gets the old Apple Git of `/usr/bin` and not the git of Homebrew. The run then writes a
+  warning after its `running in` line.
+
+```sh
+yonder run studio --fetch out/test-results -- zsh -c 'make test > out/test-results/log.txt'
+```
 - A Mac host stays awake while a client talks to it and while a run goes on.
 
 `bt --host <host> <the usual bt args>` runs a test of the monorepo the same way. bt links the client. It runs the
@@ -53,7 +61,8 @@ committed HEAD only and refuses a dirty tree. The new run directories of `out/bt
 
 - `yonder: run <run> of <commit> on <host>` comes first. Keep the run id: `attach`, `cancel` and `fetch` need it.
 - `yonder: running in <slot> (slot <n>): load …, nice …, … open files, git <version>, …` comes right before the
-  command. The git is the one that the command finds first on its `PATH`.
+  command. The git is the one that the `PATH` of the run finds first. A login shell of bash or sh on macOS can find
+  another one, and then a warning line follows.
 - `yonder: phases: …` comes at the end. Read it before you guess where the time went.
 
 The steps of the phases line, in their order:

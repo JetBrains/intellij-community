@@ -157,6 +157,15 @@ The agent, bd, the prepare steps and the commands use the git that their `PATH` 
    Elsewhere it names the package manager of the host. A start after a refusal checks again, so a git that the user
    installed counts without a restart of the agent.
 
+A login shell can find another git than the one of the line before the command. On macOS `bash -l` and `sh -l` run
+`/etc/profile`, whose `path_helper` puts `/usr/bin` before `/opt/homebrew/bin`, so `bash -lc '…'` gets the Apple Git of
+`/usr/bin`. zsh runs `path_helper` in `/etc/zprofile` too, but `~/.zprofile` of a Homebrew user runs `brew shellenv`
+after it and puts Homebrew first again. On 2026-10-27 the Mac Studio gave `/opt/homebrew/bin/git` to `zsh -lc` and
+to `bash -c`, and `/usr/bin/git` to `bash -lc` and `sh -lc`. So a command needs no login shell, because it has the
+login environment already, or uses `zsh -lc`. A command whose program is `bash` or `sh` with `-l` or `--login` on
+macOS gets the line ``yonder: `bash -l` runs /etc/profile, …`` after the line before the command
+(`host_git::login_shell_warning`).
+
 `~/.cache/yonderd/git.json` keeps the last state for the runs: `{"state": "ready" | "upgrading" | "refused",
 "message", "at_ms"}`. The message names the git, the command of Homebrew, or the refusal. A run that waited reads it,
 and a refused state ends the run with `old_git`.
