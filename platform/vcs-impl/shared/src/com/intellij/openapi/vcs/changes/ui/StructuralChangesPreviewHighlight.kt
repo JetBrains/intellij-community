@@ -38,16 +38,34 @@ fun highlightStructuralPreview(editor: Editor, range: TextRange?, wholeLines: Bo
 
 private fun hasBidirectionalBoundary(editor: Editor, range: TextRange): Boolean {
   val document = editor.document
-  val folding = editor.foldingModel
-  val startOffset = folding.getCollapsedRegionAtOffset(range.startOffset)?.startOffset ?: range.startOffset
-  val endOffset = folding.getCollapsedRegionAtOffset(range.endOffset - 1)?.endOffset ?: range.endOffset
-  val startLine = document.getLineNumber(startOffset)
-  val endLine = document.getLineNumber(endOffset)
+  val unfolded = unfoldedRange(editor, range)
+  val startLine = document.getLineNumber(unfolded.startOffset)
+  val endLine = document.getLineNumber(unfolded.endOffset)
   return listOf(startLine, endLine).distinct().any { line ->
     val lineStart = document.getLineStartOffset(line)
     val content = document.charsSequence
     val text = CharArray(document.getLineEndOffset(line) - lineStart) { content[lineStart + it] }
     Bidi.requiresBidi(text, 0, text.size)
+  }
+}
+
+/** Widens the range to the collapsed fold regions at its ends, so that a folded element counts as a whole. */
+private fun unfoldedRange(editor: Editor, range: TextRange): TextRange {
+  val folding = editor.foldingModel
+  val startOffset = folding.getCollapsedRegionAtOffset(range.startOffset)?.startOffset ?: range.startOffset
+  val lastOffset = maxOf(range.startOffset, range.endOffset - 1)
+  val endOffset = folding.getCollapsedRegionAtOffset(lastOffset)?.endOffset ?: range.endOffset
+  return TextRange(startOffset, endOffset)
+}
+
+private fun paintDim(editor: Editor, g: Graphics, dimmedArea: Area) {
+  val graphics = g.create() as Graphics2D
+  try {
+    graphics.color = editor.colorsScheme.defaultBackground
+    GraphicsUtil.paintWithAlpha(graphics, 0.65f) { graphics.fill(dimmedArea) }
+  }
+  finally {
+    graphics.dispose()
   }
 }
 
@@ -61,26 +79,16 @@ private class StructuralPreviewDimRenderer(
     if (editor.isDisposed) return
     val selectedRange = selectedRange
     if (selectedRange != null && selectedRange.endOffset > editor.document.textLength) return
-    val graphics = g.create() as Graphics2D
-    try {
-      val clip = graphics.clipBounds ?: editor.scrollingModel.visibleArea
-      val dimmedArea = Area(clip)
-      if (selectedRange != null) keepSelectedRange(editor, selectedRange, clip, dimmedArea)
-      graphics.color = editor.colorsScheme.defaultBackground
-      GraphicsUtil.paintWithAlpha(graphics, 0.65f) { graphics.fill(dimmedArea) }
-    }
-    finally {
-      graphics.dispose()
-    }
+    val clip = g.clipBounds ?: editor.scrollingModel.visibleArea
+    val dimmedArea = Area(clip)
+    if (selectedRange != null) keepSelectedRange(editor, selectedRange, clip, dimmedArea)
+    paintDim(editor, g, dimmedArea)
   }
 
   private fun keepSelectedRange(editor: Editor, selectedRange: TextRange, clip: Rectangle, dimmedArea: Area) {
-    val folding = editor.foldingModel
-    val startOffset = folding.getCollapsedRegionAtOffset(selectedRange.startOffset)?.startOffset ?: selectedRange.startOffset
-    val lastOffset = maxOf(selectedRange.startOffset, selectedRange.endOffset - 1)
-    val endOffset = folding.getCollapsedRegionAtOffset(lastOffset)?.endOffset ?: selectedRange.endOffset
-    val start = editor.offsetToXY(startOffset, true, false)
-    val end = editor.offsetToXY(endOffset, false, true)
+    val unfolded = unfoldedRange(editor, selectedRange)
+    val start = editor.offsetToXY(unfolded.startOffset, true, false)
+    val end = editor.offsetToXY(unfolded.endOffset, false, true)
     val lineHeight = editor.lineHeight
 
     if (wholeLines) {
