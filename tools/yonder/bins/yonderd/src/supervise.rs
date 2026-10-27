@@ -14,7 +14,7 @@
 //!    that the main repository has already needs no pack. Else the run waits for the file `packed`, which the pack
 //!    writes after its ref. A watch of the run directory ends the wait at once.
 //! 3. Check out the commit in the slot. The give-back of the last run discarded its changes; the ignored files stay as
-//!    the warm cache.
+//!    the warm cache. So the checkout writes only the files of the diff and reads no other file (`git::checkout`).
 //! 4. Prepare: read `.yonder.toml` of the commit, build the environment (`run_env`, with the login environment of
 //!    `login_env`), and run each prepare step whose inputs changed since its last success in this slot (`prepare`, the
 //!    fingerprints of `slots::Prepared`). For a client that asks for them, remove the outputs of the config, and scan
@@ -287,14 +287,16 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     if !phases.time("pack_wait", || wait_for_pack(run, context.repo, spec, limits, stop, &mut say))? {
         return Ok(INTERRUPTED);
     }
-    if let Err(error) = phases.time("checkout", || git::checkout(&slot, &spec.commit, stop)) {
-        if stop() {
-            return Ok(INTERRUPTED);
+    match phases.time("checkout", || git::checkout(&slot, &spec.commit, stop)) {
+        Ok(git::Checkout::Forced(why)) => say(&format!("checked out with a scan of every file, because {why}")),
+        Ok(git::Checkout::Kept | git::Checkout::Switched) => {}
+        Err(_) if stop() => return Ok(INTERRUPTED),
+        Err(error) => {
+            return Err(refused(
+                CHECKOUT_FAILED,
+                format!("cannot check out {} in {}: {error}", spec.commit, slot.display()),
+            ));
         }
-        return Err(refused(
-            CHECKOUT_FAILED,
-            format!("cannot check out {} in {}: {error}", spec.commit, slot.display()),
-        ));
     }
     if stop() {
         return Ok(INTERRUPTED);

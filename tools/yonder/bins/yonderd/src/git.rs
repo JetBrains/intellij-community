@@ -233,15 +233,49 @@ impl Drop for RemoveOnDrop {
     }
 }
 
-/// Checks out `commit` detached in the worktree `dir`, and discards the local changes there. `stop` kills the call
+/// How [`checkout`] brought a worktree to its commit.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Checkout {
+    /// The detached HEAD was the commit already: no file changed.
+    Kept,
+    /// `reset --keep` moved the detached HEAD: it wrote only the files that differ between the two commits.
+    Switched,
+    /// `checkout -f --detach` wrote the commit and discarded the local changes, for the reason in the text.
+    Forced(String),
+}
+
+/// Checks out `commit` detached in the worktree `dir`, which must have no local changes: the give-back of the last run
+/// discarded them (Branch Deck, `spec/cli/lease.spec.md`, "Host slots"). A detached HEAD moves with `reset --keep`, a two-way merge that reads only the files of the diff. A
+/// HEAD on a branch, which `reset` would move, or a refused merge, such as a local change in the diff, falls back to
+/// `checkout -f --detach`, which stats every file of the worktree and discards its local changes. `stop` kills the call
 /// early.
-pub(crate) fn checkout(dir: &Path, commit: &str, stop: Stop<'_>) -> Result<(), String> {
+pub(crate) fn checkout(dir: &Path, commit: &str, stop: Stop<'_>) -> Result<Checkout, String> {
+    let head = checked(child::run(
+        git(dir).args(["rev-parse", "HEAD", "--symbolic-full-name", "HEAD"]),
+        QUICK,
+        stop,
+    ));
+    let why = match head.as_ref().map(Output::stdout_text) {
+        Ok(text) => match text.lines().collect::<Vec<_>>()[..] {
+            [id, "HEAD"] if id == commit => return Ok(Checkout::Kept),
+            [_, "HEAD"] => match checked(child::run(git(dir).args(["reset", "-q", "--keep", commit]), CHECKOUT, stop)) {
+                Ok(_) => return Ok(Checkout::Switched),
+                Err(error) => format!("`git reset --keep` refused: {error}"),
+            },
+            [_, branch] => format!("the HEAD is on the branch {branch}"),
+            _ => format!("`git rev-parse` answered {text:?}"),
+        },
+        Err(error) => format!("the HEAD is unknown: {error}"),
+    };
+    if stop() {
+        return Err(why);
+    }
     checked(child::run(
         git(dir).args(["checkout", "-q", "-f", "--detach", commit]),
         CHECKOUT,
         stop,
     ))
-    .map(drop)
+    .map(|_| Checkout::Forced(why))
 }
 
 #[cfg(test)]

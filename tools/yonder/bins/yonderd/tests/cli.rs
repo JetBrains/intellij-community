@@ -149,11 +149,11 @@ echo "fake bd: unknown call: $*" >&2
 exit 2
 "#;
 
-/// A git in front of the real one, `$REAL_GIT`. With `$FAKE_BD_DIR/slow-checkout`, a checkout writes
+/// A git in front of the real one, `$REAL_GIT`. With `$FAKE_BD_DIR/slow-checkout`, a checkout or a reset writes
 /// `checkout-started` and waits up to 60 s before it goes on, so a test can cancel a run during its checkout. With
 /// `$FAKE_BD_DIR/slow-cat-file`, a `cat-file` takes a second.
 const SLOW_GIT: &str = r#"#!/bin/sh
-if [ "$3" = checkout ] && [ -e "$FAKE_BD_DIR/slow-checkout" ]; then
+if { [ "$3" = checkout ] || [ "$3" = reset ]; } && [ -e "$FAKE_BD_DIR/slow-checkout" ]; then
   : >"$FAKE_BD_DIR/checkout-started"
   i=0; while [ $i -lt 600 ]; do sleep 0.1; i=$((i + 1)); done
 fi
@@ -1274,9 +1274,15 @@ fn a_cancel_during_the_checkout_kills_git_and_ends_the_run_before_its_command() 
     let agent = world.serve_with(&[("REAL_GIT", real.to_str().expect("a text path"))]);
     let world = &agent.world;
     let marker = world.dir.path().join("ran");
+    // The slot starts at the first commit of the world, so the run must move it to the second.
+    let second = commit_files(world, &[("b.txt", "b")]);
+    git(&world.repo(), &["reset", "-q", "--hard", &world.commit]);
     fs::write(world.bd_dir().join("slow-checkout"), "").expect("the flag");
-    git(&world.repo(), &["update-ref", "refs/yonder/12-1", &world.commit]);
-    agent.start(world.spec("12-1", HOLDER, &format!("touch '{}'", marker.display())));
+    git(&world.repo(), &["update-ref", "refs/yonder/12-1", &second]);
+    agent.start(RunSpec {
+        commit: second,
+        ..world.spec("12-1", HOLDER, &format!("touch '{}'", marker.display()))
+    });
     eventually("the start of the checkout", || world.bd_dir().join("checkout-started").exists());
     let started = Instant::now();
     agent.reply(&Request::Cancel { run: "12-1".to_owned() });

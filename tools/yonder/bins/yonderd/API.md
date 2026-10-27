@@ -79,6 +79,10 @@ fill waits 1, 5, then 15 minutes.
   at most once a second, and a wait without a chunk for `PACK_STALL_SECONDS` ends the run, because its client is
   gone. An empty chunk counts, so a client sends one while it builds its pack. A wait longer than 1 s writes the line
   `yonder: waiting for the pack of <commit>` to the log. A cancel ends the wait too.
+- The checkout writes only the files that differ between the commit of the slot and the commit of the run
+  (`git reset --keep` on the detached HEAD), so its time follows the diff, not the tree. A slot on a branch, an
+  unreadable HEAD, or a local change or an untracked file in a path of the diff gets the forced checkout
+  `git checkout -f --detach` instead, which stats every file. Then the log has the line `yonder: checked out with a scan of every file, because <reason>`.
 - A pack that comes after the end of its run makes no ref. Its objects land.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
   the phases that have ended so far. The phases are `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`,

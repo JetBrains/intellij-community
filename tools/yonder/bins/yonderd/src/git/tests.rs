@@ -93,3 +93,57 @@ fn a_checkout_and_a_bare_repository_pass_by_their_files() {
     );
     assert_eq!(check_repo(&bare), Ok(()));
 }
+
+/// A detached slot moves with a two-way merge, which keeps a local change outside the diff and the ignored files. The
+/// same commit changes nothing.
+#[test]
+fn a_detached_slot_moves_to_the_commit_and_writes_only_the_diff() {
+    let (_dir, repo, first) = repo();
+    let run = |args: &[&str]| testing::git(&repo, args);
+    std::fs::write(repo.join("b.txt"), "b").expect("a file");
+    run(&["add", "b.txt"]);
+    run(&["commit", "-q", "-m", "second"]);
+    let second = run(&["rev-parse", "HEAD"]);
+    run(&["checkout", "-q", "--detach", &first]);
+    std::fs::write(repo.join("a.txt"), "outside the diff").expect("a change");
+
+    assert_eq!(checkout(&repo, &second, &never), Ok(Checkout::Switched));
+    assert_eq!(run(&["rev-parse", "HEAD"]), second);
+    assert_eq!(std::fs::read_to_string(repo.join("b.txt")).expect("the new file"), "b");
+    assert_eq!(
+        std::fs::read_to_string(repo.join("a.txt")).expect("the kept file"),
+        "outside the diff",
+        "the checkout reads no file outside the diff"
+    );
+
+    assert_eq!(checkout(&repo, &second, &never), Ok(Checkout::Kept));
+    assert_eq!(checkout(&repo, &first, &never), Ok(Checkout::Switched));
+    assert!(!repo.join("b.txt").exists(), "the file of the diff goes");
+}
+
+/// A local change in the diff, and a HEAD on a branch, get `checkout -f --detach`: it discards the change, and the
+/// branch stays where it was.
+#[test]
+fn a_change_in_the_diff_or_a_branch_forces_the_checkout() {
+    let (_dir, repo, first) = repo();
+    let run = |args: &[&str]| testing::git(&repo, args);
+    std::fs::write(repo.join("a.txt"), "second").expect("a change");
+    run(&["commit", "-q", "-am", "second"]);
+    let second = run(&["rev-parse", "HEAD"]);
+    let branch = run(&["symbolic-ref", "HEAD"]);
+
+    let Ok(Checkout::Forced(why)) = checkout(&repo, &first, &never) else {
+        panic!("a HEAD on a branch must force the checkout");
+    };
+    assert_eq!(why, format!("the HEAD is on the branch {branch}"));
+    assert_eq!(run(&["rev-parse", &branch]), second, "the branch stays");
+    assert_eq!(run(&["rev-parse", "HEAD"]), first);
+
+    std::fs::write(repo.join("a.txt"), "local").expect("a change in the diff");
+    let Ok(Checkout::Forced(why)) = checkout(&repo, &second, &never) else {
+        panic!("a change in the diff must force the checkout");
+    };
+    assert!(why.starts_with("`git reset --keep` refused: "), "{why}");
+    assert_eq!(run(&["rev-parse", "HEAD"]), second);
+    assert_eq!(std::fs::read_to_string(repo.join("a.txt")).expect("the file"), "second");
+}
