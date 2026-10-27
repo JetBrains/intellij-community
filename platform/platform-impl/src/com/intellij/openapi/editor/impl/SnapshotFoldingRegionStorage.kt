@@ -70,7 +70,8 @@ internal class SnapshotFoldingRegionStorage(
       neverExpands = neverExpands,
       policy = foldRegionMarkerPolicy,
     )
-    return register(region, startOffset, endOffset, spec)
+    register(region, startOffset, endOffset, spec)
+    return region
   }
 
   override fun createCustomFoldRegion(
@@ -87,7 +88,8 @@ internal class SnapshotFoldingRegionStorage(
       initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
       renderer = renderer,
     )
-    return register(region, startOffset, endOffset, spec)
+    register(region, startOffset, endOffset, spec)
+    return region
   }
 
   override fun removeRegion(region: FoldRegionMarker): Boolean {
@@ -218,18 +220,17 @@ internal class SnapshotFoldingRegionStorage(
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
-  private fun <T : SnapshotFoldRegion> register(
-    region: T,
+  private fun register(
+    region: SnapshotFoldRegion,
     startOffset: Int,
     endOffset: Int,
     spec: Byte,
-  ): T {
+  ) {
     check(regionsById.putIfAbsent(region.id, region) == null) { "Fold region ${region.id} is already registered" }
     val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(region, retainStrong = true)
     rootStore.updateRoot(currentSnapshot()) {
       it.insert(region.id, startOffset, endOffset, spec, region.flavorFlags, markerReference, policy = region.policy)
     }
-    return region
   }
 
   private fun processAffectedRegions(markerIds: LongList) {

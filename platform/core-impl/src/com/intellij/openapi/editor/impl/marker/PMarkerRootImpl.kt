@@ -298,10 +298,10 @@ open class PMarkerRootImpl private constructor(
     if (!isSortedByPosition(transformedMiddle)) transformedMiddle.sortWith(ENTRY_COMPARATOR)
 
     val rebuiltMiddle = buildBalanced(editor, transformedMiddle)
-    val shiftedAfter = shift(editor, after, delta)
+    shift(editor, after, delta)
 
     var newRoot = joinDisjoint(editor, updatedBefore, rebuiltMiddle)
-    newRoot = joinDisjoint(editor, newRoot, shiftedAfter)
+    newRoot = joinDisjoint(editor, newRoot, after)
     if (oldLength == 0 && patch.moveOffset() != editStart) {
       // The regular insertion update has already shifted the source range. Retarget its contained markers to the
       // inserted copy before the deletion half of moveText is applied.
@@ -879,8 +879,8 @@ open class PMarkerRootImpl private constructor(
       return height(editor, node.leftId) - height(editor, node.rightId)
     }
 
-    private fun shift(editor: MapBatchEditor, nodeId: Long, delta: Int): Long {
-      if (nodeId == NULL_NODE || delta == 0) return nodeId
+    private fun shift(editor: MapBatchEditor, nodeId: Long, delta: Int) {
+      if (nodeId == NULL_NODE || delta == 0) return
       val node = editor.valid(nodeId)
       editor.putValid(
         nodeId,
@@ -893,7 +893,6 @@ open class PMarkerRootImpl private constructor(
           lazyOffsetDelta = node.lazyOffsetDelta + delta
         )
       )
-      return nodeId
     }
 
     private fun push(editor: MapBatchEditor, nodeId: Long): ValidNode {
@@ -916,7 +915,7 @@ open class PMarkerRootImpl private constructor(
       leftId: Long,
       rightId: Long,
       entry: MarkerEntry = node.entry,
-    ): ValidNode {
+    ) {
       check(node.lazyOffsetDelta == 0) { "Node $markerId must be pushed before it is rewritten" }
       val updated = node.copy(
         entry = entry,
@@ -936,19 +935,18 @@ open class PMarkerRootImpl private constructor(
       if (updated != node) editor.putValid(markerId, updated)
       editor.setParent(leftId, markerId)
       editor.setParent(rightId, markerId)
-      return updated
     }
 
-    private fun detachAsLeaf(editor: MapBatchEditor, markerId: Long): ValidNode {
+    private fun detachAsLeaf(editor: MapBatchEditor, markerId: Long) {
       val node = push(editor, markerId)
       editor.setParent(node.leftId, NULL_NODE)
       editor.setParent(node.rightId, NULL_NODE)
-      return rewrite(editor, markerId, node, NULL_NODE, NULL_NODE, NULL_NODE)
+      rewrite(editor, markerId, node, NULL_NODE, NULL_NODE, NULL_NODE)
     }
 
     private fun rotateLeft(editor: MapBatchEditor, rootId: Long): Long {
       val root = push(editor, rootId)
-      val rightId = checkNotNull(root.rightId) { "Cannot rotate node $rootId left without a right child" }
+      val rightId = checkNotNull(root.rightId)
       val right = push(editor, rightId)
       val parentId = root.parentId
       val middleId = right.leftId
@@ -960,7 +958,7 @@ open class PMarkerRootImpl private constructor(
 
     private fun rotateRight(editor: MapBatchEditor, rootId: Long): Long {
       val root = push(editor, rootId)
-      val leftId = checkNotNull(root.leftId) { "Cannot rotate node $rootId right without a left child" }
+      val leftId = checkNotNull(root.leftId)
       val left = push(editor, leftId)
       val parentId = root.parentId
       val middleId = left.rightId
@@ -975,7 +973,8 @@ open class PMarkerRootImpl private constructor(
       val factor = balanceFactor(editor, root)
 
       if (factor > 1) {
-        val leftId = checkNotNullNode(root.leftId)
+        val leftId = root.leftId
+        checkNotNullNode(leftId)
         val left = push(editor, leftId)
         if (balanceFactor(editor, left) < 0) {
           val newLeft = rotateLeft(editor, leftId)
@@ -986,7 +985,8 @@ open class PMarkerRootImpl private constructor(
       }
 
       if (factor < -1) {
-        val rightId = checkNotNullNode(root.rightId)
+        val rightId = root.rightId
+        checkNotNullNode(rightId)
         val right = push(editor, rightId)
         if (balanceFactor(editor, right) > 0) {
           val newRight = rotateRight(editor, rightId)
@@ -1072,9 +1072,8 @@ open class PMarkerRootImpl private constructor(
       return ExtractMinimumResult(remainingRoot, minimumId)
     }
 
-    private fun checkNotNullNode(id: Long): Long {
+    private fun checkNotNullNode(id: Long) {
       check(id != NULL_NODE)
-      return id
     }
 
     private fun joinPrepared(editor: MapBatchEditor, leftId: Long, pivotId: Long, rightId: Long): Long {
@@ -1279,13 +1278,15 @@ open class PMarkerRootImpl private constructor(
       invalidatedMarkerConsumer: LongConsumer,
       affectedMarkerConsumer: LongConsumer,
     ): MarkerTransformResult {
-      return processTransformResult(
+      val result = entry.policy.afterRetarget(entry, afterText)
+      processTransformResult(
         editor,
         entry,
-        entry.policy.afterRetarget(entry, afterText),
+        result,
         invalidatedMarkerConsumer,
         affectedMarkerConsumer,
       )
+      return result
     }
 
     private fun processTransformResult(
@@ -1294,7 +1295,7 @@ open class PMarkerRootImpl private constructor(
       result: MarkerTransformResult,
       invalidatedMarkerConsumer: LongConsumer,
       affectedMarkerConsumer: LongConsumer,
-    ): MarkerTransformResult {
+    ) {
       check(result.entry.markerId == entry.markerId) {
         "Marker policy changed marker ID ${entry.markerId} to ${result.entry.markerId}"
       }
@@ -1306,7 +1307,6 @@ open class PMarkerRootImpl private constructor(
       else {
         invalidatedMarkerConsumer.accept(entry.markerId)
       }
-      return result
     }
 
     private fun collectContainedEntries(
@@ -1389,13 +1389,15 @@ open class PMarkerRootImpl private constructor(
       invalidatedMarkerConsumer: LongConsumer,
       affectedMarkerConsumer: LongConsumer,
     ): MarkerTransformResult {
-      return processTransformResult(
+      val result = entry.policy.transform(entry, patch, beforeText, afterText)
+      processTransformResult(
         editor,
         entry,
-        entry.policy.transform(entry, patch, beforeText, afterText),
+        result,
         invalidatedMarkerConsumer,
         affectedMarkerConsumer,
       )
+      return result
     }
   }
 }

@@ -116,9 +116,8 @@ internal enum class PersistentLongMapImplementation {
   CHAMP_64,
 }
 
-private fun requireNonNegativeKey(key: Long): Long {
+private fun requireNonNegativeKey(key: Long) {
   require(key >= 0) { "key must be non-negative" }
-  return key
 }
 
 private fun <V : Any> PersistentLongMap<V>.mapToString(): String {
@@ -142,7 +141,10 @@ internal class PersistentLongMap16<V : Any> private constructor(
 ) : PersistentLongMap<V> {
   constructor() : this(null, 0)
 
-  override operator fun get(key: Long): V? = getUnchecked(requireNonNegativeKey(key))
+  override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
+    return getUnchecked(key)
+  }
 
   override fun getUnchecked(key: Long): V? {
     var branch = root ?: return null
@@ -210,7 +212,8 @@ internal class PersistentLongMap16<V : Any> private constructor(
 
     override fun get(key: Long): V? {
       checkActive()
-      return find(requireNonNegativeKey(key))
+      requireNonNegativeKey(key)
+      return find(key)
     }
 
     override fun getUnchecked(key: Long): V? {
@@ -364,19 +367,22 @@ internal class PersistentLongChampMap<V : Any> private constructor(
 ) : PersistentLongMap<V> {
   constructor(bitsPerLevel: Int = DEFAULT_BITS_PER_LEVEL) : this(Layout(bitsPerLevel), null, 0)
 
-  override operator fun get(key: Long): V? = getUnchecked(requireNonNegativeKey(key))
+  override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
+    return getUnchecked(key)
+  }
 
   override fun getUnchecked(key: Long): V? = find(layout, root, key, mixKey(key))
 
   override fun put(key: Long, value: V): PersistentLongChampMap<V> {
-    val checkedKey = requireNonNegativeKey(key)
-    val newSize = size + if (getUnchecked(checkedKey) == null) 1 else 0
-    return PersistentLongChampMap(layout, put(layout, root, 0, checkedKey, mixKey(checkedKey), value), newSize)
+    requireNonNegativeKey(key)
+    val newSize = size + if (getUnchecked(key) == null) 1 else 0
+    return PersistentLongChampMap(layout, put(layout, root, 0, key, mixKey(key), value), newSize)
   }
 
   override fun remove(key: Long): PersistentLongChampMap<V> {
-    val checkedKey = requireNonNegativeKey(key)
-    val result = remove(layout, root, 0, checkedKey, mixKey(checkedKey))
+    requireNonNegativeKey(key)
+    val result = remove(layout, root, 0, key, mixKey(key))
     return if (!result.removed) this else PersistentLongChampMap(layout, result.node, size - 1)
   }
 
@@ -436,8 +442,8 @@ internal class PersistentLongChampMap<V : Any> private constructor(
 
     override fun get(key: Long): V? {
       checkActive()
-      val checkedKey = requireNonNegativeKey(key)
-      return find(source.layout, root, checkedKey, mixKey(checkedKey))
+      requireNonNegativeKey(key)
+      return find(source.layout, root, key, mixKey(key))
     }
 
     override fun getUnchecked(key: Long): V? {
@@ -447,16 +453,16 @@ internal class PersistentLongChampMap<V : Any> private constructor(
 
     override fun put(key: Long, value: V) {
       checkActive()
-      val checkedKey = requireNonNegativeKey(key)
-      if (find<V>(source.layout, root, checkedKey, mixKey(checkedKey)) == null) size++
-      root = put(root, 0, checkedKey, mixKey(checkedKey), value)
+      requireNonNegativeKey(key)
+      if (find<V>(source.layout, root, key, mixKey(key)) == null) size++
+      root = put(root, 0, key, mixKey(key), value)
       dirty = true
     }
 
     override fun remove(key: Long) {
       checkActive()
-      val checkedKey = requireNonNegativeKey(key)
-      val result = remove(root, 0, checkedKey, mixKey(checkedKey))
+      requireNonNegativeKey(key)
+      val result = remove(root, 0, key, mixKey(key))
       if (!result.removed) return
       root = result.node
       size--
@@ -801,20 +807,23 @@ internal class PersistentVector32<V : Any> private constructor(
 ) : PersistentLongMap<V> {
   constructor() : this(null, 0, 0)
 
-  override operator fun get(key: Long): V? = getUnchecked(requireNonNegativeKey(key))
+  override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
+    return getUnchecked(key)
+  }
 
   override fun getUnchecked(key: Long): V? = get(root, shift, key)
 
   override fun put(key: Long, value: V): PersistentVector32<V> {
-    val index = requireNonNegativeKey(key)
-    val updated = put(root, shift, index, value)
-    val newSize = size + if (getUnchecked(index) == null) 1 else 0
+    requireNonNegativeKey(key)
+    val updated = put(root, shift, key, value)
+    val newSize = size + if (getUnchecked(key) == null) 1 else 0
     return PersistentVector32(updated.root, updated.shift, newSize)
   }
 
   override fun remove(key: Long): PersistentVector32<V> {
-    val index = requireNonNegativeKey(key)
-    val updated = remove(root, shift, index)
+    requireNonNegativeKey(key)
+    val updated = remove(root, shift, key)
     return if (!updated.removed) this else PersistentVector32(updated.root, updated.shift, size - 1)
   }
 
@@ -861,7 +870,8 @@ internal class PersistentVector32<V : Any> private constructor(
 
     override fun get(key: Long): V? {
       checkActive()
-      return get(root, shift, requireNonNegativeKey(key))
+      requireNonNegativeKey(key)
+      return get(root, shift, key)
     }
 
     override fun getUnchecked(key: Long): V? {
@@ -871,9 +881,9 @@ internal class PersistentVector32<V : Any> private constructor(
 
     override fun put(key: Long, value: V) {
       checkActive()
-      val index = requireNonNegativeKey(key)
-      if (get<V>(root, shift, index) == null) size++
-      val requiredShift = requiredShift(index)
+      requireNonNegativeKey(key)
+      if (get<V>(root, shift, key) == null) size++
+      val requiredShift = requiredShift(key)
       var expandedRoot = root
       var expandedShift = if (expandedRoot == null) requiredShift else shift
 
@@ -884,17 +894,17 @@ internal class PersistentVector32<V : Any> private constructor(
         expandedShift += BITS
       }
 
-      root = putNode(expandedRoot, expandedShift, index, value)
+      root = putNode(expandedRoot, expandedShift, key, value)
       shift = expandedShift
       dirty = true
     }
 
     override fun remove(key: Long) {
       checkActive()
-      val index = requireNonNegativeKey(key)
+      requireNonNegativeKey(key)
       val currentRoot = root ?: return
-      if (requiredShift(index) > shift) return
-      val result = removeNode(currentRoot, shift, index)
+      if (requiredShift(key) > shift) return
+      val result = removeNode(currentRoot, shift, key)
       if (!result.removed) return
       val trimmed = trim(result.node, shift)
       root = trimmed.root
@@ -1074,20 +1084,23 @@ internal class PersistentVector64<V : Any> private constructor(
 ) : PersistentLongMap<V> {
   constructor() : this(null, 0, 0)
 
-  override operator fun get(key: Long): V? = getUnchecked(requireNonNegativeKey(key))
+  override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
+    return getUnchecked(key)
+  }
 
   override fun getUnchecked(key: Long): V? = get(root, shift, key)
 
   override fun put(key: Long, value: V): PersistentVector64<V> {
-    val index = requireNonNegativeKey(key)
-    val updated = put(root, shift, index, value)
-    val newSize = size + if (getUnchecked(index) == null) 1 else 0
+    requireNonNegativeKey(key)
+    val updated = put(root, shift, key, value)
+    val newSize = size + if (getUnchecked(key) == null) 1 else 0
     return PersistentVector64(updated.root, updated.shift, newSize)
   }
 
   override fun remove(key: Long): PersistentVector64<V> {
-    val index = requireNonNegativeKey(key)
-    val updated = remove(root, shift, index)
+    requireNonNegativeKey(key)
+    val updated = remove(root, shift, key)
     return if (!updated.removed) this else PersistentVector64(updated.root, updated.shift, size - 1)
   }
 
@@ -1134,7 +1147,8 @@ internal class PersistentVector64<V : Any> private constructor(
 
     override fun get(key: Long): V? {
       checkActive()
-      return get(root, shift, requireNonNegativeKey(key))
+      requireNonNegativeKey(key)
+      return get(root, shift, key)
     }
 
     override fun getUnchecked(key: Long): V? {
@@ -1144,9 +1158,9 @@ internal class PersistentVector64<V : Any> private constructor(
 
     override fun put(key: Long, value: V) {
       checkActive()
-      val index = requireNonNegativeKey(key)
-      if (get<V>(root, shift, index) == null) size++
-      val requiredShift = requiredShift(index)
+      requireNonNegativeKey(key)
+      if (get<V>(root, shift, key) == null) size++
+      val requiredShift = requiredShift(key)
       var expandedRoot = root
       var expandedShift = if (expandedRoot == null) requiredShift else shift
 
@@ -1157,17 +1171,17 @@ internal class PersistentVector64<V : Any> private constructor(
         expandedShift += BITS
       }
 
-      root = putNode(expandedRoot, expandedShift, index, value)
+      root = putNode(expandedRoot, expandedShift, key, value)
       shift = expandedShift
       dirty = true
     }
 
     override fun remove(key: Long) {
       checkActive()
-      val index = requireNonNegativeKey(key)
+      requireNonNegativeKey(key)
       val currentRoot = root ?: return
-      if (requiredShift(index) > shift) return
-      val result = removeNode(currentRoot, shift, index)
+      if (requiredShift(key) > shift) return
+      val result = removeNode(currentRoot, shift, key)
       if (!result.removed) return
       val trimmed = trim(result.node, shift)
       root = trimmed.root
@@ -1346,7 +1360,10 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 ) : PersistentLongMap<V> {
   constructor() : this(PersistentVector32(), 0)
 
-  override operator fun get(key: Long): V? = getUnchecked(requireNonNegativeKey(key))
+  override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
+    return getUnchecked(key)
+  }
 
   override fun getUnchecked(key: Long): V? {
     val page = pages.getUnchecked(key ushr PAGE_BITS) ?: return null
@@ -1355,9 +1372,9 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   }
 
   override fun put(key: Long, value: V): PersistentPagedVector128<V> {
-    val index = requireNonNegativeKey(key)
-    val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK).toInt()
+    requireNonNegativeKey(key)
+    val pageKey = key ushr PAGE_BITS
+    val slot = (key and PAGE_MASK).toInt()
     val oldPage = pages[pageKey]
     val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
     val added = values[slot] == null
@@ -1367,9 +1384,9 @@ internal class PersistentPagedVector128<V : Any> private constructor(
   }
 
   override fun remove(key: Long): PersistentPagedVector128<V> {
-    val index = requireNonNegativeKey(key)
-    val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK).toInt()
+    requireNonNegativeKey(key)
+    val pageKey = key ushr PAGE_BITS
+    val slot = (key and PAGE_MASK).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
 
@@ -1408,7 +1425,8 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 
     override fun get(key: Long): V? {
       checkActive()
-      return find(requireNonNegativeKey(key))
+      requireNonNegativeKey(key)
+      return find(key)
     }
 
     override fun getUnchecked(key: Long): V? {
@@ -1424,9 +1442,9 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 
     override fun put(key: Long, value: V) {
       checkActive()
-      val index = requireNonNegativeKey(key)
-      val pageKey = index ushr PAGE_BITS
-      val slot = (index and PAGE_MASK).toInt()
+      requireNonNegativeKey(key)
+      val pageKey = key ushr PAGE_BITS
+      val slot = (key and PAGE_MASK).toInt()
       val oldPage = pages[pageKey]
       val page = editable(oldPage)
       if (page !== oldPage) pages.put(pageKey, page)
@@ -1440,9 +1458,9 @@ internal class PersistentPagedVector128<V : Any> private constructor(
 
     override fun remove(key: Long) {
       checkActive()
-      val index = requireNonNegativeKey(key)
-      val pageKey = index ushr PAGE_BITS
-      val slot = (index and PAGE_MASK).toInt()
+      requireNonNegativeKey(key)
+      val pageKey = key ushr PAGE_BITS
+      val slot = (key and PAGE_MASK).toInt()
       val oldPage = pages[pageKey] ?: return
       if (oldPage.values[slot] == null) return
 
@@ -1496,7 +1514,10 @@ internal class PersistentPagedVector256<V : Any> private constructor(
 ) : PersistentLongMap<V> {
   constructor() : this(PersistentVector32(), 0)
 
-  override operator fun get(key: Long): V? = getUnchecked(requireNonNegativeKey(key))
+  override operator fun get(key: Long): V? {
+    requireNonNegativeKey(key)
+    return getUnchecked(key)
+  }
 
   override fun getUnchecked(key: Long): V? {
     val page = pages.getUnchecked(key ushr PAGE_BITS) ?: return null
@@ -1505,9 +1526,9 @@ internal class PersistentPagedVector256<V : Any> private constructor(
   }
 
   override fun put(key: Long, value: V): PersistentPagedVector256<V> {
-    val index = requireNonNegativeKey(key)
-    val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK).toInt()
+    requireNonNegativeKey(key)
+    val pageKey = key ushr PAGE_BITS
+    val slot = (key and PAGE_MASK).toInt()
     val oldPage = pages[pageKey]
     val values = oldPage?.values?.copyOf() ?: arrayOfNulls(PAGE_SIZE)
     val added = values[slot] == null
@@ -1517,9 +1538,9 @@ internal class PersistentPagedVector256<V : Any> private constructor(
   }
 
   override fun remove(key: Long): PersistentPagedVector256<V> {
-    val index = requireNonNegativeKey(key)
-    val pageKey = index ushr PAGE_BITS
-    val slot = (index and PAGE_MASK).toInt()
+    requireNonNegativeKey(key)
+    val pageKey = key ushr PAGE_BITS
+    val slot = (key and PAGE_MASK).toInt()
     val oldPage = pages[pageKey] ?: return this
     if (oldPage.values[slot] == null) return this
 
@@ -1558,7 +1579,8 @@ internal class PersistentPagedVector256<V : Any> private constructor(
 
     override fun get(key: Long): V? {
       checkActive()
-      return find(requireNonNegativeKey(key))
+      requireNonNegativeKey(key)
+      return find(key)
     }
 
     override fun getUnchecked(key: Long): V? {
@@ -1574,9 +1596,9 @@ internal class PersistentPagedVector256<V : Any> private constructor(
 
     override fun put(key: Long, value: V) {
       checkActive()
-      val index = requireNonNegativeKey(key)
-      val pageKey = index ushr PAGE_BITS
-      val slot = (index and PAGE_MASK).toInt()
+      requireNonNegativeKey(key)
+      val pageKey = key ushr PAGE_BITS
+      val slot = (key and PAGE_MASK).toInt()
       val oldPage = pages[pageKey]
       val page = editable(oldPage)
       if (page !== oldPage) pages.put(pageKey, page)
@@ -1590,9 +1612,9 @@ internal class PersistentPagedVector256<V : Any> private constructor(
 
     override fun remove(key: Long) {
       checkActive()
-      val index = requireNonNegativeKey(key)
-      val pageKey = index ushr PAGE_BITS
-      val slot = (index and PAGE_MASK).toInt()
+      requireNonNegativeKey(key)
+      val pageKey = key ushr PAGE_BITS
+      val slot = (key and PAGE_MASK).toInt()
       val oldPage = pages[pageKey] ?: return
       if (oldPage.values[slot] == null) return
 

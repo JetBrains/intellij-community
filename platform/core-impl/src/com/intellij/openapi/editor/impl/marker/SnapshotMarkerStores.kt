@@ -37,10 +37,10 @@ class SnapshotMarkerStores {
   }
 
   @TestOnly
-  fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch?): DocumentSnapshot {
-    if (afterSnapshot === beforeSnapshot) return afterSnapshot
+  fun applyPatch(beforeSnapshot: DocumentSnapshot, afterSnapshot: DocumentSnapshot, patch: DocumentPatch?) {
+    if (afterSnapshot === beforeSnapshot) return
     while (true) {
-      if (tryCommit(beforeSnapshot, afterSnapshot, patch, isCurrent = { true }, publish = {})) return afterSnapshot
+      if (tryCommit(beforeSnapshot, afterSnapshot, patch, isCurrent = { true }, publish = {})) return
     }
   }
 
@@ -50,7 +50,8 @@ class SnapshotMarkerStores {
     for (op in patch.ops()) {
       afterSnapshot = afterSnapshot.applyOp(op)
     }
-    return applyPatch(beforeSnapshot, afterSnapshot, patch)
+    applyPatch(beforeSnapshot, afterSnapshot, patch)
+    return afterSnapshot
   }
 
   internal fun tryCommit(
