@@ -8,8 +8,11 @@ import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffViewer
+import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffGutterRenderer
+import com.intellij.diff.util.DiffLineMarkerRenderer
 import com.intellij.diff.util.Side
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.EDT
@@ -25,6 +28,7 @@ import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
@@ -55,6 +59,7 @@ internal class StructuralDiffPreviewAppearanceTest {
     withViewer(::SimpleDiffViewer, commitTab = true) { viewer ->
       for (side in Side.entries) assertDefaultDiff(viewer.getEditor(side))
       assertTrue(Side.entries.any { hasArrows(viewer.getEditor(it)) })
+      assertFalse(dividerPainter(viewer) is MatchedLinksPainter)
     }
     withViewer(::UnifiedDiffViewer, commitTab = true) { viewer ->
       assertDefaultDiff(viewer.editor)
@@ -67,6 +72,7 @@ internal class StructuralDiffPreviewAppearanceTest {
     withViewer(::SimpleDiffViewer, commitTab = false) { viewer ->
       for (side in Side.entries) assertDefaultDiff(viewer.getEditor(side))
       assertTrue(Side.entries.any { hasArrows(viewer.getEditor(it)) })
+      assertFalse(dividerPainter(viewer) is MatchedLinksPainter)
     }
     withViewer(::UnifiedDiffViewer, commitTab = false) { viewer ->
       assertDefaultDiff(viewer.editor)
@@ -84,6 +90,7 @@ internal class StructuralDiffPreviewAppearanceTest {
         assertLineColor(editor, DiffColors.DIFF_INSERTED, Hue.GREEN)
         assertLineColor(editor, DiffColors.DIFF_MODIFIED, Hue.BLUE)
       }
+      assertTrue(dividerPainter(viewer) is MatchedLinksPainter, "The divider paints a link in the color of its lines")
     }
   }
 
@@ -104,8 +111,8 @@ internal class StructuralDiffPreviewAppearanceTest {
     val project = project
     withContext(Dispatchers.EDT) {
       val contents = DiffContentFactory.getInstance()
-      val base = contents.create(project, "first\nold\nlast")
-      val request = SimpleDiffRequest(null, base, contents.create(project, "first\nnew\nlast"), null, null)
+      val base = contents.create(project, "first\nvalue = old\nlast")
+      val request = SimpleDiffRequest(null, base, contents.create(project, "first\nvalue = new\nlast"), null, null)
       // An editable right side gets the arrows that apply a change.
       (request.contents[1] as DocumentContent).document.setReadOnly(false)
       val context = TestDiffContext(project)
@@ -130,6 +137,7 @@ internal class StructuralDiffPreviewAppearanceTest {
     assertTrue(editor.settings.isLineNumbersShown)
     assertTrue((editor.markupModel as EditorMarkupModel).isErrorStripeVisible)
     assertTrue(hasChangeMarks(editor))
+    assertTrue(wordLineMarkers(editor).all { it.gutterMode != it.editorMode }, "The line numbers of changed words get the full color")
     val scheme = EditorColorsManager.getInstance().globalScheme
     for (key in listOf(DiffColors.DIFF_DELETED, DiffColors.DIFF_INSERTED, DiffColors.DIFF_MODIFIED)) {
       assertEquals(scheme.getAttributes(key), editor.colorsScheme.getAttributes(key), key.externalName)
@@ -137,8 +145,9 @@ internal class StructuralDiffPreviewAppearanceTest {
   }
 
   /**
-   * The gutter keeps the line marker area, because only that area paints the colors of the changes. The scroll bar keeps the marks of
-   * errors and warnings, but shows no marks of the changes.
+   * The gutter keeps the line marker area, because only that area paints the colors of the changes. The line numbers of a line with
+   * changed words get the light color of the line. The scroll bar keeps the marks of errors and warnings, but shows no marks of the
+   * changes.
    */
   private fun assertIconFreeGutter(editor: EditorEx) {
     assertTrue(editor.settings.isLineMarkerAreaShown)
@@ -146,6 +155,8 @@ internal class StructuralDiffPreviewAppearanceTest {
     assertFalse(editor.settings.isFoldingOutlineShown)
     assertTrue(editor.settings.isLineNumbersShown)
     assertFalse(hasArrows(editor))
+    assertTrue(wordLineMarkers(editor).all { it.gutterMode == it.editorMode },
+               "The line numbers of changed words get the color of the line")
     assertTrue((editor.markupModel as EditorMarkupModel).isErrorStripeVisible)
     assertFalse(hasChangeMarks(editor))
   }
@@ -154,6 +165,17 @@ internal class StructuralDiffPreviewAppearanceTest {
 
   private fun hasChangeMarks(editor: EditorEx): Boolean =
     editor.markupModel.allHighlighters.any { it.getErrorStripeMarkColor(editor.colorsScheme) != null }
+
+  /** The gutter markers of the lines with changed words. The diff of the test changes one word, so each editor has such a line. */
+  private fun wordLineMarkers(editor: EditorEx): List<DiffLineMarkerRenderer> {
+    val markers = editor.markupModel.allHighlighters.mapNotNull { it.lineMarkerRenderer as? DiffLineMarkerRenderer }
+      .filter { it.editorMode == DiffDrawUtil.PaintMode.IGNORED }
+    assertFalse(markers.isEmpty(), "The changed word gives its line the light color")
+    return markers
+  }
+
+  private fun dividerPainter(viewer: SimpleDiffViewer): DiffSplitter.Painter? =
+    checkNotNull(UIUtil.findComponentOfType(viewer.component, DiffSplitter::class.java)).painter
 
   /** The diff paints a line with changed words in the foreground color of the key, and the words in its background color. */
   private fun assertLineColor(editor: EditorEx, key: TextAttributesKey, hue: Hue) {
