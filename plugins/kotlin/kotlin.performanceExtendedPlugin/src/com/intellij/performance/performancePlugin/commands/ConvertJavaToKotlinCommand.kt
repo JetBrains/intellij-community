@@ -9,13 +9,15 @@ import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.psi.PsiJavaFile
 import com.jetbrains.performancePlugin.commands.OpenFileCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.kotlin.j2k.JavaToKotlinService
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.j2k.JavaToKotlinService
+import org.jetbrains.kotlin.j2k.KotlinJ2kBundle
 
 class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
     companion object {
@@ -33,11 +35,13 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
             TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use {
-                project.service<JavaToKotlinService>().convert(
-                    files = listOf(javaFile),
-                    module = module,
-                    updateExternalUsages = false,
-                )
+                withModalProgress(project, KotlinJ2kBundle.message("j2k.phase.converting")) {
+                    project.service<JavaToKotlinService>().convert(
+                        files = listOf(javaFile),
+                        module = module,
+                        updateExternalUsages = false,
+                    )
+                }
             }
         }
     }

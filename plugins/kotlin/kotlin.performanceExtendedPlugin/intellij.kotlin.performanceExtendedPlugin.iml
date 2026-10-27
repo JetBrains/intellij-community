@@ -61,5 +61,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.compiler.common" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k" />
+    <orderEntry type="module" module-name="intellij.platform.ide.progress" />
   </component>
 </module>

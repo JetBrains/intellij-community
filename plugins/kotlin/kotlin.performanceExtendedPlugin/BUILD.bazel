@@ -80,6 +80,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
         "//plugins/kotlin/base/project-structure",
         "//plugins/kotlin/j2k/k2:kotlin-j2k",
+        "//platform/progress/shared:ide-progress",
     ],
 )
 
@@ -132,6 +133,7 @@ jvm_library(
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//plugins/kotlin/base/project-structure:project-structure_test_lib",
         "//plugins/kotlin/j2k/k2:kotlin-j2k_test_lib",
+        "//platform/progress/shared:ide-progress_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.performanceExtendedPlugin` end
