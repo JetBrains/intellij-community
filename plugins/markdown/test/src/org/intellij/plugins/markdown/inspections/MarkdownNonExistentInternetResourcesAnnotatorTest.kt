@@ -5,6 +5,7 @@ import com.intellij.markdown.backend.inspections.MarkdownNonExistentInternetReso
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.sun.net.httpserver.HttpServer
 import java.net.InetSocketAddress
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 class MarkdownNonExistentInternetResourcesAnnotatorTest : BasePlatformTestCase() {
@@ -16,20 +17,33 @@ class MarkdownNonExistentInternetResourcesAnnotatorTest : BasePlatformTestCase()
         [Available]($root/available)
         [Missing](<warning>$root/missing</warning>)
         <<warning>$root/missing-autolink</warning>>
+        [Gone](<warning>$root/gone</warning>)
+        [Forbidden]($root/forbidden)
+        [Server error]($root/error)
       """.trimIndent())
 
       myFixture.checkHighlighting()
-      assertEquals(3, server.requestCount.get())
+      assertEquals(6, server.requestCount.get())
+      assertTrue(server.userAgents.toString(), server.userAgents.none { it.isEmpty() || it.startsWith("Java/") })
     }
   }
 
   private class TestHttpServer : AutoCloseable {
     val requestCount = AtomicInteger()
+    val userAgents = ConcurrentLinkedQueue<String>()
 
     private val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
       createContext("/") { exchange ->
         requestCount.incrementAndGet()
-        val status = if (exchange.requestURI.path.startsWith("/missing")) 404 else 200
+        userAgents.add(exchange.requestHeaders.getFirst("User-Agent").orEmpty())
+        val path = exchange.requestURI.path
+        val status = when {
+          path.startsWith("/missing") -> 404
+          path == "/gone" -> 410
+          path == "/forbidden" -> 403
+          path == "/error" -> 500
+          else -> 200
+        }
         exchange.sendResponseHeaders(status, -1)
         exchange.close()
       }

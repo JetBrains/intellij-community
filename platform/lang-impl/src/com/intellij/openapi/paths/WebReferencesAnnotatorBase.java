@@ -14,11 +14,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.io.HttpRequests;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.HttpURLConnection;
 import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -28,6 +30,12 @@ import java.util.Map;
 @ApiStatus.Internal
 public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebReferencesAnnotatorBase.MyInfo[], WebReferencesAnnotatorBase.MyInfo[]> {
   private static final Logger LOG = Logger.getInstance(WebReferencesAnnotatorBase.class);
+  /**
+   * Returns the HTTP status codes that mark a link as non-existent.
+   * Other HTTP errors, such as {@code 403 Forbidden}, mark the link as available.
+   * The default codes are {@code 404 Not Found} and {@code 410 Gone}.
+   */
+  private static final IntSet NON_EXISTENT_RESOURCE_STATUS_CODES = IntSet.of(HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_GONE);
 
   private final Map<String, MyFetchCacheEntry> myFetchCache = new HashMap<>();
   private final Object myFetchCacheLock = new Object();
@@ -154,7 +162,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
 
     try {
-      HttpRequests.request(url).connectTimeout(3000).readTimeout(3000).tryConnect();
+      HttpRequests.request(url).productNameAsUserAgent().connectTimeout(3000).readTimeout(3000).tryConnect();
     }
     catch (UnknownHostException e) {
       LOG.info(e);
@@ -162,7 +170,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
     catch (HttpRequests.HttpStatusException e) {
       LOG.info(e);
-      return MyFetchResult.NONEXISTENCE;
+      return NON_EXISTENT_RESOURCE_STATUS_CODES.contains(e.getStatusCode()) ? MyFetchResult.NONEXISTENCE : MyFetchResult.OK;
     }
     catch (IOException e) {
       LOG.info(e);

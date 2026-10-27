@@ -812,6 +812,10 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
     doTestWebLinks(true);
   }
 
+  public void testWebLinksValidator8() throws Exception {
+    doTestWebLinks(true);
+  }
+
   public void testWI5823() {
     ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
     String defaultHtmlDoctype = manager.getDefaultHtmlDoctype(getProject());
@@ -968,6 +972,15 @@ public class HtmlHighlightingTest extends BasePlatformTestCase {
 
                   if (httpRequest.contains("nonexistent-resource")) {
                     writer.println("HTTP/1.0 404 Not Found\n");
+                  }
+                  else if (httpRequest.contains("gone-resource")) {
+                    writer.println("HTTP/1.0 410 Gone\n");
+                  }
+                  else if (httpRequest.contains("forbidden-resource")) {
+                    writer.println("HTTP/1.0 403 Forbidden\n");
+                  }
+                  else if (httpRequest.contains("error-resource")) {
+                    writer.println("HTTP/1.0 500 Internal Server Error\n");
                   }
                   else {
                     writer.println("HTTP/1.0 200 OK\n");
