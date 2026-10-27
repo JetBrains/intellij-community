@@ -1890,7 +1890,7 @@ class GradleTestAssertionTest : GradleTestExecutionTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
-  @TargetVersions(GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE)
+  @TargetVersions("4.10+", GRADLE_CLASSPATH_ENHANCEMENT_POSSIBLE)
   fun `test controlled spread of Gradle daemon's pollution`(gradleVersion: GradleVersion) {
     testJavaProject(gradleVersion) {
       writeText("src/test/java/org/example/TestCase.java", """
