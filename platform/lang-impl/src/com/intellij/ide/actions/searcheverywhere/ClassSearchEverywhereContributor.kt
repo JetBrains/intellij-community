@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -59,6 +60,7 @@ open class ClassSearchEverywhereContributor @Internal constructor(event: AnActio
 
     val model = GotoClassModel2(project)
     model.setFilterItems(filter.selectedElements)
+    Disposer.register(operationDisposable ?: this, model)
     return model
   }
 
@@ -68,6 +70,7 @@ open class ClassSearchEverywhereContributor @Internal constructor(event: AnActio
 
     val model = GotoClassModel2(project)
     model.setFilterItems(filter.selectedElements)
+    Disposer.register(this, model)
     return model
   }
 
