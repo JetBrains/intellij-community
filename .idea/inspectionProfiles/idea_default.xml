@@ -2185,7 +2185,7 @@
         <constraint name="project" within="" contains="" />
         <constraint name="PsiManager" nameOfExprType="com\.intellij\.psi\.PsiManager" minCount="0" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="can use ArrayUtil" uuid="d28d1bfc-45ff-3472-864c-6e13c1d1688d" description="emptyCollection.toArray() creates new array whereas ArrayUtil.toArray() methods don't&#10;similarly, ArrayUtil.EMPTY_*_ARRAY don't allocate  " problemDescriptor="can use ArrayUtil" text="$collection$.toArray(new Object[$collection$.size()])" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toObjectArray($collection$)">
+      <replaceConfiguration name="can use ArrayUtil" uuid="d28d1bfc-45ff-3472-864c-6e13c1d1688d" description="emptyCollection.toArray() creates new array whereas ArrayUtil.toArray() methods don't&#10;similarly, ArrayUtil.EMPTY_*_ARRAY don't allocate  " suppressId="ArrayUtilUsage" problemDescriptor="can use ArrayUtil" text="$collection$.toArray(new Object[$collection$.size()])" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toObjectArray($collection$)">
         <constraint name="collection" within="" contains="" />
       </replaceConfiguration>
       <replaceConfiguration name="can use ArrayUtil" uuid="d28d1bfc-45ff-3472-864c-6e13c1d1688d" text="$collection$.toArray(new Object[0])" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="com.intellij.util.ArrayUtil.toObjectArray($collection$)">
@@ -4037,7 +4037,7 @@
         <constraint name="Condition" regexp="is Filesystem.Eel" within="" contains="" />
         <constraint name="Expression" within="" contains="" />
       </searchConfiguration>
-      <searchConfiguration name="Use RecursionManager?" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
+      <searchConfiguration name="Use RecursionManager?" suppressId="RecursionManagerUsage" text="class $Class$ { &#10;  ThreadLocal&lt;$FieldType$&gt; $FieldName$ = $Init$;&#10;}" recursive="false" caseInsensitive="false" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="FieldType" regexp="Collection" withinHierarchy="true" target="true" within="" contains="" />
         <constraint name="FieldName" maxCount="2147483647" within="" contains="" />
