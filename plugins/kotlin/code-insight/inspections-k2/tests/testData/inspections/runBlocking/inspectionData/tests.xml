@@ -210,35 +210,16 @@
       <input_file path="SameNameInPackageBlocking.kt"/>
       <input_file path="SameNameInPackageSuspend.kt"/>
     </input_files>
-    <problems>
-      <problem>
-        <trace_element fq_name="sameNameInPackage.main" file="SameNameInPackageSuspend.kt" offset="39"/>
-        <trace_element fq_name="--> runBlocking" file="SameNameInPackageBlocking.kt" offset="83"/>
-      </problem>
-    </problems>
   </test>
   <test name="RunBlocking in an extension function with the same name as a suspend extension function on another receiver">
     <input_files>
       <input_file path="SameNameDifferentReceivers.kt"/>
     </input_files>
-    <problems>
-      <problem>
-        <trace_element fq_name="sameNameDifferentReceivers.process" file="SameNameDifferentReceivers.kt" offset="137"/>
-        <trace_element fq_name="--> runBlocking" file="SameNameDifferentReceivers.kt" offset="102"/>
-      </problem>
-    </problems>
   </test>
   <test name="RunBlocking in a private function with the same name as a private function in another file of the package">
     <input_files>
       <input_file path="SamePrivateNameBlocking.kt"/>
       <input_file path="SamePrivateNameCoroutine.kt"/>
     </input_files>
-    <problems>
-      <problem>
-        <trace_element fq_name="samePrivateName.work" file="SamePrivateNameCoroutine.kt" offset="63"/>
-        <trace_element fq_name="samePrivateName.helper" file="SamePrivateNameCoroutine.kt" offset="76"/>
-        <trace_element fq_name="--> runBlocking" file="SamePrivateNameBlocking.kt" offset="91"/>
-      </problem>
-    </problems>
   </test>
 </tests>

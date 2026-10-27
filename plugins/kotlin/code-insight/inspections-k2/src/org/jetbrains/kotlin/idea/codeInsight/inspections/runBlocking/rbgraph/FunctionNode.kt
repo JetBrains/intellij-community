@@ -46,7 +46,7 @@ internal class FunctionNode(
     
     companion object {
         fun generateId(psiFun: KtNamedFunction): String {
-            return "${psiFun.fqName}_${buildString{ psiFun.valueParameters.forEach { append(it.typeReference?.text) }}}"
+            return "${psiFun.fqName}_${MyPsiUtils.getUrl(psiFun)}"
         }
     }
 
