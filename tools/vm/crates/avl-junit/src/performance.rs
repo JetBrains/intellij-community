@@ -10,8 +10,9 @@
 //! Its metrics still reach TeamCity as `testMetadata`.
 //!
 //! The format is `PerformanceMetricsDto` of `intellij.tools.ide.metrics.collector`, version 1, as the JVM host wrote it.
-//! A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is a ratio, and it is the
-//! counter `<name>.x100` of its value times 100. Every other metric is a counter. The format keeps whole numbers, so a
+//! A metric whose name starts with `growth.` is a ratio, and it is the counter `<name>.x100` of its value times 100,
+//! also when the name of its step ends with `Ms`. Another metric whose name ends with `Ms` is a duration. Every other
+//! metric is a counter. The format keeps whole numbers, so a
 //! value is rounded, and a half goes up.
 
 use std::collections::BTreeMap;
@@ -201,7 +202,9 @@ struct Metric {
 
 fn metric(name: &str, value: &serde_json::Number) -> Metric {
     let value = value.as_f64().unwrap_or_default();
-    if name.ends_with("Ms") {
+    if name.starts_with("growth.") {
+        counter(format!("{name}.x100"), whole(value * 100.0))
+    } else if name.ends_with("Ms") {
         let duration = whole(value);
         Metric {
             n: name.to_owned(),
@@ -209,8 +212,6 @@ fn metric(name: &str, value: &serde_json::Number) -> Metric {
             c: None,
             v: duration,
         }
-    } else if name.starts_with("growth.") {
-        counter(format!("{name}.x100"), whole(value * 100.0))
     } else {
         counter(name.to_owned(), whole(value))
     }

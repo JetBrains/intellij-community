@@ -59,7 +59,14 @@ fn a_duration_a_growth_and_a_counter_keep_whole_numbers() {
         &series("AirManyAgentsUiTest", "many-agents", "air-many-agents"),
         "271.1",
         GENERATED,
-        &metrics(json!({"firstShowMs": 1234.5, "growth.heapMiB": 0.125, "rows": 300, "frames": 2.4, "driftMs": -2.5})),
+        &metrics(json!({
+            "firstShowMs": 1234.5,
+            "growth.heapMiB": 0.125,
+            "growth.open.coverRemovedMs": 2.437,
+            "rows": 300,
+            "frames": 2.4,
+            "driftMs": -2.5
+        })),
     );
     let document: Value = serde_json::from_str(&text).unwrap();
     assert_eq!(
@@ -69,6 +76,7 @@ fn a_duration_a_growth_and_a_counter_keep_whole_numbers() {
             {"n": "firstShowMs", "d": 1235, "v": 1235},
             {"n": "frames", "c": 2, "v": 2},
             {"n": "growth.heapMiB.x100", "c": 13, "v": 13},
+            {"n": "growth.open.coverRemovedMs.x100", "c": 244, "v": 244},
             {"n": "rows", "c": 300, "v": 300},
         ])
     );
