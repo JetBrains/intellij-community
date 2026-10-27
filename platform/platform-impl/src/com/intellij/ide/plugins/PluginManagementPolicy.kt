@@ -17,6 +17,11 @@ import org.jetbrains.annotations.ApiStatus
 interface PluginManagementPolicy {
 
   /**
+   * Returns whether this policy can currently apply.
+   */
+  fun isAvailable(): Boolean = true
+
+  /**
    * Whether to show that an upgrade is available for a plugin.
    *
    * Pay close attention to the fact that if multiple plugin sources are present, there can be more than one [remoteDescriptor]
@@ -71,6 +76,6 @@ interface PluginManagementPolicy {
     val EP: ExtensionPointName<PluginManagementPolicy> = ExtensionPointName("com.intellij.pluginManagementPolicy")
 
     @JvmStatic
-    fun getInstance(): PluginManagementPolicy = EP.extensionList.firstOrNull() ?: DefaultPluginManagementPolicyImpl
+    fun getInstance(): PluginManagementPolicy = EP.extensionList.firstOrNull { it.isAvailable() } ?: DefaultPluginManagementPolicyImpl
   }
 }

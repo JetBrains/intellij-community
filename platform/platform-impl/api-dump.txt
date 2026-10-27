@@ -1135,6 +1135,7 @@ f:com.intellij.ide.plugins.CountIcon
 f:com.intellij.ide.plugins.DefaultPluginManagementPolicy
 - <init>():V
 - canEnablePlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
+- isAvailable():Z
 - isInstallFromDiskAllowed():Z
 - isPluginAutoUpdateAllowed():Z
 f:com.intellij.ide.plugins.DependencyInformation

@@ -6,6 +6,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.disposableFixture
 import org.junit.jupiter.api.Test
 import kotlin.test.assertFalse
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 @TestApplication
@@ -17,6 +18,7 @@ internal class PluginManagementPolicyTest {
     maskPolicies()
 
     val policy = PluginManagementPolicy.getInstance()
+    assertTrue(policy.isAvailable(), "the default policy is available")
     assertTrue(policy.isUpgradeAllowed(null, null), "the default allows upgrades")
     assertFalse(policy.isDowngradeAllowed(null, null), "the default denies downgrades")
     assertTrue(policy.canEnablePlugin(null), "the default allows enabling plugin")
@@ -45,12 +47,44 @@ internal class PluginManagementPolicyTest {
     assertFalse(PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed())
   }
 
+  @Test
+  fun `selects the first available extension`() {
+    val firstAvailable = FakePolicy()
+    maskPolicies(FakePolicy(available = false), firstAvailable, FakePolicy())
+
+    assertSame(firstAvailable, PluginManagementPolicy.getInstance())
+  }
+
+  @Test
+  fun `uses the default when all extensions are unavailable`() {
+    maskPolicies(FakePolicy(available = false), FakePolicy(available = false))
+
+    val policy = PluginManagementPolicy.getInstance()
+
+    assertTrue(policy.isAvailable(), "the default policy is available")
+    assertFalse(policy.isDowngradeAllowed(null, null), "the default denies downgrades")
+  }
+
+  @Test
+  fun `checks availability for each lookup`() {
+    val first = FakePolicy(available = false)
+    val second = FakePolicy()
+    maskPolicies(first, second)
+
+    assertSame(second, PluginManagementPolicy.getInstance())
+
+    first.available = true
+
+    assertSame(first, PluginManagementPolicy.getInstance())
+  }
+
   private fun maskPolicies(vararg policies: PluginManagementPolicy) {
     ExtensionTestUtil.maskExtensions(PluginManagementPolicy.EP, policies.asList(), testDisposable.get())
   }
 }
 
 private class FakePolicy(
+  var available: Boolean = true,
   private val upgradeAllowed: Boolean = true,
   private val downgradeAllowed: Boolean = true,
   private val enableAllowed: Boolean = true,
@@ -58,6 +92,7 @@ private class FakePolicy(
   private val installFromDiskAllowed: Boolean = true,
   private val autoUpdateAllowed: Boolean = true,
 ) : PluginManagementPolicy {
+  override fun isAvailable(): Boolean = available
   override fun isUpgradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean = upgradeAllowed
   override fun isDowngradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean = downgradeAllowed
   override fun canEnablePlugin(descriptor: IdeaPluginDescriptor?): Boolean = enableAllowed
