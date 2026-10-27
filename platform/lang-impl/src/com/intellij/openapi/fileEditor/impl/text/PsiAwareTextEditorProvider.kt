@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.CompletableDeferred
@@ -80,6 +81,9 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
       span("editor necropolis preload") {
         Necropolis.getInstanceAsync(project)
       }
+
+      // the editor listeners on EDT can detect the file type from the content, which asks for the project encoding
+      project.serviceAsync<EncodingProjectManager>()
 
       val highlighterDeferred = async(CoroutineName("editor highlighter creating")) {
         val scheme = serviceAsync<EditorColorsManager>().globalScheme
