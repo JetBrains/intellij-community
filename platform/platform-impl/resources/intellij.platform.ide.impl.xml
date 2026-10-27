@@ -137,6 +137,9 @@
     <extensionPoint qualifiedName="com.intellij.pluginManagementPolicy"
                     interface="com.intellij.ide.plugins.PluginManagementPolicy"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.productVersionPolicy"
+                    interface="com.intellij.openapi.updateSettings.ProductVersionPolicy"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.provisionedServiceRegistry"
                     interface="com.intellij.platform.ide.provisioner.ProvisionedServiceRegistry"
                     dynamic="true"/>

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.openapi.updateSettings.ProductVersionPolicy
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.util.containers.MultiMap
@@ -14,6 +15,7 @@ class UpdateStrategy @JvmOverloads constructor(
   private val product: Product?,
   private val settings: UpdateSettings,
   private val customization: UpdateStrategyCustomization = UpdateStrategyCustomization.getInstance(),
+  private val policies: List<ProductVersionPolicy> = ProductVersionPolicy.EP_NAME.extensionsIfPointIsRegistered,
 ) {
   fun checkForUpdates(): PlatformUpdates {
     if (product == null || product.channels.isEmpty()) {
@@ -38,7 +40,8 @@ class UpdateStrategy @JvmOverloads constructor(
   private fun isApplicable(candidate: BuildInfo, ignoredBuilds: Set<String>): Boolean =
     customization.isNewerVersion(candidate.number, currentBuild) &&
     candidate.number.asStringWithoutProductCode() !in ignoredBuilds &&
-    candidate.target?.inRange(currentBuild) ?: true
+    (candidate.target?.inRange(currentBuild) ?: true) &&
+    policies.all { it.isVersionAllowed(candidate.number) }
 
   private fun compareBuilds(n1: BuildNumber, n2: BuildNumber): Int {
     val preferSameMajorVersion = customization.haveSameMajorVersion(currentBuild, n1).compareTo(customization.haveSameMajorVersion(currentBuild, n2))

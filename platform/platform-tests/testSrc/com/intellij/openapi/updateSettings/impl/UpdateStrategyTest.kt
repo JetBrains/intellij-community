@@ -1,16 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.openapi.updateSettings.ProductVersionPolicy
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.updateSettings.impl.productMigration.distributionXml
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
-import org.junit.Assert.assertTrue
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Test
 
 // unless stated otherwise, the behavior described in cases is true for 162+
 class UpdateStrategyTest {
@@ -376,12 +377,73 @@ class UpdateStrategyTest {
     assertThat(result.patches?.chain).isEqualTo(listOf("183.3795.13", "183.3975.18", "183.4139.22").map(BuildNumber::fromString))
   }
 
+  @Test fun `a product version policy hides a prohibited build and keeps an earlier allowed build`() {
+    val result = assertLoaded("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = listOf(BlockingPolicy("262.102")))
+    assertBuild("262.101", result.newBuild)
+  }
+
+  @Test fun `prohibited minor updates do not hide an allowed major update`() {
+    val policies = listOf(BlockingPolicy("262.101", "262.102"))
+    assertBuild("263.100", assertLoaded("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = policies).newBuild)
+  }
+
+  @Test fun `every product version policy must allow a target build`() {
+    val policies = listOf(BlockingPolicy("262.102"), BlockingPolicy("262.101"))
+    assertBuild("263.100", assertLoaded("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = policies).newBuild)
+  }
+
+  @Test fun `no allowed target build produces no update`() {
+    val policies = listOf(BlockingPolicy("262.101", "262.102", "263.100"))
+    assertTrue(check("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = policies) is PlatformUpdates.Empty)
+  }
+
+  @Test fun `a product version policy does not enable an unselected channel`() {
+    val policies = listOf(BlockingPolicy("262.101", "262.102", "263.100"))
+    assertTrue(check("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = policies) is PlatformUpdates.Empty)
+    assertBuild("264.100", assertLoaded("IU-262.100", ChannelStatus.EAP, POLICY_CHANNELS, policies = policies).newBuild)
+  }
+
+  @Test fun `ignored builds stay excluded with a product version policy`() {
+    val result = assertLoaded("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, listOf("262.101"), listOf(BlockingPolicy("262.102")))
+    assertBuild("263.100", result.newBuild)
+  }
+
+  @Test fun `a prohibited intermediate patch does not prohibit an allowed target build`() {
+    val result = assertLoaded("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = listOf(BlockingPolicy("262.101")))
+    assertBuild("262.102", result.newBuild)
+    assertEquals(listOf("262.100", "262.101", "262.102"), result.patches?.chain?.map { it.asStringWithoutProductCode() })
+  }
+
+  @Test fun `a product version policy is asked on every check`() {
+    val policy = BlockingPolicy("262.102")
+    val strategy = strategy("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = listOf(policy))
+    assertBuild("262.101", (strategy.checkForUpdates() as PlatformUpdates.Loaded).newBuild)
+    policy.blockedBuilds = emptySet()
+    assertBuild("262.102", (strategy.checkForUpdates() as PlatformUpdates.Loaded).newBuild)
+  }
+
+  @Test fun `a product version policy receives the target product code`() {
+    val policy = BlockingPolicy()
+    check("IU-262.100", ChannelStatus.RELEASE, POLICY_CHANNELS, policies = listOf(policy))
+    assertTrue(policy.checkedBuilds.isNotEmpty())
+    assertTrue(policy.checkedBuilds.all { it.productCode == "IU" })
+  }
+
   private fun check(
     currentBuild: String,
     selectedChannel: ChannelStatus,
     testData: String,
     ignoredBuilds: List<String> = emptyList(),
-  ): PlatformUpdates {
+    policies: List<ProductVersionPolicy> = emptyList(),
+  ): PlatformUpdates = strategy(currentBuild, selectedChannel, testData, ignoredBuilds, policies).checkForUpdates()
+
+  private fun strategy(
+    currentBuild: String,
+    selectedChannel: ChannelStatus,
+    testData: String,
+    ignoredBuilds: List<String> = emptyList(),
+    policies: List<ProductVersionPolicy> = emptyList(),
+  ): UpdateStrategy {
     val updatesInfoText = """
           <products>
             <product name="IntelliJ IDEA">
@@ -398,7 +460,8 @@ class UpdateStrategyTest {
       parseUpdateData(JDOMUtil.load(updatesInfoText), "IU", distributionOs = "mac"),
       settings,
       UpdateStrategyCustomization(),
-    ).checkForUpdates()
+      policies,
+    )
   }
 
   private fun assertLoaded(
@@ -406,12 +469,35 @@ class UpdateStrategyTest {
     selectedChannel: ChannelStatus,
     testData: String,
     ignoredBuilds: List<String> = emptyList(),
+    policies: List<ProductVersionPolicy> = emptyList(),
   ): PlatformUpdates.Loaded {
-    val result = check(currentBuild, selectedChannel, testData, ignoredBuilds)
+    val result = check(currentBuild, selectedChannel, testData, ignoredBuilds, policies)
     assertThat(result is PlatformUpdates.Loaded)
     return result as PlatformUpdates.Loaded
   }
 
   private fun assertBuild(expected: String, build: BuildInfo) =
     assertEquals(expected, build.number.asStringWithoutProductCode())
+
+  private class BlockingPolicy(vararg blockedBuilds: String) : ProductVersionPolicy {
+    var blockedBuilds: Set<String> = blockedBuilds.toSet()
+    val checkedBuilds = mutableListOf<BuildNumber>()
+
+    override fun isVersionAllowed(build: BuildNumber): Boolean {
+      checkedBuilds.add(build)
+      return build.asStringWithoutProductCode() !in blockedBuilds
+    }
+  }
+
+  private companion object {
+    const val POLICY_CHANNELS = """
+      <channel id="release" status="release" licensing="release">
+        <build number="262.101" version="2026.2.1"><patch from="262.100"/></build>
+        <build number="262.102" version="2026.2.2"><patch from="262.101"/></build>
+        <build number="263.100" version="2026.3"/>
+      </channel>
+      <channel id="eap" status="eap" licensing="eap">
+        <build number="264.100" version="2027.1 EAP"/>
+      </channel>"""
+  }
 }
