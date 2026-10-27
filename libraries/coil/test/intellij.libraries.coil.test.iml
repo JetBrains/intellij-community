@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="io.coil.kt.coil3.test.jvm" type="repository">
+        <properties include-transitive-deps="false" maven-id="io.coil-kt.coil3:coil-test-jvm:3.2.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar">
+              <sha256sum>bea462cdc351c04dc4895f028b847d65a7dbae72a9b3999ea1089cd56ded43ad</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/coil-kt/coil3/coil-test-jvm/3.2.0/coil-test-jvm-3.2.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>

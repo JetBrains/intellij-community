@@ -429,6 +429,7 @@ libraries/cli-parser
 libraries/clikt
 libraries/cloud-config-client
 libraries/coil
+libraries/coil/test
 libraries/commons/cli
 libraries/commons/codec
 libraries/commons/compress

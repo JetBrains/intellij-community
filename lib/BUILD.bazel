@@ -6658,7 +6658,7 @@ copy_file(
 )
 
 jvm_import(
-    name = "libraries-coil-io-coil-kt-coil3-test-jvm",
+    name = "libraries-coil-test-io-coil-kt-coil3-test-jvm",
     jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0_http//file",
     source_jar = "@io_coil-kt_coil3-coil-test-jvm-3_2_0-sources_http//file",
     visibility = ["//visibility:public"],

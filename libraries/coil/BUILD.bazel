@@ -30,7 +30,6 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
-        "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
     ],
     runtime_deps = [
@@ -56,7 +55,6 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-coil-io-coil-kt-coil3-network-ktor3-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-svg-jvm",
-        "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
         "@lib//:libraries-coil-io-coil-kt-coil3-compose-jvm",
     ],
     runtime_deps = [
@@ -64,7 +62,6 @@ jvm_library(
         ":coil",
         "//libraries/ktor/client:client_test_lib",
         "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "@lib//:libraries-coil-io-coil-kt-coil3-test-jvm",
     ],
 )
 ### auto-generated section `build intellij.libraries.coil` end

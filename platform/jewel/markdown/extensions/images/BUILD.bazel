@@ -154,6 +154,8 @@ jvm_library(
         "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/coil",
         "//libraries/coil:coil_test_lib",
+        "//libraries/coil/test",
+        "//libraries/coil/test:test_test_lib",
         "//libraries/junit4",
         "//libraries/junit4:junit4_test_lib",
         "//libraries/kotlinx/coroutines/test",

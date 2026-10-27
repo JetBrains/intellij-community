@@ -1100,6 +1100,7 @@
       <module fileurl="file://$PROJECT_DIR$/libraries/clikt/intellij.libraries.clikt.iml" filepath="$PROJECT_DIR$/libraries/clikt/intellij.libraries.clikt.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/cloud-config-client/intellij.libraries.cloud.config.client.iml" filepath="$PROJECT_DIR$/libraries/cloud-config-client/intellij.libraries.cloud.config.client.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/coil/intellij.libraries.coil.iml" filepath="$PROJECT_DIR$/libraries/coil/intellij.libraries.coil.iml" />
+      <module fileurl="file://$PROJECT_DIR$/libraries/coil/test/intellij.libraries.coil.test.iml" filepath="$PROJECT_DIR$/libraries/coil/test/intellij.libraries.coil.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/cli/intellij.libraries.commons.cli.iml" filepath="$PROJECT_DIR$/libraries/commons/cli/intellij.libraries.commons.cli.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/codec/intellij.libraries.commons.codec.iml" filepath="$PROJECT_DIR$/libraries/commons/codec/intellij.libraries.commons.codec.iml" />
       <module fileurl="file://$PROJECT_DIR$/libraries/commons/compress/intellij.libraries.commons.compress.iml" filepath="$PROJECT_DIR$/libraries/commons/compress/intellij.libraries.commons.compress.iml" />
