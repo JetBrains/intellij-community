@@ -1114,7 +1114,7 @@
     <applicationService serviceInterface="com.intellij.notification.DoNotAskAppManager"
                         serviceImplementation="com.intellij.notification.impl.DoNotAskAppManagerImpl"/>
     <projectService serviceInterface="com.intellij.notification.DoNotAskProjectManager"
-                    serviceImplementation="com.intellij.notification.impl.DoNotAskProjectManagerImpl"/>
+                    serviceImplementation="com.intellij.notification.impl.DoNotAskProjectManagerImpl" preload="true"/>
     <applicationSettings service="com.intellij.notification.impl.DoNotAskAppManagerImpl"/>
     <projectSettings service="com.intellij.notification.impl.DoNotAskProjectManagerImpl"/>
     <applicationSettings service="com.intellij.notification.impl.NotificationsConfigurationImpl"/>
