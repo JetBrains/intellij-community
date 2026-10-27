@@ -1208,12 +1208,6 @@ internal class BazelBuildFileGenerator(
   }
 }
 
-// This is a usual convention in the intellij repository for storing classpath for running tests
-// ex.: intellij.idea.community.main intellij.rubymine.main
-private fun isTestClasspathModule(module: ModuleDescriptor): Boolean {
-  return module.module.name.split('.').contains("main")
-}
-
 private fun getTestClasspathModule(module: ModuleDescriptor, moduleList: ModuleList): ModuleDescriptor? {
   val moduleName = module.module.name
 
