@@ -701,6 +701,11 @@ The lane's side is [Flow UI Scenario Traces](../../../../plugins/air/spec/docs/f
   zips. `--root` adds a place, and `--no-default-roots` drops the defaults.
   [@test] ../crates/air-trace/src/serve/tests.rs
 
+- The defaults include the export directory of the checkout, `out/air/vm-export/runs`. A run of another host
+  exports its zips there with `AIR_VM_EXPORT`, and yonder copies them back.
+  [@test] ../crates/avl-trace-tools/src/discover/tests.rs (`the_default_roots_find_the_exported_zips_of_the_checkout`)
+  [@test] ../crates/avl-vm/src/daemon/export/tests.rs
+
 - A zip entry that ends in `.zip` and lies outside every bundle is an inner zip. Discovery extracts it once into
   the cache and reads it as a zip, one level deep. Its bundles name the container `<outer>!/<entry>`, and the
   server serves them from the extraction. A planner without a cache extracts into a temporary directory. An inner

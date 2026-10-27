@@ -28,6 +28,7 @@ use std::str::FromStr;
 use std::sync::OnceLock;
 use std::time::Duration;
 
+use avl_trace_tools::discover::VM_EXPORT_DIR;
 use serde::{Deserialize, Serialize};
 
 use crate::refusal::RefusalExt;
@@ -534,6 +535,20 @@ impl fmt::Display for PoolRule {
             Self::ParallelsVm => f.write_str("AIR_VM_PARALLELS_VM"),
         }
     }
+}
+
+/// What a run copies into the export directory of the checkout, [`VM_EXPORT_DIR`] (`AIR_VM_EXPORT`).
+///
+/// The export is for a run on another host: `.yonder.toml` sets the variable, and yonder copies the directory back.
+/// The runtime root of this host keeps the same files, so a run here exports nothing by default.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Export {
+    /// No export.
+    Off,
+    /// The journal, the reports and the trace zips of the scenarios that did not pass.
+    Failed,
+    /// The journal, the reports and every trace zip.
+    All,
 }
 
 /// A size in MiB as GiB: `128 GiB`, or `7.5 GiB` when it is not a whole number.
@@ -1214,6 +1229,10 @@ pub struct Config {
     /// The output root of the `testing-ui` skill, where the controller reads the control port, its bearer and the
     /// display description: `out/testing-ui` of the checkout that holds the workspace.
     pub container_linux_root: PathBuf,
+    /// What a run exports (`AIR_VM_EXPORT`).
+    pub export: Export,
+    /// Where a run exports to: [`VM_EXPORT_DIR`] of the checkout that holds the workspace.
+    pub export_root: PathBuf,
     /// The host loopback port at which the container-linux `start` publishes the daemon's guest port
     /// (`AIR_VM_DAEMON_HOST_PORT`). The default derives from the checkout path, so two checkouts never share it and it
     /// stays the same across restarts.
@@ -1484,6 +1503,18 @@ impl Config {
             ));
         }
 
+        let export = match reader.string("AIR_VM_EXPORT", "off").as_str() {
+            "off" => Export::Off,
+            "failed" => Export::Failed,
+            "all" => Export::All,
+            other => {
+                reader.refuse(Refusal::invalid_environment(format!(
+                    r#"AIR_VM_EXPORT must be "off", "failed" or "all", not {other:?}"#
+                )));
+                Export::Off
+            }
+        };
+
         let root_disk_opts = reader.string("AIR_VM_ROOT_DISK_OPTS", "caching=cached,sync=none");
         if !is_root_disk_options(&root_disk_opts) {
             reader.refuse(Refusal::invalid_environment(format!(
@@ -1645,6 +1676,8 @@ impl Config {
             image_root: reader.path("AIR_VM_IMAGE_ROOT", || workspace_dir.join("provision")),
             container_linux_script: checkout.join(".agents/skills/testing-ui/scripts/container.cmd"),
             container_linux_root: checkout.join("out/testing-ui"),
+            export,
+            export_root: checkout.join(VM_EXPORT_DIR),
             daemon_host_port: {
                 let fallback = derived_host_port(&checkout);
                 let port = reader.bounded_positive_int("AIR_VM_DAEMON_HOST_PORT", u32::from(fallback), u32::from(u16::MAX));

@@ -101,8 +101,8 @@ pub(crate) struct ServeArgs {
     /// The TeamCity server of a --teamcity build given by its id.
     #[arg(long, value_name = "URL", env = "TEAMCITY_URL", default_value = teamcity::DEFAULT_TEAMCITY_URL)]
     pub teamcity_url: String,
-    /// Look only in the --root and --teamcity values, not in the AIR lanes' bazel-testlogs and the VM runs and
-    /// reports.
+    /// Look only in the --root and --teamcity values, not in the AIR lanes' bazel-testlogs, the VM export of the
+    /// checkout and the VM runs and reports.
     #[arg(long)]
     pub no_default_roots: bool,
     /// Make sure a server answers on the port, starting one in the background when none does, then exit.

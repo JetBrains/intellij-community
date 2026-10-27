@@ -561,11 +561,31 @@ fn the_default_roots_find_the_controllers_zips() {
     let unresolved = default_roots(Some(Path::new("/repo")), Err("AIR_VM_RUNTIME_ROOT is not absolute"));
     assert_eq!(
         unresolved.iter().map(|root| root.kind).collect::<Vec<_>>(),
-        [RootKind::BazelTestlogs, RootKind::VmReports, RootKind::VmRuns]
+        [RootKind::BazelTestlogs, RootKind::VmExport, RootKind::VmReports, RootKind::VmRuns]
     );
     let states = Scanner::new(Options::default()).scan(&unresolved).roots;
-    assert_eq!(states[1].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
+    assert_eq!(states[1].error, None, "the export of the checkout needs no runtime root");
     assert_eq!(states[2].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
+    assert_eq!(states[3].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
+}
+
+/// A run that another host exported into the checkout is found by the glob of the runs, under the export directory.
+#[test]
+fn the_default_roots_find_the_exported_zips_of_the_checkout() {
+    let manifest = example_manifest();
+    let repo = tempfile::tempdir().unwrap();
+    let traces = repo.path().join(VM_EXPORT_DIR).join("runs/develar-run-1/traces/iter-1");
+    fs::create_dir_all(&traces).unwrap();
+    let keep = tempfile::tempdir().unwrap();
+    fs::copy(packed_example(&manifest, &keep), traces.join("001.zip")).unwrap();
+    fs::write(traces.join("../../events.ndjson"), "{}\n").unwrap();
+
+    let runtime = tempfile::tempdir().unwrap();
+    let roots = default_roots(Some(repo.path()), Ok(runtime.path()));
+    assert_eq!(roots[1].kind, RootKind::VmExport);
+    let found = Scanner::new(Options::default()).scan(&roots);
+    assert_eq!(found.bundles.len(), 1, "{:?}", found.roots);
+    assert_eq!(found.roots[1].bundles, 1, "{:?}", found.roots);
 }
 
 #[test]

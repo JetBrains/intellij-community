@@ -929,6 +929,20 @@ fn the_idle_stop_is_the_container_engines_alone() {
     }
 }
 
+// A run exports nothing by default. `failed` and `all` name what it exports, always into the export directory of the
+// checkout, and any other value is refused.
+#[test]
+fn the_export_is_off_unless_the_environment_names_it() {
+    let settings = load(docker(), &env(&[]));
+    assert_eq!(settings.export, Export::Off);
+    assert_eq!(settings.export_root, Path::new("/repo/out/air/vm-export"));
+    assert_eq!(load(docker(), &env(&[("AIR_VM_EXPORT", "failed")])).export, Export::Failed);
+    assert_eq!(load(docker(), &env(&[("AIR_VM_EXPORT", "all")])).export, Export::All);
+    let refusal = refuse(docker(), &env(&[("AIR_VM_EXPORT", "yes")]));
+    assert_eq!(refusal.code, "invalid_environment");
+    assert!(refusal.message.contains("AIR_VM_EXPORT"), "{}", refusal.message);
+}
+
 #[test]
 fn the_default_slots_are_a_pure_rule() {
     assert_eq!(default_docker_slots(Some(128 * GIB), 8_192), 4);
