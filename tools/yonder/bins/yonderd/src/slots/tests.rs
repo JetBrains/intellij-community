@@ -71,3 +71,26 @@ fn the_fingerprints_of_a_slot_are_kept_until_its_next_clean() {
     );
     assert!(Prepared::load(dir.path(), "lease-2", 10).steps.is_empty(), "another slot");
 }
+
+/// The last JSON line of `bd lease host checkout`: how Branch Deck moved the slot, with git's reason for a forced one
+#[test]
+fn a_checkout_answers_how_the_slot_moved() {
+    assert_eq!(
+        parse_checkout(r#"{"schema":2,"n":1,"path":"/p","commit":"c","moved":"kept"}"#),
+        Some(Checkout::Kept)
+    );
+    assert_eq!(
+        parse_checkout(r#"{"schema":2,"n":1,"path":"/p","commit":"c","moved":"switched"}"#),
+        Some(Checkout::Switched)
+    );
+    assert_eq!(
+        parse_checkout(
+            r#"{"schema":2,"n":1,"path":"/p","commit":"c","moved":"forced","reason":"error: Untracked working tree file 'b' would be overwritten by merge."}"#
+        ),
+        Some(Checkout::Forced(
+            "git refused the diff: error: Untracked working tree file 'b' would be overwritten by merge.".to_owned()
+        ))
+    );
+    assert_eq!(parse_checkout(r#"{"schema":2,"moved":"moved"}"#), None);
+    assert_eq!(parse_checkout("not json"), None);
+}

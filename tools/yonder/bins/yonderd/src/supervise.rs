@@ -298,7 +298,7 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     if !phases.time("pack_wait", || wait_for_pack(run, context.repo, spec, limits, stop, &mut say))? {
         return Ok(INTERRUPTED);
     }
-    match phases.time("checkout", || git::checkout(&slot, &spec.commit, stop)) {
+    match phases.time("checkout", || check_out(context, &slot, stop)) {
         Ok(git::Checkout::Forced(why)) => say(&format!("checked out with a scan of every file, because {why}")),
         Ok(git::Checkout::Kept | git::Checkout::Switched) => {}
         Err(_) if stop() => return Ok(INTERRUPTED),
@@ -413,6 +413,16 @@ fn waiting_line(queued: &Queued, repo: &Path) -> String {
         line.push_str("; the host prepares its slots");
     }
     line
+}
+
+/// The checkout of the commit of the run in its slot: by Branch Deck (`slots::checkout`), which owns the slot, else, with
+/// a bd before `bd lease host checkout`, by git here (`git::checkout`).
+fn check_out(context: &Context<'_>, slot: &Path, stop: Stop<'_>) -> Result<git::Checkout, String> {
+    let spec = context.spec;
+    match slots::checkout(context.repo, &spec.run, &spec.commit, stop)? {
+        Some(moved) => Ok(moved),
+        None => git::checkout(slot, &spec.commit, stop),
+    }
 }
 
 /// The prepare step of a run: the config of the slot, the environment, the prepare steps, and for a client that asks

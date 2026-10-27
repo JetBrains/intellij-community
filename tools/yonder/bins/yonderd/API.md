@@ -82,10 +82,13 @@ fill waits 1, 5, then 15 minutes.
   at most once a second, and a wait without a chunk for `PACK_STALL_SECONDS` ends the run, because its client is
   gone. An empty chunk counts, so a client sends one while it builds its pack. A wait longer than 1 s writes the line
   `yonder: waiting for the pack of <commit>` to the log. A cancel ends the wait too.
-- The checkout writes only the files that differ between the commit of the slot and the commit of the run
-  (`git reset --merge` on the detached HEAD), so its time follows the diff, not the tree. A slot on a branch, an
-  unreadable HEAD, or a local change or an untracked file in a path of the diff gets the forced checkout
-  `git checkout -f --detach` instead, which stats every file. Then the log has the line `yonder: checked out with a scan of every file, because <reason>`.
+- The checkout writes only the files that differ between the commit of the slot and the commit of the run, so its
+  time follows the diff, not the tree. Branch Deck moves the slot, which it owns: `bd lease host checkout --run <id>
+  --commit <id>` (`reset --merge` of the detached HEAD, no `status`, since the give-back of the last run left the slot
+  clean). With a bd whose `bd schema` lacks `lease_host_checkout`, the agent runs the same `git reset --merge` itself.
+  A local change or an untracked file in a path of the diff gets the forced checkout `git checkout -f --detach` instead
+  (the agent's own checkout also for a slot on a branch or an unreadable HEAD), which stats every file. Then the log has
+  the line `yonder: checked out with a scan of every file, because <reason>`. A cancel kills bd and its git.
 - A pack that comes after the end of its run makes no ref. Its objects land.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
   the phases that have ended so far. The phases are `git`, `slot`, `pack_wait`, `checkout`, `prepare`, `command` and

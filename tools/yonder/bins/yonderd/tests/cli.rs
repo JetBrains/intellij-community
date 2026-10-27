@@ -48,8 +48,10 @@ fn agent_binary() -> PathBuf {
 /// lend, `slot-count` of them (1 by default): `lent-<n>` names the run that has slot `n`, `used-<n>` the holder that
 /// used it last and `generation-<n>` the generation of its files. A lend of a run that has no slot and finds every slot
 /// lent queues; `give-back` frees the slot of the run, and with `discard` it answers that count of discarded changes
-/// and moves the generation of the slot. `fill` and `reclaim` answer nothing to do. `schema` names `lease_host_lend`
-/// unless `old-bd` exists.
+/// and moves the generation of the slot. `checkout` moves the slot of the run with `git reset --merge` (so the slow git
+/// below waits in it too) and answers `switched`, or `kept` at the commit. `fill` and `reclaim` answer nothing to do.
+/// `schema` names `lease_host_lend` unless `old-bd` exists, and `lease_host_checkout` unless `old-bd` or
+/// `no-host-checkout` exists.
 ///
 /// `lease status` and `lease return` serve the return of the leases of holders: `alive` keeps the live lease ids, and
 /// `fail-return` makes a return fail.
@@ -57,15 +59,18 @@ const FAKE_BD: &str = r#"#!/bin/sh
 state=$FAKE_BD_DIR
 printf '%s|%s\n' "$PWD" "$*" >>"$state/calls"
 if [ "$1" = schema ]; then
-  if [ -e "$state/old-bd" ]; then echo '{"schema":2,"commands":{"lease":["lease_get"]}}'; else echo '{"schema":2,"commands":{"lease":["lease_get","lease_host_lend"]}}'; fi
+  if [ -e "$state/old-bd" ]; then echo '{"schema":2,"commands":{"lease":["lease_get"]}}'
+  elif [ -e "$state/no-host-checkout" ]; then echo '{"schema":2,"commands":{"lease":["lease_get","lease_host_lend"]}}'
+  else echo '{"schema":2,"commands":{"lease":["lease_get","lease_host_lend","lease_host_checkout"]}}'; fi
   exit 0
 fi
 if [ "$1" = lease ] && [ "$2" = host ]; then
   verb=$3; shift 3
-  run= affinity= repo=
+  run= affinity= repo= commit=
   while [ $# -gt 0 ]; do
     case $1 in
       --run) run=$2; shift 2 ;;
+      --commit) commit=$2; shift 2 ;;
       --affinity) affinity=$2; shift 2 ;;
       --pid) shift 2 ;;
       -C) repo=$2; shift 2 ;;
@@ -117,6 +122,20 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
         n=$((n + 1))
       done
       echo '{"schema":2,"left_queue":true,"discarded":0,"processes_checked":false}'
+      ;;
+    checkout)
+      n=1
+      while [ "$n" -le "$count" ]; do
+        if [ -e "$state/lent-$n" ] && [ "$(cat "$state/lent-$n")" = "$run" ]; then
+          slot=$state/slots/$n
+          moved=switched
+          if [ "$(git -C "$slot" rev-parse HEAD)" = "$commit" ]; then moved=kept; else git -C "$slot" reset -q --merge "$commit" >&2 || exit 1; fi
+          printf '{"schema":2,"n":%s,"path":"%s","commit":"%s","moved":"%s"}\n' "$n" "$slot" "$commit" "$moved"
+          exit 0
+        fi
+        n=$((n + 1))
+      done
+      echo '{"schema":2,"error":{"code":"no_lease","message":"no slot"}}'; exit 2
       ;;
     fill) echo '{"schema":2,"filled":[]}' ;;
     reclaim) echo '{"schema":2,"reclaimed":[]}' ;;
@@ -714,6 +733,13 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
         "{}",
         world.bd_calls()
     );
+    assert!(
+        world
+            .bd_calls()
+            .contains(&format!("lease host checkout --run 1-1 --commit {} -C ", world.commit)),
+        "Branch Deck moves the slot: {}",
+        world.bd_calls()
+    );
     assert!(world.bd_calls().lines().all(|call| call.starts_with("/|")), "{}", world.bd_calls());
     let start = followed.start_line();
     assert!(start.starts_with(&format!("{START_LINE}{} (slot ", slot.display())), "{start}");
@@ -1033,6 +1059,18 @@ fn the_keeper_returns_the_leases_that_holders_kept_and_then_fills() {
     drop(legacy_lock);
     eventually("the first fill", || world.bd_calls().contains("lease host fill -C "));
     assert!(world.bd_calls().contains("lease host reclaim -C "), "{}", world.bd_calls());
+}
+
+#[test]
+fn a_bd_without_lease_host_checkout_has_the_slot_checked_out_by_the_agent() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    fs::write(world.bd_dir().join("no-host-checkout"), "").expect("the flag");
+    agent.start(world.spec("7-2", HOLDER, "cat a.txt"));
+    let followed = agent.follow("7-2", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("7-2"));
+    assert!(!world.bd_calls().contains("lease host checkout"), "{}", world.bd_calls());
+    assert_eq!(git(&world.slot(1), &["rev-parse", "HEAD"]), world.commit);
 }
 
 #[test]

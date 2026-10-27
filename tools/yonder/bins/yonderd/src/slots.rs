@@ -22,6 +22,7 @@ use serde::Deserialize;
 use crate::bd;
 use crate::child::Stop;
 use crate::files::{private_dir, write_private};
+use crate::git::Checkout;
 
 /// The deadline of a lend: no git, a read and a write of the lend table.
 const LEND: Duration = Duration::from_secs(60);
@@ -33,8 +34,14 @@ const GIVE_BACK: Duration = Duration::from_mins(10);
 /// The deadline of a fill: a new slot can need a clone and a checkout of the monorepo.
 const FILL: Duration = Duration::from_mins(30);
 
+/// The deadline of a checkout of a slot: a forced checkout writes every file of the monorepo.
+const CHECKOUT: Duration = Duration::from_mins(30);
+
 /// The output of `bd schema` that names the support of `bd lease host`.
 const LEND_OUTPUT: &str = "lease_host_lend";
+
+/// The output of `bd schema` that names the support of `bd lease host checkout`.
+const CHECKOUT_OUTPUT: &str = "lease_host_checkout";
 
 /// The slot lent to a run.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -110,23 +117,62 @@ pub(crate) fn fill(repo: &Path, stop: Stop<'_>) -> Result<Vec<u32>, String> {
     Ok(parse_fill(&text))
 }
 
-/// Whether the bd of the host has `bd lease host`. A positive answer is kept for the life of the process; a negative
-/// one is asked again, so a Branch Deck installed later is seen.
+/// Moves the slot of `run` in the pool of `repo` to `commit`, detached, through `bd lease host checkout`: Branch Deck
+/// owns the slot and its git, and the give-back of the last run left the slot clean, so the move writes only the diff
+/// of the two commits and runs no `status` (`spec/cli/lease.spec.md`, "Host slots", in the Branch Deck repository).
+/// `None` when the bd of the host lacks it: then the caller checks the slot out itself. `stop` kills bd and its git.
+pub(crate) fn checkout(repo: &Path, run: &str, commit: &str, stop: Stop<'_>) -> Result<Option<Checkout>, String> {
+    static SUPPORTED: AtomicBool = AtomicBool::new(false);
+    if !names_output(&SUPPORTED, CHECKOUT_OUTPUT) {
+        return Ok(None);
+    }
+    let text = bd::host(repo, &["checkout", "--run", run, "--commit", commit], CHECKOUT, stop)?;
+    parse_checkout(&text)
+        .map(Some)
+        .ok_or_else(|| format!("bd lease host checkout answered no move: {text}"))
+}
+
+/// Whether the bd of the host has `bd lease host`.
 pub(crate) fn supported() -> bool {
     static SUPPORTED: AtomicBool = AtomicBool::new(false);
-    if SUPPORTED.load(Ordering::Relaxed) {
+    names_output(&SUPPORTED, LEND_OUTPUT)
+}
+
+/// Whether `bd schema` of the host names the output `output`. A positive answer is kept in `known` for the life of the
+/// process; a negative one is asked again, so a Branch Deck installed later is seen.
+fn names_output(known: &AtomicBool, output: &str) -> bool {
+    if known.load(Ordering::Relaxed) {
         return true;
     }
-    let supported = bd::schema().is_some_and(|text| text.contains(&format!("\"{LEND_OUTPUT}\"")));
-    if supported {
-        SUPPORTED.store(true, Ordering::Relaxed);
+    let named = bd::schema().is_some_and(|text| text.contains(&format!("\"{output}\"")));
+    if named {
+        known.store(true, Ordering::Relaxed);
     }
-    supported
+    named
 }
 
 /// The refusal text of a host whose bd lacks `bd lease host`.
 pub(crate) const UNSUPPORTED: &str =
     "bd on the host lacks `bd lease host`, which lends the host slots per run: install a Branch Deck with it on the host";
+
+fn parse_checkout(text: &str) -> Option<Checkout> {
+    #[derive(Deserialize)]
+    struct Answer {
+        moved: String,
+        #[serde(default)]
+        reason: Option<String>,
+    }
+    let answer: Answer = serde_json::from_str(text.lines().last()?).ok()?;
+    match answer.moved.as_str() {
+        "kept" => Some(Checkout::Kept),
+        "switched" => Some(Checkout::Switched),
+        "forced" => Some(Checkout::Forced(format!(
+            "git refused the diff: {}",
+            answer.reason.unwrap_or_default()
+        ))),
+        _ => None,
+    }
+}
 
 fn parse_lend(text: &str) -> Option<Lend> {
     #[derive(Deserialize)]
