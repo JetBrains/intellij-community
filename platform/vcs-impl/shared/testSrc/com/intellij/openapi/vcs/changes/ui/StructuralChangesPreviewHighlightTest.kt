@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
@@ -14,9 +15,12 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -122,6 +126,23 @@ internal class StructuralChangesPreviewHighlightTest {
       for (line in 0 until document.lineCount) {
         assertDimmed(image, editor.characterPoint(document.getLineStartOffset(line)))
       }
+    }
+  }
+
+  @Test
+  fun `the strength of the dim follows the registry key`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    withEditor("first\nsecond") { editor ->
+      val document = editor.document
+      val range = TextRange(document.getLineStartOffset(1), document.getLineEndOffset(1))
+      val point = editor.characterPoint(0)
+      val strength = RegistryManager.getInstance().get(StructuralChangesViewSettings.DIM_REGISTRY_KEY)
+
+      strength.setValue(0, disposable)
+      assertEquals(SOURCE_COLOR.rgb, renderDim(editor, range, wholeLines = true).getRGB(point.x, point.y), "A strength of 0 paints no dim")
+
+      strength.setValue(100, disposable)
+      assertEquals(editor.colorsScheme.defaultBackground.rgb, renderDim(editor, range, wholeLines = true).getRGB(point.x, point.y),
+                   "A strength of 100 paints the background")
     }
   }
 

@@ -12,12 +12,15 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.openapi.vcs.changes.ui.StructuralChangesPreviewHighlighter
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.fileEditorManagerFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
@@ -25,12 +28,14 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 
 @TestApplication
 internal class StructuralChangesPreviewHighlighterTest {
@@ -160,6 +165,21 @@ internal class StructuralChangesPreviewHighlighterTest {
       val (handle, markup) = withContext(Dispatchers.EDT) { highlight(fixture) }
       withContext(Dispatchers.Default) { Disposer.dispose(handle) }
       withContext(Dispatchers.EDT) { assertFalse(markup.isValid) }
+    }
+  }
+
+  @Test
+  fun `a new strength of the dim repaints the component`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      var repaints = 0
+      val component = object : JComponent() {
+        override fun repaint(tm: Long, x: Int, y: Int, width: Int, height: Int) {
+          repaints++
+        }
+      }
+      repaintOnDimStrengthChange(component, disposable)
+      RegistryManager.getInstance().get(StructuralChangesViewSettings.DIM_REGISTRY_KEY).setValue(30, disposable)
+      assertEquals(1, repaints)
     }
   }
 
