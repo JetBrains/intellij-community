@@ -137,9 +137,6 @@ abstract class KotlinPluginBuilder(val kind: KotlinPluginKind = System.getProper
   }
 }
 
-private const val KOTLINC_KOTLIN_COMPILER_COMMON_MODULE = "intellij.libraries.kotlinc.kotlin.compiler.common"
-private const val KOTLINC_KOTLIN_COMPILER_COMMON_JAR = "intellij.libraries.kotlinc.kotlin.compiler.common.jar"
-
 private fun withKotlincInPluginDirectory(libName: String = "kotlin-dist", target: String = "kotlinc", spec: PluginLayout.PluginLayoutSpec) {
   val distLibName = "kotlinc.$libName"
   spec.withLibraryResources(libraryName = distLibName, relativeOutputPath = target)
