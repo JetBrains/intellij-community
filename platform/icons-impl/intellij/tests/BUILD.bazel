@@ -45,6 +45,7 @@ jvm_library(
         "//platform/icons-impl",
         "//platform/icons-impl/intellij",
         "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
         "//platform/testFramework/junit5",
         "//platform/icons",
         "//platform/testFramework",
