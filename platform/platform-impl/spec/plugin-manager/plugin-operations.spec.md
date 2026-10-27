@@ -12,6 +12,7 @@ targets:
   - ../../src/com/intellij/ide/plugins/newui/PluginManagerCustomizer.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelAsyncOperationsExecutor.kt
   - ../../src/com/intellij/ide/plugins/newui/PluginModelEvents.kt
+  - ../../src/com/intellij/ide/plugins/newui/PluginUpdateSourceFilter.kt
   - ../../src/com/intellij/ide/plugins/newui/SelectionBasedPluginModelAction.java
   - ../../src/com/intellij/ide/plugins/newui/UninstallAction.kt
   - ../../src/com/intellij/ide/plugins/unified/LegacyPluginRowFactory.kt
@@ -29,6 +30,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/newui/LegacyPluginUiHostTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginManagerButtonUsageTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginModelEventPublisherTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateSourceFilterTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/LegacyPluginRowFactoryTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginInstallingLedgerTest.kt
   - ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginLocalSourceCoordinatorTest.kt
@@ -180,6 +182,21 @@ Untested: No focused test verifies state isolation across two page sessions.
 - Saving the same source again must not request another check.
   [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
     `saved source changes refresh updates`
+  )
+
+- A plugin with a pending update source change must not offer Update in its rows or details.
+- Update All must exclude this plugin until the source change is applied or reverted.
+- Reverting the source change or resetting the session must restore the latest cached update.
+- Pending source changes must not affect another page session or the shared update snapshot.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `pending source changes suppress row details and Update All availability`;
+    `Update All excludes plugins with pending source changes`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateSourceFilterTest.kt (
+    `pending sources suppress enabled and disabled updates without changing the shared snapshot`;
+    `returning to the initial source restores updates after several source changes`;
+    `unknown sources participate in pending changes`;
+    `reset restores the latest snapshot and persistence clears only its plugin`
   )
 
 - Before the trust check starts, an operation must load incomplete Marketplace details.
