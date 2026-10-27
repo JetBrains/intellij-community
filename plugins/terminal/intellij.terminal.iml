@@ -70,7 +70,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.datetime" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.libraries.opentelemetry" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.libraries.opentelemetry.extension.kotlin" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.platform.ide.ui" />
     <orderEntry type="module" module-name="intellij.platform.project" />
     <orderEntry type="module" module-name="intellij.platform.eel" />

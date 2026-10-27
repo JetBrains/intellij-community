@@ -30,19 +30,19 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.xml.emmet.shared" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.xml.emmet" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.xml.emmet" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.editor.ui" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.rt" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.projectModel" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.analysis" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.ide" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ui" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" />
+    <orderEntry type="module" module-name="intellij.platform.projectModel" />
+    <orderEntry type="module" module-name="intellij.platform.analysis" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.rpc.backend" />
   </component>
 </module>

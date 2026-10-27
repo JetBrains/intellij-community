@@ -43,7 +43,7 @@
     <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" />
     <orderEntry type="module" module-name="intellij.libraries.jgoodies.forms" />
     <orderEntry type="module" module-name="intellij.libraries.gson" />
     <orderEntry type="module" module-name="intellij.libraries.guava" />
@@ -51,7 +51,7 @@
     <orderEntry type="module" module-name="intellij.platform.buildView" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.serialization" />
-    <orderEntry type="module" module-name="intellij.maven.artifactResolver.m31" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.maven.artifactResolver.m31" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.vcs" />
     <orderEntry type="module" module-name="intellij.properties.psi" />

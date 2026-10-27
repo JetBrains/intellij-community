@@ -28,20 +28,19 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.core.ui" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.icons.impl" exported="" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.util.ui" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.core.impl" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.ide.core" scope="PROVIDED" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.api.rendering" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.icons.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.ui" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.core" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
   </component>
 </module>
