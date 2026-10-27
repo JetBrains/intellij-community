@@ -4,6 +4,7 @@ package com.intellij.platform.lsp
 import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.getCtrlMouseData
 import com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION
+import com.intellij.openapi.actionSystem.IdeActions.ACTION_GOTO_DECLARATION_ONLY
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.TextRange
@@ -130,6 +131,42 @@ internal class LspGotoDefinitionTest {
         serverSession.awaitExpected()
         assertEquals(OFFSET_IN_REFERENCE, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
       }
+  }
+
+  @Nested
+  inner class GoToDeclarationOnlyAction {
+    @Suppress("unused")
+    private val fakeLspIntegration by definitionIntegrationFixture()
+
+    @Test
+    fun `given definition when go to declaration only is invoked then the caret moves to the definition`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
+
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.performEditorAction(ACTION_GOTO_DECLARATION_ONLY)
+      }
+
+      serverSession.awaitExpected()
+      assertEquals(0, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
+
+    @Test
+    fun `given no definition when go to declaration only is invoked then the caret stays put`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = configureServerSession(project, virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.expectDefinition(fileUri, emptyList())
+
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.performEditorAction(ACTION_GOTO_DECLARATION_ONLY)
+      }
+
+      serverSession.awaitExpected()
+      assertEquals(OFFSET_IN_REFERENCE, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
   }
 
   @Nested

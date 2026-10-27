@@ -272,6 +272,7 @@ public interface IdeActions {
   String ACTION_GOTO_BACK = "Back";
   String ACTION_GOTO_FORWARD = "Forward";
   String ACTION_GOTO_DECLARATION = "GotoDeclaration";
+  String ACTION_GOTO_DECLARATION_ONLY = "GotoDeclarationOnly";
   String ACTION_GOTO_TYPE_DECLARATION = "GotoTypeDeclaration";
   String ACTION_GOTO_IMPLEMENTATION = "GotoImplementation";
   String ACTION_GOTO_SUPER = "GotoSuperMethod";
