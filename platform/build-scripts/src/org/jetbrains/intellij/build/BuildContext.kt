@@ -17,7 +17,6 @@ import org.jetbrains.intellij.build.impl.plugins.PluginAutoPublishList
 import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
 import org.jetbrains.intellij.build.telemetry.use
-import org.jetbrains.jps.model.module.JpsModule
 import java.io.ByteArrayOutputStream
 import java.io.OutputStream
 import java.nio.file.Files
@@ -155,8 +154,6 @@ interface BuildContext : CompilationContext {
     isPortableDist: Boolean = false,
     isQodana: Boolean = false,
   ): List<String>
-
-  fun findApplicationInfoModule(): JpsModule
 
   fun signFiles(files: List<Path>, options: PersistentMap<String, String> = persistentMapOf()) {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)

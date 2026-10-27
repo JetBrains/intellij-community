@@ -57,7 +57,6 @@ import org.jetbrains.intellij.build.productRunner.createDevModeProductRunner
 import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.JpsProject
-import org.jetbrains.jps.model.module.JpsModule
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -322,8 +321,6 @@ class BuildContextImpl internal constructor(
   override fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?, libcImpl: LibcImpl?): Collection<DistFile> {
     return selectDistFiles(distFiles, os, arch, libcImpl)
   }
-
-  override fun findApplicationInfoModule(): JpsModule = outputProvider.findRequiredModule(productProperties.applicationInfoModule)
 
   override fun notifyArtifactBuilt(artifactPath: Path) {
     compilationContext.notifyArtifactBuilt(artifactPath)
