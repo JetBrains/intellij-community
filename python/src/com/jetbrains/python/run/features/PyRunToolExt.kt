@@ -1,9 +1,45 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.features
 
+import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.features.PyRunToolProvider.Companion.forSdk
+import org.jetbrains.annotations.ApiStatus
+
+/**
+ * The parameters of the tool this configuration runs with, or `null` when the interpreter runs it by itself.
+ *
+ * The same decision [com.jetbrains.python.run.PythonCommandLineState.startProcess] makes for Run and the pydevd
+ * debugger, for a launch that does not go through it: the debugpy debuggee, which the debug adapter spawns (PY-93398).
+ */
+@ApiStatus.Internal
+suspend fun AbstractPythonRunConfiguration<*>.resolveRunToolParameters(sdk: Sdk): PyRunToolParameters? {
+  if (!enableRunTool) return null
+  val provider = forSdk(sdk) ?: return null
+  if (!useRunTool(sdk)) return null
+  // Resolved here rather than in the tool: only the configuration knows whether it runs a bare script.
+  val inlineScriptTarget = asBareScriptConfiguration()?.inlineScriptTarget
+  val parameters = provider.getRunToolParameters(sdk, inlineScriptTarget)
+  PyRunToolUsageCollector.logRun(project, PyRunToolIds.idOf(provider), inlineScriptTarget != null)
+  return parameters
+}
+
+/**
+ * How a process on the machine of the interpreter starts [python] through a run tool: [command] in place of [python],
+ * with [envs] added to its variables.
+ */
+@ApiStatus.Internal
+class PyRunToolLaunch(val command: List<FullPathOnTarget>, val envs: Map<String, String>)
+
+/**
+ * The launch of [python] through this tool for a process that the machine of the interpreter spawns rather than the
+ * IDE, such as the debuggee of the debugpy launcher. [python] and the paths in the result are paths on that machine.
+ * The command is the one `PythonScripts.applyRunToolAsync` builds for Run.
+ */
+@ApiStatus.Internal
+fun PyRunToolParameters.launchOnRemoteMachine(python: FullPathOnTarget): PyRunToolLaunch =
+  PyRunToolLaunch(listOf(exe.toStringOnRemoteMachine()) + args + listOfNotNull(python.takeIf { includeOriginalExe }), envs)
 
 internal fun AbstractPythonRunConfiguration<*>.useRunTool(sdk: Sdk): Boolean {
   val explicit = this.useRunTool
