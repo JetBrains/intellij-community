@@ -120,7 +120,7 @@ private fun KtCallableDeclaration.findAllOverridings(withFullHierarchy: Boolean,
                     val isFinal = runReadActionBlocking {
                         analyze(currentMethod) {
                             val symbol = currentMethod.symbol
-                            ((symbol as? KaValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol).modality == KaSymbolModality.FINAL
+                            ((symbol as? KaValueParameterSymbol)?.primaryConstructorProperty ?: symbol).modality == KaSymbolModality.FINAL
                         }
                     }
                     if (isFinal) continue

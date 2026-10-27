@@ -9,8 +9,7 @@ import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 import org.jetbrains.idea.devkit.kotlin.DevKitKotlinBundle.message
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
-import org.jetbrains.kotlin.analysis.api.components.isClassType
-import org.jetbrains.kotlin.analysis.api.components.returnType
+import org.jetbrains.kotlin.analysis.api.expressions.returnType
 import org.jetbrains.kotlin.analysis.api.scopes.declaredMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
@@ -27,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.analysis.api.types.type
@@ -324,7 +324,7 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
       private fun isKotlinSerializationFunction(symbol: KaDeclarationSymbol): Boolean {
         return symbol is KaNamedFunctionSymbol &&
                symbol.name.asString() == "serializer" &&
-               symbol.returnType.isClassType(kSerializedClassId)
+               symbol.returnType.classId == kSerializedClassId
       }
 
       private fun KtDeclaration.isAnnotatedWith(fqn: FqName): Boolean {
@@ -338,7 +338,7 @@ internal class NonSerializableTypeInRpcInterfaceInspection : LocalInspectionTool
                                     if (declaration is KtProperty && usesFieldKeyword(declaration)) declarationSymbol
                                     else declarationSymbol.backingFieldSymbol
                                   }
-                                  is KaValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty
+                                  is KaValueParameterSymbol -> declarationSymbol.primaryConstructorProperty
                                   else -> declarationSymbol
                                 } ?: return false
           annotatedSymbol.annotations.any { it.getFqn() == fqn }

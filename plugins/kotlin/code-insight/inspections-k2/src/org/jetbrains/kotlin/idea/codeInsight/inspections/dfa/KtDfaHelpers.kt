@@ -15,7 +15,6 @@ import com.intellij.psi.PsiTypes
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
-import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluate
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.function
@@ -187,7 +186,7 @@ context(_: KaSession)
 internal fun KaType.getJvmAwareArrayElementType(): KaType? {
     if (!isArrayOrPrimitiveArray) return null
     val type = arrayElementType ?: return null
-    if (this.isClassType(StandardClassIds.Array) && type.classId in KaStandardTypeClassIds.PRIMITIVES) {
+    if (this.classId == StandardClassIds.Array && type.classId in KaStandardTypeClassIds.PRIMITIVES) {
         return type.withNullability(true)
     }
     return type

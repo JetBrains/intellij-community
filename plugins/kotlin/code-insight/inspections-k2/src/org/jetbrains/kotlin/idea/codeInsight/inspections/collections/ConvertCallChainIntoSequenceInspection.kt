@@ -14,7 +14,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.simple
 import org.jetbrains.kotlin.analysis.api.resolution.single
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.fullyExpandedType
 import org.jetbrains.kotlin.analysis.api.types.isSubtypeOf
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -240,12 +240,12 @@ val KaType?.isIterable: Boolean
 context(_: KaSession)
 val KaType?.isList: Boolean
     @ApiStatus.Internal
-    get() = this?.fullyExpandedType?.isClassType(StandardClassIds.List) ?: false
+    get() = this?.fullyExpandedType?.classId == StandardClassIds.List
 
 context(_: KaSession)
 val KaType?.isSet: Boolean
     @ApiStatus.Internal
-        get() = this?.fullyExpandedType?.isClassType(StandardClassIds.Set) ?: false
+        get() = this?.fullyExpandedType?.classId == StandardClassIds.Set
 
 private val terminations: Set<String> =
     StandardKotlinNames.Collections.terminations.mapTo(HashSet()) { it.shortName().asString() }

@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
-import org.jetbrains.kotlin.analysis.api.components.isClassType
 import org.jetbrains.kotlin.analysis.api.evaluation.evaluateAsAnnotationValue
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbols
@@ -38,6 +37,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.classId
 import org.jetbrains.kotlin.analysis.api.types.expandedSymbol
 import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.analysis.api.types.varargArrayType
@@ -99,8 +99,8 @@ internal class UnnecessaryOptInAnnotationInspection :
     context(session: KaSession)
     override fun prepareContext(element: KtAnnotationEntry): Context? {
         val annotationType = element.typeReference?.type ?: return null
-        val isOptIn = annotationType.isClassType(OptInNames.OPT_IN_CLASS_ID)
-                || annotationType.isClassType(OLD_USE_EXPERIMENTAL_CLASS_ID)
+        val isOptIn = annotationType.classId == OptInNames.OPT_IN_CLASS_ID
+                || annotationType.classId == OLD_USE_EXPERIMENTAL_CLASS_ID
         if (!isOptIn) return null
 
         val annotationEntryArguments = element.valueArguments
