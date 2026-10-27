@@ -1110,8 +1110,10 @@ chmod 755 "$bin/git"
     ]);
     let world = &agent.world;
     agent.start(world.spec("9-1", HOLDER, "command -v git"));
-    let waiting = "yonder: waiting for the upgrade of git on the host: `brew install git` runs since 0 s";
-    agent.follow_until("9-1", 0, waiting);
+    let waiting = "yonder: waiting for the upgrade of git on the host: `brew install git` ";
+    eventually("the wait of the run", || {
+        fs::read_to_string(world.run_dir("9-1").join("events.log")).is_ok_and(|log| log.contains(waiting))
+    });
 
     fs::write(&gate, "").expect("the gate");
     let followed = agent.follow("9-1", 0);

@@ -100,8 +100,18 @@ fn tend(home: &Home, repo: &Path, fills: &Arc<Mutex<HashMap<PathBuf, Fill>>>) {
         }
         fill.running = true;
     }
-    let (repo, fills) = (repo.to_path_buf(), Arc::clone(fills));
+    let (repo, fills, home) = (repo.to_path_buf(), Arc::clone(fills), home.clone());
     thread::spawn(move || {
+        // A fill clones and checks out with git, so an upgrade of git waits for its end.
+        let Some(_use) = host_git::take_use(&home) else {
+            fills
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner)
+                .entry(repo)
+                .or_default()
+                .running = false;
+            return;
+        };
         let filled = slots::fill(&repo, &never);
         let mut fills = fills.lock().unwrap_or_else(PoisonError::into_inner);
         let fill = fills.entry(repo.clone()).or_default();

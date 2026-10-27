@@ -107,7 +107,8 @@ fn the_plan_upgrades_only_through_homebrew_and_refuses_without_it() {
         panic!("a refusal");
     };
     assert!(linux.contains("missing: the PATH of the agent finds no git"), "{linux}");
-    assert!(linux.contains("with the package manager of the host"), "{linux}");
+    assert!(linux.contains("such as git 2.43 of Ubuntu 24.04"), "{linux}");
+    assert!(linux.contains("the git-core PPA on Ubuntu"), "{linux}");
     assert!(!linux.contains("Homebrew"), "{linux}");
 }
 
@@ -208,13 +209,13 @@ fn a_run_waits_while_serve_holds_the_lock_and_a_refused_upgrade_refuses_it_then(
     assert!(!upgrading(&home), "no lock file");
     assert_eq!(wait(&home, &never, &mut |line| said.push(line.to_owned())), Ok(true));
 
-    write_state(&home, "upgrading", "brew upgrade git");
+    write_state(&home, "upgrading", "`brew upgrade git` runs");
     let lock = hold_lock(&home).expect("the lock");
     assert!(upgrading(&home));
     assert_eq!(wait(&home, &|| true, &mut |line| said.push(line.to_owned())), Ok(false));
     assert_eq!(
         said,
-        ["waiting for the upgrade of git on the host: `brew upgrade git` runs since 0 s"]
+        ["waiting for the upgrade of git on the host: `brew upgrade git` runs, for 0 s"]
     );
 
     write_state(&home, "refused", "`brew upgrade git` failed");
@@ -233,4 +234,94 @@ fn a_run_waits_while_serve_holds_the_lock_and_a_refused_upgrade_refuses_it_then(
 
     write_state(&home, "ready", "git 2.56.0 at /opt/homebrew/bin/git");
     assert_eq!(wait(&home, &never, &mut |_| {}), Ok(true));
+}
+
+#[test]
+fn an_upgrade_waits_for_each_use_of_git_and_a_new_use_waits_for_the_upgrade() {
+    let dir = tempfile::tempdir().expect("a directory");
+    let home = Home::new(dir.path().to_path_buf());
+    fs::create_dir_all(home.cache_dir()).expect("the cache");
+    let first = take_use(&home).expect("no upgrade");
+    let second = take_use(&home).expect("two uses share the flock");
+
+    // The upgrade takes `git.lock` first: a new use waits, and the upgrade waits for the two that go on.
+    let lock = hold_lock(&home).expect("the lock");
+    assert!(take_use(&home).is_none());
+    let (sender, receiver) = std::sync::mpsc::channel();
+    thread::spawn(move || {
+        let _ = sender.send(wait_for_users(&home, "brew upgrade git").is_some());
+    });
+    drop(first);
+    assert!(receiver.recv_timeout(Duration::from_millis(500)).is_err(), "the second use goes on");
+    drop(second);
+    assert_eq!(receiver.recv_timeout(Duration::from_secs(10)), Ok(true));
+    drop(lock);
+}
+
+#[test]
+fn an_upgrade_tries_again_while_another_homebrew_holds_the_lock_of_git() {
+    let dir = tempfile::tempdir().expect("a directory");
+    let bin = dir.path();
+    // The first call fails on the lock of an orphaned Homebrew; the second one installs a new git.
+    let brew = script(
+        bin,
+        "brew",
+        &format!(
+            r#"bin={bin}
+echo "$* cleanup=$HOMEBREW_NO_INSTALL_CLEANUP update=$HOMEBREW_AUTO_UPDATE_SECS" >>"$bin/calls"
+if [ ! -e "$bin/once" ]; then
+  : >"$bin/once"
+  echo 'Error: A `brew upgrade git` process has already locked /opt/homebrew/var/homebrew/locks/git.formula.lock.' >&2
+  exit 1
+fi
+printf '#!/bin/sh\necho "git version 99.0.0"\n' >"$bin/git"
+chmod 755 "$bin/git""#,
+            bin = bin.display()
+        ),
+    );
+    let found = upgrade(
+        &brew,
+        ["upgrade", "git"],
+        "brew upgrade git",
+        bin.as_os_str(),
+        version("99.0.0"),
+        Duration::from_millis(10),
+    )
+    .expect("an upgraded git");
+    assert_eq!(found.version, Some(version("99.0.0")));
+    assert_eq!(
+        fs::read_to_string(bin.join("calls")).expect("the calls"),
+        "upgrade git cleanup=1 update=0\nupgrade git cleanup=1 update=0\n"
+    );
+
+    // Another failure ends the upgrade with the end of the output of Homebrew.
+    let failing = script(
+        bin,
+        "failing-brew",
+        "echo 'Error: No available formula with the name \"git\".' >&2; exit 1",
+    );
+    let error = upgrade(
+        &failing,
+        ["install", "git"],
+        "brew install git",
+        OsStr::new("/nonexistent"),
+        MINIMUM,
+        Duration::from_millis(10),
+    )
+    .expect_err("a failure");
+    assert!(
+        error.starts_with("`brew install git` failed (exit status: 1): Error: No available formula"),
+        "{error}"
+    );
+}
+
+#[test]
+fn a_lock_of_another_homebrew_process_counts_as_a_wait() {
+    assert!(is_homebrew_lock(
+        "Error: A `brew install git` process has already locked /opt/homebrew/var/homebrew/locks/git.formula.lock."
+    ));
+    assert!(is_homebrew_lock(
+        "Error: Another active Homebrew update process is already in progress."
+    ));
+    assert!(!is_homebrew_lock("Error: No available formula with the name \"git\"."));
 }

@@ -4,10 +4,15 @@
 //! - At its start, before its first thread, `serve` puts the `bin` directory of Homebrew before `/usr/bin` in its own
 //!   `PATH` ([`put_brew_first`]). So each child of the agent finds the git of Homebrew before the one of the system:
 //!   git, bd, the supervisors, and through them the prepare steps and the commands.
-//! - Then `serve` checks the git of its `PATH` ([`HostGit::settle`]). A git older than [`MINIMUM`] gets `brew install
-//!   git` when Homebrew has no git, else `brew upgrade git`, on a thread of its own. While Homebrew works, `serve` holds
-//!   the flock of `~/.cache/yonderd/git.lock`. A run waits for it before it borrows a slot, with a line in its log at the
-//!   start and once a minute, and the keeper of the slots waits too. `~/.cache/yonderd/git.json` keeps the last state.
+//! - Then `serve` checks the git of its `PATH` ([`HostGit::settle`]), before it takes the first connection. A git older
+//!   than [`MINIMUM`] gets `brew install git` when Homebrew has no git, else `brew upgrade git`, on a thread of its own.
+//!   `~/.cache/yonderd/git.json` keeps the last state.
+//! - Two flocks keep Homebrew and the users of git apart. `serve` holds `~/.cache/yonderd/git.lock` from the plan to
+//!   the end of Homebrew: a new run waits for it before it borrows a slot, with a line in its log at the start and once
+//!   a minute, and the keeper of the slots waits too. Each supervisor holds a shared flock of
+//!   `~/.cache/yonderd/git-users.lock` from then to the end of its process, the give-back included, and so does each
+//!   fill of the keeper. Homebrew starts only once `serve` takes that flock exclusively: no run uses git while Homebrew
+//!   replaces it. A run that started before an upgrade of the agent counts too, because its supervisor outlives `serve`.
 //! - A host without Homebrew refuses each start with `old_git`. The message names the install of Homebrew on macOS, and
 //!   the package manager of the host elsewhere. A start after a refusal checks again, so a git that the user installed
 //!   counts at once.
@@ -61,8 +66,15 @@ const VERSION_DEADLINE: Duration = Duration::from_secs(30);
 /// The deadline of `brew install git` and `brew upgrade git`: an update of Homebrew, a download and an install.
 const BREW_DEADLINE: Duration = Duration::from_mins(30);
 
-/// How long a run waits for an upgrade of git: the deadline of Homebrew and a minute.
-const WAIT: Duration = Duration::from_mins(31);
+/// How long an upgrade waits for the runs that use git. Then Homebrew starts anyway, and a line of the log says so.
+const USERS_WAIT: Duration = Duration::from_mins(60);
+
+/// How long a run waits for an upgrade of git: the wait for the other runs, the deadline of Homebrew and a minute.
+const WAIT: Duration = Duration::from_mins(91);
+
+/// How often an upgrade tries again while another Homebrew process holds the lock of git, such as the Homebrew of a
+/// `serve` that exited during its upgrade.
+const BREW_LOCK_POLL: Duration = Duration::from_secs(10);
 
 /// How often a run that waits for an upgrade of git looks again.
 const WAIT_POLL: Duration = Duration::from_secs(2);
@@ -351,7 +363,7 @@ pub(crate) fn plan(found: Option<&Found>, minimum: Version, brew: Option<&Path>,
             )
         } else {
             format!(
-                "the git of this host is {what}, older than {minimum}, the minimum of yonder. Install git {minimum} or later with the package manager of the host, so that the PATH of the agent finds it first"
+                "the git of this host is {what}, older than {minimum}, the minimum of yonder. Install git {minimum} or later, so that the PATH of the agent finds it first. The git of a distribution is often older, such as git 2.43 of Ubuntu 24.04: take a newer source of packages, such as the git-core PPA on Ubuntu (`sudo add-apt-repository ppa:git-core/ppa && sudo apt install git`), or build git from its source"
             )
         });
     };
@@ -442,12 +454,19 @@ impl HostGit {
         };
         let command = format!("brew {}", args.join(" "));
         log(&format!("the git of the host is {what}, older than {}: {command}", minimum()));
-        write_state(&self.home, "upgrading", &command);
+        write_state(
+            &self.home,
+            "upgrading",
+            &format!("`{command}` waits for the runs that use git to end"),
+        );
         *state = State::Upgrading;
         let lock = hold_lock(&self.home);
         let (home, shared) = (self.home.clone(), Arc::clone(&self.state));
         thread::spawn(move || {
-            let next = match upgrade(&brew, args, &command) {
+            let users = wait_for_users(&home, &command);
+            write_state(&home, "upgrading", &format!("`{command}` runs"));
+            let path = env::var_os("PATH").unwrap_or_default();
+            let next = match upgrade(&brew, args, &command, &path, minimum(), BREW_LOCK_POLL) {
                 Ok(found) => {
                     log(&format!("{command} ended: the git of the host is {found}"));
                     write_state(&home, "ready", &found.to_string());
@@ -460,6 +479,7 @@ impl HostGit {
                 }
             };
             *shared.lock().unwrap_or_else(PoisonError::into_inner) = next;
+            drop(users);
             drop(lock);
         });
     }
@@ -477,14 +497,69 @@ impl HostGit {
     }
 }
 
-/// Runs `brew <args>`, then answers the git of the `PATH` when it is new enough, else the message of the refusal.
-fn upgrade(brew: &Path, args: [&str; 2], command: &str) -> Result<Found, String> {
-    let mut call = Command::new(brew);
-    // Each run of Homebrew updates its formulae first, so the upgrade sees the newest git.
-    call.args(args).current_dir("/").env("HOMEBREW_AUTO_UPDATE_SECS", "0");
-    let output = child::run(&mut call, BREW_DEADLINE, &never).map_err(|error| format!("`{command}` failed: {error}"))?;
-    if !output.status.success() {
+/// Waits up to [`USERS_WAIT`] for the exclusive flock of `git-users.lock`: the end of each run that uses git.
+fn wait_for_users(home: &Home, command: &str) -> Option<File> {
+    let path = home.git_users_lock_file();
+    let file = open_private(&path)
+        .inspect_err(|error| log(&format!("cannot open {}: {error}", path.display())))
+        .ok()?;
+    let started = Instant::now();
+    let mut said = false;
+    loop {
+        match try_flock(&file) {
+            Ok(true) => return Some(file),
+            Ok(false) if started.elapsed() >= USERS_WAIT => {
+                log(&format!(
+                    "runs still use git after {} min; `{command}` starts anyway",
+                    USERS_WAIT.as_secs() / 60
+                ));
+                return None;
+            }
+            Ok(false) => {
+                if !said {
+                    log(&format!("`{command}` waits for the runs that use git to end"));
+                    said = true;
+                }
+                thread::sleep(WAIT_POLL);
+            }
+            Err(error) => {
+                log(&format!("cannot lock {}: {error}", path.display()));
+                return None;
+            }
+        }
+    }
+}
+
+/// Runs `brew <args>`, then answers the git of `path` when it is at least `minimum`, else the message of the refusal.
+/// While another Homebrew process holds the lock of git, it waits `lock_poll`, takes a new enough git as the end of
+/// that process, and else tries again, up to [`BREW_DEADLINE`] in all.
+fn upgrade(brew: &Path, args: [&str; 2], command: &str, path: &OsStr, minimum: Version, lock_poll: Duration) -> Result<Found, String> {
+    let started = Instant::now();
+    loop {
+        let mut call = Command::new(brew);
+        // Each run of Homebrew updates its formulae first, so the upgrade sees the newest git. No cleanup: a run that
+        // goes on after `USERS_WAIT` keeps the helpers of the old git in `libexec/git-core`.
+        call.args(args)
+            .current_dir("/")
+            .env("HOMEBREW_AUTO_UPDATE_SECS", "0")
+            .env("HOMEBREW_NO_INSTALL_CLEANUP", "1");
+        let deadline = BREW_DEADLINE.saturating_sub(started.elapsed());
+        let output = child::run(&mut call, deadline, &never).map_err(|error| format!("`{command}` failed: {error}"))?;
+        if output.status.success() {
+            break;
+        }
         let said = output.diagnostic();
+        if is_homebrew_lock(&said) && started.elapsed() + lock_poll < BREW_DEADLINE {
+            log(&format!(
+                "another Homebrew process works on git; `{command}` tries again in {} s",
+                lock_poll.as_secs()
+            ));
+            thread::sleep(lock_poll);
+            if let Some(found) = find(path).filter(|found| found.is_new_enough(minimum)) {
+                return Ok(found);
+            }
+            continue;
+        }
         let tail = said
             .char_indices()
             .rev()
@@ -492,14 +567,19 @@ fn upgrade(brew: &Path, args: [&str; 2], command: &str) -> Result<Found, String>
             .map_or(said.as_str(), |(at, _)| &said[at..]);
         return Err(format!("`{command}` failed ({}): {tail}", output.status));
     }
-    let minimum = minimum();
-    match find(&env::var_os("PATH").unwrap_or_default()) {
+    match find(path) {
         Some(found) if found.is_new_enough(minimum) => Ok(found),
         Some(found) => Err(format!(
             "`{command}` ended, and the PATH of the agent still finds {found}, older than {minimum}, the minimum of yonder: Homebrew has no newer git, or another git comes first"
         )),
         None => Err(format!("`{command}` ended, and the PATH of the agent still finds no git")),
     }
+}
+
+/// Whether Homebrew failed because another Homebrew process holds a lock: of the formula (`has already locked`) or of
+/// its update (`already in progress`).
+pub(crate) fn is_homebrew_lock(said: &str) -> bool {
+    said.contains("has already locked") || said.contains("already in progress")
 }
 
 fn write_state(home: &Home, state: &str, message: &str) {
@@ -542,18 +622,48 @@ pub(crate) fn upgrading(home: &Home) -> bool {
     File::open(home.git_lock_file()).is_ok_and(|file| matches!(try_flock_shared(&file), Ok(false)))
 }
 
+/// The use of git by a supervisor or a fill: the shared flock of `git-users.lock`, or none when the flock cannot be
+/// taken for another cause than an upgrade.
+#[derive(Debug)]
+pub(crate) struct Use(#[expect(dead_code, reason = "the flock lives as long as the file")] Option<File>);
+
+/// The use of git of this supervisor, which lives to the end of its process: the give-back after `exit.json` uses git
+/// too.
+static USE: Mutex<Option<Use>> = Mutex::new(None);
+
+/// Takes the shared flock of `git-users.lock`. `None` while an upgrade waits for it or runs.
+pub(crate) fn take_use(home: &Home) -> Option<Use> {
+    let Ok(file) = open_private(&home.git_users_lock_file()) else {
+        return Some(Use(None));
+    };
+    match try_flock_shared(&file) {
+        Ok(true) => {}
+        Ok(false) => return None,
+        Err(_) => return Some(Use(None)),
+    }
+    // An upgrade that took `git.lock` after the look of the caller waits for this flock: it goes, and the caller waits.
+    (!upgrading(home)).then_some(Use(Some(file)))
+}
+
 /// Waits while `serve` upgrades git: a line in the log of the run at the start and once a minute, `lock_timeout` after
-/// [`WAIT`]. Then a refused upgrade refuses the run with `old_git`. Answers `false` when `stop` ended the wait.
+/// [`WAIT`]. Then the supervisor takes its use of git to the end of its process ([`take_use`]), and a refused upgrade
+/// refuses the run with `old_git`. Answers `false` when `stop` ended the wait.
 pub(crate) fn wait(home: &Home, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<bool, Refusal> {
     let started = Instant::now();
     let mut said: Option<Instant> = None;
-    while upgrading(home) {
+    loop {
+        if !upgrading(home)
+            && let Some(taken) = take_use(home)
+        {
+            *USE.lock().unwrap_or_else(PoisonError::into_inner) = Some(taken);
+            break;
+        }
         if said.is_none_or(|at| at.elapsed() >= WAIT_SAY_EVERY) {
-            let command = read_state(home)
+            let what = read_state(home)
                 .filter(|file| file.state == "upgrading")
-                .map_or_else(|| "Homebrew".to_owned(), |file| format!("`{}`", file.message));
+                .map_or_else(|| "Homebrew works".to_owned(), |file| file.message);
             say(&format!(
-                "waiting for the upgrade of git on the host: {command} runs since {} s",
+                "waiting for the upgrade of git on the host: {what}, for {} s",
                 started.elapsed().as_secs()
             ));
             said = Some(Instant::now());

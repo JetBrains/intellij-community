@@ -52,7 +52,7 @@ fill waits 1, 5, then 15 minutes.
 | A `Lease` request of an older client | `bad_request`: host slots are lent per run (a `Release` answers `Done`) |
 | A start while the git of the host is older than the minimum and the agent cannot upgrade it, see [The git of the host](#the-git-of-the-host) | `old_git` |
 | A run whose upgrade of git failed while it waited, or whose `PATH` finds a git older than the minimum or no git | `old_git`, as the end of the run, before the command |
-| A run that waited for an upgrade of git for 31 min | `lock_timeout` |
+| A run that waited for an upgrade of git for 91 min | `lock_timeout` |
 | A run whose bd lacks `bd lease host`, or whose lend fails | `lease_failed` |
 | A run that got no host slot within an hour | `lock_timeout` |
 | A run whose commit the repository lacks, and whose pack does not come within 30 min, or sends no chunk for 2 min | `pack_missing`, as the end of the run |
@@ -141,20 +141,32 @@ The agent, bd, the prepare steps and the commands use the git that their `PATH` 
    own `PATH`, so each child finds the git of Homebrew first: git, bd, the supervisors and Homebrew itself. Homebrew is
    `brew` on the `PATH`, else `/opt/homebrew/bin/brew`, else `/usr/local/bin/brew`. Its `bin` directory, `$(brew
    --prefix)/bin`, is the directory of `brew`. The agent looks for Homebrew on macOS only.
-2. Once it listens, `serve` runs `git --version` of the git of its `PATH`. A version such as `2.50.1 (Apple Git-155)`
+2. Once it listens, and before it takes the first connection, `serve` runs `git --version` of the git of its `PATH`.
+   So no start comes before this check. A version such as `2.50.1 (Apple Git-155)`
    counts as `2.50.1`, and a release candidate `2.56.0.rc1` comes before `2.56.0`. An answer without a version counts
    as too old.
 3. A git that is too old gets `brew install git` when the `bin` directory of Homebrew has no git, else `brew upgrade
-   git`, with `HOMEBREW_AUTO_UPDATE_SECS=0`, so Homebrew updates its formulae first. It runs on a thread of its own,
-   with a deadline of 30 min, while `serve` holds the flock of `~/.cache/yonderd/git.lock`. So the listener and the
-   watchdog of an upgrade of the agent do not wait for Homebrew.
-4. A run that starts during the install waits for it before it borrows a slot. Its log says ``yonder: waiting for the
-   upgrade of git on the host: `brew upgrade git` runs since <s> s`` at the start and once a minute, and the run gets
-   the phase `git`. A cancel ends the wait. The keeper of the slots does nothing while the flock is held.
-5. A start refuses with `old_git` when the git stays too old: no Homebrew, a failed `brew`, a git of Homebrew that is
+   git`. It runs on a thread of its own, so the listener and the watchdog of an upgrade of the agent do not wait for
+   Homebrew. `serve` holds the flock of `~/.cache/yonderd/git.lock` from the plan to the end of Homebrew.
+4. Homebrew replaces the links of `bin/git` and can remove the old helpers of `libexec/git-core`, so it starts only
+   while no run uses git. Each supervisor holds a shared flock of `~/.cache/yonderd/git-users.lock` from the end of its
+   wait to the end of its process, the give-back included, and so does each fill of the keeper. A run that started
+   before an upgrade of the agent counts too, because its supervisor outlives `serve`. The upgrade takes that flock
+   exclusively, up to 60 min; then Homebrew starts anyway, and the log says so. Homebrew runs with
+   `HOMEBREW_AUTO_UPDATE_SECS=0`, so it updates its formulae first, and `HOMEBREW_NO_INSTALL_CLEANUP=1`, so the old
+   keg stays. Its deadline is 30 min.
+5. A Homebrew that fails on the lock of another Homebrew process (`has already locked`, `already in progress`), such as
+   the one of a `serve` that exited during its upgrade, waits 10 s. A new enough git then ends the upgrade, else
+   Homebrew tries again, up to the deadline.
+6. A run that starts while `git.lock` is held waits before it borrows a slot. Its log says ``yonder: waiting for the
+   upgrade of git on the host: `brew upgrade git` waits for the runs that use git to end, for <s> s``, or `` `brew
+   upgrade git` runs``, at the start and once a minute. The run gets the phase `git`, and a cancel ends the wait. The
+   keeper of the slots does nothing while the flock is held.
+7. A start refuses with `old_git` when the git stays too old: no Homebrew, a failed `brew`, a git of Homebrew that is
    still too old, or another old git before the one of Homebrew on the `PATH`. On macOS without Homebrew the message
    names the install of Homebrew, which asks for the password of an administrator, and then `brew install git`.
-   Elsewhere it names the package manager of the host. A start after a refusal checks again, so a git that the user
+   Elsewhere it names a newer source of packages than the distribution, such as the git-core PPA of Ubuntu, whose
+   24.04 has git 2.43, or a build from the source. A start after a refusal checks again, so a git that the user
    installed counts without a restart of the agent.
 
 A login shell can find another git than the one of the line before the command. On macOS `bash -l` and `sh -l` run

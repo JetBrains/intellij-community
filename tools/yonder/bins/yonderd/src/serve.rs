@@ -116,8 +116,8 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out
     }
     let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
     let agent = Arc::new(Agent::new(home, tls, exe, launchctl));
-    // An install or an upgrade of git runs on a thread of its own, so the listener and the watchdog of an upgrade of
-    // the agent do not wait for Homebrew.
+    // Before the first connection, so no start comes before the decision. An install or an upgrade of git runs on a
+    // thread of its own, so the listener and the watchdog of an upgrade of the agent do not wait for Homebrew.
     agent.git.settle();
     *agent.keeper.lock().unwrap_or_else(PoisonError::into_inner) = Some(keeper::start(agent.home.clone()));
 

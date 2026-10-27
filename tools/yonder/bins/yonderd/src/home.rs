@@ -85,6 +85,11 @@ impl Home {
         self.dir.join(".cache/yonderd/git.lock")
     }
 
+    /// The flock that each user of git holds shared, and an upgrade of git exclusive: `~/.cache/yonderd/git-users.lock`.
+    pub(crate) fn git_users_lock_file(&self) -> PathBuf {
+        self.dir.join(".cache/yonderd/git-users.lock")
+    }
+
     /// The lease file and the lock of each holder of before the host slots, which the keeper returns:
     /// `~/.cache/yonderd/leases/`.
     pub(crate) fn leases_dir(&self) -> PathBuf {

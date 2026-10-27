@@ -70,7 +70,7 @@ The steps of the phases line, in their order:
 | Step | Where | A long step means |
 |---|---|---|
 | `pack`, `upload` | here | The pack of the missing commits is large: the host is far behind this history. |
-| `git` | host | The host upgraded its git with Homebrew, and the run waited. Only such a run has it. |
+| `git` | host | The host upgraded its git with Homebrew, and the run waited for the other runs and for Homebrew. Only such a run has it. |
 | `slot` | host | Every slot was lent, and the run waited in the queue. |
 | `pack_wait` | host | The slot was ready before the pack came. |
 | `checkout` | host | A diff with many files, or a forced checkout. The log then says `checked out with a scan of every file, because …`. |
