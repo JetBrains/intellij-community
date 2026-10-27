@@ -32,8 +32,6 @@ jvm_library(
         "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
-        "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests",
-        "//plugins/kotlin/code-insight/kotlin.code-insight.k2:kotlin-codeInsight-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests_test_lib",
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests",
