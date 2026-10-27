@@ -76,6 +76,67 @@ internal class DefaultPluginUpdatesProviderTest {
   }
 
   @Test
+  fun `completed checks replace versions for the same plugin ids`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    assertUpdateDetailsReplaced(disposable,
+                               updatesWithDetails("1.1", "https://example.com/repo-a"),
+                               updatesWithDetails("1.2", "https://example.com/repo-a"))
+  }
+
+  @Test
+  fun `completed checks replace repositories for the same plugin ids`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
+    assertUpdateDetailsReplaced(disposable,
+                               updatesWithDetails("1.1", "https://example.com/repo-a"),
+                               updatesWithDetails("1.1", "https://example.com/repo-b"))
+  }
+
+  private suspend fun assertUpdateDetailsReplaced(
+    disposable: Disposable,
+    initial: PluginUpdatesModel,
+    updated: PluginUpdatesModel,
+  ) {
+    withProvider(disposable) { provider ->
+      publishPluginUpdates(null, initial)
+      val service = PluginUpdatesService(this)
+      service.flow().filterNotNull().first()
+      val received = Channel<PluginUpdatesEvent>(Channel.UNLIMITED)
+      val subscription = withContext(Dispatchers.UI) {
+        service.subscribe { received.trySend(it) }
+      }
+      assertUpdateDetails(received.receive(), initial)
+
+      publishPluginUpdates(null, updated)
+
+      assertUpdateDetails(provider.pluginUpdateEvents().filterNotNull().first(), updated)
+      assertUpdateDetails(received.receive(), updated)
+      val lateService = PluginUpdatesService(this)
+      assertUpdateDetails(lateService.flow().filterNotNull().first(), updated)
+      withContext(Dispatchers.UI) {
+        subscription.cancel()
+      }
+    }
+  }
+
+  private fun updatesWithDetails(version: String, repository: String): PluginUpdatesModel {
+    fun plugin(id: String): PluginDto = pluginDto(id).apply {
+      this.version = version
+      repositoryName = repository
+      downloadUrl = "$repository/$id-$version.zip"
+    }
+    return updatesModel(listOf(plugin("enabled")), listOf(plugin("disabled")), listOf(plugin("custom")))
+  }
+
+  private fun assertUpdateDetails(event: PluginUpdatesEvent, model: PluginUpdatesModel) {
+    for ((actual, expected) in listOf(event.enabledUpdates to model.pluginUpdates,
+                                      event.disabledUpdates to model.disabledPluginUpdates,
+                                      event.pluginNods to model.updatesFromCustomRepositories)) {
+      assertThat(actual.map { it.pluginId }).containsExactlyElementsOf(expected.map { it.pluginId })
+      assertThat(actual.map { it.version }).containsExactlyElementsOf(expected.map { it.version })
+      assertThat(actual.map { it.repositoryName }).containsExactlyElementsOf(expected.map { it.repositoryName })
+      assertThat(actual.map { it.downloadUrl }).containsExactlyElementsOf(expected.map { it.downloadUrl })
+    }
+  }
+
+  @Test
   fun `an empty completed check clears cached updates`(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     withProvider(disposable) { provider ->
       publishPluginUpdates(null, updatesModel(listOf(pluginDto("available"))))

@@ -21,7 +21,6 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -35,7 +34,9 @@ import kotlin.time.Duration.Companion.milliseconds
 @ApiStatus.Internal
 class DefaultPluginUpdatesProvider(private val coroutineScope: CoroutineScope) : PluginUpdatesProvider {
   private val updateMutex = Mutex()
-  private val flow = MutableStateFlow<PluginUpdatesEvent?>(null)
+  private val flow = MutableSharedFlow<PluginUpdatesEvent?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
+    tryEmit(null)
+  }
   private val updateRequestFlow = MutableSharedFlow<Unit>(replay = 1, extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private var lastPluginUpdates: PluginUpdatesEvent? = null
 
