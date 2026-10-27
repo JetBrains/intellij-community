@@ -37,7 +37,6 @@
     </orderEntry>
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
   </component>
   <component name="TestModuleProperties" production-module="intellij.platform.images.build" />

@@ -186,7 +186,6 @@
     <orderEntry type="library" scope="TEST" name="jetbrains.kotlinx.lincheck.jvm" level="project" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.workspace.storage.testEntities" scope="TEST" />

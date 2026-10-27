@@ -59,8 +59,6 @@ jvm_library(
         "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
-        "//platform/xdebugger-impl:debugger-impl-tests",
-        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests_test_lib",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",

@@ -168,8 +168,6 @@ jvm_library(
         "//spellchecker:spellchecker_test_lib",
         "//platform/xdebugger-api:debugger",
         "//platform/xdebugger-api:debugger_test_lib",
-        "//platform/xdebugger-impl:debugger-impl-tests",
-        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
         "//platform/execution-impl",

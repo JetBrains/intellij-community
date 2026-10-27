@@ -20,7 +20,6 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.analysis.platform.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />

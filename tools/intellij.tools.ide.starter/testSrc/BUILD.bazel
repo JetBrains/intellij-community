@@ -69,8 +69,6 @@ jvm_library(
         "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
-        "//platform/xdebugger-impl:debugger-impl-tests",
-        "//platform/xdebugger-impl:debugger-impl-tests_test_lib",
         "@lib//:mockito-junit-jupiter",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate_test_lib",

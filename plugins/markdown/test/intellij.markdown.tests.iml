@@ -79,7 +79,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.images.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.structureView.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
