@@ -171,12 +171,18 @@ def _dev_dist_plugin_content_impl(ctx):
         content = target[DevDistContentInfo]
         module_jars.append(content.module_jars)
         library_jars.append(content.library_jars)
+    content = DevDistContentInfo(
+        module_jars = depset(transitive = module_jars),
+        library_jars = depset(transitive = library_jars),
+    )
+
+    # A build-scripts binary can name this target as data. Under `bazel run`, `BazelModuleOutputProvider` then finds each
+    # jar in the runfiles tree: a module jar by its label, a library jar by its label or by its container file.
+    library_files = [jar for entry in content.library_jars.to_list() for jar in entry.jars]
+    runfiles = ctx.runfiles(transitive_files = depset(library_files, transitive = [content.module_jars]))
     return [
-        DefaultInfo(files = depset()),
-        DevDistContentInfo(
-            module_jars = depset(transitive = module_jars),
-            library_jars = depset(transitive = library_jars),
-        ),
+        DefaultInfo(files = depset(), runfiles = runfiles),
+        content,
     ]
 
 dev_dist_plugin_content = rule(
@@ -193,6 +199,9 @@ dev_dist_plugin_content = rule(
     still come from the neutral configuration through each component's inputs target, so no module compiles twice.
     `deps` are other content targets, already configured: the content of the embedded frontend's own bundled plugins,
     collected under the frontend's product.
+
+    The jars are also the runfiles of the target. So a build-scripts binary that packs a plugin names this target as
+    its data, instead of every target of the repository.
     """,
     implementation = _dev_dist_plugin_content_impl,
     attrs = {

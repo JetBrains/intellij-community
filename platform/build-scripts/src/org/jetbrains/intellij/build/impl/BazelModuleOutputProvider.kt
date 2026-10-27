@@ -457,11 +457,11 @@ class BazelModuleOutputProvider(
     // Three sources, and the middle one is why `jarTargets` stays in `bazel-targets.json`. Under a fragment's explicit
     // manifest the key is the library *container*, whose label carries no artifact version and which the manifest
     // expands back into ordered jars. Under plain Bazel runfiles there is no manifest to expand anything, and a
-    // container target is not a file, so the per-jar labels are the only thing resolvable - the same branch
-    // `ArchivedCompilationContextUtil` and `MonorepoProjectStructure` take. Outside Bazel entirely it is the output root.
+    // container target is not a file, so the library resolves jar by jar. `ArchivedCompilationContextUtil` and
+    // `MonorepoProjectStructure` also take the per-jar labels. Outside Bazel entirely it is the output root.
     val paths = when {
       BazelBuildInputs.isConfigured -> resolveDeclaredLibrary(library, libraryMoniker)
-      BazelRunfiles.isRunningFromBazel -> library.jarTargets.map { BazelRunfiles.getFileByLabel(BazelLabel.fromString(it)) }
+      BazelRunfiles.isRunningFromBazel -> resolveLibraryRunfiles(library, libraryMoniker)
       else -> library.jars.map { state.bazelOutputRoot.resolve(it) }
     }
 
@@ -504,6 +504,21 @@ class BazelModuleOutputProvider(
       "Neither the container '${library.target}' nor every jar of $libraryMoniker is declared in the explicit input manifest"
     }
     return perJar.requireNoNulls()
+  }
+
+  /**
+   * A library's files in the Bazel runfiles, jar by jar: the per-jar label, or else the jar file of the container.
+   *
+   * The per-jar label of a Maven library is a `copy_file` output, and the container imports the downloaded file itself.
+   * A binary whose data is `dev_dist_plugin_content` holds the container jars only. That is the rule of
+   * [resolveDeclaredLibrary] too: a jar is declared by its own label or as a file.
+   */
+  private fun resolveLibraryRunfiles(library: BazelTargetsInfo.LibraryDescription, libraryMoniker: String): List<Path> {
+    check(library.jarTargets.size == library.jars.size) { "The jar labels and the jar paths of $libraryMoniker differ in count" }
+    return library.jarTargets.zip(library.jars) { jarTarget, jar ->
+      findLibraryJarRunfile(jarTarget = jarTarget, jar = jar, findByLabel = ::findRunfileByLabel, findByKey = ::findRunfile)
+      ?: BazelRunfiles.getFileByLabel(BazelLabel.fromString(jarTarget))
+    }
   }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
@@ -620,6 +635,34 @@ private fun findRunfileByLabel(label: String): Path? {
     append('/')
     append(bazelLabel.target)
   }
+  return findRunfile(key)
+}
+
+/**
+ * The runfile of one library jar, or `null` when the runfiles hold neither file.
+ *
+ * [findByLabel] gives the file of the per-jar label [jarTarget]. [findByKey] gives the file of a runfiles key, here the
+ * key of the container jar [jar].
+ */
+internal fun findLibraryJarRunfile(jarTarget: String, jar: String, findByLabel: (String) -> Path?, findByKey: (String) -> Path?): Path? {
+  return findByLabel(jarTarget) ?: runfilesKeyOfOutputPath(jar)?.let(findByKey)
+}
+
+/**
+ * The runfiles key of [outputPath], or `null` when [outputPath] is in no repository.
+ *
+ * [outputPath] is relative to the output base, as `LibraryDescription.jars` states it: `external/<repository>/...` or
+ * `execroot/_main/...`. The key is the same path without the first element.
+ */
+internal fun runfilesKeyOfOutputPath(outputPath: String): String? {
+  val path = Path.of(outputPath).normalize()
+  if (path.nameCount < 3 || path.getName(0).toString() !in setOf("external", "execroot")) {
+    return null
+  }
+  return path.subpath(1, path.nameCount).invariantSeparatorsPathString
+}
+
+private fun findRunfile(key: String): Path? {
   val entries = runfilesManifestEntries
   val file = if (entries == null) BazelRunfiles.bazelJavaRunfilesPath.resolve(key) else Path.of(entries.get(key) ?: return null)
   return if (Files.exists(file)) file else null

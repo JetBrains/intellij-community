@@ -70,7 +70,56 @@ internal class ModuleOutputProbeRootTest {
   fun `no root when both are absent`() {
     assertThat(resolveProbeRoot(MODULE_TARGET) { null }).isNull()
   }
+
+  @Test
+  fun `the runfiles key of a downloaded jar`() {
+    assertThat(runfilesKeyOfOutputPath("external/ultimate_lib++http_file+com_jetbrains-kmermaid-merman-0_7_2_http//file/kmermaid-merman-0.7.2.jar"))
+      .isEqualTo("ultimate_lib++http_file+com_jetbrains-kmermaid-merman-0_7_2_http/file/kmermaid-merman-0.7.2.jar")
+  }
+
+  @Test
+  fun `the runfiles key of a checked-in jar`() {
+    assertThat(runfilesKeyOfOutputPath("execroot/_main/plugins/javaee_oss_servers/glassfish-lib3/lib/admin-util-3.1.jar"))
+      .isEqualTo("_main/plugins/javaee_oss_servers/glassfish-lib3/lib/admin-util-3.1.jar")
+  }
+
+  @Test
+  fun `a path in no repository has no runfiles key`() {
+    assertThat(runfilesKeyOfOutputPath("bazel-out/darwin_arm64-fastbuild/bin/a.jar")).isNull()
+    assertThat(runfilesKeyOfOutputPath("external/a.jar")).isNull()
+  }
+
+  @Test
+  fun `the per-jar label comes first`() {
+    val askedKeys = ArrayList<String>()
+
+    val file = findLibraryJarRunfile(jarTarget = JAR_TARGET, jar = CONTAINER_JAR, findByLabel = { Path.of("copy.jar") }) { key ->
+      askedKeys.add(key)
+      Path.of("container.jar")
+    }
+
+    assertThat(file).isEqualTo(Path.of("copy.jar"))
+    assertThat(askedKeys).isEmpty()
+  }
+
+  @Test
+  fun `the container jar is the runfile when the per-jar label is absent`() {
+    val file = findLibraryJarRunfile(jarTarget = JAR_TARGET, jar = CONTAINER_JAR, findByLabel = { null }) { key ->
+      if (key == CONTAINER_JAR_KEY) Path.of("container.jar") else null
+    }
+
+    assertThat(file).isEqualTo(Path.of("container.jar"))
+  }
+
+  @Test
+  fun `no runfile when both are absent`() {
+    assertThat(findLibraryJarRunfile(jarTarget = JAR_TARGET, jar = CONTAINER_JAR, findByLabel = { null }) { null }).isNull()
+  }
 }
+
+private const val JAR_TARGET = "@ultimate_lib//:com.jetbrains/kusvg-0.7.2.jar"
+private const val CONTAINER_JAR = "external/ultimate_lib++http_file+com_jetbrains-kusvg-0_7_2_http//file/kusvg-0.7.2.jar"
+private const val CONTAINER_JAR_KEY = "ultimate_lib++http_file+com_jetbrains-kusvg-0_7_2_http/file/kusvg-0.7.2.jar"
 
 private const val MODULE_TARGET = "@community//plugins/env-files-support:dotenv.jar"
 private const val SIBLING_TARGET = "@community//plugins/env-files-support:dotenv_resource_jar.jar"
