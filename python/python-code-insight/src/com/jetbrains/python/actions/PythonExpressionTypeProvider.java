@@ -4,6 +4,8 @@ package com.jetbrains.python.actions;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SyntaxTraverser;
@@ -24,7 +26,24 @@ final class PythonExpressionTypeProvider extends ExpressionTypeProvider<PyExpres
   @Override
   public @NotNull String getInformationHint(@NotNull PyExpression element) {
     TypeEvalContext context = TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile());
-    return PythonDocumentationProvider.getTypeName(context.getType(element), context);
+    // The type has no links yet, see PY-93419
+    return withHtmlLineBreaks(PythonDocumentationProvider.getMultilineHighlightedTypeName(context.getType(element), context, element));
+  }
+
+  private static @NotNull @NlsSafe String withHtmlLineBreaks(@NotNull String html) {
+    HtmlBuilder result = new HtmlBuilder();
+    for (@NlsSafe String line : StringUtil.splitByLinesDontTrim(html)) {
+      if (!result.isEmpty()) {
+        result.br();
+      }
+      String content = StringUtil.trimLeading(line, ' ');
+      int indent = line.length() - content.length();
+      if (indent > 0) {
+        result.nbsp(indent);
+      }
+      result.appendRaw(content);
+    }
+    return result.toString();
   }
 
   @Override

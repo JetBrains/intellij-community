@@ -83,6 +83,7 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.functionNameTextAttribute;
 import static com.jetbrains.python.documentation.PyDocSignaturesHighlighterKt.highlightExpressionText;
@@ -101,6 +102,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
   public static final String DOCUMENTATION_CONFIGURABLE_ID = "com.jetbrains.python.documentation.PythonDocumentationConfigurable";
 
   private static final int RETURN_TYPE_WRAPPING_THRESHOLD = 80;
+  private static final int TYPE_LINE_WIDTH = 80;
 
   // provides ctrl+hover info
   @Override
@@ -155,7 +157,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       return PyPsiBundle.message("QDOC.type.parameter.name", describeTypeParameter(typeParameter, originalElement, context));
     }
     else if (element instanceof PyTypeAliasStatement typeAliasStatement) {
-      return describeTypeAlias(typeAliasStatement, context).toString();
+      return describeTypeAlias(typeAliasStatement, context, true).toString();
     }
     return null;
   }
@@ -173,7 +175,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     result.append(styledSpan(StringUtil.notNullize(target.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
     result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
     PyType type = context.getType(target);
-    result.append(styledSpan(formatTypeWithLinks(type, target, target, context), PyHighlighter.PY_ANNOTATION));
+    result.append(styledSpan(layoutTypeWithLinks(type, target, target, context, result.toString(), 0), PyHighlighter.PY_ANNOTATION));
 
     // Can return not physical elements such as foo()[0] for assignments like x, _ = foo()
     final PyExpression value = target.findAssignedValue();
@@ -217,7 +219,8 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     final HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan(StringUtil.notNullize(parameter.getName()), paramNameTextAttribute(parameter.isSelf())));
     result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
-    result.append(styledSpan(formatTypeWithLinks(context.getType(parameter), parameter, parameter, context), PyHighlighter.PY_ANNOTATION));
+    result.append(styledSpan(layoutTypeWithLinks(context.getType(parameter), parameter, parameter, context, result.toString(), 0),
+                             PyHighlighter.PY_ANNOTATION));
     return result.toFragment();
   }
 
@@ -239,7 +242,9 @@ public class PythonDocumentationProvider implements DocumentationProvider {
                                                                                                 context);
   }
 
-  static @NotNull HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement, @NotNull TypeEvalContext context) {
+  static @NotNull HtmlChunk describeTypeAlias(@NotNull PyTypeAliasStatement typeAliasStatement,
+                                              @NotNull TypeEvalContext context,
+                                              boolean forTooltip) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(styledSpan("type ", PyHighlighter.PY_KEYWORD)); //NON-NLS
     result.append(styledSpan(StringUtil.notNullize(typeAliasStatement.getName()), DefaultLanguageHighlighterColors.IDENTIFIER));
@@ -248,8 +253,10 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     if (typeExpression != null) {
       result.append(styledSpan(" = ", PyHighlighter.PY_OPERATION_SIGN));
       PyType aliasedType = Ref.deref(PyTypingTypeProvider.getType(typeExpression, context));
-      result.append(styledSpan(formatTypeWithLinks(aliasedType, typeExpression, typeAliasStatement, context),
-                               PyHighlighter.PY_ANNOTATION));
+      HtmlChunk renderedType = forTooltip
+                               ? formatTypeWithLinks(aliasedType, typeExpression, typeAliasStatement, context)
+                               : layoutTypeWithLinks(aliasedType, typeExpression, typeAliasStatement, context, result.toString(), 0);
+      result.append(styledSpan(renderedType, PyHighlighter.PY_ANNOTATION));
     }
     return result.toFragment();
   }
@@ -280,7 +287,6 @@ public class PythonDocumentationProvider implements DocumentationProvider {
     result.append(styledSpan("(", PyHighlighter.PY_PARENTHS));
     firstParamOffset++;
 
-    int lastLineOffset = 0;
     boolean first = true;
     boolean firstIsSelf = false;
     final List<PyCallableParameter> parameters = function.getParameters(context);
@@ -294,7 +300,6 @@ public class PythonDocumentationProvider implements DocumentationProvider {
         }
         else {
           result.append("\n");
-          lastLineOffset = result.length();
           // alignment
           StringUtil.repeatSymbol(result, ' ', firstParamOffset);
         }
@@ -339,9 +344,11 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
       result.append(styledSpan(paramName, paramNameTextAttribute(isSelf)));
       if (showType) {
-        result
-          .append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN))
-          .append(styledSpan(formatTypeWithLinks(paramType, named, function, context), PyHighlighter.PY_ANNOTATION));
+        result.append(styledSpan(": ", PyHighlighter.PY_OPERATION_SIGN));
+        HtmlChunk renderedType = forTooltip
+                                 ? formatTypeWithLinks(paramType, named, function, context)
+                                 : layoutTypeWithLinks(paramType, named, function, context, result.toString(), firstParamOffset);
+        result.append(styledSpan(renderedType, PyHighlighter.PY_ANNOTATION));
       }
 
       final String signature = ParamHelper.getDefaultValuePartInSignature(parameter.getDefaultValueText(), showType);
@@ -362,12 +369,15 @@ public class PythonDocumentationProvider implements DocumentationProvider {
 
     result.append(styledSpan(")", PyHighlighter.PY_PARENTHS));
 
-    if (!forTooltip && StringUtil.stripHtml(result.substring(lastLineOffset), false).length() > RETURN_TYPE_WRAPPING_THRESHOLD) {
+    if (!forTooltip && StringUtil.stripHtml(result.substring(result.lastIndexOf("\n") + 1), false).length() > RETURN_TYPE_WRAPPING_THRESHOLD) {
       result.append("\n ");
     }
     final PyType returnType = context.getReturnType(function);
     result.append(HtmlChunk.text(" -> "));
-    result.append(styledSpan(formatTypeWithLinks(returnType, function, function, context), PyHighlighter.PY_ANNOTATION));
+    HtmlChunk renderedReturnType = forTooltip
+                                   ? formatTypeWithLinks(returnType, function, function, context)
+                                   : layoutTypeWithLinks(returnType, function, function, context, result.toString(), 0);
+    result.append(styledSpan(renderedReturnType, PyHighlighter.PY_ANNOTATION));
     return result.toString();
   }
 
@@ -438,6 +448,24 @@ public class PythonDocumentationProvider implements DocumentationProvider {
                                                      PyTypeRendererFeature @NotNull ... features) {
     EnumSet<PyTypeRendererFeature> featureSet = features.length == 0 ? EnumSet.noneOf(PyTypeRendererFeature.class) : EnumSet.copyOf(Arrays.asList(features));
     return PyTypeVisitor.visit(type, new PyTypeRenderer.Documentation(context, featureSet)).toString();
+  }
+
+  /**
+   * Render a type as HTML with the same highlighting as {@link #getTypeNameWithLinks}, but without links.
+   * The lines of a long type are broken to fit in {@link #TYPE_LINE_WIDTH} columns.
+   * The lines are separated by {@code \n} and indented with spaces.
+   *
+   * @param type    the type to render
+   * @param context TypeEvalContext instance to infer extra types with
+   * @param anchor  element the type belongs to, used to resolve class names to their declarations
+   * @return HTML representation of the type, on one or more lines
+   */
+  @ApiStatus.Internal
+  public static @NotNull @NlsSafe String getMultilineHighlightedTypeName(@Nullable PyType type,
+                                                                         @NotNull TypeEvalContext context,
+                                                                         @NotNull PsiElement anchor) {
+    HtmlChunk renderedType = Objects.requireNonNull(PyTypeVisitor.visit(type, new PyTypeRenderer.HighlightedDocumentation(context, anchor)));
+    return PyTypeLayout.layout(renderedType, TYPE_LINE_WIDTH, 0, 0, true);
   }
 
   /**
@@ -518,21 +546,36 @@ public class PythonDocumentationProvider implements DocumentationProvider {
    * @param typeOwner element that has the given type, can be {@code null} for synthetic parameters
    * @param context   type evaluation context
    * @param anchor    anchor element
-   * @param body      body to be used to append description
    */
-  private static void describeTypeWithLinks(@Nullable PyType type,
-                                            @Nullable PyTypedElement typeOwner,
-                                            @NotNull TypeEvalContext context,
-                                            @NotNull PsiElement anchor,
-                                            @NotNull HtmlBuilder body) {
+  private static @NotNull HtmlChunk formatTypeWithLinks(@Nullable PyType type,
+                                                        @Nullable PyTypedElement typeOwner,
+                                                        @NotNull PsiElement anchor,
+                                                        @NotNull TypeEvalContext context) {
     if (typeOwner instanceof PyTargetExpression) {
       if (typeOwner.getParent() instanceof PyAssignmentStatement assignment &&
           PyTypingTypeProvider.isExplicitTypeAlias(assignment, context)) {
-        body.append(styledSpan("TypeAlias", PyHighlighter.PY_ANNOTATION));
-        return;
+        return styledSpan("TypeAlias", PyHighlighter.PY_ANNOTATION);
       }
     }
-    body.append(PyTypeVisitor.visit(type, new PyTypeRenderer.RichDocumentation(context, anchor)));
+    return Objects.requireNonNull(PyTypeVisitor.visit(type, new PyTypeRenderer.RichDocumentation(context, anchor)));
+  }
+
+  /**
+   * Same as {@link #formatTypeWithLinks}, but breaks the lines of a long type to fit in {@link #TYPE_LINE_WIDTH} columns.
+   * The output is for a {@code <pre>} element.
+   *
+   * @param precedingHtml the HTML before the type, which gives the column where the type starts
+   * @param indent        the column where the next lines of the type start, before their nesting level
+   */
+  private static @NotNull HtmlChunk layoutTypeWithLinks(@Nullable PyType type,
+                                                        @Nullable PyTypedElement typeOwner,
+                                                        @NotNull PsiElement anchor,
+                                                        @NotNull TypeEvalContext context,
+                                                        @NotNull String precedingHtml,
+                                                        int indent) {
+    HtmlChunk renderedType = formatTypeWithLinks(type, typeOwner, anchor, context);
+    int startColumn = PyTypeLayout.lastLineWidth(precedingHtml);
+    return HtmlChunk.raw(PyTypeLayout.layout(renderedType, TYPE_LINE_WIDTH, startColumn, indent, true));
   }
 
   static @NotNull HtmlChunk describeDecorators(@NotNull PyDecoratable decoratable,
@@ -728,15 +771,6 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       }
     }
     return null;
-  }
-
-  private static @NotNull HtmlChunk formatTypeWithLinks(@Nullable PyType type,
-                                                        @Nullable PyTypedElement typeOwner,
-                                                        @NotNull PsiElement anchor,
-                                                        @NotNull TypeEvalContext context) {
-    final HtmlBuilder builder = new HtmlBuilder();
-    describeTypeWithLinks(type, typeOwner, context, anchor, builder);
-    return builder.toFragment();
   }
 
   public static @Nullable QualifiedName getFullQualifiedName(final @Nullable PsiElement element) {
