@@ -391,6 +391,7 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     builder.args(command.drop(1))
     builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
     builder.interactionOptions(commandLine.interactionOptions())
+    builder.stdErr(commandLine.stdErr())
 
     return runBlockingCancellable {
       builder.env(buildEnvs(commandLine.environmentVariables, parentEnvVarsOptions))
@@ -423,14 +424,15 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     return envs
   }
 
-  private fun TargetedCommandLine.interactionOptions(): EelExecApi.InteractionOptions? = when {
-    ptyOptions != null -> {
-      val echo = !ptyOptions.toLocalPtyOptions().consoleMode
-      EelExecApi.Pty(ptyOptions.initialColumns, ptyOptions.initialRows, echo)
-    }
-    isRedirectErrorStream -> EelExecApi.RedirectStdErr(EelExecApi.RedirectTo.STDOUT)
-    else -> null
+  private fun TargetedCommandLine.interactionOptions(): EelExecApi.InteractionOptions? = when (val pty = ptyOptions) {
+    null -> null
+    else -> EelExecApi.Pty(pty.initialColumns, pty.initialRows, !pty.toLocalPtyOptions().consoleMode)
   }
+
+  /** A pty merges `stderr` into `stdout` on its own, so ask for the merge only without one. */
+  private fun TargetedCommandLine.stdErr(): EelExecApi.RedirectStdErrTo =
+    if (ptyOptions == null && isRedirectErrorStream) EelExecApi.RedirectStdErrTo.Stdout
+    else EelExecApi.RedirectStdErrTo.Pipe
 
   override val targetPlatform: TargetPlatform = request.targetPlatform
 

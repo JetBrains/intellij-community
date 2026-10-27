@@ -5,6 +5,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
+import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
@@ -29,6 +30,12 @@ class ExecuteProcessOptionsBuilder(
   private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
 
   private var scope: CoroutineScope? = null
+
+  private var stdErr: EelExecApi.RedirectStdErrTo = EelExecApi.RedirectStdErrTo.Pipe
+
+  private var stdIn: EelExecApi.Redirect = EelExecApi.Redirect.Pipe
+
+  private var stdOut: EelExecApi.Redirect = EelExecApi.Redirect.Pipe
 
   private var workingDirectory: EelPath? = null
 
@@ -72,6 +79,10 @@ class ExecuteProcessOptionsBuilder(
    * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
    * If not set, `xterm` will be used as a most popular one.
    *
+   * A pty owns all three standard streams, so it merges `stderr` into `stdout` and it ignores no redirection.
+   * Keep [stdIn], [stdOut] and [stdErr] at their default `Pipe` value together with [Pty].
+   * An implementation rejects any other combination with an [ExecuteProcessException].
+   *
    * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
    */
   @ApiStatus.Experimental
@@ -93,6 +104,37 @@ class ExecuteProcessOptionsBuilder(
   }
 
   /**
+   * Where the process writes its standard error to. [RedirectStdErrTo.Pipe] by default, which makes [EelProcess.stderr] usable.
+   *
+   * IJent honours every value but [RedirectStdErrTo.File]. An implementation throws an [ExecuteProcessException] for a value it
+   * cannot honour.
+   */
+  @ApiStatus.Experimental
+  fun stdErr(arg: EelExecApi.RedirectStdErrTo): ExecuteProcessOptionsBuilder = apply {
+    this.stdErr = arg
+  }
+
+  /**
+   * Where the process reads its standard input from. [Redirect.Pipe] by default, which makes [EelProcess.stdin] usable.
+   *
+   * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+   */
+  @ApiStatus.Experimental
+  fun stdIn(arg: EelExecApi.Redirect): ExecuteProcessOptionsBuilder = apply {
+    this.stdIn = arg
+  }
+
+  /**
+   * Where the process writes its standard output to. [Redirect.Pipe] by default, which makes [EelProcess.stdout] usable.
+   *
+   * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+   */
+  @ApiStatus.Experimental
+  fun stdOut(arg: EelExecApi.Redirect): ExecuteProcessOptionsBuilder = apply {
+    this.stdOut = arg
+  }
+
+  /**
    * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
    * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
    */
@@ -109,6 +151,9 @@ class ExecuteProcessOptionsBuilder(
       interactionOptions = interactionOptions,
       ptyOrStdErrSettings = ptyOrStdErrSettings,
       scope = scope,
+      stdErr = stdErr,
+      stdIn = stdIn,
+      stdOut = stdOut,
       workingDirectory = workingDirectory,
     )
 }
@@ -121,5 +166,8 @@ internal class ExecuteProcessOptionsImpl(
   override val interactionOptions: EelExecApi.InteractionOptions?,
   override val ptyOrStdErrSettings: EelExecApi.InteractionOptions?,
   override val scope: CoroutineScope?,
+  override val stdErr: EelExecApi.RedirectStdErrTo,
+  override val stdIn: EelExecApi.Redirect,
+  override val stdOut: EelExecApi.Redirect,
   override val workingDirectory: EelPath?,
 ) : ExecuteProcessOptions

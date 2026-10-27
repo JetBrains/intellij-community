@@ -112,6 +112,10 @@ sealed interface EelExecApi {
      * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
      * If not set, `xterm` will be used as a most popular one.
      *
+     * A pty owns all three standard streams, so it merges `stderr` into `stdout` and it ignores no redirection.
+     * Keep [stdIn], [stdOut] and [stdErr] at their default `Pipe` value together with [Pty].
+     * An implementation rejects any other combination with an [ExecuteProcessException].
+     *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
     @get:ApiStatus.Experimental
@@ -135,6 +139,31 @@ sealed interface EelExecApi {
      */
     @get:ApiStatus.Experimental
     val exe: String
+
+    /**
+     * Where the process reads its standard input from. [Redirect.Pipe] by default, which makes [EelProcess.stdin] usable.
+     *
+     * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+     */
+    @get:ApiStatus.Experimental
+    val stdIn: Redirect get() = Redirect.Pipe
+
+    /**
+     * Where the process writes its standard output to. [Redirect.Pipe] by default, which makes [EelProcess.stdout] usable.
+     *
+     * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+     */
+    @get:ApiStatus.Experimental
+    val stdOut: Redirect get() = Redirect.Pipe
+
+    /**
+     * Where the process writes its standard error to. [RedirectStdErrTo.Pipe] by default, which makes [EelProcess.stderr] usable.
+     *
+     * IJent honours every value but [RedirectStdErrTo.File]. An implementation throws an [ExecuteProcessException] for a value it
+     * cannot honour.
+     */
+    @get:ApiStatus.Experimental
+    val stdErr: RedirectStdErrTo get() = RedirectStdErrTo.Pipe
   }
 
   @Suppress("FunctionName")
@@ -518,9 +547,12 @@ sealed interface EelExecApi {
   /**
    * Do not use pty, but redirect `stderr` to [to]
    */
+  @Suppress("DEPRECATION")  // A deprecated class may name its own deprecated enum.
+  @Deprecated("Switch to ExecuteProcessOptions.stdErr", replaceWith = ReplaceWith("stdErr"))
   @ApiStatus.Experimental
   class RedirectStdErr(val to: RedirectTo) : InteractionOptions
 
+  @Deprecated("Switch to RedirectStdErrTo", replaceWith = ReplaceWith("RedirectStdErrTo"))
   @ApiStatus.Experimental
   enum class RedirectTo {
     /**
@@ -532,6 +564,63 @@ sealed interface EelExecApi {
      * `stdout` much like `redirectErrorStream` in JVM
      */
     STDOUT
+  }
+
+  /**
+   * Where [ExecuteProcessOptions.stdIn] or [ExecuteProcessOptions.stdOut] is connected.
+   */
+  @ApiStatus.Experimental
+  sealed interface Redirect {
+    /**
+     * An anonymous pipe to the IDE, reachable through [EelProcess.stdin] or [EelProcess.stdout]. The default.
+     */
+    @ApiStatus.Experimental
+    object Pipe : Redirect
+
+    /**
+     * `/dev/null` on POSIX and `NUL` on Windows, much like `DISCARD` in JVM. The matching [EelProcess] channel reads nothing
+     * and accepts nothing.
+     */
+    @ApiStatus.Experimental
+    object Null : Redirect
+
+    /**
+     * A file in the environment. [ExecuteProcessOptions.stdIn] reads it, and it must exist.
+     * [ExecuteProcessOptions.stdOut] writes it, and it is created when it is absent.
+     */
+    @ApiStatus.Experimental
+    data class File(val path: EelPath) : Redirect
+  }
+
+  /**
+   * Where [ExecuteProcessOptions.stdErr] is connected. Same as [Redirect], plus [Stdout].
+   */
+  @ApiStatus.Experimental
+  sealed interface RedirectStdErrTo {
+    /**
+     * An anonymous pipe to the IDE, reachable through [EelProcess.stderr]. The default.
+     */
+    @ApiStatus.Experimental
+    object Pipe : RedirectStdErrTo
+
+    /**
+     * `/dev/null` on POSIX and `NUL` on Windows, much like `DISCARD` in JVM. [EelProcess.stderr] reads nothing.
+     */
+    @ApiStatus.Experimental
+    object Null : RedirectStdErrTo
+
+    /**
+     * `stdout`, much like `redirectErrorStream` in JVM. [EelProcess.stderr] reads nothing, and both streams arrive through
+     * [EelProcess.stdout].
+     */
+    @ApiStatus.Experimental
+    object Stdout : RedirectStdErrTo
+
+    /**
+     * A file in the environment, created when it is absent.
+     */
+    @ApiStatus.Experimental
+    data class File(val path: EelPath) : RedirectStdErrTo
   }
 }
 

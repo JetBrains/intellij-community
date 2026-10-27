@@ -72,11 +72,11 @@ fun runProcessBlocking(
 
   val (command, envs) = applyWslOptions(processBuilder.command(), processBuilder.environment(), ijentApi.exec, options)
 
-  val interactionOptions = when {
-    ptyOptions != null -> with(ptyOptions) { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) }
-    processBuilder.redirectErrorStream() -> EelExecApi.RedirectStdErr(to = EelExecApi.RedirectTo.STDOUT)
-    else -> null
-  }
+  val interactionOptions = ptyOptions?.let { with(it) { EelExecApi.Pty(initialColumns, initialRows, !consoleMode) } }
+  // A pty merges `stderr` into `stdout` on its own, so ask for the merge only without one.
+  val stdErr =
+    if (ptyOptions == null && processBuilder.redirectErrorStream()) EelExecApi.RedirectStdErrTo.Stdout
+    else EelExecApi.RedirectStdErrTo.Pipe
 
   val workingDirectory = processBuilder.directory()?.toPath()?.let { windowsWorkingDirectory ->
     wslDistribution.getWslPath(windowsWorkingDirectory)
@@ -91,6 +91,7 @@ fun runProcessBlocking(
     .args(command.drop(1))
     .env(envs)
     .interactionOptions(interactionOptions)
+    .stdErr(stdErr)
     .workingDirectory(workingDirectory?.let { EelPath.parse(it, ijentApi.descriptor) })
     .eelIt()
     .toProcess(

@@ -7,6 +7,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesOptions
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions
 import com.intellij.platform.eel.EelExecApi.ExternalCliEntrypoint
+import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.path.EelPath
 import kotlinx.coroutines.CoroutineScope
@@ -208,6 +209,12 @@ object EelExecApiHelpers {
 
     private var scope: CoroutineScope? = null
 
+    private var stdErr: EelExecApi.RedirectStdErrTo = EelExecApi.RedirectStdErrTo.Pipe
+
+    private var stdIn: EelExecApi.Redirect = EelExecApi.Redirect.Pipe
+
+    private var stdOut: EelExecApi.Redirect = EelExecApi.Redirect.Pipe
+
     private var workingDirectory: EelPath? = null
 
     /**
@@ -250,6 +257,10 @@ object EelExecApiHelpers {
      * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
      * If not set, `xterm` will be used as a most popular one.
      *
+     * A pty owns all three standard streams, so it merges `stderr` into `stdout` and it ignores no redirection.
+     * Keep [stdIn], [stdOut] and [stdErr] at their default `Pipe` value together with [Pty].
+     * An implementation rejects any other combination with an [ExecuteProcessException].
+     *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
     @ApiStatus.Experimental
@@ -268,6 +279,37 @@ object EelExecApiHelpers {
      */
     fun scope(arg: CoroutineScope?): Execute = apply {
       this.scope = arg
+    }
+
+    /**
+     * Where the process writes its standard error to. [RedirectStdErrTo.Pipe] by default, which makes [EelProcess.stderr] usable.
+     *
+     * IJent honours every value but [RedirectStdErrTo.File]. An implementation throws an [ExecuteProcessException] for a value it
+     * cannot honour.
+     */
+    @ApiStatus.Experimental
+    fun stdErr(arg: EelExecApi.RedirectStdErrTo): Execute = apply {
+      this.stdErr = arg
+    }
+
+    /**
+     * Where the process reads its standard input from. [Redirect.Pipe] by default, which makes [EelProcess.stdin] usable.
+     *
+     * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+     */
+    @ApiStatus.Experimental
+    fun stdIn(arg: EelExecApi.Redirect): Execute = apply {
+      this.stdIn = arg
+    }
+
+    /**
+     * Where the process writes its standard output to. [Redirect.Pipe] by default, which makes [EelProcess.stdout] usable.
+     *
+     * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+     */
+    @ApiStatus.Experimental
+    fun stdOut(arg: EelExecApi.Redirect): Execute = apply {
+      this.stdOut = arg
     }
 
     /**
@@ -293,6 +335,9 @@ object EelExecApiHelpers {
           interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
+          stdErr = stdErr,
+          stdIn = stdIn,
+          stdOut = stdOut,
           workingDirectory = workingDirectory,
         )
       )
@@ -318,6 +363,12 @@ object EelExecApiHelpers {
     private var ptyOrStdErrSettings: EelExecApi.InteractionOptions? = interactionOptions
 
     private var scope: CoroutineScope? = null
+
+    private var stdErr: EelExecApi.RedirectStdErrTo = EelExecApi.RedirectStdErrTo.Pipe
+
+    private var stdIn: EelExecApi.Redirect = EelExecApi.Redirect.Pipe
+
+    private var stdOut: EelExecApi.Redirect = EelExecApi.Redirect.Pipe
 
     private var workingDirectory: EelPath? = null
 
@@ -361,6 +412,10 @@ object EelExecApiHelpers {
      * This terminal should also be set in `TERM` environment variable, so setting it in [env] worth doing.
      * If not set, `xterm` will be used as a most popular one.
      *
+     * A pty owns all three standard streams, so it merges `stderr` into `stdout` and it ignores no redirection.
+     * Keep [stdIn], [stdOut] and [stdErr] at their default `Pipe` value together with [Pty].
+     * An implementation rejects any other combination with an [ExecuteProcessException].
+     *
      * See `termcap(2)`, `terminfo(2)`, `ncurses(3X)` and ISBN `0937175226`.
      */
     @ApiStatus.Experimental
@@ -379,6 +434,37 @@ object EelExecApiHelpers {
      */
     fun scope(arg: CoroutineScope?): SpawnProcess = apply {
       this.scope = arg
+    }
+
+    /**
+     * Where the process writes its standard error to. [RedirectStdErrTo.Pipe] by default, which makes [EelProcess.stderr] usable.
+     *
+     * IJent honours every value but [RedirectStdErrTo.File]. An implementation throws an [ExecuteProcessException] for a value it
+     * cannot honour.
+     */
+    @ApiStatus.Experimental
+    fun stdErr(arg: EelExecApi.RedirectStdErrTo): SpawnProcess = apply {
+      this.stdErr = arg
+    }
+
+    /**
+     * Where the process reads its standard input from. [Redirect.Pipe] by default, which makes [EelProcess.stdin] usable.
+     *
+     * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+     */
+    @ApiStatus.Experimental
+    fun stdIn(arg: EelExecApi.Redirect): SpawnProcess = apply {
+      this.stdIn = arg
+    }
+
+    /**
+     * Where the process writes its standard output to. [Redirect.Pipe] by default, which makes [EelProcess.stdout] usable.
+     *
+     * Only [Redirect.Pipe] works over IJent. An implementation throws an [ExecuteProcessException] for a value it cannot honour.
+     */
+    @ApiStatus.Experimental
+    fun stdOut(arg: EelExecApi.Redirect): SpawnProcess = apply {
+      this.stdOut = arg
     }
 
     /**
@@ -405,6 +491,9 @@ object EelExecApiHelpers {
           interactionOptions = interactionOptions,
           ptyOrStdErrSettings = ptyOrStdErrSettings,
           scope = scope,
+          stdErr = stdErr,
+          stdIn = stdIn,
+          stdOut = stdOut,
           workingDirectory = workingDirectory,
         )
       )

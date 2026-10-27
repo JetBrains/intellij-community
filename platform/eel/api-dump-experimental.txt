@@ -73,6 +73,9 @@
 - *a:getExe():java.lang.String
 - *:getInteractionOptions():com.intellij.platform.eel.EelExecApi$InteractionOptions
 - getScope():kotlinx.coroutines.CoroutineScope
+- *:getStdErr():com.intellij.platform.eel.EelExecApi$RedirectStdErrTo
+- *:getStdIn():com.intellij.platform.eel.EelExecApi$Redirect
+- *:getStdOut():com.intellij.platform.eel.EelExecApi$Redirect
 - *:getWorkingDirectory():com.intellij.platform.eel.path.EelPath
 *:com.intellij.platform.eel.EelExecApi$InteractionOptions
 *f:com.intellij.platform.eel.EelExecApi$Pty
@@ -80,10 +83,45 @@
 - *:<init>(I,I):V
 - f:getColumns():I
 - f:getRows():I
+*:com.intellij.platform.eel.EelExecApi$Redirect
+*f:com.intellij.platform.eel.EelExecApi$Redirect$File
+- com.intellij.platform.eel.EelExecApi$Redirect
+- <init>(com.intellij.platform.eel.path.EelPath):V
+- f:component1():com.intellij.platform.eel.path.EelPath
+- f:copy(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecApi$Redirect$File
+- bs:copy$default(com.intellij.platform.eel.EelExecApi$Redirect$File,com.intellij.platform.eel.path.EelPath,I,java.lang.Object):com.intellij.platform.eel.EelExecApi$Redirect$File
+- equals(java.lang.Object):Z
+- f:getPath():com.intellij.platform.eel.path.EelPath
+- hashCode():I
+*f:com.intellij.platform.eel.EelExecApi$Redirect$Null
+- com.intellij.platform.eel.EelExecApi$Redirect
+- sf:INSTANCE:com.intellij.platform.eel.EelExecApi$Redirect$Null
+*f:com.intellij.platform.eel.EelExecApi$Redirect$Pipe
+- com.intellij.platform.eel.EelExecApi$Redirect
+- sf:INSTANCE:com.intellij.platform.eel.EelExecApi$Redirect$Pipe
 *f:com.intellij.platform.eel.EelExecApi$RedirectStdErr
 - com.intellij.platform.eel.EelExecApi$InteractionOptions
 - <init>(com.intellij.platform.eel.EelExecApi$RedirectTo):V
 - f:getTo():com.intellij.platform.eel.EelExecApi$RedirectTo
+*:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo
+*f:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$File
+- com.intellij.platform.eel.EelExecApi$RedirectStdErrTo
+- <init>(com.intellij.platform.eel.path.EelPath):V
+- f:component1():com.intellij.platform.eel.path.EelPath
+- f:copy(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$File
+- bs:copy$default(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$File,com.intellij.platform.eel.path.EelPath,I,java.lang.Object):com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$File
+- equals(java.lang.Object):Z
+- f:getPath():com.intellij.platform.eel.path.EelPath
+- hashCode():I
+*f:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$Null
+- com.intellij.platform.eel.EelExecApi$RedirectStdErrTo
+- sf:INSTANCE:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$Null
+*f:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$Pipe
+- com.intellij.platform.eel.EelExecApi$RedirectStdErrTo
+- sf:INSTANCE:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$Pipe
+*f:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$Stdout
+- com.intellij.platform.eel.EelExecApi$RedirectStdErrTo
+- sf:INSTANCE:com.intellij.platform.eel.EelExecApi$RedirectStdErrTo$Stdout
 *e:com.intellij.platform.eel.EelExecApi$RedirectTo
 - java.lang.Enum
 - sf:NULL:com.intellij.platform.eel.EelExecApi$RedirectTo
@@ -113,6 +151,9 @@
 - getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *f:stdErr(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
+- *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecApiHelpersKt
 - *sf:environmentVariables(com.intellij.platform.eel.EelExecApi):com.intellij.platform.eel.EelExecApiHelpers$EnvironmentVariables
@@ -152,6 +193,9 @@ f:com.intellij.platform.eel.EelExecApiKt
 - getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *f:stdErr(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
+- *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecPosixApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - *sf:environmentVariables(com.intellij.platform.eel.EelExecPosixApi):com.intellij.platform.eel.EelExecPosixApiHelpers$EnvironmentVariables
@@ -185,6 +229,9 @@ f:com.intellij.platform.eel.EelExecPosixApiHelpersKt
 - getEelDescriptor():com.intellij.platform.eel.EelDescriptor
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:stdErr(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
+- *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.EelExecWindowsApiHelpers$SpawnProcess
 f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - *sf:environmentVariables(com.intellij.platform.eel.EelExecWindowsApi):com.intellij.platform.eel.EelExecWindowsApiHelpers$EnvironmentVariables
@@ -498,6 +545,9 @@ f:com.intellij.platform.eel.EelTunnelsApiKt
 - *f:exe(java.lang.String):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:interactionOptions(com.intellij.platform.eel.EelExecApi$InteractionOptions):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - f:scope(kotlinx.coroutines.CoroutineScope):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- *f:stdErr(com.intellij.platform.eel.EelExecApi$RedirectStdErrTo):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- *f:stdIn(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
+- *f:stdOut(com.intellij.platform.eel.EelExecApi$Redirect):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 - *f:workingDirectory(com.intellij.platform.eel.path.EelPath):com.intellij.platform.eel.ExecuteProcessOptionsBuilder
 *f:com.intellij.platform.eel.ExpandPathEnvVarKt
 - *sf:expandPathEnvVar(com.intellij.platform.eel.EelExecApi,kotlin.coroutines.Continuation):java.lang.Object

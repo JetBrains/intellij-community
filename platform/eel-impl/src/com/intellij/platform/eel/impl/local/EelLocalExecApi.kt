@@ -383,6 +383,7 @@ private fun destroyUndeliveredProcess(process: Process, propagatedError: Throwab
   }
 }
 
+@Suppress("DEPRECATION")  // Reads the deprecated `RedirectStdErr` for the callers that still pass it.
 private suspend fun startProcessImpl(
   builder: EelExecApi.ExecuteProcessOptions,
   onStarted: (Process) -> Unit,
@@ -400,6 +401,7 @@ private suspend fun startProcessImpl(
     val escapedCommandLine = CommandLineUtil.toCommandLine(builder.exe, builder.args, platform)
     val process = when (val p = pty) {
       is EelExecApi.Pty -> {
+        builder.requireNoRedirection()
         if (platform == Platform.UNIX && "TERM" !in environment) {
           environment["TERM"] = "xterm"
         }
@@ -418,15 +420,7 @@ private suspend fun startProcessImpl(
       is EelExecApi.RedirectStdErr, null -> {
         ProcessBuilder(escapedCommandLine).apply {
           environment().putAll(environment)
-          when (p?.to) {
-            null -> Unit
-            EelExecApi.RedirectTo.NULL -> {
-              redirectError(ProcessBuilder.Redirect.DISCARD)
-            }
-            EelExecApi.RedirectTo.STDOUT -> {
-              redirectErrorStream(true)
-            }
-          }
+          applyRedirection(builder.stdIn, builder.stdOut, effectiveStdErr(p, builder.stdErr))
           builder.workingDirectory?.let {
             directory(File(it.toString()))
           }
@@ -435,6 +429,10 @@ private suspend fun startProcessImpl(
     }
     onStarted(process)
     process
+  }
+  catch (e: ExecuteProcessException) {
+    // Already the right exception. It is an `IOException` too, so it must not fall through to the wrapping below.
+    throw e
   }
   catch (e: IOException) {
     val errorCode = errorPattern.find(e.message ?: e.toString())?.let { result ->
@@ -451,6 +449,70 @@ private suspend fun startProcessImpl(
       }
     } ?: -3003 // Just a random code which isn't used by any OS and not zero
     throw ExecuteProcessException(errorCode, e.toString())
+  }
+}
+
+/**
+ * The null device of this OS. `ProcessBuilder.Redirect.DISCARD` covers only the two output streams, so a discarded standard input
+ * needs the device itself.
+ */
+// `ProcessBuilder.Redirect` accepts `java.io.File` only, so `nio.Path` is not an option here.
+@Suppress("SSBasedInspection")
+private val nullDeviceFile: File = File(if (SystemInfo.isWindows) "NUL" else "/dev/null")
+
+/**
+ * Resolves the standard error target. The deprecated [EelExecApi.RedirectStdErr] wins while a caller still passes it, so that
+ * migrating to [EelExecApi.ExecuteProcessOptions.stdErr] changes nothing for the callers that did not migrate yet.
+ */
+@Suppress("DEPRECATION")
+private fun effectiveStdErr(
+  interactionOptions: EelExecApi.InteractionOptions?,
+  stdErr: EelExecApi.RedirectStdErrTo,
+): EelExecApi.RedirectStdErrTo =
+  when (interactionOptions) {
+    is EelExecApi.RedirectStdErr -> when (interactionOptions.to) {
+      EelExecApi.RedirectTo.NULL -> EelExecApi.RedirectStdErrTo.Null
+      EelExecApi.RedirectTo.STDOUT -> EelExecApi.RedirectStdErrTo.Stdout
+    }
+    else -> stdErr
+  }
+
+// `ProcessBuilder.Redirect` accepts `java.io.File` only, so `nio.Path` is not an option here.
+@Suppress("SSBasedInspection")
+private fun ProcessBuilder.applyRedirection(
+  stdIn: EelExecApi.Redirect,
+  stdOut: EelExecApi.Redirect,
+  stdErr: EelExecApi.RedirectStdErrTo,
+) {
+  when (stdIn) {
+    EelExecApi.Redirect.Pipe -> Unit
+    EelExecApi.Redirect.Null -> redirectInput(ProcessBuilder.Redirect.from(nullDeviceFile))
+    is EelExecApi.Redirect.File -> redirectInput(ProcessBuilder.Redirect.from(File(stdIn.path.toString())))
+  }
+  when (stdOut) {
+    EelExecApi.Redirect.Pipe -> Unit
+    EelExecApi.Redirect.Null -> redirectOutput(ProcessBuilder.Redirect.DISCARD)
+    is EelExecApi.Redirect.File -> redirectOutput(ProcessBuilder.Redirect.to(File(stdOut.path.toString())))
+  }
+  when (stdErr) {
+    EelExecApi.RedirectStdErrTo.Pipe -> Unit
+    EelExecApi.RedirectStdErrTo.Null -> redirectError(ProcessBuilder.Redirect.DISCARD)
+    EelExecApi.RedirectStdErrTo.Stdout -> redirectErrorStream(true)
+    is EelExecApi.RedirectStdErrTo.File -> redirectError(ProcessBuilder.Redirect.to(File(stdErr.path.toString())))
+  }
+}
+
+/**
+ * A pty owns all three standard streams, so no redirection can apply to it.
+ */
+private fun EelExecApi.ExecuteProcessOptions.requireNoRedirection() {
+  val redirected = buildList {
+    if (stdIn != EelExecApi.Redirect.Pipe) add("stdIn=$stdIn")
+    if (stdOut != EelExecApi.Redirect.Pipe) add("stdOut=$stdOut")
+    if (stdErr != EelExecApi.RedirectStdErrTo.Pipe) add("stdErr=$stdErr")
+  }
+  if (redirected.isNotEmpty()) {
+    throw ExecuteProcessException(-3004, "A process with a pty cannot redirect a standard stream: ${redirected.joinToString()}")
   }
 }
 
