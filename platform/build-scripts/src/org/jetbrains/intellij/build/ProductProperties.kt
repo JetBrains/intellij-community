@@ -273,6 +273,16 @@ abstract class ProductProperties {
   var productMode: ProductMode = ProductMode.MONOLITH
 
   /**
+   * A temporary property for the gradual migration from the module-based loader to the path class loader (IJPL-258583).
+   * Set to `true` to make the module-based loader load every bundled plugin of the distribution, as the path-based loader does.
+   * The build then takes the bundled plugins from [ProductModulesLayout.bundledPluginModules], not from the `product-modules.xml` file,
+   * and the launcher gets `-Dintellij.platform.load.all.bundled.plugins=true`.
+   * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
+   */
+  @ApiStatus.Experimental
+  var loadAllBundledPluginsWithModularLoader: Boolean = false
+
+  /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
   open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {

@@ -150,7 +150,7 @@ private fun createPlatformLayout(
     productProperties = productProperties,
     outputProvider = outputProvider,
     bundledPluginModules = { bundledPluginModules },
-    bypassFilter = productProperties.additionalIdeJvmArguments.contains("-Dintellij.platform.load.all.bundled.plugins=true")
+    bypassFilter = productProperties.loadAllBundledPluginsWithModularLoader,
   )
 
   addModule(UTIL_RT_JAR, productLayout = productLayout, layout = layout)

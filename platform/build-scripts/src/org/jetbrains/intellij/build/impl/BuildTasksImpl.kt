@@ -584,7 +584,7 @@ private fun checkProductProperties(context: BuildContext) {
   }
   properties.rootModuleForModularLoader?.let { rootModule ->
     checkModule(rootModule, "productProperties.rootModuleForModularLoader", context)
-    if (properties.productLayout.bundledPluginModules.isNotEmpty()) {
+    if (!properties.loadAllBundledPluginsWithModularLoader && properties.productLayout.bundledPluginModules.isNotEmpty()) {
       context.messages.logErrorAndThrow(
         """
         |'${properties.javaClass.name}' uses module-based loader, so the following bundled plugins must be specified in product-modules.xml file 

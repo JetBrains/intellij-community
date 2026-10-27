@@ -419,7 +419,13 @@ internal fun productJvmArguments(product: ProductLaunchInputs, bundledRuntimeVer
     rootModule = if (product.useModularLoader) properties.rootModuleForModularLoader else null,
     productMode = if (product.useModularLoader) properties.productMode.id else null,
     platformPrefix = properties.platformPrefix,
-    additional = properties.additionalIdeJvmArguments + properties.getAdditionalContextDependentIdeJvmArguments(product.applicationInfoOf),
+    additional = buildList {
+      addAll(properties.additionalIdeJvmArguments)
+      if (properties.loadAllBundledPluginsWithModularLoader) {
+        add("-Dintellij.platform.load.all.bundled.plugins=true")
+      }
+      addAll(properties.getAdditionalContextDependentIdeJvmArguments(product.applicationInfoOf))
+    },
     splash = properties.useSplash,
     nativeAccess = bundledRuntimeVersion >= 25,
   )

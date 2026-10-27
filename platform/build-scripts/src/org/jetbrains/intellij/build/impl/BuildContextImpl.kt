@@ -307,7 +307,7 @@ class BuildContextImpl internal constructor(
   }
 
   override fun getBundledPluginModules(): List<String> {
-    if (productProperties.additionalIdeJvmArguments.contains("-Dintellij.platform.load.all.bundled.plugins=true")) {
+    if (productProperties.loadAllBundledPluginsWithModularLoader) {
       return productProperties.productLayout.bundledPluginModules
     }
     return bundledPluginModulesForModularLoader ?: productProperties.productLayout.bundledPluginModules
