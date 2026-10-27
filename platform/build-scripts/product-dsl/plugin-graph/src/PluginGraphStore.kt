@@ -56,7 +56,6 @@ class PluginGraphStore internal constructor(
     }
   }
   private val edgeIndexCache = AtomicReferenceArray<EdgeIndex?>(EDGE_TYPE_COUNT)
-  private val edgeIndexInCache = AtomicReferenceArray<EdgeIndex?>(EDGE_TYPE_COUNT)
 
   @PublishedApi
   internal fun getInCsr(edgeType: Int): CsrEdges? {
@@ -83,19 +82,6 @@ class PluginGraphStore internal constructor(
       return created
     }
     return edgeIndexCache.get(edgeType)!!
-  }
-
-  @PublishedApi
-  internal fun edgeIndexIn(edgeType: Int): EdgeIndex {
-    val cached = edgeIndexInCache.get(edgeType)
-    if (cached != null) {
-      return cached
-    }
-    val created = buildCsrEdgeIndex(getInCsr(edgeType), edgeType)
-    if (edgeIndexInCache.compareAndSet(edgeType, null, created)) {
-      return created
-    }
-    return edgeIndexInCache.get(edgeType)!!
   }
 
   // region Node Lookups
