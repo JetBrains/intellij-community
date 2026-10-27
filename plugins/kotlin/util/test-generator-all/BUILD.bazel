@@ -55,8 +55,6 @@ jvm_library(
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//platform/testFramework/common",
         "//platform/testFramework/common:common_test_lib",
-        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests",
-        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests_test_lib",
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests",
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests",

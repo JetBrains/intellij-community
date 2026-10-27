@@ -30,8 +30,6 @@ jvm_library(
         ":compose-all-tests-k2",
         "//plugins/kotlin/tests-compose:tests-compose_test_lib",
         "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
-        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests",
-        "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java-tests_test_lib",
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests",
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests_test_lib",
         "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests",
