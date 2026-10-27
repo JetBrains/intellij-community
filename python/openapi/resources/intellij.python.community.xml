@@ -18,6 +18,6 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <registryKey defaultValue="true" description="Support eel for local SDK" key="python.eel.native"/>
+    <registryKey defaultValue="false" description="Support eel for local SDK" key="python.eel.native"/>
   </extensions>
 </idea-plugin>
