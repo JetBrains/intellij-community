@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -212,7 +212,7 @@ internal fun selectJdkAndPath(
 @Internal
 class JdkDownloadTask(
   @JvmField val jdkItem: JdkItem,
-  @JvmField val request: JdkInstallRequest,
+  @JvmField var request: JdkInstallRequest,
   @JvmField val project: Project?,
 ) : SdkDownloadTask {
   override fun getSuggestedSdkName() = request.item.suggestedSdkName
@@ -222,7 +222,11 @@ class JdkDownloadTask(
 
   @Throws(IOException::class)
   override fun doDownload(indicator: ProgressIndicator) {
-    JdkInstaller.getInstance().installJdk(request, indicator, project)
+    val installer = JdkInstaller.getInstance()
+    (request as? JdkInstallRequestInfo)?.let {
+      request = installer.prepareJdkInstallation(it.item, it.installDir)
+    }
+    installer.installJdk(request, indicator, project)
   }
 
   override fun toString() = "DownloadTask{${request.item.fullPresentationText}, dir=${request.installDir}}"

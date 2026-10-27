@@ -56,6 +56,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import java.io.IOException
 import java.nio.file.Files
@@ -448,6 +449,13 @@ abstract class JdkInstallerBase {
     else {
       return prepareJdkInstallationDirect(jdkItem, targetPath)
     }
+  }
+
+  @Contract(pure = true)
+  fun findInstalledJavaHome(jdkItem: JdkItem, targetPath: Path): Path? {
+    if (!Registry.`is`("jdk.downloader.reuse.installed")) return null
+    val distribution = wslDistributionFromPath(targetPath)
+    return findAlreadyInstalledJdk(jdkItem, distribution)?.javaHome
   }
 
   /**

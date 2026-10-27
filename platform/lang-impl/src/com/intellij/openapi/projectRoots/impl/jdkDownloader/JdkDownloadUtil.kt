@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTask
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.use
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
@@ -72,6 +73,20 @@ object JdkDownloadUtil {
     val sdk = ProjectSdksModel.createDownloadSdkInternal(sdkType, sdkDownloadTask, sdks)
     sdkTable.addJdk(sdk)
     return sdk
+  }
+
+  @ApiStatus.Internal
+  @RequiresWriteLock
+  fun findOrCreateDownloadSdkInternal(sdkType: SdkType, sdkDownloadTask: SdkDownloadTask): Sdk {
+    val installedJavaHome = (sdkDownloadTask as? JdkDownloadTask)?.let {
+      JdkInstaller.getInstance().findInstalledJavaHome(it.jdkItem, it.request.installDir)
+    }
+    val registeredSdk = installedJavaHome?.let { home ->
+      ProjectJdkTable.getInstance().allJdks.firstOrNull { sdk ->
+        sdk.sdkType == sdkType && sdk.homePath?.let { FileUtil.pathsEqual(it, home.toString()) } == true
+      }
+    }
+    return registeredSdk ?: createDownloadSdkInternal(sdkType, sdkDownloadTask)
   }
 
   @Deprecated(message = "Use #downloadSdk(Project?, Sdk) for proper background progress", replaceWith = ReplaceWith("downloadSdk(project, sdk)"))
