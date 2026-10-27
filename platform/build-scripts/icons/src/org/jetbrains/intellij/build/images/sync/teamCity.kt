@@ -121,7 +121,3 @@ internal fun isScheduled() = triggeredByName?.contains("Schedule") == true
 private val triggeredByName by lazy {
   System.getProperty("teamcity.build.triggeredBy")
 }
-
-internal fun triggerBuild(buildId: String, branch: String): String {
-  return teamCityPost("buildQueue", """<build branchName="$branch"><buildType id="$buildId"/></build>""")
-}
