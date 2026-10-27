@@ -136,15 +136,15 @@ pub fn run_jvm_and_event_loop(
         match call_main_method(jni_env, &main_class, args) {
             Outcome::Ok(_) => {
                 debug!("[JVM] main method finished peacefully");
-                std::process::exit(0);
+                exit_launcher(0);
             }
             Outcome::Err(e) => {
                 error!("[JVM] main method failed: {e:?}");
-                std::process::exit(1);
+                exit_launcher(1);
             }
             Outcome::Panic(e) => {
                 error!("[JVM] main method panicked: {e:?}");
-                std::process::exit(1);
+                exit_launcher(1);
             }
         };
     })?;
@@ -171,6 +171,12 @@ fn reset_signal_handler(signal: c_int) -> Result<()> {
             _ => bail!("sigaction({}): {}", signal, std::io::Error::last_os_error())
         }
     }
+}
+
+fn exit_launcher(status: i32) -> ! {
+    #[cfg(target_os = "windows")]
+    crate::java_sockets::cleanup();
+    std::process::exit(status)
 }
 
 #[cfg(target_os = "windows")]
@@ -260,6 +266,14 @@ fn load_libjvm(libjvm_path: &Path, is_musl: bool) -> Result<libloading::Library>
 
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
     let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
+
+    #[cfg(target_os = "windows")]
+    if crate::java_sockets::owns_directory() {
+        jni_options.push(jni::sys::JavaVMOption {
+            optionString: CString::new("exit")?.into_raw(),
+            extraInfo: crate::java_sockets::exit_hook as *mut c_void,
+        });
+    }
 
     jni_options.push(jni::sys::JavaVMOption {
         optionString: CString::new("abort")?.into_raw(),

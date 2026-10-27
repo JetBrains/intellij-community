@@ -63,6 +63,8 @@ pub mod default;
 pub mod remote_dev;
 mod managed_vm_options;
 pub mod java;
+#[cfg(target_os = "windows")]
+mod java_sockets;
 pub mod docker;
 pub mod cef_sandbox;
 
@@ -148,13 +150,21 @@ fn main_impl(exe_path: PathBuf, remote_dev: bool, debug_mode: bool, sandbox_subp
 
     debug!("** Collecting JVM options");
     let vm_options = get_full_vm_options(&*configuration, &cef_sandbox).context("Cannot collect JVM options")?;
+    #[cfg(target_os = "windows")]
+    let vm_options = {
+        let mut vm_options = vm_options;
+        java_sockets::prepare(main_class, &mut vm_options)?;
+        vm_options
+    };
     debug!("Collected {} VM options", vm_options.len());
 
     debug!("** Launching JVM");
     let args = configuration.get_args();
     let redirect_stdout = configuration.should_redirect_stdout();
-    java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode, redirect_stdout, is_musl)
-        .context("Cannot start the runtime")?;
+    let result = java::run_jvm_and_event_loop(&jre_home, vm_options, main_class, args.to_vec(), debug_mode, redirect_stdout, is_musl);
+    #[cfg(target_os = "windows")]
+    java_sockets::cleanup();
+    result.context("Cannot start the runtime")?;
 
     Ok(())
 }
