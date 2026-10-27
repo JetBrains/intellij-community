@@ -300,10 +300,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
     DebugProcessImpl debugProcess = context.getDebugProcess();
+    var finishInitialUpdate = startPendingLabelUpdate();
     getRenderer(debugProcess)
-      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
+      .thenCompose(renderer -> calcRepresentation(context, labelListener, finishInitialUpdate, debugProcess, renderer))
       .exceptionally(throwable -> {
         setValueLabelFailed(this, throwable);
+        finishInitialUpdate.run();
         labelListener.labelChanged();
         return null;
       });
@@ -311,10 +313,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     return "";
   }
 
-  private @NotNull String calcRepresentation(EvaluationContextImpl context,
-                                             DescriptorLabelListener originalListener,
-                                             DebugProcessImpl debugProcess,
-                                             NodeRenderer renderer) {
+  private @NotNull CompletableFuture<Void> calcRepresentation(EvaluationContextImpl context,
+                                                              DescriptorLabelListener originalListener,
+                                                              Runnable finishInitialUpdate,
+                                                              DebugProcessImpl debugProcess,
+                                                              NodeRenderer renderer) {
     var labelListener = new DelayedDescriptorLabelListener(originalListener);
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
@@ -369,7 +372,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     }
 
     // only call labelChanged when we have expandable value
-    expandableFuture.whenComplete((res, ex) -> {
+    CompletableFuture<Void> initialRepresentation = expandableFuture.handle((res, ex) -> {
       if (ex == null) {
         myIsExpandable = res;
       }
@@ -382,12 +385,15 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
           LOG.error(new Throwable(ex));
         }
       }
-      labelListener.labelChanged();
+      finishInitialUpdate.run();
+      return null;
     });
+    // The notification is not part of the returned future: a listener that throws must not fail the representation
+    initialRepresentation.thenRun(labelListener::labelChanged);
 
     labelListener.start();
 
-    return ""; // we have overridden getLabel
+    return initialRepresentation;
   }
 
   @Override
@@ -443,13 +449,20 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
    */
   @ApiStatus.Internal
   public @NotNull DescriptorLabelListener startLabelUpdate(@NotNull DescriptorLabelListener delegate) {
+    var finishUpdate = startPendingLabelUpdate();
+    return () -> {
+      finishUpdate.run();
+      delegate.labelChanged();
+    };
+  }
+
+  private @NotNull Runnable startPendingLabelUpdate() {
     myPendingLabelUpdates.incrementAndGet();
     AtomicBoolean finished = new AtomicBoolean();
     return () -> {
       if (finished.compareAndSet(false, true)) {
         myPendingLabelUpdates.decrementAndGet();
       }
-      delegate.labelChanged();
     };
   }
 

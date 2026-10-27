@@ -546,8 +546,8 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
           updateRepresentationNoNotify(context, labelListener);
         }
       };
-      evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
       descriptor.putUserData(key, evalDescriptor);
+      evalDescriptor.updateRepresentation((EvaluationContextImpl)evaluationContext, listener);
     }
 
     @Override
