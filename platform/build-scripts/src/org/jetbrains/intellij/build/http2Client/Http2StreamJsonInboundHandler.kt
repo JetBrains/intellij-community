@@ -18,7 +18,6 @@ import io.netty.handler.codec.http2.Http2StreamFrame
 import io.netty.util.AsciiString
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.serialization.DeserializationStrategy
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.serializer
@@ -43,40 +42,8 @@ internal suspend fun Http2ClientConnection.getString(path: CharSequence, headers
   }
 }
 
-internal suspend inline fun <reified T : Any> Http2ClientConnection.getJsonOrDefaultIfNotFound(
-  path: CharSequence,
-  defaultIfNotFound: T,
-): T {
-  return doGetJsonOrDefaultIfNotFound(path = path, deserializer = serializer<T>(), defaultIfNotFound = defaultIfNotFound)
-}
-
 internal suspend inline fun <reified T : Any> Http2ClientConnection.post(path: CharSequence, data: CharSequence, contentType: AsciiString): T {
   return post(path = AsciiString.of(path), data = data, contentType = contentType, deserializer = serializer<T>())
-}
-
-private suspend fun <T : Any> Http2ClientConnection.doGetJsonOrDefaultIfNotFound(
-  path: CharSequence,
-  deserializer: KSerializer<T>,
-  defaultIfNotFound: T,
-): T {
-  return connection.stream { stream, result ->
-    stream.pipeline().addLast(Http2StreamJsonInboundHandler(
-      urlPath = path,
-      result = result,
-      bufferAllocator = stream.alloc(),
-      deserializer = deserializer,
-      defaultIfNotFound = defaultIfNotFound,
-    ))
-
-    stream.writeHeaders(
-      headers = createHeaders(
-        HttpMethod.GET,
-        AsciiString.of(path),
-        HttpHeaderNames.ACCEPT_ENCODING, HttpHeaderValues.GZIP,
-      ),
-      endStream = true,
-    )
-  }
 }
 
 private suspend fun <T : Any> Http2ClientConnection.post(path: AsciiString, data: CharSequence, contentType: AsciiString, deserializer: DeserializationStrategy<T>): T {
