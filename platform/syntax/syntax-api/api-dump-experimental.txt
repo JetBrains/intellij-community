@@ -1,0 +1,12 @@
+*:com.intellij.platform.syntax.lexer.RestartableLexer
+- com.intellij.platform.syntax.lexer.Lexer
+- a:getStartState():I
+- a:isRestartableState(I):Z
+- a:start(java.lang.CharSequence,I,I,I,com.intellij.platform.syntax.lexer.TokenIterator):V
+*:com.intellij.platform.syntax.lexer.TokenIterator
+- a:getEndOffset(I):I
+- a:getStartOffset(I):I
+- a:getState(I):I
+- a:getTokenCount():I
+- a:getType(I):com.intellij.platform.syntax.SyntaxElementType
+- a:initialTokenIndex():I

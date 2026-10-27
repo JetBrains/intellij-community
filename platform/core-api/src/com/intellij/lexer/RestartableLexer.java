@@ -14,6 +14,11 @@ import org.jetbrains.annotations.NotNull;
  * {@link #start(CharSequence, int, int, int, TokenIterator)} implementation helps quickly retrieve information from preceding part of the file
  * to restore lexer properly.
  * {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter#documentChanged(com.intellij.openapi.editor.event.DocumentEvent)}
+ * <p/>
+ * The default storage of {@link com.intellij.openapi.editor.ex.util.LexerEditorHighlighter} keeps only 16 bits of a state,
+ * so a state must be in the {@code short} range, {@code -32768..32767}.
+ * The highlighter truncates a state out of this range and then restarts the lexer in a wrong state.
+ * A highlighter with its own {@link com.intellij.openapi.editor.ex.util.DataStorage} can have a different range.
  */
 public interface RestartableLexer {
 

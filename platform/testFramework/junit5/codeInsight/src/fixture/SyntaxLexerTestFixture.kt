@@ -4,11 +4,13 @@ package com.intellij.platform.testFramework.junit5.codeInsight.fixture
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.syntax.SyntaxElementType
 import com.intellij.platform.syntax.lexer.Lexer
+import com.intellij.platform.syntax.lexer.RestartableLexer
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.junit5.fixture.TestFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.jetbrains.annotations.TestOnly
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
 import java.util.function.Supplier
 
 /**
@@ -73,8 +75,8 @@ class SyntaxLexerTestFixture internal constructor(
 
   /**
    * Verifies that the lexer produces the same token sequence when restarted from any position
-   * where [Lexer.getState] returns zero.
-   * TODO support restartable lexers in Syntax Library
+   * where [Lexer.getState] returns zero or [RestartableLexer.isRestartableState] returns `true`.
+   * For a [RestartableLexer], it also checks that each state is in the `Short` range.
    *
    * For every such position the lexer is restarted via [Lexer.start] with the recorded offset and state,
    * and the resulting tokens are compared against the tail of the initial full-text tokenization.
@@ -87,7 +89,12 @@ class SyntaxLexerTestFixture internal constructor(
     var index = 0
     while (auxLexer.getTokenType() != null) {
       val state = auxLexer.getState()
-      if (state == 0) {
+      if (auxLexer is RestartableLexer) {
+        assertTrue(state in Short.MIN_VALUE..Short.MAX_VALUE) {
+          "The state $state at offset ${auxLexer.getTokenStart()} is out of the Short range"
+        }
+      }
+      if (state == 0 || (auxLexer is RestartableLexer && auxLexer.isRestartableState(state))) {
         val tokenStart = auxLexer.getTokenStart()
         val expectedTokens = allTokens.subList(index, allTokens.size)
         val restartedTokens = tokenize(text, tokenStart, state, mainLexer)
