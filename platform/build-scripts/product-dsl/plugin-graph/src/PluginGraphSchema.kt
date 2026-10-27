@@ -174,30 +174,6 @@ internal const val EDGE_TYPE_COUNT: Int = 19
 // endregion
 
 // ============================================================================
-// region Edge Type Masks (for multi-edge queries)
-// ============================================================================
-
-/** Mask for EDGE_BUNDLES */
-const val EDGE_BUNDLES_MASK: Int = 1 shl EDGE_BUNDLES
-
-/** Mask for EDGE_BUNDLES_TEST */
-const val EDGE_BUNDLES_TEST_MASK: Int = 1 shl EDGE_BUNDLES_TEST
-
-/** Mask for all bundle edges (production + test) */
-const val EDGE_BUNDLES_ALL: Int = EDGE_BUNDLES_MASK or EDGE_BUNDLES_TEST_MASK
-
-/** Mask for EDGE_CONTAINS_CONTENT */
-const val EDGE_CONTAINS_CONTENT_MASK: Int = 1 shl EDGE_CONTAINS_CONTENT
-
-/** Mask for EDGE_CONTAINS_CONTENT_TEST */
-const val EDGE_CONTAINS_CONTENT_TEST_MASK: Int = 1 shl EDGE_CONTAINS_CONTENT_TEST
-
-/** Mask for all containsContent edges (production + test) */
-internal const val EDGE_CONTAINS_CONTENT_ALL: Int = EDGE_CONTAINS_CONTENT_MASK or EDGE_CONTAINS_CONTENT_TEST_MASK
-
-// endregion
-
-// ============================================================================
 // region Loading Mode Packing (for content edges)
 // ============================================================================
 
