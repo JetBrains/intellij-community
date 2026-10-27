@@ -1,6 +1,9 @@
 package com.intellij.driver.sdk.ui.components.clion
 
 import com.intellij.util.system.OS
+import java.util.Properties
+import kotlin.io.path.Path
+import kotlin.io.path.inputStream
 
 
 data class Toolset(
@@ -84,7 +87,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.MINGW_CUSTOM_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-    toolset: Toolset = Toolset(kind = "MINGW", path = "C:/Tools/msys2/mingw64"),
+    toolset: Toolset = Toolset(kind = "MINGW", path = WindowsToolchainPaths.mingw),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class MingwCustomGDB(
@@ -92,7 +95,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.CUSTOM_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MINGW_GDB,
-    toolset: Toolset = Toolset(kind = "MINGW", path = "C:/Tools/msys2/mingw64"),
+    toolset: Toolset = Toolset(kind = "MINGW", path = WindowsToolchainPaths.mingw),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class MSVC(
@@ -100,7 +103,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.BUNDLED_LLDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.MSVC,
-    toolset: Toolset = Toolset(kind = "MSVC", path = "C:/Program Files (x86)/Microsoft Visual Studio/2026/BuildTools"),
+    toolset: Toolset = Toolset(kind = "MSVC", path = WindowsToolchainPaths.msvc),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class Cygwin(
@@ -108,7 +111,7 @@ sealed class Toolchain(
     debugger: Debugger = Debugger.CYGWIN_GDB,
     buildTool: BuildTool = BuildTool.DEFAULT,
     name: ToolchainNames = ToolchainNames.CYGWIN,
-    toolset: Toolset = Toolset(kind = "CYGWIN", path = "C:/Tools/cygwin"),
+    toolset: Toolset = Toolset(kind = "CYGWIN", path = WindowsToolchainPaths.cygwin),
   ) : Toolchain(name, compiler, debugger, buildTool, toolset)
 
   class WSL(
@@ -136,9 +139,38 @@ sealed class Toolchain(
 
   companion object {
     const val DEFAULT_WSL_DISTRIBUTION: String = "ubuntu2204wsl2"
-    // Cygwin CMake is the only case where we need to specify CMake path manually. For this reason we did not add a cmake value to
-    // all the sealed Toolchain classes. This property should be removed anyway and should be made an environment variable
-    const val CYGWIN_CMAKE_PATH: String = "C:/Tools/cygwin/bin/cmake.exe"
+    /** The CMake executable from the Cygwin installation. */
+    val CYGWIN_CMAKE_PATH: String
+      get() = "${WindowsToolchainPaths.cygwin}/bin/cmake.exe"
+  }
+}
+
+private object WindowsToolchainPaths {
+  val mingw: String
+    get() = installationPath("tools.msys2.mingw64")
+  val msvc: String
+    get() = installationPath("tools.msvs.2026.installDir")
+  val cygwin: String
+    get() = installationPath("tools.cygwin.installDir")
+
+  private val configurationParameters: Properties by lazy {
+    val configurationFile = System.getProperty("teamcity.configuration.properties.file")
+                            ?: System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let {
+                              loadProperties(it).getProperty("teamcity.configuration.properties.file")
+                            }
+    configurationFile?.let { loadProperties(it) } ?: Properties()
+  }
+
+  private fun installationPath(parameterName: String): String {
+    val path = System.getProperty(parameterName)?.takeIf { it.isNotBlank() }
+               ?: configurationParameters.getProperty(parameterName)?.takeIf { it.isNotBlank() }
+    return checkNotNull(path) {
+      "Missing toolchain parameter '$parameterName'. For a local run, set -D$parameterName=<installation directory>."
+    }.replace('\\', '/').trimEnd('/')
+  }
+
+  private fun loadProperties(file: String): Properties = Properties().apply {
+    Path(file).inputStream().use { load(it) }
   }
 }
 
@@ -203,7 +235,7 @@ enum class Debugger {
   CUSTOM_GDB {
     override fun getDebuggerPath(): String = when (OS.CURRENT) {
       // Windows will use cygwin gdbserver executable as the custom gdb server
-      OS.Windows -> "C:\\Tools\\cygwin\\bin\\gdbserver.exe"
+      OS.Windows -> "${WindowsToolchainPaths.cygwin}/bin/gdbserver.exe"
       else -> "/usr/bin/gdb"
     }
 
@@ -222,7 +254,7 @@ enum class Debugger {
   },
 
   CYGWIN_GDB {
-    override fun getDebuggerPath(): String = "C:\\Tools\\cygwin\\bin\\gdbserver.exe"
+    override fun getDebuggerPath(): String = "${WindowsToolchainPaths.cygwin}/bin/gdbserver.exe"
     override fun getDebuggerFieldName(): String = "Custom GDB executable"
     override fun toString(): String = "Custom Cygwin GDB"
     override fun type(): String = "GDB"
