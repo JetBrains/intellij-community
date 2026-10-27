@@ -100,7 +100,3 @@ private fun nextDelay(
 interface IExceptionWithRetryPolicy{
   val isRetryAllowed: Boolean
 }
-
-class NoMoreRetriesException(message: String): Exception(message), IExceptionWithRetryPolicy {
-  override val isRetryAllowed: Boolean = false
-}
