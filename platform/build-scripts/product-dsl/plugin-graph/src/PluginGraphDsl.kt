@@ -447,14 +447,6 @@ value class GraphScope @PublishedApi internal constructor(
 
   // endregion
 
-  // region Reverse Edge Properties (TargetNode)
-
-  /** Target ← Module (which modules are backed by this target) */
-  val TargetNode.backedByModules: ReverseEdgeInvoker<ContentModuleNode>
-    get() = ReverseEdgeInvoker.Companion.create(EDGE_BACKED_BY, id)
-
-  // endregion
-
   // region Reverse Edge Properties (ModuleSetNode)
 
   /** ModuleSet ← ModuleSet (parent module sets that nest this set) */
@@ -888,13 +880,6 @@ value class GraphScope @PublishedApi internal constructor(
   // endregion
 
   // region Utility Functions
-
-  /** Get allowed missing module names for a product */
-  fun ProductNode.allowedMissingModules(): Set<ContentModuleName> {
-    val result = HashSet<ContentModuleName>()
-    allowsMissing { module -> result.add(module.name()) }
-    return result
-  }
 
   /**
    * Check if a module has content source edges (is declared as content somewhere).
