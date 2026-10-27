@@ -236,7 +236,7 @@ pub(crate) fn execute_args(args: &Args, runtime: &dyn Runtime, areas: &Areas) ->
         Some(selector) => {
             if explicit_filter.is_some() && !matches!(selector.kind, SelectorKind::Label | SelectorKind::Module) {
                 return Err(fail_usage(
-                    "--filter is only valid with an explicit //label or --module; a name selector already implies a filter",
+                    "--filter is only valid with an explicit label (//pkg:target or @repo//pkg:target) or --module; a name selector already implies a filter",
                 ));
             }
             let inputs = ResolutionInputs::new(runtime, areas);

@@ -22,6 +22,11 @@ fn classify_selector_reads_each_kind() {
         ("//plugins/air/shared/core:ai-agent-core-tests_test", SelectorKind::Label),
         ("//plugins/air/...", SelectorKind::Pattern),
         ("//plugins/air/shared/*:all", SelectorKind::Pattern),
+        // A label of another repository, as the hint of a module outside the migrated list prints it.
+        ("@community//platform/build-scripts/tests:tests_test", SelectorKind::Label),
+        ("@@community//tools/bt:bt-core_test", SelectorKind::Label),
+        ("@//plugins/air/shared/core:ai-agent-core-tests_test", SelectorKind::Label),
+        ("@community//platform/...", SelectorKind::Pattern),
         ("AgentThreadCliTest", SelectorKind::SimpleName),
         ("com.intellij.air.threads.AgentThreadCliTest", SelectorKind::Fqn),
         ("com.intellij.air.threads", SelectorKind::Package),

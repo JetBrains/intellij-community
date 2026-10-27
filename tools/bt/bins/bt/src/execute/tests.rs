@@ -311,12 +311,9 @@ fn the_invocation_modes_are_refused_when_they_conflict() {
             &["--lane", "fast", "--filter", "a.b.C"],
             "cannot be combined with the wildcard pattern",
         ),
-        (&["FooTest", "--filter", "a.b.C"], "only valid with an explicit //label"),
-        (
-            &["plugins/air/shared/core", "--filter", "Foo"],
-            "only valid with an explicit //label",
-        ),
-        (&["//plugins/air/...", "--filter", "a.b.C"], "only valid with an explicit //label"),
+        (&["FooTest", "--filter", "a.b.C"], "only valid with an explicit label"),
+        (&["plugins/air/shared/core", "--filter", "Foo"], "only valid with an explicit label"),
+        (&["//plugins/air/...", "--filter", "a.b.C"], "only valid with an explicit label"),
         (&["FooTest", "BarTest"], "BarTest"),
         (&["FooTest", "--shards", "six"], "six"),
         (&["--lane", "fast", "--lane", "ui"], "--lane"),
@@ -842,11 +839,17 @@ fn fake_module_tree() -> FakeRuntime {
     fake.put(
         ".idea/modules.xml",
         r#"<module fileurl="file://$PROJECT_DIR$/community/platform/util/intellij.platform.util.tests.iml" filepath="$PROJECT_DIR$/community/platform/util/intellij.platform.util.tests.iml" />
-<module fileurl="file://$PROJECT_DIR$/goland/tests/intellij.goland.tests.iml" filepath="$PROJECT_DIR$/goland/tests/intellij.goland.tests.iml" />"#,
+<module fileurl="file://$PROJECT_DIR$/goland/tests/intellij.goland.tests.iml" filepath="$PROJECT_DIR$/goland/tests/intellij.goland.tests.iml" />
+<module fileurl="file://$PROJECT_DIR$/community/platform/build-scripts/tests/intellij.platform.buildScripts.tests.iml" filepath="$PROJECT_DIR$/community/platform/build-scripts/tests/intellij.platform.buildScripts.tests.iml" />"#,
     );
     for (dir, module, target) in [
         ("community/platform/util", "intellij.platform.util.tests", "util-tests_test"),
         ("goland/tests", "intellij.goland.tests", "go-tests_test"),
+        (
+            "community/platform/build-scripts/tests",
+            "intellij.platform.buildScripts.tests",
+            "tests_test",
+        ),
     ] {
         fake.put(&format!("{dir}/BUILD.bazel"), &module_build_bazel_text(module, target));
     }
@@ -912,6 +915,32 @@ fn a_module_outside_the_migrated_list_is_refused_before_bazel_starts() {
         &[
             "./tests.cmd --module intellij.goland.tests --test <FQN>",
             "./community/tools/bt.cmd //goland/tests:go-tests_test --filter <FQN>",
+        ],
+    );
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
+}
+
+/// The hint of a refused community module names an `@community//` label, and the hint runs as printed: the parser reads
+/// that label as a label, so `--filter` goes with it.
+#[test]
+fn the_hint_of_a_refused_community_module_runs_with_its_filter() {
+    let fake = fake_module_tree();
+    let failure = refusal(execute(["--module", "intellij.platform.buildScripts.tests", "--dry-run"], &fake));
+    assert_eq!(failure.code.as_ref(), "module_not_migrated");
+    let hint = failure
+        .message
+        .split("./community/tools/bt.cmd ")
+        .nth(1)
+        .unwrap_or_else(|| panic!("no bt hint in: {}", failure.message));
+    let mut argv: Vec<&str> = hint.split_whitespace().collect();
+    assert_eq!(argv, ["@community//platform/build-scripts/tests:tests_test", "--filter", "<FQN>"]);
+    argv[2] = "org.jetbrains.intellij.build.FooTest";
+    argv.push("--dry-run");
+    assert_mentions(
+        &run(&argv, &fake).text,
+        &[
+            "label   @community//platform/build-scripts/tests:tests_test",
+            "--test_filter=org.jetbrains.intellij.build.FooTest",
         ],
     );
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());

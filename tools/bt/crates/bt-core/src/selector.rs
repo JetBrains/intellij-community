@@ -86,7 +86,7 @@ impl Selector {
 
     /// Reads one selector without touching the filesystem.
     pub fn classify(raw: &str) -> Result<Self, Refusal> {
-        if raw.starts_with("//") {
+        if is_target_pattern(raw) {
             let kind = if raw.ends_with("/...") || raw.contains('*') {
                 SelectorKind::Pattern
             } else {
@@ -162,9 +162,16 @@ impl Selector {
         Err(fail_usage(format!(
             "Cannot interpret selector: {raw}\n\
              Expected ClassName, ClassName#method, a.b.c.ClassName, a.b.c (package), a/directory/path, \
-             //pkg:target, //pkg/..., flow-id, or suite-id"
+             //pkg:target, @repo//pkg:target, //pkg/..., flow-id, or suite-id"
         )))
     }
+}
+
+/// Whether a value is a bazel label or a target pattern from the root of a repository: `//pkg:target`, or
+/// `@repo//pkg:target` of another repository. The hint of a module outside the migrated list names the second form. No
+/// other kind of selector starts with `//` or `@`.
+pub fn is_target_pattern(value: &str) -> bool {
+    value.starts_with("//") || value.starts_with('@')
 }
 
 impl FromStr for Selector {

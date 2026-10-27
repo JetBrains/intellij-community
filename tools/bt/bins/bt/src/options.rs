@@ -2,6 +2,7 @@
 
 use std::ffi::OsString;
 
+use bt_core::selector::is_target_pattern;
 use bt_core::{AREAS_FILE, Areas, Refusal, exit, fail_usage};
 use clap::Parser;
 use clap::error::ErrorKind;
@@ -27,6 +28,7 @@ Selectors (at most one):
   a.b.c                      all-lowercase dotted package; runs the whole package
   plugins/air/backend/vcs    directory; every test target under it, as //<dir>/...
   //pkg:target               explicit label, no resolution (works outside every area)
+  @repo//pkg:target          explicit label of another repository, such as @community, the same way
   //pkg/...                  wildcard pattern; a filter may not be combined with it
   flow-rename-session        flow id; every generated suite that tells or walks the flow, as its lane
                              narrowed to those classes (launches a real IDE on this machine)
@@ -258,7 +260,7 @@ pub(crate) struct BuildArgs {
 /// A target pattern: a label or a pattern from the root of a repository. A relative pattern resolves against the
 /// working directory of bazel, which is the checkout root, so it is refused as the likely typo of a selector.
 fn target_pattern(value: &str) -> Result<String, String> {
-    if value.starts_with("//") || value.starts_with('@') {
+    if is_target_pattern(value) {
         return Ok(value.to_owned());
     }
     Err(format!("a target pattern starts with // or @, and {value} does not"))
