@@ -52,20 +52,6 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
   private val testRuntimeLibraryCache = ConcurrentHashMap<JpsModule, List<JpsLibraryDependency>>()
   private val separateJarDependencyObserver = ThreadLocal<((JpsModule, PluginLayout, List<JpsLibraryDependency>) -> Unit)?>()
 
-  /** Observes separate-jar dependencies on this thread. Close the lease on the same thread, in reverse registration order. */
-  internal fun observeSeparateJarDependencies(observer: (JpsModule, PluginLayout, List<JpsLibraryDependency>) -> Unit): AutoCloseable {
-    val owner = Thread.currentThread()
-    val previous = separateJarDependencyObserver.get()
-    val current = { module: JpsModule, layout: PluginLayout, dependencies: List<JpsLibraryDependency> -> observer(module, layout, dependencies) }
-    separateJarDependencyObserver.set(current)
-    return AutoCloseable {
-      check(Thread.currentThread() === owner) { "Close the dependency observer on its original thread" }
-      check(separateJarDependencyObserver.get() === current) { "Close dependency observers in LIFO order" }
-      if (previous == null) separateJarDependencyObserver.remove()
-      else separateJarDependencyObserver.set(previous)
-    }
-  }
-
   fun getModuleDependencies(moduleName: String): Sequence<String> {
     return outputProvider.findRequiredModule(moduleName).getProductionModuleDependencies(withTests = false).map { it.moduleReference.moduleName }
   }
