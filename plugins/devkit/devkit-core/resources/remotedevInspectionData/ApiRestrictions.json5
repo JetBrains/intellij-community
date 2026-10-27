@@ -216,7 +216,6 @@
   {"apiName": "com.intellij.execution.filters.ConsoleInputFilterProvider", "extensionPointNames": ["com.intellij.consoleInputFilterProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.actions.ConsoleActionsPostProcessor", "extensionPointNames": ["com.intellij.consoleActionsPostProcessor"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.junit.RuntimeConfigurationProducer", "extensionPointNames": ["com.intellij.configurationProducer"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
-  {"apiName": "com.intellij.execution.lineMarker.RunLineMarkerContributor", "extensionPointNames": ["com.intellij.runLineMarkerContributor"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.actions.MultipleRunLocationsProvider", "extensionPointNames": ["com.intellij.multipleRunLocationsProvider"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.dashboard.RunDashboardCustomizer", "extensionPointNames": ["com.intellij.runDashboardCustomizer"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
   {"apiName": "com.intellij.execution.dashboard.LegacyRunDashboardServiceSubstitutor", "extensionPointNames": ["com.intellij.legacyRunDashboardServiceSubstitutor"], "targetModules": ["backend"], "restrictionKind": "genericPlatformApi"},
@@ -331,6 +330,8 @@
   {"apiName": "com.intellij.lang.annotation.Annotator", "extensionPointNames": ["com.intellij.annotator"], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Resolve-dependent annotators belong to the backend, while lightweight ones belong to frontend"},
   {"apiName": "com.intellij.lang.annotation.ContributedReferencesAnnotator", "extensionPointNames": ["com.intellij.contributedReferencesAnnotator"], "targetModules": ["frontend", "backend"], "restrictionKind": "genericPlatformApi", "hint": "Resolve-dependent annotators belong to the backend, while lightweight ones belong to frontend"},
 
+  // most of the contributors runs on backend, but if an extension uses `RunLineMarkerContributorBase` interface and don't use run configurations, it can be registered in shared code
+  {"apiName": "com.intellij.execution.lineMarker.RunLineMarkerContributor", "extensionPointNames": ["com.intellij.runLineMarkerContributor"], "targetModules": ["backend", "shared"], "restrictionKind": "genericPlatformApi"},
 
 
   // frontend or shared generic apis
