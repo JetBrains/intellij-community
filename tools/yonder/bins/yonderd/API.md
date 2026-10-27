@@ -170,9 +170,12 @@ creates = ["node_modules"]
 
 ## The changes of a command
 
-With `RunSpec::changes`, the supervisor writes the tree of the slot before the command and after it: `git add --all`
-into a copy of the index of the slot (`before.index`, `after.index` in the run directory), then `git write-tree`, without
-fsmonitor. The index of the slot stays as it is. The patch from the first tree to the second, `git diff-tree -p --binary
+With `RunSpec::changes`, the supervisor writes the tree of the slot before the command and after it, as `git add --all`
+sees it, into a copy of the index of the slot (`before.index`, `after.index` in the run directory). `git status` of the
+copy names the paths that differ. Up to 256 of them go through `git add --all` by their paths; with more, or when a path
+went away before the add, a plain `git add --all` runs. Then `git write-tree` writes the tree. With the
+fsmonitor and the untracked cache of the repository configuration, the status reads only what changed. The index of the
+slot stays as it is. The patch from the first tree to the second, `git diff-tree -p --binary
 --full-index --no-renames`, goes to `changes.patch`. A command that changed nothing has no patch. The scan before the
 command comes after the prepare steps, so their changes stay out of the patch.
 
