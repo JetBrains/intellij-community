@@ -2,21 +2,74 @@
 package com.intellij.ide.plugins.newui
 
 import com.intellij.ide.plugins.api.PluginDto
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceServiceImpl
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.replaceService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 @TestApplication
+@RegistryKey(key = "platform.limit.plugin.update.source.by.configured.one", value = "false")
 internal class PluginUpdateSourceFilterTest {
   private val sources = PluginUpdateSourceServiceImpl()
   private val sourceA = sources.createCustomRepositoryPluginUpdateSourceId("https://example.com/a.xml")
   private val sourceB = sources.createCustomRepositoryPluginUpdateSourceId("https://example.com/b.xml")
   private val sourceC = sources.createCustomRepositoryPluginUpdateSourceId("https://example.com/c.xml")
+
+  @Test
+  @RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "true")
+  @RegistryKey(key = "platform.limit.plugin.update.source.by.configured.one", value = "true")
+  @RegistryKey(key = "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users", value = "false")
+  fun `cached updates must match the saved source when filtering is enabled`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      ApplicationManager.getApplication().replaceService(PluginUpdateSourceService::class.java, sources, disposable)
+      val enabled = plugin("enabled").apply { repositoryName = "https://example.com/a.xml" }
+      val disabled = plugin("disabled").apply { repositoryName = "https://example.com/a.xml" }
+      val unknown = plugin("unknown").apply { repositoryName = "https://example.com/a.xml" }
+      sources.setPluginUpdateSourceId(enabled.pluginId, sourceB)
+      sources.setPluginUpdateSourceId(disabled.pluginId, sourceA)
+      val snapshot = PluginUpdatesEvent(listOf(enabled, unknown), listOf(disabled), listOf(enabled))
+      val updates = MutableStateFlow(snapshot)
+      val filter = PluginUpdateSourceFilter()
+
+      val filtered = filter.filter(updates).first()
+      assertThat(filtered.enabledUpdates).isEmpty()
+      assertThat(filtered.disabledUpdates).containsExactly(disabled)
+      assertThat(filtered.pluginNods).containsExactly(enabled)
+      assertThat(updates.value).isSameAs(snapshot)
+
+      sources.setPluginUpdateSourceId(enabled.pluginId, sourceA)
+      assertThat(filter.filter(updates).first().enabledUpdates).containsExactly(enabled)
+      sources.setPluginUpdateSourceId(disabled.pluginId, sourceB)
+      assertThat(filter.filter(updates).first().disabledUpdates).isEmpty()
+    }
+
+  @Test
+  @RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "true")
+  fun `disabled source filtering retains cached updates after pending changes clear`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      ApplicationManager.getApplication().replaceService(PluginUpdateSourceService::class.java, sources, disposable)
+      val update = plugin("plugin").apply { repositoryName = "https://example.com/b.xml" }
+      sources.setPluginUpdateSourceId(update.pluginId, sourceA)
+      val snapshot = PluginUpdatesEvent(listOf(update), emptyList(), emptyList())
+      val updates = MutableStateFlow(snapshot)
+      val filter = PluginUpdateSourceFilter()
+
+      assertThat(filter.filter(updates).first()).isSameAs(snapshot)
+      filter.sourceChanged(update.pluginId, sourceA, sourceB)
+      assertThat(filter.filter(updates).first().all).isEmpty()
+      filter.clear()
+      assertThat(filter.filter(updates).first()).isSameAs(snapshot)
+    }
 
   @Test
   fun `pending sources suppress enabled and disabled updates without changing the shared snapshot`(): Unit = timeoutRunBlocking {

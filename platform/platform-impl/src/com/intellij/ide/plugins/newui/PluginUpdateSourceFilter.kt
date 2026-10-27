@@ -3,6 +3,8 @@ package com.intellij.ide.plugins.newui
 
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
+import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
+import com.intellij.openapi.updateSettings.impl.createRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -30,10 +32,23 @@ internal class PluginUpdateSourceFilter {
 
   fun filter(updates: Flow<PluginUpdatesEvent>): Flow<PluginUpdatesEvent> {
     return updates.combine(changes) { snapshot, pendingChanges ->
-      if (pendingChanges.isEmpty()) snapshot
+      val sources = if (PluginUpdateSourceService.isPluginUpdateFilteredAgainstPluginUpdateSource()) {
+        PluginUpdateSourceService.getInstance()
+      }
+      else null
+
+      fun accepts(plugin: PluginUiModel): Boolean {
+        if (plugin.pluginId in pendingChanges) return false
+        if (sources == null) return true
+        return sources.getPluginUpdateSourceId(plugin.pluginId)?.canInstallUpdatesFrom(createRepository(plugin)) == true
+      }
+
+      val enabledUpdates = snapshot.enabledUpdates.filter(::accepts)
+      val disabledUpdates = snapshot.disabledUpdates.filter(::accepts)
+      if (enabledUpdates.size == snapshot.enabledUpdates.size && disabledUpdates.size == snapshot.disabledUpdates.size) snapshot
       else snapshot.copy(
-        enabledUpdates = snapshot.enabledUpdates.filterNot { it.pluginId in pendingChanges },
-        disabledUpdates = snapshot.disabledUpdates.filterNot { it.pluginId in pendingChanges },
+        enabledUpdates = enabledUpdates,
+        disabledUpdates = disabledUpdates,
       )
     }
   }

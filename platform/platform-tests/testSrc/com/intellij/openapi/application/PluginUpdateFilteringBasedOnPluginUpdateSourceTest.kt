@@ -1,22 +1,45 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.ide.plugins.newui.DefaultPluginUpdatesProvider
+import com.intellij.ide.plugins.newui.DefaultUiPluginManagerController
+import com.intellij.ide.plugins.newui.PluginManagerSessionService
+import com.intellij.ide.plugins.newui.PluginUpdateSourceState
+import com.intellij.ide.plugins.newui.PluginUpdatesEvent
+import com.intellij.ide.plugins.newui.PluginUpdatesProvider
+import com.intellij.ide.plugins.newui.PluginUpdatesService
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.updateSettings.impl.DefaultPluginUpdateHandler
+import com.intellij.openapi.updateSettings.impl.PluginUpdateHandler
+import com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSource
 import com.intellij.openapi.updateSettings.impl.PluginUpdateSourceService
 import com.intellij.openapi.updateSettings.impl.UpdateCheckerFacade
 import com.intellij.openapi.updateSettings.impl.createNightlyAndMarketplacePluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.createNightlyPluginUpdateSourceId
 import com.intellij.openapi.updateSettings.impl.FORCE_INTERNAL_USER_FOR_TESTS_IN_PLUGIN_UPDATE_SOURCES
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.TaskCancellation
+import com.intellij.platform.ide.progress.withModalProgress
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil.withSystemProperty
 import com.intellij.testFramework.TestModeFlags
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.http.url
+import com.intellij.testFramework.replaceService
+import com.intellij.util.application
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertNotNull
+import java.util.UUID
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
@@ -25,6 +48,68 @@ import kotlin.test.assertTrue
 @RegistryKey(key = "platform.limit.plugin.update.source.by.configured.one", value = "true")
 internal class PluginUpdateFilteringBasedOnPluginUpdateSourceTest : UpdateCheckerTestBase() {
   private val updateSourcePluginIds = mutableSetOf<PluginId>()
+
+  @Test
+  @RegistryKey(key = "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users", value = "false")
+  fun `applying source changes publishes fresh results from the selected repository`(): Unit = timeoutRunBlocking {
+    val pluginId = PluginId.getId("test.source.switch")
+    val repositoryA = createTestServer("repository-a")
+    val repositoryB = createTestServer("repository-b")
+    setInstalledPluginMocks(installedPlugin(pluginId.idString))
+    installedPluginsFacade.setHosts(listOf(repositoryA.url, repositoryB.url))
+    setMarketplacePlugins(emptyList(), listOf(pluginId.idString))
+    setCustomRepositoryPlugins(repositoryA, listOf(CustomRepositoryPlugin(pluginId.idString, "1.1")))
+    setCustomRepositoryPlugins(repositoryB, listOf(CustomRepositoryPlugin(pluginId.idString, "2.1")))
+
+    val sources = PluginUpdateSourceService.getInstance()
+    application.replaceService(PluginManagerSessionService::class.java, PluginManagerSessionService(), testDisposable.get())
+    val sourceA = sources.createCustomRepositoryPluginUpdateSourceId(repositoryA.url)
+    val sourceB = sources.createCustomRepositoryPluginUpdateSourceId(repositoryB.url)
+    setPluginUpdateSources(sourceB, pluginId.idString)
+    val session = DefaultUiPluginManagerController.createSession(UUID.randomUUID().toString())
+    session.pluginUpdateSourceStates[pluginId] = PluginUpdateSourceState(sourceB)
+    val handler = DefaultPluginUpdateHandler()
+    ExtensionTestUtil.maskExtensions(PluginUpdateHandlerProvider.EP_NAME, listOf(object : PluginUpdateHandlerProvider {
+      override fun getPluginUpdateHandler(): PluginUpdateHandler = handler
+    }), testDisposable.get())
+
+    val scope = childScope("Plugin source update check", Dispatchers.IO)
+    try {
+      val provider = DefaultPluginUpdatesProvider(scope)
+      ExtensionTestUtil.maskExtensions(PluginUpdatesProvider.EP_NAME, listOf(provider), testDisposable.get())
+      val service = PluginUpdatesService(scope)
+      val results = Channel<PluginUpdatesEvent>(Channel.UNLIMITED)
+      val subscription = withContext(Dispatchers.UI) {
+        service.subscribe { results.trySend(it) }
+      }
+      try {
+        fun assertUpdate(event: PluginUpdatesEvent, version: String, repository: String) {
+          val update = event.enabledUpdates.single()
+          assertEquals(pluginId, update.pluginId)
+          assertEquals(version, update.version)
+          assertEquals(repository, update.repositoryName)
+        }
+
+        assertUpdate(results.receive(), "2.1", repositoryB.url)
+        withModalProgress(ModalTaskOwner.guess(), "Check plugin updates", TaskCancellation.nonCancellable()) {
+          for ((source, version, repository) in listOf(Triple(sourceA, "1.1", repositoryA.url),
+                                                     Triple(sourceB, "2.1", repositoryB.url),
+                                                     Triple(sourceA, "1.1", repositoryA.url))) {
+            DefaultUiPluginManagerController.setPendingPluginUpdateSourceInSession(session.sessionId, pluginId, source)
+            assertEquals(null, DefaultUiPluginManagerController.apply(null, null).error)
+            assertEquals(source, sources.getPluginUpdateSourceId(pluginId))
+            assertUpdate(results.receive(), version, repository)
+          }
+        }
+      }
+      finally {
+        withContext(Dispatchers.UI) { subscription.cancel() }
+      }
+    }
+    finally {
+      scope.cancel()
+    }
+  }
 
   @AfterEach
   fun cleanUpPluginUpdateSources() {

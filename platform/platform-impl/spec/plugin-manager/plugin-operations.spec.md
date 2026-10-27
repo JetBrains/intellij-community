@@ -184,6 +184,11 @@ Untested: No focused test verifies state isolation across two page sessions.
     `saved source changes refresh updates`
   )
 
+- A check must deliver fresh updates to UI callbacks while a modal task is active.
+  [@test] ../../../platform-tests/testSrc/com/intellij/openapi/application/PluginUpdateFilteringBasedOnPluginUpdateSourceTest.kt (
+    `applying source changes publishes fresh results from the selected repository`
+  )
+
 - A plugin with a pending update source change must not offer Update in its rows or details.
 - Update All must exclude this plugin until the source change is applied or reverted.
 - Reverting the source change or resetting the session must restore the latest cached update.
@@ -197,6 +202,16 @@ Untested: No focused test verifies state isolation across two page sessions.
     `returning to the initial source restores updates after several source changes`;
     `unknown sources participate in pending changes`;
     `reset restores the latest snapshot and persistence clears only its plugin`
+  )
+
+- When source filtering is enabled, the page must accept cached updates only from the saved update source.
+- Apply must not restore an update from the previous source while a fresh check runs.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `Apply keeps updates from the previous source hidden`
+  )
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/PluginUpdateSourceFilterTest.kt (
+    `cached updates must match the saved source when filtering is enabled`;
+    `disabled source filtering retains cached updates after pending changes clear`
   )
 
 - Before the trust check starts, an operation must load incomplete Marketplace details.

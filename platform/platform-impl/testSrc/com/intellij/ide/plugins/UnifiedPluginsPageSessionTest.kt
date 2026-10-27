@@ -71,6 +71,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.common.waitUntilAssertSucceeds
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
@@ -88,6 +89,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -112,6 +114,7 @@ import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 @Timeout(30)
+@RegistryKey(key = "platform.limit.plugin.update.source.by.configured.one", value = "false")
 internal class UnifiedPluginsPageSessionTest {
   companion object {
     @JvmStatic
@@ -702,6 +705,71 @@ internal class UnifiedPluginsPageSessionTest {
           val row = componentsOfType(content, ListPluginComponent::class.java).single()
           assertThat(row.getUpdatePluginDescriptor()?.version).isEqualTo("2.0")
           assertThat(facade.getPendingPluginUpdateSource(update.pluginId)).isEqualTo(sourceB)
+        }
+      }
+      finally {
+        Disposer.dispose(session)
+      }
+    }
+
+  @Test
+  @RegistryKey(key = "platform.enable.plugin.update.source.feature", value = "true")
+  @RegistryKey(key = "platform.limit.plugin.update.source.by.configured.one", value = "true")
+  @RegistryKey(key = "platform.disable.plugin.update.sources.ui.and.filtering.for.internal.users", value = "false")
+  fun `Apply keeps updates from the previous source hidden`(@TestDisposable disposable: Disposable): Unit =
+    uiTest {
+      val sources = PluginUpdateSourceServiceImpl()
+      ApplicationManager.getApplication().replaceService(PluginUpdateSourceService::class.java, sources, disposable)
+      val pluginId = PluginId.getId("applied.source.plugin")
+      val repositoryA = "http://127.0.0.1:8765/updatePlugins.xml"
+      val repositoryB = "http://127.0.0.1:8766/updatePlugins.xml"
+      val sourceA = sources.createCustomRepositoryPluginUpdateSourceId(repositoryA)
+      val sourceB = sources.createCustomRepositoryPluginUpdateSourceId(repositoryB)
+      val updateA = PluginDto("Plugin Update", pluginId).apply {
+        version = "1.1"
+        repositoryName = repositoryA
+      }
+      val updateB = PluginDto("Plugin Update", pluginId).apply {
+        version = "2.1"
+        repositoryName = repositoryB
+      }
+      sources.setPluginUpdateSourceId(pluginId, sourceB)
+      val updates = MutableSharedFlow<PluginUpdatesEvent>(replay = 1)
+      updates.emit(PluginUpdatesEvent(listOf(updateB), emptyList(), emptyList()))
+      val provider = FixedLocalDataProvider(
+        UnifiedPluginInventory(listOf(inventoryItem(pluginId.idString, "Installed Plugin")), emptyList()),
+      )
+      val session = createSession(null, provider, pluginUpdates = updates)
+      try {
+        val content = session.getComponent()
+        val button = updateAllButton(session.getCenterComponent(Configurable.TopComponentController.EMPTY))
+        waitForPluginIds(content, setOf(pluginId.idString))
+        waitForButton(button, "Update All", enabled = true)
+        val facade = componentsOfType(content, ListPluginComponent::class.java).single().getModelFacade()
+        facade.getModel().waitForSessionInitialization()
+        val pluginSession = checkNotNull(PluginManagerSessionService.getInstance().getSession(facade.getModel().sessionId))
+        pluginSession.pluginUpdateSourceStates[pluginId] = PluginUpdateSourceState(sourceB)
+
+        for ((source, update) in listOf(sourceA to updateA, sourceB to updateB)) {
+          facade.setPendingPluginUpdateSourceInSession(pluginId, source)
+          waitUntilAssertSucceeds { assertThat(button.isVisible).isFalse() }
+          facade.getModel().applyAsync(null)
+
+          assertThat(sources.getPluginUpdateSourceId(pluginId)).isEqualTo(source)
+          assertThat(facade.getModel().updateSourceFilter.filter(updates).first().all).isEmpty()
+          waitUntilAssertSucceeds {
+            val row = componentsOfType(content, ListPluginComponent::class.java).single()
+            assertThat(row.getUpdateActionDescriptors()).isNull()
+            assertThat(button.isVisible).isFalse()
+          }
+
+          updates.emit(PluginUpdatesEvent(listOf(update), emptyList(), emptyList()))
+          waitForButton(button, "Update All", enabled = true)
+          waitUntilAssertSucceeds {
+            val row = componentsOfType(content, ListPluginComponent::class.java).single()
+            assertThat(row.getUpdatePluginDescriptor()?.version).isEqualTo(update.version)
+            assertThat(row.getUpdatePluginDescriptor()?.repositoryName).isEqualTo(update.repositoryName)
+          }
         }
       }
       finally {
