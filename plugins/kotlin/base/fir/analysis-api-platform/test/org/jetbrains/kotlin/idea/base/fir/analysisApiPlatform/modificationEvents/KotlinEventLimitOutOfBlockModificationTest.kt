@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modificationEvent
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.codeInsight.multiverse.ProjectModelContextBridge
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.project.Project
@@ -339,8 +340,8 @@ class KotlinEventLimitOutOfBlockModificationTest : AbstractKotlinModificationEve
         CodeInsightContextManager.getInstance(project).registerTestOnlyCodeInsightContextProvider(object : CodeInsightContextProvider {
             override fun isOwnerOf(context: CodeInsightContext): Boolean = context === mockContext
 
-            override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? =
-                if (file.name == "a.kt") listOf(mockContext, moduleContextA) else null
+            override fun getContexts(file: VirtualFile, project: Project): Answer =
+                if (file.name == "a.kt") Answer.Contexts(listOf(mockContext, moduleContextA)) else Answer.NotOwned
 
             override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
         }, testRootDisposable)

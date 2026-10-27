@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.multiverse
 
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -105,9 +106,11 @@ class CodeInsightContextManagerImpl(
     log.trace { "requested all contexts of file ${file.path}" }
 
     for (provider in EP_NAME.lazySequence()) {
-      val contexts = provider.getContextSafely(file) ?: continue
-      return@getOrPut contexts.ifEmpty { listOf(defaultContext()) }.asSequence().toContextOrArray().also {
-        log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
+      when (val answer = provider.getContextSafely(file)) {
+        Answer.NotOwned -> continue
+        is Answer.Contexts -> return@getOrPut answer.contexts.asSequence().toContextOrArray().also {
+          log.debug { "[ctx-diag] computed contexts of ${file.path}: ${it.wrapToList()}" }
+        }
       }
     }
 
@@ -185,9 +188,9 @@ class CodeInsightContextManagerImpl(
     return context
   }
 
-  /** `null` when the provider does not own [file], or when it threw. A provider that throws is broken, so we isolate it. */
-  private fun CodeInsightContextProvider.getContextSafely(file: VirtualFile): List<CodeInsightContext>? {
-    return runSafely { this.getContexts(file, project) }
+  /** [Answer.NotOwned] when the provider threw. A provider that throws is broken, so we isolate it. */
+  private fun CodeInsightContextProvider.getContextSafely(file: VirtualFile): Answer {
+    return runSafely { this.getContexts(file, project) } ?: Answer.NotOwned
   }
 
   private inline fun <T> runSafely(block: () -> T): T? {

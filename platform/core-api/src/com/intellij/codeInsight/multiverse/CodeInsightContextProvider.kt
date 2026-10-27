@@ -19,10 +19,9 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.OverrideOnly
 interface CodeInsightContextProvider {
-  /** `null` when this provider does not own [file]; empty when it owns it but has nothing to offer yet, e.g. still loading. */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-  fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>?
+  fun getContexts(file: VirtualFile, project: Project): Answer
 
   /** `true` when [context] is one this provider produces. A plain type test, and no two providers may accept the same context. */
   fun isOwnerOf(context: CodeInsightContext): Boolean
@@ -57,6 +56,24 @@ interface CodeInsightContextProvider {
   fun interface Invalidator {
     @RequiresWriteLock
     fun requestInvalidation()
+  }
+
+  /** What [getContexts] returns for a file. */
+  sealed interface Answer {
+    /** This provider does not own the file. The platform asks the next provider. */
+    data object NotOwned : Answer
+
+    /** The contexts of the file. [contexts] is never empty. */
+    class Contexts(val contexts: List<CodeInsightContext>) : Answer {
+      init {
+        require(contexts.isNotEmpty()) { "an owned file with no contexts of its own is DefaultContext" }
+      }
+    }
+
+    companion object {
+      /** [Contexts] with only the default context. */
+      val DefaultContext: Contexts = Contexts(listOf(defaultContext()))
+    }
   }
 }
 
