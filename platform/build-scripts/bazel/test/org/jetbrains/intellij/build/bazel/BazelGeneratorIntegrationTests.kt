@@ -160,7 +160,10 @@ class BazelGeneratorIntegrationTests {
 
     generateMetadataProject(projectDir, communityOnly = false)
 
-    softly.assertThat(communityDir.resolve("plugin/BUILD.bazel").readText()).contains("""
+    val pluginBuildFile = communityDir.resolve("plugin/BUILD.bazel")
+    val pluginBuildFileContent = pluginBuildFile.readText()
+    softly.assertThat(pluginBuildFileContent).contains("""
+      |### auto-generated section `plugin intellij.plugin` start
       |ij_plugin(
       |    name = "plugin_plugin",
       |    descriptor_module = ":plugin",
@@ -178,7 +181,32 @@ class BazelGeneratorIntegrationTests {
       |    }),
       |    visibility = ["//visibility:public"],
       |)
+      |### auto-generated section `plugin intellij.plugin` end
     """.trimMargin())
+
+    // the standalone community repository does not know the ultimate modules, so it keeps the section generated in the ultimate repository
+    generateMetadataProject(communityDir)
+    assertEquals(pluginBuildFileContent, pluginBuildFile.readText())
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  @Test
+  fun `standalone community repository rejects unknown content module without plugin section`() {
+    val projectDir = Files.createTempDirectory("ij-plugin-unknown-content-module")
+    getTestDataPath("ij-plugin-target").resolve("project").copyToRecursively(projectDir, followLinks = true, overwrite = false)
+    val pluginXml = projectDir.resolve("plugin/resources/META-INF/plugin.xml")
+    pluginXml.writeText(pluginXml.readText().replace(
+      "<module name=\"intellij.module\"/>",
+      "<module name=\"intellij.module\"/>\n    <module name=\"intellij.ultimate.split\"/>",
+    ))
+
+    val exception = assertThrows(IllegalStateException::class.java) {
+      generateMetadataProject(projectDir)
+    }
+    softly.assertThat(exception.message)
+      .contains("[intellij.ultimate.split]")
+      .contains("Run ./build/jpsModelToBazel.cmd in the ultimate repository")
+    assertTrue("The generator must not save module files when a plugin section cannot be generated", !Files.exists(projectDir.resolve("plugin/BUILD.bazel")))
     if (softly.wasSuccess()) projectDir.deleteRecursively()
   }
 
