@@ -84,7 +84,7 @@ class StandaloneMavenArtifactsTest {
   @Test
   fun `pom of each layer matches the expected file`() {
     for (layer in layers) {
-      val pom = renderPom(artifactData.getValue(layer), context).replace(context.buildNumber, VERSION_PLACEHOLDER)
+      val pom = renderPom(artifactData.getValue(layer).withKotlinVersionPlaceholder(), context).replace(context.buildNumber, VERSION_PLACEHOLDER)
       UsefulTestCase.assertSameLinesWithFile(moduleDir(layer).resolve(EXPECTED_POM_FILE_NAME).toString(), pom)
     }
   }
@@ -162,6 +162,20 @@ class StandaloneMavenArtifactsTest {
   }
 
   /**
+   * Replaces the version of each `org.jetbrains.kotlin` dependency with [KOTLIN_VERSION_PLACEHOLDER].
+   */
+  private fun MavenArtifactData.withKotlinVersionPlaceholder(): MavenArtifactData {
+    return copy(dependencies = dependencies.map { dependency ->
+      if (dependency.coordinates.groupId == KOTLIN_GROUP_ID) {
+        dependency.copy(coordinates = dependency.coordinates.copy(version = KOTLIN_VERSION_PLACEHOLDER))
+      }
+      else {
+        dependency
+      }
+    })
+  }
+
+  /**
    * The libraries that the POMs of [layer] and of its own modules declare, as `groupId:artifactId`.
    */
   private fun libraries(layer: JpsModule, moduleCoordinates: Set<MavenCoordinates>): Set<String> {
@@ -205,5 +219,7 @@ class StandaloneMavenArtifactsTest {
     const val EXPECTED_CLASSPATH_FILE_NAME = "expected-classpath.txt"
     const val EXPECTED_DUPLICATE_SOURCES_FILE_NAME = "expected-duplicate-sources.txt"
     const val VERSION_PLACEHOLDER = "BUILD_NUMBER"
+    const val KOTLIN_GROUP_ID = "org.jetbrains.kotlin"
+    const val KOTLIN_VERSION_PLACEHOLDER = "KOTLIN_VERSION"
   }
 }
