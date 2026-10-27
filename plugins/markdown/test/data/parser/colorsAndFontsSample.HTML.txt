@@ -151,8 +151,8 @@ HtmlFile:a.md
       XmlToken:XML_NAME('table')
       XmlToken:XML_TAG_END('>')
     XmlText
+      PsiElement(MARKDOWN_OUTER_BLOCK)('\n\n')
       PsiElement(XML_COMMENT)
-        PsiElement(MARKDOWN_OUTER_BLOCK)('\n\n')
         XmlToken:XML_COMMENT_START('<!--')
         XmlToken:XML_COMMENT_CHARACTERS(' This is an HTML comment ')
         XmlToken:XML_COMMENT_END('-->')

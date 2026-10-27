@@ -18,6 +18,8 @@ class MarkdownEmbeddedHtmlTest : BasePlatformTestCase() {
 
   fun testHtml3() = doTest()
 
+  fun testTrailingComment() = doTest()
+
   fun doTest() {
     val name = getTestName(true)
     val file = myFixture.configureByFile("$name.md")

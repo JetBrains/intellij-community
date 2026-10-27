@@ -19,6 +19,7 @@ import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.templateLanguages.TreePatcher;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +30,9 @@ public class XmlTemplateTreePatcher implements TreePatcher {
       //[mike]
       //Nasty hack. Is used not to insert OuterLanguageElements before the first token of tag.
       //See GeneralJspParsingTest.testHtml6
-      if (anchorBefore.getElementType() == XmlTokenType.XML_START_TAG_START) {
+      //The same applies to the first token of a comment.
+      IElementType anchorType = anchorBefore.getElementType();
+      if (anchorType == XmlTokenType.XML_START_TAG_START || anchorType == XmlTokenType.XML_COMMENT_START) {
         anchorBefore = anchorBefore.getTreeParent();
       }
 
