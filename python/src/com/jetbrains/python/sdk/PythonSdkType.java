@@ -7,9 +7,8 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -23,6 +22,7 @@ import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -88,7 +88,6 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import static com.intellij.platform.ide.progress.TasksKt.runWithModalProgressBlocking;
-import static com.jetbrains.python.sdk.EelNativeModeKt.getEelNativeMode;
 import static com.jetbrains.python.statistics.PythonSDKUpdaterIdsHolder.REFRESH_SKELETONS_FOR_REMOTE_INTERPRETER_FAILED;
 
 /**
@@ -406,12 +405,9 @@ public final class PythonSdkType extends SdkType {
 
   /**
    * Returns whether {@code homePath} belongs to an SDK from before the targets API (`docker://...`, `sftp://...`), which is not supported.
-   * In the eel native mode a UNC path (`\\wsl$\...`) is a valid path on an eel, so only a path with a scheme is such an SDK.
    */
   private static boolean isPreTargetSdkHomePath(@NotNull String homePath) {
-    return getEelNativeMode()
-           ? CustomSdkHomePattern.isSchemePythonSdkHomePath(homePath)
-           : CustomSdkHomePattern.isCustomPythonSdkHomePath(homePath);
+    return CustomSdkHomePattern.isSchemePythonSdkHomePath(homePath);
   }
 
   @Override

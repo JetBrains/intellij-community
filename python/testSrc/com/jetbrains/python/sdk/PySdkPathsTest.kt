@@ -49,7 +49,7 @@ import org.junit.Test
 
 @Subsystems.Interpreters
 @Layers.Functional
-class PySdkPathsTest {
+internal class PySdkPathsTest {
 
   companion object {
     @JvmField
@@ -346,6 +346,40 @@ class PySdkPathsTest {
 
       assertThat(sdk.sdkAdditionalData).isInstanceOf(PyInvalidSdk::class.java)
       assertThat(sdk.pySdkAdditionalData).isInstanceOf(PyInvalidSdk::class.java)
+    }
+  }
+
+  /**
+   * PY-93451: an SDK on an eel has a UNC home path. [PythonSdkType.loadAdditionalData] must keep its data
+   * when `python.eel.native` is off, because the IDE saves [PyInvalidSdk] as empty data.
+   */
+  @Test
+  fun eelSdkIsNotInvalidWhenEelNativeModeIsOff() {
+    mockPythonPluginDisposable()
+    Registry.get("python.eel.native").setValue(false, projectModel.project)
+    val sdkType = PythonSdkType.getInstance()
+
+    for (eelPath in listOf(
+      "\\\\wsl$\\Ubuntu\\home\\user\\venv\\bin\\python",
+      "//wsl.localhost/Ubuntu/home/user/venv/bin/python",
+    )) {
+      val sdk = ProjectJdkTable.getInstance().createSdk("WSL SDK", sdkType) as ProjectJdkImpl
+      runWriteActionAndWait {
+        sdk.sdkModificator.apply {
+          homePath = eelPath
+          sdkAdditionalData = PythonSdkAdditionalData(
+            PyFlavorAndData(PyFlavorData.Empty, VirtualEnvSdkFlavor.getInstance()),
+            projectModel.projectRootDir
+          )
+          commitChanges()
+        }
+      }
+      val element = Element("jdk")
+      sdk.writeExternal(element)
+      sdk.readExternal(element)
+
+      assertThat(sdk.sdkAdditionalData).describedAs(eelPath).isNotInstanceOf(PyInvalidSdk::class.java)
+      assertThat((sdk.sdkAdditionalData as PythonSdkAdditionalData).flavor).describedAs(eelPath).isEqualTo(VirtualEnvSdkFlavor.getInstance())
     }
   }
 

@@ -37,8 +37,8 @@ object CustomSdkHomePattern {
 
   /**
    * Returns whether [homePath] has a scheme (`docker://...`, `sftp://...`), as the SDKs from before the targets API have.
-   * Unlike [isCustomPythonSdkHomePath], a UNC path (`\\wsl$\...`) and `//wsl...` do not match: in the eel native mode
-   * these are valid paths on an eel.
+   * Unlike [isCustomPythonSdkHomePath], a UNC path (`\\wsl$\...`) and `//wsl...` do not match: these are valid paths
+   * on an eel, also when the eel native mode is off.
    */
   @JvmStatic
   @Contract(pure = true)
