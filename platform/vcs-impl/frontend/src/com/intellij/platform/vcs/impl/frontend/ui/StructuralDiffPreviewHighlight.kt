@@ -66,7 +66,7 @@ internal class StructuralDiffPreviewHighlight(
     }
   }
 
-  /** Dims the viewer outside the hunk. With [scroll], it also moves the caret to the hunk and brings the hunk into view. */
+  /** Dims the viewer outside the hunk. With [scroll], it also moves the carets to the hunk and brings the hunk into view. */
   @RequiresEdt
   fun apply(scroll: Boolean) {
     clearMarkups()
@@ -85,12 +85,18 @@ internal class StructuralDiffPreviewHighlight(
     else viewer.transferLineToOnesideStrict(Side.RIGHT, lines.current.end - 1)
     if (start !in 0..last) return emptyList()
     val editor = viewer.editor
-    if (scroll) scrollTo(editor, LineRange(start, last + 1))
+    if (scroll) {
+      moveCaret(editor, LineRange(start, last + 1))
+      scrollTo(editor, LineRange(start, last + 1))
+    }
     return listOfNotNull(dim(editor, LineRange(start, last + 1)))
   }
 
   private fun applyTwoside(viewer: TwosideTextDiffViewer, scroll: Boolean): List<Disposable> {
     if (scroll) {
+      // Both carets go to the hunk, so that the caret rows of both sides mark it.
+      moveCaret(viewer.getEditor(Side.LEFT), lines.base)
+      moveCaret(viewer.getEditor(Side.RIGHT), lines.current)
       if (lines.current.isEmpty) scrollTo(viewer.getEditor(Side.LEFT), lines.base)
       else scrollTo(viewer.getEditor(Side.RIGHT), lines.current)
     }
@@ -117,10 +123,15 @@ internal class StructuralDiffPreviewHighlight(
     return highlightStructuralPreview(editor, lines, wholeLines = true, gutter = true)
   }
 
+  /** Moves the caret to the first line of the range. A side without lines of the hunk gets the caret on the line after the change. */
+  private fun moveCaret(editor: Editor, range: LineRange) {
+    val line = minOf(range.start, editor.document.lineCount - 1)
+    if (line >= 0) editor.caretModel.moveToLogicalPosition(LogicalPosition(line, 0))
+  }
+
   /** Centers a hunk that fits the viewport. A longer hunk starts near the top. */
   private fun scrollTo(editor: Editor, range: LineRange) {
     if (range.isEmpty || range.start >= editor.document.lineCount) return
-    editor.caretModel.moveToLogicalPosition(LogicalPosition(range.start, 0))
     val visibleArea = editor.scrollingModel.visibleArea
     val top = editor.logicalPositionToXY(LogicalPosition(range.start, 0)).y
     val bottom = editor.logicalPositionToXY(LogicalPosition(range.end, 0)).y
