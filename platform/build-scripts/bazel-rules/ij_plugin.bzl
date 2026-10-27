@@ -51,6 +51,8 @@ def _ij_plugin_impl(ctx):
 
     args.add("--packed_modules")
     args.add(packed_modules_file)
+    if ctx.attr.skip_unresolved_optional_modules:
+        args.add("--skip_unresolved_optional_modules")
     args.add_joined(
         "--descriptor_module",
         plugin_descriptor_jars,
@@ -215,6 +217,15 @@ This rule is experimental, and its API may change. Do not migrate plugins to it 
         "content_modules": attr.label_list(
             doc = "A list of targets that produce the plugin content modules registered in the plugin.",
             providers = [[_PluginModuleInfo], [_KtJvmInfo]],
+        ),
+        "skip_unresolved_optional_modules": attr.bool(
+            doc = """\
+If `True`, a content module with the `optional` or `on-demand` loading rule in `plugin.xml` is skipped if `content_modules` does not have it.
+The rule also removes the `module` tag of the skipped module from `plugin.xml`.
+
+If `False`, such a module causes an error.
+""",
+            default = False,
         ),
         "since_build": attr.string(
             doc = """\

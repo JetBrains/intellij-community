@@ -8,6 +8,7 @@ import org.jdom.Element
  * Computes the patched version of `plugin.xml` descriptor where `version` tag, `since-build` and `until-build` attributes are replaced by the provided values,
  * and bodies of content module descriptors are inlined in the corresponding 'module' tags wrapped into CDATA.
  * @param contentModules maps from a name of a content module to the text of its descriptor
+ * @param skippedContentModuleNames names of content modules which are not included in the distribution; their 'module' tags are removed
  */
 internal fun patchPluginDescriptor(
   originalContent: ByteArray,
@@ -15,21 +16,32 @@ internal fun patchPluginDescriptor(
   sinceBuild: String?,
   untilBuild: String?,
   contentModules: Map<String, ContentModuleData>,
+  skippedContentModuleNames: Set<String>,
   presentablePluginDescriptorLocation: String,
 ): ByteArray {
   val pluginDescriptorRoot = JDOMUtil.load(originalContent)
   insertVersionAndCompatibilityRange(pluginDescriptorRoot, pluginVersion = pluginVersion, sinceBuild = sinceBuild, untilBuild = untilBuild)
-  embedContentModules(pluginDescriptorRoot, contentModules, presentablePluginDescriptorLocation)
+  embedContentModules(pluginDescriptorRoot, contentModules, skippedContentModuleNames, presentablePluginDescriptorLocation)
   val patchedData = JDOMUtil.write(pluginDescriptorRoot)
   return patchedData.toByteArray()
 }
 
-private fun embedContentModules(pluginDescriptorRoot: Element, contentModules: Map<String, ContentModuleData>, presentablePluginDescriptorLocation: String) {
+private fun embedContentModules(
+  pluginDescriptorRoot: Element,
+  contentModules: Map<String, ContentModuleData>,
+  skippedContentModuleNames: Set<String>,
+  presentablePluginDescriptorLocation: String,
+) {
   inlineXIncludes(pluginDescriptorRoot, presentablePluginDescriptorLocation)
   for (contentElement in pluginDescriptorRoot.getChildren("content")) {
-    for (moduleElement in contentElement.getChildren("module")) {
+    // copy the list, because skipped modules are removed from it
+    for (moduleElement in contentElement.getChildren("module").toList()) {
       val moduleName = moduleElement.getAttributeValue("name")
                        ?: throw IjPluginPackagingException("Required 'name' attribute for 'module' tag in 'content' tag is missing in $presentablePluginDescriptorLocation")
+      if (moduleName in skippedContentModuleNames) {
+        moduleElement.detach()
+        continue
+      }
       val contentModule = contentModules.get(moduleName)
                           ?: throw IjPluginPackagingException("Descriptor for content module '$moduleName' is not found for plugin descriptor from $presentablePluginDescriptorLocation")
 

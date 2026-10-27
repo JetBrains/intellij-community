@@ -36,6 +36,8 @@ import kotlin.io.path.readText
  * * `--content_module module_name:path_to_jar[,path_to_jar...]`: includes a plugin content module in the distribution; the first path contains the module XML descriptor, if
  *   additional paths are specified, they are packed together with the content module;
  *   Specify each module only once.
+ * * `--skip_unresolved_optional_modules` (takes no value): skips a content module with the `optional` or `on-demand` loading rule if no
+ *   `--content_module` argument specifies it; the module is also removed from `plugin.xml`. Without this option, such a module causes an error;
  * * `--non_classpath_data relative_output_path:input_path`: copies a file or directory to the relative path in the plugin distribution;
  * * `--packed_modules path`: enables generation of the `packed-modules.yaml` file, which names each jar in the distribution and the modules packed into it;
  * * `--plugin_version version`: updates `<version>` tag in `plugin.xml` with the provided version;
@@ -69,8 +71,14 @@ object IjPluginPackager {
     var sinceBuild: String? = null
     var untilBuild: String? = null
     var buildNumberFile: Path? = null
+    var skipUnresolvedOptionalModules = false
     var index = 1
     while (index < args.size) {
+      if (args[index] == "--skip_unresolved_optional_modules") {
+        skipUnresolvedOptionalModules = true
+        index++
+        continue
+      }
       require(index + 1 < args.size) { "Expected a value after ${args[index]}" }
       when (args[index]) {
         "--descriptor_module" -> {
@@ -120,7 +128,18 @@ object IjPluginPackager {
     val contentModuleElements = parseContentAndXIncludes(originalPluginXmlContent, descriptorJar.toString()).contentModules
     val packedModulesWriter = packedModulesPath?.let { PackedModulesWriter(it, outputDirectory) }
 
-    val contentModules = readContentModuleDescriptors(contentModuleElements, contentModuleArguments)
+    val skippedContentModuleNames = if (skipUnresolvedOptionalModules) {
+      contentModuleElements
+        .filter { isOptionalLoadingRule(it.loadingRule) && !contentModuleArguments.containsKey(it.name) }
+        .mapTo(HashSet()) { it.name }
+    }
+    else {
+      emptySet()
+    }
+    val contentModules = readContentModuleDescriptors(
+      contentModuleElements = contentModuleElements.filter { it.name !in skippedContentModuleNames },
+      contentModuleArguments = contentModuleArguments,
+    )
     val (contentModulesToMergeWithMainJar, contentModulesToPackSeparately) = contentModules.partition { it.shouldBeMergedToMainJar }
     packContentModuleJars(
       contentModules = contentModulesToPackSeparately,
@@ -147,6 +166,7 @@ object IjPluginPackager {
         sinceBuild = substituteBuildNumber(sinceBuild, buildNumberFromFile),
         untilBuild = substituteBuildNumber(untilBuild, buildNumberFromFile),
         contentModules = contentModules.associateBy { it.moduleElement.name },
+        skippedContentModuleNames = skippedContentModuleNames,
         presentablePluginDescriptorLocation = descriptorJar.pathString,
       )
       packager.addFile(PLUGIN_DESCRIPTOR_ENTRY_NAME, patchedPluginXmlContent, presentableOrigin = descriptorJar.pathString)
@@ -271,6 +291,13 @@ object IjPluginPackager {
           packedModulesWriter.addModuleLibrary(outputJar, contentModuleElement.name, jar.name)
         }
       }
+    }
+  }
+
+  private fun isOptionalLoadingRule(loadingRule: ModuleLoadingRuleValue): Boolean {
+    return when (loadingRule) {
+      ModuleLoadingRuleValue.OPTIONAL, ModuleLoadingRuleValue.ON_DEMAND -> true
+      ModuleLoadingRuleValue.REQUIRED, ModuleLoadingRuleValue.EMBEDDED -> false
     }
   }
 

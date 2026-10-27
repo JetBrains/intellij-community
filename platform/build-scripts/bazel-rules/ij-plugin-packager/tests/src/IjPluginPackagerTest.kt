@@ -250,6 +250,104 @@ internal class IjPluginPackagerTest {
   }
 
   @Test
+  fun skipsUnresolvedOptionalModulesIfOptionIsSpecified(@TempDir tempDirectory: Path) {
+    createDescriptorJarWithContentModules(tempDirectory.resolve("input"), requiredModuleLoadingRule = "required")
+
+    val outputDirectory = tempDirectory.resolve("output")
+    IjPluginPackager.packPlugin(
+      args = listOf(
+        "output",
+        "--descriptor_module",
+        "descriptor:input/descriptor.jar",
+        "--skip_unresolved_optional_modules",
+        "--content_module",
+        "required.module:input/required-module.jar",
+      ),
+      baseDir = tempDirectory,
+    )
+
+    val expectedPluginXml = """
+      <idea-plugin>
+        <content>
+          <module name="required.module" loading="required"><![CDATA[<idea-plugin />]]></module>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+    assertEquals(expectedPluginXml, readZipEntry(outputDirectory.resolve("lib/descriptor.jar"), "META-INF/plugin.xml"))
+    outputDirectory.resolve("lib/modules").assertMatches(directoryContent {
+      zip("required.module.jar") {
+        file("__index__")
+        file("required.module.xml", "<idea-plugin></idea-plugin>")
+      }
+    })
+  }
+
+  @Test
+  fun reportsErrorIfOptionalModuleIsUnresolved(@TempDir tempDirectory: Path) {
+    createDescriptorJarWithContentModules(tempDirectory.resolve("input"), requiredModuleLoadingRule = "required")
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--content_module",
+          "required.module:input/required-module.jar",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals("No 'content_module' argument is specified in 'ij_plugin' rule for 'optional.module' registered in plugin.xml", error.message)
+  }
+
+  @Test
+  fun reportsErrorIfRequiredModuleIsUnresolvedEvenIfSkipOptionIsSpecified(@TempDir tempDirectory: Path) {
+    createDescriptorJarWithContentModules(tempDirectory.resolve("input"), requiredModuleLoadingRule = "embedded")
+
+    val error = assertThrows(IjPluginPackagingException::class.java) {
+      IjPluginPackager.packPlugin(
+        args = listOf(
+          "output",
+          "--descriptor_module",
+          "descriptor:input/descriptor.jar",
+          "--skip_unresolved_optional_modules",
+        ),
+        baseDir = tempDirectory,
+      )
+    }
+
+    assertEquals("No 'content_module' argument is specified in 'ij_plugin' rule for 'required.module' registered in plugin.xml", error.message)
+  }
+
+  /**
+   * Creates a descriptor JAR with an optional, an on-demand and a required module, and a JAR of the required module.
+   * [requiredModuleLoadingRule] is the loading rule of the required module.
+   */
+  private fun createDescriptorJarWithContentModules(inputDirectory: Path, requiredModuleLoadingRule: String) {
+    val pluginXml = """
+      <idea-plugin>
+        <content>
+          <module name="optional.module"/>
+          <module name="required.module" loading="$requiredModuleLoadingRule"/>
+          <module name="on.demand.module" loading="on-demand"/>
+        </content>
+      </idea-plugin>
+    """.trimIndent()
+    directoryContent {
+      zip("descriptor.jar") {
+        dir("META-INF") {
+          file("plugin.xml", pluginXml)
+        }
+      }
+      zip("required-module.jar") {
+        file("required.module.xml", "<idea-plugin></idea-plugin>")
+      }
+    }.generate(inputDirectory)
+  }
+
+  @Test
   fun dropsManifestsThatAJarToolWroteIntoModuleOutputJars(@TempDir tempDirectory: Path) {
     // the rules_kotlin backend writes such a manifest into every module output jar; the JPS backend writes none
     val toolManifest = "Manifest-Version: 1.0\r\nCreated-By: singlejar\r\nTarget-Label: //some:module\r\nInjecting-Rule-Kind: kt_jvm_library\r\n\r\n"
