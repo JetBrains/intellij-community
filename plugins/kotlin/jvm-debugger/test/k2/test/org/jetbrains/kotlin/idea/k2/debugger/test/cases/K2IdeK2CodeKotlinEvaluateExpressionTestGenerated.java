@@ -255,6 +255,16 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorFromSuspendToNonSuspend.kt");
                 }
 
+                @TestMetadata("runToCursorIntoCoroutineScopeAndAsync.kt")
+                public void testRunToCursorIntoCoroutineScopeAndAsync() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorIntoCoroutineScopeAndAsync.kt");
+                }
+
+                @TestMetadata("runToCursorIntoWithContext.kt")
+                public void testRunToCursorIntoWithContext() throws Exception {
+                    runTest("../testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorIntoWithContext.kt");
+                }
+
                 @TestMetadata("runToCursorSeveralUndispatchedCoroutines.kt")
                 public void testRunToCursorSeveralUndispatchedCoroutines() throws Exception {
                     runTest("../testData/evaluation/singleBreakpoint/coroutines/runToCursor/runToCursorSeveralUndispatchedCoroutines.kt");
