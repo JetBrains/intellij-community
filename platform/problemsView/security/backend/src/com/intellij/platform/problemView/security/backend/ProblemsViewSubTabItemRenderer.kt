@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.problemView.security.frontend
+package com.intellij.platform.problemView.security.backend
 
 import com.intellij.platform.problemView.security.icons.SecurityProblemsViewIcons
 import com.intellij.ui.components.JBLabel

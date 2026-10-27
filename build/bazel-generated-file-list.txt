@@ -986,7 +986,7 @@ platform/problemsView/core
 platform/problemsView/frontend
 platform/problemsView/plugin
 platform/problemsView/security
-platform/problemsView/security/frontend
+platform/problemsView/security/backend
 platform/problemsView/shared
 platform/problemsView/ui
 platform/productMode

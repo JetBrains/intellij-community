@@ -3,10 +3,10 @@
   <dependencies>
     <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
+    <module name="intellij.platform.backend"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
-    <module name="intellij.platform.frontend"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -16,14 +16,18 @@
     <module name="intellij.platform.util.ui"/>
   </dependencies>
   <!-- endregion -->
+  <!-- The module depends on intellij.platform.backend, because the backend creates the Problems tool window in split mode (IJPL-223406).
+       The frontend shows the Security tab through LUX. -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.securityProblemsViewSubTab"
-                    interface="com.intellij.platform.problemView.security.frontend.ProblemsViewSubTabProvider"
+                    interface="com.intellij.platform.problemView.security.backend.ProblemsViewSubTabProvider"
                     dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <problemsViewPanelProvider implementation="com.intellij.platform.problemView.security.frontend.SecurityProblemsViewPanelProvider"/>
+    <!-- the backend creates the Problems tool window in split mode (IJPL-223406) -->
+    <!--suppress SplitModeXmlApiUsage -->
+    <problemsViewPanelProvider implementation="com.intellij.platform.problemView.security.backend.SecurityProblemsViewPanelProvider"/>
   </extensions>
 </idea-plugin>

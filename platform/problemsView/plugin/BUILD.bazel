@@ -13,7 +13,7 @@ dev_dist_plugin(
         "intellij.platform.problemView.backend",
         "intellij.platform.problemView.frontend",
         "intellij.platform.problemView.security",
-        "intellij.platform.problemView.security.frontend",
+        "intellij.platform.problemView.security.backend",
     ],
     descriptor = "resources/META-INF/plugin.xml",
     jars = {
@@ -21,7 +21,10 @@ dev_dist_plugin(
     },
     main_module = "intellij.platform.problemView.plugin",
     mode_refused_content_modules = {
-        "frontend": ["intellij.platform.problemView.backend"],
+        "frontend": [
+            "intellij.platform.problemView.backend",
+            "intellij.platform.problemView.security.backend",
+        ],
     },
 )
 ### auto-generated section `dev intellij.platform.problemView.plugin` end
@@ -65,7 +68,7 @@ ij_plugin(
         "//platform/problemsView/backend",
         "//platform/problemsView/frontend",
         "//platform/problemsView/security",
-        "//platform/problemsView/security/frontend",
+        "//platform/problemsView/security/backend",
     ],
     visibility = ["//visibility:public"],
 )

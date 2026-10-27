@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.problemView.security.frontend
+package com.intellij.platform.problemView.security.backend
 
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView
 import com.intellij.analysis.problemsView.toolWindow.ProblemsViewPanelProvider
@@ -24,6 +24,8 @@ internal class SecurityProblemsViewTab(project: Project) : SubTabbedProblemsView
   usagesTabId = "Security",
 )
 
+// the backend owns the Problems tool window in split mode (IJPL-223406)
+@Suppress("SplitModeApiUsage")
 internal class SecurityProblemsViewPanelProvider(private val project: Project) : ProblemsViewPanelProvider {
   override fun create(): ProblemsViewTab? {
     // a plugin can add a provider later, so the watch starts here

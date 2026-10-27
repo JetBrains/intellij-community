@@ -22,6 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
-    <orderEntry type="module" module-name="intellij.platform.frontend" />
+    <orderEntry type="module" module-name="intellij.platform.backend" />
   </component>
 </module>
