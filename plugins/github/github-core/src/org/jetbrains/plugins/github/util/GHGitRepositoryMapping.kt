@@ -9,9 +9,10 @@ import git4idea.ui.branch.GitRepositoryMappingData
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubServerPath
 
-class GHGitRepositoryMapping(override val repository: GHRepositoryCoordinates,
-                             override val remote: GitRemoteUrlCoordinates)
-  : GitRepositoryMappingData, HostedGitRepositoryMapping {
+data class GHGitRepositoryMapping(
+  override val repository: GHRepositoryCoordinates,
+  override val remote: GitRemoteUrlCoordinates,
+) : GitRepositoryMappingData, HostedGitRepositoryMapping {
 
   override val gitRemote: GitRemote
     get() = remote.remote
@@ -19,23 +20,6 @@ class GHGitRepositoryMapping(override val repository: GHRepositoryCoordinates,
     get() = remote.repository
   override val repositoryPath: String
     get() = repository.repositoryPath.repository
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is GHGitRepositoryMapping) return false
-
-    if (repository != other.repository) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return repository.hashCode()
-  }
-
-  override fun toString(): String {
-    return "(repository=$repository, remote=$repository)"
-  }
 
   companion object {
     fun create(server: GithubServerPath, remote: GitRemoteUrlCoordinates): GHGitRepositoryMapping? {
