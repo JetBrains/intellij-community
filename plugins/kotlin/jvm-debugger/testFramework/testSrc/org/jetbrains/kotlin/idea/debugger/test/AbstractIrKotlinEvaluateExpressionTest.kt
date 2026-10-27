@@ -191,7 +191,7 @@ abstract class AbstractIrKotlinEvaluateExpressionTest : KotlinDescriptorTestCase
         debuggerContext.initCaches()
 
         val contextElement = runReadAction {
-            CodeFragmentContextTuner.getInstance().tuneContextElement(ContextUtil.getContextElement(debuggerContext))!!
+            CodeFragmentContextTuner.getInstance().tuneContextElement(debuggerContext.getContextElement())!!
         }
 
         val codeFragmentFactory = CodeFragmentFactory.EXTENSION_POINT_NAME.extensions

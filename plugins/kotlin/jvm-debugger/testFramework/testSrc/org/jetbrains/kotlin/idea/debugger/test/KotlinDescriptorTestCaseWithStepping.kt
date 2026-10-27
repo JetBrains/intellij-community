@@ -22,6 +22,7 @@ import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
@@ -263,12 +264,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     private fun SuspendContextImpl.printContext() {
-        runReadAction {
-            if (this.frameProxy == null) {
-                return@runReadAction println("Context thread is null", ProcessOutputTypes.SYSTEM)
-            }
+        if (frameProxy == null) {
+            println("Context thread is null", ProcessOutputTypes.SYSTEM)
+            return
+        }
 
-            println(PositionUtil.getSourcePosition(this)?.render() ?: "null", ProcessOutputTypes.SYSTEM)
+        val position = PositionUtil.getSourcePosition(this)
+        runReadActionBlocking {
+            println(position?.render() ?: "null", ProcessOutputTypes.SYSTEM)
             extraPrintContext(this)
         }
     }

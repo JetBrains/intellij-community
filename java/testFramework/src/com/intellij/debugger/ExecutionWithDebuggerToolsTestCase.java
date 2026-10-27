@@ -37,6 +37,8 @@ import com.intellij.testFramework.ThreadTracker;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.EdtInvocationManager;
@@ -272,6 +274,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     systemPrintln("frameProxy(" + frameIndex + ") = " + method);
   }
 
+  @RequiresReadLock
   protected static String toDisplayableString(SourcePosition sourcePosition) {
     if (sourcePosition == null) return "unknown source position";
     int line = sourcePosition.getLine();
@@ -287,20 +290,21 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   /** Prints the location of the given context, in the format "file.ext:12345". */
   protected void printContext(@NotNull String prefix, StackFrameContext context) {
-    ReadAction.runBlocking(() -> {
-      if (context.getFrameProxy() != null) {
-        systemPrintln(prefix + toDisplayableString(PositionUtil.getSourcePosition(context)));
-      }
-      else {
-        systemPrintln("Context thread is null");
-      }
-    });
+    if (context.getFrameProxy() != null) {
+      var position = PositionUtil.getSourcePosition(context);
+      systemPrintln(prefix + ReadAction.computeBlocking(() -> toDisplayableString(position)));
+    }
+    else {
+      systemPrintln("Context thread is null");
+    }
   }
 
+  @RequiresReadLockAbsence
   protected void printContextWithText(StackFrameContext context) {
-    ReadAction.runBlocking(() -> {
-      if (context.getFrameProxy() != null) {
-        SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    if (context.getFrameProxy() != null) {
+      SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
+      ReadAction.runBlocking(() -> {
         int offset = sourcePosition.getOffset();
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(sourcePosition.getFile());
         CharSequence text = Objects.requireNonNull(document).getImmutableCharSequence();
@@ -312,19 +316,26 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
         }
 
         systemPrintln(toDisplayableString(sourcePosition) + positionText);
-        printHighlightingRange((SuspendContextImpl)context);
-      }
-      else {
-        systemPrintln("Context thread is null");
-      }
-    });
+      });
+      printHighlightingRange((SuspendContextImpl)context);
+    }
+    else {
+      systemPrintln("Context thread is null");
+    }
   }
 
+  @RequiresReadLockAbsence
   protected void printHighlightingRange(SuspendContextImpl context) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     SourcePosition position = context.getDebugProcess().getPositionManager().getSourcePosition(context.getLocation());
-    JavaSourcePositionHighlighter highlighter = new JavaSourcePositionHighlighter();
-    TextRange range = ReadAction.compute(() -> highlighter.getHighlightRange(position));
-    String actualText = range == null ? null : range.substring(position.getFile().getText());
+    String actualText = ReadAction.computeBlocking(() -> {
+      if (position == null) {
+        return null;
+      }
+      var highlighter = new JavaSourcePositionHighlighter();
+      TextRange range = highlighter.getHighlightRange(position);
+      return range == null ? null : range.substring(position.getFile().getText());
+    });
     if (actualText != null) {
       systemPrintln("Highlight code range: '" + StringUtil.escapeLineBreak(actualText) + "'");
     } else {

@@ -84,7 +84,7 @@ abstract class AbstractK2RuntimeTypeEvaluatorTest : KotlinDescriptorTestCaseWith
         debuggerContext.initCaches()
 
         val contextElement = ReadAction.nonBlocking<PsiElement?> {
-            CodeFragmentContextTuner.getInstance().tuneContextElement(ContextUtil.getContextElement(debuggerContext))
+            CodeFragmentContextTuner.getInstance().tuneContextElement(debuggerContext.getContextElement())
         }.executeSynchronously() ?: error("Cannot find a context element for the breakpoint")
 
         DebugContextProvider.supplyTestDebugContext(contextElement, debuggerContext)
