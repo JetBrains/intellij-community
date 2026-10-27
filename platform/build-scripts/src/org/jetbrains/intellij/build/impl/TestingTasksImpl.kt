@@ -273,9 +273,6 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       }
     }
     else if (options.testSimplePatterns != null) {
-      if (TeamCityHelper.isUnderTeamCity) {
-        context.messages.logErrorAndThrow("'intellij.build.test.simple.patterns' option should be used only for local runs")
-      }
       if (options.testGroups != null) {
         errorOptionIgnored("intellij.build.test.simple.patterns", testGroupSystemPropertyKey)
       }
