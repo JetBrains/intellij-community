@@ -35,13 +35,13 @@ object JsonConfigFile {
   /**
    * Makes the file at [path] known to the VFS, or its absence when the file is missing. A VFS event fires only for a
    * file that the VFS tracks, and a refresh of a partly loaded directory checks only the names that the VFS knows. So
-   * after this call, a later VFS refresh reports a change of the file, and also its creation.
+   * after the asynchronous refresh ends, a later VFS refresh reports a change of the file, and also its creation.
    */
   internal fun refreshInVfs(path: Path) {
     val vfm = VirtualFileManager.getInstance()
     // Refresh the parent's children first: a bare file-path refresh leaves a just-created file "absent" when the
     // directory's child list is already cached, so the new config would never become VFS-visible.
-    vfm.refreshAndFindFileByNioPath(path.parent)?.refresh(false, false)
-    vfm.refreshAndFindFileByNioPath(path)
+    // The finish callback runs on the EDT under the write lock, so its synchronous lookup runs inline.
+    vfm.refreshAndFindFileByNioPath(path.parent)?.refresh(true, false) { vfm.refreshAndFindFileByNioPath(path) }
   }
 }
