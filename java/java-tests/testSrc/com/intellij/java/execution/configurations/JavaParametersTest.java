@@ -13,27 +13,37 @@ import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LanguageLevelModuleExtension;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.intellij.lang.annotations.MagicConstant;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
 public class JavaParametersTest extends ModuleRootManagerTestCase {
   public void testLibrary() throws Exception {
-    ModuleRootModificationUtil.addDependency(myModule, createFastUtilLibrary());
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), getFastUtilJar());
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, getFastUtilJar());
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar());
-    assertClasspath(myProject, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), getFastUtilJar());
+    var libraryJar = createJar("library.jar");
+    ModuleRootModificationUtil.addDependency(myModule, createLibraryWithSources(libraryJar));
+    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), libraryJar);
+    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, libraryJar);
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, libraryJar);
+    assertClasspath(myProject, JavaParameters.JDK_AND_CLASSES_AND_TESTS, getRtJarJdk17(), libraryJar);
   }
 
-  private Library createFastUtilLibrary() {
-    return createLibrary("fastutil-min", getFastUtilJar(), IntelliJProjectConfiguration.getJarFromSingleJarModuleLibrary("intellij.libraries.gson", "gson"));
+  private Library createLibraryWithSources(VirtualFile classesRoot) {
+    return createLibrary("library", classesRoot, createJar("library-sources.jar"));
+  }
+
+  private VirtualFile createJar(String name) {
+    var jar = IoTestUtil.createTestJar(new File(getOrCreateProjectBaseDir().toNioPath().toFile(), name));
+    var jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(getVirtualFile(jar));
+    assertNotNull(jarRoot);
+    return jarRoot;
   }
 
   public void testModuleSourcesAndOutput() throws Exception {
@@ -48,46 +58,52 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
   }
 
   public void testLibraryScope() throws Exception {
-    ModuleRootModificationUtil.addDependency(myModule, createFastUtilLibrary(), DependencyScope.RUNTIME, false);
-    ModuleRootModificationUtil.addDependency(myModule, createSampleLibrary(), DependencyScope.TEST, false);
+    var libraryJar = createJar("library.jar");
+    var testLibraryJar = createJar("test-library.jar");
+    ModuleRootModificationUtil.addDependency(myModule, createLibraryWithSources(libraryJar), DependencyScope.RUNTIME, false);
+    ModuleRootModificationUtil.addDependency(myModule, createLibrary("test-library", testLibraryJar, null), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getSampleLibJar());
-    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, getFastUtilJar());
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, libraryJar, testLibraryJar);
+    assertClasspath(myModule, JavaParameters.CLASSES_ONLY, libraryJar);
   }
 
   public void testProvidedScope() throws Exception {
-    ModuleRootModificationUtil.addDependency(myModule, createFastUtilLibrary(), DependencyScope.PROVIDED, false);
-    ModuleRootModificationUtil.addDependency(myModule, createSampleLibrary(), DependencyScope.TEST, false);
+    var libraryJar = createJar("library.jar");
+    var testLibraryJar = createJar("test-library.jar");
+    ModuleRootModificationUtil.addDependency(myModule, createLibraryWithSources(libraryJar), DependencyScope.PROVIDED, false);
+    ModuleRootModificationUtil.addDependency(myModule, createLibrary("test-library", testLibraryJar, null), DependencyScope.TEST, false);
 
-    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, getFastUtilJar(), getSampleLibJar());
+    assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS, libraryJar, testLibraryJar);
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
-    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), getFastUtilJar());
+    assertClasspath(myModule, JavaParameters.JDK_AND_CLASSES_AND_PROVIDED, getRtJarJdk17(), libraryJar);
   }
 
   public void testModuleDependency() throws Exception {
+    var libraryJar = createJar("library.jar");
     final Module dep = createModule("dep");
     final VirtualFile depOutput = setModuleOutput(dep, false);
     final VirtualFile depTestOutput = setModuleOutput(dep, true);
-    ModuleRootModificationUtil.addDependency(dep, createFastUtilLibrary());
+    ModuleRootModificationUtil.addDependency(dep, createLibraryWithSources(libraryJar));
     ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.COMPILE, false);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY,
-                    depOutput, getFastUtilJar());
+                    depOutput, libraryJar);
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
-                    depTestOutput, depOutput, getFastUtilJar());
+                    depTestOutput, depOutput, libraryJar);
   }
 
   public void testModuleDependencyScope() throws Exception {
+    var libraryJar = createJar("library.jar");
     final Module dep = createModule("dep");
-    ModuleRootModificationUtil.addDependency(dep, createFastUtilLibrary());
+    ModuleRootModificationUtil.addDependency(dep, createLibraryWithSources(libraryJar));
     ModuleRootModificationUtil.addDependency(myModule, dep, DependencyScope.TEST, true);
 
     assertClasspath(myModule, JavaParameters.CLASSES_ONLY);
     assertClasspath(myModule, JavaParameters.CLASSES_AND_TESTS,
-                    getFastUtilJar());
+                    libraryJar);
 
     assertClasspath(myProject, JavaParameters.CLASSES_ONLY,
-                    getFastUtilJar());
+                    libraryJar);
   }
 
   public void testUseNewestJreVersion() throws CantRunException {

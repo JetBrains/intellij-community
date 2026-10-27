@@ -103,10 +103,6 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     });
   }
 
-  protected Library createSampleLibrary() {
-    return createLibrary("byte-buddy", getSampleLibJar(), null);
-  }
-
   protected VirtualFile getSampleLibJar() {
     return IntelliJProjectConfiguration.getJarFromSingleJarModuleLibrary("intellij.libraries.byte.buddy", "byte-buddy");
   }
