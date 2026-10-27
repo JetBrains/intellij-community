@@ -46,9 +46,8 @@ public class LightAdvHighlightingJdk9Test extends LightDaemonAnalyzerTestCase {
   public void testDiamondsWithAnonymousDiamond() { doTest(false, false);}
 
   public void testHighlightApiUsages() {
-    setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(false, false);}
-
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_8, () -> doTest(false, false));
+  }
   public void testModuleInfoSuppression() {
     doTest(BASE_PATH + "/module-info.java", true, false);
   }
