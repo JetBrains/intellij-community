@@ -16,6 +16,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -25,6 +26,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContentUiType
@@ -36,6 +38,7 @@ import com.intellij.platform.projectView.actions.ProjectViewActionSupport
 import com.intellij.platform.projectView.frontend.actions.ProjectViewActionSupportImpl
 import com.intellij.platform.projectView.frontend.actions.ProjectViewToolbarActionGroup
 import com.intellij.platform.projectView.frontend.actions.SplitProjectViewAutoscrollFromSource
+import com.intellij.platform.projectView.frontend.impl.CachedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewUpdateRequestsService
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
@@ -141,6 +144,42 @@ internal class ProjectViewToolWindowServiceImpl(
     if (action != null) toolWindow.setTitleActions(listOf(ProjectViewToolbarActionGroup(action)))
     toolWindow.setAdditionalGearActions(menuActionGroup)
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
+    addCachedPaneContent(toolWindow)
+  }
+
+  /**
+   * Shows the cached tree of the pane to select until the first real pane is added.
+   *
+   * The pane to select is the same as the one that [manageToolWindow] selects.
+   */
+  @RequiresEdt
+  private fun addCachedPaneContent(toolWindow: ToolWindow) {
+    if (!stateInitJob.isCompleted) {
+      LOG.debug { "The saved state is not loaded yet, not showing the cached pane" }
+      return
+    }
+    val paneId = getStartupPaneId(service<ProjectFrameCapabilitiesService>()) ?: persistentState.getSelectedPaneState() ?: return
+    val paneElement = persistentState.getPaneState(paneId)?.element
+    @Suppress("HardCodedStringLiteral") // the name is saved from the descriptor
+    val presentableName: @NlsSafe String? = paneElement?.getAttributeValue(PRESENTABLE_NAME_ATTRIBUTE)
+    if (paneElement == null || presentableName == null) {
+      LOG.debug { "The pane $paneId has no saved state or name, not showing the cached pane" }
+      return
+    }
+    val pane = CachedFrontendProjectViewPane()
+    if (!pane.restoreStateFrom(paneElement)) {
+      LOG.debug { "The pane $paneId has no cached presentation, not showing the cached pane" }
+      return
+    }
+    val content = ContentFactory.getInstance().createContent(pane.component, presentableName, false)
+    content.setPreferredFocusedComponent { pane.componentToFocus }
+    toolWindow.contentManager.addContent(content)
+    ProjectViewInitNotifier.getInstance(project).initCachedNodesLoaded()
+    LOG.info("Added the cached pane $paneId")
+  }
+
+  private fun getStartupPaneId(capabilities: ProjectFrameCapabilitiesService): ProjectViewPaneId? {
+    return capabilities.getUiPolicy(project)?.projectPaneToActivateId?.let { projectViewPaneId(it) }
   }
 
   override suspend fun manageToolWindow(toolWindow: ToolWindow) {
@@ -152,9 +191,7 @@ internal class ProjectViewToolWindowServiceImpl(
         paneContentManager.manageContent()
       }
       val aggregator = FrontendProjectViewPaneAggregator.getInstance(project)
-      val startupPaneId = serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicy(project)
-        ?.projectPaneToActivateId
-        ?.let { projectViewPaneId(it) }
+      val startupPaneId = getStartupPaneId(serviceAsync<ProjectFrameCapabilitiesService>())
       // The frame UI policy wins over the saved selection, as in the monolith.
       // The saved selection is read once, after the state is loaded: the content manager selects the first added content,
       // and that selection overwrites the saved value (IJPL-256315).
@@ -396,6 +433,7 @@ internal class ProjectViewToolWindowServiceImpl(
     }
     val paneElement = Element("pane")
     paneElement.setAttribute("pane", pane.id.idString)
+    paneElement.setAttribute(PRESENTABLE_NAME_ATTRIBUTE, pane.descriptorImpl.presentableName)
     if (pane.saveStateTo(paneElement)) {
       persistentState.putPaneState(pane.id, PaneState(paneElement, pane.descriptorImpl.kind))
       LOG.debug { "Saved the last state for ${pane.id}" }
@@ -414,7 +452,7 @@ internal class ProjectViewToolWindowServiceImpl(
       get() = pane.descriptorImpl
     
     private val initialized = CompletableDeferred<Unit>()
-    
+
     suspend fun managePane() {
       coroutineScope {
         val mainScope = this
@@ -589,7 +627,7 @@ internal class ProjectViewToolWindowServiceImpl(
     val descriptor: ProjectViewPaneDescriptorImpl
       get() = pane.descriptorImpl
   }
-  
+
   private inner class PaneContentManager @RequiresEdt constructor(toolWindow: ToolWindow) {
     private val contentManager = toolWindow.contentManager
     // Written only in createAndAddContent on the EDT, read from any thread.
@@ -636,6 +674,11 @@ internal class ProjectViewToolWindowServiceImpl(
       newContent.setPreferredFocusedComponent { pane.componentToFocus }
       newContent.putUserData(PANE_KEY, pane)
       val index = findSuitableIndex(pane) ?: return null
+      if (firstContentAddedAt == null) {
+        // Before the first real pane, the tool window can have only the cached pane.
+        LOG.debug { "Removing ${contentManager.contentCount} contents before adding the first real pane ${pane.id}" }
+        contentManager.removeAllContents(true)
+      }
       contentManager.addContent(newContent, index)
       if (firstContentAddedAt == null) {
         firstContentAddedAt = TimeSource.Monotonic.markNow()
@@ -809,6 +852,11 @@ private data class PaneState(
 
 private fun defaultSelectedPaneId(): ProjectViewPaneId =
   projectViewPaneId(ProjectViewPane.ID)
+
+/**
+ * The saved pane name, which the cached pane shows before the descriptors arrive.
+ */
+private const val PRESENTABLE_NAME_ATTRIBUTE = "presentableName"
 
 private val FrontendProjectViewPane.descriptorImpl: ProjectViewPaneDescriptorImpl
   get() = descriptor as ProjectViewPaneDescriptorImpl
