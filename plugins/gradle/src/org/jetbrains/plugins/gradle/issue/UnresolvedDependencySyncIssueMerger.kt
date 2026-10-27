@@ -9,26 +9,45 @@ internal class UnresolvedDependencySyncIssueMerger : GradleIssueMerger {
   override fun isApplicable(issue: BuildIssue): Boolean = issue is UnresolvedDependencySyncIssue
 
   override fun merge(issues: List<BuildIssue>): List<BuildIssue> {
-    var offlineMode = false
-    val descriptionBuilder = StringBuilder(GradleBundle.message("gradle.build.issue.unresolved.dependencies.description"))
-      .append("\n")
+    val descriptionBuilder = StringBuilder()
     issues.filterIsInstance<UnresolvedDependencySyncIssue>()
       .groupBy { it.dependencyOwner }
-      .forEach { (configuration, issues) ->
+      .forEach { (_, issues) ->
         descriptionBuilder
           .append("\n")
-          .append(GradleBundle.message("gradle.build.issue.unresolved.dependencies.configuration", configuration))
-          .append("\n")
         for (issue in issues) {
-          descriptionBuilder.append("    - ").append(issue.dependencyName).append("\n")
-          offlineMode = issue.isOfflineMode
+          descriptionBuilder.append("    - ")
+            .append(issue.dependencyName)
+            .append("\n")
+            .append(issue.description)
+            .append("\n")
         }
       }
     return listOf(
       UnresolvedGroupedDependencyIssue(
         GradleBundle.message("gradle.build.issue.unresolved.dependencies.title"),
-        descriptionBuilder.toString(),
-        offlineMode)
+        descriptionBuilder.dropEmptyLines()
+      )
     )
+  }
+
+  private fun CharSequence.dropEmptyLines(): String {
+    val result = StringBuilder()
+    var isPrevEmpty = false
+    for (line in lines()) {
+      if (line.isEmpty()) {
+        isPrevEmpty = true
+        continue
+      }
+      if (result.isNotEmpty()) {
+        result.append('\n')
+        if (isPrevEmpty) {
+          result.append('\n')
+        }
+      }
+      result.append(line)
+      isPrevEmpty = false
+    }
+    return result.toString()
   }
 }

@@ -71,18 +71,11 @@ abstract class UnresolvedDependencyIssue : ConfigurableGradleBuildIssue() {
 class UnresolvedGroupedDependencyIssue(
   title: @NlsSafe String,
   description: @NlsSafe String,
-  isOfflineMode: Boolean,
 ) : UnresolvedDependencyIssue() {
 
   init {
     setTitle(title)
     addDescription(description)
-    configureQuickFix(
-      null,
-      isOfflineMode,
-      DisableOfflineAndRerun(),
-      "gradle.build.quick.fix.disable.offline.mode.rebuild"
-    )
   }
 }
 
