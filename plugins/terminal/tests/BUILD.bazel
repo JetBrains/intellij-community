@@ -59,6 +59,7 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
+        "//libraries/zstd-jni",
     ],
 )
 
@@ -94,6 +95,7 @@ jvm_library(
         "//platform/platform-impl/eel:ide-impl-wsl_test_lib",
         "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
         "//community-resources:customization_test_lib",
+        "//libraries/zstd-jni:zstd-jni_test_lib",
     ],
     deps = [
         # do not sort,

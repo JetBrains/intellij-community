@@ -80,6 +80,7 @@ jvm_library(
     ),
     module_name = "intellij.terminal.emulator.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//libraries/zstd-jni"],
 )
 
 jvm_library(
@@ -98,7 +99,11 @@ jvm_library(
         "//plugins/terminal/emulator:emulator_test_lib",
     ],
     visibility = ["//visibility:public"],
-    runtime_deps = [":emulator-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":emulator-tests",
+        "//libraries/zstd-jni:zstd-jni_test_lib",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
