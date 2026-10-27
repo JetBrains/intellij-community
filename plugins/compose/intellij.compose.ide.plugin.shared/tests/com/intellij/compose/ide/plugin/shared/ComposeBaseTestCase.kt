@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
@@ -75,20 +76,19 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
    * Configures the test data project for an Android target.
    *
    * Writes the Android SDK path into `local.properties`. The Android Gradle plugin and the IDE SDK sync read the SDK
-   * path from there, and without it both need `ANDROID_HOME`. When the Android plugin is loaded, this step also
-   * registers the Android platform SDK of the project in the SDK table, because the fixture reopens a cached project
-   * without a sync. [removeSdksInTests] removes that SDK after the last test of the class.
+   * path from there, and without it both need `ANDROID_HOME`. When the Android plugin provides the [AndroidSdks]
+   * service, this step also registers the Android platform SDK of the project in the SDK table, because the fixture
+   * reopens a cached project without a sync. [removeSdksInTests] removes that SDK after the last test of the class.
    */
   protected fun FileTestFixture.Builder.withAndroidSdk() {
     val sdkPath = KotlinTestUtils.getAndroidSdkSystemIndependentPath()
     withFile("local.properties", "sdk.dir=$sdkPath")
-    setUpAndroidSdk(File(sdkPath))
+    serviceOrNull<AndroidSdks>()?.let { androidSdks -> setUpAndroidSdk(androidSdks, File(sdkPath)) }
   }
 
   /** Registers the Android platform SDK for the compile SDK of the test data project, if the SDK table lacks it. */
-  private fun setUpAndroidSdk(sdkPath: File) {
+  private fun setUpAndroidSdk(androidSdks: AndroidSdks, sdkPath: File) {
     val targetHash = ANDROID_PLATFORM_HASH_PREFIX + androidCompileSdk()
-    val androidSdks = AndroidSdks.getInstance()
     if (androidSdks.findSuitableAndroidSdk(targetHash) != null) return
     invokeAndWaitIfNeeded { androidSdks.tryToCreate(sdkPath, targetHash) }
     ?: error("The Android SDK at $sdkPath has no platform '$targetHash'")
