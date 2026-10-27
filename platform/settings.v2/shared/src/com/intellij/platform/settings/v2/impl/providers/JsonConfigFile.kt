@@ -8,6 +8,7 @@ import com.intellij.platform.settings.v2.SettingsValue.MapValue
 import com.intellij.platform.settings.v2.impl.JsonSettingsCodec
 import com.intellij.platform.settings.v2.impl.SettingsDecodingException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 
 /** Reads and writes a settings [MapValue] as a JSON file at a file system [Path]. The calls block, so call them off the EDT. */
@@ -18,9 +19,15 @@ object JsonConfigFile {
    *
    * @throws SettingsDecodingException when the file exists but does not parse
    */
-  fun read(path: Path): MapValue =
-    if (!Files.exists(path)) MapValue(emptyMap())
-    else JsonSettingsCodec.decode(Files.readString(path))
+  fun read(path: Path): MapValue {
+    val text = try {
+      Files.readString(path)
+    }
+    catch (_: NoSuchFileException) {
+      return MapValue(emptyMap())
+    }
+    return JsonSettingsCodec.decode(text)
+  }
 
   /** Returns the JSON text that [write] stores for [map]. */
   fun toJson(map: MapValue): String = JsonSettingsCodec.encode(map)
