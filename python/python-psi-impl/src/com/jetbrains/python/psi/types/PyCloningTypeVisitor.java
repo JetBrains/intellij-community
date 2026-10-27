@@ -280,20 +280,27 @@ public abstract class PyCloningTypeVisitor extends PyTypeVisitorExt<PyType> {
   @Override
   public PyType visitPyCallableParameterListType(@NotNull PyCallableParameterListType callableParameterListType) {
     return new PyCallableParameterListTypeImpl(
-      ContainerUtil.map(callableParameterListType.getParameters(), parameter ->
-        new PyCallableParameterImpl(
+      ContainerUtil.map(callableParameterListType.getParameters(), parameter -> {
+        var clonedType = clone(parameter.getType(myTypeEvalContext));
+        var parameterPsi = parameter.getParameter();
+        if (parameterPsi != null) {
+          // Keep PSI-backed parameters lazy to avoid loading the AST for their default values.
+          return PyCallableParameterImpl.psi(parameterPsi, clonedType);
+        }
+        return new PyCallableParameterImpl(
           parameter.getName(),
-          Ref.create(clone(parameter.getType(myTypeEvalContext))),
+          Ref.create(clonedType),
           parameter.getDefaultValue(),
           parameter.getDefaultValueText(),
-          parameter.getParameter(),
+          null,
           parameter.isPositionalContainer(),
           parameter.isKeywordContainer(),
           parameter.isSelf(),
           parameter.isKeywordOnlySeparator(),
           parameter.isPositionOnlySeparator(),
           parameter.getDeclarationElement()
-        ))
+        );
+      })
     );
   }
 
