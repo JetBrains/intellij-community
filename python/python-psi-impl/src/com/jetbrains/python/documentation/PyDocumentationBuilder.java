@@ -322,7 +322,7 @@ public final class PyDocumentationBuilder {
     }
     if (link != null && typeParamName != null) {
       myBody.appendRaw(PyPsiBundle.message("QDOC.type.alias.statement.name.of.link", HtmlChunk.text(typeParamName).bold(), link)).br();
-      myBody.append(PythonDocumentationProvider.describeTypeAlias(typeAliasStatement, myContext));
+      myBody.append(PythonDocumentationProvider.describeTypeAlias(typeAliasStatement, myContext, false));
     }
   }
 
