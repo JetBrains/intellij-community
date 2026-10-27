@@ -425,6 +425,55 @@ internal class UnifiedPluginsPageViewTest {
   }
 
   @Test
+  fun `initial layout keeps the repository header visible`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val repository = PluginSectionId.CustomRepository("https://example.com/plugins.xml")
+    val query = "/repository:\"${repository.repositoryId}\""
+    val controller = UnifiedPluginsPageController(
+      initialSections = listOf(section(repository, itemCount = 1, title = repository.repositoryId)),
+      initialQuery = PluginsQueryState(query, query),
+    )
+    createView().use { view ->
+      view.render(controller.state.value)
+      prepareForScrolling(view)
+
+      assertRepositoryHeaderVisible(view, repository.repositoryId)
+    }
+  }
+
+  @Test
+  fun `new repository header stays visible after a section replacement`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
+    val controller = UnifiedPluginsPageController(listOf(section(PluginSectionId.Installed, itemCount = 1)))
+    createView().use { view ->
+      view.render(controller.state.value)
+      prepareForScrolling(view)
+      view.render(controller.state.value)
+      val repository = PluginSectionId.CustomRepository("https://example.com/plugins.xml")
+      val query = "/repository:\"${repository.repositoryId}\""
+      controller.setQuery(PluginsQueryState(query, query, revision = 1))
+      controller.replaceSections(listOf(section(repository, itemCount = 1, title = repository.repositoryId)))
+
+      view.render(controller.state.value)
+      layoutRecursively(view.component)
+
+      assertRepositoryHeaderVisible(view, repository.repositoryId)
+
+      view.component.setSize(1_100, 320)
+      layoutRecursively(view.component)
+
+      assertRepositoryHeaderVisible(view, repository.repositoryId)
+    }
+  }
+
+  private fun assertRepositoryHeaderVisible(view: UnifiedPluginsPageView, title: String) {
+    val titleLabel = componentsOfType(view.component, JBLabel::class.java)
+      .single { it.accessibleContext.accessibleName == title }
+    val header = checkNotNull(SwingUtilities.getAncestorOfClass(SelectablePanel::class.java, titleLabel) as? JComponent)
+    val viewport = componentsOfType(view.component, JBScrollPane::class.java).single().viewport
+    assertThat(header.visibleRect).isEqualTo(Rectangle(0, 0, viewport.width, header.preferredSize.height))
+    assertThat(titleLabel.text).isEqualTo(title)
+  }
+
+  @Test
   fun `long repository title truncates without hiding controls`(): Unit = timeoutRunBlocking(context = Dispatchers.UI) {
     val repositoryId = PluginSectionId.CustomRepository(
       "https://plugins.example.com/" + "a-very-long-repository-segment/".repeat(10) + "plugins.xml"
