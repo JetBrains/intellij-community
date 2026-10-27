@@ -523,7 +523,11 @@ export async function loadToolPermissions(edition, path = toolPermissionsPath) {
     allow: resolvePermissionEntries(parsed.allow, toolsDir, "allow"),
     deny: resolvePermissionEntries(parsed.deny, toolsDir, "deny"),
     denyTools: parsed.denyTools ?? [],
+    additionalDirectories: parsed.additionalDirectories ?? [],
   };
+  if (!permissions.additionalDirectories.every(dir => typeof dir === "string" && dir !== "")) {
+    throw new Error(`${path} has an additionalDirectories entry that is not a non-empty string.`);
+  }
   if (permissions.allow.length === 0) {
     throw new Error(`${path} has no allow entries.`);
   }
@@ -567,10 +571,11 @@ function toClaudeBashRules(entries) {
 /**
  * Rewrites the permission arrays of a committed `.claude/settings.json` from the shared list.
  *
- * Only the rules the list owns are replaced: every `Bash(...)` entry in `permissions.allow` and the
- * whole of `permissions.deny`. MCP, Skill and WebSearch allows stay where they are, and `hooks`,
- * `defaultMode` and the rest of the file are untouched -- settings.json remains the hand-edited
- * home for everything that is not a shell-command rule.
+ * Only the rules the list owns are replaced: every `Bash(...)` entry in `permissions.allow`, the
+ * whole of `permissions.deny` and the whole of `permissions.additionalDirectories`. MCP, Skill and
+ * WebSearch allows stay where they are, and `hooks`, `defaultMode` and the rest of the file are
+ * untouched -- settings.json remains the hand-edited home for everything that is not a
+ * shell-command rule or a working directory.
  */
 export function applyClaudePermissions(settingsText, permissions) {
   const settings = JSON.parse(settingsText);
@@ -582,6 +587,12 @@ export function applyClaudePermissions(settingsText, permissions) {
   // Assigning to existing keys keeps their position, so the file's shape does not churn.
   claudePermissions.allow = [...keptAllowRules, ...toClaudeBashRules(permissions.allow)];
   claudePermissions.deny = [...permissions.denyTools, ...toClaudeBashRules(permissions.deny)];
+  const additionalDirectories = permissions.additionalDirectories ?? [];
+  if (additionalDirectories.length === 0) {
+    delete claudePermissions.additionalDirectories;
+  } else {
+    claudePermissions.additionalDirectories = [...additionalDirectories];
+  }
   return `${JSON.stringify(settings, null, 2)}\n`;
 }
 

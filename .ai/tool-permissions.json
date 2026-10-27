@@ -164,5 +164,15 @@
     "call is attempted; the guide's Tooling rules point at the ijproxy and rg.cmd/fd.cmd equivalents.",
     "Codex has no such tools, so its rules file omits this section."
   ],
-  "denyTools": ["Grep", "Glob"]
+  "denyTools": ["Grep", "Glob"],
+
+  "$comment_additionalDirectories": [
+    "Directories outside the workspace that Claude Code treats as working directories. A session",
+    "runs `cd` into its Branch Deck lease once, and the shell stays there; Write and Edit there ask",
+    "nothing. `EnterWorktree` into a lease asks every time, and neither an allow rule nor a hook",
+    "removes that prompt, because the pool is outside `.claude/worktrees/`. A pool that",
+    "`branchdeck.leasePool` moves elsewhere is not covered. Codex has no such setting, so its rules",
+    "file omits this section."
+  ],
+  "additionalDirectories": ["~/.branch-deck/pool"]
 }

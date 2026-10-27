@@ -200,6 +200,7 @@ describe('render-guides skills', () => {
     ok(community.allow.some(argv => argv[0] === './tools/rg.cmd'), 'community list should use ./tools')
     ok(ultimate.deny.some(argv => argv[0] === 'grep'), 'grep should be denied')
     ok(ultimate.denyTools.includes('Grep'), 'the Grep tool should be denied')
+    ok(ultimate.additionalDirectories.includes('~/.branch-deck/pool'), 'the lease pool should be a working directory')
   })
 
   it('keeps committed agent permission outputs up to date', async () => {
@@ -253,6 +254,19 @@ describe('render-guides skills', () => {
     equal(rewritten.permissions.defaultMode, 'plan')
     equal(rewritten.hooks.SessionStart[0], 'keep me')
     equal(Object.keys(rewritten.permissions).join(' '), 'defaultMode deny allow', 'key order should not churn')
+  })
+
+  it('owns the additional directories of the committed Claude settings', () => {
+    const settingsText = `${JSON.stringify({
+      permissions: {deny: [], allow: [], additionalDirectories: ['~/stale']},
+    }, null, 2)}\n`
+    const permissions = {allow: [['./tests.cmd']], deny: [], denyTools: []}
+
+    const rewritten = JSON.parse(applyClaudePermissions(settingsText, {...permissions, additionalDirectories: ['~/pool']}))
+    equal(rewritten.permissions.additionalDirectories.join(' '), '~/pool')
+
+    const emptied = JSON.parse(applyClaudePermissions(settingsText, {...permissions, additionalDirectories: []}))
+    ok(!('additionalDirectories' in emptied.permissions), 'an empty list should drop the key')
   })
 
   // NOTE: The committed-skill-output freshness / collision check lives in the Kotlin test
