@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.util
 
 import com.intellij.collaboration.messages.CollaborationToolsBundle
@@ -46,6 +46,8 @@ object URIUtil {
     val index = url.indexOf(URLUtil.SCHEME_SEPARATOR)
     return if (index != -1) url.substring(index + URLUtil.SCHEME_SEPARATOR.length) else url
   }
+
+  fun encodePath(path: String): String = path.split('/').joinToString("/") { URLUtil.encodeURIComponent(it) }
 }
 
 fun URI.resolveRelative(path: String): URI {

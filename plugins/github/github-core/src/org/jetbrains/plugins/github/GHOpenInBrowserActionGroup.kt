@@ -1,13 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github
 
+import com.intellij.collaboration.util.URIUtil.encodePath
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.URLUtil
-import com.intellij.util.withFragment
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.action.GlobalHostedGitRepositoryReferenceActionGroup
 import git4idea.remote.hosting.action.HostedGitRepositoryReference
@@ -40,18 +39,15 @@ object GHPathUtil {
     repository.resolveRelative("commit").resolveRelative(revisionOrBranch)
 
   fun getWebURI(repository: URI, revisionOrBranch: String, relativePath: String, lineRange: IntRange?): URI {
-    val fileUri = repository.resolveRelative("blob").resolveRelative(revisionOrBranch).resolveRelative(URLUtil.encodePath(relativePath))
+    val fileUri = repository.resolveRelative("blob").resolveRelative(revisionOrBranch).resolveRelative(encodePath(relativePath))
+    if (lineRange == null) return fileUri
 
-    return if (lineRange != null) {
-      val fragmentBuilder = StringBuilder()
-      fragmentBuilder.append("L").append(lineRange.first + 1)
+    val fragment = buildString {
+      append("L").append(lineRange.first + 1)
       if (lineRange.last != lineRange.first) {
-        fragmentBuilder.append("-L").append(lineRange.last + 1)
+        append("-L").append(lineRange.last + 1)
       }
-      fileUri.withFragment(fragmentBuilder.toString())
     }
-    else {
-      fileUri
-    }
+    return URI("$fileUri#$fragment")
   }
 }

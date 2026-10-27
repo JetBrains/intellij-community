@@ -372,6 +372,7 @@ f:com.intellij.collaboration.util.SequenceItemKt
 f:com.intellij.collaboration.util.URIUtil
 - sf:INSTANCE:com.intellij.collaboration.util.URIUtil
 - f:createUriWithCustomScheme(java.lang.String,java.lang.String):java.net.URI
+- f:encodePath(java.lang.String):java.lang.String
 - f:equalWithoutSchema(java.net.URI,java.net.URI):Z
 - f:isValidHttpUri(java.lang.String):Z
 - f:normalizeAndValidateHttpUri(java.lang.String):java.lang.String

@@ -1,12 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.action
 
+import com.intellij.collaboration.util.URIUtil.encodePath
 import com.intellij.collaboration.util.resolveRelative
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.URLUtil
-import com.intellij.util.withFragment
 import git4idea.remote.hosting.HostedGitRepositoriesManager
 import git4idea.remote.hosting.action.GlobalHostedGitRepositoryReferenceActionGroup
 import git4idea.remote.hosting.action.HostedGitRepositoryReference
@@ -56,19 +55,17 @@ object GitLabURIUtil {
 
     // if version == null, it must be gitlab.com, otherwise a weburl would not be shown
     val fileUri =
-      if (version != null && version < GitLabVersion(16, 0)) repository.resolveRelative("blob").resolveRelative(revisionOrBranch).resolveRelative(URLUtil.encodePath(relativePath))
-      else repository.resolveRelative("-").resolveRelative("blob").resolveRelative(revisionOrBranch).resolveRelative(URLUtil.encodePath(relativePath))
+      if (version != null && version < GitLabVersion(16, 0)) repository.resolveRelative("blob").resolveRelative(revisionOrBranch)
+      else repository.resolveRelative("-").resolveRelative("blob").resolveRelative(revisionOrBranch)
+    val encodedFileUri = fileUri.resolveRelative(encodePath(relativePath))
+    if (lineRange == null) return encodedFileUri
 
-    return if (lineRange != null) {
-      val fragmentBuilder = StringBuilder()
-      fragmentBuilder.append("L").append(lineRange.first + 1)
+    val fragment = buildString {
+      append("L").append(lineRange.first + 1)
       if (lineRange.last != lineRange.first) {
-        fragmentBuilder.append("-L").append(lineRange.last + 1)
+        append("-L").append(lineRange.last + 1)
       }
-      fileUri.withFragment(fragmentBuilder.toString())
     }
-    else {
-      fileUri
-    }
+    return URI("$encodedFileUri#$fragment")
   }
 }
