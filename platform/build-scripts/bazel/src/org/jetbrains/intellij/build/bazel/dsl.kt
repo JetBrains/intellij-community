@@ -225,6 +225,39 @@ private fun formatValue(value: Any?): String {
   }
 }
 
+/**
+ * Renders a `select` call for an attribute value.
+ * Each item of a non-empty list value is put on a separate line.
+ * @param branches maps a label of a `config_setting` target or `//conditions:default` to the value for this condition
+ */
+internal fun formatSelect(branches: LinkedHashMap<String, Any>): Renderable {
+  return object : Renderable {
+    override fun render(): String {
+      val renderedBranches = branches.entries.joinToString(separator = "") { (condition, value) ->
+        "$INDENT$INDENT\"$condition\": ${formatSelectValue(value)},\n"
+      }
+      return "select({\n$renderedBranches$INDENT})"
+    }
+  }
+}
+
+private fun formatSelectValue(value: Any): String {
+  if (value !is Collection<*> || value.isEmpty()) {
+    return formatValue(value)
+  }
+  return value.joinToString(separator = "", prefix = "[\n", postfix = "$INDENT$INDENT]") { "$INDENT$INDENT$INDENT${formatValue(it)},\n" }
+}
+
+/**
+ * Renders the concatenation of [parts] for an attribute value.
+ * Each part is a list or a [formatSelect] call.
+ */
+internal fun formatConcatenation(parts: List<Any>): Renderable {
+  return object : Renderable {
+    override fun render(): String = parts.joinToString(separator = " + ") { formatValue(it) }
+  }
+}
+
 internal const val INDENT = "    "
 internal object DoNotSortIndicator
 

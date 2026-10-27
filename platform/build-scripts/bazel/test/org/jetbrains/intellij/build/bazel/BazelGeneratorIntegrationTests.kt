@@ -139,6 +139,50 @@ class BazelGeneratorIntegrationTests {
   }
 
   @Test
+  fun `community plugin includes ultimate content module only inside ultimate`() {
+    val projectDir = Files.createTempDirectory("ij-plugin-ultimate-content-module")
+    projectDir.resolve(".ultimate.root.marker").writeText("")
+    val communityDir = projectDir.resolve("community")
+    getTestDataPath("ij-plugin-target").resolve("project").copyToRecursively(communityDir, followLinks = true, overwrite = false)
+    communityDir.resolve(".idea").copyToRecursively(projectDir.resolve(".idea"), followLinks = true, overwrite = false)
+    val modulesFile = projectDir.resolve(".idea/modules.xml")
+    modulesFile.writeText(modulesFile.readText().replace("\$PROJECT_DIR\$/", "\$PROJECT_DIR\$/community/"))
+    for (moduleName in listOf("split", "other")) {
+      addMetadataModule(projectDir, "ultimate/$moduleName", "intellij.ultimate.$moduleName", communityDir)
+      projectDir.resolve("ultimate/$moduleName/resources/intellij.ultimate.$moduleName.xml").createParentDirectories().writeText("<idea-plugin/>")
+    }
+    val pluginXml = communityDir.resolve("plugin/resources/META-INF/plugin.xml")
+    // an ultimate module goes first, the generator moves it to the end of `content_modules`
+    pluginXml.writeText(pluginXml.readText().replace(
+      "<module name=\"intellij.module\"/>",
+      "<module name=\"intellij.ultimate.split\"/>\n    <module name=\"intellij.module\"/>\n    <module name=\"intellij.ultimate.other\"/>",
+    ))
+
+    generateMetadataProject(projectDir, communityOnly = false)
+
+    softly.assertThat(communityDir.resolve("plugin/BUILD.bazel").readText()).contains("""
+      |ij_plugin(
+      |    name = "plugin_plugin",
+      |    descriptor_module = ":plugin",
+      |    content_modules = ["//module"] + select({
+      |        "@community//build:is_inside_ultimate": [
+      |            # do not sort,
+      |            "@@//ultimate/split",
+      |            "@@//ultimate/other",
+      |        ],
+      |        "//conditions:default": [],
+      |    }),
+      |    skip_unresolved_optional_modules = select({
+      |        "@community//build:is_inside_ultimate": False,
+      |        "//conditions:default": True,
+      |    }),
+      |    visibility = ["//visibility:public"],
+      |)
+    """.trimMargin())
+    if (softly.wasSuccess()) projectDir.deleteRecursively()
+  }
+
+  @Test
   fun `missing skipped module owner is rejected before saving`() {
     val projectDir = createMetadataProject()
     addMetadataModule(projectDir, "platform/build-scripts/bazel", "intellij.platform.buildScripts.bazel")

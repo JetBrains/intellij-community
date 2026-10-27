@@ -71,6 +71,30 @@ internal class ModuleList(
 
 }
 
+/**
+ * The `config_setting` which matches if the community repository is loaded inside the ultimate repository.
+ */
+private const val INSIDE_ULTIMATE_CONFIG_SETTING = "@community//build:is_inside_ultimate"
+
+private data class ContentModuleLabel(
+  @JvmField val label: String,
+  @JvmField val isUltimateModuleOfCommunityPlugin: Boolean,
+)
+
+/**
+ * Returns the value of the `content_modules` attribute for a community plugin with content modules from the ultimate part.
+ * An ultimate module is included only if the community repository is loaded inside the ultimate repository.
+ * The ultimate modules are put after the other modules.
+ */
+private fun contentModulesWithUltimateModules(contentModules: List<ContentModuleLabel>): Renderable {
+  val (ultimateModules, communityModules) = contentModules.partition { it.isUltimateModuleOfCommunityPlugin }
+  val ultimateModulesSelect = formatSelect(linkedMapOf(
+    INSIDE_ULTIMATE_CONFIG_SETTING to ultimateModules.map { it.label }.unsorted(),
+    "//conditions:default" to emptyList<String>(),
+  ))
+  return formatConcatenation(listOf(communityModules.map { it.label }.unsorted(), ultimateModulesSelect))
+}
+
 internal data class CustomModuleDescription(
   val moduleName: String,
   val bazelPackage: String,
@@ -984,12 +1008,22 @@ internal class BazelBuildFileGenerator(
       option("name", getPluginTargetName(moduleDescriptor))
       option("descriptor_module", ":${moduleDescriptor.targetName}${getPluginModuleTargetNameSuffix(moduleDescriptor, moduleList, manuallyWrittenAttributes)}")
       if (pluginXmlContentData.contentModuleNames.isNotEmpty()) {
-        val contentModuleLabels = pluginXmlContentData.contentModuleNames.map {
+        val contentModules = pluginXmlContentData.contentModuleNames.map {
           val contentModuleDescriptor = moduleList.getModuleDescriptor(it)
           val contentModuleTargetNameSuffix = getPluginModuleTargetNameSuffix(contentModuleDescriptor, moduleList, manuallyWrittenAttributes)
-          getBazelDependencyLabel(contentModuleDescriptor, moduleDescriptor, targetNameSuffix = contentModuleTargetNameSuffix)
+          ContentModuleLabel(
+            label = getContentModuleLabel(contentModuleDescriptor, moduleDescriptor, contentModuleTargetNameSuffix),
+            isUltimateModuleOfCommunityPlugin = moduleDescriptor.isCommunity && !contentModuleDescriptor.isCommunity,
+          )
         }
-        option("content_modules", contentModuleLabels.unsorted())
+        if (contentModules.any { it.isUltimateModuleOfCommunityPlugin }) {
+          option("content_modules", contentModulesWithUltimateModules(contentModules))
+          // the standalone community repository has no ultimate modules, so the plugin is packed without them
+          option("skip_unresolved_optional_modules", formatSelect(linkedMapOf(INSIDE_ULTIMATE_CONFIG_SETTING to false, "//conditions:default" to true)))
+        }
+        else {
+          option("content_modules", contentModules.map { it.label }.unsorted())
+        }
       }
       // the distribution is consumed from other packages: by the build scripts building this plugin by Bazel,
       // and by the test comparing the result with the build scripts' own output
@@ -998,6 +1032,19 @@ internal class BazelBuildFileGenerator(
   }
 
   private fun getPluginTargetName(moduleDescriptor: ModuleDescriptor): String = moduleDescriptor.targetName + "_plugin"
+
+  /**
+   * Returns the label of [contentModule] for the `content_modules` attribute of the `ij_plugin` target of [pluginModule].
+   * Unlike a usual dependency, a community plugin can register a content module from the ultimate part.
+   * Such a module is referenced from the main repository, which is the ultimate one when the label is used.
+   */
+  private fun getContentModuleLabel(contentModule: ModuleDescriptor, pluginModule: ModuleDescriptor, targetNameSuffix: String): String {
+    if (pluginModule.isCommunity && !contentModule.isCommunity) {
+      // the label as it is written in the ultimate part
+      return "@@" + getBazelDependencyLabel(contentModule, dependent = contentModule, targetNameSuffix = targetNameSuffix)
+    }
+    return getBazelDependencyLabel(contentModule, pluginModule, targetNameSuffix = targetNameSuffix)
+  }
 
   /**
    * Determines whether `ij_plugin_module` rule should be used for the given module or the default `jvm_library` rule is enough.
