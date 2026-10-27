@@ -5,6 +5,8 @@ import com.intellij.lang.TokenWrapper;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerPosition;
 import com.intellij.lexer.RestartableLexer;
+import com.intellij.openapi.editor.ex.util.DataStorage;
+import com.intellij.openapi.editor.ex.util.IntBasedStorage;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -83,6 +85,10 @@ public abstract class LexerTestCase extends UsefulTestCase {
   /**
    * Verifies that the lexer produces the same token sequence when restarted from any position
    * where {@link Lexer#getState()} returns zero or {@link RestartableLexer#isRestartableState(int)} returns {@code true}.
+   * For a {@link RestartableLexer}, it also checks that each state is the same after a round trip
+   * through {@link #createHighlighterStorage()}.
+   * The check skips a token type that is not registered, because the highlighter cannot keep it.
+   * Only a parsing lexer returns such a token type.
    *
    * <p>For every such position the lexer is restarted via {@link Lexer#start(CharSequence, int, int, int)}
    * with the recorded offset and state, and the resulting tokens are compared against the tail of the
@@ -92,6 +98,7 @@ public abstract class LexerTestCase extends UsefulTestCase {
     Lexer mainLexer = createLexer();
     List<TokenState> allTokens = tokenize(text, 0, 0, mainLexer);
     Lexer auxLexer = createLexer();
+    DataStorage storage = auxLexer instanceof RestartableLexer ? createHighlighterStorage() : null;
     auxLexer.start(text);
     int index = 0;
     while (true) {
@@ -100,6 +107,14 @@ public abstract class LexerTestCase extends UsefulTestCase {
         break;
       }
       int state = auxLexer.getState();
+      if (storage != null && type.getIndex() >= 0) {
+        boolean isRestartable = ((RestartableLexer)auxLexer).isRestartableState(state);
+        int storedState = storage.unpackStateFromData(storage.packData(type, state, isRestartable));
+        if (state != storedState) {
+          fail(HighlighterStorageCheck.mismatchMessage(auxLexer.getTokenStart(), state, storedState, storage,
+                                                        "override createHighlighterStorage() to return it"));
+        }
+      }
       if (state == 0 || (auxLexer instanceof RestartableLexer && ((RestartableLexer)auxLexer).isRestartableState(state))) {
         int tokenStart = auxLexer.getTokenStart();
         List<TokenState> expectedTokens = allTokens.subList(index, allTokens.size());
@@ -114,6 +129,16 @@ public abstract class LexerTestCase extends UsefulTestCase {
       index++;
       auxLexer.advance();
     }
+  }
+
+  /**
+   * Returns the storage in which the editor highlighter keeps the states of the lexer.
+   * The default is {@link IntBasedStorage}, the storage of {@code LexerEditorHighlighter} for a {@link RestartableLexer}.
+   * Override this function when the highlighter of the lexer has its own storage.
+   * Return {@code null} to skip the check of the states in {@link #checkCorrectRestart(String)}.
+   */
+  protected @Nullable DataStorage createHighlighterStorage() {
+    return new IntBasedStorage();
   }
 
   /**

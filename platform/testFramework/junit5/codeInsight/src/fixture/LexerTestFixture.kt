@@ -5,10 +5,13 @@ import com.intellij.lang.TokenWrapper
 import com.intellij.lexer.Lexer
 import com.intellij.lexer.LexerPosition
 import com.intellij.lexer.RestartableLexer
+import com.intellij.openapi.editor.ex.util.DataStorage
+import com.intellij.openapi.editor.ex.util.IntBasedStorage
 import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
+import com.intellij.testFramework.HighlighterStorageCheck
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy
 import com.intellij.testFramework.junit5.fixture.TestFixture
@@ -40,6 +43,7 @@ class LexerTestFixture internal constructor(
   private val expectedFileExtension: String,
   private val trimTestData: Boolean,
   private val checkRestart: Boolean,
+  private val highlighterStorageFactory: Supplier<out DataStorage>?,
 ) {
   fun createLexer(): Lexer = lexerFactory.get()
 
@@ -109,6 +113,9 @@ class LexerTestFixture internal constructor(
   /**
    * Verifies that the lexer produces the same token sequence when restarted from any position
    * where [Lexer.getState] returns zero or [RestartableLexer.isRestartableState] returns `true`.
+   * For a [RestartableLexer], it also checks that each state is the same after a round trip through the highlighter storage.
+   * The check skips a token type that is not registered, because the highlighter cannot keep it.
+   * Only a parsing lexer returns such a token type.
    *
    * For every such position the lexer is restarted via [Lexer.start] with the recorded offset and state,
    * and the resulting tokens are compared against the tail of the initial full-text tokenization.
@@ -117,11 +124,19 @@ class LexerTestFixture internal constructor(
     val mainLexer = createLexer()
     val allTokens = tokenize(text, 0, 0, mainLexer)
     val auxLexer = createLexer()
+    val storage = if (auxLexer is RestartableLexer) highlighterStorageFactory?.get() else null
     auxLexer.start(text)
     var index = 0
     while (true) {
-      auxLexer.tokenType ?: break
+      val type = auxLexer.tokenType ?: break
       val state = auxLexer.state
+      if (storage != null && type.index >= 0) {
+        val isRestartable = (auxLexer as RestartableLexer).isRestartableState(state)
+        val storedState = storage.unpackStateFromData(storage.packData(type, state, isRestartable))
+        if (state != storedState) {
+          fail(HighlighterStorageCheck.mismatchMessage(auxLexer.tokenStart, state, storedState, storage, PASS_STORAGE_HINT))
+        }
+      }
       if (state == 0 || (auxLexer is RestartableLexer && auxLexer.isRestartableState(state))) {
         val tokenStart = auxLexer.tokenStart
         val expectedTokens = allTokens.subList(index, allTokens.size)
@@ -249,6 +264,9 @@ class LexerTestFixture internal constructor(
   }
 }
 
+/** Tells how a test of [lexerFixture] or [syntaxLexerFixture] gives its own highlighter storage to the check. */
+internal const val PASS_STORAGE_HINT: String = "pass its factory as the highlighterStorageFactory argument of the fixture"
+
 /**
  * Creates a [LexerTestFixture] that gets a new lexer from [lexerFactory] for each check.
  *
@@ -257,6 +275,10 @@ class LexerTestFixture internal constructor(
  * When [trimTestData] is `true`, [LexerTestFixture.loadTestDataFile] trims the text of the file.
  * The trim is the same as Java `String.trim`. It removes each char up to U+0020 at both ends.
  * When [checkRestart] is `false`, [LexerTestFixture.doTest] does not call [LexerTestFixture.checkCorrectRestart].
+ * [highlighterStorageFactory] creates the storage in which the editor highlighter keeps the states of a [RestartableLexer].
+ * The default is [IntBasedStorage], the storage of `LexerEditorHighlighter` for a [RestartableLexer].
+ * Pass the factory of its own storage when the highlighter of the lexer has one.
+ * Pass `null` to skip the check of the states in [LexerTestFixture.checkCorrectRestart].
  *
  * The fixture takes the name of the current test method, so declare it as an instance property.
  * Annotate the test class with [com.intellij.testFramework.junit5.fixture.TestFixtures], or with
@@ -269,6 +291,7 @@ fun lexerFixture(
   expectedFileExtension: String = ".txt",
   trimTestData: Boolean = true,
   checkRestart: Boolean = true,
+  highlighterStorageFactory: Supplier<out DataStorage>? = Supplier { IntBasedStorage() },
   lexerFactory: Supplier<out Lexer>,
 ): TestFixture<LexerTestFixture> = testFixture("lexerFixture") { context ->
   val fixture = LexerTestFixture(
@@ -278,6 +301,7 @@ fun lexerFixture(
     expectedFileExtension = expectedFileExtension,
     trimTestData = trimTestData,
     checkRestart = checkRestart,
+    highlighterStorageFactory = highlighterStorageFactory,
   )
   initialized(fixture) {}
 }

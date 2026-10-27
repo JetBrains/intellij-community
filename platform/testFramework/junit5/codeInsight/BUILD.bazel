@@ -154,6 +154,8 @@ jvm_library(
         "//platform/syntax/syntax-api:syntax_test_lib",
         "//platform/syntax/syntax-util:util",
         "//platform/syntax/syntax-util:util_test_lib",
+        "//platform/core-impl",
+        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight.tests` end
