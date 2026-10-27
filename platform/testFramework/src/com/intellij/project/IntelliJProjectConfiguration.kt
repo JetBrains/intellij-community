@@ -74,9 +74,6 @@ class IntelliJProjectConfiguration {
     }
 
     @JvmStatic
-    fun getJarFromSingleJarProjectLibrary(projectLibraryName: String): VirtualFile = getVirtualFile(getProjectLibrary(projectLibraryName))
-
-    @JvmStatic
     fun getJarFromSingleJarModuleLibrary(moduleName: String, libraryName: String): VirtualFile =
       getVirtualFile(getModuleLibrary(moduleName, libraryName))
 

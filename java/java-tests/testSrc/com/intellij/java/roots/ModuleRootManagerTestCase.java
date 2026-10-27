@@ -71,11 +71,6 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
     return getMockJdk18WithRtJarOnly().getRootProvider().getFiles(OrderRootType.CLASSES)[0];
   }
 
-  protected static VirtualFile getFastUtilJar() {
-    return IntelliJProjectConfiguration.getVirtualFile(
-      IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.fastutil", "fastutil-min"));
-  }
-
   protected VirtualFile addSourceRoot(Module module, boolean testSource) throws IOException {
     final VirtualFile root = getVirtualFile(createTempDir(module.getName() + (testSource ? "Test" : "Prod") + "Src"));
     PsiTestUtil.addSourceContentToRoots(module, root, testSource);
@@ -101,9 +96,5 @@ public abstract class ModuleRootManagerTestCase extends JavaModuleTestCase {
       model.commit();
       return library;
     });
-  }
-
-  protected VirtualFile getSampleLibJar() {
-    return IntelliJProjectConfiguration.getJarFromSingleJarModuleLibrary("intellij.libraries.byte.buddy", "byte-buddy");
   }
 }
