@@ -1,25 +1,31 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage.durablemap;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.platform.util.io.storages.StorageFactory;
 import com.intellij.platform.util.io.storages.durablemap.DurableMap;
-import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.impl.IndexStorageLockingBase;
+import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.function.IntPredicate;
 
 /**
  * The implementation thread-safety relies on {@link DurableMap} implementation used to be a thread-safe
  * (Which is true for the currently existing impls)
  */
 @ApiStatus.Internal
-public class DurableMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
+public class DurableMapBasedForwardIndex implements IterableForwardIndex, MeasurableIndexStore {
 
   private final @NotNull ThrowableComputable<? extends DurableMap<Integer, ByteArraySequence>, ? extends IOException> mapOpener;
 
@@ -41,6 +47,41 @@ public class DurableMapBasedForwardIndex implements ForwardIndex, MeasurableInde
   @Override
   public @Nullable ByteArraySequence get(@NotNull Integer key) throws IOException {
     return durableMap.get(key);
+  }
+
+  @Override
+  public <Key> boolean processFilteredKeys(@NotNull IntPredicate inputIdFilter,
+                                           @NotNull AbstractMapForwardIndexAccessor<Key, ?, ?> accessor,
+                                           @NotNull Processor<? super Key> processor) throws IOException {
+    try {
+      return durableMap.processKeys(inputId -> {
+        if (IndexStorageLockingBase.MAKE_INDEX_LOOKUP_CANCELLABLE) {
+          // processor may be already cancellable, but with a lot of keys duplicated it could be called very rarely
+          if ((inputId & 0b1111) == 0b1010) {// ~1/16
+            ProgressManager.checkCanceled();
+          }
+        }
+
+        if (!inputIdFilter.test(inputId)) return true;
+
+        try {
+          ByteArraySequence blob = get(inputId);
+          var data = accessor.convertToInputDataMap(inputId, blob);
+          if (data != null) {
+            for (Key key : data.keySet()) {
+              if (!processor.process(key)) return false;
+            }
+          }
+          return true;
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      });
+    }
+    catch (UncheckedIOException e) {
+      throw e.getCause();
+    }
   }
 
   @Override
@@ -88,9 +129,5 @@ public class DurableMapBasedForwardIndex implements ForwardIndex, MeasurableInde
 
   public boolean containsMapping(int key) throws IOException {
     return durableMap.containsMapping(key);
-  }
-
-  public DurableMap<Integer, ByteArraySequence> getUnderlyingMap() {
-    return durableMap;
   }
 }

@@ -17,6 +17,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -688,6 +689,37 @@ public class PersistentMapTest extends PersistentMapTestBase {
 
     assertEquals(ContainerUtil.newHashSet("key", "key2"), allKeys);
     assertEquals(ContainerUtil.newHashSet("key"), existingKeys);
+  }
+
+  public void testProcessKeysAllowsReadingValuesAndStopsEarly() throws IOException {
+    myMap.put("first", "value");
+    myMap.put("removed", "old value");
+    myMap.remove("removed");
+
+    int[] visited = {0};
+    assertFalse(myMap.processKeys(key -> {
+      visited[0]++;
+      try {
+        assertEquals(key.equals("removed") ? null : "value", myMap.get(key));
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      return false;
+    }));
+    assertEquals(1, visited[0]);
+
+    HashSet<String> active = new HashSet<>();
+    assertTrue(myMap.processKeys(key -> {
+      try {
+        if (myMap.get(key) != null) active.add(key);
+      }
+      catch (IOException e) {
+        throw new UncheckedIOException(e);
+      }
+      return true;
+    }));
+    assertEquals(Set.of("first"), active);
   }
 
   public void testSmallPersistentMapPhysicalSize() throws IOException {

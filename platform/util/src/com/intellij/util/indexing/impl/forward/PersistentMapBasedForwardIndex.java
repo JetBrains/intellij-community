@@ -1,10 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
+import com.intellij.openapi.progress.Cancellation;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.Processor;
+import com.intellij.util.indexing.impl.IndexStorageLockingBase;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.MeasurableIndexStore;
+import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.util.io.PersistentMapBuilder;
 import com.intellij.util.io.StorageLockContext;
@@ -13,15 +17,20 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Map;
+import java.util.function.IntPredicate;
 
 /**
  * The implementation thread-safety relies on {@link PersistentMap} implementation used to be a thread-safe
  * (Which is true for the currently existing impls)
  */
 @Internal
-public final class PersistentMapBasedForwardIndex implements ForwardIndex, MeasurableIndexStore {
-  private volatile @NotNull PersistentMap<Integer, ByteArraySequence> myPersistentMap;
+public final class PersistentMapBasedForwardIndex implements IterableForwardIndex, MeasurableIndexStore {
+
+  private volatile @NotNull PersistentHashMap<Integer, ByteArraySequence> myPersistentMap;
+
   private final @NotNull Path myMapFile;
   private final boolean myUseChunks;
   private final boolean myReadOnly;
@@ -45,6 +54,41 @@ public final class PersistentMapBasedForwardIndex implements ForwardIndex, Measu
   @Override
   public @Nullable ByteArraySequence get(@NotNull Integer key) throws IOException {
     return myPersistentMap.get(key);
+  }
+
+  @Override
+  public <Key> boolean processFilteredKeys(@NotNull IntPredicate inputIdFilter,
+                                           @NotNull AbstractMapForwardIndexAccessor<Key, ?, ?> accessor,
+                                           @NotNull Processor<? super Key> processor) throws IOException {
+    try {
+      // Integer keys use InlinedKeyStorage, which doesn't support processKeys() (which is strange, but ce la vie)
+      return myPersistentMap.processKeysWithExistingMapping(inputId -> {
+        if (IndexStorageLockingBase.MAKE_INDEX_LOOKUP_CANCELLABLE) {
+          // processor may be already cancellable, but with a lot of keys duplicated it could be called very rarely
+          if ((inputId & 0b1111) == 0b1010) {// ~1/16
+            Cancellation.checkCancelled();
+          }
+        }
+
+        if (!inputIdFilter.test(inputId)) return true;
+
+        try {
+          Map<Key, ?> data = accessor.convertToInputDataMap(inputId, get(inputId));
+          if (data != null) {
+            for (Key key : data.keySet()) {
+              if (!processor.process(key)) return false;
+            }
+          }
+          return true;
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      });
+    }
+    catch (UncheckedIOException e) {
+      throw e.getCause();
+    }
   }
 
   @Override
@@ -96,10 +140,12 @@ public final class PersistentMapBasedForwardIndex implements ForwardIndex, Measu
     return myPersistentMap;
   }
 
-  private static @NotNull PersistentMap<Integer, ByteArraySequence> createMap(@NotNull Path file,
-                                                                              boolean useChunks,
-                                                                              boolean isReadOnly,
-                                                                              @Nullable StorageLockContext storageLockContext) throws IOException {
+  private static @NotNull PersistentHashMap<Integer, ByteArraySequence> createMap(
+    @NotNull Path file,
+    boolean useChunks,
+    boolean isReadOnly,
+    @Nullable StorageLockContext storageLockContext
+  ) throws IOException {
     return PersistentMapBuilder
       .newBuilder(file, EnumeratorIntegerDescriptor.INSTANCE, ByteSequenceDataExternalizer.INSTANCE)
       .hasChunks(useChunks)

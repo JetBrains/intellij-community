@@ -10,6 +10,7 @@ import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import com.intellij.util.indexing.impl.storage.StorageRef;
@@ -39,13 +40,13 @@ public class ShardedStorageLayout<Key, Value> implements VfsAwareIndexStorageLay
   private final ThrowableRunnable<? extends IOException> forwardIndexCleaner;
 
   public ShardedStorageLayout(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                              @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexFactory,
+                              @NotNull ThrowableNotNullFunction<Integer, IterableForwardIndex, IOException> forwardIndexFactory,
                               @NotNull ThrowableNotNullFunction<Integer, VfsAwareIndexStorage<Key, Value>, IOException> indexStorageFactory) {
     this(extension, forwardIndexFactory, indexStorageFactory, () -> { }, () -> { });
   }
 
   public ShardedStorageLayout(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                              @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexFactory,
+                              @NotNull ThrowableNotNullFunction<Integer, IterableForwardIndex, IOException> forwardIndexFactory,
                               @NotNull ThrowableNotNullFunction<Integer, VfsAwareIndexStorage<Key, Value>, IOException> indexStorageFactory,
                               @NotNull ThrowableRunnable<? extends IOException> indexStorageCleaner,
                               @NotNull ThrowableRunnable<? extends IOException> forwardIndexCleaner) {

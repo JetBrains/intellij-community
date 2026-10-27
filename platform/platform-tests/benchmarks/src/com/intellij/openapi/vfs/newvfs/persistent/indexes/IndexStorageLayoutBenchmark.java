@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.NioFiles;
@@ -11,8 +12,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.FileContent;
+import com.intellij.util.indexing.FileIndexingStateWithExplanation;
 import com.intellij.util.indexing.IdFilter;
+import com.intellij.util.indexing.IndexedFile;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.Input;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyEntriesPerFileInputGenerator;
@@ -22,9 +27,13 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import com.intellij.util.indexing.impl.storage.KeyHashLog;
 import com.intellij.util.indexing.impl.storage.durablemap.database.DurableDatabaseIndexLayoutProvider;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
+import com.intellij.util.indexing.storage.MapReduceIndexBase;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -49,6 +58,7 @@ import org.openjdk.jmh.runner.options.CommandLineOptionException;
 import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -156,6 +166,8 @@ public class IndexStorageLayoutBenchmark {
 
     public IndexStorage<Integer, Integer> indexStorage;
 
+    private BenchmarkMapReduceIndex mapReduceIndex;
+
     @Setup
     public void setupBenchmark() throws Exception {
       IndexDebugProperties.IS_IN_STRESS_TESTS = true;
@@ -209,10 +221,7 @@ public class IndexStorageLayoutBenchmark {
     @TearDown(Level.Iteration)
     public void closeIteration_closeStorage() throws Exception {
       try {
-        if (indexStorage != null) {
-          indexStorage.close();
-          indexStorage = null;
-        }
+        closeStorage();
       }
       finally {
         printIoLatencyStatistics();
@@ -221,10 +230,7 @@ public class IndexStorageLayoutBenchmark {
 
     @TearDown
     public void closeBenchmark() throws Exception {
-      if (indexStorage != null) {
-        indexStorage.close();
-        indexStorage = null;
-      }
+      closeStorage();
       if (storageLayout != null) {
         storageLayout.clearIndexData();
         storageLayout = null;
@@ -232,6 +238,18 @@ public class IndexStorageLayoutBenchmark {
 
       if (storageLayoutProviderToTest != null) {
         storageLayoutProviderToTest.close();
+      }
+    }
+
+    private void closeStorage() throws IOException {
+      if (mapReduceIndex != null) {
+        mapReduceIndex.dispose();
+        mapReduceIndex = null;
+        indexStorage = null;
+      }
+      else if (indexStorage != null) {
+        indexStorage.close();
+        indexStorage = null;
       }
     }
 
@@ -278,10 +296,56 @@ public class IndexStorageLayoutBenchmark {
     protected FileBasedIndexExtension<Integer, Integer> createIndexExtension() {
       return new SampleIndexExtension(cacheSize) {
         @Override
+        public @NotNull DataIndexer<Integer, Integer, FileContent> getIndexer() {
+          return ignoredContent -> {
+            throw new UnsupportedOperationException("The benchmark supplies mapped data directly");
+          };
+        }
+
+        @Override
         public boolean traceKeyHashToVirtualFileMapping() {
           return true;
         }
       };
+    }
+  }
+
+  /// Exposes the base key traversal without VFS indexing services
+  private static final class BenchmarkMapReduceIndex extends MapReduceIndexBase<Integer, Integer, Void> {
+    private BenchmarkMapReduceIndex(FileBasedIndexExtension<Integer, Integer> extension,
+                                    IndexStorage<Integer, Integer> storage,
+                                    VfsAwareIndexStorageLayout<Integer, Integer> layout) throws IOException {
+      super(extension, () -> storage, layout::openForwardIndex, layout.getForwardIndexAccessor());
+    }
+
+    @Override
+    protected Logger getLogger() {
+      return Logger.getInstance(BenchmarkMapReduceIndex.class);
+    }
+
+    @Override
+    protected void requestRebuild(@NotNull Throwable e) {
+      throw new IllegalStateException("The benchmark index requires a rebuild", e);
+    }
+
+    @Override
+    public Void getFileIndexMetaData(@NotNull IndexedFile file) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void invalidateIndexedStateForFile(int fileId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setUnindexedStateForFile(int fileId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull FileIndexingStateWithExplanation getIndexingStateForFile(int fileId, @NotNull IndexedFile file) {
+      throw new UnsupportedOperationException();
     }
   }
 
@@ -327,13 +391,13 @@ public class IndexStorageLayoutBenchmark {
     }
   }
 
-  public enum KeyFilterMode { KEYS_ONLY, EXACT, HASH_LOG }
+  public enum KeyFilterMode { KEYS_ONLY, EXACT, HASH_LOG, FORWARD_INDEX }
 
   /// Keeps the project filter ready so repeated queries measure the scan rather than cache construction
   @SuppressWarnings("unused") // JMH calls the setup and teardown methods
   @State(Scope.Benchmark)
   public static class ProjectFilterContext {
-    @Param({"KEYS_ONLY", "EXACT", "HASH_LOG"})
+    @Param({"KEYS_ONLY", "EXACT", "HASH_LOG", "FORWARD_INDEX"})
     public KeyFilterMode keyFilterMode;
 
     @Param("1/4")
@@ -396,12 +460,23 @@ public class IndexStorageLayoutBenchmark {
 
     @Setup(Level.Iteration)
     public void setupIteration(InputContext inputContext, ProjectFilterStorageContext storageContext) throws Exception {
+      StorageContext context = storageContext;
+      context.mapReduceIndex = new BenchmarkMapReduceIndex(context.extension, context.indexStorage, context.storageLayout);
+      if (!(context.mapReduceIndex.getForwardIndex() instanceof IterableForwardIndex forwardIndex) ||
+          !(context.mapReduceIndex.getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Integer, Integer, ?> accessor)) {
+        throw new IllegalStateException("The benchmark requires an iterable forward index and a map accessor");
+      }
       logDirectory = Files.createTempDirectory("index-key-hash-log");
       keyHashLog = new KeyHashLog<>(storageContext.extension.getKeyDescriptor(), logDirectory.resolve("keys"));
       var readContext = new ReadContext();
       readContext.fillStorageWithData(inputContext, storageContext, keyHashLog);
+      for (long substrate : inputContext.inputsSubstrate) {
+        var input = inputContext.inputDataGenerator.unpackSubstrate(substrate);
+        forwardIndex.put(input.inputId(), accessor.serializeIndexedData(new InputData<>(input.inputData())));
+      }
+      context.mapReduceIndex.flush();
 
-      // Build the cache and check the two filters before measuring repeated queries
+      // Build the cache and check the filters before measuring repeated queries
       IntPredicate suitableHashes = keyHashLog.getSuitableKeyHashes(idFilter, project);
       int hashFilteredCount = 0;
       for (int key : readContext.allKeys) {
@@ -418,8 +493,18 @@ public class IndexStorageLayoutBenchmark {
       if (exactKeys.size() != hashFilteredCount) {
         throw new IllegalStateException("The exact filter and the hash filter disagree: " + exactKeys.size() + " != " + hashFilteredCount);
       }
+      var forwardKeys = new IntOpenHashSet();
+      context.mapReduceIndex.processAllKeys(key -> {
+        if (!forwardKeys.add(key.intValue())) {
+          throw new IllegalStateException("The forward index returned a duplicate key: " + key);
+        }
+        return true;
+      }, scope, idFilter);
+      if (!forwardKeys.equals(exactKeys)) {
+        throw new IllegalStateException("The forward index and the exact filter returned different keys");
+      }
       System.out.println("Project key filter: all=" + readContext.allKeys.length + ", matched=" + exactKeys.size() +
-                         ", exactProcessorCalls=" + exactCount[0]);
+                         ", exactProcessorCalls=" + exactCount[0] + ", forwardProcessorCalls=" + forwardKeys.size());
       storageContext.resetIoLatencyStatistics();
     }
 
@@ -515,6 +600,10 @@ public class IndexStorageLayoutBenchmark {
     switch (filterContext.keyFilterMode) {
       case KEYS_ONLY -> storage.processKeys(processor, filterContext.scope, IdFilter.ACCEPT_ALL);
       case EXACT -> storage.processKeys(processor, filterContext.scope, filterContext.idFilter);
+      case FORWARD_INDEX -> {
+        StorageContext context = storageContext;
+        context.mapReduceIndex.processAllKeys(processor, filterContext.scope, filterContext.idFilter);
+      }
       case HASH_LOG -> {
         IntPredicate suitableHashes = filterContext.keyHashLog.getSuitableKeyHashes(filterContext.idFilter, filterContext.project);
         storage.processKeys(key -> {

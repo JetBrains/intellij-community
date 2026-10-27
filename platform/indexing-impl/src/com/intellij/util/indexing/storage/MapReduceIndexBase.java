@@ -8,7 +8,9 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IdFilter;
@@ -20,11 +22,13 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.UpdatableIndex;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.IndexStorageUtil;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +36,19 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
+
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @Internal
 public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduceIndex<Key, Value, FileContent>
   implements UpdatableIndex<Key, Value, FileContent, FileCache> {
+
+  /// If true: [ForwardIndex] is used to speed up filtering keys by `fileId` (i.e. [IdFilter])
+  /// BEWARE: being enabled, it may supersede [[FileBasedIndexExtension#traceKeyHashToVirtualFileMapping()]: if an index does have
+  ///         a (capable) [ForwardIndex], then it is used for keys filtering, not [com.intellij.util.indexing.impl.storage.KeyHashLog]
+  private static final boolean USE_FORWARD_INDEX_FOR_KEYS_FILTERING = getBooleanProperty("ide.indexes.use-forward-index-for-filtering", true);
+
   private final boolean mySingleEntryIndex;
 
   protected MapReduceIndexBase(@NotNull IndexExtension<Key, Value, FileContent> extension,
@@ -56,10 +69,37 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
     return (ID<Key, Value>)super.indexId();
   }
 
+  /** Reads keys from accepted files when the forward map can enumerate file IDs */
   @Override
-  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter)
-    throws StorageException {
-    return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
+  public boolean processAllKeys(@NotNull Processor<? super Key> processor,
+                                @NotNull GlobalSearchScope scope,
+                                @Nullable IdFilter idFilter) throws StorageException {
+    // Keys traversal with trivial IdFilter is usually faster via main storage, because no need for deduplication;
+    // With non-trivial IdFilter filtering via ForwardIndex is usually faster (if ForwardIndex exists & supports iteration)
+    if (idFilter == null || idFilter == IdFilter.ACCEPT_ALL
+        || !USE_FORWARD_INDEX_FOR_KEYS_FILTERING
+        || !(getForwardIndex() instanceof IterableForwardIndex forwardIndex)
+        || !(getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Key, Value, ?> forwardIndexAccessor)) {
+      return ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter);
+    }
+
+    // => Collect & filter keys via (Iterable)ForwardIndex:
+    Set<Key> alreadySeenKeys = CollectionFactory.createCustomHashingStrategySet(
+      IndexStorageUtil.adaptKeyDescriptorToStrategy(getExtension().getKeyDescriptor())
+    );
+    try {
+      return forwardIndex.processFilteredKeys(
+        fileId -> idFilter.containsFileId(fileId),
+        forwardIndexAccessor,
+        key -> {
+          boolean alreadySeen = !alreadySeenKeys.add(key);
+          return alreadySeen || processor.process(key);
+        }
+      );
+    }
+    catch (IOException e) {
+      throw new StorageException(e);
+    }
   }
 
   @Override

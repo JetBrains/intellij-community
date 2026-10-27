@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -142,6 +143,38 @@ public final class DurableMapScenarios {
         CollectionFactory.createSmallMemoryFootprintSet(keysReportedByProcessKeys),
         ".processKeys() must return same keys, as were added"
       );
+    }
+
+    @Test
+    default void processKeysAllowsReadingValuesAndStopsEarly(KeyValueTestData<K, V> testData) throws IOException {
+      var first = testData.keyValue(43);
+      var removed = testData.keyValue(44);
+      var last = testData.keyValue(45);
+      var map = storageUnderTest();
+      map.put(first.getKey(), first.getValue());
+      map.put(removed.getKey(), removed.getValue());
+      map.put(last.getKey(), last.getValue());
+      map.remove(removed.getKey());
+
+      var visited = new HashSet<K>();
+      assertFalse(map.processKeys(key -> {
+        visited.add(key);
+        assertDoesNotThrow(() -> map.get(key), "Reading a value from the traversal callback must succeed");
+        return false;
+      }), "The traversal must stop when the processor returns false");
+      assertEquals(1, visited.size(), "The traversal must stop after the first callback");
+
+      var active = new HashSet<K>();
+      assertTrue(map.processKeys(key -> {
+        V value = assertDoesNotThrow(() -> map.get(key));
+        if (key.equals(removed.getKey())) {
+          assertNull(value, "A removed key has no value even if processKeys reports it");
+        }
+        if (value != null) active.add(key);
+        return true;
+      }));
+      assertEquals(Set.of(first.getKey(), last.getKey()), active,
+                   "Reading values during traversal must include active keys and skip removed keys");
     }
 
     @Test

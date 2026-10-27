@@ -21,6 +21,7 @@ import com.intellij.util.indexing.impl.InputIndexDataExternalizer
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex
 import com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor
@@ -181,7 +182,7 @@ class DefaultIndexStorageLayoutProvider(
 
 private data class StorageFactories<K, V>(
   val storageFactory: ThrowableNotNullFunction<Int, VfsAwareIndexStorage<K, V>, IOException>,
-  val forwardFactory: ThrowableNotNullFunction<Int, ForwardIndex, IOException>,
+  val forwardFactory: ThrowableNotNullFunction<Int, IterableForwardIndex, IOException>,
 )
 
 private fun <K, V> createDefaultFactories(
@@ -205,7 +206,7 @@ private fun <K, V> createDefaultFactories(
       storageLockContext,
     )
   }
-  val forwardFactory = ThrowableNotNullFunction<Int, ForwardIndex, IOException> { shardNo ->
+  val forwardFactory = ThrowableNotNullFunction<Int, IterableForwardIndex, IOException> { shardNo ->
     val shardStorageFile = IndexInfrastructure.getInputIndexStorageFile(extension.name, shardNo)
     PersistentMapBasedForwardIndex(shardStorageFile, false, false, storageLockContexts[shardNo])
   }

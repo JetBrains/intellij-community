@@ -3,36 +3,35 @@ package com.intellij.util.indexing.storage.sharding;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.impl.forward.ForwardIndex;
-import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
+import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.function.IntPredicate;
 
-/**
- * Sharded forward index: a wrapper around N {@link PersistentMapBasedForwardIndex} non-sharded forward
- * indexes.
- */
+/// Sharded forward index: a wrapper around N {@link IterableForwardIndex} non-sharded forward indexes
 @ApiStatus.Internal
-public class ShardedForwardIndex implements ForwardIndex {
+public class ShardedForwardIndex implements IterableForwardIndex {
   private final ShardableIndexExtension extension;
-  private final ForwardIndex[] shards;
+  private final IterableForwardIndex[] shards;
 
   private volatile boolean closed = false;
 
   public <Value, Key> ShardedForwardIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                          @NotNull ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardIndexesFactory)
+                                          @NotNull ThrowableNotNullFunction<Integer, IterableForwardIndex, IOException> forwardIndexesFactory)
     throws IOException {
     if (!(extension instanceof ShardableIndexExtension shardableExtension)) {
       throw new IllegalArgumentException("Extension(" + extension + ") must be ShardableIndexExtension");
     }
     this.extension = shardableExtension;
 
-    shards = new ForwardIndex[shardableExtension.shardsCount()];
+    shards = new IterableForwardIndex[shardableExtension.shardsCount()];
     try {
       for (int shardNo = 0; shardNo < shards.length; shardNo++) {
         shards[shardNo] = forwardIndexesFactory.fun(shardNo);
@@ -56,6 +55,17 @@ public class ShardedForwardIndex implements ForwardIndex {
   }
 
   @Override
+  public <Key> boolean processFilteredKeys(@NotNull IntPredicate inputIdFilter,
+                                           @NotNull AbstractMapForwardIndexAccessor<Key, ?, ?> accessor,
+                                           @NotNull Processor<? super Key> processor) throws IOException {
+    for (var shard : shards) {
+      boolean shouldContinue = shard.processFilteredKeys(inputIdFilter, accessor, processor);
+      if (!shouldContinue) return false;
+    }
+    return true;
+  }
+
+  @Override
   public void put(@NotNull Integer inputId,
                   @Nullable ByteArraySequence value) throws IOException {
     int shardNo = extension.shardNo(inputId);
@@ -73,7 +83,7 @@ public class ShardedForwardIndex implements ForwardIndex {
     //  but benefits may arise if/when we'll develop shards into more self-contained entities with capacity to move/rebuild
     //  individual shards -- in this scenario it may be beneficial to clean 'ok' shards, and, say, rebuild failing ones afterwards
     //  (Same is true for .force() method)
-    for (ForwardIndex shard : shards) {
+    for (var shard : shards) {
       shard.clear();
     }
   }
@@ -95,14 +105,14 @@ public class ShardedForwardIndex implements ForwardIndex {
 
   @Override
   public void force() throws IOException {
-    for (ForwardIndex shard : shards) {
+    for (var shard : shards) {
       shard.force();
     }
   }
 
   @Override
   public boolean isDirty() {
-    for (ForwardIndex shard : shards) {
+    for (var shard : shards) {
       if (shard.isDirty()) {
         return true;
       }

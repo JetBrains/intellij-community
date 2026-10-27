@@ -3,6 +3,8 @@ package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexExtension;
@@ -12,8 +14,9 @@ import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
+import com.intellij.util.indexing.impl.forward.AbstractMapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
-import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +27,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.IntPredicate;
 
 import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurrentIntObjectMap;
 
@@ -34,35 +38,32 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   private static final Logger LOG = Logger.getInstance(TransientFileContentIndex.class);
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues = createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues;
 
 
   public TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
-                                   @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout)
-    throws IOException {
+                                   @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout) throws IOException {
+    this(extension, indexStorageLayout, createConcurrentIntObjectMap());
+  }
+
+  //this ctor is just a trick to share .myInMemoryKeysAndValues ref between this class, and TransientIterableForwardIndex
+  // that is created during super() call
+  private TransientFileContentIndex(@NotNull FileBasedIndexExtension<Key, Value> extension,
+                                    @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout,
+                                    @NotNull ConcurrentIntObjectMap<Map<Key, Value>> transientData) throws IOException {
     super(extension,
-          new VfsAwareIndexStorageLayout<>() {
-            @Override
-            public @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
-              return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension);
+          () -> new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension),
+          () -> {
+            ForwardIndex index = indexStorageLayout.openForwardIndex();
+            if (index instanceof IterableForwardIndex iterableIndex) {
+              return new TransientIterableForwardIndex<>(iterableIndex, transientData);
             }
+            return index;
+          },
+          indexStorageLayout.getForwardIndexAccessor()
+    );
 
-            @Override
-            public void clearIndexData() {
-              //TODO why we don't clear TransientChangesIndexStorage's in-memory cache?
-              indexStorageLayout.clearIndexData();
-            }
-
-            @Override
-            public @Nullable ForwardIndex openForwardIndex() throws IOException {
-              return indexStorageLayout.openForwardIndex();
-            }
-
-            @Override
-            public @Nullable ForwardIndexAccessor<Key, Value> getForwardIndexAccessor() throws IOException {
-              return indexStorageLayout.getForwardIndexAccessor();
-            }
-          });
+    myInMemoryKeysAndValues = transientData;
     installMemoryModeListener();
   }
 
@@ -189,5 +190,83 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
                                                                                                                        @NotNull VfsAwareIndexStorageLayout<Key, Value> indexStorageLayout)
     throws IOException {
     return new TransientFileContentIndex<>(extension, indexStorageLayout);
+  }
+
+  /** Uses transient file data instead of persistent data during key traversal */
+  private static final class TransientIterableForwardIndex<Key, Value> implements IterableForwardIndex {
+
+    private final IterableForwardIndex delegate;
+
+    private final ConcurrentIntObjectMap<Map<Key, Value>> transientData;
+
+    private TransientIterableForwardIndex(@NotNull IterableForwardIndex delegate,
+                                          @NotNull ConcurrentIntObjectMap<Map<Key, Value>> transientData) {
+      this.delegate = delegate;
+      this.transientData = transientData;
+    }
+
+    @Override
+    public @Nullable ByteArraySequence get(@NotNull Integer fileId) throws IOException {
+      return delegate.get(fileId);
+    }
+
+    @Override
+    public void put(@NotNull Integer fileId, @Nullable ByteArraySequence data) throws IOException {
+      delegate.put(fileId, data);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <K> boolean processFilteredKeys(@NotNull IntPredicate inputIdFilter,
+                                           @NotNull AbstractMapForwardIndexAccessor<K, ?, ?> accessor,
+                                           @NotNull Processor<? super K> processor) throws IOException {
+      boolean allKeysProcessed = delegate.processFilteredKeys(
+        fileId -> inputIdFilter.test(fileId) && !transientData.containsKey(fileId),
+        accessor,
+        processor
+      );
+      if (!allKeysProcessed) return false;
+
+      for (int fileId : transientData.keys()) {
+        if (!inputIdFilter.test(fileId)) continue;
+        Map<Key, Value> data = transientData.get(fileId);
+        if (data != null) {
+          for (Key key : data.keySet()) {
+            if (!processor.process((K)key)) return false;
+          }
+        }
+      }
+      return true;
+    }
+
+    @Override
+    public void clear() throws IOException {
+      try {
+        delegate.clear();
+      }
+      finally {
+        transientData.clear();
+      }
+    }
+
+    @Override
+    public boolean isClosed() {
+      return delegate.isClosed();
+    }
+
+    @Override
+    public void force() throws IOException {
+      delegate.force();
+    }
+
+    @Override
+    public boolean isDirty() {
+      return delegate.isDirty();
+    }
+
+    @Override
+    public void close() throws IOException {
+      delegate.close();
+    }
   }
 }

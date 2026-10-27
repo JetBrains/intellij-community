@@ -15,6 +15,7 @@ import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
+import com.intellij.util.indexing.impl.forward.IterableForwardIndex;
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProviderKt;
 import com.intellij.util.indexing.impl.storage.StorageRef;
@@ -73,7 +74,7 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
         extension.traceKeyHashToVirtualFileMapping()
       );
     };
-    ThrowableNotNullFunction<Integer, ForwardIndex, IOException> forwardFactory = shardNo ->
+    ThrowableNotNullFunction<Integer, IterableForwardIndex, IOException> forwardFactory = shardNo ->
       new DurableMapBasedForwardIndex(forwardMapAccessor(shardNo)::open);
 
     indexStorageRef = new StorageRef<>(
