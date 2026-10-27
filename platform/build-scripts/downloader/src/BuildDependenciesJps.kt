@@ -166,26 +166,4 @@ object BuildDependenciesJps {
     return roots.single()
   }
 
-  fun getProjectLibraryRoots(
-    libraryXml: Path,
-    libraryName: String,
-    mavenRepositoryUrl: String,
-    communityRoot: BuildDependenciesCommunityRoot,
-    credentialsProvider: (() -> Credentials)?,
-    session: BuildHttpSession? = null,
-  ): List<Path> = try {
-    val document = BuildDependenciesUtil.createDocumentBuilder().parse(libraryXml.toFile())
-
-    val library = document.documentElement.getSingleChildElement("library")
-    val roots = getLibraryRoots(library, mavenRepositoryUrl, communityRoot, credentialsProvider, session)
-
-    if (roots.isEmpty()) {
-      error("No library roots for library '$libraryName' in the following iml file at '$libraryXml':\n${Files.readString(libraryXml)}")
-    }
-
-    roots
-  }
-  catch (t: Throwable) {
-    throw IllegalStateException("Unable to find module library '$libraryName' in '$libraryXml'", t)
-  }
 }
