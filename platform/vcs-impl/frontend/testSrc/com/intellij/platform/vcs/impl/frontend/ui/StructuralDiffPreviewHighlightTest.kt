@@ -56,6 +56,27 @@ internal class StructuralDiffPreviewHighlightTest {
   }
 
   @Test
+  fun `the preview moves both carets to the hunk`(): Unit = timeoutRunBlocking {
+    withViewer(base = "first\nsecond\nold\nlast", current = "first\nsecond\nnew\nlast") { viewer ->
+      val editors = Side.entries.map<Side, Editor> { viewer.getEditor(it) }
+      for (editor in editors) editor.caretModel.moveToOffset(0)
+      val highlight = StructuralDiffPreviewHighlight(viewer, ChangesBrowserStructuralNode.DiffLines(LineRange(2, 3), LineRange(2, 3)))
+      highlight.apply(scroll = true)
+      assertEquals(listOf(2, 2), editors.map { it.caretModel.logicalPosition.line })
+      Disposer.dispose(highlight)
+    }
+    withViewer(base = "first\nremoved\nlast", current = "first\nlast") { viewer ->
+      val editors = Side.entries.map<Side, Editor> { viewer.getEditor(it) }
+      for (editor in editors) editor.caretModel.moveToOffset(0)
+      val highlight = StructuralDiffPreviewHighlight(viewer, ChangesBrowserStructuralNode.DiffLines(LineRange(1, 2), LineRange(1, 1)))
+      highlight.apply(scroll = true)
+      assertEquals(listOf(1, 1), editors.map { it.caretModel.logicalPosition.line },
+                   "The side without lines gets the caret after the change")
+      Disposer.dispose(highlight)
+    }
+  }
+
+  @Test
   fun `the dim of the divider ends with the highlight`(): Unit = timeoutRunBlocking {
     withViewer(base = "first\nold\nlast", current = "first\nnew\nlast") { viewer ->
       val splitter = checkNotNull(UIUtil.findComponentOfType(viewer.component, DiffSplitter::class.java))
