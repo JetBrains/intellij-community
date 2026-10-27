@@ -84,7 +84,8 @@ pub(crate) mod kind {
     pub(crate) const LAUNCH: &str = "lane_launch";
 }
 
-/// What the transport of an instruction waits past its deadline, before the grace of the bridge client.
+/// What the transport of an instruction waits past its deadline, before the grace of the bridge client. It is longer than
+/// `AIR_UI_TEST_ANSWER_GRACE_MS`, so the IDE answers an overrun before the transport gives up.
 const INSTRUCTION_MARGIN: Duration = Duration::from_secs(10);
 
 /// The deadline of `Reset` and `ResetManagedAgents`, `AIR_UI_TEST_RESET_TIMEOUT_MS`.
@@ -116,7 +117,7 @@ const AUTHORED_HOST_IDS: [HostAction; 3] = [HostAction::RestartIde, HostAction::
 const LIVE_HOST_IDS: [HostAction; 2] = [HostAction::RefreshLiveWiring, HostAction::AdoptLeftoverJunieSessions];
 /// The agent id of Junie, which the session inventory of the IDE names a Junie session by.
 const JUNIE_AGENT_ID: &str = "junie";
-/// How long the IDE may take to hand one session to the reset.
+/// How long the IDE may take to hand one session to the reset, `AIR_UI_TEST_ADOPT_TIMEOUT_MS`.
 const ADOPT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
