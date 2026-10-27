@@ -38,7 +38,7 @@ internal object ConvertExtensionToFunctionTypeFixFactory {
         val type = typeReference.type as? KaFunctionType ?: return null
         if (!type.hasReceiver) return null
         // We do not support rendering context receivers
-        if (type.contextReceivers.isNotEmpty()) return null
+        if (type.contextParameterTypes.isNotEmpty()) return null
 
         val shortName = renderFunctionTypeWithoutReceiver(type, shortNameRenderer)
         val longName = renderFunctionTypeWithoutReceiver(type, KaRenderer.withQualifiedNames)
