@@ -10,6 +10,7 @@ import org.hamcrest.MatcherAssert
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.junit.jupiter.api.io.TempDir
@@ -45,6 +46,7 @@ class EnvironmentVariablesPathMockTest {
   }
 
   @Test
+  @Disabled("mockk doesn't work in dev-build tests, fixed in 262 by e955846cb747a and c80378a470f3e")
   fun ensurePathFixedTest() {
     Assertions.assertTrue(System.getenv().keys.count() > 2, "Env is too small, seems to be broken")
     val pathKey = System.getenv().keys.find { it.lowercase() == "path" }
