@@ -4437,9 +4437,12 @@ a:com.intellij.ui.AbstractFontCombo
 f:com.intellij.ui.AdditionalPageAtBottomEditorCustomization
 - com.intellij.ui.SimpleEditorCustomization
 a:com.intellij.ui.AppIcon
-- s:getInstance():com.intellij.ui.AppIcon
+- sf:Companion:com.intellij.ui.AppIcon$Companion
+- sf:getInstance():com.intellij.ui.AppIcon
 - requestFocus():V
 - requestFocus(com.intellij.openapi.wm.IdeFrame):V
+f:com.intellij.ui.AppIcon$Companion
+- f:getInstance():com.intellij.ui.AppIcon
 f:com.intellij.ui.AppUIUtil
 - sf:INSTANCE:com.intellij.ui.AppUIUtil
 - f:createHorizontalGradientTexture(java.awt.Graphics,java.awt.Color,java.awt.Color,I,I,I):java.awt.TexturePaint
