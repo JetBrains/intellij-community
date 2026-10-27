@@ -28,7 +28,6 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -38,7 +37,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManager.ConflictResolution
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.ui.Messages
 import com.intellij.util.asDisposable
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -471,14 +469,12 @@ open class McpServerService(private val cs: CoroutineScope) {
         val selectedPort = server.engine.resolvedConnectors().first().port
         settings.mcpServerPort = selectedPort
         if (selectedPort != desiredPort) {
-          withContext(Dispatchers.EDT) {
-            // We want to warn the user that the used port is different from what was used last, or directly requested by the user.
-            Messages.showWarningDialog(null,
-                                       McpServerBundle.message("mcp.server.port.changed.warning.message",
-                                                               desiredPort.toString(),
-                                                               selectedPort.toString()),
-                                       McpServerBundle.message("mcp.server.port.changed.warning.title"))
-          }
+          // We want to warn the user that the used port is different from what was used last, or directly requested by the user.
+          NotificationGroupManager.getInstance().getNotificationGroup("MCP Server Port").createNotification(
+            McpServerBundle.message("mcp.server.port.changed.warning.title"),
+            McpServerBundle.message("mcp.server.port.changed.warning.message", desiredPort.toString(), selectedPort.toString()),
+            NotificationType.WARNING,
+          ).notify(null)
         }
       }
     }

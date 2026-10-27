@@ -83,7 +83,8 @@
     <backgroundPostStartupActivity implementation="com.intellij.mcpserver.impl.wsl.McpWslForwarderService$ProjectOpenTracker" os="windows"/>
     <notificationGroup id="MCP Server" displayType="BALLOON" bundle="messages.McpServerBundle" key="notification.group.mcp.server"
       notificationIds="mcp.client.detected;mcp.client.autoconfigured;mcp.client.error.autoconfigured;mcp.client.wrong.port.detected"/>
-
+    <notificationGroup id="MCP Server Port" displayType="STICKY_BALLOON" bundle="messages.McpServerBundle"
+                       key="notification.group.mcp.server.port"/>
     <mcpServer.mcpToolsProvider implementation="com.intellij.mcpserver.impl.ReflectionToolsProvider" />
     <mcpServer.elicitationProvider implementation="com.intellij.mcpserver.elicitation.McpAirChatElicitationProvider" />
     <mcpServer.elicitationProvider implementation="com.intellij.mcpserver.elicitation.McpElicitationCliProvider" />
