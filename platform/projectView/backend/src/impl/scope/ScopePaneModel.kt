@@ -1,6 +1,4 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:OptIn(ExperimentalAtomicApi::class)
-
 package com.intellij.platform.projectView.backend.impl.scope
 
 import com.intellij.ide.scopeView.NamedScopeFilter
@@ -11,10 +9,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.isQualifiedModuleNamesEnabled
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.vcs.FileStatusListener
-import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.projectView.backend.pane.BackendProjectViewPaneService
 import com.intellij.platform.projectView.impl.ProjectViewPsiExtractor
@@ -40,16 +35,16 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.util.PlatformUtils
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.getAndUpdate
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.concurrent.atomics.AtomicReference
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
-import kotlin.coroutines.resume
 
 /**
  * A Project View pane showing a single scope, the new implementation of one sub-pane of [ScopeViewPane].
@@ -71,14 +66,9 @@ class ScopePaneModel internal constructor(
   /**
    * The pane ID never changes, but the filter behind it does: a scope keeps its name while its contents are
    * edited, and the holder hands out a new [NamedScopeFilter] every time that happens.
+   * The live session sets each new filter on the shared model, see [runLiveSession].
    */
-  private val currentFilter = AtomicReference(filter)
-
-  /** The shared model, only while this pane is live. */
-  private val treeModel = AtomicReference<ScopeViewTreeModel?>(null)
-
-  /** Guards the changes of [treeModel] and the calls to [ScopeViewTreeModel.setFilter], see [applyFilterIfLive]. */
-  private val filterLock = Any()
+  private val currentFilter = MutableStateFlow(filter)
 
   private val sessionState = MutableStateFlow(SessionState.UNMANAGED)
 
@@ -91,11 +81,11 @@ class ScopePaneModel internal constructor(
 
   private val paneId = paneId(filter)
 
-  override val psi: ProjectViewPsiExtractor<TreeStructureProjectViewNode> = ScopeTreeStructurePsiExtractor(project, treeModel)
+  override val psi: ProjectViewPsiExtractor<TreeStructureProjectViewNode> = ScopeTreeStructurePsiExtractor(project, sharedModel)
 
   override suspend fun id(): ProjectViewPaneId = paneId
 
-  override suspend fun presentableName(): @NlsSafe String = currentFilter.load().scope.presentableName
+  override suspend fun presentableName(): @NlsSafe String = currentFilter.value.scope.presentableName
 
   override suspend fun order(): Int = 4
 
@@ -104,15 +94,7 @@ class ScopePaneModel internal constructor(
    * instance is replaced whenever the scope's contents change, and the model has to be told to re-filter.
    */
   fun updateFilter(filter: NamedScopeFilter) {
-    currentFilter.store(filter)
-    applyFilterIfLive()
-  }
-
-  /** The model shows the scope of the live pane, so a frozen pane must not set its filter on it. */
-  private fun applyFilterIfLive() {
-    synchronized(filterLock) {
-      treeModel.load()?.setFilter(currentFilter.load())
-    }
+    currentFilter.value = filter
   }
 
   override suspend fun manageState(builder: ProjectViewPaneStateBuilder) {
@@ -128,28 +110,20 @@ class ScopePaneModel internal constructor(
     }
   }
 
+  /** The model shows the scope of the live pane. So only the live session sets the filter, here. */
   private suspend fun runLiveSession(model: ScopeViewTreeModel, builder: ProjectViewPaneStateBuilder) {
-    val sessionDisposable = Disposer.newDisposable("The live session of the scope pane $paneId")
     try {
-      synchronized(filterLock) {
-        treeModel.store(model)
-        model.setFilter(currentFilter.load())
-      }
-      // Updates for VCS-based scopes like "All Changed Files".
-      FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
-        override fun fileStatusesChanged() {
-          applyFilterIfLive()
+      coroutineScope {
+        // Undispatched, so that the model has the filter of this pane before the session loads the first node.
+        launch(CoroutineName("The filter of the scope pane $paneId"), start = CoroutineStart.UNDISPATCHED) {
+          currentFilter.collect { filter -> model.setFilter(filter) }
         }
-      }, sessionDisposable)
-      LOG.debug { "The scope pane $paneId is live" }
-      // If this pane was live before, the builder still has that tree, and this session resumes it.
-      super.manageState(builder)
+        LOG.debug { "The scope pane $paneId is live" }
+        // If this pane was live before, the builder still has that tree, and this session resumes it.
+        super.manageState(builder)
+      }
     }
     finally {
-      synchronized(filterLock) {
-        treeModel.store(null)
-      }
-      Disposer.dispose(sessionDisposable)
       sessionState.value = SessionState.FROZEN
       LOG.debug { "The scope pane $paneId is frozen" }
     }
@@ -198,7 +172,7 @@ class ScopePaneModel internal constructor(
   private suspend fun findPaneThatAccepts(file: VirtualFile?): ScopePaneModel? {
     if (file == null) return this
     val panes = listOf(this) + ScopePaneService.getInstance(project).getPanes().filter { it !== this }
-    return panes.firstOrNull { pane -> readAction { pane.currentFilter.load().accept(file) } }
+    return panes.firstOrNull { pane -> readAction { pane.currentFilter.value.accept(file) } }
   }
 
   private suspend fun findNodeInThisPane(target: ProjectViewSelectTarget): ProjectViewNodePath? {
@@ -225,17 +199,13 @@ class ScopePaneModel internal constructor(
   }
 
   override suspend fun createNodeProvider(settingsAccessor: ProjectViewPaneSettingsAccessor): ProjectViewTreeNodeProvider<TreeStructureProjectViewNode> {
-    return ScopeViewNodeProvider(project, requireTreeModel(), settingsAccessor)
+    return sharedModel.createNodeProvider(settingsAccessor)
   }
 
-  override suspend fun createUpdater(): ProjectViewUpdater = ScopeViewProjectViewUpdater(requireTreeModel())
+  override suspend fun createUpdater(): ProjectViewUpdater = sharedModel.createUpdater()
 
   override fun createSelectNodeVisitorProvider(): ProjectViewSelectNodeVisitorProvider<TreeStructureProjectViewNode> {
     return TreeStructureSelectNodeVisitorProvider()
-  }
-
-  private fun requireTreeModel(): ScopeViewTreeModel = requireNotNull(treeModel.load()) {
-    "The scope tree model of $paneId is only available while the pane is live"
   }
 
   override suspend fun navigate(nodeIds: List<Long>, options: ProjectViewPaneNavigateOptions): Boolean {
@@ -248,20 +218,12 @@ class ScopePaneModel internal constructor(
 
   override suspend fun setOptionValue(option: ProjectViewPaneOption, newValue: Boolean) {
     super.setOptionValue(option, newValue)
-    // ScopeViewTreeModel caches its children and its view-setting-derived state (such as whether excluded files
-    // are shown), so re-reading the tree isn't enough: the model itself has to be invalidated. That fires a
-    // whole-tree structure change, which ScopeViewProjectViewUpdater turns into a deep refresh.
-    treeModel.load()?.invalidate(null)
+    // The model caches its children and the state that comes from the view settings, so re-reading the tree isn't enough.
+    sharedModel.invalidate()
   }
 
-  override suspend fun flushExternalUpdates() {
-    // ScopeViewTreeModel batches VFS and PSI changes in its own queue, which nothing outside it can observe.
-    // This is the equivalent of what ScopeViewPane.select() does before it starts looking for a node.
-    val model = treeModel.load() ?: return
-    suspendCancellableCoroutine { continuation ->
-      model.updater.updateImmediately { continuation.resume(Unit) }
-    }
-  }
+  // ScopeViewTreeModel batches VFS and PSI changes in its own queue, which nothing outside it can observe.
+  override suspend fun flushExternalUpdates(): Unit = sharedModel.flushUpdates()
 
   companion object {
     fun paneId(filter: NamedScopeFilter): ProjectViewPaneId = projectViewPaneId("${ScopeViewPane.ID}:$filter")
