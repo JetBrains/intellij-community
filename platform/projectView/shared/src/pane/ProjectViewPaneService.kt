@@ -178,7 +178,7 @@ abstract class ProjectViewPaneServiceBase(
   }
 
   override suspend fun getPaneStateFlow(paneId: ProjectViewPaneId): Flow<ProjectViewPaneStateEvent>? {
-    return awaitManager(paneId)?.getPaneStateFlow()
+    return awaitManager(paneId)?.getPaneStateFlow(ClientId.current)
   }
   
   fun getPaneDescriptors(): List<ProjectViewPaneDescriptorImpl> {
@@ -239,6 +239,10 @@ private class ProjectViewPaneManager(
     get() = descriptor.id
 
   private val subscriberCount = MutableStateFlow(0)
+  /** The client ID of the latest state subscriber, or `null` if the pane had no state subscribers yet. */
+  private val stateClientId = MutableStateFlow<ClientId?>(null)
+  /** The client ID of the running [ProjectViewPaneModel.manageState], or `null` if the pane is inactive. */
+  private val runningClientId = MutableStateFlow<ClientId?>(null)
   private val stateBuilder = ProjectViewPaneStateBuilderImpl(id)
   private val manageScopeDeferred = CompletableDeferred<CoroutineScope>()
 
@@ -250,18 +254,24 @@ private class ProjectViewPaneManager(
           .distinctUntilChanged() // leave only activate / deactivate events
           .debounce { isActive -> if (isActive) 0.seconds else 30.seconds }
           .distinctUntilChanged() // filter out quick reconnects
-          .collectLatest { isActive ->
-            if (isActive) {
+          .combine(stateClientId) { isActive, clientId -> if (isActive) clientId ?: ClientId.localId else null }
+          .distinctUntilChanged() // a new client ID restarts the active pane, as the previous client has disconnected
+          .collectLatest { clientId ->
+            if (clientId != null) {
               runSafelyCancellable(LOG, taskDescription = { "managing the state of the pane $id" }) {
                 try {
-                  LOG.debug { "The pane $id became active, managing its state..." }
-                  pane.manageState(stateBuilder)
+                  LOG.debug { "The pane $id became active for the client $clientId, managing its state..." }
+                  runningClientId.value = clientId
+                  withContext(clientId.asContextElement()) {
+                    pane.manageState(stateBuilder)
+                  }
                 }
                 finally {
                   LOG.debug { "The pane $id became inactive, clearing its state..." }
                   withContext(NonCancellable) {
                     stateBuilder.clear()
                   }
+                  runningClientId.value = null
                 }
               }
             }
@@ -309,8 +319,13 @@ private class ProjectViewPaneManager(
     }
   }
 
-  fun getPaneStateFlow(): Flow<ProjectViewPaneStateEvent> = flow {
+  fun getPaneStateFlow(clientId: ClientId): Flow<ProjectViewPaneStateEvent> = flow {
+    stateClientId.value = clientId
     withPaneActive {
+      // Wait for the restart under the new client ID, so that the subscriber doesn't get the state of the previous client.
+      // A subscriber that is replaced by a newer one doesn't wait, because the pane never runs under its client ID again.
+      combine(runningClientId, stateClientId) { running, latest -> running == clientId || latest != clientId }.first { it }
+      stateBuilder.awaitInitialized()
       stateBuilder.getStateFlow().collect(this)
     }
   }
