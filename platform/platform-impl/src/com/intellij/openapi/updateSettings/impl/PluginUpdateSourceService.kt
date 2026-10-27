@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.util.messages.Topic
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -83,4 +84,12 @@ interface PluginUpdateSourceService {
 
   @TestOnly
   fun getPersistedPluginUpdateSourceId(pluginId: PluginId): PluginUpdateSource?
+}
+
+internal fun interface PluginUpdateSourceListener {
+  fun sourcesChanged()
+
+  companion object {
+    val TOPIC: Topic<PluginUpdateSourceListener> = Topic(PluginUpdateSourceListener::class.java, Topic.BroadcastDirection.NONE)
+  }
 }
