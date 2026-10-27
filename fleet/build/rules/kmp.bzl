@@ -1,37 +1,37 @@
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive", "http_file")
 load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
 
-_RESOLUTION_FACTS_VERSION = "resolution.v38"
+_RESOLUTION_FACTS_VERSION = "resolution.v39"
 
-_RESOLVER_VERSION = "0.2.0"
+_RESOLVER_VERSION = "0.3.0"
 _RESOLVER_BINARY_URL_PREFIX = (
     "https://cache-redirector.jetbrains.com/github.com/JetBrains/bazel-kmp-resolver/releases/download/%s" % _RESOLVER_VERSION
 )
 _RESOLVER_BINARIES = {
     "linux_arm64": struct(
         filename = "bazel-kmp-resolver-linux-arm64",
-        sha256 = "1e90598162f08e710f835a0804a7e221eca6380667dc70d31ef56e562d24b9b5",
+        sha256 = "c4ac45efe8f6370a87ba80dd9f94c8b26c9b446013ae6ec7ce148b8db060082d",
     ),
     "linux_x64": struct(
         filename = "bazel-kmp-resolver-linux-x64",
-        sha256 = "85e1c04d9392304272b0f07fb3c233d43a550dba253b7f369306b81198672d97",
+        sha256 = "43032d76424b53ee4320b996b066ca9ce889eef934c2048eb12e20d8e1a1ce08",
     ),
     "macos_arm64": struct(
         filename = "bazel-kmp-resolver-macos-arm64",
-        sha256 = "070fcda61d29f48561d46b5777ddf0c8e63b06b379d6e588020ec58c94164ee3",
+        sha256 = "bea2621e715c2e5185bef24e5b9e25ee69e0c1a026bd412c52ab855dedde974b",
     ),
     "macos_x64": struct(
         filename = "bazel-kmp-resolver-macos-x64",
-        sha256 = "46980f9168a8651ed2d34f3ad7f8976433f441317b0d8d8d22af4d634bf65016",
+        sha256 = "65817e3f8f1393d8b1dd6614880ce39d06eb442243edf18762606efbd2f1d304",
     ),
     "windows_x64": struct(
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "27e8a62bfcd5cf3fa6558cf9f4d3a67fa7869a564686e94e158104e18dc26137",
+        sha256 = "75e50a5a7fc32f5a9df073ac6f1b961a59e33a7a2ce7ca2d0bf9309ceb7a0caf",
     ),
     "windows_arm64": struct(
         # TODO: GraalVM does not support ARM64 Windows yet, so use the x64 binary for now.
         filename = "bazel-kmp-resolver-windows-x64.exe",
-        sha256 = "27e8a62bfcd5cf3fa6558cf9f4d3a67fa7869a564686e94e158104e18dc26137",
+        sha256 = "75e50a5a7fc32f5a9df073ac6f1b961a59e33a7a2ce7ca2d0bf9309ceb7a0caf",
     ),
 }
 
@@ -726,6 +726,8 @@ def _resolve_fresh(module_ctx, config):
         if duration:
             args.extend([flag, str(_duration_to_millis(duration, env_name))])
 
+    args.extend(["--cache-dir", _resolver_cache_dir(module_ctx)])
+
     result = module_ctx.execute(
         args,
         quiet = True,
@@ -739,6 +741,18 @@ def _resolve_fresh(module_ctx, config):
         ))
 
     return module_ctx.read(resolution_path)
+
+def _resolver_cache_dir(module_ctx):
+    """The resolver's cache of Maven metadata and artifacts, `<output_base>/kmp-resolver-cache`.
+
+    Bazel wipes the extension's working directory, `<output_base>/modextwd/<extension>`, after each evaluation: a
+    directory next to `modextwd` keeps the cache across resolutions until `bazel clean --expunge` deletes the output
+    base. The cache never changes the resolution, it only spares the downloads.
+    """
+    modextwd = module_ctx.path(".").dirname
+    if modextwd.basename != "modextwd":
+        fail("Expected the working directory of the kmp extension to be in <output_base>/modextwd, got %s" % module_ctx.path("."))
+    return str(modextwd.dirname.get_child("kmp-resolver-cache"))
 
 def _workspace_root(module_ctx):
     return module_ctx.path(Label("@@//:MODULE.bazel")).dirname
@@ -936,5 +950,8 @@ kmp = module_extension(
       `KMP_RESOLVER_CREDENTIAL_HELPER_TIMEOUT` and `KMP_RESOLVER_CREDENTIAL_HELPER_CACHE_DURATION` are the counterparts
       of Bazel's `--credential_helper_timeout` and `--credential_helper_cache_duration`, with the same duration syntax
       (defaults: `10s` and `30m`).
+
+      The resolver keeps its cache of Maven metadata and artifacts in `<output_base>/kmp-resolver-cache` across
+      resolutions; `bazel clean --expunge` deletes it. It never changes the resolution.
     """,
 )
