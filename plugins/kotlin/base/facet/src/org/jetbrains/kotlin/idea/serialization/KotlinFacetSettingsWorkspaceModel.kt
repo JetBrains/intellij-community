@@ -232,10 +232,25 @@ class KotlinFacetSettingsWorkspaceModel(val entity: KotlinSettingsEntityBuilder)
             entity.sourceSetNames = value.toMutableList()
         }
 
+    private class DeserializedTargetPlatform(val serializedTargetPlatform: String, val targetPlatform: TargetPlatform?)
+
+    // One immutable holder keeps the serialized and the deserialized value consistent when threads race on the cache.
+    private var _deserializedTargetPlatform: DeserializedTargetPlatform? = null
+
+    private fun deserializeTargetPlatform(): TargetPlatform? {
+        val serializedTargetPlatform = entity.targetPlatform ?: return null
+        _deserializedTargetPlatform?.let { cached ->
+            if (cached.serializedTargetPlatform == serializedTargetPlatform) return cached.targetPlatform
+        }
+
+        val targetPlatform = serializedTargetPlatform.deserializeTargetPlatformByComponentPlatforms()
+        _deserializedTargetPlatform = DeserializedTargetPlatform(serializedTargetPlatform, targetPlatform)
+        return targetPlatform
+    }
+
     override var targetPlatform: TargetPlatform?
         get() {
-            val deserializedTargetPlatform =
-                entity.targetPlatform?.deserializeTargetPlatformByComponentPlatforms() ?: return null
+            val deserializedTargetPlatform = deserializeTargetPlatform() ?: return null
             val args = compilerArguments
             val singleSimplePlatform = deserializedTargetPlatform.componentPlatforms.singleOrNull()
             if (args != null && singleSimplePlatform == JvmPlatforms.defaultJvmPlatform.singleOrNull()) {
