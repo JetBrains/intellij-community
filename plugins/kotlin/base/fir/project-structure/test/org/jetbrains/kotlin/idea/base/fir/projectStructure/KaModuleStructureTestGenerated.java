@@ -126,6 +126,11 @@ public abstract class KaModuleStructureTestGenerated extends AbstractKaModuleStr
             runTest("testData/kaModuleStructure/moduleExportedDependencies/");
         }
 
+        @TestMetadata("moduleExportedDependenciesAggregatorCycle")
+        public void testModuleExportedDependenciesAggregatorCycle() throws Exception {
+            runTest("testData/kaModuleStructure/moduleExportedDependenciesAggregatorCycle/");
+        }
+
         @TestMetadata("moduleExportedDependenciesChain")
         public void testModuleExportedDependenciesChain() throws Exception {
             runTest("testData/kaModuleStructure/moduleExportedDependenciesChain/");

@@ -68,15 +68,35 @@ internal class KotlinExportedDependenciesCollector(private val project: Project)
         computeDependenciesOf: ModuleDependency,
         currentSnapshot: ImmutableEntityStorage,
     ): List<ModuleDependencyItem> {
-        val visitedModules = linkedSetOf<ModuleId>()
-        val rawResult = mutableListOf<ModuleDependencyItem>()
+        val visitedModules = hashSetOf<ModuleId>()
+
+        // Keeps only the first occurrence of each library and module. Consumers take this occurrence as the dependency, including its
+        // `DependencyScope`.
+        val result = LinkedHashMap<Any, ModuleDependencyItem>()
+
+        fun add(dependency: ModuleDependencyItem) {
+            val key = when (dependency) {
+                is LibraryDependency -> dependency.library
+                is ModuleDependency -> dependency.module
+                else -> error("Unexpected dependency type: $dependency")
+            }
+            result.putIfAbsent(key, dependency)
+        }
 
         fun visit(currentDependency: ModuleDependency) {
             if (currentDependency.module in visitedModules) return
             visitedModules += currentDependency.module
 
-            cache[currentDependency]?.let {
-                rawResult += it
+            cache[currentDependency]?.let { cachedDependencies ->
+                cachedDependencies.forEach(::add)
+
+                // The exported closure of each module in `cachedDependencies` is a subset of `cachedDependencies`. A visit of such a
+                // module can only add dependencies that are already in the result.
+                for (cachedDependency in cachedDependencies) {
+                    if (cachedDependency is ModuleDependency) {
+                        visitedModules += cachedDependency.module
+                    }
+                }
                 return
             }
 
@@ -86,13 +106,13 @@ internal class KotlinExportedDependenciesCollector(private val project: Project)
                 when (transitiveDependency) {
                     is LibraryDependency -> {
                         if (transitiveDependency.exported) {
-                            rawResult += transitiveDependency
+                            add(transitiveDependency)
                         }
                     }
 
                     is ModuleDependency ->
                         if (transitiveDependency.exported) {
-                            rawResult += transitiveDependency
+                            add(transitiveDependency)
                             visit(transitiveDependency)
                         }
 
@@ -105,16 +125,8 @@ internal class KotlinExportedDependenciesCollector(private val project: Project)
 
         visit(computeDependenciesOf)
 
-        val result = rawResult
-            .distinctBy { dep ->
-                when (dep) {
-                    is LibraryDependency -> dep.library
-                    is ModuleDependency -> dep.module
-                    else -> error("Unexpected dependency type: $computeDependenciesOf")
-                }
-            }
-
-        return cache.putIfAbsent(computeDependenciesOf, result) ?: result
+        val resultList = result.values.toList()
+        return cache.putIfAbsent(computeDependenciesOf, resultList) ?: resultList
     }
 
     override fun dispose() {}
