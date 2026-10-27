@@ -863,4 +863,56 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     class BasicFilteredWalker(WalkerFilterRegistry[WT], Generic[WT]):
         ...
     """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92408"])
+  fun `use correct overload`() = test("""
+    iter = iter(str())
+    # └ TYPE Iterator[str]
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92408"])
+  fun `LiteralString argument in constructor call inside list literal`() = test("""
+    from abc import ABC
+    import os.path
+    from typing import LiteralString
+
+
+    class AbstractStep(ABC):
+        pass
+
+
+    class MyStep(AbstractStep):
+        def __init__(self, path: LiteralString): ...
+
+
+    class Sequence(AbstractStep):
+        def __init__(self, steps: list[AbstractStep] | None = None): ...
+
+    Sequence([ MyStep(os.path.join('my', 'path')) ]) # no issues here
+    """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-92408"])
+  fun `Enum argument in constructor call inside list literal`() = test("""
+    from abc import ABC
+    from enum import Enum
+
+    class EnumType(Enum):
+        TYPE_A = 1
+        TYPE_B = 2
+
+
+    class AbstractStep(ABC):
+        pass
+
+    class MyStep(AbstractStep):
+        def __init__(self, t: EnumType): ...
+
+    class Sequence(AbstractStep):
+        def __init__(self, steps: list[AbstractStep] | None = None): ...
+
+    Sequence([MyStep(t=EnumType(1))]) # no issues here
+    """.trimIndent())
 }
