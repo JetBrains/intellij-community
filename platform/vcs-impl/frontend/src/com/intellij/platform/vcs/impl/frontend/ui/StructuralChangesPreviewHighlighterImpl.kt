@@ -32,6 +32,10 @@ import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.util.registry.RegistryValue
+import com.intellij.openapi.util.registry.RegistryValueListener
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
 import com.intellij.openapi.vcs.changes.ui.StructuralChangesPreviewHighlighter
 import com.intellij.openapi.vcs.changes.ui.highlightStructuralPreview
@@ -39,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import javax.swing.JComponent
 
 internal class StructuralChangesPreviewHighlighterImpl(private val project: Project) : StructuralChangesPreviewHighlighter, Disposable {
   @RequiresEdt
@@ -61,6 +66,7 @@ internal class StructuralChangesPreviewHighlighterImpl(private val project: Proj
     }
     Disposer.register(this, lifetime)
     Disposer.register(resources, markup)
+    repaintOnDimStrengthChange(editor.component, resources)
     val clear = Runnable { Disposer.dispose(lifetime) }
 
     IdeEventQueue.getInstance().addPostprocessor({
@@ -120,4 +126,11 @@ internal class StructuralChangesPreviewHighlighterImpl(private val project: Proj
     StructuralDiffPreviewHighlight(viewer, lines).also { it.apply(scroll = true) }
 
   override fun dispose() {}
+}
+
+/** Repaints [component] when the strength of the dim changes, so that the user sees a new strength at once. */
+internal fun repaintOnDimStrengthChange(component: JComponent, parentDisposable: Disposable) {
+  RegistryManager.getInstance().get(StructuralChangesViewSettings.DIM_REGISTRY_KEY).addListener(object : RegistryValueListener {
+    override fun afterValueChanged(value: RegistryValue) = component.repaint()
+  }, parentDisposable)
 }

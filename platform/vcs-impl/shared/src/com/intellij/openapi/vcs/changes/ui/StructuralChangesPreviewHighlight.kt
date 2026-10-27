@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.GraphicsUtil
 import org.jetbrains.annotations.ApiStatus
@@ -20,7 +21,8 @@ import java.text.Bidi
 
 /**
  * Dims the editor outside [range]. With [wholeLines], the range keeps the full width of its lines, as a diff hunk does, and an empty
- * range keeps one blank line. A null range dims the whole editor: a side of a diff hunk can have no lines.
+ * range keeps one blank line. A null range dims the whole editor: a side of a diff hunk can have no lines. The strength comes from
+ * [StructuralChangesViewSettings.previewDimAlpha].
  */
 @ApiStatus.Internal
 @RequiresEdt
@@ -62,7 +64,7 @@ private fun paintDim(editor: Editor, g: Graphics, dimmedArea: Area) {
   val graphics = g.create() as Graphics2D
   try {
     graphics.color = editor.colorsScheme.defaultBackground
-    GraphicsUtil.paintWithAlpha(graphics, 0.65f) { graphics.fill(dimmedArea) }
+    GraphicsUtil.paintWithAlpha(graphics, StructuralChangesViewSettings.previewDimAlpha()) { graphics.fill(dimmedArea) }
   }
   finally {
     graphics.dispose()

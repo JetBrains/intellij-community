@@ -76,6 +76,8 @@
                  description="Enables structural changes in the Changes view"/>
     <registryKey key="vcs.show.structural.changes.max.files" defaultValue="100" restartRequired="false"
                  description="The Changes view shows no structural changes when it has more changed files"/>
+    <registryKey key="vcs.show.structural.changes.dim" defaultValue="65" restartRequired="false"
+                 description="The strength of the dim around a structural change in its preview, in percent from 0 to 100"/>
 
     <projectService serviceInterface="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettings"
                     serviceImplementation="com.intellij.platform.vcs.impl.shared.changes.ChangesViewSettingsImpl"/>

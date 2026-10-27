@@ -39,6 +39,7 @@ internal class StructuralDiffPreviewHighlight(
   init {
     viewer.addListener(rediffListener)
     Disposer.register(viewer, this)
+    repaintOnDimStrengthChange(viewer.component, this)
     for (editor in editors()) {
       editor.addEditorMouseListener(object : EditorMouseListener {
         override fun mousePressed(event: EditorMouseEvent) = Disposer.dispose(this@StructuralDiffPreviewHighlight)
