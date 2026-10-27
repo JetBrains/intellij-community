@@ -3,6 +3,7 @@ package com.intellij.multiverse
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -37,8 +38,8 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
   override fun isOwnerOf(context: CodeInsightContext): Boolean =
     context is ModuleContext || context is LibraryContext || context is SdkContext
 
-  override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? {
-    if (project.isDefault) return null
+  override fun getContexts(file: VirtualFile, project: Project): Answer {
+    if (project.isDefault) return Answer.NotOwned
 
     val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
 
@@ -52,21 +53,21 @@ internal class ProjectModelEntityContextProvider : CodeInsightContextProvider {
       includeExternalNonIndexableSets = false,
       includeCustomKindSets = false
     )
-    if (fileSets.isEmpty()) return null
+    if (fileSets.isEmpty()) return Answer.NotOwned
 
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
 
     // One file set needs no duplicate check, and most files have one.
     if (fileSets.size == 1) {
-      val context = extractContext(fileSets.single(), storage, project) ?: return null
-      return listOf(context)
+      val context = extractContext(fileSets.single(), storage, project) ?: return Answer.NotOwned
+      return Answer.Contexts(listOf(context))
     }
 
     val contexts = fileSets
       .mapNotNull { fileSet -> extractContext(fileSet, storage, project) }
       .distinct()
 
-    return contexts.ifEmpty { null }
+    return if (contexts.isEmpty()) Answer.NotOwned else Answer.Contexts(contexts)
   }
 
   private fun extractContext(

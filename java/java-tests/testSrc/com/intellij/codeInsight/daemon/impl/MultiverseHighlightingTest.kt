@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.ProductionLightDaemonAnalyzerTestCase
 import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.codeInsight.multiverse.EditorContextManager
 import com.intellij.codeInsight.multiverse.ModuleContext
 import com.intellij.codeInsight.multiverse.SingleEditorContext
@@ -244,7 +245,7 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     assertTrue(getRawContexts().toString(), getRawContexts().any { it is ModuleContext })
 
     val fake = FakeContext("hi")
-    registerOwningProvider(virtualFile, listOf(fake))
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(fake)))
 
     // The test provider owns the file, so the platform module context is fully suppressed for it.
     assertEquals(listOf<CodeInsightContext>(fake), getRawContexts())
@@ -252,16 +253,16 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
 
   fun testUnclaimedProviderFallsThroughToNextOwner() {
     configureByText(JavaFileType.INSTANCE, "class C {}")
-    registerOwningProvider(virtualFile, contexts = null)
+    registerOwningProvider(virtualFile, Answer.NotOwned)
 
     val contexts = getRawContexts()
     assertTrue("must fall through to the platform module context", contexts.any { it is ModuleContext })
     assertFalse("no fake context is contributed for this file", contexts.any { it is FakeContext })
   }
 
-  fun testEmptyOwnerKeepsTheFileAndShowsDefaultContext() {
+  fun testDefaultContextAnswerKeepsTheFileAndShowsDefaultContext() {
     configureByText(JavaFileType.INSTANCE, "class C {}")
-    registerOwningProvider(virtualFile, emptyList())
+    registerOwningProvider(virtualFile, Answer.DefaultContext)
 
     val contexts = getRawContexts()
     assertEquals(listOf(defaultContext()), contexts)
@@ -275,7 +276,7 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
-    registerOwningProvider(virtualFile, listOf(first, second), preferred = second)
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)), preferred = second)
     assertEquals(second, getPreferredContext())
   }
 
@@ -283,7 +284,7 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
     configureByText(JavaFileType.INSTANCE, "class C {}")
     val first = FakeContext("first")
     val second = FakeContext("second")
-    registerOwningProvider(virtualFile, listOf(first, second))
+    registerOwningProvider(virtualFile, Answer.Contexts(listOf(first, second)))
     assertEquals(first, getPreferredContext())
   }
 
@@ -295,11 +296,11 @@ class MultiverseHighlightingTest : DaemonAnalyzerTestCase() {
 
   private fun registerOwningProvider(
     targetFile: VirtualFile,
-    contexts: List<CodeInsightContext>?,
+    answer: Answer,
     preferred: CodeInsightContext? = null,
   ) {
     CodeInsightContextManager.getInstance(project)
-      .registerTestOnlyCodeInsightContextProvider(OwningTestContextProvider(targetFile, contexts, preferred), testRootDisposable)
+      .registerTestOnlyCodeInsightContextProvider(OwningTestContextProvider(targetFile, answer, preferred), testRootDisposable)
   }
 
   private fun getContexts(): List<ModuleContext> {
@@ -315,16 +316,16 @@ private class FakeContext(private val name: String) : CodeInsightContext {
   override fun toString(): String = "FakeContext($name)"
 }
 
-// Answers [contexts] for [targetFile] and nominates [preferred], claiming no other file.
+// Gives [answer] for [targetFile] and nominates [preferred], claiming no other file.
 private class OwningTestContextProvider(
   private val targetFile: VirtualFile,
-  private val contexts: List<CodeInsightContext>?,
+  private val answer: Answer,
   private val preferred: CodeInsightContext? = null,
 ) : CodeInsightContextProvider {
   override fun isOwnerOf(context: CodeInsightContext): Boolean = context is FakeContext
 
-  override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? =
-    if (file == targetFile) contexts else null
+  override fun getContexts(file: VirtualFile, project: Project): Answer =
+    if (file == targetFile) answer else Answer.NotOwned
 
   override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
 

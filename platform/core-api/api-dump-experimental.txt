@@ -21,11 +21,24 @@
 - a:isApplicable(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 *:com.intellij.codeInsight.multiverse.CodeInsightContextProvider
 - getContextResetAction(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):kotlin.jvm.functions.Function1
-- a:getContexts(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):java.util.List
+- a:getContexts(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer
 - getPreferredContext(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,java.util.List):com.intellij.codeInsight.multiverse.CodeInsightContext
 - a:isOwnerOf(com.intellij.codeInsight.multiverse.CodeInsightContext):Z
 - onContextPicked(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContext):V
 - a:subscribeToChanges(com.intellij.openapi.project.Project,com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator):V
+*:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer
+- *sf:Companion:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$Companion
+*f:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$Companion
+- f:getDefaultContext():com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$Contexts
+*f:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$Contexts
+- com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer
+- <init>(java.util.List):V
+- f:getContexts():java.util.List
+*f:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$NotOwned
+- com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer
+- sf:INSTANCE:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Answer$NotOwned
+- equals(java.lang.Object):Z
+- hashCode():I
 *:com.intellij.codeInsight.multiverse.CodeInsightContextProvider$Invalidator
 - a:requestInvalidation():V
 *f:com.intellij.codeInsight.multiverse.CodeInsightContexts

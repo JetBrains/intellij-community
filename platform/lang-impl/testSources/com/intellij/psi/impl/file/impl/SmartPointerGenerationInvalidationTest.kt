@@ -5,6 +5,7 @@ import com.intellij.codeInsight.multiverse.CodeInsightContext
 import com.intellij.codeInsight.multiverse.CodeInsightContextManager
 import com.intellij.codeInsight.multiverse.CodeInsightContextManagerImpl
 import com.intellij.codeInsight.multiverse.CodeInsightContextProvider
+import com.intellij.codeInsight.multiverse.CodeInsightContextProvider.Answer
 import com.intellij.codeInsight.multiverse.codeInsightContext
 import com.intellij.codeInsight.multiverse.defaultContext
 import com.intellij.openapi.Disposable
@@ -552,8 +553,8 @@ private class TestFileContextProvider(
 ) : CodeInsightContextProvider {
   override fun isOwnerOf(context: CodeInsightContext): Boolean = context is TestContext
 
-  override fun getContexts(file: VirtualFile, project: Project): List<CodeInsightContext>? =
-    if (file == targetFile) contexts else null
+  override fun getContexts(file: VirtualFile, project: Project): Answer =
+    if (file == targetFile) Answer.Contexts(contexts) else Answer.NotOwned
 
   override fun subscribeToChanges(project: Project, invalidator: CodeInsightContextProvider.Invalidator) {}
 }
