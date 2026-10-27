@@ -1,0 +1,23 @@
+<idea-plugin url="https://www.jetbrains.com/pycharm/" allow-bundled-update="true">
+  <id>com.intellij.python.zuban</id>
+  <name>Zuban</name>
+  <category>Languages</category>
+  <vendor url="https://www.jetbrains.com/pycharm/">JetBrains</vendor>
+
+  <description><![CDATA[
+Runs <a href="https://zubanls.com/">Zuban</a> in the IDE.
+Zuban is a fast, Mypy-compatible Python type checker and language server, written in Rust.
+<br>
+The plugin shows the Zuban diagnostics in the editor, and it adds Zuban to the Python external tools settings.
+]]></description>
+
+  <dependencies>
+    <plugin id="PythonCore"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.python.zuban.common"/>
+    <module name="intellij.python.zuban.frontend"/>
+    <module name="intellij.python.zuban"/>
+  </content>
+</idea-plugin>

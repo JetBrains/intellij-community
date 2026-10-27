@@ -103,12 +103,6 @@
             "module": "intellij.python.ty.frontend"
         },
         {
-            "module": "intellij.python.zuban.common"
-        },
-        {
-            "module": "intellij.python.zuban.frontend"
-        },
-        {
             "module": "intellij.python.psi"
         },
         {
@@ -349,9 +343,6 @@
         },
         {
             "module": "intellij.python.pyright"
-        },
-        {
-            "module": "intellij.python.zuban"
         },
         {
             "destination": "lib/modules/intellij.libraries.jsr305.jar",

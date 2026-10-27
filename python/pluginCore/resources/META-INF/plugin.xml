@@ -65,8 +65,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.ruff.frontend"/>
     <module name="intellij.python.ty.common"/>
     <module name="intellij.python.ty.frontend"/>
-    <module name="intellij.python.zuban.common"/>
-    <module name="intellij.python.zuban.frontend"/>
 
     <!-- Backend-only modules: load only when intellij.platform.backend is available -->
     <module name="intellij.python.psi"/>
@@ -129,7 +127,6 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <module name="intellij.python.ruff"/>
     <module name="intellij.python.pyrefly"/>
     <module name="intellij.python.pyright"/>
-    <module name="intellij.python.zuban"/>
   </content>
   <content>
     <module name="intellij.libraries.jsr305"/>

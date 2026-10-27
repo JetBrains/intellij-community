@@ -1214,6 +1214,8 @@ jvm_library(
         "//python/services/shared",
         "//python/intellij.python.community.communityOnly:community-communityOnly",
         "//python/aliasProvider",
+        "//python/python-zuban/frontend",
+        "//python/python-zuban/plugin",
     ],
 )
 
@@ -1260,6 +1262,8 @@ jvm_library(
         "//python/intellij.python.community.communityOnly:community-communityOnly_test_lib",
         "//python/aliasProvider:aliasProvider_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//python/python-zuban/frontend:frontend_test_lib",
+        "//python/python-zuban/plugin:plugin_test_lib",
     ],
     deps = [
         # do not sort,
