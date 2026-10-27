@@ -6,6 +6,7 @@
 //!
 //! The steps:
 //!
+//! 0. Wait while `serve` upgrades git with Homebrew (`host_git`). A refused upgrade ends the run with `old_git`.
 //! 1. Borrow a host slot of the repository (`slots`, `bd lease host lend` with the pid of this process): the slot that
 //!    the holder used last, else the one used longest ago, else a place in the queue. While every slot is lent, it asks
 //!    again every 2 s and says so in the log once a minute, up to an hour.
@@ -16,7 +17,7 @@
 //! 3. Check out the commit in the slot. The give-back of the last run discarded its changes; the ignored files stay as
 //!    the warm cache. So the checkout writes only the files of the diff and reads no other file (`git::checkout`).
 //! 4. Prepare: read `.yonder.toml` of the commit, build the environment (`run_env`, with the login environment of
-//!    `login_env`), and run each prepare step whose inputs changed since its last success in this slot (`prepare`, the
+//!    `login_env` and the programs of Homebrew before `/usr/bin`), check its git (`host_git::for_command`), and run each prepare step whose inputs changed since its last success in this slot (`prepare`, the
 //!    fingerprints of `slots::Prepared`). For a client that asks for them, remove the outputs of the config, and scan
 //!    the tree of the slot before the command.
 //! 5. Run the command in the slot root, in its own process group, with stdin `/dev/null`, the environment of step 4
@@ -25,7 +26,7 @@
 //! 6. Stage: the patch of the changes of the command, the outputs, and the new entries of each `fetch` directory, into
 //!    the run directory: nothing reads the slot after the run.
 //!
-//! Each step is a phase: `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`. At the end of each step,
+//! Each step is a phase: `git` (only after a wait), `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`. At the end of each step,
 //! whatever its outcome, the supervisor rewrites `phases.json` with the steps that have ended.
 //!
 //! On every way out it keeps the fingerprints of the slot, deletes the ref of the pack, and writes `exit.json` last.
@@ -65,7 +66,7 @@ use crate::refused::{
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir};
 use crate::slots::{self, GaveBack, Lend, Lent, Prepared, Queued};
 use crate::watch::Watch;
-use crate::{awake, config, git, lease, login_env, prepare, run_env, tuning};
+use crate::{awake, config, git, host_git, lease, login_env, prepare, run_env, tuning};
 
 /// How long a run waits for a host slot.
 const SLOT_WAIT: Duration = Duration::from_secs(3600);
@@ -263,6 +264,8 @@ struct Launch {
     before: Option<String>,
     /// The login environment of the run, for its first line.
     login: Option<LoginEnv>,
+    /// The git of the command, for its first line: `git 2.56.0`.
+    git: String,
 }
 
 fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, Refusal> {
@@ -272,6 +275,14 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     private_dir(&stage).map_err(|error| refused(AGENT_ERROR, format!("cannot make {}: {error}", stage.display())))?;
     let mut phases = Phases { run, ended: Vec::new() };
 
+    let settled = if host_git::upgrading(context.home) {
+        phases.time("git", || host_git::wait(context.home, stop, &mut say))
+    } else {
+        host_git::wait(context.home, stop, &mut say)
+    };
+    if !settled? {
+        return Ok(INTERRUPTED);
+    }
     let Some(lent) = phases.time("slot", || borrow(context, stop, &mut say))? else {
         return Ok(INTERRUPTED);
     };
@@ -409,13 +420,17 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
     let login = context
         .exe
         .and_then(|exe| login_env::for_run(context.home, exe, login_env::MAX_AGE, &mut |line| context.say(line)));
-    let env = run_env::run_env(login_env::applied(login.as_ref()), &config.env, context.home, spec, slot)?;
+    let mut base = login_env::applied(login.as_ref());
+    host_git::put_brew_first_in(&mut base);
+    let env = run_env::run_env(base, &config.env, context.home, spec, slot)?;
+    let git = host_git::for_command(&env)?;
     let launch = Launch {
         env,
         nice: spec.nice,
         outputs: if spec.outputs { config.outputs.clone() } else { Vec::new() },
         before: None,
         login,
+        git,
     };
     let Some(prepared) = held.prepared.as_mut() else {
         return Err(refused(AGENT_ERROR, "the prepare step has no slot"));
@@ -478,10 +493,11 @@ fn start_line(slot: &Path, launch: &Launch) -> String {
         },
     );
     format!(
-        "running in {} (slot {}): load {load} on {cores} cores, nice {}, {files} open files, {login}",
+        "running in {} (slot {}): load {load} on {cores} cores, nice {}, {files} open files, {}, {login}",
         slot.display(),
         run_env::slot_number(slot),
-        launch.nice.unwrap_or(0)
+        launch.nice.unwrap_or(0),
+        launch.git
     )
 }
 

@@ -20,7 +20,7 @@ client, its refusals, the order of a run) and `link.md` (the refusal codes of th
 |---|---|
 | `yonder run`, `attach`, `runs`, `cancel`, `fetch`, `forget`, `bt --host <host> …` | An agent, at any time. Cancel and forget only your own runs. |
 | `yonder upgrade <host>` | An agent, only after the user agrees: it deploys a new agent to a machine that the user shares. |
-| `yonder prepare <host>`, `bt --host <host> --prepare`, and every `ssh` or `sudo` on the host | The user only. They use ssh, and the ssh key can need the user at the machine. |
+| `yonder prepare <host>`, `bt --host <host> --prepare`, the install of Homebrew, and every `ssh` or `sudo` on the host | The user only. They use ssh, and the ssh key can need the user at the machine. |
 
 A run needs no ssh: each end pins the certificate of the other end, so a run works from a background session too.
 Never install, configure or restart the agent by hand. Tell the user what a refusal names.
@@ -52,7 +52,8 @@ committed HEAD only and refuses a dirty tree. The new run directories of `out/bt
 ### The lines of a run
 
 - `yonder: run <run> of <commit> on <host>` comes first. Keep the run id: `attach`, `cancel` and `fetch` need it.
-- `yonder: running in <slot> (slot <n>): load …, nice …, … open files, …` comes right before the command.
+- `yonder: running in <slot> (slot <n>): load …, nice …, … open files, git <version>, …` comes right before the
+  command. The git is the one that the command finds first on its `PATH`.
 - `yonder: phases: …` comes at the end. Read it before you guess where the time went.
 
 The steps of the phases line, in their order:
@@ -60,6 +61,7 @@ The steps of the phases line, in their order:
 | Step | Where | A long step means |
 |---|---|---|
 | `pack`, `upload` | here | The pack of the missing commits is large: the host is far behind this history. |
+| `git` | host | The host upgraded its git with Homebrew, and the run waited. Only such a run has it. |
 | `slot` | host | Every slot was lent, and the run waited in the queue. |
 | `pack_wait` | host | The slot was ready before the pack came. |
 | `checkout` | host | A diff with many files, or a forced checkout. The log then says `checked out with a scan of every file, because …`. |
@@ -155,6 +157,7 @@ host.
 | `old_agent` | The agent lacks a feature of the run, such as `--apply`. Ask the user for `yonder upgrade <host>` on macOS, or `yonder prepare <host>`. |
 | `lease_failed`, `lock_timeout` | The host lent no slot. Exit 75: run locally, or try again later. |
 | `local_changes` | `--head` or `bt --host` with uncommitted or untracked changes. Commit first. |
+| `old_git` | The git of the host is older than 2.56.0, and the agent cannot upgrade it. Exit 75: run locally. Give the message to the user: on macOS without Homebrew, the user installs Homebrew once at the host (it needs an administrator) and then runs `brew install git`. |
 
 ## The Local Network permission on macOS
 

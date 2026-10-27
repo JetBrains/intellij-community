@@ -27,6 +27,8 @@ pub(crate) const AGENT_ERROR: &str = "agent_error";
 pub(crate) const BAD_CONFIG: &str = "bad_config";
 /// A prepare step of `.yonder.toml` failed, so the command did not run.
 pub(crate) const PREPARE_FAILED: &str = "prepare_failed";
+/// The git of the host is older than the minimum of yonder, and the agent cannot upgrade it (`host_git`).
+pub(crate) const OLD_GIT: &str = "old_git";
 
 /// The binary of an upgrade has another size or SHA-256 than the request names, or it does not run here as an agent
 /// of this schema that can be upgraded again.

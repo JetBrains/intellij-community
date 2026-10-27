@@ -75,6 +75,16 @@ impl Home {
         self.dir.join(".cache/yonderd/upgrade.lock")
     }
 
+    /// The last state of the git of the host (`host_git`): `~/.cache/yonderd/git.json`.
+    pub(crate) fn git_file(&self) -> PathBuf {
+        self.dir.join(".cache/yonderd/git.json")
+    }
+
+    /// The flock that `serve` holds while Homebrew installs or upgrades git: `~/.cache/yonderd/git.lock`.
+    pub(crate) fn git_lock_file(&self) -> PathBuf {
+        self.dir.join(".cache/yonderd/git.lock")
+    }
+
     /// The lease file and the lock of each holder of before the host slots, which the keeper returns:
     /// `~/.cache/yonderd/leases/`.
     pub(crate) fn leases_dir(&self) -> PathBuf {

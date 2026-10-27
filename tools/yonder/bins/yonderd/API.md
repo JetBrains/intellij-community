@@ -50,6 +50,9 @@ fill waits 1, 5, then 15 minutes.
 | A repository path that is no directory, or that git says is no repository | `repo_missing`, with the words of git |
 | A repository check that cannot run, such as a git that cannot start | `agent_error`, with the error of the start |
 | A `Lease` request of an older client | `bad_request`: host slots are lent per run (a `Release` answers `Done`) |
+| A start while the git of the host is older than the minimum and the agent cannot upgrade it, see [The git of the host](#the-git-of-the-host) | `old_git` |
+| A run whose upgrade of git failed while it waited, or whose `PATH` finds a git older than the minimum or no git | `old_git`, as the end of the run, before the command |
+| A run that waited for an upgrade of git for 31 min | `lock_timeout` |
 | A run whose bd lacks `bd lease host`, or whose lend fails | `lease_failed` |
 | A run that got no host slot within an hour | `lock_timeout` |
 | A run whose commit the repository lacks, and whose pack does not come within 30 min, or sends no chunk for 2 min | `pack_missing`, as the end of the run |
@@ -85,13 +88,14 @@ fill waits 1, 5, then 15 minutes.
   `git checkout -f --detach` instead, which stats every file. Then the log has the line `yonder: checked out with a scan of every file, because <reason>`.
 - A pack that comes after the end of its run makes no ref. Its objects land.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
-  the phases that have ended so far. The phases are `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`,
-  in this order. A run that ends early has only the phases up to its last step.
+  the phases that have ended so far. The phases are `git`, `slot`, `pack_wait`, `checkout`, `prepare`, `command` and
+  `stage`, in this order. Only a run that waited for an upgrade of git has `git`. A run that ends early has only the phases up to its last step.
 - The hello lists the features of the agent: `config`, `login_env`, `nice` and `changes`, and `upgrade` on macOS
   (`proto::feature`). It names the SHA-256 of the binary of the agent too. An agent
   ignores a field of a start that it does not know, so a client checks the feature first.
 - Right before the command the run writes one line: `yonder: running in <slot> (slot <n>): load <l> on <c> cores, nice
-  <n>, <limit> open files, the login environment of <shell> from <age> ago`.
+  <n>, <limit> open files, git <version>, the login environment of <shell> from <age> ago`. The git is the one that the
+  `PATH` of the command finds first, with the answer of `git --version`, such as `git 2.50.1 (Apple Git-155)`.
 - A follow sends its heartbeats from a thread of their own, so a slow read of the run files holds none back. On macOS a
   kqueue tells the follow about a change of the log or of the run directory at once. On Linux the follow reads the
   run files every 200 ms.
@@ -116,13 +120,46 @@ command get more:
    that fails gets a second try with `-l` only. `serve` captures at its start, and a run captures again when the last
    capture is an hour old. A failed capture keeps the last one and says so in the log of the run.
    `~/.cache/yonderd/login-env.json` holds the capture.
-3. `YONDER_RUN`, `YONDER_HOLDER`, `YONDER_COMMIT` and `YONDER_SLOT`, the number of the slot: the name of the parent
+3. The `bin` directory of Homebrew right before `/usr/bin` in `PATH`, as in the `PATH` of the agent, see [The git of the
+   host](#the-git-of-the-host). A login shell can put `/usr/bin` first again.
+4. `YONDER_RUN`, `YONDER_HOLDER`, `YONDER_COMMIT` and `YONDER_SLOT`, the number of the slot: the name of the parent
    directory of the slot when it is a number below 1000, as in the pool of `bd lease`, else a number below 100 from its
    path.
-4. `[env]` of `.yonder.toml`.
+5. `[env]` of `.yonder.toml`.
+
+The run then checks the git that this `PATH` finds first, as [The git of the host](#the-git-of-the-host) says.
 
 `serve` and each supervisor raise the soft open-files limit to 65536, or to the hard limit and `kern.maxfilesperproc`
 when they are lower. With `RunSpec::nice`, the prepare steps and the command run at that niceness.
+
+## The git of the host
+
+The agent, bd, the prepare steps and the commands use the git that their `PATH` finds first. Each of them needs git
+2.56.0 or later (`host_git::MINIMUM`).
+
+1. At its start, before its first thread, `serve` puts the `bin` directory of Homebrew right before `/usr/bin` in its
+   own `PATH`, so each child finds the git of Homebrew first: git, bd, the supervisors and Homebrew itself. Homebrew is
+   `brew` on the `PATH`, else `/opt/homebrew/bin/brew`, else `/usr/local/bin/brew`. Its `bin` directory, `$(brew
+   --prefix)/bin`, is the directory of `brew`. The agent looks for Homebrew on macOS only.
+2. Once it listens, `serve` runs `git --version` of the git of its `PATH`. A version such as `2.50.1 (Apple Git-155)`
+   counts as `2.50.1`, and a release candidate `2.56.0.rc1` comes before `2.56.0`. An answer without a version counts
+   as too old.
+3. A git that is too old gets `brew install git` when the `bin` directory of Homebrew has no git, else `brew upgrade
+   git`, with `HOMEBREW_AUTO_UPDATE_SECS=0`, so Homebrew updates its formulae first. It runs on a thread of its own,
+   with a deadline of 30 min, while `serve` holds the flock of `~/.cache/yonderd/git.lock`. So the listener and the
+   watchdog of an upgrade of the agent do not wait for Homebrew.
+4. A run that starts during the install waits for it before it borrows a slot. Its log says ``yonder: waiting for the
+   upgrade of git on the host: `brew upgrade git` runs since <s> s`` at the start and once a minute, and the run gets
+   the phase `git`. A cancel ends the wait. The keeper of the slots does nothing while the flock is held.
+5. A start refuses with `old_git` when the git stays too old: no Homebrew, a failed `brew`, a git of Homebrew that is
+   still too old, or another old git before the one of Homebrew on the `PATH`. On macOS without Homebrew the message
+   names the install of Homebrew, which asks for the password of an administrator, and then `brew install git`.
+   Elsewhere it names the package manager of the host. A start after a refusal checks again, so a git that the user
+   installed counts without a restart of the agent.
+
+`~/.cache/yonderd/git.json` keeps the last state for the runs: `{"state": "ready" | "upgrading" | "refused",
+"message", "at_ms"}`. The message names the git, the command of Homebrew, or the refusal. A run that waited reads it,
+and a refused state ends the run with `old_git`.
 
 ## `.yonder.toml`
 
@@ -233,7 +270,8 @@ executable `(deleted)`.
 ## The test durations
 
 `YONDERD_TEST_SHELL` names a shell for the login environment in place of the one of the user. `none` turns the capture
-off. `YONDERD_TEST_CAFFEINATE` names the program of the power assertions in place of `/usr/bin/caffeinate`, and `none`
+off. `YONDERD_TEST_BREW` names a fake Homebrew, and `none` names none. `YONDERD_TEST_GIT_MINIMUM` sets another minimum
+of the git of the host, such as `0.0.0`. `YONDERD_TEST_CAFFEINATE` names the program of the power assertions in place of `/usr/bin/caffeinate`, and `none`
 turns them off. A process test shortens these durations through the environment of `serve`, in milliseconds:
 
 | Variable | Duration | Default |

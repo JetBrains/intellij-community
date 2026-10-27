@@ -28,6 +28,10 @@ under the directory of the repository of its host file, such as `~/projects/bran
 the tools that the commands of those repositories need on the login `PATH` of its user, such as pnpm. The agent gives
 each run the login environment of the user, so a tool that a terminal of the host finds, a run finds too.
 
+A host needs git 2.56.0 or later. On macOS the agent puts the programs of Homebrew before `/usr/bin` and runs `brew
+install git` or `brew upgrade git` itself when its git is older. A host without Homebrew refuses each run with
+`old_git`, and the message names what the user installs. "The git of the host" in `bins/yonderd/API.md` has the steps.
+
 ## The upgrade
 
 `yonder upgrade <alias>` updates the agent of a macOS host over the link, without ssh, so a background session can do

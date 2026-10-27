@@ -17,6 +17,7 @@ mod config;
 mod files;
 mod git;
 mod home;
+mod host_git;
 mod keeper;
 mod lease;
 mod login_env;

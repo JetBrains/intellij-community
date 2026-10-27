@@ -263,7 +263,11 @@ impl World {
             // The login shell of the developer stays out of the tests; a test that needs one names its own.
             .env("YONDERD_TEST_SHELL", "none")
             // The power assertions of the developer's Mac stay out of the tests; a test that checks them names a fake.
-            .env("YONDERD_TEST_CAFFEINATE", "none");
+            .env("YONDERD_TEST_CAFFEINATE", "none")
+            // Any git of the developer passes, and the Homebrew of the developer stays out of the tests; a test that
+            // checks the upgrade names a minimum and a fake Homebrew.
+            .env("YONDERD_TEST_GIT_MINIMUM", "0.0.0")
+            .env("YONDERD_TEST_BREW", "none");
         command
     }
 
@@ -714,7 +718,7 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
     let start = followed.start_line();
     assert!(start.starts_with(&format!("{START_LINE}{} (slot ", slot.display())), "{start}");
     assert!(
-        start.contains(", nice 0, ") && start.contains(" open files, the environment of the agent"),
+        start.contains(", nice 0, ") && start.contains(" open files, git ") && start.ends_with(", the environment of the agent"),
         "{start}"
     );
 
@@ -1049,6 +1053,77 @@ fn a_bd_without_lease_host_refuses_the_run_and_deletes_the_ref() {
         panic!("not runs");
     };
     assert_eq!(runs[0].exit, Some(255));
+}
+
+/// A host whose git is older than the minimum and that has no Homebrew refuses each start, and says what to install.
+#[test]
+fn a_host_with_an_old_git_and_no_homebrew_refuses_the_start_with_old_git() {
+    let agent = World::new().serve_with(&[("YONDERD_TEST_GIT_MINIMUM", "99.0.0")]);
+    let world = &agent.world;
+    let reply = agent.reply(&Request::Start(world.spec("8-1", HOLDER, "true")));
+    let install = if cfg!(target_os = "macos") {
+        "Then run `brew install git`"
+    } else {
+        "with the package manager of the host"
+    };
+    assert!(
+        matches!(&reply, Reply::Refused { code, message } if code == "old_git" && message.contains("older than 99.0.0") && message.contains(install)),
+        "{reply:?}"
+    );
+    assert!(!world.run_dir("8-1").exists());
+}
+
+/// `serve` installs git with Homebrew when its git is too old. A run that starts meanwhile waits for the install, and
+/// then its command finds the git of Homebrew first.
+#[test]
+fn serve_installs_git_with_homebrew_and_a_run_waits_for_it() {
+    let world = World::new();
+    let brew_bin = world.dir.path().join("homebrew/bin");
+    fs::create_dir_all(&brew_bin).expect("the Homebrew directory");
+    let real_git = std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default())
+        .map(|dir| dir.join("git"))
+        .find(|git| git.is_file())
+        .expect("a git on the PATH of the test");
+    let gate = world.dir.path().join("brew-gate");
+    // The fake Homebrew records its arguments, waits for the gate, and installs a git that answers a high version.
+    write_script(
+        &brew_bin.join("brew"),
+        &format!(
+            r#"#!/bin/sh
+bin=$(dirname "$0")
+echo "$*" >>"$bin/calls"
+{}
+printf '#!/bin/sh
+if [ "$1" = --version ]; then echo "git version 99.0.0"; exit 0; fi
+exec {} "$@"
+' >"$bin/git"
+chmod 755 "$bin/git"
+"#,
+            wait_for(&gate),
+            real_git.display()
+        ),
+    );
+    let brew = brew_bin.join("brew");
+    let agent = world.serve_with(&[
+        ("YONDERD_TEST_GIT_MINIMUM", "99.0.0"),
+        ("YONDERD_TEST_BREW", brew.to_str().expect("UTF-8")),
+    ]);
+    let world = &agent.world;
+    agent.start(world.spec("9-1", HOLDER, "command -v git"));
+    let waiting = "yonder: waiting for the upgrade of git on the host: `brew install git` runs since 0 s";
+    agent.follow_until("9-1", 0, waiting);
+
+    fs::write(&gate, "").expect("the gate");
+    let followed = agent.follow("9-1", 0);
+    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("9-1"));
+    assert_eq!(followed.of(Stream::Stdout), [brew_bin.join("git").to_str().expect("UTF-8")]);
+    assert!(followed.start_line().contains(" open files, git 99.0.0, "), "{followed:?}");
+    let mut phases = vec!["git"];
+    phases.extend(ALL_PHASES);
+    assert_eq!(followed.phase_names(), phases);
+    assert_eq!(fs::read_to_string(brew_bin.join("calls")).expect("the calls"), "install git\n");
+    let state = fs::read_to_string(world.home().join(".cache/yonderd/git.json")).expect("the state");
+    assert!(state.contains(r#""state":"ready""#), "{state}");
 }
 
 /// An older client asks for the lease of its holder, or releases it: there is none, slots are lent per run

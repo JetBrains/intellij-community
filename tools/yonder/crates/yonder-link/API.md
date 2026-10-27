@@ -29,7 +29,7 @@ completes a byte stream.
 | `unknown_run` | No kept run has the id. |
 | `repo_missing` | The repository path is not a git repository on the host. |
 | `pack_failed` | `git index-pack` or `git update-ref` failed. |
-| `lock_timeout` | A run got no host slot within an hour. |
+| `lock_timeout` | A run got no host slot within an hour, or an upgrade of git did not end in 31 min. |
 | `lease_failed` | `bd lease host lend` failed, or the bd of the host lacks it. |
 | `pack_missing` | The commit of a run did not come in a pack within `PACK_WAIT_SECONDS`. |
 | `checkout_failed` | The commit cannot be checked out in the slot. |
@@ -37,6 +37,7 @@ completes a byte stream.
 | `agent_error` | The agent cannot read or write its own files. |
 | `bad_config` | `.yonder.toml` of the commit cannot be read, or it has an unknown key or a value of the wrong shape. |
 | `prepare_failed` | A prepare step of `.yonder.toml` exited with a code other than 0, so the command did not run. |
+| `old_git` | The git of the host is older than the minimum of yonder, and the agent cannot upgrade it: no Homebrew, or a failed upgrade. The message says what the user installs. |
 | `bad_binary` | The binary of an upgrade has another size or SHA-256 than its request, or `<binary> version` does not answer as an agent of this schema with the feature `upgrade`. |
 | `plist_changed` | The new binary of an upgrade would write another LaunchAgent than the one on the host: `yonder prepare` installs it. |
 | `downgrade` | The new binary of an upgrade has a lower version than the agent, and the request has no `force`. |

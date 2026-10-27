@@ -5,7 +5,7 @@
 //! of its own, one per repository at a time, and only once no lease of a holder is left: a fill beside the old leases
 //! would add slots that they hold, and nor while a supervisor of before the host slots lives (`RunDir::is_legacy`). A failed fill waits 1, 5, then 15 minutes before the next one. The repositories
 //! start from the repository list of the packs, the runs on disk and the lease files, so a restart of `serve` keeps
-//! them.
+//! them. While Homebrew upgrades git (`host_git`), a tick does nothing.
 
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
@@ -18,7 +18,7 @@ use crate::child::never;
 use crate::home::Home;
 use crate::run::Runs;
 use crate::serve::log;
-use crate::{cleanup, lease, slots, tuning};
+use crate::{cleanup, host_git, lease, slots, tuning};
 
 /// The waits after a failed fill: the first, the second, and every later one.
 const FILL_BACKOFF: [Duration; 3] = [Duration::from_mins(1), Duration::from_mins(5), Duration::from_mins(15)];
@@ -51,8 +51,11 @@ fn keep(home: &Home, woken: &mpsc::Receiver<PathBuf>) {
     let mut said_unsupported = false;
     loop {
         if slots::supported() {
-            for repo in &repos {
-                tend(home, repo, &fills);
+            // bd uses git: no slot work while Homebrew replaces it.
+            if !host_git::upgrading(home) {
+                for repo in &repos {
+                    tend(home, repo, &fills);
+                }
             }
         } else if !said_unsupported {
             log(slots::UNSUPPORTED);

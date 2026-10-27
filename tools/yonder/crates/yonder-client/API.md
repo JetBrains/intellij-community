@@ -52,7 +52,7 @@ A refusal carries an `Exit`, which is the exit code of `yonder`:
 
 | Exit | Code | When |
 |---|---|---|
-| `NotRun` | 75 | A run refused before its command: the host did not run it, so the caller can run it locally instead. Every refusal before the start, a pack that did not reach the host, and a refusal of the agent whose phases have no `command`, such as `lease_failed`, `prepare_failed` or `bad_config`, but `unknown_run`. |
+| `NotRun` | 75 | A run refused before its command: the host did not run it, so the caller can run it locally instead. Every refusal before the start, a pack that did not reach the host, and a refusal of the agent whose phases have no `command`, such as `lease_failed`, `prepare_failed`, `old_git` or `bad_config`, but `unknown_run`. |
 | `Interrupted` | 130 | Ctrl+C before the command, or a second Ctrl+C during the follow. |
 | `Refused` | 255 | Any other refusal: the link broke after the start and the run can go on on the host, the run vanished on the host after its start (`unknown_run`: a `yonder forget` or the expiry removed it, so whether its command ran is unknown, and the client forgets nothing), the changes did not apply, or a request other than a run failed. |
 
