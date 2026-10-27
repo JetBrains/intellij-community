@@ -115,6 +115,7 @@ class SettingsSlottedWriteTest {
 
   /** Seeds the application config from the committed snapshot and loads it into the vault. */
   private suspend fun seedConfig() {
+    Files.createDirectories(appConfig.parent)
     Files.writeString(appConfig, Files.readString(Path.of(testResourcePath("$SNAPSHOT_DIR/$CONFIG"))))
     VirtualFileManager.getInstance().refreshAndFindFileByNioPath(appConfig)
     SettingsVault.getInstance().reload(SettingsContext.app())
