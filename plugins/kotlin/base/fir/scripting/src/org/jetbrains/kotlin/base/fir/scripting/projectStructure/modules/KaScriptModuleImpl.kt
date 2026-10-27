@@ -3,7 +3,8 @@ package org.jetbrains.kotlin.base.fir.scripting.projectStructure.modules
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.platform.backend.workspace.toVirtualFileUrl
+import com.intellij.platform.backend.workspace.findEntitiesByVirtualFile
+import com.intellij.platform.backend.workspace.get
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -30,7 +31,7 @@ internal class KaScriptModuleImpl(
     override val snapshot: ImmutableEntityStorage,
 ) : KaScriptModuleBase(project, virtualFile) {
     val kotlinScriptEntity by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        snapshot.scriptEntitiesByUrl(virtualFile.toVirtualFileUrl(virtualFileUrlManager)).firstOrNull()
+        snapshot.scriptEntitiesByVirtualFile(virtualFile).firstOrNull()
     }
 
     private val importedScriptUrls: List<VirtualFileUrl> by lazy(LazyThreadSafetyMode.PUBLICATION) {
@@ -75,6 +76,9 @@ internal class KaScriptModuleImpl(
     private fun ImmutableEntityStorage.scriptEntitiesByUrl(url: VirtualFileUrl): Sequence<KotlinScriptEntity> =
         getVirtualFileUrlIndex().findEntitiesByUrl(url).filterIsInstance<KotlinScriptEntity>()
 
+    private fun ImmutableEntityStorage.scriptEntitiesByVirtualFile(virtualFile: VirtualFile): Sequence<KotlinScriptEntity> = 
+        getVirtualFileUrlIndex().findEntitiesByVirtualFile(virtualFile, virtualFileUrlManager).filterIsInstance<KotlinScriptEntity>()
+
     private fun getImportedScripts(
         entity: KotlinScriptEntity,
         visited: MutableSet<VirtualFileUrl> = mutableSetOf(),
@@ -84,7 +88,7 @@ internal class KaScriptModuleImpl(
         }?.data?.asCompilationConfiguration()?.let {
             it[ScriptCompilationConfiguration.resolvedImportScripts] ?: it[ScriptCompilationConfiguration.importScripts]
         }.orEmpty().mapNotNull {
-            getVirtualFile(it)?.toVirtualFileUrl(virtualFileUrlManager)
+            getVirtualFile(it)?.let { virtualFileUrlManager.get(it) }
         }.filter { visited.add(it) }
 
         return importedScriptUrls + importedScriptUrls.flatMap {
