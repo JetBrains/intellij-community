@@ -503,6 +503,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param action the action to be launched.
    * @see #launchAction(IntentionAction)
    */
+  @RequiresEdt
   void checkPreviewAndLaunchAction(@NotNull IntentionAction action);
 
   void testCompletion(String @NotNull [] filesBefore, @TestDataFile @NotNull String fileAfter);
