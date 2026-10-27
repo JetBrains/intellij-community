@@ -441,8 +441,6 @@ jvm_library(
         "//libraries/jediterm-core",
         "//libraries/jediterm-core:jediterm-core_test_lib",
         "@lib//:jetbrains-kotlinx-lincheck-jvm",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "//platform/vcs-impl:vcs-impl-tests",
         "//platform/vcs-impl:vcs-impl-tests_test_lib",
         "//platform/service-container:serviceContainer-tests",

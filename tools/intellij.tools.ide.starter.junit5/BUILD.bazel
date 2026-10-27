@@ -169,8 +169,6 @@ jvm_library(
         "//platform/util:util_test_lib",
         "//platform/testFramework/junit5",
         "//platform/testFramework/junit5:junit5_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "//platform/testFramework/teamCity",
         "//platform/testFramework/teamCity:teamCity_test_lib",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",

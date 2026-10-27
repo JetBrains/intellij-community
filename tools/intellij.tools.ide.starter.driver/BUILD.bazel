@@ -110,6 +110,7 @@ jvm_library(
     ),
     module_name = "intellij.tools.ide.starter.driver.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = ["//platform/testFramework/junit5"],
 )
 
 jvm_library(
@@ -129,7 +130,11 @@ jvm_library(
     ],
     kotlinc_opts = ":custom_ide-starter-driver-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":ide-starter-driver-tests"],
+    runtime_deps = [
+        # do not sort,
+        ":ide-starter-driver-tests",
+        "//platform/testFramework/junit5:junit5_test_lib",
+    ],
     deps = [
         # do not sort,
         "//platform/remote-driver/client",

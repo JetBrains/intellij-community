@@ -36,6 +36,5 @@
     <orderEntry type="module" module-name="intellij.tools.ide.starter.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.driver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.tools.ide.starter.build.server" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.regexp.tests" scope="TEST" />
   </component>
 </module>

@@ -76,8 +76,6 @@ jvm_library(
         "//libraries/kotlin/reflect:reflect_test_lib",
         "//plugins/kotlin/tests-from-compiler",
         "//plugins/kotlin/tests-from-compiler:tests-from-compiler_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
         "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework_test_lib",
         "//libraries/junit4",

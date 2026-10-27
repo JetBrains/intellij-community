@@ -169,8 +169,6 @@ jvm_library(
         "//build/tasks:tasks-tests",
         "//build/tasks:tasks-tests_test_lib",
         "@lib//:platform-images-build-tests-pngencoder",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.images.build.tests` end

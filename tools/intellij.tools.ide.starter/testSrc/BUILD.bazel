@@ -65,8 +65,6 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
         "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "@lib//:mockito-junit-jupiter",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate_test_lib",

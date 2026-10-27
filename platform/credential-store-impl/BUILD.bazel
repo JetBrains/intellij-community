@@ -184,8 +184,6 @@ jvm_library(
         "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-api:ide",
         "//platform/platform-api:ide_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
     ],

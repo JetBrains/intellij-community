@@ -128,8 +128,6 @@ jvm_library(
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//android/android-templates:templates-tests",
         "//android/android-templates:templates-tests_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "//platform/util:util-ui",
         "//platform/util:util-ui_test_lib",
         "//platform/util-ex",

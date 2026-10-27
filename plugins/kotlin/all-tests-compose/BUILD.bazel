@@ -30,8 +30,6 @@ jvm_library(
         ":compose-all-tests-k2",
         "//plugins/kotlin/tests-compose:tests-compose_test_lib",
         "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
-        "//RegExpSupport:regexp-tests",
-        "//RegExpSupport:regexp-tests_test_lib",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests",
         "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests_test_lib",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
