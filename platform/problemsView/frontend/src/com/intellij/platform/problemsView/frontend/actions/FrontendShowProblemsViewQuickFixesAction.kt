@@ -13,6 +13,7 @@ import com.intellij.codeInsight.intention.IntentionSource
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.IntentionListStep
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -72,6 +73,10 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
   private suspend fun getQuickFixes(problem: HighlightingProblem, project: Project): List<HighlightInfo.IntentionActionDescriptor> {
     if (IdeProductMode.isMonolith) {
       val info = problem.info ?: return emptyList()
+      // The action coroutine scope runs on Dispatchers.Default, so it is fine to block here.
+      if (info.hasLazyQuickFixes()) {
+        LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, problem.highlighter.document)
+      }
       return buildList {
         info.findRegisteredQuickFix { action, _ ->
           add(action)
