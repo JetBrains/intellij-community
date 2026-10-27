@@ -198,24 +198,33 @@ class WebServerPageConnectionService {
   }
 
   private fun showGotItTooltipLater(modifiedFiles: List<VirtualFile>) {
-    // cheap checks before going to EDT; they are repeated in showGotItTooltip
-    if (WebPreviewState.isPreviewOpened || WebBrowserManager.getInstance().webServerReloadMode !== ReloadMode.RELOAD_ON_SAVE) return
+    val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
+    if (!checkCanShowGotItTooltip(gotItTooltip)) return
     ApplicationManager.getApplication().invokeLater {
-      showGotItTooltip(modifiedFiles)
+      showGotItTooltip(modifiedFiles, gotItTooltip)
     }
   }
 
-  private fun showGotItTooltip(modifiedFiles: List<VirtualFile>) {
-    val gotItTooltip = GotItTooltip(SERVER_RELOAD_TOOLTIP_ID, BuiltInServerBundle.message("reload.on.save.got.it.content"), myServer!!)
-    if (!gotItTooltip.canShow() || WebPreviewState.isPreviewOpened) return
+  /**
+   * Disposes [gotItTooltip] and returns `false` if the tooltip must not be shown.
+   */
+  private fun checkCanShowGotItTooltip(gotItTooltip: GotItTooltip): Boolean {
+    if (gotItTooltip.canShow() && !WebPreviewState.isPreviewOpened &&
+        WebBrowserManager.getInstance().webServerReloadMode === ReloadMode.RELOAD_ON_SAVE) {
+      return true
+    }
+    Disposer.dispose(gotItTooltip)
+    return false
+  }
+
+  private fun showGotItTooltip(modifiedFiles: List<VirtualFile>, gotItTooltip: GotItTooltip) {
+    // the state can change while the tooltip waits for EDT
+    if (!checkCanShowGotItTooltip(gotItTooltip)) return
 
     if (WebBrowserManager.BROWSER_RELOAD_MODE_DEFAULT !== ReloadMode.RELOAD_ON_SAVE) {
       Logger.getInstance(WebServerPageConnectionService::class.java).error(
         "Default value for " + BuiltInServerBundle.message("reload.on.save.got.it.title") + " has changed, tooltip is outdated.")
-      return
-    }
-    if (WebBrowserManager.getInstance().webServerReloadMode !== ReloadMode.RELOAD_ON_SAVE) {
-      // changed before gotIt was shown
+      Disposer.dispose(gotItTooltip)
       return
     }
 
