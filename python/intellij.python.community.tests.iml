@@ -177,6 +177,8 @@
     <orderEntry type="module" module-name="intellij.python.pyright" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.zuban" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.zuban.common" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.zuban.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.python.zuban.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.lsp.core.common" scope="TEST" />
     <orderEntry type="module" module-name="intellij.toml.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.python.community.impl.poetry.backend" scope="TEST" />

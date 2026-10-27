@@ -2276,6 +2276,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-zuban/intellij.python.zuban.iml" filepath="$PROJECT_DIR$/python/python-zuban/intellij.python.zuban.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-zuban/common/intellij.python.zuban.common.iml" filepath="$PROJECT_DIR$/python/python-zuban/common/intellij.python.zuban.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/python/python-zuban/frontend/intellij.python.zuban.frontend.iml" filepath="$PROJECT_DIR$/python/python-zuban/frontend/intellij.python.zuban.frontend.iml" />
+      <module fileurl="file://$PROJECT_DIR$/python/python-zuban/plugin/intellij.python.zuban.plugin.iml" filepath="$PROJECT_DIR$/python/python-zuban/plugin/intellij.python.zuban.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/intellij.regexp.iml" filepath="$PROJECT_DIR$/RegExpSupport/intellij.regexp.iml" />
       <module fileurl="file://$PROJECT_DIR$/RegExpSupport/intellij.regexp.tests.iml" filepath="$PROJECT_DIR$/RegExpSupport/intellij.regexp.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/intellij.relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/intellij.relaxng.iml" />

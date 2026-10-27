@@ -1,0 +1,59 @@
+load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `dev intellij.python.zuban.plugin` start
+dev_dist_plugin(
+    content_modules = [
+        # do not sort,
+        "intellij.python.zuban.common",
+        "intellij.python.zuban.frontend",
+        "intellij.python.zuban",
+    ],
+    descriptor = "resources/META-INF/plugin.xml",
+    jars = {
+        "lib/python-zuban-plugin.jar": ["intellij.python.zuban.plugin"],
+    },
+    main_module = "intellij.python.zuban.plugin",
+    mode_refused_content_modules = {
+        "frontend": ["intellij.python.zuban"],
+    },
+)
+### auto-generated section `dev intellij.python.zuban.plugin` end
+
+### auto-generated section `build intellij.python.zuban.plugin` start
+jvm_library(
+    name = "plugin",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.zuban.plugin",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "plugin_test_lib",
+    testonly = True,
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.python.zuban.plugin",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":plugin"],
+)
+### auto-generated section `build intellij.python.zuban.plugin` end
+
+### auto-generated section `iml intellij.python.zuban.plugin` start
+exports_files(
+    [
+        "intellij.python.zuban.plugin.iml",
+        "resources/META-INF/plugin.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.python.zuban.plugin` end
