@@ -30,8 +30,6 @@ jvm_library(
         ":compose-all-tests-k2",
         "//plugins/kotlin/tests-compose:tests-compose_test_lib",
         "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
-        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests",
-        "//plugins/kotlin/highlighting/highlighting-k2:kotlin-highlighting-tests_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
         "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests",
