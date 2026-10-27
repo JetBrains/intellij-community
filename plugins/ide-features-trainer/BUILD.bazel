@@ -40,7 +40,12 @@ dev_dist_plugin(
     },
     main_module = "intellij.featuresTrainer",
     mode_refused_content_modules = {
-        "frontend": ["intellij.kotlin.onboarding.promoter"],
+        "frontend": [
+            "intellij.vcs.git.featuresTrainer",
+            "intellij.featuresTrainer.onboarding",
+            "intellij.kotlin.onboarding.promoter",
+            "intellij.featuresTrainer.tips",
+        ],
     },
 )
 ### auto-generated section `dev intellij.featuresTrainer` end
