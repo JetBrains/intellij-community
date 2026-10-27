@@ -1,20 +1,23 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.components.SerializablePersistentStateComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.FilePath
 import com.intellij.vcsUtil.VcsFileUtil
-import git4idea.repo.GitRepository
+import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.Serializable
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
+import org.jetbrains.plugins.gitlab.mergerequest.data.findViewedStateSha
 import java.time.Duration
 
 @Service(Service.Level.PROJECT)
@@ -56,31 +59,38 @@ internal class GitLabPersistentMergeRequestChangesViewedState
     val viewedFiles: Map<String, String> = mapOf()
   )
 
-  fun isViewed(
-    serverPath: GitLabServerPath,
-    projectId: String,
-    iid: String,
-    gitRepository: GitRepository,
-    filePath: FilePath,
-    sha: String,
-  ): Boolean {
-    val relPath = VcsFileUtil.relativePath(gitRepository.root, filePath)
+  /**
+   * Checks the viewed state of [change].
+   * A change of a single commit is never viewed, because the viewed state describes only the cumulative diff.
+   */
+  fun isViewed(mergeRequest: GitLabMergeRequest, parsedChanges: GitBranchComparisonResult, change: RefComparisonChange): Boolean {
+    val gitRepository = mergeRequest.gitRemote.repository
+    val sha = parsedChanges.findViewedStateSha(gitRepository, change) ?: return false
+    val relPath = VcsFileUtil.relativePath(gitRepository.root, change.filePath)
 
-    return state.statesMap[MRId(serverPath, projectId, iid)]?.let {
+    return state.statesMap[mergeRequest.viewedStateId]?.let {
       it.viewedFiles[relPath] == sha
     } ?: false
   }
 
+  /**
+   * Sets the viewed state of [changes].
+   * The method skips a change of a single commit, because the viewed state describes only the cumulative diff.
+   */
   fun markViewed(
-    serverPath: GitLabServerPath,
-    projectId: String,
-    iid: String,
-    gitRepository: GitRepository,
-    filePathsAndShas: Iterable<Pair<FilePath, String>>,
+    mergeRequest: GitLabMergeRequest,
+    parsedChanges: GitBranchComparisonResult,
+    changes: Iterable<RefComparisonChange>,
     viewed: Boolean,
   ) {
-    val relPathsAndShas = filePathsAndShas.map { VcsFileUtil.relativePath(gitRepository.root, it.first) to it.second }
-    updateStateOrCreateAndCleanup(MRId(serverPath, projectId, iid)) { st ->
+    val gitRepository = mergeRequest.gitRemote.repository
+    val relPathsAndShas = changes.mapNotNull { change ->
+      parsedChanges.findViewedStateSha(gitRepository, change)?.let { sha ->
+        VcsFileUtil.relativePath(gitRepository.root, change.filePath) to sha
+      }
+    }
+    if (relPathsAndShas.isEmpty()) return
+    updateStateOrCreateAndCleanup(mergeRequest.viewedStateId) { st ->
       if (viewed) {
         MRViewedState(id = st.id, viewedFiles = st.viewedFiles + relPathsAndShas)
       }
@@ -105,4 +115,7 @@ internal class GitLabPersistentMergeRequestChangesViewedState
       st.copy(states = newStates.filterNot { it.lastUpdated < staleBeforeTime || it.viewedFiles.isEmpty() })
     }
   }
+
+  private val GitLabMergeRequest.viewedStateId: MRId
+    get() = MRId(serverPath, projectId, iid)
 }

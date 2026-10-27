@@ -6,6 +6,7 @@ import com.intellij.collaboration.api.page.foldToList
 import com.intellij.collaboration.async.childScope
 import com.intellij.collaboration.async.mapConcurrentOrdered
 import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.filePath
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.PatchReader
@@ -128,6 +129,15 @@ internal class GitLabMergeRequestParsedChangesImpl(
 fun GitBranchComparisonResult.findLatestCommitWithChangesTo(gitRepository: GitRepository, filePath: FilePath): String? {
   val relativePath = VcsFileUtil.relativePath(gitRepository.root, filePath)
   return commits.lastOrNull { commit -> commit.patches.any { it.filePath == relativePath } }?.sha
+}
+
+/**
+ * Finds the SHA that the viewed state of [change] uses.
+ * The viewed state describes only the cumulative diff, so the result is `null` for a change of a single commit.
+ */
+internal fun GitBranchComparisonResult.findViewedStateSha(gitRepository: GitRepository, change: RefComparisonChange): String? {
+  if (patchesByChange[change]?.isCumulative != true) return null
+  return findLatestCommitWithChangesTo(gitRepository, change.filePath)
 }
 
 internal suspend fun GitLabMergeRequestChanges.loadRevisionsAndParseChanges(): GitLabMergeRequestParsedChanges =
