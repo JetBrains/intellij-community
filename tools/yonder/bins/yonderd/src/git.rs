@@ -238,15 +238,16 @@ impl Drop for RemoveOnDrop {
 pub(crate) enum Checkout {
     /// The detached HEAD was the commit already: no file changed.
     Kept,
-    /// `reset --keep` moved the detached HEAD: it wrote only the files that differ between the two commits.
+    /// `reset --merge` moved the detached HEAD: it wrote only the files that differ between the index and the commit.
     Switched,
     /// `checkout -f --detach` wrote the commit and discarded the local changes, for the reason in the text.
     Forced(String),
 }
 
 /// Checks out `commit` detached in the worktree `dir`, which must have no local changes: the give-back of the last run
-/// discarded them (Branch Deck, `spec/cli/lease.spec.md`, "Host slots"). A detached HEAD moves with `reset --keep`, a two-way merge that reads only the files of the diff. A
-/// HEAD on a branch, which `reset` would move, or a refused merge, such as a local change in the diff, falls back to
+/// discarded them (Branch Deck, `spec/cli/lease.spec.md`, "Host slots"). A detached HEAD moves with `reset --merge`, a
+/// one-way merge from the index that reads only the files of the diff and the trees that changed. A HEAD on a branch,
+/// which `reset` would move, or a refused merge, such as a local change in the diff, falls back to
 /// `checkout -f --detach`, which stats every file of the worktree and discards its local changes. `stop` kills the call
 /// early.
 pub(crate) fn checkout(dir: &Path, commit: &str, stop: Stop<'_>) -> Result<Checkout, String> {
@@ -258,9 +259,9 @@ pub(crate) fn checkout(dir: &Path, commit: &str, stop: Stop<'_>) -> Result<Check
     let why = match head.as_ref().map(Output::stdout_text) {
         Ok(text) => match text.lines().collect::<Vec<_>>()[..] {
             [id, "HEAD"] if id == commit => return Ok(Checkout::Kept),
-            [_, "HEAD"] => match checked(child::run(git(dir).args(["reset", "-q", "--keep", commit]), CHECKOUT, stop)) {
+            [_, "HEAD"] => match checked(child::run(git(dir).args(["reset", "-q", "--merge", commit]), CHECKOUT, stop)) {
                 Ok(_) => return Ok(Checkout::Switched),
-                Err(error) => format!("`git reset --keep` refused: {error}"),
+                Err(error) => format!("`git reset --merge` refused: {error}"),
             },
             [_, branch] => format!("the HEAD is on the branch {branch}"),
             _ => format!("`git rev-parse` answered {text:?}"),

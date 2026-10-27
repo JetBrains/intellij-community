@@ -94,7 +94,7 @@ fn a_checkout_and_a_bare_repository_pass_by_their_files() {
     assert_eq!(check_repo(&bare), Ok(()));
 }
 
-/// A detached slot moves with a two-way merge, which keeps a local change outside the diff and the ignored files. The
+/// A detached slot moves with a one-way merge from the index, which keeps a local change outside the diff and the ignored files. The
 /// same commit changes nothing.
 #[test]
 fn a_detached_slot_moves_to_the_commit_and_writes_only_the_diff() {
@@ -119,6 +119,15 @@ fn a_detached_slot_moves_to_the_commit_and_writes_only_the_diff() {
     assert_eq!(checkout(&repo, &second, &never), Ok(Checkout::Kept));
     assert_eq!(checkout(&repo, &first, &never), Ok(Checkout::Switched));
     assert!(!repo.join("b.txt").exists(), "the file of the diff goes");
+
+    run(&["add", "a.txt"]);
+    assert_eq!(checkout(&repo, &second, &never), Ok(Checkout::Switched));
+    assert_eq!(
+        std::fs::read_to_string(repo.join("a.txt")).expect("the reset file"),
+        "a",
+        "a staged change outside the diff ends at the commit"
+    );
+    assert_eq!(run(&["status", "--porcelain"]), "");
 }
 
 /// A local change in the diff, and a HEAD on a branch, get `checkout -f --detach`: it discards the change, and the
@@ -143,7 +152,7 @@ fn a_change_in_the_diff_or_a_branch_forces_the_checkout() {
     let Ok(Checkout::Forced(why)) = checkout(&repo, &second, &never) else {
         panic!("a change in the diff must force the checkout");
     };
-    assert!(why.starts_with("`git reset --keep` refused: "), "{why}");
+    assert!(why.starts_with("`git reset --merge` refused: "), "{why}");
     assert_eq!(run(&["rev-parse", "HEAD"]), second);
     assert_eq!(std::fs::read_to_string(repo.join("a.txt")).expect("the file"), "second");
 }
