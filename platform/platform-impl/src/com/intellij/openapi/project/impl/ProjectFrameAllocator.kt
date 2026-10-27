@@ -4,14 +4,24 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
+import com.intellij.openapi.application.UI
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.observable.util.whenDisposedOrNow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -69,6 +79,51 @@ class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
 
   override suspend fun preInitProject(project: Project) {
     project.getOrCreateIdeFrameDeferred().complete(null)
+  }
+
+  override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {
+    cannotConvertException?.let { throw cannotConvertException }
+  }
+}
+
+/**
+ * Put it into `OpenProjectTask.implOptions` to show a project in the frame of [frameOwner] instead of a frame of its own.
+ * The project becomes a frame guest, see [ProjectFrameHelper.addGuestProject], through [FrameGuestProjectFrameAllocator].
+ */
+@Internal
+class OpenProjectAsFrameGuest(@JvmField val frameOwner: Project)
+
+/**
+ * Opens a project as a frame guest of [frameOwner]: the project gets no frame of its own, and the frame of [frameOwner] shows it.
+ *
+ * The guest joins the frame before its startup activities run, so a lookup of its frame works from the start. The tool-window
+ * manager of the guest gets a default pane that no frame shows, so a tool window of the guest can register. The caller puts the
+ * editors of the guest into the frame. Without a frame of [frameOwner], the guest opens as in a headless application.
+ */
+@Internal
+class FrameGuestProjectFrameAllocator(private val frameOwner: Project) : ProjectFrameAllocator {
+  override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
+  }
+
+  override suspend fun run(projectInitObservable: ProjectInitObservable) {
+    val frameHelper = serviceAsync<WindowManager>().getIdeFrameDeferred(frameOwner).await() as? ProjectFrameHelper
+    val project = projectInitObservable.awaitProjectPreInit()
+    if (frameHelper == null || frameHelper.isDisposed()) {
+      project.getOrCreateIdeFrameDeferred().complete(null)
+      return
+    }
+    withContext(Dispatchers.UI) {
+      frameHelper.addGuestProject(project)
+    }
+    projectInitObservable.awaitProjectInit()
+    // DaemonCodeAnalyzer uses FileEditorManager
+    project.serviceAsync<FileEditorManager>()
+    coroutineScope { preloadDaemonServices(project) }
+    (project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.initDetachedDefaultPane(frameHelper.frame)
+    project.getOrCreateIdeFrameDeferred().complete(frameHelper)
+  }
+
+  override suspend fun preInitProject(project: Project) {
   }
 
   override suspend fun projectNotLoaded(cannotConvertException: CannotConvertException?) {

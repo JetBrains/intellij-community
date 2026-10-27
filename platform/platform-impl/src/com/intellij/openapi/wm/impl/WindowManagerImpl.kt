@@ -58,6 +58,7 @@ import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
@@ -95,7 +96,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  private val projectToFrame = HashMap<Project, ProjectItem>()
+  // write from EDT; getFrameHelper scans it from any thread
+  private val projectToFrame = ConcurrentHashMap<Project, ProjectItem>()
   // read from any thread, write from EDT
   private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
@@ -122,7 +124,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosed(project: Project) {
-        val helper = getFrameHelper(project)
+        val helper = projectToFrame.get(project)?.frameHelper
+        if (helper == null) {
+          // a frame guest leaves the frame of another project, and that frame stays
+          getFrameHelper(project)?.removeGuestProject(project)
+        }
         LOG.info("=== Release(${helper != null}) frame on closed project ===")
         helper?.let {
           releaseFrame(it)
@@ -265,7 +271,22 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   @Internal
-  override fun getFrameHelper(project: Project?): ProjectFrameHelper? = projectToFrame.get(project)?.frameHelper
+  override fun getFrameHelper(project: Project?): ProjectFrameHelper? {
+    if (project == null) return null
+    projectToFrame.get(project)?.let { return it.frameHelper }
+    // a frame guest resolves to the frame that shows it, see ProjectFrameHelper.addGuestProject
+    return projectToFrame.values.firstOrNull { it.frameHelper.showsProject(project) }?.frameHelper
+  }
+
+  /**
+   * Tells whether [project] has no frame of its own and shows in the frame of another project,
+   * see [ProjectFrameHelper.addGuestProject].
+   */
+  @Internal
+  fun isFrameGuest(project: Project): Boolean {
+    val frameOwner = getFrameHelper(project)?.project ?: return false
+    return frameOwner !== project
+  }
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)

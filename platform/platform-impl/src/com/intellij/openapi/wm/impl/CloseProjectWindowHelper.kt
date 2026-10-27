@@ -89,7 +89,12 @@ open class CloseProjectWindowHelper {
     }
   }
 
-  protected open fun getNumberOfOpenedProjects(): Int = ProjectManager.getInstance().openProjects.size
+  /** The open projects that have a frame of their own. A frame guest shows in the frame of another project. */
+  protected open fun getNumberOfOpenedProjects(): Int {
+    val projects = ProjectManager.getInstance().openProjects
+    val windowManager = WindowManager.getInstance() as? WindowManagerImpl ?: return projects.size
+    return projects.count { !windowManager.isFrameGuest(it) }
+  }
 
   @RequiresEdt
   protected open fun closeProjectAndShowWelcomeFrameIfNoProjectOpened(project: Project?) {

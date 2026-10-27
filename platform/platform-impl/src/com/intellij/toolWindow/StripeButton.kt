@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
 import com.intellij.openapi.wm.impl.AnchoredButton
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
@@ -111,7 +112,7 @@ class StripeButton internal constructor(@JvmField internal val toolWindow: ToolW
 
   override fun uiDataSnapshot(sink: DataSink) {
     sink[PlatformDataKeys.TOOL_WINDOW] = toolWindow
-    sink[CommonDataKeys.PROJECT] = toolWindow.toolWindowManager.project
+    sink[CommonDataKeys.PROJECT] = ProjectFrameHelper.activeProjectOf(toolWindow.toolWindowManager.project)
   }
 
   override fun getMnemonic(): Int = mnemonic

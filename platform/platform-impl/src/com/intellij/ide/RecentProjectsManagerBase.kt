@@ -914,6 +914,10 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
       LOG.warn("Cannot update frame info (project=${project.name}, reason=frame helper is not found)")
       return
     }
+    if (frameHelper.project !== project) {
+      // the frame belongs to another project; its info is recorded for that project
+      return
+    }
 
     val frame = frameHelper.frame
     if (appClosing) {

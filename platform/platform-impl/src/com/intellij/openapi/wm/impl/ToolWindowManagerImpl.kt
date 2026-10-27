@@ -509,6 +509,22 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     return state.scheduledLayout.get()?.getInfo(id)?.isVisible == true
   }
 
+  /**
+   * Gives a project that has no frame of its own a default pane that no frame shows.
+   * A tool window registration then works, and nothing is visible. [frame] is the frame that hosts the project.
+   * The tool windows of the extension point are not registered, and a task that [invokeLater] queued before this call is dropped.
+   */
+  @ApiStatus.Internal
+  suspend fun initDetachedDefaultPane(frame: JFrame) {
+    val pane = ToolWindowPane.create(frame, coroutineScope, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    doInit(
+      pane = pane,
+      connection = project.messageBus.connect(coroutineScope),
+      reopeningEditorJob = Job().also { it.complete() },
+      taskListDeferred = null,
+    )
+  }
+
   @ApiStatus.Internal
   @VisibleForTesting
   suspend fun doInit(

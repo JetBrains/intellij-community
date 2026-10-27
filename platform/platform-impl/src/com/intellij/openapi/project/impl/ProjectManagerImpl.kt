@@ -29,6 +29,7 @@ import com.intellij.ide.cancelAndTryJoin
 import com.intellij.ide.frameInfo
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.effectiveImplOptions
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
@@ -966,9 +967,10 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (app.isHeadlessEnvironment || app.isUnitTestMode) {
       return HeadlessProjectFrameAllocator()
     }
-    else {
-      return IdeProjectFrameAllocator(options, projectStoreBaseDir)
+    (options.effectiveImplOptions as? OpenProjectAsFrameGuest)?.let {
+      return FrameGuestProjectFrameAllocator(it.frameOwner)
     }
+    return IdeProjectFrameAllocator(options, projectStoreBaseDir)
   }
 
   private suspend fun cancelProjectOpening(project: Project?, e: CancellationException? = null) {

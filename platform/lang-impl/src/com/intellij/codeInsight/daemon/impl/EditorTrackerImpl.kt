@@ -43,8 +43,9 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
 
     private fun windowByEditor(editor: Editor, project: Project): Window? {
       val window = SwingUtilities.windowForComponent(editor.component)
-      val frameHelper = ProjectFrameHelper.getFrameHelper(window)
-      return if (frameHelper != null && frameHelper.project !== project) null else window
+      val frameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return window
+      // the frame shows its own project and its frame guests
+      return if (frameHelper.showsProject(project)) window else null
     }
   }
 

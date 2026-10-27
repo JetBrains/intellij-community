@@ -748,6 +748,26 @@ private fun activateProjectViewWhenRegistered(toolWindowManager: ToolWindowManag
   activateIfRegistered()
 }
 
+/**
+ * Preloads the services that the daemon needs once an editor shows, in the background of this scope.
+ * The caller makes sure that `FileEditorManager` exists first, because `DaemonCodeAnalyzer` uses it.
+ */
+internal fun CoroutineScope.preloadDaemonServices(project: Project) {
+  // DaemonCodeAnalyzer wants DaemonCodeAnalyzerSettings
+  val daemonCodeAnalyzerSettingsJob = launch {
+    serviceAsync<DaemonCodeAnalyzerSettings>()
+  }
+  launch {
+    // WolfTheProblemSolver uses PsiManager
+    project.serviceAsync<PsiManager>()
+    project.serviceAsync<WolfTheProblemSolver>()
+  }
+  launch {
+    daemonCodeAnalyzerSettingsJob.join()
+    project.serviceAsync<DaemonCodeAnalyzer>()
+  }
+}
+
 private suspend fun restoreEditors(
   project: Project,
   fileEditorManager: FileEditorManagerImpl,
@@ -756,19 +776,7 @@ private suspend fun restoreEditors(
 ) {
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
-    // DaemonCodeAnalyzer wants DaemonCodeAnalyzerSettings
-    val daemonCodeAnalyzerSettingsJob = launch {
-      serviceAsync<DaemonCodeAnalyzerSettings>()
-    }
-    launch {
-      // WolfTheProblemSolver uses PsiManager
-      project.serviceAsync<PsiManager>()
-      project.serviceAsync<WolfTheProblemSolver>()
-    }
-    launch {
-      daemonCodeAnalyzerSettingsJob.join()
-      project.serviceAsync<DaemonCodeAnalyzer>()
-    }
+    preloadDaemonServices(project)
 
     val (editorComponent, editorState) = fileEditorManager.init()
     // the empty state may be built as soon as restoring is over, in parallel with the rest of the project open, but it must not be

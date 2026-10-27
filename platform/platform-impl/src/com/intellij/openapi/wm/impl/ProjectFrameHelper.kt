@@ -58,6 +58,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.WindowResizeListenerEx
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.SuperUserStatus.isSuperUserOrNull
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
@@ -115,6 +116,12 @@ abstract class ProjectFrameHelper internal constructor(
   private var fileTitle: String? = null
   private var currentFile: Path? = null
   private var project: Project? = null
+
+  /** The frame guests, see [addGuestProject]. Written on the EDT, read from any thread. */
+  @Volatile
+  private var guests: List<Project> = emptyList()
+  private val guestConnections = HashMap<Project, SimpleMessageBusConnection>()
+  private var activeGuest: Project? = null
 
   private val glassPane: IdeGlassPaneImpl
   private val frameHeaderHelper: ProjectFrameCustomHeaderHelper
@@ -277,6 +284,18 @@ abstract class ProjectFrameHelper internal constructor(
         SwingUtilities.getAncestorOfClass(IdeFrameImpl::class.java, window) as? IdeFrameImpl ?: return null
       }
       return projectFrame.frameHelper?.helper as? ProjectFrameHelper
+    }
+
+    /**
+     * The project that the frame of [frameOwner] gives to an action, see [activeProject]. [frameOwner] itself when it owns no
+     * frame, or when it is a frame guest.
+     */
+    @Internal
+    @JvmStatic
+    fun activeProjectOf(frameOwner: Project): Project {
+      val frameHelper = WindowManagerEx.getInstanceEx().getFrameHelper(frameOwner) ?: return frameOwner
+      if (frameHelper.project !== frameOwner) return frameOwner
+      return frameHelper.activeProject ?: frameOwner
     }
 
     val superUserSuffix: String?
@@ -446,16 +465,70 @@ abstract class ProjectFrameHelper internal constructor(
     val project = project
     sink[IdeFrame.KEY] = this
     if (project == null || !project.isInitialized) return
-    sink[CommonDataKeys.PROJECT] = project
+    // A frame that shows guests gives the active one, see activeProject
+    val active = activeProject ?: project
+    if (!active.isInitialized) return
+    sink[CommonDataKeys.PROJECT] = active
+    // The tool windows belong to the project of the frame
     sink[PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS] =
       (project.serviceIfCreated<ToolWindowManager>() as? ToolWindowManagerImpl)
         ?.getLastActiveToolWindows()?.toList()?.toTypedArray()
     sink[PlatformDataKeys.LAST_ACTIVE_FILE_EDITOR] =
-      (project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)
+      (active.serviceIfCreated<FileEditorManager>() as? FileEditorManagerEx)
         ?.selectedEditor
   }
 
   override fun getProject(): Project? = project
+
+  /** Tells whether this frame shows [project]: the project of the frame, or a frame guest, see [addGuestProject]. */
+  @Internal
+  fun showsProject(project: Project): Boolean = this.project === project || project in guests
+
+  /**
+   * The project that the UI of this frame gives to an action: the active frame guest, see [setActiveProject], or the project
+   * of the frame.
+   */
+  @get:Internal
+  val activeProject: Project?
+    get() = activeGuest?.takeIf { !it.isDisposed } ?: project
+
+  /**
+   * Shows [guest], a project with no frame of its own, in this frame. Every lookup of a frame by [guest] then gives this frame,
+   * and the status bar of this frame shows the status text of [guest]. The frame still belongs to its own project: a close of
+   * [guest] does not release it. [guest] leaves the frame when it closes, when the frame is released, or on [removeGuestProject].
+   */
+  @Internal
+  @RequiresEdt
+  fun addGuestProject(guest: Project) {
+    if (showsProject(guest)) return
+    guests = guests + guest
+    statusBar?.let { statusBar ->
+      val connection = guest.messageBus.simpleConnect()
+      connection.subscribe(StatusBar.Info.TOPIC, statusBar)
+      guestConnections.put(guest, connection)
+    }
+  }
+
+  @Internal
+  @RequiresEdt
+  fun removeGuestProject(guest: Project) {
+    guests = guests.filter { it !== guest }
+    guestConnections.remove(guest)?.disconnect()
+    if (activeGuest === guest) {
+      activeGuest = null
+    }
+  }
+
+  /**
+   * Makes [project] the project that the UI of this frame gives to an action, see [activeProject]. [project] is the project
+   * of the frame, or one of its guests.
+   */
+  @Internal
+  @RequiresEdt
+  fun setActiveProject(project: Project) {
+    LOG.assertTrue(showsProject(project), "$project is not shown in the frame of ${this.project}")
+    activeGuest = project.takeIf { it !== this.project }
+  }
 
   // any activities that will not access a workspace model
   // without [initializesStatusBar], the caller calls [initializeStatusBar] later
@@ -541,6 +614,12 @@ abstract class ProjectFrameHelper internal constructor(
 
   open fun dispose() {
     coroutineScope.cancel()
+    for (connection in guestConnections.values) {
+      connection.disconnect()
+    }
+    guestConnections.clear()
+    guests = emptyList()
+    activeGuest = null
     MouseGestureManager.getInstance().remove(this)
     balloonLayout?.let {
       balloonLayout = null
