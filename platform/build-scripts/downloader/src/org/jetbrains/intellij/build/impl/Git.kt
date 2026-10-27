@@ -31,10 +31,6 @@ class Git(private val dir: Path) {
     return execute("git", "log", "-$commitCount", "--pretty=tformat:%H")
   }
 
-  fun formatLatestCommit(format: String): String {
-    return execute("git", "log", "--pretty=format:$format", "-n", "1").joinToString("\n")
-  }
-
   data class Entry(val path: String, val isExecutable: Boolean)
 
   fun listTree(refSpec: String = "HEAD"): List<Entry> {
@@ -54,33 +50,6 @@ class Git(private val dir: Path) {
 
   fun listStagingFiles(): List<String> {
     return executeWithNullSeparatedOutput("git", "ls-files", "-z") { it.toList() }
-  }
-
-  /**
-   * The path of every indexed file whose file name is one of [fileNames], in index order. Each name
-   * contributes two pathspecs, `*<name>` and `<name>`, because a leading `*` does not match a file
-   * directly in the directory this [Git] was built for.
-   *
-   * Every path is relative to that directory, so `dir.resolve(path)` is the file. `--full-name` is
-   * therefore not passed: it would make a path relative to the repository root instead, which is a
-   * different directory whenever this [Git] points inside the repository. The listing is scoped to
-   * that directory for the same reason.
-   *
-   * A name that matches nothing yields nothing: `--error-unmatch` is deliberately not passed, so a
-   * caller may keep asking for a name whose last file is gone, as a guard against its return.
-   *
-   * A pathspec is a glob, so `*<name>` also matches a longer name that ends with it. Re-check the
-   * file name of every returned path.
-   */
-  fun listStagingFilesByName(fileNames: Collection<String>): List<String> {
-    if (fileNames.isEmpty()) {
-      return emptyList()
-    }
-
-    val pathspecs = fileNames.flatMap { listOf("*$it", it) }
-    return executeWithNullSeparatedOutput("git", "ls-files", "-z", "--", *pathspecs.toTypedArray()) {
-      it.toList()
-    }
   }
 
   fun rm(files: List<Path>) {
