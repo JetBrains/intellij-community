@@ -283,6 +283,7 @@ private fun androidDesignPlugin(mainModuleName: String = "intellij.android.desig
     spec.withModule("intellij.android.designer")
     spec.withModule("intellij.android.designer.gradle")
     spec.withModule("intellij.android.glance-designer")
+    spec.withModule("intellij.android.layoutlib")
     spec.withModule("intellij.android.nav.editor")
     spec.withModule("intellij.android.nav.editor.gradle")
     spec.withModule("intellij.android.preview-designer")
