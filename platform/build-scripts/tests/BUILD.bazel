@@ -118,8 +118,6 @@ jvm_library(
         "//jps/model-api:model_test_lib",
         "//libraries/jsoup",
         "//libraries/jsoup:jsoup_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
         "//platform/testFramework/bootstrap:tools-testsBootstrap",

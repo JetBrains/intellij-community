@@ -150,8 +150,6 @@ jvm_library(
         "//libraries/rd/framework:framework_test_lib",
         "//libraries/rd/core",
         "//libraries/rd/core:core_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
     ],

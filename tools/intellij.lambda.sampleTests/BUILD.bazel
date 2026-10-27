@@ -70,8 +70,6 @@ jvm_library(
         "//tools/intellij.tools.ide.starter.driver:ide-starter-driver_test_lib",
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
     ],

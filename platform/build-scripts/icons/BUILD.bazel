@@ -169,8 +169,6 @@ jvm_library(
         "//build/tasks:tasks-tests",
         "//build/tasks:tasks-tests_test_lib",
         "@lib//:platform-images-build-tests-pngencoder",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
     ],

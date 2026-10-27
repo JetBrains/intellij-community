@@ -106,8 +106,6 @@ jvm_library(
         "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/execution",
         "//platform/execution:execution_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
         "//platform/code-style-api:codeStyle",

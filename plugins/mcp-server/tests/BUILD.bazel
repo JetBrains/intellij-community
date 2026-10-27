@@ -160,8 +160,6 @@ jvm_library(
         "//platform/statistics:statistics_test_lib",
         "//platform/statistics/testFramework",
         "//platform/statistics/testFramework:testFramework_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
         "//spellchecker",

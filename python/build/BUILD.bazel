@@ -193,8 +193,6 @@ jvm_library(
         "//platform/ide-core",
         "//python/python-sdk/backend",
         "//python/python-sdk/backend:backend_test_lib",
-        "//images:images-tests",
-        "//images:images-tests_test_lib",
         "//RegExpSupport:regexp-tests",
         "//RegExpSupport:regexp-tests_test_lib",
     ],
