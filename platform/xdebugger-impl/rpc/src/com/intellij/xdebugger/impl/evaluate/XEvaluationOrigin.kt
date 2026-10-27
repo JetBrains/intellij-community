@@ -19,6 +19,7 @@ enum class XEvaluationOrigin {
   BREAKPOINT_LOG,
   RENDERER,
   EDITOR,               // both on hover and on quick evaluate
+  MCP,                  // a request from an MCP tool, see the `debugger-mcp` plugin
   UNSPECIFIED,
   UNSPECIFIED_WATCH;
 

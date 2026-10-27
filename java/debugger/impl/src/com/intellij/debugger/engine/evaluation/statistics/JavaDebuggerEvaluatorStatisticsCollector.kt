@@ -16,7 +16,7 @@ object JavaDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("java.debugger.evaluator", 1)
+  private val GROUP = EventLogGroup("java.debugger.evaluator", 2)
 
   // fields
   private val evaluatorField = EventFields.Enum<StatisticsEvaluator>("evaluator")
