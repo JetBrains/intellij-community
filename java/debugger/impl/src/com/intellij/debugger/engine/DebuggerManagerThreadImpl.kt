@@ -10,6 +10,7 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.InvokeAndWaitThread
 import com.intellij.debugger.impl.PrioritizedTask
+import com.intellij.debugger.impl.checkBlockingDebuggerOperation
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.debugger.statistics.StatisticsStorage
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -137,6 +138,7 @@ class DebuggerManagerThreadImpl @ApiStatus.Internal constructor(
 
   override fun invokeAndWait(managerCommand: DebuggerCommandImpl) {
     LOG.assertTrue(!isManagerThread(), "Should be invoked outside manager thread, use DebuggerManagerThreadImpl.schedule(...)")
+    checkBlockingDebuggerOperation()
     super.invokeAndWait(managerCommand)
   }
 

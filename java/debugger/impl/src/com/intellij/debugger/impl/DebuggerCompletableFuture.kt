@@ -14,24 +14,27 @@ internal class DebuggerCompletableFuture<T> : CompletableFuture<T>() {
   override fun <U> newIncompleteFuture() = DebuggerCompletableFuture<U>()
 
   override fun get(): T? {
-    assertNotDebuggerThreadOrCompleted()
+    checkWaitingThread()
     return super.get()
   }
 
   override fun get(timeout: Long, unit: TimeUnit): T? {
-    assertNotDebuggerThreadOrCompleted()
+    checkWaitingThread(mayBlock = timeout > 0)
     return super.get(timeout, unit)
   }
 
   override fun join(): T? {
-    assertNotDebuggerThreadOrCompleted()
+    checkWaitingThread()
     return super.join()
   }
 
-  private fun assertNotDebuggerThreadOrCompleted() {
+  private fun checkWaitingThread(mayBlock: Boolean = true) {
     if (isDone) return
     if (DebuggerManagerThreadImpl.isManagerThread()) {
       throw IllegalStateException("Should not be called from the debugger thread")
+    }
+    if (mayBlock) {
+      checkBlockingDebuggerOperation()
     }
   }
 }

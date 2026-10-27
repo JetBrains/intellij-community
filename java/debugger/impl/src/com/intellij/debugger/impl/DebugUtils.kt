@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.ui.EDT
 import com.sun.jdi.IncompatibleThreadStateException
 import com.sun.jdi.InternalException
 import com.sun.jdi.ObjectCollectedException
@@ -139,6 +140,24 @@ fun preloadAllClasses(vm: VirtualMachine) {
       }
     }
   }
+}
+
+internal fun checkBlockingDebuggerOperation() {
+  val application = ApplicationManager.getApplication()
+  if (application == null) return
+
+  val isEdt = EDT.isCurrentThreadEdt()
+  // only EDT check for now
+  //if (!isEdt && !application.isReadAccessAllowed) return
+  if (!isEdt) return
+
+  val context = if (isEdt) "on EDT" else "with read access"
+  val message = "Debugger communication $context"
+  val trace = Throwable(message)
+  val details = "$message (thread=${Thread.currentThread().name}, readLock=${application.holdsReadLock()}, " +
+                "writeIntent=${application.isWriteIntentLockAcquired}, writeAccess=${application.isWriteAccessAllowed})"
+
+  fileLogger().error(details, trace)
 }
 
 internal fun <T> runBlockingAssertNotInReadAction(block: suspend CoroutineScope.() -> T): T {

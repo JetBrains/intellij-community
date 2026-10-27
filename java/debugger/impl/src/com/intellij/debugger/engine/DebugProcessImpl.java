@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.engine.requests.StepRequestor;
+import com.intellij.debugger.impl.DebugUtilsKt;
 import com.intellij.debugger.impl.DebuggerCompletableFuture;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
@@ -207,6 +208,10 @@ import static com.intellij.platform.util.coroutines.CoroutineScopeKt.childScope;
 
 public abstract class DebugProcessImpl extends UserDataHolderBase implements DebugProcess {
   private static final Logger LOG = Logger.getInstance(DebugProcessImpl.class);
+
+  static {
+    VirtualMachineImpl.setBlockingOperationChecker(DebugUtilsKt::checkBlockingDebuggerOperation);
+  }
 
   private final Project project;
   private final RequestManagerImpl requestManager;
