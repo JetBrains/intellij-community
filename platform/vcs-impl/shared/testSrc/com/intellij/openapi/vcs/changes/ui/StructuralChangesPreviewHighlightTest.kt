@@ -32,9 +32,11 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.awt.Color
+import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
+import javax.swing.JComponent
 
 @TestApplication
 internal class StructuralChangesPreviewHighlightTest {
@@ -126,6 +128,29 @@ internal class StructuralChangesPreviewHighlightTest {
       for (line in 0 until document.lineCount) {
         assertDimmed(image, editor.characterPoint(document.getLineStartOffset(line)))
       }
+    }
+  }
+
+  @Test
+  fun `the gutter dim covers the line numbers outside the lines of the range`(): Unit = timeoutRunBlocking {
+    withEditor("first\nsecond\nthird") { editor ->
+      val document = editor.document
+      val range = TextRange(document.getLineStartOffset(1), document.getLineEndOffset(1))
+      val gutter = editor.gutter as JComponent
+      val children = gutter.components.toList()
+      Disposer.dispose(checkNotNull(highlightStructuralPreview(editor, range, wholeLines = true)))
+      assertEquals(children, gutter.components.toList(), "Without the gutter option, the gutter gets no dim")
+
+      val handle = checkNotNull(highlightStructuralPreview(editor, range, wholeLines = true, gutter = true))
+      val dim = gutter.components.single { it !in children }
+      assertFalse(dim.contains(5, 5), "The dim takes no mouse events")
+      val image = renderGutterDim(editor, dim)
+      assertClear(image, Point(5, editor.characterPoint(document.getLineStartOffset(1)).y))
+      assertDimmed(image, Point(5, editor.characterPoint(document.getLineStartOffset(0)).y))
+      assertDimmed(image, Point(5, editor.characterPoint(document.getLineStartOffset(2)).y))
+
+      Disposer.dispose(handle)
+      assertEquals(children, gutter.components.toList(), "The end of the dim removes it from the gutter")
     }
   }
 
@@ -252,6 +277,22 @@ internal class StructuralChangesPreviewHighlightTest {
     finally {
       graphics.dispose()
       Disposer.dispose(handle)
+    }
+    return image
+  }
+
+  /** Paints the gutter part of the dim over an image of the source color. The gutter paints the dim after its line numbers. */
+  private fun renderGutterDim(editor: Editor, dim: Component): BufferedImage {
+    val image = BufferedImage(20, editor.offsetToXY(editor.document.textLength).y + editor.lineHeight, BufferedImage.TYPE_INT_RGB)
+    dim.setSize(image.width, image.height)
+    val graphics = image.createGraphics()
+    try {
+      graphics.color = SOURCE_COLOR
+      graphics.fillRect(0, 0, image.width, image.height)
+      dim.paint(graphics)
+    }
+    finally {
+      graphics.dispose()
     }
     return image
   }

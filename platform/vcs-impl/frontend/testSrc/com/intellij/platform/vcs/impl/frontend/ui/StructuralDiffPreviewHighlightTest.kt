@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import javax.swing.JComponent
 
 /** The dim of a hunk in the side-by-side viewer. */
 @TestApplication
@@ -34,6 +35,19 @@ internal class StructuralDiffPreviewHighlightTest {
       highlight.apply(scroll = false)
       assertEquals(before.map { it + 1 }, editors.map(::customRenderers), "Each side gets one dim")
       Disposer.dispose(highlight)
+    }
+  }
+
+  @Test
+  fun `the dim covers the gutters of both sides`(): Unit = timeoutRunBlocking {
+    withViewer(base = "first\nold\nlast", current = "first\nnew\nlast") { viewer ->
+      val gutters = Side.entries.map<Side, Editor> { viewer.getEditor(it) }.map { it.gutter as JComponent }
+      val before = gutters.map { it.componentCount }
+      val highlight = StructuralDiffPreviewHighlight(viewer, ChangesBrowserStructuralNode.DiffLines(LineRange(1, 2), LineRange(1, 2)))
+      highlight.apply(scroll = false)
+      assertEquals(before.map { it + 1 }, gutters.map { it.componentCount }, "Each gutter gets one dim")
+      Disposer.dispose(highlight)
+      assertEquals(before, gutters.map { it.componentCount }, "The end of the dim removes it from the gutters")
     }
   }
 
