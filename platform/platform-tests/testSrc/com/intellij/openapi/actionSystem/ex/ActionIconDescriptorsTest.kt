@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.paintToImage
 import com.intellij.openapi.actionSystem.unknownMarkerPixels
 import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.actionSystem.withDarkTheme
+import com.intellij.openapi.actionSystem.withGrayFilter
 import com.intellij.openapi.util.IconLoader
 import com.intellij.platform.icons.IconDescriptor
 import com.intellij.platform.icons.imageIconDescriptor
@@ -17,11 +18,15 @@ import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.platform.icons.swing.createSwingIcon
 import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.ui.icons.RgbImageFilterSupplier
+import com.intellij.ui.icons.getDisabledIcon
+import com.intellij.util.ui.GrayFilter
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.awt.image.BufferedImage
 import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertSame
@@ -31,6 +36,8 @@ import kotlin.test.assertTrue
 @RegistryKey(ExperimentalIconRendering.REGISTRY_KEY, "true")
 class ActionIconDescriptorsTest {
   companion object {
+    private val PARITY_ICONS = listOf("actions/execute.svg", "actions/close.svg", "general/add.svg", "expui/toolbar/unknown.svg")
+
     @JvmStatic
     @BeforeAll
     fun activateNewIconManager() {
@@ -81,17 +88,47 @@ class ActionIconDescriptorsTest {
   }
 
   @Test
-  fun `disabled variant is translucent and more so on a dark theme`() {
-    val baseAlpha = executeDescriptor().paint().maxAlpha()
-    val brightAlpha = ActionIconDescriptors.disabled(executeDescriptor()).paint().maxAlpha()
-    val darkAlpha = withDarkTheme { ActionIconDescriptors.disabled(executeDescriptor()).paint().maxAlpha() }
+  fun `disabled variant follows the alpha of the gray filter`() {
+    assertEquals(255, executeDescriptor().paint().maxAlpha())
 
-    assertEquals(255, baseAlpha)
-    assertTrue(brightAlpha < baseAlpha, "bright theme: disabled alpha $brightAlpha is not below $baseAlpha")
-    assertTrue(darkAlpha < brightAlpha, "dark theme: disabled alpha $darkAlpha is not below $brightAlpha")
+    val alpha = withGrayFilter(GrayFilter(0, 0, 50)) { ActionIconDescriptors.disabled(executeDescriptor()).paint().maxAlpha() }
+
+    assertEquals(255 * 50 / 100, alpha, "the disabled variant did not scale the alpha of the pixels")
+  }
+
+  @Test
+  fun `disabled variant differs between the light and the dark theme`() {
+    val light = ActionIconDescriptors.disabled(executeDescriptor()).paint().visiblePixels()
+    val dark = withDarkTheme { ActionIconDescriptors.disabled(executeDescriptor()).paint().visiblePixels() }
+
+    assertTrue(light.isNotEmpty() && dark.isNotEmpty(), "a disabled variant painted nothing")
+    assertNotEquals(light, dark, "both themes painted the same disabled variant")
+  }
+
+  @Test
+  fun `disabled variant matches the legacy disabled icon with the gray filter of the light theme`() {
+    for (path in PARITY_ICONS) assertMatchesLegacyDisabledIcon(path, GrayFilter(33, -35, 100))
+  }
+
+  @Test
+  fun `disabled variant matches the legacy disabled icon with the gray filter of the dark theme`() {
+    for (path in PARITY_ICONS) assertMatchesLegacyDisabledIcon(path, GrayFilter(-70, -70, 100))
   }
 
   private fun executeDescriptor(): IconDescriptor = imageIconDescriptor("actions/execute.svg", AllIcons::class.java.classLoader)
+
+  private fun assertMatchesLegacyDisabledIcon(path: String, filter: GrayFilter) {
+    val classLoader = AllIcons::class.java.classLoader
+    val legacyDisabled = getDisabledIcon(IconLoader.getIcon(path, classLoader), object : RgbImageFilterSupplier {
+      override fun getFilter() = filter
+    })
+    val expected = legacyDisabled.paintToImage().visiblePixels()
+    val actual =
+      withGrayFilter(filter) { imageIconDescriptor(path, classLoader).let { ActionIconDescriptors.disabled(it).paint().visiblePixels() } }
+
+    assertTrue(expected.isNotEmpty(), "the legacy disabled icon of $path painted nothing")
+    assertEquals(expected, actual, "the disabled variant of $path does not match the legacy disabled icon")
+  }
 
   private fun IconDescriptor.paint(): BufferedImage = createSwingIcon().paintToImage()
 }
