@@ -2,8 +2,7 @@
 package com.intellij.microservices.client.generator
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.scratch.ScratchFileService
-import com.intellij.ide.scratch.ScratchUtil
+import com.intellij.ide.scratch.ScratchFileCreator
 import com.intellij.microservices.MicroservicesBundle
 import com.intellij.microservices.endpoints.EndpointsChangeTracker
 import com.intellij.microservices.oas.OasSpecificationProvider.Companion.getOasSpecification
@@ -14,7 +13,6 @@ import com.intellij.microservices.url.inlay.UrlPathInlayHint
 import com.intellij.microservices.url.references.UrlPathContext
 import com.intellij.microservices.url.references.resolveTargets
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -27,7 +25,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.findPsiFile
-import com.intellij.openapi.vfs.writeText
 import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
@@ -52,7 +49,7 @@ internal class OpenInScratchClientGeneratorInlayAction : UrlPathInlayAction {
 
   override fun isAvailable(file: PsiFile, urlPathInlayHint: UrlPathInlayHint): Boolean {
     val available = urlPathInlayHint.context.schemes.run { isNotEmpty() && all { it in HTTP_SCHEMES } }
-    return Registry.`is`("client.generator.inlay.action") && available && ScratchUtil.findScratchesRootType() != null
+    return Registry.`is`("client.generator.inlay.action") && available
   }
 
   override fun actionPerformed(file: PsiFile, editor: Editor, urlPathContext: UrlPathContext, mouseEvent: MouseEvent) {
@@ -124,15 +121,9 @@ class ClientGeneratorOpenInScratchService(private val project: Project, private 
     val fileName = extension?.let { ext -> "$CLIENT_EXAMPLE_SCRATCH_PREFIX.$ext" } ?: CLIENT_EXAMPLE_SCRATCH_PREFIX
     val language = (fileType as? LanguageFileType)?.language
 
-    val scratchesRoot = ScratchUtil.findScratchesRootType() ?: return
-    val fileService = ScratchFileService.getInstance()
-    val scratchFile = edtWriteAction {
-      fileService.findFile(scratchesRoot, fileName, ScratchFileService.Option.create_new_always)
-        .also { scratchFile ->
-          fileService.scratchesMapping.setMapping(scratchFile, language)
-          scratchFile.writeText(text)
-        }
-    }
+    val scratchFile = withContext(Dispatchers.EDT) {
+      ScratchFileCreator.createScratchOrTempFile(project, fileName, language, text)
+    } ?: return
 
     val pointer = readAction { scratchFile.findPsiFile(project)?.createSmartPointer() }
 
