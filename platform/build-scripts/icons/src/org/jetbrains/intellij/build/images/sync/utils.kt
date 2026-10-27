@@ -130,17 +130,6 @@ private val mutedStream = PrintStream(object : OutputStream() {
   override fun write(b: Int) {}
 })
 
-internal inline fun <T> muteStdOut(block: () -> T): T {
-  val out = System.out
-  System.setOut(mutedStream)
-  return try {
-    block()
-  }
-  finally {
-    System.setOut(out)
-  }
-}
-
 internal inline fun <T> muteStdErr(block: () -> T): T = protectStdErr {
   System.setErr(mutedStream)
   return block()
