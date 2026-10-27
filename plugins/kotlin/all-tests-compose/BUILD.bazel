@@ -32,8 +32,6 @@ jvm_library(
         "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.compose-all-tests.k2` end

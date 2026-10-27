@@ -57,8 +57,6 @@ jvm_library(
         "//platform/testFramework/common:common_test_lib",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests",
-        "//plugins/kotlin/refactorings/rename.k2:kotlin-refactorings-rename-tests_test_lib",
         "//platform/scratch/plugin",
         "//platform/scratch/plugin:plugin_test_lib",
     ],
