@@ -2,7 +2,7 @@
 package com.intellij.openapi.actionSystem.ex
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.maxAlpha
+import com.intellij.openapi.actionSystem.isGray
 import com.intellij.openapi.actionSystem.paintToImage
 import com.intellij.openapi.actionSystem.visiblePixels
 import com.intellij.openapi.actionSystem.withDarkTheme
@@ -53,11 +53,14 @@ class SwingIconCacheTest {
   }
 
   @Test
-  fun `disabled icon is fainter`() {
+  fun `disabled icon is gray and differs from the base icon`() {
     val cache = SwingIconCache().apply { update(executeDescriptor()) }
-    val baseAlpha = assertNotNull(cache.icon).paintToImage().maxAlpha()
-    val disabledAlpha = assertNotNull(cache.disabled).paintToImage().maxAlpha()
-    assertTrue(disabledAlpha < baseAlpha, "the disabled icon is not fainter than the base icon")
+    val basePixels = assertNotNull(cache.icon).paintToImage().visiblePixels()
+    val disabledPixels = assertNotNull(cache.disabled).paintToImage().visiblePixels()
+
+    assertTrue(basePixels.any { !isGray(it) }, "the base icon is already gray, so the test proves nothing")
+    assertTrue(disabledPixels.isNotEmpty(), "the disabled icon painted nothing")
+    assertTrue(disabledPixels.all { isGray(it) }, "the disabled icon has colored pixels")
   }
 
   @Test

@@ -152,6 +152,8 @@ com.intellij.platform.icons.design.SvgPatcherDesigner
 com.intellij.platform.icons.filters.ColorFilter
 - sf:Companion:com.intellij.platform.icons.filters.ColorFilter$Companion
 f:com.intellij.platform.icons.filters.ColorFilter$Companion
+f:com.intellij.platform.icons.filters.GrayColorFilterKt
+- sf:gray(com.intellij.platform.icons.filters.ColorFilter$Companion,I,I,I):com.intellij.platform.icons.filters.ColorFilter
 f:com.intellij.platform.icons.filters.TintColorFilterKt
 - sf:tint(com.intellij.platform.icons.filters.ColorFilter$Companion,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode):com.intellij.platform.icons.filters.ColorFilter
 - bs:tint$default(com.intellij.platform.icons.filters.ColorFilter$Companion,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode,I,java.lang.Object):com.intellij.platform.icons.filters.ColorFilter
@@ -165,6 +167,7 @@ f:com.intellij.platform.icons.modifiers.AlphaIconModifierKt
 - sf:alpha(com.intellij.platform.icons.modifiers.IconModifier,F):com.intellij.platform.icons.modifiers.IconModifier
 f:com.intellij.platform.icons.modifiers.ColorFilterModifierKt
 - sf:colorFilter(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.filters.ColorFilter):com.intellij.platform.icons.modifiers.IconModifier
+- sf:grayFilter(com.intellij.platform.icons.modifiers.IconModifier,I,I,I):com.intellij.platform.icons.modifiers.IconModifier
 - sf:tintColor(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.Color,com.intellij.platform.icons.design.BlendMode):com.intellij.platform.icons.modifiers.IconModifier
 f:com.intellij.platform.icons.modifiers.CutoutMarginModifierKt
 - sf:cutoutMargin(com.intellij.platform.icons.modifiers.IconModifier,com.intellij.platform.icons.design.IconUnit):com.intellij.platform.icons.modifiers.IconModifier

@@ -8,4 +8,7 @@ import com.intellij.platform.icons.filters.ColorFilterFactory
 
 object DefaultColorFilterFactory : ColorFilterFactory {
     override fun tintColor(color: Color, blendMode: BlendMode): ColorFilter = TintColorFilter(color, blendMode)
+
+    override fun gray(brightness: Int, contrast: Int, alpha: Int): ColorFilter =
+        GrayColorFilter(brightness.coerceIn(-100, 100), contrast.coerceIn(-100, 100), alpha.coerceIn(0, 100))
 }

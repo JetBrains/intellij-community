@@ -5,38 +5,19 @@ import com.intellij.openapi.actionSystem.ExperimentalIconRendering
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.platform.icons.AllIconDescriptors
 import com.intellij.platform.icons.IconDescriptor
-import com.intellij.platform.icons.design.BlendMode
-import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.iconDescriptor
 import com.intellij.platform.icons.modifiers.IconModifier
-import com.intellij.platform.icons.modifiers.alpha
-import com.intellij.platform.icons.modifiers.tintColor
-import com.intellij.ui.JBColor
+import com.intellij.platform.icons.modifiers.grayFilter
+import com.intellij.util.ui.GrayFilter
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Icon states of an action [Presentation] for the experimental icons pipeline.
- * Call these functions only while [ExperimentalIconRendering.isEnabled] is true.
+ * Icon states of an action [Presentation] for the experimental icons pipeline. Call these functions only while
+ * [ExperimentalIconRendering.isEnabled] is true.
  */
 @ApiStatus.Internal
 object ActionIconDescriptors {
-  /**
-   * Alpha of the disabled variant on a bright theme.
-   *
-   * This is an estimate of the legacy `GrayFilter` result of the Light theme (`33,-35,100`).
-   * The new API has no brightness or contrast modifier, so the variant is a gray tint with an alpha.
-   * The legacy filter also reduces the contrast, so no single alpha matches every icon.
-   */
-  private const val BRIGHT_THEME_DISABLED_ALPHA = 0.5f
-
-  /**
-   * Alpha of the disabled variant on a dark theme.
-   *
-   * This is an estimate of the legacy `GrayFilter` result of the Darcula theme (`-70,-70,100`).
-   * It is lower than the bright value. The icons of a dark theme are light on a dark background, so they need more fade to look disabled.
-   */
-  private const val DARK_THEME_DISABLED_ALPHA = 0.3f
-
   /**
    * The descriptor to render for [presentation].
    *
@@ -48,14 +29,12 @@ object ActionIconDescriptors {
     presentation.iconDescriptor ?: if (presentation.icon != null) AllIconDescriptors.Toolbar.Unknown else null
 
   /**
-   * The disabled variant of [base]: gray and translucent, so it blends into the theme background.
-   * The alpha depends on the current theme, so build the variant again after a theme change.
+   * The disabled variant of [base]. It has the same pixels as `IconLoader.getDisabledIcon` gives for the legacy icon. It uses the gray
+   * filter of the look and feel, [UIUtil.getGrayFilter]. Build the variant again after a theme change.
    */
   @JvmStatic
   fun disabled(base: IconDescriptor): IconDescriptor {
-    val alpha = if (JBColor.isBright()) BRIGHT_THEME_DISABLED_ALPHA else DARK_THEME_DISABLED_ALPHA
-    return iconDescriptor {
-      icon(base, IconModifier.tintColor(Color.White, BlendMode.Saturation).alpha(alpha))
-    }
+    val filter = UIUtil.getGrayFilter() as GrayFilter
+    return iconDescriptor { icon(base, IconModifier.grayFilter(filter.brightness, filter.contrast, filter.alpha)) }
   }
 }

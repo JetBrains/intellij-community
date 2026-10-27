@@ -5,6 +5,7 @@ import com.intellij.ui.svg.SvgAttributePatcher
 import com.intellij.util.SVGLoader
 import com.intellij.platform.icons.design.BlendMode
 import com.intellij.platform.icons.filters.ColorFilter
+import com.intellij.platform.icons.impl.filters.GrayColorFilter
 import com.intellij.platform.icons.impl.filters.TintColorFilter
 import com.intellij.platform.icons.impl.patchers.AUTHORED_STROKE_VARIANT_SUFFIX
 import com.intellij.platform.icons.impl.patchers.DefaultSvgPatcher
@@ -13,6 +14,7 @@ import com.intellij.platform.icons.impl.patchers.authoredStrokeSvgPatcher
 import com.intellij.platform.icons.impl.patchers.strokeSvgPatcher
 import com.intellij.platform.icons.impl.patchers.writeSvgAttribute
 import com.intellij.platform.icons.swing.toAwtColor
+import com.intellij.util.ui.GrayFilter
 import java.awt.Color
 import java.awt.image.RGBImageFilter
 import com.intellij.platform.icons.design.Color as DesignColor
@@ -22,6 +24,7 @@ internal fun ColorFilter.toAwtFilter(): RGBImageFilter {
     is TintColorFilter -> {
       AwtColorFilter.fromColorAndBlendMode(color, blendMode)
     }
+    is GrayColorFilter -> GrayFilter(brightness, contrast, alpha)
     else -> error("Unsupported color filter: $this")
   }
 }

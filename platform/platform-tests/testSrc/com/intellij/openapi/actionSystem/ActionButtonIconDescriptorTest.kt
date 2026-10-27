@@ -90,15 +90,12 @@ class ActionButtonIconDescriptorTest {
   }
 
   @Test
-  fun `disabled icon is gray and translucent`() {
+  fun `disabled icon is gray`() {
     val button = button(executeDescriptor())
     button.presentation.isEnabled = false
-    val disabled = assertIs<ScalableSwingIcon>(button.icon).paintToImage()
-    val pixels = disabled.visiblePixels()
-    val alpha = disabled.maxAlpha()
+    val pixels = assertIs<ScalableSwingIcon>(button.icon).paintToImage().visiblePixels()
 
     assertTrue(pixels.isNotEmpty(), "the disabled icon painted nothing")
-    assertTrue(alpha < 255, "the disabled icon is opaque: max alpha $alpha")
     assertTrue(pixels.all { isGray(it) }, "the disabled icon has colored pixels")
   }
 
@@ -119,18 +116,18 @@ class ActionButtonIconDescriptorTest {
     button.presentation.isEnabled = false
 
     val brightIcon = button.icon
-    val brightAlpha = brightIcon.paintToImage().maxAlpha()
+    val brightPixels = brightIcon.paintToImage().visiblePixels()
 
-    val (darkIcon, darkAlpha) =
+    val (darkIcon, darkPixels) =
       withDarkTheme {
         button.updateIcon()
 
         val icon = button.icon
-        icon to icon.paintToImage().maxAlpha()
+        icon to icon.paintToImage().visiblePixels()
       }
 
     assertNotSame(brightIcon, darkIcon, "the disabled icon was not rebuilt after the theme change")
-    assertTrue(darkAlpha < brightAlpha, "dark alpha $darkAlpha is not below bright alpha $brightAlpha")
+    assertNotEquals(brightPixels, darkPixels, "the dark theme painted the disabled icon of the bright theme")
   }
 
   @Test
