@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 private const val MODEL_REGISTRY_KEY: String = "search.everywhere.actions.ranker.decisions.model"
-private const val DEFAULT_MODEL: String = "gpt-6-luna"
+internal const val DECISIONS_DEFAULT_MODEL: String = "gpt-6-luna"
 
 private const val NO_ACTION_DESCRIPTION: String = "No IDE action does what the user asks for."
 private const val CANDIDATE_VALUE_PREFIX: String = "a"
@@ -53,7 +53,7 @@ internal class SeDecisionsActionsRanker : SeActionsRanker {
   override val diagnosticName: String get() = "Decision API"
 
   override suspend fun openSession(): SeActionsRankerSession? {
-    val model = RegistryManager.getInstanceAsync().stringValue(MODEL_REGISTRY_KEY)?.trim()?.ifEmpty { null } ?: DEFAULT_MODEL
+    val model = RegistryManager.getInstanceAsync().stringValue(MODEL_REGISTRY_KEY)?.trim()?.ifEmpty { null } ?: DECISIONS_DEFAULT_MODEL
     val service = serviceAsync<SeDecisionsActionsRankerService>()
 
     // No suspension follows the acquisition, thus a cancellation cannot lose an acquired lease.

@@ -3,7 +3,7 @@ package com.intellij.platform.searchEverywhere.frontend.providers.actions
 
 import com.intellij.openapi.components.serviceAsync
 
-private const val OPENAI_API_URL: String = "https://api.openai.com/v1"
+internal const val OPENAI_API_URL: String = "https://api.openai.com/v1"
 
 /**
  * Serves the Decision API ranker straight from the OpenAI API with the personal OpenAI API key of the user.
