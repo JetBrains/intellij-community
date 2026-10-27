@@ -5,6 +5,7 @@ import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffContext
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.simple.SimpleDiffViewer
+import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.openapi.application.EDT
@@ -16,9 +17,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotSame
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import javax.swing.JComponent
 
@@ -48,6 +52,21 @@ internal class StructuralDiffPreviewHighlightTest {
       assertEquals(before.map { it + 1 }, gutters.map { it.componentCount }, "Each gutter gets one dim")
       Disposer.dispose(highlight)
       assertEquals(before, gutters.map { it.componentCount }, "The end of the dim removes it from the gutters")
+    }
+  }
+
+  @Test
+  fun `the dim of the divider ends with the highlight`(): Unit = timeoutRunBlocking {
+    withViewer(base = "first\nold\nlast", current = "first\nnew\nlast") { viewer ->
+      val splitter = checkNotNull(UIUtil.findComponentOfType(viewer.component, DiffSplitter::class.java))
+      val platformPainter = checkNotNull(splitter.painter)
+      val highlight = StructuralDiffPreviewHighlight(viewer, ChangesBrowserStructuralNode.DiffLines(LineRange(1, 2), LineRange(1, 2)))
+      highlight.apply(scroll = false)
+      assertNotSame(platformPainter, splitter.painter, "The dim paints over the divider")
+      // A rediff applies the dim again.
+      highlight.apply(scroll = false)
+      Disposer.dispose(highlight)
+      assertSame(platformPainter, splitter.painter, "The divider gets its own painter back")
     }
   }
 
