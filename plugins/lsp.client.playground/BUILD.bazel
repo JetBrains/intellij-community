@@ -67,13 +67,15 @@ jvm_library(
         "//platform/platform-frontend:frontend_test_lib",
     ],
 )
+### auto-generated section `build intellij.lsp.client.playground` end
 
+### auto-generated section `plugin intellij.lsp.client.playground` start
 ij_plugin(
     name = "lsp.client.playground_plugin",
     descriptor_module = ":lsp.client.playground",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.lsp.client.playground` end
+### auto-generated section `plugin intellij.lsp.client.playground` end
 
 ### auto-generated section `iml intellij.lsp.client.playground` start
 exports_files(

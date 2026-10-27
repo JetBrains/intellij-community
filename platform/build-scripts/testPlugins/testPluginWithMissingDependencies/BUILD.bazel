@@ -42,14 +42,16 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":testPluginWithMissingDependencies"],
 )
+### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
 
+### auto-generated section `plugin intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
 ij_plugin(
     name = "testPluginWithMissingDependencies_plugin",
     descriptor_module = ":testPluginWithMissingDependencies",
     content_modules = ["//platform/build-scripts/testPlugins/testPluginWithMissingDependencies/module"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
+### auto-generated section `plugin intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.testPlugins.testPluginWithMissingDependencies` start
 exports_files(

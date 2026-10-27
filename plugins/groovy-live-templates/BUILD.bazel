@@ -67,13 +67,15 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )
+### auto-generated section `build intellij.groovy.live.templates` end
 
+### auto-generated section `plugin intellij.groovy.live.templates` start
 ij_plugin(
     name = "groovy-live-templates_plugin",
     descriptor_module = ":groovy-live-templates",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.groovy.live.templates` end
+### auto-generated section `plugin intellij.groovy.live.templates` end
 
 ### auto-generated section `iml intellij.groovy.live.templates` start
 exports_files(

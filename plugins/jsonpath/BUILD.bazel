@@ -98,14 +98,16 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )
+### auto-generated section `build intellij.jsonpath` end
 
+### auto-generated section `plugin intellij.jsonpath` start
 ij_plugin(
     name = "jsonpath_plugin",
     descriptor_module = ":jsonpath",
     content_modules = ["//plugins/jsonpath/scratch"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.jsonpath` end
+### auto-generated section `plugin intellij.jsonpath` end
 
 ### auto-generated section `iml intellij.jsonpath` start
 exports_files(

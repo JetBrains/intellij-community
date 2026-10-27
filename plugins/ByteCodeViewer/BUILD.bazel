@@ -103,13 +103,15 @@ jvm_library(
         "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.java.byteCodeViewer` end
 
+### auto-generated section `plugin intellij.java.byteCodeViewer` start
 ij_plugin(
     name = "java-byteCodeViewer_plugin",
     descriptor_module = ":java-byteCodeViewer",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.java.byteCodeViewer` end
+### auto-generated section `plugin intellij.java.byteCodeViewer` end
 
 ### auto-generated section `iml intellij.java.byteCodeViewer` start
 exports_files(

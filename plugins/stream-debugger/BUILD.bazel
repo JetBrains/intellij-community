@@ -81,7 +81,9 @@ jvm_library(
         "//platform/ide-core-impl:ide-core-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.debugger.streams.plugin` end
 
+### auto-generated section `plugin intellij.debugger.streams.plugin` start
 ij_plugin(
     name = "debugger-streams-plugin_plugin",
     descriptor_module = ":debugger-streams-plugin",
@@ -97,7 +99,7 @@ ij_plugin(
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.debugger.streams.plugin` end
+### auto-generated section `plugin intellij.debugger.streams.plugin` end
 
 ### auto-generated section `iml intellij.debugger.streams.plugin` start
 exports_files(

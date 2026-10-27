@@ -99,13 +99,15 @@ jvm_library(
         "//java/java-backend:backend_test_lib",
     ],
 )
+### auto-generated section `build intellij.commander` end
 
+### auto-generated section `plugin intellij.commander` start
 ij_plugin(
     name = "commander_plugin",
     descriptor_module = ":commander",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.commander` end
+### auto-generated section `plugin intellij.commander` end
 
 ### auto-generated section `iml intellij.commander` start
 exports_files(

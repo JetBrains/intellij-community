@@ -140,7 +140,9 @@ jvm_library(
         "//platform/util/coroutines:coroutines_test_lib",
     ],
 )
+### auto-generated section `build intellij.mermaid` end
 
+### auto-generated section `plugin intellij.mermaid` start
 ij_plugin(
     name = "mermaid_plugin",
     descriptor_module = ":mermaid",
@@ -153,7 +155,7 @@ ij_plugin(
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.mermaid` end
+### auto-generated section `plugin intellij.mermaid` end
 
 ### auto-generated section `iml intellij.mermaid` start
 exports_files(

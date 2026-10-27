@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.visualAssist` end
 
+### auto-generated section `plugin intellij.keymap.visualAssist` start
 ij_plugin(
     name = "keymap-visualAssist_plugin",
     descriptor_module = ":keymap-visualAssist",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.visualAssist` end
+### auto-generated section `plugin intellij.keymap.visualAssist` end
 
 ### auto-generated section `iml intellij.keymap.visualAssist` start
 exports_files(

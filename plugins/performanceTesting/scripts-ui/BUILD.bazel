@@ -90,13 +90,15 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
     ],
 )
+### auto-generated section `build intellij.performanceTesting.ui` end
 
+### auto-generated section `plugin intellij.performanceTesting.ui` start
 ij_plugin(
     name = "ui_plugin",
     descriptor_module = ":ui",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.performanceTesting.ui` end
+### auto-generated section `plugin intellij.performanceTesting.ui` end
 
 ### auto-generated section `iml intellij.performanceTesting.ui` start
 exports_files(

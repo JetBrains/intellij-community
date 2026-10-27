@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.vibrant_ink` end
 
+### auto-generated section `plugin intellij.color.scheme.vibrant_ink` start
 ij_plugin(
     name = "color-scheme-vibrant_ink_plugin",
     descriptor_module = ":color-scheme-vibrant_ink",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.vibrant_ink` end
+### auto-generated section `plugin intellij.color.scheme.vibrant_ink` end
 
 ### auto-generated section `iml intellij.color.scheme.vibrant_ink` start
 exports_files(

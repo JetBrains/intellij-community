@@ -97,7 +97,9 @@ jvm_library(
         "//fleet/rpc:rpc_test_lib",
     ],
 )
+### auto-generated section `build intellij.java.ide.customization` end
 
+### auto-generated section `plugin intellij.java.ide.customization` start
 ij_plugin(
     name = "ide-customization_plugin",
     descriptor_module = ":ide-customization",
@@ -108,7 +110,7 @@ ij_plugin(
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.java.ide.customization` end
+### auto-generated section `plugin intellij.java.ide.customization` end
 
 ### auto-generated section `iml intellij.java.ide.customization` start
 exports_files(

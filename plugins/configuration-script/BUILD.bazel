@@ -108,14 +108,16 @@ jvm_library(
         "//platform/execution:execution_test_lib",
     ],
 )
+### auto-generated section `build intellij.configurationScript` end
 
+### auto-generated section `plugin intellij.configurationScript` start
 ij_plugin(
     name = "configuration-script_plugin",
     descriptor_module = ":configuration-script",
     content_modules = ["//plugins/configuration-script/backend"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.configurationScript` end
+### auto-generated section `plugin intellij.configurationScript` end
 
 ### auto-generated section `iml intellij.configurationScript` start
 exports_files(

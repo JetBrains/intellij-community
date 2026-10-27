@@ -63,13 +63,15 @@ jvm_library(
         "//platform/ml-impl:ml-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.marketplaceMl` end
 
+### auto-generated section `plugin intellij.marketplaceMl` start
 ij_plugin(
     name = "marketplace-ml_plugin",
     descriptor_module = ":marketplace-ml",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.marketplaceMl` end
+### auto-generated section `plugin intellij.marketplaceMl` end
 
 ### auto-generated section `iml intellij.marketplaceMl` start
 exports_files(

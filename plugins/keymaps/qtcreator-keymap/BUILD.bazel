@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.qtcreator` end
 
+### auto-generated section `plugin intellij.keymap.qtcreator` start
 ij_plugin(
     name = "keymap-qtcreator_plugin",
     descriptor_module = ":keymap-qtcreator",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.qtcreator` end
+### auto-generated section `plugin intellij.keymap.qtcreator` end
 
 ### auto-generated section `iml intellij.keymap.qtcreator` start
 exports_files(

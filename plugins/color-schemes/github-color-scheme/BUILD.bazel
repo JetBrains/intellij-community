@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.github` end
 
+### auto-generated section `plugin intellij.color.scheme.github` start
 ij_plugin(
     name = "color-scheme-github_plugin",
     descriptor_module = ":color-scheme-github",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.github` end
+### auto-generated section `plugin intellij.color.scheme.github` end
 
 ### auto-generated section `iml intellij.color.scheme.github` start
 exports_files(

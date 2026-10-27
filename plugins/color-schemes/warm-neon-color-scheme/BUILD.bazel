@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.warmNeon` end
 
+### auto-generated section `plugin intellij.color.scheme.warmNeon` start
 ij_plugin(
     name = "color-scheme-warmNeon_plugin",
     descriptor_module = ":color-scheme-warmNeon",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.warmNeon` end
+### auto-generated section `plugin intellij.color.scheme.warmNeon` end
 
 ### auto-generated section `iml intellij.color.scheme.warmNeon` start
 exports_files(

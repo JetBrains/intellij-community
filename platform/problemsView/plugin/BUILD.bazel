@@ -52,7 +52,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
+### auto-generated section `build intellij.platform.problemView.plugin` end
 
+### auto-generated section `plugin intellij.platform.problemView.plugin` start
 ij_plugin(
     name = "plugin_plugin",
     descriptor_module = ":plugin",
@@ -69,7 +71,7 @@ ij_plugin(
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.platform.problemView.plugin` end
+### auto-generated section `plugin intellij.platform.problemView.plugin` end
 
 ### auto-generated section `iml intellij.platform.problemView.plugin` start
 exports_files(

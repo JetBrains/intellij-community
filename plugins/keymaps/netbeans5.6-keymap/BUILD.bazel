@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.netbeans` end
 
+### auto-generated section `plugin intellij.keymap.netbeans` start
 ij_plugin(
     name = "keymap-netbeans_plugin",
     descriptor_module = ":keymap-netbeans",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.netbeans` end
+### auto-generated section `plugin intellij.keymap.netbeans` end
 
 ### auto-generated section `iml intellij.keymap.netbeans` start
 exports_files(

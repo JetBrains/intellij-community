@@ -161,13 +161,15 @@ jvm_library(
         "//java/java-frontback-psi-api:frontback-psi_test_lib",
     ],
 )
+### auto-generated section `build intellij.java.i18n` end
 
+### auto-generated section `plugin intellij.java.i18n` start
 ij_plugin(
     name = "java-i18n_plugin",
     descriptor_module = ":java-i18n",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.java.i18n` end
+### auto-generated section `plugin intellij.java.i18n` end
 
 ### auto-generated section `iml intellij.java.i18n` start
 exports_files(

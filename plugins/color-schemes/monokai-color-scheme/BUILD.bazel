@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.monokai` end
 
+### auto-generated section `plugin intellij.color.scheme.monokai` start
 ij_plugin(
     name = "color-scheme-monokai_plugin",
     descriptor_module = ":color-scheme-monokai",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.monokai` end
+### auto-generated section `plugin intellij.color.scheme.monokai` end
 
 ### auto-generated section `iml intellij.color.scheme.monokai` start
 exports_files(

@@ -67,13 +67,15 @@ jvm_library(
         "//platform/execution:execution_test_lib",
     ],
 )
+### auto-generated section `build intellij.platform.tracing.ide` end
 
+### auto-generated section `plugin intellij.platform.tracing.ide` start
 ij_plugin(
     name = "tracing-ide_plugin",
     descriptor_module = ":tracing-ide",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.platform.tracing.ide` end
+### auto-generated section `plugin intellij.platform.tracing.ide` end
 
 ### auto-generated section `iml intellij.platform.tracing.ide` start
 exports_files(

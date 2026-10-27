@@ -39,14 +39,16 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":lsp.ui.plugin"],
 )
+### auto-generated section `build intellij.lsp.ui.plugin` end
 
+### auto-generated section `plugin intellij.lsp.ui.plugin` start
 ij_plugin(
     name = "lsp.ui.plugin_plugin",
     descriptor_module = ":lsp.ui.plugin",
     content_modules = ["//plugins/lsp.ui/lsp.ui.frontend"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.lsp.ui.plugin` end
+### auto-generated section `plugin intellij.lsp.ui.plugin` end
 
 ### auto-generated section `iml intellij.lsp.ui.plugin` start
 exports_files(

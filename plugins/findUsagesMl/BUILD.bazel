@@ -76,13 +76,15 @@ jvm_library(
         "//platform/util/jdom:jdom_test_lib",
     ],
 )
+### auto-generated section `build intellij.findUsagesMl` end
 
+### auto-generated section `plugin intellij.findUsagesMl` start
 ij_plugin(
     name = "findUsagesMl_plugin",
     descriptor_module = ":findUsagesMl",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.findUsagesMl` end
+### auto-generated section `plugin intellij.findUsagesMl` end
 
 ### auto-generated section `iml intellij.findUsagesMl` start
 exports_files(

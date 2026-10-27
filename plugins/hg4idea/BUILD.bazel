@@ -117,13 +117,15 @@ jvm_library(
         "//platform/lvcs-impl:lvcs-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.vcs.hg` end
 
+### auto-generated section `plugin intellij.vcs.hg` start
 ij_plugin(
     name = "vcs-hg_plugin",
     descriptor_module = ":vcs-hg",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.vcs.hg` end
+### auto-generated section `plugin intellij.vcs.hg` end
 
 ### auto-generated section `iml intellij.vcs.hg` start
 exports_files(

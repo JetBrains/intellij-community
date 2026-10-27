@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.xcode` end
 
+### auto-generated section `plugin intellij.keymap.xcode` start
 ij_plugin(
     name = "keymap-xcode_plugin",
     descriptor_module = ":keymap-xcode",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.xcode` end
+### auto-generated section `plugin intellij.keymap.xcode` end
 
 ### auto-generated section `iml intellij.keymap.xcode` start
 exports_files(

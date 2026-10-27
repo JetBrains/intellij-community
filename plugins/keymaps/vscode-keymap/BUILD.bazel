@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.vscode` end
 
+### auto-generated section `plugin intellij.keymap.vscode` start
 ij_plugin(
     name = "keymap-vscode_plugin",
     descriptor_module = ":keymap-vscode",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.vscode` end
+### auto-generated section `plugin intellij.keymap.vscode` end
 
 ### auto-generated section `iml intellij.keymap.vscode` start
 exports_files(

@@ -42,14 +42,16 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
+### auto-generated section `build intellij.minimap.plugin` end
 
+### auto-generated section `plugin intellij.minimap.plugin` start
 ij_plugin(
     name = "plugin_plugin",
     descriptor_module = ":plugin",
     content_modules = ["//plugins/minimap/core"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.minimap.plugin` end
+### auto-generated section `plugin intellij.minimap.plugin` end
 
 ### auto-generated section `iml intellij.minimap.plugin` start
 exports_files(

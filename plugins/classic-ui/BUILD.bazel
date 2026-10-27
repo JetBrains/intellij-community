@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.classic.ui` end
 
+### auto-generated section `plugin intellij.classic.ui` start
 ij_plugin(
     name = "classic-ui_plugin",
     descriptor_module = ":classic-ui",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.classic.ui` end
+### auto-generated section `plugin intellij.classic.ui` end
 
 ### auto-generated section `iml intellij.classic.ui` start
 exports_files(

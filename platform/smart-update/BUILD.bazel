@@ -87,13 +87,15 @@ jvm_library(
         "//platform/execution-impl:execution-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.smart.update` end
 
+### auto-generated section `plugin intellij.smart.update` start
 ij_plugin(
     name = "smart-update_plugin",
     descriptor_module = ":smart-update",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.smart.update` end
+### auto-generated section `plugin intellij.smart.update` end
 
 ### auto-generated section `iml intellij.smart.update` start
 exports_files(

@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.resharper` end
 
+### auto-generated section `plugin intellij.keymap.resharper` start
 ij_plugin(
     name = "keymap-resharper_plugin",
     descriptor_module = ":keymap-resharper",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.resharper` end
+### auto-generated section `plugin intellij.keymap.resharper` end
 
 ### auto-generated section `iml intellij.keymap.resharper` start
 exports_files(

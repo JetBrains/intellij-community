@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.visualStudio2022` end
 
+### auto-generated section `plugin intellij.keymap.visualStudio2022` start
 ij_plugin(
     name = "keymap-visualStudio2022_plugin",
     descriptor_module = ":keymap-visualStudio2022",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.visualStudio2022` end
+### auto-generated section `plugin intellij.keymap.visualStudio2022` end
 
 ### auto-generated section `iml intellij.keymap.visualStudio2022` start
 exports_files(

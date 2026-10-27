@@ -44,14 +44,16 @@ jvm_library(
         "//platform/platform-frontend:frontend_test_lib",
     ],
 )
+### auto-generated section `build intellij.extendedToolWindowsUi` end
 
+### auto-generated section `plugin intellij.extendedToolWindowsUi` start
 ij_plugin(
     name = "extendedToolWindowsUi_plugin",
     descriptor_module = ":extendedToolWindowsUi",
     content_modules = ["//plugins/extended-toolwindows-ui/frontend"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.extendedToolWindowsUi` end
+### auto-generated section `plugin intellij.extendedToolWindowsUi` end
 
 ### auto-generated section `iml intellij.extendedToolWindowsUi` start
 exports_files(

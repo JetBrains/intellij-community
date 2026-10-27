@@ -43,13 +43,15 @@ jvm_library(
         "//platform/platform-impl:ide-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.keymap.visualStudioForMac` end
 
+### auto-generated section `plugin intellij.keymap.visualStudioForMac` start
 ij_plugin(
     name = "keymap-visualStudioForMac_plugin",
     descriptor_module = ":keymap-visualStudioForMac",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.keymap.visualStudioForMac` end
+### auto-generated section `plugin intellij.keymap.visualStudioForMac` end
 
 ### auto-generated section `iml intellij.keymap.visualStudioForMac` start
 exports_files(

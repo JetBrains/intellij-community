@@ -84,13 +84,15 @@ jvm_library(
         "//platform/lang-api:lang_test_lib",
     ],
 )
+### auto-generated section `build intellij.remoteControl` end
 
+### auto-generated section `plugin intellij.remoteControl` start
 ij_plugin(
     name = "remote-control_plugin",
     descriptor_module = ":remote-control",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.remoteControl` end
+### auto-generated section `plugin intellij.remoteControl` end
 
 ### auto-generated section `iml intellij.remoteControl` start
 exports_files(

@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.twilight` end
 
+### auto-generated section `plugin intellij.color.scheme.twilight` start
 ij_plugin(
     name = "color-scheme-twilight_plugin",
     descriptor_module = ":color-scheme-twilight",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.twilight` end
+### auto-generated section `plugin intellij.color.scheme.twilight` end
 
 ### auto-generated section `iml intellij.color.scheme.twilight` start
 exports_files(

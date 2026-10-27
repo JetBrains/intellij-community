@@ -65,13 +65,15 @@ jvm_library(
         "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.vcs.git.commit.modal` end
 
+### auto-generated section `plugin intellij.vcs.git.commit.modal` start
 ij_plugin(
     name = "vcs-git-commit-modal_plugin",
     descriptor_module = ":vcs-git-commit-modal",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.vcs.git.commit.modal` end
+### auto-generated section `plugin intellij.vcs.git.commit.modal` end
 
 ### auto-generated section `iml intellij.vcs.git.commit.modal` start
 exports_files(

@@ -39,14 +39,16 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":execution-multilaunch-plugin"],
 )
+### auto-generated section `build intellij.execution.multilaunch.plugin` end
 
+### auto-generated section `plugin intellij.execution.multilaunch.plugin` start
 ij_plugin(
     name = "execution-multilaunch-plugin_plugin",
     descriptor_module = ":execution-multilaunch-plugin",
     content_modules = ["//plugins/execution-multilaunch/core"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.execution.multilaunch.plugin` end
+### auto-generated section `plugin intellij.execution.multilaunch.plugin` end
 
 ### auto-generated section `iml intellij.execution.multilaunch.plugin` start
 exports_files(

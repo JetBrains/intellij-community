@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.all_hallows_eve` end
 
+### auto-generated section `plugin intellij.color.scheme.all_hallows_eve` start
 ij_plugin(
     name = "color-scheme-all_hallows_eve_plugin",
     descriptor_module = ":color-scheme-all_hallows_eve",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.all_hallows_eve` end
+### auto-generated section `plugin intellij.color.scheme.all_hallows_eve` end
 
 ### auto-generated section `iml intellij.color.scheme.all_hallows_eve` start
 exports_files(

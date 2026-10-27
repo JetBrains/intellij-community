@@ -96,14 +96,16 @@ jvm_library(
         "//jps/model-api:model_test_lib",
     ],
 )
+### auto-generated section `build intellij.restructuredtext` end
 
+### auto-generated section `plugin intellij.restructuredtext` start
 ij_plugin(
     name = "restructuredtext_plugin",
     descriptor_module = ":restructuredtext",
     content_modules = ["//python/python-restructuredtext:restructuredtext-python"],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.restructuredtext` end
+### auto-generated section `plugin intellij.restructuredtext` end
 
 ### auto-generated section `iml intellij.restructuredtext` start
 exports_files(

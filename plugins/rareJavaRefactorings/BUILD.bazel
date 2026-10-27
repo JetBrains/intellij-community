@@ -119,13 +119,15 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
     ],
 )
+### auto-generated section `build intellij.java.rareRefactorings` end
 
+### auto-generated section `plugin intellij.java.rareRefactorings` start
 ij_plugin(
     name = "java-rareRefactorings_plugin",
     descriptor_module = ":java-rareRefactorings",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.java.rareRefactorings` end
+### auto-generated section `plugin intellij.java.rareRefactorings` end
 
 ### auto-generated section `iml intellij.java.rareRefactorings` start
 exports_files(

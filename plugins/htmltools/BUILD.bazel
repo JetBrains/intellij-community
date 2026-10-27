@@ -100,13 +100,15 @@ jvm_library(
         "//platform/util:util-ui_test_lib",
     ],
 )
+### auto-generated section `build intellij.html.tools` end
 
+### auto-generated section `plugin intellij.html.tools` start
 ij_plugin(
     name = "html-tools_plugin",
     descriptor_module = ":html-tools",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.html.tools` end
+### auto-generated section `plugin intellij.html.tools` end
 
 ### auto-generated section `iml intellij.html.tools` start
 exports_files(

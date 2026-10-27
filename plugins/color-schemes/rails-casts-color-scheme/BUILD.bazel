@@ -43,13 +43,15 @@ jvm_library(
         "//platform/projectModel-impl:projectModel-impl_test_lib",
     ],
 )
+### auto-generated section `build intellij.color.scheme.rails_casts` end
 
+### auto-generated section `plugin intellij.color.scheme.rails_casts` start
 ij_plugin(
     name = "color-scheme-rails_casts_plugin",
     descriptor_module = ":color-scheme-rails_casts",
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.color.scheme.rails_casts` end
+### auto-generated section `plugin intellij.color.scheme.rails_casts` end
 
 ### auto-generated section `iml intellij.color.scheme.rails_casts` start
 exports_files(
