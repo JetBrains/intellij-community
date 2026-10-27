@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.impl.base" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
   </component>
 </module>

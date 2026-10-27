@@ -50,6 +50,7 @@ jvm_library(
         "//platform/eel",
         "//platform/util-class-loader:util-classLoader",
         "//platform/consoleView",
+        "//platform/util/annotations",
     ],
 )
 
@@ -94,6 +95,7 @@ jvm_library(
         "//platform/eel:eel_test_lib",
         "//platform/util-class-loader:util-classLoader_test_lib",
         "//platform/consoleView:consoleView_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.execution` end

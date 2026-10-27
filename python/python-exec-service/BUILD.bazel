@@ -68,6 +68,7 @@ jvm_library(
         "//platform/eel-impl-base",
         "//platform/platform-impl:ide-impl",
         "//platform/projectModel-impl",
+        "//platform/util/annotations",
     ],
 )
 
@@ -105,6 +106,7 @@ jvm_library(
         "//platform/eel-impl-base:eel-impl-base_test_lib",
         "//platform/platform-impl:ide-impl_test_lib",
         "//platform/projectModel-impl:projectModel-impl_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.execService` end

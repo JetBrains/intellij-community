@@ -87,6 +87,7 @@ jvm_library(
         "//platform/platform-impl/rpc",
         "//platform/project/shared:project",
         "//platform/lang-impl",
+        "//platform/util/annotations",
     ],
 )
 
@@ -153,6 +154,7 @@ jvm_library(
         "//platform/platform-impl/rpc:rpc_test_lib",
         "//platform/project/shared:project_test_lib",
         "//platform/lang-impl:lang-impl_test_lib",
+        "//platform/util/annotations:annotations_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.sdk.backend` end

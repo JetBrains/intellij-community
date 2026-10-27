@@ -178,5 +178,6 @@
     <orderEntry type="module" module-name="intellij.platform.eel.nioFs" />
     <orderEntry type="module" module-name="intellij.platform.wsl.impl" />
     <orderEntry type="module" module-name="intellij.libraries.commons.compress" />
+    <orderEntry type="module" module-name="intellij.platform.util.annotations" />
   </component>
 </module>

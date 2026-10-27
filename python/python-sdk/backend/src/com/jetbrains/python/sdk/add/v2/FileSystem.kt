@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.util.annotations.paths.OsPath
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.pytools.backend.ToolCommandSpec
@@ -57,7 +58,7 @@ interface FileSystem<P : PathHolder> {
   /**
    * Path on remote machine. As an exception, MRFS path is also supported by Eel impl.
    */
-  fun parsePath(raw: String): PyResult<P>
+  fun parsePath(raw: @OsPath String): PyResult<P>
   suspend fun validateExecutable(path: P): PyResult<Unit>
   suspend fun fileExists(path: P): Boolean
 

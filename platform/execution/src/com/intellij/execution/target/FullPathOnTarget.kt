@@ -2,10 +2,11 @@
 package com.intellij.execution.target
 
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.util.annotations.paths.OsPath
 
 /**
  * This is a path on target. String is temporary solution but would be changed to the real target-specific class
  */
-typealias FullPathOnTarget = @NlsSafe String
+typealias FullPathOnTarget = @NlsSafe @OsPath String
 
-fun FullPathOnTarget(path: String): FullPathOnTarget = path
+fun FullPathOnTarget(path: @OsPath String): FullPathOnTarget = path
