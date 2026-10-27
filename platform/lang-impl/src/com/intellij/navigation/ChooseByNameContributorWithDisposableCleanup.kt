@@ -17,20 +17,29 @@ interface ChooseByNameContributorWithDisposableCleanup : ChooseByNameContributor
 
   @Deprecated("Please use the Disposable-enabled version, this one cleans up too early. Still correct, but takes more computation")
   override fun processNames(processor: Processor<in String>, parameters: FindSymbolParameters) {
-    val localDisposable = Disposer.newDisposable()
-    processNamesWithDisposable(localDisposable, processor, parameters)
-    Disposer.dispose(localDisposable)
+    withNamedDisposable("processNames") { localDisposable ->
+      processNamesWithDisposable(localDisposable, processor, parameters)
+    }
   }
 
   @Deprecated("Please use the Disposable-enabled version, this one cleans up too early. Still correct, but takes more computation")
   override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
-    val localDisposable = Disposer.newDisposable()
-    processElementsWithNameWithDisposable(localDisposable, name, processor, parameters)
-    Disposer.dispose(localDisposable)
+    withNamedDisposable("processElementsWithName") { localDisposable ->
+      processElementsWithNameWithDisposable(localDisposable, name, processor, parameters)
+    }
   }
 
   @Deprecated("Please use the Disposable-enabled version, this one DOES NOTHING")
   override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
     throw UnsupportedOperationException("Use RdChooseByNameContributor.processNamesLifetimed")
+  }
+
+  private inline fun withNamedDisposable(methodName: String, action: (disposable: Disposable) -> Unit) {
+    val disposable = Disposer.newDisposable("${ChooseByNameContributorWithDisposableCleanup::class.qualifiedName}.$methodName")
+    try {
+      action(disposable)
+    } finally {
+      Disposer.dispose(disposable)
+    }
   }
 }

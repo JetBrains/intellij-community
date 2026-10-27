@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -77,6 +78,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
     }
+    Disposer.register(this, model);
     return model;
   }
 
@@ -95,6 +97,7 @@ public class SymbolSearchEverywhereContributor extends AbstractGotoSEContributor
     if (myFilter != null) {
       model.setFilterItems(myFilter.getSelectedElements());
     }
+    Disposer.register(operationDisposable == null ? this : operationDisposable, model);
     return model;
   }
 
