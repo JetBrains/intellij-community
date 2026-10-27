@@ -163,7 +163,7 @@
     <registryKey defaultValue="true"
                  description="Show non-python modules(different type, no python facet) in Python configurable when they have base dir"
                  key="python.show.modules.with.base.dir" restartRequired="true"/>
-    <registryKey defaultValue="true"
+    <registryKey defaultValue="false"
                  description="Master switch for the new Python formatter defaults (PY-85946). When off, the feature is fully disabled: classic formatting everywhere, no migration, no balloon."
                  key="python.formatter.new.defaults.enabled" restartRequired="true"/>
     <fileType name="PyTyped"
