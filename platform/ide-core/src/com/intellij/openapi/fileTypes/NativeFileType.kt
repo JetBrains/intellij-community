@@ -1,128 +1,98 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.fileTypes;
+package com.intellij.openapi.fileTypes
 
-import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeCoreBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.system.OS;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeCoreBundle
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.system.OS
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import org.jetbrains.annotations.Nls
+import java.awt.Desktop
+import javax.swing.Icon
 
-import javax.swing.Icon;
-import java.awt.Desktop;
-import java.util.ArrayList;
-import java.util.List;
+private val LOG = logger<NativeFileType>()
 
-public final class NativeFileType implements INativeFileType {
-  public static final NativeFileType INSTANCE = new NativeFileType();
+object NativeFileType : INativeFileType {
+  @get:JvmSynthetic
+  val INSTANCE: NativeFileType
+    get() = this
 
-  private NativeFileType() { }
-
-  @Override
-  public @NotNull String getName() {
-    return "Native";
-  }
-
-  @Override
-  public @NotNull String getDescription() {
-    return IdeCoreBundle.message("filetype.native.description");
-  }
-
-  @Override
-  public @Nls @NotNull String getDisplayName() {
-    return IdeCoreBundle.message("filetype.native.display.name");
-  }
-
-  @Override
-  public @NotNull String getDefaultExtension() {
-    return "";
-  }
-
-  @Override
-  public Icon getIcon() {
-    return AllIcons.FileTypes.Custom;
-  }
-
-  @Override
-  public boolean isBinary() {
-    return true;
-  }
-
-  @Override
-  public boolean openFileInAssociatedApplication(@NotNull Project project, @NotNull VirtualFile file) {
-    return openAssociatedApplication(file);
-  }
-
-  @Override
-  public boolean useNativeIcon() {
-    return true;
-  }
-
-  public static boolean openAssociatedApplication(@NotNull VirtualFile file) {
-    if (!file.isInLocalFileSystem()) {
-      throw new IllegalArgumentException("Non-local file: " + file + "; FS=" + file.getFileSystem());
-    }
+  @JvmStatic
+  fun openAssociatedApplication(file: VirtualFile): Boolean {
+    require(file.isInLocalFileSystem) { "Non-local file: $file; FS=${file.fileSystem}" }
 
     // `Desktop.open` and the process start are native calls that can block for a long time
     // (e.g., `ProcessImpl.create` on Windows is synchronized), so they must not run on EDT
     if (Desktop.isDesktopSupported()) {
-      var desktop = Desktop.getDesktop();
+      val desktop = Desktop.getDesktop()
       if (desktop.isSupported(Desktop.Action.OPEN)) {
-        AppExecutorUtil.getAppExecutorService().execute(() -> {
+        coroutineScope().launch(Dispatchers.IO) {
           try {
-            //noinspection IO_FILE_USAGE
-            desktop.open(file.toNioPath().toFile());
+            @Suppress("IO_FILE_USAGE")
+            desktop.open(file.toNioPath().toFile())
           }
-          catch (Exception e) {
-            Logger.getInstance(NativeFileType.class).warn(e);
-            var commands = getFallbackCommand(file);
-            if (commands != null) {
-              startProcess(commands);
-            }
+          catch (e: Exception) {
+            rethrowControlFlowException(e)
+            LOG.warn(e)
+            getFallbackCommand(file)?.let(::startProcess)
           }
-        });
-        return true;
+        }
+        return true
       }
     }
 
-    var commands = getFallbackCommand(file);
-    if (commands == null) {
-      return false;
+    val command = getFallbackCommand(file) ?: return false
+    coroutineScope().launch(Dispatchers.IO) {
+      startProcess(command)
     }
-    AppExecutorUtil.getAppExecutorService().execute(() -> startProcess(commands));
-    return true;
+    return true
   }
 
-  private static @Nullable List<String> getFallbackCommand(VirtualFile file) {
-    var commands = new ArrayList<String>();
-    if (OS.CURRENT == OS.Windows) {
-      commands.add("rundll32.exe");
-      commands.add("url.dll,FileProtocolHandler");
-    }
-    else if (OS.CURRENT == OS.macOS) {
-      commands.add("/usr/bin/open");
-    }
-    else if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) {
-      commands.add("xdg-open");
-    }
-    else {
-      return null;
-    }
-    commands.add(file.getPresentableUrl());
-    return commands;
-  }
+  override fun getName(): String = "Native"
 
-  private static void startProcess(List<String> commands) {
-    try {
-      new ProcessBuilder(commands).start();
-    }
-    catch (Exception e) {
-      Logger.getInstance(NativeFileType.class).warn(e);
-    }
+  override fun getDescription(): String = IdeCoreBundle.message("filetype.native.description")
+
+  override fun getDisplayName(): @Nls String = IdeCoreBundle.message("filetype.native.display.name")
+
+  override fun getDefaultExtension(): String = ""
+
+  override fun getIcon(): Icon = AllIcons.FileTypes.Custom
+
+  override fun isBinary(): Boolean = true
+
+  override fun openFileInAssociatedApplication(project: Project, file: VirtualFile): Boolean = openAssociatedApplication(file)
+
+  override fun useNativeIcon(): Boolean = true
+}
+
+private fun coroutineScope(): CoroutineScope = service<NativeFileTypeCoroutineScopeHolder>().coroutineScope
+
+private fun getFallbackCommand(file: VirtualFile): List<String>? {
+  val launcher = when (OS.CURRENT) {
+    OS.Windows -> listOf("rundll32.exe", "url.dll,FileProtocolHandler")
+    OS.macOS -> listOf("/usr/bin/open")
+    else -> if (PathEnvironmentVariableUtil.isOnPath("xdg-open")) listOf("xdg-open") else return null
+  }
+  return launcher + file.presentableUrl
+}
+
+private fun startProcess(command: List<String>) {
+  try {
+    ProcessBuilder(command).start()
+  }
+  catch (e: Exception) {
+    rethrowControlFlowException(e)
+    LOG.warn(e)
   }
 }
+
+@Service
+private class NativeFileTypeCoroutineScopeHolder(@JvmField val coroutineScope: CoroutineScope)

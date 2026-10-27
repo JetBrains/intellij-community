@@ -779,7 +779,8 @@ a:com.intellij.openapi.fileTypes.FileTypeManager
 - a:setIgnoredFilesList(java.lang.String):V
 f:com.intellij.openapi.fileTypes.NativeFileType
 - com.intellij.openapi.fileTypes.INativeFileType
-- s:openAssociatedApplication(com.intellij.openapi.vfs.VirtualFile):Z
+- bf:getINSTANCE():com.intellij.openapi.fileTypes.NativeFileType
+- sf:openAssociatedApplication(com.intellij.openapi.vfs.VirtualFile):Z
 f:com.intellij.openapi.fileTypes.StdFileTypes
 - com.intellij.openapi.fileTypes.FileTypes
 com.intellij.openapi.fileTypes.TemplateLanguageFileType
