@@ -21,6 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,6 +149,11 @@ public class DiffSplitter extends JBSplitter {
   @RequiresEdt
   public void setPainter(@Nullable Painter painter) {
     myPainter = painter;
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Painter getPainter() {
+    return myPainter;
   }
 
   public void repaintDivider() {
