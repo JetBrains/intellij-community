@@ -19,7 +19,7 @@ import com.intellij.find.findUsages.PersistentFindUsagesOptions;
 import com.intellij.find.impl.FindManagerImpl;
 import com.intellij.find.impl.UsageAdaptersKt;
 import com.intellij.find.usages.api.SearchTarget;
-import com.intellij.find.usages.impl.Psi2UsageInfo2UsageAdapter;
+import com.intellij.find.usages.impl.PsiUsage2UsageInfo;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.searcheverywhere.ExtendedInfo;
@@ -943,7 +943,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
 
       int line = editor.getDocument().getLineNumber(offset);
       return usage -> {
-        if (usage instanceof Psi2UsageInfo2UsageAdapter adapter) {
+        if (usage instanceof UsageInfo2UsageAdapter adapter && adapter.getUsageInfo() instanceof PsiUsage2UsageInfo) {
           if (line != adapter.getLine() || !file.equals(adapter.getFile())) {
             return false;
           }
