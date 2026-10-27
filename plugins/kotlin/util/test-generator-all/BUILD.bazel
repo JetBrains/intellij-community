@@ -55,8 +55,6 @@ jvm_library(
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//platform/testFramework/common",
         "//platform/testFramework/common:common_test_lib",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests_test_lib",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
         "//plugins/kotlin/base/scripting/scripting:kotlin-base-scripting-tests",

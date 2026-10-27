@@ -227,8 +227,6 @@ jvm_library(
         "//plugins/kotlin/completion/tests-shared:kotlin-completion-tests-shared_test_lib",
         "//plugins/kotlin/base/code-insight",
         "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform-tests_test_lib",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests",
         "//plugins/kotlin/base/fir/project-structure:kotlin-projectStructure-tests_test_lib",
         "//plugins/kotlin/base/scripting/scripting:kotlin-base-scripting-tests",
