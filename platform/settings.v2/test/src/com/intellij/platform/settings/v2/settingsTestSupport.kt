@@ -1,8 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.v2
 
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.settings.v2.impl.providers.FileLayerService
@@ -77,12 +75,12 @@ internal fun clearLocalityConfigs(dir: Path, teamFileName: String) {
  * Returns the text of the [locality] config of [dir], or `null` when the file is absent. The default locality gives
  * `.jetbrains.local.json`, where a plain write lands.
  */
-internal suspend fun readConfigOrNull(dir: VirtualFile, locality: LayerLocality = LayerLocality.LOCAL): String? =
-  readAction { dir.findChild(localityConfigName(FileLayerService.CONFIG_FILE, locality))?.takeIf { it.isValid }?.let { VfsUtilCore.loadText(it) } }
+internal fun readConfigOrNull(dir: VirtualFile, locality: LayerLocality = LayerLocality.LOCAL): String? =
+  dir.toNioPath().resolve(localityConfigName(FileLayerService.CONFIG_FILE, locality)).takeIf { Files.exists(it) }?.let { Files.readString(it) }
 
 /** Returns the text of the local config (`.jetbrains.local.json`) of [dir]. Fails when the file is absent. */
-internal suspend fun readConfig(dir: VirtualFile): String =
-  readAction { VfsUtilCore.loadText(dir.findChild(localConfigName(FileLayerService.CONFIG_FILE))!!) }
+internal fun readConfig(dir: VirtualFile): String =
+  Files.readString(dir.toNioPath().resolve(localConfigName(FileLayerService.CONFIG_FILE)))
 
 /** Waits until the [locality] config of [dir] on disk holds [value], for up to [DISK_TIMEOUT]. */
 internal suspend fun awaitConfigContains(dir: VirtualFile, locality: LayerLocality, value: String) {

@@ -4,6 +4,7 @@ package com.intellij.platform.settings.v2
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.settings.v2.impl.providers.FileLayerService
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -87,7 +88,8 @@ class PerFileLayerTest {
     awaitConfigFile(dir)  // read-your-writes makes the reads above immediate; wait for the debounced persist before deleting
 
     // The writes above land in the local config (default locality); delete that file to clear them.
-    VfsTestUtil.deleteFile(readAction { dir.findChild(localConfigName(FileLayerService.CONFIG_FILE))!! })
+    val config = dir.toNioPath().resolve(localConfigName(FileLayerService.CONFIG_FILE))
+    VfsTestUtil.deleteFile(VirtualFileManager.getInstance().refreshAndFindFileByNioPath(config)!!)
 
     awaitEquals("def") { style[fooCtx] }   // per-file override gone → key default
     awaitEquals("def") { style[dirCtx] }   // directory value gone → key default
