@@ -34,7 +34,11 @@ The host-side provider, layout-plan, fragment and composition flow is documented
 in [Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md). The guest consumes a
 self-contained Bazel distribution, and it needs no checkout of its own. Nothing caches a guest run,
 so an iteration runs every suite it selects again. On 2026-09-30 the `ui` lane was 71 tests in 40
-classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`. To
+classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`.
+A Kotlin file of the test bridge reaches only the suites whose requests reach the declarations that the change
+changed, against the commit where `HEAD` meets its upstream. `suites --base <rev>` compares with another revision.
+Only a bridge declaration that every suite reaches, such as the state reset or the HTTP service, reaches the whole lane
+set. On 2026-10-27 one changed bridge function selected 86 suites in three lanes before, and 4 suites after. To
 test one flow, run `vm.cmd run flow-rename-session`: it selects every generated suite that tells or
 walks the flow. `vm.cmd run rename-session` selects one suite by its id. A suite is the smallest unit,
 because its scenarios share one managed-agent chain

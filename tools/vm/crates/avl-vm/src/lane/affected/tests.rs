@@ -242,9 +242,16 @@ fn a_coarse_two_lane_answer_says_it_came_from_a_module_endpoint() {
 async fn the_suites_command_subtotals_each_lane_and_carries_the_counts_as_data() {
     let checkout = Checkout::new();
 
-    let outcome = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), paths([BOTH]), &quiet())
-        .await
-        .unwrap();
+    let outcome = command_suites(
+        &Ctx::background(),
+        &checkout.settings(),
+        &path_runner(),
+        paths([BOTH]),
+        None,
+        &quiet(),
+    )
+    .await
+    .unwrap();
 
     // The last line is the aggregate: the total, the subtotal of each lane, and the command to run next. A caller
     // reads the sizes off it rather than counting the suite lines above it.
@@ -269,9 +276,16 @@ async fn the_suites_command_subtotals_each_lane_and_carries_the_counts_as_data()
 async fn one_lanes_suites_need_no_lane_in_the_command_to_run_next() {
     let checkout = Checkout::new();
 
-    let outcome = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), paths([PRESET]), &quiet())
-        .await
-        .unwrap();
+    let outcome = command_suites(
+        &Ctx::background(),
+        &checkout.settings(),
+        &path_runner(),
+        paths([PRESET]),
+        None,
+        &quiet(),
+    )
+    .await
+    .unwrap();
 
     // One lane settles itself, so the next command carries no `--lane` for the caller to fill in.
     assert_eq!(
@@ -284,7 +298,7 @@ async fn one_lanes_suites_need_no_lane_in_the_command_to_run_next() {
 async fn the_suites_command_needs_a_path() {
     let checkout = Checkout::new();
 
-    let refused = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), Vec::new(), &quiet())
+    let refused = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), Vec::new(), None, &quiet())
         .await
         .unwrap_err();
 

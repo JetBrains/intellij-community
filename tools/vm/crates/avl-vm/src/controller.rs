@@ -150,7 +150,9 @@ impl Controller {
                 let probe = parked_daemon_probe(Arc::clone(&self.settings), self.host.daemon().clone());
                 command_lease(ctx, manager, &command, lease_file, &probe).await
             }
-            Cmd::Suites { paths } => crate::lane::command_suites(ctx, &self.settings, &self.runner, paths, &self.reporter).await,
+            Cmd::Suites { paths, base } => {
+                crate::lane::command_suites(ctx, &self.settings, &self.runner, paths, base.as_deref(), &self.reporter).await
+            }
             Cmd::Run(args) => self.host.command_run(ctx, &args, lease_file).await,
             Cmd::Shard(args) => shard::command_shard(ctx, &self.host, args).await,
             Cmd::Flake(args) => flake::command_flake(ctx, &self.host, args, lease_file).await,

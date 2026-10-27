@@ -25,6 +25,8 @@ use super::teamcity::{Build, CHANGED_FILES};
 pub(crate) const AFFECTED_FILE: &str = "affected.json";
 /// The version of the document.
 const SCHEMA: u32 = 1;
+/// The revision of the changed files of the patch of a personal build.
+const PERSONAL_REVISION: &str = "<personal>";
 
 /// One line of the file of the changed files.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -163,7 +165,14 @@ pub(crate) fn affected(runtime: &dyn Runtime, area: &Area, revision: &str, files
     };
     for (commit, of_commit) in commits {
         let paths: Vec<String> = of_commit.iter().map(|file| file.path.clone()).collect();
-        let joined = avl_affected::affected_suites(runtime, area, &paths).map_err(|refused| {
+        // A personal build carries its patch in the working tree, so its baseline is the commit it is based on.
+        let parent = format!("{commit}^");
+        let baseline = if commit == PERSONAL_REVISION {
+            avl_affected::Baseline::Upstream
+        } else {
+            avl_affected::Baseline::Revision(&parent)
+        };
+        let joined = avl_affected::affected_suites(runtime, area, &paths, baseline).map_err(|refused| {
             format!(
                 "the suite join refused the files of {commit}: {}: {}",
                 refused.code, refused.message

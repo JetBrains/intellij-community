@@ -227,6 +227,11 @@ pub(crate) enum Cmd {
     Suites {
         #[arg(value_name = "CHANGED_PATH")]
         paths: Vec<String>,
+        /// The revision that a changed Kotlin file of the test bridge is compared with, to find its changed
+        /// declarations. The default is the commit where HEAD meets its upstream, so every change that is not pushed
+        /// yet counts.
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
     },
     /// Builds on the host and runs one selection in a worker's warm daemon.
     #[command(long_about = run_long_about())]

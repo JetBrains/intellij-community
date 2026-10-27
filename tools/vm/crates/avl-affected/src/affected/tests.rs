@@ -21,7 +21,7 @@ fn put(tree: &mut Tree, path: &str, text: impl Into<String>) {
 
 fn affected_of(fake: &FakeRuntime, paths: &[&str]) -> Affected {
     let paths: Vec<String> = paths.iter().map(ToString::to_string).collect();
-    affected_suites(fake, area(), &paths).unwrap_or_else(|failure| panic!("the resolution refused: {failure}"))
+    affected_suites(fake, area(), &paths, Baseline::Upstream).unwrap_or_else(|failure| panic!("the resolution refused: {failure}"))
 }
 
 fn reasons_of(affected: &Affected) -> String {
@@ -149,7 +149,7 @@ fn an_absolute_path_is_accepted_beside_a_repo_relative_one() {
 
 #[test]
 fn naming_no_path_is_a_usage_refusal() {
-    let failure = refusal(affected_suites(&catalog(), area(), &[]));
+    let failure = refusal(affected_suites(&catalog(), area(), &[], Baseline::Upstream));
     assert_eq!(failure.exit, exit::USAGE);
 }
 
@@ -157,7 +157,12 @@ fn naming_no_path_is_a_usage_refusal() {
 fn an_unreadable_catalog_refuses_rather_than_answering_nothing() {
     let fake = FakeRuntime::new([("plugins/air/frontend/src/Rows.kt", kdoc(&["@flow flow-x"]).as_str())]);
     // An empty answer and a missing catalog look identical to a caller, and one of them means "run nothing".
-    let failure = refusal(affected_suites(&fake, area(), &["plugins/air/frontend/src/Rows.kt".to_owned()]));
+    let failure = refusal(affected_suites(
+        &fake,
+        area(),
+        &["plugins/air/frontend/src/Rows.kt".to_owned()],
+        Baseline::Upstream,
+    ));
     assert_eq!(failure.exit, exit::INFRA);
 }
 
@@ -168,7 +173,12 @@ fn a_lane_the_controller_does_not_run_is_refused_by_name() {
         &document_path("future"),
         &suite_document_text("future", "HEADLESS", "AirFutureGeneratedFlowUiTest", "flow-manage-launch-preset"),
     );
-    let failure = refusal(affected_suites(&fake, area(), &["plugins/air/frontend/src/Rows.kt".to_owned()]));
+    let failure = refusal(affected_suites(
+        &fake,
+        area(),
+        &["plugins/air/frontend/src/Rows.kt".to_owned()],
+        Baseline::Upstream,
+    ));
     assert_eq!(failure.exit, exit::INFRA);
     assert!(failure.message.contains("HEADLESS"), "{}", failure.message);
 }
@@ -177,7 +187,12 @@ fn a_lane_the_controller_does_not_run_is_refused_by_name() {
 fn a_malformed_suite_document_is_refused_by_name() {
     let fake = catalog();
     fake.put(&document_path("broken"), "{\"suite\": \"broken\", ");
-    let failure = refusal(affected_suites(&fake, area(), &["plugins/air/frontend/src/Rows.kt".to_owned()]));
+    let failure = refusal(affected_suites(
+        &fake,
+        area(),
+        &["plugins/air/frontend/src/Rows.kt".to_owned()],
+        Baseline::Upstream,
+    ));
     assert!(failure.message.contains("broken.json"), "{}", failure.message);
 }
 

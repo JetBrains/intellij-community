@@ -88,6 +88,15 @@ pub trait Runtime: Sync {
     /// would answer every build output and every `node_modules` file under a module as a changed path.
     fn list_files(&self, dir: &Path) -> io::Result<Vec<PathBuf>>;
 
+    /// The text of a repo-relative file at a revision of the checkout, or `None` when the revision holds no such file.
+    /// An error is a revision that the checkout does not hold, or a checkout that the version control cannot read.
+    fn revision_text(&self, revision: &str, path: &str) -> io::Result<Option<String>>;
+
+    /// The commit where `HEAD` meets its upstream: the upstream of the current branch, or the default branch of
+    /// `origin` for a detached `HEAD`. The commits after it are the changes that are not pushed yet. An error is a
+    /// checkout without an upstream.
+    fn upstream_base(&self) -> io::Result<String>;
+
     /// Answers for a directory as well as a file: every test source root this crate probes is a directory.
     fn exists(&self, path: &Path) -> bool;
 

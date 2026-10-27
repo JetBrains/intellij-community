@@ -660,6 +660,12 @@ fn the_bep_file_is_deleted_even_when_the_run_blows_up() {
         fn list_files(&self, dir: &Path) -> std::io::Result<Vec<PathBuf>> {
             self.0.list_files(dir)
         }
+        fn revision_text(&self, revision: &str, path: &str) -> std::io::Result<Option<String>> {
+            self.0.revision_text(revision, path)
+        }
+        fn upstream_base(&self) -> std::io::Result<String> {
+            self.0.upstream_base()
+        }
         fn exists(&self, path: &Path) -> bool {
             self.0.exists(path)
         }

@@ -773,7 +773,13 @@ fn a_source_path_is_joined_as_vm_suites_joins_it() {
 
     // The reference answer is `bt`'s own, asked directly.
     let runtime = bt_runtime(&repo.root, BtNotes::default());
-    let affected = avl_affected::affected_suites(&runtime, air_area(), &[tagged.to_owned(), plain.to_owned()]).expect("bt joins the paths");
+    let affected = avl_affected::affected_suites(
+        &runtime,
+        air_area(),
+        &[tagged.to_owned(), plain.to_owned()],
+        avl_affected::Baseline::Upstream,
+    )
+    .expect("bt joins the paths");
     let mut want: Vec<String> = affected
         .suites
         .iter()

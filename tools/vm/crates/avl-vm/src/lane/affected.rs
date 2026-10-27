@@ -20,7 +20,7 @@
 
 use std::path::{Path, PathBuf};
 
-use avl_affected::{affected_suites, air_area};
+use avl_affected::{Baseline, affected_suites, air_area};
 use avl_base::{Config, Exit, Outcome, Refusal, Reporter};
 use avl_host_sys::guest::ensure_host_paths;
 use avl_host_sys::{Ctx, Runner};
@@ -129,7 +129,7 @@ impl Reached {
 /// The generated suites the named paths reach.
 pub(crate) fn resolve_changed_suites(settings: &Config, paths: &[String], reporter: &Reporter) -> Result<Reached, Refusal> {
     Ok(Reached {
-        affected: resolve_affected(settings, paths, reporter)?,
+        affected: resolve_affected(settings, paths, Baseline::Upstream, reporter)?,
         subject: CHANGED_PATHS_SUBJECT.to_owned(),
     })
 }
@@ -230,9 +230,14 @@ pub(crate) fn is_named_suite_selector(selector: &str) -> bool {
 }
 
 /// The join alone, with no lane chosen and no filter built: what `suites` answers.
-pub(crate) fn resolve_affected(settings: &Config, paths: &[String], reporter: &Reporter) -> Result<Affected, Refusal> {
+pub(crate) fn resolve_affected(
+    settings: &Config,
+    paths: &[String],
+    baseline: Baseline<'_>,
+    reporter: &Reporter,
+) -> Result<Affected, Refusal> {
     let runtime = bt_runtime(settings.host_repo()?, reporter);
-    affected_suites(&runtime, air_area(), paths).map_err(as_usage)
+    affected_suites(&runtime, air_area(), paths, baseline).map_err(as_usage)
 }
 
 // --- the read-only command ------------------------------------------------------------------------------------
@@ -281,6 +286,7 @@ pub(crate) async fn command_suites(
     settings: &Config,
     runner: &Runner,
     paths: Vec<String>,
+    base: Option<&str>,
     reporter: &Reporter,
 ) -> Result<Outcome, Refusal> {
     if paths.is_empty() {
@@ -288,7 +294,8 @@ pub(crate) async fn command_suites(
     }
     // The join reads the checkout through `host_repo`, which is only answerable once the host paths have resolved.
     ensure_host_paths(ctx, runner, settings).await?;
-    let affected = resolve_affected(settings, &paths, reporter)?;
+    let baseline = base.map_or(Baseline::Upstream, Baseline::Revision);
+    let affected = resolve_affected(settings, &paths, baseline, reporter)?;
     Outcome::new(SuitesData::of(&affected)?, render_suites(&affected))
 }
 

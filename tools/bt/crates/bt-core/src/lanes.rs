@@ -36,10 +36,12 @@ use crate::shard_plan::{PLANNED_SHARDS, SHARD_PLAN_ENV};
 /// - The suite catalog, both or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
 ///   one document per generated suite; `flowTextDir`, where the flow text generator writes one plain-text rendering
 ///   per story flow.
-/// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
-///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
-///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or directory
-///   that no module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
+/// - `specDir`, `laneWideModules`, `laneWidePaths` and `declarationReach`: what the Air UI-lane controller joins a
+///   changed path through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the
+///   lane harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or
+///   directory that no module of the area holds, by its repo-relative path, in the same shape. `declarationReach`
+///   names the harness modules whose Kotlin sources the controller joins by declaration, each a [`DeclarationReach`].
+///   This crate reads none of them.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Lanes {
@@ -59,7 +61,26 @@ pub struct Lanes {
     lane_wide_modules: BTreeMap<String, Vec<String>>,
     #[serde(default)]
     lane_wide_paths: BTreeMap<String, Vec<String>>,
+    #[serde(default)]
+    declaration_reach: BTreeMap<String, DeclarationReach>,
     lanes: Vec<LaneSpec>,
+}
+
+/// A harness module whose Kotlin sources the Air UI-lane controller joins by declaration: a changed declaration reaches
+/// the suites whose requests reach it, and only a declaration that every suite reaches is lane-wide. All paths are
+/// repo-relative.
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DeclarationReach {
+    /// The source directories of the module, and those of the modules that call into it inside the IDE.
+    pub sources: Vec<String>,
+    /// The module descriptors whose classes the IDE creates by itself, such as a service or an HTTP handler.
+    pub descriptors: Vec<String>,
+    /// The simple name of the sealed type of every request that the server decodes.
+    pub request_type: String,
+    /// The flow vocabulary file of the module, which the controller joins by its entries.
+    #[serde(default)]
+    pub vocabulary: Option<String>,
 }
 
 /// The suite catalog of a lane table: the two paths the suite join reads, both repo-relative.
@@ -179,6 +200,15 @@ impl Lanes {
         }
         lanes.check_tags()?;
         lanes.check_document_lanes()?;
+        if let Some(module) = lanes
+            .declaration_reach
+            .keys()
+            .find(|module| !lanes.lane_wide_modules.contains_key(*module))
+        {
+            return Err(format!(
+                "declarationReach names {module}, which laneWideModules does not name: the reach narrows a harness module"
+            ));
+        }
         Ok(lanes)
     }
 
@@ -374,6 +404,12 @@ impl Lanes {
                     .is_some_and(|rest| rest.is_empty() || rest.starts_with('/'))
             })
             .max_by_key(|(directory, _)| directory.len())
+    }
+
+    /// How the controller joins the Kotlin sources of a harness module by declaration, or `None` when every path of
+    /// the module is lane-wide.
+    pub fn declaration_reach(&self, module: &str) -> Option<&DeclarationReach> {
+        self.declaration_reach.get(module)
     }
 
     pub fn lane_wide_paths(&self) -> impl Iterator<Item = (&str, &[String])> {

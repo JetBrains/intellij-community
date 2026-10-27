@@ -362,6 +362,64 @@ fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
     );
 }
 
+/// A revision reads a file as the commit holds it, answers no text for a file that the commit does not hold, and is an
+/// error when the checkout holds no such commit. The upstream base is where `HEAD` meets the upstream of its branch.
+#[test]
+fn a_revision_reads_its_files_and_the_upstream_base_is_the_merge_base() {
+    if !git_available() {
+        eprintln!("skipped: no git on this host");
+        return;
+    }
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let repo = dir.path();
+    let git = |args: &[&str]| -> String {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(repo)
+            .args([
+                "-c",
+                "user.name=test",
+                "-c",
+                "user.email=test@example.com",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args(args)
+            .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .output()
+            .expect("git runs");
+        assert!(output.status.success(), "git {args:?}: {output:?}");
+        String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    };
+    std::fs::create_dir_all(repo.join("module")).expect("mkdir");
+    std::fs::write(repo.join("module/Driver.kt"), "first\n").expect("write");
+    git(&["init", "-q", "-b", "main"]);
+    git(&["add", "module/Driver.kt"]);
+    git(&["commit", "-q", "-m", "first"]);
+    let base = git(&["rev-parse", "HEAD"]);
+    git(&["branch", "published"]);
+    git(&["branch", "-q", "--set-upstream-to=published"]);
+    std::fs::write(repo.join("module/Driver.kt"), "second\n").expect("write");
+    git(&["commit", "-q", "-am", "second"]);
+
+    let host = OsRuntime::builder(repo).build();
+    assert_eq!(host.upstream_base().expect("the branch has an upstream"), base);
+    assert_eq!(
+        host.revision_text(&base, "module/Driver.kt").expect("git reads"),
+        Some("first\n".to_owned())
+    );
+    assert_eq!(
+        host.revision_text("HEAD", "module/Driver.kt").expect("git reads"),
+        Some("second\n".to_owned())
+    );
+    assert_eq!(host.revision_text(&base, "module/Gone.kt").expect("git reads"), None);
+    host.revision_text("no-such-revision", "module/Driver.kt")
+        .expect_err("the checkout holds no such revision");
+    git(&["checkout", "-q", "--detach"]);
+    host.upstream_base().expect_err("a detached HEAD without origin has no upstream");
+}
+
 /// A directory git cannot list is an error that names it, never an empty listing: an empty one reads as "this
 /// directory holds no file", which is a different answer.
 #[test]

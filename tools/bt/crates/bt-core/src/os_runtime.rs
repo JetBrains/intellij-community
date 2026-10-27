@@ -131,6 +131,28 @@ impl OsRuntimeBuilder {
     }
 }
 
+impl OsRuntime {
+    /// The stdout of one git command in the checkout, or an error with what git said.
+    ///
+    /// Not through the injected spawn, for the reason of [`Runtime::list_files`]: a read of the checkout is not a
+    /// subprocess that the controller must keep out of a held lease.
+    fn git(&self, args: &[&str]) -> io::Result<String> {
+        let ran = Command::new("git")
+            .arg("-C")
+            .arg(&self.repo_root)
+            .args(args)
+            .stdin(Stdio::null())
+            .output();
+        let refused = |said: String| io::Error::other(format!("git {} failed in {}: {said}", args.join(" "), self.repo_root.display()));
+        let ran = ran.map_err(|error| refused(error.to_string()))?;
+        if !ran.status.success() {
+            let stderr = String::from_utf8_lossy(&ran.stderr).trim().to_owned();
+            return Err(refused(if stderr.is_empty() { ran.status.to_string() } else { stderr }));
+        }
+        Ok(String::from_utf8_lossy(&ran.stdout).into_owned())
+    }
+}
+
 /// Writes one line, appending the newline the runtime's callers leave to the sink.
 ///
 /// A failed write to stdout leaves nowhere to report it, the descriptor a report would go to being the one that just
@@ -602,6 +624,29 @@ impl Runtime for OsRuntime {
             .collect();
         files.sort();
         Ok(files)
+    }
+
+    /// A blob that git cannot read is a file that the revision does not hold, when the revision itself resolves.
+    fn revision_text(&self, revision: &str, path: &str) -> io::Result<Option<String>> {
+        if let Ok(blob) = self.git(&["cat-file", "blob", &format!("{revision}:{path}")]) {
+            return Ok(Some(blob));
+        }
+        self.git(&["rev-parse", "--verify", "--quiet", &format!("{revision}^{{commit}}")])?;
+        Ok(None)
+    }
+
+    fn upstream_base(&self) -> io::Result<String> {
+        let tracked = self
+            .git(&["symbolic-ref", "--quiet", "HEAD"])
+            .ok()
+            .and_then(|branch| self.git(&["for-each-ref", "--format=%(upstream)", branch.trim()]).ok())
+            .map(|upstream| upstream.trim().to_owned())
+            .filter(|upstream| !upstream.is_empty());
+        let upstream = match tracked {
+            Some(upstream) => upstream,
+            None => self.git(&["rev-parse", "--verify", "--quiet", "refs/remotes/origin/HEAD"])?.trim().to_owned(),
+        };
+        Ok(self.git(&["merge-base", "HEAD", &upstream])?.trim().to_owned())
     }
 
     fn exists(&self, path: &Path) -> bool {

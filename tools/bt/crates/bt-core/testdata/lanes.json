@@ -112,6 +112,21 @@
     "plugins/air/tests/integration/ui_lane_ide.bzl": [],
     "plugins/air/tests/integration/vm-contract": []
   },
+  "declarationReach": {
+    "intellij.air.integrationTests.bridge": {
+      "sources": [
+        "plugins/air/tests/integration/bridge/tests",
+        "plugins/air/tests/integration/bridge/testGen",
+        "plugins/air/tests/integration/bridge/genui/tests"
+      ],
+      "descriptors": [
+        "plugins/air/tests/integration/bridge/resources/intellij.air.integrationTests.bridge.xml",
+        "plugins/air/tests/integration/bridge/genui/resources/intellij.air.integrationTests.bridge.genui.xml"
+      ],
+      "requestType": "AirUiTestRequest",
+      "vocabulary": "plugins/air/tests/integration/bridge/resources/flow-vocabulary.json"
+    }
+  },
   "lanes": [
     {
       "name": "fast",

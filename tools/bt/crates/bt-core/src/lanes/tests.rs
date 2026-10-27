@@ -681,3 +681,44 @@ fn the_fixture_names_the_controller_workspace_as_a_lane_wide_path() {
         Some(("community/tools/vm", &[] as &[String]))
     );
 }
+
+/// A harness module that the controller joins by declaration must be a harness module: the reach narrows a lane-wide
+/// answer and adds no harness of its own.
+#[test]
+fn a_declaration_reach_narrows_a_lane_wide_module() {
+    let table = |modules: &str| {
+        Lanes::parse(&format!(
+            r#"{{
+              "laneWideModules": {{ {modules} }},
+              "declarationReach": {{
+                "bridge": {{ "sources": ["bridge/tests"], "descriptors": ["bridge/plugin.xml"], "requestType": "Request" }}
+              }},
+              "lanes": [ {{ "name": "ui", "target": "//ui:ui_test", "extra": [] }} ]
+            }}"#
+        ))
+    };
+    let parsed = table(r#""bridge": []"#).expect("the table parses");
+    let reach = parsed.declaration_reach("bridge").expect("the module is joined by declaration");
+    assert_eq!(
+        (reach.sources.clone(), reach.request_type.as_str(), reach.vocabulary.clone()),
+        (vec!["bridge/tests".to_owned()], "Request", None)
+    );
+    assert_eq!(parsed.declaration_reach("other"), None);
+    assert_eq!(
+        table("").unwrap_err(),
+        "declarationReach names bridge, which laneWideModules does not name: the reach narrows a harness module"
+    );
+}
+
+/// The fixture table joins the sources of the bridge by declaration, as the Air table does.
+#[test]
+fn the_fixture_joins_the_bridge_sources_by_declaration() {
+    let reach = lanes()
+        .declaration_reach("intellij.air.integrationTests.bridge")
+        .expect("the bridge is joined by declaration");
+    assert_eq!(reach.request_type, "AirUiTestRequest");
+    assert_eq!(
+        reach.vocabulary.as_deref(),
+        Some("plugins/air/tests/integration/bridge/resources/flow-vocabulary.json")
+    );
+}
