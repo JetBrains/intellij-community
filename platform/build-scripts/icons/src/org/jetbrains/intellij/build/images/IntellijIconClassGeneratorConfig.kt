@@ -233,7 +233,15 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.swagger.core"
       )
       "intellij.ml.llm.core" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
+      "intellij.ml.llm.nextEdits.frontend" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.ml.llm.nextEdits.frontend",
+      )
       "intellij.llmInstaller" -> IntellijIconClassGeneratorModuleConfig(className = "LLMIcons", packageName = "com.intellij.llmInstaller")
+      "intellij.llmInstaller.common" -> IntellijIconClassGeneratorModuleConfig(packageName = "com.intellij.llmInstaller.common")
+      "intellij.llmInstaller.jupyter" -> IntellijIconClassGeneratorModuleConfig(packageName = "com.intellij.llmInstaller.jupyter")
+      "intellij.llmInstaller.pycharm.community" -> IntellijIconClassGeneratorModuleConfig(
+        packageName = "com.intellij.llmInstaller.pycharm.community",
+      )
 
       "intellij.dts" -> IntellijIconClassGeneratorModuleConfig(className = "DtsIcons", packageName = "com.intellij.dts")
 
