@@ -1,3 +1,4 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.pyrefly.lsp
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -172,11 +173,7 @@ class PyreflyLspClientDescriptor(
    * and the upstream `remove_*_clears_and_flags_modified` tests for the exact contract.
    */
   private fun buildPyreflyClientSettings(): Map<String, Any> = buildMap {
-    put("displayTypeErrors", "force-on")
-
-    // the default value for "typeCheckingMode" is "auto", which will often disable all error messages
-    // to keep behaviour close to pycharm, we set it to "default" instead of the default
-    put("typeCheckingMode", "default")
+    put("typeCheckingMode", typeCheckingMode)
     // Pyrefly keeps `extraPaths` as `search_path_from_args` and consults it before its own heuristics,
     // which is the priority "Sources Root" has in the IDE. Content roots are deliberately left out:
     // Pyrefly already derives them from the workspace folders, and repeating them here would lift
@@ -204,8 +201,11 @@ class PyreflyLspClientDescriptor(
 
   private fun buildPyreflyAnalysisSettings(): Map<String, Any> = mapOf(
     "completeFunctionParens" to true,
-    "typeCheckingMode" to "default",
+    "typeCheckingMode" to typeCheckingMode,
   )
+
+  private val typeCheckingMode: String
+    get() = if (runsBundledPyrefly) "jet-basic" else "default"
 
   /**
    * Pyrefly keeps one workspace for each folder, and each workspace holds its own interpreter. It
