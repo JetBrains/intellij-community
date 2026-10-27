@@ -442,6 +442,10 @@ object PyTypeChecker {
       return Optional.of(match(actual, expected, context))
     }
 
+    if (actual is PyParamSpecType && context.reversedSubstitutions) {
+      return Optional.of(match(actual, expected, context))
+    }
+
     if (expected is PyParamSpecType) {
       return Optional.of(match(expected, actual, context))
     }
@@ -2040,7 +2044,7 @@ object PyTypeChecker {
   private inline fun recordTypeArgumentFrame(
     context: MatchContext,
     typeArgIndex: Int,
-    typeParameter: PyTypeVarType?,
+    typeParameter: PyTypeParameterType?,
     genericType: PyClassType?,
     expected: PyType?,
     actual: PyType?,
@@ -2063,23 +2067,23 @@ object PyTypeChecker {
     }, body)
 
   /**
-   * The declared type variable at [typeArgumentIndex] of [genericType]'s class, or null when there isn't one
-   * (no generic class, a tuple, or a non-[PyTypeVarType] parameter — see PY-89623). Used both to find the
+   * The declared type parameter at [typeArgumentIndex] of [genericType]'s class, or null when there isn't one
+   * (no generic class, a tuple, or an index past the declared parameters). Used both to find the
    * variance and to name the parameter in breakdowns.
    */
   private fun findTypeParameter(
     genericType: PyClassType?,
     typeArgumentIndex: Int,
     context: MatchContext,
-  ): PyTypeVarType? {
+  ): PyTypeParameterType? {
     if (genericType == null) return null
     if (genericType is PyTupleType) return null
     val genericDefType = findGenericDefinitionType(genericType.pyClass, context.context)
-    return genericDefType?.typeArguments?.getOrNull(typeArgumentIndex) as? PyTypeVarType
+    return genericDefType?.typeArguments?.getOrNull(typeArgumentIndex) as? PyTypeParameterType
   }
 
   private fun matchCapturedType(
-    typeParameter: PyTypeVarType?,
+    typeParameter: PyTypeParameterType?,
     genericType: PyClassType?,
     typeArgIndex: Int,
     variance: PyVariance,
@@ -2104,7 +2108,8 @@ object PyTypeChecker {
           // Invariance also requires the reverse direction. When only this leg fails, the actual is a strict
           // subtype (e.g. `list[bool]` where `list[int]` is expected); recording the reversed leg would read
           // backwards ("int is not assignable to bool"), so discard it and emit one invariance-specific reason.
-          val sameType = withoutRecording(context) { match(actualType, expectedType, context).getOrElse { false } }
+          val sameType = isUnboundTypeParameterOnActualSide(expectedType, context) ||
+                         withoutRecording(context) { match(actualType, expectedType, context).getOrElse { false } }
           if (!sameType) {
             recordLeaf(context, {
               // The prose form only earns the educational "even though … is a subtype of …" clause here, on the
@@ -2140,6 +2145,16 @@ object PyTypeChecker {
       PyVariance.BIVARIANT -> recordTypeArgumentFrame(context, typeArgIndex, typeParameter, genericType, expectedType, actualType) { match(expectedType, actualType, context).getOrElse { false } }
       else -> false
     }
+  }
+
+  /**
+   * Returns true if [type] is a type parameter that the reverse leg of an invariance check would see on its actual side.
+   * The forward leg has already bound it. [matchImpl] treats such a [PyTypeVarType] as unknown (see [containsAny]).
+   * A [PyTypeVarTupleType] or a [PyParamSpecType] gets the same treatment here, because the dedicated matchers
+   * for a positional variadic or a `Concatenate` on the expected side run before that check and reject it.
+   */
+  private fun isUnboundTypeParameterOnActualSide(type: PyType?, context: MatchContext): Boolean {
+    return !context.reversedSubstitutions && (type is PyTypeVarType || type is PyTypeVarTupleType || type is PyParamSpecType)
   }
 
   private fun matchNumericTypes(expected: PyType?, actual: PyType?): Boolean {
