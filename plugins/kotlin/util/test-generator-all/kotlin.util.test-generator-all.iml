@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="kotlin.util.project-model-updater" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.test" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.common" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.kotlin.projectStructure.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.gradle.scripting.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting.tests" scope="TEST" />
