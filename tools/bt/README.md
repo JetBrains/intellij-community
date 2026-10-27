@@ -97,9 +97,11 @@ nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` boun
 1. ssh: the alias answers in batch mode. Otherwise the step names the `~/.ssh/config` settings to check
    (`AddressFamily inet`, and `IdentitiesOnly yes` only with an `IdentityFile`), and the other steps do not run.
 2. The repository (`--host-repo`): a missing one is created with `feature.manyFiles`, `core.untrackedCache` and
-   `core.fsmonitor=false`. Then the local master goes to `refs/heads/sync` there, and `checkout -B master sync` makes
+   `core.fsmonitor=true`. Then the local master goes to `refs/heads/sync` there, and `checkout -B master sync` makes
    it the master. The step warns about the size first, because the whole history crosses the network. An existing
-   master moves to the local master only when it is clean and an ancestor.
+   master moves to the local master only when it is clean and an ancestor. An existing repository without
+   `core.fsmonitor=true` gets it, and the step says what the value was. The give-back of a host slot runs one
+   `status` after each run, and without fsmonitor it reads every file: 18-19 s on the Studio, against 2.5 s.
 3. `bd`: the local `~/.local/bin/bd` replaces another build on a host of the same platform. The SHA-256 of the binary
    tells the build, so a new build with the same version also goes over. `~/.local/bin` goes on the PATH in `~/.zshenv`.
 4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
