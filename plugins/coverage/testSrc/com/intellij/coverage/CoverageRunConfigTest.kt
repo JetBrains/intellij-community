@@ -26,8 +26,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.rt.coverage.data.LineCoverage
+import com.intellij.testFramework.ExecutionTestUtil
 import com.intellij.testFramework.IndexingTestUtil
-import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.utils.io.deleteRecursively
 import com.intellij.ui.classFilter.ClassFilter
@@ -259,7 +259,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
     try {
       options.setOptionsToReplace(CoverageOptionsProvider.ASK_ON_NEW_SUITE)
       withContext(Dispatchers.EDT) {
-        PlatformTestUtil.executeConfigurationAndWait(runConfig, CoverageExecutor.EXECUTOR_ID)
+          ExecutionTestUtil.executeConfigurationAndWait(runConfig, CoverageExecutor.EXECUTOR_ID)
       }
       val completedBundle = withTimeout(10_000.milliseconds) { completed.await() }
 
@@ -323,7 +323,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
 
       waitSuiteProcessing {
         runBlocking(Dispatchers.EDT) {
-          PlatformTestUtil.executeConfigurationAndWait(runConfig, CoverageExecutor.EXECUTOR_ID)
+            ExecutionTestUtil.executeConfigurationAndWait(runConfig, CoverageExecutor.EXECUTOR_ID)
         }
       }
 
