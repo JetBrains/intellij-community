@@ -30,7 +30,7 @@ import com.intellij.platform.util.coroutines.flow.mapStateIn
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.TerminalTitle
-import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import com.intellij.terminal.frontend.fus.TerminalCommandCompletionStatistics
 import com.intellij.terminal.frontend.fus.TerminalFusCursorPainterListener
 import com.intellij.terminal.frontend.fus.TerminalFusFirstOutputListener
@@ -799,7 +799,7 @@ class TerminalViewImpl(
 
     override fun uiDataSnapshot(sink: DataSink) {
       sink[TerminalView.DATA_KEY] = this@TerminalViewImpl
-      sink[TerminalActionUtil.EDITOR_KEY] = curEditor
+      sink[TerminalPlatformDataKeys.EDITOR_KEY] = curEditor
       sink[TerminalInput.DATA_KEY] = terminalInput
       sink[TerminalOutputModel.DATA_KEY] = outputModels.active.value
       sink[TerminalSearchController.KEY] = terminalSearchController

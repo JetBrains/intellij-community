@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModel
 import com.intellij.terminal.frontend.view.impl.TerminalOutputScrollingModelImpl
@@ -864,7 +864,7 @@ internal class TerminalScrollingModelTest : BasePlatformTestCase() {
 
     fun invokeAction(actionId: String) {
       val action = ActionManager.getInstance().getAction(actionId)!!
-      val dataContext = SimpleDataContext.getSimpleContext(TerminalActionUtil.EDITOR_KEY, editor, editor.dataContext)
+      val dataContext = SimpleDataContext.getSimpleContext(TerminalPlatformDataKeys.EDITOR_KEY, editor, editor.dataContext)
       val event = TestActionEvent.createTestEvent(action, dataContext)
       ActionUtil.performAction(action, event)
     }

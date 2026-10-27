@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Key
-import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction.Companion.SUPPRESS_COMPLETION
 import org.jetbrains.plugins.terminal.block.BlockTerminalController
@@ -51,7 +51,7 @@ object TerminalDataContextUtils {
     get() = getUserData(TerminalPromptModel.KEY)
 
   val DataContext.terminalEditor: Editor?
-    get() = getData(TerminalActionUtil.EDITOR_KEY) ?: getData(CommonDataKeys.EDITOR)
+    get() = getData(TerminalPlatformDataKeys.EDITOR_KEY) ?: getData(CommonDataKeys.EDITOR)
 
   @get:ApiStatus.Internal
   val DataContext.outputController: TerminalOutputController?

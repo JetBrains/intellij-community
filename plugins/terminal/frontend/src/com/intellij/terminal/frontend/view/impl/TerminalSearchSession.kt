@@ -35,7 +35,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.terminal.BlockTerminalColors
-import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.SmartList
 import com.intellij.util.ui.ComponentWithEmptyText
@@ -289,7 +289,7 @@ internal class TerminalSearchSession(
 
 private class DataContextWrapper(component: JComponent): Wrapper(component), UiDataProvider {
   override fun uiDataSnapshot(sink: DataSink) {
-    sink.setNull(TerminalActionUtil.EDITOR_KEY) // disable editor actions when the search is in focus
+    sink.setNull(TerminalPlatformDataKeys.EDITOR_KEY) // disable editor actions when the search is in focus
   }
 
   override fun getPreferredSize(): Dimension = super.getPreferredSize().also {

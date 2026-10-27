@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
-import com.intellij.terminal.actions.TerminalActionUtil
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import com.intellij.terminal.frontend.view.TerminalView
 import com.intellij.terminal.frontend.view.activeOutputModel
 import com.intellij.terminal.frontend.view.impl.TerminalInput
@@ -106,7 +106,7 @@ internal class TerminalViewFixture(private val project: Project, emulatorType: T
     val editor = activeEditor
     val context = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, project)
-      .add(TerminalActionUtil.EDITOR_KEY, editor)
+      .add(TerminalPlatformDataKeys.EDITOR_KEY, editor)
       .add(TerminalOutputModel.DATA_KEY, view.activeOutputModel())
       .add(TerminalView.DATA_KEY, view)
       .add(TerminalInput.DATA_KEY, editor.getUserData(TerminalInput.KEY))

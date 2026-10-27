@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
@@ -16,7 +14,6 @@ import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +26,6 @@ import java.util.function.Predicate;
 public final class TerminalActionUtil {
 
   private TerminalActionUtil() {}
-
-  @ApiStatus.Internal
-  public static final DataKey<Editor> EDITOR_KEY = DataKey.create("TERMINAL_EDITOR");
 
   public static @Nullable TerminalAction createTerminalAction(@NotNull JBTerminalWidget widget,
                                                               @NonNls @NotNull String actionId,
