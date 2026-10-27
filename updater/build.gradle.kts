@@ -35,12 +35,13 @@ tasks.test {
 
 tasks.register<Jar>("fatJar") {
   description = "Building the self-containing .jar file"
-  archiveFileName = "updater-full.jar"
   group = "build"
+  dependsOn(configurations.runtimeClasspath)
+
+  archiveFileName = "updater-full.jar"
   manifest.attributes["Main-Class"] = "com.intellij.updater.Bootstrap"
   manifest.attributes["Patcher-Version"] = "3.0"
   from(sourceSets.main.get().output)
-  dependsOn(configurations.runtimeClasspath)
   from(configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map(::zipTree))
   duplicatesStrategy = DuplicatesStrategy.EXCLUDE
   exclude(
