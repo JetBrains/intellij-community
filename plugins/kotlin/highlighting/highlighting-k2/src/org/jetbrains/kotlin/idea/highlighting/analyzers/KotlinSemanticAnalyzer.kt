@@ -21,7 +21,7 @@ internal abstract class KotlinSemanticAnalyzer(
     holder: HighlightInfoHolder,
 
     /**
-     * This is safe to store [KaSession] as its lifetime is limited to the corresponding [org.jetbrains.kotlin.analysis.api.analyze]
+     * This is safe to store [KaSession] as its lifetime is limited to the corresponding [org.jetbrains.kotlin.analysis.api.session.analyze]
      * block inside [org.jetbrains.kotlin.idea.highlighting.visitor.KotlinAbstractSemanticHighlightingVisitor].
      *
      * But it must not be exposed or stored outside this visitor.
