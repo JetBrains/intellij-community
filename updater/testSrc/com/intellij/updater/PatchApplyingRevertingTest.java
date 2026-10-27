@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +16,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -167,6 +168,24 @@ abstract class PatchApplyingRevertingTest {
     assertNotApplied(dirs, preparationResult);
   }
 
+  @Test @DisabledOnOs(OS.WINDOWS) void updatedFileIsReplacedNotOverwritten() throws Exception {
+    var oldDir = Files.createDirectories(tempDir.resolve("oldDir"));
+    var newDir = Files.createDirectories(tempDir.resolve("newDir"));
+    var oldFile = Files.writeString(oldDir.resolve("idea.sh"), "#!/bin/sh\necho 'hi there'\n");
+    var newFile = Files.writeString(newDir.resolve("idea.sh"), "#!/bin/sh\n\necho 'hi there'\n\nexit 0\n");
+    Files.createLink(tempDir.resolve("retainer"), oldFile);  // preventing the inode from being recycled
+    var originalFileKey = Files.readAttributes(oldFile, BasicFileAttributes.class).fileKey();
+    assertThat(originalFileKey).isNotNull();
+
+    var patchFile = createPatch(createPatchSpec(oldDir, newDir));
+    var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), oldDir.toFile(), testUI);
+    var applicationResult = PatchFileCreator.apply(preparationResult, Map.of(), null, testUI);
+    assertThat(applicationResult.error).isNull();
+    assertThat(applicationResult.applied).isTrue();
+    assertThat(oldFile).hasSameTextualContentAs(newFile);
+    assertThat(Files.readAttributes(oldFile, BasicFileAttributes.class).fileKey()).isNotNull().isNotEqualTo(originalFileKey);
+  }
+
   @Test void cancelledAtBackingUp() throws Exception {
     var dirs = prepareDirectories(tempDir, dataDir, true);
     var patchFile = createPatch(createPatchSpec(dirs.oldDir, dirs.newDir));
@@ -283,7 +302,7 @@ abstract class PatchApplyingRevertingTest {
     var preparationResult = PatchFileCreator.prepareAndValidate(patchFile.toFile(), dirs.oldDir.toFile(), testUI);
 
     assertThat(preparationResult.validationResults).isEmpty();
-    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> { original.remove("bin/idea.bat"); });
+    assertAppliedAndReverted(dirs, preparationResult, (original, target) -> original.remove("bin/idea.bat"));
   }
 
   @Test void revertingWithAbsentFileToDelete() throws Exception {

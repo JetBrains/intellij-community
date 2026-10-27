@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.intellij.updater.Utils.OpenByteArrayOutputStream;
@@ -208,14 +208,8 @@ public class UpdateAction extends PatchAction {
       }
     }
 
-    if (Utils.IS_MAC) {
-      // on macOS, code signing caches seem to be associated with specific file IDs, so we need to remove the original file
-      Utils.delete(toFile);
-      Utils.copy(source, toFile, false);
-    }
-    else {
-      Utils.copy(source, toFile, true);
-    }
+    // on macOS, code signing caches are bound to file IDs, so the file must be replaced rather than rewritten in place
+    Utils.copy(source, toFile, true);
   }
 
   @Override
