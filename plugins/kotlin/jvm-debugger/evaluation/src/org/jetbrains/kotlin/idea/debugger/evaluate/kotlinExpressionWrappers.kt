@@ -15,6 +15,7 @@ import java.util.concurrent.Callable
 import org.jetbrains.eval4j.jdi.asValue
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.diagnostics
+import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.expressions.expressionType
 import org.jetbrains.kotlin.analysis.api.renderer.render
 import org.jetbrains.kotlin.analysis.api.resolution.successful
@@ -24,7 +25,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.variable
 import org.jetbrains.kotlin.analysis.api.scopes.memberScope
 import org.jetbrains.kotlin.analysis.api.scopes.staticMemberScope
 import org.jetbrains.kotlin.analysis.api.session.analyze
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.findClass
@@ -44,7 +44,10 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
+import org.jetbrains.kotlin.idea.util.application.attachmentByPsiFile
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
+import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
+import org.jetbrains.kotlin.idea.util.application.merge
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtBlockCodeFragment
@@ -165,10 +168,16 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
             rewrite(candidate.dotQualified, newExpressionText)
         }
 
-        LOG.error("Runtime-type member rewriting did not converge after $MAX_REWRITE_ITERATIONS iterations")
+        ReadAction.nonBlocking(Callable {
+            reportUnexpectedState(
+                codeFragment,
+                "Runtime-type member rewriting did not converge after $MAX_REWRITE_ITERATIONS iterations",
+            )
+        }).executeSynchronously()
     }
 
     protected class RewriteCandidate(
+        val codeFragment: KtCodeFragment,
         val dotQualified: SmartPsiElementPointer<KtDotQualifiedExpression>,
         val receiver: SmartPsiElementPointer<KtExpression>,
         val receiverText: String,
@@ -194,11 +203,11 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
             }
             val receiver = dotQualified.receiverExpression
 
-            if (!isSimpleSideEffectFreeReceiver(receiver)) continue
+            if (!isSimpleReceiverExpression(receiver)) continue
 
-            val isUnresolved = calleeReference.diagnostics().directOnly(true).any {
-                it.factoryName == "UNRESOLVED_REFERENCE" || it.factoryName == "UNRESOLVED_REFERENCE_WRONG_RECEIVER"
-            }
+            val isUnresolved = calleeReference.diagnostics().directOnly(true)
+                .map { it.diagnosticClass }
+                .any { it == KaFirDiagnostic.UnresolvedReference::class || it == KaFirDiagnostic.UnresolvedReferenceWrongReceiver::class }
             if (!isUnresolved) continue
 
             val receiverIsValue = when (receiver) {
@@ -208,6 +217,7 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
             if (!receiverIsValue) continue
 
             return RewriteCandidate(
+                codeFragment = codeFragment,
                 dotQualified = SmartPointerManager.createPointer(dotQualified),
                 receiver = SmartPointerManager.createPointer(receiver),
                 receiverText = receiver.text,
@@ -222,13 +232,13 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
         val value = evaluateReceiver(codeFragment, candidate.receiver, candidate.receiverText) ?: return null
 
         val asmType = value.asValue().asmType
-        val className = asmType.internalName.replace('/', '.')
+        val className = asmType.className
         val rawClassId = ClassId.fromString(asmType.internalName.replace('$', '.'))
         val runtimeClassId = JavaToKotlinClassMap.mapJavaToKotlin(rawClassId.asSingleFqName()) ?: rawClassId
 
         return ReadAction.nonBlocking(Callable {
             analyze(codeFragment) {
-                val classSymbol = (findClass(runtimeClassId) as? KaNamedClassSymbol)
+                val classSymbol = findClass(runtimeClassId)
                     ?: findLocalClassByName(codeFragment, className)?.namedClassSymbol
                     ?: return@analyze null
 
@@ -284,7 +294,7 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
             }).executeSynchronously()
             evaluator.evaluate(evaluationContext)
         } catch (e: EvaluateException) {
-            LOG.debug("Failed to evaluate receiver for runtime-type member access: $receiverText", e)
+            LOG.warn("Failed to evaluate receiver for runtime-type member access: $receiverText", e)
             null
         }
 
@@ -303,6 +313,19 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
         }
     }
 
+    // Caller's responsibility to run under a read action.
+    protected fun reportUnexpectedState(codeFragment: KtCodeFragment, message: String) {
+        if (!isApplicationInternalMode()) {
+            LOG.error(message)
+            return
+        }
+        val attachments = listOfNotNull(
+            attachmentByPsiFile(codeFragment.context?.containingFile),
+            attachmentByPsiFile(codeFragment),
+        )
+        LOG.error(message, attachments.merge())
+    }
+
     private fun contentExpression(codeFragment: KtCodeFragment): KtExpression? =
         when (codeFragment) {
             is KtExpressionCodeFragment -> codeFragment.getContentElement()
@@ -313,13 +336,13 @@ internal abstract class KotlinRuntimeTypeMemberWrapper(
             }
         }
 
-    private fun isSimpleSideEffectFreeReceiver(receiver: KtExpression): Boolean =
+    private fun isSimpleReceiverExpression(receiver: KtExpression): Boolean =
         when (receiver) {
             is KtNameReferenceExpression -> true
             is KtThisExpression -> true
             is KtDotQualifiedExpression -> {
                 val selectorSimple = receiver.selectorExpression is KtNameReferenceExpression
-                selectorSimple && isSimpleSideEffectFreeReceiver(receiver.receiverExpression)
+                selectorSimple && isSimpleReceiverExpression(receiver.receiverExpression)
             }
             else -> false
         } && receiver.collectDescendantsOfType<KtCallExpression>().isEmpty()
@@ -345,7 +368,15 @@ internal class KotlinRuntimeTypeCastWrapper(
         val classId = classSymbol.defaultType.symbol?.classId
         val recovered = if (classSymbol.typeParameters.isNotEmpty() && classId != null) {
             val receiver = candidate.receiver.element
-            if (receiver == null) null else recoverCastTypeFromSource(receiver, classId)
+            if (receiver == null) {
+                reportUnexpectedState(
+                    candidate.codeFragment,
+                    "Receiver PSI unexpectedly unavailable while recovering cast type for '${candidate.receiverText}.${candidate.selectorText}'",
+                )
+                null
+            } else {
+                recoverCastTypeFromSource(receiver, classId)
+            }
         } else {
             null
         }
@@ -386,7 +417,7 @@ internal class KotlinRuntimeTypeCastWrapper(
 
     context(_: KaSession)
     private fun KaType.replaceTypeParametersWithStarProjections(): KaType? =
-        (abbreviationOrSelf.symbol as? KaClassLikeSymbol)?.defaultTypeWithStarProjections
+        abbreviationOrSelf.symbol?.defaultTypeWithStarProjections
 }
 
 /**
