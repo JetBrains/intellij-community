@@ -15,18 +15,22 @@ import kotlin.io.path.readText
 /**
  * Verifies plugin manager specification files and their links to source files and tests.
  *
- * [repositoryRoot] defines the base for code backlinks. [scanRoots] limit target matching and backlink checks.
+ * [repositoryRoot] bounds specification references and provides the default base for backlinks.
+ * [scanRoots] limit target matching and backlink checks.
  * [sectionRequirements] defines the required sections for each specification path relative to [specRoot].
+ * [backlinkRoots] resolve backlinks when scanned sources use different repository roots.
  */
 class PluginManagerSpecVerifier(
   repositoryRoot: Path,
   specRoot: Path,
   scanRoots: List<Path>,
   sectionRequirements: Map<String, Set<String>>,
+  backlinkRoots: List<Path> = listOf(repositoryRoot),
 ) {
   private val repositoryRoot = repositoryRoot.toAbsolutePath().normalize()
   private val specRoot = specRoot.toAbsolutePath().normalize()
   private val scanRoots = scanRoots.map { it.toAbsolutePath().normalize() }
+  private val backlinkRoots = backlinkRoots.map { it.toAbsolutePath().normalize() }
   private val sectionRequirements = sectionRequirements.mapKeys { (path, _) ->
     Path.of(path).normalize().invariantSeparatorsPathString
   }
@@ -160,18 +164,18 @@ class PluginManagerSpecVerifier(
   ) {
     val specsByPath = specs.associateBy { it.path }
     val backlinkCounts = specs.associate { it.path to 0 }.toMutableMap()
-    val specPrefix = repositoryRoot.relativize(specRoot).invariantSeparatorsPathString.trimEnd('/') + "/"
     for (source in scannedFiles.filter { it.name.endsWith(".kt") || it.name.endsWith(".java") }) {
       val sourceText = source.readText()
       for (match in BACKLINK.findAll(sourceText)) {
         val link = match.groupValues[1]
-        val target = repositoryRoot.resolve(link).normalize()
-        if (Path.of(link).isAbsolute || !target.startsWith(repositoryRoot) ||
-            !Files.isRegularFile(target) || !target.name.endsWith(".spec.md")) {
+        val target = backlinkRoots.firstNotNullOfOrNull { root ->
+          root.resolve(link).normalize().takeIf { it.startsWith(root) && Files.isRegularFile(it) && it.name.endsWith(".spec.md") }
+        }
+        if (Path.of(link).isAbsolute || target == null) {
           violations += "${display(source)}:${lineOf(sourceText, match.range.first)}: backlink '$link' does not resolve"
           continue
         }
-        if (!link.startsWith(specPrefix)) continue
+        if (!target.startsWith(specRoot)) continue
         val spec = specsByPath[target]
         if (spec == null) {
           violations += "${display(source)}:${lineOf(sourceText, match.range.first)}: backlink '$link' does not resolve"

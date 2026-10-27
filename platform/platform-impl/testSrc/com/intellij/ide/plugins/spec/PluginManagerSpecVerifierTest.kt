@@ -39,6 +39,25 @@ internal class PluginManagerSpecVerifierTest {
     )
   }
 
+  @Test
+  fun `backlinks resolve from either configured repository root`() {
+    writeFixture("expected behavior")
+    write("community/spec/shared.spec.md", "# Shared\n")
+    write("src/Shared.kt", "// @spec spec/shared.spec.md\nclass Shared\n")
+
+    assertThat(validate(backlinkRoots = listOf(repositoryRoot, repositoryRoot.resolve("community")))).isEmpty()
+  }
+
+  @Test
+  fun `missing backlinks fail with multiple repository roots`() {
+    writeFixture("expected behavior")
+    write("src/Shared.kt", "// @spec spec/missing.spec.md\nclass Shared\n")
+
+    assertThat(validate(backlinkRoots = listOf(repositoryRoot, repositoryRoot.resolve("community")))).containsExactly(
+      "src/Shared.kt:1: backlink 'spec/missing.spec.md' does not resolve",
+    )
+  }
+
   private fun writeFixture(vararg linkedMethods: String, declaredMethod: String = linkedMethods.single()) {
     write(
       "src/Example.kt",
@@ -75,13 +94,17 @@ internal class PluginManagerSpecVerifierTest {
     )
   }
 
-  private fun validate(requiredSections: Set<String> = REQUIRED_SECTIONS): List<String> = PluginManagerSpecVerifier(
+  private fun validate(
+    requiredSections: Set<String> = REQUIRED_SECTIONS,
+    backlinkRoots: List<Path> = listOf(repositoryRoot),
+  ): List<String> = PluginManagerSpecVerifier(
     repositoryRoot = repositoryRoot,
     specRoot = repositoryRoot.resolve("spec"),
     scanRoots = listOf(repositoryRoot.resolve("src"), repositoryRoot.resolve("test")),
     sectionRequirements = mapOf(
       "example.spec.md" to requiredSections,
     ),
+    backlinkRoots = backlinkRoots,
   ).validate()
 
   private fun write(relativePath: String, text: String) {
