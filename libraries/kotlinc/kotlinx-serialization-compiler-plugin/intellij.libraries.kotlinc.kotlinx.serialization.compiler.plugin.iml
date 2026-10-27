@@ -25,19 +25,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlinx-serialization-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.5.0-ij263-18">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlinx-serialization-compiler-plugin-for-ide:2.5.0-ij263-30">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-ij263-18/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-ij263-18.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-ij263-30/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-ij263-30.jar">
               <sha256sum>dfebc5c85182791f6f6737cd3acbff8a1db827533295d90c2a789d6f878edc8b</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-ij263-18/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-ij263-18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-ij263-30/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-ij263-30.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-ij263-18/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-ij263-18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlinx-serialization-compiler-plugin-for-ide/2.5.0-ij263-30/kotlinx-serialization-compiler-plugin-for-ide-2.5.0-ij263-30-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.assignment-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:2.5.0-ij263-18">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:assignment-compiler-plugin-for-ide:2.5.0-ij263-30">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-ij263-18/assignment-compiler-plugin-for-ide-2.5.0-ij263-18.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-ij263-30/assignment-compiler-plugin-for-ide-2.5.0-ij263-30.jar">
               <sha256sum>31ab8552b4ace34ac3aefec65d475a252169ae7f20198c795ba3532dfac05579</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-ij263-18/assignment-compiler-plugin-for-ide-2.5.0-ij263-18.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-ij263-30/assignment-compiler-plugin-for-ide-2.5.0-ij263-30.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-ij263-18/assignment-compiler-plugin-for-ide-2.5.0-ij263-18-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/assignment-compiler-plugin-for-ide/2.5.0-ij263-30/assignment-compiler-plugin-for-ide-2.5.0-ij263-30-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
