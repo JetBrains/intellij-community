@@ -28,7 +28,9 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [":plugin"],
 )
+### auto-generated section `build intellij.plugin` end
 
+### auto-generated section `plugin intellij.plugin` start
 ij_plugin(
     name = "plugin_plugin",
     descriptor_module = ":plugin",
@@ -39,7 +41,7 @@ ij_plugin(
     ],
     visibility = ["//visibility:public"],
 )
-### auto-generated section `build intellij.plugin` end
+### auto-generated section `plugin intellij.plugin` end
 
 ### auto-generated section `iml intellij.plugin` start
 exports_files(
