@@ -8,7 +8,6 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeLi
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.collaboration.util.filePath
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import git4idea.changes.GitBranchComparisonResult
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.gitlab.api.GitLabId
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
-import org.jetbrains.plugins.gitlab.mergerequest.data.findLatestCommitWithChangesTo
 import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import java.util.concurrent.ConcurrentHashMap
@@ -129,28 +127,11 @@ internal class GitLabMergeRequestCumulativeChangeListViewModelImpl(
     }.stateIn(cs, SharingStarted.Eagerly, emptyMap())
 
   override fun setViewedState(changes: Iterable<RefComparisonChange>, viewed: Boolean) {
-    val filePathsWithShas = changes.mapNotNull { change ->
-      val path = change.filePath
-      parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, path)?.let {
-        path to it
-      }
-    }
-    persistentChangesViewedState.markViewed(
-      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
-      mergeRequest.gitRemote.repository,
-      filePathsWithShas,
-      viewed
-    )
+    persistentChangesViewedState.markViewed(mergeRequest, parsedChanges, changes, viewed)
   }
 
-  private fun isViewed(change: RefComparisonChange): Boolean {
-    val sha = parsedChanges.findLatestCommitWithChangesTo(mergeRequest.gitRemote.repository, change.filePath) ?: return false
-    return persistentChangesViewedState.isViewed(
-      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
-      mergeRequest.gitRemote.repository,
-      change.filePath, sha
-    )
-  }
+  private fun isViewed(change: RefComparisonChange): Boolean =
+    persistentChangesViewedState.isViewed(mergeRequest, parsedChanges, change)
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

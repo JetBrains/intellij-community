@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -217,17 +218,18 @@ internal class GitLabMergeRequestDiffProcessorViewModelImpl(
             LOG.warn("Empty patch for change $change")
             return@mapScoped null
           }
-          createChangeVm(change, patchWithHistory)
+          createChangeVm(changes, change, patchWithHistory)
         }.stateIn(cs, SharingStarted.WhileSubscribed(5.minutes, ZERO), null)
     }
 
   private fun CoroutineScope.createChangeVm(
+    parsedChanges: GitBranchComparisonResult,
     change: RefComparisonChange,
     diffData: GitTextFilePatchWithHistory,
   ) =
     GitLabMergeRequestDiffReviewViewModelImpl(
       project, this,
-      mergeRequest, diffData, change,
+      mergeRequest, parsedChanges, diffData, change,
       this@GitLabMergeRequestDiffProcessorViewModelImpl,
       discussionsContainer, discussionsViewOption, avatarIconsProvider,
       imageLoader

@@ -10,11 +10,11 @@ import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPositi
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.collaboration.util.filePath
 import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
+import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -66,6 +66,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   project: Project,
   parentCs: CoroutineScope,
   private val mergeRequest: GitLabMergeRequest,
+  private val parsedChanges: GitBranchComparisonResult,
   private val diffData: GitTextFilePatchWithHistory,
   private val change: RefComparisonChange,
   private val diffVm: GitLabMergeRequestDiffViewModel,
@@ -117,13 +118,7 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   }
 
   override fun markViewed() {
-    val sha = mergeRequest.details.value.diffRefs?.headSha ?: return
-    persistentChangesViewedState.markViewed(
-      mergeRequest.serverPath, mergeRequest.projectId, mergeRequest.iid,
-      mergeRequest.gitRemote.repository,
-      listOf(change.filePath to sha),
-      true
-    )
+    persistentChangesViewedState.markViewed(mergeRequest, parsedChanges, listOf(change), true)
   }
 
   override fun showDiffAtComment(commentId: String) {
