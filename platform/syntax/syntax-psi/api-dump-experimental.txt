@@ -1,0 +1,9 @@
+*c:com.intellij.platform.syntax.psi.lexer.RestartableLexerAdapter
+- com.intellij.platform.syntax.psi.lexer.LexerAdapter
+- com.intellij.lexer.RestartableLexer
+- <init>(com.intellij.platform.syntax.lexer.RestartableLexer,com.intellij.platform.syntax.psi.ElementTypeConverter):V
+- getStartState():I
+- isRestartableState(I):Z
+- start(java.lang.CharSequence,I,I,I,com.intellij.lexer.TokenIterator):V
+*f:com.intellij.platform.syntax.psi.lexer.RestartableLexerAdapterKt
+- sf:createLexerAdapter(com.intellij.platform.syntax.lexer.Lexer,com.intellij.platform.syntax.psi.ElementTypeConverter):com.intellij.platform.syntax.psi.lexer.LexerAdapter
