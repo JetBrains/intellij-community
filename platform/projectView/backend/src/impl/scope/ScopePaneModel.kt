@@ -197,7 +197,7 @@ class ScopePaneModel internal constructor(
 
   private suspend fun findPaneThatAccepts(file: VirtualFile?): ScopePaneModel? {
     if (file == null) return this
-    val panes = listOf(this) + sharedModel.panes.filter { it !== this }
+    val panes = listOf(this) + ScopePaneService.getInstance(project).getPanes().filter { it !== this }
     return panes.firstOrNull { pane -> readAction { pane.currentFilter.load().accept(file) } }
   }
 
