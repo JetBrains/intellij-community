@@ -211,12 +211,6 @@ private fun projectPlatform(
   return result
 }
 
-private fun projectPluginIndex(plugins: List<PluginBuildResult>): List<PluginContentReport> {
-  return distinctPlugins(plugins).map {
-    PluginContentReport(mainModule = it.mainModule, os = it.os?.osId, arch = it.arch?.name)
-  }
-}
-
 private fun groupPlatformEntries(
   contentReport: ContentReport,
   buildPaths: BuildPaths,
