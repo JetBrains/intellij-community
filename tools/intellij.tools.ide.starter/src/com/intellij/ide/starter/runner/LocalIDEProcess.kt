@@ -10,6 +10,7 @@ import com.intellij.ide.starter.process.exec.ExecTimeoutException
 import com.intellij.ide.starter.process.exec.ProcessExecutor
 import com.intellij.ide.starter.process.getIdeProcessIdWithRetry
 import com.intellij.ide.starter.profiler.ProfilerType
+import com.intellij.ide.starter.ide.LinuxIdeDistribution
 import com.intellij.ide.starter.report.ErrorReporter
 import com.intellij.ide.starter.report.DetailsOnCI
 import com.intellij.ide.starter.report.TimeoutAnalyzer
@@ -181,6 +182,7 @@ class LocalIDEProcess : IDEProcess {
               validateVMOptionsWereSet(dirWatermarks)
             }
             ideProcessId?.let { lastIdeReportingData.collectJBRDiagnosticFiles(it) }
+            LinuxIdeDistribution.reportMissingWindowManager(originalIdeReportingData.logsDir)
 
             (CIServer.instance as? TeamCityCIServer)?.addBisectMetadata()
             ErrorReporter.instance.reportErrorsAsFailedTests(this)

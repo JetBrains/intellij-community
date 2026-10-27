@@ -69,6 +69,8 @@ internal class IDEBackendHandler(
     val vmOptions = context.ide.vmOptions
     vmOptions.configureLoggers(LogLevel.DEBUG, "#com.intellij.remoteDev.downloader.EmbeddedClientLauncher")
     vmOptions.addSystemProperty("rdct.embedded.client.use.custom.paths", true)
+    // Lux needs the non-headless mode, but no real display; the frontend gets its own display
+    vmOptions.withEnv("DISPLAY", "NoDisplay")
     options.systemProperties.forEach(vmOptions::addSystemProperty)
     if (vmOptions.isUnderDebug()) {
       vmOptions.debug(debugPort, suspend = false)

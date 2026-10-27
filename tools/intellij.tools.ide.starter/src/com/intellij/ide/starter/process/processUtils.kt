@@ -69,8 +69,9 @@ private suspend fun getFilteredProcessList(filter: Predicate<OSProcess>? = null)
     .map { it.toProcessInfo() }
 }
 
-private suspend fun getChildProcessList(parentPid: Long): List<ProcessInfo> =
-  getFilteredProcessList { p -> p.parentProcessID.toLong() == parentPid }
+/** The process [pid] and its children. */
+private suspend fun getProcessWithChildrenList(pid: Long): List<ProcessInfo> =
+  getFilteredProcessList { p -> p.processID.toLong() == pid || p.parentProcessID.toLong() == pid }
 
 /**
  * Identifies and terminates any leftover processes from previous test runs, specifically those
@@ -266,7 +267,8 @@ private suspend fun getIdeProcessId(parentProcessInfo: ProcessInfo, runContext: 
 
   logOutput("Guessing IDE process ID on Linux (pid of the IDE process wrapper ${parentProcessInfo.pid})")
 
-  val children = getChildProcessList(parentProcessInfo.pid)
+  // the shell of `linuxCommandLine` becomes the IDE with `exec`: the wrapper itself, or the child of `xvfb-run`
+  val children = getProcessWithChildrenList(parentProcessInfo.pid)
   val suitableChildren = children.filter { it.isIde(runContext) }
 
   if (suitableChildren.isEmpty()) {

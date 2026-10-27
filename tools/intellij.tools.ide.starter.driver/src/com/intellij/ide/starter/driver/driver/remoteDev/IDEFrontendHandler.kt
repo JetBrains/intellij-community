@@ -1,20 +1,13 @@
 package com.intellij.ide.starter.driver.driver.remoteDev
 
-import com.intellij.ide.starter.config.ConfigurationStorage
-import com.intellij.ide.starter.config.useDockerContainer
 import com.intellij.ide.starter.coroutine.CommonScope.scopeForProcesses
 import com.intellij.ide.starter.driver.engine.DriverOptions
-import com.intellij.ide.starter.driver.engine.remoteDev.XorgWindowManagerHandler
 import com.intellij.ide.starter.ide.IDETestContext
 import com.intellij.ide.starter.models.IDEStartResult
-import com.intellij.ide.starter.models.VMOptions
 import com.intellij.ide.starter.runner.IDECommandLine
 import com.intellij.ide.starter.runner.IDEHandle
 import com.intellij.ide.starter.runner.IDERunContext
-import com.intellij.ide.starter.runner.events.IdeAfterLaunchEvent
 import com.intellij.ide.starter.runner.events.IdeLaunchEvent
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.tools.ide.performanceTesting.commands.CommandChain
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.tools.ide.util.common.logError
@@ -23,7 +16,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
-import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
@@ -35,14 +27,6 @@ internal class IDEFrontendHandler(
   private val debugPort: Int,
 ) {
 
-  private fun VMOptions.addDisplayIfNecessary(): Unit = timeoutRunBlocking {
-    if (ConfigurationStorage.useDockerContainer()) return@timeoutRunBlocking
-    if (SystemInfo.isLinux && System.getenv("DISPLAY") == null) {
-      val displayNum = XorgWindowManagerHandler.provideDisplay()
-      withEnv("DISPLAY", ":$displayNum")
-    }
-  }
-
   fun runInBackground(
     launchName: String,
     commandLine: IDECommandLine,
@@ -50,9 +34,6 @@ internal class IDEFrontendHandler(
     configure: IDERunContext.() -> Unit = {},
   ): Triple<Deferred<IDEStartResult>, IDEHandle, IDERunContext> {
     frontendContext.ide.vmOptions.let {
-      //setup xDisplay
-      it.addDisplayIfNecessary()
-
       //add driver related vmOptions
       driverOptions.systemProperties.forEach(it::addSystemProperty)
 
@@ -76,21 +57,7 @@ internal class IDEFrontendHandler(
           commands = CommandChain(),
           runTimeout = runTimeout,
           launchName = launchName,
-          configure = {
-            if (!ConfigurationStorage.useDockerContainer()
-                && System.getenv("DISPLAY") == null && frontendContext.ide.vmOptions.environmentVariables["DISPLAY"] != null && SystemInfo.isLinux
-                && !frontendContext.ide.vmOptions.hasHeadlessMode()) {
-              // It means the ide will be started on a new display, so we need to add win manager
-              XorgWindowManagerHandler.startFluxBox(this@runIdeSuspending, this@async)?.let { fluxboxJob ->
-                EventsBus.subscribeOnce(fluxboxJob) { event: IdeAfterLaunchEvent ->
-                  if (event.runContext === this@runIdeSuspending) {
-                    fluxboxJob.cancelAndJoin()
-                  }
-                }
-              }
-            }
-            configure(this)
-          })
+          configure = configure)
           .also {
             logOutput("Remote IDE Frontend run ${frontendContext.testName} completed")
           }
