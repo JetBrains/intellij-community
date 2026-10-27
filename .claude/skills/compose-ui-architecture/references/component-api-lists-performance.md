@@ -26,6 +26,8 @@ Rules:
 - Chain internal modifiers after caller `modifier`.
 - Do not expose `MutableState<T>` in reusable component APIs. Prefer value + `onXxxChange` or a dedicated state holder.
 - Do not pass presenters/coordinators into leaf components. Pass view models and callbacks.
+- Compose skips a call when its inputs are stable and equal. Prefer primitives, `String`, lambdas, `@Immutable` data
+  classes, and `@Stable` state holders. Pass the few fields a component needs, not an interface or a mutable collection.
 
 ## Lazy Lists
 
@@ -33,6 +35,8 @@ Rules:
 - Use `contentType` for heterogeneous rows so Compose can reuse compatible item compositions.
 - Never use list index as a key for reorderable/dynamic data.
 - Verify key uniqueness when rows merge data from multiple sources.
+- A plain loop over items with internal state or effects needs `key(item.id) { ... }` too. Identity is the call
+  site, so without a key a reorder moves state to the wrong item.
 
 Common examples that should be key/content-type aware include timeline rows, message/log rows, sidebar rows,
 settings/provider rows, permission cards, and generated lists of tools, plans, or knowledge items.

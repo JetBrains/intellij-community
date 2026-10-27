@@ -20,8 +20,16 @@ uncancellable loops, swallowed cancellation, `GlobalScope`, launch-in-`init`, de
 `invokeOnCompletion`, `ProcessCanceledException`, blocking/progress bridges, `ModalityState`
 context capture, or promise/callback cancellation bridges.
 
-Related skills: **platform-deep-dives** (coroutine internals, dispatchers, read/write actions);
-**kotlin-ui-swing-component-architecture** (Swing UI and EDT ownership).
+Related skill: **kotlin-ui-swing-component-architecture** (Swing UI and EDT ownership).
+
+Deeper reading on the platform internals:
+
+- The coroutines notebooks: [Context Propagation](../../../docs/notebooks/1-ContextPropagation.ipynb),
+  [Cancellation](../../../docs/notebooks/2-CancellationModel.ipynb),
+  [Read-Write Lock](../../../docs/notebooks/3-ReadWriteLock.ipynb).
+- The Platform Docs of the ultimate checkout: `docs/IntelliJ-Platform/4_man/Kotlin-Coroutines/` (services, EDT
+  dispatchers, read actions), `docs/IntelliJ-Platform/4_man/Performance/` (freezes, background write actions,
+  profiling) and `docs/IntelliJ-Platform/4_man/Indexes/` (the indexing system, dumb-aware code).
 
 ## Core review loop
 

@@ -82,6 +82,12 @@ Avoid locals for actions or app state:
 
 Prefer explicit parameters or presenter-projected screen state.
 
+Pick the factory by how often the value changes:
+
+- `compositionLocalOf`: only the readers recompose when the value changes.
+- `staticCompositionLocalOf`: the whole subtree recomposes. Use it only for a value that never or rarely changes.
+- Give a safe default, or fail fast when no provider is present.
+
 ## Testing Implications
 
 Architecture fixes should move logic into places that are cheap to test:
