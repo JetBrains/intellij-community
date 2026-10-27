@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.idea.facet.applyCompilerArgumentsToFacetSettings
 import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.configureKotlinSdkIfPossible
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.mavenLibraryIdToPlatform
 import org.jetbrains.kotlin.idea.facet.noVersionAutoAdvance
@@ -347,7 +348,8 @@ fun configureFacetWithCompilerArguments(
     modelsProvider: IdeModifiableModelsProvider?,
     compilerArguments: CommonCompilerArguments,
 ) {
-    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings)
+    modelsProvider?.let { kotlinFacet.module.configureKotlinSdkIfPossible(compilerArguments, it) }
 }
 
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {

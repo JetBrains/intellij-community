@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ExternalCompilerVersionPr
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.applyCompilerArgumentsToFacetSettings
+import org.jetbrains.kotlin.idea.facet.configureKotlinSdkIfPossible
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.initializeIfNeeded
 import org.jetbrains.kotlin.idea.facet.noVersionAutoAdvance
@@ -147,7 +148,8 @@ private fun configureFacetByFragmentData(
 
     ideModule.isKpmModule = true
     ideModule.refinesFragmentIds = fragmentDataNode.data.refinesFragmentIds.toList()
-    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings)
+    kotlinFacet.module.configureKotlinSdkIfPossible(compilerArguments, modelsProvider)
     kotlinFacet.configuration.settings.noVersionAutoAdvance()
     return kotlinFacet
 }

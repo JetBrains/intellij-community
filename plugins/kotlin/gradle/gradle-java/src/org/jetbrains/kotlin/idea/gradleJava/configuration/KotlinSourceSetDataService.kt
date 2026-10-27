@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.applyCompilerArgumentsToFacetSettings
 import org.jetbrains.kotlin.idea.facet.configureFacet
+import org.jetbrains.kotlin.idea.facet.configureKotlinSdkIfPossible
 import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.facet.noVersionAutoAdvance
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
@@ -249,12 +250,8 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             )
 
             if (compilerArguments != null) {
-                applyCompilerArgumentsToFacetSettings(
-                    compilerArguments,
-                    kotlinFacet.configuration.settings,
-                    kotlinFacet.module,
-                    modelsProvider
-                )
+                applyCompilerArgumentsToFacetSettings(compilerArguments, kotlinFacet.configuration.settings)
+                kotlinFacet.module.configureKotlinSdkIfPossible(compilerArguments, modelsProvider)
             }
 
             with(kotlinFacet.configuration.settings) {

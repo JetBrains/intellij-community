@@ -9,6 +9,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModel
 import com.intellij.openapi.roots.ProjectRootManager
@@ -150,32 +151,33 @@ fun LanguageVersion.coerceAtMostVersion(version: IdeKotlinVersion): LanguageVers
 fun parseCompilerArgumentsToFacetSettings(
     arguments: List<String>,
     kotlinFacetSettings: IKotlinFacetSettings,
-    modelsProvider: IdeModifiableModelsProvider?
 ) {
     val compilerArgumentsClass = kotlinFacetSettings.compilerArguments?.javaClass ?: return
     val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
-    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacetSettings, null, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacetSettings)
 }
 
 fun parseCompilerArgumentsToFacet(
     arguments: List<String>,
     kotlinFacet: KotlinFacet,
-    modelsProvider: IdeModifiableModelsProvider?,
 ) {
     val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
     val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
-    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacet.configuration.settings, kotlinFacet.module, modelsProvider)
+    applyCompilerArgumentsToFacetSettings(currentArgumentsBean, kotlinFacet.configuration.settings)
 }
 
+/**
+ * Applies [arguments] to [kotlinFacetSettings]. It does not touch the SDK of the module.
+ *
+ * A caller that must also set the SDK calls [Module.configureKotlinSdkIfPossible] or [Module.applyKotlinSdk].
+ */
 fun applyCompilerArgumentsToFacetSettings(
     arguments: CommonCompilerArguments,
     kotlinFacetSettings: IKotlinFacetSettings,
-    module: Module?,
-    modelsProvider: IdeModifiableModelsProvider?
 ) {
     with(kotlinFacetSettings) {
         updateCompilerArguments {
@@ -196,9 +198,6 @@ fun applyCompilerArgumentsToFacetSettings(
 
             // Retain only fields exposed (and not explicitly ignored) in facet configuration editor.
             // The rest is combined into string and stored in CompilerSettings.additionalArguments
-
-            if (modelsProvider != null && module != null)
-                module.configureSdkIfPossible(this, modelsProvider)
 
             val allFacetFields = this.kotlinFacetFields.allFields
 
@@ -264,14 +263,42 @@ fun applyCompilerArgumentsToFacetSettings(
     }
 }
 
-private fun Module.configureSdkIfPossible(compilerArguments: CommonCompilerArguments, modelsProvider: IdeModifiableModelsProvider) {
-    // SDK for Android module is already configured by Android plugin at this point
+/**
+ * Sets the SDK of the module to the one that [compilerArguments] ask for.
+ *
+ * It keeps the current SDK if [compilerArguments] are JVM arguments without a JDK home.
+ */
+fun Module.configureKotlinSdkIfPossible(compilerArguments: CommonCompilerArguments, modelsProvider: IdeModifiableModelsProvider) {
     if (isAndroidModule(modelsProvider) || shouldSkipSdkConfiguration(compilerArguments)) return
+    applyKotlinSdk(resolveKotlinSdk(compilerArguments, modelsProvider), modelsProvider)
+}
 
+/**
+ * Sets [sdk] on the modifiable root model of the module.
+ *
+ * The module inherits the project SDK if [sdk] is `null` or the project SDK itself. The SDK of an Android
+ * module stays untouched, because the Android plugin already configured it.
+ */
+private fun Module.applyKotlinSdk(sdk: Sdk?, modelsProvider: IdeModifiableModelsProvider) {
+    val rootModel = modelsProvider.getModifiableRootModel(this)
+    if (sdk == null || sdk == ProjectRootManager.getInstance(project).projectSdk) {
+        rootModel.inheritSdk()
+    } else {
+        rootModel.sdk = sdk
+    }
+}
+
+/**
+ * Finds the SDK that fits [compilerArguments], or `null` for the project SDK.
+ *
+ * JVM arguments give a JDK: the one of the JDK home, the project SDK, or any JDK. Other arguments give a
+ * [KotlinSdkType] SDK.
+ */
+private fun Module.resolveKotlinSdk(compilerArguments: CommonCompilerArguments, modelsProvider: IdeModifiableModelsProvider): Sdk? {
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     KotlinSdkType.setUpIfNeeded()
     val allSdks = runReadAction { ProjectJdkTable.getInstance() }.allJdks
-    val sdk = if (compilerArguments is K2JVMCompilerArguments) {
+    return if (compilerArguments is K2JVMCompilerArguments) {
         val jdkHome = compilerArguments.jdkHome
         when {
             jdkHome != null -> allSdks.firstOrNull { it.sdkType is JavaSdk && FileUtil.comparePaths(it.homePath, jdkHome) == 0 }
@@ -286,13 +313,6 @@ private fun Module.configureSdkIfPossible(compilerArguments: CommonCompilerArgum
                 .asSequence()
                 .mapNotNull { modelsProvider.getModifiableRootModel(it).sdk }
                 .firstOrNull { it.sdkType is KotlinSdkType }
-    }
-
-    val rootModel = modelsProvider.getModifiableRootModel(this)
-    if (sdk == null || sdk == projectSdk) {
-        rootModel.inheritSdk()
-    } else {
-        rootModel.sdk = sdk
     }
 }
 
