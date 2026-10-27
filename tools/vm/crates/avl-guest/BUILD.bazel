@@ -14,3 +14,14 @@ filegroup(
     srcs = glob(["testdata/**"]),
     visibility = ["//visibility:public"],
 )
+
+# The sources with the names of the files of an Air performance part. The Kotlin bridge test `AirPerformanceContractTest`
+# holds them to the names that the bridge writes, so a rename on one side fails the fast lane.
+filegroup(
+    name = "performance_contract_sources",
+    srcs = [
+        "src/lane/performance.rs",
+        "src/lane/program.rs",
+    ],
+    visibility = ["//visibility:public"],
+)
