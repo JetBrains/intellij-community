@@ -10,6 +10,11 @@ fun CodeInsightTestFixture.configure(configurator: PolySymbolsTestConfigurator) 
 interface PolySymbolsTestConfigurator {
   fun configure(fixture: CodeInsightTestFixture)
 
-  fun beforeDirectoryComparison(fixture: CodeInsightTestFixture, resultsDir: VirtualFile, goldDir: VirtualFile) {
-  }
+  /**
+   * Names the files in the project root that the directory comparison of a test with `checkResult` skips.
+   * A configurator names a file that [configure] created when [goldDir] has no file with that name.
+   * The comparison skips the file. The configurator does not delete it from the project.
+   */
+  fun rootFilesToSkipInDirectoryComparison(fixture: CodeInsightTestFixture, goldDir: VirtualFile): Collection<String> =
+    emptyList()
 }

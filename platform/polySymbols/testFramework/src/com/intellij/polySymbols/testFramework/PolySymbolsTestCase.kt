@@ -225,12 +225,15 @@ abstract class PolySymbolsTestCase(mode: HybridTestMode = HybridTestMode.BasePla
                           ?: throw FileNotFoundException(pathAfter)
           val results = myFixture.tempDirFixture.findOrCreateDir(".")
 
-          // Trigger any advanced configurators
-          adjustedConfigurators.forEach { it.beforeDirectoryComparison(myFixture, results, rootAfter) }
+          val skippedRootFiles = adjustedConfigurators.flatMapTo(HashSet()) { it.rootFilesToSkipInDirectoryComparison(myFixture, rootAfter) }
+          val baseFilter = directoriesCompareFileFilter
+          val filter = VirtualFileFilter { file ->
+            baseFilter.accept(file)
+            && !(file.name in skippedRootFiles && (file.parent == results || file.parent == rootAfter))
+          }
 
           // Set test data file path, so that comparison works
           val root = tempDirFixture.findOrCreateDir(".")
-          val filter = directoriesCompareFileFilter
           VfsUtil.visitChildrenRecursively(root, object : VirtualFileVisitor<Any>() {
             override fun visitFileEx(file: VirtualFile): Result =
               if (!filter.accept(file))
