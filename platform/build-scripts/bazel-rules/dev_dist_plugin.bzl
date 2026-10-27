@@ -5,9 +5,13 @@ load(":content_module_jar.bzl", "content_module_jar_target_name")
 load(":dev_dist_frontend_application_info.bzl", "dev_dist_frontend_application_info")
 load(":dev_dist_plugin_descriptor.bzl", "dev_dist_plugin_descriptor", "dev_dist_plugin_descriptor_target_name")
 load(":dev_plugin.bzl", "dev_dist_plugin_directory", "dev_plugin", "is_library_token")
+load(":jvm_runtime_jars.bzl", "jvm_runtime_jars")
 
 _SHARED_LEAF_ATTRS = ["tags", "visibility"]
 _MAX_REPORTED_STALE_MODULES = 20
+
+# The runtime jars of the plugin modules, for a build-scripts binary that packs the plugin.
+_RUNTIME_JARS_SUFFIX = "_runtime_jars"
 
 # What a packed plugin component's target is called, after the main module. Public through
 # `dev_dist_plugin_component_target_name`, because the generated product map names the target.
@@ -142,8 +146,16 @@ def dev_dist_plugin(
         _warn_stale(main_module, {main_module: True})
         return
 
-    # Nothing reads the labels. The resolution fills `stale`, and the `if jars and not stale` guard below reads it.
-    _module_labels(content_modules, module_targets, stale)
+    # The resolution also fills `stale`, and the `if jars and not stale` guard below reads it.
+    content_module_labels = _module_labels(content_modules, module_targets, stale)
+
+    # A plugin outside every product has no packed component. Its build-scripts binary names this target as data.
+    jvm_runtime_jars(
+        name = main_module + _RUNTIME_JARS_SUFFIX,
+        modules = [owner] + content_module_labels,
+        tags = ["manual"],
+        visibility = ["//visibility:public"],
+    )
 
     # The packed component's inputs. A module a jar names is resolved like a content module, and a library token is
     # passed through as the label it is. A stale name here skips the whole component below, so a plugin never ships with
