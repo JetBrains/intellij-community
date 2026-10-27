@@ -17,6 +17,7 @@ import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.EditorMarkupModel
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.PlatformTestUtil
@@ -103,7 +104,8 @@ internal class StructuralDiffPreviewAppearanceTest {
     val project = project
     withContext(Dispatchers.EDT) {
       val contents = DiffContentFactory.getInstance()
-      val request = SimpleDiffRequest(null, contents.create(project, "first\nold\nlast"), contents.create(project, "first\nnew\nlast"), null, null)
+      val base = contents.create(project, "first\nold\nlast")
+      val request = SimpleDiffRequest(null, base, contents.create(project, "first\nnew\nlast"), null, null)
       // An editable right side gets the arrows that apply a change.
       (request.contents[1] as DocumentContent).document.setReadOnly(false)
       val context = TestDiffContext(project)
@@ -126,22 +128,32 @@ internal class StructuralDiffPreviewAppearanceTest {
     assertTrue(editor.settings.isLineMarkerAreaShown)
     assertTrue(editor.settings.areGutterIconsShown())
     assertTrue(editor.settings.isLineNumbersShown)
+    assertTrue((editor.markupModel as EditorMarkupModel).isErrorStripeVisible)
+    assertTrue(hasChangeMarks(editor))
     val scheme = EditorColorsManager.getInstance().globalScheme
     for (key in listOf(DiffColors.DIFF_DELETED, DiffColors.DIFF_INSERTED, DiffColors.DIFF_MODIFIED)) {
       assertEquals(scheme.getAttributes(key), editor.colorsScheme.getAttributes(key), key.externalName)
     }
   }
 
-  /** The gutter keeps the line marker area, because only that area paints the colors of the changes. */
+  /**
+   * The gutter keeps the line marker area, because only that area paints the colors of the changes. The scroll bar keeps the marks of
+   * errors and warnings, but shows no marks of the changes.
+   */
   private fun assertIconFreeGutter(editor: EditorEx) {
     assertTrue(editor.settings.isLineMarkerAreaShown)
     assertFalse(editor.settings.areGutterIconsShown())
     assertFalse(editor.settings.isFoldingOutlineShown)
     assertTrue(editor.settings.isLineNumbersShown)
     assertFalse(hasArrows(editor))
+    assertTrue((editor.markupModel as EditorMarkupModel).isErrorStripeVisible)
+    assertFalse(hasChangeMarks(editor))
   }
 
   private fun hasArrows(editor: EditorEx): Boolean = editor.markupModel.allHighlighters.any { it.gutterIconRenderer is DiffGutterRenderer }
+
+  private fun hasChangeMarks(editor: EditorEx): Boolean =
+    editor.markupModel.allHighlighters.any { it.getErrorStripeMarkColor(editor.colorsScheme) != null }
 
   /** The diff paints a line with changed words in the foreground color of the key, and the words in its background color. */
   private fun assertLineColor(editor: EditorEx, key: TextAttributesKey, hue: Hue) {
