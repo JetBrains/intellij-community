@@ -6,11 +6,18 @@ import com.intellij.diff.DiffExtension
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
+import com.intellij.diff.tools.simple.SimpleDiffViewer
+import com.intellij.diff.tools.util.DiffSplitter
+import com.intellij.diff.tools.util.base.DiffViewerListener
 import com.intellij.diff.tools.util.side.TwosideTextDiffViewer
+import com.intellij.diff.util.DiffDividerDrawUtil
+import com.intellij.diff.util.DiffDrawUtil
 import com.intellij.diff.util.DiffGutterRenderer
+import com.intellij.diff.util.DiffLineMarkerRenderer
 import com.intellij.diff.util.Side
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diff.DiffColors
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme
@@ -20,13 +27,18 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.ColorUtil
+import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.UIUtil
 import java.awt.Color
 import java.awt.Font
+import java.awt.Graphics
+import javax.swing.JComponent
 
 /**
  * Gives the Commit diff tab of structural changes a quiet frame. The gutter shows line numbers and the colors of the changes, but no icons:
  * the hunks in the tree have the checkboxes and the rollback. The scroll bar shows the marks of errors and warnings, but no marks of the
- * changes, because the tree lists them. Removed lines are red, added lines are green, and changed lines are blue.
+ * changes, because the tree lists them. Removed lines are red, added lines are green, and changed lines are blue. A change has one color
+ * from the left text to the right text.
  */
 internal class StructuralDiffPreviewAppearance : DiffExtension() {
   override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -35,6 +47,15 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
     when (viewer) {
       is UnifiedDiffViewer -> quiet(viewer.editor, viewer)
       is TwosideTextDiffViewer -> for (side in Side.entries) quiet(viewer.getEditor(side), viewer)
+    }
+    if (viewer is SimpleDiffViewer) {
+      // The viewer sets the painter of its divider in its init, after the extensions.
+      viewer.addListener(object : DiffViewerListener() {
+        override fun onInit() {
+          val splitter = UIUtil.findComponentOfType(viewer.component, DiffSplitter::class.java) ?: return
+          splitter.painter = MatchedLinksPainter(splitter.painter, viewer)
+        }
+      })
     }
   }
 
@@ -48,16 +69,81 @@ internal class StructuralDiffPreviewAppearance : DiffExtension() {
     (editor.markupModel as? EditorMarkupModel)?.setTrafficLightIconVisible(false)
     editor.colorsScheme = StructuralDiffColors(editor.colorsScheme)
     editor.markupModel.addMarkupModelListener(viewer, object : MarkupModelListener {
-      override fun afterAdded(highlighter: RangeHighlighterEx) = dropArrow(highlighter)
+      override fun afterAdded(highlighter: RangeHighlighterEx) = quietRenderers(highlighter)
 
       override fun attributesChanged(highlighter: RangeHighlighterEx, renderersChanged: Boolean, fontStyleOrColorChanged: Boolean) {
-        if (renderersChanged) dropArrow(highlighter)
+        if (renderersChanged) quietRenderers(highlighter)
       }
     })
   }
 
-  private fun dropArrow(highlighter: RangeHighlighterEx) {
+  private fun quietRenderers(highlighter: RangeHighlighterEx) {
     if (highlighter.gutterIconRenderer is DiffGutterRenderer) highlighter.gutterIconRenderer = null
+    matchGutterColor(highlighter)
+  }
+
+  /**
+   * A line with changed words gets the light color in the text, but the full color next to its line numbers. The gutter gets the light
+   * color too.
+   */
+  private fun matchGutterColor(highlighter: RangeHighlighterEx) {
+    val renderer = highlighter.lineMarkerRenderer as? DiffLineMarkerRenderer ?: return
+    if (renderer.editorMode != DiffDrawUtil.PaintMode.IGNORED || renderer.gutterMode != DiffDrawUtil.PaintMode.DEFAULT) return
+    highlighter.lineMarkerRenderer = DiffLineMarkerRenderer(
+      highlighter = renderer.highlighter,
+      diffType = renderer.diffType,
+      editorMode = renderer.editorMode,
+      gutterMode = renderer.editorMode,
+      hideWithoutLineNumbers = renderer.hideWithoutLineNumbers,
+      isEmptyRange = renderer.isEmptyRange,
+      isFirstLine = renderer.isFirstLine,
+      isLastLine = renderer.isLastLine,
+      alignedSides = renderer.alignedSides,
+      clearThinLineBetweenGutterAndEditor = false,
+    )
+  }
+}
+
+/**
+ * Paints the divider of the platform, and then the link of each line with changed words in the light color of the line. The platform paints
+ * such a link in the full color, but the text and the gutter show the light one. An excluded change keeps the look of the platform.
+ */
+internal class MatchedLinksPainter(
+  private val original: DiffSplitter.Painter?,
+  private val viewer: SimpleDiffViewer,
+) : DiffSplitter.Painter {
+  override fun paint(g: Graphics, divider: JComponent) {
+    original?.paint(g, divider)
+    val left: Editor = viewer.getEditor(Side.LEFT)
+    val right: Editor = viewer.getEditor(Side.RIGHT)
+    if (left.isDisposed || right.isDisposed || !divider.isShowing || !left.component.isShowing) return
+    val graphics = DiffDividerDrawUtil.getDividerGraphics(g, divider, left.component)
+    val config = GraphicsUtil.setupAAPainting(graphics)
+    try {
+      val clip = graphics.clipBounds
+      val leftOffset = DiffDividerDrawUtil.getEditorTopOffset(left)
+      val rightOffset = DiffDividerDrawUtil.getEditorTopOffset(right)
+      for (change in viewer.diffChanges) {
+        if (!change.isValid || change.isExcluded || change.isSkipped || change.fragment.innerFragments == null) continue
+        // The platform draws a link with a folded side in another shape, so such a link keeps its color.
+        if (DiffDividerDrawUtil.isIntervalFolded(left, change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT)) ||
+            DiffDividerDrawUtil.isIntervalFolded(right, change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT))) continue
+        val leftRange = DiffDrawUtil.getGutterMarkerPaintRange(left, change.getStartLine(Side.LEFT), change.getEndLine(Side.LEFT))
+        val rightRange = DiffDrawUtil.getGutterMarkerPaintRange(right, change.getStartLine(Side.RIGHT), change.getEndLine(Side.RIGHT))
+        val top = minOf(leftRange.y1 + leftOffset, rightRange.y1 + rightOffset)
+        val bottom = maxOf(leftRange.y2 + leftOffset, rightRange.y2 + rightOffset)
+        if (clip != null && top > clip.y + clip.height) break
+        if (clip != null && bottom < clip.y) continue
+        DiffDividerDrawUtil.DividerPolygon(leftRange.y1 + leftOffset, rightRange.y1 + rightOffset, leftRange.y2 + leftOffset,
+                                           rightRange.y2 + rightOffset, change.diffType.getIgnoredColor(right), /* borderColor = */ null,
+                                           /* dottedBorder = */ false)
+          .paint(graphics, divider.width, /* curve = */ true)
+      }
+    }
+    finally {
+      config.restore()
+      graphics.dispose()
+    }
   }
 }
 
