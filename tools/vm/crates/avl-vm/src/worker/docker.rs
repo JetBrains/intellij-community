@@ -133,8 +133,8 @@ pub(crate) const ENTRYPOINT: &str = include_str!("../../../../docker/air-display
 
 /// The packages a worker needs beyond the base image. The image installs them at build time.
 ///
-/// `x11-utils` is not decoration: `XorgWindowManagerHandler` shells out to `xprop` to decide whether a window
-/// manager is registered, and reads its absence as no window manager at all.
+/// `x11-utils` is not decoration: the window manager script of `LinuxIdeDistribution.linuxCommandLine` shells out to
+/// `xprop` to decide whether a window manager is registered. Without `xprop`, it starts no window manager.
 ///
 /// **No Node here, and no `npm`.** The lane's tests need both, and the base does not supply them in a usable form.
 /// Ubuntu 26.04 has `nodejs` 22 (the `apt-cache policy` candidate on 2026-09-29). That is below `NODE_MAJOR`, and a

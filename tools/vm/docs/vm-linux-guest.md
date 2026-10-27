@@ -44,8 +44,8 @@ StartupUiUtil.isWaylandToolkit()`. Air's own input primitives run inside the IDE
 `AcpDebugScreenshot.kt` paints a `BufferedImage` from the window rather than capturing the screen.
 
 **IDE Starter already runs on Linux.** `LinuxIdeDistribution.linuxCommandLine` wraps a launch in
-`xvfb-run --server-num=88` unless `DISPLAY` is already set; `XorgWindowManagerHandler` starts fluxbox and
-verifies it through EWMH `_NET_SUPPORTING_WM_CHECK`; `getRunningDisplays()` enumerates Xvfb displays;
+`xvfb-run --server-num=88` unless `DISPLAY` is already set; its shell script starts fluxbox before the IDE
+when the display has no window manager, verified through EWMH `_NET_SUPPORTING_WM_CHECK`;
 and `IdeFromCodeInstaller` — the dev-build path these lanes use — already selects the Linux command line
 when `SystemInfoRt.isLinux`.
 
@@ -80,7 +80,7 @@ unchanged, and the guest user is `admin` with passwordless sudo, the same name t
 symlinks onto the mount and `out` diverted to guest-local storage, and the host's Bazel outputs — the
 cross-built distribution included — resolve through them. `Xvfb :88` plus `fluxbox` come up from
 `apt-get`, and fluxbox registers itself through EWMH `_NET_SUPPORTING_WM_CHECK`, which is exactly what
-`XorgWindowManagerHandler.isWmRunning` looks for. The linux-aarch64 JBR out of
+the script of `LinuxIdeDistribution.linuxCommandLine` looks for. The linux-aarch64 JBR out of
 `@jbr_linux_aarch64` runs in the guest and reports itself as JBR 25.0.4 with JCEF.
 
 ## What it would cost
@@ -107,7 +107,7 @@ carried no preloaded JBR at all.
 `--backend linux` exists, and a worker built by it is verified up to the point where a lane would start:
 `pool start air-linux-1` clones the public image, boots, provisions and reports parity ready in 75 s the
 first time and 55 s warm, with both display services active, the window manager registered through the
-EWMH property `XorgWindowManagerHandler` reads, both shares mounted, and the cross-assembled Linux
+EWMH property that `LinuxIdeDistribution.linuxCommandLine` reads, both shares mounted, and the cross-assembled Linux
 distribution visible through the share. `pool stop` and a restart work — and
 `AirNewSessionShellTerminalGeneratedFlowUiTest` **passes** on it, one testcase in 38.56 s, against a
 daemon holding a warm IDE.
@@ -134,7 +134,7 @@ Two things turned out easier than expected. The parity layout needed no fight �
 Linux, with no SIP restriction on `/`. And the display seam fitted as designed: provisioning runs
 `Xvfb :88` and `fluxbox` as systemd services, so `LinuxIdeDistribution.linuxCommandLine` takes its
 "DISPLAY is already set" branch instead of starting a private `xvfb-run` per launch, and
-`XorgWindowManagerHandler.startFluxBox` finds a window manager already registered and no-ops.
+its script finds a window manager already registered and starts no fluxbox.
 
 Three things the hypervisor and the guest decided for us, all found by trying rather than reading:
 
@@ -349,7 +349,7 @@ each refusal names what it looked at and what it found:
   should be serving it. Not "the unit is enabled" and not "the unit is active": an Xvfb that is still
   starting and one that died on a bad `-screen` are both `active` for a moment, and only a client connecting
   tells them apart;
-- a window manager is registered on it, read exactly as `XorgWindowManagerHandler.isWmRunning` reads it — the
+- a window manager is registered on it, read exactly as the script of `LinuxIdeDistribution.linuxCommandLine` reads it — the
   root's `_NET_SUPPORTING_WM_CHECK`, then the support window's self-reference. Nothing registered is
   `linux_window_manager_missing`; a property left behind by a fluxbox that exited is
   `linux_window_manager_stale`. Two codes because they are two repairs: a unit to look at, and a worker to

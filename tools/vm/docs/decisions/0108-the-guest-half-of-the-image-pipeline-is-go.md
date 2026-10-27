@@ -171,7 +171,7 @@ for "no window manager is registered on this display" and for "a `_NET_SUPPORTIN
 behind by a window manager that has exited", because one integer was the entire channel it had. Those are
 different repairs — the first is `air-fluxbox.service` to look at, the second is a worker to recycle — and the
 verb now says which, as `linux_window_manager_missing` and `linux_window_manager_stale`. The two hops are read
-exactly as `XorgWindowManagerHandler.isWmRunning` reads them, unchanged: the root property names a window, and
+exactly as the script of `LinuxIdeDistribution.linuxCommandLine` reads them, unchanged: the root property names a window, and
 that window must point the same property back at itself.
 
 **And then the distinction paid for a fix the shell version could not have been given.** Because the two

@@ -250,8 +250,9 @@ impl<R: Runner> GuestValidator<R> {
         Ok(root_window)
     }
 
-    /// One `xprop` hop, told the display twice - as `-display` and as `DISPLAY` - which is what
-    /// `XorgWindowManagerHandler` passes. Captured: an `xprop` that finds nothing writes `not found.` to stdout.
+    /// One `xprop` hop, told the display twice - as `-display` and as `DISPLAY`. The window manager script of
+    /// `LinuxIdeDistribution.linuxCommandLine` passes `DISPLAY`. Captured: an `xprop` that finds nothing writes
+    /// `not found.` to stdout.
     fn xprop(&self, target: &[&str]) -> Step {
         let argv =
             std::iter::once(XPROP_TOOL)
