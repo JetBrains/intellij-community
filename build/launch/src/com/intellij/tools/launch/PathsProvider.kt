@@ -1,3 +1,4 @@
+@file:Suppress("IO_FILE_USAGE")
 package com.intellij.tools.launch
 
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
@@ -31,7 +32,7 @@ interface PathsProvider {
     get() = launcherFolder.resolve("system")
 
   val javaHomeFolder: File
-    get() = JdkDownloader.blockingGetJdkHomeAndLog(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
+    get() = JdkDownloader.getJdkHomeAndLog(BuildDependenciesCommunityRoot(communityRootFolder.toPath())).normalize().toFile()
 
   val mavenRepositoryFolder: File
     get() = File(getMavenRepositoryPath())
@@ -52,7 +53,8 @@ interface PathsProvider {
     get() = configFolder.resolve("plugins")
 
   companion object {
-    fun resolveTempFolder(sourcesRootFolder: File) = TeamCityHelper.tempDirectory?.toFile()
-                                                     ?: sourcesRootFolder.resolve("out").resolve("tmp")
+    fun resolveTempFolder(sourcesRootFolder: File): File = (
+      TeamCityHelper.tempDirectory?.toFile() ?: sourcesRootFolder.resolve("out").resolve("tmp")
+    )
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -12,7 +12,6 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.Disposable;
@@ -96,7 +95,7 @@ public abstract class GroovyCompilerTestCase extends JavaCodeInsightFixtureTestC
       ModuleGroupTestsKt.renameModule(getModule(), "mainModule");
 
       Path communityHomePath = Paths.get(PathManager.getHomePathFor(GroovyCompilerTestCase.class), "community");
-      Path javaHomePath = JdkDownloader.INSTANCE.blockingGetJdkHomeAndLog(new BuildDependenciesCommunityRoot(communityHomePath), null, null);
+      Path javaHomePath = JdkDownloader.INSTANCE.getJdkHomeAndLog(new BuildDependenciesCommunityRoot(communityHomePath), null, null);
       String javaHome = javaHomePath.toAbsolutePath().toString();
       javaHome = StringUtil.trimEnd(StringUtil.trimEnd(javaHome, "/"), "/jre");
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), javaHome);

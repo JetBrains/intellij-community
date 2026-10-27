@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.dependencies
 
 import org.jetbrains.annotations.ApiStatus
@@ -46,7 +46,7 @@ class DependenciesProperties(communityRoot: BuildDependenciesCommunityRoot, vara
   }
 
   @Throws(IOException::class)
-  fun copy(copy: Path?) {
+  fun copy(copy: Path) {
     Files.newBufferedWriter(copy, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING).use { file -> file.write(toString()) }
     check(dependencies.containsKey("jdkBuild")) { "'jdkBuild' key is required for backward compatibility with gradle-intellij-plugin" }
   }
