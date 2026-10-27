@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab
 import com.intellij.collaboration.api.findServerForAlias
 import com.intellij.collaboration.api.parseServerHostAliases
 import com.intellij.collaboration.api.serverHostAliasesFlow
+import com.intellij.collaboration.util.URIUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -24,13 +25,19 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
+import org.jetbrains.plugins.gitlab.authentication.GitLabOAuthSettings
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.net.URI
 
-interface GitLabProjectsManager : HostedGitRepositoriesManager<GitLabProjectMapping>
+interface GitLabProjectsManager : HostedGitRepositoriesManager<GitLabProjectMapping> {
+  /**
+   * Checks pre-configured servers from settings or does some guess to whether the given server path hosts a GitLab server.
+   */
+  suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean
+}
 
-internal class GitLabProjectsManagerImpl(project: Project, cs: CoroutineScope) : GitLabProjectsManager {
+internal class GitLabProjectsManagerImpl(private val project: Project, cs: CoroutineScope) : GitLabProjectsManager {
 
   override val knownRepositoriesState: StateFlow<Set<GitLabProjectMapping>> by lazy {
     val gitRemotesFlow = gitRemotesFlow(project).distinctUntilChanged()
@@ -47,8 +54,7 @@ internal class GitLabProjectsManagerImpl(project: Project, cs: CoroutineScope) :
     val discoveredServersFlow = notAliasedRemotes.discoverServers(accountsServersFlow) { remote ->
       GitHostingUrlUtil.findServerAt(LOG, remote) {
         val server = GitLabServerPath(it.toString())
-        val isGitLabServer = service<GitLabServersManager>().checkIsGitLabServer(server)
-        if (isGitLabServer) server else null
+        if (checkIsGitLabServer(server)) server else null
       }
     }.runningFold(emptySet<GitLabServerPath>()) { accumulator, value ->
       accumulator + value
@@ -76,6 +82,17 @@ internal class GitLabProjectsManagerImpl(project: Project, cs: CoroutineScope) :
 
   private val GitRemoteUrlCoordinates.host: String?
     get() = getUriFromRemoteUrl(url)?.host?.lowercase()
+
+  override suspend fun checkIsGitLabServer(server: GitLabServerPath): Boolean =
+    isPreConfigured(server) || service<GitLabServersManager>().checkIsGitLabServer(server)
+
+  private fun isPreConfigured(server: GitLabServerPath): Boolean {
+    val serverUri = server.toURI()
+    return GitLabOAuthSettings.getInstance(project).state.customServers.any {
+      val configuredUri = runCatching { GitLabServerPath(it.serverUri).toURI() }.getOrNull() ?: return@any false
+      URIUtil.equalWithoutSchema(configuredUri, serverUri)
+    }
+  }
 
   companion object {
     private val LOG = logger<GitLabProjectsManager>()

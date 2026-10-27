@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.git.http
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
@@ -16,7 +16,7 @@ import git4idea.remote.GitHttpAuthDataProvider
 import git4idea.remote.hosting.GitHostingUrlUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.gitlab.GitLabServersManager
+import org.jetbrains.plugins.gitlab.GitLabProjectsManager
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginSource
 import org.jetbrains.plugins.gitlab.authentication.GitLabLoginUtil
@@ -70,7 +70,7 @@ private suspend fun GitLabAccountManager.tryCreateAccount(
   val server = GitHostingUrlUtil.getUriFromRemoteUrl(gitHostUrl)?.let {
     GitLabServerPath(it.toString())
   } ?: return LoginResult.OtherMethod
-  val isGitLabServer = service<GitLabServersManager>().checkIsGitLabServer(server)
+  val isGitLabServer = project.service<GitLabProjectsManager>().checkIsGitLabServer(server)
   if (!isGitLabServer) return LoginResult.OtherMethod
   return withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
     GitLabLoginUtil.loginWithOAuthOrToken(project, null, server, login, GitLabLoginSource.GIT, ::isAccountUnique).also {
