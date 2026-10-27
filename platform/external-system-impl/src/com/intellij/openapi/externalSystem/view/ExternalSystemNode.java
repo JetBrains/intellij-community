@@ -41,6 +41,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Function;
 
 /**
+ * This class is not thread-safe.
+ * Access a node from one thread only.
+ *
  * @author Vladislav.Soroka
  */
 public abstract class ExternalSystemNode<T> extends SimpleNode implements Comparable<ExternalSystemNode<?>> {
@@ -207,16 +210,23 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myChildren;
   }
 
+  /**
+   * Builds the children from {@link #doBuildChildren()} and changes this node only at the end.
+   * A cancelled build leaves this node unchanged, so the next call builds the same children again.
+   */
   private ExternalSystemNode<?> @NotNull [] buildChildren() {
-    List<? extends ExternalSystemNode<?>> newChildrenCandidates = new ArrayList<ExternalSystemNode<?>>(doBuildChildren());
+    List<ExternalSystemNode<?>> newChildrenCandidates = new ArrayList<>(doBuildChildren());
     if (newChildrenCandidates.isEmpty()) return NO_CHILDREN;
 
-    addAll(newChildrenCandidates, true);
-    sort(myChildrenList);
+    for (ExternalSystemNode<?> candidate : newChildrenCandidates) {
+      candidate.setParent(this);
+    }
+    sort(newChildrenCandidates);
     List<ExternalSystemNode<?>> visibleNodes = new ArrayList<>();
-    for (ExternalSystemNode<?> each : myChildrenList) {
+    for (ExternalSystemNode<?> each : newChildrenCandidates) {
       if (each.isVisible()) visibleNodes.add(each);
     }
+    myChildrenList = new CopyOnWriteArrayList<>(newChildrenCandidates);
     return visibleNodes.toArray(new ExternalSystemNode[0]);
   }
 
@@ -237,10 +247,6 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
   }
 
   public boolean addAll(Collection<? extends ExternalSystemNode<?>> externalSystemNodes) {
-    return addAll(externalSystemNodes, false);
-  }
-
-  private boolean addAll(Collection<? extends ExternalSystemNode<?>> externalSystemNodes, boolean silently) {
     if (externalSystemNodes.isEmpty()) return false;
 
     if (myChildrenList == NO_CHILDREN_LIST) {
@@ -251,9 +257,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
       externalSystemNode.setParent(this);
       myChildrenList.add(externalSystemNode);
     }
-    if (!silently) {
-      childrenChanged();
-    }
+    childrenChanged();
 
     return true;
   }
