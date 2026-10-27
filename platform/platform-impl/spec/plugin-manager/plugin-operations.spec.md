@@ -166,9 +166,12 @@ Untested: No focused test verifies state isolation across two page sessions.
 
 - A completed update check for the current IDE build must refresh the plugin manager's cached updates.
 - Open pages and pages opened later must receive the completed result, including an empty result.
+- A completed result must replace version, repository, and download data even when the plugin IDs stay the same.
 - A check for another IDE build must preserve the current update snapshot.
   [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
     `completed checks reach current and later subscribers`;
+    `completed checks replace versions for the same plugin ids`;
+    `completed checks replace repositories for the same plugin ids`;
     `an empty completed check clears cached updates`;
     `checks for another IDE build keep the current snapshot`
   )
