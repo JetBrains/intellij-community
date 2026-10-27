@@ -166,22 +166,22 @@ private class Bitset(
    * Translates DFA states to action switch labels.
    */
   private const val ZZ_ACTION_PACKED_0: String  =
-    "\u0010\u0000\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0003\u0001\u0004\u0001\u0005\u0003\u0006"+
-    "\u0001\u0007\u0005\u0006\u0001\u0008\u0001\u0009\u0001\u000a\u0001\u000b\u0001\u000c\u0001\u000d"+
-    "\u0001\u000e\u0001\u000f\u0001\u0006\u0001\u0010\u0001\u0006\u0001\u0011\u0001\u0006\u0001\u0008"+
-    "\u0001\u000a\u0001\u000d\u0001\u0006\u0001\u0012\u0004\u0006\u0001\u0013\u0001\u0014\u0001\u0015"+
-    "\u0001\u0016\u0001\u0006\u0001\u0017\u0001\u0018\u0001\u0019\u000c\u0000\u0001\u001a\u0002\u001b"+
-    "\u0007\u0000\u0001\u001c\u0002\u0000\u0001\u001d\u0002\u0000\u0001\u001e\u0001\u001f\u0002\u0020"+
-    "\u0002\u0009\u0001\u0000\u0002\u000e\u0002\u0000\u0001\u0021\u0005\u0000\u0001\u0022\u0004\u0000"+
-    "\u0001\u0006\u0001\u0000\u0001\u0006\u0002\u0000\u0001\u0006\u0003\u0000\u0001\u0023\u000e\u0000"+
-    "\u0001\u0024\u0001\u0025\u0001\u0000\u0001\u0003\u0003\u0000\u0001\u001c\u0002\u0000\u0001\u0026"+
-    "\u0001\u0006\u0002\u0000\u0001\u001e\u0001\u0009\u0001\u0000\u0001\u000e\u0001\u0006\u0002\u0000"+
-    "\u0001\u0006\u0004\u0000\u0001\u0027\u0001\u0000\u0001\u0006\u0004\u0000\u0001\u0028\u0003\u0006"+
-    "\u0002\u0000\u0003\u0006\u0001\u0000\u0001\u0022\u0006\u0000\u0001\u0029\u0003\u0000\u0002\u0006"+
-    "\u0001\u0000\u0001\u0006\u0002\u0000\u0001\u002a\u0002\u0000\u0001\u0006\u0001\u0000\u0001\u0006"+
-    "\u0001\u0000\u0001\u0006\u0002\u0000\u0001\u0006\u0001\u0028\u0003\u0000\u0001\u0022\u0003\u0027"+
-    "\u0002\u0000\u0001\u0006\u0001\u0000\u0002\u0006\u0001\u002b\u0002\u0006\u0005\u0000\u0001\u0006"+
-    "\u0001\u0000\u0001\u0006\u0001\u0027\u0004\u0006\u0001\u0000"
+    "\u0010\u0000\u0001\u0001\u0001\u0002\u0002\u0001\u0001\u0003\u0001\u0004\u0001\u0005\u0002\u0006"+
+    "\u0001\u0007\u0001\u0008\u0002\u0006\u0001\u0007\u0002\u0006\u0001\u0009\u0001\u000a\u0001\u000b"+
+    "\u0001\u000c\u0001\u000d\u0001\u000e\u0001\u000f\u0001\u0010\u0001\u0006\u0001\u0011\u0001\u0006"+
+    "\u0001\u0012\u0001\u0006\u0001\u0009\u0001\u000b\u0001\u000e\u0001\u0006\u0001\u0013\u0004\u0006"+
+    "\u0001\u0014\u0001\u0015\u0001\u0016\u0001\u0017\u0001\u0006\u0001\u0018\u0001\u0019\u0001\u001a"+
+    "\u000c\u0000\u0001\u001b\u0002\u001c\u0007\u0000\u0001\u001d\u0002\u0000\u0001\u001e\u0002\u0000"+
+    "\u0001\u001f\u0001\u0020\u0002\u0021\u0002\u000a\u0001\u0000\u0002\u000f\u0002\u0000\u0001\u0022"+
+    "\u0005\u0000\u0001\u0023\u0004\u0000\u0001\u0006\u0001\u0000\u0001\u0006\u0002\u0000\u0001\u0006"+
+    "\u0003\u0000\u0001\u0024\u000e\u0000\u0001\u0025\u0001\u0026\u0001\u0000\u0001\u0003\u0003\u0000"+
+    "\u0001\u001d\u0002\u0000\u0001\u0027\u0001\u0006\u0002\u0000\u0001\u001f\u0001\u000a\u0001\u0000"+
+    "\u0001\u000f\u0001\u0006\u0002\u0000\u0001\u0006\u0004\u0000\u0001\u0028\u0001\u0000\u0001\u0006"+
+    "\u0004\u0000\u0001\u0029\u0003\u0006\u0002\u0000\u0003\u0006\u0001\u0000\u0001\u0023\u0006\u0000"+
+    "\u0001\u002a\u0003\u0000\u0002\u0006\u0001\u0000\u0001\u0006\u0002\u0000\u0001\u002b\u0002\u0000"+
+    "\u0001\u0006\u0001\u0000\u0001\u0006\u0001\u0000\u0001\u0006\u0002\u0000\u0001\u0006\u0001\u0029"+
+    "\u0003\u0000\u0001\u0023\u0003\u0028\u0002\u0000\u0001\u0006\u0001\u0000\u0002\u0006\u0001\u002c"+
+    "\u0002\u0006\u0005\u0000\u0001\u0006\u0001\u0000\u0001\u0006\u0001\u0028\u0004\u0006\u0001\u0000"
 
   @JvmStatic
   private fun zzUnpackAction(): IntArray {
@@ -684,16 +684,25 @@ private class Bitset(
   /** This flag is set after the first plain scalar line until it ends */
   private var possiblePlainTextScalarContinue = false
 
+  /**
+   * This flag is set after a quote without a closing quote, and it stays set until the end of the file.
+   * The quoted scalar rules search for the closing quote up to the end of the file.
+   * So the lexer cannot restart after such a quote, because a new closing quote changes the token at the quote.
+   */
+  private var hasUnclosedQuote = false
+
   //-------------------------------------------------------------------------------------------------------------------
 
   fun isCleanState(): Boolean = yystate() == YYINITIAL
     && braceCount == 0
     && prevElementIndent == 0
     && !possiblePlainTextScalarContinue
+    && !hasUnclosedQuote
 
   fun cleanMyState() {
     braceCount = 0
     blockScalarType = null
+    hasUnclosedQuote = false
 
     yycolumn = 0
     returnState = YYINITIAL
@@ -1103,21 +1112,21 @@ private class Bitset(
           1 -> {
             goToState(getStateAfterLineStart(0))
             }
-          44 -> { /* do nothing */ }
+          45 -> { /* do nothing */ }
           2 -> {
             yybegin(getStateAfterLineStart(yylength()))
         return getWhitespaceType()
             }
-          45 -> { /* do nothing */ }
+          46 -> { /* do nothing */ }
           3 -> {
             possiblePlainTextScalarContinue = true
         return YamlSyntaxTokenTypes.TEXT
             }
-          46 -> { /* do nothing */ }
+          47 -> { /* do nothing */ }
           4 -> {
             return getWhitespaceType()
             }
-          47 -> { /* do nothing */ }
+          48 -> { /* do nothing */ }
           5 -> {
             if (!possiblePlainTextScalarContinue && prevElementIndent == 0) {
           // It is hard to find clean state in YAML lexer :(
@@ -1128,105 +1137,110 @@ private class Bitset(
         }
         return YamlSyntaxTokenTypes.EOL
             }
-          48 -> { /* do nothing */ }
+          49 -> { /* do nothing */ }
           6 -> {
             return YamlSyntaxTokenTypes.TEXT
             }
-          49 -> { /* do nothing */ }
+          50 -> { /* do nothing */ }
           7 -> {
+            hasUnclosedQuote = true
+        return YamlSyntaxTokenTypes.TEXT
+            }
+          51 -> { /* do nothing */ }
+          8 -> {
             return YamlSyntaxTokenTypes.COMMENT
             }
-          50 -> { /* do nothing */ }
-          8 -> {
+          52 -> { /* do nothing */ }
+          9 -> {
             prevElementIndent = yycolumn
         return YamlSyntaxTokenTypes.COLON
             }
-          51 -> { /* do nothing */ }
-          9 -> {
+          53 -> { /* do nothing */ }
+          10 -> {
             returnState = yystate()
         yybegin(BS_HEADER_TAIL_STATE)
         blockScalarType = YamlSyntaxTokenTypes.SCALAR_TEXT
         return blockScalarType
             }
-          52 -> { /* do nothing */ }
-          10 -> {
+          54 -> { /* do nothing */ }
+          11 -> {
             prevElementIndent = yycolumn
         return YamlSyntaxTokenTypes.QUESTION
             }
-          53 -> { /* do nothing */ }
-          11 -> {
+          55 -> { /* do nothing */ }
+          12 -> {
             openBrace()
         return YamlSyntaxTokenTypes.LBRACKET
             }
-          54 -> { /* do nothing */ }
-          12 -> {
+          56 -> { /* do nothing */ }
+          13 -> {
             closeBrace()
         return YamlSyntaxTokenTypes.RBRACKET
             }
-          55 -> { /* do nothing */ }
-          13 -> {
+          57 -> { /* do nothing */ }
+          14 -> {
             openBrace()
         return YamlSyntaxTokenTypes.LBRACE
             }
-          56 -> { /* do nothing */ }
-          14 -> {
+          58 -> { /* do nothing */ }
+          15 -> {
             returnState = yystate()
         yybegin(BS_HEADER_TAIL_STATE)
         blockScalarType = YamlSyntaxTokenTypes.SCALAR_LIST
         return blockScalarType
             }
-          57 -> { /* do nothing */ }
-          15 -> {
+          59 -> { /* do nothing */ }
+          16 -> {
             closeBrace()
         return YamlSyntaxTokenTypes.RBRACE
             }
-          58 -> { /* do nothing */ }
-          16 -> {
+          60 -> { /* do nothing */ }
+          17 -> {
             return YamlSyntaxTokenTypes.EOL
             }
-          59 -> { /* do nothing */ }
-          17 -> {
+          61 -> { /* do nothing */ }
+          18 -> {
             return YamlSyntaxTokenTypes.COMMA
             }
-          60 -> { /* do nothing */ }
-          18 -> {
+          62 -> { /* do nothing */ }
+          19 -> {
             yybegin(LINE_START_STATE)
         return YamlSyntaxTokenTypes.EOL
             }
-          61 -> { /* do nothing */ }
-          19 -> {
+          63 -> { /* do nothing */ }
+          20 -> {
             goToState(BLOCK_STATE)
             }
-          62 -> { /* do nothing */ }
-          20 -> {
+          64 -> { /* do nothing */ }
+          21 -> {
             yybegin(returnState)
         return YamlSyntaxTokenTypes.ANCHOR
             }
-          63 -> { /* do nothing */ }
-          21 -> {
+          65 -> { /* do nothing */ }
+          22 -> {
             yybegin(returnState)
         return YamlSyntaxTokenTypes.ALIAS
             }
-          64 -> { /* do nothing */ }
-          22 -> {
+          66 -> { /* do nothing */ }
+          23 -> {
             yybegin(returnState)
         return YamlSyntaxTokenTypes.COLON
             }
-          65 -> { /* do nothing */ }
-          23 -> {
+          67 -> { /* do nothing */ }
+          24 -> {
             goToState(BS_BODY_STATE)
             }
-          66 -> { /* do nothing */ }
-          24 -> {
+          68 -> { /* do nothing */ }
+          25 -> {
             require(yycolumn > prevElementIndent)
         return blockScalarType
             }
-          67 -> { /* do nothing */ }
-          25 -> {
+          69 -> { /* do nothing */ }
+          26 -> {
             return YamlSyntaxTokenTypes.SCALAR_EOL
             }
-          68 -> { /* do nothing */ }
-          26 -> {
+          70 -> { /* do nothing */ }
+          27 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 13
           var zzFPos = zzStartRead
@@ -1258,8 +1272,8 @@ private class Bitset(
 
             return processScalarKey()
             }
-          69 -> { /* do nothing */ }
-          27 -> {
+          71 -> { /* do nothing */ }
+          28 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 9
           var zzFPos = zzStartRead
@@ -1291,39 +1305,39 @@ private class Bitset(
 
             return YamlSyntaxTokenTypes.TAG
             }
-          70 -> { /* do nothing */ }
-          28 -> {
+          72 -> { /* do nothing */ }
+          29 -> {
             return YamlSyntaxTokenTypes.SCALAR_DSTRING
             }
-          71 -> { /* do nothing */ }
-          29 -> {
+          73 -> { /* do nothing */ }
+          30 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 1)
             returnState = yystate()
         yybegin(ANCHOR_MODE)
         return YamlSyntaxTokenTypes.AMPERSAND
             }
-          72 -> { /* do nothing */ }
-          30 -> {
+          74 -> { /* do nothing */ }
+          31 -> {
             return YamlSyntaxTokenTypes.SCALAR_STRING
             }
-          73 -> { /* do nothing */ }
-          31 -> {
+          75 -> { /* do nothing */ }
+          32 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 1)
             returnState = yystate()
         yybegin(ALIAS_MODE)
         return YamlSyntaxTokenTypes.STAR
             }
-          74 -> { /* do nothing */ }
-          32 -> {
+          76 -> { /* do nothing */ }
+          33 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 1)
             prevElementIndent = yycolumn
         return YamlSyntaxTokenTypes.SEQUENCE_MARKER
             }
-          75 -> { /* do nothing */ }
-          33 -> {
+          77 -> { /* do nothing */ }
+          34 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 14
           var zzFPos = zzStartRead
@@ -1355,8 +1369,8 @@ private class Bitset(
 
             return processScalarKey()
             }
-          76 -> { /* do nothing */ }
-          34 -> {
+          78 -> { /* do nothing */ }
+          35 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 13
           var zzFPos = zzStartRead
@@ -1388,8 +1402,8 @@ private class Bitset(
 
             return processScalarKey(BLOCK_STATE)
             }
-          77 -> { /* do nothing */ }
-          35 -> {
+          79 -> { /* do nothing */ }
+          36 -> {
             // lookahead expression with fixed lookahead length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzMarkedPos, -1)
             val indent = yylength() - 1
@@ -1402,17 +1416,17 @@ private class Bitset(
           return YamlSyntaxTokenTypes.SCALAR_EOL
         }
             }
-          78 -> { /* do nothing */ }
-          36 -> {
+          80 -> { /* do nothing */ }
+          37 -> {
             prepareForNewDocument()
         return YamlSyntaxTokenTypes.DOCUMENT_MARKER
             }
-          79 -> { /* do nothing */ }
-          37 -> {
+          81 -> { /* do nothing */ }
+          38 -> {
             return YamlSyntaxTokenTypes.DOCUMENT_END
             }
-          80 -> { /* do nothing */ }
-          38 -> {
+          82 -> { /* do nothing */ }
+          39 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 11
           var zzFPos = zzStartRead
@@ -1444,8 +1458,8 @@ private class Bitset(
 
             return processScalarKey()
             }
-          81 -> { /* do nothing */ }
-          39 -> {
+          83 -> { /* do nothing */ }
+          40 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 13
           var zzFPos = zzStartRead
@@ -1477,8 +1491,8 @@ private class Bitset(
 
             return YamlSyntaxTokenTypes.TEXT
             }
-          82 -> { /* do nothing */ }
-          40 -> {
+          84 -> { /* do nothing */ }
+          41 -> {
           // general lookahead, find correct zzMarkedPos
           var zzFState = 11
           var zzFPos = zzStartRead
@@ -1510,26 +1524,26 @@ private class Bitset(
 
             return processScalarKey(BLOCK_STATE)
             }
-          83 -> { /* do nothing */ }
-          41 -> {
+          85 -> { /* do nothing */ }
+          42 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 3)
             goToState(getStateAfterLineStart(0))
             }
-          84 -> { /* do nothing */ }
-          42 -> {
+          86 -> { /* do nothing */ }
+          43 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 1)
             cleanMyState()
           return YamlSyntaxTokenTypes.EOL
             }
-          85 -> { /* do nothing */ }
-          43 -> {
+          87 -> { /* do nothing */ }
+          44 -> {
             // lookahead expression with fixed base length
             zzMarkedPos = zzBufferL.offsetByCodePoints(zzStartRead, 1)
             return YamlSyntaxTokenTypes.EOL
             }
-          86 -> { /* do nothing */ }
+          88 -> { /* do nothing */ }
           else ->
             zzScanError(ZZ_NO_MATCH)
         }

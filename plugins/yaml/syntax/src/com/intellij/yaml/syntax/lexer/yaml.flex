@@ -44,16 +44,25 @@ import com.intellij.yaml.syntax.YamlSyntaxTokenTypes
   /** This flag is set after the first plain scalar line until it ends */
   private var possiblePlainTextScalarContinue = false
 
+  /**
+   * This flag is set after a quote without a closing quote, and it stays set until the end of the file.
+   * The quoted scalar rules search for the closing quote up to the end of the file.
+   * So the lexer cannot restart after such a quote, because a new closing quote changes the token at the quote.
+   */
+  private var hasUnclosedQuote = false
+
   //-------------------------------------------------------------------------------------------------------------------
 
   fun isCleanState(): Boolean = yystate() == YYINITIAL
     && braceCount == 0
     && prevElementIndent == 0
     && !possiblePlainTextScalarContinue
+    && !hasUnclosedQuote
 
   fun cleanMyState() {
     braceCount = 0
     blockScalarType = null
+    hasUnclosedQuote = false
 
     yycolumn = 0
     returnState = YYINITIAL
@@ -404,6 +413,12 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 
   {DSTRING} {
         return YamlSyntaxTokenTypes.SCALAR_DSTRING
+      }
+
+  // This rule matches only when the quoted scalar rules above find no closing quote
+  [\"'] {
+        hasUnclosedQuote = true
+        return YamlSyntaxTokenTypes.TEXT
       }
 }
 
