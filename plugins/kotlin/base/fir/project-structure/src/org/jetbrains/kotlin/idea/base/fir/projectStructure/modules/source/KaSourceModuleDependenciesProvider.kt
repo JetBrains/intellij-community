@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.fir.projectStructure.provider.K2IDEProject
 import org.jetbrains.kotlin.idea.base.projectStructure.KaSourceModuleKind
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.HmppSourceModuleDependencyFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.NonHmppSourceModuleDependenciesFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.kmp.SourceModuleDependenciesFilterCandidate
 import org.jetbrains.kotlin.idea.base.projectStructure.openapiModule
 import org.jetbrains.kotlin.idea.base.projectStructure.sourceModuleKind
@@ -54,7 +55,8 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
             for (dependency in from.entity.dependencies) {
                 dependency.collectKaModules(from.kind, this)
             }
-            removeIf { !from.canDependOn(it) }
+            val dependencyFilter = from.getDependencyFilter()
+            removeIf { !dependencyFilter.isSupportedDependency(it.toDependencyCandidate()) }
             addAll(extraDependencies)
             remove(from)
         }.toList()
@@ -238,12 +240,9 @@ internal class KaSourceModuleDependenciesProvider(private val project: Project) 
         }
     }
 
-    private fun KaSourceModuleBase.canDependOn(other: KaModule): Boolean {
-        val dependencyFilter = when {
-            module.isHMPPEnabled -> HmppSourceModuleDependencyFilter(targetPlatform)
-            else -> NonHmppSourceModuleDependenciesFilter(targetPlatform)
-        }
-        return dependencyFilter.isSupportedDependency(other.toDependencyCandidate())
+    private fun KaSourceModuleBase.getDependencyFilter(): SourceModuleDependenciesFilter = when {
+        module.isHMPPEnabled -> HmppSourceModuleDependencyFilter(targetPlatform)
+        else -> NonHmppSourceModuleDependenciesFilter(targetPlatform)
     }
 
     private fun KaModule.toDependencyCandidate(): SourceModuleDependenciesFilterCandidate {
