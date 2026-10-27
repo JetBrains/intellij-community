@@ -109,6 +109,10 @@ class LegacyPluginUiHost @RequiresEdt(generateAssertion = false /* IJPL-115548 *
   val sessionId: String
     get() = model.sessionId
 
+  internal fun filterPluginUpdates(updates: Flow<PluginUpdatesEvent>): Flow<PluginUpdatesEvent> {
+    return model.updateSourceFilter.filter(updates)
+  }
+
   val createShutdownCallback: Boolean
     get() = model.createShutdownCallback
 

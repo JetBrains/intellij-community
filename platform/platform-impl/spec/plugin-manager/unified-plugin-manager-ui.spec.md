@@ -265,6 +265,11 @@ Untested: Product welcome buttons on a remote backend keep the Settings route be
     `update filter follows session enablement with cached disabled updates`
   )
 
+- Update available must exclude a plugin while its update source change is pending.
+  [@test] ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt (
+    `pending source changes suppress row details and Update All availability`
+  )
+
 - An empty search field must show `Search all plugins` and the Filter control.
 - The Filter control must show a selected state while a represented filter is active.
   [@test] ../../testSrc/com/intellij/ide/plugins/unified/UnifiedPluginsPageViewTest.kt (

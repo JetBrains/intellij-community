@@ -154,6 +154,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     compactRows = densityVariant.compactRows,
   )
   private var updateAllOperationEventSink: (PluginModelEvent) -> Unit = {}
+  private val sessionPluginUpdates = host.filterPluginUpdates(pluginUpdates)
   private val listModel = ListPluginModel()
   private val repositoryCache = UnifiedPluginRepositoryCache(pageScope, repositoryDataProviderFactory())
   private val enrichmentReadiness: suspend () -> Unit = {
@@ -163,7 +164,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
   private val localSource = UnifiedPluginLocalSourceCoordinator(
     scope = pageScope,
     dataProvider = localDataProviderFactory(host).withEnrichmentReadiness(enrichmentReadiness),
-    updates = pluginUpdates,
+    updates = sessionPluginUpdates,
     hostEvents = host.events,
     sessionId = host.sessionId,
     loadErrorMessage = IdeBundle.message("plugins.configurable.local.plugins.not.loaded"),
@@ -176,7 +177,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     scope = pageScope,
     loadGroup = internalGroupLoader,
     dataEnricher = marketplaceDataProvider,
-    updates = pluginUpdates,
+    updates = sessionPluginUpdates,
     loadingTitle = IdeBundle.message("plugins.configurable.internal"),
     loadErrorMessage = IdeBundle.message("plugins.configurable.internal.plugins.not.loaded"),
     loadingDelay = internalLoadingDelay,
@@ -185,14 +186,14 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
     scope = pageScope,
     initialQuery = initialQueryState,
     dataProvider = marketplaceDataProvider,
-    updates = pluginUpdates,
+    updates = sessionPluginUpdates,
     loadErrorMessage = IdeBundle.message("plugins.configurable.search.result.not.loaded"),
   )
   private val repositorySource = UnifiedPluginRepositorySourceCoordinator(
     scope = pageScope,
     repositoryCache = repositoryCache,
     dataEnricher = marketplaceDataProvider,
-    updates = pluginUpdates,
+    updates = sessionPluginUpdates,
     loadErrorMessage = IdeBundle.message("plugins.configurable.repository.plugins.not.loaded"),
   )
   private val pageSource = UnifiedPluginsPageSourceCoordinator(
@@ -328,7 +329,7 @@ internal class UnifiedPluginsPageSession @RequiresEdt(generateAssertion = false 
       }
     }
     updateAllUpdatesCollectionJob = pageScope.launch(start = CoroutineStart.UNDISPATCHED) {
-      pluginUpdates.combine(localSource.state) { updates, localState ->
+      sessionPluginUpdates.combine(localSource.state) { updates, localState ->
         val enabledPluginIds = localState.sections.asSequence()
           .filter { it.id == PluginSectionId.Installed || it.id == PluginSectionId.Bundled }
           .flatMap { it.items.asSequence() }
