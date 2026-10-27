@@ -68,7 +68,8 @@ public final class TokenBuffer {
 
   // has to combine "\r" from the previous token with "\n" from current token to make it LF
   private boolean hasTrailingCR() {
-    return !tokens.isEmpty() && tokens.peekLast() != CR_TOKEN && StringUtil.endsWithChar(tokens.peekLast().getText(), '\r');
+    TokenInfo last = tokens.peekLast();
+    return last != null && last != CR_TOKEN && StringUtil.endsWithChar(last.getText(), '\r');
   }
 
   // \r with \n should be \n
@@ -76,8 +77,10 @@ public final class TokenBuffer {
   private void combineTrailingCRWith(@NotNull String currentText) {
     if (StringUtil.startsWith(currentText, "\n")) {
       TokenInfo last = tokens.removeLast();
-      String lastTextWithNoCR = last.getText().substring(0, last.length() - 1);
-      if (!lastTextWithNoCR.isEmpty()) {
+      String lastText = last.getText();
+      int lastLength = lastText.length();
+      if (lastLength != 1) {
+        String lastTextWithNoCR = lastText.substring(0, lastLength - 1);
         TokenInfo newLast = new TokenInfo(last.contentType, lastTextWithNoCR, last.getHyperlinkInfo());
         tokens.addLast(newLast);
         size --;
@@ -142,8 +145,7 @@ public final class TokenBuffer {
     size = 0;
   }
 
-  @ApiStatus.Internal
-  public static @NotNull CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
+  private static @NotNull @Unmodifiable CharSequence getRawText(@NotNull List<? extends TokenInfo> tokens) {
     int size = 0;
     for (TokenInfo token : tokens) {
       size += token.getText().length();
@@ -174,7 +176,7 @@ public final class TokenBuffer {
     List<TokenInfo> list = tokens.isEmpty() ? Collections.emptyList() : new ArrayList<>(tokens);
     if (startIndex != 0) {
       // slice the first token
-      TokenInfo first = list.get(0);
+      TokenInfo first = list.getFirst();
       TokenInfo sliced = new TokenInfo(first.contentType, first.getText().substring(startIndex), first.getHyperlinkInfo());
       return ContainerUtil.concat(Collections.singletonList(sliced), list.subList(1, list.size()));
     }
@@ -192,8 +194,8 @@ public final class TokenBuffer {
     private final HyperlinkInfo myHyperlinkInfo;
 
     public TokenInfo(@NotNull ConsoleViewContentType contentType,
-              @NotNull String text,
-              @Nullable HyperlinkInfo hyperlinkInfo) {
+                     @NotNull String text,
+                     @Nullable HyperlinkInfo hyperlinkInfo) {
       this.contentType = contentType;
       myHyperlinkInfo = hyperlinkInfo;
       this.text = text;

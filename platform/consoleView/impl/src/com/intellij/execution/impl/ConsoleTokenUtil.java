@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 
 @ApiStatus.Internal
@@ -73,16 +72,19 @@ public final class ConsoleTokenUtil {
     text.setLength(newLength);
   }
 
-  static int evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
-                                        int sourceStartIndex,
-                                        @NotNull List<? super TokenBuffer.TokenInfo> dest) {
+  static @NotNull StringBuilder evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
+                                                           int sourceStartIndex,
+                                                           TokenBuffer.TokenInfo @NotNull [] dest) {
     int backspacesFromNextToken = 0;
+    int o = dest.length-1;
+    int resultTextLength = 0;
     for (int i = source.size() - 1; i >= sourceStartIndex; i--) {
       TokenBuffer.TokenInfo token = source.get(i);
       TokenBuffer.TokenInfo newToken;
-      if (StringUtil.containsChar(token.getText(), BACKSPACE) || backspacesFromNextToken > 0) {
-        StringBuilder tokenTextBuilder = new StringBuilder(token.getText().length() + backspacesFromNextToken);
-        tokenTextBuilder.append(token.getText());
+      String tokenText = token.getText();
+      if (StringUtil.containsChar(tokenText, BACKSPACE) || backspacesFromNextToken > 0) {
+        StringBuilder tokenTextBuilder = new StringBuilder(tokenText.length() + backspacesFromNextToken);
+        tokenTextBuilder.append(tokenText);
         StringUtil.repeatSymbol(tokenTextBuilder, BACKSPACE, backspacesFromNextToken);
         normalizeBackspaceCharacters(tokenTextBuilder);
         backspacesFromNextToken = getBackspacePrefixLength(tokenTextBuilder);
@@ -92,13 +94,18 @@ public final class ConsoleTokenUtil {
       else {
         newToken = token;
       }
-      dest.add(newToken);
+      dest[o--] = newToken;
+      resultTextLength += newToken.length();
     }
-    Collections.reverse(dest);
-    return backspacesFromNextToken;
+    StringBuilder result = new StringBuilder(resultTextLength+backspacesFromNextToken);
+    StringUtil.repeatSymbol(result, BACKSPACE, backspacesFromNextToken);
+    for (TokenBuffer.TokenInfo info : dest) {
+      result.append(info.getText());
+    }
+    return result;
   }
 
-  private static int getBackspacePrefixLength(@NotNull CharSequence text) {
+  static int getBackspacePrefixLength(@NotNull CharSequence text) {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
@@ -110,7 +117,7 @@ public final class ConsoleTokenUtil {
     m.putUserData(CONTENT_TYPE, contentType);
   }
 
-  // finds range marker the [offset..offset+1) belongs to
+  // finds range marker the [offset...offset+1) belongs to
   static RangeMarker findTokenMarker(@NotNull Editor editor, @NotNull Project project, int offset) {
     ThreadingAssertions.assertEventDispatchThread();
     RangeMarker[] marker = new RangeMarker[1];
@@ -189,7 +196,7 @@ public final class ConsoleTokenUtil {
 
   static void highlightTokenTextAttributes(@NotNull Editor editor,
                                            @NotNull Project project,
-                                           @NotNull List<TokenBuffer.TokenInfo> tokens,
+                                           @NotNull TokenBuffer.TokenInfo @NotNull [] tokens,
                                            @NotNull EditorHyperlinkSupport hyperlinks,
                                            @NotNull Collection<? super ConsoleViewContentType> contentTypes,
                                            @NotNull List<? super Pair<String, ConsoleViewContentType>> contents) {
@@ -197,12 +204,12 @@ public final class ConsoleTokenUtil {
     // start from the end because portion of the text can be stripped from the document beginning because of a cycle buffer
     int offset = editor.getDocument().getTextLength();
     int tokenLength = 0;
-    for (int i = tokens.size() - 1; i >= 0; i--) {
-      TokenBuffer.TokenInfo token = tokens.get(i);
+    for (int i = tokens.length - 1; i >= 0; i--) {
+      TokenBuffer.TokenInfo token = tokens[i];
       contentTypes.add(token.contentType);
       contents.add(new Pair<>(token.getText(), token.contentType));
       tokenLength += token.length();
-      TokenBuffer.TokenInfo prevToken = i == 0 ? null : tokens.get(i - 1);
+      TokenBuffer.TokenInfo prevToken = i == 0 ? null : tokens[i - 1];
       if (prevToken != null && token.contentType == prevToken.contentType && token.getHyperlinkInfo() == prevToken.getHyperlinkInfo()) {
         // do not create highlighter yet because can merge previous token with the current
         continue;

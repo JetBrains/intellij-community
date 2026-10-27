@@ -60,10 +60,11 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.min
 import com.intellij.openapi.util.Pair as OpenApiPair
 
+@Suppress("SuspiciousPackagePrivateAccess")
 class ConsoleViewImplTest : LightPlatformTestCase() {
   private lateinit var console: ConsoleViewImpl
 
-  private val consoleEditor
+  private val consoleEditor: EditorEx
     get() = console.editor!! as EditorEx
 
   public override fun setUp() {

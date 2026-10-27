@@ -3,7 +3,6 @@
 
 package com.intellij.execution.impl
 
-import com.google.common.base.CharMatcher
 import com.intellij.codeInsight.folding.impl.FoldingUtil
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.currentOrNull
@@ -53,6 +52,7 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.TestOnlyThreading
 import com.intellij.openapi.command.undo.UndoUtil
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.ClientEditorManager.Companion.getClientEditor
@@ -138,7 +138,6 @@ import javax.swing.JPanel
 import javax.swing.event.AncestorEvent
 import kotlin.math.max
 import kotlin.math.min
-import com.intellij.openapi.util.Pair as OpenApiPair
 
 open class ConsoleViewImpl protected constructor(
   project: Project,
@@ -152,8 +151,8 @@ open class ConsoleViewImpl protected constructor(
   }
 
   @Suppress("LeakingThis")
-  private val flushUserInputAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
-  private val commandLineFolding = CommandLineFolding()
+  private val flushUserInputAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+  private val commandLineFolding: CommandLineFolding = CommandLineFolding()
 
   private val psiDisposedCheck: DisposedPsiManagerCheck
 
@@ -165,14 +164,14 @@ open class ConsoleViewImpl protected constructor(
     private set
 
   @Suppress("LeakingThis")
-  private val spareTimeAlarm = Alarm(this)
+  private val spareTimeAlarm: Alarm = Alarm(this)
 
   @Suppress("LeakingThis")
-  private val heavyAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
+  private val heavyAlarm: Alarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
 
   @Volatile
-  private var heavyUpdateTicket = 0
-  private val myPredefinedFiltersUpdateExpirableTokenProvider = ExpirableTokenProvider()
+  private var heavyUpdateTicket: Int = 0
+  private val myPredefinedFiltersUpdateExpirableTokenProvider: ExpirableTokenProvider = ExpirableTokenProvider()
   private val myListeners: MutableCollection<ObservableConsoleView.ChangeListener> = CopyOnWriteArraySet()
 
   private val customActions: MutableList<AnAction> = ArrayList()
@@ -181,36 +180,36 @@ open class ConsoleViewImpl protected constructor(
    * the text from [.print] goes there and stays there until [.flushDeferredText] is called
    * guarded by LOCK
    */
-  private val myDeferredBuffer = TokenBuffer(
+  private val myDeferredBuffer: TokenBuffer = TokenBuffer(
     if (ConsoleBuffer.useCycleBuffer() && ConsoleBuffer.getCycleBufferSize() > 0) ConsoleBuffer.getCycleBufferSize() else Int.MAX_VALUE)
 
-  private var myUpdateFoldingsEnabled = true
+  private var myUpdateFoldingsEnabled: Boolean = true
 
   private var layeredPane: MyDiffContainer? = null
   private var myMainPanel: JPanel? = null
-  private var myAllowHeavyFilters = false
+  private var myAllowHeavyFilters: Boolean = false
   protected var myCancelStickToEnd: Boolean = false // accessed in EDT only
 
   @Suppress("LeakingThis")
-  private val flushAlarm = Alarm(this)
+  private val flushAlarm: Alarm = Alarm(this)
 
   val project: Project
 
-  private var myOutputPaused = false // guarded by LOCK
+  private var myOutputPaused: Boolean = false // guarded by LOCK
 
   // do not access directly, use getEditor() for proper synchronization
   private var myEditor: EditorEx? = null // guarded by LOCK
 
-  private val LOCK = ObjectUtils.sentinel("ConsoleView lock")
+  private val LOCK: Any = ObjectUtils.sentinel("ConsoleView lock")
 
   private var myHelpId: String? = null
 
   private val mySearchScope: GlobalSearchScope
 
   private val myCustomFilters: MutableList<Filter> = SmartList()
-  private val myCustomInputFilters = ContainerUtil.createLockFreeCopyOnWriteList<InputFilter>()
+  private val myCustomInputFilters: MutableList<InputFilter> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  private val myInputMessageFilter = AtomicReference<InputFilter>(InputFilter { _, _ -> null })
+  private val myInputMessageFilter: AtomicReference<InputFilter> = AtomicReference<InputFilter>(InputFilter { _, _ -> null })
 
   @Volatile
   @JvmField
@@ -286,7 +285,7 @@ open class ConsoleViewImpl protected constructor(
     val model = editor!!.foldingModel
     model.runBatchFoldingOperation {
       for (region in model.allFoldRegions) {
-        model.removeFoldRegion(region!!)
+        model.removeFoldRegion(region)
       }
     }
 
@@ -367,7 +366,7 @@ open class ConsoleViewImpl protected constructor(
     }
   }
 
-  private var keepSlashR = true
+  private var keepSlashR: Boolean = true
   fun setEmulateCarriageReturn(emulate: Boolean) {
     keepSlashR = emulate
   }
@@ -603,7 +602,7 @@ open class ConsoleViewImpl protected constructor(
   // send text which was typed in the console to the running process
   private fun sendUserInput(typedText: CharSequence) {
     ThreadingAssertions.assertEventDispatchThread()
-    if (state.isRunning && NEW_LINE_MATCHER.indexIn(typedText) >= 0) {
+    if (state.isRunning && (typedText.contains('\n') || typedText.contains('\r'))) {
       val textToSend = ConsoleTokenUtil.computeTextToSend(editor!!, project)
       if (!textToSend.isEmpty()) {
         flushUserInputAlarm.addRequest({
@@ -680,7 +679,7 @@ open class ConsoleViewImpl protected constructor(
       editor.scrollingModel.accumulateViewportChanges()
     }
     val contentTypes = HashSet<ConsoleViewContentType>()
-    val contents = ArrayList<OpenApiPair<String, ConsoleViewContentType>>()
+    val contents = ArrayList<com.intellij.openapi.util.Pair<String, ConsoleViewContentType>>()
     val addedText: CharSequence
     try {
       // the text can contain one "\r" at the start meaning we should delete the last line
@@ -693,20 +692,19 @@ open class ConsoleViewImpl protected constructor(
         }
       }
       val startIndex = if (startsWithCR) 1 else 0
-      val refinedTokens = ArrayList<TokenBuffer.TokenInfo>(deferredTokens.size - startIndex)
-      val backspacePrefixLength = ConsoleTokenUtil.evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens)
+      val refinedTokens= arrayOfNulls<TokenBuffer.TokenInfo>(deferredTokens.size - startIndex)
+      val evaluatedText = ConsoleTokenUtil.evaluateBackspacesInTokens(deferredTokens, startIndex, refinedTokens)
+      val backspacePrefixLength = ConsoleTokenUtil.getBackspacePrefixLength(evaluatedText)
       if (backspacePrefixLength > 0) {
         val lineCount = document.lineCount
         if (lineCount != 0) {
           val lineStartOffset = document.getLineStartOffset(lineCount - 1)
-          document.deleteString(
-            max(lineStartOffset, document.textLength - backspacePrefixLength),
-            document.textLength)
+          document.deleteString(max(lineStartOffset, document.textLength - backspacePrefixLength), document.textLength)
         }
       }
-      addedText = TokenBuffer.getRawText(refinedTokens)
+      addedText = evaluatedText.subSequence(backspacePrefixLength, evaluatedText.length)
       document.insertString(document.textLength, addedText)
-      ConsoleTokenUtil.highlightTokenTextAttributes(this.editor!!, project, refinedTokens, getHyperlinks()!!, contentTypes, contents)
+      ConsoleTokenUtil.highlightTokenTextAttributes(this.editor!!, project, refinedTokens as Array<TokenBuffer.TokenInfo>, getHyperlinks()!!, contentTypes, contents)
     }
     finally {
       if (!shouldStickToEnd) {
@@ -1345,9 +1343,9 @@ open class ConsoleViewImpl protected constructor(
     //Initializing prev and next occurrences actions
     val actionsManager = CommonActionsManager.getInstance()
     val prevAction = actionsManager.createPrevOccurenceAction(this)
-    prevAction.templatePresentation.setText(previousOccurenceActionName)
+    prevAction.templatePresentation.text = previousOccurenceActionName
     val nextAction = actionsManager.createNextOccurenceAction(this)
-    nextAction.templatePresentation.setText(nextOccurenceActionName)
+    nextAction.templatePresentation.text = nextOccurenceActionName
 
     val switchSoftWrapsAction: AnAction = object : ToggleUseSoftWrapsToolbarAction(SoftWrapAppliancePlaces.CONSOLE) {
       override fun getEditor(e: AnActionEvent): Editor? {
@@ -1508,7 +1506,7 @@ open class ConsoleViewImpl protected constructor(
     private val adHoc: Boolean,
   ) : Runnable {
     // Does request of this class was myFlushAlarm.addRequest()-ed but not yet executed
-    private val requested = AtomicBoolean()
+    private val requested: AtomicBoolean = AtomicBoolean()
 
     fun queue(delay: Long) {
       if (flushAlarm.isDisposed) return
@@ -1546,7 +1544,7 @@ open class ConsoleViewImpl protected constructor(
     }
   }
 
-  private val FLUSH = FlushRunnable(false)
+  private val FLUSH: FlushRunnable = FlushRunnable(false)
 
   private inner class ClearRunnable : FlushRunnable(false) {
     override fun doRun() {
@@ -1554,7 +1552,7 @@ open class ConsoleViewImpl protected constructor(
     }
   }
 
-  private val CLEAR = ClearRunnable()
+  private val CLEAR: ClearRunnable = ClearRunnable()
 
   init {
     initTypedHandler()
@@ -1565,8 +1563,7 @@ open class ConsoleViewImpl protected constructor(
     mySearchScope = searchScope
 
     updateInputMessageFilter()
-    project.messageBus.connect(
-      this).subscribe<DumbService.DumbModeListener>(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
+    project.messageBus.connect(this).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       private var myLastStamp: Long = 0
 
       override fun enteredDumbMode() {
@@ -1670,9 +1667,9 @@ open class ConsoleViewImpl protected constructor(
 
   companion object {
     private const val CONSOLE_VIEW_POPUP_MENU: @NonNls String = "ConsoleView.PopupMenu"
-    private val LOG = logger<ConsoleViewImpl>()
+    private val LOG: Logger = logger<ConsoleViewImpl>()
 
-    private val DEFAULT_FLUSH_DELAY = SystemProperties.getIntProperty("console.flush.delay.ms", 200)
+    private val DEFAULT_FLUSH_DELAY: Int = SystemProperties.getIntProperty("console.flush.delay.ms", 200)
 
     @JvmField
     val CONSOLE_VIEW_IN_EDITOR_VIEW: Key<ConsoleViewImpl> = Key.create("CONSOLE_VIEW_IN_EDITOR_VIEW")
@@ -1685,11 +1682,10 @@ open class ConsoleViewImpl protected constructor(
   }
 }
 
-private var ourTypedHandlerInitialized = false
-private val NEW_LINE_MATCHER: CharMatcher = CharMatcher.anyOf("\n\r")
+private var ourTypedHandlerInitialized: Boolean = false
 
 /** The ID of the `EOFAction` action. */
-private const val SEND_EOF_ACTION_ID = "SendEOF"
+private const val SEND_EOF_ACTION_ID: String = "SendEOF"
 
 private fun initTypedHandler() {
   if (ourTypedHandlerInitialized) return
@@ -1718,7 +1714,7 @@ private fun registerActionHandler(editor: Editor, @Suppress("SameParameterValue"
   action.registerCustomShortcutSet(action.shortcutSet, editor.contentComponent)
 }
 
-private val USED_FOLDING_FQN_KEY = Key.create<String>("USED_FOLDING_KEY")
+private val USED_FOLDING_FQN_KEY: Key<String?> = Key.create<String>("USED_FOLDING_KEY")
 
 private fun getFoldingFqn(consoleFolding: ConsoleFolding): String = consoleFolding.javaClass.name
 
