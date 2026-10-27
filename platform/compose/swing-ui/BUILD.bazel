@@ -169,6 +169,8 @@ jvm_library(
         "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//libraries/compose-swing-ui:compose-swing",
         "//libraries/compose-swing-ui:compose-swing_test_lib",
+        "//libraries/compose-swing-ui/test",
+        "//libraries/compose-swing-ui/test:test_test_lib",
         "//libraries/junit6",
         "//libraries/junit6:junit6_test_lib",
         "//platform/testFramework",

@@ -7586,7 +7586,7 @@ copy_file(
 )
 
 java_library(
-    name = "libraries-compose-swing-org-jetbrains-compose-swing-swing-ui-test",
+    name = "libraries-compose-swing-test-org-jetbrains-compose-swing-swing-ui-test",
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,

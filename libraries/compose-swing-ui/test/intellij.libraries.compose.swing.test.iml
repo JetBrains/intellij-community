@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library" exported="">
+      <library name="org.jetbrains.compose.swing.swing-ui-test" type="repository">
+        <properties maven-id="org.jetbrains.compose.swing:swing-ui-test:0.1.0-alpha06">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06.jar">
+              <sha256sum>4b52a26f33b0681d865e1575858c41da861ce213a3ea7e18c4023635551876bd</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.20/kotlin-test-2.4.20.jar">
+              <sha256sum>fa281d657898a34f6b0c7383f374f0a0161e61b6cea0095f135d917721d63f22</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0.jar">
+              <sha256sum>68b87fa90db3dab1e794ff6078364087c07f87e5e4a4d0c8d3272a222ee8fe7e</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar">
+              <sha256sum>ce506d82f3642651a39fc706f3d2928d846772a64c92e749f018d7f0f216826f</sha256sum>
+            </artifact>
+          </verification>
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+            <dependency maven-id="org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm" />
+            <dependency maven-id="org.jetbrains:annotations" />
+            <dependency maven-id="org.jetbrains.compose.swing:swing-ui" />
+            <dependency maven-id="androidx.compose.runtime:runtime-desktop" />
+            <dependency maven-id="androidx.lifecycle:lifecycle-runtime-compose-desktop" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.20/kotlin-test-2.4.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/compose/swing/swing-ui-test/0.1.0-alpha06/swing-ui-test-0.1.0-alpha06-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-test/2.4.20/kotlin-test-2.4.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-test-jvm/1.9.0/kotlinx-coroutines-test-jvm-1.9.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-coroutines-swing/1.9.0/kotlinx-coroutines-swing-1.9.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+  </component>
+</module>
