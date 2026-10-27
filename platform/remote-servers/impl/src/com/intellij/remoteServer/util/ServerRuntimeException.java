@@ -12,4 +12,8 @@ public class ServerRuntimeException extends Exception {
   public ServerRuntimeException(String message) {
     super(message);
   }
+
+  public ServerRuntimeException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }
