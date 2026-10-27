@@ -69,7 +69,6 @@ private class Http2StreamJsonInboundHandler<T : Any>(
   private val bufferAllocator: ByteBufAllocator,
   private val result: CompletableDeferred<T>,
   private val deserializer: DeserializationStrategy<T>?,
-  private val defaultIfNotFound: T? = null,
   private val headers: Ref<Http2Headers>? = null,
 ) : InboundHandlerResultTracker<Http2StreamFrame>(result) {
   private var isGzip = false
@@ -126,12 +125,7 @@ private class Http2StreamJsonInboundHandler<T : Any>(
       val headers = frame.headers()
       val status = HttpResponseStatus.parseLine(headers.status())
       if (status != HttpResponseStatus.OK) {
-        if (status == HttpResponseStatus.NOT_FOUND && defaultIfNotFound != null) {
-          result.complete(defaultIfNotFound)
-        }
-        else {
-          result.completeExceptionally(UnexpectedHttpStatus(urlPath = urlPath, status))
-        }
+        result.completeExceptionally(UnexpectedHttpStatus(urlPath = urlPath, status))
         return
       }
 
