@@ -23,6 +23,7 @@ import com.intellij.ui.svg.SVGRasterizationConfig
 import com.intellij.ui.svg.Unloadable
 import com.intellij.ui.svg.rasterizeSVGImage
 import com.intellij.util.DataUrl
+import com.sun.net.httpserver.HttpServer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
@@ -49,7 +50,9 @@ import java.awt.Color
 import java.awt.Rectangle
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
+import java.net.InetSocketAddress
 import java.util.Base64
+import java.util.concurrent.ConcurrentLinkedQueue
 import javax.imageio.ImageIO
 import com.intellij.ui.svg.ImageDimension.Unit as IDUnit
 
@@ -1112,6 +1115,39 @@ class CachingAdaptiveImageManagerBehaviorTest {
         ))
       }
     )
+  }
+
+  @Test
+  fun `load url with product user agent`() {
+    val userAgents = ConcurrentLinkedQueue<String>()
+    val body = TEST_SVG_GREEN.toByteArray()
+    val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0).apply {
+      createContext("/") { exchange ->
+        val userAgent = exchange.requestHeaders.getFirst("User-Agent").orEmpty()
+        userAgents.add(userAgent)
+        if (userAgent.isEmpty() || userAgent.startsWith("Java/")) {
+          exchange.sendResponseHeaders(403, -1)
+        }
+        else {
+          exchange.responseHeaders.add("Content-Type", "image/svg+xml")
+          exchange.sendResponseHeaders(200, body.size.toLong())
+          exchange.responseBody.write(body)
+        }
+        exchange.close()
+      }
+      start()
+    }
+    try {
+      val root = "http://127.0.0.1:${server.address.port}"
+      // The first URL goes through CachingDataReader, the second one has no file extension and goes through a plain connection.
+      for (url in listOf("$root/image.svg", "$root/image")) {
+        assertThat(String(getImageSourceData(UrlAdaptiveImageSource(url)).data)).isEqualTo(TEST_SVG_GREEN)
+      }
+      assertThat(userAgents).hasSize(2)
+    }
+    finally {
+      server.stop(0)
+    }
   }
 
   /**

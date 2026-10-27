@@ -23,6 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.codeInsight.documentation.CachingAdaptiveImageManagerKt.openConnection;
+
 /**
  * Cache for accessing remote resources (the ones fetched via FTP, HTTP and HTTPS protocols are stored on disk for further accesses).
  * Disk cache is cleaned on IDE exit.
@@ -50,12 +52,17 @@ public final class CachingDataReader implements Disposable {
       }
     }
     try {
-      return shouldCache(url) ? new CachingInputStream(url) : url.openStream();
+      return shouldCache(url) ? new CachingInputStream(url) : openStream(url);
     }
     catch (IOException e) {
       LOG.debug("Couldn't open " + url, e);
     }
     return null;
+  }
+
+  private static @NotNull InputStream openStream(@NotNull URL url) throws IOException {
+    var connection = openConnection(url);
+    return connection.getInputStream();
   }
 
   private static boolean shouldCache(@NotNull URL url) {
@@ -105,7 +112,7 @@ public final class CachingDataReader implements Disposable {
 
     private CachingInputStream(@NotNull URL url) throws IOException {
       myURL = url;
-      myDelegate = url.openStream();
+      myDelegate = openStream(url);
       myStreamCopy = new ByteArrayOutputStream();
     }
 

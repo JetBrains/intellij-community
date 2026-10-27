@@ -37,6 +37,7 @@ import com.intellij.ui.svg.rasterizeSVGImage
 import com.intellij.util.MemorySizeAware
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
+import com.intellij.util.net.PlatformHttpClient
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
@@ -140,8 +141,16 @@ data class UrlAdaptiveImageSource(val url: String) : AdaptiveImageSource {
   override fun toString(): String = "UrlAdaptiveImageSource(${url})"
 }
 
-private fun getUrlData(url: URL): DataWithMimeType {
+@ApiStatus.Internal
+fun openConnection(url: URL): URLConnection {
   val connection = url.openConnection()
+  // Some sites, for example Wikipedia, may reject a request with 403 because it doesn't have `User-Agent` header
+  connection.setRequestProperty("User-Agent", PlatformHttpClient.userAgent())
+  return connection
+}
+
+private fun getUrlData(url: URL): DataWithMimeType {
+  val connection = openConnection(url)
   val bytes = connection.getInputStream().use { it.readBytes() }
   return DataWithMimeType(bytes, connection.contentType)
 }
