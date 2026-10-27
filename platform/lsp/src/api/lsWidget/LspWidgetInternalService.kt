@@ -12,6 +12,9 @@ abstract class LspWidgetInternalService {
 
   abstract fun createShowErrorOutputAction(lspClient: LspClient): AnAction?
 
+  /** An action that shows the server log of [lspClient], its console in the Services tool window. */
+  abstract fun createShowServerLogAction(lspClient: LspClient): AnAction
+
   abstract fun restartLspClient(lspClient: LspClient)
 
   abstract fun stopLspClient(lspClient: LspClient)

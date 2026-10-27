@@ -67,6 +67,7 @@ import com.intellij.platform.lsp.api.customization.LspInlayHintSupport
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsCustomizer
 import com.intellij.platform.lsp.api.customization.LspOptimizeImportsDisabled
 import com.intellij.platform.lsp.api.lsWidget.LspClientWidgetItem
+import com.intellij.platform.lsp.api.lsWidget.LspWidgetInternalService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -195,8 +196,12 @@ abstract class PyLspToolIntegrationProvider : LspIntegrationProvider {
       override fun createWidgetMainAction(): AnAction =
         OpenPyExternalToolsSettingsAction(widgetActionText, getIcon(lspClient))
 
+      // The platform links the server log only from the notifications of the server, and its error output only after a
+      // crash, so the item offers the log of a server that runs too.
       override fun createWidgetInlineActions(): List<AnAction> =
-        super.createWidgetInlineActions() + OpenPyExternalToolsSettingsAction()
+        super.createWidgetInlineActions() +
+        service<LspWidgetInternalService>().createShowServerLogAction(lspClient) +
+        OpenPyExternalToolsSettingsAction()
     }
 
   abstract fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor
