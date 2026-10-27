@@ -22,7 +22,6 @@ import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtImportDirective
-import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import org.jetbrains.kotlin.psi.KtPackageDirective
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
@@ -84,7 +83,7 @@ private fun importsOf(file: KtFile): List<String> = file.importDirectives.mapNot
 private fun unresolvedExpressions(file: KtFile): List<KtSimpleNameExpression> =
     SyntaxTraverser.psiTraverser(file)
         .filter(KtSimpleNameExpression::class.java)
-        .filter { canTakeImport(it) && it.mainReference.resolve() == null }
+        .filter { it.mainReference.resolvesByNames.isNotEmpty() && canTakeImport(it) && it.mainReference.resolve() == null }
         .toList()
 
 private fun importVariantsOf(
@@ -101,7 +100,6 @@ private fun importVariantsOf(
 }
 
 private fun canTakeImport(expression: KtSimpleNameExpression): Boolean {
-    if (expression is KtOperationReferenceExpression && !expression.isConventionOperator()) return false
     return expression.parentOfType<KtImportDirective>(withSelf = true) == null &&
             expression.parentOfType<KtPackageDirective>(withSelf = true) == null
 }
