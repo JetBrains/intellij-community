@@ -3,7 +3,6 @@
 
 package com.intellij.testFramework.junit5.fixture
 
-import com.intellij.execution.RunManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
@@ -257,8 +256,6 @@ fun projectFixture(
   // Keep command-triggered postponed formatting deterministic while full background service preloading is disabled.
   PomManager.getModel(project)
 
-  // Wait until components fully loaded. Otherwise, we might start loading then when a project is already disposed when a test is too fast.
-  RunManager.getInstanceAsync(project)
   initialized(project) {
     runAllSuspend(
       { awaitEditorNotificationJobs(project) },
