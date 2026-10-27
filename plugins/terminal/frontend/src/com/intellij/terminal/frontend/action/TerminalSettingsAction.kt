@@ -10,7 +10,7 @@ import org.jetbrains.plugins.terminal.TerminalBundle
 import org.jetbrains.plugins.terminal.TerminalUtil
 
 internal class TerminalSettingsAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     super.update(e)

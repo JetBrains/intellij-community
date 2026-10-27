@@ -85,5 +85,5 @@ internal class TerminalPasteAction : TerminalPromotedDumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

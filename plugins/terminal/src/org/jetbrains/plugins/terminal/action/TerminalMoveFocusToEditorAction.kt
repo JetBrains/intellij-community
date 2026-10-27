@@ -25,5 +25,5 @@ class TerminalMoveFocusToEditorAction : DumbAwareAction(), ActionRemoteBehaviorS
     e.presentation.isEnabledAndVisible = enabled
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

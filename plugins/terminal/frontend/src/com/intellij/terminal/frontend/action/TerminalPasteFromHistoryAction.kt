@@ -27,7 +27,7 @@ internal class TerminalPasteFromHistoryAction
     )
   }
 
-  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun performPaste(e: AnActionEvent, focusedComponent: JComponent, pasteSimple: Boolean) {
     val terminalPaste = ActionManager.getInstance().getAction("Terminal.Paste") ?: return
