@@ -4,6 +4,8 @@ package git4idea.log
 import com.intellij.dvcs.repo.getRepositoryUnlessFresh
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
@@ -21,7 +23,6 @@ import com.intellij.vcs.log.VcsRefsContainer
 import com.intellij.vcs.log.data.VcsLogSorter
 import com.intellij.vcs.log.impl.LogDataImpl
 import com.intellij.vcsUtil.VcsFileUtil
-import fleet.util.logging.logger
 import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.history.GitLogOutputSplitter
@@ -136,7 +137,7 @@ private class TagsLoader(
       LOG.debug { "No tags to load" }
       return emptySet()
     }
-    LOG.info { "Processing ${unreachableTags.size} tags" }
+    LOG.info("Processing ${unreachableTags.size} tags")
     val commits = HashSet<VcsCommitMetadata>()
     VcsTracer.traceSuspending(LoadingCommitsOnTaggedBranch) {
       it.withVcsAttributes(repository.root)
