@@ -22,6 +22,7 @@ import com.intellij.testFramework.TestModeFlags
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.ui.LicensingFacade
 import com.intellij.util.UriUtil
+import com.intellij.util.application
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -111,7 +112,11 @@ internal class PluginUpdateSourceServiceImpl : PluginUpdateSourceService,
     update: State.() -> State,
     lazyMessage: () -> @NonNls String,
   ) {
+    val previousSources = state.sources
     updateState(update)
+    if (previousSources != state.sources) {
+      application.messageBus.syncPublisher(PluginUpdateSourceListener.TOPIC).sourcesChanged()
+    }
     thisLogger().apply {
       if (isTraceEnabled) {
         trace(RuntimeException(lazyMessage()))

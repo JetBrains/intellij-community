@@ -4,6 +4,7 @@ description: Stable behavior for plugin changes started or presented by the Plug
 targets:
   - ../../src/com/intellij/ide/plugins/UnifiedPluginsPageApplyState.kt
   - ../../src/com/intellij/ide/plugins/UnifiedPluginsPageSession.kt
+  - ../../src/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProvider.kt
   - ../../src/com/intellij/ide/plugins/newui/DefaultUiPluginManagerController.kt
   - ../../src/com/intellij/ide/plugins/newui/LegacyPluginUiHost.kt
   - ../../src/com/intellij/ide/plugins/newui/ListPluginComponent.kt
@@ -24,6 +25,7 @@ targets:
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageApplyStateTest.kt
   - ../../testSrc/com/intellij/ide/plugins/UnifiedPluginsPageSessionTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/InstallPluginTerminalStateTest.kt
+  - ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/LegacyPluginUiHostTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginManagerButtonUsageTest.kt
   - ../../testSrc/com/intellij/ide/plugins/newui/PluginModelEventPublisherTest.kt
@@ -39,7 +41,7 @@ targets:
 # Plugin Operations
 
 Status: Active
-Date: 2026-10-16
+Date: 2026-10-27
 
 ## Purpose
 
@@ -161,6 +163,21 @@ Untested: No focused test verifies complete Apply and OK result handling.
 Untested: No focused test verifies state isolation across two page sessions.
 
 ## Install and Update
+
+- A completed update check for the current IDE build must refresh the plugin manager's cached updates.
+- Open pages and pages opened later must receive the completed result, including an empty result.
+- A check for another IDE build must preserve the current update snapshot.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
+    `completed checks reach current and later subscribers`;
+    `an empty completed check clears cached updates`;
+    `checks for another IDE build keep the current snapshot`
+  )
+
+- A saved update source change must request a new plugin update check.
+- Saving the same source again must not request another check.
+  [@test] ../../testSrc/com/intellij/ide/plugins/newui/DefaultPluginUpdatesProviderTest.kt (
+    `saved source changes refresh updates`
+  )
 
 - Before the trust check starts, an operation must load incomplete Marketplace details.
 - An operation must stop before the trust check when complete Marketplace details are unavailable.

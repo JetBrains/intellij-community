@@ -15,6 +15,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.plugins.newui.PluginUiModel
 import com.intellij.ide.plugins.newui.UiPluginManager
+import com.intellij.ide.plugins.newui.publishPluginUpdates
 import com.intellij.ide.plugins.updateBrokenPlugins
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.Notification
@@ -759,6 +760,7 @@ private suspend fun doUpdateAndShowResult(
   else null
   val apiVersion = announcedUpdate?.newBuild?.apiVersion
   val updatesModel = PluginUpdateHandler.getInstance().loadAndStorePluginUpdates(apiVersion?.asString(), indicator = indicator)
+  publishPluginUpdates(apiVersion?.asString(), updatesModel)
   val updatesForPlugins = updatesModel.pluginUpdates
   val incompatiblePluginNames = updatesModel.incompatiblePluginNames
   val customRepoPlugins = updatesModel.updatesFromCustomRepositories
