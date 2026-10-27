@@ -1699,26 +1699,62 @@ private object SubtypeJudgement {
     val rightBackSubstitutions: PyTypeChecker.GenericSubstitutions)
 
   fun getReversibleSubstitutionData(left: PyType?, right: PyType?, context: TypeEvalContext): ReversibleSubstitutionData {
-    val leftNoIVs = if (left is PyClassType) PyTypeChecker.findGenericDefinitionType(left.pyClass, left.isDefinition, context) ?: left else left
-    val rightNoIVs = if (right is PyClassType) PyTypeChecker.findGenericDefinitionType(right.pyClass, right.isDefinition, context) ?: right else right
     val leftBackSubstitutions = HashMap<PyTypeParameterType, PyType?>()
     val rightBackSubstitutions = HashMap<PyTypeParameterType, PyType?>()
-    if (left is PyClassType && leftNoIVs is PyClassType && left.typeArguments.size == leftNoIVs.typeArguments.size) {
-      for ((origTypeArg, typeVar) in left.typeArguments.zip(leftNoIVs.typeArguments)) {
-        if (typeVar is PyTypeParameterType) {
-          leftBackSubstitutions[typeVar] = origTypeArg
-        }
-      }
-    }
-    if (right is PyClassType && rightNoIVs is PyClassType && right.typeArguments.size == rightNoIVs.typeArguments.size) {
-      for ((origTypeArg, typeVar) in right.typeArguments.zip(rightNoIVs.typeArguments)) {
-        if (typeVar is PyTypeParameterType) {
-          rightBackSubstitutions[typeVar] = origTypeArg
-        }
-      }
-    }
+    val leftNoIVs = toRawType(left, leftBackSubstitutions, context)
+    val rightNoIVs = toRawType(right, rightBackSubstitutions, context)
 
     return ReversibleSubstitutionData(leftNoIVs, rightNoIVs, PyTypeChecker.GenericSubstitutions(leftBackSubstitutions), PyTypeChecker.GenericSubstitutions(rightBackSubstitutions))
+  }
+
+  /**
+   * Returns a raw version of [type] and records in [backSubstitutions] how to get back to the original type:
+   * - For class types, the generic definition type is returned, and its type parameters are mapped back to the original type arguments.
+   * - For callable types, all inference variables are replaced by their type variables, and these type variables are mapped back
+   *   to the original inference variables.
+   *
+   * Note: [PyClassType] is a [PyCallableType], hence the class type case must be checked first.
+   */
+  private fun toRawType(type: PyType?, backSubstitutions: MutableMap<PyTypeParameterType, PyType?>, context: TypeEvalContext): PyType? {
+    if (type is PyClassType) {
+      val rawType = PyTypeChecker.findGenericDefinitionType(type.pyClass, type.isDefinition, context) ?: type
+      val mapping = PyTypeParameterMapping.mapByShape(rawType.typeArguments, type.typeArguments)
+      if (mapping != null) {
+        for (pair in mapping.mappedTypes) {
+          val typeVar = pair.first
+          if (typeVar is PyTypeParameterType) {
+            backSubstitutions[typeVar] = pair.second
+          }
+        }
+      }
+      return rawType
+    }
+    if (type is PyCallableType) {
+      return replaceInferenceVariablesByTypeVariables(type, backSubstitutions, context)
+    }
+    return type
+  }
+
+  /**
+   * Replaces all inference variables in [type] by their type variables and records the reverse mapping in [backSubstitutions].
+   * Returns [type] itself if it does not reference any inference variables (keeps, e.g., [PyFunctionType] instances intact).
+   */
+  private fun replaceInferenceVariablesByTypeVariables(
+    type: PyType,
+    backSubstitutions: MutableMap<PyTypeParameterType, PyType?>,
+    context: TypeEvalContext,
+  ): PyType? {
+    if (isProper(type, context)) return type
+
+    return PyCloningTypeVisitor.clone(type, object : PyCloningTypeVisitor(context) {
+      override fun visitPyType(type: PyType): PyType? {
+        if (type is PyInferenceVariable) {
+          backSubstitutions.putIfAbsent(type.typeVariable, type)
+          return type.typeVariable
+        }
+        return super.visitPyType(type)
+      }
+    })
   }
 
   /**

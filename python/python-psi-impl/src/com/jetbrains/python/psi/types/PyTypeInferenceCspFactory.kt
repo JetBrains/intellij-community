@@ -266,10 +266,15 @@ object PyTypeInferenceCspFactory {
     val resolveContext = PyResolveContext.defaultContext(context)
     val callableTypes = callSite.multiResolveCallee(resolveContext)
     val returnTypes = mutableListOf<PyType?>()
+    var allNotSupported = callableTypes.isNotEmpty()
     for (callableType in callableTypes) {
-      val returnType = buildCallSiteExpressionCsp(SubstitutionsIdentifier(callSite, callableType), builder, context)
-      returnTypes.add(returnType)
+      try {
+        val returnType = buildCallSiteExpressionCsp(SubstitutionsIdentifier(callSite, callableType), builder, context)
+        returnTypes.add(returnType)
+        allNotSupported = false
+      } catch (_ : NotSupportedException) {}
     }
+    if (allNotSupported) throw NotSupportedException()
     return PyUnionType.unionOrUnknown(returnTypes)
   }
 
@@ -306,7 +311,7 @@ object PyTypeInferenceCspFactory {
 
     // function arguments
     for ((argument, parameter) in mappedParameters) {
-      if (parameter.isPositionalContainer || parameter.isKeywordContainer) {
+      if (parameter.isKeywordContainer) {
         throw NotSupportedException()
       }
 

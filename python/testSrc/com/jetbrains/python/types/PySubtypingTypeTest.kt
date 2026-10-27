@@ -615,7 +615,7 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
     @TestCaseOptions(assertRecursionPrevention = false)
     fun `type var widening`() = test("""
       from collections.abc import Iterable
-      from typing import assert_type
+      from typing import assert_type, Literal
 
       # PY-84544
       def foo(iterable: Iterable[int] | Iterable[str]) -> None:
@@ -623,8 +623,8 @@ class PySubtypingTypeTest : PyCodeInsightTestCase() {
 
 
       # PY-25989
-      assert_type(max(1, 2.6), float | int)
-      assert_type(max(2.6, 1), float | int)
+      assert_type(max(1, 2.6), Literal[1] | float | int)
+      assert_type(max(2.6, 1), Literal[1] | float | int)
       max(1, object()) # WARNING No overload of 'max' matches the arguments. Argument types: (Literal[1], object). Expected one of: (arg1: SupportsRichComparisonT, arg2: SupportsRichComparisonT, *_args: tuple[SupportsRichComparisonT, ...], key: None), (arg1: _T, arg2: _T, *_args: tuple[_T, ...], key: (_T) -> SupportsDunderLT[Any] | SupportsDunderGT[Any])
 
 
