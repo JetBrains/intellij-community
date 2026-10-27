@@ -13,8 +13,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.SmartList
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.javaGetterName
-import org.jetbrains.kotlin.analysis.api.components.javaSetterName
+import org.jetbrains.kotlin.analysis.api.javaInterop.javaMethodName
 import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
 import org.jetbrains.kotlin.analysis.api.resolution.KaVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.resolveSuccessfulSymbol
@@ -213,8 +212,8 @@ private fun KtNamedDeclaration.findNonCodeUsages(
     if (this is KtProperty) {
         allowAnalysisFromWriteActionInEdt(this) {
             (symbol as? KaPropertySymbol)?.let { symbol ->
-                listOfNames.addIfNotNull(symbol.javaGetterName.asString())
-                listOfNames.addIfNotNull(symbol.javaSetterName?.asString())
+                listOfNames.addIfNotNull(symbol.getter?.javaMethodName)
+                listOfNames.addIfNotNull(symbol.setter?.javaMethodName)
             }
         }
     }
