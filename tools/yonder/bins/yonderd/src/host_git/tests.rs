@@ -325,3 +325,39 @@ fn a_lock_of_another_homebrew_process_counts_as_a_wait() {
     ));
     assert!(!is_homebrew_lock("Error: No available formula with the name \"git\"."));
 }
+
+#[test]
+fn a_short_call_of_serve_holds_its_use_while_an_upgrade_waits_and_goes_on_without_it_while_homebrew_runs() {
+    let dir = tempfile::tempdir().expect("a directory");
+    let home = Home::new(dir.path().to_path_buf());
+    fs::create_dir_all(home.cache_dir()).expect("the cache");
+    let lock = hold_lock(&home).expect("the lock");
+    // The upgrade waits for the users: a new run waits, and the index-pack of a pack takes its use at once.
+    assert!(take_use(&home).is_none());
+    let pack = hold_use(&home);
+    assert!(pack.0.is_some());
+    drop(pack);
+    let users = wait_for_users(&home, "brew upgrade git").expect("the users flock");
+    // Homebrew runs: the call goes on without the flock.
+    assert!(hold_use(&home).0.is_none());
+    drop(users);
+    drop(lock);
+}
+
+#[test]
+fn the_fallback_of_the_upgrade_goes_into_the_log_of_each_run_that_goes_on() {
+    let dir = tempfile::tempdir().expect("a directory");
+    let home = Home::new(dir.path().to_path_buf());
+    let runs = Runs::new(home.runs_dir());
+    let spec = |run: &str| yonder_link::proto::RunSpec {
+        run: run.to_owned(),
+        ..Default::default()
+    };
+    let (live, _lock) = runs.create(&spec("1-1")).expect("a live run");
+    let (ended, ended_lock) = runs.create(&spec("1-2")).expect("a run");
+    drop(ended_lock);
+    tell_runs(&home, "runs still use git");
+    let line = r#"{"stream":"stderr","text":"yonder: runs still use git"}"#;
+    assert_eq!(fs::read_to_string(live.events_path()).expect("the log").trim_end(), line);
+    assert_eq!(fs::read_to_string(ended.events_path()).expect("the log"), "");
+}

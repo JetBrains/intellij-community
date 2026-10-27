@@ -36,12 +36,13 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
 use serde::{Deserialize, Serialize};
+use yonder_link::proto::Stream;
 
 use crate::child::{self, Stop, never};
 use crate::files::{open_private, try_flock, try_flock_shared, write_private};
 use crate::home::Home;
 use crate::refused::{LOCK_TIMEOUT, OLD_GIT, Refusal, refused};
-use crate::run::epoch_ms;
+use crate::run::{EventLog, Runs, epoch_ms};
 use crate::serve::log;
 
 /// The lowest git of a host. No feature of the agent or of bd needs this release: `core.fsmonitor=true` needs the
@@ -509,10 +510,12 @@ fn wait_for_users(home: &Home, command: &str) -> Option<File> {
         match try_flock(&file) {
             Ok(true) => return Some(file),
             Ok(false) if started.elapsed() >= USERS_WAIT => {
-                log(&format!(
-                    "runs still use git after {} min; `{command}` starts anyway",
+                let message = format!(
+                    "runs still use git after {} min, so `{command}` starts anyway: a git call can fail while Homebrew replaces git",
                     USERS_WAIT.as_secs() / 60
-                ));
+                );
+                log(&message);
+                tell_runs(home, &message);
                 return None;
             }
             Ok(false) => {
@@ -526,6 +529,18 @@ fn wait_for_users(home: &Home, command: &str) -> Option<File> {
                 log(&format!("cannot lock {}: {error}", path.display()));
                 return None;
             }
+        }
+    }
+}
+
+/// Writes `message` into the log of each run that goes on, so its reader sees why a git call of the run can fail.
+fn tell_runs(home: &Home, message: &str) {
+    for run in Runs::new(home.runs_dir()).list() {
+        if run.is_alive()
+            && matches!(run.exit(), Ok(None))
+            && let Ok(events) = EventLog::open(&run.events_path())
+        {
+            events.write(Stream::Stderr, &format!("yonder: {message}"));
         }
     }
 }
@@ -625,7 +640,7 @@ pub(crate) fn upgrading(home: &Home) -> bool {
 /// The use of git by a supervisor or a fill: the shared flock of `git-users.lock`, or none when the flock cannot be
 /// taken for another cause than an upgrade.
 #[derive(Debug)]
-pub(crate) struct Use(#[expect(dead_code, reason = "the flock lives as long as the file")] Option<File>);
+pub(crate) struct Use(#[cfg_attr(not(test), expect(dead_code, reason = "the flock lives as long as the file"))] Option<File>);
 
 /// The use of git of this supervisor, which lives to the end of its process: the give-back after `exit.json` uses git
 /// too.
@@ -643,6 +658,16 @@ pub(crate) fn take_use(home: &Home) -> Option<Use> {
     }
     // An upgrade that took `git.lock` after the look of the caller waits for this flock: it goes, and the caller waits.
     (!upgrading(home)).then_some(Use(Some(file)))
+}
+
+/// The use of git of a short call of `serve`, such as the `index-pack` of a pack: the shared flock of
+/// `git-users.lock` at once, also while an upgrade waits for it, so the upgrade waits for the call. While Homebrew runs,
+/// the call goes on without it: a wait would stall the pack of its client.
+pub(crate) fn hold_use(home: &Home) -> Use {
+    let file = open_private(&home.git_users_lock_file())
+        .ok()
+        .filter(|file| matches!(try_flock_shared(file), Ok(true)));
+    Use(file)
 }
 
 /// Waits while `serve` upgrades git: a line in the log of the run at the start and once a minute, `lock_timeout` after

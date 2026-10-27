@@ -152,7 +152,12 @@ The agent, bd, the prepare steps and the commands use the git that their `PATH` 
    while no run uses git. Each supervisor holds a shared flock of `~/.cache/yonderd/git-users.lock` from the end of its
    wait to the end of its process, the give-back included, and so does each fill of the keeper. A run that started
    before an upgrade of the agent counts too, because its supervisor outlives `serve`. The upgrade takes that flock
-   exclusively, up to 60 min; then Homebrew starts anyway, and the log says so. Homebrew runs with
+   exclusively, up to 60 min; then Homebrew starts anyway, and the log of `serve` and the log of each run that goes on
+   say so. The `index-pack` and the `update-ref` of a pack take the shared flock at once, also while the upgrade waits
+   for it, and go on without it while Homebrew runs, because a wait would stall the pack of the client. Other short git
+   and bd calls of `serve` take no flock, so they can meet the swap of Homebrew in a short window: the git of `Have`,
+   the repository check and the ref delete of a start, the cleanup thread, and `reclaim` and the lease return of the
+   keeper. A failure there is a refusal of that request, or a line of the log of `serve`. Homebrew runs with
    `HOMEBREW_AUTO_UPDATE_SECS=0`, so it updates its formulae first, and `HOMEBREW_NO_INSTALL_CLEANUP=1`, so the old
    keg stays. Its deadline is 30 min.
 5. A Homebrew that fails on the lock of another Homebrew process (`has already locked`, `already in progress`), such as

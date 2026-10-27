@@ -515,6 +515,8 @@ impl Agent {
                 return channel.send(&reply(&refusal));
             }
         };
+        // An upgrade of git waits for the end of the pack (`host_git`).
+        let using = host_git::hold_use(&self.home);
         let mut running = match git::index_pack(&repo) {
             Ok(running) => running,
             Err(error) => {
@@ -543,6 +545,8 @@ impl Agent {
         let (reference, commit) = (reference.to_owned(), commit.to_owned());
         let home = self.home.clone();
         let indexed = with_heartbeats(channel, &mut || progress.note(), move || {
+            // The use ends with the ref of the pack.
+            let _using = using;
             let indexed = git::finish_index_pack(running);
             received?;
             let result = indexed
