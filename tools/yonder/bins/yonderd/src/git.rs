@@ -257,13 +257,13 @@ pub(crate) fn checkout(dir: &Path, commit: &str, stop: Stop<'_>) -> Result<Check
         stop,
     ));
     let why = match head.as_ref().map(Output::stdout_text) {
-        Ok(text) => match text.lines().collect::<Vec<_>>()[..] {
-            [id, "HEAD"] if id == commit => return Ok(Checkout::Kept),
-            [_, "HEAD"] => match checked(child::run(git(dir).args(["reset", "-q", "--merge", commit]), CHECKOUT, stop)) {
+        Ok(text) => match text.split_once('\n') {
+            Some((id, "HEAD")) if id == commit => return Ok(Checkout::Kept),
+            Some((_, "HEAD")) => match checked(child::run(git(dir).args(["reset", "-q", "--merge", commit]), CHECKOUT, stop)) {
                 Ok(_) => return Ok(Checkout::Switched),
                 Err(error) => format!("`git reset --merge` refused: {error}"),
             },
-            [_, branch] => format!("the HEAD is on the branch {branch}"),
+            Some((_, branch)) if !branch.contains('\n') => format!("the HEAD is on the branch {branch}"),
             _ => format!("`git rev-parse` answered {text:?}"),
         },
         Err(error) => format!("the HEAD is unknown: {error}"),
