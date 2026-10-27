@@ -1,4 +1,4 @@
-//! The durations of the steps of a run, for a person. The agent measures its own steps, such as `lease` and `command`,
+//! The durations of the steps of a run, for a person. The agent measures its own steps, such as `slot` and `command`,
 //! and the client adds `pack`, `upload`, `fetch` and `total`.
 
 use std::time::Duration;
@@ -13,7 +13,7 @@ pub fn phases_line(phases: &[Phase]) -> String {
     format!("yonder: phases: {}", join(phases.iter()))
 }
 
-/// The steps of a run in a short form for a list: `lease 9m02s, checkout 41.0s, command 25.1s`, without the steps under
+/// The steps of a run in a short form for a list: `slot 9m02s, checkout 41.0s, command 25.1s`, without the steps under
 /// 0.1 s. Empty when no step is that long.
 pub fn phases_short(phases: &[Phase]) -> String {
     join(phases.iter().filter(|phase| phase.ms >= SHORT_FROM_MS))

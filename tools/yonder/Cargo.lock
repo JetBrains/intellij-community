@@ -964,6 +964,7 @@ dependencies = [
  "pretty_assertions",
  "tempfile",
  "yonder-client",
+ "yonder-link",
 ]
 
 [[package]]

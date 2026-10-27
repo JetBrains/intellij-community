@@ -13,6 +13,7 @@ workspace = true
 [dependencies]
 clap.workspace = true
 yonder-client.workspace = true
+yonder-link.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true

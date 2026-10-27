@@ -25,12 +25,18 @@ impl Processes for Checkout {
 
 /// One invocation in a configuration directory without host files. Answers the exit code, the stdout and the stderr.
 fn invoke(args: &[&str]) -> (u8, String, Vec<String>) {
-    let dir = tempfile::tempdir().expect("a temporary directory");
+    let home = tempfile::tempdir().expect("a temporary directory");
+    invoke_in(home.path(), args)
+}
+
+/// One invocation with the configuration directory and the skill directory of the home directory `home`.
+fn invoke_in(home: &Path, args: &[&str]) -> (u8, String, Vec<String>) {
     let said = Mutex::new(Vec::new());
     let say = |line: &str| said.lock().unwrap_or_else(PoisonError::into_inner).push(line.to_owned());
     let mut stdout = Vec::new();
     let argv = std::iter::once("yonder").chain(args.iter().copied());
-    let code = run(argv, Ok(Config::new(dir.path().to_path_buf())), &Checkout, &mut stdout, &say);
+    let skills = home.join("skills/yonder");
+    let code = run(argv, Ok(Config::in_home(home)), Some(&skills), &Checkout, &mut stdout, &say);
     let said = said.into_inner().unwrap_or_else(PoisonError::into_inner);
     (code, String::from_utf8_lossy(&stdout).into_owned(), said)
 }
@@ -135,7 +141,7 @@ fn a_listed_run_shows_its_long_steps() {
         exit: Some(0),
         phases: vec![
             step("lock", 0),
-            step("lease", 542_000),
+            step("slot", 542_000),
             step("checkout", 41_000),
             step("command", 3_909_000),
         ],
@@ -143,7 +149,7 @@ fn a_listed_run_shows_its_long_steps() {
     };
     assert_eq!(
         run_line(&run),
-        "1000-1  exit 0  yonder-0123456789ab  0123456789ab  ./bt.cmd FooTest  (lease 9m02s, checkout 41.0s, command 1h05m09s)"
+        "1000-1  exit 0  yonder-0123456789ab  0123456789ab  ./bt.cmd FooTest  (slot 9m02s, checkout 41.0s, command 1h05m09s)"
     );
     run.exit = None;
     run.phases = vec![step("lock", 20)];
@@ -201,7 +207,14 @@ fn prepare_in(root: Option<PathBuf>, args: &[&str]) -> (u8, Vec<String>, Vec<Str
     let said = Mutex::new(Vec::new());
     let say = |line: &str| said.lock().unwrap_or_else(PoisonError::into_inner).push(line.to_owned());
     let argv = ["yonder", "prepare"].into_iter().chain(args.iter().copied());
-    let code = run(argv, Ok(Config::new(dir.path().to_path_buf())), &processes, &mut Vec::new(), &say);
+    let code = run(
+        argv,
+        Ok(Config::new(dir.path().to_path_buf())),
+        None,
+        &processes,
+        &mut Vec::new(),
+        &say,
+    );
     let calls = processes.calls.into_inner().unwrap_or_else(PoisonError::into_inner);
     (code, calls, said.into_inner().unwrap_or_else(PoisonError::into_inner))
 }
@@ -329,4 +342,93 @@ fn an_upgrade_says_how_the_binary_came_and_which_agent_answers() {
         upgraded_text("studio", &upgraded(UpgradeWay::Current)),
         format!("yonderd bbbbbbbbbbbb on studio is current\n{answers}")
     );
+}
+
+/// `yonder skill install` writes into the skill directory of the user, says so, and a second call finds it current.
+#[test]
+fn skill_install_writes_the_skill_of_the_user_and_then_finds_it_current() {
+    let home = tempfile::tempdir().expect("a home directory");
+    let dir = home.path().join("skills/yonder");
+    let (code, stdout, said) = invoke_in(home.path(), &["skill", "install"]);
+    assert_eq!(
+        (code, stdout),
+        (
+            0,
+            format!("installed the yonder skill of build {} in {}\n", skill::build(), dir.display())
+        ),
+        "{said:?}"
+    );
+    assert_eq!(std::fs::read_to_string(dir.join("SKILL.md")).expect("the skill"), skill::SKILL);
+
+    let (code, stdout, _) = invoke_in(home.path(), &["skill", "install"]);
+    assert_eq!(
+        (code, stdout),
+        (
+            0,
+            format!("the yonder skill of build {} in {} is current\n", skill::build(), dir.display())
+        )
+    );
+}
+
+/// An edited copy leaves by 255 with `skill_edited`, and `--dir` names another directory.
+#[test]
+fn skill_install_refuses_an_edited_copy_without_force() {
+    let home = tempfile::tempdir().expect("a home directory");
+    let other = home.path().join("codex/yonder");
+    let dir = other.to_str().expect("a UTF-8 path");
+    assert_eq!(invoke_in(home.path(), &["skill", "install", "--dir", dir]).0, 0);
+    std::fs::write(other.join("SKILL.md"), "mine").expect("written");
+
+    let (code, stdout, said) = invoke_in(home.path(), &["skill", "install", "--dir", dir]);
+    assert_eq!((code, stdout.as_str()), (255, ""));
+    assert!(said[0].starts_with("yonder: skill_edited: the skill in "), "{said:?}");
+
+    let (code, stdout, _) = invoke_in(home.path(), &["skill", "install", "--dir", dir, "--force"]);
+    assert_eq!(
+        (code, stdout),
+        (
+            0,
+            format!("replaced the edited yonder skill with build {} in {dir}\n", skill::build())
+        )
+    );
+}
+
+#[test]
+fn skill_print_writes_the_skill_to_the_stdout() {
+    let (code, stdout, _) = invoke(&["skill", "print"]);
+    assert_eq!(code, 0);
+    assert_eq!(stdout.trim_end(), skill::SKILL.trim_end());
+}
+
+/// `yonder upgrade` says that it updated a copy of another build before it talks to the host.
+#[test]
+fn upgrade_refreshes_an_installed_skill_of_another_build() {
+    let home = tempfile::tempdir().expect("a home directory");
+    let dir = home.path().join("skills/yonder");
+    assert_eq!(invoke_in(home.path(), &["skill", "install"]).0, 0);
+    let marker = dir.join(".yonder-skill.sha256");
+    let old = "old words";
+    std::fs::write(dir.join("SKILL.md"), old).expect("written");
+    let lines = std::fs::read_to_string(&marker).expect("the marker");
+    let sha256 = lines.split_once("  ").expect("a marker line").0;
+    let mut digest = yonder_link::digest::Sha256::default();
+    digest.update(old.as_bytes());
+    let old_marker = lines.replacen(sha256, &digest.hex(), 1);
+    std::fs::write(&marker, &old_marker).expect("written");
+    let mut digest = yonder_link::digest::Sha256::default();
+    digest.update(old_marker.as_bytes());
+    let old_build = digest.hex()[..12].to_owned();
+
+    let (code, _, said) = invoke_in(home.path(), &["upgrade", "studio"]);
+    assert_eq!(code, 255);
+    assert_eq!(
+        said[0],
+        format!(
+            "yonder: replaced the skill of build {old_build} with build {} in {}",
+            skill::build(),
+            dir.display()
+        )
+    );
+    assert!(said[1].starts_with("yonder: no_host: "), "{said:?}");
+    assert_eq!(std::fs::read_to_string(dir.join("SKILL.md")).expect("the skill"), skill::SKILL);
 }

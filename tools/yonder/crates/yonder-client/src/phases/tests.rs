@@ -25,18 +25,18 @@ fn the_line_names_each_step_in_its_order() {
         step("pack", 3100),
         step("upload", 2000),
         step("lock", 0),
-        step("lease", 542_000),
+        step("slot", 542_000),
         step("command", 25_100),
         step("fetch", 400),
         step("total", 3_909_000),
     ];
     assert_eq!(
         phases_line(&phases),
-        "yonder: phases: pack 3.1s, upload 2.0s, lock 0.0s, lease 9m02s, command 25.1s, fetch 0.4s, total 1h05m09s"
+        "yonder: phases: pack 3.1s, upload 2.0s, lock 0.0s, slot 9m02s, command 25.1s, fetch 0.4s, total 1h05m09s"
     );
     assert_eq!(
         phases_short(&phases),
-        "pack 3.1s, upload 2.0s, lease 9m02s, command 25.1s, fetch 0.4s, total 1h05m09s"
+        "pack 3.1s, upload 2.0s, slot 9m02s, command 25.1s, fetch 0.4s, total 1h05m09s"
     );
     assert_eq!(phases_short(&[step("lock", 99)]), "");
 }

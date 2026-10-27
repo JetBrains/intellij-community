@@ -149,6 +149,6 @@ and stops the pack, and the output follows up to the end of the run. The second 
 host from `Reply::Phases`, `fetch`, and `total`, the whole call. The line of a started run is `yonder: run <id> of
 <commit> on <alias>`, with ` in <repository>` when the repository is not the one of the host file, and `: the working
 tree, HEAD <commit> and <n> changed paths` for a commit of the working tree. `phases_line` makes the stderr line `yonder: phases:
-pack 3.1s, upload 2.0s, lease 9m02s, … total 10m13s`. `yonder run` and `bt --host` print it at the end of a run. A run
+pack 3.1s, upload 2.0s, slot 9m02s, … total 10m13s`. `yonder run` and `bt --host` print it at the end of a run. A run
 that the agent refuses has no outcome, so the client says that line itself. `yonder runs` shows the steps of 0.1 s or
 more of each run.

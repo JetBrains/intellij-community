@@ -19,6 +19,8 @@ exports_files([
     "Cargo.toml",
     # The patch of the ring build script for Windows AArch64, which `community/MODULE.bazel` applies.
     "ring-windows-clang-cl.patch",
+    # The agent skill, which the `yonder` binary carries.
+    "skill/SKILL.md",
 ])
 
 # `yonderd`, the agent, one file, always optimized. `yonder prepare` copies it to the host.
