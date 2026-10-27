@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.BooleanTableCellEditor
 import com.intellij.ui.BooleanTableCellRenderer
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.ColumnInfo
@@ -62,7 +63,7 @@ internal val ScriptDefinitionDiscoverySource?.locationText: @NlsSafe String
         null -> ""
     }
 
-/** One row of the tooltip table. [code] marks a value the reader compares character by character. */
+/** One line of the tooltip. [code] marks a value the reader compares character by character. */
 internal data class TooltipRow(
     val label: @NlsSafe String,
     val value: @NlsSafe String,
@@ -73,7 +74,8 @@ internal data class TooltipRow(
  * What the tooltip says about a definition.
  *
  * The row already carries the pattern, the origin and the location, so this answers the rest: how the
- * IDE reached the definition and which exact artifacts are involved.
+ * IDE reached the definition and which exact artifacts are involved. The definition class is the
+ * tooltip header, so no line repeats it.
  */
 internal fun ScriptDefinitionDiscoverySource?.tooltipRows(
     definitionFqn: @NlsSafe String,
@@ -105,7 +107,6 @@ internal fun ScriptDefinitionDiscoverySource?.tooltipRows(
 
             null -> Unit
         }
-        add(row("script.definitions.tooltip.definition.class", definitionFqn, code = true))
     }
 }
 
@@ -118,28 +119,34 @@ private const val TOOLTIP_WRAP_THRESHOLD: Int = 70
 private const val TOOLTIP_WIDTH: Int = 560
 
 /**
- * A two column table: bold labels on the left, values on the right.
+ * The layout of the file Quick Documentation: the [header] in code font, a separator, then one line per row
+ * with a grayed label.
  *
  * A path and a class name hold no spaces, so a long one needs a break opportunity of its own. Only a
  * value over [TOOLTIP_WRAP_THRESHOLD] gets one, because the break costs a character that the value
  * does not hold. A short value stays what it says it is.
  */
-internal fun List<TooltipRow>.toTooltipHtml(): HtmlChunk {
+internal fun List<TooltipRow>.toTooltipHtml(header: @NlsSafe String): HtmlChunk {
     var table = HtmlChunk.tag("table").attr("cellspacing", "0").attr("cellpadding", "2")
-    if (any { it.value.length > TOOLTIP_WRAP_THRESHOLD }) {
+    if (header.length > TOOLTIP_WRAP_THRESHOLD || any { it.value.length > TOOLTIP_WRAP_THRESHOLD }) {
         table = table.attr("width", TOOLTIP_WIDTH)
     }
 
-    return table.children(
-        map { (label, value, code) ->
-            val text = HtmlChunk.text(if (value.length > TOOLTIP_WRAP_THRESHOLD) value.withWrapOpportunities() else value)
-            HtmlChunk.tag("tr").children(
-                HtmlChunk.tag("td").attr("valign", "top").children(HtmlChunk.tag("b").addText(label), HtmlChunk.nbsp(2)),
-                HtmlChunk.tag("td").child(if (code) HtmlChunk.tag("code").child(text) else text),
-            )
-        }
-    )
+    val labelColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.Tooltip.grayedForeground())
+    val lines = map { (label, value, code) ->
+        val text = wrappable(value)
+        HtmlChunk.div("padding-top: ${JBUI.scale(4)}px").children(
+            HtmlChunk.font(labelColor).addText(label),
+            HtmlChunk.nbsp(),
+            if (code) HtmlChunk.tag("code").child(text) else text,
+        )
+    }
+    val headerChunk = HtmlChunk.div("padding-bottom: ${JBUI.scale(4)}px").child(HtmlChunk.tag("code").child(wrappable(header)))
+    return table.child(HtmlChunk.tag("tr").child(HtmlChunk.tag("td").children(headerChunk, HtmlChunk.hr(), *lines.toTypedArray())))
 }
+
+private fun wrappable(value: @NlsSafe String): HtmlChunk =
+    HtmlChunk.text(if (value.length > TOOLTIP_WRAP_THRESHOLD) value.withWrapOpportunities() else value)
 
 /**
  * A zero-width space after every separator, so the renderer can break the value.
@@ -152,8 +159,8 @@ private fun String.withWrapOpportunities(): @NlsSafe String =
 
 /** A row reads out its visible line first, then the provenance behind it. */
 @NlsSafe
-private fun accessibleDescription(detail: String, rows: List<TooltipRow>): String =
-    (listOf(detail) + rows.map { "${it.label} ${it.value}" }).joinToString(". ")
+private fun accessibleDescription(detail: String, definitionFqn: String, rows: List<TooltipRow>): String =
+    (listOf(detail, definitionFqn) + rows.map { "${it.label} ${it.value}" }).joinToString(". ")
 
 /** The second line of a row: what the definition matches, how it was reached, and from where. */
 internal val ScriptDefinitionTableModel.detailText: @NlsSafe String
@@ -204,10 +211,10 @@ internal class ScriptDefinitionTable(definitions: MutableList<ScriptDefinitionTa
 
             // The row shows the friendly names, so the exact classes and files live here.
             val rows = item.source.tooltipRows(item.id, item.filePattern)
-            panel.setToolTipText(rows.toTooltipHtml())
+            panel.setToolTipText(rows.toTooltipHtml(item.id))
 
             panel.accessibleContext.accessibleName = item.name
-            panel.accessibleContext.accessibleDescription = accessibleDescription(item.detailText, rows)
+            panel.accessibleContext.accessibleDescription = accessibleDescription(item.detailText, item.id, rows)
             return panel
         }
     }

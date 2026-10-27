@@ -151,7 +151,6 @@ class ScriptDefinitionsSnapshotTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf(
                 "Definition source:" to "mcp-script-definition-0.1.0.jar",
                 "Marker file:" to "META-INF/kotlin/script/templates/com.example.Script.classname",
-                "Definition class:" to "com.example.Script",
             ),
             rows,
         )
@@ -178,7 +177,6 @@ class ScriptDefinitionsSnapshotTest : KotlinLightCodeInsightFixtureTestCase() {
             listOf(
                 "Definition source:" to "org.jetbrains.kotlin.idea.core.script.definitions.MainKtsScriptDefinitionsProvider",
                 "Plugin ID:" to "org.jetbrains.kotlin",
-                "Definition class:" to "org.jetbrains.kotlin.mainKts.MainKtsScript",
             ),
             rows,
         )
@@ -188,7 +186,7 @@ class ScriptDefinitionsSnapshotTest : KotlinLightCodeInsightFixtureTestCase() {
         val rows = ScriptDefinitionDiscoverySource.Manual.tooltipRows("com.example.Manual").map { it.label to it.value }
 
         assertEquals(
-            listOf("Definition source:" to "Manual Settings", "Definition class:" to "com.example.Manual"),
+            listOf("Definition source:" to "Manual Settings"),
             rows,
         )
     }
@@ -203,22 +201,24 @@ class ScriptDefinitionsSnapshotTest : KotlinLightCodeInsightFixtureTestCase() {
                    ScriptDefinitionDiscoverySource.Manual.tooltipRows("com.example.Gradle").associate { it.label to it.value }["File pattern:"])
     }
 
-    fun `test the tooltip renders a two column table`() {
+    fun `test the tooltip renders the definition class above a separator and grayed labels`() {
         val html = listOf(
             TooltipRow("Plugin", "Kotlin"),
-            TooltipRow("Definition class", "com.example.Script", code = true),
-        ).toTooltipHtml().toString()
+            TooltipRow("Plugin ID", "org.jetbrains.kotlin", code = true),
+        ).toTooltipHtml("com.example.Script").toString()
 
-        assertTrue("A label must be bold, was '$html'", html.contains("<b>Plugin</b>"))
-        assertTrue("A label must stay top aligned, was '$html'", html.contains("valign=\"top\""))
-        assertTrue("A class name must render as code, was '$html'", html.contains("<code>"))
+        assertTrue("The header must render as code above a separator, was '$html'", html.contains("<code>com.example.Script</code></div><hr/>"))
+        assertTrue("A label must be grayed, was '$html'", html.contains("<font color=\"") && html.contains(">Plugin</font>"))
+        assertTrue("A code value must render as code, was '$html'", html.contains("<code>org.jetbrains.kotlin</code>"))
+        assertEquals("Each row must be its own block, was '$html'", 3, html.split("<div style=").size - 1)
+        assertFalse("A row must not be a paragraph, was '$html'", html.contains("<p>"))
     }
 
     fun `test only a value too long to fit gets a break after each separator`() {
         val short = "com.example.Script"
         val long = "org.jetbrains.kotlin.idea.core.script.definitions.MainKtsScriptDefinitionsProviderLong"
 
-        val html = listOf(TooltipRow("Short", short), TooltipRow("Long", long)).toTooltipHtml().toString()
+        val html = listOf(TooltipRow("Short", short), TooltipRow("Long", long)).toTooltipHtml("com.example.Header").toString()
 
         // A break is a real character, so a value that fits must stay the value itself.
         assertTrue("A short value must stay literal, was '$html'", html.contains(short))
