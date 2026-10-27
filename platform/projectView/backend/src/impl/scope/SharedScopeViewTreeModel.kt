@@ -7,6 +7,7 @@ import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.ide.scopeView.ScopeViewTreeModel
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FileStatusListener
@@ -20,11 +21,19 @@ import com.intellij.platform.projectView.settings.ProjectViewPaneOption
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsAccessor
 import com.intellij.platform.projectView.settings.ProjectViewPaneSettingsService
 import com.intellij.platform.projectView.settings.ProjectViewPaneSortKey
+import kotlinx.coroutines.CoroutineName
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.withIndex
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -36,70 +45,169 @@ import kotlin.coroutines.resume
  *
  * One pane is live at a time. Its session runs on the model, and the model shows the scope of that pane.
  * The other managed panes are frozen. Their state builders keep the last tree, and nothing updates it.
- * A pane becomes live when it claims the model. Then the pane that was live becomes frozen.
+ * [LiveSelection.livePane] tells which pane is live.
  *
- * The model exists while at least one pane is managed.
+ * The model exists while a pane runs code in [runWithManagedPane] or [runFindRequest].
  * The operations that don't depend on a scope are here, and they do nothing while there is no model.
- * Only a live session sets the scope on the model, see [manage].
+ * Only a live session sets the scope on the model.
  */
-internal class SharedScopeViewTreeModel(private val project: Project) {
-  /** Guards [managedPaneCount] and the creation and disposal of the model. */
+internal class SharedScopeViewTreeModel(private val project: Project, coroutineScope: CoroutineScope) {
+  /** Guards [modelUserCount] and the creation and disposal of the model. */
   private val modelLock = Mutex()
-  private var managedPaneCount = 0
+  private var modelUserCount = 0
 
   /** The model, written only under [modelLock]. */
   private val currentModel = MutableStateFlow<ScopeViewTreeModel?>(null)
 
-  private val mutableLivePane = MutableStateFlow<ScopePaneModel?>(null)
+  private val selection = MutableStateFlow(LiveSelection())
 
-  /** The pane whose session runs on the model. */
-  val livePane: StateFlow<ScopePaneModel?> = mutableLivePane.asStateFlow()
+  /**
+   * The live session, in which the code of [withLivePane] can run, and the number of such code blocks that run now.
+   * The next session starts only after all the blocks of the previous one have finished.
+   */
+  private val gate = MutableStateFlow(LiveGate(session = null, runningBlocks = 0))
 
-  /** The pane that the frontend selected last. */
-  @Volatile
-  private var selectedPane: ScopePaneModel? = null
+  /** The pane that [LiveSelection.livePane] chooses now. */
+  val livePane: Flow<ScopePaneModel?> = selection.map { it.livePane }.distinctUntilChanged()
 
-  /** A live session holds it, so the next session starts only after the previous one has stopped. */
-  private val liveSessionMutex = Mutex()
-
-  /** Makes [pane] live. The session of the previous live pane stops. */
-  fun claim(pane: ScopePaneModel) {
-    mutableLivePane.value = pane
+  init {
+    // The only place that decides which pane is live. It's also the only place that creates sessions.
+    coroutineScope.launch(CoroutineName("The live scope pane")) {
+      // Each choice gets its own index, so the index is a unique ID of the session.
+      livePane.withIndex().collect { (index, pane) ->
+        LOG.trace { "Terminating the previous session ${gate.value.session}" }
+        gate.update { it.copy(session = null) } // the blocks of the previous session stop, and no new block starts
+        gate.first { it.runningBlocks == 0 }
+        LOG.trace { "The previous session has been terminated" }
+        val session = if (pane == null) null else LiveSession(id = index, pane = pane)
+        gate.update { it.copy(session = session) }
+        LOG.debug { "The live scope session is $session" }
+      }
+    }
   }
 
-  /** Makes [pane] the selected pane and claims the model for it. */
+  /** Makes [pane] the selected pane, which the frontend shows. */
   fun select(pane: ScopePaneModel) {
-    selectedPane = pane
-    claim(pane)
-  }
-
-  /** Gives the model back to the selected pane, for example after a Select In has searched another pane. */
-  fun claimForSelectedPane() {
-    selectedPane?.let { claim(it) }
+    selection.update { it.copy(selectedPane = pane) }
   }
 
   /**
-   * Runs [session] each time [pane] becomes live, until it is cancelled.
+   * Runs [session] in each live period of [pane], until it is cancelled.
    *
-   * [pane] claims the model at the start. While [pane] is frozen, nothing runs.
-   * Only [session] gets the model, so only the live session can set its scope.
+   * The pane service calls it while it manages [pane], that is, while the state of [pane] is requested.
+   * While [pane] is frozen, nothing runs.
    */
-  suspend fun manage(pane: ScopePaneModel, session: suspend (ScopeViewTreeModel) -> Unit) {
+  suspend fun runWithManagedPane(pane: ScopePaneModel, session: suspend (ScopeViewTreeModel) -> Unit) {
+    selection.update { it.copy(managedPanes = it.managedPanes + ManagedPane(pane, hasTree = false)) }
+    try {
+      withLivePane(pane, session)
+    }
+    finally {
+      selection.update { it.copy(managedPanes = it.managedPanes.filter { managed -> managed.pane !== pane }) }
+    }
+  }
+
+  /** Tells that the managed [pane] has its tree now. So it doesn't need a live period for its first tree anymore. */
+  fun setHasTree(pane: ScopePaneModel) {
+    selection.update { current ->
+      current.copy(managedPanes = current.managedPanes.map { if (it.pane === pane) it.copy(hasTree = true) else it })
+    }
+  }
+
+  /**
+   * Makes [pane] live and runs [find] in it, for a Select In.
+   *
+   * The last request wins, and the panes of the previous ones wait frozen.
+   * If [pane] stops being live before [find] completes, [find] runs again when [pane] is live again.
+   */
+  suspend fun <T> runFindRequest(pane: ScopePaneModel, find: suspend () -> T): T {
+    val request = FindRequest(pane)
+    selection.update { it.copy(findRequests = it.findRequests + request) }
+    try {
+      return withLivePane(pane) { find() }
+    }
+    finally {
+      selection.update { it.copy(findRequests = it.findRequests - request) }
+    }
+  }
+
+  /**
+   * Runs [block] while [pane] is live, and returns its result.
+   *
+   * If [pane] stops being live before [block] completes, [block] is cancelled, and it runs again when [pane] is live again.
+   * So a block that never completes, such as a session, runs once in each live period.
+   * Only [block] gets the model, so only the live pane can set its scope.
+   */
+  private suspend fun <T> withLivePane(pane: ScopePaneModel, block: suspend (ScopeViewTreeModel) -> T): T {
     val model = acquire()
     try {
-      claim(pane)
-      livePane.collectLatest { livePane ->
-        if (livePane !== pane) return@collectLatest
-        liveSessionMutex.withLock {
-          session(model)
+      return channelFlow {
+        gate.map { it.session }.distinctUntilChanged().collectLatest { session ->
+          if (!tryEnterBlock(requestedPane = pane, session = session)) return@collectLatest
+          try {
+            send(block(model))
+          }
+          finally {
+            leaveBlock()
+          }
         }
-      }
+      }.first()
     }
     finally {
       withContext(NonCancellable) {
-        release(pane)
+        release()
       }
     }
+  }
+
+  private suspend fun acquire(): ScopeViewTreeModel = modelLock.withLock {
+    ++modelUserCount
+    currentModel.value ?: createModel().also { currentModel.value = it }
+  }
+
+  private suspend fun release() = modelLock.withLock {
+    if (--modelUserCount == 0) {
+      currentModel.value?.let { Disposer.dispose(it) }
+      currentModel.value = null
+      LOG.debug { "Disposed the shared scope tree model" }
+    }
+  }
+
+  /**
+   * Counts a new block of [requestedPane] in [session], the session that `collectLatest` delivered.
+   * Fails if [session] isn't a session of [requestedPane], or if it has ended since.
+   */
+  private fun tryEnterBlock(requestedPane: ScopePaneModel, session: LiveSession?): Boolean {
+    if (session?.pane !== requestedPane) return false // Fail-fast path: we want one pane, the current collectLatest call got another.
+    while (true) {
+      val current = gate.value
+      // Each session has its own ID, so a session that has ended never comes back.
+      // So `collectLatest` is about to get the newer value and cancel this block.
+      if (current.session?.id != session.id) return false
+      if (gate.compareAndSet(current, current.copy(runningBlocks = current.runningBlocks + 1))) return true
+    }
+  }
+
+  private fun leaveBlock() {
+    // The decrement has no session condition, because the session might have changed.
+    // In fact, setting the session to null is how the collector stops the running blocks.
+    gate.update { it.copy(runningBlocks = it.runningBlocks - 1) }
+  }
+
+  private fun createModel(): ScopeViewTreeModel {
+    val model = ScopeViewTreeModel(project, ProjectViewPaneViewSettings(ScopePaneSettingsAccessor(project))).apply {
+      setStructureProvider(CompoundTreeStructureProvider.get(project))
+      setNodeDecorator(CompoundProjectViewNodeDecorator.get(project))
+    }
+    // The contents of a VCS-based scope, such as "All Changed Files", depend on the file statuses.
+    // Setting the same scope again makes the model filter the files again.
+    FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
+      override fun fileStatusesChanged() {
+        model.setFilter(model.filter)
+      }
+    }, model)
+    LOG.debug { "Created the shared scope tree model" }
+    return model
   }
 
   /** Creates the node provider of a live session. */
@@ -133,39 +241,43 @@ internal class SharedScopeViewTreeModel(private val project: Project) {
   }
 
   private fun requireModel(): ScopeViewTreeModel = requireNotNull(currentModel.value) {
-    "The shared scope tree model is only available while a scope pane is managed"
-  }
-
-  private suspend fun acquire(): ScopeViewTreeModel = modelLock.withLock {
-    ++managedPaneCount
-    currentModel.value ?: createModel().also { currentModel.value = it }
-  }
-
-  private suspend fun release(pane: ScopePaneModel) = modelLock.withLock {
-    mutableLivePane.compareAndSet(pane, null)
-    if (--managedPaneCount == 0) {
-      currentModel.value?.let { Disposer.dispose(it) }
-      currentModel.value = null
-      LOG.debug { "Disposed the shared scope tree model" }
-    }
-  }
-
-  private fun createModel(): ScopeViewTreeModel {
-    val model = ScopeViewTreeModel(project, ProjectViewPaneViewSettings(ScopePaneSettingsAccessor(project))).apply {
-      setStructureProvider(CompoundTreeStructureProvider.get(project))
-      setNodeDecorator(CompoundProjectViewNodeDecorator.get(project))
-    }
-    // The contents of a VCS-based scope, such as "All Changed Files", depend on the file statuses.
-    // Setting the same scope again makes the model filter the files again.
-    FileStatusManager.getInstance(project).addFileStatusListener(object : FileStatusListener {
-      override fun fileStatusesChanged() {
-        model.setFilter(model.filter)
-      }
-    }, model)
-    LOG.debug { "Created the shared scope tree model" }
-    return model
+    "The shared scope tree model is only available while a scope pane is live"
   }
 }
+
+/**
+ * What decides the live pane. A managed pane stays frozen until it becomes live, see [livePane].
+ *
+ * [managedPanes] and [findRequests] are in the order in which they came.
+ */
+private data class LiveSelection(
+  val selectedPane: ScopePaneModel? = null,
+  val managedPanes: List<ManagedPane> = emptyList(),
+  val findRequests: List<FindRequest> = emptyList(),
+) {
+  /**
+   * The rules, in the order of priority:
+   * 1. The pane of the last find request. A Select In must search a live pane.
+   * 2. The last managed pane without a tree. The pane service waits for its first state before it does anything with it.
+   * 3. The selected pane, if it's managed. The frontend doesn't tell a pane that it's no longer selected.
+   * 4. The last managed pane.
+   */
+  val livePane: ScopePaneModel?
+    get() = findRequests.lastOrNull()?.pane
+            ?: managedPanes.lastOrNull { !it.hasTree }?.pane
+            ?: selectedPane?.takeIf { selected -> managedPanes.any { it.pane === selected } }
+            ?: managedPanes.lastOrNull()?.pane
+}
+
+private data class ManagedPane(val pane: ScopePaneModel, val hasTree: Boolean)
+
+/** Not a data class: two requests for the same pane are different requests. */
+private class FindRequest(val pane: ScopePaneModel)
+
+/** A live period of [pane]. [id] tells two live periods of the same pane apart. */
+private data class LiveSession(val id: Int, val pane: ScopePaneModel)
+
+private data class LiveGate(val session: LiveSession?, val runningBlocks: Int)
 
 /**
  * The settings of a scope pane, read from the settings service.

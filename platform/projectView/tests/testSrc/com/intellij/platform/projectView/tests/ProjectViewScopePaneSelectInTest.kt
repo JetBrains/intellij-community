@@ -111,6 +111,64 @@ internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() 
     }
   }
 
+  @Test
+  fun `Select In searches another scope when no scope pane is live`() = timeoutRunBlocking(60.seconds) {
+    val src = srcRoot.get().virtualFile
+    val other = edtWriteAction { src.createChildData(this@ProjectViewScopePaneSelectInTest, "Other.txt") }
+    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
+    val holder = NamedScopeManager.getInstance(project.get())
+    val helloScope = NamedScope("Hello Files", FilePatternPackageSet(null, "*Hello.txt"))
+    holder.addScope(helloScope)
+    val helloPaneId = ScopePaneModel.paneId(NamedScopeFilter(holder, helloScope))
+    aggregator.awaitPane(helloPaneId)
+    val expectedPaneId = readAction {
+      NamedScopeFilter.list(DependencyValidationManager.getInstance(project.get()), holder)
+        .first { it.scope != helloScope && it.accept(other) }
+        .let { ScopePaneModel.paneId(it) }
+    }
+
+    try {
+      // Nobody requests the state of a scope pane, so the search must make both panes live by itself.
+      val path = aggregator.findNodeForSelectIn(selectInRequest(helloPaneId, other))
+      assertEquals(expectedPaneId, path?.paneId, "Other.txt isn't in the hello scope, but the found path is $path")
+    }
+    finally {
+      edtWriteAction { other.delete(this@ProjectViewScopePaneSelectInTest) }
+    }
+  }
+
+  @Test
+  fun `the selected pane is live again after Select In has searched another pane`(): Unit = timeoutRunBlocking(60.seconds) {
+    val src = srcRoot.get().virtualFile
+    val hello = src.findChild("Hello.txt")!!
+    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
+    val holder = NamedScopeManager.getInstance(project.get())
+    val helloScope = NamedScope("Hello Files", FilePatternPackageSet(null, "*Hello.txt"))
+    val textScope = NamedScope("Text Files", FilePatternPackageSet(null, "*.txt"))
+    holder.addScope(helloScope)
+    holder.addScope(textScope)
+    val helloPaneId = ScopePaneModel.paneId(NamedScopeFilter(holder, helloScope))
+    val textPaneId = ScopePaneModel.paneId(NamedScopeFilter(holder, textScope))
+    aggregator.awaitPane(helloPaneId)
+    aggregator.awaitPane(textPaneId)
+
+    var newFile: VirtualFile? = null
+    try {
+      withProjectViewPane(project.get(), textPaneId) { text ->
+        text.select()
+        text.awaitTree { "Hello.txt" in it.names() }
+        val path = aggregator.findNodeForSelectIn(selectInRequest(helloPaneId, hello))
+        assertEquals(helloPaneId, path?.paneId, "Hello.txt is in the hello scope, but the found path is $path")
+        // Only a live pane gets updates, so the text pane shows a new file only if it's live again.
+        newFile = edtWriteAction { src.createChildData(this@ProjectViewScopePaneSelectInTest, "New.txt") }
+        text.awaitTree { "New.txt" in it.names() }
+      }
+    }
+    finally {
+      newFile?.let { file -> edtWriteAction { file.delete(this@ProjectViewScopePaneSelectInTest) } }
+    }
+  }
+
   private fun String.names(): List<String> = lines().map { it.trim() }
 
   private fun selectInRequest(paneId: ProjectViewPaneId, file: VirtualFile): SelectInRequestDTO {
