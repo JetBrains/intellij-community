@@ -116,7 +116,7 @@ internal fun osVmOptions(os: OsFamily, platformPrefix: String?): List<String> = 
     "-Dawt.lock.fair=true",
     // disabled for Gateway until JBR supports system tray in the Wayland toolkit (IJPL-231661/JBR-9966)
     "-Dawt.toolkit.name=auto".takeIf { platformPrefix != "Gateway" },
-    "-Dsun.java2d.vulkan=true",
+    "-Dsun.java2d.vulkan=true".takeIf { platformPrefix != "JetBrainsClient" }, // disabled for rem-dev due to IJPL-259757
   )
   OsFamily.WINDOWS -> emptyList()
 }
