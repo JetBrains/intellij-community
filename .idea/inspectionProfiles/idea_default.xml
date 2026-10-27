@@ -27,6 +27,9 @@
       <scope name="IDE Testing Framework" level="WARNING" enabled="true" />
     </inspection_tool>
     <inspection_tool class="60116a3f-d0e5-3ea6-bf7a-7856244d8ffc" enabled="true" level="Strong Warning" enabled_by_default="true" editorAttributes="Strong Warning" />
+    <inspection_tool class="4eb51d7d-e527-31f8-ab15-76a399786587" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="60175927-3d94-3de3-bbe6-54353bd28bc6" enabled="true" level="WARNING" enabled_by_default="true">
       <scope name="Fleet" level="WARNING" enabled="false" />
       <scope name="Rider Build Scripts" level="WARNING" enabled="false" />
@@ -364,6 +367,23 @@
                   <option name="regExp" value="\blocalEel\b" />
                   <option name="_fileType" value="Kotlin" />
                   <option name="searchContext" value="ANY" />
+                  <option name="flags" value="64" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Use `java.nio.file.Path` for a path.&#10;If you must keep a path in a `String`, mark the type with `@OsPath` or `@NioPath` from `com.intellij.platform.util.annotations.paths`:&#10;`path: @OsPath String`." />
+            <option name="name" value="Do not represent paths as strings" />
+            <option name="problemDescriptor" value="Use java.nio.file.Path, or mark the String with @OsPath or @NioPath" />
+            <option name="suppressId" value="pathAsString" />
+            <option name="uuid" value="4eb51d7d-e527-31f8-ab15-76a399786587" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value="[pP]ath\s*:\s*String\b" />
+                  <option name="_fileType" value="Kotlin" />
+                  <option name="searchContext" value="EXCEPT_COMMENTS_AND_STRING_LITERALS" />
                   <option name="flags" value="64" />
                 </InspectionPattern>
               </list>

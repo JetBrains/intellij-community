@@ -23,6 +23,9 @@
       <scope name="swift" level="WARNING" enabled="true" />
       <scope name="swift-lang" level="WARNING" enabled="true" />
     </inspection_tool>
+    <inspection_tool class="4eb51d7d-e527-31f8-ab15-76a399786587" enabled="true" level="WARNING" enabled_by_default="false">
+      <scope name="Python" level="WARNING" enabled="true" />
+    </inspection_tool>
     <inspection_tool class="4ed1243f-91f1-388d-ba02-4dbef1721d3a" enabled="true" level="WEAK WARNING" enabled_by_default="true" editorAttributes="INFO_ATTRIBUTES">
       <scope name="IDE Testing Framework" level="WARNING" enabled="true" />
     </inspection_tool>
@@ -344,6 +347,23 @@
                   <option name="_fileType" value="Properties" />
                   <option name="searchContext" value="ANY" />
                   <option name="replacement" value="…" />
+                </InspectionPattern>
+              </list>
+            </option>
+          </RegExpInspectionConfiguration>
+          <RegExpInspectionConfiguration>
+            <option name="description" value="Use `java.nio.file.Path` for a path.&#10;If you must keep a path in a `String`, mark the type with `@OsPath` or `@NioPath` from `com.intellij.platform.util.annotations.paths`:&#10;`path: @OsPath String`." />
+            <option name="name" value="Do not represent paths as strings" />
+            <option name="problemDescriptor" value="Use java.nio.file.Path, or mark the String with @OsPath or @NioPath" />
+            <option name="suppressId" value="pathAsString" />
+            <option name="uuid" value="4eb51d7d-e527-31f8-ab15-76a399786587" />
+            <option name="patterns">
+              <list>
+                <InspectionPattern>
+                  <option name="regExp" value="[pP]ath\s*:\s*String\b" />
+                  <option name="_fileType" value="Kotlin" />
+                  <option name="searchContext" value="EXCEPT_COMMENTS_AND_STRING_LITERALS" />
+                  <option name="flags" value="64" />
                 </InspectionPattern>
               </list>
             </option>
