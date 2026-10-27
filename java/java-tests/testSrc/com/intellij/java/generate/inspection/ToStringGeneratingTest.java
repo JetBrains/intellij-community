@@ -314,8 +314,7 @@ public class ToStringGeneratingTest extends LightJavaCodeInsightFixtureTestCase 
 
   @NotNull
   private GenerateToStringWorker buildWorker(@NotNull final PsiClass clazz, @NotNull final ConflictResolutionPolicy policy) {
-    return new GenerateToStringWorker(clazz, myFixture.getEditor(), true) {
-    };
+    return new GenerateToStringWorker(clazz, myFixture.getEditor(), true);
   }
 
   @NotNull
