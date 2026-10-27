@@ -220,7 +220,7 @@ fn pack_of_a_missing_tree_exits_1_with_the_reason_on_stderr() {
     let code = run_pack(&args, &mut stdout, &mut stderr);
     let stderr = String::from_utf8(stderr).unwrap();
     assert_eq!(code, 1);
-    assert!(stdout.is_empty());
+    assert_eq!(stdout, Vec::<u8>::new());
     assert!(stderr.starts_with("air-trace pack: "), "{stderr}");
     assert!(stderr.contains("absent"), "{stderr}");
 }

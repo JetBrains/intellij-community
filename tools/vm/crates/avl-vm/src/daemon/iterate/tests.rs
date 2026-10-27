@@ -243,7 +243,7 @@ async fn the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_reco
     fixture.on("contract", contract(&reinstalled));
     assert_eq!(fixture.host.installed_agent(&ctx, &state, &scope).await, None);
     state.agent_digest = started.clone();
-    assert!(fixture.channel().calls_containing("vm-guest-agent contract").is_empty());
+    assert_eq!(fixture.channel().calls_containing("vm-guest-agent contract"), Vec::<String>::new());
 
     assert_eq!(
         fixture.host.installed_agent(&ctx, &state, &scope).await.as_deref(),
@@ -1019,7 +1019,7 @@ async fn an_iteration_without_traces_reports_neither() {
     let (fixture, _, _) = iteration_fixture("it-31").await;
     let attempt = run_warm_iteration(&fixture, false).await;
     let report = report_of(&attempt);
-    assert!(report.trace_archives.is_empty());
+    assert_eq!(report.trace_archives, []);
     assert_eq!(report.traces_error, None);
     assert!(
         fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty(),
@@ -1045,10 +1045,10 @@ async fn a_trace_failure_of_the_daemon_is_the_traces_error_of_an_iteration_witho
     fixture.script_run(lines);
     let attempt = run_warm_iteration(&fixture, false).await;
     let report = report_of(&attempt);
-    assert!(report.trace_archives.is_empty());
+    assert_eq!(report.trace_archives, []);
     assert_eq!(report.traces_error.as_deref(), Some(reason));
     assert_eq!(report.status, Status::Passed);
-    assert!(fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty());
+    assert_eq!(fixture.channel().calls_containing(TRACE_PACK_READY_VERB), Vec::<String>::new());
 }
 
 // A warm iteration passes the hypervisor's gate before its first guest command, as every worker operation must: the

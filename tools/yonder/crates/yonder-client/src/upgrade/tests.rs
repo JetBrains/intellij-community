@@ -107,7 +107,7 @@ fn the_binary_that_the_agent_runs_is_current_and_does_not_go() {
         .upgrade(&request(Some(&agent), None))
         .expect("current");
     assert_eq!(upgraded.way, UpgradeWay::Current);
-    assert!(setup.agent.requests().is_empty());
+    assert_eq!(setup.agent.requests(), []);
 
     let forced = UpgradeRequest {
         force: true,
@@ -142,7 +142,7 @@ fn a_binary_of_another_platform_is_refused_before_it_goes() {
         "{}",
         refusal.message
     );
-    assert!(setup.agent.requests().is_empty());
+    assert_eq!(setup.agent.requests(), []);
 }
 
 #[test]
@@ -285,7 +285,7 @@ fn a_bootstrap_refuses_a_path_that_git_ignores_or_that_is_there_already() {
         refusal.message
     );
     assert!(root.join(BOOTSTRAP_DIR).is_dir(), "the directory of the user stays");
-    assert!(setup.agent.requests().is_empty());
+    assert_eq!(setup.agent.requests(), []);
 }
 
 #[test]

@@ -173,7 +173,7 @@ fn a_truncated_final_line_is_skipped() {
 fn an_empty_file_reports_having_seen_nothing() {
     let summary = parse_bep(lines_of(""), Platform::Darwin);
     assert!(!summary.saw_any_event);
-    assert!(summary.attempts.is_empty());
+    assert_eq!(summary.attempts, []);
 }
 
 /// proto3 JSON encodes an int64 as a quoted string, so a real bazel sends the duration quoted while the int32 ids

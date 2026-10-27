@@ -536,7 +536,7 @@ fn a_failed_agent_build_or_prepare_is_missing() {
         "{}",
         outcome.text
     );
-    assert!(link.prepares().is_empty());
+    assert_eq!(link.prepares(), []);
     assert_eq!(outcome.exit_code, exit::INFRA);
 
     let stalled = ready();
@@ -550,7 +550,7 @@ fn a_failed_agent_build_or_prepare_is_missing() {
         outcome.text
     );
     assert!(
-        stalled.state().idle_limits.contains(&std::time::Duration::from_secs(1800)),
+        stalled.state().idle_limits.contains(&std::time::Duration::from_mins(30)),
         "the build is a watched child"
     );
 

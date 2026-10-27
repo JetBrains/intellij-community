@@ -560,7 +560,10 @@ fn parse_compile_errors_reads_the_worker_and_the_inline_forms() {
         ]
     );
 
-    assert!(parse_compile_errors("INFO: Build completed successfully, 2 total actions\n").is_empty());
+    assert_eq!(
+        parse_compile_errors("INFO: Build completed successfully, 2 total actions\n"),
+        Vec::<String>::new()
+    );
 }
 
 /// Two shards that read different plans can have split the classes differently, so a class can have run in no shard.

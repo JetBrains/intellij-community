@@ -137,7 +137,7 @@ fn an_expiry_a_failed_class_and_the_hard_stop_affect_the_running_launch_or_else_
         launched(101, "restart-1-b", root),
         started("hangs"),
     ]);
-    assert!(launches(&open, false).1.is_empty());
+    assert_eq!(launches(&open, false).1, []);
     assert_eq!(names(&launches(&open, true).1), ["restart-1-b"]);
 }
 

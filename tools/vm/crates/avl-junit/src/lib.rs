@@ -232,7 +232,7 @@ fn seconds(millis: i64) -> String {
 
 /// Whether XML 1.0 admits `character` at all. It admits a tab, a newline and a carriage return of the control
 /// characters, and it forbids `U+FFFE` and `U+FFFF`.
-fn admitted(character: char) -> bool {
+const fn admitted(character: char) -> bool {
     matches!(character, '\t' | '\n' | '\r') || !(character.is_control() || matches!(character, '\u{fffe}' | '\u{ffff}'))
 }
 

@@ -17,7 +17,7 @@ const SCHEMA: Duration = Duration::from_secs(60);
 const STATUS: Duration = Duration::from_secs(60);
 
 /// The deadline of `bd lease return`. It can stop a Bazel server and clean the slot.
-const RETURN: Duration = Duration::from_secs(10 * 60);
+const RETURN: Duration = Duration::from_mins(10);
 
 fn bd() -> Command {
     let mut command = Command::new("bd");

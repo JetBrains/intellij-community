@@ -395,7 +395,7 @@ fn an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing() {
     let outer = zip_of_zips(&[("a/test.outputs/outputs.zip", &bogus)], &outer_dir);
     let nested = tempfile::tempdir().unwrap();
     let found = Scanner::new(nested_options(nested.path())).scan(&[Root::new(RootKind::Flag, &outer)]);
-    assert!(found.bundles.is_empty());
+    assert_eq!(found.bundles, []);
     let problems = &found.roots[0].problems;
     assert_eq!(problems.len(), 1, "{problems:?}");
     assert!(
@@ -406,7 +406,7 @@ fn an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing() {
 
     let mut archive = ZipArchive::new(Cursor::new(fs::read(&outer).unwrap())).unwrap();
     let (bundles, errors) = read_zip_reporting(&mut archive, "bazel.logs.zip");
-    assert!(bundles.is_empty());
+    assert_eq!(bundles, []);
     assert_eq!(errors.len(), 1, "{errors:?}");
     assert!(errors[0].starts_with("a/test.outputs/outputs.zip: "), "{errors:?}");
 }
@@ -496,7 +496,7 @@ fn a_walk_skips_git_and_node_modules_and_stops_at_its_bound() {
         ..Options::default()
     })
     .scan(&[Root::new(RootKind::Flag, root.path())]);
-    assert!(bounded.bundles.is_empty());
+    assert_eq!(bounded.bundles, []);
     assert_eq!(bounded.roots[0].problems.len(), 1);
     assert!(
         bounded.roots[0].problems[0].contains("holds more than 4 entries"),

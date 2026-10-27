@@ -165,7 +165,7 @@ fn the_hasher_over_random_chunks_equals_hash_file() {
                 hasher.update(&[]);
                 rest = tail;
             }
-            assert!(rest.is_empty());
+            assert_eq!(rest, []);
             assert_eq!(hasher.finish(), expected, "size {size}, {} chunks", split.len());
         }
     }

@@ -200,10 +200,8 @@ impl avl_base::report::Sink for Exporter {
                     self.send(Job::Report(PathBuf::from(reported.report_path)));
                 }
             }
-            Kind::RunFinished => {
-                if data::<RunFinished>(record).is_some_and(|finished| finished.exit_code != 0) {
-                    lock(&self.state).red = true;
-                }
+            Kind::RunFinished if data::<RunFinished>(record).is_some_and(|finished| finished.exit_code != 0) => {
+                lock(&self.state).red = true;
             }
             _ => {}
         }

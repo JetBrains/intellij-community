@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::{Mutex, PoisonError};
 
 use pretty_assertions::assert_eq;
-use yonder_link::proto::{FEATURES, FileKind};
+use yonder_link::proto::{FEATURES, FileKind, RunInfo};
 use yonder_link::{Channel, Frame};
 
 use super::*;
@@ -309,7 +309,7 @@ fn a_host_that_has_the_commit_gets_no_pack() {
     let outcome = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect("the run");
     assert_eq!(outcome.code, 0);
     assert_eq!(kinds(&setup), ["have", "start", "follow", "forget"]);
-    assert!(pack_inputs(&processes).is_empty());
+    assert_eq!(pack_inputs(&processes), Vec::<String>::new());
 }
 
 /// A lost connection follows again from the last offset, and a record that came twice shows once.
@@ -629,7 +629,7 @@ fn runs_and_cancel_answer_the_replies_of_the_agent() {
     });
     let processes = FakeProcesses::default();
     let client = client(&setup, &processes, &|_| {}, &calm);
-    assert!(client.runs(ALIAS).expect("the runs").is_empty());
+    assert_eq!(client.runs(ALIAS).expect("the runs"), Vec::<RunInfo>::new());
     assert_eq!(client.cancel(ALIAS, "r1").expect_err("refused").code, "bad_request");
 }
 
@@ -648,7 +648,7 @@ fn heartbeats_keep_a_waiting_request_alive() {
     });
     let processes = FakeProcesses::default();
     let runs = client(&setup, &processes, &|_| {}, &calm).runs(ALIAS).expect("the runs");
-    assert!(runs.is_empty());
+    assert_eq!(runs, Vec::<RunInfo>::new());
 }
 
 /// A host without any of the candidate commits would need the whole history. The client refuses, names the count,
@@ -662,7 +662,7 @@ fn a_host_without_any_candidate_is_behind_and_gets_no_pack() {
     assert!(refusal.message.contains("all 7 commits of the history"), "{}", refusal.message);
     assert!(refusal.message.contains("`bt --host studio --prepare`"), "{}", refusal.message);
     assert_eq!(kinds(&setup), ["have", "have"], "the near candidates, then the long walk");
-    assert!(pack_inputs(&processes).is_empty());
+    assert_eq!(pack_inputs(&processes), Vec::<String>::new());
 }
 
 /// A host that has none of the near candidates gets a second `Have` with the long first-parent walk, and the pack
@@ -872,7 +872,7 @@ fn a_cut_fetch_leaves_no_part_and_keeps_the_run() {
     let say = |line: &str| said.push(line);
     let outcome = run_in(&setup, &checkout(), &say, &calm, &fetch()).expect("the run");
     assert_eq!(outcome.code, 3);
-    assert!(outcome.fetched.is_empty());
+    assert_eq!(outcome.fetched, Vec::<String>::new());
     let checkout_root = setup.checkout();
     assert!(!checkout_root.join("out/bt-runs/1/big.log").exists());
     assert!(!checkout_root.join("out/bt-runs/1/big.log.yonder-part").exists());

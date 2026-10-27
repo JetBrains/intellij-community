@@ -201,7 +201,7 @@ fn a_dry_run_prints_the_argv_and_spawns_nothing() {
         outcome.text
     );
     assert!(outcome.text.ends_with(" //plugins/air/... --config=x"), "{}", outcome.text);
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
     assert_eq!(fake.state().checkout_trees.len(), 2, "a dry run read the tree");
 }
 
@@ -222,5 +222,5 @@ fn the_command_line_of_a_build_is_checked_before_any_work() {
 
     let bare = execute(["build"], &fake).expect("the help");
     assert_eq!(bare.exit_code, exit::USAGE);
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
 }

@@ -568,7 +568,7 @@ fn pack_writes_no_index_pointer_for_an_empty_result() {
     let source = write_zip_jar(&scratch, "empty.jar", &[entry(".unmodified", "dropped")]);
     let (data, _) = pack(&scratch, spec("intellij.example.jar", vec![Source::module(&source)]));
     assert_eq!(index_pointer(&data), -1);
-    assert!(entry_names(&data).is_empty());
+    assert_eq!(entry_names(&data), Vec::<String>::new());
 }
 
 #[test]

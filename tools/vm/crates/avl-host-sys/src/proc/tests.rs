@@ -826,7 +826,7 @@ async fn spawn_piped_ends_with_an_eof_after_the_first_byte() {
         .read_to_end(&mut received)
         .await
         .expect("a clean exit is an EOF");
-    assert!(received.is_empty());
+    assert_eq!(received, Vec::<u8>::new());
 }
 
 // A dropped HTTP connection must strand no `tart exec` and no guest relay, so the drop takes the whole group.

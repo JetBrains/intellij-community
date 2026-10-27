@@ -106,5 +106,5 @@ fn the_query_decodes_as_a_form() {
         argv_of("/v1/execute?arg=%2Fusr%2Fbin%2Fenv&arg=A%3D1&arg=a+b&arg=%C3%A9"),
         ["/usr/bin/env", "A=1", "a b", "é"]
     );
-    assert!(argv_of("/v1/execute").is_empty());
+    assert_eq!(argv_of("/v1/execute"), Vec::<String>::new());
 }

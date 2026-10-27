@@ -154,7 +154,7 @@ fn a_current_entry_writes_nothing() {
         .push(("cat .netrc".to_owned(), ok("machine cache.test login me password same\n")));
     let lines = copy_entries(&fake, "studio", "7", NETRC, &["cache.test".to_owned()], &NetrcFormat);
     assert_eq!(lines, ["current netrc entry for cache.test"]);
-    assert!(fake.state().inputs.is_empty());
+    assert_eq!(fake.state().inputs, Vec::<String>::new());
 }
 
 #[test]

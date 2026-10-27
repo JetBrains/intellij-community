@@ -83,7 +83,7 @@ fn a_green_run_keeps_nothing() {
     let bep = summary(vec![attempt("//pkg:target_test", 1, "PASSED", Some("pkg/target_test"))]);
 
     assert_eq!(keep_failed_evidence(&fake, &bep), None);
-    assert!(kept(&fake).is_empty());
+    assert_eq!(kept(&fake), Vec::<String>::new());
 }
 
 /// A target that bazel killed before it wrote a log has nothing to keep, and an empty run directory would push a
@@ -97,7 +97,7 @@ fn a_failure_without_files_keeps_no_run_directory() {
     ]);
 
     assert_eq!(keep_failed_evidence(&fake, &bep), None);
-    assert!(kept(&fake).is_empty());
+    assert_eq!(kept(&fake), Vec::<String>::new());
 }
 
 #[test]

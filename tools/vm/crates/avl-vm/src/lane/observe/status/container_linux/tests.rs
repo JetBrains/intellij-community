@@ -62,8 +62,8 @@ async fn a_stopped_container_linux_worker_reports_every_key() {
         })
     );
     assert_eq!(outcome.text, "container-linux-1: stopped lease=free parity=n/a novnc=none");
-    assert!(fixture.channel(WORKER).lines().is_empty());
-    assert!(fixture.control_port().requests().is_empty());
+    assert_eq!(fixture.channel(WORKER).lines(), Vec::<String>::new());
+    assert_eq!(fixture.control_port().requests(), Vec::<String>::new());
 
     fixture.lease_receipt(WORKER);
     let outcome = status(&fixture).await;

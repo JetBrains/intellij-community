@@ -1207,7 +1207,7 @@ fn serve_removes_a_run_that_ended_a_day_ago_and_the_ref_of_a_pack_without_a_run(
     fs::File::options()
         .write(true)
         .open(&exit)
-        .and_then(|file| file.set_modified(SystemTime::now() - Duration::from_secs(25 * 3600)))
+        .and_then(|file| file.set_modified(SystemTime::now() - Duration::from_hours(25)))
         .expect("an old time");
     let agent = world.serve();
     eventually("the removal of the old run", || !agent.world.run_dir("8-1").exists());

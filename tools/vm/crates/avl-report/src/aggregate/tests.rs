@@ -404,7 +404,7 @@ fn a_plain_red_lane_needs_no_diagnostic_code() {
     assert_eq!((verdict.status, verdict.code), (Status::Failed, None));
     let decoded = read_back(&verdict);
     assert_eq!((decoded.status, decoded.code), (Status::Failed, None));
-    assert!(!decoded.failures.is_empty());
+    assert_ne!(decoded.failures, []);
 }
 
 /// Cases are merged by instant and by global position, never by timestamp text.
@@ -709,7 +709,7 @@ fn a_broken_class_is_not_a_flaky_one() {
         .collect();
     let summary = flake_summary(&trials);
     assert_eq!(class_of(&summary, "com.intellij.air.Broken").bucket, FlakeBucket::Broken);
-    assert!(summary.flake_set.is_empty());
+    assert_eq!(summary.flake_set, Vec::<String>::new());
     assert_eq!(summary.lane_flake_rate, 0.0);
     // One stable class was measured, so the summary is quotable: a red lane is not an unmeasured one.
     assert!(summary.reportable, "{}", text(summary.not_reportable_reason.as_deref()));
@@ -834,7 +834,7 @@ fn the_honesty_guard_withholds_a_run_that_judged_almost_no_classes() {
     );
     // The floor withholds the headline, not the evidence.
     assert_eq!(summary.measured_classes, 1);
-    assert!(!summary.not_measured.is_empty());
+    assert_ne!(summary.not_measured, Vec::<String>::new());
 }
 
 /// The floor is a floor, not a nonzero check: the healthy 2026-08-23 baseline measured 22 of 23 classes.

@@ -28,8 +28,8 @@ fn the_decisions_of_a_shard_run_need_no_worker() {
         floor_ms: 0.0,
         makespan_ms: 0.0,
     };
-    assert!(shard_attempts(&plan, &[], Vec::new(), None).is_empty());
-    assert!(plan_data(&plan, &[]).shards.is_empty());
+    assert_eq!(shard_attempts(&plan, &[], Vec::new(), None), []);
+    assert_eq!(plan_data(&plan, &[]).shards, []);
     let refusal = shard_interrupted("SIGTERM", &[], &plan, "/agg/shard-1.json", "`vm.cmd lease release`");
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("shard_interrupted", Exit::SOFTWARE));
     assert_eq!(
@@ -308,7 +308,7 @@ async fn two_shards_run_at_once_on_one_build_and_their_verdict_is_merged() {
     );
     // Every lease this command placed is given back, and each row says so of itself.
     assert_eq!(data.lease_disposition, Some(LeaseDisposition::Released));
-    assert!(data.release_failures.is_empty());
+    assert_eq!(data.release_failures, Vec::<String>::new());
     assert!(data.leases.iter().all(|lease| lease.released), "{:?}", data.leases);
     for worker in &workers {
         assert!(!fixture.leased(worker), "{worker} is still leased after the run finished");

@@ -438,7 +438,7 @@ fn an_unknown_name_is_unmapped_and_the_cli_exits_three() {
     let result = plan(&repo.root, vec![text("zz-no-such-thing")]);
     assert_eq!(result.unmapped.len(), 1, "{result:?}");
     assert_eq!(result.unmapped[0].reason, reason::UNKNOWN_NAME);
-    assert!(result.commands.is_empty());
+    assert_eq!(result.commands, []);
 
     let (code, stdout, stderr) = cli(&repo, &["--no-default-roots", "zz-no-such-thing"], b"");
     assert_eq!(code, 3, "the CLI exited {code}: {stdout}{stderr}");

@@ -1569,7 +1569,7 @@ fn a_bare_ide_that_does_not_get_ready_fails_its_suite_and_the_lane_takes_its_ide
         "the bare IDE of the suite 'startup-class-loading' did not get ready: lane_ide_not_ready: the IDE of \
          'air-startup-class-loading' did not get ready"
     );
-    assert!(ran.events("testStarted").is_empty());
+    assert_eq!(ran.events("testStarted"), Vec::<&serde_json::Value>::new());
     assert!(fake.requests().is_empty(), "{:?}", fake.requests());
 }
 
@@ -1976,7 +1976,7 @@ fn a_failed_install_and_a_missing_install_request_fail_the_suite() {
             Some("Air managed-agent install failed: Codex: the IDE served no package")
         )
     );
-    assert!(ran.events("testStarted").is_empty());
+    assert_eq!(ran.events("testStarted"), Vec::<&serde_json::Value>::new());
     let fake = Fake::new(Script::default());
     let ran = run(&fake, &[installing_suite(None)], None);
     let failed = ran.events("containerFailed");
@@ -2199,9 +2199,9 @@ fn a_failed_scenario_attaches_the_codex_daemon_ledger_and_records_of_the_ide() {
     write_codex_daemons(&passing);
     let ran = run_one_assertion(&passing);
     assert_eq!(ran.events("testFinished")[0]["status"], "SUCCESSFUL");
-    assert!(codex_attachments(&ran).is_empty());
+    assert_eq!(codex_attachments(&ran), []);
 
     let ran = run_one_assertion(&failing_assertion());
     assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
-    assert!(codex_attachments(&ran).is_empty());
+    assert_eq!(codex_attachments(&ran), []);
 }

@@ -577,7 +577,7 @@ fn wildcard_guards_keep_a_broad_run_safe() {
     );
     assert!(has(&mixed, "--build_tests_only"), "{mixed:?}");
     // An empty list is not "all integration": guarding it is the safe reading.
-    assert!(!wildcard_guards(areas(), &[]).is_empty());
+    assert_ne!(wildcard_guards(areas(), &[]), Vec::<String>::new());
 }
 
 /// A `fast-lane` category leaves only the fast lane: a directory run is how a caller runs what the default loop leaves out.

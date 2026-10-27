@@ -93,7 +93,7 @@ async fn a_named_tart_asks_bazel_nothing() {
     let bazel = Arc::new(PinnedBazel::tart(fixture.fake.executable()));
     let backend = backend_over(&fixture.settings, Some(bazel.clone()));
     backend.require_available(&Ctx::background(), "").await.unwrap();
-    assert!(bazel.asked().is_empty());
+    assert_eq!(bazel.asked(), Vec::<String>::new());
     assert_eq!(PathBuf::from(backend.program()), fixture.fake.executable());
 }
 

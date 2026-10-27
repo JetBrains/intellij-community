@@ -15,7 +15,7 @@ pub const AGENT_TARGET: &str = "//tools/yonder:yonderd";
 
 /// How long the build of the agent may write nothing before it is stopped. A build that writes progress takes as long
 /// as it needs.
-pub const AGENT_BUILD_QUIET: Duration = Duration::from_secs(30 * 60);
+pub const AGENT_BUILD_QUIET: Duration = Duration::from_mins(30);
 
 /// The base name of the agent binary.
 const AGENT_NAME: &str = "yonderd";

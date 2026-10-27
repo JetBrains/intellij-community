@@ -238,7 +238,7 @@ fn a_healthy_worker_is_validated_and_reports_what_it_found() {
         }
     );
     // A warm worker pays the wait's first probe and nothing else.
-    assert!(fixture.validator.runner.paused.is_empty());
+    assert_eq!(fixture.validator.runner.paused, []);
     let encoded = serde_json::to_value(&report).unwrap();
     assert_eq!(
         encoded,
@@ -658,7 +658,10 @@ fn unresolved_sonames_are_deduplicated_and_ordered() {
     ]
     .join("\n");
     assert_eq!(unresolved_sonames(&output), ["libEGL.so.1", "libatspi.so.0", "libgtk-3.so.0"]);
-    assert!(unresolved_sonames("\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n").is_empty());
+    assert_eq!(
+        unresolved_sonames("\tlibc.so.6 => /lib/libc.so.6 (0x0000ffff)\n"),
+        Vec::<String>::new()
+    );
 }
 
 /// The refusal shows ten objects and says how many it did not show.

@@ -77,7 +77,7 @@ fn the_agent_is_built_in_the_monorepo_and_cquery_names_its_binary() {
         assert_eq!(call.limit, Limit::Quiet(AGENT_BUILD_QUIET));
         assert_eq!(call.dir.as_deref(), Some(root.path()));
     }
-    assert_eq!(AGENT_BUILD_QUIET, Duration::from_secs(30 * 60));
+    assert_eq!(AGENT_BUILD_QUIET, Duration::from_mins(30));
     assert!(
         said.lines()[0].starts_with(&format!("> ./bazel.cmd build {LABEL} in ")),
         "{:?}",
@@ -93,7 +93,7 @@ fn outside_the_monorepo_the_build_is_refused_with_usage() {
     let refusal = build_in(dir.path(), &processes, &Said::default()).expect_err("no monorepo");
     assert_eq!(refusal.code, code::USAGE);
     assert!(refusal.message.contains("`--agent <yonderd>`"), "{}", refusal.message);
-    assert!(processes.calls().is_empty());
+    assert_eq!(processes.calls(), []);
 }
 
 /// A failed build shows the end of its stderr, a quiet one says the limit, and a cquery without the binary fails.

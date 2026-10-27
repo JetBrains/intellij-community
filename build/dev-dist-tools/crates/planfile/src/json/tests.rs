@@ -107,7 +107,7 @@ fn from_slice_takes_null_as_absent_for_an_option_and_a_default_for_an_absent_key
         }
     );
     let catalogue: Catalogue = from_slice(br#"{"version":1,"artifacts":[{"id":"a","kind":"file","root":"r"}]}"#).unwrap();
-    assert!(catalogue.libraries.is_empty());
+    assert_eq!(catalogue.libraries, []);
     assert_eq!(catalogue.artifacts[0].id, "a");
     let rows: Vec<Asset> = from_slice(br#"[{"destination":"lib/a.jar","producer":"remainder","classPath":null}]"#).unwrap();
     assert_eq!(rows[0].class_path, None, "the target type decides the top-level shape");

@@ -101,7 +101,7 @@ fn a_refused_run_names_its_refusal() {
     let out = tempfile::tempdir().unwrap();
     let result = refused("ui-perf", "linux_window_manager_missing", "  the display :0 has no window manager ");
     assert!(!result.green);
-    assert!(result.failed_tests.is_empty());
+    assert_eq!(result.failed_tests, []);
     let file = path(Some(out.path()), Path::new("/unused"));
     write(&file, &result).unwrap();
     let document: Value = serde_json::from_str(&fs::read_to_string(&file).unwrap()).unwrap();

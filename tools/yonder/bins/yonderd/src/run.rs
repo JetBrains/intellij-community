@@ -57,7 +57,7 @@ pub(crate) const SUPERVISOR_LOG: &str = "supervisor.log";
 pub(crate) const MAX_EVENT_TEXT: usize = 64 * 1024;
 
 /// How long the agent keeps a run after its end.
-pub(crate) const KEEP: Duration = Duration::from_secs(24 * 3600);
+pub(crate) const KEEP: Duration = Duration::from_hours(24);
 
 /// The exit code that [`RunInfo::exit`] gives a run that ended with a refusal. A client also exits with it.
 pub(crate) const REFUSED_EXIT: i32 = 255;

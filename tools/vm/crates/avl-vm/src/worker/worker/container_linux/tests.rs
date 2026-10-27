@@ -143,7 +143,7 @@ async fn a_stopped_container_linux_worker_is_not_release_ready() {
 async fn pool_init_on_container_linux_starts_the_one_slot_and_takes_no_golden() {
     let fixture = Fixture::container_linux();
     assert_init_refuses_a_golden(&fixture).await;
-    assert!(start_calls(&fixture).is_empty());
+    assert_eq!(start_calls(&fixture), Vec::<Vec<String>>::new());
 
     let outcome = fixture.run_pool(PoolCommand::Init { golden: None }).await.unwrap();
     assert_eq!(outcome.data["started"], json!(["container-linux-1"]));

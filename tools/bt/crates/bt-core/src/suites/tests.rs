@@ -74,7 +74,7 @@ fn a_flow_selector_runs_its_lane_narrowed_to_its_suites_classes() {
     }
     // A class filter selects the suites, so no --test_filter may narrow the run a second time.
     assert!(!argv.iter().any(|argument| argument.starts_with("--test_filter")), "{argv:?}");
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
 }
 
 /// Two lanes are one refusal, the same one `run --changed` gives, and `--lane` beside the selector settles it. The

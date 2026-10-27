@@ -146,5 +146,5 @@ fn a_lookup_answers_ipv4_first_and_each_address_once() {
     let found = resolve("127.0.0.1", 7741, Duration::from_secs(2)).expect("a literal resolves");
     assert_eq!(found, ["127.0.0.1:7741".parse::<SocketAddr>().expect("an address")]);
     let said = resolve("no-such-host.invalid", 7741, Duration::from_secs(5)).expect_err("no such host");
-    assert!(!said.is_empty());
+    assert_ne!(said, "");
 }

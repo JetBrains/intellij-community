@@ -70,7 +70,7 @@ const ABANDON_TRIES: u32 = 3;
 const APPLY_DEADLINE: Duration = Duration::from_secs(300);
 
 /// How long the patches of the changes stay in the git directory of a checkout.
-const PATCH_KEEP: Duration = Duration::from_secs(7 * 24 * 3600);
+const PATCH_KEEP: Duration = Duration::from_hours(168);
 
 /// The file in the root of a checkout that asks the agent for prepare steps, an environment and outputs.
 const CONFIG_FILE: &str = ".yonder.toml";

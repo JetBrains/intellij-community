@@ -18,7 +18,7 @@ fn drops_the_options_of_the_java_launcher() {
 
 #[test]
 fn asks_for_no_filter_when_bazel_names_no_test() {
-    assert!(filters("", None).is_empty());
+    assert_eq!(filters("", None), Vec::<String>::new());
 }
 
 #[test]
@@ -40,7 +40,7 @@ fn reads_a_junit_filter_of_the_class_of_the_report() {
         filters("com.example.ModelTest#authoredModelIsValid", class),
         vec!["authoredModelIsValid".to_owned()]
     );
-    assert!(filters("com.example.ModelTest", class).is_empty());
+    assert_eq!(filters("com.example.ModelTest", class), Vec::<String>::new());
     assert_eq!(filters("model::a,b", class), vec!["model::a".to_owned(), "b".to_owned()]);
     assert_eq!(
         filters("com.example.ModelTest#a", None),
@@ -161,5 +161,5 @@ fn the_shards_run_every_test_once() {
 fn a_shard_past_the_last_test_runs_nothing() {
     let names = vec!["a".to_owned()];
 
-    assert!(Shard { index: 1, total: 2 }.slice(names).is_empty());
+    assert_eq!(Shard { index: 1, total: 2 }.slice(names), Vec::<String>::new());
 }

@@ -186,7 +186,7 @@ fn the_trace_archives_round_trip_beside_an_error() {
         );
     });
     let decoded = decode_run_report(&older).expect("a report of the first pull design did not decode");
-    assert!(decoded.trace_archives.is_empty());
+    assert_eq!(decoded.trace_archives, []);
 }
 
 #[test]

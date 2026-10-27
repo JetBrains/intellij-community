@@ -99,7 +99,7 @@ fn an_empty_document_is_empty_and_not_malformed() {
     for blank in ["", "   ", "\n\t", "\u{feff}", "\u{feff}\u{feff}"] {
         let report = parse_report(blank);
         assert_eq!(report.integrity.status, IntegrityStatus::Empty, "{blank:?}");
-        assert!(report.suites.is_empty());
+        assert_eq!(report.suites, []);
     }
 }
 

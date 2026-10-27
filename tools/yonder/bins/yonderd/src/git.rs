@@ -10,16 +10,16 @@ use crate::child::{self, Output, Running, Stop, never};
 pub(crate) const QUICK: Duration = Duration::from_secs(60);
 
 /// The deadline of a checkout in a slot. A checkout of the monorepo writes many files.
-pub(crate) const CHECKOUT: Duration = Duration::from_secs(30 * 60);
+pub(crate) const CHECKOUT: Duration = Duration::from_mins(30);
 
 /// The deadline of `index-pack` for one pack.
-pub(crate) const INDEX_PACK: Duration = Duration::from_secs(30 * 60);
+pub(crate) const INDEX_PACK: Duration = Duration::from_mins(30);
 
 /// The namespace of the refs that a pack makes.
 pub(crate) const REF_PREFIX: &str = "refs/yonder/";
 
 /// The deadline of a scan of the files of a slot: `git status` and `git add --all` into an index copy.
-pub(crate) const SCAN: Duration = Duration::from_secs(30 * 60);
+pub(crate) const SCAN: Duration = Duration::from_mins(30);
 
 fn git(dir: &Path) -> Command {
     let mut command = Command::new("git");
@@ -141,7 +141,7 @@ pub(crate) fn delete_ref(repo: &Path, reference: &str) -> Result<(), String> {
 }
 
 /// The deadline of `git maintenance run --auto`, which can repack a large repository.
-pub(crate) const MAINTENANCE: Duration = Duration::from_secs(30 * 60);
+pub(crate) const MAINTENANCE: Duration = Duration::from_mins(30);
 
 /// Runs the maintenance tasks of `repo` that its configuration asks for, such as a repack when the packs of the
 /// runs piled up. git runs them after a fetch, but not after an `index-pack`. The tasks run in the foreground, so the

@@ -108,7 +108,7 @@ fn order_keeps_distinct_jars_and_sorts_more_than_one() {
     assert_eq!(order("demo", &input), ["lib/demo.jar", "lib/util.jar"]);
     assert_eq!(input, ["lib/util.jar", "lib/demo.jar", "lib/util.jar"], "the input stays as it is");
     assert_eq!(order("demo", &["lib/zz.jar"]), ["lib/zz.jar"]);
-    assert!(order::<&str>("demo", &[]).is_empty());
+    assert_eq!(order::<&str>("demo", &[]), Vec::<String>::new());
 }
 
 #[test]

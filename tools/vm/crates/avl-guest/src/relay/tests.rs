@@ -121,7 +121,7 @@ fn relay_copies_bytes_both_ways() {
 
     assert_eq!(relayed.exit, 0, "{}", String::from_utf8_lossy(&relayed.stderr));
     assert!(relayed.stdout == reply, "the reply arrived changed");
-    assert!(relayed.stderr.is_empty());
+    assert_eq!(relayed.stderr, Vec::<u8>::new());
     feeder.join().unwrap();
     assert!(daemon.join().unwrap() == request, "the request arrived changed");
 }
@@ -186,7 +186,7 @@ fn relay_ends_when_the_output_is_gone() {
 
     let (exit, stderr) = relay.join().unwrap();
     assert_eq!(exit, 0, "{}", String::from_utf8_lossy(&stderr));
-    assert!(stderr.is_empty());
+    assert_eq!(stderr, Vec::<u8>::new());
     drop(socket);
 }
 

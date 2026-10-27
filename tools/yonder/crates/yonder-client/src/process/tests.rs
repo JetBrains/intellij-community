@@ -58,7 +58,7 @@ mod unix {
         let file = dir.path().join("pack");
         let ran = OsProcesses.run_to_file(&sh("printf abc", Duration::from_secs(10)), &file, &never);
         assert!(ran.ok(), "{ran:?}");
-        assert!(ran.stdout.is_empty());
+        assert_eq!(ran.stdout, Vec::<u8>::new());
         assert_eq!(std::fs::read(&file).expect("the file"), b"abc");
     }
 

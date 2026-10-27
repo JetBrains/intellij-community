@@ -220,7 +220,7 @@ fn fakes_installed_beside_share_answers_and_one_call_log() {
 
     // A test that shares the fake between its cases forgets the calls of one case before the next.
     fake.forget_calls();
-    assert!(parallels.calls().is_empty());
+    assert_eq!(parallels.calls(), Vec::<String>::new());
     run(&parallels, &["--version"]);
     assert_eq!(fake.calls(), ["--version"]);
 }
@@ -320,7 +320,7 @@ fn every_install_gets_its_own_directory() {
     let second = Fake::install("2.34.0\n");
     assert_ne!(first.directory(), second.directory());
     run(&first, &["list"]);
-    assert!(second.calls().is_empty());
+    assert_eq!(second.calls(), Vec::<String>::new());
     assert_eq!(stdout(&run(&second, &["--version"])), "2.34.0\n");
 }
 

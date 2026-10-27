@@ -149,7 +149,7 @@ fn help_answers_on_stdout_and_succeeds() {
         "the internal verb is listed: {}",
         answered.stdout
     );
-    assert!(answered.stderr.is_empty());
+    assert_eq!(answered.stderr, "");
 }
 
 /// The verb names are the wire's, not a second spelling here: every [`AgentVerb`] is a subcommand under its wire

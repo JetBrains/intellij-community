@@ -214,7 +214,7 @@ fn host_without_a_selector_is_a_usage_failure() {
     let link = FakeLink::default();
     let failure = refusal(execute_with(["--host", "studio"], &fake, &link));
     assert_eq!(failure.exit, exit::USAGE);
-    assert!(link.calls().is_empty());
+    assert_eq!(link.calls(), Vec::<String>::new());
 }
 
 /// The host lends a slot per run, so the flags of the warm lease of a checkout are gone and refused

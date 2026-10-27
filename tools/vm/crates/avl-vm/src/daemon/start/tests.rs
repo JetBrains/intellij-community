@@ -463,8 +463,8 @@ async fn an_interrupted_start_is_daemon_start_interrupted() {
             .as_str()
             .is_some_and(|run| run.starts_with("run-ui-daemon-"))
     );
-    assert!(cancels(&fixture).is_empty());
-    assert!(fixture.channel().calls_containing("vm-guest-agent log").is_empty());
+    assert_eq!(cancels(&fixture), Vec::<String>::new());
+    assert_eq!(fixture.channel().calls_containing("vm-guest-agent log"), Vec::<String>::new());
     assert_eq!(HostState::read(&fixture.settings, &fixture.worker), None);
 
     // In the health poll: the record is written, and it stays for `daemon stop`.
@@ -489,7 +489,7 @@ async fn an_interrupted_start_is_daemon_start_interrupted() {
     interrupter.await.unwrap();
     assert_eq!(failure.code, "daemon_start_interrupted", "{}", failure.message);
     assert!(HostState::read(&fixture.settings, &fixture.worker).is_some());
-    assert!(cancels(&fixture).is_empty());
+    assert_eq!(cancels(&fixture), Vec::<String>::new());
 }
 
 // The full start: agent installed, retired runtime generations removed, free space checked, state directory made,
@@ -547,7 +547,7 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     ] {
         assert!(!starts[0].contains(bazel), "{bazel} in {}", starts[0]);
     }
-    assert!(channel.calls_containing("vm-guest-agent launch-prep").is_empty());
+    assert_eq!(channel.calls_containing("vm-guest-agent launch-prep"), Vec::<String>::new());
     // The start stages no runtime generation and collects none. The agent has no verb for either, and no guest call
     // names one.
     for retired in ["vm-guest-agent stage", "vm-guest-agent gc "] {
@@ -584,7 +584,7 @@ async fn a_full_start_boots_polls_and_records_its_state() {
     fixture.assert_one_ide_gc("--stop-all");
 
     // A green start cancels nothing.
-    assert!(cancels(&fixture).is_empty());
+    assert_eq!(cancels(&fixture), Vec::<String>::new());
 
     // The phase table names the fixed sequence, in order.
     let names: Vec<String> = timeline.take().into_iter().map(|timing| timing.name).collect();
@@ -786,7 +786,7 @@ async fn a_failed_ide_gc_refuses_the_start() {
     let failure = refusal(start(&fixture, &prep).await);
     assert_eq!(failure.code, "guest_agent_failed");
     assert_eq!(remounts(&fixture), 0);
-    assert!(fixture.channel().calls_containing("vm-guest-agent start").is_empty());
+    assert_eq!(fixture.channel().calls_containing("vm-guest-agent start"), Vec::<String>::new());
 }
 
 // A parity layout that does not show the descriptor refuses before the supervisor start, at 65.

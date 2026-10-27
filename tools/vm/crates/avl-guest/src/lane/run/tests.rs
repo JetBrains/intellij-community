@@ -92,7 +92,7 @@ fn the_selectors_and_the_filters_come_from_the_flags_and_the_environment() {
         junit5_filters(&parsed, &variable),
         ["exclude-classname=.*Slow", "include-package=com.intellij.air"]
     );
-    assert!(selectors(&args(&[]), &environment(&[])).is_empty());
+    assert_eq!(selectors(&args(&[]), &environment(&[])), Vec::<String>::new());
 }
 
 fn summary(has_failures: bool) -> String {
@@ -493,7 +493,7 @@ fn expired(reason: &str, active: Option<(&str, &str)>) -> RunEvent {
 #[test]
 fn a_run_that_its_budget_ended_is_a_teamcity_build_problem_with_the_case_and_the_budget() {
     let team_city = environment(&[("TEAMCITY_VERSION", "2026.1")]);
-    let budget = Some(Duration::from_secs(2520));
+    let budget = Some(Duration::from_mins(42));
     let case = Some((
         "com.intellij.air.integration.flow.AgentSessionToolWindowComposerUiTest",
         "the 'second' frame",

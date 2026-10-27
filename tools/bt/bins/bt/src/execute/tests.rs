@@ -365,14 +365,14 @@ fn a_flow_selector_dry_runs_as_its_lane_and_lane_settles_it() {
             "ui AirManageLaunchPresetQuickStartGeneratedFlowUiTest (manage-launch-preset-quick-start)",
         ],
     );
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
 }
 
 #[test]
 fn list_prints_candidates_without_running_bazel() {
     let fake = fake_air_tree();
     let outcome = run(&["AgentPromptChangesTreeContextContributorTest", "--list"], &fake);
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
     assert_mentions(
         &outcome.text,
         &[
@@ -471,7 +471,7 @@ fn a_directory_that_does_not_exist_fails_before_bazel_is_spawned() {
     let fake = fake_air_tree();
     let failure = refusal(execute(["plugins/air/does/not/exist"], &fake));
     assert!(failure.message.contains("No such directory"), "{}", failure.message);
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
 }
 
 fn green_run(cases: Vec<bt_core::fake::CaseSpec>) -> FakeRuntime {

@@ -240,7 +240,7 @@ async fn a_daemon_stop_without_a_record_retires_the_daemon_run_in_the_slot() {
     let failure = refusal(daemon_stop(&fixture).await);
     assert_eq!((failure.code.as_ref(), failure.exit), ("run_active", Exit::FAILURE));
     assert!(failure.message.contains("cannot stop the daemon"), "{}", failure.message);
-    assert!(cancels(&fixture).is_empty());
+    assert_eq!(cancels(&fixture), Vec::<String>::new());
 
     // A supervisor that does not finish the run is a refusal, never a "stopped".
     let fixture = Fixture::new().await;
@@ -467,7 +467,7 @@ async fn command_daemon_start_reports_the_endpoint_and_phases() {
     );
     assert_eq!(outcome.data.get("runtimeDigest"), None, "the payload names no runtime digest");
     assert_eq!(outcome.data["productDigest"], json!(prep.product_digest));
-    assert!(!outcome.data["phases"].as_array().unwrap().is_empty());
+    assert_ne!(outcome.data["phases"].as_array().unwrap().as_slice(), Vec::<Value>::new());
     assert!(
         fixture.stderr.text().contains(r#""event":"daemonPhases""#),
         "the structured mirror of the table is published as progress"
@@ -990,7 +990,7 @@ fn the_reproduce_list_is_one_per_failed_class_and_skips_an_unnamed_one() {
         report_failure(Some("b.TwoTest"), "third", ""),
     ]);
     assert_eq!(commands, ["run a.OneTest", "run b.TwoTest"]);
-    assert!(reproduce_commands(&[]).is_empty());
+    assert_eq!(reproduce_commands(&[]), Vec::<String>::new());
 }
 
 #[tokio::test]
@@ -1152,7 +1152,7 @@ async fn a_run_without_a_receipt_leases_a_worker_and_gives_it_back() {
     let taken = verdict.and_then(|verdict| verdict.lease).expect("the verdict names the lease");
     assert_eq!(taken.workers, std::slice::from_ref(&fixture.worker));
     assert!(taken.released());
-    assert!(taken.receipts.is_empty());
+    assert_eq!(taken.receipts, Vec::<String>::new());
     require_unleased(&fixture);
 }
 
@@ -1428,7 +1428,7 @@ async fn a_run_of_several_lanes_answers_one_envelope_with_a_verdict_per_lane() {
     let data = lanes_data(&result.unwrap().data);
     assert_eq!(data.worker, fixture.worker);
     assert!(!data.has_failures);
-    assert!(data.not_run.is_empty());
+    assert_eq!(data.not_run, []);
     let lanes: Vec<_> = data
         .lanes
         .iter()

@@ -45,7 +45,7 @@ pub(crate) const CALL_IDLE: Duration = Duration::from_secs(120);
 pub(crate) const PUSH_IDLE: Duration = Duration::from_secs(300);
 
 /// How long an scp may run, since it writes nothing while it copies.
-pub(crate) const COPY_IDLE: Duration = Duration::from_secs(1800);
+pub(crate) const COPY_IDLE: Duration = Duration::from_mins(30);
 
 /// The git URL of the main repository on the host.
 pub(crate) fn push_url(alias: &str, repo: &str) -> String {

@@ -20,7 +20,7 @@ fn nothing_is_collected_without_a_timeline() {
     assert_eq!(open.elapsed(), Duration::ZERO);
     assert!(PhaseHandle::default().elapsed().is_zero());
     drop(guard);
-    assert!(timeline.take().is_empty());
+    assert_eq!(timeline.take(), []);
 }
 
 #[test]

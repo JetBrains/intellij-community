@@ -42,7 +42,7 @@ fn an_active_window_message_raises_and_focuses_a_managed_window() {
 
     assert_eq!(clients.activate(FRAME), [Effect::Raise(FRAME), Effect::Focus(FRAME)]);
     assert_eq!(clients.focus(), Some(FRAME));
-    assert!(clients.activate(0x50_0000).is_empty());
+    assert_eq!(clients.activate(0x50_0000), []);
 
     clients.map(NO_INPUT, false);
     assert_eq!(clients.activate(NO_INPUT), [Effect::Raise(NO_INPUT)]);
@@ -63,7 +63,7 @@ fn a_gone_window_with_the_focus_gives_it_to_the_topmost_window_that_takes_it() {
 
     assert_eq!(clients.gone(NO_INPUT), [Effect::ClientList(vec![FRAME, DIALOG])]);
     assert_eq!(clients.gone(DIALOG), [Effect::ClientList(vec![FRAME]), Effect::Focus(FRAME)]);
-    assert!(clients.gone(0x50_0000).is_empty());
+    assert_eq!(clients.gone(0x50_0000), []);
     assert_eq!(clients.gone(FRAME), [Effect::ClientList(Vec::new()), Effect::FocusRoot]);
     assert_eq!(clients.focus(), None);
 }

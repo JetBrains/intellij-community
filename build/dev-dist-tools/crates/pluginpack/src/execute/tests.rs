@@ -187,7 +187,7 @@ fn copy_tree_preserves_its_own_outputs_and_empty_root() {
         let metadata = root.path().join("metadata.json");
         execution.write(&output, &metadata).unwrap();
         let inventory = filemeta::read(&metadata).unwrap();
-        assert!(!inventory.is_empty());
+        assert_ne!(inventory, []);
         for entry in &inventory {
             assert!(
                 entry.relative_path == "kotlinc" || entry.relative_path.starts_with("kotlinc/"),

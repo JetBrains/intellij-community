@@ -491,7 +491,7 @@ fn a_whole_plan_that_ran_names_no_unreported_class() {
     let mut events = vec![plan(&[CLASS])];
     events.extend(scenario("1", "SUCCESSFUL", None));
     let document = built(input(Some(summary(1, 0, 0, 0, 0)), events));
-    assert!(document.unreported_classes.is_empty());
+    assert_eq!(document.unreported_classes, Vec::<String>::new());
     assert_eq!(document.status, Status::Passed, "{}", diagnostic(&document));
 }
 
@@ -510,7 +510,7 @@ fn a_plan_of_simple_names_is_covered_by_records_of_fqns() {
 #[test]
 fn a_stream_with_no_plan_record_names_nothing() {
     let document = built(input(Some(summary(1, 0, 0, 0, 0)), scenario("1", "SUCCESSFUL", None)));
-    assert!(document.unreported_classes.is_empty());
+    assert_eq!(document.unreported_classes, Vec::<String>::new());
 }
 
 #[test]
@@ -811,7 +811,7 @@ fn traces_are_carried_and_never_decide_the_verdict() {
         (baseline.status, &baseline.verdict_diagnostic)
     );
     assert_eq!(with_error.traces_error, Some(reason));
-    assert!(with_error.trace_archives.is_empty());
+    assert_eq!(with_error.trace_archives, []);
 
     let traces = archive(vec![bundle(CLASS, "smoke", "failed")]);
     let mut failing = input(Some(summary(1, 1, 0, 0, 0)), scenario("1", "FAILED", Some("boom")));

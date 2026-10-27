@@ -125,8 +125,8 @@ fn reads_every_source_field_that_the_replay_reads() {
     assert_eq!(recipe.fragment, "sample");
     let kinds: Vec<EntryKind> = recipe.entries.iter().map(|entry| entry.kind).collect();
     assert_eq!(kinds, [EntryKind::Placed, EntryKind::Jar, EntryKind::Jar, EntryKind::Link]);
-    assert!(recipe.entries[0].sources.is_empty());
-    assert!(recipe.entries[3].sources.is_empty());
+    assert_eq!(recipe.entries[0].sources, []);
+    assert_eq!(recipe.entries[3].sources, []);
 
     let one = &recipe.entries[1].sources;
     let text = |value: &str| Some(value.to_owned());
@@ -208,7 +208,7 @@ fn refuses_a_blank_file_and_reads_an_empty_plan() {
         &plan(0, ""),
         "a.plan.yaml: the plan holds 0 YAML documents; DevDistRecipe writes one",
     );
-    assert!(must_parse(&plan(0, "[]")).entries.is_empty());
+    assert_eq!(must_parse(&plan(0, "[]")).entries, []);
 }
 
 #[test]

@@ -191,7 +191,7 @@ fn a_command_that_cannot_start_is_an_infra_exit() {
     assert!(result.output.contains("not-a-program"), "{result:?}");
     let empty = spawn_child(None, &[], None);
     assert_eq!(empty.exit_code, 127);
-    assert!(!empty.output.is_empty());
+    assert_ne!(empty.output, "");
 }
 
 /// The controller's spawn, which is a refusal: a selector is resolved from inside a held lease.

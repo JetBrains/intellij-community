@@ -235,6 +235,6 @@ mod tests {
         let items: Vec<usize> = (0..500).collect();
         let doubled = par_map(&items, |item| item * 2);
         assert_eq!(doubled, items.iter().map(|item| item * 2).collect::<Vec<_>>());
-        assert!(par_map(&[] as &[usize], |item| *item).is_empty());
+        assert_eq!(par_map(&[] as &[usize], |item| *item), Vec::<usize>::new());
     }
 }

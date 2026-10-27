@@ -348,7 +348,7 @@ const fn is_identifier_start(byte: u8) -> bool {
     byte.is_ascii_alphabetic() || byte == b'_' || byte >= 0x80
 }
 
-fn identifier_end(bytes: &[u8], start: usize) -> usize {
+const fn identifier_end(bytes: &[u8], start: usize) -> usize {
     let mut end = start;
     while end < bytes.len() && (is_identifier_start(bytes[end]) || bytes[end].is_ascii_digit()) {
         end += 1;

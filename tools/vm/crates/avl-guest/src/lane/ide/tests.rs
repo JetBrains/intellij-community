@@ -157,7 +157,7 @@ fn a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirem
             .all(|(key, _)| !matches!(*key, "idea.is.internal" | "air.workflows" | "air.acp.debug.server.enabled")),
         "{bare:?}"
     );
-    assert!(!bare.is_empty());
+    assert_ne!(bare, []);
 }
 
 // A recycle removes the editor tabs that the start would reopen, and the run log names the file. A `restart-ide` keeps

@@ -67,7 +67,7 @@ fn the_phases_of_a_run_and_a_run_info_without_them_parse() {
     assert_eq!(serde_json::from_str::<Reply>(&json).expect("parsed"), phases);
     let info: RunInfo = serde_json::from_str(r#"{"run":"1-2","holder":"h","commit":"c","command":["true"],"started_ms":1,"exit":null}"#)
         .expect("an info of schema 1");
-    assert!(info.phases.is_empty());
+    assert_eq!(info.phases, []);
     assert!(info.fetch.is_empty(), "an agent before the fetch directories sends none");
     assert!(BASE_REFS.starts_with("refs/yonder/") && BASE_REFS.ends_with('/'));
 }

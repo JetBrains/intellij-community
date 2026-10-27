@@ -80,7 +80,7 @@ fn gzip_resources_keep_the_deflate_stream_of_the_source_entry() {
     empty.extend_from_slice(&[1, 0, 0, 0xff, 0xff, 0, 0, 0, 0, 0, 0, 0, 0]);
     let empty_member = read_bytes(output.join("empty.xml.gzip"));
     assert_eq!(empty_member, empty, "the empty member");
-    assert!(gunzip(&empty_member).is_empty());
+    assert_eq!(gunzip(&empty_member), Vec::<u8>::new());
 }
 
 #[test]

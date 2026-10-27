@@ -184,7 +184,7 @@ fn the_fingerprint_of_a_file_holds_its_package_line() {
     let one = read_text("package a\n\nfun open() = 1\n");
     let two = read_text("package b\n\nfun open() = 1\n");
     assert_eq!(declaration(&one, "open").fingerprint, declaration(&two, "open").fingerprint);
-    assert!(one.fingerprint != two.fingerprint);
+    assert_ne!(one.fingerprint, two.fingerprint);
 }
 
 /// A comment and a KDoc are no tokens, so a change of one changes no fingerprint. A change of a token does.
@@ -195,7 +195,7 @@ fn a_comment_changes_no_fingerprint_and_a_token_does() {
     let changed = read_text("fun open() {\n  click(2)\n}\n");
     let fingerprint = |source: &Source| declaration(source, "open").fingerprint;
     assert_eq!(fingerprint(&before), fingerprint(&commented));
-    assert!(fingerprint(&before) != fingerprint(&changed));
+    assert_ne!(fingerprint(&before), fingerprint(&changed));
 }
 
 /// A branch keyed by a suite and a pair keyed by a suite are entries of that suite, with their own names and
