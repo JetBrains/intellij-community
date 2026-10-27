@@ -50,7 +50,6 @@ fun getProductionLibraryDependencies(module: JpsModule): List<JpsLibraryDependen
 internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOutputProvider) {
   private val productionLibraryCache = ConcurrentHashMap<JpsModule, List<JpsLibraryDependency>>()
   private val testRuntimeLibraryCache = ConcurrentHashMap<JpsModule, List<JpsLibraryDependency>>()
-  private val separateJarDependencyObserver = ThreadLocal<((JpsModule, PluginLayout, List<JpsLibraryDependency>) -> Unit)?>()
 
   fun getModuleDependencies(moduleName: String): Sequence<String> {
     return outputProvider.findRequiredModule(moduleName).getProductionModuleDependencies(withTests = false).map { it.moduleReference.moduleName }
@@ -58,7 +57,6 @@ internal class JarPackagerDependencyHelper(private val outputProvider: ModuleOut
 
   fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout, frontendModuleFilter: FrontendModuleFilter): Boolean {
     val dependencies = getLibraryDependencies(module = module, withTests = false)
-    separateJarDependencyObserver.get()?.invoke(module, layout, dependencies)
     return isPluginModulePackedIntoSeparateJar(
       module = module,
       layout = layout,
