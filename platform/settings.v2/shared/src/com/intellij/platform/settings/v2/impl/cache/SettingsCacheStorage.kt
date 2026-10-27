@@ -9,8 +9,10 @@ import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.platform.settings.v2.impl.cache.SettingsCacheStorage.markerFile
 import java.nio.file.AtomicMoveNotSupportedException
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
+import java.nio.file.attribute.FileTime
 
 /**
  * Holds the file layout and the IO of the snapshot cache. The application cache is a single file in the system
@@ -38,14 +40,28 @@ object SettingsCacheStorage {
    * "Invalidate Caches" marker is newer. The method deletes an invalidated file.
    */
   fun read(cacheFile: Path): ByteArray? {
-    if (!Files.exists(cacheFile)) return null
-    val marker = markerFile()
-    if (Files.exists(marker) && Files.getLastModifiedTime(marker) > Files.getLastModifiedTime(cacheFile)) {
+    val cacheTime = lastModifiedTimeOrNull(cacheFile) ?: return null
+    val markerTime = lastModifiedTimeOrNull(markerFile())
+    if (markerTime != null && markerTime > cacheTime) {
       Files.deleteIfExists(cacheFile)
       return null
     }
-    return Files.readAllBytes(cacheFile)
+    return try {
+      Files.readAllBytes(cacheFile)
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
   }
+
+  /** Returns the last modification time of [path], or `null` if the file is absent. */
+  private fun lastModifiedTimeOrNull(path: Path): FileTime? =
+    try {
+      Files.getLastModifiedTime(path)
+    }
+    catch (_: NoSuchFileException) {
+      null
+    }
 
   /** Writes [bytes] to [cacheFile] atomically (temp file + move), creating parent directories. */
   fun write(cacheFile: Path, bytes: ByteArray) {
