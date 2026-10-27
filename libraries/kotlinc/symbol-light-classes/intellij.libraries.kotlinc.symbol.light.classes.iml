@@ -26,19 +26,19 @@
     <orderEntry type="module" module-name="intellij.java.psi.impl" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.symbol-light-classes" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:symbol-light-classes-for-ide:2.5.20-dev-1532">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:symbol-light-classes-for-ide:2.5.20-dev-2285">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.20-dev-1532/symbol-light-classes-for-ide-2.5.20-dev-1532.jar">
-              <sha256sum>30ccc593606c2df1bce31fdd718f64728dddc053addbac2a562af8bf37d31006</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.20-dev-2285/symbol-light-classes-for-ide-2.5.20-dev-2285.jar">
+              <sha256sum>e81969527c28712150369c19ebf35953594d263efbd22c3c58a5f766caa7b958</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.20-dev-1532/symbol-light-classes-for-ide-2.5.20-dev-1532.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.20-dev-2285/symbol-light-classes-for-ide-2.5.20-dev-2285.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.20-dev-1532/symbol-light-classes-for-ide-2.5.20-dev-1532-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/symbol-light-classes-for-ide/2.5.20-dev-2285/symbol-light-classes-for-ide-2.5.20-dev-2285-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

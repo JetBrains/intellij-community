@@ -26,10 +26,6 @@ jvm_library(
         # do not sort,
         "@lib//:libraries-kotlinc-analysis-api-impl-base-kotlinc-analysis-api-impl-base",
         "//platform/backend",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
-        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir",
     ],
 )
 
@@ -48,10 +44,6 @@ jvm_library(
         # do not sort,
         ":libraries-kotlinc-analysis-api-impl-base",
         "//platform/backend:backend_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-ir:libraries-kotlinc-kotlin-compiler-ir_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.kotlinc.analysis.api.impl.base` end

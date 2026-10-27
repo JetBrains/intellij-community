@@ -2,8 +2,20 @@
 package org.jetbrains.idea.devkit.k2.inspections
 
 import org.jetbrains.idea.devkit.inspections.PersistentStatePropertyNotSerializedInspectionTestBase
+import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.idea.test.setupKotlinFacet
+import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 
 class KtPersistentStatePropertyNotSerializedInspectionTest : PersistentStatePropertyNotSerializedInspectionTestBase() {
+
+  override fun setUp() {
+    super.setUp()
+    module.setupKotlinFacet {
+      (settings.compilerArguments as? K2JVMCompilerArguments)?.jvmTarget = "25"
+      settings.targetPlatform = JvmPlatforms.jvmPlatformByTargetVersion(JvmTarget.JVM_25)
+    }
+  }
 
   fun `test read-only property of a constructor is reported`() {
     doTest("MySettings.kt", """
