@@ -6,10 +6,7 @@ import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.ide.actions.searcheverywhere.GotoLimitedRuns
 import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
 import com.intellij.ide.actions.searcheverywhere.PersistentSearchEverywhereContributorFilter
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorWrapper
 import com.intellij.ide.actions.searcheverywhere.SearchEverywherePreviewFetcher
-import com.intellij.ide.actions.searcheverywhere.SemanticSearchEverywhereContributor
 import com.intellij.ide.ui.icons.rpcId
 import com.intellij.ide.util.PsiElementListCellRenderer.ItemMatchers
 import com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
@@ -34,7 +31,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.DataSink
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -635,18 +631,7 @@ class SeTargetItemsProvider<T> private constructor(
     /** The limit of the first run of [collectItems]: the frontend asks for 50 items at a time. */
     private const val FIRST_RUN_LIMIT = 50
 
-    suspend fun isCoroutineBasedGotoEnabled(legacyContributor: SearchEverywhereContributor<Any>, providerId: String): Boolean {
-      if (!RegistryManager.getInstanceAsync().`is`(COROUTINE_BASED_GOTO_KEY)) return false
-
-      val effectiveContributor = (legacyContributor as? SearchEverywhereContributorWrapper)?.getEffectiveContributor()
-                                 ?: legacyContributor
-      if (effectiveContributor is SemanticSearchEverywhereContributor && !ApplicationManager.getApplication().isInternal) {
-        SeLog.log(SeLog.LIFE_CYCLE) { "$providerId: the semantic contributor is on, keeping the legacy provider" }
-        return false
-      }
-
-      return true
-    }
+    suspend fun isCoroutineBasedGotoEnabled(): Boolean = RegistryManager.getInstanceAsync().`is`(COROUTINE_BASED_GOTO_KEY)
 
     /**
      * Builds the preview of [rawItem], or returns null when the item shows none.

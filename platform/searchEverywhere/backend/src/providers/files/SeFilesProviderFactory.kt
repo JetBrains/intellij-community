@@ -22,7 +22,7 @@ class SeFilesProviderFactory : SeWrappedLegacyContributorItemsProviderFactory {
                                         isAllTab: Boolean,
                                         dataContext: DataContext): SeItemsProvider? {
     if (project == null) return null
-    if (!SeTargetItemsProvider.isCoroutineBasedGotoEnabled(legacyContributor, id)) {
+    if (!SeTargetItemsProvider.isCoroutineBasedGotoEnabled()) {
       return getItemsProvider(project, legacyContributor)
     }
 

@@ -317,7 +317,7 @@
 - bs:create$default(com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider$Companion,com.intellij.openapi.project.Project,com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.Disposable,java.lang.String,kotlin.jvm.functions.Function3,kotlin.jvm.functions.Function1,com.intellij.platform.searchEverywhere.providers.target.SeExtendedInfoCalculator,Z,Z,Z,com.intellij.platform.searchEverywhere.providers.target.SeTargetScopesProvider,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 - f:createDefaultMatchers(java.lang.String,java.lang.String):com.intellij.ide.util.PsiElementListCellRenderer$ItemMatchers
 - f:fetchPreviewInfo(java.lang.Object,com.intellij.openapi.project.Project,kotlin.jvm.functions.Function1,kotlin.coroutines.Continuation):java.lang.Object
-- f:isCoroutineBasedGotoEnabled(com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- f:isCoroutineBasedGotoEnabled(kotlin.coroutines.Continuation):java.lang.Object
 - f:isExactMatch(Z,java.lang.String,java.lang.String,Z,Z,Z):Z
 - f:normalizeQuery(java.lang.String):java.lang.String
 *:com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem

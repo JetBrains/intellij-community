@@ -5,11 +5,7 @@ import com.intellij.ide.rpc.ThrottledAccumulatedItems
 import com.intellij.ide.rpc.ThrottledItems
 import com.intellij.ide.rpc.ThrottledOneItem
 import com.intellij.platform.searchEverywhere.SeItemData
-import com.intellij.platform.searchEverywhere.SeItemDataKeys
-import com.intellij.platform.searchEverywhere.SeResultAddedEvent
-import com.intellij.platform.searchEverywhere.SeResultEndEvent
 import com.intellij.platform.searchEverywhere.SeResultEvent
-import com.intellij.platform.searchEverywhere.SeResultReplacedEvent
 import com.intellij.platform.searchEverywhere.frontend.SeSearchStatePublisher
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
 import com.intellij.platform.searchEverywhere.frontend.vm.SeSearchContext
@@ -32,22 +28,17 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
 
   val pendingReplacementElementUuids: MutableSet<String> = mutableSetOf()
 
-  var isValidAndHasOnlySemantic: Boolean = false
-    private set
-
   fun reset() {
     SeLog.log(SeLog.THROTTLING) { "Will reset result list model" }
     freezer.reset()
     _isValidState.value = true
     pendingReplacementElementUuids.clear()
     removeAllElements()
-    isValidAndHasOnlySemantic = false
   }
 
   fun invalidate() {
     SeLog.log(SeLog.THROTTLING) { "Will invalidate result list model" }
     _isValidState.value = false
-    isValidAndHasOnlySemantic = false
     freezer.reset()
   }
 
@@ -110,10 +101,6 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       freezer.enable()
       freezer.freezeIfEnabled(size)
     }
-
-    if (!throttledEvent.isEndEvent()) { // isValidAndHasOnlySemantic does not change if it is an end event
-      isValidAndHasOnlySemantic = (isValidAndHasOnlySemantic || (wasEmpty && !isEmpty)) && throttledEvent.allItemsAreSemantic()
-    }
   }
 
   class Freezer(private val listSize: () -> Int) {
@@ -141,29 +128,4 @@ class SeResultListModel(private val searchStatePublisher: SeSearchStatePublisher
       SeLog.log(SeLog.FROZEN_COUNT) { "reset: frozenCount = $frozenCountToApply; size = ${listSize()}; isApplied = $isEnabled" }
     }
   }
-}
-
-private fun <T : SeResultEvent> ThrottledItems<T>.allItemsAreSemantic(): Boolean =
-  when (this) {
-    is ThrottledAccumulatedItems<T> -> items.all { it.isSemantic() }
-    is ThrottledOneItem<T> -> item.isSemantic()
-  }
-
-private fun <T : SeResultEvent> ThrottledItems<T>.isEndEvent(): Boolean =
-  when (this) {
-    is ThrottledAccumulatedItems<T> -> items.size == 1 && items[0] is SeResultEndEvent
-    is ThrottledOneItem<T> -> item is SeResultEndEvent
-  }
-
-private fun SeResultEvent.isSemantic(): Boolean {
-  val itemData = when (this) {
-    is SeResultAddedEvent -> {
-      itemData
-    }
-    is SeResultReplacedEvent -> {
-      newItemData
-    }
-    else -> null
-  }
-  return itemData?.additionalInfo[SeItemDataKeys.IS_SEMANTIC].toBoolean()
 }

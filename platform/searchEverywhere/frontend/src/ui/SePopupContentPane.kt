@@ -59,7 +59,6 @@ import com.intellij.platform.searchEverywhere.frontend.SeSelectionListener
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultClose
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionResultText
 import com.intellij.platform.searchEverywhere.frontend.SeSelectionState
-import com.intellij.platform.searchEverywhere.frontend.SearchEverywhereFrontendBundle
 import com.intellij.platform.searchEverywhere.frontend.ml.SeMlService
 import com.intellij.platform.searchEverywhere.frontend.tabs.actions.SeActionItemPresentationRenderer
 import com.intellij.platform.searchEverywhere.frontend.tabs.all.SeAllTab
@@ -241,8 +240,6 @@ class SePopupContentPane(
     private set
   var popupExtendedSize: Dimension? = initPopupExtendedSize
 
-  private val semanticWarning = MutableStateFlow(false)
-
   private var quickDocPopup: JBPopup? = null
 
   val currentResultsInList: List<SeItemData> get() =
@@ -376,7 +373,6 @@ class SePopupContentPane(
           }
 
           resultList.withProgrammaticSelectionChange { resultListModel.reset() }
-          semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
         }
         it.searchResults.filterNotNull()
       }.collectLatest { searchContext ->
@@ -440,7 +436,6 @@ class SePopupContentPane(
                 }
               }
 
-              semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
               updateViewMode()
               autoSelectIndex(searchContext.searchPattern, true)
             }
@@ -459,8 +454,6 @@ class SePopupContentPane(
                   if (event.hasResultsUpdates()) hasResultsUpdates = true
                 }
               }
-
-              semanticWarning.value = resultListModel.isValidAndHasOnlySemantic
 
               // Freeze back if it was frozen before
               if (wasFrozen) {
@@ -544,9 +537,7 @@ class SePopupContentPane(
     launch {
       // A toolbar field is too narrow for a text hint.
       if (isExternalTextField) return@launch
-      combine(vm.searchFieldHint, semanticWarning) { searchFieldHint, semanticWarning ->
-        searchFieldHint to semanticWarning
-      }.collect { (searchFieldHint, semanticWarning) ->
+      vm.searchFieldHint.collect { searchFieldHint ->
         withContext(Dispatchers.EDT) {
           if (searchFieldHint != null) {
             val (text, tooltip, isWarning) = searchFieldHint
@@ -556,10 +547,6 @@ class SePopupContentPane(
             else {
               hintHelper.setHint(text)
             }
-          }
-          else if (semanticWarning) {
-            val noExactMatchesText = SearchEverywhereFrontendBundle.bundle.getMessage("search.everywhere.no.exact.matches")
-            hintHelper.setHint(noExactMatchesText)
           }
           else {
             hintHelper.setHint(null)
