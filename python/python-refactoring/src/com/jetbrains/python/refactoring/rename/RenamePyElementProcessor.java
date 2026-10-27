@@ -6,13 +6,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 

@@ -5,13 +5,13 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.getDataclassKind
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
 import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
 import com.jetbrains.python.codeInsight.stdlib.isFrozenInAnyDataclassOfHierarchy

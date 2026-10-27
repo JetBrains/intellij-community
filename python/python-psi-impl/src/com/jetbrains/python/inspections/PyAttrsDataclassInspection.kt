@@ -8,12 +8,12 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiNameIdentifierOwner
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
 import com.jetbrains.python.codeInsight.resolvesToOmittedDefault
 import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
-import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFunction

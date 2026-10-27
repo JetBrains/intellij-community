@@ -15,11 +15,7 @@
  */
 package com.jetbrains.python.ast;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a qualified expression, that is, of "a.b.c..." sort.

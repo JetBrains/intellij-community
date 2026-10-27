@@ -5,10 +5,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.search.PyClassInheritorsSearch;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

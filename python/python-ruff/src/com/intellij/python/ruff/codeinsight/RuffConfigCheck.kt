@@ -9,9 +9,9 @@ import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.python.community.execService.Args
+import com.intellij.python.pytools.backend.runtime.executeToolInteractive
 import com.intellij.python.ruff.RuffBundle
 import com.intellij.python.ruff.RuffPyTool
-import com.intellij.python.pytools.backend.runtime.executeToolInteractive
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.sdk.ModuleOrProject

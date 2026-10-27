@@ -6,7 +6,6 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.XmlSerializerUtil
-import kotlin.text.trimIndent
 
 const val BLACK_ID: String = "Black"
 

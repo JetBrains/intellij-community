@@ -7,7 +7,6 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.parentOfType
-import com.intellij.psi.util.parentOfTypes
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.isProtocol

@@ -23,7 +23,6 @@ import com.jetbrains.python.psi.PyElsePart
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyIfPart
 import com.jetbrains.python.psi.PyIfStatement
-import com.jetbrains.python.psi.PyStatementPart
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.stubs.PyVersionSpecificStub

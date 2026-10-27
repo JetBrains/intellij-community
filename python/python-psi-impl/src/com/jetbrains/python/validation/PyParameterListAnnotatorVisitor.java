@@ -2,8 +2,8 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.ProtectionLevel;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyNamedParameter;

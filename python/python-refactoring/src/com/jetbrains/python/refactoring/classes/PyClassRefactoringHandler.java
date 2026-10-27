@@ -15,10 +15,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 

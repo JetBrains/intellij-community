@@ -3,8 +3,8 @@ package com.jetbrains.python.refactoring.classes.pullUp;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringHandler;
 import com.jetbrains.python.refactoring.classes.PyMemberInfoStorage;
 import com.jetbrains.python.vp.Creator;

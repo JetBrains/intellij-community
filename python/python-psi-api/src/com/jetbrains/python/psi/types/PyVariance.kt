@@ -1,12 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
+import com.jetbrains.python.psi.types.PyExpectedVariance.NONE
 import com.jetbrains.python.psi.types.PyVariance.BIVARIANT
 import com.jetbrains.python.psi.types.PyVariance.CONTRAVARIANT
 import com.jetbrains.python.psi.types.PyVariance.COVARIANT
 import com.jetbrains.python.psi.types.PyVariance.INFER_VARIANCE
 import com.jetbrains.python.psi.types.PyVariance.INVARIANT
-import com.jetbrains.python.psi.types.PyExpectedVariance.NONE
 import com.jetbrains.python.psi.types.PyVarianceIntermediateResult.RECURSIVE
 import org.jetbrains.annotations.ApiStatus
 

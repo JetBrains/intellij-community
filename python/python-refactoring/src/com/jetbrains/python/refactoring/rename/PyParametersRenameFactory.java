@@ -6,12 +6,12 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameter;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

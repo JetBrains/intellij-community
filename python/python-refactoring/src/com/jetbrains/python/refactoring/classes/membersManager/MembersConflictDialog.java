@@ -7,8 +7,8 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

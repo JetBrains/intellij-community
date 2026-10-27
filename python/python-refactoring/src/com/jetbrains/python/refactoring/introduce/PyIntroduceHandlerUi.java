@@ -5,9 +5,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.introduce.inplace.InplaceVariableIntroducer;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 
 import java.util.LinkedHashSet;
 import java.util.List;

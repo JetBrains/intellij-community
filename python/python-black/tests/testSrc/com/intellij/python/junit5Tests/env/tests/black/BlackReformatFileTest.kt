@@ -16,9 +16,9 @@ import com.intellij.python.black.BlackPyTool
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pyInterpreterFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.testFramework.common.timeoutRunBlocking
-import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers

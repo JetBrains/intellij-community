@@ -32,7 +32,6 @@ import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.fromFoothold
 import com.jetbrains.python.psi.resolve.resolveTopLevelMember
-import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream

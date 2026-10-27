@@ -3,7 +3,6 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider

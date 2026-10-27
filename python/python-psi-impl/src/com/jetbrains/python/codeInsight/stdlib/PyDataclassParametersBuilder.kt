@@ -10,7 +10,6 @@ import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassStubImpl
 import com.jetbrains.python.psi.stubs.PyDataclassStub
 import org.jetbrains.annotations.ApiStatus
-import java.util.LinkedHashMap
 
 @ApiStatus.Internal
 class PyDataclassParametersBuilder(

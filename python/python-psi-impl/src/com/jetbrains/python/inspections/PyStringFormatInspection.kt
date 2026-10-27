@@ -18,8 +18,8 @@ import com.jetbrains.python.PyStringFormatParser.NewStyleSubstitutionChunk
 import com.jetbrains.python.PyStringFormatParser.PercentSubstitutionChunk
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
+import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
 import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.LanguageLevel
@@ -57,11 +57,11 @@ import com.jetbrains.python.psi.types.PyABCUtil
 import com.jetbrains.python.psi.types.PyAnyType
 import com.jetbrains.python.psi.types.PyCallableArgument
 import com.jetbrains.python.psi.types.PyClassType
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker.match
-import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext

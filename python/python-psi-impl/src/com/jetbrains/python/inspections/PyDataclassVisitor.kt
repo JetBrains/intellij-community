@@ -5,10 +5,10 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.parseStdOrDataclassTransformDataclassParameters
 import com.jetbrains.python.codeInsight.resolveDataclassFieldParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass

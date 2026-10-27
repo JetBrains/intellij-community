@@ -4,10 +4,7 @@ package com.jetbrains.python.psi.impl
 import com.intellij.lang.ASTNode
 import com.intellij.psi.PsiPolyVariantReference
 import com.jetbrains.python.psi.PyAugAssignmentStatement
-import com.jetbrains.python.psi.PyCallable
 import com.jetbrains.python.psi.PyElementVisitor
-import com.jetbrains.python.psi.PyExpression
-import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.references.PyOperatorReference
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.types.PyType

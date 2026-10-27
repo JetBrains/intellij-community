@@ -9,12 +9,12 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
+import tools.jackson.databind.json.JsonMapper
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.attribute.PosixFilePermission
 import javax.swing.Icon
-import tools.jackson.databind.json.JsonMapper
 import kotlin.io.path.div
 import kotlin.io.path.setPosixFilePermissions
 

@@ -12,10 +12,10 @@ import com.intellij.python.typeEngine.common.PyTypeEngineStateDto
 import fleet.rpc.client.durable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
 class PyTypeEngineFrontendState(project: Project, scope: CoroutineScope) {

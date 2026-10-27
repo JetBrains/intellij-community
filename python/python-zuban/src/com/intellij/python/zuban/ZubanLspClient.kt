@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.zuban
 
-import com.jetbrains.python.project.PyProject
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.lang.annotation.AnnotationHolder
@@ -23,17 +22,18 @@ import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.lsp.core.isUsable
 import com.intellij.python.lsp.core.pyLspAttachedDescriptor
+import com.intellij.python.lsp.core.pyLspInterpreterOf
 import com.intellij.python.lsp.core.pyLspProjectsToServeWith
 import com.intellij.python.lsp.core.pyServedProjects
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.lsp.core.pyLspInterpreterOf
 import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.zuban.common.ZubanTypeCheckingMode
 import com.intellij.util.EnvironmentUtil
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.Diagnostic

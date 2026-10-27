@@ -8,9 +8,9 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.containers.tailOrEmpty
 import com.jetbrains.python.PyPsiBundle
+import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
-import com.jetbrains.python.codeInsight.PyDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
 import com.jetbrains.python.psi.PyCallExpression

@@ -65,6 +65,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static com.jetbrains.python.psi.types.PyTypeUtilKt.isAnyOrUnknown;
+
 /**
  * @author Mikhail Golubev
  */

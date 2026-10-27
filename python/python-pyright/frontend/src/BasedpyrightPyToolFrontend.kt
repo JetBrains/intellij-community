@@ -2,8 +2,8 @@
 package com.intellij.python.pyright.frontend
 
 import com.intellij.python.lsp.core.frontend.LspPyToolFrontend
-import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pyright.common.icons.PythonPyrightCommonIcons
+import com.intellij.python.pytools.common.FusId
 import com.intellij.util.IconUtil
 import javax.swing.Icon
 

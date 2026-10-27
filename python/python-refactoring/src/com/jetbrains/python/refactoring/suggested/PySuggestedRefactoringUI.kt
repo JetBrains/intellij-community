@@ -9,9 +9,9 @@ import com.intellij.refactoring.suggested.SuggestedRefactoringExecution
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Parameter
 import com.intellij.refactoring.suggested.SuggestedRefactoringUI
-import com.jetbrains.python.refactoring.PyRefactoringBundle
 import com.jetbrains.python.psi.PyExpressionStatement
 import com.jetbrains.python.psi.impl.ParamHelper
+import com.jetbrains.python.refactoring.PyRefactoringBundle
 import com.jetbrains.python.refactoring.changeSignature.PyExpressionCodeFragment
 import com.jetbrains.python.refactoring.suggested.PySuggestedRefactoringSupport.Helper.defaultValue
 import org.jetbrains.annotations.Nls

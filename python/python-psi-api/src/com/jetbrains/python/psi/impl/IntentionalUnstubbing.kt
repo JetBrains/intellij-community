@@ -6,7 +6,6 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.AstLoadingFilter
-import com.jetbrains.python.psi.impl.IntentionalUnstubbing.onFileOf
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.Collections

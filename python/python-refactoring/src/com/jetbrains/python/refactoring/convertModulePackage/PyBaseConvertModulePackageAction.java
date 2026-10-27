@@ -8,8 +8,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.refactoring.PyBaseRefactoringAction;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**

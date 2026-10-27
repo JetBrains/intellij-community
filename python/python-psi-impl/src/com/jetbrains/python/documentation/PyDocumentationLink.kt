@@ -8,7 +8,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.documentation.PyDocumentationLink.toPossibleClass
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.highlighting.PyHighlighter
 import com.jetbrains.python.psi.PyClass
@@ -21,8 +20,8 @@ import com.jetbrains.python.psi.PyTypeAliasStatement
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
-import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
+import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyUnionType
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.psi.types.isNoneType

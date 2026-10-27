@@ -15,7 +15,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyFunction;
@@ -24,6 +23,7 @@ import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyPsiRefactoringUtil;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

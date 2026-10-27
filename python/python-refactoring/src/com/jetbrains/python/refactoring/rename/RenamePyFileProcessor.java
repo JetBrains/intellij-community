@@ -13,13 +13,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiFileProcessor;
 import com.intellij.refactoring.rename.UnresolvableCollisionUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyImportStatementBase;
 import com.jetbrains.python.pyi.PyiFile;
 import com.jetbrains.python.pyi.PyiUtil;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

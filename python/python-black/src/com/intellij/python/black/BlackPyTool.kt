@@ -4,11 +4,11 @@ package com.intellij.python.black
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.black.common.PyBlackToolConfigurationDto
 import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.pytools.backend.PyToolsState
-import com.intellij.python.black.common.PyBlackToolConfigurationDto
 import com.jetbrains.python.packaging.PyPackageName
 import org.jetbrains.annotations.ApiStatus
 

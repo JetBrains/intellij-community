@@ -113,6 +113,7 @@ import com.jetbrains.python.psi.types.PyCollectionTypeImpl
 import com.jetbrains.python.psi.types.PyConcatenateType
 import com.jetbrains.python.psi.types.PyInstantiableType
 import com.jetbrains.python.psi.types.PyIntersectionType.Companion.intersectionOrTop
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyLiteralStringType.Companion.create
 import com.jetbrains.python.psi.types.PyLiteralType
 import com.jetbrains.python.psi.types.PyModuleType
@@ -133,7 +134,6 @@ import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeFormType
 import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
-import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown

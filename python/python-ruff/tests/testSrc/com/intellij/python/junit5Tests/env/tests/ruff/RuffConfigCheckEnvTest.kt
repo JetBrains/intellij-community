@@ -2,13 +2,12 @@
 package com.intellij.python.junit5Tests.env.tests.ruff
 
 import com.intellij.openapi.module.Module
-import com.intellij.python.junit5Tests.framework.pyProjectFixture
-import com.intellij.python.ruff.codeinsight.RuffConfigError
-import com.intellij.python.ruff.codeinsight.checkRuffConfig
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.ruff.RuffPyTool
+import com.intellij.python.ruff.codeinsight.RuffConfigError
+import com.intellij.python.ruff.codeinsight.checkRuffConfig
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.installToolPackage
 import com.intellij.python.test.env.junit5.pyVenvFixture

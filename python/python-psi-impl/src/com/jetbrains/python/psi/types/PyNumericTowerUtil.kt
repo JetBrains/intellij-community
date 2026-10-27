@@ -4,7 +4,6 @@ package com.jetbrains.python.psi.types
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.impl.PyBuiltinCache
-import com.jetbrains.python.psi.types.PyTypeUtil.toStream
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental

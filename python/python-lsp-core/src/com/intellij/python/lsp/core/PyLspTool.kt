@@ -3,12 +3,12 @@ package com.intellij.python.lsp.core
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
 import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.PyTool
-import com.intellij.python.pytools.backend.isEnabledOn
 import com.intellij.python.pytools.backend.PyToolsState
+import com.intellij.python.pytools.backend.isEnabledOn
 import com.intellij.python.pytools.backend.statistics.PyToolFusSnapshot
-import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
 import javax.swing.Icon
 
 /**

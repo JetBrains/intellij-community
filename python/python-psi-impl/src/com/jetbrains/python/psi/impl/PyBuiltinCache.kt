@@ -7,7 +7,6 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.impl.OrderEntryUtil
-import com.jetbrains.python.psi.resolve.mainPythonSdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -25,6 +24,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache
 import com.jetbrains.python.psi.resolve.fromSdk
+import com.jetbrains.python.psi.resolve.mainPythonSdk
 import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.types.PyAnyType

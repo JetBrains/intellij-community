@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.jetbrains.python.PyPsiBundle
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.parseDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyClass

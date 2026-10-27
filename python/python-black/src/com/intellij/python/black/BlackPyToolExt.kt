@@ -9,12 +9,12 @@ import com.intellij.platform.eel.provider.utils.EelProcessExecutionResultInfo
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.black.PyBlackBundle.message
+import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.pytools.backend.runtime.executeToolInteractive
 import com.jetbrains.python.Result
-import com.intellij.python.black.PyBlackBundle.message
-import com.intellij.python.black.configuration.BlackFormatterConfiguration
 import com.jetbrains.python.errorProcessing.ExecError
 import com.jetbrains.python.errorProcessing.PyError
 import com.jetbrains.python.pyi.PyiFileType

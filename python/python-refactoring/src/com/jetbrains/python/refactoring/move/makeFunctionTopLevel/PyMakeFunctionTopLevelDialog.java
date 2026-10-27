@@ -2,8 +2,8 @@
 package com.jetbrains.python.refactoring.move.makeFunctionTopLevel;
 
 import com.intellij.openapi.project.Project;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.refactoring.move.PyBaseMoveDialog;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import org.jetbrains.annotations.NotNull;

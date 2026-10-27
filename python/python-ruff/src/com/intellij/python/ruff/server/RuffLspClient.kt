@@ -1,6 +1,5 @@
 package com.intellij.python.ruff.server
 
-import com.jetbrains.python.project.PyProject
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -38,6 +37,7 @@ import com.intellij.python.ruff.ruffGetsProjectConfig
 import com.intellij.python.ruff.ruffInitializationOptions
 import com.intellij.python.ruff.ruffProjectDir
 import com.jetbrains.python.NON_INTERACTIVE_ROOT_TRACE_CONTEXT
+import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.withLock
 import org.eclipse.lsp4j.Diagnostic

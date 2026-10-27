@@ -8,8 +8,8 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
 import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
-import com.intellij.python.pytools.common.PyToolActionSource
 import com.intellij.python.pytools.common.ProjectLevelPyToolApi
+import com.intellij.python.pytools.common.PyToolActionSource
 import com.intellij.python.pytools.common.PyToolApi
 import com.intellij.python.pytools.common.PyToolEventKind
 import com.intellij.python.pytools.common.PyToolLogEventRequest

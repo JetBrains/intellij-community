@@ -1,6 +1,5 @@
 package com.intellij.python.pyrefly.lsp
 
-import com.jetbrains.python.project.PyProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
@@ -11,6 +10,7 @@ import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.pyLspAttachedDescriptor
 import com.intellij.python.lsp.core.pyLspProjectsToServeWith
 import com.intellij.python.pyrefly.PyreflyPyTool
+import com.jetbrains.python.project.PyProject
 
 class PyreflyLspIntegrationProvider : PyLspToolIntegrationProvider() {
   override fun getDescriptor(pyProject: PyProject): PyLspToolDescriptor = pyreflyDescriptor(pyProject)

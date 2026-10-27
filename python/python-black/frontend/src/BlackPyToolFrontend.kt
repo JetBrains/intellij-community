@@ -5,11 +5,11 @@ import com.intellij.codeInsight.actions.onSave.FormatOnSaveOptions
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.python.black.common.PyBlackToolConfigurationDto
+import com.intellij.python.black.common.icons.PythonBlackCommonIcons
+import com.intellij.python.black.frontend.PyBlackFrontendBundle.message
 import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pytools.common.PyToolDescriptorDto
 import com.intellij.python.pytools.frontend.ProjectLevelPyToolFrontend
-import com.intellij.python.black.common.icons.PythonBlackCommonIcons
-import com.intellij.python.black.frontend.PyBlackFrontendBundle.message
 import javax.swing.Icon
 
 internal class BlackPyToolFrontend : ProjectLevelPyToolFrontend<PyBlackToolConfigurationDto> {

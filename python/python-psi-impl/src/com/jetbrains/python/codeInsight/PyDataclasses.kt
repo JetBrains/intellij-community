@@ -4,10 +4,10 @@ package com.jetbrains.python.codeInsight
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.codeInsight.PyDataclassParameters.Type
 import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
-import com.jetbrains.python.codeInsight.PyDataclassParameters.Type
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassParametersBuilder
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassResolver
 import com.jetbrains.python.codeInsight.stdlib.PyDataclassTransformType

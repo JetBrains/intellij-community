@@ -7,11 +7,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.project.projectId
 import com.intellij.python.lsp.core.common.PyLspToolConfigurationDto
-import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.FusId
+import com.intellij.python.pytools.common.ProjectLevelPyToolApi
 import com.intellij.python.pytools.common.PyToolRequest
-import com.intellij.python.pytools.common.getConfiguration
 import com.intellij.python.pytools.common.PyToolSetConfigurationRequest
+import com.intellij.python.pytools.common.getConfiguration
 import com.intellij.python.typeEngine.common.PyTypeEngineId
 import com.intellij.python.typeEngine.frontend.PyTypeEngineFrontend
 import com.intellij.ui.components.Badge

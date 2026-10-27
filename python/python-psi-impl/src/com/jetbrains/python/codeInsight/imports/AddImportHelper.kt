@@ -5,7 +5,6 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ProjectRootManager
-import com.jetbrains.python.psi.resolve.mainPythonSdk
 import com.intellij.openapi.util.registry.Registry.Companion.intValue
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiComment
@@ -46,6 +45,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
+import com.jetbrains.python.psi.resolve.mainPythonSdk
 import com.jetbrains.python.psi.resolve.pythonSdkIfReady
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil

@@ -7,11 +7,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

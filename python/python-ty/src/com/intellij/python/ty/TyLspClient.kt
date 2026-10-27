@@ -1,6 +1,5 @@
 package com.intellij.python.ty
 
-import com.jetbrains.python.project.PyProject
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.components.service
@@ -12,12 +11,13 @@ import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.api.customization.LspGoToDefinitionDisabled
 import com.intellij.python.lsp.core.PyLspTool
 import com.intellij.python.lsp.core.PyLspToolCustomization
-import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolDescriptor
+import com.intellij.python.lsp.core.PyLspToolIntegrationProvider
 import com.intellij.python.lsp.core.PyLspToolSettings
 import com.intellij.python.lsp.core.pyLspAttachedDescriptor
 import com.intellij.python.lsp.core.pyLspProjectsToServeWith
 import com.intellij.python.lsp.core.utils.PyLspServerModificationTracker
+import com.jetbrains.python.project.PyProject
 import org.eclipse.lsp4j.ConfigurationItem
 import org.eclipse.lsp4j.DidChangeWorkspaceFoldersParams
 import org.eclipse.lsp4j.WorkspaceFolder

@@ -9,7 +9,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -23,6 +22,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStatement;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 

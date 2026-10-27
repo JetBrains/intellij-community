@@ -2,8 +2,8 @@
 package com.jetbrains.python.inspections.stdlib
 
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.parseStdDataclassParameters
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.LanguageLevel

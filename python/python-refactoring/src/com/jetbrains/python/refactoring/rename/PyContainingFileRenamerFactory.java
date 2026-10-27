@@ -10,11 +10,11 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamer;
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.rename.naming.NameSuggester;
 import com.intellij.usageView.UsageInfo;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 

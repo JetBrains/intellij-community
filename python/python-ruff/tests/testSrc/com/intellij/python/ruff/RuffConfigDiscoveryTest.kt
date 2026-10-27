@@ -4,12 +4,12 @@ package com.intellij.python.ruff
 import com.intellij.idea.TestFor
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals

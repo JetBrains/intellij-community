@@ -5,9 +5,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.impl.PyResolveResultRaterBase;
+import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 
 public final class NumpyResolveRater extends PyResolveResultRaterBase {

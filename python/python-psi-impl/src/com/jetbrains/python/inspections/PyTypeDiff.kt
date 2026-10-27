@@ -13,8 +13,6 @@ import com.jetbrains.python.ast.PyAstSingleStarParameter
 import com.jetbrains.python.ast.PyAstSlashParameter
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.inspections.PyTypeDiff.columns
-import com.jetbrains.python.inspections.PyTypeDiff.diffTooltip
 import com.jetbrains.python.inspections.PyTypeDiffGrid.Cell
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter

@@ -10,7 +10,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.xml.util.XmlStringUtil
 import com.jetbrains.python.documentation.PyDocumentationLink
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.inspections.PyInspectionMessages.bundleMessage
 import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext

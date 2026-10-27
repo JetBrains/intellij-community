@@ -18,8 +18,8 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.PyTokenTypes
 import com.jetbrains.python.codeInsight.parseDataclassParameters
-import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
 import com.jetbrains.python.inspections.PyInspectionMessages.CodifiedParam
+import com.jetbrains.python.inspections.quickfix.PyAddDunderMethodQuickFix
 import com.jetbrains.python.psi.PyCallExpression
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression

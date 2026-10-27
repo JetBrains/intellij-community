@@ -17,7 +17,6 @@ import com.jetbrains.python.psi.types.PyCallableType;
 import com.jetbrains.python.psi.types.PyExpectedTypeJudgement;
 import com.jetbrains.python.psi.types.PyFunctionTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.PyUnionType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ import java.util.Optional;
 
 import static com.intellij.util.containers.ContainerUtil.map;
 import static com.jetbrains.python.psi.types.PyTypeUtil.toStream;
-import static kotlin.streams.jdk8.StreamsKt.asStream;
 
 
 public class PyLambdaExpressionImpl extends PyElementImpl implements PyLambdaExpression {

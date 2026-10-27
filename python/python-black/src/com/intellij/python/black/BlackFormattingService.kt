@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.black
 
-import com.intellij.codeInsight.actions.VcsFacade
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
@@ -10,20 +9,19 @@ import com.intellij.formatting.service.AsyncFormattingRequest
 import com.intellij.formatting.service.FormattingService
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiEditorUtil
+import com.intellij.python.black.PyBlackBundle.message
+import com.intellij.python.black.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_EXCEPTION
+import com.intellij.python.black.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_TIMEOUT
 import com.intellij.python.pytools.backend.isEnabledOn
 import com.intellij.ui.LightweightHint
 import com.intellij.util.application
 import com.jetbrains.python.PythonFileType
-import com.intellij.python.black.PyBlackBundle.message
-import com.intellij.python.black.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_EXCEPTION
-import com.intellij.python.black.statistics.BlackFormatterIntegrationIdsHolder.Companion.BLACK_FORMATTER_TIMEOUT
 import com.jetbrains.python.pyi.PyiFileType
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.cancellation.CancellationException

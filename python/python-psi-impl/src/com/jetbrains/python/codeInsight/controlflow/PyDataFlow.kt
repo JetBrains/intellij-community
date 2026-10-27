@@ -1,9 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.controlflow
 
+import com.intellij.codeInsight.controlflow.ConditionalInstruction
 import com.intellij.codeInsight.controlflow.ControlFlow
 import com.intellij.codeInsight.controlflow.Instruction
-import com.intellij.codeInsight.controlflow.ConditionalInstruction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import com.intellij.util.ThreeState

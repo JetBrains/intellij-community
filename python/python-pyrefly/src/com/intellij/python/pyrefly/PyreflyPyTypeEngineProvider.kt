@@ -4,11 +4,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.api.stopAndRestartClientsIfNeeded
 import com.intellij.platform.lsp.api.stopClients
+import com.intellij.python.lsp.core.isActiveOn
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineProvider
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.pyrefly.lsp.PyreflyLspIntegrationProvider
 import com.intellij.python.pyrefly.typeEngine.PyreflyLspTypeEngineProvider
-import com.intellij.python.lsp.core.isActiveOn
 
 internal class PyreflyPyTypeEngineProvider : PyTypeEngineProvider {
   override val pyTypeEngineType: PyTypeEngineType

@@ -1,12 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.lsp.core
 
-import com.intellij.python.sdk.backend.detectedEnvironment
-import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -19,9 +17,11 @@ import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUtils
 import com.intellij.python.lsp.core.utils.PyLspToolVersionTracker
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.pytools.backend.PyTool
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.util.messages.Topic
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.project.PyProject

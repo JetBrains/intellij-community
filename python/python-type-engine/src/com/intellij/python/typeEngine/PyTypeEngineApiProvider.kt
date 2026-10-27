@@ -13,9 +13,10 @@ import com.intellij.python.lsp.core.typeEngine.PyTypeEngineType
 import com.intellij.python.lsp.core.typeEngine.PyTypeEngineUsageCollector
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.pytools.backend.ProjectLevelPyTool
-import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.pytools.backend.PyToolsState
+import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.ty.TyUtil
 import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
 import com.intellij.python.typeEngine.common.PyTypeEngineEventRequest
@@ -24,7 +25,6 @@ import com.intellij.python.typeEngine.common.PyTypeEngineOperationResultDto
 import com.intellij.python.typeEngine.common.PyTypeEngineRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineSelectionRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineStateDto
-import com.intellij.python.ty.TyUtil
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot

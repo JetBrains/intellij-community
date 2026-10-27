@@ -15,11 +15,11 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
-import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.getDataclassInitVars
 import com.jetbrains.python.codeInsight.parseDataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.PyAttrsDataclassType
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Attrs
+import com.jetbrains.python.codeInsight.stdlib.PyDataclassNames.Dataclasses
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDataclassType
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.extensions.afterDefInMethod

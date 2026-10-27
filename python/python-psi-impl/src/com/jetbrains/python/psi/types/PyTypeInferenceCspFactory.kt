@@ -29,7 +29,6 @@ import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
 import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory.enterCsp
 import org.jetbrains.annotations.ApiStatus
-import kotlin.collections.set
 
 
 @ApiStatus.Experimental

@@ -75,7 +75,6 @@ import com.jetbrains.python.psi.types.PyTupleType
 import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
-import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeMap

@@ -6,8 +6,8 @@ import com.intellij.python.pytools.frontend.ui.PyToolsUiBundle.message
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
-import kotlin.reflect.KMutableProperty0
 import org.jetbrains.annotations.Nls
+import kotlin.reflect.KMutableProperty0
 
 internal fun KMutableProperty0<Boolean?>.toSafeProperty(default: Boolean = false): MutableProperty<Boolean> =
   MutableProperty({ get() ?: default }, { set(it) })

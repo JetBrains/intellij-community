@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.refactoring.PyRefactoringBundle;
 import org.jetbrains.annotations.NotNull;
 
 /**

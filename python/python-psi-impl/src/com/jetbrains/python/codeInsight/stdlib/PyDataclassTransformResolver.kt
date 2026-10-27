@@ -26,8 +26,8 @@ import com.jetbrains.python.psi.impl.StubAwareComputation
 import com.jetbrains.python.psi.resolve.PyResolveContext
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
-import com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStub
 import com.jetbrains.python.psi.stubs.PyDataclassStub
+import com.jetbrains.python.psi.stubs.PyDataclassTransformDecoratorStub
 import com.jetbrains.python.psi.types.PyCallableType
 import com.jetbrains.python.psi.types.PyClassType
 import com.jetbrains.python.psi.types.PyOverloadType

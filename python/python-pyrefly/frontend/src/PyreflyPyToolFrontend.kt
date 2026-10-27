@@ -2,8 +2,8 @@
 package com.intellij.python.pyrefly.frontend
 
 import com.intellij.python.lsp.core.frontend.LspPyToolFrontend
-import com.intellij.python.pytools.common.FusId
 import com.intellij.python.pyrefly.common.icons.PythonPyreflyCommonIcons
+import com.intellij.python.pytools.common.FusId
 import com.intellij.util.IconUtil
 import javax.swing.Icon
 
