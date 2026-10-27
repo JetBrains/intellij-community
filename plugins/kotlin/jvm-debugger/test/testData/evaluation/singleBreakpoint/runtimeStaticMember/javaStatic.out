@@ -1,0 +1,9 @@
+LineBreakpoint created at javaStatic.kt:7
+Run Java
+Connected to the target VM
+javaStatic.kt:7
+Compile bytecode for javaStatic.JavaClass.FIELD
+Compile bytecode for javaStatic.JavaClass.method()
+Disconnected from the target VM
+
+Process finished with exit code 0

@@ -1,0 +1,9 @@
+LineBreakpoint created at methodCall.kt:14
+Run Java
+Connected to the target VM
+methodCall.kt:14
+Compile bytecode for (i as methodCall.B).f()
+Compile bytecode for (i as methodCall.B).add(41)
+Disconnected from the target VM
+
+Process finished with exit code 0

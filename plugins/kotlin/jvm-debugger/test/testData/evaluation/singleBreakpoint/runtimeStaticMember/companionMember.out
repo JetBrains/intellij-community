@@ -1,0 +1,9 @@
+LineBreakpoint created at companionMember.kt:16
+Run Java
+Connected to the target VM
+companionMember.kt:16
+Compile bytecode for companionMember.C.c
+Compile bytecode for companionMember.C.g()
+Disconnected from the target VM
+
+Process finished with exit code 0

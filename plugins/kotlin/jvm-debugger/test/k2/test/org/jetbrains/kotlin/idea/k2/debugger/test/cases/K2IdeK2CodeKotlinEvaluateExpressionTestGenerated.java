@@ -1452,6 +1452,34 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/evaluation/singleBreakpoint/runtimeStaticMember")
+        public static class RuntimeStaticMember extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM, testDataFilePath);
+            }
+
+            @TestMetadata("companionMember.kt")
+            public void testCompanionMember() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeStaticMember/companionMember.kt");
+            }
+
+            @TestMetadata("enumSynthetic.kt")
+            public void testEnumSynthetic() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeStaticMember/enumSynthetic.kt");
+            }
+
+            @TestMetadata("javaStatic.kt")
+            public void testJavaStatic() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeStaticMember/javaStatic.kt");
+            }
+
+            @TestMetadata("missingMember.kt")
+            public void testMissingMember() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeStaticMember/missingMember.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../testData/evaluation/singleBreakpoint/runtimeTypeCast")
         public static class RuntimeTypeCast extends AbstractK2IdeK2CodeKotlinEvaluateExpressionTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -1466,6 +1494,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
             @TestMetadata("localClass.kt")
             public void testLocalClass() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/localClass.kt");
+            }
+
+            @TestMetadata("methodCall.kt")
+            public void testMethodCall() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/runtimeTypeCast/methodCall.kt");
             }
 
             @TestMetadata("missingMember.kt")
