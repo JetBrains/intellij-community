@@ -1,0 +1,42 @@
+{
+    "modules": [
+        {
+            "name": "A",
+            "content_roots": ["production", "tests"],
+            "dependencies": [
+                {"name": "C", "exported": true},
+                {"name": "B", "exported": true},
+                {"name": "D", "exported": true}
+            ]
+        },
+        {
+            "name": "B",
+            "content_roots": ["production", "tests"],
+            "dependencies": [
+                {"name": "A", "exported": true},
+                {"name": "E", "exported": true}
+            ]
+        },
+        {
+            "name": "C",
+            "content_roots": ["production", "tests"],
+            "dependencies": [
+                {"name": "A", "exported": true},
+                {"name": "E", "scope": "TEST", "exported": true},
+                {"name": "L", "exported": true}
+            ]
+        },
+        {
+            "name": "D",
+            "content_roots": ["production", "tests"],
+            "dependencies": [{"name": "A", "exported": true}]
+        },
+        {
+            "name": "E",
+            "content_roots": ["production", "tests"]
+        }
+    ],
+    "libraries": [
+        { "name": "L" }
+    ]
+}
