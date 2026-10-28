@@ -331,7 +331,7 @@ internal fun <T, P : PathHolder, VP : ValidatedPath<T, P>> Panel.validatablePath
   val hasVerdict = pathValidator.backProperty.transform { it != null }
 
   /** No path resolved: either nothing was found, or nothing has been looked up yet. */
-  val toolMissing = pathValidator.backProperty.transform { it?.pathHolder == null }
+  val toolMissing = pathValidator.backProperty.transform { it?.pathHolder?.successOrNull == null }
 
   val missingToolTooltip = if (missingExecutableText != null) {
     missingToolRow(
