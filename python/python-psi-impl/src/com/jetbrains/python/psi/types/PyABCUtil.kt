@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.psi.types
 
+import com.intellij.openapi.util.RecursionManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.toStream
+import java.util.concurrent.ConcurrentHashMap
 
 object PyABCUtil {
   /**
@@ -165,6 +167,23 @@ object PyABCUtil {
   }
 
   private fun hasMethod(cls: PyClass, name: String, inherited: Boolean, context: TypeEvalContext?): Boolean {
+    if (context == null) {
+      return computeHasMethod(cls, name, inherited, null)
+    }
+    val cache = context.getClassMethodPresenceCache()
+    // Not `computeIfAbsent`: the computation runs type evaluation, which can call this again and deadlock the map
+    val forClass = cache[cls] ?: ConcurrentHashMap<Pair<String, Boolean>, Boolean>().let { cache.putIfAbsent(cls, it) ?: it }
+    val question = name to inherited
+    forClass[question]?.let { return it }
+    val stamp = RecursionManager.markStack()
+    val answer = computeHasMethod(cls, name, inherited, context)
+    if (stamp.mayCacheNow()) {
+      forClass[question] = answer
+    }
+    return answer
+  }
+
+  private fun computeHasMethod(cls: PyClass, name: String, inherited: Boolean, context: TypeEvalContext?): Boolean {
     return cls.findMethodByName(name, inherited, context) != null || cls.findClassAttribute(name, inherited, context) != null
   }
 }
