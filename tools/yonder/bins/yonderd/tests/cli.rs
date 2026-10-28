@@ -564,6 +564,18 @@ fn wait_for(gate: &Path) -> String {
     )
 }
 
+/// The niceness of this test process, as `ps` shows it.
+fn own_niceness() -> u8 {
+    let output = Command::new("ps")
+        .args(["-o", "nice=", "-p", &std::process::id().to_string()])
+        .output()
+        .expect("ps");
+    String::from_utf8_lossy(&output.stdout)
+        .trim()
+        .parse()
+        .expect("a niceness of 0 to 19")
+}
+
 /// Waits up to 30 s until `done` answers `true`.
 fn eventually(what: &str, done: impl Fn() -> bool) {
     let started = Instant::now();
@@ -1869,8 +1881,10 @@ fn a_run_gets_the_login_environment_a_raised_open_files_limit_and_its_niceness()
     write_script(&shell, LOGIN_SHELL);
     let agent = world.serve_with(&[("YONDERD_TEST_SHELL", &shell.to_string_lossy())]);
     let world = &agent.world;
+    // A process cannot lower its own niceness, and a test can start niced, such as under a Bazel server at nice 10.
+    let nice = (own_niceness() + 3).min(19);
     agent.start(RunSpec {
-        nice: Some(7),
+        nice: Some(nice),
         ..world.spec(
             "20-1",
             HOLDER,
@@ -1883,9 +1897,9 @@ fn a_run_gets_the_login_environment_a_raised_open_files_limit_and_its_niceness()
     assert_eq!(stdout[..2], ["yes", "/profile/bin"], "{followed:?}");
     let limit: u64 = stdout[2].trim().parse().expect("a limit");
     assert!(limit >= 4096, "{limit}");
-    assert_eq!(stdout[3].trim(), "7");
+    assert_eq!(stdout[3].trim(), nice.to_string());
     let start = followed.start_line();
-    assert!(start.contains(", nice 7, "), "{start}");
+    assert!(start.contains(&format!(", nice {nice}, ")), "{start}");
     assert!(
         start.contains(&format!("the login environment of {} -l -i from ", shell.display())),
         "{start}"
