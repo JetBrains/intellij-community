@@ -28,4 +28,19 @@ class WhatsNewContentTest {
     Assert.assertTrue(bigBugfix > bugfix)
     Assert.assertTrue(smallBugfix < bigBugfix)
   }
+
+  @Test
+  fun `Air button alt text variable follows the welcome screen project`() {
+    val key = $$"$__VISION_PAGE_SETTINGS_IS_AIR_BUTTON_ALT_TEXT_ENABLED__$"
+    val page = WhatsNewInVisionContentProvider.Page(
+      id = 1,
+      actions = emptyList(),
+      html = "isAirButtonAltTextEnabled: '$key'",
+      languages = emptyList(),
+      publicVars = listOf(WhatsNewInVisionContentProvider.PublicVar(key, "")),
+    )
+    val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), page)
+    Assert.assertEquals("isAirButtonAltTextEnabled: 'true'", content.getContent(isWelcomeScreenProject = true))
+    Assert.assertEquals("isAirButtonAltTextEnabled: 'false'", content.getContent(isWelcomeScreenProject = false))
+  }
 }
