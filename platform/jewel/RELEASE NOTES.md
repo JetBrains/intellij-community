@@ -1,5 +1,108 @@
 # Jewel Release Notes
 
+## v0.43 (2026-11-17)
+
+| Min supported IJP versions | Compose Multiplatform version |
+|----------------------------|-------------------------------|
+| 2026.3.1                     | 1.13.0-beta01                 |
+
+### ⚠️ Important Changes
+
+* **[JEWEL-1458](https://youtrack.jetbrains.com/issue/JEWEL-1458)** Jewel now builds against **Compose Multiplatform
+  1.13.0-beta01** ([#3716](https://github.com/JetBrains/intellij-community/pull/3716))
+* **[JEWEL-1295](https://youtrack.jetbrains.com/issue/JEWEL-1295)** If you subclass `DefaultTreeViewPointerEventAction`
+  and override `toggleKeySelection` or `onExtendSelectionToKey`, Cmd/Ctrl + click and Shift + click now call your
+  overrides, which the tree previously skipped. Check that your overrides behave correctly when the tree calls them
+  ([#3675](https://github.com/JetBrains/intellij-community/pull/3675))
+* **[JEWEL-225](https://youtrack.jetbrains.com/issue/JEWEL-225)** Source-breaking: the `DefaultComponentStyling`
+  constructor has a new `onOffButtonStyle` parameter with no default value. A call without it no longer compiles. Pass
+  an `OnOffButtonStyle`, for example `OnOffButtonStyle.light()` or `OnOffButtonStyle.dark()`. `ComponentStyling.light()`
+  and `dark()` give the new parameter a default value, so their callers compile unchanged
+  ([#3690](https://github.com/JetBrains/intellij-community/pull/3690))
+* **[JEWEL-1440](https://youtrack.jetbrains.com/issue/JEWEL-1440)** Source-breaking: the `onDismissRequest` callback of
+  `Popup` and `PopupContainer` now receives the `InputMode` that caused the dismissal
+  ([#3662](https://github.com/JetBrains/intellij-community/pull/3662))
+  * A lambda literal such as `onDismissRequest = { close() }` compiles unchanged.
+  * A value of type `() -> Unit`, such as `::close` or a stored lambda, no longer compiles. Wrap it in a lambda:
+    `onDismissRequest = { close() }`.
+  * A custom `PopupRenderer` should override the `Popup` overload whose `onDismissRequest` takes an `InputMode`. An
+    override of an old overload still compiles with a deprecation warning, and it reports every dismissal as
+    `InputMode.Touch`.
+
+### New features
+
+* **[JEWEL-225](https://youtrack.jetbrains.com/issue/JEWEL-225)** Added the `OnOffButton` component, a toggle that
+  matches the IntelliJ Platform's New UI toggle. It paints the platform `toggle*.svg` images, so in the IDE it follows
+  the theme's `toggle-*` colors and any toggle images the theme replaces
+  ([#3690](https://github.com/JetBrains/intellij-community/pull/3690))
+* **[JEWEL-225](https://youtrack.jetbrains.com/issue/JEWEL-225)** Added the `ColorKeyPaletteReplacement` painter hint,
+  which recolors SVG elements that name a theme color in a `color-fill-key` or `color-stroke-key` attribute
+  ([#3690](https://github.com/JetBrains/intellij-community/pull/3690))
+* **[JEWEL-1443](https://youtrack.jetbrains.com/issue/JEWEL-1443)** Added
+  `Coil3ImageRendererExtension.withIdeDefaultLoader()` to the Markdown bridge styling module. Its image loader fetches
+  remote images using the IDE proxy settings (PAC and automatic detection included), proxy authentication, and trusted
+  certificates. Use it instead of `withDefaultLoader()` when Jewel runs inside an IntelliJ Platform application
+  ([#3673](https://github.com/JetBrains/intellij-community/pull/3673))
+* **[JEWEL-1443](https://youtrack.jetbrains.com/issue/JEWEL-1443)** Added a
+  `Coil3ImageRendererExtension.withDefaultLoader(context, imageLoaderBuilder)` overload, so you can customize the
+  default image loader, for example by registering your own network fetcher
+  ([#3673](https://github.com/JetBrains/intellij-community/pull/3673))
+
+### Bug fixes
+
+* **[JEWEL-1295](https://youtrack.jetbrains.com/issue/JEWEL-1295)** Right-clicking a row in `BasicLazyTree`, `LazyTree`,
+  and the selectable lazy columns no longer toggles it or selects a range when Cmd/Ctrl or Shift is held.
+  Right-clicking a selected row keeps the current selection, and right-clicking an unselected row selects just that
+  row, like in the IntelliJ Platform tree ([#3675](https://github.com/JetBrains/intellij-community/pull/3675))
+* **[JEWEL-1295](https://youtrack.jetbrains.com/issue/JEWEL-1295)** `SelectableLazyListState.isKeyboardNavigating` now
+  goes back to `false` when the user clicks a row in a selectable lazy column. Previously, it only did that in trees
+  ([#3675](https://github.com/JetBrains/intellij-community/pull/3675))
+* **[JEWEL-1452](https://youtrack.jetbrains.com/issue/JEWEL-1452)** Fixed the translucent colors in the standalone theme
+  palettes (`DefaultColorPalette` and the `IntUiLightTheme`/`IntUiDarkTheme` color palettes). The palette generator
+  read the `#RRGGBBAA` theme values as if they had no alpha, so, for example, the Islands `transparent` color was drawn
+  as a faint tint, and the dark `toggle-*` colors were wrong. These colors now have the same alpha as in the IntelliJ
+  Platform ([#3686](https://github.com/JetBrains/intellij-community/pull/3686))
+* **[JEWEL-1454](https://youtrack.jetbrains.com/issue/JEWEL-1454)** Arrow keys now navigate menus rendered by
+  `JDialogRenderer`: Up and Down move between menu items instead of the owner window's components, and Right opens a
+  submenu. A submenu now receives its keys, instead of its parent menu taking them
+  ([#3700](https://github.com/JetBrains/intellij-community/pull/3700))
+* **[JEWEL-1454](https://youtrack.jetbrains.com/issue/JEWEL-1454)** Popups rendered by `JDialogRenderer` now close when
+  you switch to another application, like the IDE's popups
+  ([#3700](https://github.com/JetBrains/intellij-community/pull/3700))
+* **[JEWEL-1459](https://youtrack.jetbrains.com/issue/JEWEL-1459)** Fixed the custom popup renderers (`JBPopupRenderer`
+  and `JDialogRenderer`) briefly showing popups at screen `(0, 0)` with a `1x1` size before moving and resizing them to
+  their target bounds ([#3705](https://github.com/JetBrains/intellij-community/pull/3705))
+* **[JEWEL-1462](https://youtrack.jetbrains.com/issue/JEWEL-1462)** Clicking a hovered submenu item in `PopupMenu` now
+  keeps the submenu open instead of closing it ([#3710](https://github.com/JetBrains/intellij-community/pull/3710))
+* **[JEWEL-1464](https://youtrack.jetbrains.com/issue/JEWEL-1464)** Custom-rendered popups and menus no longer take the
+  native window focus from the owner window when they open or when you click inside them
+  ([#3712](https://github.com/JetBrains/intellij-community/pull/3712))
+* **[JEWEL-1464](https://youtrack.jetbrains.com/issue/JEWEL-1464)** Fixed the `MenuComboBox` popup closing immediately
+  when opened with a pre-selected item under the custom popup renderer
+  ([#3712](https://github.com/JetBrains/intellij-community/pull/3712))
+* **[JEWEL-1464](https://youtrack.jetbrains.com/issue/JEWEL-1464)** Fixed keyboard navigation and `Escape` dismissal
+  across nested submenus and popups under `JDialogRenderer` and `JBPopupRenderer`
+  ([#3712](https://github.com/JetBrains/intellij-community/pull/3712))
+* **[JEWEL-1464](https://youtrack.jetbrains.com/issue/JEWEL-1464)** Clicking a toggle button in the owner window now
+  closes an open focusable popup without immediately reopening it
+  ([#3712](https://github.com/JetBrains/intellij-community/pull/3712))
+* **[JEWEL-1464](https://youtrack.jetbrains.com/issue/JEWEL-1464)** The pressed menu item background now matches the
+  focused background color in the standalone and bridge themes
+  ([#3712](https://github.com/JetBrains/intellij-community/pull/3712))
+
+### Deprecated API
+
+Binary compatibility is kept. The old signatures below stay as hidden deprecated overloads, so code compiled against
+0.42 still runs. Source code cannot call them. See ⚠️ Important Changes for the source migration.
+
+* **[JEWEL-225](https://youtrack.jetbrains.com/issue/JEWEL-225)** `ComponentStyling.light()`/`dark()` and the
+  `DefaultComponentStyling` constructor without `onOffButtonStyle`
+  ([#3690](https://github.com/JetBrains/intellij-community/pull/3690))
+* **[JEWEL-1440](https://youtrack.jetbrains.com/issue/JEWEL-1440)** `Popup` and `PopupContainer` with a zero-argument
+  `onDismissRequest`. The `PopupRenderer.Popup` overloads with a zero-argument `onDismissRequest` are deprecated at
+  the warning level, so existing renderers still compile
+  ([#3662](https://github.com/JetBrains/intellij-community/pull/3662))
+
 ## v0.42 (2026-10-08)
 
 | Min supported IJP versions | Compose Multiplatform version |
