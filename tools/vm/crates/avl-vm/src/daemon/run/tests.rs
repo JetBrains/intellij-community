@@ -526,6 +526,7 @@ async fn parse_run_refuses_the_usage_ladder() {
             "--progress-timeout expects positive seconds",
         ),
         (&["--changed"], "--changed <PATH>"),
+        (&["--base", "HEAD~1", "rename-session"], "--changed <PATH>"),
     ] {
         let message = rejected(argv);
         assert!(message.contains(fragment), "{argv:?}: {message}");
@@ -658,6 +659,22 @@ async fn parse_run_turns_a_changed_path_into_its_suites_class_filters() {
     assert_eq!(
         parsed_run.selection.description,
         "1 changed path(s) -> lane ui: AirPresetGeneratedFlowUiTest"
+    );
+}
+
+// `--base` names the run in its argv, so the journal and the history tell it from a run against the upstream. A path
+// outside the test bridge does not read the base, so the selection stays the same.
+#[tokio::test]
+async fn parse_run_keeps_the_base_of_a_changed_run() {
+    let fixture = Fixture::new().await;
+    write_preset_suite(&fixture, &["Preset.kt"]);
+    let args = parsed(&["--changed", "plugins/air/frontend/src/Preset.kt", "--base", "HEAD~3"]);
+    assert_eq!(args.base.as_deref(), Some("HEAD~3"));
+    assert_eq!(args.argv(), ["--changed", "plugins/air/frontend/src/Preset.kt", "--base", "HEAD~3"]);
+    let parsed_run = fixture.host.parse_run(&Ctx::background(), &args).await.unwrap();
+    assert_eq!(
+        parsed_run.selection.junit5_filters,
+        [r"include-classname=(^|.*\.)AirPresetGeneratedFlowUiTest$"]
     );
 }
 

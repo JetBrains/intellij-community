@@ -104,6 +104,10 @@ pub(crate) struct RunArgs {
     /// Runs the generated suites the changed paths reach.
     #[arg(long, value_name = "PATH", num_args = 1..)]
     pub changed: Vec<String>,
+    /// The revision that a changed Kotlin file of the test bridge is compared with, as `suites --base` takes it. The
+    /// default is the commit where HEAD meets its upstream.
+    #[arg(long, value_name = "REV", requires = "changed")]
+    pub base: Option<String>,
     /// One more JUnit5 filter, `<option>=<value>`, for an option the daemon applies.
     #[arg(long = "filter", value_name = "OPTION=VALUE", value_parser = parse_filter)]
     pub filters: Vec<Junit5Filter>,
@@ -129,6 +133,9 @@ impl RunArgs {
         if !self.changed.is_empty() {
             argv.push("--changed".to_owned());
             argv.extend(self.changed.iter().cloned());
+        }
+        if let Some(base) = &self.base {
+            argv.extend(["--base".to_owned(), base.clone()]);
         }
         for filter in &self.filters {
             argv.extend(["--filter".to_owned(), filter.to_string()]);
@@ -346,7 +353,7 @@ impl Host {
                     selector.to_owned(),
                 ),
                 _ => (
-                    crate::lane::resolve_changed_suites(&self.settings, &changed, &self.reporter)?,
+                    crate::lane::resolve_changed_suites(&self.settings, &changed, args.base.as_deref(), &self.reporter)?,
                     format!("{} changed path(s)", changed.len()),
                 ),
             };

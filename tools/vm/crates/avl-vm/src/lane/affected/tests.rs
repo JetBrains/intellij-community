@@ -294,6 +294,29 @@ async fn one_lanes_suites_need_no_lane_in_the_command_to_run_next() {
     );
 }
 
+// A non-bridge path does not read the base, so the answer stays the same. The next command repeats the base, so the
+// run selects what this answer names.
+#[tokio::test]
+async fn the_next_command_repeats_the_base_of_the_answer() {
+    let checkout = Checkout::new();
+
+    let outcome = command_suites(
+        &Ctx::background(),
+        &checkout.settings(),
+        &path_runner(),
+        paths([PRESET]),
+        Some("HEAD~3"),
+        &quiet(),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(
+        outcome.text.lines().last(),
+        Some("2 suite(s): ui 2; next: run --changed <the same paths> --base HEAD~3")
+    );
+}
+
 #[tokio::test]
 async fn the_suites_command_needs_a_path() {
     let checkout = Checkout::new();
@@ -445,7 +468,7 @@ fn a_flow_refusal_keeps_bts_own_code() {
 fn every_lane_selects_each_reached_lane_in_lane_order() {
     let checkout = Checkout::new();
     let settings = checkout.settings();
-    let reached = resolve_changed_suites(&settings, &paths([BOTH]), &quiet()).unwrap();
+    let reached = resolve_changed_suites(&settings, &paths([BOTH]), None, &quiet()).unwrap();
 
     let planned = reached.every_lane(None).unwrap();
     let planned_lanes: Vec<&str> = planned.iter().map(|one| one.lane.as_str()).collect();
@@ -460,6 +483,6 @@ fn every_lane_selects_each_reached_lane_in_lane_order() {
     assert_eq!(named[0].lane, "gui-chat");
 
     // An answer with no suite keeps its own refusal.
-    let nothing = resolve_changed_suites(&settings, &paths([PLAIN]), &quiet()).unwrap();
+    let nothing = resolve_changed_suites(&settings, &paths([PLAIN]), None, &quiet()).unwrap();
     assert_eq!(refusal(nothing.every_lane(None)).code, "no_affected_suite");
 }

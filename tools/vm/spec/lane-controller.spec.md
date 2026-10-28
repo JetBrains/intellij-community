@@ -262,7 +262,9 @@ The generator publishes the suite facts that the controller reads, as
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
 - `run --changed` runs the suites those paths reach. Every bare argument after `--changed` is a changed
-  path. For each lane, the selection is the lane and one class filter for each suite.
+  path. For each lane, the selection is the lane and one class filter for each suite. `--base <rev>` compares a
+  Kotlin file of the test bridge with that revision, as `suites --base` does, and the next command of `suites`
+  repeats it.
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs
   [@test] ../crates/avl-vm/src/lane/affected/tests.rs
 

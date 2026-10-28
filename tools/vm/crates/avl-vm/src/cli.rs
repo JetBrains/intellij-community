@@ -97,7 +97,8 @@ selects every generated suite whose scenarios tell or walk the flow, and a suite
 lane and one class filter per suite. An unknown id names the nearest ids, and a flow no generated suite tests \
 is refused, because an iteration that runs nothing is not a passing run. With --changed, every argument that is not \
 an option is a changed path, so \"--changed A B\" and \"--changed A --changed B\" are the same run, and a change no \
-generated suite covers is refused, naming each path.
+generated suite covers is refused, naming each path. --base REV compares a changed Kotlin file of the test bridge \
+with REV, as suites --base does; it needs --changed.
 
 For a flow, a suite or --changed without --lane: one iteration per reached lane, in the order {lanes}, on one worker \
 of the selected backend, in one reply. More than one lane answers {{worker, lanes: [{{lane, exitCode, code, message, \
