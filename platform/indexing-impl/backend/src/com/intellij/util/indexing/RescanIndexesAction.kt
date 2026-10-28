@@ -6,12 +6,12 @@ import com.intellij.ide.actions.cache.ExceptionalCompletionProblem
 import com.intellij.ide.actions.cache.FilesRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.actions.cache.RecoveryScope
-import com.intellij.lang.LangBackendBundle
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.indexing.impl.backend.IndexingBackendBundle
 import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.application
@@ -32,7 +32,7 @@ class RescanIndexesAction : RecoveryAction {
   override val performanceRate: Int
     get() = 9990
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
-    get() = LangBackendBundle.message("rescan.indexes.recovery.action.name")
+    get() = IndexingBackendBundle.message("rescan.indexes.recovery.action.name")
   override val actionKey: String
     get() = "rescan"
 

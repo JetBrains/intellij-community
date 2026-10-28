@@ -1,21 +1,127 @@
-<idea-plugin>
+<idea-plugin visibility="internal">
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.libraries.fastutil"/>
+    <module name="intellij.libraries.guava"/>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.kotlinx.html"/>
+    <module name="intellij.libraries.opentelemetry"/>
+    <module name="intellij.platform.analysis"/>
     <module name="intellij.platform.backend"/>
+    <module name="intellij.platform.backend.observation"/>
+    <module name="intellij.platform.backend.workspace"/>
+    <module name="intellij.platform.concurrency"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.diagnostic.telemetry"/>
+    <module name="intellij.platform.diagnostic.telemetry.impl"/>
+    <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.core.impl"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.progress"/>
     <module name="intellij.platform.ide.rpc"/>
     <module name="intellij.platform.indexing"/>
     <module name="intellij.platform.indexing.impl"/>
+    <module name="intellij.platform.lang.core"/>
     <module name="intellij.platform.lang.impl"/>
+    <module name="intellij.platform.lvcs"/>
+    <module name="intellij.platform.projectFrame"/>
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.projectModel.impl"/>
     <module name="intellij.platform.refactoring"/>
     <module name="intellij.platform.rpc.backend"/>
+    <module name="intellij.platform.serviceContainer"/>
+    <module name="intellij.platform.statistics"/>
+    <module name="intellij.platform.util.coroutines"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.util.io.storages"/>
+    <module name="intellij.platform.util.progress"/>
+    <module name="intellij.platform.util.ui"/>
+    <module name="intellij.platform.workspace.jps"/>
+    <module name="intellij.platform.workspace.storage"/>
   </dependencies>
   <!-- endregion -->
 
+  <extensionPoints>
+    <extensionPoint name="projectIndexingActivityHistoryListener"
+                    interface="com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener" dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <findInProjectSearchEngine implementation="com.intellij.platform.indexing.impl.backend.IdeaIndexBasedFindInProjectSearchEngine"/>
+
+    <!-- FileBasedIndex / SerializationManager is quite important and in any case will be used better to preload it -->
+    <applicationService serviceInterface="com.intellij.util.indexing.FileBasedIndex"
+                        serviceImplementation="com.intellij.util.indexing.FileBasedIndexImpl" preload="notLightEdit"/>
+    <vfs.asyncListenerBackgroundable implementation="com.intellij.util.indexing.events.ChangedFilesCollector"/>
+    <applicationService serviceInterface="com.intellij.util.indexing.impl.storage.IndexMaintenance"
+                        serviceImplementation="com.intellij.util.indexing.IndexMaintenanceService"/>
+    <applicationInitializedListener implementation="com.intellij.util.indexing.FileBasedIndexLoader" order="first"/>
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.ProjectFileBasedIndexStartupActivity" order="first"
+                                         id="projectIndexStartup"/>
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.DumbModeWhileScanningSubscriber"/>
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.FileBasedIndexInfrastructureExtensionStartup"/>
+    <postStartupActivity implementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheckStarter"/>
+    <postStartupActivity implementation="com.intellij.openapi.roots.impl.ScanningCancellationMonitorStarter"/>
+    <projectService serviceInterface="com.intellij.util.indexing.DumbModeReindexingScheduler"
+                    serviceImplementation="com.intellij.platform.indexing.impl.backend.BackendDumbModeReindexingScheduler"
+                    overrides="true"/>
+    <applicationService serviceInterface="com.intellij.util.indexing.diagnostic.ChangedFilesPushedEventReporter"
+                        serviceImplementation="com.intellij.platform.indexing.impl.backend.BackendChangedFilesPushedEventReporter"
+                        overrides="true"/>
+    <projectService serviceInterface="com.intellij.openapi.project.SmartModeScheduler"
+                    serviceImplementation="com.intellij.platform.indexing.impl.backend.BackendSmartModeScheduler"
+                    overrides="true"/>
+
+    <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"
+                    serviceImplementation="com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl"/>
+    <activityTracker implementation="com.intellij.openapi.project.ScanningTracker"/>
+    <applicationService serviceInterface="com.intellij.openapi.roots.AdditionalLibraryRootsListenerHelper"
+                        serviceImplementation="com.intellij.openapi.roots.impl.AdditionalLibraryRootsListenerHelperImpl"/>
+    <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
+                        serviceImplementation="com.intellij.psi.stubs.StubIndexImpl"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubUpdatableIndexFactory"
+                        serviceImplementation="com.intellij.psi.stubs.StubUpdatableIndexFactoryImpl"/>
+    <projectService serviceImplementation="com.intellij.util.indexing.projectFilter.ProjectIndexableFilesFilterHealthCheck"/>
+    <applicationService serviceInterface="com.intellij.psi.stubs.StubTreeLoader"
+                        serviceImplementation="com.intellij.psi.stubs.StubTreeLoaderImpl"/>
+    <projectFileScanner implementation="com.intellij.ide.analysisignore.AnalysisIgnoreIndexableFileScanner"/>
+    <fileBasedIndex implementation="com.intellij.psi.search.FileTypeIndexImpl"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.projectFilter.IndexableFilesFilterHealthCheckCollector"/>
+    <psi.treeChangePreprocessor implementation="com.intellij.util.indexing.events.FileBasedIndexTreeChangePreprocessor"/>
+    <projectIndexingActivityHistoryListener implementation="com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryFusReporterListener"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.util.indexing.IndexesScanningSkipCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.project.IndexableFilesCollector"/>
+    <cachesInvalidator implementation="com.intellij.util.indexing.FileBasedIndexCachesInvalidator" order="after rootCachesInvalidator"/>
+    <recoveryAction implementation="com.intellij.util.indexing.RescanIndexesAction"/>
+    <recoveryAction implementation="com.intellij.util.indexing.ReindexAction"/>
+    <recoveryAction implementation="com.intellij.util.indexing.RefreshIndexableFilesAction"/>
   </extensions>
+
+  <actions>
+    <action id="SwitchFileBasedIndexStorageAction" internal="true"
+            class="com.intellij.util.indexing.impl.storage.SwitchFileBasedIndexStorageAction"/>
+    <action id="ForceIndexRescanning" internal="true" class="com.intellij.util.indexing.ForceIndexRescanningAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="ForceIndexRebuild" internal="true" class="com.intellij.util.indexing.ForceIndexRebuildAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="ToggleFileBasedIndexes" internal="true" class="com.intellij.util.indexing.internal.ToggleFileBasedIndexesAction"/>
+    <action id="PauseScanningAndIndexing" internal="true" class="com.intellij.util.indexing.internal.PauseScanningAndIndexingAction"/>
+  </actions>
+
+  <applicationListeners>
+    <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+    <listener class="com.intellij.find.ngrams.TrigramIndexRegistryValueListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
+  </applicationListeners>
+
+  <projectListeners>
+    <listener class="com.intellij.util.indexing.ProjectEntityIndexingService"
+              topic="com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexListener"/>
+    <listener class="com.intellij.util.indexing.ProjectEntityIndexingService"
+              topic="com.intellij.openapi.roots.ModuleRootListener"/>
+  </projectListeners>
 </idea-plugin>

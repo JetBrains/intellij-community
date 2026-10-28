@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
  * Records a finished [ChangedFilesPushingStatistics] event for the index diagnostics dump.
  *
  * The default implementation ([NoopChangedFilesPushedEventReporter]) does nothing. The real implementation lives in the
- * `intellij.platform.lang.impl.backend` module and delegates to `ChangedFilesPushedDiagnostic.addEvent`. This indirection keeps
+ * `intellij.platform.indexing.impl.backend` module and delegates to `ChangedFilesPushedDiagnostic.addEvent`. This indirection keeps
  * `intellij.platform.lang.impl` (in particular [com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl]) free
  * of a direct dependency on the indexing backend implementation, which is a prerequisite for a frontend-only (IJ Light)
  * IDE where the backend module is not loaded.

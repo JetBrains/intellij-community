@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 
 /**
- * The default [SmartModeScheduler] for a process that does not load `intellij.platform.lang.impl.backend`.
+ * The default [SmartModeScheduler] for a process that does not load `intellij.platform.indexing.impl.backend`.
  * Such a process has no scanning and no indexing, so this scheduler reports smart mode at all times.
  */
 internal class AlwaysSmartModeScheduler(private val project: Project) : SmartModeScheduler {

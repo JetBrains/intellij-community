@@ -42,7 +42,7 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl/playback",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/execution",
         "//platform/util/concurrency",
         "//libraries/opentelemetry",

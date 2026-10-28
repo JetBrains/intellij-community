@@ -254,7 +254,7 @@ jvm_library(
         "//platform/libraries/cglib",
         "//libraries/junit4",
         "//platform/platform-impl:ide-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/welcome-screen-impl:welcomeScreen-impl",
         "//platform/usageView",
         "//libraries/cli-parser",

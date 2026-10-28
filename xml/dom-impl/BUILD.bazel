@@ -43,7 +43,7 @@ jvm_library(
         "//platform/lang-api:lang",
         "//xml/xml-psi-api:psi",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/indexing-impl",
         "//xml/xml-parser:parser",
         "//platform/refactoring",

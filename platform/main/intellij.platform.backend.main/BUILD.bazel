@@ -33,6 +33,7 @@ jvm_library(
         "//platform/remote-topics/backend",
         "//platform/buildView/backend",
         "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/pluginManager/backend",
         "//platform/backend/workspace.impl",
     ],

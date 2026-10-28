@@ -82,7 +82,7 @@ jvm_library(
         "//platform/lang-core",
         "//platform/lang-api:lang",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//libraries/junit4",
         "@lib//:jmock",
         "//platform/observable",

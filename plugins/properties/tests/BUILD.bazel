@@ -50,7 +50,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/lang-core",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",

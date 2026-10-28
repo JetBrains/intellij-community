@@ -207,7 +207,7 @@ jvm_library(
         "//libraries/maven-resolver-provider",
         "//java/java-syntax:syntax",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//xml/impl",
         "//platform/syntax/syntax-scripts:scripts",
         "//plugins/grazie/src:core",

@@ -5,9 +5,9 @@ import com.intellij.ide.actions.cache.CacheInconsistencyProblem
 import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
 import com.intellij.ide.actions.cache.RecoveryScope
-import com.intellij.lang.LangBackendBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.DumbUtilImpl
+import com.intellij.platform.indexing.impl.backend.IndexingBackendBundle
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
@@ -16,7 +16,7 @@ class ReindexAction : RecoveryAction {
   override val performanceRate: Int
     get() = 1000
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
-    get() = LangBackendBundle.message("reindex.project.recovery.action.name")
+    get() = IndexingBackendBundle.message("reindex.project.recovery.action.name")
   override val actionKey: String
     get() = "reindex"
 

@@ -22,7 +22,7 @@ jvm_library(
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//platform/remote-driver/model",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",

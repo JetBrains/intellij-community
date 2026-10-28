@@ -51,7 +51,7 @@
     <orderEntry type="module" module-name="intellij.libraries.junit4" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl.backend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.indexing.impl.backend" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.welcomeScreen.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.usageView" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.cli.parser" scope="TEST" />

@@ -41,7 +41,7 @@ jvm_library(
         "//platform/analysis-api:analysis",
         "//platform/util/concurrency",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/core-impl",
     ],
 )

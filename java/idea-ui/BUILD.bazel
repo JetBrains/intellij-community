@@ -80,7 +80,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/core-impl",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/workspace/jps",
         "//platform/platform-util-io:ide-util-io",
         "//platform/progress/shared:ide-progress",

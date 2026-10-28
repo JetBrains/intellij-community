@@ -31,7 +31,7 @@ class TrigramIndexFilter : BaseFileTypeInputFilter(FileTypeSubstitutionStrategy.
     @JvmStatic
     val ENABLE_EXTENSION_EXCLUDES_REGISTRY_KEY: String = "ide.index.trigram.enable.exclude.extensions"
 
-    /** `TrigramIndexRegistryValueListener` in `intellij.platform.lang.impl.backend` rebuilds the index when this value changes. */
+    /** `TrigramIndexRegistryValueListener` in `intellij.platform.indexing.impl.backend` rebuilds the index when this value changes. */
     private val ENABLE_EXTENSION_EXCLUDES = Registry.`is`(ENABLE_EXTENSION_EXCLUDES_REGISTRY_KEY, false)
 
     private val EXTENSION_EXCLUDES: CustomizableExcludeExtensions = CustomizableExcludeExtensions(

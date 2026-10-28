@@ -37,7 +37,7 @@ jvm_library(
         "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
         "//platform/lang-impl",
-        "//platform/lang-impl/backend",
+        "//platform/indexing-impl/backend",
         "//platform/indexing-impl",
         "//platform/platform-api:ide",
         "//platform/util/progress",
