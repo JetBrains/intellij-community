@@ -142,7 +142,9 @@ internal data class JbProductInfo(
       }
       candidates.values.removeIf { !isCompatible(it, candidates) }
 
-      val migration = ConfigImportHelper.migrateImportedPlugins(configDir, PathManager.getConfigDir(), candidates.values, true, logger)
+      val migration = ConfigImportHelper.migrateImportedPlugins(
+        configDir, PathManager.getConfigDir(), candidates.values, /* dryRun = */ true, logger
+      )
       val disabledIds = migration.toDisable.toSet()
       for (migrated in migration.toMigrate) {
         val id = migrated.pluginId
@@ -200,8 +202,8 @@ internal data class JbProductInfo(
   }
 
   /**
-   * The plugins that the plugin migrations disable. The dialog does not list them, but an import of plugins passes them to
-   * [JbSettingsImporter.installPlugins], so that they arrive disabled, as in the raw config import.
+   * The plugins that the plugin migrations disable. The dialog does not list them, but an import of at least one plugin passes them
+   * to [JbSettingsImporter.installPlugins], so that they arrive disabled, as in the raw config import.
    */
   fun getPluginsHiddenByMigration(): Map<PluginId, PluginMainDescriptor> = hiddenByMigrationMap
 
@@ -427,7 +429,8 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
         selectedPlugins = productInfo.getPluginsDescriptors().filter {
           setting.selectedChildIds?.contains(it.key.idString) ?: false
         }
-        plugins2import = selectedPlugins + productInfo.getPluginsHiddenByMigration()
+        // with no plugin selected, nothing is installed, so a hidden plugin does not force a restart
+        plugins2import = if (selectedPlugins.isEmpty()) selectedPlugins else selectedPlugins + productInfo.getPluginsHiddenByMigration()
         unselectedPlugins = setting.unselectedChildIds
         logger.info(
           "Will import ${setting.selectedChildIds?.size} custom plugins: ${setting.selectedChildIds?.joinToString()}\n" +

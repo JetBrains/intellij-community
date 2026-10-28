@@ -422,7 +422,7 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
     ImportSettingsEventsCollector.jbPluginsNewImport()
     // the migrations run before the update check, so a plugin that they remove is not downloaded either
     val migratedIds = ConfigImportHelper.migrateImportedPlugins(
-      configDirPath, PathManager.getConfigDir(), plugins.values.filterNotNull(), false, LOG
+      configDirPath, PathManager.getConfigDir(), plugins.values.filterNotNull(), /* dryRun = */ false, LOG
     ).toMigrate.mapTo(HashSet()) { it.pluginId }
     val pluginsMap = plugins.filter { (id, descriptor) -> descriptor == null || id in migratedIds }
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)

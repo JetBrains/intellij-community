@@ -58,6 +58,15 @@ internal class ImportedPluginsMigrationTest {
     assertThat(newConfigDir.listDirectoryEntries()).isEmpty()
   }
 
+  @Test
+  fun `an import that cannot write the disabled plugins file still returns the plugins`() {
+    // a directory in place of the file makes the write fail
+    newConfigDir.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME).createDirectories()
+    val result = migrateFrom("2026.2", dryRun = false)
+    assertThat(ids(result.toMigrate)).containsExactly(AI_ASSISTANT_PLUGIN_ID, OTHER_PLUGIN_ID)
+    assertThat(result.toDisable).containsExactly(PluginId.getId(AI_ASSISTANT_PLUGIN_ID))
+  }
+
   /** Every import offers AI Assistant, Space and one more plugin. A migration removes Space on any version. */
   private fun migrateFrom(previousVersion: String, dryRun: Boolean): ConfigImportHelper.PluginMigrationResult {
     val oldConfigDir = configRoot.resolve("IntelliJIdea$previousVersion").createDirectories()

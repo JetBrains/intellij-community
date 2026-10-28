@@ -1190,7 +1190,7 @@ public final class ConfigImportHelper {
   /**
    * Applies the plugin migrations to the plugins of a partial import, the import of the plugins that the Import Settings dialog selected.
    * Without {@code dryRun}, it adds the plugins to disable to the disabled plugins file of {@code newConfigDir}, and a migration can
-   * write its own files there. In a dry run, nothing is written.
+   * write its own files there. It logs an I/O error of the disabled plugins file and does not throw it. In a dry run, nothing is written.
    */
   public static @NotNull PluginMigrationResult migrateImportedPlugins(
     @NotNull Path oldConfigDir,
@@ -1198,7 +1198,7 @@ public final class ConfigImportHelper {
     @NotNull Collection<? extends IdeaPluginDescriptor> plugins,
     boolean dryRun,
     @NotNull Logger log
-  ) throws IOException {
+  ) {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     return migrateImportedPlugins(oldConfigDir, newConfigDir, plugins, currentProductVersion, dryRun, log);
   }
@@ -1207,7 +1207,7 @@ public final class ConfigImportHelper {
   static @NotNull PluginMigrationResult migrateImportedPlugins(
     Path oldConfigDir, Path newConfigDir, Collection<? extends IdeaPluginDescriptor> plugins, String currentProductVersion,
     boolean dryRun, Logger log
-  ) throws IOException {
+  ) {
     var toMigrate = new ArrayList<IdeaPluginDescriptor>(plugins);
     var toDownload = new ArrayList<IdeaPluginDescriptor>();
     var toDisable = new ArrayList<PluginId>();
@@ -1220,8 +1220,13 @@ public final class ConfigImportHelper {
                toDownload.stream().map(d -> d.getPluginId().getIdString()).collect(Collectors.joining(", ")));
     }
     if (!dryRun && !toDisable.isEmpty()) {
-      amendDisabledPluginsFile(newConfigDir, ContainerUtil.map(toDisable, PluginId::getIdString), log);
-      DisabledPluginsState.Companion.invalidate();
+      try {
+        amendDisabledPluginsFile(newConfigDir, ContainerUtil.map(toDisable, PluginId::getIdString), log);
+        DisabledPluginsState.Companion.invalidate();
+      }
+      catch (IOException e) {
+        log.warn("Cannot add the plugins that the migrations disable to the disabled plugins file", e);
+      }
     }
     return new PluginMigrationResult(toMigrate, toDisable);
   }
