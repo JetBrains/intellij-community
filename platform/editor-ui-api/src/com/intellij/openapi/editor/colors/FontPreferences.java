@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -72,7 +72,14 @@ public class FontPreferences {
     return DEFAULT_LINE_SPACING;
   }
 
-  public static @NlsSafe String getDefaultFontName() {
+  /**
+   * @return a set of enabled font features (e.g. {@code zero}, {@code ss01}) for the default font.
+   */
+  public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {
+    return Set.of();
+  }
+
+  private static @NlsSafe String getDefaultFontName() {
     if (SystemInfo.isJetBrainsJvm) {
       return JETBRAINS_MONO;
     }
@@ -91,9 +98,4 @@ public class FontPreferences {
     }
     return FALLBACK_FONT_FAMILY;
   }
-
-  /**
-   * @return a set of enabled font features (e.g. {@code zero}, {@code ss01}) for the default font.
-   */
-  public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() { return Set.of(); }
 }

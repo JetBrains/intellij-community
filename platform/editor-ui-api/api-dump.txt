@@ -2065,7 +2065,6 @@ c:com.intellij.openapi.editor.colors.FontPreferences
 - copyTo(com.intellij.openapi.editor.colors.FontPreferences):V
 - getBoldSubFamily():java.lang.String
 - getCharacterVariants():java.util.Set
-- s:getDefaultFontName():java.lang.String
 - getEffectiveFontFamilies():java.util.List
 - getFontFamily():java.lang.String
 - getLineSpacing():F
