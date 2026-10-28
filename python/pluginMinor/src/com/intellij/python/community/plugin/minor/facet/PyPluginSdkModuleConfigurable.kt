@@ -10,33 +10,23 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.plugin.impl.facet.PythonFacetUtil
 import com.jetbrains.python.configuration.PyActiveSdkConfigurable
 import com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable
-import com.jetbrains.python.module.PyModuleService
 import com.jetbrains.python.sdk.removeTransferredRoots
 import com.jetbrains.python.sdk.transferRoots
 import org.jetbrains.annotations.ApiStatus
 
+/**
+ * The interpreter page of a module of another type, such as a CLion module with the Python facet. It sets the
+ * interpreter as for a Python module, through `PyProject.setPythonInterpreter`. That writes the interpreter library
+ * entry, and the facet gets the SDK for an older build, see [setSdkToFacet].
+ */
 internal class PyPluginSdkModuleConfigurable(project: Project?) : PyActiveSdkModuleConfigurable(project) {
-  override fun createModuleConfigurable(module: Module): UnnamedConfigurable {
-    return object : PyActiveSdkConfigurable(module) {
-      override fun setSdk(item: Sdk?) {
-        setSdkToFacetImpl(item, module)
-      }
-
-      override fun getSdk(): Sdk? {
-        // Read from the Python facet, which is the authoritative SDK storage for CLion.
-        // PyModuleService.findPythonSdk() checks ModuleRootManager.sdk first, but that
-        // may hold a stale value if the Python SDK was previously set via a different
-        // path. setSdkToFacet() (our setSdk override) only writes to the facet, so
-        // getSdk() must also read from the facet to keep isModified() consistent.
-        val facet = FacetManager.getInstance(module).getFacetByType(MinorPythonFacet.ID)
-        return facet?.configuration?.sdk
-               ?: PyModuleService.getInstance(module.project).findPythonSdk(module)
-      }
-    }
-  }
+  override fun createModuleConfigurable(module: Module): UnnamedConfigurable = object : PyActiveSdkConfigurable(module) {}
 }
 
-
+/**
+ * Writes [item] as the SDK of the Python facet of [module], and adds the facet when the module has none. It is how a
+ * module of another type stores its SDK for an older build. This build reads the interpreter library entry instead.
+ */
 @ApiStatus.Internal
 fun setSdkToFacet(item: Sdk?, module: Module) {
   setSdkToFacetImpl(item, module)

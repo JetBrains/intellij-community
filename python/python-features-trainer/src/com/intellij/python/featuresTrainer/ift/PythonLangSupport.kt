@@ -4,8 +4,9 @@ package com.intellij.python.featuresTrainer.ift
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -122,11 +123,15 @@ internal class PythonLangSupport(private val errorSink: ErrorSink = ErrorSink())
     }
   }
 
+  /**
+   * The Python binary of the interpreter of the learning project. The lesson cleanup keeps every directory above a
+   * protected path, so it keeps the virtual environment. The module names its interpreter by a library entry, not by a
+   * module SDK, so the snapshot gives it.
+   */
   @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-  override fun getProtectedDirs(project: Project): Set<Path> {
-    return project.getSdks().mapNotNull { it.homePath }.map { Path.of(it) }.toSet()
-  }
+  override fun getProtectedDirs(project: Project): Set<Path> =
+    when (val interpreter = project.mainPythonInterpreterIfReady()) {
+      is NativePythonInterpreter -> setOf(interpreter.pythonBinary)
+      is TargetPythonInterpreter, null -> emptySet()
+    }
 }
-
-@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
-private fun Project.getSdks(): Set<Sdk> = modules.mapNotNull { ModuleRootManager.getInstance(it).sdk }.toSet()

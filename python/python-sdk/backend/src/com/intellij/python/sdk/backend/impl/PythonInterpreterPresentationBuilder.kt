@@ -9,7 +9,22 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.sdk.backend.PySdkBundle.message
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.PythonInterpreterPresentationProvider
+import com.intellij.execution.target.getTargetType
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.getEelDescriptor
+import com.intellij.python.sdk.backend.NativePythonInterpreter
+import com.intellij.python.sdk.backend.detectedEnvironment
+import com.intellij.python.sdk.backend.SystemPythonEnvironment
+import com.intellij.python.sdk.backend.TargetPythonInterpreter
+import com.intellij.python.sdk.backend.binaryPathString
+import com.intellij.openapi.util.io.toNioPathOrNull
+import com.intellij.python.sdk.backend.resolvePythonHome
+import com.intellij.python.sdk.backend.targetAdditionalData
+import com.intellij.python.sdk.common.PyInterpreterRef
+import com.jetbrains.python.sdk.add.v2.PathHolder
+import kotlin.io.path.pathString
 import com.intellij.python.sdk.backend.getPythonInfo
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.python.sdk.common.PythonInterpreterProblem
@@ -30,46 +45,70 @@ import javax.swing.Icon
  * Reads only what is already recorded about the interpreter, so building this runs nothing and needs no coroutine.
  * Detecting the environment does; that happened when the [PythonInterpreter] was obtained.
  */
-internal fun PythonInterpreter.buildItem(customName: String? = null): PyInterpreterItem =
-  presentation(customName).let { PyInterpreterItem(ref, it.name, it.suffix, it.description, it.problem, it.icon, it.isPathDerivedName, it.toolShortName) }
+internal fun PythonInterpreter.buildItem(): PyInterpreterItem =
+  presentation().let { PyInterpreterItem(ref, it.name, it.suffix, it.description, it.problem, it.icon, it.isPathDerivedName) }
 
 /**
  * What a row draws for this interpreter, without the ref that selects it. For a list of the SDK table, which also shows a
  * broken SDK that no ref names, see [PythonInterpreterPresentation].
+ *
+ * The name is the env ref, which is the name the tool gives the environment: `.venv` for uv and pip, the environment
+ * name for conda and hatch, `in-project` for poetry. Where it runs follows it when that is not this machine, as in
+ * `ml · SSH`. The version follows the name. The description is the root of the environment, relative to the user home,
+ * so the path appears once. A system interpreter shows its binary instead, see [environmentRoot].
  */
-fun PythonInterpreter.presentation(customName: String? = null): PythonInterpreterPresentation {
+fun PythonInterpreter.presentation(): PythonInterpreterPresentation {
   // One question, asked once: it carries both the version the row shows and the reason it is flagged.
   val info = getPythonInfo()
   val problem = problemFrom(info)
 
-  val sdk = sdk
   val sudo = if (sdk.isRunAsRootViaSudo()) "[sudo]" else null
   // The version the interpreter reports about itself, which for an environment that states one is more exact than the
   // SDK's. A flagged interpreter has none to show, and the marker says why instead.
   val version = info.successOrNull?.version
   val secondary = listOfNotNull(sudo, version).joinToString(" ").ifEmpty { null }
 
-  // The tool that owns the interpreter may write its short label, where the shortened path reads badly. It replaces only
-  // the default: a caller that passed a [customName] named this one rendering, and keeps that name everywhere.
-  val toolShortName = if (customName == null) PythonInterpreterPresentationProvider.shortNameFor(sdk) else null
-
-  val displayName = customName ?: sdk.name
-  // Only the default path-derived name is safe to compact via the basename heuristic;
-  // a custom label like `SSH (sftp://...)` or a caller-supplied [customName] must be
-  // rendered as-is (modulo middle ellipsis) so it doesn't degenerate into `python)`.
-  val isPathDerivedName = customName == null && isNameDerivedFromHomePath(displayName, sdk.homePath)
-
   return PythonInterpreterPresentation(
-    name = displayName,
+    name = listOfNotNull(envName(), whereItRuns()).joinToString(" · "),
     suffix = secondary,
-    // Empty when the SDK carries no binary path. That SDK is invalid anyway, and the row states why through [problem],
-    // so there is nothing to gain from a placeholder that reads like a path.
-    description = sdk.homePath.orEmpty(),
+    description = FileUtil.getLocationRelativeToUserHome(environmentRoot()),
     problem = problem,
     icon = icon(problem).rpcId(),
-    isPathDerivedName = isPathDerivedName,
-    toolShortName = toolShortName,
+    isPathDerivedName = false,
   )
+}
+
+/**
+ * The name of the environment: its env ref, see [PyInterpreterRef.envRef]. An env ref that is an absolute path, such as
+ * the binary of a system Python, is the root of the environment relative to the user home instead, as the description.
+ */
+private fun PythonInterpreter.envName(): @NlsSafe String {
+  val envRef = ref.envRef.value
+  val isAbsolute = envRef.startsWith("/") || envRef.toNioPathOrNull()?.isAbsolute == true
+  return if (isAbsolute) FileUtil.getLocationRelativeToUserHome(environmentRoot()) else envRef
+}
+
+/**
+ * Where this interpreter runs, or `null` for this machine: the type of its target, such as SSH, or the machine of its
+ * binary, such as a WSL distribution. A native ref names an interpreter on any Eel machine, so the binary tells which.
+ */
+private fun PythonInterpreter.whereItRuns(): @Nls String? = when (this) {
+  is TargetPythonInterpreter -> targetAdditionalData?.targetEnvironmentConfiguration?.getTargetType()?.displayName
+  is NativePythonInterpreter -> pythonBinary.getEelDescriptor().takeIf { it != LocalEelDescriptor }?.let { machineName(it) }
+}
+
+/** The user-readable name of [descriptor], such as `Wsl: Ubuntu`. It names a machine, so it is not translated. */
+private fun machineName(descriptor: EelDescriptor): @NlsSafe String = descriptor.name
+
+/**
+ * The path that tells this interpreter apart: the root of its environment, the directory that holds `bin` or `Scripts`.
+ * A system interpreter has no environment of its own, and its root is a shared directory such as `/usr`, so it is told
+ * apart by its binary, such as `/usr/bin/python3.13`.
+ */
+private fun PythonInterpreter.environmentRoot(): String = when (this) {
+  is NativePythonInterpreter ->
+    if (detectedEnvironment is SystemPythonEnvironment) pythonBinary.pathString else pythonBinary.resolvePythonHome().pathString
+  is TargetPythonInterpreter -> (PathHolder.Target(binaryPathString).resolvePythonHome() as PathHolder.Target).pathString
 }
 
 /**
@@ -83,7 +122,6 @@ fun brokenSdkPresentation(sdk: Sdk, reason: @Nls String): PythonInterpreterPrese
   problem = invalidProblem(reason),
   icon = wrapIconWithWarningDecorator(AllIcons.Nodes.Unknown).rpcId(),
   isPathDerivedName = isNameDerivedFromHomePath(sdk.name, sdk.homePath),
-  toolShortName = null,
 )
 
 /** A configuration the user has to fix, which is `[invalid]` like any other. */
@@ -166,5 +204,4 @@ class PythonInterpreterPresentation(
   val problem: PythonInterpreterProblem?,
   val icon: IconId,
   val isPathDerivedName: Boolean,
-  val toolShortName: @NlsSafe String?,
 )

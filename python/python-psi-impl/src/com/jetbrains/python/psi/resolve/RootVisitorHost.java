@@ -1,6 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.resolve;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PyInterpreterLibraryKt;
+import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -63,7 +67,12 @@ public final class RootVisitorHost {
       enumerator = enumerator.recursively();
     }
     if (skipSdk) {
-      enumerator = enumerator.withoutSdk();
+      // The interpreter library of a module carries its interpreter as the SDK does, so it is skipped with it.
+      enumerator = enumerator.withoutSdk().satisfying(entry -> !PyInterpreterLibraryKt.isPyInterpreterLibrary(entry));
+    }
+    else {
+      // A module names its interpreter by one carrier, and the platform loads the other too. See isIgnoredInterpreterEntry.
+      enumerator = enumerator.satisfying(entry -> !PyInterpreterLibraryKt.isIgnoredInterpreterEntry(entry));
     }
     enumerator.forEach(orderEntry -> {
       if (orderEntry instanceof ModuleSourceOrderEntry) {
@@ -92,16 +101,17 @@ public final class RootVisitorHost {
 
     // out-of-project file or non-file(e.g. console) - use roots of the main PyProject's interpreter
     if (orderEntries == null) {
-      final Sdk sdk = MainPythonSdkKt.mainPythonSdk(file.getProject());
-      if (sdk != null) {
-        visitSdkRoots(sdk, visitor);
+      final PythonInterpreter interpreter = MainPythonSdkKt.mainPythonInterpreter(file.getProject());
+      if (interpreter != null) {
+        visitInterpreterRoots(file.getProject(), interpreter, visitor);
       }
     }
   }
 
-  public static boolean visitSdkRoots(@NotNull Sdk sdk, @NotNull RootVisitor visitor) {
-    final VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
-    for (VirtualFile root : roots) {
+  /** Visits the class roots of [interpreter] in [project]. Returns whether the visitor stopped. */
+  public static boolean visitInterpreterRoots(@NotNull Project project, @NotNull PythonInterpreter interpreter, @NotNull RootVisitor visitor) {
+    final Sdk sdk = MainPythonSdkKt.resolveSdk(interpreter);
+    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, project)) {
       if (!visitor.visitRoot(root, null, sdk, false)) {
         return true;
       }
@@ -122,12 +132,17 @@ public final class RootVisitorHost {
     return true;
   }
 
+  /** The SDK of the interpreter that [entry] carries, when it is the interpreter library of its module. */
+  private static @Nullable Sdk interpreterSdkOf(@NotNull OrderEntry entry) {
+    return PyInterpreterLibraryKt.isInterpreterLibraryCarrier(entry) ? MainPythonSdkKt.pythonSdkIfReady(entry.getOwnerModule()) : null;
+  }
+
   private static boolean visitOrderEntryRoots(RootVisitor visitor, OrderEntry entry) {
     Set<VirtualFile> allRoots = new LinkedHashSet<>();
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.SOURCES));
     Collections.addAll(allRoots, entry.getFiles(OrderRootType.CLASSES));
     Module module = entry instanceof ModuleOrderEntry ? ((ModuleOrderEntry)entry).getModule() : null;
-    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdk() : null;
+    Sdk sdk = entry instanceof JdkOrderEntry ? ((JdkOrderEntry)entry).getJdk() : interpreterSdkOf(entry);
     for (VirtualFile root : allRoots) {
       if (!visitor.visitRoot(root, module, sdk, false)) {
         return false;

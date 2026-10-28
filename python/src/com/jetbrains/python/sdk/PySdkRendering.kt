@@ -113,22 +113,14 @@ private suspend fun pyProjectInterpreters(project: Project, module: Module?): Li
 }
 
 /**
- * The interpreters of [module] as a UI list holds them, read under a progress over [owner], for a Java caller that
- * cannot suspend. See [pyProjectInterpreters].
+ * The interpreters of [module] as a UI list holds them, read under a progress over the project, for a Java caller that
+ * cannot suspend. See [pyProjectInterpreters]. The rows of the list are their [PythonInterpreter.asItem].
  */
 @ApiStatus.Internal
 @RequiresEdt
-fun pyProjectInterpreterItemsUnderProgress(project: Project, module: Module?, owner: JComponent): List<PyInterpreterItem> =
-  runWithModalProgressBlocking(ModalTaskOwner.component(owner), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    pyProjectInterpreters(project, module).map { it.asItem() }
-  }
-
-/** The same, for a caller that has no component to hang the progress on yet, such as a form constructor. */
-@ApiStatus.Internal
-@RequiresEdt
-fun pyProjectInterpreterItemsUnderProgress(project: Project, module: Module?): List<PyInterpreterItem> =
+fun pyProjectInterpretersUnderProgress(project: Project, module: Module?): List<PythonInterpreter> =
   runWithModalProgressBlocking(ModalTaskOwner.project(project), PyBundle.message("python.interpreters.reading.interpreters.progress")) {
-    pyProjectInterpreters(project, module).map { it.asItem() }
+    pyProjectInterpreters(project, module)
   }
 
 /**
@@ -178,8 +170,11 @@ internal fun SimpleColoredComponent.customizeWithSdkValue(
     is PyInterpreterItem -> appendItem(value)
     is String -> append(value)
     null -> {
+      // The row of the current interpreter says only that, in grey, with its icon. The row of the same interpreter below
+      // it names it, so this row repeats nothing.
       if (nullItem != null) {
-        appendItem(nullItem)
+        icon = nullItem.icon.icon()
+        append(nullLabel, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
       else {
         append(nullLabel)
@@ -204,7 +199,7 @@ private fun SimpleColoredComponent.appendItem(item: PyInterpreterItem) = with(it
   }
 
   if (suffix != null) {
-    append(" $suffix", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
+    append(" [$suffix]", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)
   }
 
   append(" $description", SimpleTextAttributes.GRAYED_SMALL_ATTRIBUTES)

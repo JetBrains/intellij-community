@@ -1,14 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.projectView;
 
+import com.intellij.python.sdk.backend.PyInterpreterLibraryKt;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
-import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
+import com.intellij.ide.projectView.impl.nodes.ExternalLibrariesNode;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -21,6 +23,10 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.evolution.EvoPyProject;
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.PyDocStringOwner;
@@ -42,26 +48,29 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
                                                          @NotNull Collection<AbstractTreeNode<?>> children,
                                                          ViewSettings settings) {
     final Project project = parent.getProject();
-    final Sdk sdk = getPythonSdk(parent);
-    if (sdk != null && project != null) {
+    final PythonInterpreter interpreter = project != null ? getPythonInterpreter(project, parent) : null;
+    if (interpreter != null) {
       final Collection<AbstractTreeNode<?>> newChildren = hideSkeletons(children);
-      final PySkeletonsNode skeletonsNode = PySkeletonsNode.create(project, sdk, settings);
+      final PySkeletonsNode skeletonsNode = PySkeletonsNode.create(project, interpreter, settings);
       if (skeletonsNode != null) {
         newChildren.add(skeletonsNode);
       }
-      final PyRemoteLibrariesNode remoteLibrariesNode = PyRemoteLibrariesNode.create(project, sdk, settings);
+      final PyRemoteLibrariesNode remoteLibrariesNode = PyRemoteLibrariesNode.create(project, interpreter, settings);
       if (remoteLibrariesNode != null) {
         newChildren.add(remoteLibrariesNode);
       }
-      final PyTypeShedNode typeShedNode = PyTypeShedNode.Companion.create(project, sdk, settings);
+      final PyTypeShedNode typeShedNode = PyTypeShedNode.Companion.create(project, interpreter, settings);
       if (typeShedNode != null) {
         newChildren.add(typeShedNode);
       }
-      final PyBundledStubsNode bundledStubsNode = PyBundledStubsNode.Companion.create(project, sdk, settings);
+      final PyBundledStubsNode bundledStubsNode = PyBundledStubsNode.Companion.create(project, interpreter, settings);
       if (bundledStubsNode != null) {
         newChildren.add(bundledStubsNode);
       }
       return newChildren;
+    }
+    if (parent instanceof ExternalLibrariesNode && project != null) {
+      return drawInterpreterLibraries(project, children, settings);
     }
     if (settings != null && settings.isShowMembers()) {
       List<AbstractTreeNode<?>> newChildren = new ArrayList<>();
@@ -79,20 +88,50 @@ public final class PyTreeStructureProvider implements SelectableTreeStructurePro
     return children;
   }
 
-  private static @Nullable Sdk getPythonSdk(@NotNull AbstractTreeNode node) {
-    if (node instanceof NamedLibraryElementNode) {
-      final NamedLibraryElement value = ((NamedLibraryElementNode)node).getValue();
-      if (value != null) {
-        final LibraryOrSdkOrderEntry entry = value.getOrderEntry();
-        if (entry instanceof JdkOrderEntry) {
-          final Sdk sdk = ((JdkOrderEntry)entry).getJdk();
-          if (sdk != null && PythonSdkUtil.isPythonSdk(sdk, true)) {
-            return sdk;
-          }
-        }
+  /**
+   * Draws each interpreter library among [children] as its interpreter, see [PyInterpreterLibraryNode]. A Python SDK is
+   * not shown: a module keeps it only for an older build.
+   */
+  private static @NotNull Collection<AbstractTreeNode<?>> drawInterpreterLibraries(@NotNull Project project,
+                                                                                   @NotNull Collection<AbstractTreeNode<?>> children,
+                                                                                   ViewSettings settings) {
+    List<AbstractTreeNode<?>> newChildren = new ArrayList<>(children.size());
+    for (AbstractTreeNode<?> child : children) {
+      if (child instanceof NamedLibraryElementNode libraryNode && libraryNode.getValue() != null &&
+          PyInterpreterLibraryKt.isIgnoredInterpreterEntry(libraryNode.getValue().getOrderEntry())) {
+        continue;
+      }
+      if (child instanceof NamedLibraryElementNode libraryNode &&
+          !(child instanceof PyInterpreterLibraryNode) &&
+          libraryNode.getValue() != null &&
+          PyInterpreterLibraryKt.isInterpreterLibraryCarrier(libraryNode.getValue().getOrderEntry())) {
+        newChildren.add(new PyInterpreterLibraryNode(project, libraryNode.getValue(), settings));
+      }
+      else {
+        newChildren.add(child);
       }
     }
-    return null;
+    return newChildren;
+  }
+
+  private static @Nullable PythonInterpreter getPythonInterpreter(@NotNull Project project, @NotNull AbstractTreeNode<?> node) {
+    if (!(node instanceof NamedLibraryElementNode libraryNode) || libraryNode.getValue() == null) return null;
+    final LibraryOrSdkOrderEntry entry = libraryNode.getValue().getOrderEntry();
+    if (PyInterpreterLibraryKt.isIgnoredInterpreterEntry(entry)) return null;
+
+    // The node of the carrier that the module names its interpreter by, see isIgnoredInterpreterEntry.
+    if (PyInterpreterLibraryKt.isInterpreterLibraryCarrier(entry)) {
+      return findInterpreter(entry.getOwnerModule());
+    }
+    if (!(entry instanceof JdkOrderEntry jdkEntry) || !(jdkEntry.getJdk() instanceof Sdk sdk)) return null;
+    if (!PythonSdkUtil.isPythonSdk(sdk, true)) return null;
+    return PythonInterpreterRegistry.Companion.getInstance(project).interpreterOfIfReady(sdk);
+  }
+
+  /** The interpreter of the Python project that resides on [module], read from the snapshot. */
+  private static @Nullable PythonInterpreter findInterpreter(@Nullable Module module) {
+    EvoPyProject pyProject = module == null ? null : EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
+    return pyProject == null ? null : pyProject.getInterpreter();
   }
 
   private static @NotNull Collection<AbstractTreeNode<?>> hideSkeletons(@NotNull Collection<AbstractTreeNode<?>> children) {

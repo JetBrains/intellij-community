@@ -1,15 +1,14 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.tensorFlow
 
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
+import com.jetbrains.python.psi.resolve.pythonInterpreterIfReady
+import com.jetbrains.python.psi.resolve.storedInterpreter
 import com.intellij.python.requirements.pyRequirementVersionSpec
-import com.jetbrains.python.PyPsiPackageUtil
-import com.jetbrains.python.packaging.PyPackage
-import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.packaging.requirement.PyRequirementVersionSpec
+import com.jetbrains.python.psi.resolve.PackageAvailabilityService
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 
@@ -64,8 +63,10 @@ private val LAYOUT_PER_VERSION: List<Pair<VersionRange, Map<String, String>>> = 
   ),
 )
 
-internal fun getTensorFlowPathConfig(sdk: Sdk?): Map<String, String> {
-  val version = getTensorFlowPackage(sdk)?.version
+/** The TensorFlow layout of the interpreter that [context] resolves in: the one of its module, or its own. */
+internal fun getTensorFlowPathConfig(context: PyQualifiedNameResolveContext): Map<String, String> {
+  val interpreter = context.module?.pythonInterpreterIfReady() ?: context.storedInterpreter
+  val version = interpreter?.let { PackageAvailabilityService.getInstance().installedPackageVersion(context.project, it, "tensorflow") }
   if (version == null) {
     return LAYOUT_PER_VERSION.first().second
   }
@@ -74,15 +75,6 @@ internal fun getTensorFlowPathConfig(sdk: Sdk?): Map<String, String> {
 
 internal fun takeFirstResolvedInTensorFlow(qualifiedName: String, context: PyQualifiedNameResolveContext): PsiElement? {
   return resolveQualifiedName(QualifiedName.fromDottedString(qualifiedName), context).firstOrNull()
-}
-
-private fun getTensorFlowPackage(sdk: Sdk?): PyPackage? {
-  if (sdk == null) return null
-
-  val pkgManager = PyPackageManager.getInstance(sdk)
-
-  val packages = pkgManager.packages ?: return null
-  return PyPsiPackageUtil.findPackage(packages, "tensorflow")
 }
 
 private data class VersionRange(val minIncluded: String?, val maxExcluded: String?) {

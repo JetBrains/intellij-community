@@ -3,18 +3,25 @@ package com.jetbrains.python.psi.resolve
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl
 
+/**
+ * The only [PyQualifiedNameResolveContext].
+ *
+ * [interpreter] is set only for a context that has no module and no foothold, see [fromInterpreter]. Resolve then visits
+ * the roots of that interpreter. A context with a module or a foothold finds its interpreter from them.
+ */
 data class PyQualifiedNameResolveContextImpl(
   private val psiManager: PsiManager, private val module: Module?,
-  private val foothold: PsiElement?, private val sdk: Sdk?,
+  private val foothold: PsiElement?, internal val interpreter: PythonInterpreter? = null,
   private val relativeLevel: Int = -1,
   private val withoutRoots: Boolean = false,
   private val withoutForeign: Boolean = false,
@@ -26,8 +33,6 @@ data class PyQualifiedNameResolveContextImpl(
   override fun getFoothold(): PsiElement? = foothold
 
   override fun getRelativeLevel(): Int = relativeLevel
-
-  override fun getSdk(): Sdk? = sdk
 
   override fun getModule(): Module? = module
 
@@ -44,9 +49,6 @@ data class PyQualifiedNameResolveContextImpl(
   override fun getWithPlainDirectories(): Boolean = withPlainDirectories
 
   override fun getWithoutStubs(): Boolean = withoutStubs
-
-  override fun getEffectiveSdk(): Sdk? =
-    if (visitAllModules && foothold != null) PythonRuntimeService.getInstance().getConsoleSdk(foothold) else sdk
 
   override fun isValid(): Boolean = footholdFile?.isValid ?: true
 
@@ -81,3 +83,17 @@ data class PyQualifiedNameResolveContextImpl(
                             file is PyExpressionCodeFragmentImpl)
   }
 }
+
+/**
+ * The interpreter of the Python console that [foothold] is in, or `null`. The console stores its SDK, and the registry
+ * of its project holds the interpreter of that SDK.
+ */
+internal fun consoleInterpreterOf(foothold: PsiElement): PythonInterpreter? =
+  PythonRuntimeService.getInstance().getConsoleSdk(foothold)?.let { foothold.project.findPythonInterpreterIfReady(it) }
+
+/**
+ * The interpreter of a context without a module and a foothold, see [PyQualifiedNameResolveContextImpl.interpreter].
+ * [PyQualifiedNameResolveContextImpl] is the only implementation, so the cast always succeeds.
+ */
+internal val PyQualifiedNameResolveContext.storedInterpreter: PythonInterpreter?
+  get() = (this as PyQualifiedNameResolveContextImpl).interpreter

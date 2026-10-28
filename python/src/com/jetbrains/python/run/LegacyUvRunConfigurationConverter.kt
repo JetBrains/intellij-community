@@ -4,7 +4,6 @@ package com.jetbrains.python.run
 import com.intellij.openapi.util.JDOMExternalizerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.xmlb.XmlSerializer
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jdom.Element
 
 /**
@@ -91,10 +90,11 @@ internal fun applyLegacyUvRunConfiguration(element: Element, configuration: Pyth
   migrated.isModuleMode = options.runType == LegacyUvRunType.MODULE
   // Merged rather than assigned, to keep the environment the configuration set up for itself.
   migrated.envs.putAll(options.env)
-  migrated.sdk = options.uvSdkKey?.let { PythonSdkUtil.findSdkByKey(it) }
   migrated.useRunTool = true
   // Cast pins the PythonRunConfigurationParams overload, which copies the script fields too, not just the base ones.
   PythonRunConfiguration.copyParams(migrated as PythonRunConfigurationParams, configuration)
+  // The SDK key is the SDK name, so it reads as the SDK_NAME field of an older build.
+  configuration.setLegacySdkName(options.uvSdkKey)
   configuration.myLegacyUvMigrationPending = true
 
   // Not made unique against the other configurations: the run manager is loading its own state here, so asking it for

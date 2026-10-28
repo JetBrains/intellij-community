@@ -60,8 +60,7 @@ public final class PySkeletonUtil {
    */
   @RequiresBackgroundThread
   public static @Nullable VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
-    PythonInterpreter interpreter = PythonInterpreterKt.pythonInterpreterResult(pythonSdk, false).getSuccessOrNull();
-    return interpreter == null ? null : PythonInterpreterExtKt.sitePackagesDirectory(interpreter);
+    return PythonInterpreterExtKt.sitePackagesDirectory(pythonSdk);
   }
 
   /**

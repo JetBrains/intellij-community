@@ -11,12 +11,8 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.ValidationInfoBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.PythonLanguageRuntimeType
@@ -24,18 +20,17 @@ import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
+/** Minimum preferred width for the "Interpreter Settings" edit dialog — matches the Figma spec. */
+private const val EDIT_DIALOG_MIN_WIDTH: Int = 720
+
 /**
  * "Interpreter Settings" edit dialog for a **remote** target-aware Python SDK — Docker, Docker
  * Compose, SSH, WSL, and similar. Renders the same right-side form the classical Project
- * Structure > Modules > Interpreter dialog shows, with an added **Interpreter Name** row so the
- * rename flow lives inside the same dialog rather than behind a separate action.
- *
- * State and persistence live in [PyRemoteInterpreterEditModel]; the dialog binds the name field
- * via Kotlin UI DSL v2 and hands OK to the model's `apply`.
+ * Structure > Modules > Interpreter dialog shows. The interpreter keeps its name, so only the
+ * target configuration is editable.
  */
 internal class PyRemoteInterpreterEditDialog private constructor(
   project: Project,
-  private val model: PyRemoteInterpreterEditModel,
   private val detailsConfigurable: PythonTargetInterpreterDetailsConfigurable,
 ) : DialogWrapper(project, true) {
 
@@ -55,18 +50,8 @@ internal class PyRemoteInterpreterEditDialog private constructor(
     // `createFor` and dialog open, or the target type opts out of a UI form). Render an empty
     // panel in that edge case instead of crashing the OK path.
     val details = detailsConfigurable.createComponent() ?: return panel { }
+    // The name is not editable: an interpreter keeps its name, see [PyInterpreterEditDialogLauncher].
     dialogPanel = panel {
-      row(PyBundle.message("configurable.PyAllInterpretersConfigurable.edit.dialog.interpreter.name")) {
-        // Same validator on input + on apply — flags a duplicate name as the user types and again on OK.
-        val nameValidator: ValidationInfoBuilder.(JBTextField) -> ValidationInfo? = { field ->
-          model.validateName(field.text)?.let { error(it) }
-        }
-        textField()
-          .bindText(model::name)
-          .align(AlignX.FILL)
-          .validationOnInput(nameValidator)
-          .validationOnApply(nameValidator)
-      }
       row {
         cell(details).align(AlignX.FILL)
       }
@@ -92,13 +77,12 @@ internal class PyRemoteInterpreterEditDialog private constructor(
   override fun doOKAction() {
     dialogPanel.apply()
     try {
-      model.apply()
+      detailsConfigurable.apply()
     }
     catch (e: ConfigurationException) {
       Messages.showErrorDialog(contentPane, e.messageHtml.toString(), title)
       return
     }
-    detailsConfigurable.apply()
     super.doOKAction()
   }
 
@@ -125,8 +109,7 @@ internal class PyRemoteInterpreterEditDialog private constructor(
         parent,
       )
       val detailsConfigurable = PythonTargetInterpreterDetailsConfigurable(project, sdk, additionalData, targetConfigurable)
-      val model = PyRemoteInterpreterEditModel(project, sdk)
-      return PyRemoteInterpreterEditDialog(project, model, detailsConfigurable)
+      return PyRemoteInterpreterEditDialog(project, detailsConfigurable)
     }
   }
 }

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -76,6 +77,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CheckReturnValue
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 
 
 /**
@@ -172,8 +174,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun syncLocked(): PyResult<List<PythonPackage>> {
-    if (sdk.isReadOnly) {
-      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    if (interpreter.isReadOnly) {
+      return PyResult.localizedError(interpreter.readOnlyErrorMessage)
     }
     syncLockedCommand().getOr { return it }
     return reloadPackages()
@@ -185,8 +187,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     module: Module? = null,
     dependencyGroup: PyDependencyGroup? = null,
   ): PyResult<List<PythonPackage>> {
-    if (sdk.isReadOnly) {
-      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    if (interpreter.isReadOnly) {
+      return PyResult.localizedError(interpreter.readOnlyErrorMessage)
     }
     waitForInit()
     installPackageCommand(installRequest, options, module, dependencyGroup).getOr { return it }
@@ -196,8 +198,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
   @ApiStatus.Internal
   suspend fun updatePackages(vararg packages: PythonRepositoryPackageSpecification): PyResult<List<PythonPackage>> {
-    if (sdk.isReadOnly) {
-      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    if (interpreter.isReadOnly) {
+      return PyResult.localizedError(interpreter.readOnlyErrorMessage)
     }
     waitForInit()
     updatePackageCommand(*packages).getOr { return it }
@@ -211,8 +213,8 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     workspaceMember: PyWorkspaceMember? = null,
     dependencyGroup: PyDependencyGroup? = null,
   ): PyResult<List<PythonPackage>> {
-    if (sdk.isReadOnly) {
-      return PyResult.localizedError(sdk.readOnlyErrorMessage)
+    if (interpreter.isReadOnly) {
+      return PyResult.localizedError(interpreter.readOnlyErrorMessage)
     }
     if (packages.isEmpty()) {
       return PyResult.success(listInstalledPackagesSnapshot())
@@ -270,7 +272,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     // Outside the mutex: in a headless run the SDK update is synchronous, and the update it queues reloads the packages.
     if (!isInit) {
       withContext(NonCancellable) {
-        refreshPaths(project, sdk)
+        refreshPaths(project, interpreter)
       }
     }
 
@@ -650,6 +652,14 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
     @Throws(AlreadyDisposedException::class)
     fun forPythonInterpreter(project: Project, interpreter: PythonInterpreter): PythonPackageManager =
       project.service<PythonPackageManagerService>().forPythonInterpreter(project, interpreter)
+
+    /** For tests: drops the cached managers of [project], see [PythonPackageManagerServiceImpl.dropManagersForTests]. */
+    @TestOnly
+    @ApiStatus.Internal
+    @JvmStatic
+    fun dropManagersForTests(project: Project) {
+      project.serviceIfCreated<PythonPackageManagerService>()?.let { (it as? PythonPackageManagerServiceImpl)?.dropManagersForTests() }
+    }
 
     @Topic.AppLevel
     val PACKAGE_MANAGEMENT_TOPIC: Topic<PythonPackageManagementListener> =

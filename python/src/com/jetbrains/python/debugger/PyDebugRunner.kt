@@ -36,7 +36,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -82,6 +81,8 @@ import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
 import com.jetbrains.python.sdk.getOrCreateAdditionalDataOld
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.getPythonInfo
 import com.jetbrains.python.PYTHONPATH
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -552,9 +553,9 @@ open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
       }
 
       if (runConfiguration != null) {
-        val sdk = runConfiguration.sdk
-        if (sdk != null) {
-          val langLevel = languageLevelOf(sdk)
+        val interpreter = runConfiguration.pythonInterpreter
+        if (interpreter != null) {
+          val langLevel = interpreter.getPythonInfo().successOrNull?.languageLevel ?: LanguageLevel.getDefault()
           // PY-28457 Disable Cython extensions in Python 3.4 and Python 3.5 because of a crash in generated C code
           if (langLevel == LanguageLevel.PYTHON34 || langLevel == LanguageLevel.PYTHON35) {
             environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO")
@@ -632,9 +633,9 @@ open class PyDebugRunner : AsyncProgramRunner<RunnerSettings>() {
     }
 
     private fun addSdkRootsToEnv(environmentController: EnvironmentController, runConfiguration: AbstractPythonRunConfiguration<*>) {
-      val sdk = runConfiguration.sdk
-      if (sdk != null) {
-        val roots = sdk.rootProvider.getFiles(OrderRootType.CLASSES).map { it.path }
+      val interpreter = runConfiguration.pythonInterpreter
+      if (interpreter != null) {
+        val roots = interpreter.classRoots(runConfiguration.project).map { it.path }
         // Assume that libraries are located on the target machine
         environmentController.putFixedValue(LIBRARY_ROOTS, StringUtil.join(roots, pathSeparator))
       }

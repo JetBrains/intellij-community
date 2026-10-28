@@ -109,6 +109,8 @@ import com.jetbrains.python.run.PythonRunParams;
 import com.jetbrains.python.run.PythonScripts;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.intellij.lang.annotations.Language;
@@ -1276,23 +1278,19 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       throw new UnsupportedOperationException();
     }
 
-    @Override
-    public @Nullable String getSdkHome() {
-      return mySdk.getHomePath();
-    }
-
+    /** The console runner gives an SDK, which the registry might not hold. So these parameters keep it as it is. */
     @Override
     public @NotNull Sdk getSdk() {
       return mySdk;
     }
 
     @Override
-    public void setSdkHome(String sdkHome) {
-      throw new UnsupportedOperationException();
+    public @Nullable PythonInterpreter getPythonInterpreter() {
+      return PythonInterpreterRegistryKt.findPythonInterpreterInOpenProjectsIfReady(mySdk);
     }
 
     @Override
-    public void setSdk(@Nullable Sdk sdk) {
+    public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
       throw new UnsupportedOperationException();
     }
 

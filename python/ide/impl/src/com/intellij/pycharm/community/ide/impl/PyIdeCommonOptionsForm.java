@@ -7,14 +7,11 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.python.sdk.backend.PyInterpreterRefsKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry;
 import com.intellij.python.sdk.common.PyInterpreterItem;
-import com.intellij.python.sdk.common.PyInterpreterRef;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +21,6 @@ import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.PyCommonOptionsFormData;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PySdkRenderingKt;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +37,13 @@ import java.util.function.Consumer;
 
 public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   private final PyIdeCommonOptionsPanel content;
-  private String mySelectedSdkHome = null;
-  private Sdk mySelectedSdk = null;
+  /** The interpreter that {@link #setPythonInterpreter} gave, selected when the mode is not "project default". */
+  private @Nullable PythonInterpreter mySelectedInterpreter = null;
 
   private JComponent labelAnchor;
   private final Project myProject;
+  /** The interpreters of the combo, in the order of {@link #myInterpreterItems}. */
+  private List<PythonInterpreter> myInterpreters;
   /** The combo's interpreter rows. The combo shows them after a leading null row for "project default". */
   private List<PyInterpreterItem> myInterpreterItems;
   private @NotNull List<String> myEnvPaths = Collections.emptyList();
@@ -57,7 +55,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   public PyIdeCommonOptionsForm(PyCommonOptionsFormData data) {
     myProject = data.getProject();
-    myInterpreterItems = PySdkRenderingKt.pyProjectInterpreterItemsUnderProgress(myProject, null);
+    setInterpreters(PySdkRenderingKt.pyProjectInterpretersUnderProgress(myProject, null));
     List<PyInterpreterItem> rows = new ArrayList<>(myInterpreterItems);
     rows.addFirst(null);
     Module[] modules = ModuleManager.getInstance(data.getProject()).getModules();
@@ -140,24 +138,13 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   @Override
-  public String getSdkHome() {
-    Sdk selectedSdk = selectedSdk();
-    return selectedSdk == null ? null : selectedSdk.getHomePath();
+  public @Nullable PythonInterpreter getPythonInterpreter() {
+    return selectedInterpreter();
   }
 
   @Override
-  public void setSdkHome(String sdkHome) {
-    mySelectedSdkHome = sdkHome;
-  }
-
-  @Override
-  public @Nullable Sdk getSdk() {
-    return selectedSdk();
-  }
-
-  @Override
-  public void setSdk(@Nullable Sdk sdk) {
-    mySelectedSdk = sdk;
+  public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
+    mySelectedInterpreter = interpreter;
   }
 
   @Override
@@ -203,17 +190,17 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   private void updateDefaultInterpreter(Module module) {
-    final Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(module);
+    final PythonInterpreter interpreter = PyModuleInterpreterReader.findModuleInterpreterIfReady(module);
+    final PyInterpreterItem item = interpreter != null ? PythonInterpreterExtKt.asItem(interpreter) : null;
     content.interpreterComboBox.setRenderer(
-      sdk == null
+      item == null
       ? new PySdkListCellRenderer()
-      : new PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.project.default.0", sdk.getName()),
-                                  PySdkRenderingKt.interpreterItemsUnderProgress(List.of(sdk), content.panel).getFirst())
+      : new PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.current"), item)
     );
   }
 
   public void updateSdkList(boolean preserveSelection) {
-    myInterpreterItems = PySdkRenderingKt.pyProjectInterpreterItemsUnderProgress(myProject, getModule(), content.panel);
+    setInterpreters(PySdkRenderingKt.pyProjectInterpretersUnderProgress(myProject, getModule()));
     PyInterpreterItem selection =
       preserveSelection && content.interpreterComboBox.getSelectedItem() instanceof PyInterpreterItem item ? item : null;
     if (!myInterpreterItems.contains(selection)) {
@@ -231,26 +218,25 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   @Override
   public void setUseModuleSdk(boolean useModuleSdk) {
-    if (mySelectedSdk != null) {
-      content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : itemFor(mySelectedSdk));
-      return;
-    }
-    content.interpreterComboBox.setSelectedItem(
-      useModuleSdk ? null : itemFor(PythonSdkUtil.findSdkByPath(mySelectedSdkHome)));
+    content.interpreterComboBox.setSelectedItem(useModuleSdk ? null : itemFor(mySelectedInterpreter));
   }
 
-  /** The SDK the combo has selected, or null for the "project default" row or an interpreter that is gone. */
-  private @Nullable Sdk selectedSdk() {
-    Object selected = content.interpreterComboBox.getSelectedItem();
-    return selected instanceof PyInterpreterItem item ? PythonInterpreterExtKt.findSdk(item) : null;
+  /** Makes {@code interpreters} the rows of the combo, see {@link #myInterpreters}. */
+  private void setInterpreters(@NotNull List<PythonInterpreter> interpreters) {
+    myInterpreters = interpreters;
+    myInterpreterItems = ContainerUtil.map(interpreters, interpreter -> PythonInterpreterExtKt.asItem(interpreter));
   }
 
-  /** The combo row that stands for {@code sdk}, or null when the combo holds no row for it. */
-  private @Nullable PyInterpreterItem itemFor(@Nullable Sdk sdk) {
-    if (sdk == null) return null;
-    PyInterpreterRef ref = PyInterpreterRefsKt.interpreterRefOf(sdk);
-    if (ref == null) return null;
-    return ContainerUtil.find(myInterpreterItems, item -> ref.equals(item.getRef()));
+  /** The interpreter the combo has selected, or null for the "project default" row. */
+  private @Nullable PythonInterpreter selectedInterpreter() {
+    int index = myInterpreterItems.indexOf(content.interpreterComboBox.getSelectedItem());
+    return index >= 0 ? myInterpreters.get(index) : null;
+  }
+
+  /** The combo row that stands for {@code interpreter}, or null when the combo holds no row for it. */
+  private @Nullable PyInterpreterItem itemFor(@Nullable PythonInterpreter interpreter) {
+    int index = interpreter != null ? myInterpreters.indexOf(interpreter) : -1;
+    return index >= 0 ? myInterpreterItems.get(index) : null;
   }
 
   @Override
@@ -323,22 +309,21 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
   }
 
   private void updateRemoteInterpreterMode() {
-    setRemoteInterpreterMode(PythonSdkUtil.isRemote(getSdkSelected()));
+    setRemoteInterpreterMode(isRemote(selectedOrModuleInterpreter()));
     for (Consumer<Boolean> f : myRemoteInterpreterModeListeners) {
       f.accept(myInterpreterRemote);
     }
   }
 
-  private @Nullable Sdk getSdkSelected() {
-    String sdkHome = getSdkHome();
-    if (StringUtil.isEmptyOrSpaces(sdkHome)) {
-      final Sdk projectJdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
-      if (projectJdk != null) {
-        sdkHome = projectJdk.getHomePath();
-      }
-    }
+  /** The selected interpreter, or the interpreter of the module for the "project default" row. */
+  private @Nullable PythonInterpreter selectedOrModuleInterpreter() {
+    final PythonInterpreter selected = selectedInterpreter();
+    return selected != null ? selected : PyModuleInterpreterReader.findModuleInterpreterIfReady(getModule());
+  }
 
-    return PythonSdkUtil.findSdkByPath(sdkHome);
+  /** Whether {@code interpreter} runs on a target, which needs path mappings. */
+  private static boolean isRemote(@Nullable PythonInterpreter interpreter) {
+    return interpreter != null && PythonInterpreterExtKt.isOnTarget(interpreter);
   }
 
   private void addInterpreterComboBoxActionListener(ActionListener listener) {

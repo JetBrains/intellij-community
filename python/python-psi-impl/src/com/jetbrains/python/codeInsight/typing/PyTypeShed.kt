@@ -156,11 +156,10 @@ object PyTypeShed {
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
-  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk: Sdk): Boolean {
+  fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, currentLanguageLevel: LanguageLevel): Boolean {
     if (isInStandardLibrary(root)) {
       val head = name.firstComponent ?: return true
       val languageLevels = stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels[head] ?: return true
-      val currentLanguageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
       val maxLanguageLevel = languageLevels.second
       return currentLanguageLevel.isAtLeast(languageLevels.first) &&
              (maxLanguageLevel == null || maxLanguageLevel.isAtLeast(currentLanguageLevel))

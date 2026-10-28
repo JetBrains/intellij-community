@@ -53,3 +53,7 @@ fun findAllSdksIfReady(project: Project): List<Sdk> {
   @Suppress("DEPRECATION") // The callers still take an SDK.
   return project.pythonInterpretersIfReady().orEmpty().map { it.getSdkAPI() }.distinct()
 }
+
+/** Every interpreter of the snapshot of [project]. Empty before the first snapshot. */
+@ApiStatus.Internal
+fun findAllInterpretersIfReady(project: Project): Set<PythonInterpreter> = project.pythonInterpretersIfReady().orEmpty()

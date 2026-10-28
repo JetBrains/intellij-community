@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.python.sdk.backend.PythonSdkTable
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.impl.presentation
 import com.intellij.python.sdk.backend.impl.PythonInterpreterPresentation
 import com.intellij.python.sdk.backend.impl.brokenSdkPresentation
@@ -16,7 +18,6 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
@@ -26,11 +27,9 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
@@ -274,7 +273,7 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
 
   private fun reloadList(preferredSelection: Sdk? = null) {
     val previouslySelected = (preferredSelection?.name ?: selectedRow()?.sdk?.name)?.let(::PySdkName)
-    val allEditable = project.asModuleOrProject.filterAssignablePythonSdks(projectSdksModel.sdks.toList())
+    val allEditable = project.asModuleOrProject.filterAssignablePythonSdks(PythonSdkTable.allSdks(project))
     PyPackageCoroutine.launch(project, Dispatchers.IO) {
       // A broken SDK names no interpreter, so it gets a row that says why, and the user can remove it.
       val rows = allEditable.map { sdk ->
@@ -337,9 +336,13 @@ internal class PyAllInterpretersConfigurable(private val project: Project) : Sea
   ) {
     override fun actionPerformed(e: AnActionEvent) {
       val row = selectedRow() ?: return
-      removeFromJdkTable(row.sdk)
-      projectSdksModel.reset(project)
-      reloadList()
+      PyPackageCoroutine.launch(project) {
+        PythonInterpreterRegistry.getInstance(project).removeSdk(row.sdk)
+        withContext(Dispatchers.EDT) {
+          projectSdksModel.reset(project)
+          reloadList()
+        }
+      }
     }
 
     override fun update(e: AnActionEvent) {
@@ -579,13 +582,6 @@ private object RowActionMetrics {
 private val PythonInterpreter.sdk: Sdk
   get() = getSdkAPI()
 
-/** Removes [sdk] from `ProjectJdkTable`. */
-internal fun removeFromJdkTable(sdk: Sdk) {
-  WriteAction.runAndWait<RuntimeException> {
-    ProjectJdkTable.getInstance().removeJdk(sdk)
-  }
-}
-
 /** A row of the page: the interpreter of an SDK, or an SDK that names no interpreter. */
 internal sealed interface PyInterpreterRow {
   val sdk: Sdk
@@ -608,15 +604,9 @@ internal sealed interface PyInterpreterRow {
  * Returns the "Interpreter Settings" edit dialog for this interpreter, or `null` when it is a
  * legacy remote SDK that carries no target configuration. The Edit button skips the click on
  * `null`; whether the button is shown at all depends on the SDK being target-aware.
- *
- * The "All Interpreters" page is project-scoped, so a "current module" is not obvious for a
- * multi-module project. The first module is passed as the association target — the reviewer-approved
- * fallback for this page. The module-scoped "Workspace Structure" page passes its own module.
  */
-internal fun PythonInterpreter.editorFor(project: Project, parent: Configurable): DialogWrapper? {
-  val associationTarget = ModuleManager.getInstance(project).modules.firstOrNull()
-  return PyInterpreterEditDialogLauncher.editorFor(project, this, associationTarget, parent)
-}
+internal fun PythonInterpreter.editorFor(project: Project, parent: Configurable): DialogWrapper? =
+  PyInterpreterEditDialogLauncher.editorFor(project, this, parent)
 
 /** Opens the legacy interpreter-paths dialog for this interpreter and reports the mutated SDK. */
 internal suspend fun PythonInterpreter.openPathsDialog(project: Project, onCommit: (Sdk) -> Unit) {

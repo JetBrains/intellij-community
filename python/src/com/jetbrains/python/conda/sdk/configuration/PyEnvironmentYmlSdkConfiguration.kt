@@ -19,7 +19,6 @@ import com.intellij.python.sdk.backend.PythonEnvironment
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.detectPythonEnvironment
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.resolvePythonBinary
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PyBundle
@@ -144,7 +143,7 @@ internal class PyEnvironmentYmlSdkConfiguration : PyProjectSdkConfigurationExten
     }
 
     val sdk = createAndAddCondaEnv(pyProject, condaExecutable!!, envExists)
-    return sdk.onSuccess { sdk -> sdk.let { PythonSdkUpdater.scheduleUpdate(it.getSdkAPI(), pyProject.project) } }
+    return sdk.onSuccess { interpreter -> PythonSdkUpdater.scheduleUpdate(interpreter, pyProject.project) }
   }
 
   private suspend fun createAndAddCondaEnv(pyProject: PyProject, condaExecutable: PathHolder.Eel, envExists: Boolean): PyResult<PythonInterpreter> {

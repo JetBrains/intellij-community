@@ -20,26 +20,26 @@ import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.OrderRootType.CLASSES
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PlatformIcons
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.classRoots
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.navigation.PyNavigationBundle
 
-class PyTypeShedNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : ProjectViewNode<Sdk>(project, sdk, viewSettings) {
+class PyTypeShedNode(project: Project?, interpreter: PythonInterpreter, viewSettings: ViewSettings) : ProjectViewNode<PythonInterpreter>(project, interpreter, viewSettings) {
   companion object {
-    fun create(project : Project?, sdk: Sdk, viewSettings: ViewSettings): PyTypeShedNode? =
-        if (sdk.rootProvider.getFiles(CLASSES).any { PyTypeShed.isInside(it) })
-          PyTypeShedNode(project, sdk, viewSettings)
+    fun create(project : Project?, interpreter: PythonInterpreter, viewSettings: ViewSettings): PyTypeShedNode? =
+        if (project != null && interpreter.classRoots(project).any { PyTypeShed.isInside(it) })
+          PyTypeShedNode(project, interpreter, viewSettings)
         else null
   }
 
   override fun getChildren(): MutableCollection<PsiDirectoryNode> {
     val p = project ?: return mutableListOf()
     val psiManager = PsiManager.getInstance(p)
-    return value.rootProvider.getFiles(CLASSES)
+    return value.classRoots(p)
         .asSequence()
         .filter { PyTypeShed.isInside(it) }
         .map { psiManager.findDirectory(it) }

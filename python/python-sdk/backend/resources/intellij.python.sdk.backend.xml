@@ -64,9 +64,6 @@
     <extensionPoint qualifiedName="Pythonid.evoEnvironmentProvider"
                     interface="com.intellij.python.sdk.backend.evolution.PyEvoEnvironmentProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="Pythonid.interpreterPresentationProvider"
-                    interface="com.intellij.python.sdk.backend.PythonInterpreterPresentationProvider"
-                    dynamic="true"/>
     <!-- The `id` names the kind of environment. It is the only place a kind is named. -->
     <extensionPoint qualifiedName="Pythonid.pythonEnvironmentProvider"
                     interface="com.intellij.python.sdk.backend.PythonEnvironmentProvider"
@@ -90,6 +87,10 @@
                         serviceImplementation="com.jetbrains.python.sdk.WinRegistryServiceImpl"/>
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.PySdkSettings"/>
+    <registryKey key="python.interpreter.library.entries"
+                 defaultValue="true"
+                 restartRequired="true"
+                 description="A module names its Python interpreter by an interpreter library entry, and the IDE reads only that entry. Turn it off to name the interpreter by the Python SDK of the module, as older builds do."/>
     <registryKey key="python.activate.env.reader.timeout.ms"
                  defaultValue="60000"
                  restartRequired="false"

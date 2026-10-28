@@ -17,7 +17,7 @@ import javax.swing.JList
  * running the interpreter. Build the items off the EDT with
  * [com.intellij.python.sdk.backend.pyInterpreterItems] and set them as the model.
  *
- * @param nullLabel what the `null` row says when [nullItem] is `null`.
+ * @param nullLabel what the `null` row says. With a [nullItem], it is drawn in grey with the icon of that interpreter.
  * @param nullItem the interpreter the `null` row stands for, usually the project default.
  */
 @ApiStatus.Internal

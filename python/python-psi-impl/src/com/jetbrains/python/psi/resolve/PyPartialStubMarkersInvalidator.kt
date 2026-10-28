@@ -18,7 +18,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent
 import com.intellij.python.pyproject.model.evolution.pythonInterpreters
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.util.asDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -73,8 +72,7 @@ class PyPartialStubMarkersInvalidator(
 
     // Debounced on a coroutine, so it can await the structure. The set holds the main interpreter too.
     for (interpreter in project.pythonInterpreters()) {
-      @Suppress("DEPRECATION")
-      PythonSdkPathCache.getInstance(project, interpreter.getSdkAPI()).clearCache()
+      PythonSdkPathCache.getInstance(project, interpreter).clearCache()
     }
   }
 

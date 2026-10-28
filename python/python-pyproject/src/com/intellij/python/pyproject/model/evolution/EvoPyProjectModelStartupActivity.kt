@@ -9,5 +9,6 @@ internal class EvoPyProjectModelStartupActivity : ProjectActivity {
   override suspend fun execute(project: Project) {
     if (project.isDefault) return
     EvoPyProjectModel.getInstance(project)
+    PyInterpreterLibrarySync.getInstance(project).start()
   }
 }

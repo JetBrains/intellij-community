@@ -1,6 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
+import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
+import com.intellij.python.sdk.backend.PythonSdkTable
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import com.intellij.openapi.application.EDT
+import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -10,18 +17,14 @@ import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.ui.InputValidatorEx
 import com.intellij.openapi.ui.MasterDetailsComponent
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Condition
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
@@ -31,7 +34,6 @@ import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.onFailure
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.ModuleOrProject.ModuleAndProject
 import com.jetbrains.python.sdk.ModuleOrProject.ProjectOnly
@@ -42,7 +44,6 @@ import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithAnotherModule
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import com.jetbrains.python.sdk.noInterpreterMarker
-import com.jetbrains.python.sdk.renameSdk
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -120,8 +121,11 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
     return pythonPathsModified || projectSdksModel.isModified || super.isModified()
   }
 
+  // The interpreter library flow holds its SDKs in no SDK table, so the model has none of them: they are listed as they are.
   private val allPythonSdksInEdit: List<Sdk>
-    get() = moduleOrProject.filterAssignablePythonSdks(projectSdksModel.sdks.toList())
+    get() = moduleOrProject.filterAssignablePythonSdks(
+      if (isInterpreterLibraryFlowEnabled()) PythonSdkTable.allSdks(project) else projectSdksModel.sdks.toList()
+    )
 
   override fun reset() {
     pythonPathsModified = false
@@ -155,7 +159,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
    * Suits for incremental addition [sdk] to the tree: it preserves a selection and inserts the provided [sdk] to the proper place.
    */
   private fun addSdkNode(sdk: Sdk, item: PyInterpreterItem) {
-    addNode(MyNode(PythonInterpreterDetailsConfigurable(project, module, sdk, item, parentConfigurable)), myRoot)
+    addNode(MyNode(PythonInterpreterDetailsConfigurable(project, sdk, item, parentConfigurable)), myRoot)
   }
 
   private fun addSdkNodeAndSelect(sdk: Sdk) {
@@ -178,7 +182,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
 
   override fun createActions(fromPopup: Boolean): List<AnAction> =
     if (fromPopup) {
-      listOf(RemoveAction(), RenameAction(), ShowPathsAction())
+      listOf(RemoveAction(), ShowPathsAction())
     }
     else {
       // it would be nicer to insert the sdk at the proper place instead of adding it to the bottom
@@ -190,7 +194,7 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
         isPopup = true
         registerCustomShortcutSet(CommonShortcuts.getInsert(), myTree)
       }
-      listOfNotNull(addInterpreterActionGroup, RemoveAction(), RenameAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
+      listOfNotNull(addInterpreterActionGroup, RemoveAction(), ToggleVirtualEnvFilterButton(), ShowPathsAction())
     }
 
   private fun getSelectedSdk(): Sdk? = selectedObject as? Sdk
@@ -210,78 +214,19 @@ internal class PythonInterpreterMasterDetails(private val moduleOrProject: Modul
       registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree)
     }
 
+    /**
+     * Removes the selected SDKs through the registry, right away rather than on OK. The tree holds the editable copies of
+     * [projectSdksModel], so each copy is mapped back to the SDK of the table first. A reset then rebuilds the tree.
+     */
     override fun actionPerformed(e: AnActionEvent) {
-      myTree.selectionPaths?.forEach { selectedPath ->
-        projectSdksModel.removeSdk(selectedPath.sdk)
-        TreeUtil.removeLastPathComponent(tree, selectedPath)
+      val copies = myTree.selectionPaths?.map { it.sdk }?.toSet() ?: return
+      val originals = if (isInterpreterLibraryFlowEnabled()) copies.toList()
+                      else projectSdksModel.projectSdks.filterValues { it in copies }.keys.toList()
+      PyPackageCoroutine.launch(project) {
+        val registry = PythonInterpreterRegistry.getInstance(project)
+        originals.forEach { registry.removeSdk(it) }
+        withContext(Dispatchers.EDT) { reset() }
       }
-    }
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = !isEmptySdkSelection()
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-      return ActionUpdateThread.EDT
-    }
-  }
-
-  private inner class RenameAction : DumbAwareAction(PyBundle.messagePointer("python.interpreters.rename.interpreter.action.text"),
-                                                     IconUtil.editIcon) {
-    init {
-      registerCustomShortcutSet(CommonShortcuts.getRename(), myTree)
-    }
-
-    override fun actionPerformed(e: AnActionEvent) {
-      val selectedSdk = getSelectedSdk() ?: return
-      val initialName = selectedSdk.name
-      // SDK names must be unique across the whole project JDK table (all SDK types), not only among the interpreters shown here.
-      val allNames: List<String> = ProjectJdkTable.getInstance().allJdks.map { it.name }
-      val name = Messages.showInputDialog(
-        myTree,
-        PyBundle.message("python.interpreters.rename.interpreter.dialog.message"),
-        PyBundle.message("python.interpreters.rename.interpreter.dialog.title"),
-        null,
-        initialName,
-        object : InputValidatorEx {
-          override fun getErrorText(inputString: String): String? =
-            when {
-              inputString.isBlank() -> PyBundle.message("rename.python.interpreter.dialog.provide.name.error.text")
-              conflictsWithOtherInterpreter(inputString) -> PyBundle.message("rename.python.interpreter.name.already.exists.error.text")
-              else -> null
-            }
-
-          override fun checkInput(inputString: String): Boolean = canClose(inputString)
-
-          override fun canClose(inputString: String): Boolean = nameCanBeApplied(inputString)
-
-          private fun nameCanBeApplied(inputString: String) = inputString.isNotBlank() && !allNames.contains(inputString)
-
-          private fun conflictsWithOtherInterpreter(inputString: String): Boolean = inputString != initialName &&
-                                                                                    allNames.contains(inputString)
-        }
-      )
-      // Skip changing the name if either the dialog is cancelled or the name is not changed
-      if (name == null || name == initialName) return
-      ApplicationManager.getApplication().runWriteAction {
-        // Rename the registered SDK in the project JDK table and re-point the project/module references to it.
-        project.renameSdk(initialName, name).onFailure {
-          // The rename dialog already rejects duplicate names, so this is only a defensive fallback.
-          thisLogger().warn("Cannot rename interpreter '$initialName' to '$name': $it")
-          return@runWriteAction
-        }
-
-        // `renameSdk` renamed the registered SDK. For an existing interpreter the tree shows a separate editable copy from
-        // `ProjectSdksModel`; rename it too so that `ProjectSdksModel.apply()` does not revert the change.
-        if (selectedSdk.name == initialName) {
-          selectedSdk.sdkModificator.let {
-            it.name = name
-            it.commitChanges()
-          }
-        }
-      }
-      (myTree.model as? DefaultTreeModel)?.nodeChanged(selectedNode)
-      myTree.revalidate()
     }
 
     override fun update(e: AnActionEvent) {

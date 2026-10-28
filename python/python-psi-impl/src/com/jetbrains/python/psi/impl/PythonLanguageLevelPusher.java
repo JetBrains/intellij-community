@@ -8,22 +8,18 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbModeTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ContentIteratorEx;
 import com.intellij.openapi.roots.ModuleFileIndex;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
@@ -33,21 +29,22 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.platform.backend.workspace.WorkspaceModel;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.psi.SingleRootFileViewProvider;
+import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.TreeNodeProcessingResult;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.messages.SimpleMessageBusConnection;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl;
 import com.jetbrains.python.PyLanguageFacade;
 import com.jetbrains.python.PythonCodeStyleService;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyUtil;
@@ -59,18 +56,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
-  private static final Key<String> PROJECT_LANGUAGE_LEVEL = new Key<>("python.project.language.level");
   private static final FilePropertyKey<LanguageLevel> KEY =
     FilePropertyKeyImpl.createPersistentEnumKey("python.language.level", "python_language_level_persistence", 3, LanguageLevel.class);
 
@@ -90,16 +80,22 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     levels.put(l2, l1);
   }
 
-  private final Map<Module, Sdk> myModuleSdks = new WeakHashMap<>();
+  /**
+   * The layout that the pusher pushed last in a project, see {@link #push}. It is kept on the project, as the pusher is an
+   * application extension, and a layout holds the modules of its project.
+   */
+  private static final Key<PythonLanguageLevelLayout> PUSHED_LAYOUT = Key.create("python.language.level.pushed.layout");
+
+  private static @NotNull PythonLanguageLevelLayout pushedLayout(@NotNull Project project) {
+    final PythonLanguageLevelLayout layout = project.getUserData(PUSHED_LAYOUT);
+    return layout != null ? layout : PythonLanguageLevelLayout.EMPTY;
+  }
 
   @Override
   public void initExtra(@NotNull Project project) {
-    final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
-
-    myModuleSdks.putAll(moduleSdks);
-    resetProjectLanguageLevel(project);
-    updateSdkLanguageLevels(project, moduleSdks);
-    guessLanguageLevelWithCaching(project, moduleSdks::values);
+    final PythonLanguageLevels levels = PythonLanguageLevels.getInstance(project);
+    push(project, levels.refresh(), false);
+    levels.follow();
   }
 
   @Override
@@ -122,27 +118,15 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     return null;
   }
 
-  private static @Nullable Sdk getFileSdk(@NotNull Project project, @NotNull VirtualFile file) {
+  /**
+   * The level of [file] from the interpreter that holds it: the interpreter of its module, or an interpreter whose class
+   * root holds a file outside the modules. {@code null} when no interpreter holds it.
+   */
+  private static @Nullable LanguageLevel getFileInterpreterLevel(@NotNull Project project,
+                                                                 @NotNull PythonLanguageLevelLayout layout,
+                                                                 @NotNull VirtualFile file) {
     final Module module = ModuleUtilCore.findModuleForFile(file, project);
-    if (module != null) {
-      return PythonSdkUtil.readStoredPythonSdk(module);
-    }
-    else {
-      return findSdkForFileOutsideTheProject(project, file);
-    }
-  }
-
-  private static @Nullable Sdk findSdkForFileOutsideTheProject(Project project, VirtualFile file) {
-    if (file != null) {
-      var snapshot = WorkspaceModel.getInstance(project).getCurrentSnapshot();
-      var sdkEntities = ProjectRootManager.getInstance(project).getFileIndex().findContainingSdks(file);
-      var sdks = ContainerUtil.mapNotNull(sdkEntities, (sdk) -> SdkBridgeImpl.Companion.findSdk(snapshot, sdk));
-
-      if (!sdks.isEmpty()) {
-        return sdks.getFirst();
-      }
-    }
-    return null;
+    return module != null ? layout.getModuleLevels().get(module) : layout.levelOfInterpreterFile(file);
   }
 
   @Override
@@ -151,8 +135,8 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       return LanguageLevel.FORCE_LANGUAGE_LEVEL;
     }
 
-    final Sdk sdk = PythonSdkUtil.readStoredPythonSdk(module);
-    return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+    final LanguageLevel level = PythonLanguageLevels.layoutOf(module.getProject()).getModuleLevels().get(module);
+    return level != null ? level : LanguageLevel.getDefault();
   }
 
   @Override
@@ -199,29 +183,50 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   private static void clearSdkPathCache(final @NotNull VirtualFile child) {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
-      final Sdk sdk = getFileSdk(project, child);
-      if (sdk != null) {
-        final PythonSdkPathCache pathCache = PythonSdkPathCache.getInstance(project, sdk);
-        pathCache.clearCache();
+      final Module module = ModuleUtilCore.findModuleForFile(child, project);
+      final PythonInterpreter interpreter = module == null ? null : findModuleInterpreter(module);
+      if (interpreter != null) {
+        PythonSdkPathCache.getInstance(project, interpreter).clearCache();
       }
     }
   }
 
   @Override
   public void afterRootsChanged(final @NotNull Project project) {
-    final Map<Module, Sdk> moduleSdks = getPythonModuleSdks(project);
-    final boolean needToReparseOpenFiles = ContainerUtil.exists(moduleSdks.entrySet(), entry -> {
-      final Module module = entry.getKey();
-      final Sdk newSdk = entry.getValue();
-      final Sdk oldSdk = myModuleSdks.get(module);
-      return myModuleSdks.containsKey(module) && newSdk != oldSdk;
+    // A roots change can add a root that has no level yet, so the pusher pushes the layout even when it is the same.
+    push(project, PythonLanguageLevels.layoutOf(project), true);
+  }
+
+  /**
+   * Pushes [layout] when it differs from the layout it pushed last. For a change that no roots change reports: a new
+   * snapshot, or a new version that the interpreter store saves. See {@link PythonLanguageLevels#follow}.
+   */
+  static void layoutChanged(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout) {
+    if (project.isDisposed()) return;
+    for (FilePropertyPusher<?> pusher : EP_NAME.getExtensionList()) {
+      if (pusher instanceof PythonLanguageLevelPusher languageLevelPusher) {
+        languageLevelPusher.push(project, layout, false);
+      }
+    }
+  }
+
+  /**
+   * Queues a task that pushes the levels of [layout] to the roots. Reparses the open files when the level of a module
+   * changed. With [always], it also pushes a layout that is equal to the pushed one.
+   */
+  private void push(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout, boolean always) {
+    final PythonLanguageLevelLayout previous = pushedLayout(project);
+    project.putUserData(PUSHED_LAYOUT, layout);
+    if (!always && layout.equals(previous)) return;
+
+    final boolean levelOfModuleChanged = ContainerUtil.exists(layout.getModuleLevels().entrySet(), entry -> {
+      final LanguageLevel before = previous.getModuleLevels().get(entry.getKey());
+      return before != null && before != entry.getValue();
     });
-
-    myModuleSdks.putAll(moduleSdks);
-    resetProjectLanguageLevel(project);
-    updateSdkLanguageLevels(project, moduleSdks);
-
-    if (needToReparseOpenFiles) {
+    if (!layout.getModuleLevels().isEmpty() || !layout.getInterpreterLevels().isEmpty()) {
+      new MyDumbModeTask(project, layout).queue(project);
+    }
+    if (levelOfModuleChanged) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) {
           return;
@@ -231,53 +236,31 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     }
   }
 
-  private static @NotNull Map<@NotNull Module, @NotNull Sdk> getPythonModuleSdks(@NotNull Project project) {
-    ModuleManager moduleManager = ModuleManager.Companion.getInstanceIfDefined(project);
-    if (moduleManager == null) {
-      return Collections.emptyMap();
-    }
-
-    final Map<Module, Sdk> result = new LinkedHashMap<>();
-    for (Module module : moduleManager.getModules()) {
-      Sdk sdk = PythonSdkUtil.readStoredPythonSdk(module);
-      if (sdk != null) {
-        result.put(module, sdk);
-      }
-    }
-    return result;
+  /** The interpreter of [module] in the current snapshot, or {@code null}. */
+  private static @Nullable PythonInterpreter findModuleInterpreter(@NotNull Module module) {
+    final EvoPyProject evoPyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
+    return evoPyProject == null ? null : evoPyProject.getInterpreter();
   }
 
-  private void updateSdkLanguageLevels(@NotNull Project project, @NotNull Map<Module, Sdk> moduleSdks) {
-    if (moduleSdks.isEmpty()) {
-      return;
-    }
-
-    new MyDumbModeTask(project, moduleSdks).queue(project);
-  }
-
-  private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Map<Module, Sdk> moduleSdks) {
+  private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout) {
     final List<Runnable> results = new ArrayList<>();
-    for (Map.Entry<Module, Sdk> moduleToSdk : moduleSdks.entrySet()) {
-      final Module module = moduleToSdk.getKey();
+    for (Map.Entry<Module, LanguageLevel> moduleLevel : layout.getModuleLevels().entrySet()) {
+      final Module module = moduleLevel.getKey();
       if (module.isDisposed()) continue;
 
-      final Sdk sdk = moduleToSdk.getValue();
-      final LanguageLevel languageLevel =
-        PythonSdkUtil.isDisposed(sdk) ? LanguageLevel.getDefault() : PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
       for (VirtualFile root : PyUtil.getSourceRoots(module)) {
-        addRootIndexingTask(root, results, project, languageLevel, true);
+        addRootIndexingTask(root, results, project, moduleLevel.getValue(), true);
       }
     }
-    final LinkedHashSet<Sdk> distinctSdks = new LinkedHashSet<>(moduleSdks.values());
-    for (Sdk sdk : distinctSdks) {
-      if (PythonSdkUtil.isDisposed(sdk)) continue;
+    for (Map.Entry<PythonInterpreter, LanguageLevel> interpreterLevel : layout.getInterpreterLevels().entrySet()) {
+      final PythonInterpreter interpreter = interpreterLevel.getKey();
+      if (PythonInterpreterExtKt.isDisposed(interpreter)) continue;
 
-      final LanguageLevel languageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
-      for (VirtualFile root : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, project)) {
         if (!root.isValid() || PyTypeShed.INSTANCE.isInside(root)) {
           continue;
         }
-        addRootIndexingTask(root, results, project, languageLevel, false);
+        addRootIndexingTask(root, results, project, interpreterLevel.getValue(), false);
       }
     }
     return results;
@@ -291,30 +274,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     final VirtualFile parent = root.getParent();
     final boolean shouldSuppressSizeLimit = parent != null && parent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME);
     results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit, iterateAsContent));
-  }
-
-  private static @NotNull LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project,
-                                                                      @NotNull Supplier<@NotNull Collection<? extends Sdk>> pythonModuleSdks) {
-    LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(PROJECT_LANGUAGE_LEVEL.get(project));
-    if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(pythonModuleSdks.get());
-      PROJECT_LANGUAGE_LEVEL.set(project, languageLevel.toPythonVersion());
-    }
-
-    return languageLevel;
-  }
-
-  private static void resetProjectLanguageLevel(@NotNull Project project) {
-    PROJECT_LANGUAGE_LEVEL.set(project, null);
-  }
-
-  private static @NotNull LanguageLevel guessLanguageLevel(@NotNull Collection<? extends @NotNull Sdk> pythonModuleSdks) {
-    PythonRuntimeService pythonRuntimeService = PythonRuntimeService.getInstance();
-    return pythonModuleSdks.stream()
-      .distinct()
-      .map(sdk -> pythonRuntimeService.getLanguageLevelForSdk(sdk))
-      .max(LanguageLevel.VERSION_COMPARATOR)
-      .orElse(LanguageLevel.getDefault());
   }
 
   /**
@@ -333,10 +292,11 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     final LanguageLevel specified = specifiedFileLanguageLevel(virtualFile);
     if (specified != null) return specified;
 
-    final Sdk sdk = virtualFile instanceof LightVirtualFile ? null : getFileSdk(project, virtualFile);
-    if (sdk != null) return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+    final PythonLanguageLevelLayout layout = PythonLanguageLevels.layoutOf(project);
+    final LanguageLevel interpreterLevel = virtualFile instanceof LightVirtualFile ? null : getFileInterpreterLevel(project, layout, virtualFile);
+    if (interpreterLevel != null) return interpreterLevel;
 
-    return guessLanguageLevelWithCaching(project, () -> getPythonModuleSdks(project).values());
+    return layout.getProjectLevel();
   }
 
   private final class UpdateRootTask implements Runnable {
@@ -476,19 +436,14 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     }
   }
 
-  @TestOnly
-  public void flushLanguageLevelCache() {
-    myModuleSdks.clear();
-  }
-
   private final class MyDumbModeTask extends DumbModeTask {
     private final @NotNull Project project;
-    private final @NotNull Map<Module, Sdk> moduleSdks;
+    private final @NotNull PythonLanguageLevelLayout layout;
     private final SimpleMessageBusConnection connection;
 
-    private MyDumbModeTask(@NotNull Project project, @NotNull Map<Module, Sdk> moduleSdks) {
+    private MyDumbModeTask(@NotNull Project project, @NotNull PythonLanguageLevelLayout layout) {
       this.project = project;
-      this.moduleSdks = moduleSdks;
+      this.layout = layout;
       connection = project.getMessageBus().simpleConnect();
       connection.subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
         @Override
@@ -512,7 +467,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
       //final PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
       indicator.setIndeterminate(true);
       indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-      final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, moduleSdks));
+      final List<Runnable> tasks = ReadAction.compute(() -> getRootUpdateTasks(project, layout));
       // The push reindexes every indexed Python file, and each reindex drops the PSI caches in a write action.
       // The token merges these drops into one write action.
       try (AccessToken ignored = GistManager.getInstance().mergeDependentCacheInvalidations()) {
@@ -526,9 +481,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
 
     @Override
     public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
-      if (taskFromQueue instanceof MyDumbModeTask &&
-          ((MyDumbModeTask)taskFromQueue).project.equals(project) &&
-          ((MyDumbModeTask)taskFromQueue).moduleSdks.equals(moduleSdks)) {
+      if (taskFromQueue instanceof MyDumbModeTask queued && queued.project.equals(project) && queued.layout.equals(layout)) {
         return this;
       }
       return null;

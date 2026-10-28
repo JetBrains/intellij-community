@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Key
 import com.intellij.psi.util.CachedValue
+import com.intellij.python.sdk.backend.PythonInterpreter
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -101,6 +102,12 @@ interface PackageAvailabilityService {
    * Checks if a package is available in the SDK's Python environment.
    */
   fun isPackageAvailable(project: Project, sdk: Sdk, spec: PackageAvailabilitySpec): Boolean
+
+  /**
+   * The version of the package [packageName] that the package manager lists as installed in [interpreter], or `null`
+   * when it lists no such package. It reads the last list and does not wait, so code insight can call it.
+   */
+  fun installedPackageVersion(project: Project, interpreter: PythonInterpreter, packageName: String): String?
 
   companion object {
     @JvmStatic

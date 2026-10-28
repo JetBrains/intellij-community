@@ -31,12 +31,15 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonModuleTypeBase;
+import com.intellij.python.pyproject.model.evolution.PyRunConfigurationInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterRegistryKt;
 import com.jetbrains.python.configuration.PyModuleInterpreterReader;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.run.features.PyRunToolData;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -49,6 +52,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static com.jetbrains.python.run.PythonScriptCommandLineState.getExpandedWorkingDir;
 import static com.jetbrains.python.run.features.PyRunToolExtKt.activeRunToolData;
@@ -60,12 +64,26 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   implements AbstractPythonRunConfigurationParams, CommandLinePatcher, RunProfileWithCompileBeforeLaunchOption {
   private static final String RUN_TOOL = "RUN_TOOL";
   private static final String RUN_AS_SCRIPT = "RUN_AS_SCRIPT";
+  /** The interpreter, as {@link PyRunConfigurationInterpreter#interpreterTextOf} states it. An older build ignores it. */
+  private static final String INTERPRETER = "INTERPRETER";
   private @Nullable Boolean useRunTool = null;
   private @Nullable Boolean runAsScript = null;
   private String myInterpreterOptions = "";
   private String myWorkingDirectory = "";
+  /** The stored {@code SDK_HOME} field of an older build. */
   private String mySdkHome = "";
-  private Sdk mySdk = null;
+  /**
+   * The interpreter of this run configuration, as {@link PyRunConfigurationInterpreter#interpreterTextOf} states it. It is
+   * resolved each time the interpreter is needed, because the registry is not ready when the configuration loads.
+   */
+  private @Nullable String myInterpreterText = null;
+  /** The stored {@code SDK_NAME} field of an older build. */
+  private @Nullable String myLegacySdkName = null;
+  /**
+   * The interpreter that the stored fields name, resolved once. It is not saved: the fields are. A {@code null} value is
+   * not kept, so a configuration read before the registry is ready resolves later.
+   */
+  private @Nullable PythonInterpreter myPythonInterpreter = null;
   private boolean myUseModuleSdk;
   private boolean myAddContentRoots = true;
   private boolean myAddSourceRoots = true;
@@ -194,69 +212,69 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     }
     else {
       if (!myUseModuleSdk) {
-        if (StringUtil.isEmptyOrSpaces(getSdkHome())) {
-          // No SDK home and no module SDK: an interpreter belongs to a Python project, so there is nothing to run.
+        if (!hasStoredInterpreter()) {
+          // No interpreter and no module interpreter: an interpreter belongs to a Python project, so there is nothing to run.
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_sdk"));
         }
-        // Only that the SDK is a Python one. Whether the interpreter actually runs is not asked here: this method runs on
-        // every validation pass of the run configuration editor, and answering it launches a process. A broken
-        // interpreter fails at launch instead, with the error the launch itself reports.
-        else if (mySdk == null || !PythonSdkUtil.isPythonSdk(mySdk)) {
+        // Only that the interpreter resolves. Whether it actually runs is not asked here: this method runs on every
+        // validation pass of the run configuration editor, and answering it launches a process. A broken interpreter fails
+        // at launch instead, with the error the launch itself reports.
+        else if (getPythonInterpreter() == null) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
         }
       }
       else {
-        Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
-        if (sdk == null) {
+        if (PyModuleInterpreterReader.findModuleInterpreterIfReady(getModule()) == null) {
           throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_module_sdk"));
         }
       }
     }
   }
 
-  @Override
-  public String getSdkHome() {
-    if (mySdk != null) {
-      return mySdk.getHomePath();
-    }
-    String sdkHome = mySdkHome;
-    if (StringUtil.isEmptyOrSpaces(mySdkHome)) {
-      final Sdk projectJdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
-      if (projectJdk != null) {
-        sdkHome = projectJdk.getHomePath();
-      }
-    }
-    return sdkHome;
-  }
-
+  /** The path of the Python binary of {@link #getPythonInterpreter()}, or {@code null} without an interpreter. */
   public @Nullable String getInterpreterPath() {
-    String sdkHome;
-    if (myUseModuleSdk) {
-      Sdk sdk = PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
-      if (sdk == null) return null;
-      sdkHome = sdk.getHomePath();
-    }
-    else if (mySdk != null) {
-      sdkHome = mySdk.getHomePath();
-    }
-    else {
-      sdkHome = getSdkHome();
-    }
-    return sdkHome;
+    final PythonInterpreter interpreter = getPythonInterpreter();
+    return interpreter != null ? PythonInterpreterExtKt.getBinaryPathString(interpreter) : null;
   }
 
+  /**
+   * The interpreter of the module when {@link #isUseModuleSdk()} is set, and otherwise the interpreter that this run
+   * configuration names itself, see {@link #getStoredInterpreter}. Without that, the interpreter of the module.
+   */
   @Override
   @Transient
-  public @Nullable Sdk getSdk() {
-    if (myUseModuleSdk) {
-      return PyModuleInterpreterReader.findModuleSdkIfReady(getModule());
+  @ApiStatus.Internal
+  public @Nullable PythonInterpreter getPythonInterpreter() {
+    if (myUseModuleSdk || !hasStoredInterpreter()) {
+      return PyModuleInterpreterReader.findModuleInterpreterIfReady(getModule());
     }
-    else if (mySdk != null) {
-      return mySdk;
+    return getStoredInterpreter();
+  }
+
+  /** Whether the stored fields name an interpreter, also one that does not resolve yet. */
+  private boolean hasStoredInterpreter() {
+    return myPythonInterpreter != null || !StringUtil.isEmpty(myInterpreterText) || !StringUtil.isEmpty(myLegacySdkName) ||
+           !StringUtil.isEmptyOrSpaces(mySdkHome);
+  }
+
+  /**
+   * The interpreter that this run configuration names itself, without the module: the stored {@code INTERPRETER} field,
+   * or the legacy {@code SDK_NAME} and {@code SDK_HOME} fields of an older build. {@code null} before the registry is
+   * ready.
+   */
+  private @Nullable PythonInterpreter getStoredInterpreter() {
+    if (myPythonInterpreter == null) {
+      myPythonInterpreter = PyRunConfigurationInterpreter.findRunConfigurationInterpreterIfReady(
+        getProject(), getModule(), myInterpreterText, myLegacySdkName, mySdkHome);
     }
-    else {
-      return PythonSdkUtil.findSdkByPath(getSdkHome());
-    }
+    return myPythonInterpreter;
+  }
+
+  /** The SDK of {@link #getStoredInterpreter}. */
+  private @Nullable Sdk getStoredSdk() {
+    final PythonInterpreter interpreter = getStoredInterpreter();
+    //noinspection deprecation
+    return interpreter != null ? PythonInterpreterExtKt.getSdkAPI(interpreter) : null;
   }
 
   private @NotNull List<String> myEnvFiles = Collections.emptyList();
@@ -278,10 +296,9 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     readEnvs(element);
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
 
-    final String sdkName = JDOMExternalizerUtil.readField(element, "SDK_NAME");
-    if (sdkName != null) {
-      mySdk = PythonSdkUtil.findSdkByKey(sdkName);
-    }
+    myInterpreterText = JDOMExternalizerUtil.readField(element, INTERPRETER);
+    myLegacySdkName = JDOMExternalizerUtil.readField(element, "SDK_NAME");
+    myPythonInterpreter = null;
 
     var output = JDOMExternalizerUtil.readField(element, "ENV_FILES");
     myEnvFiles = output != null ? StringUtil.split(output, File.pathSeparator) : Collections.emptyList();
@@ -320,9 +337,25 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     JDOMExternalizerUtil.writeField(element, "ENV_FILES", String.join(File.pathSeparator, myEnvFiles));
     JDOMExternalizerUtil.writeField(element, "INTERPRETER_OPTIONS", myInterpreterOptions);
     writeEnvs(element);
-    JDOMExternalizerUtil.writeField(element, "SDK_HOME", mySdkHome);
-    if (mySdk != null) {
-      JDOMExternalizerUtil.writeField(element, "SDK_NAME", mySdk.getName());
+    // A configuration of an older build has no text yet. It gets the text of the interpreter that its legacy fields name.
+    final PythonInterpreter interpreter = myInterpreterText == null ? getStoredInterpreter() : null;
+    final String interpreterText = interpreter != null ? PyRunConfigurationInterpreter.interpreterTextOf(getProject(), interpreter)
+                                                       : myInterpreterText;
+    if (!StringUtil.isEmpty(interpreterText)) {
+      JDOMExternalizerUtil.writeField(element, INTERPRETER, interpreterText);
+    }
+    // An older build reads the SDK by these fields. The legacy flow writes the SDK it holds, and an interpreter that does
+    // not resolve yet keeps the values that were read. The interpreter library flow writes back only what it read, so an
+    // older build keeps its interpreter and this build reads the INTERPRETER field.
+    final Sdk sdk = PyRunConfigurationInterpreter.isLegacySdkWriteEnabled() ? getStoredSdk() : null;
+    final String sdkHome = sdk != null ? sdk.getHomePath() : null;
+    final String storedSdkHome = sdkHome != null ? sdkHome : mySdkHome;
+    if (!StringUtil.isEmpty(storedSdkHome)) {
+      JDOMExternalizerUtil.writeField(element, "SDK_HOME", storedSdkHome);
+    }
+    final String sdkName = sdk != null ? sdk.getName() : myLegacySdkName;
+    if (sdkName != null) {
+      JDOMExternalizerUtil.writeField(element, "SDK_NAME", sdkName);
     }
     JDOMExternalizerUtil.writeField(element, "WORKING_DIRECTORY", myWorkingDirectory);
     JDOMExternalizerUtil.writeField(element, "IS_MODULE_SDK", Boolean.toString(myUseModuleSdk));
@@ -366,14 +399,37 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   @Override
-  public void setSdkHome(String sdkHome) {
-    mySdkHome = sdkHome;
-  }
-
-  @Override
   @Transient
   public void setSdk(@Nullable Sdk sdk) {
-    mySdk = sdk;
+    setPythonInterpreter(sdk != null ? PythonInterpreterRegistryKt.findPythonInterpreterIfReady(getProject(), sdk) : null);
+  }
+
+  /**
+   * Makes {@code sdkName} the legacy {@code SDK_NAME} field, for a converter of an older run configuration that names
+   * its SDK. The interpreter is looked up from it as from the field of an older build, see {@link #getStoredInterpreter}.
+   */
+  @ApiStatus.Internal
+  public void setLegacySdkName(@Nullable String sdkName) {
+    myLegacySdkName = sdkName;
+    myPythonInterpreter = null;
+  }
+
+  /**
+   * Makes {@code interpreter} the interpreter that this run configuration names itself, see {@link #getStoredInterpreter}.
+   * The value that {@link #getStoredInterpreter} has now changes nothing. An editor gives that value back, and before the
+   * registry is ready it is {@code null}, which must not clear the stored fields.
+   */
+  @Override
+  @ApiStatus.Internal
+  public void setPythonInterpreter(@Nullable PythonInterpreter interpreter) {
+    if (Objects.equals(interpreter, getStoredInterpreter())) return;
+    myPythonInterpreter = interpreter;
+    myInterpreterText = interpreter != null ? PyRunConfigurationInterpreter.interpreterTextOf(getProject(), interpreter) : null;
+    // The interpreter library flow keeps the legacy fields for an older build, see writeExternal.
+    if (PyRunConfigurationInterpreter.isLegacySdkWriteEnabled()) {
+      myLegacySdkName = null;
+      mySdkHome = "";
+    }
   }
 
   @Override
@@ -417,8 +473,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     target.setEnvs(new LinkedHashMap<>(source.getEnvs()));
     target.setInterpreterOptions(source.getInterpreterOptions());
     target.setPassParentEnvs(source.isPassParentEnvs());
-    target.setSdkHome(source.getSdkHome());
-    target.setSdk(source.getSdk());
+    target.setPythonInterpreter(source.getPythonInterpreter());
     target.setWorkingDirectory(source.getWorkingDirectory());
     target.setModule(source.getModule());
     target.setUseModuleSdk(source.isUseModuleSdk());

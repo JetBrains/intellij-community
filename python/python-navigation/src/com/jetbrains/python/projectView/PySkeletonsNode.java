@@ -5,13 +5,13 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.navigation.PyNavigationBundle;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +26,8 @@ public final class PySkeletonsNode extends PsiDirectoryNode {
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  public static @Nullable PySkeletonsNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    final VirtualFile skeletonsVirtualFile = PythonSdkUtil.findSkeletonsDir(sdk);
+  public static @Nullable PySkeletonsNode create(@NotNull Project project, @NotNull PythonInterpreter interpreter, ViewSettings settings) {
+    final VirtualFile skeletonsVirtualFile = PythonInterpreterExtKt.skeletonsDirectory(interpreter, project);
     if (skeletonsVirtualFile != null) {
       final PsiDirectory skeletonsDirectory = PsiManager.getInstance(project).findDirectory(skeletonsVirtualFile);
       if (skeletonsDirectory != null) {

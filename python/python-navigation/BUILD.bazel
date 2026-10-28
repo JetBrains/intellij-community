@@ -41,6 +41,7 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/core-ui",
         "//platform/editor-ui-api:editor-ui",
+        "//platform/execution",
         "//platform/platform-api:ide",
         "//platform/ide-core",
         "//platform/indexing-api:indexing",
@@ -59,7 +60,10 @@ jvm_library(
         "//python/python-ast:ast",
         "//python/python-psi-api:psi",
         "//python/python-psi-impl:psi-impl",
+        "//python/python-pyproject:pyproject",
+        "//python/python-pytools/backend",
         "//python/python-sdk/backend",
+        "//python/python-sdk/common",
     ],
 )
 
@@ -84,6 +88,7 @@ jvm_library(
         "//platform/core-api:core_test_lib",
         "//platform/core-ui:core-ui_test_lib",
         "//platform/editor-ui-api:editor-ui_test_lib",
+        "//platform/execution:execution_test_lib",
         "//platform/platform-api:ide_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/indexing-api:indexing_test_lib",
@@ -102,7 +107,10 @@ jvm_library(
         "//python/python-ast:ast_test_lib",
         "//python/python-psi-api:psi_test_lib",
         "//python/python-psi-impl:psi-impl_test_lib",
+        "//python/python-pyproject:pyproject_test_lib",
+        "//python/python-pytools/backend:backend_test_lib",
         "//python/python-sdk/backend:backend_test_lib",
+        "//python/python-sdk/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.navigation` end

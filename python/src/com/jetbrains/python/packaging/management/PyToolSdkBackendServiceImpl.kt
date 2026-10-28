@@ -63,11 +63,11 @@ internal class PyToolSdkBackendServiceImpl : PyToolSdkBackendService {
   private suspend fun projectInterpreters(project: Project): List<Pair<PythonInterpreter, PyInterpreterItem>> =
     project.pythonInterpreters().map { it to it.asItem() }.sortedBy { (_, item) -> item.name }
 
-  /** The token is the interpreter name, as the list shows it. */
-  private fun PyInterpreterItem.toDto(): PyToolSdkDto = PyToolSdkDto(name, shortName)
+  /** The token is the ref of the interpreter. Two interpreters can have one name, so the name is no key. */
+  private fun PyInterpreterItem.toDto(): PyToolSdkDto = PyToolSdkDto(ref.toString(), shortName)
 
   private suspend fun requireInterpreter(project: Project, dto: PyToolSdkDto): Pair<PythonInterpreter, PyInterpreterItem> =
-    projectInterpreters(project).firstOrNull { (_, item) -> item.name == dto.token } ?: error("Unknown Python interpreter: " + dto.token)
+    projectInterpreters(project).firstOrNull { (_, item) -> item.ref.toString() == dto.token } ?: error("Unknown Python interpreter: " + dto.token)
 
   private fun PyDependencyGroup.toDto() = PyToolDependencyGroupDto(
     name,

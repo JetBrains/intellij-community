@@ -14,13 +14,14 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.findPythonInterpreterIfReady
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext
 import com.jetbrains.python.psi.resolve.fromModule
-import com.jetbrains.python.psi.resolve.fromSdk
+import com.jetbrains.python.psi.resolve.fromInterpreter
 import com.jetbrains.python.psi.resolve.resolveModuleAt
 import com.jetbrains.python.psi.resolve.resolveQualifiedName
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
@@ -52,7 +53,9 @@ class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
 }
 
 class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
-  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
+  // A run configuration still names its interpreter by an SDK, so this looks up the interpreter of the project for it.
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? =
+    sdk?.let { project.findPythonInterpreterIfReady(it) }?.let { fromInterpreter(project, it) }
   override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
   override fun getRoots(): Array<VirtualFile> {
     val manager = ProjectRootManager.getInstance(project)

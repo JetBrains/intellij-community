@@ -7,6 +7,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -33,6 +34,8 @@ import com.intellij.python.pyproject.model.internal.pyProject.getPyProjectsWithS
 import com.intellij.python.pyproject.model.internal.workspaceBridge.affectsWorkspaceLayout
 import com.intellij.python.pyproject.model.internal.workspaceBridge.getWorkspaceLayout
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterKey
+import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.evolution.EvoPyProject
 import com.intellij.python.sdk.backend.evolution.EvoToolContext
@@ -87,16 +90,13 @@ private val PY_PROJECT_ENTITIES: List<Class<out WorkspaceEntity>> =
  * leaves a stale workspace behind.
  */
 private fun VersionedStorageChange.affectsPyProjects(): Boolean =
-  PY_PROJECT_ENTITIES.any { getChanges(it).isNotEmpty() } || changesInheritedInterpreter() || affectsWorkspaceLayout()
+  PY_PROJECT_ENTITIES.any { getChanges(it).isNotEmpty() } || changesInheritedPythonSdk() || affectsWorkspaceLayout()
 
 /**
- * Whether this change gives a module that inherits its interpreter another one.
- *
- * Such a module has an [InheritedSdkDependency], and [sdkReferenceOf] reads its interpreter from
- * [ProjectSettingsEntity]. Only that field counts, and only while a module inherits it. So a change of any other
- * setting, or a project where no module inherits, publishes no snapshot.
+ * Whether this change makes the project SDK a Python SDK while a module inherits it. The legacy flow then reads that SDK
+ * as the interpreter of the module, see [sdkReferenceOf]. A change of any other setting publishes no snapshot.
  */
-private fun VersionedStorageChange.changesInheritedInterpreter(): Boolean =
+private fun VersionedStorageChange.changesInheritedPythonSdk(): Boolean =
   getChanges(ProjectSettingsEntity::class.java).any { it.oldEntity?.projectSdk != it.newEntity?.projectSdk } &&
   storageAfter.entities<ModuleEntity>().any { module -> module.dependencies.any { it is InheritedSdkDependency } }
 
@@ -139,10 +139,15 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      */
     val main: EvoPyProject?,
     /**
-     * The SDK names the modules refer to, also names that the SDK table does not hold.
-     * A change of one of these SDKs in the SDK table starts a recompute.
+     * The interpreters the modules refer to, as the owner directory and the ref of each, also those that the registry
+     * does not hold. A change of one of them in the registry starts a recompute.
      */
-    val sdkReferences: Set<String>,
+    val interpreterKeys: Set<PythonInterpreterKey>,
+    /**
+     * Whether a module still refers to a Python SDK that the registry does not hold, see [migrateSdkReferences]. A
+     * change of the registry then starts a recompute, so the reference is replaced when its SDK appears.
+     */
+    val hasPendingSdkReferences: Boolean,
   ) {
     /**
      * Every `PyProject` of this generation, one workspace after another and each workspace's root first.
@@ -211,7 +216,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
      * find out. Read from the same generation as everything else here, so a caller never mixes two answers.
      *
      * A set, so [PythonInterpreter] equality carries it: two wrappers of one SDK are one interpreter here.
-     * A name that the SDK table does not hold is only in [sdkReferences].
+     * An interpreter that the registry does not hold is only in [interpreterKeys].
      */
     val interpreters: Set<PythonInterpreter> = evoPyProjects.mapNotNullTo(mutableSetOf()) { it.interpreter }
   }
@@ -237,11 +242,15 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
         .collect {
           val snapshot = computeSnapshot()
           state.value = snapshot
+          // The writes come after the publish, and from this coroutine. A write from inside the pass waits for the write
+          // lock, and a caller under a modal progress that waits for this snapshot holds that lock. Each write reports
+          // itself, so the next pass reads the result. A failed write is logged, and the model follows the next change.
+          logger.runAndLogException { writeDerivedEntities(snapshot) }
           // An inspection can have read the previous snapshot. Run it again on the new one. A project without Python
           // projects has nothing that reads it. A daemon that does not exist yet has run nothing, and creating it here
           // can register it on a project that is already closed.
           if (snapshot.workspaces.isNotEmpty()) {
-            project.serviceIfCreated<DaemonCodeAnalyzer>()?.restart("Python project structure changed")
+            logger.runAndLogException { project.serviceIfCreated<DaemonCodeAnalyzer>()?.restart("Python project structure changed") }
           }
         }
     }
@@ -307,35 +316,43 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
   private fun selectedFile(): VirtualFile? = FileEditorManager.getInstance(project).selectedFiles.firstOrNull()
 
   /**
-   * An event for each change of [PythonInterpreterRegistry] that adds, removes or renames an SDK named in
-   * [Snapshot.sdkReferences]. The project event log does not report interpreters. A change before the first snapshot is
+   * An event for each change of [PythonInterpreterRegistry] that adds or removes an interpreter in
+   * [Snapshot.interpreterKeys]. The project event log does not report interpreters. A change before the first snapshot is
    * ignored.
    */
   private fun interpreterChanges(): Flow<Unit> =
-    PythonInterpreterRegistry.getInstance(project).moduleSdkNamesFlow
+    PythonInterpreterRegistry.getInstance(project).interpreterKeysFlow
       .zipWithNext()
       .filter { (before, after) ->
-        val references = state.value?.sdkReferences ?: return@filter false
-        references.any { name -> (name in before) != (name in after) }
+        val snapshot = state.value ?: return@filter false
+        snapshot.hasPendingSdkReferences || snapshot.interpreterKeys.any { key -> (key in before) != (key in after) }
       }
       .map { }
 
   /**
-   * The interpreter whose SDK a module names [name], or `null`. The module stores the interpreter of its [PyProject], so
-   * the reference alone decides. A member of a tool workspace names the interpreter of the workspace root.
+   * Replaces the SDK references of the modules, see [migrateSdkReferences], and builds the interpreter libraries of
+   * [snapshot], see [PyInterpreterLibrarySync]. A module of an older build, the platform or a facet can still refer to an
+   * SDK. The legacy flow reads the SDK name of each module, see [isInterpreterLibraryFlowEnabled], so it migrates nothing.
    */
-  private suspend fun findPythonInterpreter(name: String): PythonInterpreter? =
-    PythonInterpreterRegistry.getInstance(project).findByModuleSdkName(name)
+  private suspend fun writeDerivedEntities(snapshot: Snapshot) {
+    if (isInterpreterLibraryFlowEnabled()) migrateSdkReferences(project)
+    PyInterpreterLibrarySync.getInstance(project).sync(snapshot.evoPyProjects)
+  }
 
   private suspend fun computeSnapshot(): Snapshot {
+    // The legacy flow lets the SDK table decide, so it recomputes on each change of the registry, as
+    // [hasPendingSdkReferences] says.
+    val libraryFlow = isInterpreterLibraryFlowEnabled()
     // Read all module data from this one storage. It does not change, so a module removal cannot break the pass.
     val (sources, storage) = project.getPyProjectsWithStorage()
+    val hasPendingSdkReferences = !libraryFlow || hasPendingSdkReferences(project, storage)
     val layouts = sources.associate { it.residesOnModule to it.residesOnModule.getWorkspaceLayout(storage) }
     val references = sources.associate { pyProject ->
-      pyProject.residesOnModule to pyProject.residesOnModule.findModuleEntity(storage)?.let { sdkReferenceOf(it, storage) }
+      pyProject.residesOnModule to pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }
     }
-    val interpreters = references.mapValues { (_, name) -> name?.let { findPythonInterpreter(it) } }
-    val sdkReferences = references.values.filterNotNullTo(mutableSetOf())
+    val registry = PythonInterpreterRegistry.getInstance(project)
+    val interpreters = references.mapValues { (_, reference) -> reference?.let { registry.resolve(it) } }
+    val interpreterKeys = references.values.filterIsInstance<StoredInterpreterReference.Library>().mapTo(mutableSetOf()) { it.key }
 
     // Every project first, indexed by its module: a project states nothing about a workspace, and a workspace is built
     // from the projects it owns, so this pass has to come first.
@@ -369,7 +386,7 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     val mainKey = project.basePath?.let { FileUtil.toSystemIndependentName(it) }
     // One workspace per group, built where its first member appears, so the order follows the project model.
     val workspaces = sources.map { it.residesOnModule }.distinctBy(::workspaceKeyOf).map(::workspaceOf)
-    return Snapshot(workspaces, projectsByModule.values.firstOrNull { it.key == mainKey }, sdkReferences)
+    return Snapshot(workspaces, projectsByModule.values.firstOrNull { it.key == mainKey }, interpreterKeys, hasPendingSdkReferences)
   }
 
   /**
@@ -383,10 +400,13 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
    * error, so a snapshot that never agrees cannot block the caller forever.
    */
   suspend fun awaitInterpreterOf(pyProjects: Collection<PyProject>) {
+    // A test can still write an SDK to a module. Replace it first, so the expected interpreter is the one it names.
+    if (isInterpreterLibraryFlowEnabled()) migrateSdkReferences(project)
     // The interpreter each module refers to now, read the same way as the snapshot reads it.
     val (_, storage) = project.getPyProjectsWithStorage()
+    val registry = PythonInterpreterRegistry.getInstance(project)
     val expected = pyProjects.associateWith { pyProject ->
-      pyProject.residesOnModule.findModuleEntity(storage)?.let { sdkReferenceOf(it, storage) }?.let { findPythonInterpreter(it) }
+      pyProject.residesOnModule.findModuleEntity(storage)?.let { project.storedInterpreterReferenceOf(it, storage) }?.let { registry.resolve(it) }
     }
     val agreed = withTimeoutOrNull(AWAIT_INTERPRETER_TIMEOUT) {
       snapshotFlow().first { snapshot ->
@@ -395,7 +415,11 @@ class EvoPyProjectModel(private val project: Project, scope: CoroutineScope) {
     }
     if (agreed == null) {
       logger.error("The snapshot does not state the interpreters after $AWAIT_INTERPRETER_TIMEOUT: $expected")
+      return
     }
+    // The snapshot coroutine builds the libraries after it publishes. Build them here too, so a caller that resolves
+    // next finds the roots. It runs in the context of the caller, so a modal progress of the caller does not block it.
+    PyInterpreterLibrarySync.getInstance(project).sync(agreed.evoPyProjects)
   }
 
   /** For tests: suspends until the snapshot holds the current SDK of every Python module. Call it before highlighting. */

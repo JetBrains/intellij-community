@@ -10,9 +10,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -20,6 +20,9 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.languageLevel
+import com.intellij.python.sdk.backend.skeletonsDirectory
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
@@ -36,7 +39,6 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyImportResolver
 import com.jetbrains.python.pyi.PyiFile
 import com.jetbrains.python.pyi.PyiUtil
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.util.SortedMap
 
@@ -165,21 +167,20 @@ fun resolveModuleAt(name: QualifiedName, item: PsiFileSystemItem?, context: PyQu
  */
 fun fromFoothold(foothold: PsiElement): PyQualifiedNameResolveContext {
   val module = ModuleUtilCore.findModuleForPsiElement(foothold.containingFile ?: foothold)
-  return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold, module?.pythonSdkIfReady())
+  return PyQualifiedNameResolveContextImpl(foothold.manager, module, foothold)
 }
 
 /**
  * Creates a [PyQualifiedNameResolveContext] from a [module].
  */
 fun fromModule(module: Module): PyQualifiedNameResolveContext =
-  PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null, module.pythonSdkIfReady())
+  PyQualifiedNameResolveContextImpl(PsiManager.getInstance(module.project), module, null)
 
 /**
- * Creates a [PyQualifiedNameResolveContext] from an [sdk].
+ * Creates a [PyQualifiedNameResolveContext] that resolves in the roots of [interpreter].
  */
-fun fromSdk(project: Project, sdk: Sdk): PyQualifiedNameResolveContext =
-  PyQualifiedNameResolveContextImpl(PsiManager.getInstance(project), module = null, foothold = null,
-                                    sdk = sdk)
+fun fromInterpreter(project: Project, interpreter: PythonInterpreter): PyQualifiedNameResolveContext =
+  PyQualifiedNameResolveContextImpl(PsiManager.getInstance(project), module = null, foothold = null, interpreter = interpreter)
 
 private fun cachePrefix(context: PyQualifiedNameResolveContext): QualifiedName {
   val results = mutableListOf<String>()
@@ -224,8 +225,8 @@ private fun relativeResultsFromSkeletons(name: QualifiedName, context: PyQualifi
       val containingName = QualifiedNameFinder.findCanonicalImportPath(containingDirectory, null)
       if (containingName != null && containingName.componentCount > 0) {
         val absoluteName = containingName.append(name)
-        val sdk = footholdFile.pythonSdkIfReady() ?: return emptyList()
-        val skeletonsVirtualFile = PythonSdkUtil.findSkeletonsDir(sdk) ?: return emptyList()
+        val interpreter = ModuleUtilCore.findModuleForPsiElement(footholdFile)?.pythonInterpreterIfReady() ?: return emptyList()
+        val skeletonsVirtualFile = interpreter.skeletonsDirectory(context.project) ?: return emptyList()
         val skeletonsDir = context.psiManager.findDirectory(skeletonsVirtualFile)
         return resolveModuleAt(absoluteName, skeletonsDir, context.copyWithoutForeign())
       }
@@ -269,16 +270,21 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
   val moduleResults = mutableListOf<PsiElement>()
   val sdkResults = mutableListOf<PsiElement>()
 
-  val sdk = context.effectiveSdk
   val module = context.module
   val footholdFile = context.footholdFile
   val withoutStubs = context.withoutStubs
+  val storedInterpreter = context.storedInterpreter
+  val consoleInterpreter = context.foothold?.takeIf { context.visitAllModules }?.let { consoleInterpreterOf(it) }
+  // The interpreter whose language level picks the typeshed stubs of the standard library: the console interpreter
+  // for a context that visits all modules, otherwise the interpreter of the context or of its module.
+  val languageInterpreter =
+    if (context.visitAllModules) consoleInterpreter else storedInterpreter ?: module?.pythonInterpreterIfReady()
+  val languageLevel = languageInterpreter?.languageLevel(context.project)
 
-  val visitor = RootVisitor { root, module, sdk, isModuleSource ->
+  val visitor = RootVisitor { root, _, _, isModuleSource ->
     val results = if (isModuleSource) moduleResults else sdkResults
-    val effectiveSdk = sdk ?: context.effectiveSdk
     if (!root.isValid ||
-        effectiveSdk != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, effectiveSdk)
+        languageLevel != null && PyTypeShed.isInside(root) && !PyTypeShed.maySearchForStubInRoot(name, root, languageLevel)
     ) {
       return@RootVisitor true
     }
@@ -301,24 +307,20 @@ private fun resultsFromRoots(name: QualifiedName, context: PyQualifiedNameResolv
     context.visitAllModules -> {
       RootVisitorHost.visitRootsInAllModules(context.project, visitor)
       when {
-        sdk != null ->
-          RootVisitorHost.visitSdkRoots(sdk, visitor)
+        consoleInterpreter != null ->
+          RootVisitorHost.visitInterpreterRoots(context.project, consoleInterpreter, visitor)
         footholdFile != null ->
           RootVisitorHost.visitSdkRoots(footholdFile, visitor)
       }
     }
     module != null -> {
-      val otherSdk = sdk != context.sdk
-      RootVisitorHost.visitRoots(module, otherSdk, visitor)
-      if (otherSdk && sdk != null) {
-        RootVisitorHost.visitSdkRoots(sdk, visitor)
-      }
+      RootVisitorHost.visitRoots(module, false, visitor)
     }
     footholdFile != null -> {
       RootVisitorHost.visitRoots(footholdFile, visitor)
     }
-    sdk != null -> {
-      RootVisitorHost.visitSdkRoots(sdk, visitor)
+    storedInterpreter != null -> {
+      RootVisitorHost.visitInterpreterRoots(context.project, storedInterpreter, visitor)
     }
     else -> throw IllegalStateException()
   }
@@ -352,11 +354,10 @@ fun resolveInRoot(name: QualifiedName, root: VirtualFile, context: PyQualifiedNa
 fun findCache(context: PyQualifiedNameResolveContext): PythonPathCache? {
   return when {
     context.visitAllModules -> null
-    context.module != null ->
-      if (context.effectiveSdk != context.sdk) null else PythonModulePathCache.getInstance(context.module)
+    context.module != null -> PythonModulePathCache.getInstance(context.module)
     context.footholdFile != null -> {
-      val sdk = PyBuiltinCache.findSdkForNonModuleFile(context.footholdFile!!)
-      if (sdk != null) PythonSdkPathCache.getInstance(context.project, sdk) else null
+      val interpreter = PyBuiltinCache.findInterpreterForNonModuleFile(context.footholdFile!!)
+      if (interpreter != null) PythonSdkPathCache.getInstance(context.project, interpreter) else null
     }
     else -> null
   }
@@ -476,9 +477,10 @@ private fun resolvedElementPriority(element: PsiElement, module: Module?): Prior
 }
 
 fun isInSkeletons(element: PsiElement): Boolean {
-  val sdk = element.pythonSdkIfReady() ?: return false
+  val interpreter = ModuleUtilCore.findModuleForPsiElement(element)?.pythonInterpreterIfReady() ?: return false
   val vFile = (if (element is PsiDirectory) element.virtualFile else element.containingFile?.virtualFile) ?: return false
-  return PythonSdkUtil.isFileInSkeletons(vFile, sdk)
+  val skeletons = interpreter.skeletonsDirectory(element.project) ?: return false
+  return VfsUtilCore.isAncestor(skeletons, vFile, false)
 }
 
 private fun isInProvidedSdk(element: PsiElement): Boolean =

@@ -13,7 +13,7 @@ class PyTensorFlowImportResolver : PyImportResolver {
   override fun resolveImportReference(name: QualifiedName, context: PyQualifiedNameResolveContext, withRoots: Boolean): PsiElement? {
     return if (isTensorFlowMember(name)) {
       val resolveContext = context.copyWithoutForeign()
-      resolveImportReference(name, resolveContext, getTensorFlowPathConfig(resolveContext.sdk))
+      resolveImportReference(name, resolveContext, getTensorFlowPathConfig(resolveContext))
     }
     else {
       null

@@ -2,7 +2,6 @@
 package com.jetbrains.python.sdk
 
 import com.intellij.ide.projectView.actions.MarkRootsManager
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
@@ -15,6 +14,7 @@ import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.detectedEnvironment
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResult
+import com.intellij.python.sdk.backend.remoteSourcesLocalPath
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.isCondaVirtualEnv
 import com.jetbrains.python.isNonToolVirtualEnv
@@ -24,8 +24,8 @@ import com.jetbrains.python.sdk.readOnly.PythonSdkReadOnlyProvider
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.annotations.Nls
 import java.nio.file.Path
-import kotlin.io.path.div
 
 internal fun resetSystemWideSdksDetectors() {
   PythonSdkFlavor.getApplicableFlavors(false).forEach(PythonSdkFlavor<*>::dropCaches)
@@ -92,23 +92,16 @@ internal val Sdk.isSystemWide: Boolean
   get() = !PythonSdkUtil.isRemote(this) && !this.isNonToolVirtualEnv && !this.isCondaVirtualEnv
 
 
-@get:Internal
-val Sdk.isReadOnly: Boolean
-  get() = PythonSdkReadOnlyProvider.isReadOnly(this)
-
-@get:Internal
-val Sdk.readOnlyErrorMessage: String
-  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", name)
-
 /** Whether packages cannot be installed into this interpreter, for example one inside a Docker image. */
 @get:Internal
 val PythonInterpreter.isReadOnly: Boolean
-  get() = getSdkAPI().isReadOnly
+  get() = PythonSdkReadOnlyProvider.isReadOnly(this)
 
 /** Why packages cannot be installed into this interpreter. See [isReadOnly]. */
 @get:Internal
-val PythonInterpreter.readOnlyErrorMessage: String
-  get() = getSdkAPI().readOnlyErrorMessage
+val PythonInterpreter.readOnlyErrorMessage: @Nls String
+  @Suppress("DEPRECATION") // The fallback names the SDK.
+  get() = PythonSdkReadOnlyProvider.getReadOnlyMessage(this) ?: PyBundle.message("python.sdk.read.only", getSdkAPI().name)
 
 internal val Sdk.sdkFlavor: PythonSdkFlavor<*> get() = pySdkAdditionalData.flavor
 
@@ -134,11 +127,6 @@ fun getOrCreateAdditionalDataOld(sdk: Sdk): PythonSdkAdditionalData = sdk.pySdkA
  */
 @get:Internal
 internal val Sdk.remoteSourcesLocalPath: Path
-  get() =
-    Path.of(PathManager.getSystemPath()) /
-    Path.of(PythonSdkUtil.REMOTE_SOURCES_DIR_NAME) /
-    Path.of(when (val data = sdkAdditionalData) {
-              is PyTargetAwareAdditionalData -> data.uuid.toString()
-              else -> error("Only legacy and remote SDK and target-based SDKs are supported")
-            }.hashCode().toString())
+  get() = remoteSourcesLocalPath(sdkAdditionalData as? PyTargetAwareAdditionalData
+                                 ?: error("Only legacy and remote SDK and target-based SDKs are supported"))
 

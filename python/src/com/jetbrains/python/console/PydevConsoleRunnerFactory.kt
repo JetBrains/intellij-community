@@ -100,7 +100,7 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
     // whole creation stood for.
     val (workingDirFunction, setupScriptFunction) = readAction {
       val workingDir = getWorkingDirFunction(target, pathMapper, settingsProvider)
-      workingDir to createSetupScriptFunction(target, workingDir, pathMapper, settingsProvider)
+      workingDir to createSetupScriptFunction(target, sdk, workingDir, pathMapper, settingsProvider)
     }
     return TargetedConsoleParameters(project, sdk, workingDirFunction, envs, PyConsoleType.PYTHON, settingsProvider, setupScriptFunction)
       .also { it.module = target.moduleIfExists }
@@ -218,12 +218,13 @@ open class PydevConsoleRunnerFactory : PyConsoleRunnerFactoryAsync() {
     }
 
     private fun createSetupScriptFunction(moduleOrProject: ModuleOrProject,
+                                          sdk: Sdk?,
                                           workingDir: TargetEnvironmentFunction<String>?,
                                           pathMapper: PyRemotePathMapper?,
                                           settingsProvider: PyConsoleSettings): TargetEnvironmentFunction<String> {
       val customStartScript = makeStartWithEmptyLine(settingsProvider.myCustomStartScript)
       val (project, module) = moduleOrProject.destructured
-      val pythonPathFuns = collectPythonPath(project, module, settingsProvider.mySdkHome, pathMapper,
+      val pythonPathFuns = collectPythonPath(project, module, sdk, pathMapper,
                                              settingsProvider.shouldAddContentRoots(), settingsProvider.shouldAddSourceRoots()
       ).toMutableSet()
       return constructPyPathAndWorkingDirCommand(pythonPathFuns, workingDir, customStartScript)

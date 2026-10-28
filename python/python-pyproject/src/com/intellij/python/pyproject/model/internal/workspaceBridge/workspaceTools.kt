@@ -1,5 +1,6 @@
 package com.intellij.python.pyproject.model.internal.workspaceBridge
 
+import com.intellij.python.sdk.backend.pyInterpreterDependency
 import com.intellij.configurationStore.saveSettings
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.javaResourceRoots
@@ -511,13 +512,15 @@ private fun updateModule(
       this.type = PYTHON_MODULE_TYPE_ID
 
       if (isModuleDependenciesChanged) {
-        // Replacing `dependencies` wipes the SdkDependency item — save and restore it.
+        // Replacing `dependencies` wipes the SdkDependency item and the interpreter library entry — save and restore them.
         val existingSdk = module.sdkId
+        val existingInterpreter = module.dependencies.pyInterpreterDependency
         this.dependencies = mutableListOf<com.intellij.platform.workspace.jps.entities.ModuleDependencyItem>().apply {
           add(ModuleSourceDependency)
           for (depName in entry.dependencies) {
             add(ModuleDependency(ModuleId(depName.name), true, DependencyScope.COMPILE, false))
           }
+          existingInterpreter?.let(::add)
         }
         this.sdkId = existingSdk
       }

@@ -8,7 +8,7 @@ import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.xmlb.annotations.Attribute
@@ -120,20 +120,15 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     @JvmField
     var myCustomStartScript: String = PydevConsoleRunnerImpl.CONSOLE_START_COMMAND
 
-    @JvmField
-    var mySdkHome: String? = null
-
     /**
-     * Resolved [Sdk] object, kept only as transient runtime state and shuttled to/from the Console Settings UI
-     * via [apply]/[reset]. It is intentionally **not serialized** ([Transient]):
-     * - the persisted interpreter reference is the path [mySdkHome] (`sdk-home`), from which the SDK is resolved
-     *   at launch time (see `findPythonSdkAndModule`); and
-     * - [Sdk] is an interface, so persisting it made deserialization try to instantiate the interface and fail
-     *   with `NoSuchElementException: List is empty` ([PY-90067](https://youtrack.jetbrains.com/issue/PY-90067)).
+     * The interpreter that the Console Settings UI shows, shuttled to and from it by [apply] and [reset]. It is not
+     * saved: a console runs with the interpreter of its Python project, see `findPythonSdkAndModule`. So the settings
+     * hold no local path.
      */
     @Transient
     @JvmField
-    var mySdk: Sdk? = null
+    @ApiStatus.Internal
+    var myPythonInterpreter: PythonInterpreter? = null
 
     @JvmField
     var myInterpreterOptions: String = ""
@@ -171,8 +166,7 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     }
 
     fun apply(form: AbstractPythonRunConfigurationParams) {
-      mySdkHome = form.sdkHome
-      mySdk = form.sdk
+      myPythonInterpreter = form.pythonInterpreter
       myInterpreterOptions = form.interpreterOptions
       myEnvs = form.envs
       myEnvFiles = form.envFilePaths
@@ -187,7 +181,7 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     }
 
     fun isModified(form: AbstractPyCommonOptionsForm): Boolean {
-      return !ComparatorUtil.equalsNullable(mySdkHome, form.sdkHome) ||
+      return myPythonInterpreter != form.pythonInterpreter ||
              myInterpreterOptions != form.interpreterOptions ||
              myEnvs != form.envs ||
              myEnvFiles != form.envFilePaths ||
@@ -205,8 +199,7 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
       form.envFilePaths = myEnvFiles
       form.isPassParentEnvs = myPassParentEnvs
       form.interpreterOptions = myInterpreterOptions
-      form.sdkHome = mySdkHome
-      form.sdk = mySdk
+      form.pythonInterpreter = myPythonInterpreter
       form.isUseModuleSdk = myUseModuleSdk
       form.setAddContentRoots(myAddContentRoots)
       form.setAddSourceRoots(myAddSourceRoots)
@@ -234,13 +227,10 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
     @Attribute("custom-start-script")
     fun getCustomStartScript(): String = myCustomStartScript
 
-    @Deprecated("Deprecated in Java")
-    @Attribute("sdk-home")
-    override fun getSdkHome(): String? = mySdkHome
-
-    // Not serialized, see [mySdk].
+    // Not serialized, see [myPythonInterpreter].
     @Transient
-    override fun getSdk(): Sdk? = mySdk
+    @ApiStatus.Internal
+    override fun getPythonInterpreter(): PythonInterpreter? = myPythonInterpreter
 
     @Attribute("module-name")
     override fun getModuleName(): String? = myModuleName
@@ -271,13 +261,9 @@ class PyConsoleOptions(private val project: Project) : PersistentStateComponent<
       myCustomStartScript = customStartScript
     }
 
-    @Deprecated("Deprecated in Java")
-    override fun setSdkHome(sdkHome: String?) {
-      mySdkHome = sdkHome
-    }
-
-    override fun setSdk(sdk: Sdk?) {
-      mySdk = sdk
+    @ApiStatus.Internal
+    override fun setPythonInterpreter(interpreter: PythonInterpreter?) {
+      myPythonInterpreter = interpreter
     }
 
     override fun setModule(module: Module) {

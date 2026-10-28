@@ -6,14 +6,12 @@ import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.ComboBox
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfiguration
 import com.jetbrains.python.run.configuration.PyInterpreterModeNotifier
 import com.jetbrains.python.run.configuration.PySdkComboBox
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
 import java.awt.event.ItemEvent
@@ -22,7 +20,8 @@ import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JPanel
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.isOnTarget
 
 internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : SettingsEditorFragment<T, JPanel>(
   "py.plugin.interpreter", null, null, JPanel(GridBagLayout()), SettingsEditorFragmentType.COMMAND_LINE, null, null,
@@ -141,7 +140,7 @@ internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : Sett
     return if (component == null) null else hints[component]
   }
 
-  override fun isRemoteSelected(): Boolean = PythonSdkUtil.isRemote(getSelectedSdk())
+  override fun isRemoteSelected(): Boolean = getSelectedInterpreter()?.isOnTarget == true
 
   override fun addInterpreterModeListener(listener: Consumer<Boolean>) {
     interpreterModeListeners.add(listener)
@@ -154,16 +153,13 @@ internal class PyPluginSdkFragment<T : AbstractPythonRunConfiguration<*>> : Sett
     }
   }
 
-  private fun getSelectedSdk(): Sdk? {
+  private fun getSelectedInterpreter(): PythonInterpreter? {
     if (currentMode == SDK_OF_MODULE) {
-      ((modulesCombo?.selectedItem) as? Module)?.let {
-        // A fragment cannot suspend, so it peeks at the snapshot.
-        @Suppress("DEPRECATION") // The run configuration takes an SDK.
-        return it.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
-      }
+      // A fragment cannot suspend, so it peeks at the snapshot.
+      return ((modulesCombo?.selectedItem) as? Module)?.findEvoPyProjectIfReady()?.interpreter
     }
     else if (currentMode == SDK_FROM_LIST) {
-      return interpreterCombo?.getSelectedSdk()
+      return interpreterCombo?.getSelectedInterpreter()
     }
     return null
   }

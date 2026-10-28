@@ -8,7 +8,6 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.NativePythonInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.TargetPythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.sdk.isReadOnly
 import com.jetbrains.python.statistics.InterpreterTarget
@@ -57,9 +56,8 @@ object PyTypeEngineUtils {
    * runs on the machine of the interpreter through Eel, so WSL and Docker count. A legacy target, such as SSH, has no
    * such machine.
    */
-  @Suppress("DEPRECATION") // The read-only state is recorded on the SDK.
   fun servedInterpreterOf(interpreter: PythonInterpreter): NativePythonInterpreter? = when (interpreter) {
-    is NativePythonInterpreter -> interpreter.takeUnless { it.getSdkAPI().isReadOnly }
+    is NativePythonInterpreter -> interpreter.takeUnless { it.isReadOnly }
     is TargetPythonInterpreter -> null
   }
 

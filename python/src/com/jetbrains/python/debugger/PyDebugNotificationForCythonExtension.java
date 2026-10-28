@@ -1,6 +1,8 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.debugger;
 
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
@@ -39,7 +41,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -106,7 +107,8 @@ public final class PyDebugNotificationForCythonExtension {
       return true;
     }
     // Temporarily disable notification for Remote interpreters
-    return PythonSdkUtil.isRemote(runConfiguration.getSdk());
+    final PythonInterpreter interpreter = runConfiguration.getPythonInterpreter();
+    return interpreter != null && PythonInterpreterExtKt.isOnTarget(interpreter);
   }
 
   private static void showErrorDialog(Project project, @DialogMessage String message) {

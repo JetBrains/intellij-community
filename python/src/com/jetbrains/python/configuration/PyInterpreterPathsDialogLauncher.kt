@@ -7,6 +7,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
+import com.intellij.python.sdk.backend.PythonInterpreterSdks
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.sdk.PythonSdkUpdater
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
@@ -35,6 +38,7 @@ object PyInterpreterPathsDialogLauncher {
     val strategy = PathEditorStrategy.forSdk(sdk)
     val (editor, modified) = withContext(Dispatchers.EDT) {
       val editor = strategy.createEditor(project, sdk)
+      editor.setModuleSourceRoots(moduleSourceRootsOf(project, sdk))
       // Wire the "Reload paths" toolbar action inside the paths editor to a full interpreter
       // re-detection: `PythonSdkUpdater` walks the SDK binary again and refreshes version +
       // site-packages / typeshed roots. Without this callback the toolbar button would only
@@ -82,4 +86,14 @@ private sealed interface PathEditorStrategy {
   companion object {
     fun forSdk(sdk: Sdk): PathEditorStrategy = if (PythonSdkUtil.isRemote(sdk)) Remote else Local
   }
+}
+
+
+/**
+ * The paths of the `sys.path` of [sdk] that are source roots of a module of [project], not roots of the interpreter, see
+ * [PythonInterpreterDetails.sourceRoots]. Only the interpreter library flow has them.
+ */
+private fun moduleSourceRootsOf(project: Project, sdk: Sdk): Collection<VirtualFile> {
+  val key = PythonInterpreterSdks.getInstance(project).keyOf(sdk) ?: return emptyList()
+  return PythonInterpreterDetails.getInstance(project).sourceRoots(key)
 }

@@ -109,7 +109,7 @@ internal class PythonPackageManagerServiceImpl(
     PyPackageUtil.runOnChangeUnderInterpreterPaths(entry.sdk, watcher) {
       // A background request: a change under the paths of an interpreter that the project does not use must not
       // start it, see PY-88315.
-      PythonSdkUpdater.scheduleBackgroundUpdate(entry.sdk, project)
+      PythonSdkUpdater.scheduleBackgroundUpdate(entry.interpreter, project)
     }
     entry.watcher = watcher
   }
@@ -184,6 +184,18 @@ internal class PythonPackageManagerServiceImpl(
     @Suppress("DEPRECATION")
     PythonRequirementTxtSdkUtils.migrateRequirementsTxtPathFromModuleToSdk(project, interpreter.getSdkAPI())
     return manager
+  }
+
+  /**
+   * Drops every cached manager. A light test project keeps its interpreter for the whole run, so a test that replaces
+   * the managers through [PythonPackageManagerProvider] gets a new one after this.
+   */
+  @TestOnly
+  fun dropManagersForTests() {
+    watchersLock.withLock {
+      for (entry in cache.values) dropEntry(entry)
+      cache.clear()
+    }
   }
 
   /** The disposable that owns the watcher of the paths of [sdk], or `null` when they are not watched. */

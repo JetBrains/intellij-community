@@ -12,7 +12,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
@@ -311,7 +310,7 @@ public final class PyPackageUtil {
   }
 
   private static @NotNull Set<VirtualFile> getPackagingAwareSdkRoots(@NotNull Sdk sdk) {
-    final Set<VirtualFile> result = Sets.newHashSet(sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+    final Set<VirtualFile> result = Sets.newHashSet(PythonSdkUtil.getPythonClassRoots(sdk));
     var targetAdditionalData = SdkExtKt.getTargetAdditionalData(sdk);
     if (targetAdditionalData != null) {
       // For targets that support VFS we are interested not only in local dirs, but also for VFS on target

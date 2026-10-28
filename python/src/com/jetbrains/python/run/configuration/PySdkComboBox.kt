@@ -2,28 +2,25 @@
 package com.jetbrains.python.run.configuration
 
 import org.jetbrains.annotations.ApiStatus
-import com.intellij.python.sdk.backend.interpreterItem
 import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.Computable
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.asItem
-import com.intellij.python.sdk.backend.findSdk
+import com.intellij.python.sdk.backend.isOnTarget
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams
 import com.jetbrains.python.sdk.PySdkListCellRenderer
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import java.util.function.Consumer
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
-import com.intellij.python.sdk.backend.getSdkAPI
 
 /**
  * The interpreter combo of a run configuration.
@@ -40,9 +37,12 @@ class PySdkComboBox @ApiStatus.Internal constructor(
 ) : ComboBox<PyInterpreterItem?>(), PyInterpreterModeNotifier {
   private val interpreterModeListeners: MutableList<Consumer<Boolean>> = mutableListOf()
 
+  /** The interpreter of each row, see [initList]. The row for "the interpreter of the module" has none. */
+  private var interpreters: Map<PyInterpreterItem, PythonInterpreter> = emptyMap()
+
   fun reset(config: AbstractPythonRunConfigurationParams) {
     initList()
-    selectedItem = config.sdk?.let { itemFor(it) }
+    selectedItem = config.pythonInterpreter?.let { itemFor(it) }
     setUseModuleSdk(config.isUseModuleSdk)
     setModule(config.module)
     addActionListener {
@@ -52,11 +52,12 @@ class PySdkComboBox @ApiStatus.Internal constructor(
   }
 
   fun initList() {
-    val items: MutableList<PyInterpreterItem?> = readInterpreters {
+    interpreters = readInterpreters {
       val pyProjects = moduleProvider.compute()?.asPyProject()?.let { listOf(it) } ?: project.getPyProjects()
       val registry = PythonInterpreterRegistry.getInstance(project)
-      pyProjects.flatMap { registry.interpreters(it) }.distinct().map { it.asItem() }
-    }.toMutableList()
+      pyProjects.flatMap { registry.interpreters(it) }.distinct().associateBy { it.asItem() }
+    }
+    val items: MutableList<PyInterpreterItem?> = interpreters.keys.toMutableList()
     if (addDefault) {
       items.add(0, null)
     }
@@ -67,7 +68,7 @@ class PySdkComboBox @ApiStatus.Internal constructor(
   }
 
   fun apply(config: AbstractPythonRunConfigurationParams) {
-    config.sdk = getSelectedSdk()
+    config.pythonInterpreter = getSelectedInterpreter()
     config.isUseModuleSdk = isUseModuleSdk()
   }
 
@@ -78,11 +79,10 @@ class PySdkComboBox @ApiStatus.Internal constructor(
 
   private fun updateDefaultInterpreter(module: Module?) {
     // A combo cannot suspend, so it peeks at the snapshot. Before the first one, no default interpreter is shown.
-    @Suppress("DEPRECATION") // The renderer and the run configuration take an SDK.
-    val sdk = module?.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+    val item = module?.findEvoPyProjectIfReady()?.interpreter?.asItem()
     setRenderer(
-      if (sdk == null) PySdkListCellRenderer()
-      else PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.project.default.0", sdk.name), itemFor(sdk))
+      if (item == null) PySdkListCellRenderer()
+      else PySdkListCellRenderer(PyBundle.message("python.sdk.rendering.current"), item)
     )
   }
 
@@ -94,23 +94,15 @@ class PySdkComboBox @ApiStatus.Internal constructor(
 
   private fun isUseModuleSdk(): Boolean = addDefault && selectedItem == null
 
-  fun getSelectedSdk(): Sdk? {
-    val selectedSdk = (selectedItem as? PyInterpreterItem)?.findSdk()
-    if (selectedSdk != null) {
-      return selectedSdk
-    }
-    else {
-      if (isUseModuleSdk()) {
-        moduleProvider.get()?.let {
-          @Suppress("DEPRECATION") // The run configuration takes an SDK.
-          return@getSelectedSdk it.findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
-        }
-      }
-    }
-    return null
+  /** The selected interpreter, or the interpreter of the module for the row that stands for it. */
+  @ApiStatus.Internal
+  fun getSelectedInterpreter(): PythonInterpreter? {
+    (selectedItem as? PyInterpreterItem)?.let { return interpreters[it] }
+    if (!isUseModuleSdk()) return null
+    return moduleProvider.get()?.findEvoPyProjectIfReady()?.interpreter
   }
 
-  override fun isRemoteSelected(): Boolean = PythonSdkUtil.isRemote(getSelectedSdk())
+  override fun isRemoteSelected(): Boolean = getSelectedInterpreter()?.isOnTarget == true
 
   private fun updateRemoteInterpreterMode() {
     val isRemote = isRemoteSelected()
@@ -123,8 +115,8 @@ class PySdkComboBox @ApiStatus.Internal constructor(
     interpreterModeListeners.add(listener)
   }
 
-  /** The row of [sdk], or `null` for a broken SDK that has no ref. */
-  private fun itemFor(sdk: Sdk): PyInterpreterItem? = readInterpreters { sdk.interpreterItem() }
+  /** The row of [interpreter], or `null` when the combo holds no row for it. */
+  private fun itemFor(interpreter: PythonInterpreter): PyInterpreterItem? = interpreters.entries.firstOrNull { it.value == interpreter }?.key
 
   private fun <T> readInterpreters(read: suspend () -> T): T =
     // Before the combo box is in a window, the progress cannot use it as the owner.

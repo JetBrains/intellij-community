@@ -267,6 +267,7 @@
                  description="Enable pyi stubs for Django (django-stubs package)"
                  key="django.enable.pyi.stubs"/>
     <library.type implementation="com.jetbrains.python.library.PythonLibraryType"/>
+    <library.type implementation="com.jetbrains.python.library.PyInterpreterLibraryType"/>
 
     <lang.documentationProvider language="Python" implementationClass="com.jetbrains.python.console.PydevDocumentationProvider"/>
 
@@ -764,9 +765,6 @@
     <evoEnvironmentProvider id="CondaEvoProvider"
                             order="after PoetryEvoProvider"
                             implementation="com.jetbrains.python.conda.sdk.evolution.CondaEvoEnvironmentProvider"/>
-
-    <!-- A pipenv cache environment is named after a hash of the project path, so it is labelled by its version. -->
-    <interpreterPresentationProvider implementation="com.jetbrains.python.sdk.pipenv.PipenvInterpreterPresentationProvider"/>
 
     <!-- Between conda and pip, like hatch: pipenv is a project tool, so it precedes the generic pip fallback. -->
     <evoEnvironmentProvider id="PipenvEvoProvider"

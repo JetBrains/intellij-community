@@ -5,8 +5,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
@@ -16,8 +14,17 @@ import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.sdk.skeleton.PySkeletonUtil.getSitePackagesDirectory
+import com.intellij.python.sdk.backend.classRoots
+import com.intellij.python.sdk.backend.associatedModuleDir
+import com.intellij.python.sdk.backend.sitePackagesDirectory
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
+import com.intellij.python.sdk.backend.isInterpreterLibraryFlowEnabled
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.withContext
 
 internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
@@ -45,36 +52,67 @@ internal class PythonSdkUpdateProjectActivity : ProjectActivity, DumbAware {
     })
 
 
+    if (isInterpreterLibraryFlowEnabled()) {
+      PythonSavedSysPathApplier.getInstance(project).start()
+    }
+
     if (application.isUnitTestMode) return
     if (dropUpdaterInHeadless()) return  // see PythonHeadlessSdkUpdater
     if (project.isDisposed) return
 
-    for (sdk in EvoPyProjectModel.getInstance(project).snapshot().sdks()) {
-      PythonSdkUpdater.scheduleUpdate(sdk, project)
+    for (interpreter in EvoPyProjectModel.getInstance(project).snapshot().interpreters) {
+      PythonSdkUpdater.scheduleUpdate(interpreter, project)
     }
   }
 }
 
-internal suspend fun refreshPaths(project: Project, sdk: Sdk): Unit = withContext(Dispatchers.IO) {
+/**
+ * Gives each interpreter that the registry builds from a record the roots of its saved `sys.path`, see
+ * [PythonSdkUpdater.applySavedSysPath]. The project then opens with the roots of each interpreter, and the first update
+ * reads `sys.path` again later. Only the interpreter library flow builds an SDK from a record.
+ */
+@Service(Service.Level.PROJECT)
+internal class PythonSavedSysPathApplier(private val project: Project, private val scope: CoroutineScope) {
+  private val started = AtomicBoolean()
+
+  fun start() {
+    if (!started.compareAndSet(false, true)) return
+    scope.launch(Dispatchers.IO) {
+      val registry = PythonInterpreterRegistry.getInstance(project)
+      registry.interpreterKeysFlow.collect { keys ->
+        for (key in keys) {
+          val interpreter = registry.resolveIfReady(key) ?: continue
+          PythonSdkUpdater.applySavedSysPath(project, interpreter)
+        }
+      }
+    }
+  }
+
+  companion object {
+    fun getInstance(project: Project): PythonSavedSysPathApplier = project.service()
+  }
+}
+
+internal suspend fun refreshPaths(project: Project, interpreter: PythonInterpreter): Unit = withContext(Dispatchers.IO) {
   // Background refreshing breaks structured concurrency: there is a some activity in background that locks files.
   // Temporary folders can't be deleted on Windows due to that.
   // That breaks tests.
   // This code should be deleted, but disabled temporary to fix tests
   if (!(ApplicationManager.getApplication().isUnitTestMode && SystemInfoRt.isWindows)) {
-    val files = sdk.rootProvider.getFiles(OrderRootType.CLASSES)
+    val files = interpreter.classRoots(project)
     VfsUtil.markDirty(true, true, *files)
     RefreshQueue.getInstance().refresh(true, files.toList())
-    RefreshQueue.getInstance().refresh(false, listOfNotNull(sdk.associatedModuleDir))
+    RefreshQueue.getInstance().refresh(false, listOfNotNull(interpreter.associatedModuleDir))
   }
   else {
-    RefreshQueue.getInstance().refresh(true, listOfNotNull(getSitePackagesDirectory(sdk), sdk.associatedModuleDir))
+    RefreshQueue.getInstance().refresh(true, listOfNotNull(interpreter.sitePackagesDirectory(project), interpreter.associatedModuleDir))
   }
 
   // Do not start the update on a separate scope. `ProgressManager.run` returns at once for a background task, so a
   // caller does not wait. A test gets a synchronous update, and no test must wait for a job it cannot see.
   // The synchronous behaviour comes from `CoreProgressManager.isSynchronousHeadless`, and the property
   // `intellij.progress.task.ignoreHeadless` removes it. `PythonSdkUpdater.setEnabledInTests` asserts that.
-  PythonSdkUpdater.scheduleUpdate(sdk, project, false)
+  PythonSdkUpdater.scheduleUpdate(interpreter, project, false)
 }
 
 internal fun dropUpdaterInHeadless(): Boolean {

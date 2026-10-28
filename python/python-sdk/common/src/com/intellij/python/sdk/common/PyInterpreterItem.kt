@@ -33,16 +33,14 @@ data class PythonInterpreterProblem(
  * pins this.
  *
  * @property ref the ref of this interpreter, which is what selects it.
- * @property name Main label: `sdk.name` or a caller-supplied override. Two items built for one interpreter with
- *   different names are still equal, so never put both in one list.
- * @property suffix Trailing info shown in brackets (e.g. `sudo / 3.12.1`), or `null`.
- * @property description Python Binary Path (SDK.homePath). Used in tooltips.
+ * @property name Main label, built from [ref]: the tool that manages the environment, and where it runs when that is
+ *   not this machine, such as `uv` or `Conda · SSH`. Two interpreters can have one name, so the name is no key.
+ * @property suffix Trailing info, such as the version `3.12.1` or `[sudo] 3.12.1`, or `null`.
+ * @property description The root of the environment, relative to the user home, such as `~/app/.venv`.
  * @property problem Why the interpreter is flagged, or `null` when it is usable.
  * @property icon Flavor icon, pre-decorated with a warning cross when flagged.
- * @property isPathDerivedName `true` when [name] is the canonical path-derived label produced
- *   by `PythonSdkType.suggestSdkName` (so basename/middle-ellipsis shortening is meaningful);
- *   `false` when [name] is a free-form label such as `SSH (sftp://...)` or a caller-supplied
- *   custom name, in which case the renderer trims the middle instead. See PY-89560.
+ * @property isPathDerivedName `true` when [name] is a path, so basename/middle-ellipsis shortening is meaningful. Only
+ *   the row of a broken SDK has such a name. See PY-89560.
  */
 @Serializable
 class PyInterpreterItem(
@@ -53,13 +51,6 @@ class PyInterpreterItem(
   val problem: PythonInterpreterProblem?,
   val icon: IconId,
   val isPathDerivedName: Boolean,
-  /**
-   * A short label the interpreter's own tool supplies, or `null` to shorten [name] as usual.
-   *
-   * It replaces [shortName] alone. [name], [fullName] and [longName] stay the SDK name, because they are read where
-   * there is room for the path, and the path is what tells two environments apart.
-   */
-  val toolShortName: @NlsSafe String? = null,
 ) {
   /** `name [suffix]` or `name` when [suffix] is null. Example: `~/Projects/myapp/long/path/.venv [3.12.1]`. */
   val fullName: @NlsSafe String = if (suffix == null) name else "$name [$suffix]"
@@ -75,11 +66,8 @@ class PyInterpreterItem(
    *  Up to 50 chars. For path-derived names: drops the path prefix. For free-form labels:
    *  trims the middle of the whole string. Keeps `[suffix]` verbatim.
    *  Example: `myenv [3.12.1]`.
-   *
-   *  A [toolShortName] is taken as it stands, with no `[suffix]` after it. The tool wrote the whole label, so appending
-   *  the version to it would state the version twice.
    */
-  val shortName: @NlsSafe String = toolShortName ?: compactName(50, false)
+  val shortName: @NlsSafe String = compactName(50, false)
 
   /**
    * Fits the label in [maxLength] chars; `[suffix]` is kept as-is.

@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.python.sdk.backend.PythonSdkTable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
@@ -344,7 +345,7 @@ internal class PyModuleDetailsPane(
   }
 
   private fun collectAvailablePythonSdks(): List<Sdk> {
-    val editable = projectSdksModel.projectSdks.values.toList()
+    val editable = PythonSdkTable.allSdks(project)
     return moduleOrProject.filterAssignablePythonSdks(editable)
   }
 
@@ -379,7 +380,7 @@ internal class PyModuleDetailsPane(
    */
   private fun buildSdkLookup(availableSdks: List<Sdk>): Map<String, Sdk> = buildMap {
     availableSdks.forEach { put(it.name, it) }
-    projectSdksModel.projectSdks.values.forEach { putIfAbsent(it.name, it) }
+    PythonSdkTable.allSdks(project).forEach { putIfAbsent(it.name, it) }
   }
 
   private fun publishComboItems(items: List<SdkComboItem>) {

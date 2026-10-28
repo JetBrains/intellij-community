@@ -1,34 +1,23 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.readOnly
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.projectRoots.Sdk
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
+import com.intellij.python.sdk.backend.PythonInterpreter
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 
+/** Tells whether packages cannot be installed into an interpreter, and why. */
 @ApiStatus.Internal
 interface PythonSdkReadOnlyProvider {
-  fun isSdkReadOnly(sdk: Sdk): Boolean
-  fun getSdkReadOnlyMessage(sdk: Sdk): String
+  fun isReadOnly(interpreter: PythonInterpreter): Boolean
+  fun getReadOnlyMessage(interpreter: PythonInterpreter): @Nls String
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<PythonSdkReadOnlyProvider>("Pythonid.pythonSdkReadOnlyProvider")
 
-    internal fun isReadOnly(sdk: Sdk): Boolean {
-      if (!PythonSdkUtil.isPythonSdk(sdk)) {
-        return false
-      }
+    internal fun isReadOnly(interpreter: PythonInterpreter): Boolean = EP_NAME.extensionList.any { it.isReadOnly(interpreter) }
 
-      return EP_NAME.extensionList.any { it.isSdkReadOnly(sdk) }
-    }
-
-    internal fun getReadOnlyMessage(sdk: Sdk): String? {
-      if (!PythonSdkUtil.isPythonSdk(sdk)) {
-        return null
-      }
-
-      return EP_NAME.extensionList.firstOrNull { it.isSdkReadOnly(sdk) }?.getSdkReadOnlyMessage(sdk)
-    }
-
+    internal fun getReadOnlyMessage(interpreter: PythonInterpreter): @Nls String? =
+      EP_NAME.extensionList.firstOrNull { it.isReadOnly(interpreter) }?.getReadOnlyMessage(interpreter)
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.modules
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.python.sdk.backend.PythonInterpreterSdks
 import com.intellij.python.community.execService.impl.processLaunchers.uploadMeasureTime
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.PathUtil
@@ -239,6 +240,8 @@ internal class PyTargetsIntrospectionFacadeRemote private constructor(
         }
       }
     }
+    // An SDK of the interpreter store is in no SDK table, so its commit reports nothing itself.
+    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
     data = sdk.sdkAdditionalData as PyTargetAwareAdditionalData
   }
 }

@@ -119,7 +119,7 @@ internal class PipEnvPipFileWatcher : EditorFactoryListener {
         }
 
         withContext(Dispatchers.IO) {
-          interpreter.sitePackagesDirectory()?.refresh(true, true)
+          interpreter.sitePackagesDirectory(module.project)?.refresh(true, true)
           // `Pipfile.lock` may not be there yet, and a plain refresh never looks for a name VFS has not seen — see
           // the note on `PythonPackageManagerAction`'s own refresh, which this mirrors (PY-92487).
           interpreter.associatedModuleDir?.let { VfsUtil.markDirtyAndRefresh(true, false, true, it) }

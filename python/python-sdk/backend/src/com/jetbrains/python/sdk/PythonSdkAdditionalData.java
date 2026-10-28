@@ -114,11 +114,31 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     return myUUID;
   }
 
+  /** Sets the UUID of an SDK that is built again from what the interpreter store saved for it. */
+  @ApiStatus.Internal
+  public final void setUUID(@NotNull UUID uuid) {
+    myUUID = uuid;
+  }
+
   public final void setAddedPathsFromVirtualFiles(@NotNull Set<VirtualFile> addedPaths) {
     myAddedPaths.clear();
     for (VirtualFile file : addedPaths) {
       myAddedPaths.add(file);
     }
+  }
+
+  /** Sets the paths added by the user from their URLs, which need not exist yet. */
+  @ApiStatus.Internal
+  public final void setAddedPathsFromUrls(@NotNull List<String> urls) {
+    myAddedPaths.clear();
+    urls.forEach(myAddedPaths::add);
+  }
+
+  /** Sets the paths excluded by the user from their URLs, which need not exist yet. */
+  @ApiStatus.Internal
+  public final void setExcludedPathsFromUrls(@NotNull List<String> urls) {
+    myExcludedPaths.clear();
+    urls.forEach(myExcludedPaths::add);
   }
 
   @ApiStatus.Internal

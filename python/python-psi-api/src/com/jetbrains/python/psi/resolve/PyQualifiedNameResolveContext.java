@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,9 +33,6 @@ public interface PyQualifiedNameResolveContext {
   PsiElement getFoothold();
 
   int getRelativeLevel();
-
-  @Nullable
-  Sdk getSdk();
 
   @Nullable
   Module getModule();
@@ -58,9 +54,6 @@ public interface PyQualifiedNameResolveContext {
   boolean getWithPlainDirectories();
 
   boolean getVisitAllModules();
-
-  @Nullable
-  Sdk getEffectiveSdk();
 
   boolean isValid();
 

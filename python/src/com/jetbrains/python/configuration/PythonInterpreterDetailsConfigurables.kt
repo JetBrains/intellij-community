@@ -4,7 +4,6 @@ package com.jetbrains.python.configuration
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentType
 import com.intellij.execution.target.getTargetType
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -21,13 +20,12 @@ import com.jetbrains.python.target.PythonLanguageRuntimeType
  * @see PythonTargetInterpreterDetailsConfigurable
  */
 internal fun createPythonInterpreterConfigurable(project: Project,
-                                                 module: Module?,
                                                  sdk: Sdk,
                                                  item: PyInterpreterItem,
                                                  parentConfigurable: Configurable): Configurable {
   val sdkAdditionalData = sdk.sdkAdditionalData
   return if (!PythonSdkUtil.isRemote(sdk)) {
-    PythonLocalInterpreterConfigurable(project, module, sdk, item)
+    PythonLocalInterpreterConfigurable(sdk, item)
   }
   else if (sdkAdditionalData is PyTargetAwareAdditionalData) {
     createPythonInterpreterConfigurable(project, sdk, sdkAdditionalData, parentConfigurable)

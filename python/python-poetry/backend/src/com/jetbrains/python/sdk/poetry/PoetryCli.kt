@@ -110,4 +110,4 @@ fun <P : PathHolder> List<P>.poetryCacheEnvFor(version: String): P? =
 suspend fun <P : PathHolder> poetryEnvRootOf(fileSystem: FileSystem<P>, projectPath: Path, envRef: String): PyResult<P?> =
   if (envRef == POETRY_IN_PROJECT_ENV_REF) PyResult.success(fileSystem.resolveInWorkingDir(projectPath,
                                                                                            VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
-  else poetryCacheEnvRoots(fileSystem, projectPath).mapSuccess { it.poetryCacheEnvFor(envRef) }
+  else poetryCacheEnvRoots(fileSystem, projectPath).mapSuccess { it.poetryCacheEnvFor(poetryCacheEnvRefVersion(envRef)) }

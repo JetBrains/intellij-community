@@ -10,6 +10,8 @@ import com.jetbrains.python.sdk.poetry.poetryCacheEnvFor
 import com.jetbrains.python.sdk.poetry.poetryCacheEnvRoots
 import com.jetbrains.python.sdk.poetry.poetryEnvRootOf
 import com.intellij.python.sdk.common.PyEnvRef
+import com.jetbrains.python.sdk.poetry.poetryCacheEnvRef
+import com.jetbrains.python.sdk.poetry.poetryCacheEnvRefVersion
 import com.jetbrains.python.sdk.poetry.poetryEnvRefOf
 import com.jetbrains.python.sdk.poetry.POETRY_IN_PROJECT_ENV_REF
 import com.jetbrains.python.project.PyProject
@@ -111,7 +113,7 @@ internal class PoetryEvoEnvironmentProvider : PyEvoEnvironmentProvider {
         // Not on the machine: offer to install it. Its token is the version rather than an interpreter path, so it
         // cannot be handed to the create step as-is — evoInstallPythonLeaf is what asks for the install first.
         option.installable -> evoInstallPythonLeaf(title = title, version = versionStr)
-        existingBinary != null -> evoEnvLeaf(title = title, pythonBinary = existingBinary, envRef = PyEnvRef(versionStr))
+        existingBinary != null -> evoEnvLeaf(title = title, pythonBinary = existingBinary, envRef = PyEnvRef(poetryCacheEnvRef(versionStr)))
         // Built from the best interpreter of that version, with the others behind the row's own pencil rather than
         // behind a view of the whole node — see [recreateSpecFor].
         else -> evoCreateEnvLeaf(title = title, token = option.token, icon = icon)
@@ -164,7 +166,7 @@ internal class PoetryEvoEnvironmentProvider : PyEvoEnvironmentProvider {
     val inProject = ref.envRef.value == POETRY_IN_PROJECT_ENV_REF
     val option = context.cached(VERSIONS_KEY) { systemPythonOptions(baseDir, context.fileSystem) }
       .filter { !it.installable }
-      .firstOrNull { inProject || it.title == ref.envRef.value }
+      .firstOrNull { inProject || it.title == poetryCacheEnvRefVersion(ref.envRef.value) }
                  ?: return PyResult.localizedError(PySdkBundle.message("evolution.error.base.python.not.found", ref.envRef))
     return createNewPoetrySdk(
       moduleOrProject = context.workspace.moduleOrProject,

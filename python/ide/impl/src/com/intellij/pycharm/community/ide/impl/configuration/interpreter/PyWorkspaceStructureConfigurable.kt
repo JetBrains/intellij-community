@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.python.sdk.backend.PythonSdkTable
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -77,7 +78,7 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   /** [PyWorkspaceStructureModel]'s view of the editable-SDK pool — a thin adapter over [projectSdksModel]. */
   private val sdksTable: PyWorkspaceStructureModel.SdksTable = object : PyWorkspaceStructureModel.SdksTable {
     override fun trackedNames(): Set<SdkName> =
-      projectSdksModel.projectSdks.keys.mapTo(HashSet()) { SdkName(it.name) }
+      PythonSdkTable.allSdks(project).mapTo(HashSet()) { SdkName(it.name) }
 
     override fun syncFromJdkTable() {
       // Re-read live JdkTable; add-time clone caused PY-92599.

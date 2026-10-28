@@ -2,7 +2,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 
 public final class PythonModulePathCache extends PythonPathCache {
   public static PythonPathCache getInstance(Module module) {
@@ -14,10 +14,10 @@ public final class PythonModulePathCache extends PythonPathCache {
   }
 
   private static void updateCacheForSdk(Module module) {
-    final Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(module);
-    if (sdk != null) {
-      // initialize cache for SDK
-      PythonSdkPathCache.getInstance(module.getProject(), sdk);
+    final PythonInterpreter interpreter = MainPythonSdkKt.pythonInterpreterIfReady(module);
+    if (interpreter != null) {
+      // initialize cache for the interpreter
+      PythonSdkPathCache.getInstance(module.getProject(), interpreter);
     }
   }
 }

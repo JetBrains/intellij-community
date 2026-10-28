@@ -4,10 +4,10 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.python.sdk.backend.PythonSdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
@@ -18,12 +18,9 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.eel.EelDescriptor;
 import com.intellij.platform.eel.provider.LocalEelDescriptor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyInternalExecApi;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.module.PyModuleService;
@@ -99,7 +96,7 @@ public final class PythonSdkUtil {
    */
   @PyInternalExecApi
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks() {
-    return ContainerUtil.filter(ProjectJdkTable.getInstance().getAllJdks(), sdk -> isPythonSdk(sdk, false));
+    return PythonSdkTable.pythonSdks();
   }
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull Project project) {
@@ -115,17 +112,16 @@ public final class PythonSdkUtil {
   }
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdks(@NotNull ModuleOrProject moduleOrProject) {
-    return SdkFiltersKt.filterAssignablePythonSdks(moduleOrProject, List.of(ProjectJdkTable.getInstance().getAllJdks()));
+    return SdkFiltersKt.filterAssignablePythonSdks(moduleOrProject, PythonSdkTable.allSdks(moduleOrProject.getProject()));
   }
 
   public static @Unmodifiable @NotNull List<@NotNull Sdk> getAllSdksOn(@NotNull EelDescriptor eelDescriptor) {
-    return SdkFiltersKt.filterAssignablePythonSdks(eelDescriptor, List.of(ProjectJdkTable.getInstance().getAllJdks()));
+    return SdkFiltersKt.filterAssignablePythonSdks(eelDescriptor, PythonSdkTable.allSdks());
   }
 
   /**
-   * The Python SDK stored on {@code module}, read now. For low-level code that the project structure depends on: the
-   * language level pusher, which runs inside the platform roots-change cycle and fills an index, and the SDK writer,
-   * which reports the previous value. Every other caller reads the interpreter of the Python project.
+   * The Python SDK that {@code module} stores as an older build does, read now. Only the writer of that value reads it, to
+   * report the previous value to the listeners. Every other caller reads the interpreter of the Python project.
    */
   @ApiStatus.Internal
   public static @Nullable Sdk readStoredPythonSdk(@Nullable Module module) {
@@ -187,12 +183,21 @@ public final class PythonSdkUtil {
     return findLibraryDir(sdk, SKELETON_DIR_NAME, BUILTIN_ROOT_TYPE);
   }
 
+  /**
+   * The class roots of the interpreter of {@code sdk}: the directories its {@code sys.path} holds, the skeletons and the
+   * bundled stubs. Every reader of these roots reads them here, and not from the root provider of the SDK, so one place
+   * decides where they come from.
+   */
+  public static VirtualFile @NotNull [] getPythonClassRoots(@NotNull Sdk sdk) {
+    return ReadAction.computeBlocking(() -> sdk.getRootProvider().getFiles(OrderRootType.CLASSES));
+  }
+
   public static @Nullable VirtualFile findAnyRemoteLibrary(final @NotNull Sdk sdk) {
     return findLibraryDir(sdk, REMOTE_SOURCES_DIR_NAME, OrderRootType.CLASSES);
   }
 
   public static VirtualFile findLibraryDir(Sdk sdk, String dirName, OrderRootType rootType) {
-    final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(rootType);
+    final VirtualFile[] virtualFiles = rootType == OrderRootType.CLASSES ? getPythonClassRoots(sdk) : sdk.getRootProvider().getFiles(rootType);
     for (VirtualFile virtualFile : virtualFiles) {
       if (virtualFile.isValid() && virtualFile.getPath().contains(dirName)) {
         return virtualFile;
@@ -202,12 +207,7 @@ public final class PythonSdkUtil {
   }
 
   public static boolean hasValidSdk() {
-    for (Sdk sdk : ProjectJdkTable.getInstance().getAllJdks()) {
-      if (isPythonSdk(sdk)) {
-        return true;
-      }
-    }
-    return false;
+    return !PythonSdkTable.pythonSdks().isEmpty();
   }
 
   public static boolean isDisposed(@NotNull Sdk sdk) {
@@ -278,7 +278,7 @@ public final class PythonSdkUtil {
   }
 
   public static @Nullable Sdk findSdkByKey(@NotNull String key) {
-    return ProjectJdkTable.getInstance().findJdk(key);
+    return PythonSdkTable.findByName(key);
   }
 
   /**

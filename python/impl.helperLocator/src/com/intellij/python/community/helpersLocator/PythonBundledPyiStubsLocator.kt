@@ -17,10 +17,15 @@ object PythonBundledPyiStubsLocator {
   private const val MODULE_NAME: String = "intellij.python.bundledPyiStubs"
   private const val RELATIVE_PATH: String = "/python/bundledPyiStubs"
 
+  /** The directory of all bundled stubs: `typeshed` and `third_party` are in it. */
+  @JvmStatic
+  @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
+  fun root(): Path = findModuleRootByJarPath(PythonBundledPyiStubsLocator::class.java, MODULE_NAME, RELATIVE_PATH)
+
   @JvmStatic
   @RequiresBackgroundThread(generateAssertion = false /* PY-93235 */)
   fun findPath(@NonNls resourceName: String): Path {
-    val root = findModuleRootByJarPath(PythonBundledPyiStubsLocator::class.java, MODULE_NAME, RELATIVE_PATH)
+    val root = root()
     val resourcePath = root.resolve(resourceName)
     if (resourcePath.exists()) {
       return resourcePath

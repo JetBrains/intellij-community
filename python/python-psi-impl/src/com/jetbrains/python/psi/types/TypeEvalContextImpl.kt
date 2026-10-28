@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.psi.types
 
+import com.intellij.python.sdk.backend.isIgnoredInterpreterEntry
+import com.intellij.python.sdk.backend.isInterpreterLibraryCarrier
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -131,7 +133,8 @@ open class TypeEvalContextImpl internal constructor(
     val virtualFile = origin.virtualFile ?: return null
     return ProjectFileIndex.getInstance(origin.project).getOrderEntriesForFile(virtualFile)
       .asSequence()
-      .filterIsInstance<JdkOrderEntry>()
+      // The interpreter library of a module carries the roots of its interpreter, as its SDK does.
+      .filter { !it.isIgnoredInterpreterEntry() && (it is JdkOrderEntry || it.isInterpreterLibraryCarrier()) }
       .map { it.ownerModule }
       .distinct()
       .firstNotNullOfOrNull(::moduleTypeEngine)

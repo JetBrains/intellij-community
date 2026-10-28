@@ -20,19 +20,19 @@ import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.OrderRootType.CLASSES
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PlatformIcons
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.classRoots
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs
 import com.jetbrains.python.navigation.PyNavigationBundle
 
-class PyBundledStubsNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings) : ProjectViewNode<Sdk>(project, sdk, viewSettings) {
+class PyBundledStubsNode(project: Project?, interpreter: PythonInterpreter, viewSettings: ViewSettings) : ProjectViewNode<PythonInterpreter>(project, interpreter, viewSettings) {
   companion object {
-    fun create(project: Project?, sdk: Sdk, viewSettings: ViewSettings): PyBundledStubsNode? =
-      if (sdk.rootProvider.getFiles(CLASSES).any { PyBundledStubs.isInside(it) })
-        PyBundledStubsNode(project, sdk, viewSettings)
+    fun create(project: Project?, interpreter: PythonInterpreter, viewSettings: ViewSettings): PyBundledStubsNode? =
+      if (project != null && interpreter.classRoots(project).any { PyBundledStubs.isInside(it) })
+        PyBundledStubsNode(project, interpreter, viewSettings)
       else null
 
   }
@@ -40,7 +40,7 @@ class PyBundledStubsNode(project: Project?, sdk: Sdk, viewSettings: ViewSettings
   override fun getChildren(): MutableCollection<PsiDirectoryNode> {
     val p = project ?: return mutableListOf()
     val psiManager = PsiManager.getInstance(p)
-    return value.rootProvider.getFiles(CLASSES)
+    return value.classRoots(p)
       .asSequence()
       .filter { PyBundledStubs.isInside(it) }
       .map { psiManager.findDirectory(it) }

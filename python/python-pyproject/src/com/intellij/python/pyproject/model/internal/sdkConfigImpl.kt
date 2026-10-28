@@ -20,7 +20,7 @@ import com.jetbrains.python.sdk.configuration.CreateInterpreterInfo
 import com.jetbrains.python.sdk.configuration.CreateInterpreterInfoWithInterpreterCreator
 import com.jetbrains.python.sdk.configuration.CreateSdkInfoWithToolBase
 import com.jetbrains.python.sdk.configuration.getInterpreterCreator
-import com.jetbrains.python.sdk.readPythonSdkForConfiguration
+import com.intellij.python.pyproject.model.evolution.readStoredInterpreter
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 
 private val logger = fileLogger()
@@ -42,7 +42,7 @@ private val logger = fileLogger()
 internal suspend fun <T : Any> SdkForModuleConfigInstruction.autoConfigureSdk(controller: AutoConfigurationController<T>): InterpreterConfigurationResult<T> {
   val outcome = withSdkConfigurationLock(module.project) {
     // We might have TOCTOU here (sdk might already be created), so we check SDK once again
-    if (module.readPythonSdkForConfiguration() != null) ConfigOutcome.Configured() else autoConfigureSdkImpl(controller)
+    if (module.readStoredInterpreter() != null) ConfigOutcome.Configured() else autoConfigureSdkImpl(controller)
   }
   return when (outcome) {
     is ConfigOutcome.Configured -> {

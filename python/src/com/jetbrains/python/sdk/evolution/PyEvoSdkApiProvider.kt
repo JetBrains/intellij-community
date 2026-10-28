@@ -67,7 +67,6 @@ import com.intellij.python.sdk.backend.evolution.toDisplayPath
 import com.intellij.python.sdk.backend.evolution.toSectionLabel
 import com.intellij.python.sdk.backend.evolution.withCreators
 import com.intellij.python.sdk.backend.getPythonInfo
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.interpreterItem
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.sdk.common.EvoRowAction
@@ -136,7 +135,7 @@ import com.jetbrains.python.sdk.evolution.PyEvoSdkApiImpl.slowLoadThreshold
 import com.jetbrains.python.sdk.getAssignablePythonSdks
 import com.jetbrains.python.sdk.isAssociatedWithModule
 import com.jetbrains.python.sdk.isSdkConfigurationInProgress
-import com.jetbrains.python.sdk.readPythonSdkForConfiguration
+import com.intellij.python.pyproject.model.evolution.readStoredInterpreter
 import com.jetbrains.python.sdk.withSdkConfigurationLock
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
@@ -825,14 +824,13 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    * `AccessDeniedException`, naming the environment as in use rather than saying only that a delete failed.
    */
   private suspend fun awaitSdkQuiet(pyProject: PyProject, ref: PyInterpreterRef) {
-    @Suppress("DEPRECATION") // The SDK updater still takes an SDK.
-    val sdk =
-      PythonInterpreterRegistry.getInstance(pyProject.project).interpreters(pyProject).firstOrNull { it.ref == ref }?.getSdkAPI() ?: return
+    val interpreter = PythonInterpreterRegistry.getInstance(pyProject.project).interpreters(pyProject)
+                        .firstOrNull { it.ref == ref } ?: return
     withTimeoutOrNull(SDK_QUIESCE_TIMEOUT) {
-      while (PythonSdkUpdater.isUpdateScheduled(sdk)) {
+      while (PythonSdkUpdater.isUpdateScheduled(interpreter)) {
         delay(SDK_QUIESCE_POLL)
       }
-    } ?: LOG.info("Evo: '${sdk.name}' is still refreshing after ${SDK_QUIESCE_TIMEOUT}; rebuilding anyway")
+    } ?: LOG.info("Evo: '${interpreter.ref}' is still refreshing after ${SDK_QUIESCE_TIMEOUT}; rebuilding anyway")
   }
 
   /**
@@ -863,7 +861,7 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
    */
   private suspend fun refreshRebuiltSdk(pythonInterpreter: PythonInterpreter, project: Project) {
     val updated = withContext(Dispatchers.IO) {
-      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(pythonInterpreter.getSdkAPI(), project)
+      PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(pythonInterpreter, project)
     }
     if (!updated) LOG.warn("Evo: rebuilt ${pythonInterpreter.detectedEnvironment?.pythonBinaryPath ?: pythonInterpreter}, but could not re-read its version and paths")
   }
@@ -981,9 +979,9 @@ private object PyEvoSdkApiImpl : PyEvoSdkApi {
     return withSdkConfigurationLock(workspace.project) {
       // TOCTOU: an SDK may have appeared since the row was listed. Logged, because from the outside this reads exactly
       // like a click that failed — the row is gone and no environment was made for it.
-      // The stored SDK, because the snapshot may not hold one that another writer set under this lock a moment ago.
-      module.readPythonSdkForConfiguration()?.let {
-        LOG.info("Evo: '$toolId' for '${module.name}' did nothing, because '${it.name}' was configured meanwhile")
+      // The stored entry, because the snapshot may not hold one that another writer set under this lock a moment ago.
+      module.readStoredInterpreter()?.let {
+        LOG.info("Evo: '$toolId' for '${module.name}' did nothing, because '${it.ref}' was configured meanwhile")
         return@withSdkConfigurationLock EvoSelectResultDto.Ok
       }
       val option = PyProjectSdkConfigurationExtension.findAllSorted(workspace.pyProject).firstOrNull { it.toolId.id == toolId }

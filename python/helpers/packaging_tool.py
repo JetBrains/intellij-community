@@ -41,7 +41,27 @@ def error_no_pip():
 
 
 def do_list():
-    run_pip(['list', "--format=json", "--disable-pip-version-check"])
+    args = ['list', "--format=json", "--disable-pip-version-check"]
+    bundled_pip = bundled_pip_if_missing()
+    if bundled_pip is not None:
+        # pip comes from its wheel. The wheel holds the metadata of pip, so pip lists only the paths of the environment.
+        env_paths = [path for path in sys.path if path and os.path.isdir(path)]
+        sys.path.insert(0, bundled_pip)
+        for path in env_paths:
+            args += ['--path', path]
+    run_pip(args)
+
+
+def bundled_pip_if_missing():
+    """The path of the bundled pip wheel when the environment has no pip, else None."""
+    try:
+        import pip
+        return None
+    except ImportError:
+        pass
+    helpers_dir = os.path.dirname(os.path.abspath(__file__))
+    wheels = [name for name in os.listdir(helpers_dir) if name.startswith('pip-') and name.endswith('.whl')]
+    return os.path.join(helpers_dir, wheels[0]) if wheels else None
 
 
 def do_list_outdated():

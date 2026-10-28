@@ -12,9 +12,10 @@ import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.psi.PsiManager
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModel
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.PythonInterpreterDetails
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -45,14 +46,21 @@ class PyResolveCachesInvalidator(private val project: Project, private val corou
         // The first generation too: resolve can run before it, and then it saw no interpreter.
         .collect { interpreters -> dropCaches(interpreters) }
     }
+    coroutineScope.launch {
+      // The updater writes new roots of an interpreter, which no snapshot reports. The first value is the current state.
+      PythonInterpreterDetails.getInstance(project).changes.drop(1).collect {
+        PythonSdkPathCache.onInterpreterDetailsChanged(project)
+        tracker.incModificationCount()
+        backgroundWriteAction { PsiManager.getInstance(project).dropPsiCaches() }
+      }
+    }
   }
 
   private suspend fun dropCaches(interpreters: Map<Module, PythonInterpreter?>) {
     for ((module, interpreter) in interpreters) {
       if (module.isDisposed) continue
       PythonModulePathCache.getInstance(module).clearCache()
-      @Suppress("DEPRECATION") // The path cache is keyed by an SDK.
-      interpreter?.let { PythonSdkPathCache.getInstance(project, it.getSdkAPI()).clearCache() }
+      interpreter?.let { PythonSdkPathCache.getInstance(project, it).clearCache() }
     }
     tracker.incModificationCount()
     backgroundWriteAction { PsiManager.getInstance(project).dropPsiCaches() }

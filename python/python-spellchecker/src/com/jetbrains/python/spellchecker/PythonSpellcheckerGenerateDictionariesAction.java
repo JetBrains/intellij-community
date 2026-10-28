@@ -6,9 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
 import com.intellij.python.sdk.backend.PythonInterpreter;
@@ -34,13 +32,11 @@ public class PythonSpellcheckerGenerateDictionariesAction extends AnAction {
     if (interpreter == null) {
       return;
     }
-    //noinspection deprecation
-    Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
 
     final PythonSpellcheckerDictionaryGenerator generator = new PythonSpellcheckerDictionaryGenerator(module.getProject(),
                                                                                                       contentRoots[0].getPath() + "/dicts");
 
-    VirtualFile[] roots = sdk.getRootProvider().getFiles(OrderRootType.CLASSES);
+    VirtualFile[] roots = PythonInterpreterExtKt.classRoots(interpreter, module.getProject());
     for (VirtualFile root : roots) {
       if (root.getName().equals("Lib")) {
         generator.addFolder("python", root);

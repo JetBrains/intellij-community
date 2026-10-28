@@ -2,6 +2,17 @@
 package com.jetbrains.python.module;
 
 import com.intellij.facet.impl.ui.FacetErrorPanel;
+import com.jetbrains.python.sourceRoots.PySourceRootsBundle;
+import java.util.Set;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.JTree;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.python.pyproject.model.evolution.PyInterpreterLibrarySyncKt;
+import com.intellij.openapi.fileChooser.FileElement;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -50,6 +61,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final Module myModule;
   private Disposable myFilePointersDisposable;
   private MyContentEntryEditor myContentEntryEditor;
+  private final Set<String> myInterpreterRootUrls;
   private final FacetErrorPanel myWarningPanel;
 
   public PyContentEntriesEditor(Module module, ModuleConfigurationState moduleConfigurationState,
@@ -57,12 +69,55 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
     super(module.getName(), moduleConfigurationState, withBorders, rootTypes);
     myRootTypeProviders = PyRootTypeProvider.EP_NAME.getExtensionList();
     myModule = module;
+    myInterpreterRootUrls = PyInterpreterLibrarySyncKt.interpreterSourceRootUrls(module);
     myWarningPanel = new FacetErrorPanel();
     reset();
   }
 
   public MyContentEntryEditor getContentEntryEditor() {
     return myContentEntryEditor;
+  }
+
+  /**
+   * Whether {@code file} is a source root that the module has from the {@code sys.path} of its interpreter. No `.iml`
+   * stores such a root, and the next sync gives it back, so the page shows it and does not let the user change it.
+   */
+  private boolean isInterpreterRoot(@NotNull VirtualFile file) {
+    return myInterpreterRootUrls.contains(file.getUrl());
+  }
+
+  private static @Nullable VirtualFile fileOf(Object treeNode) {
+    if (!(treeNode instanceof DefaultMutableTreeNode node)) return null;
+    if (!(node.getUserObject() instanceof NodeDescriptor<?> descriptor)) return null;
+    return descriptor.getElement() instanceof FileElement element ? element.getFile() : null;
+  }
+
+  /** A "Mark as" action that is disabled while the selection holds a source root from the interpreter. */
+  private final class InterpreterRootGuard extends ContentEntryEditingAction {
+    private final ToggleAction myDelegate;
+
+    private InterpreterRootGuard(JTree tree, ToggleAction delegate) {
+      super(tree);
+      myDelegate = delegate;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return myDelegate.isSelected(e);
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      myDelegate.setSelected(e, state);
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      myDelegate.update(e);
+      if (ContainerUtil.exists(getSelectedFiles(), file -> isInterpreterRoot(file))) {
+        e.getPresentation().setEnabled(false);
+      }
+    }
   }
 
   @Override
@@ -167,6 +222,8 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
 
     @Override
     public void deleteContentFolder(ContentEntry contentEntry, ContentFolderRef folderRef) {
+      // The next sync gives such a root back, so the page does not offer to remove it, see isInterpreterRoot.
+      if (myInterpreterRootUrls.contains(folderRef.getUrl())) return;
       if (folderRef instanceof ExternalContentFolderRef) {
         String url = folderRef.getUrl();
         for (PyRootTypeProvider provider : myRootTypeProviders) {
@@ -285,11 +342,39 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
           action.registerCustomShortcutSet(shortcut, myTree);
         }
       }
+      // Last, so it also covers the actions of the Python root types: namespace packages, templates and resources.
+      guardInterpreterRoots();
+    }
+
+    /**
+     * Wraps each "Mark as" action, of the platform and of the Python root types, so that it is disabled while the selection holds a source root that the
+     * module has from the interpreter, see {@link #isInterpreterRoot}. Its shortcut moves to the wrapper.
+     */
+    private void guardInterpreterRoots() {
+      for (AnAction action : myEditingActionsGroup.getChildActionsOrStubs()) {
+        if (!(action instanceof ToggleAction toggle)) continue;
+        AnAction guarded = new InterpreterRootGuard(myTree, toggle);
+        guarded.copyFrom(toggle);
+        guarded.registerCustomShortcutSet(toggle.getShortcutSet(), myTree);
+        toggle.unregisterCustomShortcutSet(myTree);
+        myEditingActionsGroup.replaceAction(toggle, guarded);
+      }
     }
 
     @Override
     protected TreeCellRenderer getContentEntryCellRenderer(@NotNull ContentEntry contentEntry) {
       return new ContentEntryTreeCellRenderer(this, contentEntry, getEditHandlers()) {
+        @Override
+        public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf,
+                                          int row, boolean hasFocus) {
+          super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+          VirtualFile file = fileOf(value);
+          if (file != null && isInterpreterRoot(file)) {
+            append(" " + PySourceRootsBundle.message("sdk.paths.interpreter.root.suffix"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+            setToolTipText(PySourceRootsBundle.message("sdk.paths.interpreter.root.tooltip"));
+          }
+        }
+
         @Override
         protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, final Icon originalIcon) {
           for (PyRootTypeProvider provider : myRootTypeProviders) {

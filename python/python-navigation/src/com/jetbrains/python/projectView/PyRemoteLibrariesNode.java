@@ -11,8 +11,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -20,11 +18,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.TargetPythonInterpreter;
 import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.navigation.PyNavigationBundle;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil;
+import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,21 +48,15 @@ public final class PyRemoteLibrariesNode extends PsiDirectoryNode {
     data.setIcon(PlatformIcons.LIBRARY_ICON);
   }
 
-  public static @Nullable PyRemoteLibrariesNode create(@NotNull Project project, @NotNull Sdk sdk, ViewSettings settings) {
-    SdkAdditionalData sdkAdditionalData = sdk.getSdkAdditionalData();
-    if (sdkAdditionalData instanceof RemoteSdkProperties && sdkAdditionalData instanceof PythonSdkAdditionalData) {
-      VirtualFile remoteLibrary = PythonSdkUtil.findAnyRemoteLibrary(sdk);
+  public static @Nullable PyRemoteLibrariesNode create(@NotNull Project project, @NotNull PythonInterpreter interpreter, ViewSettings settings) {
+    PyTargetAwareAdditionalData targetData = PythonInterpreterExtKt.getTargetAdditionalData(interpreter);
+    if (interpreter instanceof TargetPythonInterpreter targetInterpreter && targetData != null) {
+      final VirtualFile remoteLibraries = PythonInterpreterExtKt.remoteSourcesDirectory(targetInterpreter);
 
-      if (remoteLibrary != null && remoteLibrary.getFileType() instanceof ArchiveFileType) {
-        remoteLibrary = JarFileSystem.getInstance().getLocalByEntry(remoteLibrary);
-      }
-
-      if (remoteLibrary != null) {
-        final VirtualFile remoteLibraries = remoteLibrary.getParent();
-
+      if (remoteLibraries != null) {
         final PsiDirectory remoteLibrariesDirectory = PsiManager.getInstance(project).findDirectory(remoteLibraries);
         if (remoteLibrariesDirectory != null) {
-          return new PyRemoteLibrariesNode(project, (RemoteSdkProperties)sdkAdditionalData, remoteLibrariesDirectory, settings);
+          return new PyRemoteLibrariesNode(project, targetData, remoteLibrariesDirectory, settings);
         }
       }
     }

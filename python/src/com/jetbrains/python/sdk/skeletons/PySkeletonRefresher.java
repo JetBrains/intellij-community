@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -187,7 +186,7 @@ public final class PySkeletonRefresher {
     final VirtualFile remoteSourcesDir = PythonSdkUtil.findAnyRemoteLibrary(sdk);
     final String remoteSourcesStr = remoteSourcesDir != null ? remoteSourcesDir.getPath() : null;
 
-    return ContainerUtil.mapNotNull(sdk.getRootProvider().getFiles(OrderRootType.CLASSES), file -> {
+    return ContainerUtil.mapNotNull(PythonSdkUtil.getPythonClassRoots(sdk), file -> {
       if (file.isInLocalFileSystem()) {
         // We compare normalized paths, not raw strings, because "c:/some/folder" equals "c:\\some\\bin\\..\\folder\\"
         final String path = file.getPath();

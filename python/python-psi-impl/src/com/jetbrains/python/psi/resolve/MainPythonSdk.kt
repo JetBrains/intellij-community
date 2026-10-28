@@ -8,6 +8,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiElement
 import com.intellij.python.pyproject.model.evolution.findEvoPyProjectIfReady
 import com.intellij.python.pyproject.model.evolution.findMainEvoPyProjectIfReady
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 
@@ -21,8 +22,13 @@ import com.jetbrains.python.sdk.legacy.PythonSdkUtil
  * [PyResolveCachesInvalidator] drops what was resolved in that window. Everything else asks
  * [com.intellij.python.pyproject.model.evolution.findMainPythonInterpreter], which waits.
  */
-@Suppress("DEPRECATION")
-internal fun Project.mainPythonSdk(): Sdk? = findMainEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+internal fun Project.mainPythonSdk(): Sdk? = findMainEvoPyProjectIfReady()?.interpreter?.resolveSdk()
+
+/** The interpreter of [mainPythonSdk]. */
+internal fun Project.mainPythonInterpreter(): PythonInterpreter? = findMainEvoPyProjectIfReady()?.interpreter
+
+/** The interpreter of [pythonSdkIfReady]. */
+internal fun Module.pythonInterpreterIfReady(): PythonInterpreter? = findEvoPyProjectIfReady()?.interpreter
 
 /**
  * The SDK of the interpreter of the Python project that resides on this module, read from the snapshot. `null` before
@@ -31,8 +37,11 @@ internal fun Project.mainPythonSdk(): Sdk? = findMainEvoPyProjectIfReady()?.inte
  * Internal to resolve and code insight, which cannot suspend. [PyResolveCachesInvalidator] drops what was resolved
  * before a snapshot changed the interpreter of the module.
  */
-@Suppress("DEPRECATION") // Resolve still reads the roots of an SDK.
-internal fun Module.pythonSdkIfReady(): Sdk? = findEvoPyProjectIfReady()?.interpreter?.getSdkAPI()
+internal fun Module.pythonSdkIfReady(): Sdk? = findEvoPyProjectIfReady()?.interpreter?.resolveSdk()
+
+/** The SDK of this interpreter. Resolve and the language level still read the roots and the version of an SDK. */
+@Suppress("DEPRECATION")
+internal fun PythonInterpreter.resolveSdk(): Sdk = getSdkAPI()
 
 /** [pythonSdkIfReady] for the module of this element. */
 internal fun PsiElement.pythonSdkIfReady(): Sdk? = ModuleUtilCore.findModuleForPsiElement(this)?.pythonSdkIfReady()

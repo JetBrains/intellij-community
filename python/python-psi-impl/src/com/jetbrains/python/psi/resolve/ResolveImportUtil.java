@@ -5,7 +5,8 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInsight.completion.CompletionUtilCoreImpl;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -42,7 +43,6 @@ import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
 import com.jetbrains.python.pyi.PyiUtil;
-import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,9 +225,9 @@ public final class ResolveImportUtil {
       cache = PythonModulePathCache.getInstance(module);
     }
     else {
-      final Sdk sdk = PyBuiltinCache.findSdkForFile(foothold.getContainingFile());
-      if (sdk != null) {
-        cache = PythonSdkPathCache.getInstance(foothold.getProject(), sdk);
+      final PythonInterpreter interpreter = PyBuiltinCache.findInterpreterForFile(foothold.getContainingFile());
+      if (interpreter != null) {
+        cache = PythonSdkPathCache.getInstance(foothold.getProject(), interpreter);
       }
     }
     return cache;
@@ -379,10 +379,11 @@ public final class ResolveImportUtil {
 
   @ApiStatus.Internal
   public static @Nullable PsiDirectory findCorrespondingSkeletonsDir(@NotNull PsiDirectory packageDir) {
-    Sdk sdk = MainPythonSdkKt.pythonSdkIfReady(packageDir);
-    if (sdk == null) return null;
+    final Module module = ModuleUtilCore.findModuleForPsiElement(packageDir);
+    final PythonInterpreter moduleInterpreter = module != null ? MainPythonSdkKt.pythonInterpreterIfReady(module) : null;
+    if (moduleInterpreter == null) return null;
 
-    VirtualFile skeletonsDir = PythonSdkUtil.findSkeletonsDir(sdk);
+    VirtualFile skeletonsDir = PythonInterpreterExtKt.skeletonsDirectory(moduleInterpreter, module.getProject());
     if (skeletonsDir == null) return null;
 
     boolean isInSkeletons = VfsUtilCore.isAncestor(skeletonsDir, packageDir.getVirtualFile(), false);

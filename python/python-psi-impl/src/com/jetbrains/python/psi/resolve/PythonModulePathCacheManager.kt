@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.util.Disposer
@@ -40,15 +40,9 @@ internal class PythonModulePathCacheManager(
     connection.subscribe<ModuleRootListener>(ModuleRootListener.TOPIC, object : ModuleRootListener {
       override fun rootsChanged(event: ModuleRootEvent) {
         if (event.isCausedByWorkspaceModelChangesOnly()) return
-        val sdks = HashSet<Sdk>()
-        for (module in pathCache.keys) {
-          val sdk = module.pythonSdkIfReady()
-          if (sdk != null) {
-            sdks.add(sdk)
-          }
-        }
-        for (sdk in sdks) {
-          updateCacheForSdk(project, sdk)
+        val interpreters = pathCache.keys.mapNotNullTo(HashSet()) { it.pythonInterpreterIfReady() }
+        for (interpreter in interpreters) {
+          updateCacheForInterpreter(project, interpreter)
         }
         for (cache in pathCache.values) {
           cache.clearCache()
@@ -60,9 +54,9 @@ internal class PythonModulePathCacheManager(
 
     connection.subscribe(PyPackageManager.PACKAGE_MANAGER_TOPIC, PyPackageManager.Listener { sdk ->
       for (module in pathCache.keys) {
-        val moduleSdk = module.pythonSdkIfReady()
-        if (moduleSdk != null && moduleSdk === sdk) {
-          updateCacheForSdk(project, sdk)
+        val interpreter = module.pythonInterpreterIfReady()
+        if (interpreter != null && interpreter.resolveSdk() === sdk) {
+          updateCacheForInterpreter(project, interpreter)
           pathCache.computeIfPresent(module) { _, cache ->
             cache.clearCache()
             cache
@@ -80,9 +74,9 @@ internal class PythonModulePathCacheManager(
     private val pathCache: ConcurrentMap<Module, PythonModulePathCache>,
   ) : WorkspaceModelChangeListener {
     override fun changed(event: VersionedStorageChange) {
-      val sdks = pathCache.keys.mapNotNull { it.pythonSdkIfReady() }.toSet()
-      for (sdk in sdks) {
-        updateCacheForSdk(myProject, sdk)
+      val interpreters = pathCache.keys.mapNotNull { it.pythonInterpreterIfReady() }.toSet()
+      for (interpreter in interpreters) {
+        updateCacheForInterpreter(myProject, interpreter)
       }
       val changes = event.getChanges(ModuleEntity::class.java)
       for (change in changes) {
@@ -169,9 +163,9 @@ internal class PythonModulePathCacheManager(
     fun getInstance(project: Project): PythonModulePathCacheManager = project.service<PythonModulePathCacheManager>()
 
 
-    fun updateCacheForSdk(project: Project, sdk: Sdk) {
-      // initialize cache for SDK
-      PythonSdkPathCache.getInstance(project, sdk)
+    fun updateCacheForInterpreter(project: Project, interpreter: PythonInterpreter) {
+      // initialize cache for the interpreter
+      PythonSdkPathCache.getInstance(project, interpreter)
     }
   }
 }

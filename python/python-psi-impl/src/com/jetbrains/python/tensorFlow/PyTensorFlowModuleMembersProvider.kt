@@ -21,7 +21,7 @@ class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
   override fun getMembers(module: PyFile, point: PointInImport, context: TypeEvalContext): Collection<PyCustomMember> {
     return if (isTensorFlow(module)) {
       val resolveContext = fromFoothold(module).copyWithoutForeign()
-      getMembers(resolveContext, getTensorFlowPathConfig(resolveContext.sdk))
+      getMembers(resolveContext, getTensorFlowPathConfig(resolveContext))
     }
     else {
       emptyList()
@@ -31,7 +31,7 @@ class PyTensorFlowModuleMembersProvider : PyModuleMembersProvider() {
   override fun resolveMember(module: PyFile, name: String, resolveContext: PyResolveContext): PsiElement? {
     return if (isTensorFlow(module)) {
       val context = fromFoothold(module).copyWithoutForeign()
-      return resolveMember(name, context, getTensorFlowPathConfig(context.sdk))
+      return resolveMember(name, context, getTensorFlowPathConfig(context))
     }
     else {
       null

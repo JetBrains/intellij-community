@@ -9,6 +9,7 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.ui"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.indexing"/>
@@ -26,7 +27,10 @@
     <module name="intellij.python.ast"/>
     <module name="intellij.python.psi"/>
     <module name="intellij.python.psi.impl"/>
+    <module name="intellij.python.pyproject"/>
+    <module name="intellij.python.pytools.backend"/>
     <module name="intellij.python.sdk.backend"/>
+    <module name="intellij.python.sdk.common"/>
   </dependencies>
   <!-- endregion -->
 

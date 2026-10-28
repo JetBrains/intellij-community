@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.configuration
 
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -17,14 +16,13 @@ import javax.swing.JPanel
  */
 internal class PythonInterpreterDetailsConfigurable(
   project: Project,
-  module: Module?,
   val sdk: Sdk,
   /** What the tree row draws. Built off the EDT, because deciding whether to flag the interpreter runs it. */
   val item: PyInterpreterItem,
   parentConfigurable: Configurable,
 ) : NamedConfigurable<Sdk>() {
 
-  private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, module, sdk, item, parentConfigurable)
+  private val underlyingConfigurable: Configurable = createPythonInterpreterConfigurable(project, sdk, item, parentConfigurable)
 
   override fun isModified(): Boolean = underlyingConfigurable.isModified
 

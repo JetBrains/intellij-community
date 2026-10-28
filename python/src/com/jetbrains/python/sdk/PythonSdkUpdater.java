@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -37,6 +38,9 @@ import com.intellij.platform.backend.observation.TrackingUtil;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterKt;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterSdks;
+import com.intellij.python.sdk.backend.PythonInterpreterDetails;
+import com.intellij.python.sdk.backend.PyInterpreterLibraryFlowKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
@@ -72,11 +76,13 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
@@ -253,6 +259,40 @@ public final class PythonSdkUpdater {
     scheduleUpdate(sdk, project, new PyUpdateSdkRequestData(withPackageUpdate));
   }
 
+  /** {@link #scheduleUpdate(Sdk, Project)} for {@code interpreter}, for a caller that holds an interpreter. */
+  @ApiStatus.Internal
+  public static void scheduleUpdate(@NotNull PythonInterpreter interpreter, @NotNull Project project) {
+    scheduleUpdate(PythonInterpreterExtKt.getSdkAPI(interpreter), project);
+  }
+
+  /** {@link #scheduleUpdate(Sdk, Project, Boolean)} for {@code interpreter}, for a caller that holds an interpreter. */
+  @ApiStatus.Internal
+  public static void scheduleUpdate(@NotNull PythonInterpreter interpreter, @NotNull Project project, boolean withPackageUpdate) {
+    scheduleUpdate(PythonInterpreterExtKt.getSdkAPI(interpreter), project, withPackageUpdate);
+  }
+
+  /** {@link #scheduleBackgroundUpdate(Sdk, Project)} for {@code interpreter}, for a caller that holds an interpreter. */
+  @ApiStatus.Internal
+  public static boolean scheduleBackgroundUpdate(@NotNull PythonInterpreter interpreter, @NotNull Project project) {
+    return scheduleBackgroundUpdate(PythonInterpreterExtKt.getSdkAPI(interpreter), project);
+  }
+
+  /** {@link #isUpdateScheduled(Sdk)} for {@code interpreter}, for a caller that holds an interpreter. */
+  @ApiStatus.Internal
+  public static boolean isUpdateScheduled(@NotNull PythonInterpreter interpreter) {
+    return isUpdateScheduled(PythonInterpreterExtKt.getSdkAPI(interpreter));
+  }
+
+  /**
+   * {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining(Sdk, Project)} for {@code interpreter}, for a caller
+   * that holds an interpreter.
+   */
+  @ApiStatus.Internal
+  public static boolean updateVersionAndPathsSynchronouslyAndScheduleRemaining(@NotNull PythonInterpreter interpreter,
+                                                                              @Nullable Project project) {
+    return updateVersionAndPathsSynchronouslyAndScheduleRemaining(PythonInterpreterExtKt.getSdkAPI(interpreter), project);
+  }
+
   /**
    * Schedules a background refresh of the SDKs of the modules for the open project.
    */
@@ -347,6 +387,7 @@ public final class PythonSdkUpdater {
 
     try {
       updateSdkPaths(
+        project,
         pythonInterpreter,
         evaluateSysPath(sdk, project != null ? project : ProjectManager.getInstance().getDefaultProject())
       );
@@ -379,12 +420,35 @@ public final class PythonSdkUpdater {
     }
   }
 
+  /**
+   * Sets up the roots of {@code interpreter} from the {@code sys.path} that the interpreter store saved, without running
+   * the interpreter, see {@link PythonInterpreterSdks#sysPathOf}. Does nothing when no {@code sys.path} is saved, or when
+   * the updater already wrote the roots in {@code project}. The registry builds the SDK of a stored interpreter with
+   * no roots, and a project opens with these roots before the first update reads {@code sys.path} again.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  public static void applySavedSysPath(@NotNull Project project, @NotNull PythonInterpreter interpreter) {
+    final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
+    final List<String> sysPath = PythonInterpreterSdks.sysPathOf(sdk);
+    if (sysPath == null || PythonInterpreterDetails.getInstance(project).hasClassRoots(interpreter)) return;
+    updateSdkPaths(project, interpreter, sysPath);
+  }
+
   @RequiresBackgroundThread
   private static void updateSdkPaths(
+    @Nullable Project project,
     @NotNull PythonInterpreter pythonInterpreter,
     @NotNull List<String> paths
   ) {
     final var sdk = PythonInterpreterExtKt.getSdkAPI(pythonInterpreter);
+    // The interpreter store saves the `sys.path` of the SDK, so a project opens with it, see PythonInterpreterSdks. A path
+    // can be on `sys.path` twice, for example an editable package that a `.pth` file and its finder both add.
+    final List<String> sysPath = new ArrayList<>(new LinkedHashSet<>(paths));
+    if (!sysPath.equals(PythonInterpreterSdks.sysPathOf(sdk))) {
+      PythonInterpreterSdks.setSysPath(sdk, sysPath);
+      PythonInterpreterSdks.sdkChangedInOpenProjects(sdk);
+    }
 
     // PY-86494: resolve the SDK's owning module (its directory is recorded at venv/uv creation) among the open
     // projects and classify sys.path entries against its roots — never against whichever project triggered the
@@ -416,7 +480,19 @@ public final class PythonSdkUpdater {
     final boolean forceCommit = ensureBinarySkeletonsDirectoryExists(sdk);
     final List<VirtualFile> localSdkPaths = buildSdkPaths(sdk, sdkRoots.first, userAddedRoots.first);
 
-    commitSdkPathsIfChanged(sdk, localSdkPaths, forceCommit);
+    commitSdkPathsIfChanged(project, pythonInterpreter, localSdkPaths, forceCommit);
+
+    // The interpreter library flow writes no source root to a module: the library sync derives them from the
+    // interpreter, so no `.iml` stores them. See PyInterpreterLibrarySync.
+    if (PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) {
+      final Project rootsProject = ownerModule != null ? ownerModule.getProject() : project;
+      if (rootsProject != null) {
+        final Set<VirtualFile> sourceRoots = new LinkedHashSet<>(sdkRoots.second);
+        sourceRoots.addAll(userAddedRoots.second);
+        PythonInterpreterDetails.getInstance(rootsProject).setSourceRoots(pythonInterpreter, sourceRoots);
+      }
+      return;
+    }
 
     // Materialize project-local entries as source roots of the owning module — only when that module is open.
     // If it isn't, they were already kept out of the CLASSES roots above and get transferred when the owner
@@ -615,7 +691,7 @@ public final class PythonSdkUpdater {
         commitSdkVersionIfChanged(mySdk, version);
         if (targetsFacade.isLocalTarget()) {
           List<String> paths = targetsFacade.getInterpreterPaths();
-          updateSdkPaths(pythonInterpreter, paths);
+          updateSdkPaths(myProject, pythonInterpreter, paths);
         }
         targetsFacade.synchronizeRemoteSourcesAndSetupMappingsIfNeeded(indicator);
         // This step also includes setting mapped interpreter paths
@@ -623,7 +699,7 @@ public final class PythonSdkUpdater {
         if (myRequestData.withPackagesUpdate) {
           refreshPackages(mySdk, manager, indicator);
         }
-        addBundledPyiStubsToInterpreterPaths(mySdk, manager);
+        addBundledPyiStubsToInterpreterPaths(myProject, pythonInterpreter, manager);
       }
       catch (ExecutionException | InvalidSdkException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
@@ -639,7 +715,9 @@ public final class PythonSdkUpdater {
       }
     }
 
-    private static void addBundledPyiStubsToInterpreterPaths(@NotNull Sdk sdk, @NotNull PythonPackageManager packageManager) {
+    private static void addBundledPyiStubsToInterpreterPaths(@NotNull Project project,
+                                                             @NotNull PythonInterpreter interpreter,
+                                                             @NotNull PythonPackageManager packageManager) {
       List<VirtualFile> allStubRoots = new ArrayList<>();
       ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
       ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
@@ -660,8 +738,8 @@ public final class PythonSdkUpdater {
         })
         .toList();
 
-      LOG.info("Bundled .pyi stub roots for SDK " + sdk + ":" + bundledStubRoots);
-      commitBundledStubRootsIfChanged(sdk, bundledStubRoots);
+      LOG.info("Bundled .pyi stub roots for " + interpreter + ":" + bundledStubRoots);
+      commitBundledStubRootsIfChanged(project, interpreter, bundledStubRoots);
     }
 
     private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
@@ -700,7 +778,7 @@ public final class PythonSdkUpdater {
         PySkeletonRefresher.refreshSkeletonsOfSdk(myProject, skeletonsPath, sdk);
         if (PythonSdkUtil.isRemote(sdk)) {
           List<@NotNull String> localRoots = SdkExtKt.getRemoteInterpreterLocalRoots(sdk);
-          updateSdkPaths(pythonInterpreter, localRoots);
+          updateSdkPaths(myProject, pythonInterpreter, localRoots);
         }
       }
       catch (UnsupportedPythonSdkTypeException | InvalidSdkException | ExecutionException e) {
@@ -780,41 +858,77 @@ public final class PythonSdkUpdater {
   }
 
   /**
-   * Commits new SDK paths using an SDK modificator if the paths have been changed.
+   * Commits new class roots if they have changed, see {@link #commitClassRootsIfChanged}.
    * <p>
-   * You may invoke it from any thread. Blocks until the commit is done in the AWT thread.
+   * You may invoke it from any thread. Blocks until the commit is done.
    */
-  private static void commitSdkPathsIfChanged(@NotNull Sdk sdk,
+  private static void commitSdkPathsIfChanged(@Nullable Project project,
+                                              @NotNull PythonInterpreter interpreter,
                                               final @NotNull List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
-    changeSdkModificator(sdk, effectiveModificator -> {
-      final List<VirtualFile> currentRoots = Arrays.asList(effectiveModificator.getRoots(OrderRootType.CLASSES));
+    commitClassRootsIfChanged(project, interpreter, forceCommit, currentRoots -> {
       // The bundled stub roots are not on sys.path, so these paths never contain them, and commitBundledStubRootsIfChanged
       // decides about them later in the same update. Dropping them here made every update commit the roots twice: once
       // without the stub roots and once with them again, and each commit rescans all roots of the SDK.
       final List<VirtualFile> newRoots = new ArrayList<>(ContainerUtil.map(sdkPaths, PythonSdkType::getSdkRootVirtualFile));
       newRoots.addAll(ContainerUtil.filter(currentRoots, root -> isBundledStubRoot(root) && !newRoots.contains(root)));
-      return setClassesRootsIfChanged(effectiveModificator, currentRoots, newRoots, forceCommit);
+      return newRoots;
     });
   }
 
   /**
-   * Makes the bundled stub roots of the SDK exactly {@code bundledStubRoots} and keeps all its other roots. It is the only
-   * place that removes the stub root of a package which is no longer installed, because {@link #commitSdkPathsIfChanged}
-   * keeps the stub roots.
+   * Makes the bundled stub roots exactly {@code bundledStubRoots} and keeps all other roots. It is the only place that
+   * removes the stub root of a package which is no longer installed, because {@link #commitSdkPathsIfChanged} keeps the
+   * stub roots.
    * <p>
    * Commits only a change: an update that computes the same roots again must not commit, because each commit rescans all
    * roots of the SDK, and a commit publishes the SDK in two steps that a concurrent reader can observe halfway through.
    */
-  private static void commitBundledStubRootsIfChanged(@NotNull Sdk sdk, @NotNull List<VirtualFile> bundledStubRoots) {
-    changeSdkModificator(sdk, effectiveModificator -> {
-      final List<VirtualFile> currentRoots = Arrays.asList(effectiveModificator.getRoots(OrderRootType.CLASSES));
+  private static void commitBundledStubRootsIfChanged(@NotNull Project project,
+                                                      @NotNull PythonInterpreter interpreter,
+                                                      @NotNull List<VirtualFile> bundledStubRoots) {
+    commitClassRootsIfChanged(project, interpreter, false, currentRoots -> {
       final List<VirtualFile> newRoots = new ArrayList<>(ContainerUtil.filter(currentRoots, root -> !isBundledStubRoot(root)));
       for (VirtualFile stubRoot : ContainerUtil.map(bundledStubRoots, PythonSdkType::getSdkRootVirtualFile)) {
         if (!newRoots.contains(stubRoot)) newRoots.add(stubRoot);
       }
-      return setClassesRootsIfChanged(effectiveModificator, currentRoots, newRoots, false);
+      return newRoots;
     });
+  }
+
+  /**
+   * Computes the new class roots of {@code interpreter} from its current ones and commits them where they live.
+   * <ul>
+   *   <li>In the interpreter library flow, into {@link PythonInterpreterDetails} of {@code project}.</li>
+   *   <li>Into the SDK in both flows. In the interpreter library flow it is the SDK of the interpreter store, which
+   *   saves it, so the roots outlive a restart.</li>
+   * </ul>
+   * A writer without a project writes only the SDK, and drops the stored roots in every open project, so readers fall
+   * back to the fresh SDK roots.
+   */
+  private static void commitClassRootsIfChanged(@Nullable Project project,
+                                                @NotNull PythonInterpreter interpreter,
+                                                boolean forceCommit,
+                                                @NotNull UnaryOperator<List<VirtualFile>> computeNewRoots) {
+    final Sdk sdk = PythonInterpreterExtKt.getSdkAPI(interpreter);
+    final boolean libraryFlow = PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled();
+    final PythonInterpreterDetails stored = libraryFlow && project != null ? PythonInterpreterDetails.getInstance(project) : null;
+    if (stored != null) {
+      final List<VirtualFile> currentRoots = Arrays.asList(PythonInterpreterExtKt.classRoots(interpreter, project));
+      final List<VirtualFile> newRoots = computeNewRoots.apply(currentRoots);
+      if (forceCommit || !Sets.newHashSet(newRoots).equals(Sets.newHashSet(currentRoots))) {
+        stored.setClassRoots(interpreter, newRoots);
+      }
+    }
+    // The SDK also gets the roots. In the library flow it is the SDK of the interpreter store, which saves it, so the
+    // roots outlive a restart and the project opens without an update.
+    changeSdkModificator(sdk, effectiveModificator -> {
+      final List<VirtualFile> currentRoots = Arrays.asList(effectiveModificator.getRoots(OrderRootType.CLASSES));
+      return setClassesRootsIfChanged(effectiveModificator, currentRoots, computeNewRoots.apply(currentRoots), forceCommit);
+    });
+    if (libraryFlow && project == null) {
+      PythonInterpreterDetails.clearInOpenProjects(interpreter);
+    }
   }
 
   /**
@@ -853,12 +967,14 @@ public final class PythonSdkUpdater {
    */
   private static void changeSdkModificator(@NotNull Sdk sdk, @NotNull Processor<? super SdkModificator> processor) {
     TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-    ApplicationManager.getApplication().runWriteAction(() -> {
+    final boolean committed = ApplicationManager.getApplication().runWriteAction((Computable<Boolean>)() -> {
       final SdkModificator effectiveModificator = sdk.getSdkModificator();
-      if (processor.process(effectiveModificator)) {
-        effectiveModificator.commitChanges();
-      }
+      if (!processor.process(effectiveModificator)) return false;
+      effectiveModificator.commitChanges();
+      return true;
     });
+    // An SDK of the interpreter store is in no SDK table, so its commit reports nothing itself.
+    if (committed) PythonInterpreterSdks.sdkChangedInOpenProjects(sdk);
   }
 
   private enum Trigger {

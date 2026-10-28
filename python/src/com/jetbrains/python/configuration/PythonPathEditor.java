@@ -42,6 +42,8 @@ import java.awt.Component;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -57,6 +59,15 @@ class PythonPathEditor extends SdkPathEditor {
                    @NotNull FileChooserDescriptor descriptor) {
     super(displayName, orderRootType, descriptor);
     myPathListModel = new PathListModel(orderRootType, getListModel());
+  }
+
+  /**
+   * Sets the paths of {@code sys.path} that are source roots of the module instead of roots of the interpreter, see
+   * {@code PythonInterpreterDetails.sourceRoots}. The list shows them, so the user can remove one, which excludes it.
+   * Call it before {@link #reset}.
+   */
+  void setModuleSourceRoots(@NotNull Collection<VirtualFile> roots) {
+    myPathListModel.setModuleSourceRoots(roots);
   }
 
   @Override
@@ -76,7 +87,7 @@ class PythonPathEditor extends SdkPathEditor {
     // add all items
     for (int i = 0; i < myPathListModel.getRowCount(); i++) {
       VirtualFile path = myPathListModel.getValueAt(i);
-      if (!myPathListModel.isExcluded(path)) {
+      if (!myPathListModel.isExcluded(path) && !myPathListModel.isModuleSourceRoot(path)) {
         sdkModificator.addRoot(path, getOrderRootType());
       }
     }
@@ -148,6 +159,7 @@ class PythonPathEditor extends SdkPathEditor {
     private final OrderRootType myOrderRootType;
     private Set<VirtualFile> myAdded = new HashSet<>();
     private Set<VirtualFile> myExcluded = new HashSet<>();
+    private final Set<VirtualFile> myModuleSourceRoots = new LinkedHashSet<>();
 
     PathListModel(OrderRootType orderRootType, DefaultListModel<VirtualFile> listModel) {
       myOrderRootType = orderRootType;
@@ -232,7 +244,19 @@ class PythonPathEditor extends SdkPathEditor {
       if (myExcluded.contains(file)) {
         return PyBundle.message("sdk.paths.dialog.removed.by.user.suffix");
       }
+      if (myModuleSourceRoots.contains(file)) {
+        return PyBundle.message("sdk.paths.dialog.module.source.root.suffix");
+      }
       return "";
+    }
+
+    void setModuleSourceRoots(@NotNull Collection<VirtualFile> roots) {
+      myModuleSourceRoots.clear();
+      myModuleSourceRoots.addAll(roots);
+    }
+
+    boolean isModuleSourceRoot(VirtualFile file) {
+      return myModuleSourceRoots.contains(file);
     }
 
     public @NotNull List<VirtualFile> reset(@NotNull List<VirtualFile> list, @NotNull SdkModificator modificator) {
@@ -241,6 +265,10 @@ class PythonPathEditor extends SdkPathEditor {
 
       myFoundFiles.clear();
       myFoundFiles.addAll(list);
+      // A path of sys.path that is a source root of the module is no root of the interpreter, so the list adds it.
+      for (VirtualFile root : myModuleSourceRoots) {
+        if (myFoundFiles.add(root)) result.add(root);
+      }
 
       if (modificator.getSdkAdditionalData() instanceof PythonSdkAdditionalData data) {
         setAdded(data.getAddedPathFiles());

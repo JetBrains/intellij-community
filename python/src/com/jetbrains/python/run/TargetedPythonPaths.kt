@@ -28,9 +28,7 @@ import com.jetbrains.python.facet.LibraryContributingFacet
 import com.jetbrains.python.library.PythonLibraryType
 import com.jetbrains.python.remote.PyRemotePathMapper
 import com.jetbrains.python.run.target.getTargetPathForPythonConsoleExecution
-import com.jetbrains.python.sdk.PythonEnvUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
-import com.jetbrains.python.sdk.legacy.PythonSdkUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
@@ -40,7 +38,6 @@ import java.nio.file.Path
  * Append PYTHONPATH from system environment for local target if it is necessary
  * checkPythonPathInEnvs flag used for optionally checking envs already contains PYTHONPATH
  */
-@ApiStatus.Internal
 internal fun initPythonPath(envs: MutableMap<String, TargetEnvironmentFunction<String>>,
                    passParentEnvs: Boolean,
                    pythonPathList: MutableCollection<TargetEnvironmentFunction<String>>,
@@ -59,18 +56,6 @@ private fun appendSystemPythonPath(pythonPath: MutableCollection<TargetEnvironme
   if (syspath != null) {
     pythonPath.addAll(syspath.split(File.pathSeparator).dropLastWhile(String::isEmpty).map(::constant))
   }
-}
-
-@ApiStatus.Internal
-fun collectPythonPath(project: Project,
-                      module: Module?,
-                      sdkHome: String?,
-                      pathMapper: PyRemotePathMapper?,
-                      shouldAddContentRoots: Boolean,
-                      shouldAddSourceRoots: Boolean
-): Collection<TargetEnvironmentFunction<String>> {
-  val sdk = PythonSdkUtil.findSdkByPath(sdkHome)
-  return collectPythonPath(project, module, sdk, pathMapper, shouldAddContentRoots, shouldAddSourceRoots)
 }
 
 @ApiStatus.Internal
@@ -116,7 +101,6 @@ private fun collectPythonPath(context: Context,
 /**
  * List of [target->targetPath] functions. TargetPaths are to be added to ``PYTHONPATH`` because user did so
  */
-@ApiStatus.Internal
 internal fun getAddedPaths(sdkAdditionalData: SdkAdditionalData): List<TargetEnvironmentFunction<String>> {
   val pathList: MutableList<TargetEnvironmentFunction<String>> = ArrayList()
   if (sdkAdditionalData is PythonSdkAdditionalData) {

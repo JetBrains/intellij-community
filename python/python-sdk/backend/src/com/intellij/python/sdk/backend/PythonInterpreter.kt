@@ -187,6 +187,28 @@ private fun Sdk.buildPythonInterpreter(forceRefresh: Boolean): PyResult<PythonIn
 }
 
 /**
+ * The interpreter of this SDK of the interpreter store, with the owner directory and the ref of [key], see
+ * [PythonInterpreterRecords]. The key names the interpreter, so no change of the SDK data, such as its association,
+ * moves it. Only the binary and the environment come from the SDK. A failure when the SDK has no home path, or when
+ * its mode differs from the mode of [key].
+ */
+internal suspend fun Sdk.pythonInterpreterOfKey(key: PythonInterpreterKey): PyResult<PythonInterpreter> = withContext(Dispatchers.IO) {
+  val sdk = this@pythonInterpreterOfKey
+  val homePath = pathEnvRef(sdk) ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+  val interpreter = when (val mode = key.ref.mode) {
+    is PyInterpreterRef.Mode.Target -> TargetPythonInterpreter(sdk, mode.targetId, key.ref.env, key.ownerDir, PathHolder.Target(homePath))
+    PyInterpreterRef.Mode.Native -> {
+      val binary = homePath.toNioPathOrNull()
+                   ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+      val environment = enrichLocalPythonSdkWithHomeInfo(false)
+                        ?: return@withContext PyResult.localizedError(PySdkBundle.message("python.sdk.broken.configuration", name))
+      NativePythonInterpreter(sdk, key.ref.env, key.ownerDir, binary, environment)
+    }
+  }
+  PyResult.success(interpreter)
+}
+
+/**
  * [Sdk.pythonInterpreterResult] for a caller that can suspend. This is the main entry point.
  *
  * The detection runs on [Dispatchers.IO] and caches its result per SDK, so only the first call pays for the file
