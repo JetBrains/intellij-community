@@ -1,3 +1,7 @@
+c:com.intellij.openapi.editor.colors.impl.FontPreferencesImpl
+- com.intellij.openapi.editor.colors.ModifiableFontPreferences
+- *:getSnapshot():com.intellij.openapi.editor.colors.FontPreferences
+- *:runBatchUpdate(java.util.function.Consumer):V
 *f:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 - <init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition):V
 - <init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition,java.lang.String):V

@@ -77,4 +77,9 @@ public final class DelegatingFontPreferences extends FontPreferences {
   public @NotNull @Unmodifiable Set<@NotNull String> getCharacterVariants() {
     return myDelegateSupplier.get().getCharacterVariants();
   }
+
+  @Override
+  public @NotNull FontPreferences getSnapshot() {
+    return myDelegateSupplier.get().getSnapshot();
+  }
 }

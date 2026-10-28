@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
-import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -13,8 +12,7 @@ import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ExceptionUtil;
-import it.unimi.dsi.fastutil.objects.Object2FloatMap;
-import it.unimi.dsi.fastutil.objects.Object2FloatOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,77 +20,62 @@ import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Consumer;
+import java.util.function.UnaryOperator;
 
 /**
- * Utility class which holds collection of font families and theirs sizes.
+ * Font preferences that can change: a list of font families with their sizes, the subfamilies and the character variants.
+ * They also hold the ligatures setting and the line spacing.
+ * The editor tries the effective font families in order and uses the first one that can display a character.
+ * When none of them can, it uses a fallback font.
+ * The real font families are the families from the settings, and usually the effective font families are the same list.
  * <p/>
- * The basic idea is to allow end-user to configure not a single font but fonts list instead - every time particular font is unable
- * to display particular char, next font is tried. This is an improvement over an old approach when it was possible to configure
- * only a single font family. Fallback fonts were chosen randomly when that font family was unable to display particular char then.
+ * The instance keeps its current snapshot in a {@link FontPreferencesSnapshot}.
+ * Each change replaces the snapshot with a compare-and-set, so each method is atomic.
+ * A sequence of calls is not atomic.
+ * To apply several changes as one change, use {@link #runBatchUpdate}.
+ * To read several values of one version, use {@link #getSnapshot()}.
  */
 public class FontPreferencesImpl extends ModifiableFontPreferences {
   private static final Logger LOG = Logger.getInstance(FontPreferencesImpl.class);
+  private static final AtomicReferenceFieldUpdater<FontPreferencesImpl, FontPreferencesSnapshot> SNAPSHOT_UPDATER =
+    AtomicReferenceFieldUpdater.newUpdater(FontPreferencesImpl.class, FontPreferencesSnapshot.class, "mySnapshot");
 
-  private final @NotNull EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
-  private final @NotNull Object2FloatMap<String> myFontSizes = new Object2FloatOpenHashMap<>();
-  private final @NotNull List<String> myEffectiveFontFamilies = new ArrayList<>();
-  private final @NotNull List<String> myRealFontFamilies = new ArrayList<>();
-  private @Nullable String myRegularSubFamily;
-  private @Nullable String myBoldSubFamily;
-  private @Unmodifiable @NotNull Set<@NotNull String> myCharacterVariants = Set.of();
+  private volatile @NotNull FontPreferencesSnapshot mySnapshot;
+  private volatile @Nullable EventDispatcher<ChangeListener> myEventDispatcher;
 
-  private boolean myUseLigatures;
-  private float myLineSpacing = DEFAULT_LINE_SPACING;
+  public FontPreferencesImpl() {
+    this(FontPreferencesSnapshot.EMPTY);
+  }
+
+  private FontPreferencesImpl(@NotNull FontPreferencesSnapshot initial) {
+    mySnapshot = initial;
+  }
 
   /**
-   * Font size to use by default. Default value is {@link #DEFAULT_FONT_SIZE}.
+   * Returns the current preferences as an immutable value.
+   * Later changes of these preferences do not change the value, so a reader on any thread sees one consistent version.
+   * The method returns the same value until the next change.
+   * The snapshot does not call the getters of a subclass.
+   * So a subclass that overrides a getter must also override this method.
    */
-  private float myTemplateFontSize = DEFAULT_FONT_SIZE;
-
-  public void addChangeListener(@NotNull ChangeListener changeListener) {
-    myEventDispatcher.addListener(changeListener);
-  }
-
-  public void addChangeListener(@NotNull ChangeListener changeListener, @NotNull Disposable parentDisposable) {
-    myEventDispatcher.addListener(changeListener, parentDisposable);
-  }
-
   @Override
-  public void clear() {
-    myFontSizes.clear();
-    clearFonts();
-  }
-
-  @Override
-  public void clearFonts() {
-    myEffectiveFontFamilies.clear();
-    myRealFontFamilies.clear();
-    myUseLigatures = false;
-    myRegularSubFamily = null;
-    myBoldSubFamily = null;
-    myCharacterVariants = Set.of();
-    notifyStateChanged();
+  @ApiStatus.Experimental
+  public @NotNull FontPreferences getSnapshot() {
+    return mySnapshot;
   }
 
   @Override
   public boolean hasSize(@NotNull String fontName) {
-    return myFontSizes.containsKey(fontName);
+    return mySnapshot.hasSize(fontName);
   }
 
   @Override
   public float getLineSpacing() {
-    return myLineSpacing;
-  }
-
-  @Override
-  public void setLineSpacing(float lineSpacing) {
-    myLineSpacing = EditorFontsConstants.checkAndFixEditorLineSpacing(lineSpacing);
+    return mySnapshot.getLineSpacing();
   }
 
   @Override
@@ -102,21 +85,66 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public float getSize2D(@NotNull String fontFamily) {
-    float result = myFontSizes.getFloat(fontFamily);
-    if (result <= 0) {
-      result = myTemplateFontSize;
-    }
-    return result > 0 ? result : DEFAULT_FONT_SIZE;
+    return mySnapshot.getSize2D(fontFamily);
   }
 
   @Override
   public @NotNull List<@NlsSafe String> getEffectiveFontFamilies() {
-    return myEffectiveFontFamilies;
+    return mySnapshot.getEffectiveFontFamilies();
   }
 
   @Override
   public @NotNull List<@NlsSafe String> getRealFontFamilies() {
-    return myRealFontFamilies;
+    return mySnapshot.getRealFontFamilies();
+  }
+
+  /**
+   * @return first element of the {@link #getEffectiveFontFamilies() registered font families} (if any);
+   *         {@link #DEFAULT_FONT_NAME} otherwise
+   */
+  @Override
+  public @NotNull @NlsSafe String getFontFamily() {
+    return mySnapshot.getFontFamily();
+  }
+
+  @Override
+  public boolean useLigatures() {
+    return mySnapshot.useLigatures();
+  }
+
+  @Override
+  public @Nullable String getRegularSubFamily() {
+    return mySnapshot.getRegularSubFamily();
+  }
+
+  @Override
+  public @Nullable String getBoldSubFamily() {
+    return mySnapshot.getBoldSubFamily();
+  }
+
+  @Override
+  public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {
+    return mySnapshot.getCharacterVariants();
+  }
+
+  @Override
+  public void copyTo(@NotNull FontPreferences preferences) {
+    mySnapshot.copyTo(preferences);
+  }
+
+  @Override
+  public void clear() {
+    updateSnapshot(FontPreferencesSnapshot::withoutFontsAndFontSizes);
+  }
+
+  @Override
+  public void clearFonts() {
+    updateSnapshot(FontPreferencesSnapshot::withoutFonts);
+  }
+
+  @Override
+  public void setLineSpacing(float lineSpacing) {
+    updateSnapshot(current -> current.withLineSpacing(lineSpacing));
   }
 
   @Override
@@ -126,58 +154,18 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, float size) {
-    if (!myRealFontFamilies.contains(fontFamily)) {
-      myRealFontFamilies.add(fontFamily);
-    }
-    if (!myEffectiveFontFamilies.contains(fontFamily)) {
-      myEffectiveFontFamilies.add(fontFamily);
-    }
-    setSize(fontFamily, size);
-  }
-
-  /**
-   * @return first element of the {@link #getEffectiveFontFamilies() registered font families} (if any);
-   *         {@link #DEFAULT_FONT_NAME} otherwise
-   */
-  @Override
-  public @NotNull @NlsSafe String getFontFamily() {
-    return myEffectiveFontFamilies.isEmpty() ? DEFAULT_FONT_NAME : myEffectiveFontFamilies.getFirst();
+    logSizeChangeIfNeeded(size);
+    updateSnapshot(current -> current.withRegisteredFontFamily(fontFamily, size));
   }
 
   @Override
   public void addFontFamily(@NotNull String fontFamily) {
-    if (!myRealFontFamilies.contains(fontFamily)) {
-      myRealFontFamilies.add(fontFamily);
-    }
-    if (!myEffectiveFontFamilies.contains(fontFamily)) {
-      myEffectiveFontFamilies.add(fontFamily);
-    }
-    notifyStateChanged();
-  }
-
-  @Override
-  public void copyTo(final @NotNull FontPreferences preferences) {
-    if (preferences instanceof ModifiableFontPreferences modifiablePreferences) {
-      modifiablePreferences.setEffectiveFontFamilies(myEffectiveFontFamilies);
-      modifiablePreferences.setRealFontFamilies(myRealFontFamilies);
-      modifiablePreferences.setTemplateFontSize(myTemplateFontSize);
-      modifiablePreferences.resetFontSizes();
-      for (String fontFamily : myRealFontFamilies) {
-        if (myFontSizes.containsKey(fontFamily)) {
-          modifiablePreferences.setFontSize(fontFamily, myFontSizes.getFloat(fontFamily));
-        }
-      }
-      modifiablePreferences.setUseLigatures(myUseLigatures);
-      modifiablePreferences.setLineSpacing(myLineSpacing);
-      modifiablePreferences.setRegularSubFamily(myRegularSubFamily);
-      modifiablePreferences.setBoldSubFamily(myBoldSubFamily);
-      modifiablePreferences.setCharacterVariants(myCharacterVariants);
-    }
+    updateSnapshot(current -> current.withFontFamily(fontFamily));
   }
 
   @Override
   public void resetFontSizes() {
-    myFontSizes.clear();
+    updateSnapshot(FontPreferencesSnapshot::withoutFontSizes);
   }
 
   @Override
@@ -187,7 +175,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void setFontSize(@NotNull String fontFamily, float size) {
-    myFontSizes.put(fontFamily, size);
+    updateSnapshot(current -> current.withFontSize(fontFamily, size));
   }
 
   @Override
@@ -197,123 +185,165 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void setTemplateFontSize(float size) {
-    myTemplateFontSize = size;
+    updateSnapshot(current -> current.withTemplateFontSize(size));
   }
 
   @Override
   public void setEffectiveFontFamilies(@NotNull List<String> fontFamilies) {
-    myEffectiveFontFamilies.clear();
-    myEffectiveFontFamilies.addAll(fontFamilies);
+    updateSnapshot(current -> current.withEffectiveFontFamilies(fontFamilies));
   }
 
   @Override
   public void setRealFontFamilies(@NotNull List<String> fontFamilies) {
-    myRealFontFamilies.clear();
-    myRealFontFamilies.addAll(fontFamilies);
-  }
-
-  @Override
-  public boolean useLigatures() {
-    return myUseLigatures;
+    updateSnapshot(current -> current.withRealFontFamilies(fontFamilies));
   }
 
   @Override
   public void setUseLigatures(boolean useLigatures) {
-    if (useLigatures != myUseLigatures) {
-      myUseLigatures = useLigatures;
-      notifyStateChanged();
-    }
-  }
-
-  @Override
-  public @Nullable String getRegularSubFamily() {
-    return myRegularSubFamily;
-  }
-
-  @Override
-  public @Nullable String getBoldSubFamily() {
-    return myBoldSubFamily;
+    updateSnapshot(current -> current.withUseLigatures(useLigatures));
   }
 
   @Override
   public void setRegularSubFamily(String subFamily) {
-    if (!Objects.equals(myRegularSubFamily, subFamily)) {
-      myRegularSubFamily = subFamily;
-      notifyStateChanged();
-    }
+    updateSnapshot(current -> current.withRegularSubFamily(subFamily));
   }
 
   @Override
   public void setBoldSubFamily(String subFamily) {
-    if (!Objects.equals(myBoldSubFamily, subFamily)) {
-      myBoldSubFamily = subFamily;
-      notifyStateChanged();
-    }
-  }
-
-  @Override
-  public @Unmodifiable @NotNull Set<@NotNull String> getCharacterVariants() {
-    return myCharacterVariants;
+    updateSnapshot(current -> current.withBoldSubFamily(subFamily));
   }
 
   @Override
   public void setCharacterVariants(@Unmodifiable @NotNull Set<@NotNull String> variants) {
-    // A persisted state can hold a null element, for example after a manual edit of the settings file
-    //noinspection ConstantValue
-    myCharacterVariants = variants.stream().filter(Objects::nonNull).collect(Collectors.toUnmodifiableSet());
-    notifyStateChanged();
+    updateSnapshot(current -> current.withCharacterVariants(variants));
   }
 
   @Override
   public void setCharacterVariant(@NotNull String variant, boolean enabled) {
-    Set<String> variants = new HashSet<>(myCharacterVariants);
-    if (enabled) {
-      variants.add(variant);
-    } else {
-      variants.remove(variant);
+    updateSnapshot(current -> current.withCharacterVariant(variant, enabled));
+  }
+
+  /**
+   * Runs the changes on a builder, which creates one snapshot, and writes the snapshot with one compare-and-set.
+   * Fires one event if the snapshot changes.
+   * A subclass can override a setter, so a subclass instance runs the changes on itself.
+   */
+  @Override
+  @ApiStatus.Experimental
+  public void runBatchUpdate(@NotNull Consumer<? super ModifiableFontPreferences> changes) {
+    if (getClass() != FontPreferencesImpl.class) {
+      changes.accept(this);
+      return;
     }
-    myCharacterVariants = Set.copyOf(variants);
-    notifyStateChanged();
+    while (true) {
+      var prev = mySnapshot;
+      var next = prev.withChanges(changes);
+      if (next == prev) {
+        return;
+      }
+      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
+        logSizeChangeIfNeeded(prev, next);
+        notifyStateChanged();
+        return;
+      }
+    }
+  }
+
+  /**
+   * Replaces the snapshot in one write.
+   * Fires one event if the snapshot changes.
+   */
+  void replaceSnapshot(@NotNull FontPreferencesSnapshot replacement) {
+    updateSnapshot(_ -> replacement);
+  }
+
+  /**
+   * Adds a listener that gets one event after each change of the snapshot.
+   * The event comes on the thread that made the change.
+   */
+  public void addChangeListener(@NotNull ChangeListener changeListener) {
+    getOrCreateEventDispatcher().addListener(changeListener);
+  }
+
+  /**
+   * Adds a listener like {@link #addChangeListener(ChangeListener)} and removes it when the disposable is disposed.
+   */
+  public void addChangeListener(@NotNull ChangeListener changeListener, @NotNull Disposable parentDisposable) {
+    getOrCreateEventDispatcher().addListener(changeListener, parentDisposable);
   }
 
   @Override
   public int hashCode() {
-    return myRealFontFamilies.hashCode();
+    return mySnapshot.hashCode();
   }
 
+  /**
+   * Compares the user settings of the current snapshots.
+   * It ignores the effective font families and the template font size.
+   * To find any change of the values, compare the results of {@link #getSnapshot()} by identity.
+   */
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     FontPreferencesImpl that = (FontPreferencesImpl)o;
-    if (!myRealFontFamilies.equals(that.myRealFontFamilies)) return false;
-    for (String fontFamily : myRealFontFamilies) {
-      if (myFontSizes.getFloat(fontFamily) != that.myFontSizes.getFloat(fontFamily)) {
-        return false;
-      }
-    }
-    if (myUseLigatures != that.myUseLigatures) return false;
-    if (myLineSpacing != that.myLineSpacing) return false;
-    if (!Objects.equals(myRegularSubFamily, that.myRegularSubFamily)) return false;
-    if (!Objects.equals(myBoldSubFamily, that.myBoldSubFamily)) return false;
-    if (!Objects.equals(myCharacterVariants, that.myCharacterVariants)) return false;
-    return true;
+    return mySnapshot.equals(that.mySnapshot);
   }
 
   @Override
   public @NonNls String toString() {
-    return "Effective font families: " + myEffectiveFontFamilies;
+    return mySnapshot.toString();
   }
 
-  private void setSize(@NotNull String fontFamily, float size) {
-    logSizeChangeIfNeeded(size);
-    myFontSizes.put(fontFamily, size);
-    myTemplateFontSize = size;
-    notifyStateChanged();
+  /**
+   * Replaces the snapshot with the result of the operation, and fires one event if the snapshot changes.
+   * The operation can run more than once, so it must have no side effects.
+   */
+  private void updateSnapshot(@NotNull UnaryOperator<FontPreferencesSnapshot> operation) {
+    while (true) {
+      var prev = mySnapshot;
+      var next = operation.apply(prev);
+      if (next == prev) {
+        return;
+      }
+      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
+        notifyStateChanged();
+        return;
+      }
+    }
+  }
+
+  private @NotNull EventDispatcher<ChangeListener> getOrCreateEventDispatcher() {
+    var dispatcher = myEventDispatcher;
+    if (dispatcher != null) {
+      return dispatcher;
+    }
+    synchronized (this) {
+      dispatcher = myEventDispatcher;
+      if (dispatcher == null) {
+        dispatcher = EventDispatcher.create(ChangeListener.class);
+        myEventDispatcher = dispatcher;
+      }
+      return dispatcher;
+    }
   }
 
   private void notifyStateChanged() {
-    myEventDispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+    var dispatcher = myEventDispatcher;
+    if (dispatcher == null || !dispatcher.hasListeners()) {
+      return;
+    }
+    dispatcher.getMulticaster().stateChanged(new ChangeEvent(this));
+  }
+
+  private void logSizeChangeIfNeeded(@NotNull FontPreferencesSnapshot prev, @NotNull FontPreferencesSnapshot next) {
+    if (!LOG.isDebugEnabled()) {
+      return;
+    }
+    var size = next.getSize2D(next.getFontFamily());
+    if (size != prev.getSize2D(prev.getFontFamily())) {
+      logSizeChangeIfNeeded(size);
+    }
   }
 
   private void logSizeChangeIfNeeded(float size) {

@@ -226,6 +226,11 @@ com.intellij.openapi.editor.colors.EditorColors
 - *sf:SELECTION_BACKGROUND_COLOR_INACTIVE:com.intellij.openapi.editor.colors.ColorKey
 a:com.intellij.openapi.editor.colors.EditorColorsManager
 - *a:getSchemeModificationCounter():J
+c:com.intellij.openapi.editor.colors.FontPreferences
+- *:getSnapshot():com.intellij.openapi.editor.colors.FontPreferences
+a:com.intellij.openapi.editor.colors.ModifiableFontPreferences
+- com.intellij.openapi.editor.colors.FontPreferences
+- *:runBatchUpdate(java.util.function.Consumer):V
 com.intellij.openapi.editor.highlighter.HighlighterIterator
 - *:getTextAttributesKeys():com.intellij.openapi.editor.colors.TextAttributesKey[]
 *e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
