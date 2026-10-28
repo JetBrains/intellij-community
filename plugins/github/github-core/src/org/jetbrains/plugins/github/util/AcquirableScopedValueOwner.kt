@@ -29,7 +29,7 @@ class AcquirableScopedValueOwner<out T : Any>(
         awaitCancellation()
       }
       finally {
-        synchronized(this) {
+        synchronized(this@AcquirableScopedValueOwner) {
           valueAndCs?.second?.cancel("Parent scope is cancelled")
           valueAndCs = null
         }
