@@ -22,8 +22,7 @@ interface ActivityProvider {
 }
 
 @ApiStatus.Experimental
-data class ActivityFilter(val filePathFilter: HistoryPathFilter?,
-                          val showSystemLabels: Boolean)
+data class ActivityFilter(val filePathFilter: HistoryPathFilter?, val showAllLabels: Boolean)
 
 @ApiStatus.Experimental
 enum class FilterKind {

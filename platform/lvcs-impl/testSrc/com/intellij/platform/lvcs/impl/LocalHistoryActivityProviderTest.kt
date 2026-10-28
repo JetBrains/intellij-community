@@ -4,6 +4,7 @@ package com.intellij.platform.lvcs.impl
 import com.intellij.history.ActivityId
 import com.intellij.history.LocalHistory
 import com.intellij.history.core.HistoryPathFilter
+import com.intellij.history.integration.CommonActivity
 import com.intellij.history.integration.IntegrationTestCase
 import com.intellij.testFramework.HeavyPlatformTestCase
 import junit.framework.TestCase
@@ -80,65 +81,81 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
   fun `test multiple labels`() {
     val file = createFile("file.txt")
 
+    val visibleLabels = mutableListOf<String>()
+    val allLabels = mutableListOf<String>()
+
     setContent(file, "initial")
     val systemLabel = "system label"
     vcs.putSystemLabel(systemLabel, project.locationHash, -1)
+    allLabels.add(systemLabel)
 
     setContent(file, "content1")
     val userLabel = "user label"
     vcs.putUserLabel(userLabel, project.locationHash)
+    allLabels.add(userLabel)
+    visibleLabels.add(userLabel)
 
     setContent(file, "content2")
-    val visibleUserLabel = "visible user label"
-    vcs.putUserLabel(visibleUserLabel, project.locationHash)
-    val hiddenUserLabel1 = "hidden user label 1"
-    vcs.putUserLabel(hiddenUserLabel1, project.locationHash)
-    val hiddenUserLabel2 = "hidden user label 2"
-    vcs.putUserLabel(hiddenUserLabel2, project.locationHash)
+    for ((i, label) in listOf("visible user label", "hidden user label 1", "hidden user label 2").withIndex()) {
+      vcs.putUserLabel(label, project.locationHash)
+      if (i == 0) {
+        visibleLabels.add(label)
+      }
+      allLabels.add(label)
+    }
 
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFile(file)
 
     val activityList = provider.loadActivityList(scope, ActivityFilter(null, false))
-    val labelNames = activityList.getLabelNameSet()
+    TestCase.assertEquals(visibleLabels.reversed(), activityList.getLabelNamesList())
 
-    TestCase.assertTrue(labelNames.containsAll(listOf(userLabel, visibleUserLabel)))
-    TestCase.assertTrue(labelNames.intersect(listOf(systemLabel, hiddenUserLabel1, hiddenUserLabel2)).isEmpty())
+    val activityListWithAllLabels = provider.loadActivityList(scope, ActivityFilter(null, true))
+    TestCase.assertEquals(allLabels.reversed(), activityListWithAllLabels.getLabelNamesList())
   }
 
   fun `test multiple event and user labels`() {
     val file = createFile("file.txt")
 
-    val activityId = ActivityId("dummyProvider", "dummyActivity")
+    val dummyActivityId = ActivityId("dummyProvider", "dummyActivity")
     val localHistory = LocalHistory.getInstance()
 
+    val visibleLabels = mutableListOf<String>()
+    val allLabels = mutableListOf<String>()
+
+    fun putLabels(labels: List<Pair<String, ActivityId>>) {
+      for ((i, labelPair) in labels.withIndex()) {
+        val (labelName, activityId) = labelPair
+        localHistory.putEventLabel(project, labelName, activityId)
+        if (i == 0 || activityId == CommonActivity.UserLabel) {
+          visibleLabels.add(labelName)
+        }
+        allLabels.add(labelName)
+      }
+    }
+
     setContent(file, "initial")
-    val visibleEventLabel1 = "visible event label 1"
-    localHistory.putEventLabel(project, visibleEventLabel1, activityId)
-    val userLabel1 = "user label 1"
-    localHistory.putUserLabel(project, userLabel1)
-    localHistory.putEventLabel(project, "event label 1", activityId)
-    val userLabel2 = "user label 2"
-    localHistory.putUserLabel(project, userLabel2)
+    putLabels(listOf("visible event label 1" to dummyActivityId,
+                     "user label 1" to CommonActivity.UserLabel,
+                     "hidden event label 1" to dummyActivityId,
+                     "user label 2" to CommonActivity.UserLabel))
 
     setContent(file, "content1")
-    val visibleEventLabel2 = "visible event label 2"
-    localHistory.putEventLabel(project, visibleEventLabel2, activityId)
-    localHistory.putEventLabel(project, "hidden event label 1", activityId)
+    putLabels(listOf("visible event label 2" to dummyActivityId, "hidden event label 2" to dummyActivityId))
 
     setContent(file, "content2")
-    val userLabel3 = "user label 3"
-    localHistory.putUserLabel(project, userLabel3)
-    localHistory.putEventLabel(project, "hidden event label 2", activityId)
-    localHistory.putEventLabel(project, "hidden event label 3", activityId)
+    putLabels(listOf("user label 3" to CommonActivity.UserLabel,
+                     "hidden event label 3" to dummyActivityId, "hidden event label 4" to dummyActivityId,
+                     "user label 4" to CommonActivity.UserLabel))
 
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFile(file)
 
     val activityList = provider.loadActivityList(scope, ActivityFilter(null, false))
-    val labelNames = activityList.getLabelNameSet()
+    TestCase.assertEquals(visibleLabels.reversed(), activityList.getLabelNamesList())
 
-    TestCase.assertEquals(listOf(userLabel1, userLabel2, userLabel3, visibleEventLabel1, visibleEventLabel2), labelNames.toList().sorted())
+    val activityListWithAllLabels = provider.loadActivityList(scope, ActivityFilter(null, true))
+    TestCase.assertEquals(allLabels.reversed(), activityListWithAllLabels.getLabelNamesList())
   }
 
   fun `test directory`() {
@@ -187,7 +204,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val scope = ActivityScope.Recent
 
     val activityList = provider.loadActivityList(scope, ActivityFilter(null, false))
-    val labelNames = activityList.getLabelNameSet()
+    val labelNames = activityList.getLabelNamesList()
 
     TestCase.assertTrue(labelNames.containsAll(listOf(label1, label2)))
     TestCase.assertTrue(labelNames.intersect(listOf(systemLabel, otherProjectLabel)).isEmpty())
@@ -315,8 +332,8 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     return provider.loadDiffData(scope, selection, diffMode)!!.presentableChanges.map { "${it.fileStatus}:${it.filePath.name}" }.sorted()
   }
 
-  private fun ActivityData.getLabelNameSet(): Set<String> {
-    return items.mapNotNull { (it as? LabelActivityItem)?.name }.toSet()
+  private fun ActivityData.getLabelNamesList(): List<String> {
+    return items.mapNotNull { (it as? LabelActivityItem)?.name }
   }
 
   private fun ActivityData.getNamesList(): List<String> = items.getNamesList()

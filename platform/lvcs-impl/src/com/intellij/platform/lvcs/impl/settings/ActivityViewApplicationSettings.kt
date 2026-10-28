@@ -27,7 +27,7 @@ internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<
       eventDispatcher.multicaster.settingsChanged()
     }
 
-  var showSystemLabels: Boolean
+  var showAllLabels: Boolean
     get() = state.showSystemLabels
     set(value) {
       state.showSystemLabels = value

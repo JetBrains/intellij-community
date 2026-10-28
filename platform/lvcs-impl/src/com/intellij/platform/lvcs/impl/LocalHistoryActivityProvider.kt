@@ -17,7 +17,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.lvcs.impl.actions.isShowSystemLabelsEnabled
+import com.intellij.platform.lvcs.impl.actions.isShowAllLabelsEnabled
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
 import com.intellij.ui.JBColor
@@ -77,17 +77,17 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
   ) {
     var lastEventLabel: ChangeSet? = null
     val userLabels = mutableListOf<ChangeSet>()
-    val showSystemLabels = filter.showSystemLabels()
+    val showAllLabels = filter.showAllLabels()
 
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, filter?.filePathFilter, affectedPaths::add) { changeSet ->
-      if (!showSystemLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
+      if (!showAllLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
         if (changeSet.activityId == CommonActivity.UserLabel) {
           userLabels.add(changeSet)
-          if (showSystemLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
+          if (showAllLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = null
         } else {
-          if (showSystemLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
+          if (showAllLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = changeSet
         }
       }
@@ -107,10 +107,10 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
     val fileFilter = filter?.filePathFilter
-    val showSystemLabels = filter.showSystemLabels()
+    val showAllLabels = filter.showAllLabels()
 
     for (changeSet in facade.changes) {
-      if (!showSystemLabels && changeSet.isSystemLabelOnly) continue
+      if (!showAllLabels && changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
         if (fileFilter != null || !changeSet.changes.any { it.affectsProject(projectId) }) continue
       }
@@ -180,7 +180,7 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
   }
 }
 
-private fun ActivityFilter?.showSystemLabels(): Boolean = this?.showSystemLabels ?: isShowSystemLabelsEnabled()
+private fun ActivityFilter?.showAllLabels(): Boolean = this?.showAllLabels ?: isShowAllLabelsEnabled()
 
 private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: IdeaGateway, scope: ActivityScope): Flow<Unit> {
   val condition: (ChangeSet) -> Boolean
