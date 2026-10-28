@@ -1,0 +1,11 @@
+LineBreakpoint created at continuationClassThis.kt:19
+Run Java
+Connected to the target VM
+continuationClassThis.kt:19
+KotlinStackFrame (continuationClassThis.kt:19)
+    JavaValue[this] this: Handler@uniqueID = continuationClassThis.Handler@hashCode
+        DummyMessageValueNode = No fields to display
+        JavaValue[getter continuationClassThis.Handler.getContext()] context: kotlin.coroutines.CoroutineContext (continuationClassThis.kt:12)
+Disconnected from the target VM
+
+Process finished with exit code 0

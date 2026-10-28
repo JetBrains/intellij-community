@@ -774,6 +774,11 @@ public abstract class K2IdeK2CodeKotlinEvaluateExpressionTestGenerated extends A
                 runTest("../testData/evaluation/singleBreakpoint/frame/companionObjectGettersAreNotShown.kt");
             }
 
+            @TestMetadata("continuationClassThis.kt")
+            public void testContinuationClassThis() throws Exception {
+                runTest("../testData/evaluation/singleBreakpoint/frame/continuationClassThis.kt");
+            }
+
             @TestMetadata("coroutineContextFun.kt")
             public void testCoroutineContextFun() throws Exception {
                 runTest("../testData/evaluation/singleBreakpoint/frame/coroutineContextFun.kt");

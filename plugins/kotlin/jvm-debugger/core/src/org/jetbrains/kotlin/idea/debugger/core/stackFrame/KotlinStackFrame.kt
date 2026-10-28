@@ -125,9 +125,11 @@ open class KotlinStackFrame(
             return true
         }
 
-        if (thisObject.type().isSubtype(CONTINUATION_TYPE)) {
+        // Only real suspend/coroutine frames carry a KotlinStackFrameProxyImpl; a plain Continuation method keeps `this`.
+        val kotlinFrameProxy = evaluationContext.frameProxy as? KotlinStackFrameProxyImpl
+        if (kotlinFrameProxy != null && thisObject.type().isSubtype(CONTINUATION_TYPE)) {
             ExistingInstanceThisRemapper.find(children)?.remove()
-            val dispatchReceiver = (evaluationContext.frameProxy as? KotlinStackFrameProxyImpl)?.dispatchReceiver() ?: return true
+            val dispatchReceiver = kotlinFrameProxy.dispatchReceiver() ?: return true
             val dispatchReceiverType = dispatchReceiver.type()
             if (dispatchReceiverType.instanceOf(Function::class.java.name) && '$' in dispatchReceiverType.signature()) {
                 attachCapturedValues(evaluationContext, children, dispatchReceiver, existingVariables)
