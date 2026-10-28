@@ -6,7 +6,7 @@ name = "bt-core"
 description = "`bt`'s core: the areas and their lanes, selector resolution, the suite catalog, Bazel test runs, BEP and test.xml reading."
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.93"
+rust-version = "1.99"
 publish = false
 license = "Apache-2.0"
 

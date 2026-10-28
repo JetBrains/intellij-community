@@ -315,8 +315,8 @@ use_repo(rules_rust, "rules_rust")
 # it fails when the tags differ. Each crate of this module sets its own edition.
 rust_toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 rust_toolchains.toolchain(
-    edition = "2021",
-    version = "1.93.1",
+    edition = "2024",
+    version = "1.99.1",
 )
 use_repo(rust_toolchains, "default_rust_toolchains")
 

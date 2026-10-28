@@ -6,7 +6,7 @@ name = "yonder-client"
 description = "The client of yonder: the host files, the address choice, and the operations of the protocol, for `yonder` and `bt --host`."
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.93"
+rust-version = "1.99"
 publish = false
 license = "Apache-2.0"
 
