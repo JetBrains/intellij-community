@@ -34,7 +34,7 @@
     <orderEntry type="library" name="kotlin-stdlib" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
     <orderEntry type="module" module-name="intellij.mcpserver" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.mcpserver.plugin" scope="PROVIDED" />
+    <orderEntry type="module" module-name="intellij.mcpserver.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.terminal" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.mcpserver.tests" scope="TEST" />

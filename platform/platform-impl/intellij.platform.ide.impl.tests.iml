@@ -29,7 +29,7 @@
     <content url="file://$MODULE_DIR$/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
     </content>
-    <orderEntry type="library" scope="PROVIDED" name="Mac" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mac" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.pluginManager.testFramework" scope="TEST" />
     <orderEntry type="inheritedJdk" />

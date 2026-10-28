@@ -30,7 +30,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
-    <orderEntry type="library" scope="PROVIDED" name="Ant" level="project" />
+    <orderEntry type="library" scope="TEST" name="Ant" level="project" />
     <orderEntry type="module-library" scope="TEST">
       <library name="ml-completion-prev-exprs-models" type="repository">
         <properties maven-id="completion.ml.python.features:ml-completion-prev-exprs-models:1.11">

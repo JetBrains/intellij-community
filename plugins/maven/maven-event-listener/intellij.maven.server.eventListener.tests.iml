@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library" scope="PROVIDED">
+    <orderEntry type="module-library" scope="TEST">
       <library name="org.apache.maven:maven-core:3.3.9" type="repository">
         <properties maven-id="org.apache.maven:maven-core:3.3.9">
           <verification>
@@ -154,7 +154,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module-library" scope="PROVIDED">
+    <orderEntry type="module-library" scope="TEST">
       <library name="com.google.inject:guice-no_aop:4.0" type="repository">
         <properties maven-id="com.google.inject:guice:4.0">
           <verification>
