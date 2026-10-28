@@ -43,7 +43,9 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 - A provider must declare the range of context kinds that it supplies layers at: its widest kind and its narrowest
   kind. The narrowest kind can be open. A provider that declares nothing covers every kind. See
   [ADR 0159](../adr/0159-a-provider-declares-the-context-kinds-it-supplies-layers-at.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLayerKindRangeTest.kt
 - The vault must log an error for a layer that a provider returns outside its range of kinds, and drop that layer.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLayerKindRangeTest.kt
 - A provider must return only the layers of the contexts that the scope covers: the scope and its descendants. A
   reload must not install a layer outside its scope again.
 - A reload must install the returned layers kind by kind. The bucket of a kind installs when every provider whose
@@ -87,6 +89,9 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
 - A push for a store outside the scope of every running reload must apply at once.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
+- The vault must log an error for a pushed layer outside the range of kinds of its provider, and drop that push.
+  See [ADR 0159](../adr/0159-a-provider-declares-the-context-kinds-it-supplies-layers-at.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLayerKindRangeTest.kt
 - The vault must drop a push while a save is pending for that store. For a held push, the vault checks this when
   it applies the push, not when the push arrives.
   See [ADR 0061](../adr/0061-the-vault-persists-on-a-debounced-save-signal.md) and
@@ -139,8 +144,8 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   model over the file of the new branch.
 - A newer reload could cancel the asks of an older overlapping reload, instead of the reload mutexes. See
   [IJPL-259868](https://youtrack.jetbrains.com/issue/IJPL-259868).
-- The provider kinds, the install kind by kind and the mutex per kind are not built yet. Until then, a reload
-  installs all its layers at once under one global mutex. See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
+- The install kind by kind and the mutex per kind are not built yet. Until then, a reload installs all its layers
+  at once under one global mutex. See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
 - A slow provider with a wide range of kinds delays every context that it covers.
 - Migration of settings data is not built. It waits until remote development is done. See
   [ADR 0142](../adr/0142-migration-waits-until-remote-development-is-done.md).

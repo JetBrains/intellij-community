@@ -285,7 +285,7 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    */
   private suspend fun requestDataOrNull(provider: LayerProvider, scopeContext: SettingsContext): List<LayerData>? =
     try {
-      provider.requestData(scopeContext)
+      requestLayersInKindRange(provider, scopeContext)
     }
     catch (e: Exception) {
       rethrowControlFlowException(e)
@@ -346,9 +346,29 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
     return currentModel
   }
 
+  /**
+   * Returns the layers that [provider] returns for [scopeContext], without the layers outside its range of context
+   * kinds. See [isInKindRange].
+   */
+  private suspend fun requestLayersInKindRange(provider: LayerProvider, scopeContext: SettingsContext): List<LayerData> =
+    provider.requestData(scopeContext).filter(::isInKindRange)
+
+  /**
+   * Returns whether the context of [layerData] has a kind in the [range of context kinds][LayerProvider.contextKindRange]
+   * of its provider. It logs an error for a layer outside the range, and the caller drops that layer (ADR 0159).
+   */
+  private fun isInKindRange(layerData: LayerData): Boolean {
+    val kindRange = layerData.provider.contextKindRange
+    val kind = layerData.context.kind
+    if (kind in kindRange) return true
+    LOG.error("Dropping a layer of '${layerData.provider.javaClass.name}' at '${layerData.context.identity}': " +
+              "its kind $kind is outside the range $kindRange of the provider")
+    return false
+  }
+
   /** Asks [provider] for its [scopeContext] data and installs it before it returns. A load is synchronous, a spontaneous [push] is not. */
   private suspend fun loadFrom(provider: LayerProvider, scopeContext: SettingsContext) {
-    installLoaded(provider.requestData(scopeContext))
+    installLoaded(requestLayersInKindRange(provider, scopeContext))
   }
 
   /**
@@ -430,7 +450,7 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
     key.layerFilter(provider) && provider.acceptsKey(key)
 
   override fun push(data: LayerData) {
-    incoming.trySend(data)
+    if (isInKindRange(data)) incoming.trySend(data)
   }
 
   override suspend fun <T> set(context: SettingsContext, key: SettingsKey<T>, value: T) {
