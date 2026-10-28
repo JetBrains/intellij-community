@@ -42,5 +42,6 @@
     <orderEntry type="module" module-name="intellij.platform.settings.v2" />
     <orderEntry type="module" module-name="intellij.platform.projectModel" />
     <orderEntry type="module" module-name="intellij.platform.ide.progress" />
+    <orderEntry type="module" module-name="intellij.platform.indexing" />
   </component>
 </module>

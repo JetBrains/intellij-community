@@ -90,6 +90,16 @@ file layer holds the settings of a directory and of each file in it, in one conf
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFileLocalityTest.kt
 - The file layer must find the directory configs by their file names in the file name index. It must wait until
   the index is ready, and it must not walk the project content. See [ADR 0163](../adr/0163-the-file-layer-finds-the-directory-configs-through-the-file-name-index.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFileLocalityTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
+- A reload of the project or the application scope in dumb mode must make the application and the project contexts
+  ready. A directory context must stay dirty until smart mode returns, and then its config must load.
+  [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
+- The wait for the index must block no other startup activity and no indexing. The platform runs the load of a
+  project open in its own coroutine, and indexing does not wait for it.
+- The file layer must find only the configs in the project content. A config in an excluded directory never loads.
+  [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
 - Every layer must create a config file only on its first write. No layer creates an empty file when it starts.
   The application layer and the project layer also create a missing directory of the file. The file layer creates
   a config file only in an existing directory.
@@ -152,11 +162,16 @@ file layer holds the settings of a directory and of each file in it, in one conf
 
 ## Open Questions / Risks
 
-- The file layer still finds configs by a walk of the whole project content. The index lookup is not built yet.
-  See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
 - The directory configs load only after indexing, also after a branch switch that starts indexing. If the file
   name index can answer before indexing ends, the configs could load earlier. This is not checked yet.
-- A config in an excluded directory never loads.
+- While a project indexes, the file bucket of a reload holds the file reload mutex. A second reload then holds the
+  project mutex while it waits for the file mutex. So a third reload installs its project bucket only after the
+  indexing. The wait climbs one kind for each queued reload. The third reload takes the mutexes hand over hand, so it
+  holds the application mutex while it waits for the project mutex. A fourth reload then waits for the application
+  mutex, and all of its kinds stay pending. So every context under the scope of the fourth reload stays dirty. For
+  the application scope, every write to the application context then waits for the indexing. See
+  [ADR 0162](../adr/0162-reloads-take-one-mutex-per-context-kind-from-the-application-down.md) and
+  [ADR 0115](../adr/0115-a-write-waits-only-for-a-reload-of-its-own-context-or-an-ancestor.md).
 - A write of an environmental file inside the project tree is visible on a remote-dev frontend, where it does nothing.
   See [ADR 0097](../adr/0097-an-environmental-key-and-its-layer-stay-on-one-side.md).
 - Deleting the application or project file is not covered by a test.

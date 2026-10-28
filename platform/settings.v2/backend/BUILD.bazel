@@ -38,6 +38,7 @@ jvm_library(
         "//platform/settings.v2",
         "//platform/projectModel-api:projectModel",
         "//platform/progress/shared:ide-progress",
+        "//platform/indexing-api:indexing",
     ],
 )
 
@@ -70,6 +71,7 @@ jvm_library(
         "//platform/settings.v2:settings.v2_test_lib",
         "//platform/projectModel-api:projectModel_test_lib",
         "//platform/progress/shared:ide-progress_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.backend` end

@@ -4,6 +4,7 @@ package com.intellij.platform.settings.v2.impl.providers
 // @spec ../../../../../../../../../spec/file-layers.spec.md
 
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -27,6 +28,8 @@ import com.intellij.platform.settings.v2.SettingsContext
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsValue.MapValue
 import com.intellij.platform.settings.v2.impl.VirtualFileSettingsContext
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.ProjectScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,7 +47,8 @@ import java.util.concurrent.ConcurrentHashMap
  * It builds on [BaseLayerService]. [split] fans a loaded directory config out into the directory layer and one layer
  * for each per-file entry, and it clears an entry that vanished. [writeData] does the inverse. Every context under the
  * directory maps to it through [storageContext], so their slices persist together in one file. [requestData] returns
- * the loaded layers for the vault to install. The VFS watcher pushes a later external change.
+ * the loaded layers for the vault to install. It finds the configs in the file name index, so it waits until the
+ * index is ready (ADR 0163). The VFS watcher pushes a later external change.
  */
 @Service(Service.Level.PROJECT)
 internal class FileLayerService(private val project: Project, private val scope: CoroutineScope) : BaseLayerService(scope) {
@@ -176,19 +180,30 @@ internal class FileLayerService(private val project: Project, private val scope:
     return layersData
   }
 
+  /**
+   * Loads the directory configs that [scopeContext] covers. It suspends until the file name index is ready. See
+   * [findConfigDirectories].
+   */
   override suspend fun requestData(scopeContext: SettingsContext): List<LayerData> = loadConfigs(scopeContext)
 
   private suspend fun loadConfigs(scopeContext: SettingsContext): List<LayerData> {
-    val dirContexts = readAction {
-      buildList {
-        ProjectFileIndex.getInstance(project).iterateContent { file ->
-          if (!file.isDirectory && file.name in CONFIG_FILE_NAMES) add(SettingsContext.file(file.parent, project))
-          true
-        }
-      }
-    }.filter { it.coveredBy(scopeContext) }
+    val dirContexts = findConfigDirectories().filter { it.coveredBy(scopeContext) }
     // Load each directory config concurrently and independently: one unreadable config must not sink the others.
     return collectIsolatedInParallel(dirContexts, { dir, e -> LOG.error("Failed to load config for '${dir.identity}'", e) }) { doLoad(it) }
+  }
+
+  /**
+   * Returns the contexts of the directories in the project content that hold a config of any locality. It looks up
+   * the [CONFIG_FILE_NAMES] in the [FilenameIndex] and walks no directory (ADR 0163). The content scope keeps out the
+   * excluded directories and the libraries. It suspends until the project is in smart mode, so the index is ready.
+   */
+  private suspend fun findConfigDirectories(): List<SettingsContext> = smartReadAction(project) {
+    val configDirectories = LinkedHashSet<VirtualFile>()
+    FilenameIndex.processFilesByNames(CONFIG_FILE_NAMES, true, ProjectScope.getContentScope(project), null) { file ->
+      if (!file.isDirectory) file.parent?.let(configDirectories::add)
+      true
+    }
+    configDirectories.map { SettingsContext.file(it, project) }
   }
 
   // Do not inline. BaseLayerService sits in the same package in another module, so another class loader, and a
@@ -263,7 +278,8 @@ internal class FileLayerService(private val project: Project, private val scope:
 
     /**
      * Holds the config file names of all the localities: `.jetbrains.json`, `.jetbrains.local.json` and
-     * `.jetbrains.env.json`. The watcher reacts to them.
+     * `.jetbrains.env.json`. The file layer finds the configs by them in the file name index, and the watcher reacts
+     * to them.
      */
     val CONFIG_FILE_NAMES: Set<String> = LayerLocality.entries.mapTo(HashSet()) { localityFileName(CONFIG_FILE, it) }
 
