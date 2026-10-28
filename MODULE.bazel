@@ -32,7 +32,7 @@ register_toolchains("@rules_jvm//:protoc_java_toolchain_toolchain")
 
 register_toolchains("@rules_jvm//:kotlin_multiplex_toolchain")
 
-bazel_dep(name = "buildifier_prebuilt", version = "8.5.1.4")
+bazel_dep(name = "buildifier_prebuilt", version = "10.1.0")
 single_version_override(
     module_name = "buildifier_prebuilt",
     patch_strip = 1,
