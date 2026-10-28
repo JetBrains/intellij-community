@@ -29,6 +29,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiNewExpression;
 import com.intellij.psi.PsiParameter;
@@ -142,7 +143,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     PsiMethod constructor = constructorOrClass instanceof PsiMethod m ? m : null;
 
     PsiClass wrClass = updater.getWritable(targetClass);
-    List<PsiNewExpression> writableUsages = ContainerUtil.map(usages.newUsages, updater::getWritable);
+    List<PsiExpression> writableUsages = ContainerUtil.map(usages.newUsages, updater::getWritable);
 
     PsiMethod wrConstructor = constructor != null
                               ? updater.getWritable(constructor)
@@ -150,29 +151,36 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     PsiUtil.setModifierProperty(wrConstructor, getMinimalAccessLevel(constructorOrClass, usages.otherUsages), true);
     PsiMethod factoryMethod = (PsiMethod)wrClass.add(createFactoryMethod(project, wrContainingClass, constructor, factoryName));
 
-    for (PsiNewExpression newExpression : writableUsages) {
-      if (newExpression.isArrayCreation()) continue;
-
-      CommentTracker ct = new CommentTracker();
-      var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
-      factoryCall.getArgumentList().replace(Objects.requireNonNull(ct.markUnchanged(newExpression.getArgumentList())));
-      PsiExpression newQualifier = ct.markUnchanged(newExpression.getQualifier());
-
-      PsiReferenceExpression factoryCallRef = factoryCall.getMethodExpression();
-      PsiElement resolvedFactoryMethod = factoryCallRef.resolve();
-      if (resolvedFactoryMethod != factoryMethod || newQualifier != null) {
-        factoryCallRef = (PsiReferenceExpression)factoryCallRef.replace(qualifiedMethodReference);
-        PsiElement qualifier = newQualifier == null ? classReferenceExpression : newQualifier;
-        Objects.requireNonNull(factoryCallRef.getQualifierExpression()).replace(qualifier);
+    for (PsiExpression expression : writableUsages) {
+      if (expression instanceof PsiMethodReferenceExpression methodReference && methodReference.isConstructor()) {
+        PsiElement qualifier = methodReference.getQualifier();
+        if (qualifier == null) continue;
+        new CommentTracker().replaceAndRestoreComments(methodReference, qualifier.getText() + "::" + factoryName);
       }
+      else if (expression instanceof PsiNewExpression newExpression) {
+        if (newExpression.isArrayCreation()) continue;
 
-      PsiClassType rawConstructorCallType = getTypeOfProbablyNeededCast(newExpression);
-      PsiExpression replacement = rawConstructorCallType == null
-                                  ? factoryCall
-                                  : castRawFactoryCall(factory, rawConstructorCallType, newExpression, factoryCall);
-      PsiElement result = ct.replaceAndRestoreComments(newExpression, replacement);
-      if (result instanceof PsiTypeCastExpression castExpression && RedundantCastUtil.isCastRedundant(castExpression)) {
-        RemoveRedundantCastUtil.removeCast(castExpression);
+        CommentTracker ct = new CommentTracker();
+        var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
+        factoryCall.getArgumentList().replace(Objects.requireNonNull(ct.markUnchanged(newExpression.getArgumentList())));
+        PsiExpression newQualifier = ct.markUnchanged(newExpression.getQualifier());
+
+        PsiReferenceExpression factoryCallRef = factoryCall.getMethodExpression();
+        PsiElement resolvedFactoryMethod = factoryCallRef.resolve();
+        if (resolvedFactoryMethod != factoryMethod || newQualifier != null) {
+          factoryCallRef = (PsiReferenceExpression)factoryCallRef.replace(qualifiedMethodReference);
+          PsiElement qualifier = newQualifier == null ? classReferenceExpression : newQualifier;
+          Objects.requireNonNull(factoryCallRef.getQualifierExpression()).replace(qualifier);
+        }
+
+        PsiClassType rawConstructorCallType = getTypeOfProbablyNeededCast(newExpression);
+        PsiExpression replacement = rawConstructorCallType == null
+                                    ? factoryCall
+                                    : castRawFactoryCall(factory, rawConstructorCallType, newExpression, factoryCall);
+        PsiElement result = ct.replaceAndRestoreComments(newExpression, replacement);
+        if (result instanceof PsiTypeCastExpression castExpression && RedundantCastUtil.isCastRedundant(castExpression)) {
+          RemoveRedundantCastUtil.removeCast(castExpression);
+        }
       }
     }
     updater.rename(factoryMethod, names);
@@ -257,10 +265,10 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     return (PsiMethod)CodeStyleManager.getInstance(project).reformat(factoryMethod);
   }
 
-  private record UsageData(@NotNull List<@NotNull PsiNewExpression> newUsages, @NotNull List<@NotNull PsiElement> otherUsages) {}
+  private record UsageData(@NotNull List<@NotNull PsiExpression> newUsages, @NotNull List<@NotNull PsiElement> otherUsages) {}
 
   private static @NotNull UsageData findUsages(@NotNull PsiMember constructorOrClass) {
-    List<PsiNewExpression> newUsages = new ArrayList<>();
+    List<PsiExpression> newUsages = new ArrayList<>();
     List<PsiElement> otherUsages = new ArrayList<>();
 
     for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false).asIterable()) {
@@ -269,6 +277,12 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       PsiElement parent = element.getParent();
       if (parent instanceof PsiNewExpression newExpression ) {
         newUsages.add(newExpression);
+      }
+      else if (element instanceof PsiMethodReferenceExpression methodReference) {
+        newUsages.add(methodReference);
+      }
+      else if (parent instanceof PsiMethodReferenceExpression methodReference) {
+        newUsages.add(methodReference);
       }
       else if (parent instanceof PsiAnonymousClass ||
                "super".equals(element.getText()) || "this".equals(element.getText()) ||

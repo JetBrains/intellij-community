@@ -47,6 +47,8 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
   public void testInnerClass() { doTest("04", null); }
   public void testNestedClass() { doTest("NestedClass", "OuterClass"); }
   public void testNestedClass2() { doTest("NestedClass2", "InnerClass"); }
+  public void testMethodReference1() { doTest(); }
+  public void testMethodReference2() { doTest(); }
   public void testAnonymousInheritor() { doTest("AnonymousInheritor", "Inner"); }
   public void testAnonymousInheritor2() { doTest(); }
   public void testSubclassVisibility() { doTest("05", null); }
