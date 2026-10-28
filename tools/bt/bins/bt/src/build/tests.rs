@@ -187,7 +187,7 @@ fn a_pattern_of_a_missing_directory_is_refused_before_bazel() {
     assert_eq!(failure.exit, exit::USAGE);
     assert!(failure.message.starts_with("No such directory: tools/vm\n"), "{}", failure.message);
     assert!(failure.message.contains("pass @community//tools/vm/..."), "{}", failure.message);
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
     assert!(fake.state().removed.is_empty(), "a BEP file was made");
 }
 
