@@ -26,6 +26,7 @@ import java.util.concurrent.TimeUnit;
 /// Every benchmark invocation performs either the number of operations stated in its method name or the number
 /// selected by its load parameter. Because the class uses [Mode#SingleShotTime] and does not use
 /// `OperationsPerInvocation`, JMH reports the total time for the complete batch in milliseconds.
+@SuppressWarnings("KotlinInternalInJava")
 @BenchmarkMode(Mode.SingleShotTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @Warmup(iterations = 3)

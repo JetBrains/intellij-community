@@ -23,7 +23,7 @@ internal interface PersistentLongMap<V : Any> {
   /** Returns the number of entries. */
   fun size(): Int
 
-  fun builder(): PersistentLongMapBuilder<V> = CopyingPersistentLongMapBuilder(this)
+  fun builder(): PersistentLongMapBuilder<V>
 
   /** Calls [action] for each entry in ascending key order. */
   fun forEachEntry(action: (Long, V) -> Unit)
@@ -67,42 +67,6 @@ internal interface PersistentLongMapBuilder<V : Any> {
   fun remove(key: Long)
 
   fun build(): PersistentLongMap<V>
-}
-
-private class CopyingPersistentLongMapBuilder<V : Any>(
-  private var map: PersistentLongMap<V>,
-) : PersistentLongMapBuilder<V> {
-  private var active: Boolean = true
-
-  override fun get(key: Long): V? {
-    checkActive()
-    return map[key]
-  }
-
-  override fun getUnchecked(key: Long): V? {
-    checkActive()
-    return map.getUnchecked(key)
-  }
-
-  override fun put(key: Long, value: V) {
-    checkActive()
-    map = map.put(key, value)
-  }
-
-  override fun remove(key: Long) {
-    checkActive()
-    map = map.remove(key)
-  }
-
-  override fun build(): PersistentLongMap<V> {
-    checkActive()
-    active = false
-    return map
-  }
-
-  private fun checkActive() {
-    check(active) { "PersistentLongMapBuilder has already been built" }
-  }
 }
 
 /** Available implementations of [PersistentLongMap]. */
