@@ -191,7 +191,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
   }
 
   private static @NotNull String tryEscapeKeyOrValue(@NotNull String keyOrValue) {
-    if(keyOrValue.contains(";") || keyOrValue.contains("=") || keyOrValue.contains("\"")) {
+    if(keyOrValue.contains(";") || keyOrValue.contains("=") || keyOrValue.contains("\"") || keyOrValue.startsWith(" ") || keyOrValue.endsWith(" ")) {
       return StringUtil.wrapWithDoubleQuote(StringUtil.escapeChars(keyOrValue,  '\\', '"'));
     }
     else return keyOrValue;

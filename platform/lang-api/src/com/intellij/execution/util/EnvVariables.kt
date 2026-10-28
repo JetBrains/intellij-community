@@ -16,7 +16,9 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
      * - a sequence of characters excluding `"`, `;`, '\n' and `=`,
      * - or a sequence of any characters (including `;` and `=`) inside double quotes `""`.
      *
-     * For the latter case, escape sequences are allowed: character `\` might precede other characters, so that they lose their meta meaning
+     * For the unquoted case, whitespace is trimmed from the start and the end of the string.
+     *
+     * For the quoted case, escape sequences are allowed: character `\` might precede other characters, so that they lose their meta meaning
      * and just become characters included into the `key` or `value`. Escape sequences supported:
      * - `\\` that gets converted into `\` character,
      * - `\"` that gets converted into `"` character.
@@ -40,14 +42,16 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
 
       var index = 0
       while (index < content.length) {
-        fun readItem(endOnEqualSign: Boolean): String {
+        fun readItem(endOnEqualSign: Boolean, trimUnquotedWhiteSpace: Boolean): String {
           if (index >= content.length) {
             return ""
           }
           val buffer = StringBuilder()
+          var isQuoted = false
 
           val firstCharacter = content[index]
           if (firstCharacter == '"') {
+            isQuoted = true
             while (index + 1 < content.length) {
               index += 1
               var c = content[index]
@@ -97,11 +101,11 @@ data class EnvVariables(val envs: Map<String, String> = emptyMap(), val envFiles
             }
           }
 
-          return buffer.toString()
+          return buffer.toString().let { if (!isQuoted && trimUnquotedWhiteSpace) it.trim() else it }
         }
 
-        fun readKey() = readItem(true)
-        fun readValue() = readItem(false)
+        fun readKey() = readItem(true, true)
+        fun readValue() = readItem(false, true)
 
         val key = readKey()
         if (index >= content.length) {

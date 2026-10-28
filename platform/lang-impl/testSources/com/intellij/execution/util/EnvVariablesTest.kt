@@ -42,6 +42,23 @@ abstract class EnvVariablesTest {
     assertEnvVarTableRoundtrip(data)
   }
 
+  @Test // IJPL-225167: Leading spaces are added to environment variables after pasting in Run Configuration (2025.3 / 2025.3.1)
+  fun keyWithSpaceRoundtrip() {
+    val envStr = "ENV_VAR_A=  VALUE_A  ;\n  ENV_VAR_B=VALUE_B;\n\"   ENV_VAR_C\"=VALUE_C;\n     ENV_  VAR_D=\"  VALUE_D;  \""
+    assertEnvVarTableRoundtrip(envString = envStr)
+  }
+
+  @Test // IJPL-225167: Leading spaces are added to environment variables after pasting in Run Configuration (2025.3 / 2025.3.1)
+  fun keyWithSpaceParsing() {
+    val envStr = "ENV_VAR_A=  VALUE_A  ;\n  ENV_VAR_B=VALUE_B;\n\"   ENV_VAR_C\"=VALUE_C;\n     ENV_  VAR_D=\"  VALUE_D;  \""
+    val map: Map<String, String> = parseEnvsFromText(envStr)
+    Assert.assertEquals(4, map.size.toLong())
+    Assert.assertEquals("VALUE_A", map["ENV_VAR_A"])
+    Assert.assertEquals("VALUE_B", map["ENV_VAR_B"])
+    Assert.assertEquals("VALUE_C", map["   ENV_VAR_C"])
+    Assert.assertEquals("  VALUE_D;  ", map["ENV_  VAR_D"])
+  }
+
   @Test
   fun escapingTests() {
     var map: Map<String, String> = parseEnvsFromText("key=\"value\"blah;")
@@ -92,12 +109,17 @@ abstract class EnvVariablesTest {
     Assert.assertEquals(3, parseEnvsFromText("t1=val1\nt2=val2\nt3=val3").size.toLong())
   }
 
-  private fun assertEnvVarTableRoundtrip(data: MutableMap<String, String>) {
+  private fun assertEnvVarTableRoundtrip(data: Map<String, String>) {
     val stringification = EnvironmentVariablesTextFieldWithBrowseButton.stringifyEnvironment(
       EnvironmentVariablesData.create(data, false, null)
     )
     val parsed: Map<String, String> = parseEnvsFromText(stringification)
     Assert.assertEquals(data, parsed)
+  }
+
+  private fun assertEnvVarTableRoundtrip(@Suppress("SameParameterValue") envString: String) {
+    val data: Map<String, String> = parseEnvsFromText(envString)
+    assertEnvVarTableRoundtrip(data)
   }
 }
 
