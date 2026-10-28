@@ -75,6 +75,7 @@ import javax.swing.JSeparator
 import javax.swing.JWindow
 import javax.swing.SwingUtilities
 import javax.swing.text.html.HTMLEditorKit
+import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEventDispatcher {
@@ -133,14 +134,12 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
     else {
       trackFrameInteractiveWaiting(loadingState, coroutineScope)
       val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
+      reportFrameInteractiveOnLoadingDone(loadingState, coroutineScope, startUpContextElementToPass)
       if (hasSplash()) {
         loadingState.done.invokeOnCompletion {
           coroutineScope.launch(RawSwingDispatcher + startUpContextElementToPass + CoroutineName("hide splash")) {
             span("hide splash") {
               hideSplash()
-            }
-            withContext(Dispatchers.IO) {
-              FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
             }
           }
         }
@@ -148,11 +147,22 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
       else {
         hideSplash()
         loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
-          FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
           loadingIndicator = null
           applyActivationState()
         }
         applyActivationState()
+      }
+    }
+  }
+
+  /**
+   * Reports the frame as interactive as soon as [loadingState] ends: the glass pane passes the input from that moment,
+   * before the EDT removes the loading layer or the splash.
+   */
+  private fun reportFrameInteractiveOnLoadingDone(loadingState: FrameLoadingState, coroutineScope: CoroutineScope, startUpContextElement: CoroutineContext) {
+    loadingState.done.invokeOnCompletion {
+      coroutineScope.launch(Dispatchers.IO + startUpContextElement + CoroutineName("frame interactive reporting")) {
+        FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
       }
     }
   }
