@@ -269,11 +269,21 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val oldBundledPluginsDir = newTempDir("oldBundled")
     plugin("my-plugin") { dependsIntellijModulesLang(); version = "1.1" }.buildMainJar(oldBundledPluginsDir.resolve("my-plugin-bundled.jar"))
     plugin("my-plugin") { dependsIntellijModulesLang(); version = "1.0" }.buildMainJar(oldPluginsDir.resolve("my-plugin.jar"))
+    plugin("my-plugin") {
+      dependsIntellijModulesLang()
+      version = "2.0"
+      untilBuild = "193.1"
+    }.buildMainJar(oldPluginsDir.resolve("my-plugin-incompatible.jar"))
 
     val newConfigDir = newTempDir("newConfig")
     val newPluginsDir = newConfigDir.resolve("plugins")
 
     options.bundledPluginPath = oldBundledPluginsDir
+    options.compatibleBuildNumber = BuildNumber.fromString("201.1")
+    ConfigImportHelper.testLastCompatiblePluginUpdatesFetcher = Function { pluginIds ->
+      assertThat(pluginIds).doesNotContain(PluginId.getId("my-plugin"))
+      null
+    }
     doImport(oldConfigDir, newConfigDir, options)
     assertThat(newPluginsDir).doesNotExist()
   }
