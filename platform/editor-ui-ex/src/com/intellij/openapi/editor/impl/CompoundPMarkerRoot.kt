@@ -1,21 +1,21 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
-import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
+import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.util.Processor
-import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.function.LongConsumer
+import java.util.function.Consumer
 
 /** Combines the exact-range and line-range highlighter roots in one marker root. */
 @ApiStatus.Internal
@@ -23,25 +23,41 @@ open class CompoundPMarkerRoot private constructor(
   val exactRangeRoot: PMarkerRoot,
   val linesInRangeRoot: PMarkerRoot,
 ) : PMarkerRoot {
+  override val resolutionCacheIdentity: Any = Any()
+
   override fun emptyRoot(): CompoundPMarkerRoot = empty()
+
+  override fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
+    exactRangeRoot.createHandle(marker, retainStrong)
+
+  override fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T> =
+    exactRangeRoot.createStrongHandle(marker)
+
+  override fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot {
+    return withRoots(exactRangeRoot.restoreEntries(entries.filter { exactRangeRoot.isValid(it.handle) }),
+                     linesInRangeRoot.restoreEntries(entries.filter { linesInRangeRoot.isValid(it.handle) }))
+  }
+
+  override fun containsMarker(handle: SnapshotMarkerReference<*>): Boolean =
+    exactRangeRoot.containsMarker(handle) || linesInRangeRoot.containsMarker(handle)
 
   override fun isEmpty(): Boolean = exactRangeRoot.isEmpty() && linesInRangeRoot.isEmpty()
 
-  override fun isValid(markerId: Long): Boolean = exactRangeRoot.isValid(markerId) || linesInRangeRoot.isValid(markerId)
+  override fun isValid(handle: SnapshotMarkerReference<*>): Boolean = exactRangeRoot.isValid(handle) || linesInRangeRoot.isValid(handle)
 
-  override fun resolve(markerId: Long): Long {
-    val exactResolution = exactRangeRoot.resolve(markerId)
+  override fun resolve(handle: SnapshotMarkerReference<*>): Long {
+    val exactResolution = exactRangeRoot.resolve(handle)
     if (!PMarkerResolution.isAbsent(exactResolution)) return exactResolution
 
-    return linesInRangeRoot.resolve(markerId)
+    return linesInRangeRoot.resolve(handle)
   }
 
-  override fun invalidationReason(markerId: Long): String? {
-    return if (PMarkerResolution.isAbsent(exactRangeRoot.resolve(markerId))) {
-      linesInRangeRoot.invalidationReason(markerId)
+  override fun invalidationReason(handle: SnapshotMarkerReference<*>): String? {
+    return if (PMarkerResolution.isAbsent(exactRangeRoot.resolve(handle))) {
+      linesInRangeRoot.invalidationReason(handle)
     }
     else {
-      exactRangeRoot.invalidationReason(markerId)
+      exactRangeRoot.invalidationReason(handle)
     }
   }
 
@@ -49,8 +65,8 @@ open class CompoundPMarkerRoot private constructor(
     patch: DocumentPatch,
     beforeText: DocumentText,
     afterText: DocumentText,
-    invalidatedMarkerConsumer: LongConsumer,
-    affectedMarkerConsumer: LongConsumer,
+    invalidatedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>>,
+    affectedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>>,
   ): PMarkerRoot {
     return withRoots(
       exactRangeRoot.applyPatch(patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer),
@@ -59,27 +75,26 @@ open class CompoundPMarkerRoot private constructor(
   }
 
   override fun insert(
-    markerId: Long,
+    handle: SnapshotMarkerReference<*>,
     startOffset: Int,
     endOffset: Int,
     spec: Byte,
     flavorFlags: Byte,
-    markerReference: SnapshotMarkerReference?,
     measure: Int,
     policy: MarkerPolicy,
   ): PMarkerRoot {
-    val highlighter = markerReference?.get() as? SnapshotRangeHighlighterImpl
+    val highlighter = handle.get() as? SnapshotRangeHighlighterImpl
     require(highlighter != null) { "A compound marker root requires a snapshot highlighter" }
-    return if (highlighter.targetAreaForStorage() == HighlighterTargetArea.EXACT_RANGE) {
+    return if (highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE) {
       withRoots(
-        exactRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy),
+        exactRangeRoot.insert(handle, startOffset, endOffset, spec, flavorFlags, measure, policy),
         linesInRangeRoot,
       )
     }
     else {
       withRoots(
         exactRangeRoot,
-        linesInRangeRoot.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, measure, policy),
+        linesInRangeRoot.insert(handle, startOffset, endOffset, spec, flavorFlags, measure, policy),
       )
     }
   }
@@ -89,9 +104,9 @@ open class CompoundPMarkerRoot private constructor(
     val exactEntries = ArrayList<MarkerEntry>()
     val lineEntries = ArrayList<MarkerEntry>()
     for (entry in entries) {
-      val highlighter = entry.markerReference?.get() as? SnapshotRangeHighlighterImpl
+      val highlighter = entry.marker as? SnapshotRangeHighlighterImpl
       require(highlighter != null) { "A compound marker root requires a snapshot highlighter" }
-      if (highlighter.targetAreaForStorage() == HighlighterTargetArea.EXACT_RANGE) {
+      if (highlighter.getTargetArea() == HighlighterTargetArea.EXACT_RANGE) {
         exactEntries.add(entry)
       }
       else {
@@ -101,28 +116,28 @@ open class CompoundPMarkerRoot private constructor(
     return withRoots(exactRangeRoot.insertMany(exactEntries), linesInRangeRoot.insertMany(lineEntries))
   }
 
-  override fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot {
-    return updateMarker { it.updateFlavor(markerId, flavorFlags) }
+  override fun updateFlavor(handle: SnapshotMarkerReference<*>, flavorFlags: Byte): PMarkerRoot {
+    return updateMarker { it.updateFlavor(handle, flavorFlags) }
   }
 
-  override fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot {
-    return updateMarker { it.updateSpec(markerId, spec) }
+  override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot {
+    return updateMarker { it.updateSpec(handle, spec) }
   }
 
-  override fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot {
-    return updateMarker { it.updateMeasure(markerId, measure) }
+  override fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot {
+    return updateMarker { it.updateMeasure(handle, measure) }
   }
 
-  override fun remove(markerId: Long): PMarkerRoot {
-    return updateMarker { it.remove(markerId) }
+  override fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot {
+    return updateMarker { it.remove(handle) }
   }
 
-  override fun removeMany(markerIds: LongList): PMarkerRoot {
-    return withRoots(exactRangeRoot.removeMany(markerIds), linesInRangeRoot.removeMany(markerIds))
+  override fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
+    return withRoots(exactRangeRoot.removeMany(handles), linesInRangeRoot.removeMany(handles))
   }
 
-  override fun purgeMany(markerIds: LongList): PMarkerRoot {
-    return withRoots(exactRangeRoot.purgeMany(markerIds), linesInRangeRoot.purgeMany(markerIds))
+  override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
+    return withRoots(exactRangeRoot.purgeMany(handles), linesInRangeRoot.purgeMany(handles))
   }
 
   override fun mergeValidMarkersFrom(other: PMarkerRoot): PMarkerRoot {
@@ -155,7 +170,8 @@ open class CompoundPMarkerRoot private constructor(
   }
 
   override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
-    throw AssertionError("Full traversal is not supported by CompoundPMarkerRoot")
+    return exactRangeRoot.processAllRangeMarkers(processor) &&
+       linesInRangeRoot.processAllRangeMarkers(processor)
   }
 
   @TestOnly
@@ -203,7 +219,7 @@ open class CompoundPMarkerRoot private constructor(
   }
 
   companion object {
-    private object EMPTY: CompoundPMarkerRoot(PMarkerRootImpl.empty(), PMarkerRootImpl.empty()) {
+    private object EMPTY : CompoundPMarkerRoot(PMarkerRootImpl.empty(), PMarkerRootImpl.empty()) {
       override fun toString(): String = "EMPTY"
     }
 
@@ -211,7 +227,7 @@ open class CompoundPMarkerRoot private constructor(
 
     private fun compareEntries(first: MarkerEntry, second: MarkerEntry): Int {
       val byStartOffset = first.nodeStart.compareTo(second.nodeStart)
-      return if (byStartOffset != 0) byStartOffset else first.markerId.compareTo(second.markerId)
+      return if (byStartOffset != 0) byStartOffset else first.handle.compareTo(second.handle)
     }
   }
 }

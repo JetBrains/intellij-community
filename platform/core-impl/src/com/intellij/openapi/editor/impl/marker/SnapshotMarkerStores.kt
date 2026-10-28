@@ -19,17 +19,17 @@ import org.jetbrains.annotations.TestOnly
  */
 @ApiStatus.Internal
 class SnapshotMarkerStores {
-  private val stores: MutableList<SnapshotMarkerRootStore> = ContainerUtil.createEmptyCOWList()
+  private val stores: MutableList<SnapshotMarkerRootStore<*>> = ContainerUtil.createEmptyCOWList()
   private var storeVersion: Long = 0
 
-  internal fun register(store: SnapshotMarkerRootStore) {
+  internal fun register(store: SnapshotMarkerRootStore<*>) {
     synchronized(this) {
       stores.add(store)
       storeVersion++
     }
   }
 
-  internal fun unregister(store: SnapshotMarkerRootStore) {
+  internal fun unregister(store: SnapshotMarkerRootStore<*>) {
     synchronized(this) {
       stores.remove(store)
       storeVersion++

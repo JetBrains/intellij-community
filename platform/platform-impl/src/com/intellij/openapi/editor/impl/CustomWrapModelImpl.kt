@@ -235,7 +235,7 @@ class CustomWrapModelImpl internal constructor(private val editor: EditorImpl) :
   }
 
   @TestOnly
-  fun rootStore(): SnapshotMarkerRootStore {
+  fun rootStore(): SnapshotMarkerRootStore<*> {
     return getOrCreateSnapshotStorage().rootStore
   }
 

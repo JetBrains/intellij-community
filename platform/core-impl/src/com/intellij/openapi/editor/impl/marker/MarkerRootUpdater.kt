@@ -1,7 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
+import com.intellij.openapi.editor.impl.DocumentImpl
 import org.jetbrains.annotations.ApiStatus
+import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -16,7 +18,14 @@ import java.util.concurrent.atomic.AtomicReference
  */
 @ApiStatus.Internal
 abstract class MarkerRootUpdater {
-  internal fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean = updateRootAtomically(null, update) != null
+  internal val weakReference: WeakReference<MarkerRootUpdater> = WeakReference(this)
+
+  /** Returns the current document, or `null` if it is unavailable. */
+  internal abstract val document: DocumentImpl?
+
+  internal abstract fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*>
+
+  fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean = updateRootAtomically(null, update) != null
 
   internal abstract fun currentRootReference(): AtomicReference<PMarkerRoot>
 

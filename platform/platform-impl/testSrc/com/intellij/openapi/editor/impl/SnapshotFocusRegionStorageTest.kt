@@ -4,8 +4,8 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.util.Processor
-import it.unimi.dsi.fastutil.longs.LongList
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.Test
@@ -58,30 +58,30 @@ internal class SnapshotFocusRegionStorageTest {
     private val collected: List<SnapshotFocusRegion> = listOf(storage.create(0, 1), storage.create(2, 3))
     val live = storage.create(4, 5)
     private val snapshot: DocumentSnapshot = storage.currentSnapshot()
-    val batches = ArrayList<List<Long>>()
+    val batches = ArrayList<List<SnapshotMarkerReference<*>>>()
     val references: List<Reference<*>>
 
     init {
       val reference = storage.rootStore.rootReference(snapshot)
       val root = reference.get()
       references = root.overlappingIterator(0, 6, 0).asSequence()
-        .filter { it.markerId != live.id }
-        .map { it.markerReference as Reference<*> }
+        .filter { it.handle !== live.markerHandle }
+        .map { it.handle as Reference<*> }
         .toList()
       references.forEach { it.clear() }
       reference.set(object : PMarkerRoot by root {
-        override fun purgeMany(markerIds: LongList): PMarkerRoot {
-          batches.add(markerIds.toLongArray().toList())
-          return root.purgeMany(markerIds)
+        override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
+          batches.add(handles.toList())
+          return root.purgeMany(handles)
         }
       })
     }
 
     fun assertPurged() {
       assertThat(batches).hasSize(1)
-      assertThat(batches.single()).containsExactlyInAnyOrderElementsOf(collected.map { it.id })
+      assertThat(batches.single()).containsExactlyInAnyOrderElementsOf(collected.map { it.markerHandle })
       for (region in collected) {
-        assertThat(storage.rootStore.containsMarkerId(snapshot, region.id)).isFalse()
+        assertThat(storage.rootStore.containsMarker(snapshot, region.markerHandle)).isFalse()
       }
       assertThat(live.isValid).isTrue()
     }

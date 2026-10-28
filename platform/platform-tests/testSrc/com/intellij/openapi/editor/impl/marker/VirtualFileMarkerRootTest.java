@@ -54,12 +54,10 @@ final class VirtualFileMarkerRootTest {
     var patch = DocumentPatch.simple(0, 0, "xx", 1, false);
     var afterText = beforeText.replace(patch.startOffset(), patch.endOffset(), patch.newFragment());
 
-    //noinspection KotlinInternalInJava
-    fileRoot.updateCurrentRoot$intellij_platform_core_impl(root ->
-      root.applyPatch(patch, beforeText, afterText, PMarkerRoot.EMPTY_LONG_CONSUMER, PMarkerRoot.EMPTY_LONG_CONSUMER)
+    fileRoot.updateCurrentRoot(root ->
+      root.applyPatch(patch, beforeText, afterText, PMarkerRoot.EMPTY_HANDLE_CONSUMER, PMarkerRoot.EMPTY_HANDLE_CONSUMER)
     );
 
-    //noinspection KotlinInternalInJava
     VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
 
     assertEquals(1, firstMarker.getStartOffset());
@@ -99,21 +97,20 @@ final class VirtualFileMarkerRootTest {
     DocumentImpl document = new DocumentImpl("abcdef", true);
     CountDownLatch updateStarted = new CountDownLatch(1);
     CountDownLatch finishUpdate = new CountDownLatch(1);
-    long markerId = 1L;
+    var marker = (SnapshotRangeMarkerImpl)SnapshotMarkerEngineImpl.INSTANCE.createRangeMarkerForVirtualFile(file, 0, -1, -1, -1, -1, false);
+    var handle = fileRoot.currentRootReference$intellij_platform_core_impl().get().createHandle(marker, false);
 
-    //noinspection KotlinInternalInJava
     FutureTask<Boolean> updateTask = new FutureTask<>(() ->
-      fileRoot.updateCurrentRoot$intellij_platform_core_impl(root -> {
+      fileRoot.updateCurrentRoot(root -> {
         updateStarted.countDown();
         await(finishUpdate);
-        return root.insert(markerId, 1, 2, MarkerSpec.create(false, false), (byte)0, null, 0, DefaultMarkerPolicy.INSTANCE);
+        return root.insert(handle, 1, 2, MarkerSpec.create(false, false), (byte)0, 0, DefaultMarkerPolicy.INSTANCE);
       })
     );
     new Thread(updateTask, "file marker root update").start();
     assertTrue(updateStarted.await(30, TimeUnit.SECONDS));
 
     FutureTask<Void> attachmentTask = new FutureTask<>(() -> {
-      //noinspection KotlinInternalInJava
       VirtualFileMarkerRoot.restoreRangeMarkersFromFile(document, file, 4);
       return null;
     });
@@ -130,7 +127,7 @@ final class VirtualFileMarkerRootTest {
 
     assertTrue(updateTask.get(10, TimeUnit.SECONDS));
     attachmentTask.get(10, TimeUnit.SECONDS);
-    assertTrue(document.getRangeMarkers().rootStore().containsMarkerId(document.getCore().snapshot(), markerId));
+    assertTrue(document.getRangeMarkers().rootStore().containsMarker(document.getCore().snapshot(), handle));
   }
 
   private static void waitUntilBlockedOrCompleted(Thread thread, Future<?> completion) {

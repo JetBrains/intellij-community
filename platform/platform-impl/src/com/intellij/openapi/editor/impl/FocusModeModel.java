@@ -218,7 +218,7 @@ public final class FocusModeModel implements Disposable {
   }
 
   @TestOnly
-  @NotNull SnapshotMarkerRootStore rootStore() {
+  @NotNull SnapshotMarkerRootStore<?> rootStore() {
     return getOrCreateSnapshotFocusRegionStorage().getRootStore();
   }
 

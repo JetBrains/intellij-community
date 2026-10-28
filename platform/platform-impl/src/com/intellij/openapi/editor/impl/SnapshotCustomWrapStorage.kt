@@ -1,53 +1,58 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.CustomWrap
+import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRangeScalarUtil
-import com.intellij.util.containers.ConcurrentLongObjectMap
-import it.unimi.dsi.fastutil.longs.LongList
+import java.util.concurrent.ConcurrentHashMap
 
 /** Stores the snapshot custom wraps for one editor. */
 internal class SnapshotCustomWrapStorage(
   private val model: CustomWrapModelImpl,
   val document: DocumentImpl,
 ) {
-  private val wrapsById: ConcurrentLongObjectMap<SnapshotCustomWrap> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
-  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::processInvalidatedWraps)
+  private val registeredWraps: MutableSet<SnapshotMarkerReference<*>> = ConcurrentHashMap.newKeySet()
+  val rootStore: SnapshotMarkerRootStore<SnapshotCustomWrap> = SnapshotMarkerRootStore.strong(
+    document, SnapshotCustomWrap::class.java, onMarkersInvalidated = ::processInvalidatedWraps,
+  )
 
   fun dispose() {
     rootStore.dispose(document.snapshotMarkerStores)
-    wrapsById.clear()
+    registeredWraps.clear()
   }
 
   fun create(offset: Int, indent: Int, priority: Int): SnapshotCustomWrap {
     val snapshot = currentSnapshot()
-    val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
     val spec = MarkerSpec.create(
       isGreedyToLeft = false,
       isGreedyToRight = false,
       isStickingToRight = false,
     )
-    val wrap = SnapshotCustomWrap(this, markerId, spec, TextRangeScalarUtil.toScalarRange(offset, offset), indent, priority)
-    check(wrapsById.putIfAbsent(markerId, wrap) == null) { "Custom wrap $markerId is already registered" }
-    val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(wrap, retainStrong = true)
-    rootStore.updateRoot(snapshot) { it.insert(markerId, offset, offset, spec, wrap.flavorFlags, markerReference, policy = wrap.policy) }
+    val wrap = SnapshotCustomWrap(this, spec, TextRangeScalarUtil.toScalarRange(offset, offset), indent, priority)
+    check(registeredWraps.add(wrap.markerHandle)) { "Custom wrap ${wrap.id} is already registered" }
+    rootStore.updateRoot(snapshot) {
+      it.insert(wrap.markerHandle,
+                offset,
+                offset,
+                spec,
+                wrap.flavorFlags,
+                policy = CustomWrapMarkerPolicy)
+    }
     return wrap
   }
 
   fun remove(wrap: SnapshotCustomWrap): Boolean {
-    if (wrap.storage !== this || wrapsById.get(wrap.id) !== wrap || !wrap.isValid) return false
+    if (wrap.storage !== this || wrap.markerHandle !in registeredWraps || !wrap.isValid) return false
     wrap.dispose()
     return true
   }
@@ -56,7 +61,7 @@ internal class SnapshotCustomWrapStorage(
     val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<CustomWrap>()
     root.processAllRangeMarkers { entry, _ ->
-      val wrap = entry.markerReference?.get()
+      val wrap = entry.marker
       if (wrap is SnapshotCustomWrap) result.add(wrap)
       true
     }
@@ -67,7 +72,7 @@ internal class SnapshotCustomWrapStorage(
     val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<CustomWrap>()
     root.processRangeMarkersOverlappingWith(startOffset, endOffset, 0) { entry ->
-      val wrap = entry.markerReference?.get()
+      val wrap = entry.marker
       if (wrap is SnapshotCustomWrap) result.add(wrap)
       true
     }
@@ -82,27 +87,27 @@ internal class SnapshotCustomWrapStorage(
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
 
   fun afterDisposed(wrap: SnapshotCustomWrap) {
-    if (wrapsById.remove(wrap.id, wrap)) model.notifyRemoved(wrap)
+    if (registeredWraps.remove(wrap.markerHandle)) model.notifyRemoved(wrap)
   }
 
-  private fun processInvalidatedWraps(invalidatedMarkerIds: LongList) {
-    val size = invalidatedMarkerIds.size
+  private fun processInvalidatedWraps(invalidatedHandles: List<SnapshotMarkerReference<SnapshotCustomWrap>>) {
+    val size = invalidatedHandles.size
     for (i in 0 until size) {
-      val markerId = invalidatedMarkerIds.getLong(i)
-      val wrap = wrapsById.get(markerId) ?: continue
-      if (wrapsById.remove(markerId, wrap)) model.notifyRemoved(wrap)
+      val handle = invalidatedHandles[i]
+      if (registeredWraps.remove(handle)) model.notifyRemoved(handle.get())
     }
   }
 }
 
 internal class SnapshotCustomWrap(
   internal val storage: SnapshotCustomWrapStorage,
-  markerId: Long,
   spec: Byte,
   initialRange: Long,
   override val indent: Int,
   override val priority: Int,
-) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange, CustomWrapMarkerPolicy), CustomWrap {
+) : SnapshotRangeMarkerImpl(
+  storage.document, storage.rootStore, spec, initialRange,
+), CustomWrap {
   override val offset: Int
     get() = startOffset
 
@@ -115,10 +120,10 @@ internal class SnapshotCustomWrap(
 
 private object CustomWrapMarkerPolicy : MarkerPolicy {
   override fun transform(
-      entry: PMarkerRoot.MarkerEntry,
-      patch: DocumentPatch,
-      beforeText: DocumentText,
-      afterText: DocumentText,
+    entry: PMarkerRoot.MarkerEntry,
+    patch: DocumentPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
     return if (transformed.errorReason != null) {

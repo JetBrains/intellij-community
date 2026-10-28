@@ -1,11 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.util.Processor
-import it.unimi.dsi.fastutil.longs.LongList
-import java.util.function.LongConsumer
+import java.util.function.Consumer
 
 /**
  * Immutable persistent marker-state root.
@@ -18,7 +17,22 @@ import java.util.function.LongConsumer
  * with the receiver.
  */
 interface PMarkerRoot {
-  /** Returns an empty root with the same implementation and configuration as this root. */
+  /** Creates a handle that retains [marker] when [retainStrong] is true. */
+  fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?>
+
+  /** Creates a handle that retains [marker]. */
+  fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T>
+
+  /** Identifies roots with the same marker offsets and validity. This token must not retain a root. */
+  val resolutionCacheIdentity: Any
+
+  /** Advances cached offsets across an edit, or requests a full resolution. */
+  fun advanceResolution(previousIdentity: Any, resolution: Long): Long = PMarkerResolution.UNRESOLVED
+
+  /** Replaces the offsets of existing valid markers and discards stale cached offsets. */
+  fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot
+
+  /** Returns an empty root with the same implementation and handle family as this root. */
   fun emptyRoot(): PMarkerRoot
 
   /**
@@ -27,18 +41,21 @@ interface PMarkerRoot {
    */
   fun isEmpty(): Boolean
 
-  /** Returns whether [markerId] is valid in this root without resolving its offsets. */
-  fun isValid(markerId: Long): Boolean
+  /** Returns whether this root retains a valid, invalid, or removed state for [handle]. */
+  fun containsMarker(handle: SnapshotMarkerReference<*>): Boolean
+
+  /** Returns whether [handle] is valid in this root without resolving its offsets. */
+  fun isValid(handle: SnapshotMarkerReference<*>): Boolean
 
   /**
-   * Resolves [markerId] in this root.
+   * Resolves [handle] in this root.
    *
    * @return offsets and state packed by [PMarkerResolution], or [PMarkerResolution.ABSENT] when the marker is absent or removed
    */
-  fun resolve(markerId: Long): Long
+  fun resolve(handle: SnapshotMarkerReference<*>): Long
 
   /** Returns the invalidation reason, or `null` when the marker is valid or absent. */
-  fun invalidationReason(markerId: Long): String?
+  fun invalidationReason(handle: SnapshotMarkerReference<*>): String?
 
   /**
    * Derives the marker root for the document state after [patch].
@@ -53,39 +70,37 @@ interface PMarkerRoot {
    * 6. Returns a new persistent root.
    *
    * Already-invalid markers normally remain invalid.
-   * [invalidatedMarkerConsumer] receives each marker ID that changes from valid to invalid.
-   * [affectedMarkerConsumer] receives each marker ID that remains valid after its marker policy processes the patch.
+   * [invalidatedMarkerConsumer] receives each marker handle that changes from valid to invalid.
+   * [affectedMarkerConsumer] receives each marker handle that remains valid after its marker policy processes the patch.
    */
   fun applyPatch(
     patch: DocumentPatch,
     beforeText: DocumentText,
     afterText: DocumentText,
-    invalidatedMarkerConsumer: LongConsumer = EMPTY_LONG_CONSUMER,
-    affectedMarkerConsumer: LongConsumer = EMPTY_LONG_CONSUMER,
+    invalidatedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>> = EMPTY_HANDLE_CONSUMER,
+    affectedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>> = EMPTY_HANDLE_CONSUMER,
   ): PMarkerRoot
 
   /**
-   * Inserts a marker with a new ID. Restore existing markers at new offsets only after discarding their offset cache.
+   * Inserts a marker with a new handle. Use [restoreEntries] to change the offsets of existing markers.
    *
    * The following range precondition must hold:
    *
    *     0 <= startOffset <= endOffset <= snapshot text length
    *
-   * A duplicate [markerId] should cause [IllegalArgumentException] or a more
+   * A duplicate [handle] should cause [IllegalArgumentException] or a more
    * specific implementation-defined exception.
-   * [spec] a marker flags, see [MarkerSpec]
+   * [spec] controls marker flags, see [MarkerSpec].
    * [flavorFlags] is the value obtained from the marker's `RangeMarkerEx.getFlavorFlags()` method at insertion time.
-   * [markerReference] provides the marker handle with either weak or strong ownership. Standalone roots may omit it.
    * [measure] contributes to prefix aggregate queries.
    * [policy] defines how document edits transform the marker.
    */
   fun insert(
-    markerId: Long,
+    handle: SnapshotMarkerReference<*>,
     startOffset: Int,
     endOffset: Int,
     spec: Byte,
     flavorFlags: Byte,
-    markerReference: SnapshotMarkerReference? = null,
     measure: Int = 0,
     policy: MarkerPolicy = DefaultMarkerPolicy,
   ): PMarkerRoot
@@ -93,56 +108,56 @@ interface PMarkerRoot {
   /**
    * Inserts [entries] in list order and returns one new root.
    * The entry offsets are document offsets and must satisfy the preconditions of [insert].
-   * Duplicate IDs cause an exception. An empty list returns the receiver unchanged.
+   * Duplicate handles cause an exception. An empty list returns the receiver unchanged.
    */
   fun insertMany(entries: List<MarkerEntry>): PMarkerRoot
 
   /**
    * Replaces the flavor flags of a valid marker, preserving its range and specification.
    *
-   * If [markerId] is absent or invalid, this method returns the receiver unchanged.
+   * If [handle] is absent or invalid, this method returns the receiver unchanged.
    */
-  fun updateFlavor(markerId: Long, flavorFlags: Byte): PMarkerRoot
+  fun updateFlavor(handle: SnapshotMarkerReference<*>, flavorFlags: Byte): PMarkerRoot
 
   /**
    * Replaces the specification of a valid marker, preserving its range, flavor flags, handle reference, and policy.
    *
-   * If [markerId] is absent or invalid, this method returns the receiver unchanged.
+   * If [handle] is absent or invalid, this method returns the receiver unchanged.
    */
-  fun updateSpec(markerId: Long, spec: Byte): PMarkerRoot
+  fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerRoot
 
   /**
    * Replaces the measure of a valid marker, preserving its range and other properties.
    *
-   * If [markerId] is absent or invalid, this method returns the receiver unchanged.
+   * If [handle] is absent or invalid, this method returns the receiver unchanged.
    */
-  fun updateMeasure(markerId: Long, measure: Int): PMarkerRoot
+  fun updateMeasure(handle: SnapshotMarkerReference<*>, measure: Int): PMarkerRoot
 
   /**
    * Removes the marker's endpoint anchors and secondary-index entries, retaining an absent tombstone without offsets.
    *
-   * If [markerId] is absent, this method should return the receiver
+   * If [handle] is absent, this method should return the receiver
    * unchanged.
    *
    * This is branch-local removal, not global marker disposal.
    */
-  fun remove(markerId: Long): PMarkerRoot
+  fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot
 
   /**
-   * Removes [markerIds] and retains absent tombstones, as [remove] does.
-   * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
+   * Removes [handles] and retains absent tombstones, as [remove] does.
+   * Repeated or absent handles have no effect. An unchanged batch returns the receiver.
    */
-  fun removeMany(markerIds: LongList): PMarkerRoot
+  fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot
 
   /**
-   * Removes every trace of [markerIds], including their stored resolutions.
+   * Removes every trace of [handles], including their stored resolutions.
    *
    * This operation is intended for garbage-collected marker handles. Unlike [removeMany], it does not retain an absent
    * tombstone because no handle remains that could resolve against it.
    *
-   * Repeated or absent IDs have no effect. An unchanged batch returns the receiver.
+   * Repeated or absent handles have no effect. An unchanged batch returns the receiver.
    */
-  fun purgeMany(markerIds: LongList): PMarkerRoot
+  fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot
 
   /**
    * Keeps this root's marker states and adds valid markers that exist only in [other].
@@ -154,12 +169,12 @@ interface PMarkerRoot {
    *
    * The tree maintains these invariants, where `ancestorDelta` is the sum of pending shifts in ancestor nodes:
    *
-   *     nodeStart + ancestorDelta == resolve(markerId).startOffset
-   *     nodeEnd + ancestorDelta == resolve(markerId).endOffset
+   *     nodeStart + ancestorDelta == resolve(handle).startOffset
+   *     nodeEnd + ancestorDelta == resolve(handle).endOffset
    */
   data class MarkerEntry(
     /** Identifies the marker across roots and snapshots. */
-    val markerId: Long,
+    val handle: SnapshotMarkerReference<*>,
 
     /** Gives the inclusive start stored in the tree node. */
     val nodeStart: Int,
@@ -173,15 +188,16 @@ interface PMarkerRoot {
     /** Selects query categories that the root uses for subtree pruning. */
     val flavorFlags: Byte,
 
-    /** Holds the optional marker handle and its ownership mode. */
-    val markerReference: SnapshotMarkerReference? = null,
-
     /** Contributes this integer to prefix aggregates. Non-empty markers must use the identity measure, zero. */
     val measure: Int = 0,
 
     /** Defines how document edits transform the marker. */
     val policy: MarkerPolicy = DefaultMarkerPolicy,
   ) {
+    /** Returns the marker, or null after a weak marker is collected. */
+    val marker: SnapshotRangeMarkerImpl?
+      get() = handle.get()
+
     init {
       require(measure == 0 || nodeStart == nodeEnd) {
         "Only zero-length markers can have a non-zero measure"
@@ -208,12 +224,12 @@ interface PMarkerRoot {
 
   /**
    * Returns a lazy iterator over valid markers that non-strictly intersect `[startOffset, endOffset]` and match [tastePreference].
-   * The iterator orders entries by start offset and marker ID.
+   * The iterator orders entries by start offset and handle order.
    */
   fun overlappingIterator(startOffset: Int, endOffset: Int, tastePreference: Int): Iterator<MarkerEntry>
 
   /**
-   * Processes all valid markers by increasing actual start offset, then increasing marker ID.
+   * Processes all valid markers by increasing actual start offset, then increasing handle order.
    * The start offset includes pending shifts in this root.
    * The end offset, flavor flags, and tree shape do not affect the order.
    *
@@ -229,8 +245,12 @@ interface PMarkerRoot {
   }
 
   companion object {
-    /** Ignores invalidated marker IDs. */
+    /** Ignores invalidated marker handles. */
     @JvmField
-    val EMPTY_LONG_CONSUMER: LongConsumer = LongConsumer { }
+    val EMPTY_HANDLE_CONSUMER: Consumer<SnapshotMarkerReference<*>> = Consumer { }
+
+    /** Creates an empty marker root. */
+    @JvmStatic
+    fun empty(): PMarkerRoot = PMarkerRootImpl.empty()
   }
 }

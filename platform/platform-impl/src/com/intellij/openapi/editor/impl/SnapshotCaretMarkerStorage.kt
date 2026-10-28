@@ -2,34 +2,30 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRangeScalarUtil
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.longs.LongList
-import it.unimi.dsi.fastutil.longs.LongLists
 
 /** Stores caret position and selection markers for one editor. */
 internal class SnapshotCaretMarkerStorage(
   val document: DocumentImpl,
 ) {
-  private val markers: Long2ObjectOpenHashMap<SnapshotCaretMarker> = Long2ObjectOpenHashMap()
   private var rootBeforeChange: PMarkerRoot? = null
-  private var affectedMarkerIds: LongList = LongLists.EMPTY_LIST
-  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
-    document,
+  private var affectedHandles: List<SnapshotMarkerReference<SnapshotCaretMarker?>> = emptyList()
+  val rootStore: SnapshotMarkerRootStore<SnapshotCaretMarker?> = SnapshotMarkerRootStore.create(
+    document, SnapshotCaretMarker::class.java,
     onDocumentChanged = ::documentChanged,
-    onMarkersAffected = { affectedMarkerIds = it },
+    onMarkersAffected = { affectedHandles = it },
   )
 
   fun beforeDocumentChange() {
@@ -38,14 +34,15 @@ internal class SnapshotCaretMarkerStorage(
 
   private fun documentChanged(event: DocumentEvent) {
     val beforeRoot = rootBeforeChange
-    val affected = affectedMarkerIds
+    val affected = affectedHandles
     rootBeforeChange = null
-    affectedMarkerIds = LongLists.EMPTY_LIST
+    affectedHandles = emptyList()
     if (beforeRoot == null) return
     for (index in affected.indices) {
-      val markerId = affected.getLong(index)
-      val marker = markers.get(markerId) ?: continue
-      val oldRange = beforeRoot.resolve(markerId)
+      val handle = affected[index]
+      val marker = handle.get() ?: continue
+      if (marker.isDisposed()) continue
+      val oldRange = beforeRoot.resolve(handle)
       val oldStart = PMarkerResolution.startOffset(oldRange)
       if (oldStart <= event.offset + event.oldLength && PMarkerResolution.endOffset(oldRange) >= event.offset) {
         marker.documentChanged(event, oldStart)
@@ -55,12 +52,9 @@ internal class SnapshotCaretMarkerStorage(
 
   fun dispose() {
     rootStore.dispose(document.snapshotMarkerStores)
-    markers.clear()
     rootBeforeChange = null
-    affectedMarkerIds = LongLists.EMPTY_LIST
+    affectedHandles = emptyList()
   }
-
-  fun nextMarkerId(): Long = SnapshotMarkerEngineImpl.nextMarkerId()
 
   fun positionSpec(): Byte = POSITION_SPEC
 
@@ -70,15 +64,10 @@ internal class SnapshotCaretMarkerStorage(
 
   fun selectionPolicy(): MarkerPolicy = CaretSelectionMarkerPolicy
 
-  fun add(marker: SnapshotCaretMarker, startOffset: Int, endOffset: Int, spec: Byte) {
-    markers.put(marker.id, marker)
+  fun add(marker: SnapshotCaretMarker, startOffset: Int, endOffset: Int, spec: Byte, policy: MarkerPolicy) {
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(marker.id, startOffset, endOffset, spec, marker.flavorFlags, policy = marker.policy)
+      it.insert(marker.markerHandle, startOffset, endOffset, spec, marker.flavorFlags, policy = policy)
     }
-  }
-
-  fun remove(marker: SnapshotCaretMarker) {
-    markers.remove(marker.id)
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()
@@ -90,32 +79,28 @@ internal class SnapshotCaretMarkerStorage(
 }
 
 internal abstract class SnapshotCaretMarker(
-  protected val storage: SnapshotCaretMarkerStorage,
+  storage: SnapshotCaretMarkerStorage,
   startOffset: Int,
   endOffset: Int,
   spec: Byte,
   policy: MarkerPolicy,
 ) : SnapshotRangeMarkerImpl(
-  storage.document, storage.rootStore, storage.nextMarkerId(), spec,
-  TextRangeScalarUtil.toScalarRange(startOffset, endOffset), policy,
+  storage.document, storage.rootStore, spec,
+  TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
 ) {
   init {
-    storage.add(this, startOffset, endOffset, spec)
+    storage.add(this, startOffset, endOffset, spec, policy)
   }
 
   abstract fun documentChanged(event: DocumentEvent, oldOffset: Int)
-
-  override fun afterDispose() {
-    storage.remove(this)
-  }
 }
 
 private object CaretPositionMarkerPolicy : MarkerPolicy {
   override fun transform(
-      entry: PMarkerRoot.MarkerEntry,
-      patch: DocumentPatch,
-      beforeText: DocumentText,
-      afterText: DocumentText,
+    entry: PMarkerRoot.MarkerEntry,
+    patch: DocumentPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
     val updatedEntry = if (transformed.errorReason == null) {
@@ -140,10 +125,10 @@ private object CaretPositionMarkerPolicy : MarkerPolicy {
 
 private object CaretSelectionMarkerPolicy : MarkerPolicy {
   override fun transform(
-      entry: PMarkerRoot.MarkerEntry,
-      patch: DocumentPatch,
-      beforeText: DocumentText,
-      afterText: DocumentText,
+    entry: PMarkerRoot.MarkerEntry,
+    patch: DocumentPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
     return if (transformed.errorReason != null) {

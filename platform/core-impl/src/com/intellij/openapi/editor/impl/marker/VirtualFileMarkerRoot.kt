@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.vfs.VirtualFile
-import it.unimi.dsi.fastutil.longs.LongArrayList
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
@@ -27,6 +26,13 @@ class VirtualFileMarkerRoot private constructor(
 
   @Volatile
   private var documentReference: WeakReference<DocumentImpl>? = null
+
+  override val document: DocumentImpl?
+    get() = documentReference?.get()
+
+  @Synchronized
+  override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*> =
+    rootReference.get().createHandle(marker, retainStrong)
 
   override fun currentRootReference(): AtomicReference<PMarkerRoot> {
     val observedDocumentReference = documentReference ?: return rootReference
@@ -61,7 +67,7 @@ class VirtualFileMarkerRoot private constructor(
     var restoredEntries: ArrayList<PMarkerRoot.MarkerEntry>? = null
     val resolvedMarkers = ArrayList<SnapshotLazyRangeMarker>()
     sourceRoot.processAllRangeMarkers { entry, ancestorDelta ->
-      val marker = entry.markerReference?.get() as? SnapshotLazyRangeMarker ?: return@processAllRangeMarkers true
+      val marker = entry.marker as? SnapshotLazyRangeMarker ?: return@processAllRangeMarkers true
       val range = marker.initialRange(document, tabSize)
       if (range == PMarkerResolution.UNRESOLVED) return@processAllRangeMarkers true
       val startOffset = TextRangeScalarUtil.startOffset(range)
@@ -75,11 +81,9 @@ class VirtualFileMarkerRoot private constructor(
     }
 
     val restoredRoot = restoredEntries?.let { entries ->
-      val markerIds = LongArrayList(entries.size)
-      for (entry in entries) markerIds.add(entry.markerId)
-      (sourceRoot as PMarkerRootImpl).withoutOffsetCache().purgeMany(markerIds).insertMany(entries)
+      sourceRoot.restoreEntries(entries)
     } ?: sourceRoot
-    markerRoot(document).set(restoredRoot)
+    document.rangeMarkers.rootStore().restoreRoot(document.core.snapshot(), restoredRoot)
     attach(document)
     resolvedMarkers.forEach(SnapshotLazyRangeMarker::markInitialRangeResolved)
   }
@@ -105,7 +109,7 @@ class VirtualFileMarkerRoot private constructor(
     }
 
     private fun getOrCreate(file: VirtualFile, document: DocumentImpl?): VirtualFileMarkerRoot {
-      val initialRootReference = document?.let(::markerRoot) ?: AtomicReference<PMarkerRoot>(PMarkerRootImpl.empty())
+      val initialRootReference = document?.let(::markerRoot) ?: AtomicReference(PMarkerRoot.empty())
 
       while (true) {
         val oldReference = file.getUserData(FILE_MARKER_ROOT_REF_KEY)

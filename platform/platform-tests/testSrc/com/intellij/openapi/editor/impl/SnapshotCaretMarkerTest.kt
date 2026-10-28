@@ -74,10 +74,10 @@ class SnapshotCaretMarkerTest {
 
     val beforeMarker = beforeRoot.overlappingIterator(0, 5, 0).asSequence().single()
     val afterMarker = afterRoot.overlappingIterator(0, 5, 0).asSequence().single()
-    assertThat(afterMarker.markerId).isNotEqualTo(beforeMarker.markerId)
-    assertThat(PMarkerResolution.toTextRange(beforeRoot.resolve(beforeMarker.markerId))).isEqualTo(TextRange(2, 2))
-    assertThat(afterRoot.resolve(beforeMarker.markerId)).isEqualTo(PMarkerResolution.ABSENT)
-    assertThat(PMarkerResolution.toTextRange(afterRoot.resolve(afterMarker.markerId))).isEqualTo(TextRange(4, 4))
+    assertThat(afterMarker.handle).isNotEqualTo(beforeMarker.handle)
+    assertThat(PMarkerResolution.toTextRange(beforeRoot.resolve(beforeMarker.handle))).isEqualTo(TextRange(2, 2))
+    assertThat(afterRoot.resolve(beforeMarker.handle)).isEqualTo(PMarkerResolution.ABSENT)
+    assertThat(PMarkerResolution.toTextRange(afterRoot.resolve(afterMarker.handle))).isEqualTo(TextRange(4, 4))
   }
 
   @Test

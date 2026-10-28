@@ -1,16 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
-import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.CustomFoldRegionRendererEx
 import com.intellij.openapi.editor.CustomFoldRegionRenderer
 import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.FoldingGroup
 import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
@@ -18,6 +17,7 @@ import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.GutterIconRenderer
@@ -26,10 +26,9 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.Processor
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.containers.ConcurrentLongObjectMap
-import it.unimi.dsi.fastutil.longs.LongList
 import java.awt.Point
 import java.util.Arrays
+import java.util.concurrent.ConcurrentHashMap
 
 private const val FOLD_REGION_FLAVOR: Int = 1
 private const val CUSTOM_FOLD_REGION_FLAVOR: Int = 2
@@ -40,16 +39,16 @@ internal class SnapshotFoldingRegionStorage(
   internal val editor: EditorImpl,
   val document: DocumentImpl,
 ) : FoldingRegionStorage {
-  private val regionsById: ConcurrentLongObjectMap<SnapshotFoldRegion> = ConcurrentCollectionFactory.createConcurrentLongObjectMap()
+  private val registeredRegions: MutableSet<SnapshotMarkerReference<*>> = ConcurrentHashMap.newKeySet()
   private val foldRegionMarkerPolicy: MarkerPolicy = FoldRegionMarkerPolicy {
     model.setComplexDocumentChange(true)
   }
-  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(
-    document,
+  val rootStore: SnapshotMarkerRootStore<SnapshotFoldRegion> = SnapshotMarkerRootStore.strong(
+    document, SnapshotFoldRegion::class.java,
     onMarkersInvalidated = ::processInvalidatedRegions,
     onMarkersAffected = ::processAffectedRegions,
   )
-  private var sizesBeforeUpdate: Map<Long, Int> = emptyMap()
+  private var sizesBeforeUpdate: Map<SnapshotMarkerReference<*>, Int> = emptyMap()
 
   override fun createFoldRegion(
     startOffset: Int,
@@ -58,19 +57,16 @@ internal class SnapshotFoldingRegionStorage(
     group: FoldingGroup?,
     neverExpands: Boolean,
   ): FoldRegionMarker {
-    val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val region = SnapshotFoldRegion(
       storage = this,
-      markerId = markerId,
       spec = spec,
       initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
       placeholder = placeholder,
       group = group,
       neverExpands = neverExpands,
-      policy = foldRegionMarkerPolicy,
     )
-    register(region, startOffset, endOffset, spec)
+    register(region, startOffset, endOffset, spec, foldRegionMarkerPolicy)
     return region
   }
 
@@ -79,24 +75,23 @@ internal class SnapshotFoldingRegionStorage(
     endOffset: Int,
     renderer: CustomFoldRegionRenderer,
   ): CustomFoldRegionMarker {
-    val markerId = SnapshotMarkerEngineImpl.nextMarkerId()
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val region = SnapshotCustomFoldRegion(
       storage = this,
-      markerId = markerId,
       spec = spec,
       initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset),
       renderer = renderer,
     )
-    register(region, startOffset, endOffset, spec)
+    register(region, startOffset, endOffset, spec, CustomFoldRegionMarkerPolicy)
     return region
   }
 
   override fun removeRegion(region: FoldRegionMarker): Boolean {
-    if (region !is SnapshotFoldRegion || region.storage !== this || regionsById.get(region.id) !== region || !region.isValid) return false
+    if (region !is SnapshotFoldRegion || region.storage !== this) return false
+    if (region.markerHandle !in registeredRegions || !region.isValid) return false
     model.notifyBeforeFoldRegionDisposed(region)
     val removed = SnapshotMarkerEngineImpl.removeRangeMarker(region)
-    regionsById.remove(region.id, region)
+    registeredRegions.remove(region.markerHandle)
     return removed
   }
 
@@ -109,10 +104,10 @@ internal class SnapshotFoldingRegionStorage(
 
   override fun dispose() {
     rootStore.dispose(document.snapshotMarkerStores)
-    regionsById.clear()
+    registeredRegions.clear()
   }
 
-  override fun size(): Int = regionsById.size()
+  override fun size(): Int = registeredRegions.size
 
   /**
    * Processes all regions from one captured root.
@@ -142,7 +137,7 @@ internal class SnapshotFoldingRegionStorage(
         if (!processGroup()) return@processAllRangeMarkers false
         groupStart = start
       }
-      val region = entry.markerReference?.get() as? SnapshotFoldRegion
+      val region = entry.marker as? SnapshotFoldRegion
       if (region != null) {
         if (regionCount == regions.size) regions = regions.copyOf(regions.size * 2)
         regions[regionCount++] = region
@@ -187,7 +182,7 @@ internal class SnapshotFoldingRegionStorage(
     while (entry != null) {
       val regionStart = entry.nodeStart
       while (entry != null && entry.nodeStart == regionStart) {
-        val region = entry.markerReference?.get() as? SnapshotFoldRegion
+        val region = entry.marker as? SnapshotFoldRegion
         if (region != null) regions.add(region)
         entry = if (iterator.hasNext()) iterator.next() else null
       }
@@ -203,7 +198,7 @@ internal class SnapshotFoldingRegionStorage(
   override fun beforeDocumentChange(event: DocumentEvent) {
     val changeStart = event.offset
     val changeEnd = changeStart + event.oldLength
-    val sizes = if (event.oldLength > 0) HashMap<Long, Int>() else null
+    val sizes = if (event.oldLength > 0) HashMap<SnapshotMarkerReference<*>, Int>() else null
     processRegionsOverlappingWith(changeStart, changeEnd) { region ->
       region as SnapshotFoldRegion
       if (changeStart < region.endOffset && changeEnd > region.startOffset) {
@@ -211,7 +206,7 @@ internal class SnapshotFoldingRegionStorage(
       }
       if (sizes != null) {
         val size = if (region.isExpanded) 0 else region.endOffset - region.startOffset
-        sizes[region.id] = size
+        sizes[region.markerHandle] = size
       }
       true
     }
@@ -225,25 +220,25 @@ internal class SnapshotFoldingRegionStorage(
     startOffset: Int,
     endOffset: Int,
     spec: Byte,
+    policy: MarkerPolicy,
   ) {
-    check(regionsById.putIfAbsent(region.id, region) == null) { "Fold region ${region.id} is already registered" }
-    val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(region, retainStrong = true)
+    check(registeredRegions.add(region.markerHandle)) { "Fold region ${region.id} is already registered" }
     rootStore.updateRoot(currentSnapshot()) {
-      it.insert(region.id, startOffset, endOffset, spec, region.flavorFlags, markerReference, policy = region.policy)
+      it.insert(region.markerHandle, startOffset, endOffset, spec, region.flavorFlags, policy = policy)
     }
   }
 
-  private fun processAffectedRegions(markerIds: LongList) {
-    val regions = ArrayList<SnapshotFoldRegion>(markerIds.size)
+  private fun processAffectedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion>>) {
+    val regions = ArrayList<SnapshotFoldRegion>(handles.size)
     @Suppress("ReplaceManualRangeWithIndicesCalls")
-    for (index in 0 until markerIds.size) {
-      val region = regionsById.get(markerIds.getLong(index)) ?: continue
-      regions.add(region)
+    for (index in 0 until handles.size) {
+      val handle = handles[index]
+      if (handle in registeredRegions) regions.add(handle.get())
     }
     regions.sortWith(REGION_COMPARATOR)
     removeDuplicateRegions(regions)
     for (region in regions) {
-      if (region is SnapshotCustomFoldRegion && regionsById.get(region.id) === region) {
+      if (region is SnapshotCustomFoldRegion && region.markerHandle in registeredRegions) {
         model.addAffectedCustomRegions(region)
       }
     }
@@ -274,21 +269,21 @@ internal class SnapshotFoldingRegionStorage(
   }
 
   private fun invalidateDuplicate(region: SnapshotFoldRegion) {
-    rootStore.updateRoot(currentSnapshot()) { it.remove(region.id) }
-    if (regionsById.remove(region.id, region)) {
+    rootStore.updateRoot(currentSnapshot()) { it.remove(region.markerHandle) }
+    if (registeredRegions.remove(region.markerHandle)) {
       region.markDisposed()
       model.snapshotFoldRegionInvalidated(region)
     }
   }
 
-  private fun sizeBeforeUpdate(region: SnapshotFoldRegion): Int = sizesBeforeUpdate[region.id] ?: 0
+  private fun sizeBeforeUpdate(region: SnapshotFoldRegion): Int = sizesBeforeUpdate[region.markerHandle] ?: 0
 
-  private fun processInvalidatedRegions(markerIds: LongList) {
-    val size = markerIds.size
+  private fun processInvalidatedRegions(handles: List<SnapshotMarkerReference<SnapshotFoldRegion>>) {
+    val size = handles.size
     for (index in 0 until size) {
-      val markerId = markerIds.getLong(index)
-      val region = regionsById.get(markerId) ?: continue
-      if (regionsById.remove(markerId, region)) {
+      val handle = handles[index]
+      if (registeredRegions.remove(handle)) {
+        val region = handle.get()
         region.markDisposed()
         model.snapshotFoldRegionInvalidated(region)
       }
@@ -313,14 +308,14 @@ internal class SnapshotFoldingRegionStorage(
 
 internal open class SnapshotFoldRegion(
   internal val storage: SnapshotFoldingRegionStorage,
-  markerId: Long,
   spec: Byte,
   initialRange: Long,
   private var placeholder: String,
   private val group: FoldingGroup?,
   private val neverExpands: Boolean,
-  policy: MarkerPolicy,
-) : SnapshotRangeMarkerImpl(storage.document, storage.rootStore, markerId, spec, initialRange, policy), FoldRegionMarker {
+) : SnapshotRangeMarkerImpl(
+  storage.document, storage.rootStore, spec, initialRange,
+), FoldRegionMarker {
   protected val editorImpl: EditorImpl
     get() = storage.editor
 
@@ -361,7 +356,7 @@ internal open class SnapshotFoldRegion(
   }
 
   override fun isValidInRoot(root: PMarkerRoot): Boolean {
-    val resolution = root.resolve(id)
+    val resolution = root.resolve(markerHandle)
     return PMarkerResolution.isValid(resolution) && PMarkerResolution.startOffset(resolution) != PMarkerResolution.endOffset(resolution)
   }
 
@@ -442,11 +437,10 @@ internal open class SnapshotFoldRegion(
 
 internal class SnapshotCustomFoldRegion(
   storage: SnapshotFoldingRegionStorage,
-  markerId: Long,
   spec: Byte,
   initialRange: Long,
   private val renderer: CustomFoldRegionRenderer,
-) : SnapshotFoldRegion(storage, markerId, spec, initialRange, "", null, true, CustomFoldRegionMarkerPolicy), CustomFoldRegionMarker {
+) : SnapshotFoldRegion(storage, spec, initialRange, "", null, true), CustomFoldRegionMarker {
   private var width: Int = 0
   private var height: Int = 0
   private var gutterIconRenderer: GutterIconRenderer? = null
@@ -528,10 +522,10 @@ private class FoldRegionMarkerPolicy(
   private val onRangeAligned: () -> Unit,
 ) : MarkerPolicy {
   override fun transform(
-      entry: PMarkerRoot.MarkerEntry,
-      patch: DocumentPatch,
-      beforeText: DocumentText,
-      afterText: DocumentText,
+    entry: PMarkerRoot.MarkerEntry,
+    patch: DocumentPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
     return if (transformed.errorReason != null) {
@@ -564,10 +558,10 @@ private class FoldRegionMarkerPolicy(
 
 private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
   override fun transform(
-      entry: PMarkerRoot.MarkerEntry,
-      patch: DocumentPatch,
-      beforeText: DocumentText,
-      afterText: DocumentText,
+    entry: PMarkerRoot.MarkerEntry,
+    patch: DocumentPatch,
+    beforeText: DocumentText,
+    afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
     return if (transformed.errorReason != null) {

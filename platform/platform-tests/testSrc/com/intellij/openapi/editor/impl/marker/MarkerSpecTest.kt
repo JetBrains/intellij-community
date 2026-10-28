@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+@UsePMarkerImplementation
 internal class MarkerSpecTest {
   @Test
   fun `packs all boundary flag combinations`() {

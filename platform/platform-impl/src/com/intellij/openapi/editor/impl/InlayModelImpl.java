@@ -814,7 +814,7 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   }
 
   @TestOnly
-  @NotNull SnapshotMarkerRootStore rootStore() {
+  @NotNull SnapshotMarkerRootStore<?> rootStore() {
     return Objects.requireNonNull(mySnapshotMarkerStorage).getRootStore();
   }
 

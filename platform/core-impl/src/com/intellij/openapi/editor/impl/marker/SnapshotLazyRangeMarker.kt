@@ -12,12 +12,10 @@ import com.intellij.util.DocumentUtil
 /** A snapshot range marker created for a file before its document loads. */
 internal class SnapshotLazyRangeMarker(
   fileRoot: VirtualFileMarkerRoot,
-  markerId: Long,
   spec: Byte,
   initialRange: Long,
   @Volatile private var initialLineColumns: LineColumns?,
-  policy: MarkerPolicy = DefaultMarkerPolicy,
-) : SnapshotRangeMarkerImpl(fileRoot, markerId, spec, initialRange, policy) {
+) : SnapshotRangeMarkerImpl(fileRoot, spec, initialRange) {
 
   override fun getStartOffset(): Int {
     loadDocumentForInitialLineColumns()
@@ -36,7 +34,7 @@ internal class SnapshotLazyRangeMarker(
 
   override fun isValid(): Boolean {
     if (!super.isValid()) return false
-    val file = fileRoot!!.file
+    val file = (rootStorage as VirtualFileMarkerRoot).file
     if (FileDocumentManager.getInstance().getCachedDocument(file) != null) return true
     if (file.isDirectory || FileDocumentManagerBase.isBinaryWithoutDecompiler(file)) return false
     return !file.fileType.isBinary || !file.isTooLarge()

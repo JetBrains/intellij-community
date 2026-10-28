@@ -66,7 +66,7 @@ interface SnapshotMarkerEngine {
    * Returns `false` when [processor] stops processing.
    */
   fun processAllRangeMarkers(
-    rootStore: SnapshotMarkerRootStore,
+    rootStore: SnapshotMarkerRootStore<*>,
     snapshot: DocumentSnapshot,
     processor: Processor<in RangeMarkerEx>,
   ): Boolean
@@ -83,7 +83,7 @@ interface SnapshotMarkerEngine {
    * @return `false` when [processor] stops processing; otherwise, `true`
    */
   fun processRangeMarkersOverlappingWith(
-    rootStore: SnapshotMarkerRootStore,
+    rootStore: SnapshotMarkerRootStore<*>,
     snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,

@@ -4,16 +4,12 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.MarkupIterator
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.util.IncorrectOperationException
-import com.intellij.util.containers.ConcurrentLongObjectMap
-import com.intellij.util.containers.Java11Shim
-import it.unimi.dsi.fastutil.longs.LongList
 import org.jetbrains.annotations.TestOnly
-import java.util.Comparator
-import java.util.NoSuchElementException
 
 /**
  * Stores and updates the snapshot highlighters for one markup model.
@@ -26,7 +22,8 @@ internal class SnapshotHighlighterStorage(
     check(model.document === document)
   }
 
-  private val highlightersById: ConcurrentLongObjectMap<SnapshotRangeHighlighterImpl> = Java11Shim.createConcurrentLongObjectMap()
+  @Volatile
+  private var disposed: Boolean = false
 
   /** A positive value prevents structural changes during iteration on the current thread. */
   private val iteratorDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
@@ -34,28 +31,30 @@ internal class SnapshotHighlighterStorage(
   /** A positive value prevents nested changes during before-removal notifications on the current thread. */
   private val removalDepth: ThreadLocal<Int> = ThreadLocal.withInitial { 0 }
 
-  val rootStore: SnapshotMarkerRootStore = SnapshotMarkerRootStore(document, onMarkersInvalidated = ::highlightersChanged)
+  val rootStore: SnapshotMarkerRootStore<SnapshotRangeHighlighterImpl> = SnapshotMarkerRootStore.strong(
+    document, SnapshotRangeHighlighterImpl::class.java,
+    onMarkersInvalidated = ::highlightersChanged, emptyRoot = CompoundPMarkerRoot.empty(),
+  )
 
   fun dispose() {
+    disposed = true
     rootStore.dispose(document.snapshotMarkerStores)
-    highlightersById.clear()
+    model.invalidateHighlighterCache()
   }
 
-  fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: Byte) {
+  fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: Byte, policy: MarkerPolicy) {
     assertMayChange()
-    val markerId = highlighter.idForStorage()
-    val markerReference = SnapshotMarkerEngineImpl.createMarkerReference(highlighter, retainStrong = true)
+    val handle = highlighter.markerHandle
     val flavorFlags = highlighter.flavorFlags
-    val previous = highlightersById.putIfAbsent(markerId, highlighter)
-    check(previous == null) { "Highlighter $markerId is already registered" }
+    highlighter.register()
     var inserted = false
     try {
-      inserted = rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
-        it.insert(markerId, startOffset, endOffset, spec, flavorFlags, markerReference, policy = highlighter.policy)
+      inserted = rootStore.updateCurrentRoot {
+        it.insert(handle, startOffset, endOffset, spec, flavorFlags, policy = policy)
       }
     }
     finally {
-      if (!inserted) highlightersById.remove(markerId, highlighter)
+      if (!inserted) highlighter.unregister()
       model.invalidateHighlighterCache()
     }
   }
@@ -64,8 +63,8 @@ internal class SnapshotHighlighterStorage(
 
   fun updateFlavor(highlighter: SnapshotRangeHighlighterImpl) {
     val flavorFlags = highlighter.flavorFlags
-    rootStore.updateCurrentRoot(CompoundPMarkerRoot.empty()) {
-      it.updateFlavor(highlighter.idForStorage(), flavorFlags)
+    rootStore.updateCurrentRoot {
+      it.updateFlavor(highlighter.markerHandle, flavorFlags)
     }
   }
 
@@ -80,7 +79,7 @@ internal class SnapshotHighlighterStorage(
 
   fun beforeRemoved(highlighter: SnapshotRangeHighlighterImpl) {
     assertMayChange()
-    if (highlightersById.get(highlighter.idForStorage()) === highlighter) {
+    if (!disposed && highlighter.isRegistered) {
       removalDepth.set(removalDepth.get() + 1)
       var completed = false
       try {
@@ -96,8 +95,7 @@ internal class SnapshotHighlighterStorage(
   fun afterRemoved(highlighter: SnapshotRangeHighlighterImpl) {
     var removed = false
     try {
-      val markerId = highlighter.idForStorage()
-      if (highlightersById.remove(markerId, highlighter)) {
+      if (highlighter.unregister() && !disposed) {
         model.invalidateHighlighterCache()
         removed = true
       }
@@ -120,9 +118,12 @@ internal class SnapshotHighlighterStorage(
   }
 
   fun collectAll(): List<RangeHighlighterEx> {
+    val root = rootStore.root(currentSnapshot()) ?: return emptyList()
     val result = ArrayList<RangeHighlighterEx>()
-    for (highlighter in highlightersById.values()) {
-      if (highlighter.isValid) result.add(highlighter)
+    root.processAllRangeMarkers { entry, _ ->
+      val highlighter = entry.marker as? SnapshotRangeHighlighterImpl
+      if (highlighter != null && highlighter.isRegistered && highlighter.isValid) result.add(highlighter)
+      true
     }
     result.sortWith(SNAPSHOT_HIGHLIGHTER_COMPARATOR)
     return result
@@ -137,20 +138,22 @@ internal class SnapshotHighlighterStorage(
     return MarkupIterator.mergeIterators(exact, lines, RangeHighlighterEx.BY_AFFECTED_START_OFFSET)
   }
 
-  private fun highlightersChanged(invalidatedMarkerIds: LongList) {
-    val size = invalidatedMarkerIds.size
+  private fun highlightersChanged(invalidatedHandles: List<SnapshotMarkerReference<SnapshotRangeHighlighterImpl>>) {
+    val size = invalidatedHandles.size
     if (size == 0) return
     try {
       for (i in 0 until size) {
-        val markerId = invalidatedMarkerIds.getLong(i)
-        val highlighter = highlightersById.get(markerId) ?: continue
+        val handle = invalidatedHandles[i]
+        val highlighter = handle.get()
+        if (!highlighter.isRegistered) continue
         beforeRemoved(highlighter)
         afterRemoved(highlighter)
       }
     }
     finally {
       for (i in 0 until size) {
-        highlightersById.remove(invalidatedMarkerIds.getLong(i))
+        val highlighter = invalidatedHandles[i].get()
+        highlighter.unregister()
       }
       model.invalidateHighlighterCache()
     }
@@ -168,7 +171,11 @@ internal class SnapshotHighlighterStorage(
 
   @TestOnly
   fun containsHighlighterId(markerId: Long): Boolean {
-    return highlightersById.containsKey(markerId)
+    val root = rootStore.root(currentSnapshot()) ?: return false
+    return !root.processAllRangeMarkers { entry, _ ->
+      val highlighter = entry.marker as? SnapshotRangeHighlighterImpl
+      highlighter == null || !highlighter.isRegistered || highlighter.id != markerId
+    }
   }
 
   private fun markupIterator(
@@ -216,14 +223,14 @@ internal class SnapshotHighlighterStorage(
 
   private fun nextSnapshotHighlighter(entries: Iterator<PMarkerRoot.MarkerEntry>): SnapshotRangeHighlighterImpl? {
     while (entries.hasNext()) {
-      val marker = entries.next().markerReference?.get()
+      val marker = entries.next().marker
       if (marker is SnapshotRangeHighlighterImpl && marker.isValid) return marker
     }
     return null
   }
 
   companion object {
-    private val SNAPSHOT_HIGHLIGHTER_COMPARATOR: Comparator<RangeHighlighterEx> = Comparator<RangeHighlighterEx> { first, second ->
+    private val SNAPSHOT_HIGHLIGHTER_COMPARATOR: Comparator<RangeHighlighterEx> = Comparator { first, second ->
       val byStartOffset = first.affectedAreaStartOffset.compareTo(second.affectedAreaStartOffset)
       if (byStartOffset != 0) return@Comparator byStartOffset
       val byLayer = second.layer.compareTo(first.layer)

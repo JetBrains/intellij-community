@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.FoldingListener
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
+import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -176,39 +177,33 @@ class SnapshotFoldingModelTest {
 
   @Test
   fun `fold queries stop before resolving later regions`(): Unit = timeoutRunBlocking {
-    val (foundRegion, intersectsRegion, referenceReads) = withEditor("0123456789") { editor ->
+    val (foundRegion, intersectsRegion, resolutionCount) = withEditor("0123456789") { editor ->
       val firstRegion = addFoldRegion(editor, 0, 10)
       val laterRegion = addFoldRegion(editor, 3, 5) as SnapshotRangeMarkerImpl
       val rootStore = editor.foldingModel.rootStore()
       val snapshot = (editor.document as DocumentImpl).core.snapshot()
-      var referenceReads = 0
+      var resolutionCount = 0
       rootStore.updateRoot(snapshot) { root ->
-        val entries = root.overlappingIterator(0, editor.document.textLength, 0).asSequence().map { entry ->
-          if (entry.markerId == laterRegion.id) {
-            entry.copy(markerReference = object : SnapshotMarkerReference {
-              override fun get(): SnapshotRangeMarkerImpl {
-                referenceReads++
-                return laterRegion
-              }
-            })
+        object : PMarkerRoot by root {
+          override val resolutionCacheIdentity: Any = Any()
+
+          override fun resolve(handle: SnapshotMarkerReference<*>): Long {
+            if (handle === laterRegion.markerHandle) resolutionCount++
+            return root.resolve(handle)
           }
-          else {
-            entry
-          }
-        }.toList()
-        root.emptyRoot().insertMany(entries)
+        }
       }
 
       Triple(
         editor.foldingModel.getFoldRegion(0, 10) === firstRegion,
         editor.foldingModel.intersectsRegion(1, 10),
-        referenceReads,
+        resolutionCount,
       )
     }
 
     assertThat(foundRegion).isTrue()
     assertThat(intersectsRegion).isTrue()
-    assertThat(referenceReads).isZero()
+    assertThat(resolutionCount).isZero()
   }
 
   @Test

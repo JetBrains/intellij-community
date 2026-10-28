@@ -237,7 +237,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
   }
 
   @TestOnly
-  @NotNull SnapshotMarkerRootStore rootStore() {
+  @NotNull SnapshotMarkerRootStore<?> rootStore() {
     return Objects.requireNonNull(mySnapshotHighlighterStorage).getRootStore();
   }
 

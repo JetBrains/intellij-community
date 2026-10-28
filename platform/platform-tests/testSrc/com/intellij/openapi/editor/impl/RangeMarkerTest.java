@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarker;
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
+import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -1264,6 +1265,7 @@ public class RangeMarkerTest {
     Ref<RangeMarkerEx> markerRef = new Ref<>(createMarker("0123456789", 2, 5));
     long markerId = markerRef.get().getId();
     boolean snapshotMarker = markerRef.get() instanceof SnapshotMarker;
+    var handle = snapshotMarker ? ((SnapshotRangeMarkerImpl)markerRef.get()).getMarkerHandle() : null;
     deleteString(document, 1, 6);
     assertFalse(markerRef.get().isValid());
 
@@ -1282,7 +1284,7 @@ public class RangeMarkerTest {
     });
     if (snapshotMarker) {
       var documentImpl = (DocumentImpl)document;
-      assertFalse(documentImpl.getRangeMarkers().rootStore().containsMarkerId(documentImpl.getCore().snapshot(), markerId));
+      assertFalse(documentImpl.getRangeMarkers().rootStore().containsMarker(documentImpl.getCore().snapshot(), handle));
     }
   }
 

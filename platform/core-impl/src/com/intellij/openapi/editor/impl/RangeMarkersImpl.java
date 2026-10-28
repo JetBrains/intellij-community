@@ -31,7 +31,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
   private final @Nullable RangeMarkerTree<RangeMarkerEx> myRangeMarkerTree;
   private final @Nullable RangeMarkerTree<RangeMarkerEx> myPersistentRangeMarkerTree;
   private final @NotNull DocumentImpl myDocument;
-  private final @NotNull SnapshotMarkerRootStore mySnapshotMarkerRootStore;
+  private final @NotNull SnapshotMarkerRootStore<?> mySnapshotMarkerRootStore;
 
   RangeMarkersImpl(@NotNull DocumentEventDispatcher dispatcher,
                    @NotNull DocumentImpl document,
@@ -41,7 +41,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
       myRangeMarkerTree = null;
       myPersistentRangeMarkerTree = null;
       mySnapshotMarkerRootStore = hostDocument == null
-                                  ? new SnapshotMarkerRootStore(myDocument)
+                                  ? SnapshotMarkerRootStore.create(myDocument)
                                   : hostDocument.getRangeMarkers().mySnapshotMarkerRootStore;
     }
     else {
@@ -52,7 +52,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
   }
 
   @ApiStatus.Internal
-  public @NotNull SnapshotMarkerRootStore rootStore() {
+  public @NotNull SnapshotMarkerRootStore<?> rootStore() {
     return mySnapshotMarkerRootStore;
   }
 

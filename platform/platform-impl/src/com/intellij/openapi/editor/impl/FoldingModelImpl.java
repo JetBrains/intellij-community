@@ -724,7 +724,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   @TestOnly
-  @NotNull SnapshotMarkerRootStore rootStore() {
+  @NotNull SnapshotMarkerRootStore<?> rootStore() {
     return ((SnapshotFoldingRegionStorage)myRegionStorage).getRootStore();
   }
 

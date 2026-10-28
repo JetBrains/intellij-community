@@ -14,7 +14,19 @@ import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+@UsePMarkerImplementation
 internal class PMarkerResolutionTest {
+  private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
+    SnapshotMarkerEngineImpl.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy) as SnapshotRangeMarkerImpl
+  }
+  private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
+
+  private fun handle(label: Long): SnapshotMarkerReference<*> {
+    while (handles.size <= label) handles.add(PMarkerRootImpl.empty().createHandle(markerForHandles, false))
+    return handles[label.toInt()]
+  }
+
+
   @Test
   fun `states preserve empty and maximum offsets`() {
     for (range in listOf(TextRange.EMPTY_RANGE, TextRange(2, 4), TextRange(0, Int.MAX_VALUE), TextRange(Int.MAX_VALUE, Int.MAX_VALUE))) {
@@ -48,8 +60,8 @@ internal class PMarkerResolutionTest {
     assertNotEquals(PMarkerResolution.UNRESOLVED, PMarkerResolution.ABSENT)
     assertTrue(PMarkerResolution.isAbsent(PMarkerResolution.ABSENT))
     assertFalse(PMarkerResolution.isValid(PMarkerResolution.ABSENT))
-    assertEquals(PMarkerResolution.ABSENT, PMarkerRootImpl.empty().resolve(1))
-    assertFalse(PMarkerRootImpl.empty().isValid(1))
+    assertEquals(PMarkerResolution.ABSENT, PMarkerRootImpl.empty().resolve(handle(1)))
+    assertFalse(PMarkerRootImpl.empty().isValid(handle(1)))
   }
 
   @Test
@@ -63,16 +75,16 @@ internal class PMarkerResolutionTest {
   @Test
   fun `removed markers stay absent after a merge`() {
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-    val root = PMarkerRootImpl.empty().insert(1, 2, 4, spec, flavorFlags = 0)
-    val removed = root.remove(1)
+    val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0)
+    val removed = root.remove(handle(1))
 
-    assertTrue(root.isValid(1))
-    assertFalse(removed.isValid(1))
-    assertEquals(PMarkerResolution.ABSENT, removed.resolve(1))
-    assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(1))
-    assertSame(removed, removed.remove(1))
-    assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(1))
-    assertThrows(AssertionError::class.java) { removed.insert(1, 3, 6, spec, flavorFlags = 0) }
+    assertTrue(root.isValid(handle(1)))
+    assertFalse(removed.isValid(handle(1)))
+    assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle(1)))
+    assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(handle(1)))
+    assertSame(removed, removed.remove(handle(1)))
+    assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(handle(1)))
+    assertThrows(AssertionError::class.java) { removed.insert(handle(1), 3, 6, spec, flavorFlags = 0) }
   }
 
   @Test
@@ -83,22 +95,22 @@ internal class PMarkerResolutionTest {
     val policy = MarkerPolicy { entry, _, _, _ ->
       MarkerTransformResult(entry, reason)
     }
-    val root = PMarkerRootImpl.empty().insert(1, 2, 4, spec, flavorFlags = 0, policy = policy)
+    val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0, policy = policy)
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
     val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
     val edited = root.applyPatch(patch, before, after)
 
-    assertTrue(root.isValid(1))
-    assertFalse(edited.isValid(1))
-    assertFalse(edited.isValid(2))
-    assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), edited.resolve(1))
-    assertEquals(reason, edited.invalidationReason(1))
-    assertNull(root.invalidationReason(1))
-    assertNull(edited.invalidationReason(2))
-    val removed = edited.remove(1)
-    assertNull(removed.invalidationReason(1))
-    assertEquals(PMarkerResolution.ABSENT, removed.resolve(1))
-    assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), edited.resolve(1))
+    assertTrue(root.isValid(handle(1)))
+    assertFalse(edited.isValid(handle(1)))
+    assertFalse(edited.isValid(handle(2)))
+    assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), edited.resolve(handle(1)))
+    assertEquals(reason, edited.invalidationReason(handle(1)))
+    assertNull(root.invalidationReason(handle(1)))
+    assertNull(edited.invalidationReason(handle(2)))
+    val removed = edited.remove(handle(1))
+    assertNull(removed.invalidationReason(handle(1)))
+    assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle(1)))
+    assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), edited.resolve(handle(1)))
   }
 }
