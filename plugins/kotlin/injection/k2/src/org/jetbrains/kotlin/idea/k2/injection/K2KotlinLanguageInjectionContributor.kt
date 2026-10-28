@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -34,6 +35,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
+import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 import org.intellij.lang.annotations.Language as LanguageAnnotation
@@ -43,9 +45,16 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
         InjectorUtils.getActiveInjectionSupports().filterIsInstance<K2KotlinLanguageInjectionSupport>().firstOrNull()
     }
 
-    override fun KtCallExpression.hasCallableId(packageName: FqName, callableName: Name): Boolean = analyze(this) {
+    override fun KtCallExpression.callableId(): CallableId? = analyze(this) {
         val symbol = tryResolveCall()?.single?.function?.symbol
-        symbol?.callableId == CallableId(packageName, callableName)
+        symbol?.callableId
+    }
+
+    override fun KtExpression?.computeConstantExpression(): Any? {
+        val language = this?.language ?: return null
+        val expressionEvaluator =
+            LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(language)
+        return expressionEvaluator.computeConstantExpression(this, false)
     }
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()

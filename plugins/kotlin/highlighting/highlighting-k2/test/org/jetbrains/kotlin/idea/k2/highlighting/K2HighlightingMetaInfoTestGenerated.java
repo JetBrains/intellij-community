@@ -397,6 +397,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
                 runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/StringExpressionArgument.kt");
             }
 
+            @TestMetadata("StringExpressionArgumentWithConstTrimMargin.kt")
+            public void testStringExpressionArgumentWithConstTrimMargin() throws Exception {
+                runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/StringExpressionArgumentWithConstTrimMargin.kt");
+            }
+
             @TestMetadata("StringExpressionWithinParentheses.kt")
             public void testStringExpressionWithinParentheses() throws Exception {
                 runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/StringExpressionWithinParentheses.kt");
