@@ -109,6 +109,7 @@ single_version_override(
         "//:build/llvm-0.8.25-module-map-generator-long-paths.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/810
         "//:build/llvm-0.8.25-msvc-legacy-stdio-definitions.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/811
         "//:build/llvm-0.8.25-msvc-windows-subsystem.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/hermetic-llvm/issues/817
+        "//:build/llvm-0.8.25-msvc-setargv.patch",  # TODO: report to upstream https://github.com/hermeticbuild/hermetic-llvm/issues
     ],
 )
 
