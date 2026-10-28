@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.module;
 
 import com.intellij.icons.AllIcons;
@@ -8,9 +8,12 @@ import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectWizardStepFactory;
 import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.JavaPsiFacade;
 import org.jetbrains.annotations.ApiStatus;
@@ -80,7 +83,14 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   public static boolean isValidJavaSdk(@NotNull Module module) {
     if (ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES).isEmpty()) return true;
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(module.getProject());
-    return ReadAction.compute(() -> psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope())) != null;
+    return ReadAction.computeBlocking(() -> {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        for (VirtualFile root : OrderEnumerator.orderEntries(module).withoutModuleSourceEntries().withoutDepModules().classes().getRoots()) {
+          if (root.findFileByRelativePath("java/lang/Object.class") != null) return true;
+        }
+      }
+      return psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, module.getModuleWithLibrariesScope()) != null;
+    });
   }
 
   public static @Nls String getModuleName() {
