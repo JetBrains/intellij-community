@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
-import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
 internal class ShowAllLabelsAction: DumbAwareToggleAction() {
 
@@ -18,7 +17,6 @@ internal class ShowAllLabelsAction: DumbAwareToggleAction() {
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     service<ActivityViewApplicationSettings>().showAllLabels = state
-    e.getData(ActivityViewDataKeys.ACTIVITY_VIEW_MODEL)?.setAllLabelsShown(state)
   }
 }
 
