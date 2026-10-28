@@ -28,6 +28,16 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         runTest("../testData/evaluationExpression/castToInnerClass.kt");
     }
 
+    @TestMetadata("genericCastKeepsStarProjection.kt")
+    public void testGenericCastKeepsStarProjection() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastKeepsStarProjection.kt");
+    }
+
+    @TestMetadata("genericCastKeepsStarProjections.kt")
+    public void testGenericCastKeepsStarProjections() throws Exception {
+        runTest("../testData/evaluationExpression/genericCastKeepsStarProjections.kt");
+    }
+
     @TestMetadata("redundantCastOnCollectionElement.kt")
     public void testRedundantCastOnCollectionElement() throws Exception {
         runTest("../testData/evaluationExpression/redundantCastOnCollectionElement.kt");
