@@ -6,12 +6,16 @@
 //! is a binary of the system. So the client starts the system `nc` responsible for itself (see the `disclaim` module),
 //! connects it to the agent, and talks TLS through a loopback socket whose other end copies to and from `nc`. TLS and
 //! the pinned certificates stay end to end: `nc` carries only the encrypted bytes.
+//!
+//! The process remembers each address whose direct connect got the refusal, so each later connect to it goes through
+//! the relay at once. A run opens several connections, and each of them would fail a direct connect first.
 
+use std::collections::BTreeSet;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::net::{IpAddr, Ipv4Addr, Shutdown, SocketAddr, TcpListener, TcpStream};
 use std::path::Path;
 use std::process::{Child, Command, Stdio};
-use std::sync::{Arc, Mutex, mpsc};
+use std::sync::{Arc, Mutex, PoisonError, mpsc};
 use std::thread;
 use std::time::Duration;
 
@@ -19,6 +23,19 @@ use crate::channel::LinkError;
 
 /// The system `nc`.
 pub(crate) const NC: &str = "/usr/bin/nc";
+
+/// The addresses of this process whose direct connect got the refusal of the Local Network permission.
+static RELAYED: Mutex<BTreeSet<IpAddr>> = Mutex::new(BTreeSet::new());
+
+/// Remembers that a direct connect to `ip` got the refusal of the Local Network permission.
+pub(crate) fn remember(ip: IpAddr) {
+    RELAYED.lock().unwrap_or_else(PoisonError::into_inner).insert(ip);
+}
+
+/// Whether a direct connect to `ip` got the refusal of the Local Network permission in this process.
+pub(crate) fn is_remembered(ip: IpAddr) -> bool {
+    RELAYED.lock().unwrap_or_else(PoisonError::into_inner).contains(&ip)
+}
 
 /// Whether a failed connect is the refusal of the Local Network permission, which the relay can pass.
 pub(crate) fn is_local_network_refusal(error: &io::Error) -> bool {

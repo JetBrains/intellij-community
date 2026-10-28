@@ -232,15 +232,10 @@ impl Channel {
     /// the TCP connect and each read and write of the handshake, and stays the deadline of the socket afterwards.
     ///
     /// On macOS a connect that the Local Network permission refuses goes through the system `nc` instead; see
-    /// the `relay` module.
+    /// the `relay` module. The process keeps that decision for the address, so each later connect to it takes the
+    /// relay at once.
     pub fn connect(address: SocketAddr, tls: &ClientTls, deadline: Duration) -> Result<Self, LinkError> {
-        let socket = match TcpStream::connect_timeout(&address, deadline) {
-            Ok(socket) => socket,
-            Err(error) if relay::is_local_network_refusal(&error) => relay::connect(address, deadline).map_err(|relayed| {
-                LinkError::Unreachable(io::Error::new(relayed.kind(), format!("{error}; through {}: {relayed}", relay::NC)))
-            })?,
-            Err(error) => return Err(LinkError::Unreachable(error)),
-        };
+        let socket = socket_to(address, deadline)?;
         Self::connect_over(socket, tls, deadline)
     }
 
@@ -494,6 +489,33 @@ impl Closer {
 /// The provider of every TLS configuration of yonder.
 pub fn provider() -> CryptoProvider {
     rustls::crypto::ring::default_provider()
+}
+
+/// The TCP connection to `address`: a direct one, or the relay when a direct connect to it got the refusal of the
+/// Local Network permission, now or earlier in this process.
+fn socket_to(address: SocketAddr, deadline: Duration) -> Result<TcpStream, LinkError> {
+    let relayed = |direct: &dyn fmt::Display| {
+        relay::connect(address, deadline).map_err(|relayed| {
+            LinkError::Unreachable(io::Error::new(
+                relayed.kind(),
+                format!("{direct}; through {}: {relayed}", relay::NC),
+            ))
+        })
+    };
+    if relay::is_remembered(address.ip()) {
+        return relayed(&format!(
+            "an earlier direct connect to {} got the refusal of the Local Network permission",
+            address.ip()
+        ));
+    }
+    match TcpStream::connect_timeout(&address, deadline) {
+        Ok(socket) => Ok(socket),
+        Err(error) if relay::is_local_network_refusal(&error) => {
+            relay::remember(address.ip());
+            relayed(&error)
+        }
+        Err(error) => Err(LinkError::Unreachable(error)),
+    }
 }
 
 fn prepare(socket: &TcpStream, deadline: Duration) -> io::Result<()> {

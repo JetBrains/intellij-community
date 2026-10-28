@@ -345,3 +345,28 @@ fn a_relayed_connection_carries_the_handshake_and_the_frames() {
     );
     assert_eq!(served.join().expect("the agent thread"), Ok(client.fingerprint()));
 }
+
+/// A connect to an address whose direct connect got the refusal of the Local Network permission takes the relay at
+/// once. The address is `::1`, which the other tests do not use, because the process keeps the decision.
+#[cfg(target_os = "macos")]
+#[test]
+fn a_remembered_refusal_of_an_address_takes_the_relay_at_once() {
+    let client = Identity::generate().expect("the client identity");
+    let tls = ClientTls::new(client.fingerprint(), &client).expect("the client TLS");
+    let closed = TcpListener::bind("[::1]:0").expect("a port").local_addr().expect("the address");
+    let direct = Channel::connect(closed, &tls, DEADLINE).expect_err("nothing listens");
+    assert!(
+        matches!(&direct, LinkError::Unreachable(error) if error.kind() == io::ErrorKind::ConnectionRefused),
+        "{direct:?}"
+    );
+
+    relay::remember(closed.ip());
+    let relayed = Channel::connect(closed, &tls, DEADLINE).expect_err("nothing listens");
+    assert!(
+        relayed.to_string().starts_with(
+            "no connection: an earlier direct connect to ::1 got the refusal of the Local Network permission; through /usr/bin/nc: nc: "
+        ),
+        "{relayed}"
+    );
+    assert!(!relay::is_remembered("127.0.0.1".parse().expect("an address")));
+}

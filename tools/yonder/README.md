@@ -88,7 +88,8 @@ only, on the ring provider. Every read and every write has a deadline, so no cal
 
 On macOS, Local Network privacy refuses a connection with `EHOSTUNREACH` when the responsible app of the client has no
 permission. The client then connects through `/usr/bin/nc`, which it starts responsible for itself, so the connection
-works from any terminal app or IDE. TLS stays end to end. The `relay` and `disclaim` modules of `yonder-link` have the
+works from any terminal app or IDE. TLS stays end to end. The process remembers the address, so its later connections
+take the relay at once. The `relay` and `disclaim` modules of `yonder-link` have the
 details.
 
 One connection carries one request. A run lives on the agent, not on the connection: a client that lost its
