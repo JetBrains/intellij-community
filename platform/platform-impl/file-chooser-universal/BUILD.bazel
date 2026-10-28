@@ -111,6 +111,11 @@ jvm_library(
     ),
     module_name = "intellij.platform.ide.fileChooser.universal.tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+    ],
 )
 
 jvm_library(
@@ -132,6 +137,8 @@ jvm_library(
         "//platform/platform-impl/file-chooser-universal:ide-fileChooser-universal_test_lib",
         "//platform/ide-core:ide-core_test_lib",
         "//platform/platform-impl/concurrency:concurrency_test_lib",
+        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
     ],
     deps = [
         # do not sort,
