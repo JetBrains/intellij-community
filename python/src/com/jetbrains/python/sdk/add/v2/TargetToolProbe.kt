@@ -6,6 +6,7 @@ import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.pytools.backend.ToolCommandSpec
@@ -33,6 +34,10 @@ private val TOOL_PROBE_JSON = Json {
   classDiscriminator = "status"
 }
 
+/**
+ * Runs [TOOL_VERSION_PROBE_HELPER] on the target. When [workingDir] is not null, the helper runs in the target directory
+ * of [workingDir] and detects the environments that are already there. The probe copies no file of [workingDir].
+ */
 internal suspend fun TargetFileSystem.probeTargetTools(
   toolSpecs: List<ToolCommandSpec>,
   pythonPath: PathHolder.Target?,
@@ -44,9 +49,10 @@ internal suspend fun TargetFileSystem.probeTargetTools(
 
   val helper = PythonHelpersLocator.findPathInHelpers(TOOL_VERSION_PROBE_HELPER)
   val output = ExecService().execGetStdout(
-    getBinaryToExec(PathHolder.Target("/bin/sh")),
-    prepareArgs(helper, toolSpecs, pythonPath, workingDir),
-    ExecOptions(timeout = 2.minutes),
+    getBinaryToExec(PathHolder.Target("/bin/sh"), workingDir),
+    prepareArgs(helper, toolSpecs, pythonPath, detectEnvironments = workingDir != null),
+    // The empty upload list maps workingDir to the target and uploads none of its files.
+    ExecOptions(timeout = 2.minutes, uploadBeforeExecution = UploadConfig()),
   ).getOr { return it }
   return parseTargetProbeOutput(output, toolSpecs, pythonPath)
 }
@@ -91,19 +97,13 @@ private fun TargetFileSystem.prepareArgs(
   helper: Path,
   toolSpecs: List<ToolCommandSpec>,
   pythonPath: PathHolder.Target?,
-  workingDir: Path?,
-): Args {
-  val args = Args()
-    .addLocalFile(helper)
-    .addArgs(PYTHON_PATH_OPTION, pythonPath?.pathString.orEmpty())
-
-  if (workingDir != null) {
-    // Target file arguments are mapped through their parent. The "." keeps workingDir itself as the mapping root.
-    args.addArgs(DETECT_ENVIRONMENTS_OPTION).addLocalFile(workingDir.resolve("."))
-  }
-
-  return args.addArgs(encodeToolProbeArgs(toolSpecs))
-}
+  detectEnvironments: Boolean,
+): Args = Args()
+  .addLocalFile(helper)
+  .addArgs(PYTHON_PATH_OPTION, pythonPath?.pathString.orEmpty())
+  // The helper requires the option. "." is the process working directory, and an empty value turns the detection off.
+  .addArgs(DETECT_ENVIRONMENTS_OPTION, if (detectEnvironments) "." else "")
+  .addArgs(encodeToolProbeArgs(toolSpecs))
 
 private fun TargetFileSystem.encodeToolProbeArgs(
   toolSpecs: List<ToolCommandSpec>,
