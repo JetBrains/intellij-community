@@ -13,6 +13,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.getOrThrow
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Test
@@ -136,6 +137,19 @@ internal class ToolVersionProbeTest {
     )
 
     assertEquals(expectedPaths, actualPaths)
+  }
+
+  @Test
+  @Timeout(30)
+  @DisabledOnOs(OS.WINDOWS)
+  fun `environment detection reports absolute paths for a relative directory`(@TempDir workingDirectory: Path): Unit = timeoutRunBlocking {
+    createFakePython(workingDirectory.resolve("venv"), "Python 3.12.7", freeThreaded = false)
+
+    val output = runHelper(workingDirectory, "", ".")
+    val snapshot = parseTargetProbeOutput(output, emptyList(), null).getOrThrow()
+
+    assertThat(snapshot.environments.map { it.path.pathString })
+      .containsExactly(workingDirectory.toRealPath().resolve("venv/bin/python").toString())
   }
 
   private suspend fun runHelper(processWorkingDirectory: Path, pythonPath: String, detectEnvironmentsDirectory: String): String {
