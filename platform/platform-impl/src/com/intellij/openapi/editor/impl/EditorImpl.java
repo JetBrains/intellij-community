@@ -54,7 +54,6 @@ import com.intellij.openapi.editor.CustomWrapModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
-import com.intellij.openapi.editor.EditorCoreUtil;
 import com.intellij.openapi.editor.EditorDropHandler;
 import com.intellij.openapi.editor.EditorGutter;
 import com.intellij.openapi.editor.EditorKind;
@@ -314,11 +313,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   static final float MIN_FONT_SIZE = 4;
   private static final Logger LOG = Logger.getInstance(EditorImpl.class);
   static final Logger EVENT_LOG = Logger.getInstance("editor.input.events");
-  // IJPL-52267 diagnostics: traces the full lifecycle of myLastMousePressedLocation (set on press,
-  // cleared on release, read by EditorComponentImpl.uiDataSnapshot for EDITOR_VIRTUAL_SPACE) so we can
-  // observe, from real usage, exactly when/how the field is left stale (e.g. a press whose release is
-  // never delivered to the editor). Off by default; enable #editor.mouse.pressed.location:trace.
-  static final Logger MOUSE_PRESS_LOG = Logger.getInstance("editor.mouse.pressed.location");
   static final Object DND_COMMAND_GROUP = ObjectUtils.sentinel("DndCommand");
   private static final Object MOUSE_DRAGGED_COMMAND_GROUP = ObjectUtils.sentinel("MouseDraggedGroup");
   private static final Key<JComponent> PERMANENT_HEADER = Key.create("PERMANENT_HEADER");
@@ -510,10 +504,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private List<CaretState> myCaretStateBeforeLastPress;
   LogicalPosition myLastMousePressedLocation;
-  // IJPL-52267 diagnostics: correlate every touch of myLastMousePressedLocation. Incremented on each
-  // press; the timestamp lets uiDataSnapshot report how long a (possibly stale) value has been retained.
-  int myMousePressSeq;
-  long myMousePressTimestampNanos;
 
   private Point myLastMousePressedPoint;
   private boolean myLastPressedOnGutter;
@@ -910,11 +900,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void focusGained(@NotNull FocusEvent e) {
-      if (MOUSE_PRESS_LOG.isTraceEnabled() && myLastMousePressedLocation != null) {
-        MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] focusGained with stale pressedLoc=" + myLastMousePressedLocation +
-                              " virtualSpace=" + EditorCoreUtil.inVirtualSpace(EditorImpl.this, myLastMousePressedLocation) +
-                              " opposite=" + (e.getOppositeComponent() == null ? "null" : e.getOppositeComponent().getClass().getSimpleName()));
-      }
       caretMutator.setVisible(true);
       for (Caret caret : myCaretModel.getAllCarets()) {
         int caretLine = caret.getLogicalPosition().line;
@@ -934,16 +919,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void focusLost(@NotNull FocusEvent e) {
-      // IJPL-52267: if this fires while myLastMousePressedLocation is a non-null (virtual-space) value, the
-      // press's MOUSE_RELEASED was never delivered here — this is exactly the point where the proposed fix
-      // would clear the field. Logging it proves the stale value survives across focus loss without the fix.
-      if (MOUSE_PRESS_LOG.isTraceEnabled() && myLastMousePressedLocation != null) {
-        MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] focusLost with stale pressedLoc=" + myLastMousePressedLocation +
-                              " virtualSpace=" + EditorCoreUtil.inVirtualSpace(EditorImpl.this, myLastMousePressedLocation) +
-                              " caret=" + myCaretModel.getLogicalPosition() +
-                              " ageMs=" + (System.nanoTime() - myMousePressTimestampNanos) / 1_000_000 +
-                              " opposite=" + (e.getOppositeComponent() == null ? "null" : e.getOppositeComponent().getClass().getSimpleName()));
-      }
       updateFocus();
       myFocusKeepSelectionOnMousePress = false;
       mySelectionModel.reinitSettings();
@@ -3313,10 +3288,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
 
-      if (MOUSE_PRESS_LOG.isTraceEnabled()) {
-        MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] DRAG started, pressedLoc=" + myLastMousePressedLocation +
-                              " area=" + getMouseEventArea(e) + " source=" + e.getSource().getClass().getSimpleName());
-      }
       setFocusGained();
       if (mySuppressedByBreakpointsLastPressPosition != null) {
         getCaretModel().removeSecondaryCarets();
@@ -4697,10 +4668,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       boolean isLineNumbersAreaClicked = myMousePressArea == EditorMouseEventArea.LINE_NUMBERS_AREA;
       myMousePressArea = null;
-      if (MOUSE_PRESS_LOG.isTraceEnabled()) {
-        MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] CLEAR by mouseReleased, prev=" + myLastMousePressedLocation +
-                              " source=" + e.getSource().getClass().getSimpleName());
-      }
       myLastMousePressedLocation = null;
       Runnable processMouseReleased = () -> {
         runMouseReleasedCommand(e);
@@ -4733,10 +4700,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (EVENT_LOG.isDebugEnabled()) {
         EVENT_LOG.debug(e.toString());
       }
-      if (MOUSE_PRESS_LOG.isTraceEnabled() && myLastMousePressedLocation != null) {
-        MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] mouseExited while pressed, pressedLoc=" + myLastMousePressedLocation +
-                              " source=" + e.getSource().getClass().getSimpleName());
-      }
       runMouseExitedCommand(e);
       myGutterComponent.mouseExited(e);
     }
@@ -4745,16 +4708,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = createEditorMouseEvent(e);
       myLastPressWasAtBlockInlay = false;
       myLastMousePressedLocation = event.getLogicalPosition();
-      myMousePressSeq++;
-      myMousePressTimestampNanos = System.nanoTime();
-      if (MOUSE_PRESS_LOG.isTraceEnabled()) {
-        LogicalPosition pressed = myLastMousePressedLocation;
-        MOUSE_PRESS_LOG.trace("[press #" + myMousePressSeq + "] SET myLastMousePressedLocation=" + pressed +
-                              " virtualSpace=" + EditorCoreUtil.inVirtualSpace(EditorImpl.this, pressed) +
-                              " caret=" + myCaretModel.getLogicalPosition() +
-                              " button=" + e.getButton() + " clickCount=" + e.getClickCount() +
-                              " source=" + e.getSource().getClass().getSimpleName());
-      }
       myLastMousePressedPoint = convertPoint(e.getComponent(), e.getPoint(), myEditorComponent);
       myLastPressedOnGutter = e.getSource() == myGutterComponent;
       var lastPressedPointOnGutter = convertPoint(myEditorComponent, myLastMousePressedPoint, myGutterComponent);
