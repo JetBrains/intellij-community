@@ -14,7 +14,7 @@ package com.intellij.platform.ijent.spi
  * - **Tunnel and stdin packets**: regrouped into chunks of at most this size (see `regroupIntoByteString`).
  * - **Directory listing batches**: the IJent agent fills a batch up to this value, then sends the batch.
  *   This covers `listDirectory`, `listDirectoryWithAttrs`, `walkDirectory`, and `prefetchDirectories`.
- *   The Rust constant `RECOMMENDED_MAX_PACKET_SIZE` in `fleet/native/ijent/src/grpc_stdio_server.rs` holds the same value.
+ *   The Rust constant `RECOMMENDED_MAX_PACKET_SIZE` in `fleet/native/ijent/ijent_grpc_server/src/fs/helpers.rs` holds the same value.
  *   Change both constants together.
  *
  * The API implementation applies this limit internally; API users need not fragment data themselves.
