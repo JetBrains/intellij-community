@@ -260,9 +260,7 @@ object CollaborationToolsUIUtil {
   }
 
   fun getFocusBorderInset(): Int {
-    val bw: Int = if (UIUtil.isUnderDefaultMacTheme()) 3 else DarculaUIUtil.BW.unscaled.toInt()
-    val lw: Int = if (UIUtil.isUnderDefaultMacTheme()) 0 else DarculaUIUtil.LW.unscaled.toInt()
-    return bw + lw
+    return DarculaUIUtil.BW.unscaled.toInt() + DarculaUIUtil.LW.unscaled.toInt()
   }
 
   fun wrapWithLimitedSize(component: JComponent, maxWidth: Int? = null, maxHeight: Int? = null): JComponent {
