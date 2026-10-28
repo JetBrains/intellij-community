@@ -16,6 +16,8 @@ class AcquirableScopedValueOwner<out T : Any>(
   private val cs = parentCs.childScope(javaClass.name)
 
   private var subscriptionCount = 0
+
+  @Volatile
   private var valueAndCs: Pair<T, CoroutineScope>? = null
   val value: T? get() = valueAndCs?.first
 

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.asDisposable
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
 import com.intellij.util.messages.impl.PluginListenerDescriptor
@@ -51,6 +50,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRTimelineService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel.Companion.getHeadRemoteDescriptor
 import org.jetbrains.plugins.github.util.AcquirableScopedValueOwner
 import java.util.EventListener
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.time.Duration.Companion.milliseconds
 
 internal class GHPRDataProviderRepositoryImpl(
@@ -65,18 +65,16 @@ internal class GHPRDataProviderRepositoryImpl(
 ) : GHPRDataProviderRepository {
   private val cs = parentCs.childScope(javaClass.name)
 
-  private val cache = mutableMapOf<GHPRIdentifier, AcquirableScopedValueOwner<GHPRDataProvider>>()
+  private val cache = ConcurrentHashMap<GHPRIdentifier, AcquirableScopedValueOwner<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
-  @RequiresEdt
   override fun getDataProvider(id: GHPRIdentifier, hostCs: CoroutineScope): GHPRDataProvider =
-    cache.getOrPut(id) {
+    cache.computeIfAbsent(id) {
       AcquirableScopedValueOwner(cs) {
         createDataProvider(id)
       }
     }.acquireValue(hostCs)
 
-  @RequiresEdt
   override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.value
 
   private fun CoroutineScope.createDataProvider(id: GHPRIdentifier): GHPRDataProvider {
