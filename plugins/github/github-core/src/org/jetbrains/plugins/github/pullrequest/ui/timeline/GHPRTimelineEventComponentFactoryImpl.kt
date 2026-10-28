@@ -283,8 +283,7 @@ internal class GHPRTimelineEventComponentFactoryImpl(
     }
 
     private fun labelHTML(label: GHLabel): HtmlChunk {
-      val background = CollaborationToolsUIUtil.getLabelBackground(label.color)
-      val foreground = CollaborationToolsUIUtil.getLabelForeground(background)
+      val (background, foreground) = CollaborationToolsUIUtil.getLabelBackgroundAndForeground(label.color)
 
       return HtmlChunk.span("color: #${ColorUtil.toHex(foreground)}; background: #${ColorUtil.toHex(background)}")
         .child(HtmlChunk.nbsp())

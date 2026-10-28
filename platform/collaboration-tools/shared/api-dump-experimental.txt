@@ -56,8 +56,7 @@
 - f:getAnimatedLoadingIcon():javax.swing.Icon
 - f:getFocusBorderInset():I
 - f:getInsets(java.awt.Insets,java.awt.Insets):java.awt.Insets
-- f:getLabelBackground(java.lang.String):com.intellij.ui.JBColor
-- f:getLabelForeground(java.awt.Color):java.awt.Color
+- f:getLabelBackgroundAndForeground(java.lang.String):kotlin.Pair
 - f:getSize(I,I):I
 - f:hideWhenNoVisibleChildren(javax.swing.JComponent):V
 - f:installValidator(javax.swing.JComponent,com.intellij.collaboration.ui.SingleValueModel):V

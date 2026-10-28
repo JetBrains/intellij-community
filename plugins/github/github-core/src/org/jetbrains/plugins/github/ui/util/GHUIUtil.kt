@@ -38,8 +38,9 @@ internal object GHUIUtil {
     }
 
   fun createIssueLabelLabel(label: GHLabel): JBLabel = JBLabel(" ${label.name} ", UIUtil.ComponentStyle.SMALL).apply {
-    background = CollaborationToolsUIUtil.getLabelBackground(label.color)
-    foreground = CollaborationToolsUIUtil.getLabelForeground(background)
+    val (backgroundColor, foregroundColor) = CollaborationToolsUIUtil.getLabelBackgroundAndForeground(label.color)
+    background = backgroundColor
+    foreground = foregroundColor
   }.andOpaque()
 
   object SelectionPresenters {

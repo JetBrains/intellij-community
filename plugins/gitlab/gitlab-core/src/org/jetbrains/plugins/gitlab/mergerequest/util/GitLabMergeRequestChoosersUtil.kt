@@ -70,8 +70,8 @@ internal object GitLabMergeRequestChoosersUtil {
   fun getLabelPresenter(): (GitLabLabel) -> PopupItemPresentation {
     return {
       val icon = runCatching {
-        val color = CollaborationToolsUIUtil.getLabelBackground(it.colorHex)
-        ColorIcon(16, color)
+        val color = CollaborationToolsUIUtil.getLabelBackgroundAndForeground(it.colorHex)
+        ColorIcon(16, color.first)
       }
       PopupItemPresentation.Simple(
         it.title,

@@ -317,8 +317,7 @@ internal object GitLabMergeRequestTimelineComponentFactory {
 }
 
 private fun GitLabLabelRestDTO.toHtml(): @Nls String {
-  val bg = CollaborationToolsUIUtil.getLabelBackground(color)
-  val fg = CollaborationToolsUIUtil.getLabelForeground(bg)
+  val (bg, fg) = CollaborationToolsUIUtil.getLabelBackgroundAndForeground(color)
 
   return HtmlChunk.span("color: #${ColorUtil.toHex(fg)}; background: #${ColorUtil.toHex(bg)}")
     .child(HtmlChunk.nbsp())

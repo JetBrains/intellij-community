@@ -141,8 +141,7 @@ private fun UserLabel(user: GitLabUserDTO, avatarIconsProvider: IconsProvider<Gi
 
 @Suppress("FunctionName")
 private fun LabelLabel(label: GitLabLabel): JComponent {
-  val background = CollaborationToolsUIUtil.getLabelBackground(label.colorHex)
-  val foreground = CollaborationToolsUIUtil.getLabelForeground(background)
+  val (background, foreground) = CollaborationToolsUIUtil.getLabelBackgroundAndForeground(label.colorHex)
   return CollaborationToolsUIUtil.createTagLabel(label.title, foreground, background, compact = false).apply {
     border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP / 2)
   }

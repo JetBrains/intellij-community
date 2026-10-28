@@ -285,12 +285,14 @@ object CollaborationToolsUIUtil {
     }
   }
 
-  fun getLabelBackground(hexColor: String): JBColor {
-    val color = ColorUtil.fromHex(hexColor)
-    return JBColor(color, ColorUtil.darker(color, 3))
+  @Suppress("UseJBColor")
+  fun getLabelBackgroundAndForeground(hexColor: String): Pair<JBColor, JBColor> {
+    val regularBackground = ColorUtil.fromHex(hexColor)
+    val darkBackground = ColorUtil.darker(regularBackground, 3)
+    val regularForeground = if (ColorUtil.isDark(regularBackground)) Color.WHITE else Color.BLACK
+    val darkForeground = if (ColorUtil.isDark(darkBackground)) Color.WHITE else Color.BLACK
+    return JBColor(regularBackground, darkBackground) to JBColor(regularForeground, darkForeground)
   }
-
-  fun getLabelForeground(bg: Color): Color = if (ColorUtil.isDark(bg)) JBColor.WHITE else JBColor.BLACK
 
   /**
    * Use method for different sizes depending on the type of UI (old/new).
