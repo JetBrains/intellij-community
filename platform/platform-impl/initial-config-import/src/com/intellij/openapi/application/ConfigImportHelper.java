@@ -21,11 +21,10 @@ import com.intellij.ide.plugins.PluginInitContextSelectCandidateSubsetKt;
 import com.intellij.ide.plugins.PluginInstaller;
 import com.intellij.ide.plugins.PluginMainDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginNode;
 import com.intellij.ide.plugins.PluginVersionIsSuperseded;
 import com.intellij.ide.plugins.PluginsDiscoveryResult;
+import com.intellij.ide.plugins.marketplace.IdeCompatibleUpdate;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.newui.PluginUiModel;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapterKt;
@@ -1316,7 +1315,9 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static @Nullable Map<PluginId, PluginNode> fetchPluginUpdatesFromMarketplace(ConfigImportOptions options, Set<PluginId> pluginIds) {
+  private static @Nullable Map<PluginId, IdeCompatibleUpdate> fetchPluginUpdatesFromMarketplace(
+    ConfigImportOptions options, Set<PluginId> pluginIds
+  ) {
     if (testLastCompatiblePluginUpdatesFetcher != null) {
       return testLastCompatiblePluginUpdatesFetcher.apply(pluginIds);
     }
@@ -1324,15 +1325,12 @@ public final class ConfigImportHelper {
     try {
       var start = System.nanoTime();
       var updates = runSynchronouslyInBackgroundWithTimeout(
-        () -> MarketplaceRequests.loadLastCompatiblePluginModels(pluginIds, options.compatibleBuildNumber).stream()
-          .map(PluginUiModel::getDescriptor)
-          .filter(PluginNode.class::isInstance)
-          .toList(),
+        () -> MarketplaceRequests.getLastCompatiblePluginUpdate(pluginIds, options.compatibleBuildNumber),
         PLUGIN_UPDATES_TIMEOUT_MS);
       options.log.info("Fetched " + updates.size() + " latest compatible plugin updates in " + ((System.nanoTime() - start) / 1_000_000) + " ms");
-      var updatesMap = new HashMap<PluginId, PluginNode>();
+      var updatesMap = new HashMap<PluginId, IdeCompatibleUpdate>();
       for (var update : updates) {
-        updatesMap.put(update.getPluginId(), (PluginNode)update);
+        updatesMap.put(PluginId.getId(update.getPluginId()), update);
       }
       return updatesMap;
     }
@@ -1739,5 +1737,5 @@ public final class ConfigImportHelper {
 
   @VisibleForTesting
   @SuppressWarnings("StaticNonFinalField")
-  public static @Nullable Function<Set<PluginId>, @Nullable Map<PluginId, PluginNode>> testLastCompatiblePluginUpdatesFetcher = null;
+  public static @Nullable Function<Set<PluginId>, @Nullable Map<PluginId, IdeCompatibleUpdate>> testLastCompatiblePluginUpdatesFetcher = null;
 }

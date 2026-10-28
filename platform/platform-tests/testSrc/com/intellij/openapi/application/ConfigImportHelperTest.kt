@@ -7,7 +7,6 @@ import com.intellij.ide.ConfigImportOptions
 import com.intellij.ide.ConfigImportSettings
 import com.intellij.ide.SpecialConfigFiles
 import com.intellij.ide.plugins.DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate
-import com.intellij.ide.plugins.PluginNode
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService
 import com.intellij.ide.plugins.marketplace.utils.MarketplaceCustomizationService
 import com.intellij.ide.startup.StartupActionScriptManager
@@ -710,6 +709,8 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val newConfigDir = newTempDir("newConfig")
     val newPluginsDir = newConfigDir.resolve("plugins")
 
+    val updateRequests = AtomicInteger()
+    val metadataRequests = AtomicInteger()
     val server = createTestServer(testRootDisposable)
     server.createContext("/files/brokenPlugins.json") { handler ->
       handler.sendResponseHeaders(200, 0)
@@ -719,6 +720,24 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
           {"id": "broken", "version": "1.1", "since": "999.0", "until": "999.0", "originalSince": "1.0", "originalUntil": "999.9999"}]
         """.trimIndent())
       }
+    }
+    server.createContext("/api/search/updates/compatible") { handler ->
+      updateRequests.incrementAndGet()
+      handler.sendResponseHeaders(200, 0)
+      handler.responseBody.writer().use {
+        it.write("""
+          [
+            {"id": "1001", "pluginId": "101", "pluginXmlId": "update", "version": "1.1"},
+            {"id": "1002", "pluginId": "102", "pluginXmlId": "disabled", "version": "1.1"},
+            {"id": "1003", "pluginId": "103", "pluginXmlId": "migrate", "version": "1.0"}
+          ]
+        """.trimIndent())
+      }
+    }
+    server.createContext("/files/") { handler ->
+      metadataRequests.incrementAndGet()
+      handler.sendResponseHeaders(404, -1)
+      handler.close()
     }
     server.createContext("/download") { handler ->
       val id = handler.requestURI.queryParameters["id"]!!
@@ -750,17 +769,10 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
       headless = true
       compatibleBuildNumber = BuildNumber.fromString("201.1")
     }
-    ConfigImportHelper.testLastCompatiblePluginUpdatesFetcher = Function {
-      buildMap {
-        for (id in listOf("update", "disabled", "migrate")) {
-          val pid = PluginId.getId(id)
-          val node = PluginNode(pid).apply { version = if (id == "migrate") "1.0" else "1.1" }
-          put(pid, node)
-        }
-      }
-    }
     doImport(oldConfigDir, newConfigDir, options)
 
+    assertThat(updateRequests).hasValue(if (updateIncompatibleOnly) 0 else 1)
+    assertThat(metadataRequests).hasValue(0)
     assertThat(newPluginsDir).exists()
     assertThat(newPluginsDir.listDirectoryEntries())
       .containsExactlyInAnyOrder(newPluginsDir.resolve("update.jar"), newPluginsDir.resolve("migrate.jar"), newPluginsDir.resolve("disabled.jar"))
