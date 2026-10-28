@@ -18,6 +18,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -168,8 +169,23 @@ public final class VfsImplUtil {
   /// VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with forceSyncRefresh(virtualFile);
   /// ```
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
-    var event = new VFileContentChangeEvent(REFRESH_REQUESTOR, file, file.getModificationStamp(), VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH);
-    RefreshQueue.getInstance().processEvents(false, List.of(event));
+    forceRefresh(false, new SmartList<>(file));
+  }
+
+  /**
+   * {@link #forceSyncRefresh} for several files in one session, synchronous or not.
+   *
+   * <p>A synchronous call must not hold a read lock; off EDT it waits cancellably.
+   */
+  @ApiStatus.Experimental
+  public static void forceRefresh(boolean async, @NotNull Collection<? extends VirtualFile> files) {
+    if (files.isEmpty()) return;
+    List<VFileEvent> events = new SmartList<>();
+    for (VirtualFile file : files) {
+      events.add(new VFileContentChangeEvent(REFRESH_REQUESTOR, file, file.getModificationStamp(),
+                                             VFileContentChangeEvent.UNDEFINED_TIMESTAMP_OR_LENGTH));
+    }
+    RefreshQueue.getInstance().processEvents(async, events);
   }
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
