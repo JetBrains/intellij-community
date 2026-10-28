@@ -2,6 +2,8 @@
 package com.intellij.platform.util.io.storages.intmultimaps;
 
 public final class HashUtils {
+  private static final int ZERO_HASH_REPLACEMENT = -1;
+
   private HashUtils() {
     throw new AssertionError("Not for instantiation");
   }
@@ -14,8 +16,13 @@ public final class HashUtils {
       // Key (=hash) doesn't identify value uniquely anyway, hence this replacement just adds another
       // collision -- basically, we replaced original Key.hash with our own hash, which avoids 0 at
       // the cost of slightly higher collision chances
-      return -1;// anything !=0 will do
+      return ZERO_HASH_REPLACEMENT;// anything !=0 will do
     }
     return hash;
+  }
+
+  /// @return true if [#adjustHash(int)] can map different input hashes to this value
+  public static boolean isAdjustedHashAmbiguous(int adjustedHash) {
+    return adjustedHash == ZERO_HASH_REPLACEMENT;
   }
 }

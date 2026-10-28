@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.util.io.storages.database.storages.durablemap;
 
+import com.intellij.platform.util.io.storages.InlineKeyDescriptorEx;
 import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.database.storages.BlockSizingPolicy;
 import com.intellij.platform.util.io.storages.database.storages.appenablerecords.RecordStorageOverBlocks;
@@ -124,6 +125,20 @@ public final class KeyCatalogOverBlocks<K> {
   /// Processes keys in their append order without reading `LOOKUP` or `VALUES`.
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
     return keys.forEachCommittedRecord((_, record) -> processor.process(readKey(record)));
+  }
+
+  /// Uses the lookup for inline keys and the sequential catalog for other keys.
+  /// The lookup order can differ from the append order.
+  boolean processKeysUsingLookupIfInline(@NotNull Processor<? super K> processor) throws IOException {
+    if (keyDescriptor instanceof InlineKeyDescriptorEx<K> inlineDescriptor) {
+      return keyHashToRecordRefIndex.forEach((keyHash, recordRef) -> {
+        var key = HashUtils.isAdjustedHashAmbiguous(keyHash) ?
+                  readKey(recordRef) : //hash conflict: read actual key to disambiguate
+                  inlineDescriptor.fromInt(keyHash);
+        return processor.process(key);
+      });
+    }
+    return processKeys(processor);
   }
 
   /// Processes key records in append order and includes their current value references.

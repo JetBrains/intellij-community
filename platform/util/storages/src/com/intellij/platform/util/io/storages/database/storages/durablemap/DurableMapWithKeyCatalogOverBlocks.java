@@ -394,7 +394,7 @@ public class DurableMapWithKeyCatalogOverBlocks<K, V> implements DurableMap<K, V
   public boolean processKeys(@NotNull Processor<? super K> processor) throws IOException {
     synchronized (lock) {
       ensureOpen();
-      return keyCatalog.processKeys(processor);
+      return keyCatalog.processKeysUsingLookupIfInline(processor);
     }
   }
 
