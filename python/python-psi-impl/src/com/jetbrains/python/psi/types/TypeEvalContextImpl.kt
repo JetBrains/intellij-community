@@ -91,6 +91,9 @@ open class TypeEvalContextImpl internal constructor(
   protected val mySubstitutionsCache: MutableMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> = getConcurrentMapForCaching()
   protected val myClassMethodPresenceCache: ConcurrentMap<PyClass, ConcurrentMap<Pair<String, Boolean>, Boolean>> =
     getConcurrentMapForCaching()
+  protected val myProtocolMembersCache:
+    ConcurrentMap<PyClass, ConcurrentMap<Pair<PyClassType, PyClassType>, List<Pair<PyTypeMember, List<PyTypeMember>>>>> =
+    getConcurrentMapForCaching()
 
   init {
     PyCodeInsightCounters.inc(Counter.CONTEXTS_CONSTRUCTED)
@@ -378,6 +381,12 @@ open class TypeEvalContextImpl internal constructor(
   @ApiStatus.Internal
   override fun getClassMethodPresenceCache(): ConcurrentMap<PyClass, ConcurrentMap<Pair<String, Boolean>, Boolean>> {
     return myClassMethodPresenceCache
+  }
+
+  @ApiStatus.Internal
+  override fun getProtocolMembersCache():
+    ConcurrentMap<PyClass, ConcurrentMap<Pair<PyClassType, PyClassType>, List<Pair<PyTypeMember, List<PyTypeMember>>>>> {
+    return myProtocolMembersCache
   }
 
   override fun equals(other: Any?): Boolean {

@@ -61,6 +61,15 @@ abstract class TypeEvalContext protected constructor() {
    */
   @ApiStatus.Internal
   abstract fun getClassMethodPresenceCache(): ConcurrentMap<PyClass, ConcurrentMap<Pair<String, Boolean>, Boolean>>
+
+  /**
+   * The protocol members and the matching members of a class, keyed by the class of the protocol and then by the pair
+   * of the protocol type and the class type. The two maps are for the reason that [getClassMethodPresenceCache] gives.
+   */
+  @ApiStatus.Internal
+  abstract fun getProtocolMembersCache():
+    ConcurrentMap<PyClass, ConcurrentMap<Pair<PyClassType, PyClassType>, List<Pair<PyTypeMember, List<PyTypeMember>>>>>
+
   abstract fun getKnownType(element: PyTypedElement): PyType?
   abstract fun getKnownReturnType(callable: PyCallable): PyType?
 
