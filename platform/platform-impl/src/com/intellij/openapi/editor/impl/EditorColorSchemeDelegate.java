@@ -429,17 +429,19 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     @Nullable Boolean useLigatures,
     @NotNull FontPreferences delegatePreferences
   ) {
-    preferences.clear();
-    preferences.register(fontName, fontSize);
-    List<String> families = delegatePreferences.getRealFontFamilies();
-    //skip delegate's primary font
-    for (int i = 1; i < families.size(); i++) {
-      String font = families.get(i);
-      preferences.register(font, fontSize);
-    }
-    preferences.setUseLigatures(useLigatures != null ? useLigatures : delegatePreferences.useLigatures());
-    preferences.setCharacterVariants(delegatePreferences.getCharacterVariants());
-    preferences.setRegularSubFamily(delegatePreferences.getRegularSubFamily());
-    preferences.setBoldSubFamily(delegatePreferences.getBoldSubFamily());
+    preferences.runBatchUpdate(draft -> {
+      draft.clear();
+      draft.register(fontName, fontSize);
+      List<String> families = delegatePreferences.getRealFontFamilies();
+      //skip delegate's primary font
+      for (int i = 1; i < families.size(); i++) {
+        String font = families.get(i);
+        draft.register(font, fontSize);
+      }
+      draft.setUseLigatures(useLigatures != null ? useLigatures : delegatePreferences.useLigatures());
+      draft.setCharacterVariants(delegatePreferences.getCharacterVariants());
+      draft.setRegularSubFamily(delegatePreferences.getRegularSubFamily());
+      draft.setBoldSubFamily(delegatePreferences.getBoldSubFamily());
+    });
   }
 }

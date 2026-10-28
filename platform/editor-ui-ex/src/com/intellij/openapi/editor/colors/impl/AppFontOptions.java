@@ -70,21 +70,23 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   protected abstract F createFontState(@NotNull FontPreferences fontPreferences);
 
   private static void copyState(PersistentFontPreferences state, @NotNull ModifiableFontPreferences fontPreferences) {
-    fontPreferences.clear();
     // Check both float and integer font size for compatibility
     float stateFontSize = state.FONT_SIZE_2D != (float)FontPreferences.DEFAULT_FONT_SIZE ?
                           state.FONT_SIZE_2D : state.FONT_SIZE;
     float fontSize = UISettings.restoreFontSize(stateFontSize, state.FONT_SCALE);
     String[] names = migrateFamilyNameIfNeeded(state.FONT_FAMILY, state.FONT_REGULAR_SUB_FAMILY, state.FONT_BOLD_SUB_FAMILY);
-    fontPreferences.register(names[0], fontSize);
-    fontPreferences.setRegularSubFamily(names[1]);
-    fontPreferences.setBoldSubFamily(names[2]);
-    fontPreferences.setLineSpacing(state.LINE_SPACING);
-    fontPreferences.setUseLigatures(state.USE_LIGATURES);
-    fontPreferences.setCharacterVariants(state.CHARACTER_VARIANTS);
-    if (state.SECONDARY_FONT_FAMILY != null) {
-      fontPreferences.register(state.SECONDARY_FONT_FAMILY, fontSize);
-    }
+    fontPreferences.runBatchUpdate(draft -> {
+      draft.clear();
+      draft.register(names[0], fontSize);
+      draft.setRegularSubFamily(names[1]);
+      draft.setBoldSubFamily(names[2]);
+      draft.setLineSpacing(state.LINE_SPACING);
+      draft.setUseLigatures(state.USE_LIGATURES);
+      draft.setCharacterVariants(state.CHARACTER_VARIANTS);
+      if (state.SECONDARY_FONT_FAMILY != null) {
+        draft.register(state.SECONDARY_FONT_FAMILY, fontSize);
+      }
+    });
   }
 
   private static String[] migrateFamilyNameIfNeeded(String family, String regularSubFamily, String boldSubFamily) {

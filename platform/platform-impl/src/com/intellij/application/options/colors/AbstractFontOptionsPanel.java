@@ -375,23 +375,26 @@ public abstract class AbstractFontOptionsPanel extends JPanel implements Options
     }
     FontPreferences fontPreferences = getFontPreferences();
     if (fontPreferences instanceof ModifiableFontPreferences modifiableFontPreferences) {
-      modifiableFontPreferences.clearFonts();
-      modifiableFontPreferences.setUseLigatures(myEnableLigaturesCheckbox.isSelected());
+      boolean useLigatures = myEnableLigaturesCheckbox.isSelected();
       String primaryFontFamily = myPrimaryCombo.getFontName();
       String secondaryFontFamily = mySecondaryCombo.isNoFontSelected() ? null : mySecondaryCombo.getFontName();
       float fontSize = getFontSizeFromField();
-      if (primaryFontFamily != null) {
-        if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
-          modifiableFontPreferences.addFontFamily(primaryFontFamily);
+      modifiableFontPreferences.runBatchUpdate(draft -> {
+        draft.clearFonts();
+        draft.setUseLigatures(useLigatures);
+        if (primaryFontFamily != null) {
+          if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
+            draft.addFontFamily(primaryFontFamily);
+          }
+          draft.register(primaryFontFamily, fontSize);
         }
-        modifiableFontPreferences.register(primaryFontFamily, fontSize);
-      }
-      if (secondaryFontFamily != null) {
-        if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)) {
-          modifiableFontPreferences.addFontFamily(secondaryFontFamily);
+        if (secondaryFontFamily != null) {
+          if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)) {
+            draft.addFontFamily(secondaryFontFamily);
+          }
+          draft.register(secondaryFontFamily, fontSize);
         }
-        modifiableFontPreferences.register(secondaryFontFamily, fontSize);
-      }
+      });
       updateDescription(true);
     }
   }

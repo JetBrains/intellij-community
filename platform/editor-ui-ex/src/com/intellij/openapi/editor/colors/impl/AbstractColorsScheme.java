@@ -301,7 +301,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @Override
   public void setEditorFontName(String fontName) {
     ModifiableFontPreferences currPreferences = ensureEditableFontPreferences();
-    boolean useLigatures = currPreferences.useLigatures();
     float editorFontSize = getEditorFontSize2D();
     if (LOG.isDebugEnabled()) {
       String message = "setEditorFontName=%s for %s. Current name/size: %s:%.2f".formatted(
@@ -309,9 +308,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       Throwable stack = new Throwable(message);
       LOG.debug(message, stack);
     }
-    currPreferences.clear();
-    currPreferences.register(fontName, editorFontSize);
-    currPreferences.setUseLigatures(useLigatures);
+    currPreferences.runBatchUpdate(draft -> {
+      boolean useLigatures = draft.useLigatures();
+      draft.clear();
+      draft.register(fontName, editorFontSize);
+      draft.setUseLigatures(useLigatures);
+    });
     initFonts();
   }
 
@@ -841,8 +843,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public void setConsoleFontName(String fontName) {
     ModifiableFontPreferences consolePreferences = ensureEditableConsoleFontPreferences();
     float consoleFontSize = getConsoleFontSize2D();
-    consolePreferences.clear();
-    consolePreferences.register(fontName, consoleFontSize);
+    consolePreferences.runBatchUpdate(draft -> {
+      draft.clear();
+      draft.register(fontName, consoleFontSize);
+    });
   }
 
   private ModifiableFontPreferences ensureEditableConsoleFontPreferences() {
