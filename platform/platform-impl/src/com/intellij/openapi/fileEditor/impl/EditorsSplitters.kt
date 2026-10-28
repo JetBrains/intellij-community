@@ -14,6 +14,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -698,14 +699,24 @@ open class EditorsSplitters internal constructor(
     createEditors(state)
   }
 
-  internal suspend fun createEditors(state: EditorSplitterState) {
+  /** Hides the empty state before [createEditors] restores [state], in the EDT event that already runs. */
+  @RequiresEdt
+  internal fun markStartupEditorRestorePending(state: EditorSplitterState) {
     if (shouldDelayEmptyStatePresentation(state)) {
+      emptyStatePresentationReady = false
+      updateEmptyStateComponent()
+    }
+  }
+
+  internal suspend fun createEditors(state: EditorSplitterState, emptyStateHidden: Boolean = false) {
+    if (!emptyStateHidden && shouldDelayEmptyStatePresentation(state)) {
       withContext(Dispatchers.EDT) {
         emptyStatePresentationReady = false
         updateEmptyStateComponent()
       }
     }
     manager.project.putUserData(OPEN_FILES_ACTIVITY, StartUpMeasurer.startActivity(StartUpMeasurer.Activities.EDITOR_RESTORING_TILL_PAINT))
+    var finished = false
     try {
       if (!shouldReopenEditorsOnStartup()) {
         // Don't reopen editors from local files on JetBrains Client, it is done from the backend
@@ -722,17 +733,21 @@ open class EditorsSplitters internal constructor(
           },
         )
 
-      // One EDT block for the count check and the removal: another coroutine can open a tab into an empty window while a dispatcher
-      // switch is pending. No write-intent lock: re-adding the sibling component updates a toolbar synchronously, which takes a read action.
-      withContext(Dispatchers.UiWithModelAccess) {
+      // One EDT block for the count check, the removal and the end of the restore: another coroutine can open a tab into an empty
+      // window while a dispatcher switch is pending, and each switch waits behind the EDT queue that the editor creation fills.
+      withContext(Dispatchers.EDT) {
         for (window in windows) {
           window.removeIfEmpty(cause = EmptyStateCause.PROJECT_OPENED)
         }
+        finishStartupEditorRestore()
+        finished = true
       }
     }
     finally {
-      withContext(NonCancellable + Dispatchers.EDT) {
-        finishStartupEditorRestore()
+      if (!finished) {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          finishStartupEditorRestore()
+        }
       }
     }
   }
@@ -1555,6 +1570,8 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
       }.mapNotNull { it.getCompleted() }
     }
 
+    // resolved off the EDT: a suspension inside the EDT block costs a second EDT round trip
+    val editorActionGroup = serviceAsync<ActionManager>().getAction("EditorTabActionGroup")
     span("file opening in EDT", Dispatchers.EDT) {
       var window: EditorWindow? = null
       val windowAddedDeferred = CompletableDeferred<Unit>()
@@ -1564,6 +1581,7 @@ private class UiBuilder(private val splitters: EditorsSplitters, private val isL
           items = items,
           window = window,
           isLazyComposite = isLazyComposite,
+          tabActionGroup = editorActionGroup,
         )
         fileEditorManager.openTabsOnStartup(
           window = window,

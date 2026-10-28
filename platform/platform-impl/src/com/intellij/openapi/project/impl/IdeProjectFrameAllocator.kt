@@ -802,6 +802,10 @@ private suspend fun restoreEditors(
         editorComponent.markNoEditorsToRestore()
         editorComponent.finishStartupEditorRestore()
       }
+      else {
+        // the same EDT event as the hold, so the restore starts its file preparation without another switch
+        editorComponent.markStartupEditorRestorePending(editorState)
+      }
     }
     if (editorState == null) {
       StartUpMeasurer.addInstantEvent("no editors to restore")
@@ -813,10 +817,12 @@ private suspend fun restoreEditors(
 
     try {
       span("editor restoring") {
-        editorComponent.createEditors(state = editorState)
+        editorComponent.createEditors(state = editorState, emptyStateHidden = true)
       }
 
-      span("editor reopening post-processing", Dispatchers.UI) {
+      // the dispatcher of the switch inside `focusSelectedEditor`, so that switch runs in place instead of queueing
+      // a second EDT event behind the editor creation
+      span("editor reopening post-processing", Dispatchers.EDT) {
         focusSelectedEditor(editorComponent)
       }
       // before the gate opens: the loading layer leaves the EDT queue ahead of the work that the gate holds

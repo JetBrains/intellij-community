@@ -21,6 +21,7 @@ import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.DelicateLockingApi
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -2505,6 +2506,7 @@ open class FileEditorManagerImpl(
     items: List<FileToOpen>,
     window: EditorWindow,
     isLazyComposite: Boolean,
+    tabActionGroup: AnAction? = null,
   ): List<TabToOpenOnStartup?> {
     if (items.isEmpty()) {
       LOG.info("no files to reopen")
@@ -2514,7 +2516,7 @@ open class FileEditorManagerImpl(
     val uiSettings = UISettings.getInstance()
 
     val tabs = mutableListOf<TabToOpenOnStartup?>()
-    val editorActionGroup = serviceAsync<ActionManager>().getAction("EditorTabActionGroup")
+    val editorActionGroup = tabActionGroup ?: serviceAsync<ActionManager>().getAction("EditorTabActionGroup")
 
     for (item in items) {
       val fileEntry = item.fileEntry
