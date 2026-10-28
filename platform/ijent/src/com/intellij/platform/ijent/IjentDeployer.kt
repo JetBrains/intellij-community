@@ -41,6 +41,7 @@ interface IjentSession {
   val isRunning: Boolean
   val platform: EelPlatform
   val remotePathToBinary: String  // TODO Use IjentPath.Absolute.
+  val ijentProcessInfo: IjentProcessInfo
 
   /**
    * `false` while the transport is down on a live session and the reconnect layer is recovering it.

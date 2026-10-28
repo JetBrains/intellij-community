@@ -98,6 +98,7 @@ class IjentSessionExitReasonTest {
     override val isRunning: Boolean get() = error("Unused")
     override val platform: EelPlatform get() = error("Unused")
     override val remotePathToBinary: String get() = error("Unused")
+    override val ijentProcessInfo: IjentProcessInfo get() = error("Unused")
     override val transportConnected = MutableStateFlow(true)
     override suspend fun updateLogLevel(): Unit = error("Unused")
     override suspend fun setParentProcessToWatch(pid: Long): Unit = error("Unused")

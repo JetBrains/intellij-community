@@ -22,6 +22,7 @@ import com.intellij.platform.ijent.IjentExecFileProvider
 import com.intellij.platform.ijent.IjentIncompatibleBinary
 import com.intellij.platform.ijent.IjentMissingBinary
 import com.intellij.platform.ijent.IjentProcessExited
+import com.intellij.platform.ijent.IjentProcessInfo
 import com.intellij.platform.ijent.IjentScope
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.ParentOfIjentScopes
@@ -693,6 +694,7 @@ private class TestShellStrategy(
       override val isRunning: Boolean get() = shellProcess.isAlive
       override val platform: EelPlatform = deploymentResult.targetPlatform
       override val remotePathToBinary: String = remoteBinaryPath
+      override val ijentProcessInfo: IjentProcessInfo get() = error("Unused in this test")
       override val transportConnected = MutableStateFlow(true)
 
       @OptIn(DelicateCoroutinesApi::class)
