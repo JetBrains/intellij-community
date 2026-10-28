@@ -1,30 +1,18 @@
-//! The hourly cleanup of `serve`: it ends each run that lost its supervisor, removes each run a day after its end,
-//! deletes each ref of a pack that no run uses, and runs `git maintenance run --auto` in each listed repository. Each
-//! pack adds a pack file to its repository, and git repacks only when its maintenance runs.
-//!
-//! A pack makes `refs/yonder/<run>`, and the supervisor of the run deletes it. A pack that no start follows would keep
-//! its ref for ever. So each pack adds its repository to the repository list, and the cleanup deletes each
-//! `refs/yonder/<run>` of a listed repository whose run has no directory. A run directory goes a day after the end of
-//! its run, and then its ref goes too. A ref whose run id names a time within the last [`PACK_GRACE`] stays, because
-//! its start can still come. A base ref under [`BASE_REFS`] always stays: the next pack to its name replaces it.
+//! The hourly cleanup of `serve`: it ends each run that lost its supervisor and removes each run a day after its end. It
+//! also keeps the repository list of the packs, from which the keeper of the host slots starts. Branch Deck owns the
+//! refs of the packs and the git maintenance: the give-back of a run deletes its ref, `bd lease host reclaim` deletes a
+//! ref that no run uses, and an ingest and a give-back start the deferred maintenance.
 
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::time::{Duration, SystemTime};
-
-use yonder_link::proto::BASE_REFS;
+use std::time::SystemTime;
 
 use crate::files::{private_dir, write_private};
-use crate::git;
 use crate::home::Home;
-use crate::run::{Runs, epoch_ms};
+use crate::run::Runs;
 
-/// How long a ref without a run directory stays after the time in its run id.
-pub(crate) const PACK_GRACE: Duration = Duration::from_secs(3600);
-
-/// Ends the lost runs, removes the expired runs and deletes the stale refs. Answers a log line for each change and each
-/// failure.
+/// Ends the lost runs and removes the expired runs. Answers a log line for each change.
 pub(crate) fn clean(home: &Home, now: SystemTime) -> Vec<String> {
     let runs = Runs::new(home.runs_dir());
     let mut lines: Vec<String> = runs
@@ -38,36 +26,6 @@ pub(crate) fn clean(home: &Home, now: SystemTime) -> Vec<String> {
             .into_iter()
             .map(|run| format!("removed the run {run}, which ended a day ago")),
     );
-    for repo in repos(home) {
-        if !repo.is_dir() {
-            continue;
-        }
-        let references = match git::pack_refs(&repo) {
-            Ok(references) => references,
-            Err(error) => {
-                lines.push(format!("cannot list the pack refs of {}: {error}", repo.display()));
-                continue;
-            }
-        };
-        for reference in references {
-            if reference.starts_with(BASE_REFS) {
-                continue;
-            }
-            let Some(run) = reference.strip_prefix(git::REF_PREFIX) else {
-                continue;
-            };
-            if runs.get(run).is_ok() || is_fresh(run, now) {
-                continue;
-            }
-            match git::delete_ref(&repo, &reference) {
-                Ok(()) => lines.push(format!("deleted {reference} in {}, which no run uses", repo.display())),
-                Err(error) => lines.push(format!("cannot delete {reference} in {}: {error}", repo.display())),
-            }
-        }
-        if let Err(error) = git::maintenance(&repo) {
-            lines.push(format!("cannot run the git maintenance of {}: {error}", repo.display()));
-        }
-    }
     lines
 }
 
@@ -88,16 +46,6 @@ pub(crate) fn repos(home: &Home) -> Vec<PathBuf> {
     fs::read_to_string(home.repos_file())
         .map(|text| text.lines().filter(|line| !line.is_empty()).map(PathBuf::from).collect())
         .unwrap_or_default()
-}
-
-/// Whether the run id `run` starts with an epoch millisecond within [`PACK_GRACE`] before `now`, as the
-/// `<epoch ms>-<pid>` ids of the client do. An id without a time is not fresh.
-pub(crate) fn is_fresh(run: &str, now: SystemTime) -> bool {
-    let Some(started) = run.split('-').next().and_then(|ms| ms.parse::<u64>().ok()) else {
-        return false;
-    };
-    let grace = u64::try_from(PACK_GRACE.as_millis()).unwrap_or(u64::MAX);
-    epoch_ms(now).saturating_sub(started) < grace
 }
 
 #[cfg(test)]

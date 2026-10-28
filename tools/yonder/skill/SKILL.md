@@ -115,7 +115,10 @@ The host keeps a fixed set of warm slots per repository (`branchdeck.hostSlots` 
 run borrows one for that run only, through `bd lease host` of Branch Deck. The run gets the slot that its holder used
 last, else the one used longest ago, else it waits in a queue with one line a minute. After an hour it refuses with
 `lock_timeout`. At the end of each run the slot comes back: the processes of the run stop, and its changes go. The
-ignored files stay as the warm cache. So nothing keeps or returns a slot by hand.
+ignored files stay as the warm cache. So nothing keeps or returns a slot by hand. Branch Deck also does the git work of the host: the
+pack, the commit lookups and the scan of the changes. So the host needs a bd that has `bd lease host have`, `ingest`,
+`show`, `snapshot` and `changes`. A host with an older bd refuses a run with `lease_failed`, `pack_failed` or
+`agent_error`, and the message names the bd call: ask the user to install the new Branch Deck there.
 
 ## Move commits, not trees
 

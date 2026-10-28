@@ -42,54 +42,73 @@ fn agent_binary() -> PathBuf {
     std::path::absolute(path).expect("an absolute path")
 }
 
-/// The fake `bd`. It records each call as `<cwd>|<args>` in `$FAKE_BD_DIR/calls`.
+/// The fake `bd`. It records each call as `<cwd>|<args>` in `$FAKE_BD_DIR/calls`. It implements the shapes of `bd lease
+/// host` with the git of `PATH`, so the slow git below works in it too.
 ///
-/// `lease host` lends the slots `$FAKE_BD_DIR/slots/<n>`, each a worktree of the main repository made at its first
-/// lend, `slot-count` of them (1 by default): `lent-<n>` names the run that has slot `n`, `used-<n>` the holder that
-/// used it last and `generation-<n>` the generation of its files. A lend of a run that has no slot and finds every slot
-/// lent queues; `give-back` frees the slot of the run, and with `discard` it answers that count of discarded changes
-/// and moves the generation of the slot. `checkout` moves the slot of the run with `git reset --merge` (so the slow git
-/// below waits in it too) and answers `switched`, or `kept` at the commit. `fill` and `reclaim` answer nothing to do.
-/// `schema` names `lease_host_lend` unless `old-bd` exists, and `lease_host_checkout` unless `old-bd` or
-/// `no-host-checkout` exists.
+/// `lend` lends the slots `$FAKE_BD_DIR/slots/<n>`, each a worktree of the main repository made at its first lend,
+/// `slot-count` of them (1 by default): `lent-<n>` names the run that has slot `n`, `used-<n>` the holder that used it
+/// last and `generation-<n>` the generation of its files. A lend of a run that finds every slot lent writes a queue line
+/// on stderr and waits up to `--wait` seconds for a free slot, while `--pid` lives, then answers its place in the queue.
+/// `give-back` frees the slot of the run and deletes the ref of the run, and with `discard` it answers that count of
+/// discarded changes and moves the generation of the slot. `checkout` moves the slot of the run with `git reset --merge`
+/// and answers `switched`, or `kept` at the commit. `have` asks `cat-file --batch-check`. `ingest` takes the pack of
+/// stdin with `index-pack --stdin --fix-thin` and makes `refs/branch-deck/host/run/<id>` or `base/<name>`. `show`
+/// answers a blob and the ids of paths. `snapshot` adds every file of the slot to an index copy and answers its tree;
+/// `changes` writes the diff from `--base` to that tree. `fill` and `reclaim` answer nothing to do. With `fail-lend`, a
+/// lend refuses.
 const FAKE_BD: &str = r#"#!/bin/sh
 state=$FAKE_BD_DIR
 printf '%s|%s\n' "$PWD" "$*" >>"$state/calls"
-if [ "$1" = schema ]; then
-  if [ -e "$state/old-bd" ]; then echo '{"schema":2,"commands":{"lease":["lease_get"]}}'
-  elif [ -e "$state/no-host-checkout" ]; then echo '{"schema":2,"commands":{"lease":["lease_get","lease_host_lend"]}}'
-  else echo '{"schema":2,"commands":{"lease":["lease_get","lease_host_lend","lease_host_checkout"]}}'; fi
-  exit 0
-fi
+fail() { printf '{"schema":2,"error":{"code":"%s","message":"%s"}}\n' "$1" "$2"; exit "$3"; }
+json_string() { printf '"'; sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/	/\\t/g' | awk '{ printf "%s\\n", $0 }'; printf '"'; }
 if [ "$1" = lease ] && [ "$2" = host ]; then
   verb=$3; shift 3
-  run= affinity= repo= commit=
+  run= affinity= repo= commit= wait= pid= ref= blob= base= patch= ids= rest= mode=
   while [ $# -gt 0 ]; do
     case $1 in
-      --run) run=$2; shift 2 ;;
-      --commit) commit=$2; shift 2 ;;
-      --affinity) affinity=$2; shift 2 ;;
-      --pid) shift 2 ;;
-      -C) repo=$2; shift 2 ;;
-      *) shift ;;
+      --run) run=$2; shift 2; mode= ;;
+      --commit) commit=$2; shift 2; mode= ;;
+      --affinity) affinity=$2; shift 2; mode= ;;
+      --pid) pid=$2; shift 2; mode= ;;
+      --wait) wait=$2; shift 2; mode= ;;
+      --ref) ref=$2; shift 2; mode= ;;
+      --blob) blob=$2; shift 2; mode= ;;
+      --base) base=$2; shift 2; mode= ;;
+      --patch) patch=$2; shift 2; mode= ;;
+      --ids) mode=ids; shift ;;
+      -C) repo=$2; shift 2; mode= ;;
+      *) if [ "$mode" = ids ]; then ids="$ids $1"; else rest="$rest $1"; fi; shift ;;
     esac
   done
   count=1; [ -e "$state/slot-count" ] && count=$(cat "$state/slot-count")
+  slot_of() {
+    n=1
+    while [ "$n" -le "$count" ]; do
+      if [ -e "$state/lent-$n" ] && [ "$(cat "$state/lent-$n")" = "$1" ]; then echo "$n"; return 0; fi
+      n=$((n + 1))
+    done
+    return 1
+  }
   case $verb in
     lend)
-      n=1
-      while [ "$n" -le "$count" ]; do
-        if [ -e "$state/lent-$n" ] && [ "$(cat "$state/lent-$n")" = "$run" ]; then break; fi
-        n=$((n + 1))
+      [ -e "$state/fail-lend" ] && fail invalid_arguments "the table is broken" 2
+      waited=0 said=
+      while :; do
+        n=$(slot_of "$run") || {
+          n=1
+          while [ "$n" -le "$count" ] && [ -e "$state/lent-$n" ]; do n=$((n + 1)); done
+        }
+        [ "$n" -le "$count" ] && break
+        if [ -z "$said" ]; then
+          echo "bd lease host lend: run $run waits 0 s: 0 runs ahead, $count slots, lent to $(cat "$state/lent-1") (1)" >&2
+          said=1
+        fi
+        if [ -z "$wait" ] || [ "$waited" -ge "$((wait * 10))" ] || ! kill -0 "$pid" 2>/dev/null; then
+          printf '{"schema":2,"state":"queued","ahead":0,"slots":%s,"lent":[{"n":1,"run":"%s"}]}\n' "$count" "$(cat "$state/lent-1")"
+          exit 0
+        fi
+        sleep 0.1; waited=$((waited + 1))
       done
-      if [ "$n" -gt "$count" ]; then
-        n=1
-        while [ "$n" -le "$count" ] && [ -e "$state/lent-$n" ]; do n=$((n + 1)); done
-      fi
-      if [ "$n" -gt "$count" ]; then
-        printf '{"schema":2,"state":"queued","ahead":0,"slots":%s,"lent":[{"n":1,"run":"%s"}]}\n' "$count" "$(cat "$state/lent-1")"
-        exit 0
-      fi
       slot=$state/slots/$n
       if [ ! -d "$slot" ]; then
         mkdir -p "$state/slots"
@@ -100,39 +119,84 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
       if [ -e "$state/used-$n" ] && [ "$(cat "$state/used-$n")" = "$affinity" ]; then used=",\"last_used_by_affinity_ms\":$(($(date +%s) * 1000))"; fi
       echo "$affinity" >"$state/used-$n"
       generation=0; [ -e "$state/generation-$n" ] && generation=$(cat "$state/generation-$n")
-      printf '{"schema":2,"state":"lent","slot":{"n":%s,"path":"%s","lease_id":"lease-%s","cleaned_at":0,"generation":%s%s}}\n' "$n" "$slot" "$n" "$generation" "$used"
+      printf '{"schema":2,"state":"lent","slot":{"n":%s,"path":"%s","lease_id":"lease-%s","cleaned_at":0,"generation":%s%s},"waited_ms":%s}\n' "$n" "$slot" "$n" "$generation" "$used" "$((waited * 100))"
       ;;
     give-back)
-      n=1
-      while [ "$n" -le "$count" ]; do
-        if [ -e "$state/lent-$n" ] && [ "$(cat "$state/lent-$n")" = "$run" ]; then
-          discarded=0
-          if [ -e "$state/discard" ]; then
-            discarded=$(cat "$state/discard")
-            generation=0; [ -e "$state/generation-$n" ] && generation=$(cat "$state/generation-$n")
-            echo $((generation + 1)) >"$state/generation-$n"
-          fi
-          rm "$state/lent-$n"
-          printf '{"schema":2,"n":%s,"left_queue":false,"discarded":%s,"processes_checked":true}\n' "$n" "$discarded"
-          exit 0
+      deleted=
+      if git -C "$repo" rev-parse -q --verify "refs/branch-deck/host/run/$run" >/dev/null; then
+        git -C "$repo" update-ref -d "refs/branch-deck/host/run/$run"
+        deleted=",\"deleted_ref\":\"refs/branch-deck/host/run/$run\""
+      fi
+      if n=$(slot_of "$run"); then
+        discarded=0
+        if [ -e "$state/discard" ]; then
+          discarded=$(cat "$state/discard")
+          generation=0; [ -e "$state/generation-$n" ] && generation=$(cat "$state/generation-$n")
+          echo $((generation + 1)) >"$state/generation-$n"
         fi
-        n=$((n + 1))
-      done
-      echo '{"schema":2,"left_queue":true,"discarded":0,"processes_checked":false}'
+        rm "$state/lent-$n"
+        printf '{"schema":2,"n":%s,"left_queue":false,"discarded":%s,"processes_checked":true,"maintenance_started":false%s}\n' "$n" "$discarded" "$deleted"
+        exit 0
+      fi
+      printf '{"schema":2,"left_queue":true,"discarded":0,"processes_checked":false,"maintenance_started":false%s}\n' "$deleted"
       ;;
     checkout)
-      n=1
-      while [ "$n" -le "$count" ]; do
-        if [ -e "$state/lent-$n" ] && [ "$(cat "$state/lent-$n")" = "$run" ]; then
-          slot=$state/slots/$n
-          moved=switched
-          if [ "$(git -C "$slot" rev-parse HEAD)" = "$commit" ]; then moved=kept; else git -C "$slot" reset -q --merge "$commit" >&2 || exit 1; fi
-          printf '{"schema":2,"n":%s,"path":"%s","commit":"%s","moved":"%s"}\n' "$n" "$slot" "$commit" "$moved"
-          exit 0
+      n=$(slot_of "$run") || fail no_lease "no slot" 4
+      slot=$state/slots/$n
+      moved=switched
+      if [ "$(git -C "$slot" rev-parse HEAD)" = "$commit" ]; then moved=kept; else git -C "$slot" reset -q --merge "$commit" >&2 || exit 1; fi
+      printf '{"schema":2,"n":%s,"path":"%s","commit":"%s","moved":"%s"}\n' "$n" "$slot" "$commit" "$moved"
+      ;;
+    have)
+      [ -d "$repo/.git" ] || fail not_a_repository "no repository" 2
+      found= sep=
+      for id in $rest; do
+        if [ "$(echo "$id^{commit}" | git -C "$repo" cat-file --batch-check | cut -d' ' -f2)" = commit ]; then
+          found="$found$sep\"$id\""; sep=,
         fi
-        n=$((n + 1))
       done
-      echo '{"schema":2,"error":{"code":"no_lease","message":"no slot"}}'; exit 2
+      printf '{"schema":2,"repository":"%s","commits":[%s]}\n' "$repo" "$found"
+      ;;
+    ingest)
+      case $ref in
+        run:*) name=refs/branch-deck/host/run/${ref#run:} ;;
+        base:*) name=refs/branch-deck/host/base/${ref#base:} ;;
+        *) cat >/dev/null; fail invalid_arguments "bad ref" 2 ;;
+      esac
+      if ! git -C "$repo" index-pack --stdin --fix-thin >/dev/null 2>"$state/ingest.err"; then
+        cat >/dev/null; fail git_error "index-pack failed" 5
+      fi
+      git -C "$repo" update-ref "$name" "$commit" || fail git_error "update-ref failed" 5
+      printf '{"schema":2,"ref":"%s","commit":"%s","objects":1,"stored":"pack","maintenance_started":false}\n' "$name" "$commit"
+      ;;
+    show)
+      text=null
+      if [ -n "$blob" ] && [ "$(git -C "$repo" cat-file -t "$commit:$blob" 2>/dev/null)" = blob ]; then
+        text="{\"path\":\"$blob\",\"id\":\"$(git -C "$repo" rev-parse "$commit:$blob")\",\"text\":$(git -C "$repo" cat-file -p "$commit:$blob" | json_string)}"
+      fi
+      list= sep=
+      for path in $ids; do
+        id=$(git -C "$repo" rev-parse -q --verify "$commit:$path" 2>/dev/null) && id="\"$id\"" || id=null
+        list="$list$sep{\"path\":\"$path\",\"id\":$id}"; sep=,
+      done
+      printf '{"schema":2,"commit":"%s","blob":%s,"ids":[%s]}\n' "$commit" "$text" "$list"
+      ;;
+    snapshot|changes)
+      n=$(slot_of "$run") || fail no_lease "no slot" 4
+      slot=$state/slots/$n
+      index=$state/scan-$run.index
+      cp "$(git -C "$slot" rev-parse --path-format=absolute --git-path index)" "$index"
+      GIT_INDEX_FILE=$index git -C "$slot" add --all >&2 || exit 5
+      tree=$(GIT_INDEX_FILE=$index git -C "$slot" write-tree) || exit 5
+      rm -f "$index"
+      if [ "$verb" = snapshot ]; then
+        printf '{"schema":2,"n":%s,"path":"%s","head":"%s","tree":"%s","changed":0}\n' "$n" "$slot" "$(git -C "$slot" rev-parse HEAD)" "$tree"
+      elif [ "$tree" = "$base" ]; then
+        printf '{"schema":2,"n":%s,"path":"%s","tree":"%s","changed":false}\n' "$n" "$slot" "$tree"
+      else
+        git -C "$slot" diff-tree -r -p --binary --full-index --no-renames "$base" "$tree" >"$patch.part" && mv "$patch.part" "$patch"
+        printf '{"schema":2,"n":%s,"path":"%s","tree":"%s","changed":true,"patch":"%s","patch_bytes":%s}\n' "$n" "$slot" "$tree" "$patch" "$(wc -c <"$patch" | tr -d ' ')"
+      fi
       ;;
     fill) echo '{"schema":2,"filled":[]}' ;;
     reclaim) echo '{"schema":2,"reclaimed":[]}' ;;
@@ -646,9 +710,9 @@ fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
     let world = &agent.world;
     let (head, pack) = local_commit(world);
     assert_eq!(agent.pack(&head, "refs/yonder/1-1", &pack), Reply::Packed);
-    assert_eq!(git(&world.repo(), &["rev-parse", "refs/yonder/1-1"]), head);
+    assert_eq!(git(&world.repo(), &["rev-parse", "refs/branch-deck/host/run/1-1"]), head);
     assert_eq!(git(&world.repo(), &["cat-file", "-p", &format!("{head}:b.txt")]), "b");
-    // The cleanup of `serve` finds the refs of the packs through the repository list.
+    // The keeper of `serve` finds the repositories of the packs through the repository list.
     assert_eq!(
         fs::read_to_string(world.home().join(".cache/yonderd/repos")).expect("the repository list"),
         format!("{}\n", world.repo().display())
@@ -661,7 +725,7 @@ fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
         "{refused:?}"
     );
 
-    // A stream that is not a pack fails in index-pack.
+    // A stream that is not a pack fails in the ingest.
     let refused = agent.pack(&"2".repeat(40), "refs/yonder/1-2", b"not a pack");
     assert!(
         matches!(&refused, Reply::Refused { code, .. } if code == "pack_failed"),
@@ -673,7 +737,7 @@ fn a_thin_pack_lands_and_its_ref_points_at_the_commit() {
 fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten() {
     let agent = World::new().serve();
     let world = &agent.world;
-    git(&world.repo(), &["update-ref", "refs/yonder/1-1", &world.commit]);
+    git(&world.repo(), &["update-ref", "refs/branch-deck/host/run/1-1", &world.commit]);
     let script = "echo out-1; echo err-1 >&2; mkdir -p out/bt-runs/run-a; echo report >out/bt-runs/run-a/report.txt; \
                   printf x >out/bt-runs/tool.sh; chmod +x out/bt-runs/tool.sh; cat a.txt; echo; exit 3";
     agent.start(world.spec("1-1", HOLDER, script));
@@ -695,17 +759,17 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
     let log_size = fs::metadata(world.run_dir("1-1").join("events.log")).expect("the log").len();
     assert_eq!(followed.lines.last().map(|(_, _, end)| *end), Some(log_size));
 
-    // The ref is gone, the slot goes back after the end of the run, and bd ran in `/`.
-    let refs = git(&world.repo(), &["for-each-ref", "refs/yonder/"]);
-    assert_eq!(refs, "");
+    // The slot goes back after the end of the run, the give-back deletes the ref, and bd ran in `/`.
     eventually("the give-back of the slot", || !world.bd_dir().join("lent-1").exists());
+    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/branch-deck/host/"]), "");
     assert!(
         world.bd_calls().contains("lease host give-back --run 1-1 -C "),
         "{}",
         world.bd_calls()
     );
     assert!(
-        world.bd_calls().contains("lease host lend --run 1-1 --pid ") && world.bd_calls().contains(&format!("--affinity {HOLDER} -C ")),
+        world.bd_calls().contains("lease host lend --run 1-1 --pid ")
+            && world.bd_calls().contains(&format!("--affinity {HOLDER} --wait 3600 -C ")),
         "{}",
         world.bd_calls()
     );
@@ -758,7 +822,6 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
     assert!(!slot.join("out/bt-runs/run-a").exists());
 
     // A second run of the holder gets the slot it used last.
-    git(&world.repo(), &["update-ref", "refs/yonder/1-2", &world.commit]);
     agent.start(world.spec("1-2", HOLDER, "exit 0"));
     let second = agent.follow("1-2", 0);
     assert_eq!(second.end, Reply::Exit { code: 0 });
@@ -922,7 +985,7 @@ fn with_one_host_slot_a_second_run_waits_for_the_give_back_of_the_first() {
     agent.start(world.spec("5-1", HOLDER, &script));
     agent.follow_until("5-1", 0, "holding");
     agent.start(world.spec("5-2", "yonder-other", "echo second"));
-    let waiting = "yonder: waiting for a host slot of repo: 1 of 1 lent (5-1), 0 run(s) ahead";
+    let waiting = "yonder: bd lease host lend: run 5-2 waits 0 s: 0 runs ahead, 1 slots, lent to 5-1 (1)";
     eventually("the wait of the second run", || {
         fs::read_to_string(world.run_dir("5-2").join("events.log")).is_ok_and(|log| log.contains(waiting))
     });
@@ -978,31 +1041,17 @@ fn the_keeper_reclaims_and_fills_the_slots_of_a_known_repository() {
 }
 
 #[test]
-fn a_bd_without_lease_host_checkout_has_the_slot_checked_out_by_the_agent() {
+fn a_failed_lend_refuses_the_run_with_lease_failed() {
     let agent = World::new().serve();
     let world = &agent.world;
-    fs::write(world.bd_dir().join("no-host-checkout"), "").expect("the flag");
-    agent.start(world.spec("7-2", HOLDER, "cat a.txt"));
-    let followed = agent.follow("7-2", 0);
-    assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("7-2"));
-    assert!(!world.bd_calls().contains("lease host checkout"), "{}", world.bd_calls());
-    assert_eq!(git(&world.slot(1), &["rev-parse", "HEAD"]), world.commit);
-}
-
-#[test]
-fn a_bd_without_lease_host_refuses_the_run_and_deletes_the_ref() {
-    let agent = World::new().serve();
-    let world = &agent.world;
-    fs::write(world.bd_dir().join("old-bd"), "").expect("the flag");
-    git(&world.repo(), &["update-ref", "refs/yonder/7-1", &world.commit]);
+    fs::write(world.bd_dir().join("fail-lend"), "").expect("the flag");
     agent.start(world.spec("7-1", HOLDER, "true"));
     let followed = agent.follow("7-1", 0);
     assert!(
-        matches!(&followed.end, Reply::Refused { code, message } if code == "lease_failed" && message.contains("`bd lease host`")),
+        matches!(&followed.end, Reply::Refused { code, message } if code == "lease_failed" && message.contains("the table is broken")),
         "{followed:?}"
     );
     assert_eq!(followed.phase_names(), ["slot"]);
-    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "");
     let Reply::Runs { runs } = agent.reply(&Request::Runs) else {
         panic!("not runs");
     };
@@ -1083,12 +1132,8 @@ chmod 755 "$bin/git"
 }
 
 #[test]
-fn serve_removes_a_run_that_ended_a_day_ago_and_the_ref_of_a_pack_without_a_run() {
+fn serve_removes_a_run_that_ended_a_day_ago() {
     let world = World::new();
-    // A pack that no start followed: its ref names no run directory, and its run id is a day old.
-    git(&world.repo(), &["update-ref", "refs/yonder/1000-1", &world.commit]);
-    fs::create_dir_all(world.home().join(".cache/yonderd")).expect("the cache directory");
-    fs::write(world.home().join(".cache/yonderd/repos"), format!("{}\n", world.repo().display())).expect("the repository list");
     let old = world.run_dir("8-1");
     fs::create_dir_all(&old).expect("an old run");
     fs::write(
@@ -1105,9 +1150,6 @@ fn serve_removes_a_run_that_ended_a_day_ago_and_the_ref_of_a_pack_without_a_run(
         .expect("an old time");
     let agent = world.serve();
     eventually("the removal of the old run", || !agent.world.run_dir("8-1").exists());
-    eventually("the removal of the stale ref", || {
-        git(&agent.world.repo(), &["for-each-ref", "refs/yonder/"]).is_empty()
-    });
     assert_eq!(agent.reply(&Request::Runs), Reply::Runs { runs: vec![] });
 }
 
@@ -1280,7 +1322,7 @@ fn a_cancel_in_the_queue_of_the_host_slots_ends_the_run_before_its_command_and_l
     agent.follow_until("11-1", 0, "holding");
     agent.start(world.spec("11-2", "yonder-other", &format!("touch '{}'", marker.display())));
     eventually("the wait of the second run", || {
-        fs::read_to_string(world.run_dir("11-2").join("events.log")).is_ok_and(|log| log.contains("waiting for a host slot"))
+        fs::read_to_string(world.run_dir("11-2").join("events.log")).is_ok_and(|log| log.contains("bd lease host lend: run 11-2 waits"))
     });
     let done = agent.reply(&Request::Cancel { run: "11-2".to_owned() });
     assert!(matches!(done, Reply::Done { .. }), "{done:?}");
@@ -1307,7 +1349,7 @@ fn a_cancel_during_the_checkout_kills_git_and_ends_the_run_before_its_command() 
     let second = commit_files(world, &[("b.txt", "b")]);
     git(&world.repo(), &["reset", "-q", "--hard", &world.commit]);
     fs::write(world.bd_dir().join("slow-checkout"), "").expect("the flag");
-    git(&world.repo(), &["update-ref", "refs/yonder/12-1", &second]);
+    git(&world.repo(), &["update-ref", "refs/branch-deck/host/run/12-1", &second]);
     agent.start(RunSpec {
         commit: second,
         ..world.spec("12-1", HOLDER, &format!("touch '{}'", marker.display()))
@@ -1324,7 +1366,9 @@ fn a_cancel_during_the_checkout_kills_git_and_ends_the_run_before_its_command() 
         started.elapsed()
     );
     assert!(!marker.exists(), "the command ran");
-    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "", "the ref stays");
+    eventually("the give-back deletes the ref", || {
+        git(&world.repo(), &["for-each-ref", "refs/branch-deck/host/"]).is_empty()
+    });
 }
 
 #[test]
@@ -1367,22 +1411,6 @@ fn a_process_that_the_command_leaves_in_its_group_gets_sigterm_and_sigkill_befor
     // The system reaps the killed process a moment later; its parent, the command, has ended.
     let left = fs::read_to_string(&pid_file).expect("the pid");
     eventually("the end of the process of the group", || !process_alive(left.trim()));
-}
-
-#[test]
-fn a_refused_start_deletes_the_ref_of_its_pack() {
-    let agent = World::new().serve();
-    let world = &agent.world;
-    git(&world.repo(), &["update-ref", "refs/yonder/15-1", &world.commit]);
-    let refused = agent.reply(&Request::Start(RunSpec {
-        fetch: vec!["../out".to_owned()],
-        ..world.spec("15-1", HOLDER, "true")
-    }));
-    assert!(
-        matches!(&refused, Reply::Refused { code, .. } if code == "bad_request"),
-        "{refused:?}"
-    );
-    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "");
 }
 
 #[test]
@@ -1564,16 +1592,17 @@ fn the_chunks_of_a_pack_keep_its_run_waiting_and_a_start_without_them_ends_at_th
 }
 
 /// A pack that comes after the end of its run makes no ref, because no run is left to delete it.
+/// A pack after the end of its run lands, and marks no run: the ref stays for `bd lease host reclaim`
 #[test]
-fn a_pack_after_the_end_of_its_run_leaves_no_ref() {
+fn a_pack_after_the_end_of_its_run_lands_and_marks_no_run() {
     let agent = World::new().serve();
     let world = &agent.world;
     agent.start(world.spec("26-1", HOLDER, "true"));
     assert_eq!(agent.follow("26-1", 0).end, Reply::Exit { code: 0 });
     let (head, pack) = local_commit(world);
     assert_eq!(agent.pack(&head, "refs/yonder/26-1", &pack), Reply::Packed);
-    assert_eq!(git(&world.repo(), &["for-each-ref", "refs/yonder/"]), "");
     assert_eq!(git(&world.repo(), &["cat-file", "-t", &head]), "commit", "the objects land");
+    assert!(!world.run_dir("26-1").join("packed").exists());
 }
 
 #[test]
@@ -1597,22 +1626,17 @@ fn a_cancel_during_the_pack_wait_ends_the_run_before_its_command() {
 }
 
 #[test]
-fn a_pack_to_a_base_ref_lands_and_the_cleanup_keeps_the_base_refs() {
-    let world = World::new();
-    git(&world.repo(), &["update-ref", "refs/yonder/base/master", &world.commit]);
-    // A stale run ref that sorts after the base ref: once it is gone, the cleanup has passed the base ref.
-    git(&world.repo(), &["update-ref", "refs/yonder/zz-stale", &world.commit]);
-    fs::create_dir_all(world.home().join(".cache/yonderd")).expect("the cache directory");
-    fs::write(world.home().join(".cache/yonderd/repos"), format!("{}\n", world.repo().display())).expect("the repository list");
-    let agent = world.serve();
+fn a_pack_to_a_base_ref_lands_in_a_base_ref_of_branch_deck() {
+    let agent = World::new().serve();
     let world = &agent.world;
-    eventually("the removal of the stale ref", || {
-        git(&world.repo(), &["for-each-ref", "--format=%(refname)", "refs/yonder/"]) == "refs/yonder/base/master"
-    });
-
     let (head, pack) = local_commit(world);
     assert_eq!(agent.pack(&head, "refs/yonder/base/master", &pack), Reply::Packed);
-    assert_eq!(git(&world.repo(), &["rev-parse", "refs/yonder/base/master"]), head);
+    assert_eq!(git(&world.repo(), &["rev-parse", "refs/branch-deck/host/base/master"]), head);
+    assert!(
+        world.bd_calls().contains("lease host ingest --ref base:master --commit "),
+        "{}",
+        world.bd_calls()
+    );
     for bad in ["refs/yonder/base/a/b", "refs/yonder/base/.x", "refs/yonder/base/"] {
         let refused = agent.pack(&head, bad, &pack);
         assert!(

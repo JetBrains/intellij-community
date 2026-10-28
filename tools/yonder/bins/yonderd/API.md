@@ -27,10 +27,12 @@ exits with 1. A usage error exits with 2.
 | A `watchdog` that refuses, see [The upgrade](#the-upgrade) | `upgrade_failed`, `launchd_failed` |
 
 A run borrows a host slot of the pool of Branch Deck for its run only, through `bd lease host` (`lend`, `give-back`,
-`fill`, `reclaim`; the "Host slots" of `spec/cli/lease.spec.md` in the Branch Deck repository). The bd of the host
-must name `lease_host_lend` in `bd schema`; else a run refuses with `lease_failed`. The keeper of `serve` wakes once a
-minute and at each `Start` of a repository: it runs `bd lease host reclaim`, then `bd lease host fill`. A failed fill
-waits 1, 5, then 15 minutes.
+`checkout`, `fill`, `reclaim`; the "Host slots" of `spec/cli/lease.spec.md` in the Branch Deck repository). Branch Deck
+also does each git call of the agent on the repositories and the slots: `have` for `Have` and the pack wait, `ingest`
+for `Pack`, `show` for `.yonder.toml` and the inputs of the prepare steps, and `snapshot` and `changes` for the changes
+of a command. So the host needs a bd with these commands. The keeper of `serve` wakes once a minute and at each `Start`
+of a repository: it runs `bd lease host reclaim`, then `bd lease host fill`. A failed fill waits 1, 5, then 15
+minutes.
 
 ## The requests
 
@@ -40,7 +42,7 @@ waits 1, 5, then 15 minutes.
 | A commit that is not 40 or 64 lower-case hex digits | `bad_request` |
 | More than 1024 commits in one `Have` | `bad_request` |
 | A pack ref that is not `refs/yonder/<run id>` or `refs/yonder/base/<name>`, where a name has the rules of a run id | `bad_request` |
-| A start ref that is not `refs/yonder/<run>` of its own run | `bad_request`, and the ref stays |
+| A start ref that is not `refs/yonder/<run>` of its own run | `bad_request` |
 | A holder that cannot name a base ref (`[0-9A-Za-z._-]+`, no leading dot) | `bad_request` |
 | A start with no command, or a fetch directory with a root, `.` or `..` | `bad_request` |
 | A follow offset that is not 0 or the offset after a line end of the log | `bad_request` |
@@ -65,28 +67,33 @@ waits 1, 5, then 15 minutes.
 - Each git, bd and launchctl child of the agent runs in a process group of its own. A deadline or a cancel kills the
   whole group, so a stopped `bd lease host fill` leaves no clone behind.
 - A run lends a slot with the pid of its supervisor and the holder of its spec as the affinity: the slot that holder
-  used last, else the one used longest ago, else a place in the queue. While every slot is lent it asks again every
-  2 s, writes `yonder: waiting for a host slot of <repo>: …` to its log at the start and once a minute, and refuses
-  with `lock_timeout` after an hour. A cancel ends the wait.
+  used last, else the one used longest ago, else a place in the queue. One `bd lease host lend --wait 3600` waits while
+  every slot is lent. Each line that bd writes on its stderr, such as its queue line once a minute, goes to the log of
+  the run as `yonder: bd lease host lend: …`. A lend that the wait ended in the queue refuses with `lock_timeout`. A
+  cancel kills the lend.
 - On every way out, after its `exit.json`, a run gives its slot back (`bd lease host give-back --run`): the processes
-  that it left in the slot stop and its changes go; a run that got no slot leaves the queue. No signal cuts the
+  that it left in the slot stop, its changes go, and Branch Deck deletes the ref of its pack and can start the deferred
+  git maintenance; a run that got no slot leaves the queue. No signal cuts the
   give-back, and its lines go to `supervisor.log`. Nothing reads the slot after the run: the stage holds what comes
   back.
 - `Have` and the end of `Pack` send `Reply::Heartbeat` while they wait.
 - A `Start` can come before the `Pack` of its ref. The run borrows its slot, then waits for the pack
   before the checkout. A commit that the repository has already needs no pack. Else the wait ends when the pack has
-  landed: the pack writes `packed` in the run directory after the start ref. Each chunk of the pack writes `packing`,
+  landed: the pack writes `packed` in the run directory after its ref. Each chunk of the pack writes `packing`,
   at most once a second, and a wait without a chunk for `PACK_STALL_SECONDS` ends the run, because its client is
   gone. An empty chunk counts, so a client sends one while it builds its pack. A wait longer than 1 s writes the line
   `yonder: waiting for the pack of <commit>` to the log. A cancel ends the wait too.
 - The checkout writes only the files that differ between the commit of the slot and the commit of the run, so its
   time follows the diff, not the tree. Branch Deck moves the slot, which it owns: `bd lease host checkout --run <id>
   --commit <id>` (`reset --merge` of the detached HEAD, no `status`, since the give-back of the last run left the slot
-  clean). With a bd whose `bd schema` lacks `lease_host_checkout`, the agent runs the same `git reset --merge` itself.
-  A local change or an untracked file in a path of the diff gets the forced checkout `git checkout -f --detach` instead
-  (the agent's own checkout also for a slot on a branch or an unreadable HEAD), which stats every file. Then the log has
-  the line `yonder: checked out with a scan of every file, because <reason>`. A cancel kills bd and its git.
-- A pack that comes after the end of its run makes no ref. Its objects land.
+  clean). A local change or an untracked file in a path of the diff gets the forced checkout of Branch Deck instead,
+  which stats every file. Then the log has the line `yonder: checked out with a scan of every file, because <reason>`.
+  A cancel kills bd and its git.
+- A pack goes to `bd lease host ingest --ref run:<id> | base:<name> --commit <id>` on its stdin. Branch Deck lands
+  the objects and makes `refs/branch-deck/host/run/<id>` or `refs/branch-deck/host/base/<name>`. The give-back of the
+  run deletes the run ref. `bd lease host reclaim` deletes a run ref without a lend after an hour, such as the ref of a
+  refused start or of a pack after the end of its run, and a base ref that no pack moved for 14 days. A pack after the
+  end of its run writes no `packed`.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
   the phases that have ended so far. The phases are `git`, `slot`, `pack_wait`, `checkout`, `prepare`, `command` and
   `stage`, in this order. Only a run that waited for an upgrade of git has `git`. A run that ends early has only the phases up to its last step.
@@ -98,10 +105,8 @@ waits 1, 5, then 15 minutes.
 - A follow sends its heartbeats from a thread of their own, so a slow read of the run files holds none back. On macOS a
   kqueue tells the follow about a change of the log or of the run directory at once. On Linux the follow reads the
   run files every 200 ms.
-- The cleanup never deletes a base ref `refs/yonder/base/<name>`. The next pack to the same name replaces it.
 - `Cancel` writes the cancel request of the run and answers at once. A run that its supervisor lost ends at the next
   `Cancel`, `Follow` or cleanup, with `agent_error`.
-- A refused `Start` deletes the ref of its pack, unless a kept run has the same id.
 - A run that ends with a refusal shows the exit code 255 in `Runs`. A run that a cancel ends before its command starts
   ends with the exit code 130.
 - A TLS handshake has 3 s in all. At most 128 handshakes go on at a time, and at most 8 of one peer address. The agent
@@ -153,10 +158,9 @@ The agent, bd, the prepare steps and the commands use the git that their `PATH` 
    wait to the end of its process, the give-back included, and so does each fill of the keeper. A run that started
    before an upgrade of the agent counts too, because its supervisor outlives `serve`. The upgrade takes that flock
    exclusively, up to 60 min; then Homebrew starts anyway, and the log of `serve` and the log of each run that goes on
-   say so. The `index-pack` and the `update-ref` of a pack take the shared flock at once, also while the upgrade waits
-   for it, and go on without it while Homebrew runs, because a wait would stall the pack of the client. Other short git
-   and bd calls of `serve` take no flock, so they can meet the swap of Homebrew in a short window: the git of `Have`,
-   the repository check and the ref delete of a start, the cleanup thread, and `reclaim` and the lease return of the
+   say so. The ingest of a pack takes the shared flock at once, also while the upgrade waits for it, and goes on
+   without it while Homebrew runs, because a wait would stall the pack of the client. Other short bd calls of `serve`
+   take no flock, so they can meet the swap of Homebrew in a short window: the `have` of `Have`, and `reclaim` of the
    keeper. A failure there is a refusal of that request, or a line of the log of `serve`. Homebrew runs with
    `HOMEBREW_AUTO_UPDATE_SECS=0`, so it updates its formulae first, and `HOMEBREW_NO_INSTALL_CLEANUP=1`, so the old
    keg stays. Its deadline is 30 min.
@@ -233,14 +237,12 @@ creates = ["node_modules"]
 
 ## The changes of a command
 
-With `RunSpec::changes`, the supervisor writes the tree of the slot before the command and after it, as `git add --all`
-sees it, into a copy of the index of the slot (`before.index`, `after.index` in the run directory). `git status` of the
-copy names the paths that differ. Up to 256 of them go through `git add --all` by their paths; with more, or when a path
-went away before the add, a plain `git add --all` runs. Then `git write-tree` writes the tree. With the
-fsmonitor and the untracked cache of the repository configuration, the status reads only what changed. The index of the
-slot stays as it is. The patch from the first tree to the second, `git diff-tree -p --binary
---full-index --no-renames`, goes to `changes.patch`. A command that changed nothing has no patch. The scan before the
-command comes after the prepare steps, so their changes stay out of the patch.
+With `RunSpec::changes`, the supervisor asks Branch Deck for the tree of the slot before the command, as `git add
+--all` stages it (`bd lease host snapshot --run <id>`). After the command, `bd lease host changes --run <id> --base
+<tree> --patch <run dir>/changes.patch` writes the patch from that tree to the files of the slot, `git diff-tree -p
+--binary --full-index --no-renames`. Branch Deck scans through a copy of the index, in the untracked mode and with the
+fsmonitor of the repository configuration, so the index of the slot stays as it is. A command that changed nothing
+has no patch. The scan before the command comes after the prepare steps, so their changes stay out of the patch.
 
 ## The fetch
 

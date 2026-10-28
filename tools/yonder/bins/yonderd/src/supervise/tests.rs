@@ -110,6 +110,12 @@ fn repo_with_a_travelling_commit() -> (tempfile::TempDir, PathBuf, String, PathB
     (dir, repo, later, object, hidden)
 }
 
+/// Whether a commit is in `repo`, as `bd lease host have` answers: a loose object of the commit.
+fn has(repo: &Path) -> impl Fn(&str) -> Result<bool, String> {
+    let objects = repo.join(".git/objects");
+    move |commit| Ok(objects.join(&commit[..2]).join(&commit[2..]).is_file())
+}
+
 fn limits(deadline_ms: u64, stall_ms: u64) -> PackLimits {
     PackLimits {
         deadline: Duration::from_millis(deadline_ms),
@@ -124,7 +130,15 @@ fn the_pack_wait_ends_at_once_for_a_present_commit_at_its_deadline_at_a_stall_or
     let (run, _lock) = Runs::new(dir.path().join("runs")).create(&spec_of(&missing)).expect("a run");
     let mut said = Vec::new();
     let mut wait = |commit: &str, limits: PackLimits, stop: Stop<'_>| {
-        wait_for_pack(&run, &repo, &spec_of(commit), limits, stop, &mut |line| said.push(line.to_owned()))
+        wait_for_pack(
+            &run,
+            &repo,
+            &spec_of(commit),
+            limits,
+            stop,
+            &mut |line| said.push(line.to_owned()),
+            &has(&repo),
+        )
     };
 
     // A commit that the host has already needs no pack.
@@ -165,9 +179,15 @@ fn the_chunks_of_a_pack_keep_the_wait_alive_and_its_mark_ends_it() {
             }
             run.mark_packed().expect("the pack landed");
         });
-        wait_for_pack(&run, &repo, &spec_of(&later), limits(30_000, 500), &|| false, &mut |line| {
-            said.push(line.to_owned());
-        })
+        wait_for_pack(
+            &run,
+            &repo,
+            &spec_of(&later),
+            limits(30_000, 500),
+            &|| false,
+            &mut |line| said.push(line.to_owned()),
+            &has(&repo),
+        )
     });
     assert!(waited.expect("no refusal"));
     assert!(started.elapsed() >= Duration::from_millis(1500), "{:?}", started.elapsed());
@@ -184,7 +204,15 @@ fn the_chunks_of_a_pack_keep_the_wait_alive_and_its_mark_ends_it() {
         thread::sleep(Duration::from_millis(100));
         fs::rename(&hidden, &object).expect("the object back");
     });
-    let waited = wait_for_pack(&other, &repo, &spec_of(&later), limits(30_000, 400), &|| false, &mut |_| {});
+    let waited = wait_for_pack(
+        &other,
+        &repo,
+        &spec_of(&later),
+        limits(30_000, 400),
+        &|| false,
+        &mut |_| {},
+        &has(&repo),
+    );
     restore.join().expect("the restore");
     assert!(waited.expect("the commit came without a mark"));
 }

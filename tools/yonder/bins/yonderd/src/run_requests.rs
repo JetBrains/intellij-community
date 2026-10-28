@@ -20,11 +20,11 @@ use yonder_link::proto::{FileKind, Reply, RunSpec, is_run_id};
 use yonder_link::{Channel, LinkError};
 
 use crate::files::append_private;
-use crate::refused::{AGENT_ERROR, BAD_REQUEST, BAD_RUN_ID, RUN_EXISTS, Refusal, SPAWN_FAILED, refused, reply};
+use crate::refused::{AGENT_ERROR, BAD_REQUEST, BAD_RUN_ID, Refusal, SPAWN_FAILED, refused, reply};
 use crate::run::{ExitRecord, RunDir, SUPERVISOR_LOG, epoch_ms, is_line_start, read_events};
 use crate::serve::{Agent, check_holder, log};
 use crate::watch::Watch;
-use crate::{child, git, tuning};
+use crate::{child, repo, tuning};
 
 /// The longest wait of a follow for a change of the run files. A run that lost its supervisor changes no file, so this
 /// bounds the time until the follow ends it.
@@ -40,27 +40,10 @@ const FOLLOW_READ: usize = 1024 * 1024;
 const WRITE_DEADLINE: Duration = Duration::from_secs(60);
 
 impl Agent {
-    /// Makes the run directory, starts `yonderd supervise` in a session of its own, and answers at once. A refused
-    /// start deletes the ref that the pack of the run made, unless a kept run has the same id. It never deletes the
-    /// ref of another run.
+    /// Makes the run directory, starts `yonderd supervise` in a session of its own, and answers at once. The ref that
+    /// the pack of a refused start made stays until `bd lease host reclaim`, which deletes a run ref without a lend
+    /// after an hour.
     pub(crate) fn start(&self, spec: &RunSpec) -> Result<Reply, Refusal> {
-        let started = self.start_checked(spec);
-        if let Err(refusal) = &started
-            && refusal.code != RUN_EXISTS
-            && is_run_id(&spec.run)
-            && spec.reference == run_ref(&spec.run)
-        {
-            let repo = self.home.expand(&spec.repo);
-            if git::check_repo(&repo).is_ok()
-                && let Err(error) = git::delete_ref(&repo, &spec.reference)
-            {
-                log(&format!("cannot delete {} in {}: {error}", spec.reference, repo.display()));
-            }
-        }
-        started
-    }
-
-    fn start_checked(&self, spec: &RunSpec) -> Result<Reply, Refusal> {
         if !is_run_id(&spec.run) {
             return Err(refused(BAD_RUN_ID, format!("{:?} cannot name a run directory", spec.run)));
         }
@@ -68,7 +51,7 @@ impl Agent {
         if spec.command.is_empty() {
             return Err(refused(BAD_REQUEST, "the run has no command"));
         }
-        if !git::is_commit_id(&spec.commit) {
+        if !repo::is_commit_id(&spec.commit) {
             return Err(refused(BAD_REQUEST, format!("{:?} is not a full commit id", spec.commit)));
         }
         if spec.reference != run_ref(&spec.run) {
@@ -257,7 +240,7 @@ impl Agent {
 
 /// The ref that the pack of the run `run` makes: `refs/yonder/<run>`.
 pub(crate) fn run_ref(run: &str) -> String {
-    format!("{}{run}", git::REF_PREFIX)
+    format!("{}{run}", repo::REF_PREFIX)
 }
 
 /// The loop of a follow: it reads the run files and sends what is new, until the end of the run.

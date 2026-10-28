@@ -33,9 +33,9 @@ before a read and at the close. `send`, `send_all`, `send_end`, `send_keepalive`
 | `run_exists` | A start with the id of a kept run. |
 | `unknown_run` | No kept run has the id. |
 | `repo_missing` | The repository path is not a git repository on the host. |
-| `pack_failed` | `git index-pack` or `git update-ref` failed. |
+| `pack_failed` | `bd lease host ingest` failed: the stream is no pack, or git refused it. |
 | `lock_timeout` | A run got no host slot within an hour, or an upgrade of git did not end in 91 min. |
-| `lease_failed` | `bd lease host lend` failed, or the bd of the host lacks it. |
+| `lease_failed` | `bd lease host lend` failed. |
 | `pack_missing` | The commit of a run did not come in a pack within `PACK_WAIT_SECONDS`. |
 | `checkout_failed` | The commit cannot be checked out in the slot. |
 | `spawn_failed` | The command cannot start. |

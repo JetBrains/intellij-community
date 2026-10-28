@@ -45,18 +45,12 @@ fn keep(home: &Home, woken: &mpsc::Receiver<PathBuf>) {
         .chain(cleanup::repos(home))
         .collect();
     let fills: Arc<Mutex<HashMap<PathBuf, Fill>>> = Arc::default();
-    let mut said_unsupported = false;
     loop {
-        if slots::supported() {
-            // bd uses git: no slot work while Homebrew replaces it.
-            if !host_git::upgrading(home) {
-                for repo in &repos {
-                    tend(home, repo, &fills);
-                }
+        // bd uses git: no slot work while Homebrew replaces it.
+        if !host_git::upgrading(home) {
+            for repo in &repos {
+                tend(home, repo, &fills);
             }
-        } else if !said_unsupported {
-            log(slots::UNSUPPORTED);
-            said_unsupported = true;
         }
         match woken.recv_timeout(tuning::keeper_tick()) {
             Ok(repo) => {

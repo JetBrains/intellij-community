@@ -5,7 +5,7 @@
 //! stops leaves no clone or git of its own behind.
 
 use std::fmt;
-use std::io::{self, Read, Write};
+use std::io::{self, Read};
 use std::os::fd::RawFd;
 use std::os::unix::process::{CommandExt, ExitStatusExt};
 use std::process::{Child, ChildStdin, Command, ExitStatus, Stdio};
@@ -91,12 +91,23 @@ pub(crate) struct Running {
     deadline: Duration,
     stdout: Collected,
     stderr: Collected,
+    /// The lines of the stderr as they come, when the caller asked for them.
+    lines: Option<Receiver<String>>,
     /// Dropped with the `Running`, which ends the watchdog.
     _watchdog: Sender<()>,
 }
 
 /// Starts `command` with a piped stdin when `piped_stdin` is set, and with `/dev/null` otherwise.
 pub(crate) fn spawn(command: &mut Command, piped_stdin: bool, deadline: Duration) -> Result<Running, ChildError> {
+    start(command, piped_stdin, deadline, false)
+}
+
+/// Starts `command` as [`spawn`] does, and keeps each line of its stderr for [`Running::wait_with_lines`].
+pub(crate) fn spawn_with_lines(command: &mut Command, piped_stdin: bool, deadline: Duration) -> Result<Running, ChildError> {
+    start(command, piped_stdin, deadline, true)
+}
+
+fn start(command: &mut Command, piped_stdin: bool, deadline: Duration, with_lines: bool) -> Result<Running, ChildError> {
     let what = describe(command);
     command
         .stdin(if piped_stdin { Stdio::piped() } else { Stdio::null() })
@@ -104,8 +115,14 @@ pub(crate) fn spawn(command: &mut Command, piped_stdin: bool, deadline: Duration
         .stderr(Stdio::piped())
         .process_group(0);
     let mut child = command.spawn().map_err(|error| ChildError::Spawn { what: what.clone(), error })?;
-    let stdout = collect(child.stdout.take());
-    let stderr = collect(child.stderr.take());
+    let stdout = collect(child.stdout.take(), None);
+    let (lines, sent) = if with_lines {
+        let (send, receive) = mpsc::channel();
+        (Some(receive), Some(send))
+    } else {
+        (None, None)
+    };
+    let stderr = collect(child.stderr.take(), sent);
     let stdin = child.stdin.take();
     let child = Arc::new(Mutex::new(child));
     let (watchdog, ended) = mpsc::channel::<()>();
@@ -123,6 +140,7 @@ pub(crate) fn spawn(command: &mut Command, piped_stdin: bool, deadline: Duration
         deadline,
         stdout,
         stderr,
+        lines,
         _watchdog: watchdog,
     })
 }
@@ -132,20 +150,15 @@ pub(crate) fn run(command: &mut Command, deadline: Duration, stop: Stop<'_>) -> 
     spawn(command, false, deadline)?.wait(stop)
 }
 
-/// Runs `command` with `input` on its stdin to its end.
-pub(crate) fn run_with_input(command: &mut Command, input: &[u8], deadline: Duration) -> Result<Output, ChildError> {
-    let mut running = spawn(command, true, deadline)?;
-    let mut stdin = running.take_stdin();
-    let input = input.to_vec();
-    // A thread writes, so a child that writes much output before it reads all of its input cannot block both ends.
-    let writer = thread::spawn(move || {
-        if let Some(stdin) = stdin.as_mut() {
-            let _ = stdin.write_all(&input);
-        }
-    });
-    let output = running.wait(&never);
-    let _ = writer.join();
-    output
+/// Runs `command` with stdin `/dev/null` to its end, or until `stop` answers `true`. Each line of its stderr goes to
+/// `line` on this thread while the child runs.
+pub(crate) fn run_with_lines(
+    command: &mut Command,
+    deadline: Duration,
+    stop: Stop<'_>,
+    line: &mut dyn FnMut(&str),
+) -> Result<Output, ChildError> {
+    spawn_with_lines(command, false, deadline)?.wait_with_lines(stop, line)
 }
 
 impl Running {
@@ -157,8 +170,25 @@ impl Running {
 
     /// Waits for the end of the child, up to its deadline, or until `stop` answers `true`. A child past the deadline
     /// or stopped is killed.
-    pub(crate) fn wait(mut self, stop: Stop<'_>) -> Result<Output, ChildError> {
+    pub(crate) fn wait(self, stop: Stop<'_>) -> Result<Output, ChildError> {
+        self.wait_with_lines(stop, &mut |_| {})
+    }
+
+    /// Waits as [`Running::wait`] does. Each line of the stderr of a child of [`spawn_with_lines`] goes to `line` on
+    /// this thread as it comes.
+    pub(crate) fn wait_with_lines(mut self, stop: Stop<'_>, line: &mut dyn FnMut(&str)) -> Result<Output, ChildError> {
         drop(self.stdin.take());
+        let lines = self.lines.take();
+        let mut pass = |wait: Duration| {
+            if let Some(lines) = &lines {
+                if let Ok(first) = lines.recv_timeout(wait) {
+                    line(&first);
+                }
+                for next in lines.try_iter() {
+                    line(&next);
+                }
+            }
+        };
         let status = loop {
             let mut child = self.child.lock().unwrap_or_else(PoisonError::into_inner);
             match child.try_wait() {
@@ -180,18 +210,21 @@ impl Running {
                 Err(error) => return Err(ChildError::Io { what: self.what, error }),
             }
             drop(child);
-            thread::sleep(POLL);
+            if lines.is_some() {
+                pass(POLL);
+            } else {
+                thread::sleep(POLL);
+            }
         };
         // The watchdog killed a child that a caller fed for too long.
         if status.signal() == Some(libc::SIGKILL) && self.started.elapsed() >= self.deadline {
             return Err(self.timed_out());
         }
         let drained = Instant::now() + DRAIN;
-        Ok(Output {
-            status,
-            stdout: self.stdout.take(drained),
-            stderr: self.stderr.take(drained),
-        })
+        let stdout = self.stdout.take(drained);
+        let stderr = self.stderr.take(drained);
+        pass(Duration::ZERO);
+        Ok(Output { status, stdout, stderr })
     }
 
     fn timed_out(&self) -> ChildError {
@@ -235,8 +268,9 @@ impl Collected {
     }
 }
 
-/// Reads all of `pipe` on a thread, chunk by chunk, into the shared buffer of the answer.
-fn collect(pipe: Option<impl Read + Send + 'static>) -> Collected {
+/// Reads all of `pipe` on a thread, chunk by chunk, into the shared buffer of the answer. With `lines`, each complete
+/// line goes there too, without its line end.
+fn collect(pipe: Option<impl Read + Send + 'static>, lines: Option<Sender<String>>) -> Collected {
     let (ends, ended) = mpsc::channel();
     let bytes = Arc::new(Mutex::new(Vec::new()));
     if let Some(mut pipe) = pipe {
@@ -244,16 +278,31 @@ fn collect(pipe: Option<impl Read + Send + 'static>) -> Collected {
         thread::spawn(move || {
             let _ends = ends;
             let mut chunk = vec![0u8; 16 * 1024];
+            let mut partial = Vec::new();
             loop {
                 match pipe.read(&mut chunk) {
-                    Ok(0) => return,
-                    Ok(read) => bytes
-                        .lock()
-                        .unwrap_or_else(PoisonError::into_inner)
-                        .extend_from_slice(&chunk[..read]),
+                    Ok(0) => break,
+                    Ok(read) => {
+                        bytes
+                            .lock()
+                            .unwrap_or_else(PoisonError::into_inner)
+                            .extend_from_slice(&chunk[..read]);
+                        if let Some(lines) = &lines {
+                            partial.extend_from_slice(&chunk[..read]);
+                            while let Some(end) = partial.iter().position(|&byte| byte == b'\n') {
+                                let line: Vec<u8> = partial.drain(..=end).collect();
+                                let _ = lines.send(String::from_utf8_lossy(&line[..end]).into_owned());
+                            }
+                        }
+                    }
                     Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
-                    Err(_) => return,
+                    Err(_) => break,
                 }
+            }
+            if let Some(lines) = &lines
+                && !partial.is_empty()
+            {
+                let _ = lines.send(String::from_utf8_lossy(&partial).into_owned());
             }
         });
     }

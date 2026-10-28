@@ -3,9 +3,11 @@
 //! client, and the stage carries the outputs back. So a slot is lent to one run for that run only, and the host keeps a
 //! fixed set of warm slots (`branchdeck.hostSlots`, 4 by default) that runs share.
 //!
-//! - A supervisor lends a slot for its run (`lend`, with its own pid: the lend lasts as long as the supervisor), and
-//!   polls while the slots are lent to other runs; on every way out it gives the slot back (`give_back`), which also
-//!   takes a run that got none out of the queue.
+//! - A supervisor lends a slot for its run (`lend`, with its own pid: the lend lasts as long as the supervisor). One
+//!   call waits while the slots are lent to other runs, and bd says the queue on its stderr once a minute. On every way
+//!   out the supervisor gives the slot back (`give_back`), which also takes a run that got none out of the queue,
+//!   deletes the ref of its pack, and starts the deferred git maintenance under `branchdeck.leaseMaintenance`.
+//! - `checkout` moves the slot of a run to its commit through Branch Deck.
 //! - The keeper of `serve` runs `reclaim` (what a gone process left) and `fill` (the missing slots) per repository.
 //! - The prepare steps of `.yonder.toml` that succeeded in a slot are kept per slot (`Prepared`), by its lease id and
 //!   the generation of its files: a give-back that discarded changes, or a clean, can delete what a step made, and
@@ -14,7 +16,6 @@
 use std::collections::BTreeMap;
 use std::io;
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use serde::Deserialize;
@@ -22,9 +23,8 @@ use serde::Deserialize;
 use crate::bd;
 use crate::child::Stop;
 use crate::files::{private_dir, write_private};
-use crate::git::Checkout;
 
-/// The deadline of a lend: no git, a read and a write of the lend table.
+/// The deadline of a lend beyond its wait: no git, a read and a write of the lend table.
 const LEND: Duration = Duration::from_secs(60);
 
 /// The deadline of a give-back and of a reclaim: they stop the processes of a run, discard its changes, and can clean
@@ -36,12 +36,6 @@ const FILL: Duration = Duration::from_mins(30);
 
 /// The deadline of a checkout of a slot: a forced checkout writes every file of the monorepo.
 const CHECKOUT: Duration = Duration::from_mins(30);
-
-/// The output of `bd schema` that names the support of `bd lease host`.
-const LEND_OUTPUT: &str = "lease_host_lend";
-
-/// The output of `bd schema` that names the support of `bd lease host checkout`.
-const CHECKOUT_OUTPUT: &str = "lease_host_checkout";
 
 /// The slot lent to a run.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -74,16 +68,22 @@ pub(crate) enum Lend {
     Queued(Queued),
 }
 
-/// Lends a slot of the pool of `repo` to `run`, which `pid` runs, or puts the run in the queue. A repeat answers the
-/// same slot. It is never stopped: a lend that a kill cut after the table recorded it would keep the slot lent.
-pub(crate) fn lend(repo: &Path, run: &str, pid: u32, holder: &str) -> Result<Lend, String> {
-    let pid = pid.to_string();
-    let text = bd::host(
-        repo,
-        &["lend", "--run", run, "--pid", &pid, "--affinity", holder],
-        LEND,
-        &crate::child::never,
-    )?;
+/// Lends a slot of the pool of `repo` to `run`, which `pid` runs: `bd lease host lend --wait`. The call waits up to
+/// `wait` while every slot is lent, and answers the place in the queue when the wait ends. Each line of the stderr of
+/// bd, such as its queue line once a minute, goes to `line`. `stop` kills the call: the give-back at the end of the run
+/// takes its ticket out of the queue, or gives back a slot that the table lent meanwhile.
+pub(crate) fn lend(
+    repo: &Path,
+    run: &str,
+    pid: u32,
+    holder: &str,
+    wait: Duration,
+    stop: Stop<'_>,
+    line: &mut dyn FnMut(&str),
+) -> Result<Lend, String> {
+    let (pid, seconds) = (pid.to_string(), wait.as_secs().max(1).to_string());
+    let args = ["lend", "--run", run, "--pid", &pid, "--affinity", holder, "--wait", &seconds];
+    let text = bd::host_call(repo, &args, wait + LEND, stop, line).map_err(|failed| failed.message)?;
     parse_lend(&text).ok_or_else(|| format!("bd lease host lend answered no slot and no place: {text}"))
 }
 
@@ -96,6 +96,10 @@ pub(crate) struct GaveBack {
     pub(crate) stopped: usize,
     /// The commands of the processes that keep the slot in quarantine.
     pub(crate) quarantined: Vec<String>,
+    /// The ref of the pack of the run that the give-back deleted.
+    pub(crate) deleted_ref: Option<String>,
+    /// Whether the give-back started the deferred git maintenance of the repository.
+    pub(crate) maintenance_started: bool,
 }
 
 /// Gives back the slot of `run`, or takes the run out of the queue when it has none. It is never stopped, so a
@@ -117,43 +121,25 @@ pub(crate) fn fill(repo: &Path, stop: Stop<'_>) -> Result<Vec<u32>, String> {
     Ok(parse_fill(&text))
 }
 
+/// How [`checkout`] brought a slot to its commit.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) enum Checkout {
+    /// The detached HEAD was the commit already: no file changed.
+    Kept,
+    /// The detached HEAD moved: only the files of the diff changed.
+    Switched,
+    /// Branch Deck wrote the commit with a scan of every file, for the reason in the text.
+    Forced(String),
+}
+
 /// Moves the slot of `run` in the pool of `repo` to `commit`, detached, through `bd lease host checkout`: Branch Deck
 /// owns the slot and its git, and the give-back of the last run left the slot clean, so the move writes only the diff
 /// of the two commits and runs no `status` (`spec/cli/lease.spec.md`, "Host slots", in the Branch Deck repository).
-/// `None` when the bd of the host lacks it: then the caller checks the slot out itself. `stop` kills bd and its git.
-pub(crate) fn checkout(repo: &Path, run: &str, commit: &str, stop: Stop<'_>) -> Result<Option<Checkout>, String> {
-    static SUPPORTED: AtomicBool = AtomicBool::new(false);
-    if !names_output(&SUPPORTED, CHECKOUT_OUTPUT) {
-        return Ok(None);
-    }
+/// `stop` kills bd and its git.
+pub(crate) fn checkout(repo: &Path, run: &str, commit: &str, stop: Stop<'_>) -> Result<Checkout, String> {
     let text = bd::host(repo, &["checkout", "--run", run, "--commit", commit], CHECKOUT, stop)?;
-    parse_checkout(&text)
-        .map(Some)
-        .ok_or_else(|| format!("bd lease host checkout answered no move: {text}"))
+    parse_checkout(&text).ok_or_else(|| format!("bd lease host checkout answered no move: {text}"))
 }
-
-/// Whether the bd of the host has `bd lease host`.
-pub(crate) fn supported() -> bool {
-    static SUPPORTED: AtomicBool = AtomicBool::new(false);
-    names_output(&SUPPORTED, LEND_OUTPUT)
-}
-
-/// Whether `bd schema` of the host names the output `output`. A positive answer is kept in `known` for the life of the
-/// process; a negative one is asked again, so a Branch Deck installed later is seen.
-fn names_output(known: &AtomicBool, output: &str) -> bool {
-    if known.load(Ordering::Relaxed) {
-        return true;
-    }
-    let named = bd::schema().is_some_and(|text| text.contains(&format!("\"{output}\"")));
-    if named {
-        known.store(true, Ordering::Relaxed);
-    }
-    named
-}
-
-/// The refusal text of a host whose bd lacks `bd lease host`.
-pub(crate) const UNSUPPORTED: &str =
-    "bd on the host lacks `bd lease host`, which lends the host slots per run: install a Branch Deck with it on the host";
 
 fn parse_checkout(text: &str) -> Option<Checkout> {
     #[derive(Deserialize)]
@@ -255,12 +241,18 @@ fn parse_give_back(text: &str) -> Option<GaveBack> {
         stopped: Vec<Process>,
         #[serde(default)]
         quarantined: Vec<Process>,
+        #[serde(default)]
+        deleted_ref: Option<String>,
+        #[serde(default)]
+        maintenance_started: bool,
     }
     let answer: Answer = serde_json::from_str(text.lines().last()?).ok()?;
     Some(GaveBack {
         n: answer.n,
         stopped: answer.stopped.len(),
         quarantined: answer.quarantined.iter().map(Process::describe).collect(),
+        deleted_ref: answer.deleted_ref,
+        maintenance_started: answer.maintenance_started,
     })
 }
 

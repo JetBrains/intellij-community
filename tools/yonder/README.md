@@ -23,7 +23,9 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 ## The host
 
-A host has the agent (`yonder prepare <alias>` installs it over ssh), Branch Deck (`bd` on the login `PATH`), a clone of each repository
+A host has the agent (`yonder prepare <alias>` installs it over ssh), Branch Deck (`bd` on the login `PATH`, with the
+`bd lease host` commands `have`, `ingest`, `show`, `snapshot` and `changes`, which do the git work of the agent), a
+clone of each repository
 under the directory of the repository of its host file, such as `~/projects/branch-deck` beside `~/projects/idea-1`, and
 the tools that the commands of those repositories need on the login `PATH` of its user, such as pnpm. The agent gives
 each run the login environment of the user, so a tool that a terminal of the host finds, a run finds too.

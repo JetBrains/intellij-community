@@ -33,13 +33,15 @@ fn a_lend_answers_a_slot_or_a_place_in_the_queue() {
 /// A give-back names its slot, or none when the run left the queue; a reclaim and a fill answer their slots
 #[test]
 fn a_give_back_a_reclaim_and_a_fill_answer_their_slots() {
-    let gave_back = r#"{"schema":2,"n":1,"left_queue":false,"stopped":[{"pid":3,"command":"sleep","argv":"sleep 9"}],"quarantined":[],"discarded":0,"processes_checked":true}"#;
+    let gave_back = r#"{"schema":2,"n":1,"left_queue":false,"stopped":[{"pid":3,"command":"sleep","argv":"sleep 9"}],"quarantined":[],"discarded":0,"processes_checked":true,"maintenance_started":true,"deleted_ref":"refs/branch-deck/host/run/1-2"}"#;
     assert_eq!(
         parse_give_back(gave_back),
         Some(GaveBack {
             n: Some(1),
             stopped: 1,
             quarantined: Vec::new(),
+            deleted_ref: Some("refs/branch-deck/host/run/1-2".to_owned()),
+            maintenance_started: true,
         })
     );
     assert_eq!(

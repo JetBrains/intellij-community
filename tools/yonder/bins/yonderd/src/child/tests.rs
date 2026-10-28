@@ -1,3 +1,4 @@
+use std::io::Write;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use pretty_assertions::assert_eq;
@@ -18,10 +19,26 @@ fn a_child_answers_its_output_and_status() {
     assert_eq!(output.diagnostic(), "err");
 }
 
+/// Each line of the stderr reaches the caller while the child runs, and the last one without a line end too.
 #[test]
-fn a_child_reads_its_input() {
-    let output = run_with_input(&mut sh("tr a-z A-Z"), b"yonder\n", Duration::from_secs(10)).expect("the output");
-    assert_eq!(output.stdout_text(), "YONDER");
+fn the_lines_of_the_stderr_come_while_the_child_runs() {
+    let marker = tempfile::tempdir().expect("a temporary directory");
+    let seen = marker.path().join("seen");
+    let script = format!(
+        "echo first >&2; while [ ! -e '{}' ]; do sleep 0.05; done; echo out; printf last >&2",
+        seen.display()
+    );
+    let mut lines = Vec::new();
+    let output = run_with_lines(&mut sh(&script), Duration::from_secs(10), &never, &mut |line| {
+        if line == "first" {
+            std::fs::write(&seen, "").expect("the marker");
+        }
+        lines.push(line.to_owned());
+    })
+    .expect("the output");
+    assert_eq!(lines, ["first", "last"]);
+    assert_eq!(output.stdout_text(), "out");
+    assert_eq!(output.diagnostic(), "first\nlast");
 }
 
 #[test]

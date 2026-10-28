@@ -1,22 +1,16 @@
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::testing::git;
 
+/// A commit without `.yonder.toml` has the default configuration, and the text of the file of a commit is parsed
 #[test]
-fn the_config_comes_from_the_commit_and_a_file_beside_it_does_not_count() {
-    let dir = tempfile::tempdir().expect("a repository");
-    let repo = dir.path();
-    git(repo, &["init", "-q"]);
-    git(repo, &["commit", "-q", "--allow-empty", "-m", "without"]);
-    let without = git(repo, &["rev-parse", "HEAD"]);
-    std::fs::write(repo.join(FILE), "outputs = [\"out\"]\n").expect("the file");
-    assert_eq!(read(repo, &without).expect("no file in the commit"), RepoConfig::default());
-    git(repo, &["add", FILE]);
-    git(repo, &["commit", "-q", "-m", "with"]);
-    let with = git(repo, &["rev-parse", "HEAD"]);
-    std::fs::write(repo.join(FILE), "not toml").expect("a changed file");
-    assert_eq!(read(repo, &with).expect("the file of the commit").outputs, vec!["out".to_owned()]);
+fn the_config_is_the_file_of_the_commit_or_the_default() {
+    assert_eq!(of_blob(None).expect("no file in the commit"), RepoConfig::default());
+    assert_eq!(
+        of_blob(Some("outputs = [\"out\"]\n")).expect("the file of the commit").outputs,
+        vec!["out".to_owned()]
+    );
+    assert_eq!(of_blob(Some("not toml")).expect_err("a bad file").code, BAD_CONFIG);
 }
 
 /// The parser of `yonder-link` checks the format; the agent refuses each error of it with `bad_config`.

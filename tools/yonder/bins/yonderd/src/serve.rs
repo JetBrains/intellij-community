@@ -26,14 +26,14 @@ use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 
 use crate::awake::{self, Awake};
 use crate::files::private_dir;
-use crate::git::NotRepo;
 use crate::home::Home;
 use crate::host_git::{self, HostGit};
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, UPGRADE_FAILED, refused, reply};
+use crate::repo::{self, NotRepo};
 use crate::run::{RunDir, Runs};
 use crate::tally::{self, Tally};
 use crate::upgrade::{Install, Staging};
-use crate::{cleanup, git, keeper, login_env, run_env, tuning, upgrade};
+use crate::{cleanup, keeper, login_env, run_env, tuning, upgrade};
 
 /// The deadline of each read of the handshake and of a request.
 const READ_DEADLINE: Duration = Duration::from_secs(10);
@@ -478,20 +478,11 @@ impl Agent {
         if self.known_repos().contains(&path) && path.is_dir() {
             return Ok(path);
         }
-        match git::check_repo(&path) {
-            Ok(()) => {}
-            Err(NotRepo::Missing(why)) => {
-                return Err(refused(
-                    REPO_MISSING,
-                    format!("{} is not a git repository on this host: {why}", path.display()),
-                ));
-            }
-            Err(NotRepo::Unchecked(why)) => {
-                return Err(refused(
-                    AGENT_ERROR,
-                    format!("cannot check the repository {} on this host: {why}", path.display()),
-                ));
-            }
+        if let Err(NotRepo(why)) = repo::check_repo(&path) {
+            return Err(refused(
+                REPO_MISSING,
+                format!("{} is not a git repository on this host: {why}", path.display()),
+            ));
         }
         self.known_repos().insert(path.clone());
         Ok(path)
@@ -501,33 +492,34 @@ impl Agent {
         self.repos.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    /// Reads the pack that follows into `git index-pack`, then points `reference` at `commit`. A refused pack is read
-    /// to its end too, so the client gets the refusal and not a broken connection. The watchdog of the child ends a
-    /// write to a stalled `index-pack` at its deadline. Heartbeats go out while `index-pack` finishes.
+    /// Reads the pack that follows into `bd lease host ingest`, which lands its objects and points the ref of Branch
+    /// Deck for `reference` at `commit`. A refused pack is read to its end too, so the client gets the refusal and not a
+    /// broken connection. The watchdog of the child ends a write to a stalled ingest at its deadline. Heartbeats go out
+    /// while the ingest finishes.
     ///
     /// The pack of a kept run tells its supervisor how far it is: each chunk and each heartbeat writes `packing`, at
-    /// most once a second, and the landed pack writes `packed`. A pack that comes after the end of its run makes no ref,
-    /// because no run would delete it: its objects land, and the cleanup has nothing to do.
+    /// most once a second, and the landed pack writes `packed`, unless the run has ended. The give-back of the run
+    /// deletes its ref, and `bd lease host reclaim` deletes the ref of a pack that no run lends a slot for.
     fn pack(&self, channel: &mut Channel, repo: &str, commit: &str, reference: &str) -> Result<(), LinkError> {
         channel.set_read_deadline(PACK_READ_DEADLINE)?;
         let checked = self.repo(repo).and_then(|repo| {
-            if !git::is_commit_id(commit) {
+            if !repo::is_commit_id(commit) {
                 return Err(refused(BAD_REQUEST, format!("{commit:?} is not a full commit id")));
             }
-            if !git::is_pack_ref(reference) {
+            let Some(ingest_ref) = repo::ingest_ref(reference) else {
                 return Err(refused(
                     BAD_REQUEST,
                     format!(
                         "{reference:?} is not a ref {}<run id> or {}<name>",
-                        git::REF_PREFIX,
+                        repo::REF_PREFIX,
                         yonder_link::proto::BASE_REFS
                     ),
                 ));
-            }
-            Ok(repo)
+            };
+            Ok((repo, ingest_ref))
         });
-        let repo = match checked {
-            Ok(repo) => repo,
+        let (repo, ingest_ref) = match checked {
+            Ok(checked) => checked,
             Err(refusal) => {
                 drain(channel)?;
                 return channel.send(&reply(&refusal));
@@ -535,21 +527,24 @@ impl Agent {
         };
         // An upgrade of git waits for the end of the pack (`host_git`).
         let using = host_git::hold_use(&self.home);
-        let mut running = match git::index_pack(&repo) {
+        let mut running = match repo::start_ingest(&repo, &ingest_ref, commit) {
             Ok(running) => running,
             Err(error) => {
                 drain(channel)?;
                 return channel.send(&Reply::refused(PACK_FAILED, error));
             }
         };
-        let run = reference.strip_prefix(git::REF_PREFIX).and_then(|run| self.runs().get(run).ok());
+        let run = repo::is_run_ref(reference)
+            .then(|| reference.strip_prefix(repo::REF_PREFIX))
+            .flatten()
+            .and_then(|run| self.runs().get(run).ok());
         let progress = PackProgress::new(run.clone());
         let mut stdin = running.take_stdin();
         let received = loop {
             match channel.recv_frame() {
                 Ok(Frame::Bytes(chunk)) => {
                     progress.note();
-                    // index-pack can end early on a bad pack; the rest of the stream is read and dropped.
+                    // The ingest can end early on a bad pack; the rest of the stream is read and dropped.
                     if stdin.as_mut().is_some_and(|pipe| pipe.write_all(&chunk).is_err()) {
                         stdin = None;
                     }
@@ -560,32 +555,33 @@ impl Agent {
             }
         };
         drop(stdin);
-        let (reference, commit) = (reference.to_owned(), commit.to_owned());
         let home = self.home.clone();
-        let indexed = with_heartbeats(channel, &mut || progress.note(), move || {
-            // The use ends with the ref of the pack.
+        let ingested = with_heartbeats(channel, &mut || progress.note(), move || {
+            // The use ends with the ingest.
             let _using = using;
-            let indexed = git::finish_index_pack(running);
+            let ingested = repo::finish_ingest(&repo, running);
             received?;
-            let result = indexed
-                .map_err(|error| format!("git index-pack failed in {}: {error}", repo.display()))
-                .and_then(|()| point_ref(&repo, &reference, &commit, run.as_ref()));
-            if result.is_ok()
-                && let Err(error) = cleanup::remember_repo(&home, &repo)
-            {
-                log(&format!("cannot add {} to the repository list: {error}", repo.display()));
+            if ingested.is_ok() {
+                if let Err(error) = cleanup::remember_repo(&home, &repo) {
+                    log(&format!("cannot add {} to the repository list: {error}", repo.display()));
+                }
+                if let Some(run) = run.as_ref().filter(|run| !matches!(run.exit(), Ok(Some(_))))
+                    && let Err(error) = run.mark_packed()
+                {
+                    log(&format!("cannot mark the pack of {} as landed: {error}", run.path().display()));
+                }
             }
-            Ok(result)
+            Ok(ingested)
         })?;
-        match indexed? {
-            Ok(()) => channel.send(&Reply::Packed),
+        match ingested? {
+            Ok(_) => channel.send(&Reply::Packed),
             Err(message) => channel.send(&Reply::refused(PACK_FAILED, message)),
         }
     }
 }
 
-/// The commits of `commits` that the repository `repo` has. `git cat-file` can take long on a busy disk, so the caller
-/// runs it with heartbeats.
+/// The commits of `commits` that the repository `repo` has (`bd lease host have`). A lookup can take long on a busy
+/// disk, so the caller runs it with heartbeats.
 fn have(repo: &Path, commits: &[String]) -> Result<Reply, Refusal> {
     if commits.len() > MAX_HAVE {
         return Err(refused(
@@ -593,10 +589,10 @@ fn have(repo: &Path, commits: &[String]) -> Result<Reply, Refusal> {
             format!("a have names {} commits, more than {MAX_HAVE}", commits.len()),
         ));
     }
-    if let Some(bad) = commits.iter().find(|commit| !git::is_commit_id(commit)) {
+    if let Some(bad) = commits.iter().find(|commit| !repo::is_commit_id(commit)) {
         return Err(refused(BAD_REQUEST, format!("{bad:?} is not a full commit id")));
     }
-    git::have(repo, commits)
+    repo::have(repo, commits)
         .map(|commits| Reply::Have { commits })
         .map_err(|error| refused(AGENT_ERROR, error))
 }
@@ -615,27 +611,6 @@ fn handshake(socket: TcpStream, tls: &ServerTls) -> Result<Channel, LinkError> {
     let accepted = Channel::accept(socket, tls, READ_DEADLINE.min(deadline));
     let _ = done.send(());
     accepted
-}
-
-/// Points `reference` at `commit` once the objects of a pack landed, and tells the supervisor of `run`. A run that has
-/// ended gets no ref, and a run that ends during the update gets its ref deleted, so no ref outlives its run.
-fn point_ref(repo: &Path, reference: &str, commit: &str, run: Option<&RunDir>) -> Result<(), String> {
-    let ended = |run: &RunDir| matches!(run.exit(), Ok(Some(_)));
-    if run.is_some_and(ended) {
-        return Ok(());
-    }
-    git::update_ref(repo, reference, commit)
-        .map_err(|error| format!("git update-ref {reference} {commit} failed in {}: {error}", repo.display()))?;
-    let Some(run) = run else {
-        return Ok(());
-    };
-    if ended(run) {
-        return git::delete_ref(repo, reference).map_err(|error| format!("cannot delete {reference} in {}: {error}", repo.display()));
-    }
-    if let Err(error) = run.mark_packed() {
-        log(&format!("cannot mark the pack of {} as landed: {error}", run.path().display()));
-    }
-    Ok(())
 }
 
 /// The progress notes of the pack of a run, at most one per [`PACK_PROGRESS_EVERY`].

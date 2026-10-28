@@ -14,8 +14,9 @@
 //!    of it. A start can come before the pack of its reference, so the lend goes on while the pack travels. A commit
 //!    that the main repository has already needs no pack. Else the run waits for the file `packed`, which the pack
 //!    writes after its ref. A watch of the run directory ends the wait at once.
-//! 3. Check out the commit in the slot. The give-back of the last run discarded its changes; the ignored files stay as
-//!    the warm cache. So the checkout writes only the files of the diff and reads no other file (`git::checkout`).
+//! 3. Check out the commit in the slot (`bd lease host checkout`). The give-back of the last run discarded its changes;
+//!    the ignored files stay as the warm cache. So the checkout writes only the files of the diff and reads no other
+//!    file.
 //! 4. Prepare: read `.yonder.toml` of the commit, build the environment (`run_env`, with the login environment of
 //!    `login_env` and the programs of Homebrew before `/usr/bin`), check its git (`host_git::for_command`), and run each prepare step whose inputs changed since its last success in this slot (`prepare`, the
 //!    fingerprints of `slots::Prepared`). For a client that asks for them, remove the outputs of the config, and scan
@@ -29,9 +30,9 @@
 //! Each step is a phase: `git` (only after a wait), `slot`, `pack_wait`, `checkout`, `prepare`, `command` and `stage`. At the end of each step,
 //! whatever its outcome, the supervisor rewrites `phases.json` with the steps that have ended.
 //!
-//! On every way out it keeps the fingerprints of the slot, deletes the ref of the pack, and writes `exit.json` last.
-//! Then it drops the flock of the run and gives the slot back (`bd lease host give-back`): the processes that the run
-//! left in the slot stop, its changes go, and a run that got no slot leaves the queue. The give-back is never cut by a
+//! On every way out it keeps the fingerprints of the slot, and writes `exit.json` last. Then it drops the flock of the
+//! run and gives the slot back (`bd lease host give-back`): the processes that the run left in the slot stop, its
+//! changes go, the ref of its pack goes, and a run that got no slot leaves the queue. The give-back is never cut by a
 //! signal, and its lines go to
 //! `supervisor.log`. The `cancel` file of the run, or SIGINT, SIGTERM or SIGHUP, interrupts the run. Before the
 //! command starts, the run kills the bd, git or prepare child of the current step and ends with the exit code 130.
@@ -56,26 +57,20 @@ use std::time::{Duration, Instant, SystemTime};
 
 use yonder_link::proto::{Phase, RunSpec, Stream};
 
-use crate::child::{Stop, never};
-use crate::files::{FILE_MODE, open_private, private_dir, try_flock, write_private};
+use crate::child::Stop;
+use crate::files::{FILE_MODE, open_private, private_dir, try_flock};
 use crate::home::Home;
 use crate::login_env::LoginEnv;
 use crate::refused::{
     AGENT_ERROR, CHECKOUT_FAILED, LEASE_FAILED, LOCK_TIMEOUT, PACK_MISSING, PREPARE_FAILED, Refusal, SPAWN_FAILED, refused,
 };
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir, epoch_ms};
-use crate::slots::{self, GaveBack, Lend, Lent, Prepared, Queued};
+use crate::slots::{self, Checkout, Lend, Lent, Prepared, Queued};
 use crate::watch::Watch;
-use crate::{awake, config, git, host_git, login_env, prepare, run_env, tuning};
+use crate::{awake, config, host_git, login_env, prepare, repo, run_env, tuning};
 
 /// How long a run waits for a host slot.
 const SLOT_WAIT: Duration = Duration::from_secs(3600);
-
-/// How often a run that waits for a host slot asks again.
-const SLOT_POLL: Duration = Duration::from_secs(2);
-
-/// How often the log of a run that waits for a host slot says so again.
-const SLOT_SAY_EVERY: Duration = Duration::from_secs(60);
 
 /// How often the supervisor looks at the command and at the cancel request.
 const POLL: Duration = Duration::from_millis(100);
@@ -153,20 +148,26 @@ pub(crate) fn supervise(home: &Home, run_dir: &Path, lock: Option<RawFd>) {
 /// Gives back the host slot of the run, or takes the run out of the queue when it got none. A signal does not cut it.
 fn give_back(home: &Home, spec: &RunSpec) {
     match slots::give_back(&home.expand(&spec.repo), &spec.run) {
-        Ok(GaveBack {
-            n: Some(n),
-            stopped,
-            quarantined,
-        }) => {
-            eprintln!("yonderd supervise: gave back the slot {n}, {stopped} process(es) of the run stopped");
-            if !quarantined.is_empty() {
+        Ok(gave_back) => {
+            if let Some(n) = gave_back.n {
                 eprintln!(
-                    "yonderd supervise: the slot {n} stays in quarantine while these work in it: {}",
-                    quarantined.join(", ")
+                    "yonderd supervise: gave back the slot {n}, {} process(es) of the run stopped",
+                    gave_back.stopped
                 );
+                if !gave_back.quarantined.is_empty() {
+                    eprintln!(
+                        "yonderd supervise: the slot {n} stays in quarantine while these work in it: {}",
+                        gave_back.quarantined.join(", ")
+                    );
+                }
+            }
+            if let Some(deleted) = &gave_back.deleted_ref {
+                eprintln!("yonderd supervise: Branch Deck deleted {deleted}");
+            }
+            if gave_back.maintenance_started {
+                eprintln!("yonderd supervise: Branch Deck started the git maintenance of the repository");
             }
         }
-        Ok(GaveBack { n: None, .. }) => {}
         Err(error) => eprintln!("yonderd supervise: cannot give the slot of the run back: {error}"),
     }
 }
@@ -202,12 +203,7 @@ fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
     let repo = home.expand(&spec.repo);
     let log = match EventLog::open(&run.events_path()) {
         Ok(log) => Arc::new(log),
-        Err(error) => {
-            if let Err(error) = git::delete_ref(&repo, &spec.reference) {
-                eprintln!("yonderd supervise: cannot delete {} in {}: {error}", spec.reference, repo.display());
-            }
-            return Err(refused(AGENT_ERROR, format!("cannot open the log of the run: {error}")));
-        }
+        Err(error) => return Err(refused(AGENT_ERROR, format!("cannot open the log of the run: {error}"))),
     };
     let say = |message: &str| log.write(Stream::Stderr, &format!("yonder: {message}"));
     let stop = || SIGNALLED.load(Ordering::SeqCst) || run.cancel_requested();
@@ -229,9 +225,6 @@ fn run_to_end(home: &Home, run: &RunDir) -> Result<i32, Refusal> {
         && let Err(error) = prepared.save()
     {
         say(&format!("cannot keep the fingerprints of the prepare steps of the slot: {error}"));
-    }
-    if let Err(error) = git::delete_ref(&repo, &spec.reference) {
-        say(&format!("cannot delete {} in {}: {error}", spec.reference, repo.display()));
     }
     log.close();
     outcome
@@ -295,12 +288,13 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
         deadline: tuning::pack_wait(),
         stall: tuning::pack_stall(),
     };
-    if !phases.time("pack_wait", || wait_for_pack(run, context.repo, spec, limits, stop, &mut say))? {
+    let has = |commit: &str| repo::has_commit(context.repo, commit);
+    if !phases.time("pack_wait", || wait_for_pack(run, context.repo, spec, limits, stop, &mut say, &has))? {
         return Ok(INTERRUPTED);
     }
-    match phases.time("checkout", || check_out(context, &slot, stop)) {
-        Ok(git::Checkout::Forced(why)) => say(&format!("checked out with a scan of every file, because {why}")),
-        Ok(git::Checkout::Kept | git::Checkout::Switched) => {}
+    match phases.time("checkout", || slots::checkout(context.repo, &spec.run, &spec.commit, stop)) {
+        Ok(Checkout::Forced(why)) => say(&format!("checked out with a scan of every file, because {why}")),
+        Ok(Checkout::Kept | Checkout::Switched) => {}
         Err(_) if stop() => return Ok(INTERRUPTED),
         Err(error) => {
             return Err(refused(
@@ -336,42 +330,27 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     Ok(code)
 }
 
-/// Borrows a host slot for the run: a lend every `SLOT_POLL` while every slot is lent, a line in the log at the start
-/// of the wait and once a minute, `lock_timeout` after an hour. Answers `None` when a cancel ended the wait; the
-/// give-back at the end takes the run out of the queue then.
+/// Borrows a host slot for the run: one `bd lease host lend --wait` of up to an hour. The queue lines that bd writes
+/// once a minute go to the log of the run, and a lend that the wait ended in the queue refuses with `lock_timeout`.
+/// Answers `None` when a cancel ended the wait; the give-back at the end takes the run out of the queue then.
 fn borrow(context: &Context<'_>, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<Option<Lent>, Refusal> {
-    if !slots::supported() {
-        return Err(refused(LEASE_FAILED, slots::UNSUPPORTED));
-    }
     let (spec, repo) = (context.spec, context.repo);
-    let started = Instant::now();
-    let mut said: Option<Instant> = None;
-    loop {
-        let lend = slots::lend(repo, &spec.run, std::process::id(), &spec.holder).map_err(|message| refused(LEASE_FAILED, message))?;
-        let queued = match lend {
-            Lend::Lent(lent) => {
-                say(&lent_line(&lent, repo));
-                return Ok(Some(lent));
-            }
-            Lend::Queued(queued) => queued,
-        };
-        if said.is_none_or(|at| at.elapsed() >= SLOT_SAY_EVERY) {
-            say(&waiting_line(&queued, repo));
-            said = Some(Instant::now());
+    let lend = slots::lend(repo, &spec.run, std::process::id(), &spec.holder, SLOT_WAIT, stop, say);
+    match lend {
+        Ok(Lend::Lent(lent)) => {
+            say(&lent_line(&lent, repo));
+            Ok(Some(lent))
         }
-        if started.elapsed() >= SLOT_WAIT {
-            return Err(refused(
-                LOCK_TIMEOUT,
-                format!("no host slot of {} for {} s; giving up", repo.display(), SLOT_WAIT.as_secs()),
-            ));
-        }
-        let next = Instant::now() + SLOT_POLL;
-        while Instant::now() < next {
-            if stop() {
-                return Ok(None);
-            }
-            thread::sleep(POLL);
-        }
+        Ok(Lend::Queued(queued)) => Err(refused(
+            LOCK_TIMEOUT,
+            format!(
+                "no host slot for {} s; giving up: {}",
+                SLOT_WAIT.as_secs(),
+                waiting_line(&queued, repo)
+            ),
+        )),
+        Err(_) if stop() => Ok(None),
+        Err(message) => Err(refused(LEASE_FAILED, message)),
     }
 }
 
@@ -415,21 +394,11 @@ fn waiting_line(queued: &Queued, repo: &Path) -> String {
     line
 }
 
-/// The checkout of the commit of the run in its slot: by Branch Deck (`slots::checkout`), which owns the slot, else, with
-/// a bd before `bd lease host checkout`, by git here (`git::checkout`).
-fn check_out(context: &Context<'_>, slot: &Path, stop: Stop<'_>) -> Result<git::Checkout, String> {
-    let spec = context.spec;
-    match slots::checkout(context.repo, &spec.run, &spec.commit, stop)? {
-        Some(moved) => Ok(moved),
-        None => git::checkout(slot, &spec.commit, stop),
-    }
-}
-
 /// The prepare step of a run: the config of the slot, the environment, the prepare steps, and for a client that asks
 /// for them the removal of the outputs and the tree before the command. Answers `None` when a cancel ended it.
 fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut Held) -> Result<Option<Launch>, Refusal> {
     let spec = context.spec;
-    let config = config::read(slot, &spec.commit)?;
+    let config = config::read(context.repo, &spec.commit)?;
     let login = context
         .exe
         .and_then(|exe| login_env::for_run(context.home, exe, login_env::MAX_AGE, &mut |line| context.say(line)));
@@ -452,12 +421,18 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
         if stop() {
             return Ok(None);
         }
-        let ids = git::object_ids(slot, &spec.commit, &step.inputs).map_err(|error| {
-            refused(
-                AGENT_ERROR,
-                format!("cannot read the inputs of the prepare step {:?}: {error}", step.name),
-            )
-        })?;
+        let ids = if step.inputs.is_empty() {
+            Vec::new()
+        } else {
+            repo::show(context.repo, &spec.commit, None, &step.inputs)
+                .map_err(|error| {
+                    refused(
+                        AGENT_ERROR,
+                        format!("cannot read the inputs of the prepare step {:?}: {error}", step.name),
+                    )
+                })?
+                .ids
+        };
         let fingerprint = prepare::fingerprint(step, &ids);
         let Some(why) = prepare::reason(step, &fingerprint, &prepared.steps, slot) else {
             continue;
@@ -481,7 +456,7 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
         }
     }
     let before = if spec.changes {
-        let before = git::worktree_tree(slot, &context.run.path().join("before.index"), stop)
+        let before = repo::snapshot(context.repo, &spec.run, stop)
             .map_err(|error| refused(AGENT_ERROR, format!("cannot scan the files of {}: {error}", slot.display())))?;
         Some(before)
     } else {
@@ -520,7 +495,7 @@ fn stage_run(context: &Context<'_>, slot: &Path, launch: &Launch, before: &[BTre
     let run = context.run;
     let mut errors = Vec::new();
     if let Some(before) = &launch.before
-        && let Err(error) = stage_changes(slot, before, run)
+        && let Err(error) = repo::changes(context.repo, &context.spec.run, before, &run.changes_path())
     {
         errors.push(format!("cannot stage the changes of the command: {error}"));
     }
@@ -529,20 +504,6 @@ fn stage_run(context: &Context<'_>, slot: &Path, launch: &Launch, before: &[BTre
     }
     errors.extend(stage_new_entries(slot, &context.spec.fetch, before, &run.stage_path()));
     errors
-}
-
-/// Writes the patch of the changes of the command to the run directory. The command changed nothing when the tree of
-/// the slot is the one before it, and then no patch is written.
-fn stage_changes(slot: &Path, before: &str, run: &RunDir) -> Result<(), String> {
-    let after = git::worktree_tree(slot, &run.path().join("after.index"), &never)?;
-    if after == before {
-        return Ok(());
-    }
-    let patch = git::tree_patch(slot, before, &after)?;
-    if patch.is_empty() {
-        return Ok(());
-    }
-    write_private(&run.changes_path(), &patch).map_err(|error| format!("cannot write {}: {error}", run.changes_path().display()))
 }
 
 /// Moves each output that the command made to the outputs of the run, and records the moved ones. Answers a message
@@ -615,7 +576,8 @@ pub(crate) struct PackLimits {
     pub(crate) stall: Duration,
 }
 
-/// Waits for the pack of the run. A commit that `repo` has already needs no pack, because the client sends none then.
+/// Waits for the pack of the run. A commit that `repo` has already, as `has` answers, needs no pack, because the client
+/// sends none then.
 /// Else the wait ends when the pack wrote `packed` in the run directory, after the ref of the run: so the delete of the
 /// ref at the end of the run comes after it. The wait fails at the deadline of `limits`, or after its stall time
 /// without a chunk, which a client that is gone sends no more. Answers `false` when `stop` ended the wait. A wait
@@ -627,10 +589,10 @@ pub(crate) fn wait_for_pack(
     limits: PackLimits,
     stop: Stop<'_>,
     say: &mut dyn FnMut(&str),
+    has: &dyn Fn(&str) -> Result<bool, String>,
 ) -> Result<bool, Refusal> {
     let look = |revision: &str| {
-        git::has_commit(repo, revision)
-            .map_err(|error| refused(AGENT_ERROR, format!("cannot look for {revision} in {}: {error}", repo.display())))
+        has(revision).map_err(|error| refused(AGENT_ERROR, format!("cannot look for {revision} in {}: {error}", repo.display())))
     };
     if look(&spec.commit)? {
         return Ok(true);
