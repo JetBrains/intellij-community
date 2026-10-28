@@ -1876,6 +1876,75 @@ fn fetch_files(agent: &Agent, run: &str) -> Vec<(String, FileKind, String)> {
     }
 }
 
+/// A TCP proxy on a loopback port to `target` that counts the TLS records from `target` to the client. A TLS 1.3
+/// record has a header of 5 bytes, with the length in the last two.
+fn record_counter(target: SocketAddr) -> (SocketAddr, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+    use std::sync::Arc;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("a port");
+    let address = listener.local_addr().expect("the address");
+    let records = Arc::new(AtomicUsize::new(0));
+    let counted = Arc::clone(&records);
+    thread::spawn(move || {
+        let (mut client, _) = listener.accept().expect("the client");
+        let mut agent = TcpStream::connect(target).expect("the agent");
+        let (mut to_agent, mut from_client) = (agent.try_clone().expect("a clone"), client.try_clone().expect("a clone"));
+        thread::spawn(move || {
+            let _ = std::io::copy(&mut from_client, &mut to_agent);
+            let _ = to_agent.shutdown(std::net::Shutdown::Write);
+        });
+        let mut head = [0u8; 5];
+        while agent.read_exact(&mut head).is_ok() {
+            let mut body = vec![0u8; usize::from(u16::from_be_bytes([head[3], head[4]]))];
+            if agent.read_exact(&mut body).is_err() {
+                break;
+            }
+            counted.fetch_add(1, Ordering::SeqCst);
+            if client.write_all(&head).and_then(|()| client.write_all(&body)).is_err() {
+                break;
+            }
+        }
+        let _ = client.shutdown(std::net::Shutdown::Write);
+    });
+    (address, records)
+}
+
+/// The files of a fetch go into the buffer of the channel, so 300 small files take a few TLS records and not three per
+/// file.
+#[test]
+fn a_fetch_of_many_small_files_takes_few_tls_records() {
+    let agent = World::new().serve();
+    let world = &agent.world;
+    let script = "mkdir -p out/bt-runs && i=0 && while [ $i -lt 300 ]; do echo $i >out/bt-runs/$i.txt; i=$((i+1)); done";
+    agent.start(world.spec("31-1", HOLDER, script));
+    assert_eq!(agent.follow("31-1", 0).end, Reply::Exit { code: 0 }, "{}", agent.dump("31-1"));
+
+    let (proxy, records) = record_counter(agent.address);
+    let mut channel =
+        Channel::connect(proxy, &ClientTls::new(agent.fingerprint, &world.client).expect("the TLS"), DEADLINE).expect("connected");
+    channel.send(&Request::hello("test")).expect("the hello");
+    assert!(matches!(channel.recv::<Reply>().expect("the hello reply"), Reply::Hello { .. }));
+    let before = records.load(std::sync::atomic::Ordering::SeqCst);
+    channel.send(&Request::Fetch { run: "31-1".to_owned() }).expect("the request");
+    let mut files = 0;
+    loop {
+        match channel.recv::<Reply>().expect("a reply") {
+            Reply::File { .. } => {
+                channel.recv_stream(&mut std::io::sink()).expect("the bytes");
+                files += 1;
+            }
+            Reply::Fetched { files: count, .. } => {
+                assert_eq!(count, 300);
+                break;
+            }
+            other => panic!("{other:?}"),
+        }
+    }
+    assert_eq!(files, 300);
+    let fetched = records.load(std::sync::atomic::Ordering::SeqCst) - before;
+    assert!(fetched <= 10, "the fetch took {fetched} TLS records");
+}
+
 #[test]
 fn a_run_gets_the_login_environment_a_raised_open_files_limit_and_its_niceness() {
     let world = World::new();

@@ -1,4 +1,5 @@
 use std::net::TcpListener;
+use std::sync::atomic::{AtomicUsize, Ordering};
 use std::thread;
 
 use pretty_assertions::assert_eq;
@@ -104,6 +105,117 @@ fn a_pinned_client_and_an_allowed_client_exchange_messages_and_bytes() {
         Reply::Done {
             message: "both in one write".to_owned()
         }
+    );
+    assert_eq!(served.join().expect("the agent thread"), Ok(client.fingerprint()));
+}
+
+/// A TLS stream that counts the writes of the channel.
+struct CountedWrites {
+    inner: Box<dyn Tls>,
+    writes: Arc<AtomicUsize>,
+}
+
+impl Read for CountedWrites {
+    fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+        self.inner.read(buf)
+    }
+}
+
+impl Write for CountedWrites {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        self.writes.fetch_add(1, Ordering::SeqCst);
+        self.inner.write(buf)
+    }
+
+    fn write_all(&mut self, buf: &[u8]) -> io::Result<()> {
+        self.writes.fetch_add(1, Ordering::SeqCst);
+        self.inner.write_all(buf)
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
+}
+
+impl Tls for CountedWrites {
+    fn close(&mut self) {
+        self.inner.close();
+    }
+
+    fn peer_fingerprint(&self) -> Option<Fingerprint> {
+        self.inner.peer_fingerprint()
+    }
+}
+
+/// `channel` with a count of its TLS writes.
+fn count_writes(channel: Channel) -> (Channel, Arc<AtomicUsize>) {
+    let writes = Arc::new(AtomicUsize::new(0));
+    let Channel { tls, socket, peer, frames } = channel;
+    let tls = Box::new(CountedWrites {
+        inner: tls,
+        writes: Arc::clone(&writes),
+    });
+    (Channel { tls, socket, peer, frames }, writes)
+}
+
+/// Many small files of a fetch share one TLS write, a full buffer writes at once, and a read sends the buffer first.
+#[test]
+fn the_frames_go_to_tls_in_one_write_per_full_buffer_and_at_a_flush() {
+    let client = Identity::generate().expect("the client identity");
+    let agent = agent(&[&client]);
+    let served = agent.serve(|channel| {
+        expect_hello(channel);
+        let mut files = 0;
+        while let Ok(Reply::File { size, .. }) = channel.recv::<Reply>() {
+            let mut bytes = Vec::new();
+            assert_eq!(channel.recv_stream(&mut bytes).expect("the bytes"), size);
+            files += 1;
+        }
+        let mut received = Vec::new();
+        assert_eq!(channel.recv_stream(&mut received).expect("the big stream"), 200_000);
+        channel.send(&Reply::Fetched { files, bytes: 0 }).expect("the counts");
+        let asked: Request = channel.recv().expect("a request after the counts");
+        assert_eq!(asked, Request::Runs);
+        channel.send(&Reply::Packed).expect("the answer");
+    });
+    let connected = connect(agent.address, agent.identity.fingerprint(), &client, DEADLINE).expect("connected");
+    let (mut channel, writes) = count_writes(connected);
+    channel.queue(&Request::hello("test")).expect("queued");
+    for index in 0..200 {
+        let text = format!("file {index}\n");
+        channel
+            .queue(&Reply::File {
+                path: format!("out/{index}.txt"),
+                size: text.len() as u64,
+                executable: false,
+                kind: crate::proto::FileKind::Staged,
+            })
+            .expect("queued");
+        channel.queue_stream(&mut text.as_bytes(), &mut |_| {}).expect("queued");
+    }
+    assert_eq!(writes.load(Ordering::SeqCst), 0, "the buffer holds less than a chunk");
+    // A message where a file is due ends the files of the agent.
+    channel.queue(&Reply::Packed).expect("queued");
+    channel.flush().expect("flushed");
+    assert_eq!(writes.load(Ordering::SeqCst), 1, "the hello, 200 files and their ends in one write");
+
+    let bytes = vec![7u8; 200_000];
+    channel.send_stream(&mut bytes.as_slice(), &mut |_| {}).expect("streamed");
+    assert_eq!(
+        writes.load(Ordering::SeqCst),
+        1 + 200_000_usize.div_ceil(CHUNK),
+        "one write per full chunk, and the last chunk with its end at the flush"
+    );
+    assert_eq!(
+        channel.recv::<Reply>().expect("the counts"),
+        Reply::Fetched { files: 200, bytes: 0 }
+    );
+
+    channel.queue(&Request::Runs).expect("queued");
+    assert_eq!(
+        channel.recv::<Reply>().expect("the answer"),
+        Reply::Packed,
+        "the read sent the queued request"
     );
     assert_eq!(served.join().expect("the agent thread"), Ok(client.fingerprint()));
 }

@@ -179,7 +179,8 @@ impl Agent {
         })
     }
 
-    /// Sends each staged file of an ended run, then the counts.
+    /// Sends each staged file of an ended run, then the counts. The files go into the buffer of the channel, and only the
+    /// counts flush it, so many small files share a few TLS records.
     pub(crate) fn fetch(&self, channel: &mut Channel, run_id: &str) -> Result<(), LinkError> {
         let run = match self.runs().get(run_id) {
             Ok(run) => run,
@@ -211,13 +212,13 @@ impl Agent {
                     ));
                 }
             };
-            channel.send(&Reply::File {
+            channel.queue(&Reply::File {
                 path: staged.relative,
                 size,
                 executable: staged.executable,
                 kind: staged.kind,
             })?;
-            let sent = channel.send_stream(&mut file.take(size), &mut |_| {})?;
+            let sent = channel.queue_stream(&mut file.take(size), &mut |_| {})?;
             if sent != size {
                 return channel.send(&Reply::refused(
                     AGENT_ERROR,

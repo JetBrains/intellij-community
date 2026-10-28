@@ -10,6 +10,10 @@
 //!
 //! One connection carries one request. Every read and every write has the deadline of the socket, so no call waits
 //! for ever.
+//!
+//! The channel collects the frames that it sends in a buffer of its own, and writes the buffer to TLS in one call when
+//! it holds [`CHUNK`] bytes, at a flush, before a read and at the close. `StreamOwned` encrypts and writes the socket
+//! at each write call, so this is what puts many small frames into few TLS records.
 
 use std::fmt;
 use std::io::{self, Read, Write};
@@ -205,7 +209,7 @@ pub struct Channel {
     tls: Box<dyn Tls>,
     socket: TcpStream,
     peer: Fingerprint,
-    /// The buffer of the frames of one write, kept between the writes.
+    /// The frames that are not written to TLS yet.
     frames: Vec<u8>,
 }
 
@@ -273,35 +277,36 @@ impl Channel {
         self.socket.set_write_timeout(Some(deadline)).map_err(LinkError::Io)
     }
 
-    /// Sends one message.
+    /// Sends one message and flushes.
     pub fn send<T: Serialize>(&mut self, message: &T) -> Result<(), LinkError> {
         self.send_all(std::slice::from_ref(message))
     }
 
-    /// Sends `messages` one after the other in one write, so a batch costs one TLS record per 16 KiB and not one per
-    /// message.
+    /// Sends `messages` one after the other and flushes, so a batch costs one TLS record per 16 KiB and not one per
+    /// message. A message over [`MAX_MESSAGE`] sends none of the batch.
     pub fn send_all<T: Serialize>(&mut self, messages: &[T]) -> Result<(), LinkError> {
+        let start = self.frames.len();
         let mut frames = std::mem::take(&mut self.frames);
-        frames.clear();
-        let built = messages.iter().try_for_each(|message| {
-            let json = serde_json::to_vec(message).map_err(|error| LinkError::Protocol(error.to_string()))?;
-            if json.len() > MAX_MESSAGE {
-                return Err(LinkError::Protocol(format!(
-                    "a message of {} bytes is over the limit of {MAX_MESSAGE}",
-                    json.len()
-                )));
-            }
-            push_frame(&mut frames, KIND_MESSAGE, &json)
-        });
-        let sent = built.and_then(|()| {
-            self.tls.write_all(&frames).map_err(LinkError::from_io)?;
-            self.tls.flush().map_err(LinkError::from_io)
-        });
+        let built = messages.iter().try_for_each(|message| push_message(&mut frames, message));
+        if built.is_err() {
+            frames.truncate(start);
+        }
         self.frames = frames;
-        sent
+        built?;
+        self.flush()
     }
 
-    /// Sends a byte stream as chunks. [`Channel::send_end`] completes it.
+    /// Adds one message to the buffer without a flush. A later flush, send or read sends it.
+    pub fn queue<T: Serialize>(&mut self, message: &T) -> Result<(), LinkError> {
+        let start = self.frames.len();
+        if let Err(error) = push_message(&mut self.frames, message) {
+            self.frames.truncate(start);
+            return Err(error);
+        }
+        self.write_full()
+    }
+
+    /// Sends a byte stream as chunks, without a flush. [`Channel::send_end`] completes it.
     pub fn send_bytes(&mut self, bytes: &[u8]) -> Result<(), LinkError> {
         for chunk in bytes.chunks(CHUNK) {
             self.write_frame(KIND_BYTES, chunk)?;
@@ -313,18 +318,26 @@ impl Channel {
     /// yet, such as a client that builds its pack, and the deadline of the reader starts again.
     pub fn send_keepalive(&mut self) -> Result<(), LinkError> {
         self.write_frame(KIND_BYTES, &[])?;
-        self.tls.flush().map_err(LinkError::from_io)
+        self.flush()
     }
 
-    /// Completes a byte stream.
+    /// Completes a byte stream and flushes.
     pub fn send_end(&mut self) -> Result<(), LinkError> {
         self.write_frame(KIND_END, &[])?;
-        self.tls.flush().map_err(LinkError::from_io)
+        self.flush()
     }
 
-    /// Copies all of `reader` as a byte stream, and completes it. Answers the count of bytes. `progress` gets the count
-    /// after each chunk.
+    /// Copies all of `reader` as a byte stream, completes it and flushes. Answers the count of bytes. `progress` gets
+    /// the count after each chunk.
     pub fn send_stream(&mut self, reader: &mut dyn Read, progress: &mut dyn FnMut(u64)) -> Result<u64, LinkError> {
+        let total = self.queue_stream(reader, progress)?;
+        self.flush()?;
+        Ok(total)
+    }
+
+    /// Copies all of `reader` as a byte stream and completes it, without a flush. Answers the count of bytes.
+    /// `progress` gets the count after each chunk.
+    pub fn queue_stream(&mut self, reader: &mut dyn Read, progress: &mut dyn FnMut(u64)) -> Result<u64, LinkError> {
         let mut buffer = vec![0u8; CHUNK];
         let mut total = 0u64;
         loop {
@@ -338,12 +351,21 @@ impl Channel {
             total += read as u64;
             progress(total);
         }
-        self.send_end()?;
+        self.write_frame(KIND_END, &[])?;
         Ok(total)
     }
 
-    /// The next frame.
+    /// Writes the buffer to TLS in one call, and flushes TLS.
+    pub fn flush(&mut self) -> Result<(), LinkError> {
+        self.write_buffer()?;
+        self.tls.flush().map_err(LinkError::from_io)
+    }
+
+    /// The next frame. The buffer goes out first, so no frame that the other end waits for stays behind a read.
     pub fn recv_frame(&mut self) -> Result<Frame, LinkError> {
+        if !self.frames.is_empty() {
+            self.flush()?;
+        }
         let mut head = [0u8; 5];
         self.tls.read_exact(&mut head).map_err(LinkError::from_io)?;
         let length = u32::from_be_bytes([head[1], head[2], head[3], head[4]]) as usize;
@@ -401,8 +423,9 @@ impl Channel {
         }
     }
 
-    /// Ends the connection with a TLS close.
+    /// Sends the buffer, and ends the connection with a TLS close.
     pub fn close(mut self) {
+        let _ = self.write_buffer();
         self.tls.close();
     }
 
@@ -412,14 +435,38 @@ impl Channel {
         self.socket.try_clone().map(|socket| Closer { socket }).map_err(LinkError::Io)
     }
 
-    /// Writes one frame in one write, so it goes out as one TLS record.
+    /// Adds one frame to the buffer, and writes the buffer when it is full.
     fn write_frame(&mut self, kind: u8, payload: &[u8]) -> Result<(), LinkError> {
-        let mut frames = std::mem::take(&mut self.frames);
-        frames.clear();
-        let written = push_frame(&mut frames, kind, payload).and_then(|()| self.tls.write_all(&frames).map_err(LinkError::from_io));
-        self.frames = frames;
+        push_frame(&mut self.frames, kind, payload)?;
+        self.write_full()
+    }
+
+    /// Writes the buffer when it holds [`CHUNK`] bytes or more.
+    fn write_full(&mut self) -> Result<(), LinkError> {
+        if self.frames.len() >= CHUNK { self.write_buffer() } else { Ok(()) }
+    }
+
+    /// Writes the buffer to TLS in one call. A failed write drops the buffer, because the connection is lost then.
+    fn write_buffer(&mut self) -> Result<(), LinkError> {
+        if self.frames.is_empty() {
+            return Ok(());
+        }
+        let written = self.tls.write_all(&self.frames).map_err(LinkError::from_io);
+        self.frames.clear();
         written
     }
+}
+
+/// Appends the frame of the JSON of `message` to `frames`.
+fn push_message<T: Serialize>(frames: &mut Vec<u8>, message: &T) -> Result<(), LinkError> {
+    let json = serde_json::to_vec(message).map_err(|error| LinkError::Protocol(error.to_string()))?;
+    if json.len() > MAX_MESSAGE {
+        return Err(LinkError::Protocol(format!(
+            "a message of {} bytes is over the limit of {MAX_MESSAGE}",
+            json.len()
+        )));
+    }
+    push_frame(frames, KIND_MESSAGE, &json)
 }
 
 /// Appends the frame of `kind` with `payload` to `frames`.

@@ -6,6 +6,10 @@ A frame is a kind byte, a big-endian u32 length, and the payload. A message is o
 chunk is at most 64 KiB. An empty chunk keeps a byte stream alive while its sender has no bytes yet. An end frame
 completes a byte stream.
 
+A sender collects its frames in a buffer, and writes the buffer to TLS in one call when it holds 64 KiB, at a flush,
+before a read and at the close. `send`, `send_all`, `send_end`, `send_keepalive` and `send_stream` flush. `queue`,
+`queue_stream` and `send_bytes` do not, so a reply of many small files, such as a fetch, takes a few TLS records.
+
 | Input | Refusal |
 |---|---|
 | A frame of an unknown kind | `LinkError::Protocol` |
