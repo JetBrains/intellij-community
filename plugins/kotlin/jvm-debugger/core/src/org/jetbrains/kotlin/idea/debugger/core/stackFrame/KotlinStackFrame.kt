@@ -14,6 +14,7 @@ import com.sun.jdi.ObjectReference
 import com.sun.jdi.Value
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.coroutines.CONTINUATION_VARIABLE_NAME
+import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_CALL_RESULT_NAME
 import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
 import org.jetbrains.kotlin.idea.debugger.base.util.CONTINUATION_TYPE
@@ -210,7 +211,8 @@ open class KotlinStackFrame(
                     !name.startsWith(DESTRUCTURED_LAMBDA_ARGUMENT_VARIABLE_PREFIX) &&
                     !name.startsWith(AsmUtil.LOCAL_FUNCTION_VARIABLE_PREFIX) &&
                     name != CONTINUATION_VARIABLE_NAME &&
-                    name != SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
+                    name != SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME &&
+                    name != SUSPEND_CALL_RESULT_NAME
             }.partition { variable ->
             val name = variable.nameWithoutScopeNumber()
             name == AsmUtil.THIS ||

@@ -17,17 +17,14 @@ KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:12)
 optimisedVariablesInNestedFunctions.kt:18
 CoroutinePreflightFrame invokeSuspend$suspendFoo (optimisedVariablesInNestedFunctions.kt:18)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
-    JavaValue[local] result = null
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:20
 CoroutinePreflightFrame invokeSuspend$suspendFoo (optimisedVariablesInNestedFunctions.kt:20)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
-    JavaValue[local] result = null
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:22
 CoroutinePreflightFrame invokeSuspend$suspendFoo (optimisedVariablesInNestedFunctions.kt:22)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:15)
-    JavaValue[local] result = null
     JavaValue[local] a: int = 1 (optimisedVariablesInNestedFunctions.kt:16)
 optimisedVariablesInNestedFunctions.kt:27
 KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:27)
@@ -39,21 +36,17 @@ KotlinStackFrame (optimisedVariablesInNestedFunctions.kt:30)
 optimisedVariablesInNestedFunctions.kt:37
 CoroutinePreflightFrame invokeSuspend$suspendBar (optimisedVariablesInNestedFunctions.kt:37)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:35)
-    JavaValue[local] result = null
 optimisedVariablesInNestedFunctions.kt:40
 CoroutinePreflightFrame invokeSuspend$suspendBar (optimisedVariablesInNestedFunctions.kt:40)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:35)
-    JavaValue[local] result = null
     JavaValue[local] x: int = 1 (optimisedVariablesInNestedFunctions.kt:37)
 optimisedVariablesInNestedFunctions.kt:42
 CoroutinePreflightFrame invokeSuspend$suspendBar (optimisedVariablesInNestedFunctions.kt:42)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:35)
-    JavaValue[local] result = null
     JavaValue[local] x: int = 1 (optimisedVariablesInNestedFunctions.kt:37)
 optimisedVariablesInNestedFunctions.kt:44
 CoroutinePreflightFrame invokeSuspend$suspendBar (optimisedVariablesInNestedFunctions.kt:44)
     JavaValue[local] p: int = 1 (optimisedVariablesInNestedFunctions.kt:35)
-    JavaValue[local] result = null
     JavaValue[local] x: int = 1 (optimisedVariablesInNestedFunctions.kt:37)
 Disconnected from the target VM
 
