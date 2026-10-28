@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.kotlin-scripting-dependencies" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.5.0-ij263-42">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-scripting-dependencies:2.5.0-ij263-46">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-ij263-42/kotlin-scripting-dependencies-2.5.0-ij263-42.jar">
-              <sha256sum>1116b15768e08628004448ecd8f5094972247e61cf506526b37c93c5efe44645</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-ij263-46/kotlin-scripting-dependencies-2.5.0-ij263-46.jar">
+              <sha256sum>f9306d848b88703245c5fc53491eb7b25a3e01aea34273ab0f13e2147894fe3d</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-ij263-42/kotlin-scripting-dependencies-2.5.0-ij263-42.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-ij263-46/kotlin-scripting-dependencies-2.5.0-ij263-46.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-ij263-42/kotlin-scripting-dependencies-2.5.0-ij263-42-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-dependencies/2.5.0-ij263-46/kotlin-scripting-dependencies-2.5.0-ij263-46-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
