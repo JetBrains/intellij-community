@@ -4,6 +4,7 @@ package com.jetbrains.python.psi.types;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SimpleModificationTracker;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -89,8 +90,24 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   }
 
   @Override
-  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalContext standard) {
-    return retrieveFromStorage(standard, myLibrariesCachedMapStorage);
+  public @NotNull TypeEvalContext getLibraryContext(@NotNull TypeEvalContext delegating) {
+    final TypeEvalConstraints constraints = ((TypeEvalContextImpl)delegating).getConstraints();
+    // code completion will always have a new PsiFile, use the original file instead
+    final PsiFile origin = constraints.myOrigin == null ? null : constraints.myOrigin.getOriginalFile();
+    final TypeEvalConstraints key = new TypeEvalConstraints(constraints.myAllowDataFlow,
+                                                           constraints.myAllowStubToAST,
+                                                           constraints.myAllowCallContext,
+                                                           constraints.myIsExternal,
+                                                           origin);
+    final ConcurrentMap<TypeEvalConstraints, TypeEvalContext> map = myLibrariesCachedMapStorage.getValue();
+    final TypeEvalContext cachedContext = map.get(key);
+    if (cachedContext != null) {
+      return cachedContext;
+    }
+    PyCodeInsightCounters.inc(PyCodeInsightCounters.Counter.CONTEXT_LOOKUP_MISSES);
+    final TypeEvalContext fresh = new TypeEvalContextImpl.LibraryTypeEvalContext(key);
+    final TypeEvalContext oldValue = map.putIfAbsent(key, fresh);
+    return oldValue == null ? fresh : oldValue;
   }
 
   public void dispose() {

@@ -39,6 +39,11 @@ public interface TypeEvalContextCache {
   @NotNull
   TypeEvalContext getContext(@NotNull TypeEvalContext standard);
 
+  /**
+   * Returns the library context for the constraints of {@code delegating}, and builds one only if the cache holds none.
+   *
+   * @param delegating the context that delegates the types of library elements, not a library context to store
+   */
   @NotNull
-  TypeEvalContext getLibraryContext(@NotNull TypeEvalContext standard);
+  TypeEvalContext getLibraryContext(@NotNull TypeEvalContext delegating);
 }
