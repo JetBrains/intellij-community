@@ -552,15 +552,15 @@ open class McpServerService(private val cs: CoroutineScope) {
         val authToken = if (authCheck) applicationCall.request.headers[IJ_MCP_AUTH_TOKEN] else null
         val clientTagsHeader = applicationCall.request.headers[IJ_MCP_CLIENT_TAGS]
 
-        // Check for tool filter from header (for stdio/CLI usage)
-        val allowedToolsFromHeader = applicationCall.request.headers[IJ_MCP_ALLOWED_TOOLS]
+        val baseSessionOptions = getSessionOptions(authToken)
+        // Check for tool filter from header (for stdio/CLI usage).
+        // An authorized session with a fixed tool filter ignores the header, so the header cannot change the tools of a token.
+        val allowedToolsFromHeader = applicationCall.request.headers[IJ_MCP_ALLOWED_TOOLS].takeIf { baseSessionOptions.toolFilter == null }
         val headerFilter = allowedToolsFromHeader?.let { toolsStr ->
           val tools = toolsStr.split(",").map { it.trim() }.filter { it.isNotEmpty() }.toSet()
           if (tools.isNotEmpty()) McpToolFilter.AllowList(tools) else McpToolFilter.AllowAll
         }
 
-        // Merge filters: auth-based session options take precedence over header
-        val baseSessionOptions = getSessionOptions(authToken)
         val clientTags = clientTagsHeader?.let(::parseMcpClientTags) ?: baseSessionOptions.clientTags
         val useFiltersFromEP = allowedToolsFromHeader.isNullOrEmpty()
         // if no header provided, use the existing filter from sessionOptions

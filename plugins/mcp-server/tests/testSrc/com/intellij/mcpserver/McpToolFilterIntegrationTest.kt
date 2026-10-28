@@ -163,6 +163,29 @@ class McpToolFilterIntegrationTest {
     }
   }
 
+  @Test
+  fun `header does not change an authorized session with a fixed filter`() = runBlocking(Dispatchers.Default) {
+    val options = McpServerService.McpSessionOptions(
+      commandExecutionMode = McpServerService.AskCommandExecutionMode.DONT_ASK,
+      toolFilter = McpToolFilter.AllowList(setOf(tool1)),
+      invocationMode = McpSessionInvocationMode.DIRECT,
+    ).withUnusedRouterToolOmitted()
+
+    withAuthorizedSessionConnection(options, allowedToolsHeader = "$tool1,$tool2,$tool3") { client ->
+      assertThat(client.listTools().tools.map { it.name }).containsExactly(tool1)
+
+      val result = client.callTool(tool3, kotlinx.serialization.json.buildJsonObject {
+        put("pathInProject", kotlinx.serialization.json.JsonPrimitive("test.txt"))
+      })
+
+      assertThat(result.isError).isTrue()
+      assertThat((result.content.firstOrNull() as? TextContent)?.text).contains("not found")
+    }
+    withAuthorizedSessionConnection(options, allowedToolsHeader = tool2) { client ->
+      assertThat(client.listTools().tools.map { it.name }).containsExactly(tool1)
+    }
+  }
+
   private suspend fun withConnection(
     filter: McpToolFilter = McpToolFilter.AllowAll,
     allowedToolsHeader: String? = null,
@@ -201,6 +224,7 @@ class McpToolFilterIntegrationTest {
 
   private suspend fun withAuthorizedSessionConnection(
     sessionOptions: McpServerService.McpSessionOptions,
+    allowedToolsHeader: String? = null,
     action: suspend (Client) -> Unit
   ) {
     val service = McpServerService.getInstance()
@@ -210,6 +234,7 @@ class McpToolFilterIntegrationTest {
         port = port,
         extraHeaders = {
           header(tokenName, tokenValue)
+          allowedToolsHeader?.let { header(IJ_MCP_ALLOWED_TOOLS, it) }
         },
         action = action
       )
