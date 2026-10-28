@@ -54,6 +54,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -502,7 +503,8 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
         return
       }
 
-      val dumpTask = startFreezeReporting()
+      // the report start must finish even when a new EDT event cancels this coroutine
+      val dumpTask = withContext(NonCancellable) { startFreezeReporting() }
 
       if (!state.compareAndSet(CheckerState.FREEZE_DETECTED, CheckerState.FREEZE_LOGGING(dumpTask))) {
         stopFreezeReporting(dumpTask)
@@ -522,14 +524,20 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       val reportDir = logDir.resolve(freezeFolder)
       Files.createDirectories(reportDir)
 
-      EP_NAME.forEachExtensionSafeAsync {
-        it.uiFreezeStarted(reportDir, coroutineScope)
+      try {
+        EP_NAME.forEachExtensionSafeAsync {
+          it.uiFreezeStarted(reportDir, coroutineScope)
+        }
+
+        val dumpTask = PerformanceWatcherSamplingTask(freezeFolder, taskStart)
+        publisher?.uiFreezeStarted(reportDir)
+
+        return dumpTask
       }
-
-      val dumpTask = PerformanceWatcherSamplingTask(freezeFolder, taskStart)
-      publisher?.uiFreezeStarted(reportDir)
-
-      return dumpTask
+      catch (e: Throwable) {
+        deleteEmptyDirectory(reportDir)
+        throw e
+      }
     }
 
     private fun stopFreezeReporting(task: PerformanceWatcherSamplingTask) {
@@ -788,6 +796,13 @@ private suspend fun postProcessReportFolder(durationMs: Long, task: PerformanceW
 
   LOG.debug { "Awaiting the $dir dumping tasks to finish" }
   task.waitDumpProcessing()
+
+  if (task.threadInfos.asIterable().none()) {
+    // the freeze ended before the first thread dump; a report without a dump is misleading
+    NioFiles.deleteRecursively(dir)
+    LOG.info("UI was frozen for ${durationMs}ms, the freeze ended before the first thread dump, $dir is deleted")
+    return null
+  }
 
   cleanup(dir)
   var reportDir = logDir.resolve("${dir.name}${getFreezePlaceSuffix(task)}-${TimeUnit.MILLISECONDS.toSeconds(durationMs)}sec")
@@ -1205,6 +1220,15 @@ private fun formatTime(time: ZonedDateTime): String = dateFormat.format(time)
 
 private fun cleanup(dir: Path) {
   Files.deleteIfExists(dir.resolve(DURATION_FILE_NAME))
+}
+
+/** Deletes [dir] when it is empty. A non-empty directory stays, because a freeze profiler can already have written to it. */
+private fun deleteEmptyDirectory(dir: Path) {
+  try {
+    Files.deleteIfExists(dir)
+  }
+  catch (_: IOException) {
+  }
 }
 
 internal fun getStacktraceCommonPart(commonPart: List<StackTraceElement>, stackTraceElements: Array<StackTraceElement>): List<StackTraceElement> {
