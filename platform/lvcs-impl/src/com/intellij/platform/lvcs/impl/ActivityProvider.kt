@@ -11,7 +11,7 @@ interface ActivityProvider {
   fun getActivityItemsChanged(scope: ActivityScope): Flow<Unit>
 
   fun loadActivityList(scope: ActivityScope, filter: ActivityFilter?): ActivityData
-  fun filterActivityList(scope: ActivityScope, data: ActivityData, filter: ActivityFilter?): Set<ActivityItem>?
+  fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>?
 
   fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData?
   fun loadSingleDiff(scope: ActivityScope, selection: ActivitySelection): DiffRequestProducer?
@@ -23,7 +23,6 @@ interface ActivityProvider {
 
 @ApiStatus.Experimental
 data class ActivityFilter(val filePathFilter: HistoryPathFilter?,
-                          val contentFilter: String?,
                           val showSystemLabels: Boolean)
 
 @ApiStatus.Experimental

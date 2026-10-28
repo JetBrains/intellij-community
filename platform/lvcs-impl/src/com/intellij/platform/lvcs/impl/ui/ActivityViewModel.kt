@@ -67,7 +67,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
           val activityData = withContext(Dispatchers.Default) {
             LocalHistoryCounter.logLoadItems(project, activityScope) {
               val pathFilter = HistoryPathFilter.create(filter, project)
-              activityProvider.loadActivityList(activityScope, ActivityFilter(pathFilter, null, showSystemLabels))
+              activityProvider.loadActivityList(activityScope, ActivityFilter(pathFilter, showSystemLabels))
             }
           }
           withContext(Dispatchers.EDT) {
@@ -99,14 +99,12 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
 
     if (filterKind == FilterKind.CONTENT) {
       coroutineScope.launch {
-        combine(filterFlow.debounce(100),
-                filterSystemLabelsFlow.debounce(100),
-                activityItemsFlow) { ff, fs, r -> Triple(ff, fs, r) }
-          .collect { (filter, showSystemLabels, data) ->
+        combine(filterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }
+          .collect { (filter, data) ->
             thisLogger<ActivityViewModel>().debug("Filtering activity items for $activityScope by $filter")
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
             val result = LocalHistoryCounter.logFilter(project, activityScope) {
-              activityProvider.filterActivityList(activityScope, data, ActivityFilter(null, filter, showSystemLabels))
+              activityProvider.filterActivityList(activityScope, data, filter)
             }
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(result) }
           }

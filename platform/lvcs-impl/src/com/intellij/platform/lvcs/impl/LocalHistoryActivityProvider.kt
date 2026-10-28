@@ -124,16 +124,14 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     return ActivityData(result).also { it.putUserData(AFFECTED_PATHS, paths) }
   }
 
-  override fun filterActivityList(scope: ActivityScope, data: ActivityData, filter: ActivityFilter?): Set<ActivityItem>? {
+  override fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>? {
     val changeSets = data.getChangeSets()
-    if (changeSets.isEmpty()) return null
+    if (contentFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
-    val contentFilter = filter?.contentFilter
-    val showSystemLabels = filter.showSystemLabels()
 
     val filteredIds = mutableSetOf<Long>()
     val processor: (Long, String?) -> Boolean = { changeSetId, content ->
-      if (contentFilter == null || content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
+      if (content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
       true
     }
 
@@ -146,14 +144,7 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
       facade.processContents(gateway, rootEntry, path, changeSets, before = USE_OLD_CONTENT, processor = processor)
     }
 
-    val result = mutableSetOf<ActivityItem>()
-    for (item in data.items) {
-      when {
-        !showSystemLabels && item is ChangeSetActivityItem && item.isSystemLabelOnly() -> continue
-        item is ChangeSetActivityItem && filteredIds.contains(item.id) -> result.add(item)
-      }
-    }
-    return result
+    return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData? {
