@@ -288,7 +288,9 @@ internal class IdeProjectFrameAllocator(
               val deferredToolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
               // resolve the policy once: the provider of the welcome project policy writes a first-run flag
               val projectFrameUiPolicyDeferred = async {
-                serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicyForToolWindows(project)
+                val policy = serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicyForToolWindows(project)
+                val toolWindowManager = deferredToolWindowManager.await()
+                if (policy != null && toolWindowManager != null) policy.keepingStoredLayout(toolWindowManager) else policy
               }
               // a welcome-experience frame registers the tool windows it shows first, and every other one after its content paints;
               // a frame that becomes interactive when its editor is shown registers every tool window after that
@@ -639,6 +641,21 @@ private class EarlyStartupToolWindowActivation private constructor(
     isAttempted = true
     toolWindow.activate(null)
   }
+}
+
+/**
+ * Returns the policy without the Project view activation when the activation would change the stored layout.
+ * The activation stays when the project has no stored layout, or when the stored layout shows the Project view.
+ * It also stays when the policy replaces the layout with its exclusive showing set.
+ */
+@VisibleForTesting
+internal fun ProjectFrameUiPolicy.keepingStoredLayout(toolWindowManager: ToolWindowManagerImpl): ProjectFrameUiPolicy {
+  if (!activatesProjectViewOnStartup ||
+      toolWindowIdsToExclusiveShowing.isNotEmpty() ||
+      toolWindowManager.isShownOnStartupAllowed(ToolWindowId.PROJECT_VIEW)) {
+    return this
+  }
+  return copy(activatesProjectViewOnStartup = false)
 }
 
 /**
@@ -1115,8 +1132,11 @@ private suspend fun openProjectViewIfNeeded(project: Project, toolWindowInitJob:
 
   toolWindowInitJob.join()
 
-  // todo should we use `runOnceForProject(project, "OpenProjectViewOnStart")` or not?
   val toolWindowManager = project.serviceAsync<ToolWindowManager>()
+  if ((toolWindowManager as? ToolWindowManagerImpl)?.isShownOnStartupAllowed(ToolWindowId.PROJECT_VIEW) == false) {
+    return
+  }
+
   val focusRestore = withContext(Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) outer@{
     if (toolWindowManager.activeToolWindowId == null) {
       val shouldFocusProjectView = focusProjectView()

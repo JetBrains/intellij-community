@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.applyProjectFrameUiPolicy
 import com.intellij.openapi.project.impl.getOrCreateFrameContentPaintedDeferred
+import com.intellij.openapi.project.impl.keepingStoredLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -152,6 +153,47 @@ internal class DeferredToolWindowRegistrationTest {
     project.replaceService(ToolWindowManagerState::class.java, state, disposable)
 
     assertThat(createManager().getToolWindowIdsShownByStoredLayout()).isEmpty()
+  }
+
+  @Test
+  fun `the project open may show any tool window without a stored layout`() {
+    val state = ToolWindowManagerStateImpl()
+    state.noStateLoaded()
+    project.replaceService(ToolWindowManagerState::class.java, state, disposable)
+    val manager = createManager()
+
+    assertThat(manager.isShownOnStartupAllowed("Project")).isTrue()
+    val policy = ProjectFrameUiPolicy(activatesProjectViewOnStartup = true)
+    assertThat(policy.keepingStoredLayout(manager).activatesProjectViewOnStartup).isTrue()
+  }
+
+  @Test
+  fun `the project open may show only the tool windows that the stored layout shows`() {
+    loadStoredLayout("""
+      <window_info id="Open" visible="true"/>
+      <window_info id="Project"/>
+    """.trimIndent())
+    val manager = createManager()
+
+    assertThat(manager.isShownOnStartupAllowed("Open")).isTrue()
+    assertThat(manager.isShownOnStartupAllowed("Project")).isFalse()
+    assertThat(manager.isShownOnStartupAllowed("NotInLayout")).isFalse()
+    val policy = ProjectFrameUiPolicy(activatesProjectViewOnStartup = true)
+    assertThat(policy.keepingStoredLayout(manager).activatesProjectViewOnStartup).isFalse()
+  }
+
+  @Test
+  fun `the first-run policy activates the Project view that the stored layout hides`() {
+    loadStoredLayout("""<window_info id="Project"/>""")
+    val policy = ProjectFrameUiPolicy(activatesProjectViewOnStartup = true, toolWindowIdsToExclusiveShowing = setOf("Project"))
+
+    assertThat(policy.keepingStoredLayout(createManager()).activatesProjectViewOnStartup).isTrue()
+  }
+
+  private fun loadStoredLayout(layout: String) {
+    val state = ToolWindowManagerStateImpl()
+    state.loadState(JDOMUtil.load("<state><layout>$layout</layout><layoutV2>$layout</layoutV2></state>"))
+    project.replaceService(ToolWindowManagerState::class.java, state, disposable)
   }
 
   private fun registerTestToolWindows() {

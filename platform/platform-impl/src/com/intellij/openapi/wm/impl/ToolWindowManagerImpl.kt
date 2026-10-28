@@ -486,6 +486,19 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
       .mapNotNullTo(HashSet()) { it.id }
   }
 
+  /**
+   * Tells if the project open may show the tool window [id].
+   * Without a stored layout, the open lays out the default one, so it may show any tool window.
+   * With a stored layout, the open keeps that layout: it may show [id] only if the stored layout shows it.
+   */
+  @ApiStatus.Internal
+  fun isShownOnStartupAllowed(id: String): Boolean {
+    if (state.noStateLoaded) {
+      return true
+    }
+    return state.scheduledLayout.get()?.getInfo(id)?.isVisible == true
+  }
+
   @ApiStatus.Internal
   @VisibleForTesting
   suspend fun doInit(

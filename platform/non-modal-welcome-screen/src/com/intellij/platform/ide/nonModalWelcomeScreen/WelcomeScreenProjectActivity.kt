@@ -11,6 +11,7 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import com.intellij.platform.ide.nonModalWelcomeScreen.rightTab.WelcomeScreenTabFocusState
 import com.intellij.util.application
 import com.intellij.util.asSafely
@@ -40,13 +41,16 @@ internal class WelcomeScreenProjectActivity : ProjectActivity {
    * been processed, so the passive startup open does not steal the focus first (the IJPL-248588 flicker). Later
    * user-driven activations (Esc from the project view, a click on the tab) then focus the content (IJPL-203369).
    * A startup that keeps a command-line file in front skips the project view, but the content still becomes focusable.
+   * A startup that keeps the stored layout skips the project view when that layout hides it.
    */
   private suspend fun settleStartupFocus(project: Project) {
     val focusState = WelcomeScreenTabFocusState.getInstanceAsync(project)
     if (focusState.selectsTabOnStartupOpen) {
       val toolWindowManager = project.serviceAsync<ToolWindowManager>()
       withContext(Dispatchers.EDT) {
-        toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+        if ((toolWindowManager as? ToolWindowManagerImpl)?.isShownOnStartupAllowed(ToolWindowId.PROJECT_VIEW) != false) {
+          toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)?.activate(null)
+        }
       }
     }
     withContext(Dispatchers.EDT) {
