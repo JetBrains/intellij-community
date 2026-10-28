@@ -43,12 +43,13 @@ fn a_peer_gets_its_own_cap_of_handshakes_within_the_total_cap() {
         .map(|_| Handshakes::admit(&handshakes, peer(1)).expect("room for the peer"))
         .collect();
     assert!(Handshakes::admit(&handshakes, peer(1)).is_none(), "the cap of the peer is full");
-    let others: Vec<Admitted> = (2..=4)
+    let peers = u8::try_from(MAX_HANDSHAKES / MAX_HANDSHAKES_PER_PEER).expect("a peer count of one byte");
+    let others: Vec<Admitted> = (2..=peers)
         .flat_map(|last| (0..MAX_HANDSHAKES_PER_PEER).map(move |_| last))
         .map(|last| Handshakes::admit(&handshakes, peer(last)).expect("room for another peer"))
         .collect();
     assert_eq!(busy.len() + others.len(), MAX_HANDSHAKES);
-    assert!(Handshakes::admit(&handshakes, peer(5)).is_none(), "the total cap is full");
+    assert!(Handshakes::admit(&handshakes, peer(peers + 1)).is_none(), "the total cap is full");
     drop(busy);
     assert!(
         Handshakes::admit(&handshakes, peer(1)).is_some(),
@@ -56,7 +57,7 @@ fn a_peer_gets_its_own_cap_of_handshakes_within_the_total_cap() {
     );
     drop(others);
     assert!(
-        Handshakes::admit(&handshakes, peer(5)).is_some(),
+        Handshakes::admit(&handshakes, peer(peers + 1)).is_some(),
         "the other peers freed the total cap"
     );
 }

@@ -583,7 +583,8 @@ fn a_stranger_certificate_is_refused() {
     };
     assert!(!matches!(error, LinkError::TimedOut | LinkError::Unreachable(_)), "{error:?}");
     eventually("the refusal in the log of serve", || {
-        fs::read_to_string(agent.world.dir.path().join("serve.log")).is_ok_and(|log| log.contains("refused a connection from"))
+        fs::read_to_string(agent.world.dir.path().join("serve.log"))
+            .is_ok_and(|log| log.contains("refused connections: 1 since the last line, the last from"))
     });
 }
 

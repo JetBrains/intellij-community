@@ -11,9 +11,9 @@ pub(crate) fn grace() -> Duration {
     from_env("YONDERD_TEST_GRACE_MS", Duration::from_secs(120))
 }
 
-/// The total deadline of a TLS handshake: `YONDERD_TEST_HANDSHAKE_MS`, else 10 s.
+/// The total deadline of a TLS handshake: `YONDERD_TEST_HANDSHAKE_MS`, else 3 s.
 pub(crate) fn handshake() -> Duration {
-    from_env("YONDERD_TEST_HANDSHAKE_MS", Duration::from_secs(10))
+    from_env("YONDERD_TEST_HANDSHAKE_MS", Duration::from_secs(3))
 }
 
 /// How often a waiting request or a quiet follow sends a heartbeat: `YONDERD_TEST_HEARTBEAT_MS`, else

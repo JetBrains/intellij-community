@@ -30,6 +30,7 @@ mod serve;
 mod setup;
 mod slots;
 mod supervise;
+mod tally;
 #[cfg(test)]
 mod testing;
 mod tuning;

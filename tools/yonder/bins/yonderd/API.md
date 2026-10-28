@@ -108,8 +108,9 @@ fill waits 1, 5, then 15 minutes.
 - A refused `Start` deletes the ref of its pack, unless a kept run has the same id.
 - A run that ends with a refusal shows the exit code 255 in `Runs`. A run that a cancel ends before its command starts
   ends with the exit code 130.
-- A TLS handshake has 10 s in all. At most 32 handshakes go on at a time, and at most 8 of one peer address. The agent
-  closes a socket over a cap at once.
+- A TLS handshake has 3 s in all. At most 128 handshakes go on at a time, and at most 8 of one peer address. The agent
+  closes a socket over a cap at once. The sockets over a cap and the failed handshakes write one log line per minute
+  each: the count since the last line and the last peer.
 
 ## The environment of a run
 
@@ -306,7 +307,7 @@ turns them off. A process test shortens these durations through the environment 
 | Variable | Duration | Default |
 |---|---|---|
 | `YONDERD_TEST_GRACE_MS` | from SIGINT to SIGKILL of a cancelled command | 120 s |
-| `YONDERD_TEST_HANDSHAKE_MS` | the total deadline of a TLS handshake | 10 s |
+| `YONDERD_TEST_HANDSHAKE_MS` | the total deadline of a TLS handshake | 3 s |
 | `YONDERD_TEST_HEARTBEAT_MS` | between two heartbeats | `HEARTBEAT_SECONDS` |
 | `YONDERD_TEST_PACK_WAIT_MS` | the wait of a run for its pack | `PACK_WAIT_SECONDS` |
 | `YONDERD_TEST_PACK_STALL_MS` | the wait of a run for the next chunk of its pack | `PACK_STALL_SECONDS` |

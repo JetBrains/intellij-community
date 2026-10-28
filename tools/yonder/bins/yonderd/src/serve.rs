@@ -1,7 +1,8 @@
 //! `yonderd serve`: the listener of the agent. A thread per connection. Each connection: the TLS handshake within a
 //! total deadline, then [`Request::Hello`], then one request. At most [`MAX_HANDSHAKES`] handshakes go on at a time, and
 //! at most [`MAX_HANDSHAKES_PER_PEER`] of one address, so one host of the network cannot hold all of them. A socket
-//! over a cap is closed at once. A request that waits for a lock, bd or git sends a heartbeat while it
+//! over a cap is closed at once. The sockets over a cap and the failed handshakes write one log line per minute with
+//! their count (`tally`). A request that waits for a lock, bd or git sends a heartbeat while it
 //! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
 //! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
 //! raises its open-files limit, which each run inherits, and a thread captures the login environment of the user
@@ -31,6 +32,7 @@ use crate::home::Home;
 use crate::host_git::{self, HostGit};
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, UPGRADE_FAILED, refused, reply};
 use crate::run::{RunDir, Runs};
+use crate::tally::{self, Tally};
 use crate::upgrade::{Install, Staging};
 use crate::{cleanup, git, keeper, login_env, run_env, tuning, upgrade};
 
@@ -38,7 +40,7 @@ use crate::{cleanup, git, keeper, login_env, run_env, tuning, upgrade};
 const READ_DEADLINE: Duration = Duration::from_secs(10);
 
 /// The most handshakes that go on at a time.
-pub(crate) const MAX_HANDSHAKES: usize = 32;
+pub(crate) const MAX_HANDSHAKES: usize = 128;
 
 /// The most handshakes of one peer address that go on at a time. A run opens a few connections at once.
 pub(crate) const MAX_HANDSHAKES_PER_PEER: usize = 8;
@@ -87,6 +89,10 @@ pub(crate) struct Agent {
     keeper: Mutex<Option<mpsc::Sender<PathBuf>>>,
     /// The git of the host, which a start checks (`host_git`).
     pub(crate) git: HostGit,
+    /// The sockets that a cap of handshakes closed.
+    over_cap: Tally,
+    /// The handshakes that failed.
+    failed_handshakes: Tally,
 }
 
 /// Listens on `bind:port` and serves each connection. Prints one JSON line with the address and the fingerprint on
@@ -130,6 +136,14 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out
         }
     });
 
+    let flushed = Arc::clone(&agent);
+    thread::spawn(move || {
+        loop {
+            thread::sleep(tally::EVERY);
+            flushed.flush_tallies();
+        }
+    });
+
     let home = agent.home.clone();
     thread::spawn(move || {
         loop {
@@ -151,7 +165,9 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out
             Ok(socket) => {
                 let peer = socket.peer_addr().map_or(IpAddr::from([0, 0, 0, 0]), |address| address.ip());
                 let Some(admitted) = Handshakes::admit(&handshakes, peer) else {
-                    log(&format!("closed a connection from {peer}: its cap of handshakes is full"));
+                    if let Some(line) = agent.over_cap.note(Instant::now(), format!("from {peer}")) {
+                        log(&line);
+                    }
                     drop(socket);
                     continue;
                 };
@@ -239,6 +255,8 @@ impl Agent {
             upgrading: AtomicBool::new(false),
             awake: Awake::new(awake::program()),
             keeper: Mutex::new(None),
+            over_cap: Tally::new("closed connections over a cap of handshakes"),
+            failed_handshakes: Tally::new("refused connections"),
         }
     }
 
@@ -246,6 +264,16 @@ impl Agent {
     pub(crate) fn wake_keeper(&self, repo: PathBuf) {
         if let Some(keeper) = self.keeper.lock().unwrap_or_else(PoisonError::into_inner).as_ref() {
             let _ = keeper.send(repo);
+        }
+    }
+
+    /// Writes the lines of the tallies that counted events since their last line.
+    fn flush_tallies(&self) {
+        let now = Instant::now();
+        for tally in [&self.over_cap, &self.failed_handshakes] {
+            if let Some(line) = tally.flush(now) {
+                log(&line);
+            }
         }
     }
 
@@ -263,7 +291,9 @@ impl Agent {
         let mut channel = match accepted {
             Ok(channel) => channel,
             Err(error) => {
-                log(&format!("refused a connection from {address}: {error}"));
+                if let Some(line) = self.failed_handshakes.note(Instant::now(), format!("from {address}: {error}")) {
+                    log(&line);
+                }
                 return;
             }
         };
