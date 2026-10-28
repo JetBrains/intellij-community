@@ -10,6 +10,7 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 
 /**
  * Describes how the workspace includes a file during a top-down traversal of a file tree.
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class TraverseState private constructor(
   /** The kinds of file sets which include the current file, as [WorkspaceFileKindMask] bits. */
+  @VisibleForTesting
   @MagicConstant(flagsFromClass = WorkspaceFileKindMask::class)
   val mask: Int,
   /**
@@ -30,6 +32,7 @@ class TraverseState private constructor(
    * The children of the current file inherit these kinds.
    */
   @MagicConstant(flagsFromClass = WorkspaceFileKindMask::class)
+  @VisibleForTesting
   val maskRecursive: Int,
 
   private val activeExcludes: List<ActiveExclude>,
@@ -39,13 +42,17 @@ class TraverseState private constructor(
   }
 
   /** The exclusions which can still exclude the descendants of the current file. */
-  val excludes: List<WorkspaceExcludeFileSet> = if (activeExcludes.isEmpty()) emptyList()
+  @VisibleForTesting val excludes: List<WorkspaceExcludeFileSet> = if (activeExcludes.isEmpty()) emptyList()
   else object : AbstractList<WorkspaceExcludeFileSet>() {
     override val size: Int
       get() = activeExcludes.size
 
     override fun get(index: Int): WorkspaceExcludeFileSet = activeExcludes[index].rule
   }
+
+  /** `true` if a file set includes the current file. */
+  val isInWorkspace: Boolean
+    get() = mask != 0
 
   /** `true` if an indexable file set includes the current file. */
   val isIndexable: Boolean
