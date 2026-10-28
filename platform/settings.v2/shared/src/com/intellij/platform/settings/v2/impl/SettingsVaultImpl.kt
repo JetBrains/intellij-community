@@ -27,6 +27,7 @@ import com.intellij.platform.settings.v2.ReadOnlySettingsException
 import com.intellij.platform.settings.v2.SaveResult
 import com.intellij.platform.settings.v2.SettingsChangeListener
 import com.intellij.platform.settings.v2.SettingsContext
+import com.intellij.platform.settings.v2.SettingsContextKind
 import com.intellij.platform.settings.v2.SettingsKey
 import com.intellij.platform.settings.v2.SettingsMapKey
 import com.intellij.platform.settings.v2.SettingsMutationBuilder
@@ -43,7 +44,6 @@ import com.intellij.platform.settings.v2.impl.providers.AppLayerProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
@@ -119,20 +119,19 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   private val pendingSaves = HashSet<Pair<String, LayerCoordinate>>()
 
   /**
-   * Holds the pushes whose store is under the scope of a running reload, in arrival order. [finishReload] applies them
-   * after that reload installs (ADR 0123). Guarded by [vaultWriteMutex].
+   * Holds the pushes whose store is in a dirty context, in arrival order. The vault applies them when the context of
+   * their store gets ready (ADR 0123, ADR 0160). See [swapInReloadProgress]. Guarded by [vaultWriteMutex].
    */
   private val heldPushes = ArrayList<LayerData>()
 
   /**
-   * Holds the scopes of the requested reloads that have not finished, as a multiset. The same or overlapping scopes
-   * can be running and queued at once. So a scope appears once per pending reload and goes once per finished reload,
-   * never while another reload of it is pending. A context is dirty while an entry covers it: the entry is the context
-   * or an ancestor. [reloadScope] adds the entry before it waits for [reloadMutex], so a queued reload already reads as
+   * Holds the requested reloads that have not finished, the running ones and the queued ones. Each one keeps its scope
+   * and its [pending kinds][UnfinishedReload.pendingKinds] (ADR 0160). The same or overlapping scopes can be in it at
+   * once. [reloadScope] adds the entry before it waits for [reloadMutex], so a queued reload already makes its contexts
    * dirty. There is no gap between the end of one reload and the start of the next one. [isDirty] iterates it with no
    * lock.
    */
-  private val loadingScopes = CopyOnWriteArrayList<SettingsContext>()
+  private val unfinishedReloads = CopyOnWriteArrayList<UnfinishedReload>()
 
   /**
    * Serializes whole reloads (gather and install), so two reloads of overlapping scopes never interleave (ADR 0071).
@@ -142,9 +141,10 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   private val reloadMutex = Mutex()
 
   /**
-   * Holds a counter that grows on every [loadingScopes] change, so [awaitReady] can suspend until a context stops
-   * being dirty. Each value is new, so a `StateFlow` collector always gets it. The counter grows after the change of
-   * the list, so a new check sees the updated set.
+   * Holds a counter that grows on every readiness change: a reload that [unfinishedReloads] gets or drops, and a
+   * change of the [pending kinds][UnfinishedReload.pendingKinds] of a reload. So [awaitReady] can suspend until a
+   * context stops being dirty. Each value is new, so a `StateFlow` collector always gets it. The counter grows after
+   * the change, so a new check sees the updated state.
    */
   private val loadingGeneration = MutableStateFlow(0)
 
@@ -198,10 +198,10 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   }
 
   override fun isDirty(context: SettingsContext): Boolean =
-    loadingScopes.any { it.isAncestorOf(context, strict = false) }
+    unfinishedReloads.any { it.keepsDirty(context) }
 
   override suspend fun awaitReady(context: SettingsContext) {
-    // Re-checks on the current value and on every [loadingGeneration] bump; returns once no reload covers [context].
+    // Re-checks on the current value and on every [loadingGeneration] bump; returns once no reload keeps [context] dirty.
     loadingGeneration.first { !isDirty(context) }
   }
 
@@ -226,58 +226,81 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
       .map { it.storageContext(scopeContext) }
       .fold(scopeContext) { widest, storageContext -> if (storageContext.isAncestorOf(widest, strict = true)) storageContext else widest }
 
+  /**
+   * Reloads [scopeContext] kind by kind (ADR 0160). It asks every provider at once under [reloadMutex]. The bucket of
+   * a kind installs when every provider whose range of context kinds contains the kind has answered. So the buckets
+   * install in the order in which their providers answer. See [installBucket].
+   */
   private suspend fun reloadScope(scopeContext: SettingsContext) {
-    // Mark the scope dirty before the wait for reloadMutex. See loadingScopes and reloadMutex.
-    loadingScopes.add(scopeContext)
+    // Mark the scope dirty before the wait for reloadMutex. See unfinishedReloads and reloadMutex.
+    val reload = UnfinishedReload(scopeContext)
+    unfinishedReloads.add(reload)
     loadingGeneration.update { it + 1 }
     try {
       reloadMutex.withLock {
-        // Ask every provider for its data concurrently; install and sweep stay serial under the model lock.
-        val newLayersData = coroutineScope {
-          LayerProvider.EP_NAME.extensionList.map { provider -> async { provider to requestDataOrNull(provider, scopeContext) } }.awaitAll()
+        coroutineScope {
+          val providers = LayerProvider.EP_NAME.extensionList
+          val answers = providers.associateWith { provider -> async { requestDataOrNull(provider, scopeContext) } }
+          for (kind in SettingsContextKind.entries) {
+            val bucketAnswers = providers.filter { kind in it.contextKindRange }.map { it to answers.getValue(it) }
+            launch { installBucket(reload, kind, bucketAnswers.map { (provider, answer) -> provider to answer.await() }) }
+          }
         }
-        installAndSweep(scopeContext, newLayersData)
       }
     }
     finally {
-      withContext(NonCancellable) { finishReload(scopeContext) }
+      withContext(NonCancellable) { finishReload(reload) }
     }
   }
 
   /**
-   * Ends the reload of [scopeContext], also a failed or a cancelled one. Applies, in arrival order, the [heldPushes]
-   * that no other reload covers, then drops [scopeContext] from [loadingScopes]. Both happen under one
-   * [vaultWriteMutex] hold, so a new push cannot apply before a held push for the same store. A context turns ready
-   * only after its held pushes are in the model.
+   * Ends [reload], also a failed or a cancelled one. Every kind that it has not installed stops being pending, so its
+   * contexts get ready. The held pushes of the stores that get ready apply in the same [vaultWriteMutex] hold. See
+   * [swapInReloadProgress].
    */
-  private suspend fun finishReload(scopeContext: SettingsContext) {
+  private suspend fun finishReload(reload: UnfinishedReload) {
     val settingsChangeEvents = SettingsChangeEvents()
     vaultWriteMutex.withLock {
-      val otherReloadScopes = ArrayList(loadingScopes).apply { remove(scopeContext) }
-      var currentModel = model
-      val iterator = heldPushes.iterator()
-      while (iterator.hasNext()) {
-        val layerData = iterator.next()
-        if (isUnderReload(layerData, otherReloadScopes)) continue
-        iterator.remove()
-        currentModel = processPush(currentModel, layerData, settingsChangeEvents)
-      }
-      model = currentModel
-      loadingScopes.remove(scopeContext)
+      swapInReloadProgress(model, reload, pendingKinds = emptySet(), settingsChangeEvents)
+      unfinishedReloads.remove(reload)
     }
     loadingGeneration.update { it + 1 }
     notifyListeners(settingsChangeEvents)
   }
 
   /**
-   * Returns whether the store of [layerData] is under one of [reloadScopes].
+   * Swaps in [currentModel] with the [heldPushes] that get ready, then sets the pending kinds of [reload]. A held push
+   * gets ready when the context of its store is not dirty with the new pending kinds. These pushes apply in arrival
+   * order. So a context gets ready only after its held pushes are in the model, and a new push cannot apply before a
+   * held push of the same store (ADR 0160). Call under [vaultWriteMutex], and bump [loadingGeneration] after the hold.
    *
-   * @param reloadScopes the scopes of the running and the queued reloads
+   * @param pendingKinds the new [pending kinds][UnfinishedReload.pendingKinds] of [reload]
    */
-  private fun isUnderReload(layerData: LayerData, reloadScopes: List<SettingsContext> = loadingScopes): Boolean {
-    val storageContext = layerData.provider.storageContext(layerData.context)
-    return reloadScopes.any { it.isAncestorOf(storageContext, strict = false) }
+  private fun swapInReloadProgress(
+    currentModel: Map<String, ContextLayers>,
+    reload: UnfinishedReload,
+    pendingKinds: Set<SettingsContextKind>,
+    settingsChangeEvents: SettingsChangeEvents,
+  ) {
+    var modelWithPushes = currentModel
+    val iterator = heldPushes.iterator()
+    while (iterator.hasNext()) {
+      val layerData = iterator.next()
+      val storageContext = storageContextOf(layerData)
+      val staysDirty = unfinishedReloads.any { it.keepsDirty(storageContext, if (it === reload) pendingKinds else it.pendingKinds) }
+      if (staysDirty) continue
+      iterator.remove()
+      modelWithPushes = processPush(modelWithPushes, layerData, settingsChangeEvents)
+    }
+    model = modelWithPushes
+    reload.pendingKinds = pendingKinds
   }
+
+  /** Returns whether the context of the store of [layerData] is [dirty][isDirty]. Then the vault holds a push of it. */
+  private fun isStoreDirty(layerData: LayerData): Boolean = isDirty(storageContextOf(layerData))
+
+  /** Returns the context that owns the store of [layerData]. See [LayerProvider.storageContext]. */
+  private fun storageContextOf(layerData: LayerData): SettingsContext = layerData.provider.storageContext(layerData.context)
 
   /**
    * Returns the data of [provider] for [scopeContext], or `null` if the provider fails. The failure is logged. The
@@ -294,43 +317,54 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
     }
 
   /**
-   * Installs every returned layer, then sweeps the stale layers under [scopeContext] (ADR 0065). A stale layer is in
-   * the model under [scopeContext], and a returning provider did not supply it again. A layer with a pending save is
-   * not stale, because an unpersisted mutation must survive until the disk catches up. Install and sweep run under one
-   * lock hold, so the reloaded scope swaps in atomically, and the change events deliver once.
+   * Installs the bucket of [kind] of [reload] (ADR 0160). It installs only the returned layers at [kind], then sweeps
+   * the stale layers of [kind] under the scope (ADR 0065). A stale layer is in the model, and a returning provider did
+   * not supply it again. A layer with a pending save is not stale, because an unpersisted mutation must survive until
+   * the disk catches up. The install, the sweep and the readiness change run under one [vaultWriteMutex] hold, so the
+   * bucket swaps in atomically, and the change events deliver once.
+   *
+   * @param answers the answer of each provider whose range of context kinds contains [kind], or `null` for a provider
+   *   that failed. The vault does not sweep a failed provider.
    */
-  private suspend fun installAndSweep(scopeContext: SettingsContext, newLayersData: List<Pair<LayerProvider, List<LayerData>?>>) {
+  private suspend fun installBucket(
+    reload: UnfinishedReload,
+    kind: SettingsContextKind,
+    answers: List<Pair<LayerProvider, List<LayerData>?>>,
+  ) {
     val settingsChangeEvents = SettingsChangeEvents()
     vaultWriteMutex.withLock {
       var currentModel = model
       val suppliedLayers = HashSet<Pair<String, LayerCoordinate>>()
-      for ((provider, layersData) in newLayersData) {
+      for ((provider, layersData) in answers) {
         for (layerData in layersData ?: continue) {
+          if (layerData.context.kind != kind) continue
           suppliedLayers.add(layerData.context.identity to LayerCoordinate(provider, layerData.locality))
           currentModel = processPush(currentModel, layerData, settingsChangeEvents)
         }
       }
-      val returningProviders = newLayersData.mapNotNullTo(HashSet()) { (provider, layers) -> provider.takeIf { layers != null } }
-      currentModel = sweepStale(currentModel, scopeContext, returningProviders, suppliedLayers, settingsChangeEvents)
-      model = currentModel
+      val returningProviders = answers.mapNotNullTo(HashSet()) { (provider, layers) -> provider.takeIf { layers != null } }
+      currentModel = sweepStale(currentModel, reload.scopeContext, kind, returningProviders, suppliedLayers, settingsChangeEvents)
+      swapInReloadProgress(currentModel, reload, reload.pendingKinds - kind, settingsChangeEvents)
     }
+    loadingGeneration.update { it + 1 }
     notifyListeners(settingsChangeEvents)
   }
 
   /**
-   * Drops the entries of each returning provider under [scopeContext] that it did not supply again and that have no
-   * pending save. A provider returns when its reload does not fail. A failed provider gave `null`, and the vault does
-   * not sweep it. The supply check and the pending-save check work per [LayerCoordinate], so the vault can sweep one
-   * locality of a provider and keep another one. See [installAndSweep]. Call under [vaultWriteMutex].
+   * Drops the entries of [kind] of each returning provider under [scopeContext] that it did not supply again and that
+   * have no pending save. A provider returns when its reload does not fail. A failed provider gave `null`, and the
+   * vault does not sweep it. The supply check and the pending-save check work per [LayerCoordinate], so the vault can
+   * sweep one locality of a provider and keep another one. See [installBucket]. Call under [vaultWriteMutex].
    */
   private fun sweepStale(
     model: Map<String, ContextLayers>,
     scopeContext: SettingsContext,
+    kind: SettingsContextKind,
     returningProviders: Set<LayerProvider>,
     suppliedLayers: Set<Pair<String, LayerCoordinate>>,
     settingsChangeEvents: SettingsChangeEvents,
   ): Map<String, ContextLayers> {
-    val stale = model.values.filter { scopeContext.isAncestorOf(it.context, strict = false) }.flatMap { entry ->
+    val stale = model.values.filter { it.context.kind == kind && scopeContext.isAncestorOf(it.context, strict = false) }.flatMap { entry ->
       entry.layers.keys.filter { coordinate ->
         coordinate.provider in returningProviders &&
         (entry.context.identity to coordinate) !in suppliedLayers &&
@@ -830,8 +864,8 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    * Folds [firstLayerData] and every push already queued behind it into the model under one lock hold. It records the
    * watches that each push touches, then delivers them once. The drain to an empty queue coalesces a burst, such as a
    * branch switch that lands as many pushes. A contextual watch fires at most once, and not at all when its value flips
-   * back within the burst. A key-only watch fires at most once per changed context. A push whose store is under a
-   * reload goes to [heldPushes] instead (ADR 0123).
+   * back within the burst. A key-only watch fires at most once per changed context. A push whose store is in a dirty
+   * context goes to [heldPushes] instead (ADR 0123, ADR 0160).
    */
   private suspend fun processPendingPushes(firstLayerData: LayerData) {
     val settingsChangeEvents = SettingsChangeEvents()
@@ -839,7 +873,7 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
       var currentModel = model
       var layerData: LayerData? = firstLayerData
       while (layerData != null) {
-        if (isUnderReload(layerData)) heldPushes.add(layerData)
+        if (isStoreDirty(layerData)) heldPushes.add(layerData)
         else currentModel = processPush(currentModel, layerData, settingsChangeEvents)
         layerData = incoming.tryReceive().getOrNull()
       }
@@ -1084,6 +1118,30 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   }
 
   private class MutationPlan(val entry: Mutation, val targetContext: SettingsContext, val provider: LayerProvider, val locality: LayerLocality)
+
+  // -- reload bookkeeping ----------------------------------------------------------------------------------------
+
+  /**
+   * Holds the readiness state of one requested reload of [scopeContext], which runs or waits in the queue
+   * (ADR 0160). See [unfinishedReloads].
+   */
+  private class UnfinishedReload(val scopeContext: SettingsContext) {
+    /**
+     * Holds the kinds whose bucket this reload has not installed yet. A queued reload has every kind pending. The
+     * vault changes it under [vaultWriteMutex], and [isDirty] reads it with no lock.
+     */
+    @Volatile
+    var pendingKinds: Set<SettingsContextKind> = SettingsContextKind.entries.toSet()
+
+    /**
+     * Returns whether this reload keeps [context] dirty. It does when [scopeContext] is [context] or an ancestor of
+     * it, and the kind of [context] or a wider kind is in [pendingKinds].
+     *
+     * @param pendingKinds the pending kinds to check against, the current ones by default
+     */
+    fun keepsDirty(context: SettingsContext, pendingKinds: Set<SettingsContextKind> = this.pendingKinds): Boolean =
+      scopeContext.isAncestorOf(context, strict = false) && pendingKinds.any { it <= context.kind }
+  }
 
   // -- watch bookkeeping -----------------------------------------------------------------------------------------
 

@@ -35,8 +35,8 @@ interface SettingsVault {
 
   /**
    * Folds the [data] of one provider into the store. An empty [data] removes the entry of its context for that
-   * provider. A push whose store is under the scope of a running [reload] applies after that reload installs
-   * (ADR 0123). The vault drops a push while a save of its store is pending.
+   * provider. A push whose store is in a [dirty][isDirty] context applies when that context gets ready (ADR 0123,
+   * ADR 0160). The vault drops a push while a save of its store is pending.
    */
   fun push(data: LayerData)
 
@@ -52,12 +52,16 @@ interface SettingsVault {
   suspend fun reload(scopeContext: SettingsContext)
 
   /**
-   * Returns whether the resolved value of [context] may still be stale, because a reload runs for [context] or for
-   * one of its ancestors. See [SettingsContext.isDirty].
+   * Returns whether the resolved value of [context] may still be stale. It is stale while a running or a queued
+   * reload of [context] or of an ancestor has not installed the bucket of the kind of [context] or of a wider kind
+   * (ADR 0160). See [SettingsContext.isDirty].
    */
   fun isDirty(context: SettingsContext): Boolean
 
-  /** Suspends until [context] is no longer [dirty][isDirty], so every covering reload has finished. See [SettingsContext.awaitReady]. */
+  /**
+   * Suspends until [context] is no longer [dirty][isDirty], so every covering reload has installed the buckets that
+   * [context] reads. See [SettingsContext.awaitReady].
+   */
   suspend fun awaitReady(context: SettingsContext)
 
   /**

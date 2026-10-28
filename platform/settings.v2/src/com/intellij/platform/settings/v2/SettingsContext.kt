@@ -81,19 +81,19 @@ interface SettingsContext {
   fun isDescendantOf(other: SettingsContext, strict: Boolean): Boolean = other.isAncestorOf(this, strict)
 
   /**
-   * Returns whether the resolved value of this context may still be stale, because a reload runs for it or for a
-   * wider scope. Only the resolution chain feeds the value of this context, so a reload of a *descendant* does not
-   * make it dirty. A read in this window may return a value that is about to change. So a read-then-write flow, such
+   * Returns whether the resolved value of this context may still be stale. It is stale while a reload of it or of a
+   * wider scope has not installed the layers of its kind and of every wider kind (ADR 0160). Only the resolution
+   * chain feeds the value of this context, so a reload of a *descendant* does not make it dirty. A read in this window may return a value that is about to change. So a read-then-write flow, such
    * as a migration or an import, checks it first.
    */
   fun isDirty(): Boolean = SettingsVault.getInstance().isDirty(this)
 
-  /** Returns whether no reload that covers this context runs, so its resolved value is settled. It is the negation of [isDirty]. */
+  /** Returns whether no reload keeps this context dirty, so its resolved value is settled. It is the negation of [isDirty]. */
   fun isReady(): Boolean = !isDirty()
 
   /**
    * Suspends until this context is [ready][isReady]. Then every reload that covers it, at it or at an ancestor, has
-   * finished, and a following read sees settled values. Use it before a read-then-decide flow that must not run on
+   * installed the layers that it reads, and a following read sees settled values. Use it before a read-then-decide flow that must not run on
    * data in the middle of a load, such as a migration, an import, or a startup activity that branches on a setting.
    * A plain `key[ctx]` read stays synchronous.
    */

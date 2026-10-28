@@ -51,9 +51,11 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 - A reload must install the returned layers kind by kind. The bucket of a kind installs when every provider whose
   range includes the kind has answered. The buckets install in the order in which their providers answer.
   See [ADR 0160](../adr/0160-a-reload-installs-the-layers-kind-by-kind.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKindByKindReloadTest.kt
 - Each bucket must install its layers, then drop its stale layers, under one lock.
   See [ADR 0065](../adr/0065-a-reload-evicts-stale-layers-by-mark-sweep.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKindByKindReloadTest.kt
 - A reload must not install a returned layer while a save is pending for its store. The vault keeps the held
   layer, as it does for a reported change. See
   [ADR 0061](../adr/0061-the-vault-persists-on-a-debounced-save-signal.md).
@@ -82,12 +84,13 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 
 - A provider can push a layer that changed in its store. An empty layer removes the entry.
   See [ADR 0057](../adr/0057-the-vault-is-the-source-of-truth-and-a-provider-is-a-persistence-port.md).
-- The vault must hold back a push whose store is under the scope of a running reload. It must apply the held
-  pushes in arrival order when the context of the store gets ready, also when the reload fails or is cancelled.
+- The vault must hold back a push while the context of its store is dirty. It must apply the held pushes in
+  arrival order when the context of the store gets ready, also when the reload fails or is cancelled.
   See [ADR 0123](../adr/0123-a-push-during-a-reload-waits-until-the-reload-installs.md) and
   [ADR 0160](../adr/0160-a-reload-installs-the-layers-kind-by-kind.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
-- A push for a store outside the scope of every running reload must apply at once.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKindByKindReloadTest.kt
+- A push for a store whose context is ready must apply at once.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
 - The vault must log an error for a pushed layer outside the range of kinds of its provider, and drop that push.
   See [ADR 0159](../adr/0159-a-provider-declares-the-context-kinds-it-supplies-layers-at.md).
@@ -105,6 +108,7 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 
 - A context must be dirty while a reload runs for it or for an ancestor, until that reload installs the bucket of
   the kind of the context and the buckets of every wider kind. A reloading descendant does not count. See [ADR 0160](../adr/0160-a-reload-installs-the-layers-kind-by-kind.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsKindByKindReloadTest.kt
 - `isReady()` must be the opposite of `isDirty()`. `awaitReady()` must suspend until the context is ready.
   See [ADR 0064](../adr/0064-readiness-is-exposed-per-context.md).
 - `readWhenReady(key)` must wait for readiness, then read.
@@ -144,8 +148,8 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   model over the file of the new branch.
 - A newer reload could cancel the asks of an older overlapping reload, instead of the reload mutexes. See
   [IJPL-259868](https://youtrack.jetbrains.com/issue/IJPL-259868).
-- The install kind by kind and the mutex per kind are not built yet. Until then, a reload installs all its layers
-  at once under one global mutex. See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
+- The mutex per kind is not built yet. Until then, the reloads run one at a time under one global mutex. See
+  [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
 - A slow provider with a wide range of kinds delays every context that it covers.
 - Migration of settings data is not built. It waits until remote development is done. See
   [ADR 0142](../adr/0142-migration-waits-until-remote-development-is-done.md).

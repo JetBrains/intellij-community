@@ -86,6 +86,6 @@ and a context, but no value: it reads the current value itself.
   value anyway.
 - No listener observes every key at a context.
 - The queue of the notifications at a dirty context is not built yet. Until then, the vault delivers every
-  notification at once, and a reload installs all its layers at once and notifies after the install. See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
+  notification at once, and a reload notifies after the install of each bucket. See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
 - A key-only event arrives when its context is ready, but a context under it can still be dirty. A listener that
   reads there must check the readiness itself.
