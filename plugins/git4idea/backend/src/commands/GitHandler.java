@@ -71,7 +71,7 @@ public abstract class GitHandler {
 
   private boolean myPreValidateExecutable = true;
   private boolean myEnableInteractiveCallbacks = true;
-  private boolean myVersionCheck;
+  private boolean myAllowUntrustedWorkingDirectory;
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
@@ -188,17 +188,13 @@ public abstract class GitHandler {
   }
 
   /**
-   * Marks this handler as the Git version check of {@code GitExecutableFileTester}.
-   * The check runs {@code git version} in a directory that the IDE selects, not in a project directory.
-   * So the trust check of {@link #start()} does not apply to it.
+   * Allows the command to run in a working directory that is not trusted.
+   * Use it only for a command that does not read the working directory, such as {@code git version}.
+   * The trust check of the project still applies.
    */
   @ApiStatus.Internal
-  public void setVersionCheck() {
-    myVersionCheck = true;
-  }
-
-  private boolean isVersionCheck() {
-    return myVersionCheck && myCommand == GitCommand.VERSION;
+  public void setAllowUntrustedWorkingDirectory() {
+    myAllowUntrustedWorkingDirectory = true;
   }
 
   public VcsExecutableContext getExecutableContext() {
@@ -479,20 +475,16 @@ public abstract class GitHandler {
     return String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString());
   }
 
-  private void checkTrusted() {
-    if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
+  private void start() throws IOException {
+    if (myProject == null &&
+        !myAllowUntrustedWorkingDirectory &&
+        !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
       throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
                                               "Pass Project to GitHandler constructor if applicable.");
     }
 
     if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in the safe mode");
-    }
-  }
-
-  private void start() throws IOException {
-    if (!isVersionCheck()) {
-      checkTrusted();
     }
 
     if (isStarted()) {

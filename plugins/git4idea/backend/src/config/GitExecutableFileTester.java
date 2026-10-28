@@ -183,7 +183,7 @@ class GitExecutableFileTester {
                                                 GitCommand.VERSION,
                                                 Collections.emptyList());
     handler.setPreValidateExecutable(false);
-    handler.setVersionCheck();
+    handler.setAllowUntrustedWorkingDirectory();
     handler.setSilent(false);
     handler.setTerminationTimeout(1000);
     handler.setStdoutSuppressed(false);
