@@ -1,9 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.searchEverywhere.equalityProviders
 
+import com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider
+import com.intellij.ide.actions.searcheverywhere.OptionEqualityProvider
+import com.intellij.ide.actions.searcheverywhere.PsiElementsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.withSafeCatch
@@ -16,6 +20,7 @@ import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.ListCellRenderer
 import kotlin.concurrent.withLock
@@ -24,14 +29,17 @@ import kotlin.concurrent.withLock
  * Provides a way to check if the element should be added to the list of already found elements.
  * Don't forget to make SeItem implementation conforming SeLegacyItem interface.
  *
- * The checker asks the legacy [SEResultsEqualityProvider]s first and the [SeItemsEqualityProvider]s after them.
+ * The checker asks the [SeItemsEqualityProvider]s first.
+ * When all of them return [SeEqualItemsAction.DoNothing], the checker asks the legacy [SEResultsEqualityProvider]s.
  * The first answer other than [SeEqualItemsAction.DoNothing] wins.
+ * The checker does not ask a legacy provider when its replacement is registered. See [legacyProvidersToAsk].
  */
 @ApiStatus.Internal
 @Suppress("DEPRECATION")
 class SeEqualityChecker {
-  private val legacyEqualityProvider: SEResultsEqualityProvider = SEResultsEqualityProvider.composite(SEResultsEqualityProvider.EP_NAME.extensionList)
   private val equalityProviders: List<SeItemsEqualityProvider> = SeItemsEqualityProvider.EP_NAME.extensionList
+  private val legacyEqualityProvider: SEResultsEqualityProvider =
+    SEResultsEqualityProvider.composite(legacyProvidersToAsk(SEResultsEqualityProvider.EP_NAME.extensionList, equalityProviders))
   private val alreadyFoundLegacyItems = mutableMapOf<String, SearchEverywhereFoundElementInfo>()
   private val alreadyFoundItems = mutableMapOf<String, SeFoundItemInfo>()
   private val lock = ReentrantLock()
@@ -48,7 +56,7 @@ class SeEqualityChecker {
           if (item is SeLegacyItem) sortWeightToPriority(item.contributor.sortWeight)
           else platformProviderPriority(newItemData.providerId.value)
         val newItemInfo = SeFoundItemInfo(newItemData.uuid, item, newItemData.providerId, newItemData.weight, providerPriority)
-        val action = compareWithLegacyProviders(newLegacyItemInfo) ?: compareWithProviders(newItemInfo)
+        val action = compareWithProviders(newItemInfo) ?: compareWithLegacyProviders(newLegacyItemInfo) ?: SeEqualItemsAction.DoNothing
 
         when (action) {
           is SeEqualItemsAction.Replace -> {
@@ -91,7 +99,8 @@ class SeEqualityChecker {
     }
   }
 
-  private fun compareWithProviders(newItemInfo: SeFoundItemInfo): SeEqualItemsAction {
+  /** Returns `null` when the providers have nothing to do with [newItemInfo]. */
+  private fun compareWithProviders(newItemInfo: SeFoundItemInfo): SeEqualItemsAction? {
     for (provider in equalityProviders) {
       val action = {
         provider.compareItems(newItemInfo, alreadyFoundItems.values)
@@ -105,7 +114,7 @@ class SeEqualityChecker {
         SeEqualItemsAction.DoNothing, null -> {}
       }
     }
-    return SeEqualItemsAction.DoNothing
+    return null
   }
 
   private fun addToAlreadyFound(legacyItemInfo: SearchEverywhereFoundElementInfo, itemInfo: SeFoundItemInfo) {
@@ -136,8 +145,34 @@ class SeEqualityChecker {
 
   companion object {
     private fun dummyContributor(providerId: String) = DummySearchEverywhereContributor<Any>(providerId)
+
+    /**
+     * Returns the [legacyProviders] that have no registered replacement among the [providers].
+     * The old Search Everywhere still asks all legacy providers.
+     */
+    @ApiStatus.Internal
+    @VisibleForTesting
+    fun legacyProvidersToAsk(
+      legacyProviders: List<SEResultsEqualityProvider>,
+      providers: List<SeItemsEqualityProvider>,
+    ): List<SEResultsEqualityProvider> {
+      val providerClasses: Set<Class<*>> = providers.mapTo(HashSet()) { it.javaClass }
+      return legacyProviders.filter { legacyProvider ->
+        val replacement = legacyProviderReplacements[legacyProvider.javaClass]
+        replacement == null || replacement !in providerClasses
+      }
+    }
   }
 }
+
+/** The legacy platform providers and their replacements. */
+@Suppress("DEPRECATION")
+private val legacyProviderReplacements: Map<Class<out SEResultsEqualityProvider>, Class<out SeItemsEqualityProvider>> = mapOf(
+  TrivialElementsEqualityProvider::class.java to SeTrivialItemsEqualityProvider::class.java,
+  PsiElementsEqualityProvider::class.java to SePsiElementsEqualityProvider::class.java,
+  ActionsEqualityProvider::class.java to SeActionsEqualityProvider::class.java,
+  OptionEqualityProvider::class.java to SeOptionsEqualityProvider::class.java,
+)
 
 private class DummySearchEverywhereContributor<Any>(private val providerId: String): SearchEverywhereContributor<Any> {
   override fun getSearchProviderId(): String = providerId
