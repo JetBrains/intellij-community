@@ -25,17 +25,19 @@ intellij_add_opens_test_suite(name = "intellij_add_opens_test")
 dev_run_configuration_test_suite(name = "dev_run_configuration_test")
 
 # Whether the community repository is loaded inside the ultimate repository. The `.bazelrc` of the ultimate repository sets it.
-# A target in the community repository uses `:is_inside_ultimate` to select a dependency on a target of the ultimate repository.
+# The `ij_plugin` rule reads it to decide what to do with a content module that it cannot resolve.
 bool_flag(
     name = "inside_ultimate",
     build_setting_default = False,
-    visibility = ["//visibility:public"],
+    visibility = ["//platform/build-scripts/bazel-rules:__pkg__"],
 )
 
+# Use this setting only to include the ultimate modules in the `content_modules` of a community plugin.
+# Do not use it to select any other dependency on a target of the ultimate repository.
 config_setting(
     name = "is_inside_ultimate",
     flag_values = {":inside_ultimate": "true"},
-    visibility = ["//visibility:public"],
+    visibility = ["//:__subpackages__"],
 )
 
 # The pinned build-dependency versions, for tests that gate shared dev-launch dependency sets
