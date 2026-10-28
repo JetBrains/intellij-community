@@ -80,14 +80,17 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     val showAllLabels = filter.showAllLabels()
 
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, filter?.filePathFilter, affectedPaths::add) { changeSet ->
-      if (!showAllLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
+      if (showAllLabels) {
+        activityItems.add(changeSet.toActivityItem(scope))
+        return@ChangeAndPathProcessor
+      }
+
+      if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
         if (changeSet.activityId == CommonActivity.UserLabel) {
           userLabels.add(changeSet)
-          if (showAllLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = null
         } else {
-          if (showAllLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = changeSet
         }
       }
