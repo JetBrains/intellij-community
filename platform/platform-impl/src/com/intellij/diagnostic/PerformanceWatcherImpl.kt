@@ -171,6 +171,7 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
       override fun modalityPushed(ev: ModalityEvent) {}
 
       override fun modalityPopped(ev: ModalityEvent) {
+        if (SuvorovProgress.isOnStack()) return
         stopCurrentTaskAndReEmit(FreezeCheckerTask(System.nanoTime()))
       }
     })
@@ -413,6 +414,9 @@ internal class PerformanceWatcherImpl(providedScope: CoroutineScope) : Performan
   }
 
   private fun shouldSkipCurrentEdtEvent(): Boolean {
+    // the EDT pumps events while it waits for a lock permit; they are not progress of the frozen event
+    if (SuvorovProgress.isOnStack()) return true
+
     if (smokeAndMirrorsModalities.isEmpty()) return false
 
     // we do not want to report DialogWrapper opened inside 'smokeAndMirrors' frame as a UI freeze
