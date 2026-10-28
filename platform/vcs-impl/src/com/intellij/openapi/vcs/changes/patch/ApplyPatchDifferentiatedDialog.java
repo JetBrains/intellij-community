@@ -78,7 +78,7 @@ import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.ui.DocumentAdapter;
@@ -313,18 +313,27 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myPatchFile.setVisible(myCanChangePatchFile);
 
     if (myCanChangePatchFile) {
-      BulkFileListener listener = new BulkFileListener() {
+      BulkFileListenerBackgroundable listener = new BulkFileListenerBackgroundable() {
         @Override
         public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
+          List<VirtualFile> changedFiles = new ArrayList<>();
           for (VFileEvent event : events) {
             if (event instanceof VFileContentChangeEvent) {
-              syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
+              changedFiles.add(event.getFile());
             }
           }
+          if (changedFiles.isEmpty()) return;
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (isDisposed()) return;
+            for (VirtualFile file : changedFiles) {
+              syncUpdatePatchFileAndScheduleReloadIfNeeded(file);
+            }
+          });
         }
       };
       ApplicationManager.getApplication().getMessageBus().connect(getDisposable())
-        .subscribe(VirtualFileManager.VFS_CHANGES, listener);
+        .subscribe(VirtualFileManager.VFS_CHANGES_BG, listener);
     }
     updateOkActions();
   }
