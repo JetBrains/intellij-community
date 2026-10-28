@@ -261,6 +261,8 @@ fn parse_reclaim(text: &str) -> Vec<String> {
     struct Answer {
         #[serde(default)]
         reclaimed: Vec<Reclaimed>,
+        #[serde(default)]
+        deleted_refs: Vec<String>,
     }
     #[derive(Deserialize)]
     struct Reclaimed {
@@ -278,6 +280,12 @@ fn parse_reclaim(text: &str) -> Vec<String> {
             Some(error) => format!("slot {}: {} failed: {error}", done.n, done.action),
             None => format!("slot {}: {}", done.n, done.action),
         })
+        .chain(
+            answer
+                .deleted_refs
+                .into_iter()
+                .map(|deleted| format!("deleted {deleted}, which no run uses")),
+        )
         .collect()
 }
 

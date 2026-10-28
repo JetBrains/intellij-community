@@ -53,6 +53,10 @@ fn a_give_back_a_reclaim_and_a_fill_answer_their_slots() {
         ["slot 1: gave_back", "slot 2: cleaned failed: no"]
     );
     assert_eq!(
+        parse_reclaim(r#"{"schema":2,"reclaimed":[],"deleted_refs":["refs/branch-deck/host/run/1-2"],"operation_id":"x"}"#),
+        ["deleted refs/branch-deck/host/run/1-2, which no run uses"]
+    );
+    assert_eq!(
         parse_fill("bd lease host fill: slot 1: cloning\n{\"schema\":2,\"filled\":[{\"n\":1,\"path\":\"/p\",\"reused\":true}]}"),
         [1]
     );

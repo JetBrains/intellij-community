@@ -135,10 +135,10 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
           echo $((generation + 1)) >"$state/generation-$n"
         fi
         rm "$state/lent-$n"
-        printf '{"schema":2,"n":%s,"left_queue":false,"discarded":%s,"processes_checked":true,"maintenance_started":false%s}\n' "$n" "$discarded" "$deleted"
+        printf '{"schema":2,"n":%s,"left_queue":false,"discarded":%s,"processes_checked":true%s}\n' "$n" "$discarded" "$deleted"
         exit 0
       fi
-      printf '{"schema":2,"left_queue":true,"discarded":0,"processes_checked":false,"maintenance_started":false%s}\n' "$deleted"
+      printf '{"schema":2,"left_queue":true,"discarded":0,"processes_checked":false%s}\n' "$deleted"
       ;;
     checkout)
       n=$(slot_of "$run") || fail no_lease "no slot" 4
@@ -167,7 +167,7 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
         cat >/dev/null; fail git_error "index-pack failed" 5
       fi
       git -C "$repo" update-ref "$name" "$commit" || fail git_error "update-ref failed" 5
-      printf '{"schema":2,"ref":"%s","commit":"%s","objects":1,"stored":"pack","maintenance_started":false}\n' "$name" "$commit"
+      printf '{"schema":2,"ref":"%s","commit":"%s","objects":1,"stored":"pack"}\n' "$name" "$commit"
       ;;
     show)
       text=null
