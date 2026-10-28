@@ -1,7 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.ide.impl.HeadlessDataManager;
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
@@ -40,6 +45,7 @@ import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LoggedError;
 import com.intellij.testFramework.MockFontLayoutService;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.TestLoggerFactory;
 import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.UsefulTestCase;
@@ -64,6 +70,8 @@ import java.awt.KeyboardFocusManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.InputEvent;
 import java.awt.event.InputMethodEvent;
 import java.awt.event.KeyEvent;
@@ -137,6 +145,48 @@ public class EditorImplTest {
       myFixture.mouse().shift().pressAt(0, 2).dragTo(0, 3).release();
       myFixture.checkResultByText("A<selection> q<caret></selection>uick brown fox");
     });
+  }
+
+  // IJPL-52267: a mouse press whose MOUSE_RELEASED is not delivered to the editor leaves a stale pressed
+  // location. A drag that ends outside the editor, or DnD, can swallow the release. EDITOR_VIRTUAL_SPACE is
+  // served from the stale press, so the keyboard Go To Declaration stays disabled until a mouse click.
+  // The focus loss, for example a switch to another editor, must heal the stuck editor.
+  @Test
+  public void testGotoDeclarationIsEnabledAgainAfterFocusLossDropsStaleMousePress() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      EditorTestUtil.setEditorVisibleSize(myFixture.getEditor(), 1000, 1000);
+      EditorImpl editor = (EditorImpl)myFixture.getEditor();
+      HeadlessDataManager.fallbackToProductionDataManager(myFixture.getTestRootDisposable());
+
+      // Press in virtual space, past the end of "abc". The release is never delivered.
+      myFixture.mouse().pressAt(0, 10);
+      assertEquals(Boolean.TRUE, getEditorVirtualSpace(editor), "the stale press must be reported as virtual space");
+      assertFalse(isGotoDeclarationEnabled(editor), "the stale press disables the keyboard shortcut");
+
+      fireFocusLost(editor);
+
+      assertEquals(Boolean.FALSE, getEditorVirtualSpace(editor), "after the focus loss the caret position must win");
+      assertTrue(isGotoDeclarationEnabled(editor), "the focus loss must enable the keyboard shortcut again");
+    });
+  }
+
+  private static void fireFocusLost(@NotNull EditorImpl editor) {
+    FocusEvent event = new FocusEvent(editor.getContentComponent(), FocusEvent.FOCUS_LOST);
+    for (FocusListener listener : editor.getContentComponent().getFocusListeners()) {
+      listener.focusLost(event);
+    }
+  }
+
+  private static Boolean getEditorVirtualSpace(@NotNull EditorImpl editor) {
+    return CommonDataKeys.EDITOR_VIRTUAL_SPACE.getData(EditorUtil.getEditorDataContext(editor));
+  }
+
+  private static boolean isGotoDeclarationEnabled(@NotNull EditorImpl editor) {
+    AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_GOTO_DECLARATION);
+    AnActionEvent event = TestActionEvent.createTestEvent(action, EditorUtil.getEditorDataContext(editor));
+    action.update(event);
+    return event.getPresentation().isEnabled();
   }
 
   @Test

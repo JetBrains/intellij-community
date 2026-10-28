@@ -919,6 +919,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void focusLost(@NotNull FocusEvent e) {
+      // IJPL-52267: a non-null value here means that the press's MOUSE_RELEASED was never delivered to this
+      // editor. A stale value makes uiDataSnapshot report EDITOR_VIRTUAL_SPACE from the old press, which
+      // disables the keyboard Go To Declaration and Find Usages. An in-editor drag keeps the focus, so this
+      // clear only affects a press whose gesture has already ended.
+      myLastMousePressedLocation = null;
       updateFocus();
       myFocusKeepSelectionOnMousePress = false;
       mySelectionModel.reinitSettings();
