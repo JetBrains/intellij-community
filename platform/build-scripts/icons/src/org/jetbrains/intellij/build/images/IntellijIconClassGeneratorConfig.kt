@@ -233,6 +233,10 @@ class IntellijIconClassGeneratorConfig : IconClasses() {
         packageName = "com.intellij.swagger.core"
       )
       "intellij.ml.llm.core" -> IntellijIconClassGeneratorModuleConfig(className = "MLLlmIcons", packageName = "com.intellij.ml.llm")
+      "intellij.ml.llm.agents.impl" -> IntellijIconClassGeneratorModuleConfig(packageName = "com.intellij.ml.llm.agents.impl")
+      "intellij.ml.llm.codeGeneration" -> IntellijIconClassGeneratorModuleConfig(packageName = "com.intellij.ml.llm.codeGeneration")
+      "intellij.ml.llm.provider.google" -> IntellijIconClassGeneratorModuleConfig(packageName = "com.intellij.ml.llm.provider.google")
+      "intellij.ml.llm.vcs" -> IntellijIconClassGeneratorModuleConfig(packageName = "com.intellij.ml.llm.vcs")
       "intellij.ml.llm.nextEdits.frontend" -> IntellijIconClassGeneratorModuleConfig(
         packageName = "com.intellij.ml.llm.nextEdits.frontend",
       )
