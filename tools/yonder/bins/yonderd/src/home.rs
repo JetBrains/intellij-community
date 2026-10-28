@@ -75,21 +75,6 @@ impl Home {
         self.dir.join(".cache/yonderd/upgrade.lock")
     }
 
-    /// The last state of the git of the host (`host_git`): `~/.cache/yonderd/git.json`.
-    pub(crate) fn git_file(&self) -> PathBuf {
-        self.dir.join(".cache/yonderd/git.json")
-    }
-
-    /// The flock that `serve` holds while Homebrew installs or upgrades git: `~/.cache/yonderd/git.lock`.
-    pub(crate) fn git_lock_file(&self) -> PathBuf {
-        self.dir.join(".cache/yonderd/git.lock")
-    }
-
-    /// The flock that each user of git holds shared, and an upgrade of git exclusive: `~/.cache/yonderd/git-users.lock`.
-    pub(crate) fn git_users_lock_file(&self) -> PathBuf {
-        self.dir.join(".cache/yonderd/git-users.lock")
-    }
-
     /// The fingerprints of the prepare steps per host slot (`slots::Prepared`).
     pub(crate) fn slots_dir(&self) -> PathBuf {
         self.dir.join(".cache/yonderd/slots")

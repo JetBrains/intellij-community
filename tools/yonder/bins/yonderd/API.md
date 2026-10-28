@@ -49,9 +49,7 @@ minutes.
 | A fetch or a forget of a run that goes on | `bad_request` |
 | A repository path that is no directory, or that git says is no repository | `repo_missing`, with the words of git |
 | A repository check that cannot run, such as a git that cannot start | `agent_error`, with the error of the start |
-| A start while the git of the host is older than the minimum and the agent cannot upgrade it, see [The git of the host](#the-git-of-the-host) | `old_git` |
-| A run whose upgrade of git failed while it waited, or whose `PATH` finds a git older than the minimum or no git | `old_git`, as the end of the run, before the command |
-| A run that waited for an upgrade of git for 91 min | `lock_timeout` |
+| A run whose lend or `bd lease host git` refuses with `git_not_found`: the git of the host stays below its floor, see [The git of the host](#the-git-of-the-host) | `old_git` with the hint of Branch Deck, as the end of the run, before the command |
 | A run whose bd lacks `bd lease host`, or whose lend fails | `lease_failed` |
 | A run that got no host slot within an hour | `lock_timeout` |
 | A run whose commit the repository lacks, and whose pack does not come within 30 min, or sends no chunk for 2 min | `pack_missing`, as the end of the run |
@@ -125,58 +123,35 @@ command get more:
    that fails gets a second try with `-l` only. `serve` captures at its start, and a run captures again when the last
    capture is an hour old. A failed capture keeps the last one and says so in the log of the run.
    `~/.cache/yonderd/login-env.json` holds the capture.
-3. The `bin` directory of Homebrew right before `/usr/bin` in `PATH`, as in the `PATH` of the agent, see [The git of the
+3. The directory of the git of Branch Deck right before `/usr/bin` in `PATH`, see [The git of the
    host](#the-git-of-the-host). A login shell can put `/usr/bin` first again.
 4. `YONDER_RUN`, `YONDER_HOLDER`, `YONDER_COMMIT` and `YONDER_SLOT`, the number of the slot: the name of the parent
    directory of the slot when it is a number below 1000, as in the pool of `bd lease`, else a number below 100 from its
    path.
 5. `[env]` of `.yonder.toml`.
 
-The run then checks the git that this `PATH` finds first, as [The git of the host](#the-git-of-the-host) says.
-
 `serve` and each supervisor raise the soft open-files limit to 65536, or to the hard limit and `kern.maxfilesperproc`
 when they are lower. With `RunSpec::nice`, the prepare steps and the command run at that niceness.
 
 ## The git of the host
 
-The agent, bd, the prepare steps and the commands use the git that their `PATH` finds first. Each of them needs git
-2.56.0 or later (`host_git::MINIMUM`).
+Branch Deck owns the git of the host: the git that bd and the runs use is the one of Homebrew before `/usr/bin`, and
+each of them needs the floor of a host, git 2.56.0. `bd lease host git` answers its path, its directory, its version,
+the floor and whether the git meets it.
 
-1. At its start, before its first thread, `serve` puts the `bin` directory of Homebrew right before `/usr/bin` in its
-   own `PATH`, so each child finds the git of Homebrew first: git, bd, the supervisors and Homebrew itself. Homebrew is
-   `brew` on the `PATH`, else `/opt/homebrew/bin/brew`, else `/usr/local/bin/brew`. Its `bin` directory, `$(brew
-   --prefix)/bin`, is the directory of `brew`. The agent looks for Homebrew on macOS only.
-2. Once it listens, and before it takes the first connection, `serve` runs `git --version` of the git of its `PATH`.
-   So no start comes before this check. A version such as `2.50.1 (Apple Git-155)`
-   counts as `2.50.1`, and a release candidate `2.56.0.rc1` comes before `2.56.0`. An answer without a version counts
-   as too old.
-3. A git that is too old gets `brew install git` when the `bin` directory of Homebrew has no git, else `brew upgrade
-   git`. It runs on a thread of its own, so the listener and the watchdog of an upgrade of the agent do not wait for
-   Homebrew. `serve` holds the flock of `~/.cache/yonderd/git.lock` from the plan to the end of Homebrew.
-4. Homebrew replaces the links of `bin/git` and can remove the old helpers of `libexec/git-core`, so it starts only
-   while no run uses git. Each supervisor holds a shared flock of `~/.cache/yonderd/git-users.lock` from the end of its
-   wait to the end of its process, the give-back included, and so does each fill of the keeper. A run that started
-   before an upgrade of the agent counts too, because its supervisor outlives `serve`. The upgrade takes that flock
-   exclusively, up to 60 min; then Homebrew starts anyway, and the log of `serve` and the log of each run that goes on
-   say so. The ingest of a pack takes the shared flock at once, also while the upgrade waits for it, and goes on
-   without it while Homebrew runs, because a wait would stall the pack of the client. Other short bd calls of `serve`
-   take no flock, so they can meet the swap of Homebrew in a short window: the `have` of `Have`, and `reclaim` of the
-   keeper. A failure there is a refusal of that request, or a line of the log of `serve`. Homebrew runs with
-   `HOMEBREW_AUTO_UPDATE_SECS=0`, so it updates its formulae first, and `HOMEBREW_NO_INSTALL_CLEANUP=1`, so the old
-   keg stays. Its deadline is 30 min.
-5. A Homebrew that fails on the lock of another Homebrew process (`has already locked`, `already in progress`), such as
-   the one of a `serve` that exited during its upgrade, waits 10 s. A new enough git then ends the upgrade, else
-   Homebrew tries again, up to the deadline.
-6. A run that starts while `git.lock` is held waits before it borrows a slot. Its log says ``yonder: waiting for the
-   upgrade of git on the host: `brew upgrade git` waits for the runs that use git to end, for <s> s``, or `` `brew
-   upgrade git` runs``, at the start and once a minute. The run gets the phase `git`, and a cancel ends the wait. The
-   keeper of the slots does nothing while the flock is held.
-7. A start refuses with `old_git` when the git stays too old: no Homebrew, a failed `brew`, a git of Homebrew that is
-   still too old, or another old git before the one of Homebrew on the `PATH`. On macOS without Homebrew the message
-   names the install of Homebrew, which asks for the password of an administrator, and then `brew install git`.
-   Elsewhere it names a newer source of packages than the distribution, such as the git-core PPA of Ubuntu, whose
-   24.04 has git 2.43, or a build from the source. A start after a refusal checks again, so a git that the user
-   installed counts without a restart of the agent.
+1. The keeper of `serve` runs `bd lease host git --ensure` for each repository at its start and at each tick. Below
+   the floor, Branch Deck runs `brew install git` or `brew upgrade git` once no host slot is lent, and the lends queue
+   meanwhile. The call blocks while bd waits for the lends and while Homebrew runs, so it runs on the thread of the
+   keeper, not on the listener. A change of its outcome, such as an upgrade or a refusal, is one line of the log of
+   `serve`.
+2. A lend that queues because Homebrew upgrades git answers `git_upgrading` with the command of Homebrew. The run then
+   writes ``yonder: waiting for the upgrade of git on the host: `brew upgrade git` runs once no host slot is lent``, and
+   waits in the phase `git` with a lend every 5 s, up to 100 min. A cancel ends the wait.
+3. A git that stays below the floor, such as on a host without Homebrew or after a failed upgrade, makes each lend
+   refuse with `git_not_found`. The run then ends with `old_git` and the hint of Branch Deck, which names what the user
+   installs.
+4. A run puts the directory of the git of `bd lease host git` right before `/usr/bin` in the `PATH` of its prepare
+   steps and its command, and names the version in the line before the command.
 
 A login shell can find another git than the one of the line before the command. On macOS `bash -l` and `sh -l` run
 `/etc/profile`, whose `path_helper` puts `/usr/bin` before `/opt/homebrew/bin`, so `bash -lc '…'` gets the Apple Git of
@@ -185,11 +160,7 @@ after it and puts Homebrew first again. On 2026-10-27 the Mac Studio gave `/opt/
 to `bash -c`, and `/usr/bin/git` to `bash -lc` and `sh -lc`. So a command needs no login shell, because it has the
 login environment already, or uses `zsh -lc`. A command whose program is `bash` or `sh` with `-l` or `--login` on
 macOS gets the line ``yonder: `bash -l` runs /etc/profile, …`` after the line before the command
-(`host_git::login_shell_warning`).
-
-`~/.cache/yonderd/git.json` keeps the last state for the runs: `{"state": "ready" | "upgrading" | "refused",
-"message", "at_ms"}`. The message names the git, the command of Homebrew, or the refusal. A run that waited reads it,
-and a refused state ends the run with `old_git`.
+(`run_git::login_shell_warning`).
 
 ## `.yonder.toml`
 
@@ -297,8 +268,7 @@ executable `(deleted)`.
 ## The test durations
 
 `YONDERD_TEST_SHELL` names a shell for the login environment in place of the one of the user. `none` turns the capture
-off. `YONDERD_TEST_BREW` names a fake Homebrew, and `none` names none. `YONDERD_TEST_GIT_MINIMUM` sets another minimum
-of the git of the host, such as `0.0.0`. `YONDERD_TEST_CAFFEINATE` names the program of the power assertions in place of `/usr/bin/caffeinate`, and `none`
+off. `YONDERD_TEST_CAFFEINATE` names the program of the power assertions in place of `/usr/bin/caffeinate`, and `none`
 turns them off. A process test shortens these durations through the environment of `serve`, in milliseconds:
 
 | Variable | Duration | Default |

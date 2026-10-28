@@ -67,7 +67,6 @@ impl Agent {
             ));
         }
         self.repo(&spec.repo)?;
-        self.git.check()?;
         let (run, lock) = self.runs().create(spec)?;
         if let Err(refusal) = self.spawn_supervisor(&run, &lock) {
             let _ = fs::remove_dir_all(run.path());

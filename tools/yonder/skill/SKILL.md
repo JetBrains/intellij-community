@@ -70,7 +70,7 @@ The steps of the phases line, in their order:
 | Step | Where | A long step means |
 |---|---|---|
 | `pack`, `upload` | here | The pack of the missing commits is large: the host is far behind this history. |
-| `git` | host | The host upgraded its git with Homebrew, and the run waited for the other runs and for Homebrew. Only such a run has it. |
+| `git` | host | Branch Deck upgraded the git of the host with Homebrew, and the run waited for it. Only such a run has it. |
 | `slot` | host | Every slot was lent, and the run waited in the queue. |
 | `pack_wait` | host | The slot was ready before the pack came. |
 | `checkout` | host | A diff with many files, or a forced checkout. The log then says `checked out with a scan of every file, because …`. |
@@ -172,7 +172,7 @@ host.
 | `lease_failed`, `lock_timeout` | The host lent no slot. Exit 75: run locally, or try again later. |
 | `local_changes` | `--head` or `bt --host` with uncommitted or untracked changes. Commit first. |
 | `bd_failed` | A local call of Branch Deck (`bd host snapshot`, `pack` or `apply`) failed. yonder starts no git itself. Exit 75: run locally. A missing bd, or one without `bd host`, needs a newer Branch Deck on the `PATH`: give the message to the user. |
-| `old_git` | The git of the host is older than 2.56.0, and the agent cannot upgrade it. Exit 75: run locally. Give the message to the user: on macOS without Homebrew, the user installs Homebrew once at the host (it needs an administrator) and then runs `brew install git`. |
+| `old_git` | The git of the host is below 2.56.0, the floor of Branch Deck, and Homebrew cannot upgrade it. Exit 75: run locally. Give the message to the user: on macOS without Homebrew, the user installs Homebrew once at the host (it needs an administrator) and then runs `brew install git`. |
 
 ## The Local Network permission on macOS
 

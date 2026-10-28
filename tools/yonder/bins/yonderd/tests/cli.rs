@@ -55,7 +55,9 @@ fn agent_binary() -> PathBuf {
 /// stdin with `index-pack --stdin --fix-thin` and makes `refs/branch-deck/host/run/<id>` or `base/<name>`. `show`
 /// answers a blob and the ids of paths. `snapshot` adds every file of the slot to an index copy and answers its tree;
 /// `changes` writes the diff from `--base` to that tree. `fill` and `reclaim` answer nothing to do. With `fail-lend`, a
-/// lend refuses.
+/// lend refuses. `git` answers the git of `git-dir`, else the one of `PATH`. With `old-git`, a lend and `git --ensure`
+/// refuse with `git_not_found`, and `git` answers that the git is below the floor. While `git-upgrading` exists, a lend
+/// queues with `git_upgrading`.
 const FAKE_BD: &str = r#"#!/bin/sh
 state=$FAKE_BD_DIR
 printf '%s|%s\n' "$PWD" "$*" >>"$state/calls"
@@ -92,14 +94,22 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
   case $verb in
     lend)
       [ -e "$state/fail-lend" ] && fail invalid_arguments "the table is broken" 2
+      [ -e "$state/old-git" ] && fail git_not_found "git 2.50.1 is below the floor 2.56.0, and the host has no Homebrew: install it, then run brew install git" 5
       waited=0 said=
+      while [ -e "$state/git-upgrading" ]; do
+        if [ -z "$wait" ] || [ "$waited" -ge "$((wait * 10))" ]; then
+          printf '{"schema":2,"state":"queued","ahead":0,"slots":%s,"git_upgrading":"brew upgrade git"}\n' "$count"
+          exit 0
+        fi
+        sleep 0.1; waited=$((waited + 1))
+      done
       while :; do
         n=$(slot_of "$run") || {
           n=1
           while [ "$n" -le "$count" ] && [ -e "$state/lent-$n" ]; do n=$((n + 1)); done
         }
         [ "$n" -le "$count" ] && break
-        if [ -z "$said" ]; then
+        if [ -z "$said" ] && [ -n "$wait" ]; then
           echo "bd lease host lend: run $run waits 0 s: 0 runs ahead, $count slots, lent to $(cat "$state/lent-1") (1)" >&2
           said=1
         fi
@@ -197,6 +207,16 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
         git -C "$slot" diff-tree -r -p --binary --full-index --no-renames "$base" "$tree" >"$patch.part" && mv "$patch.part" "$patch"
         printf '{"schema":2,"n":%s,"path":"%s","tree":"%s","changed":true,"patch":"%s","patch_bytes":%s}\n' "$n" "$slot" "$tree" "$patch" "$(wc -c <"$patch" | tr -d ' ')"
       fi
+      ;;
+    git)
+      if [ -e "$state/git-dir" ]; then dir=$(cat "$state/git-dir"); else dir=$(dirname "$(command -v git)"); fi
+      version=$("$dir/git" --version | cut -d' ' -f3)
+      meets=true
+      if [ -e "$state/old-git" ]; then
+        [ "$rest" = " --ensure" ] && fail git_not_found "git 2.50.1 is below the floor 2.56.0, and the host has no Homebrew: install it, then run brew install git" 5
+        meets=false
+      fi
+      printf '{"schema":2,"path":"%s/git","dir":"%s","version":"%s","floor":"2.56.0","meets_floor":%s}\n' "$dir" "$dir" "$version" "$meets"
       ;;
     fill) echo '{"schema":2,"filled":[]}' ;;
     reclaim) echo '{"schema":2,"reclaimed":[]}' ;;
@@ -322,11 +342,7 @@ impl World {
             // The login shell of the developer stays out of the tests; a test that needs one names its own.
             .env("YONDERD_TEST_SHELL", "none")
             // The power assertions of the developer's Mac stay out of the tests; a test that checks them names a fake.
-            .env("YONDERD_TEST_CAFFEINATE", "none")
-            // Any git of the developer passes, and the Homebrew of the developer stays out of the tests; a test that
-            // checks the upgrade names a minimum and a fake Homebrew.
-            .env("YONDERD_TEST_GIT_MINIMUM", "0.0.0")
-            .env("YONDERD_TEST_BREW", "none");
+            .env("YONDERD_TEST_CAFFEINATE", "none");
         command
     }
 
@@ -780,8 +796,7 @@ fn a_run_streams_its_output_to_the_exit_code_stages_its_files_and_is_forgotten()
         world.bd_calls()
     );
     assert!(
-        world.bd_calls().contains("lease host lend --run 1-1 --pid ")
-            && world.bd_calls().contains(&format!("--affinity {HOLDER} --wait 3600 -C ")),
+        world.bd_calls().contains("lease host lend --run 1-1 --pid ") && world.bd_calls().contains(&format!("--affinity {HOLDER} -C ")),
         "{}",
         world.bd_calls()
     );
@@ -1071,76 +1086,62 @@ fn a_failed_lend_refuses_the_run_with_lease_failed() {
 }
 
 /// A host whose git is older than the minimum and that has no Homebrew refuses each start, and says what to install.
+/// A git of the host below its floor ends a run with `old_git` and the hint of Branch Deck, and the keeper logs the
+/// refusal of its `--ensure`
 #[test]
-fn a_host_with_an_old_git_and_no_homebrew_refuses_the_start_with_old_git() {
-    let agent = World::new().serve_with(&[("YONDERD_TEST_GIT_MINIMUM", "99.0.0")]);
+fn a_git_below_the_floor_ends_the_run_with_old_git_and_the_hint_of_bd() {
+    let world = World::new();
+    fs::write(world.bd_dir().join("old-git"), "").expect("the flag");
+    let agent = world.serve();
     let world = &agent.world;
-    let reply = agent.reply(&Request::Start(world.spec("8-1", HOLDER, "true")));
-    let install = if cfg!(target_os = "macos") {
-        "Then run `brew install git`"
-    } else {
-        "with the package manager of the host"
-    };
+    agent.start(world.spec("8-1", HOLDER, "true"));
+    let followed = agent.follow("8-1", 0);
     assert!(
-        matches!(&reply, Reply::Refused { code, message } if code == "old_git" && message.contains("older than 99.0.0") && message.contains(install)),
-        "{reply:?}"
+        matches!(&followed.end, Reply::Refused { code, message } if code == "old_git" && message.contains("install it, then run brew install git")),
+        "{followed:?}"
     );
-    assert!(!world.run_dir("8-1").exists());
+    assert_eq!(followed.phase_names(), ["slot"]);
+    eventually("the refusal of the ensure in the log", || {
+        fs::read_to_string(world.dir.path().join("serve.log"))
+            .is_ok_and(|log| log.contains("the git of the host stays below its floor: ") && log.contains("brew install git"))
+    });
 }
 
 /// `serve` installs git with Homebrew when its git is too old. A run that starts meanwhile waits for the install, and
 /// then its command finds the git of Homebrew first.
+/// A run waits in the phase `git` while Homebrew upgrades the git of the host, and its command finds the git of bd first
 #[test]
-fn serve_installs_git_with_homebrew_and_a_run_waits_for_it() {
+fn a_run_waits_while_homebrew_upgrades_git_and_its_command_gets_the_git_of_bd() {
     let world = World::new();
-    let brew_bin = world.dir.path().join("homebrew/bin");
-    fs::create_dir_all(&brew_bin).expect("the Homebrew directory");
-    let real_git = std::env::split_paths(&std::env::var_os("PATH").unwrap_or_default())
-        .map(|dir| dir.join("git"))
-        .find(|git| git.is_file())
-        .expect("a git on the PATH of the test");
-    let gate = world.dir.path().join("brew-gate");
-    // The fake Homebrew records its arguments, waits for the gate, and installs a git that answers a high version.
+    let git_bin = world.dir.path().join("homebrew/bin");
+    fs::create_dir_all(&git_bin).expect("the Homebrew directory");
     write_script(
-        &brew_bin.join("brew"),
+        &git_bin.join("git"),
         &format!(
-            r#"#!/bin/sh
-bin=$(dirname "$0")
-echo "$*" >>"$bin/calls"
-{}
-printf '#!/bin/sh
-if [ "$1" = --version ]; then echo "git version 99.0.0"; exit 0; fi
-exec {} "$@"
-' >"$bin/git"
-chmod 755 "$bin/git"
-"#,
-            wait_for(&gate),
-            real_git.display()
+            "#!/bin/sh\nif [ \"$1\" = --version ]; then echo \"git version 99.0.0\"; exit 0; fi\nexec {} \"$@\"\n",
+            real_git().display()
         ),
     );
-    let brew = brew_bin.join("brew");
-    let agent = world.serve_with(&[
-        ("YONDERD_TEST_GIT_MINIMUM", "99.0.0"),
-        ("YONDERD_TEST_BREW", brew.to_str().expect("UTF-8")),
-    ]);
+    fs::write(world.bd_dir().join("git-dir"), git_bin.to_str().expect("UTF-8")).expect("the git of bd");
+    fs::write(world.bd_dir().join("git-upgrading"), "").expect("the flag");
+    let agent = world.serve();
     let world = &agent.world;
     agent.start(world.spec("9-1", HOLDER, "command -v git"));
-    let waiting = "yonder: waiting for the upgrade of git on the host: `brew install git` ";
+    let waiting = "yonder: waiting for the upgrade of git on the host: `brew upgrade git` runs once no host slot is lent";
     eventually("the wait of the run", || {
         fs::read_to_string(world.run_dir("9-1").join("events.log")).is_ok_and(|log| log.contains(waiting))
     });
-
-    fs::write(&gate, "").expect("the gate");
+    thread::sleep(Duration::from_millis(500));
+    fs::remove_file(world.bd_dir().join("git-upgrading")).expect("the end of the upgrade");
     let followed = agent.follow("9-1", 0);
     assert_eq!(followed.end, Reply::Exit { code: 0 }, "{}", agent.dump("9-1"));
-    assert_eq!(followed.of(Stream::Stdout), [brew_bin.join("git").to_str().expect("UTF-8")]);
+    assert_eq!(followed.of(Stream::Stdout), [git_bin.join("git").to_str().expect("UTF-8")]);
     assert!(followed.start_line().contains(" open files, git 99.0.0, "), "{followed:?}");
+    assert!(followed.phase_ms("git") >= 500, "{followed:?}");
     let mut phases = vec!["git"];
     phases.extend(ALL_PHASES);
     assert_eq!(followed.phase_names(), phases);
-    assert_eq!(fs::read_to_string(brew_bin.join("calls")).expect("the calls"), "install git\n");
-    let state = fs::read_to_string(world.home().join(".cache/yonderd/git.json")).expect("the state");
-    assert!(state.contains(r#""state":"ready""#), "{state}");
+    assert!(world.bd_calls().contains("lease host git --ensure -C "), "{}", world.bd_calls());
 }
 
 #[test]

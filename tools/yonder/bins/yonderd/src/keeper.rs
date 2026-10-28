@@ -3,7 +3,9 @@
 //! supervisor, a clean or a shrink that died), then leases the missing slots (`slots::fill`). A fill can clone the whole
 //! checkout, so it runs on a thread of its own, one per repository at a time. A failed fill waits 1, 5, then 15 minutes
 //! before the next one. The repositories start from the repository list of the packs and the runs on disk, so a
-//! restart of `serve` keeps them. While Homebrew upgrades git (`host_git`), a tick does nothing.
+//! restart of `serve` keeps them. Before the slots of a repository, each tick keeps the git of the host at its floor
+//! (`run_git::ensure`): the call blocks while Branch Deck waits for the lends and while Homebrew runs. A change of its
+//! outcome is one line of the log.
 
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
@@ -16,7 +18,7 @@ use crate::child::never;
 use crate::home::Home;
 use crate::run::Runs;
 use crate::serve::log;
-use crate::{cleanup, host_git, slots, tuning};
+use crate::{cleanup, run_git, slots, tuning};
 
 /// The waits after a failed fill: the first, the second, and every later one.
 const FILL_BACKOFF: [Duration; 3] = [Duration::from_mins(1), Duration::from_mins(5), Duration::from_mins(15)];
@@ -45,12 +47,11 @@ fn keep(home: &Home, woken: &mpsc::Receiver<PathBuf>) {
         .chain(cleanup::repos(home))
         .collect();
     let fills: Arc<Mutex<HashMap<PathBuf, Fill>>> = Arc::default();
+    let mut said: HashMap<PathBuf, String> = HashMap::new();
     loop {
-        // bd uses git: no slot work while Homebrew replaces it.
-        if !host_git::upgrading(home) {
-            for repo in &repos {
-                tend(home, repo, &fills);
-            }
+        for repo in &repos {
+            ensure_git(repo, &mut said);
+            tend(repo, &fills);
         }
         match woken.recv_timeout(tuning::keeper_tick()) {
             Ok(repo) => {
@@ -63,8 +64,29 @@ fn keep(home: &Home, woken: &mpsc::Receiver<PathBuf>) {
     }
 }
 
+/// Keeps the git of the host at its floor for `repo`, and logs an upgrade or a change of the outcome. `said` holds the
+/// last outcome of each repository.
+fn ensure_git(repo: &Path, said: &mut HashMap<PathBuf, String>) {
+    let line = match run_git::ensure(repo) {
+        Ok(git) if git.upgraded => {
+            log(&format!(
+                "Homebrew upgraded the git of the host to {} {}",
+                git.path.display(),
+                git.version
+            ));
+            format!("the git of the host is {} {}", git.path.display(), git.version)
+        }
+        Ok(git) => format!("the git of the host is {} {}", git.path.display(), git.version),
+        Err(failed) => format!("the git of the host stays below its floor: {failed}"),
+    };
+    if said.get(repo) != Some(&line) {
+        log(&line);
+        said.insert(repo.to_path_buf(), line);
+    }
+}
+
 /// One tick of one repository.
-fn tend(home: &Home, repo: &Path, fills: &Arc<Mutex<HashMap<PathBuf, Fill>>>) {
+fn tend(repo: &Path, fills: &Arc<Mutex<HashMap<PathBuf, Fill>>>) {
     match slots::reclaim(repo) {
         Ok(lines) => {
             for line in lines {
@@ -81,18 +103,8 @@ fn tend(home: &Home, repo: &Path, fills: &Arc<Mutex<HashMap<PathBuf, Fill>>>) {
         }
         fill.running = true;
     }
-    let (repo, fills, home) = (repo.to_path_buf(), Arc::clone(fills), home.clone());
+    let (repo, fills) = (repo.to_path_buf(), Arc::clone(fills));
     thread::spawn(move || {
-        // A fill clones and checks out with git, so an upgrade of git waits for its end.
-        let Some(_use) = host_git::take_use(&home) else {
-            fills
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .entry(repo)
-                .or_default()
-                .running = false;
-            return;
-        };
         let filled = slots::fill(&repo, &never);
         let mut fills = fills.lock().unwrap_or_else(PoisonError::into_inner);
         let fill = fills.entry(repo.clone()).or_default();

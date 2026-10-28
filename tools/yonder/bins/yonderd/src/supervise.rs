@@ -6,10 +6,10 @@
 //!
 //! The steps:
 //!
-//! 0. Wait while `serve` upgrades git with Homebrew (`host_git`). A refused upgrade ends the run with `old_git`.
 //! 1. Borrow a host slot of the repository (`slots`, `bd lease host lend` with the pid of this process): the slot that
-//!    the holder used last, else the one used longest ago, else a place in the queue. While every slot is lent, it asks
-//!    again every 2 s and says so in the log once a minute, up to an hour.
+//!    the holder used last, else the one used longest ago, else a place in the queue. While Homebrew upgrades the git
+//!    of the host, the run waits in the phase `git`. While every slot is lent, one lend waits up to an hour, and bd
+//!    says so in the log once a minute. A git below its floor ends the run with `old_git` (`run_git`).
 //! 2. Wait for the pack, up to `PACK_WAIT_SECONDS` of the protocol, and up to `PACK_STALL_SECONDS` without a chunk
 //!    of it. A start can come before the pack of its reference, so the lend goes on while the pack travels. A commit
 //!    that the main repository has already needs no pack. Else the run waits for the file `packed`, which the pack
@@ -18,8 +18,9 @@
 //!    the ignored files stay as the warm cache. So the checkout writes only the files of the diff and reads no other
 //!    file.
 //! 4. Prepare: read `.yonder.toml` of the commit, build the environment (`run_env`, with the login environment of
-//!    `login_env` and the programs of Homebrew before `/usr/bin`), check its git (`host_git::for_command`), and run each prepare step whose inputs changed since its last success in this slot (`prepare`, the
-//!    fingerprints of `slots::Prepared`). For a client that asks for them, remove the outputs of the config, and scan
+//!    `login_env` and the directory of the git of Branch Deck before `/usr/bin`, `run_git::for_run`), and run each
+//!    prepare step whose inputs changed since its last success in this slot (`prepare`, the fingerprints of
+//!    `slots::Prepared`). For a client that asks for them, remove the outputs of the config, and scan
 //!    the tree of the slot before the command.
 //! 5. Run the command in the slot root, in its own process group, with stdin `/dev/null`, the environment of step 4
 //!    and the niceness of the spec. Its lines go to `events.log`. When the command exits, the other processes of its
@@ -67,10 +68,17 @@ use crate::refused::{
 use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir, epoch_ms};
 use crate::slots::{self, Checkout, Lend, Lent, Prepared, Queued};
 use crate::watch::Watch;
-use crate::{awake, config, host_git, login_env, prepare, repo, run_env, tuning};
+use crate::{awake, config, login_env, prepare, repo, run_env, run_git, tuning};
 
 /// How long a run waits for a host slot.
 const SLOT_WAIT: Duration = Duration::from_secs(3600);
+
+/// How long a run waits while Homebrew upgrades the git of the host: Branch Deck waits up to 60 min for the lends to
+/// end, and Homebrew takes up to 30 min.
+const GIT_WAIT: Duration = Duration::from_mins(100);
+
+/// The wait of one lend while Homebrew upgrades the git of the host, so the run sees the end of the upgrade.
+const GIT_POLL: Duration = Duration::from_secs(5);
 
 /// How often the supervisor looks at the command and at the cancel request.
 const POLL: Duration = Duration::from_millis(100);
@@ -268,15 +276,7 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     private_dir(&stage).map_err(|error| refused(AGENT_ERROR, format!("cannot make {}: {error}", stage.display())))?;
     let mut phases = Phases { run, ended: Vec::new() };
 
-    let settled = if host_git::upgrading(context.home) {
-        phases.time("git", || host_git::wait(context.home, stop, &mut say))
-    } else {
-        host_git::wait(context.home, stop, &mut say)
-    };
-    if !settled? {
-        return Ok(INTERRUPTED);
-    }
-    let Some(lent) = phases.time("slot", || borrow(context, stop, &mut say))? else {
+    let Some(lent) = take_slot(context, &mut phases, stop, &mut say)? else {
         return Ok(INTERRUPTED);
     };
     let slot = lent.slot.clone();
@@ -318,7 +318,7 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     }
     let before: Vec<BTreeSet<OsString>> = spec.fetch.iter().map(|dir| entries(&slot.join(dir))).collect();
     say(&start_line(&slot, &launch));
-    if let Some(warning) = host_git::login_shell_warning(&spec.command, &launch.git, cfg!(target_os = "macos")) {
+    if let Some(warning) = run_git::login_shell_warning(&spec.command, &launch.git, cfg!(target_os = "macos")) {
         say(&warning);
     }
     let code = phases.time("command", || {
@@ -330,18 +330,62 @@ fn steps(context: &Context<'_>, stop: Stop<'_>, held: &mut Held) -> Result<i32, 
     Ok(code)
 }
 
-/// Borrows a host slot for the run: one `bd lease host lend --wait` of up to an hour. The queue lines that bd writes
-/// once a minute go to the log of the run, and a lend that the wait ended in the queue refuses with `lock_timeout`.
-/// Answers `None` when a cancel ended the wait; the give-back at the end takes the run out of the queue then.
-fn borrow(context: &Context<'_>, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<Option<Lent>, Refusal> {
-    let (spec, repo) = (context.spec, context.repo);
-    let lend = slots::lend(repo, &spec.run, std::process::id(), &spec.holder, SLOT_WAIT, stop, say);
-    match lend {
-        Ok(Lend::Lent(lent)) => {
+/// Borrows a host slot for the run, in the phases `git` and `slot`. A first lend answers at once. A lend that queues
+/// because Homebrew upgrades the git of the host says so, and waits in the phase `git` with lends of [`GIT_POLL`] up to
+/// [`GIT_WAIT`]. Then one `bd lease host lend --wait` of up to an hour waits for the slot: the queue lines that bd
+/// writes once a minute go to the log of the run, and a lend that the wait ended in the queue refuses with
+/// `lock_timeout`. A git below its floor refuses with `old_git`. Answers `None` when a cancel ended the wait; the
+/// give-back at the end takes the run out of the queue then.
+fn take_slot(context: &Context<'_>, phases: &mut Phases<'_>, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<Option<Lent>, Refusal> {
+    let repo = context.repo;
+    let started = Instant::now();
+    let first = lend(context, None, stop, say);
+    if !matches!(first, Ok(Some(Lend::Queued(_)))) {
+        phases.record("slot", started.elapsed());
+    }
+    let mut queued = match first? {
+        None => return Ok(None),
+        Some(Lend::Lent(lent)) => {
+            say(&lent_line(&lent, repo));
+            return Ok(Some(lent));
+        }
+        Some(Lend::Queued(queued)) => queued,
+    };
+    let git_waited = queued.git_upgrading.is_some();
+    if let Some(command) = queued.git_upgrading.clone() {
+        say(&format!(
+            "waiting for the upgrade of git on the host: `{command}` runs once no host slot is lent"
+        ));
+        let upgrading = Instant::now();
+        let waited = phases.time("git", || {
+            while queued.git_upgrading.is_some() && upgrading.elapsed() < GIT_WAIT {
+                match lend(context, Some(GIT_POLL), stop, say)? {
+                    None => return Ok(None),
+                    Some(Lend::Lent(lent)) => return Ok(Some(lent)),
+                    Some(Lend::Queued(next)) => queued = next,
+                }
+            }
+            Ok::<_, Refusal>(None)
+        })?;
+        if let Some(lent) = waited {
+            phases.record("slot", Duration::ZERO);
+            say(&lent_line(&lent, repo));
+            return Ok(Some(lent));
+        }
+        if stop() {
+            return Ok(None);
+        }
+    }
+    let slot = Instant::now();
+    let waited = lend(context, Some(SLOT_WAIT), stop, say);
+    phases.record("slot", if git_waited { slot.elapsed() } else { started.elapsed() });
+    match waited? {
+        None => Ok(None),
+        Some(Lend::Lent(lent)) => {
             say(&lent_line(&lent, repo));
             Ok(Some(lent))
         }
-        Ok(Lend::Queued(queued)) => Err(refused(
+        Some(Lend::Queued(queued)) => Err(refused(
             LOCK_TIMEOUT,
             format!(
                 "no host slot for {} s; giving up: {}",
@@ -349,8 +393,18 @@ fn borrow(context: &Context<'_>, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> R
                 waiting_line(&queued, repo)
             ),
         )),
+    }
+}
+
+/// One lend of the run, with a wait of `wait`. Answers `None` when a cancel ended it. A `git_not_found` refusal of bd
+/// is `old_git` with the hint of bd, and another failure is `lease_failed`.
+fn lend(context: &Context<'_>, wait: Option<Duration>, stop: Stop<'_>, say: &mut dyn FnMut(&str)) -> Result<Option<Lend>, Refusal> {
+    let spec = context.spec;
+    match slots::lend(context.repo, &spec.run, std::process::id(), &spec.holder, wait, stop, say) {
+        Ok(lend) => Ok(Some(lend)),
         Err(_) if stop() => Ok(None),
-        Err(message) => Err(refused(LEASE_FAILED, message)),
+        Err(failed) if failed.code.as_deref() == Some(run_git::GIT_NOT_FOUND) => Err(run_git::refusal_of(&failed)),
+        Err(failed) => Err(refused(LEASE_FAILED, failed.message)),
     }
 }
 
@@ -403,9 +457,13 @@ fn prepare_slot(context: &Context<'_>, slot: &Path, stop: Stop<'_>, held: &mut H
         .exe
         .and_then(|exe| login_env::for_run(context.home, exe, login_env::MAX_AGE, &mut |line| context.say(line)));
     let mut base = login_env::applied(login.as_ref());
-    host_git::put_brew_first_in(&mut base);
+    let host_git = run_git::for_run(context.repo)?;
+    if let Some(dir) = &host_git.dir {
+        let path = base.get(std::ffi::OsStr::new("PATH")).cloned().unwrap_or_default();
+        base.insert(OsString::from("PATH"), run_git::with_first(&path, dir));
+    }
     let env = run_env::run_env(base, &config.env, context.home, spec, slot)?;
-    let git = host_git::for_command(&env)?;
+    let git = format!("git {}", host_git.version);
     let launch = Launch {
         env,
         nice: spec.nice,
@@ -553,9 +611,15 @@ impl Phases<'_> {
     fn time<T>(&mut self, name: &str, step: impl FnOnce() -> T) -> T {
         let started = Instant::now();
         let outcome = step();
+        self.record(name, started.elapsed());
+        outcome
+    }
+
+    /// Adds the phase `name` of `took`, and rewrites `phases.json`.
+    fn record(&mut self, name: &str, took: Duration) {
         self.ended.push(Phase {
             name: name.to_owned(),
-            ms: u64::try_from(started.elapsed().as_millis()).unwrap_or(u64::MAX),
+            ms: u64::try_from(took.as_millis()).unwrap_or(u64::MAX),
         });
         if let Err(error) = self.run.write_phases(&self.ended) {
             eprintln!(
@@ -563,7 +627,6 @@ impl Phases<'_> {
                 self.run.path().display()
             );
         }
-        outcome
     }
 }
 

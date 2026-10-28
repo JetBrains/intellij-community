@@ -60,6 +60,9 @@ pub(crate) struct Queued {
     pub(crate) lent: Vec<(u32, String)>,
     /// The slots in quarantine, with the commands of the processes that keep them.
     pub(crate) quarantined: Vec<(u32, Vec<String>)>,
+    /// The command of Homebrew that upgrades the git of the host, such as `brew upgrade git`, while the lend only
+    /// queues for it.
+    pub(crate) git_upgrading: Option<String>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -68,8 +71,9 @@ pub(crate) enum Lend {
     Queued(Queued),
 }
 
-/// Lends a slot of the pool of `repo` to `run`, which `pid` runs: `bd lease host lend --wait`. The call waits up to
-/// `wait` while every slot is lent, and answers the place in the queue when the wait ends. Each line of the stderr of
+/// Lends a slot of the pool of `repo` to `run`, which `pid` runs: `bd lease host lend`. With `wait`, the call waits up to
+/// that long while the run is queued, and answers the place in the queue when the wait ends; without it, it answers
+/// at once. A git of the host below its floor refuses with `git_not_found` (`run_git`). Each line of the stderr of
 /// bd, such as its queue line once a minute, goes to `line`. `stop` kills the call: the give-back at the end of the run
 /// takes its ticket out of the queue, or gives back a slot that the table lent meanwhile.
 pub(crate) fn lend(
@@ -77,14 +81,21 @@ pub(crate) fn lend(
     run: &str,
     pid: u32,
     holder: &str,
-    wait: Duration,
+    wait: Option<Duration>,
     stop: Stop<'_>,
     line: &mut dyn FnMut(&str),
-) -> Result<Lend, String> {
-    let (pid, seconds) = (pid.to_string(), wait.as_secs().max(1).to_string());
-    let args = ["lend", "--run", run, "--pid", &pid, "--affinity", holder, "--wait", &seconds];
-    let text = bd::host_call(repo, &args, wait + LEND, stop, line).map_err(|failed| failed.message)?;
-    parse_lend(&text).ok_or_else(|| format!("bd lease host lend answered no slot and no place: {text}"))
+) -> Result<Lend, bd::Failed> {
+    let pid = pid.to_string();
+    let seconds = wait.map(|wait| wait.as_secs().max(1).to_string());
+    let mut args = vec!["lend", "--run", run, "--pid", &pid, "--affinity", holder];
+    if let Some(seconds) = &seconds {
+        args.extend(["--wait", seconds.as_str()]);
+    }
+    let text = bd::host_call(repo, &args, wait.unwrap_or_default() + LEND, stop, line)?;
+    parse_lend(&text).ok_or_else(|| bd::Failed {
+        code: None,
+        message: format!("bd lease host lend answered no slot and no place: {text}"),
+    })
 }
 
 /// What a give-back did.
@@ -173,6 +184,8 @@ fn parse_lend(text: &str) -> Option<Lend> {
         lent: Vec<LentTo>,
         #[serde(default)]
         quarantined: Vec<Quarantined>,
+        #[serde(default)]
+        git_upgrading: Option<String>,
     }
     #[derive(Deserialize)]
     struct Slot {
@@ -212,6 +225,7 @@ fn parse_lend(text: &str) -> Option<Lend> {
                 .into_iter()
                 .map(|slot| (slot.n, slot.processes.into_iter().map(|process| process.describe()).collect()))
                 .collect(),
+            git_upgrading: answer.git_upgrading,
         })),
         _ => None,
     }

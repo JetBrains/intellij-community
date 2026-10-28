@@ -24,7 +24,12 @@ fn a_lend_answers_a_slot_or_a_place_in_the_queue() {
             slots: 2,
             lent: vec![(1, "r1".to_owned()), (2, "r2".to_owned())],
             quarantined: vec![(3, vec!["9 (sh -c x)".to_owned()])],
+            git_upgrading: None,
         }))
+    );
+    let upgrading = r#"{"schema":2,"state":"queued","ahead":0,"slots":0,"git_upgrading":"brew install git"}"#;
+    assert!(
+        matches!(parse_lend(upgrading), Some(Lend::Queued(Queued { git_upgrading: Some(command), .. })) if command == "brew install git")
     );
     assert_eq!(parse_lend(r#"{"state":"lent"}"#), None, "a lend without a slot");
     assert_eq!(parse_lend("not json"), None);

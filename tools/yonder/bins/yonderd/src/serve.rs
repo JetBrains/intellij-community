@@ -5,8 +5,8 @@
 //! their count (`tally`). A request that waits for git sends a heartbeat while it waits: `Have` and the end of `Pack`.
 //! The requests of a repository are here; the requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
 //! raises its open-files limit, which each run inherits, and a thread captures the login environment of the user
-//! (`login_env`). Before its first thread it puts the programs of Homebrew before `/usr/bin` in its `PATH`, and once
-//! it listens it checks the git of the host and upgrades it when it is too old (`host_git`). A client after its hello keeps the host awake until its request ends (`awake`). Once it listens, it writes the listening file with the SHA-256 of its binary, for the watchdog of an
+//! (`login_env`). The keeper of the host slots keeps the git of the host at its floor through Branch Deck (`run_git`).
+//! A client after its hello keeps the host awake until its request ends (`awake`). Once it listens, it writes the listening file with the SHA-256 of its binary, for the watchdog of an
 //! upgrade (`upgrade`). After an upgrade it waits for its other requests and exits, so that launchd starts the new
 //! binary.
 
@@ -27,7 +27,6 @@ use yonder_link::{Channel, Frame, Identity, LinkError, ServerTls};
 use crate::awake::{self, Awake};
 use crate::files::private_dir;
 use crate::home::Home;
-use crate::host_git::{self, HostGit};
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, PACK_FAILED, REPO_MISSING, Refusal, SCHEMA, UPGRADE_FAILED, refused, reply};
 use crate::repo::{self, NotRepo};
 use crate::run::{RunDir, Runs};
@@ -83,8 +82,6 @@ pub(crate) struct Agent {
     /// Wakes the keeper of the host slots for the repository of a run that starts (`keeper`); none before `serve`
     /// starts it.
     keeper: Mutex<Option<mpsc::Sender<PathBuf>>>,
-    /// The git of the host, which a start checks (`host_git`).
-    pub(crate) git: HostGit,
     /// The sockets that a cap of handshakes closed.
     over_cap: Tally,
     /// The handshakes that failed.
@@ -95,8 +92,6 @@ pub(crate) struct Agent {
 /// `out` once it listens. It answers only when it cannot listen. `launchctl` is the program of the watchdog of an
 /// upgrade.
 pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out: &mut dyn Write) -> Result<(), Refusal> {
-    // SAFETY: this is the first step of `serve`, and `main` started no thread before it.
-    unsafe { host_git::put_brew_first() };
     let identity = Identity::load_or_create(&home.identity_dir()).map_err(|error| {
         refused(
             AGENT_ERROR,
@@ -118,9 +113,6 @@ pub(crate) fn serve(home: Home, bind: IpAddr, port: u16, launchctl: PathBuf, out
     }
     let tls = ServerTls::new(&identity, home.allow_file()).map_err(|error| refused(AGENT_ERROR, format!("cannot set up TLS: {error}")))?;
     let agent = Arc::new(Agent::new(home, tls, exe, launchctl));
-    // Before the first connection, so no start comes before the decision. An install or an upgrade of git runs on a
-    // thread of its own, so the listener and the watchdog of an upgrade of the agent do not wait for Homebrew.
-    agent.git.settle();
     *agent.keeper.lock().unwrap_or_else(PoisonError::into_inner) = Some(keeper::start(agent.home.clone()));
 
     // The login environment of the user, for the runs. A shell profile can take seconds, so it does not hold the
@@ -240,7 +232,6 @@ impl Agent {
             .inspect_err(|error| log(&format!("cannot read the SHA-256 of {}: {error}", exe.display())))
             .ok();
         Self {
-            git: HostGit::new(home.clone()),
             home,
             tls,
             exe,
@@ -525,8 +516,6 @@ impl Agent {
                 return channel.send(&reply(&refusal));
             }
         };
-        // An upgrade of git waits for the end of the pack (`host_git`).
-        let using = host_git::hold_use(&self.home);
         let mut running = match repo::start_ingest(&repo, &ingest_ref, commit) {
             Ok(running) => running,
             Err(error) => {
@@ -557,8 +546,6 @@ impl Agent {
         drop(stdin);
         let home = self.home.clone();
         let ingested = with_heartbeats(channel, &mut || progress.note(), move || {
-            // The use ends with the ingest.
-            let _using = using;
             let ingested = repo::finish_ingest(&repo, running);
             received?;
             if ingested.is_ok() {
