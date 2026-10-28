@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.installer
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -99,5 +100,5 @@ private fun showErrorNotification(project: Project?, release: Release, ex: Binar
     is PrepareException -> PyInstallerBundle.message("python.sdk.download.failed.message")
     else -> PyInstallerBundle.message("python.sdk.try.to.install.manually", release.title)
   }
-  Messages.showErrorDialog(project, message, title)
+  ApplicationManager.getApplication().invokeLater { Messages.showErrorDialog(project, message, title) }
 }

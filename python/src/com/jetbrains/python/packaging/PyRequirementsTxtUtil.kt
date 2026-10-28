@@ -7,9 +7,10 @@ import com.intellij.openapi.command.writeCommandAction
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.python.pyproject.model.evolution.getInterpreter
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.sdk.backend.flavor
 import com.intellij.python.sdk.backend.requirementsPath
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.intellij.notification.NotificationAction
@@ -25,9 +26,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.toNioPathOrNull
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.ui.components.dialog
@@ -49,8 +52,10 @@ import com.jetbrains.python.project.PyProject.Companion.asPyProject
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.ANALYZE_ENTRIES_IN_REQUIREMENTS_FILE_FAILED
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.CREATE_REQUIREMENTS_FILE_FAILED
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.NO_INTERPRETER_CONFIGURED
+import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.statistics.SyncPythonRequirementsIdsHolder.Companion.SOME_REQUIREMENTS_FROM_BASE_FILES_WERE_NOT_UPDATED
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 private val PYTHON_EXTENSIONS = listOf("py", "ipynb")
 
@@ -129,7 +134,8 @@ internal suspend fun syncWithImports(module: Module) {
   val settings = PyPackageRequirementsSettings.getInstance(module)
 
   if (!ApplicationManager.getApplication().isUnitTestMode) {
-    val proceed = withContext(Dispatchers.EDT) { showSyncSettingsDialog(project, settings, interpreter) }
+    val initialPath = readAction { resolveSyncDialogInitialPath(module, interpreter) }
+    val proceed = withContext(Dispatchers.EDT) { showSyncSettingsDialog(module, settings, interpreter, initialPath) }
     if (!proceed) return
   }
 
@@ -226,19 +232,46 @@ private suspend fun prepareRequirementsText(
   return existingResult.withImportedPackages(importedPackages, settings)
 }
 
+/**
+ * Pre-fill the requirements file field with the SDK-persisted path if there is one, falling back
+ * to the file the inspection just pointed at — so leaving the dialog untouched does not clobber
+ * a working path with `null` (PY-84976). Must be called off the EDT under a read action:
+ * [PyPackageUtil.findRequirementsTxt] goes through [VirtualFileManager.findFileByNioPath] and
+ * [VirtualFile.findChild], which can touch the file system to refresh the VFS entry.
+ */
+@ApiStatus.Internal
+@PyInternalExecApi
+@RequiresBackgroundThread
+@RequiresReadLock
+fun resolveSyncDialogInitialPath(module: Module, interpreter: PythonInterpreter): Path? =
+  interpreter.requirementsPath
+  ?: PyPackageUtil.findRequirementsTxt(module)?.toNioPathOrNull()
+
 @RequiresEdt
-private fun showSyncSettingsDialog(project: Project, settings: PyPackageRequirementsSettings, interpreter: PythonInterpreter): Boolean {
+private fun showSyncSettingsDialog(
+  module: Module,
+  settings: PyPackageRequirementsSettings,
+  interpreter: PythonInterpreter,
+  initialPath: Path?,
+): Boolean {
+  val initialPathString = initialPath?.toString().orEmpty()
+  val project = module.project
+  // Scope the browse dialog to the module's content roots so the default directory is the project root,
+  // not the IDE-wide last-chosen directory (PY-84976).
   val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
+    .withRoots(*ModuleRootManager.getInstance(module).contentRoots)
   val panel = panel {
     row(PyBundle.message("form.integrated.tools.package.requirements.file")) {
-      textFieldWithBrowseButton(fileChooserDescriptor = descriptor)
-        .bindText({
-                    interpreter.requirementsPath?.toString() ?: ""
-                  }, { stringPath ->
+      textFieldWithBrowseButton(project = project, fileChooserDescriptor = descriptor)
+        .bindText({ initialPathString }, { stringPath ->
+                    // bindText fires the setter on OK even when the user did not touch the field; persisting the
+                    // pre-filled value would clear the SDK path on the next open (PY-84976).
+                    val normalized = stringPath.ifBlank { null }?.toNioPathOrNull()
+                    if (normalized == initialPath) return@bindText
                     // Goes through a modificator rather than writing to the committed data: an in-place edit leaves the
                     // stored entity behind the bridge, which the workspace model reports as a mismatch (PY-82614).
                     PythonRequirementTxtSdkUtils.saveRequirementsTxtPath(
-                      project, interpreter.getSdkAPI(), stringPath.ifBlank { null }?.toNioPathOrNull()
+                      project, interpreter.getSdkAPI(), normalized
                     )
                   })
         .align(AlignX.FILL)
