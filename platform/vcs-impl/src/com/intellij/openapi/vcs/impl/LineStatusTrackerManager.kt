@@ -90,7 +90,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.VirtualFileSetFactory
-import com.intellij.openapi.vfs.newvfs.BulkFileListener
+import com.intellij.openapi.vfs.newvfs.BulkFileListenerBackgroundable
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
@@ -176,7 +176,7 @@ class LineStatusTrackerManager(
     connection.subscribe(VcsBaseContentProviderListener.TOPIC, BaseContentProviderListener())
 
     ApplicationManager.getApplication().messageBus.connect(coroutineScope)
-      .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
+      .subscribe(VirtualFileManager.VFS_CHANGES_BG, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(coroutineScope) { updateTrackingSettings() }
     VcsBaseContentProvider.EP_NAME.addChangeListener(project, { onEverythingChanged() }, this)
@@ -534,11 +534,26 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   private fun releaseTracker(document: Document, wasUnbound: Boolean = false) {
-    val data = trackers.remove(document) ?: return
+    val data = detachTracker(document, wasUnbound) ?: return
+    disposeTracker(data)
+  }
+
+  /**
+   * First phase of [releaseTracker]: stop tracking the document. Can be called from any thread (under [LOCK] when needed).
+   * Must be followed by [disposeTracker].
+   */
+  private fun detachTracker(document: Document, wasUnbound: Boolean = false): TrackerData? {
+    val data = trackers.remove(document) ?: return null
+    unregisterTrackerInCLM(data, wasUnbound)
+    return data
+  }
+
+  /** Second phase of [releaseTracker]: notify listeners and release the tracker. */
+  @RequiresEdt
+  private fun disposeTracker(data: TrackerData) {
     if (!project.isDisposed) {
       project.messageBus.syncPublisher(TOPIC).onTrackerRemoved(data.tracker)
     }
-    unregisterTrackerInCLM(data, wasUnbound)
     data.tracker.release()
 
     log("Tracker released", data.tracker.virtualFile)
@@ -800,23 +815,39 @@ class LineStatusTrackerManager(
     }
   }
 
-  private inner class MyVirtualFileListener : BulkFileListener {
+  private inner class MyVirtualFileListener : BulkFileListenerBackgroundable {
     override fun before(events: List<VFileEvent>) {
+      val trackersToRelease = ArrayList<TrackerData>()
       for (event in events) {
         when (event) {
-          is VFileDeleteEvent -> handleFileDeletion(event.file)
+          is VFileDeleteEvent -> handleFileDeletion(event.file, trackersToRelease)
+        }
+      }
+
+      if (trackersToRelease.isNotEmpty()) {
+        ApplicationManager.getApplication().invokeLater {
+          trackersToRelease.forEach(::disposeTracker)
         }
       }
     }
 
     override fun after(events: List<VFileEvent>) {
+      val filesToRefresh = ArrayList<VirtualFile>()
       for (event in events) {
         when (event) {
           is VFilePropertyChangeEvent -> when {
-            VirtualFile.PROP_ENCODING == event.propertyName -> onFileChanged(event.file)
+            VirtualFile.PROP_ENCODING == event.propertyName -> filesToRefresh.add(event.file)
             event.isRename -> handleFileMovement(event.file)
           }
           is VFileMoveEvent -> handleFileMovement(event.file)
+        }
+      }
+
+      if (filesToRefresh.isNotEmpty()) {
+        ApplicationManager.getApplication().invokeLater {
+          for (file in filesToRefresh) {
+            onFileChanged(file)
+          }
         }
       }
     }
@@ -831,12 +862,12 @@ class LineStatusTrackerManager(
       }
     }
 
-    private fun handleFileDeletion(file: VirtualFile) {
+    private fun handleFileDeletion(file: VirtualFile, trackersToRelease: MutableList<TrackerData>) {
       if (!partialChangeListsEnabled) return
 
       synchronized(LOCK) {
         forEachTrackerUnder(file) { data ->
-          releaseTracker(data.tracker.document)
+          detachTracker(data.tracker.document)?.let { trackersToRelease.add(it) }
         }
       }
     }
