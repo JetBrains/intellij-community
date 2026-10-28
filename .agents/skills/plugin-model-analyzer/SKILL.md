@@ -12,7 +12,7 @@ Use the Product DSL analyzer directly through Bazel. Do not call the retired `Pl
 Run from the repository root:
 
 ```bash
-bazel run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='<request-json>'
+./bazel.cmd run --ui_event_filters=-info --noshow_progress //platform/buildScripts:plugin-model-tool -- --json='<request-json>'
 ```
 
 The output is JSON with a `timestamp` plus one result property named after the requested filter.

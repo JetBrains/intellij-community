@@ -1,5 +1,5 @@
 <!-- TEMPLATE:COMMENT -->
-To regenerate, run `bazel run //.ai:render-guides`.
+To regenerate, run `./bazel.cmd run //.ai:render-guides`.
 <!-- /TEMPLATE:COMMENT -->
 
 ## Project Invariants
@@ -45,8 +45,8 @@ Branch Deck is optional. First check for the `branch-deck` skill: the skill list
 ### After Code Changes
 
 - **Run the affected tests:** `{{TOOLS_DIR}}/bt.cmd --module <module> --filter <FQN>`, or `node --test <file>` for a `*.test.mjs` file. An FQN is required. Always name the test module. When bt refuses the module, run the `tests.cmd` command that it prints. Neither runner needs a separate `bazel build` step. A module rule can override the runner. Skip this when the plugin has no tests. See [TESTING](../.agents/skills/testing/SKILL.md).
-- **Bazel compilation without tests:** to verify compilation only, run `bazel build <target>` for the affected modules. Skip this when you changed only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files.
-- After you change a Bazel or Starlark source (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `bazel run //:format.check`. If it reports a diff, run `bazel run //:format`, inspect the changes, and run the check again.
+- **Bazel compilation without tests:** run `./bazel.cmd build <target>` for the affected modules. Skip this when you changed only `.js`, `.mjs`, `.md`, `.txt`, or `.json` files.
+- After you change a Bazel or Starlark source (`BUILD`, `BUILD.bazel`, `MODULE.bazel`, `WORKSPACE`, `WORKSPACE.bazel`, or `*.bzl`), run `./bazel.cmd run //:format.check`. If it reports a diff, run `./bazel.cmd run //:format`, inspect the changes, and run the check again.
 <!-- IF_EDITION:ULTIMATE -->- After you change an `*.iml`, a `BUILD.bazel`, or a `.idea/` file, run `./build/jpsModelToBazel.cmd`.
 - After you change the version of a repository library, follow [Library Versions](../../.ai/library-versions.md).<!-- /IF_EDITION:ULTIMATE --><!-- IF_EDITION:COMMUNITY -->- After you change an `*.iml`, a `BUILD.bazel`, or a `.idea/` file, run `./build/jpsModelToBazelCommunityOnly.cmd`.<!-- /IF_EDITION:COMMUNITY -->
 
@@ -71,7 +71,7 @@ Available through ijproxy or JetBrains MCP: `lint_files`, `get_symbol_info`, `re
 ### Tooling rules
 
 - Prefer ijproxy for a content or symbol **search** and for a semantic operation. Fall back to JetBrains MCP, then to `{{TOOLS_DIR}}/fd.cmd` (files) and `{{TOOLS_DIR}}/rg.cmd` (text and regex), only when ijproxy is unavailable. Pass `-H` to see a dot-directory such as `.agents/`.
-<!-- IF_EDITION:ULTIMATE -->- Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `bazel run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.<!-- /IF_EDITION:ULTIMATE -->
+<!-- IF_EDITION:ULTIMATE -->- Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `./bazel.cmd run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.<!-- /IF_EDITION:ULTIMATE -->
 - Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position.
 - Prefer a spelling the allowlist knows, because a novel one asks for a prompt. Add a new entry to `{{COMMUNITY_DIR}}.ai/tool-permissions.json`, never to a harness allowlist.
 - Shell is allowed where this guide documents it, and for git, build, and test. Prefer `git_status` when that tool is available. Outside the working copy it is task-scoped: read what this repo's tooling produced, or what the user or a skill named, and never survey the machine.

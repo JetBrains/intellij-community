@@ -11,7 +11,7 @@ This document explains `tests.cmd` internals and helps troubleshoot test executi
 
 The test execution chains:
 ```
-bt.cmd → bazel test <jps_test label> → JUnit5BazelRunner
+bt.cmd → ./bazel.cmd test <jps_test label> → JUnit5BazelRunner
 tests.cmd → Bazel → IdeaUltimateRunTestsBuildTarget → TestingTasksImpl → JUnit 5
 ```
 
@@ -70,7 +70,7 @@ Key components:
 
 2. **Verify BUILD.bazel is synced** - Run `./build/jpsModelToBazel.cmd` after changing `.iml` files.
 
-**Note:** Bazel incremental builds are always correct. Do not use `bazel clean` - it won't help.
+**Note:** Bazel incremental builds are always correct. Do not use `./bazel.cmd clean` - it won't help.
 
 ### Test Discovery Issues
 
@@ -137,7 +137,7 @@ Then attach debugger to port 5005.
                                     ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │  3. BAZEL                                                                   │
-│     bazel run //build:local_idea_ultimate_run_tests_build_target            │
+│     ./bazel.cmd run //build:local_idea_ultimate_run_tests_build_target      │
 │     (defined in build/BUILD.bazel)                                          │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │

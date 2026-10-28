@@ -31,6 +31,6 @@ Use this skill when adding, renaming, moving, deleting, or referencing icons und
 
 As of this guide, icon class generation is not exposed as a Bazel runnable target. The package `@community//platform/build-scripts/icons` contains library and test targets, but no binary target:
 
-`bazel query 'kind(".*binary.*", @community//platform/build-scripts/icons:all)'`
+`./bazel.cmd query 'kind(".*binary.*", @community//platform/build-scripts/icons:all)'`
 
 Use `bt.cmd` for verification. If a generator binary target is added later, prefer that documented Bazel target over the IDE run configuration.

@@ -66,7 +66,7 @@ A green bt run in a linked work tree, such as a Branch Deck lease, records the t
 Check the last tree with bt, not with a raw `./bazel.cmd build`. `bazel.cmd` gives the process to bazelisk, so it leaves no record. Commit or delete scratch files before the last check: a record of local changes counts only for a commit of the same files, and bt names those files on the stderr.
 
 ```bash
-./community/tools/bt.cmd build //plugins/air/...     # bazel build -k, one digest line, and the record
+./community/tools/bt.cmd build //plugins/air/...     # ./bazel.cmd build -k, one digest line, and the record
 ./community/tools/bt.cmd build //plugins/air/... --host studio
 ```
 
@@ -127,7 +127,7 @@ Use `community/tests.cmd` for tests that belong to community-only modules:
 In an Ultimate checkout, run `ApiCheckTest` directly through its Bazel test target. For a focused check, pass one or more comma-separated module names:
 
 ```bash
-bazel test //tests/ideaProjectStructure:projectStructureTests_test \
+./bazel.cmd test //tests/ideaProjectStructure:projectStructureTests_test \
   --test_filter=com.intellij.ideaProjectStructure.api.ApiCheckTest \
   --test_arg=--jvm_flag=-Dapi.dump.test.modules.to.check=<module>[,<module>...] \
   --test_output=summary \
@@ -198,11 +198,11 @@ cd community/platform/build-scripts/bazel
 ## How tests.cmd Works
 
 1. `tests.cmd` is a cross-platform script (works on Windows/Linux/macOS)
-2. It takes `--module` and `--test`, maps them to JVM properties, and calls `bazel run //build:local_idea_ultimate_run_tests_build_target`
+2. It takes `--module` and `--test`, maps them to JVM properties, and calls `./bazel.cmd run //build:local_idea_ultimate_run_tests_build_target`
 3. The test runner uses JUnit to execute the specified test classes
 
 **Troubleshooting test discovery:**
-- Bazel incremental compilation works correctly — remote caches do NOT cause staleness, don't waste time on `bazel clean`
+- Bazel incremental compilation works correctly — remote caches do NOT cause staleness, don't waste time on `./bazel.cmd clean`
 - Test discovery issues are typically caused by:
   1. Wrong test pattern (use FQN or wildcard, not simple class name)
   2. Wrong module
