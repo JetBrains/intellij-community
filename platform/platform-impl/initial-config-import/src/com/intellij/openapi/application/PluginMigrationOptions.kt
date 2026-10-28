@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import java.nio.file.Path
 
+/** With [dryRun], a migration only edits the lists and writes no file. */
 @Suppress("UNUSED_PARAMETER")
 internal class PluginMigrationOptions(
   val previousVersion: String?,
@@ -15,5 +16,6 @@ internal class PluginMigrationOptions(
   val pluginsToMigrate: MutableList<IdeaPluginDescriptor>,
   val pluginsToDownload: MutableList<IdeaPluginDescriptor>,
   val pluginsToDisable: MutableList<PluginId>,
-  val log: Logger
+  val log: Logger,
+  val dryRun: Boolean,
 )

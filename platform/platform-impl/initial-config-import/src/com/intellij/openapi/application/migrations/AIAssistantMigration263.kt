@@ -33,6 +33,9 @@ internal class AIAssistantMigration263 : PluginMigration() {
     }
     descriptor.disablePlugin(AI_ASSISTANT_PLUGIN_ID)
     options.log.info("AI Assistant disabled: settings imported from $previousVersion")
+    if (options.dryRun) {
+      return
+    }
     try {
       writeOffboardingMarker(descriptor)
     }

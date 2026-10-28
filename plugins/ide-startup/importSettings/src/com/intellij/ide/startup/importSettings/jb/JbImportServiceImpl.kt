@@ -91,6 +91,7 @@ internal data class JbProductInfo(
 ) : Product {
   override val origin = SettingsImportOrigin.JetBrainsProduct
   private val descriptorsMap = ConcurrentHashMap<PluginId, PluginMainDescriptor>()
+  private val hiddenByMigrationMap = ConcurrentHashMap<PluginId, PluginMainDescriptor>()
   private val descriptorsPrefetchTask = AtomicReference<Deferred<Unit>>()
   private var keymapRef: AtomicReference<String> = AtomicReference()
   val activeKeymap: String? get() = keymapRef.get()
@@ -129,23 +130,38 @@ internal data class JbProductInfo(
       val disabledPlugins = if (Files.exists(disabledPluginsFile)) PluginStringSetFile.readIdsSafe(disabledPluginsFile, logger) else setOf()
       val descriptors = descriptorsDeferred.await().plugins
       logger.debug { "There are ${descriptors.size} plugins in $pluginDir" }
+      // the dialog can read the maps before the prefetch ends, so the maps get only the final result
+      val candidates = HashMap<PluginId, PluginMainDescriptor>()
       for (descr in descriptors) {
         if (disabledPlugins.contains(descr.pluginId)) {
           logger.info("Plugin ${descr.pluginId} is disabled in $name. Won't try to import it")
         }
         else {
-          descriptorsMap[descr.pluginId] = descr
+          candidates[descr.pluginId] = descr
         }
       }
-      for ((id, descriptor) in descriptorsMap) {
-        if (!isCompatible(descriptor)) {
-          descriptorsMap.remove(id)
+      candidates.values.removeIf { !isCompatible(it, candidates) }
+
+      val migration = ConfigImportHelper.migrateImportedPlugins(configDir, PathManager.getConfigDir(), candidates.values, true, logger)
+      val disabledIds = migration.toDisable.toSet()
+      for (migrated in migration.toMigrate) {
+        val id = migrated.pluginId
+        val descriptor = candidates[id] ?: continue
+        if (id in disabledIds) {
+          logger.info("Plugin $id from $name is not listed: the plugin migrations disable it")
+          hiddenByMigrationMap[id] = descriptor
         }
+        else {
+          descriptorsMap[id] = descriptor
+        }
+      }
+      for (id in candidates.keys - descriptorsMap.keys - hiddenByMigrationMap.keys) {
+        logger.info("Plugin $id from $name is not listed: the plugin migrations remove it")
       }
     }
   }
 
-  private fun isCompatible(descriptor: PluginMainDescriptor): Boolean {
+  private fun isCompatible(descriptor: PluginMainDescriptor, candidates: Map<PluginId, PluginMainDescriptor>): Boolean {
     if (PluginManagerCore.getPluginSet().isPluginEnabled(descriptor.pluginId)) {
       logger.info("Plugin \"${descriptor.name}\" from \"$name\" is already present in \"${IDEData.getSelf()?.fullName}\"")
       return false
@@ -165,7 +181,7 @@ internal data class JbProductInfo(
     for (dependency in descriptor.dependencies) {
       if (dependency.isOptional)
         continue
-      if (!(PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId) || descriptorsMap.containsKey(dependency.pluginId))) {
+      if (!(PluginManagerCore.getPluginSet().isPluginEnabled(dependency.pluginId) || candidates.containsKey(dependency.pluginId))) {
         logger.info(
           "Plugin \"${descriptor.name}\" from \"$name\" could not be migrated to \"${IDEData.getSelf()?.fullName}\"" +
           " because of the missing required dependency: ${dependency.pluginId}")
@@ -182,6 +198,12 @@ internal data class JbProductInfo(
     }
     return descriptorsMap
   }
+
+  /**
+   * The plugins that the plugin migrations disable. The dialog does not list them, but an import of plugins passes them to
+   * [JbSettingsImporter.installPlugins], so that they arrive disabled, as in the raw config import.
+   */
+  fun getPluginsHiddenByMigration(): Map<PluginId, PluginMainDescriptor> = hiddenByMigrationMap
 
 
   private val _lastUsage = LocalDate.ofInstant(lastUsageTime.toInstant(), ZoneId.systemDefault())
@@ -395,15 +417,17 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
   override fun importSettings(productId: String, data: DataToApply): DialogImportData {
     val productInfo = products[productId] ?: error("Can't find product")
     val filteredCategories = mutableSetOf<SettingsCategory>()
+    var selectedPlugins: Map<PluginId, PluginMainDescriptor>? = null
     var plugins2import: Map<PluginId, PluginMainDescriptor>? = null
     var unselectedPlugins: List<String>? = null
     for (setting in data.importSettings) {
       if (setting.id == SettingsCategory.PLUGINS.name) {
         // plugins category must be added as well, some PSC's use it, for instance KotlinNotebookApplicationOptionsProvider
         filteredCategories.add(SettingsCategory.PLUGINS)
-        plugins2import = productInfo.getPluginsDescriptors().filter {
+        selectedPlugins = productInfo.getPluginsDescriptors().filter {
           setting.selectedChildIds?.contains(it.key.idString) ?: false
         }
+        plugins2import = selectedPlugins + productInfo.getPluginsHiddenByMigration()
         unselectedPlugins = setting.unselectedChildIds
         logger.info(
           "Will import ${setting.selectedChildIds?.size} custom plugins: ${setting.selectedChildIds?.joinToString()}\n" +
@@ -459,7 +483,7 @@ class JbImportServiceImpl(private val coroutineScope: CoroutineScope) : JbServic
             ImportSettingsEventsCollector.jbImportStarted(
               productInfo.codeName,
               filteredCategories,
-              plugins2import?.keys?.map { it.idString } ?: emptyList(),
+              selectedPlugins?.keys?.map { it.idString } ?: emptyList(),
               unselectedPlugins ?: emptyList()
             )
             try {

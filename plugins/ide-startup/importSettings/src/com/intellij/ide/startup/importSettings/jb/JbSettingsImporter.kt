@@ -408,11 +408,11 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
 
   fun installPlugins(
     progressIndicator: ProgressIndicator,
-    pluginsMap: Map<PluginId, PluginMainDescriptor?>,
+    plugins: Map<PluginId, PluginMainDescriptor?>,
   ) {
     if (!SettingsService.getInstance().pluginIdsPreloaded) {
       LOG.warn("Couldn't preload plugin ids, which indicates problems with connection. Will use old import")
-      val importOptions = configImportOptions(progressIndicator, pluginsMap.keys)
+      val importOptions = configImportOptions(progressIndicator, plugins.keys)
       ImportSettingsEventsCollector.jbPluginsOldImport()
       ConfigImportHelper.migratePlugins(
         pluginsPath, configDirPath, PathManager.getPluginsDir(), PathManager.getConfigDir(), importOptions, emptySet()
@@ -420,6 +420,11 @@ internal class JbSettingsImporter(private val configDirPath: Path, private val p
       return
     }
     ImportSettingsEventsCollector.jbPluginsNewImport()
+    // the migrations run before the update check, so a plugin that they remove is not downloaded either
+    val migratedIds = ConfigImportHelper.migrateImportedPlugins(
+      configDirPath, PathManager.getConfigDir(), plugins.values.filterNotNull(), false, LOG
+    ).toMigrate.mapTo(HashSet()) { it.pluginId }
+    val pluginsMap = plugins.filter { (id, descriptor) -> descriptor == null || id in migratedIds }
     RepositoryHelper.updatePluginHostsFromConfigDir(configDirPath, LOG)
     val updateableMap = HashMap<PluginId, IdeaPluginDescriptor?>(pluginsMap)
     progressIndicator.text2 = ImportSettingsBundle.message("progress.details.checking.for.plugin.updates")

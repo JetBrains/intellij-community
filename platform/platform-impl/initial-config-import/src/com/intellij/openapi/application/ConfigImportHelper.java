@@ -1166,7 +1166,7 @@ public final class ConfigImportHelper {
     var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
     var previousVersion = parseVersionFromConfig(oldConfigDir);
     var options = new PluginMigrationOptions(
-      previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, toDisable, log
+      previousVersion, currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, toDisable, log, false
     );
     performMigrations(options);
     var downloadIds = toDownload.stream()
@@ -1179,6 +1179,51 @@ public final class ConfigImportHelper {
     catch (IOException e) {
       log.error("Unable to write auto install result", e);
     }
+  }
+
+  /**
+   * The plugins of a partial import after the plugin migrations: the plugins to install and the plugins to disable.
+   * A migration can disable a plugin that it keeps in {@link #toMigrate}.
+   */
+  public record PluginMigrationResult(@NotNull List<IdeaPluginDescriptor> toMigrate, @NotNull List<PluginId> toDisable) { }
+
+  /**
+   * Applies the plugin migrations to the plugins of a partial import, the import of the plugins that the Import Settings dialog selected.
+   * Without {@code dryRun}, it adds the plugins to disable to the disabled plugins file of {@code newConfigDir}, and a migration can
+   * write its own files there. In a dry run, nothing is written.
+   */
+  public static @NotNull PluginMigrationResult migrateImportedPlugins(
+    @NotNull Path oldConfigDir,
+    @NotNull Path newConfigDir,
+    @NotNull Collection<? extends IdeaPluginDescriptor> plugins,
+    boolean dryRun,
+    @NotNull Logger log
+  ) throws IOException {
+    var currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+    return migrateImportedPlugins(oldConfigDir, newConfigDir, plugins, currentProductVersion, dryRun, log);
+  }
+
+  @VisibleForTesting
+  static @NotNull PluginMigrationResult migrateImportedPlugins(
+    Path oldConfigDir, Path newConfigDir, Collection<? extends IdeaPluginDescriptor> plugins, String currentProductVersion,
+    boolean dryRun, Logger log
+  ) throws IOException {
+    var toMigrate = new ArrayList<IdeaPluginDescriptor>(plugins);
+    var toDownload = new ArrayList<IdeaPluginDescriptor>();
+    var toDisable = new ArrayList<PluginId>();
+    var options = new PluginMigrationOptions(
+      parseVersionFromConfig(oldConfigDir), currentProductVersion, newConfigDir, oldConfigDir, toMigrate, toDownload, toDisable, log, dryRun
+    );
+    performMigrations(options);
+    if (!toDownload.isEmpty()) {
+      log.info("Plugins that the migrations add are not downloaded by a partial import: " +
+               toDownload.stream().map(d -> d.getPluginId().getIdString()).collect(Collectors.joining(", ")));
+    }
+    if (!dryRun && !toDisable.isEmpty()) {
+      amendDisabledPluginsFile(newConfigDir, ContainerUtil.map(toDisable, PluginId::getIdString), log);
+      DisabledPluginsState.Companion.invalidate();
+    }
+    return new PluginMigrationResult(toMigrate, toDisable);
   }
 
   private static void partitionNonBundled(

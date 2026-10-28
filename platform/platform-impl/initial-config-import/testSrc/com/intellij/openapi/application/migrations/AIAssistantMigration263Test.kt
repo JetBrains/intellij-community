@@ -82,6 +82,13 @@ internal class AIAssistantMigration263Test {
   }
 
   @Test
+  fun `writes no marker in a dry run`() {
+    val options = migrateFrom("2026.2", pluginsToMigrate = listOf(plugin(AI_ASSISTANT_PLUGIN_ID)), dryRun = true)
+    assertThat(options.pluginsToDisable).containsExactly(aiAssistantId)
+    assertThat(marker).doesNotExist()
+  }
+
+  @Test
   fun `leaves settings from 2026_3 alone`() {
     val options = migrateFrom("2026.3", pluginsToMigrate = listOf(plugin(AI_ASSISTANT_PLUGIN_ID)))
     assertThat(options.pluginsToDisable).isEmpty()
@@ -108,6 +115,7 @@ internal class AIAssistantMigration263Test {
     pluginsToMigrate: List<IdeaPluginDescriptor> = emptyList(),
     pluginsToDownload: List<IdeaPluginDescriptor> = emptyList(),
     oldDisabledPlugins: List<String>? = null,
+    dryRun: Boolean = false,
   ): PluginMigrationOptions {
     val oldConfigDir = configRoot.resolve("IntelliJIdea${previousVersion ?: "Unknown"}").createDirectories()
     if (oldDisabledPlugins != null) {
@@ -122,6 +130,7 @@ internal class AIAssistantMigration263Test {
       pluginsToDownload = pluginsToDownload.toMutableList(),
       pluginsToDisable = mutableListOf(),
       log = logger<AIAssistantMigration263Test>(),
+      dryRun = dryRun,
     )
     AIAssistantMigration263().migratePlugins(options)
     return options
