@@ -23,6 +23,8 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  *   the model in the first layer that offers it, and it never touches a layer that offers none (ADR 0129).
  * - [writeData] persists the layer *out*. The vault reads the current slice of its model and asks the provider to
  *   serialize it. The provider does no read-modify-write of its own (ADR 0133).
+ * - [contextKindRange] declares the range of context kinds that this provider supplies layers at. The vault drops a
+ *   layer outside it (ADR 0159).
  *
  * As an [EP_NAME] extension, a provider holds **no mutable state**. The layer data belongs to a service that the
  * provider delegates to.
@@ -49,6 +51,18 @@ interface LayerProvider {
    * @return the layers of this provider in the scope
    */
   suspend fun requestData(scopeContext: SettingsContext): List<LayerData> = emptyList()
+
+  /**
+   * Holds the range of context kinds that this provider supplies layers at (ADR 0159). The vault reads it before the
+   * provider answers. The vault logs an error for a layer outside this range and drops it. This applies to a layer
+   * that [requestData] returns and to a layer that [SettingsVault.push] gets. The default covers every kind.
+   *
+   * On a reload, the contexts of every kind in the range wait for this provider. A context of a narrower kind waits
+   * too, because a context gets ready only after every wider bucket has installed (ADR 0160). So a slow provider must
+   * declare a narrow range at the narrowest kinds that it can. A slow provider with a wide range delays every context
+   * that it covers.
+   */
+  val contextKindRange: SettingsContextKindRange get() = SettingsContextKindRange.EVERY_KIND
 
   /**
    * Returns whether this provider holds [key]. A read and a write both consult it. For a key that it rejects, the
@@ -110,6 +124,41 @@ interface LayerProvider {
   companion object {
     val EP_NAME: ExtensionPointName<LayerProvider> =
       ExtensionPointName("com.intellij.settings.v2.layerProvider")
+  }
+}
+
+/**
+ * Holds a range of context kinds, from [widestKind] to [narrowestKind]. The entries of [SettingsContextKind] go from
+ * the widest kind to the narrowest kind. A [LayerProvider] declares its range in [LayerProvider.contextKindRange].
+ *
+ * @property widestKind the widest kind in the range
+ * @property narrowestKind the narrowest kind in the range, or `null` when the range is open, because the provider
+ *   cannot tell its narrowest kind
+ */
+@Experimental
+class SettingsContextKindRange(val widestKind: SettingsContextKind, val narrowestKind: SettingsContextKind?) {
+  init {
+    require(narrowestKind == null || narrowestKind >= widestKind) {
+      "The narrowest kind $narrowestKind is wider than the widest kind $widestKind"
+    }
+  }
+
+  /**
+   * Returns whether [kind] is in this range.
+   *
+   * @param kind the kind of a context
+   * @return `true` when [kind] is not wider than [widestKind], and not narrower than [narrowestKind] when the range is
+   *   not open
+   */
+  operator fun contains(kind: SettingsContextKind): Boolean =
+    kind >= widestKind && (narrowestKind == null || kind <= narrowestKind)
+
+  override fun toString(): String = "$widestKind..${narrowestKind ?: "open"}"
+
+  @Experimental
+  companion object {
+    /** Holds the range that covers every kind. A provider that declares no range has it. */
+    val EVERY_KIND: SettingsContextKindRange = SettingsContextKindRange(SettingsContextKind.APPLICATION, narrowestKind = null)
   }
 }
 

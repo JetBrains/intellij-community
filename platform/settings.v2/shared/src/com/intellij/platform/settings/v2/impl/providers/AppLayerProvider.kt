@@ -5,9 +5,14 @@ package com.intellij.platform.settings.v2.impl.providers
 
 import com.intellij.platform.settings.v2.LayerData
 import com.intellij.platform.settings.v2.SettingsContext
+import com.intellij.platform.settings.v2.SettingsContextKind
+import com.intellij.platform.settings.v2.SettingsContextKindRange
 
 /** Provides the writable application layer. [AppLayerService] holds its state. */
 internal class AppLayerProvider : BaseLayerProvider() {
+  override val contextKindRange: SettingsContextKindRange =
+    SettingsContextKindRange(SettingsContextKind.APPLICATION, SettingsContextKind.APPLICATION)
+
   override fun service(context: SettingsContext): BaseLayerService = AppLayerService.getInstance()
 
   override suspend fun requestData(scopeContext: SettingsContext): List<LayerData> = AppLayerService.getInstance().requestData(scopeContext)

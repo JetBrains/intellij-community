@@ -60,6 +60,7 @@
 - *sf:Companion:com.intellij.platform.settings.v2.LayerProvider$Companion
 - acceptsKey(com.intellij.platform.settings.v2.SettingsKey):Z
 - availableLocalities(com.intellij.platform.settings.v2.SettingsContext):java.util.Set
+- getContextKindRange():com.intellij.platform.settings.v2.SettingsContextKindRange
 - requestData(com.intellij.platform.settings.v2.SettingsContext,kotlin.coroutines.Continuation):java.lang.Object
 - storageContext(com.intellij.platform.settings.v2.SettingsContext):com.intellij.platform.settings.v2.SettingsContext
 - writeData(com.intellij.platform.settings.v2.SettingsContext,com.intellij.platform.settings.v2.LayerLocality,java.util.Map,kotlin.coroutines.Continuation):java.lang.Object
@@ -147,6 +148,14 @@
 - s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.settings.v2.SettingsContextKind
 - s:values():com.intellij.platform.settings.v2.SettingsContextKind[]
+*f:com.intellij.platform.settings.v2.SettingsContextKindRange
+- *sf:Companion:com.intellij.platform.settings.v2.SettingsContextKindRange$Companion
+- <init>(com.intellij.platform.settings.v2.SettingsContextKind,com.intellij.platform.settings.v2.SettingsContextKind):V
+- f:contains(com.intellij.platform.settings.v2.SettingsContextKind):Z
+- f:getNarrowestKind():com.intellij.platform.settings.v2.SettingsContextKind
+- f:getWidestKind():com.intellij.platform.settings.v2.SettingsContextKind
+*f:com.intellij.platform.settings.v2.SettingsContextKindRange$Companion
+- f:getEVERY_KIND():com.intellij.platform.settings.v2.SettingsContextKindRange
 *f:com.intellij.platform.settings.v2.SettingsContextKt
 - *sf:getLANGUAGE():com.intellij.platform.settings.v2.SettingsKey
 *Fc:com.intellij.platform.settings.v2.SettingsKey

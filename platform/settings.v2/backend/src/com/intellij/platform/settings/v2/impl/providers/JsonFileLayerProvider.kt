@@ -7,10 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.settings.v2.LayerData
 import com.intellij.platform.settings.v2.SettingsContext
+import com.intellij.platform.settings.v2.SettingsContextKind
+import com.intellij.platform.settings.v2.SettingsContextKindRange
 import com.intellij.platform.settings.v2.impl.ProjectAware
 
 /** A file layer: a `.jetbrains.json` per directory. Per-project state lives in [FileLayerService]. */
 internal class JsonFileLayerProvider : BaseLayerProvider() {
+  override val contextKindRange: SettingsContextKindRange = SettingsContextKindRange(SettingsContextKind.FILE, narrowestKind = null)
+
   // A project context resolves too, not just a file/directory one; availableLocalities (not a null service) rejects a write to it.
   override fun service(context: SettingsContext): BaseLayerService? =
     (context.realContext as? ProjectAware)?.project?.let { FileLayerService.getInstance(it) }

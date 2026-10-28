@@ -128,7 +128,10 @@ interface SettingsContext {
   }
 }
 
-/** Tells the granularity of a [SettingsContext]. See [SettingsContext.kind]. */
+/**
+ * Tells the granularity of a [SettingsContext]. See [SettingsContext.kind]. The entries go from the widest kind to the
+ * narrowest kind, so a [SettingsContextKindRange] compares them by their order.
+ */
 @Experimental
 enum class SettingsContextKind {
   /** The application context, the widest node. */
