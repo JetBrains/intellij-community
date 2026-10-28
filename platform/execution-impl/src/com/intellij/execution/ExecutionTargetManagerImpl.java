@@ -5,6 +5,7 @@ import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.TargetAwareRunProfile;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -69,6 +70,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
     project.getMessageBus().connect().subscribe(RunManagerListener.TOPIC, new RunManagerListener() {
       @Override
       public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+        takeRunManagerOf(settings);
         if (settings == getRunManager().getSelectedConfiguration()) {
           updateActiveTarget(settings);
         }
@@ -76,6 +78,7 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
       @Override
       public void runConfigurationSelected(@Nullable RunnerAndConfigurationSettings settings) {
+        takeRunManagerOf(settings);
         updateActiveTarget(settings);
       }
     });
@@ -83,6 +86,13 @@ public final class ExecutionTargetManagerImpl extends ExecutionTargetManager imp
 
   private @Nullable RunManagerImpl myRunManager;
   private @NotNull Supplier<? extends RunManagerImpl> myRunManagerProvider = this::getRunManagerService;
+
+  // the run manager publishes its first selection while it initializes; a lookup of the service then re-enters that initialization
+  private void takeRunManagerOf(@Nullable RunnerAndConfigurationSettings settings) {
+    if (myRunManager == null && settings instanceof RunnerAndConfigurationSettingsImpl impl) {
+      myRunManager = impl.getManager();
+    }
+  }
 
   private @NotNull RunManagerImpl getRunManager() {
     RunManagerImpl runManager = myRunManager;
