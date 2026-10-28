@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.tools.util.breadcrumbs.BreadcrumbsPlacement
@@ -12,7 +12,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
@@ -201,7 +200,6 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     val settings = PlaceSettings()
     if (place == DiffPlaces.CHANGES_VIEW) {
       settings.EXPAND_BY_DEFAULT = false
-      settings.SHOW_LINE_NUMBERS = false
     }
     if (place == DiffPlaces.COMMIT_DIALOG) {
       settings.EXPAND_BY_DEFAULT = false
