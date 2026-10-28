@@ -72,6 +72,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -604,14 +605,7 @@ public final class MoveClassesOrPackagesUtil {
                                                  PackageWrapper aPackage) {
     if (!aPackage.getQualifiedName().isEmpty()) return;
 
-    Set<@NotNull String> pkgNames = ContainerUtil.map2SetNotNull(elementsToMove, element -> {
-      if (element instanceof PsiPackage pkg) {
-        return pkg.getQualifiedName();
-      }
-      else {
-        return null;
-      }
-    });
+    Set<@NotNull String> pkgNames = StreamEx.of(elementsToMove).select(PsiPackage.class).map(PsiPackage::getQualifiedName).toSet();
 
     Set<PsiFile> filesWithImports = new HashSet<>();
     for (UsageInfo info : infos) {
