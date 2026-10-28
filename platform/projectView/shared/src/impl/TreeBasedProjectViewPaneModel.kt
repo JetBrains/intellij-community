@@ -647,14 +647,16 @@ abstract class TreeBasedProjectViewPaneModel<T : ProjectViewNodeUserObject>(over
         coroutineScope {
           modelComputationScope = childScope("Async model computations for the PV pane $id")
           retryScope = childScope("Retries of cancelled updates for the PV pane $id")
-          applySettings()
-          initialize()
-          onStateChanged(suspendingState)
-          launch(CoroutineName("Collect updates for the PV pane $id")) {
+          // Undispatched, so that the updater subscribes before the initialization reads the tree.
+          // Otherwise, the session loses a change that comes while it initializes or resumes the tree.
+          launch(CoroutineName("Collect updates for the PV pane $id"), start = CoroutineStart.UNDISPATCHED) {
             runSafelyCancellable(LOG, taskDescription = { "updater for the pane $id" }) {
               createUpdater().continuouslyUpdatePane(this@TreeBasedProjectViewPaneModel, progressReporter)
             }
           }
+          applySettings()
+          initialize()
+          onStateChanged(suspendingState)
           launch(CoroutineName("Flush updates for the PV pane $id")) {
             pendingUpdatesSignal.throttle(timeMs = 50).collect {
               runSafelyCancellable(LOG, taskDescription = { "processing pending updates for the pane $id" }) {
