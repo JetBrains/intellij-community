@@ -16,7 +16,6 @@ libc.workspace = true
 refusal.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-toml = { version = "1.1.8", default-features = false, features = ["parse", "serde", "std"] }
 yonder-link.workspace = true
 
 [dev-dependencies]

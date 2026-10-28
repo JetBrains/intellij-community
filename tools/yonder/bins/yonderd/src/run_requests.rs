@@ -15,13 +15,14 @@ use std::sync::{Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
+use yonder_link::config::is_inner_path;
 use yonder_link::proto::{FileKind, Reply, RunSpec, is_run_id};
 use yonder_link::{Channel, LinkError};
 
 use crate::files::append_private;
 use crate::refused::{AGENT_ERROR, BAD_REQUEST, BAD_RUN_ID, RUN_EXISTS, Refusal, SPAWN_FAILED, refused, reply};
 use crate::run::{ExitRecord, RunDir, SUPERVISOR_LOG, epoch_ms, is_line_start, read_events};
-use crate::serve::{Agent, check_holder, is_inner_path, log};
+use crate::serve::{Agent, check_holder, log};
 use crate::watch::Watch;
 use crate::{child, git, tuning};
 

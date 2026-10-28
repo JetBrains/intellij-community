@@ -993,6 +993,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "toml",
 ]
 
 [[package]]
@@ -1006,7 +1007,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
- "toml",
  "yonder-link",
 ]
 

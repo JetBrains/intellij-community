@@ -714,13 +714,5 @@ fn drain(channel: &mut Channel) -> Result<(), LinkError> {
     channel.recv_stream(&mut io::sink()).map(drop)
 }
 
-/// Whether `dir` is a relative path that stays inside its base: no root, no `..`, no `.`.
-pub(crate) fn is_inner_path(dir: &str) -> bool {
-    !dir.is_empty()
-        && Path::new(dir)
-            .components()
-            .all(|component| matches!(component, std::path::Component::Normal(_)))
-}
-
 #[cfg(test)]
 mod tests;
