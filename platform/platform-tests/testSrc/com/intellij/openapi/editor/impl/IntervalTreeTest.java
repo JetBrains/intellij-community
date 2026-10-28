@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -128,9 +128,13 @@ public class IntervalTreeTest extends LightPlatformTestCase {
     assertEquals(new TextRange(changeStart - 1, changeEnd + 1 + shift), enclosing.getTextRange());
 
     // overlap queries skip subtrees by maxEnd, so they find every valid marker only if each maxEnd is right
+    // the windows overlap, and the step is prime to the spacing of the markers (3 and 1,000),
+    // so the ends of the windows fall at many different places in the markers
+    int window = 500;
+    int step = 97;
     List<RangeMarker> valid = ContainerUtil.filter(markers, RangeMarker::isValid);
-    for (int start = 0; start <= document.getTextLength(); start += 97) {
-      int end = Math.min(document.getTextLength(), start + 500);
+    for (int start = 0; start <= document.getTextLength(); start += step) {
+      int end = Math.min(document.getTextLength(), start + window);
       Set<RangeMarker> expected = new HashSet<>();
       for (RangeMarker marker : valid) {
         if (Math.max(marker.getStartOffset(), start) <= Math.min(marker.getEndOffset(), end)) {

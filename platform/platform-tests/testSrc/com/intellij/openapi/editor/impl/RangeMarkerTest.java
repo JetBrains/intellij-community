@@ -1810,8 +1810,9 @@ public class RangeMarkerTest {
   @PerformanceUnitTest
   @Test
   public void testReplaceMostOfDocumentWithManyMarkersPerformance() {
-    String text = StringUtil.repeat("abcdefghij\n", 80_000);
     int N = 80_000;
+    // a line for each marker
+    String text = StringUtil.repeat("abcdefghij\n", N);
     Ref<DocumentEx> doc = new Ref<>();
     List<RangeMarker> markers = new ArrayList<>(N);
     Benchmark.newBenchmark(classPlusTestName(), () -> {
