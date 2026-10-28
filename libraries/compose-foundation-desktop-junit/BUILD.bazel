@@ -8,10 +8,6 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.libraries.compose.foundation.desktop.junit",
-    resource_strip_prefix = "resources",
-    resources = glob(
-        ["resources/**/*"],
-    ),
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -31,6 +27,10 @@ jvm_library(
         allow_empty = True,
     ),
     module_name = "intellij.libraries.compose.foundation.desktop.junit",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
@@ -64,7 +64,6 @@ jvm_library(
 exports_files(
     [
         "intellij.libraries.compose.foundation.desktop.junit.iml",
-        "resources/intellij.libraries.compose.foundation.desktop.junit.xml",
     ],
     visibility = ["//visibility:public"],
 )
