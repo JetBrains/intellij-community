@@ -57,7 +57,7 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
       update: (PMarkerRoot) -> PMarkerRoot,
     ): PMarkerRoot? {
       if (rootReference != null) return super.updateRootAtomically(rootReference, update)
-      return updateCurrentRootAtomically(PMarkerRootImpl.empty(), update)
+      return updateCurrentRootAtomically(PMarkerRootImpl.empty()) { _, root -> update(root) }
     }
   }
 
@@ -128,24 +128,31 @@ class SnapshotMarkerRootStore @JvmOverloads constructor(
   }
 
   fun updateCurrentRoot(initialRoot: PMarkerRoot, update: (PMarkerRoot) -> PMarkerRoot): Boolean {
-    return updateCurrentRootAtomically(initialRoot, update) != null
+    return updateCurrentRootAtomically(initialRoot) { _, root -> update(root) } != null
   }
 
-  private fun updateCurrentRootAtomically(initialRoot: PMarkerRoot, update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
+  /** Passes the selected snapshot to [update] and retries if that snapshot changes before publication. */
+  internal fun updateCurrentRootAtomically(update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
+    return updateCurrentRootAtomically(PMarkerRootImpl.empty(), update)
+  }
+
+  private inline fun updateCurrentRootAtomically(
+    initialRoot: PMarkerRoot,
+    update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot,
+  ): PMarkerRoot? {
     val document = documentReference.get()
     val markerStores = document!!.snapshotMarkerStores
     while (true) {
       processQueue()
-      val snapshot: DocumentSnapshot
+      val snapshot = document.core.snapshot()
       val reference: AtomicReference<PMarkerRoot>
       val oldRoot: PMarkerRoot
       synchronized(markerStores) {
         if (disposed) return null
-        snapshot = document.core.snapshot()
         reference = rootState(snapshot, initialRoot).rootReference
         oldRoot = reference.get()
       }
-      val newRoot = update(oldRoot)
+      val newRoot = update(snapshot, oldRoot)
       synchronized(markerStores) {
         if (disposed) return null
         if (document.core.snapshot() === snapshot && reference.compareAndSet(oldRoot, newRoot)) {

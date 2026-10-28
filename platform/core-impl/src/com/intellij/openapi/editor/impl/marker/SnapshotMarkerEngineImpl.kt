@@ -67,9 +67,31 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     }
   }
 
+  /** Creates a marker in the current snapshot and retries if a text change publishes another snapshot. */
+  @ApiStatus.Internal
+  fun createRangeMarker(
+    document: Document,
+    startOffset: Int,
+    endOffset: Int,
+    spec: Byte,
+    retainStrong: Boolean,
+    policy: MarkerPolicy,
+  ): SnapshotMarker {
+    return createRangeMarker(document, null, startOffset, endOffset, spec, retainStrong) { fileRoot, markerId ->
+      val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
+      SnapshotRangeMarkerImpl(document as DocumentImpl, fileRoot, markerId, spec, initialRange, policy)
+    }
+  }
+
+  /**
+   * @param snapshot the target snapshot, or `null` to use the current snapshot.
+   * If `null`, retries insertion when a text change publishes another snapshot.
+   * @param markerFactory receives the file root and a new marker ID.
+   * The file root is `null` when the document has no associated file or [FileDocumentManager] is unavailable.
+   */
   internal fun <T : SnapshotRangeMarkerImpl> createRangeMarker(
     document: Document,
-    snapshot: DocumentSnapshot,
+    snapshot: DocumentSnapshot?,
     startOffset: Int,
     endOffset: Int,
     spec: Byte,
@@ -78,10 +100,10 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   ): T {
     processQueue()
     val documentImpl = document as DocumentImpl
-    val rootReference = documentImpl.rangeMarkers.rootStore().rootReference(snapshot)
+    val rootStore = documentImpl.rangeMarkers.rootStore()
+    val rootReference = snapshot?.let { rootStore.rootReference(it) }
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
-    require(endOffset <= snapshot.text().length()) { "Marker range exceeds snapshot length" }
 
     val fileRoot = VirtualFileMarkerRoot.getOrCreate(documentImpl)
 
@@ -94,11 +116,16 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
       QueuedMarkerReference(marker, documentImpl, markerQueue)
     }
 
-    val update: (PMarkerRoot) -> PMarkerRoot = {
-      it.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags, markerReference, policy = marker.policy)
+    val update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot = { currentSnapshot, root ->
+      require(endOffset <= currentSnapshot.text().length()) { "Marker range exceeds snapshot length" }
+      root.insert(markerId, startOffset, endOffset, spec, marker.flavorFlags, markerReference, policy = marker.policy)
     }
-    val rootStorage = fileRoot ?: documentImpl.rangeMarkers.rootStore()
-    val insertedRoot = checkNotNull(rootStorage.updateRootAtomically(rootReference, update))
+    val insertedRoot = checkNotNull(if (snapshot == null) {
+      rootStore.updateCurrentRootAtomically(update)
+    }
+    else {
+      (fileRoot ?: rootStore).updateRootAtomically(rootReference) { update(snapshot, it) }
+    })
     marker.cacheResolution(insertedRoot, PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(startOffset, endOffset)))
     return marker
   }

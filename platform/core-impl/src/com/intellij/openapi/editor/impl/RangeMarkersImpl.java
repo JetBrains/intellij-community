@@ -65,7 +65,6 @@ public final class RangeMarkersImpl implements RangeMarkers {
       byte spec = MarkerSpec.create(false, false);
       return SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
         hostDocument,
-        ((DocumentImpl)hostDocument).getCore().snapshot(),
         startOffset,
         endOffset,
         spec,
