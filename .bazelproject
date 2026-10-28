@@ -3,8 +3,6 @@
 
 dot_idea_directory_location: .idea.bazel
 
-index_all_files_in_directories: true
-
 directories:
   .
   -build/download
@@ -21,13 +19,18 @@ targets:
   @rules_jvm//...
   @lib//...
 
-use_jetbrains_test_runner: true
-
-java_source_root_optimization_enable: true
-java_source_root_optimization_patterns:
-  *
-
 run_config_run_with_bazel: false
+
+# those sections are still needed for pre 263 Bazel plugin
+# will be removed/migrated in BAZEL-3508
+# suppress: deprecation
+index_all_files_in_directories: true
+# suppress: unsupported_section
+use_jetbrains_test_runner: true
+# suppress: unsupported_section
+java_source_root_optimization_enable: true
+# suppress: unsupported_section
+java_source_root_optimization_patterns: *
 
 import_run_configurations:
   tools/bazelRunConfigurations/Run___build_android_studio.xml
