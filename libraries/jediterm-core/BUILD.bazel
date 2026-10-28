@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-jediterm-core-jediterm-core"],
     runtime_deps = ["@lib//:libraries-jediterm-core-jediterm-core"],
 )
-
-jvm_library(
-    name = "jediterm-core_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.jediterm.core",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jediterm-core-jediterm-core"],
-    runtime_deps = [":jediterm-core"],
-)
 ### auto-generated section `build intellij.libraries.jediterm.core` end
 
 ### auto-generated section `iml intellij.libraries.jediterm.core` start

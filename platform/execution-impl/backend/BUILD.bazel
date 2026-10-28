@@ -38,32 +38,6 @@ jvm_library(
         "//platform/kernel/rpc.backend",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.execution.impl.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.execution.impl.backend` end
 
 ### auto-generated section `iml intellij.platform.execution.impl.backend` start

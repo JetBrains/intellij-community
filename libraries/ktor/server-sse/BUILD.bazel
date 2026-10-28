@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
     runtime_deps = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
 )
-
-jvm_library(
-    name = "libraries-ktor-server-sse_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.ktor.server.sse",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ktor-server-sse-ktor-server-sse-jvm"],
-    runtime_deps = [":libraries-ktor-server-sse"],
-)
 ### auto-generated section `build intellij.libraries.ktor.server.sse` end
 
 ### auto-generated section `iml intellij.libraries.ktor.server.sse` start

@@ -38,28 +38,6 @@ jvm_library(
         ":libraries_kotlinx_serialization_core_provided",
     ],
 )
-
-jvm_library(
-    name = "shared_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.xml.emmet.shared",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":shared",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//xml/xml-ui-common:ui-common_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/kernel/rpc:rpc_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.xml.emmet.shared` end
 
 ### auto-generated section `iml intellij.xml.emmet.shared` start

@@ -32,28 +32,6 @@ jvm_library(
         "//libraries/kryo5",
     ],
 )
-
-jvm_library(
-    name = "tooling-proxy_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.gradle.toolingProxy",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tooling-proxy",
-        "//libraries/gradle:gradle_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-        "//libraries/jspecify:jspecify_test_lib",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
-        "//libraries/kryo5:kryo5_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.toolingProxy` end
 
 ### auto-generated section `iml intellij.gradle.toolingProxy` start
@@ -68,16 +46,6 @@ exports_files(
 
 ### auto-generated section `build intellij.gradle.toolingProxy.tests` start
 jvm_library(
-    name = "toolingProxy-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.toolingProxy.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "toolingProxy-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -90,24 +58,16 @@ jvm_library(
     ),
     module_name = "intellij.gradle.toolingProxy.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":toolingProxy-tests"],
     deps = [
         # do not sort,
         "//libraries/gradle",
-        "//libraries/gradle:gradle_test_lib",
         "@lib//:kotlin-stdlib",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
-        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
         "//plugins/gradle/tooling-proxy",
-        "//plugins/gradle/tooling-proxy:tooling-proxy_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.toolingProxy.tests` end

@@ -49,24 +49,6 @@ jvm_library(
         "//libraries/guava",
     ],
 )
-
-jvm_library(
-    name = "selfContainedProjects_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.selfContainedProjects",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":selfContainedProjects",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/guava:guava_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects` end
 
 ### auto-generated section `iml intellij.platform.testFramework.selfContainedProjects` start
@@ -80,16 +62,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` start
 jvm_library(
-    name = "selfContainedProjects-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.selfContainedProjects.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "selfContainedProjects-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -100,28 +72,18 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/testFramework/selfContainedProjects",
-        "//platform/testFramework/selfContainedProjects:selfContainedProjects_test_lib",
-    ],
+    associates = ["//platform/testFramework/selfContainedProjects"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":selfContainedProjects-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/build-scripts/downloader",
-        "//platform/build-scripts/downloader:downloader_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "@lib//:kotlin-test-junit5",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.selfContainedProjects.tests` end

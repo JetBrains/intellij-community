@@ -31,22 +31,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/backend"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.structuralSearch.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":plugin",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.structuralSearch.plugin` end
 
 ### auto-generated section `plugin intellij.platform.structuralSearch.plugin` start

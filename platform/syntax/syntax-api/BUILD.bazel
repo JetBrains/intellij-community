@@ -57,26 +57,6 @@ jvm_library(
         ":platform_multiplatformSupport_provided",
     ],
 )
-
-jvm_library(
-    name = "syntax_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_syntax",
-    module_name = "intellij.platform.syntax",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":syntax",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/multiplatformSupport",
-        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.syntax` end
 
 ### auto-generated section `iml intellij.platform.syntax` start
@@ -91,16 +71,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.syntax.tests` start
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.syntax.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -111,21 +81,14 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/syntax/syntax-api:syntax",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-    ],
+    associates = ["//platform/syntax/syntax-api:syntax"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/multiplatformSupport",
-        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.tests` end

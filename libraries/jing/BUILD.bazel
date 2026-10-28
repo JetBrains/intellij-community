@@ -28,23 +28,6 @@ jvm_library(
         "//libraries/isorelax",
     ],
 )
-
-jvm_library(
-    name = "jing_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.jing",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jing-jing"],
-    runtime_deps = [
-        # do not sort,
-        ":jing",
-        "//libraries/isorelax:isorelax_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.jing` end
 
 ### auto-generated section `iml intellij.libraries.jing` start

@@ -37,31 +37,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-jvm_library(
-    name = "impl-ide_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.grid.impl.ide",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":impl-ide",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/util:util_test_lib",
-        "//grid/core-impl:core-impl_test_lib",
-        "//grid/impl:impl_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.grid.impl.ide` end
 
 ### auto-generated section `iml intellij.grid.impl.ide` start

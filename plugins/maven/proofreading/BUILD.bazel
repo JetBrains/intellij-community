@@ -43,26 +43,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
     ],
 )
-
-jvm_library(
-    name = "proofreading_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.maven.proofreading",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":proofreading",
-        "//plugins/grazie:grazie_test_lib",
-        "//plugins/grazie/src:core_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//plugins/maven:maven_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.maven.proofreading` end
 
 ### auto-generated section `iml intellij.maven.proofreading` start
@@ -76,22 +56,6 @@ exports_files(
 ### auto-generated section `iml intellij.maven.proofreading` end
 
 ### auto-generated section `build intellij.maven.proofreading.tests` start
-jvm_library(
-    name = "proofreading-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.maven.proofreading.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/maven/proofreading",
-        "//community-resources:customization",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-    ],
-)
-
 jvm_library(
     name = "proofreading-tests_test_lib",
     testonly = True,
@@ -107,28 +71,20 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":proofreading-tests",
-        "//plugins/maven/proofreading:proofreading_test_lib",
-        "//community-resources:customization_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
+        "//plugins/maven/proofreading",
+        "//community-resources:customization",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/maven/plugin",
-        "//plugins/maven/plugin:plugin_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//plugins/grazie/src/test:grazie-tests",
         "//plugins/grazie/src/test:grazie-tests_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5/codeInsight",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.proofreading.tests` end

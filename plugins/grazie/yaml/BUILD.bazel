@@ -33,27 +33,6 @@ jvm_library(
         "//platform/util-ex",
     ],
 )
-
-jvm_library(
-    name = "yaml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.grazie.yaml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":yaml",
-        "//plugins/grazie/src:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//plugins/yaml:yaml_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.grazie.yaml` end
 
 ### auto-generated section `iml intellij.grazie.yaml` start

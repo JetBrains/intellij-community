@@ -53,31 +53,6 @@ jvm_library(
         "//platform/projectModel-api:projectModel",
     ],
 )
-
-jvm_library(
-    name = "vcs-gitlab-yaml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.vcs.gitlab.yaml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":vcs-gitlab-yaml",
-        "//plugins/gitlab/shared:shared_test_lib",
-        "//plugins/yaml/backend:backend_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//plugins/yaml:yaml_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.vcs.gitlab.yaml` end
 
 ### auto-generated section `iml intellij.vcs.gitlab.yaml` start
@@ -92,22 +67,6 @@ exports_files(
 
 ### auto-generated section `build intellij.vcs.gitlab.yaml.tests` start
 jvm_library(
-    name = "vcs-gitlab-yaml-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.vcs.gitlab.yaml.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/lucene.common",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "vcs-gitlab-yaml-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -118,61 +77,37 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
-        "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml_test_lib",
-    ],
+    associates = ["//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":vcs-gitlab-yaml-tests",
-        "//libraries/lucene.common:lucene.common_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//libraries/lucene.common",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//plugins/gitlab",
-        "//plugins/gitlab:gitlab_test_lib",
         "//plugins/yaml/backend",
-        "//plugins/yaml/backend:backend_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//json/backend/tests",
         "//json/backend/tests:tests_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/statistics",
-        "//platform/statistics:statistics_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/structure-view-impl:structureView",
-        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/structure-view-impl/plugin",
-        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//platform/searchEverywhere/shared:searchEverywhere",
-        "//platform/searchEverywhere/shared:searchEverywhere_test_lib",
         "//platform/searchEverywhere/backend",
-        "//platform/searchEverywhere/backend:backend_test_lib",
         "//json",
-        "//json:json_test_lib",
         "//json/backend",
-        "//json/backend:backend_test_lib",
         "//json/networknt.wrapper",
-        "//json/networknt.wrapper:networknt.wrapper_test_lib",
         "//spellchecker",
-        "//spellchecker:spellchecker_test_lib",
         "//platform/vcs/plugin",
-        "//platform/vcs/plugin:plugin_test_lib",
         "//plugins/git4idea:vcs-git",
-        "//plugins/git4idea:vcs-git_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.yaml.tests` end

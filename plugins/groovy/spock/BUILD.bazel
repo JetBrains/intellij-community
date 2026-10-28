@@ -43,37 +43,6 @@ jvm_library(
         "//plugins/junit_rt:junit-rt",
     ],
 )
-
-jvm_library(
-    name = "spock_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.groovy.spock",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":spock",
-        "//platform/core-api:core_test_lib",
-        "//java/java-impl:impl_test_lib",
-        "//java/execution/impl:impl_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//plugins/groovy/spock-rt:spock-rt_test_lib",
-        "//plugins/junit:junit_test_lib",
-        "//plugins/groovy:groovy_test_lib",
-        "//platform/testRunner:testRunner_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/smRunner:smRunner_test_lib",
-        "//plugins/junit_rt:junit-rt_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.groovy.spock` end
 
 ### auto-generated section `iml intellij.groovy.spock` start

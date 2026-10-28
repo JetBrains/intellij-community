@@ -19,19 +19,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":backend"],
-)
 ### auto-generated section `build intellij.platform.backend` end
 
 ### auto-generated section `iml intellij.platform.backend` start

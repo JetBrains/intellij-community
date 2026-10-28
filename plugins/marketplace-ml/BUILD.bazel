@@ -41,28 +41,6 @@ jvm_library(
         "//platform/ml-impl",
     ],
 )
-
-jvm_library(
-    name = "marketplace-ml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.marketplaceMl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":marketplace-ml",
-        "//platform/core-api:core_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
-        "//libraries/caffeine:caffeine_test_lib",
-        "//platform/ml-impl:ml-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.marketplaceMl` end
 
 ### auto-generated section `plugin intellij.marketplaceMl` start

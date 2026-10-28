@@ -66,41 +66,6 @@ jvm_library(
         "//plugins/kotlin/references",
     ],
 )
-
-jvm_library(
-    name = "kotlin-uast_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin-uast",
-    module_name = "intellij.kotlin.uast",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-uast",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/asm:asm_test_lib",
-        "//plugins/kotlin/uast/uast-kotlin-base:kotlin-uast-base_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
-        "//uast/uast-common:uast_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//uast/uast-java:java-uast_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
-        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
-        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
-        "//plugins/kotlin/references:references_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.uast` end
 
 ### auto-generated section `iml intellij.kotlin.uast` start

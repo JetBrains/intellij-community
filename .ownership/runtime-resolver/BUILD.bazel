@@ -26,29 +26,6 @@ jvm_library(
         "//platform/testFramework/bootstrap:tools-testsBootstrap",
     ],
 )
-
-jvm_library(
-    name = "codeowners-runtime-resolver_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.codeowners.runtime.resolver",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//.ownership:codeowners",
-        "//.ownership:codeowners_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":codeowners-runtime-resolver",
-        "//.ownership:codeowners_test_lib",
-        "//.ownership/monorepo-resolver:codeowners-monorepo-resolver_test_lib",
-        "//platform/testFramework/bootstrap:tools-testsBootstrap_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.codeowners.runtime.resolver` end
 
 ### auto-generated section `iml intellij.codeowners.runtime.resolver` start

@@ -34,26 +34,6 @@ jvm_library(
         "//libraries/gradle",
     ],
 )
-
-jvm_library(
-    name = "toolingExtension_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_toolingExtension",
-    module_name = "intellij.gradle.toolingExtension",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":toolingExtension",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/external-system-rt:externalSystem-rt_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-        "//libraries/gradle:gradle_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.toolingExtension` end
 
 ### auto-generated section `iml intellij.gradle.toolingExtension` start

@@ -63,30 +63,6 @@ jvm_library(
         "//libraries/jsoup",
     ],
 )
-
-jvm_library(
-    name = "core_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_core",
-    module_name = "intellij.platform.jewel.markdown.core",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:platform-jewel-markdown-core-org-commonmark-commonmark"],
-    runtime_deps = [
-        # do not sort,
-        ":core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/jewel/ui:ui_test_lib",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-        "//libraries/jsoup:jsoup_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.jewel.markdown.core` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.core` start
@@ -113,16 +89,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "jewel-markdown-core-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.jewel.markdown.core.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "jewel-markdown-core-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -133,34 +99,23 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/jewel/markdown/core",
-        "//platform/jewel/markdown/core:core_test_lib",
-    ],
+    associates = ["//platform/jewel/markdown/core"],
     kotlinc_opts = ":custom_jewel-markdown-core-tests",
     resource_strip_prefix = "src/test/resources",
     resources = glob(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":jewel-markdown-core-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "@lib//:platform-jewel-markdown-core-tests-org-commonmark-commonmark",
         "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-        "//platform/jewel/markdown/testing",
         "//platform/jewel/markdown/testing:testing_test_lib",
     ],
 )

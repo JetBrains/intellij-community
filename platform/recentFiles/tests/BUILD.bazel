@@ -11,23 +11,6 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.recentFiles.tests` start
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.recentFiles.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//platform/recentFiles/plugin",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -38,45 +21,29 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/recentFiles/shared:recentFiles",
-        "//platform/recentFiles/shared:recentFiles_test_lib",
-    ],
+    associates = ["//platform/recentFiles/shared:recentFiles"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":tests",
-        "//platform/recentFiles/plugin:plugin_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/recentFiles/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/recentFiles/backend",
-        "//platform/recentFiles/backend:backend_test_lib",
         "//platform/recentFiles/frontend",
-        "//platform/recentFiles/frontend:frontend_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util/concurrency",
-        "//platform/util/concurrency:concurrency_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/platform-impl/rpc",
         "//platform/kernel/rpc.backend",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
         "//platform/util:util-ui",
-        "//platform/util:util-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.recentFiles.tests` end

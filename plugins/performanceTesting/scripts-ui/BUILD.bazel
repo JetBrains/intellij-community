@@ -60,36 +60,6 @@ jvm_library(
         "//platform/util:util-ui",
     ],
 )
-
-jvm_library(
-    name = "ui_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.performanceTesting.ui",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ui",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//plugins/performanceTesting/core:performanceTesting_test_lib",
-        "//platform/platform-impl/playback:playback_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/util:util-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.performanceTesting.ui` end
 
 ### auto-generated section `plugin intellij.performanceTesting.ui` start
@@ -112,16 +82,6 @@ exports_files(
 
 ### auto-generated section `build intellij.performanceTesting.ui.tests` start
 jvm_library(
-    name = "ui-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.performanceTesting.ui.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "ui-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -134,44 +94,24 @@ jvm_library(
     ),
     module_name = "intellij.performanceTesting.ui.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ui-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//plugins/performanceTesting/core:performanceTesting",
-        "//plugins/performanceTesting/core:performanceTesting_test_lib",
         "//platform/analysis-impl",
-        "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/platform-api:ide",
-        "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//plugins/performanceTesting/scripts-ui:ui",
-        "//plugins/performanceTesting/scripts-ui:ui_test_lib",
         "//platform/structure-view-impl/plugin",
-        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//libraries/lucene.common",
-        "//libraries/lucene.common:lucene.common_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5/codeInsight",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.performanceTesting.ui.tests` end

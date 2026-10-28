@@ -19,16 +19,6 @@ fleet_wasmjs_module(
 
 ### auto-generated section `build fleet.openmap.test` start
 jvm_library(
-    name = "test",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "fleet.openmap.test",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "test_test_lib",
     testonly = True,
     srcs = glob(
@@ -45,20 +35,14 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":test"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
         "//fleet/openmap",
-        "//fleet/openmap:openmap_test_lib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//fleet/util/serialization",
-        "//fleet/util/serialization:serialization_test_lib",
     ],
 )
 ### auto-generated section `build fleet.openmap.test` end

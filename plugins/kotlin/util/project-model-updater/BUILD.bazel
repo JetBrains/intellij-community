@@ -49,27 +49,6 @@ jvm_library(
         "//libraries/kaml",
     ],
 )
-
-jvm_library(
-    name = "project-model-updater_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_project-model-updater",
-    module_name = "kotlin.util.project-model-updater",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":project-model-updater",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kaml:kaml_test_lib",
-        "//libraries/okio:squareup-okio-jvm_test_lib",
-    ],
-)
 ### auto-generated section `build kotlin.util.project-model-updater` end
 
 ### auto-generated section `iml kotlin.util.project-model-updater` start

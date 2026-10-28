@@ -24,26 +24,6 @@ jvm_library(
         "//community-resources/ide-customization",
     ],
 )
-
-jvm_library(
-    name = "customization_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.idea.community.customization",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":customization",
-        "//java/ide-resources:ide-resources_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//idea/customization/min:min_test_lib",
-        "//platform/experiment:experiment_test_lib",
-        "//community-resources/ide-customization:ide-customization_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.idea.community.customization` end
 
 ### auto-generated section `iml intellij.idea.community.customization` start

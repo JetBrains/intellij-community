@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-clikt-clikt"],
     runtime_deps = ["@lib//:libraries-clikt-clikt"],
 )
-
-jvm_library(
-    name = "clikt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.clikt",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-clikt-clikt"],
-    runtime_deps = [":clikt"],
-)
 ### auto-generated section `build intellij.libraries.clikt` end
 
 ### auto-generated section `iml intellij.libraries.clikt` start

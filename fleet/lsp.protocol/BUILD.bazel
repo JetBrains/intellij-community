@@ -63,28 +63,6 @@ jvm_library(
         "//libraries/io",
     ],
 )
-
-jvm_library(
-    name = "lsp.protocol_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_lsp.protocol",
-    module_name = "fleet.lsp.protocol",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":lsp.protocol",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//fleet/util/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/io:io_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.lsp.protocol` end
 
 ### auto-generated section `iml fleet.lsp.protocol` start

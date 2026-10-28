@@ -27,26 +27,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
     ],
 )
-
-jvm_library(
-    name = "jsp_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.debugger.jsp",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jsp",
-        "//java/debugger/openapi:java-debugger_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/jsp-openapi:jsp_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.debugger.jsp` end
 
 ### auto-generated section `iml intellij.java.debugger.jsp` start

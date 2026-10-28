@@ -41,35 +41,6 @@ jvm_library(
         "//platform/statistics",
     ],
 )
-
-jvm_library(
-    name = "execution_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.markdown.frontend.execution",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":execution",
-        "//plugins/markdown/core:markdown_test_lib",
-        "//plugins/markdown/execution:execution_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//fleet/rpc:rpc_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/statistics:statistics_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.markdown.frontend.execution` end
 
 ### auto-generated section `iml intellij.markdown.frontend.execution` start

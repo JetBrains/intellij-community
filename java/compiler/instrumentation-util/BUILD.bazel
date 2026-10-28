@@ -25,23 +25,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["//libraries/asm"],
 )
-
-jvm_library(
-    name = "instrumentation-util_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.compiler.instrumentationUtil",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":instrumentation-util",
-        "//libraries/asm:asm_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.compiler.instrumentationUtil` end
 
 ### auto-generated section `iml intellij.java.compiler.instrumentationUtil` start

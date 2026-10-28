@@ -23,24 +23,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-jvm_library(
-    name = "completion_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.completion",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:terminal-completion-terminal-completion-spec"],
-    runtime_deps = [
-        # do not sort,
-        ":completion",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.terminal.completion` end
 
 ### auto-generated section `iml intellij.terminal.completion` start
@@ -54,16 +36,6 @@ exports_files(
 
 ### auto-generated section `build intellij.terminal.completion.tests` start
 jvm_library(
-    name = "completion-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.completion.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "completion-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -74,22 +46,15 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/terminal/completion",
-        "//plugins/terminal/completion:completion_test_lib",
-    ],
+    associates = ["//plugins/terminal/completion"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":completion-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:terminal-completion-tests-terminal-completion-spec",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.terminal.completion.tests` end

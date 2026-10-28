@@ -44,29 +44,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-jvm_library(
-    name = "concurrency_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.concurrency",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":concurrency",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.concurrency` end
 
 ### auto-generated section `iml intellij.platform.concurrency` start
@@ -80,17 +57,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.concurrency` end
 
 ### auto-generated section `build intellij.platform.concurrency.tests` start
-jvm_library(
-    name = "concurrency-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.concurrency.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/platform-tests:tests"],
-)
-
 jvm_library(
     name = "concurrency-tests_test_lib",
     testonly = True,
@@ -108,24 +74,15 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":concurrency-tests",
-        "//platform/platform-tests:tests_test_lib",
-    ],
+    runtime_deps = ["//platform/platform-tests:tests_test_lib"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/util/concurrency",
-        "//platform/util/concurrency:concurrency_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.concurrency.tests` end

@@ -34,28 +34,6 @@ jvm_library(
         "//platform/project/shared:project",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.rpc.topics.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//fleet/rpc:rpc_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/remote-topics/shared:rpc-topics_test_lib",
-        "//platform/project/shared:project_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.rpc.topics.frontend` end
 
 ### auto-generated section `iml intellij.platform.rpc.topics.frontend` start

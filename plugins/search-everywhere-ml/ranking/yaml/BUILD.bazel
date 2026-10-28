@@ -36,30 +36,6 @@ jvm_library(
         "//plugins/search-everywhere-ml/ranking/core",
     ],
 )
-
-jvm_library(
-    name = "yaml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.searchEverywhereMl.ranking.yaml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":yaml",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/yaml/backend:backend_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//plugins/search-everywhere-ml/ranking/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.searchEverywhereMl.ranking.yaml` end
 
 ### auto-generated section `iml intellij.searchEverywhereMl.ranking.yaml` start

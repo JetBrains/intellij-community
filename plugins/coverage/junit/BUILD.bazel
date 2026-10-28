@@ -40,27 +40,6 @@ jvm_library(
         ":java_rt_provided",
     ],
 )
-
-jvm_library(
-    name = "junit_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.coverage.rt.junit",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":junit",
-        "//plugins/coverage/coverage_rt:java-coverage-rt_test_lib",
-        "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent",
-        "//plugins/coverage-common/intellij.platform.coverage.agent:coverage-agent_test_lib",
-        "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.coverage.rt.junit` end
 
 ### auto-generated section `iml intellij.java.coverage.rt.junit` start

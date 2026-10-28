@@ -66,42 +66,6 @@ jvm_library(
         "//plugins/kotlin/base/analysis",
     ],
 )
-
-jvm_library(
-    name = "utils_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_utils",
-    module_name = "intellij.kotlin.codeInsight.utils",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":utils",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//plugins/kotlin/references:references_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/base/psi:psi_test_lib",
-        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "//plugins/kotlin/formatter:formatter_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//plugins/kotlin/base/analysis:analysis_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.codeInsight.utils` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.utils` start

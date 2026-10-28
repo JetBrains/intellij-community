@@ -30,37 +30,6 @@ jvm_library(
         "//build/tasks",
     ],
 )
-
-jvm_library(
-    name = "api_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.api",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/build-scripts/concurrency",
-        "//platform/build-scripts/concurrency:concurrency_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":api",
-        "//platform/build-scripts/concurrency:concurrency_test_lib",
-        "//plugins/groovy/rt/classLoader:classLoader_test_lib",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/build-scripts/downloader:downloader_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/util/zip:zip_test_lib",
-        "@community//build:zip_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//build/tasks:tasks_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.buildScripts.api` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.api` start

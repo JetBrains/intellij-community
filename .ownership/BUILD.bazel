@@ -25,25 +25,6 @@ jvm_library(
         "@lib//:slf4j-jdk14",
     ],
 )
-
-jvm_library(
-    name = "codeowners_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.codeowners",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:codeowners-jetbrains-patronus-codeowners-lib-ownership"],
-    runtime_deps = [
-        # do not sort,
-        ":codeowners",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kaml:kaml_test_lib",
-        "//libraries/okio:squareup-okio-jvm_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.codeowners` end
 
 ### auto-generated section `iml intellij.codeowners` start

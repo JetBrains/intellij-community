@@ -24,23 +24,6 @@ jvm_library(
         "//platform/backend",
     ],
 )
-
-jvm_library(
-    name = "monolith_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.monolith",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":monolith",
-        "//platform/platform-frontend:frontend_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.monolith` end
 
 ### auto-generated section `iml intellij.platform.monolith` start

@@ -32,26 +32,6 @@ jvm_library(
         "//libraries/io",
     ],
 )
-
-jvm_library(
-    name = "http_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.platform.util.http",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":http",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/ktor/client:client_test_lib",
-        "//libraries/io:io_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.util.http` end
 
 ### auto-generated section `iml intellij.platform.util.http` start

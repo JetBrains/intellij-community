@@ -29,36 +29,6 @@ jvm_library(
         "//platform/diagnostic/telemetry/rt",
     ],
 )
-
-jvm_library(
-    name = "maven-server_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.maven.server",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util-rt",
-        "//platform/util-rt:util-rt_test_lib",
-        "//plugins/maven/model",
-        "//plugins/maven/model:model_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":maven-server",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//plugins/maven/model:model_test_lib",
-        "//platform/diagnostic/telemetry/rt:rt_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.maven.server` end
 
 ### auto-generated section `iml intellij.maven.server` start

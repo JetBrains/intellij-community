@@ -50,42 +50,6 @@ jvm_library(
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
     ],
 )
-
-jvm_library(
-    name = "built-in-help_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.builtInHelp",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":built-in-help",
-        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//libraries/jsoup:jsoup_test_lib",
-        "//libraries/jaxb:jaxb_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/credential-store:credential-store_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/built-in-server:builtInServer-impl_test_lib",
-        "//libraries/lucene.common:lucene.common_test_lib",
-        "//libraries/netty/buffer:buffer_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/platform-util-netty:ide-util-netty_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.builtInHelp` end
 
 ### auto-generated section `iml intellij.builtInHelp` start

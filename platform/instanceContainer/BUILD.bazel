@@ -42,26 +42,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-jvm_library(
-    name = "instanceContainer_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.instanceContainer",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":instanceContainer",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/util/base:base_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.instanceContainer` end
 
 ### auto-generated section `iml intellij.platform.instanceContainer` start
@@ -76,16 +56,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.instanceContainer.tests` start
 jvm_library(
-    name = "instanceContainer-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.instanceContainer.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "instanceContainer-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -98,24 +68,16 @@ jvm_library(
     ),
     module_name = "intellij.platform.instanceContainer.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":instanceContainer-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/instanceContainer",
-        "//platform/instanceContainer:instanceContainer_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//platform/testFramework/core",
-        "//platform/testFramework/core:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.instanceContainer.tests` end

@@ -69,45 +69,6 @@ jvm_library(
         "//plugins/kotlin/base/scripting/scripting",
     ],
 )
-
-jvm_library(
-    name = "scripting_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_scripting",
-    module_name = "intellij.kotlin.scripting",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":scripting",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/workspace/storage:storage_test_lib",
-        "//platform/backend/workspace:workspace_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/base/fir/analysis-api-platform:kotlin-analysis-platform_test_lib",
-        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//platform/workspace/jps:jps_test_lib",
-        "//java/java-impl:impl_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/base/facet:facet_test_lib",
-        "//plugins/kotlin/base/platforms:platforms_test_lib",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-compiler-impl:libraries-kotlinc-kotlin-scripting-compiler-impl_test_lib",
-        "//plugins/kotlin/base/fir/project-structure:project-structure_test_lib",
-        "//plugins/kotlin/base/scripting/scripting:scripting_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.scripting` end
 
 ### auto-generated section `iml intellij.kotlin.scripting` start

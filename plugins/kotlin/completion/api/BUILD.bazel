@@ -57,33 +57,6 @@ jvm_library(
         "//plugins/kotlin/base/kotlin.base.serialization",
     ],
 )
-
-jvm_library(
-    name = "api_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_api",
-    module_name = "intellij.kotlin.completion.api",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":api",
-        "//platform/core-api:core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//plugins/kotlin/base/kotlin.base.serialization:kotlin.base.serialization_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.completion.api` end
 
 ### auto-generated section `iml intellij.kotlin.completion.api` start

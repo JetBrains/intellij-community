@@ -37,31 +37,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "plugin-signature-verifier_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.pluginSignatureVerifier",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":plugin-signature-verifier",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/caffeine:caffeine_test_lib",
-        "//libraries/zip-signer:zip-signer_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core/plugins:plugins_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.pluginSignatureVerifier` end
 
 ### auto-generated section `iml intellij.platform.ide.pluginSignatureVerifier` start

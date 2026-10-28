@@ -43,28 +43,6 @@ jvm_library(
         "@lib//:jetbrains-fus-reporting-api-jvm",
     ],
 )
-
-jvm_library(
-    name = "uploader_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.statistics.uploader",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":uploader",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/statistics/config:config_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.statistics.uploader` end
 
 ### auto-generated section `iml intellij.platform.statistics.uploader` start

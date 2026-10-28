@@ -29,25 +29,6 @@ jvm_library(
         "//libraries/jackson/databind",
     ],
 )
-
-jvm_library(
-    name = "libraries-jackson-module-kotlin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.jackson.module.kotlin",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jackson-module-kotlin-jackson-module-kotlin"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-jackson-module-kotlin",
-        "//libraries/jackson/jackson:jackson_test_lib",
-        "//libraries/jackson/databind:databind_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.jackson.module.kotlin` end
 
 ### auto-generated section `iml intellij.libraries.jackson.module.kotlin` start

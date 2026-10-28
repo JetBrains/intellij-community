@@ -48,39 +48,6 @@ jvm_library(
         ":libraries_junit6_provided",
     ],
 )
-
-jvm_library(
-    name = "buildView_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.buildView",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":buildView",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//libraries/assertj-core:assertj-core_test_lib",
-        "//platform/buildView:buildView_test_lib",
-        "//platform/consoleView:consoleView_test_lib",
-        "//platform/consoleView/impl:impl_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//platform/testFramework/common:common_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util:util-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.testFramework.buildView` end
 
 ### auto-generated section `iml intellij.platform.testFramework.buildView` start

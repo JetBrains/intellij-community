@@ -62,46 +62,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-jvm_library(
-    name = "console_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.jshell.console",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":console",
-        "//platform/execution:execution_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/consoleView:consoleView_test_lib",
-        "//platform/consoleView/impl:impl_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//plugins/jshell/protocol:protocol_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//java/openapi:java_test_lib",
-        "//java/java-syntax:syntax_test_lib",
-        "//java/execution/impl:impl_test_lib",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/util:util-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.jshell.console` end
 
 ### auto-generated section `iml intellij.java.jshell.console` start
@@ -116,16 +76,6 @@ exports_files(
 
 ### auto-generated section `build intellij.java.jshell.console.tests` start
 jvm_library(
-    name = "java-jshell-console-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.jshell.console.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "java-jshell-console-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -138,18 +88,13 @@ jvm_library(
     ),
     module_name = "intellij.java.jshell.console.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":java-jshell-console-tests"],
     deps = [
         # do not sort,
         "//plugins/jshell/console",
-        "//plugins/jshell/console:console_test_lib",
         "//plugins/jshell/execution",
-        "//plugins/jshell/execution:execution_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.jshell.console.tests` end

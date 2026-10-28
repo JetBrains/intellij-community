@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
     runtime_deps = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
 )
-
-jvm_library(
-    name = "libraries-ktor-serialization-gson_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.ktor.serialization.gson",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ktor-serialization-gson-ktor-serialization-gson"],
-    runtime_deps = [":libraries-ktor-serialization-gson"],
-)
 ### auto-generated section `build intellij.libraries.ktor.serialization.gson` end
 
 ### auto-generated section `iml intellij.libraries.ktor.serialization.gson` start

@@ -39,34 +39,6 @@ jvm_library(
         "//platform/platform-impl:ide-impl",
     ],
 )
-
-jvm_library(
-    name = "driver-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.driver.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":driver-impl",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/remote-driver/model:model_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-        "//libraries/commons/lang3:lang3_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.driver.impl` end
 
 ### auto-generated section `iml intellij.driver.impl` start

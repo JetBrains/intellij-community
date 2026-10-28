@@ -43,35 +43,6 @@ jvm_library(
         "//platform/core-ui",
     ],
 )
-
-jvm_library(
-    name = "common_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.editorconfig.common",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/code-style-api:codeStyle_test_lib",
-        "//platform/code-style-impl:codeStyle-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.editorconfig.common` end
 
 ### auto-generated section `iml intellij.editorconfig.common` start

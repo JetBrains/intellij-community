@@ -31,25 +31,6 @@ jvm_library(
         "//platform/platform-impl/tab-in-editor",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.tabInEditor.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl/tab-in-editor:tab-in-editor_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.tabInEditor.frontend` end
 
 ### auto-generated section `iml intellij.platform.ide.tabInEditor.frontend` start

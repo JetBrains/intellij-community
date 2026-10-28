@@ -47,32 +47,6 @@ jvm_library(
         "//platform/welcome-screen",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.ide.customization.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/non-modal-welcome-screen/backend:backend_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/non-modal-welcome-screen:non-modal-welcome-screen_test_lib",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/welcome-screen:welcome-screen_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.ide.customization.backend` end
 
 ### auto-generated section `iml intellij.java.ide.customization.backend` start
@@ -87,21 +61,6 @@ exports_files(
 
 ### auto-generated section `build intellij.java.ide.customization.backend.tests` start
 jvm_library(
-    name = "java-ide-customization-backend-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.ide.customization.backend.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "java-ide-customization-backend-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -112,42 +71,27 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//java/ide-customization/backend",
-        "//java/ide-customization/backend:backend_test_lib",
-    ],
+    associates = ["//java/ide-customization/backend"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":java-ide-customization-backend-tests",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/welcome-screen",
-        "//platform/welcome-screen:welcome-screen_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testRunner",
-        "//platform/testRunner:testRunner_test_lib",
         "//java/ide-customization",
-        "//java/ide-customization:ide-customization_test_lib",
         "//java/plugin",
-        "//java/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin",
-        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//xml/plugin",
-        "//xml/plugin:plugin_test_lib",
         "//idea/customization/plugin",
-        "//idea/customization/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.ide.customization.backend.tests` end

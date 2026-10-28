@@ -53,29 +53,6 @@ jvm_library(
         "//platform/projectModel-impl",
     ],
 )
-
-jvm_library(
-    name = "compiler-configuration_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_compiler-configuration",
-    module_name = "intellij.kotlin.base.compilerConfiguration",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":compiler-configuration",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.base.compilerConfiguration` end
 
 ### auto-generated section `iml intellij.kotlin.base.compilerConfiguration` start

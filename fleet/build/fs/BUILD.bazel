@@ -42,25 +42,6 @@ jvm_library(
         "//libraries/commons/lang3",
     ],
 )
-
-jvm_library(
-    name = "fs_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_fs",
-    module_name = "fleet.build.fs",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":fs",
-        "//libraries/commons/compress:compress_test_lib",
-        "//libraries/commons/io:io_test_lib",
-        "//libraries/commons/lang3:lang3_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.build.fs` end
 
 ### auto-generated section `iml fleet.build.fs` start

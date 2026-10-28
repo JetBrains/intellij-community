@@ -37,32 +37,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "jps_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.java.langInjection.jps",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jps",
-        "//jps/jps-builders:build_test_lib",
-        "//jps/model-api:model_test_lib",
-        "@community//build:build-javac-rt_test_lib",
-        "//platform/util:util_test_lib",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//libraries/asm:asm_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.langInjection.jps` end
 
 ### auto-generated section `iml intellij.java.langInjection.jps` start

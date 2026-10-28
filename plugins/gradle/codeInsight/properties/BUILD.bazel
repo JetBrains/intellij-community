@@ -24,18 +24,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["@lib//:kotlin-stdlib"],
 )
-
-jvm_library(
-    name = "properties_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.codeInsight.properties",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":properties"],
-)
 ### auto-generated section `build intellij.gradle.codeInsight.properties` end
 
 ### auto-generated section `iml intellij.gradle.codeInsight.properties` start

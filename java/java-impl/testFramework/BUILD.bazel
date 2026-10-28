@@ -23,23 +23,6 @@ jvm_library(
         "//platform/testFramework/common",
     ],
 )
-
-jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.impl.testFramework",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//java/java-impl:impl_test_lib",
-        "//platform/testFramework/common:common_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.impl.testFramework` end
 
 ### auto-generated section `iml intellij.java.impl.testFramework` start

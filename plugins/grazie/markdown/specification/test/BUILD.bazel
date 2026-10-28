@@ -10,16 +10,6 @@ jps_test(
 
 ### auto-generated section `build intellij.grazie.markdown.specification.tests` start
 jvm_library(
-    name = "grazie-markdown-specification-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.grazie.markdown.specification.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "grazie-markdown-specification-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -30,33 +20,22 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/grazie/markdown/specification",
-        "//plugins/grazie/markdown/specification:specification_test_lib",
-    ],
+    associates = ["//plugins/grazie/markdown/specification"],
     resource_strip_prefix = "testData",
     resources = glob(
         ["testData/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":grazie-markdown-specification-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/ai-grazie-semantic-engine",
-        "//libraries/ai-grazie-semantic-engine:ai-grazie-semantic-engine_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/lang-api:lang",
-        "//platform/lang-api:lang_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.markdown.specification.tests` end

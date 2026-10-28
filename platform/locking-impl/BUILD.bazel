@@ -37,27 +37,6 @@ jvm_library(
         "//platform/core-api:core",
     ],
 )
-
-jvm_library(
-    name = "locking-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.locking.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":locking-impl",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/core-api:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.locking.impl` end
 
 ### auto-generated section `iml intellij.platform.locking.impl` start

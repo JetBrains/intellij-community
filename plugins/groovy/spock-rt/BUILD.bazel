@@ -31,27 +31,6 @@ jvm_library(
         ":libraries_junit4_provided",
     ],
 )
-
-jvm_library(
-    name = "spock-rt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.groovy.spock.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":spock-rt",
-        "//plugins/junit_rt:junit-rt",
-        "//plugins/junit_rt:junit-rt_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "@lib//:groovy-spock-rt-spockframework-spock-core-provided",
-    ],
-)
 ### auto-generated section `build intellij.groovy.spock.rt` end
 
 ### auto-generated section `iml intellij.groovy.spock.rt` start

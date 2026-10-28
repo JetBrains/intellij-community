@@ -34,28 +34,6 @@ jvm_library(
         "//platform/platform-util-netty:ide-util-netty",
     ],
 )
-
-jvm_library(
-    name = "collaborationTools-auth-base_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.collaborationTools.auth.base",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":collaborationTools-auth-base",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-        "//libraries/netty/buffer:buffer_test_lib",
-        "//platform/platform-util-netty:ide-util-netty_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.collaborationTools.auth.base` end
 
 ### auto-generated section `iml intellij.platform.collaborationTools.auth.base` start

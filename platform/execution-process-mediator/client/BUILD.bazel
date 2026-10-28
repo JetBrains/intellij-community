@@ -44,33 +44,6 @@ jvm_library(
         "//libraries/grpc-netty-shaded",
     ],
 )
-
-jvm_library(
-    name = "client_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.execution.process.mediator.client",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":client",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//libraries/protobuf:protobuf_test_lib",
-        "//platform/execution-process-mediator/daemon:daemon_test_lib",
-        "//platform/execution-process-mediator/common:common_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//libraries/grpc:grpc_test_lib",
-        "//libraries/grpc-netty-shaded:grpc-netty-shaded_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.execution.process.mediator.client` end
 
 ### auto-generated section `iml intellij.execution.process.mediator.client` start
@@ -85,22 +58,6 @@ exports_files(
 
 ### auto-generated section `build intellij.execution.process.mediator.client.tests` start
 jvm_library(
-    name = "execution-process-mediator-client-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.execution.process.mediator.client.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//community-resources:customization",
-        "//platform/settings-local",
-        "//platform/testFramework",
-    ],
-)
-
-jvm_library(
     name = "execution-process-mediator-client-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -111,39 +68,26 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/execution-process-mediator/client",
-        "//platform/execution-process-mediator/client:client_test_lib",
-    ],
+    associates = ["//platform/execution-process-mediator/client"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":execution-process-mediator-client-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//community-resources:customization_test_lib",
-        "//platform/settings-local:settings-local_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
+        "//community-resources:customization",
+        "//platform/settings-local",
+        "//platform/testFramework",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/util-ex",
-        "//platform/util-ex:util-ex_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/platform-util-io:ide-util-io",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "@lib//:execution-process-mediator-client-tests-grpc-inprocess",
     ],
 )

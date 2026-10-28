@@ -48,40 +48,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-jvm_library(
-    name = "analysis_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_analysis",
-    module_name = "intellij.java.analysis",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//uast/uast-common:uast",
-        "//uast/uast-common:uast_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":analysis",
-        "//platform/analysis-api:analysis_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//java/java-syntax:syntax_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//uast/uast-common:uast_test_lib",
-        "//uast/uast-common-ide:ide_test_lib",
-        "//platform/workspace/jps:jps_test_lib",
-        "//platform/workspace/storage:storage_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.analysis` end
 
 ### auto-generated section `iml intellij.java.analysis` start

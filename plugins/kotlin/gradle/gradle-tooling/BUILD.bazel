@@ -43,24 +43,6 @@ jvm_library(
         "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea",
     ],
 )
-
-jvm_library(
-    name = "kotlin-gradle-tooling_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin-gradle-tooling",
-    module_name = "intellij.kotlin.gradle.tooling",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-gradle-tooling",
-        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.gradle.tooling` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.tooling` start

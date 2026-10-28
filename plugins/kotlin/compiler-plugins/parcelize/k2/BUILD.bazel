@@ -65,41 +65,6 @@ jvm_library(
         "//plugins/kotlin/base/psi",
     ],
 )
-
-jvm_library(
-    name = "kotlin-compilerPlugins-parcelize_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin-compilerPlugins-parcelize",
-    module_name = "intellij.kotlin.compilerPlugins.parcelize",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-compilerPlugins-parcelize",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-fir:libraries-kotlinc-kotlin-compiler-fir_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
-        "//libraries/kotlinc/parcelize-compiler-plugin:libraries-kotlinc-parcelize-compiler-plugin_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/code-insight/api:api_test_lib",
-        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
-        "//plugins/kotlin/base/facet:facet_test_lib",
-        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
-        "//plugins/kotlin/base/psi:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.compilerPlugins.parcelize` end
 
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.parcelize` start

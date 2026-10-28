@@ -27,30 +27,6 @@ jvm_library(
         "//libraries/mlapi/core",
     ],
 )
-
-jvm_library(
-    name = "ml-logs_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ml.logs",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/mlapi/core",
-        "//libraries/mlapi/core:core_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":ml-logs",
-        "//platform/util:util_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/mlapi/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ml.logs` end
 
 ### auto-generated section `iml intellij.platform.ml.logs` start

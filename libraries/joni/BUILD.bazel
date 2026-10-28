@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-joni-joni"],
     runtime_deps = ["@lib//:libraries-joni-joni"],
 )
-
-jvm_library(
-    name = "joni_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.joni",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-joni-joni"],
-    runtime_deps = [":joni"],
-)
 ### auto-generated section `build intellij.libraries.joni` end
 
 ### auto-generated section `iml intellij.libraries.joni` start

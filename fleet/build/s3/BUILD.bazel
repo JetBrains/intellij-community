@@ -41,25 +41,6 @@ jvm_library(
         "@lib//:slf4j-api",
     ],
 )
-
-jvm_library(
-    name = "s3_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_s3",
-    module_name = "fleet.build.s3",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":s3",
-        "//fleet/build/platform:platform_test_lib",
-        "//fleet/build/fs:fs_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.build.s3` end
 
 ### auto-generated section `iml fleet.build.s3` start

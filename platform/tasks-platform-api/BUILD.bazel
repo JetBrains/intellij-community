@@ -31,26 +31,6 @@ jvm_library(
         "//platform/util/jdom",
     ],
 )
-
-jvm_library(
-    name = "tasks_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.tasks",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tasks",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//platform/vcs-api:vcs_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.tasks` end
 
 ### auto-generated section `iml intellij.platform.tasks` start

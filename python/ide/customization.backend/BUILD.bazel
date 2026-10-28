@@ -19,23 +19,6 @@ jvm_library(
         "//platform/vcs-impl",
     ],
 )
-
-jvm_library(
-    name = "customization.backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.pycharm.community.customization.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":customization.backend",
-        "//platform/backend:backend_test_lib",
-        "//platform/vcs-impl:vcs-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.pycharm.community.customization.backend` end
 
 ### auto-generated section `iml intellij.pycharm.community.customization.backend` start

@@ -19,18 +19,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "resources-fileTypes_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.resources.fileTypes",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":resources-fileTypes"],
-)
 ### auto-generated section `build intellij.platform.resources.fileTypes` end
 
 ### auto-generated section `iml intellij.platform.resources.fileTypes` start

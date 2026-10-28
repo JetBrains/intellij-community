@@ -27,18 +27,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.macros.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
-)
 ### auto-generated section `build intellij.macros.plugin` end
 
 ### auto-generated section `plugin intellij.macros.plugin` start

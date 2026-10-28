@@ -51,27 +51,6 @@ jvm_library(
         "//plugins/copyright",
     ],
 )
-
-jvm_library(
-    name = "copyright_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_copyright",
-    module_name = "intellij.kotlin.copyright",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":copyright",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//plugins/copyright:copyright_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.copyright` end
 
 ### auto-generated section `iml intellij.kotlin.copyright` start

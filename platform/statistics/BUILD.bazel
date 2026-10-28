@@ -83,59 +83,6 @@ jvm_library(
         "//platform/productMode",
     ],
 )
-
-jvm_library(
-    name = "statistics_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.statistics",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:com-jetbrains-fus-reporting-fus-api",
-        "//libraries/fus-ap-validation",
-        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
-        "@lib//:jetbrains-fus-reporting-api-jvm",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":statistics",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/statistics/uploader:uploader_test_lib",
-        "//platform/statistics/config:config_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/runtime/product:product_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/caffeine:caffeine_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core/plugins:plugins_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/project-frame:project-frame_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/productMode:productMode_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.statistics` end
 
 ### auto-generated section `iml intellij.platform.statistics` start
@@ -150,17 +97,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.statistics.tests` start
 jvm_library(
-    name = "statistics-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.statistics.tests",
-    visibility = ["//visibility:public"],
-    exports = ["//libraries/fus-ap-validation"],
-)
-
-jvm_library(
     name = "statistics-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -171,53 +107,27 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/statistics",
-        "//platform/statistics:statistics_test_lib",
-    ],
+    associates = ["//platform/statistics"],
     visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/fus-ap-validation",
-        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":statistics-tests",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
+    exports = ["//libraries/fus-ap-validation"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/statistics/uploader",
-        "//platform/statistics/uploader:uploader_test_lib",
         "//platform/util/concurrency",
-        "//platform/util/concurrency:concurrency_test_lib",
         "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/util-ex",
-        "//platform/util-ex:util-ex_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/core",
-        "//platform/testFramework/core:core_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/fus-ap-validation",
-        "//libraries/fus-ap-validation:fus-ap-validation_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.statistics.tests` end

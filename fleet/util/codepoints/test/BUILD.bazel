@@ -25,16 +25,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "test",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "fleet.util.codepoints.test",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "test_test_lib",
     testonly = True,
     srcs = glob(
@@ -52,14 +42,11 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":test"],
     deps = [
         # do not sort,
         "//fleet/util/codepoints",
-        "//fleet/util/codepoints:codepoints_test_lib",
         "@lib//:kotlin-stdlib",
         "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
     ],
 )
 ### auto-generated section `build fleet.util.codepoints.test` end

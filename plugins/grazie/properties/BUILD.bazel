@@ -35,29 +35,6 @@ jvm_library(
         "//platform/util-ex",
     ],
 )
-
-jvm_library(
-    name = "properties_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.grazie.properties",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":properties",
-        "//plugins/grazie/src:core_test_lib",
-        "//plugins/properties:properties-backend_test_lib",
-        "//plugins/properties/properties-psi-api:psi_test_lib",
-        "//plugins/properties/properties-common:properties_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.grazie.properties` end
 
 ### auto-generated section `iml intellij.grazie.properties` start

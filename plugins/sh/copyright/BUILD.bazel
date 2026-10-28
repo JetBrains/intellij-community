@@ -34,28 +34,6 @@ jvm_library(
         "//platform/core-impl",
     ],
 )
-
-jvm_library(
-    name = "copyright_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.sh.copyright",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":copyright",
-        "//plugins/copyright:copyright_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//plugins/sh/core:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.sh.copyright` end
 
 ### auto-generated section `iml intellij.sh.copyright` start
@@ -70,21 +48,6 @@ exports_files(
 
 ### auto-generated section `build intellij.sh.copyright.tests` start
 jvm_library(
-    name = "copyright-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.sh.copyright.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/sh/plugin:plugin-main",
-        "//platform/projectModel-impl",
-    ],
-)
-
-jvm_library(
     name = "copyright-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -97,27 +60,17 @@ jvm_library(
     ),
     module_name = "intellij.sh.copyright.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":copyright-tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//plugins/sh/plugin:plugin-main",
-        "//plugins/sh/plugin:plugin-main_test_lib",
         "//plugins/copyright",
-        "//plugins/copyright:copyright_test_lib",
         "//platform/projectModel-impl",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.sh.copyright.tests` end

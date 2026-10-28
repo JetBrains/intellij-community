@@ -24,19 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
     runtime_deps = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
 )
-
-jvm_library(
-    name = "jgit_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.jgit",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jgit-jetbrains-intellij-deps-eclipse-jgit"],
-    runtime_deps = [":jgit"],
-)
 ### auto-generated section `build intellij.libraries.jgit` end
 
 ### auto-generated section `iml intellij.libraries.jgit` start

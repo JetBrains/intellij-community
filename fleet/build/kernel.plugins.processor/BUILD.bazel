@@ -39,24 +39,6 @@ jvm_library(
         "@lib//:fleet-google-devtools-ksp-symbol-processing-api",
     ],
 )
-
-jvm_library(
-    name = "kernel.plugins.processor_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kernel.plugins.processor",
-    module_name = "fleet.build.kernel.plugins.processor",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kernel.plugins.processor",
-        "//libraries/io:io_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.build.kernel.plugins.processor` end
 
 ### auto-generated section `iml fleet.build.kernel.plugins.processor` start

@@ -43,28 +43,6 @@ jvm_library(
         "//platform/backend",
     ],
 )
-
-jvm_library(
-    name = "versionDownloadManager_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.versionDownloadManager",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":versionDownloadManager",
-        "//platform/util/base:base_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/eel-nioFs:eel-nioFs_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/progress/shared:ide-progress_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.versionDownloadManager` end
 
 ### auto-generated section `iml intellij.platform.versionDownloadManager` start
@@ -78,21 +56,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.versionDownloadManager` end
 
 ### auto-generated section `build intellij.platform.versionDownloadManager.tests` start
-jvm_library(
-    name = "versionDownloadManager-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.versionDownloadManager.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
 jvm_library(
     name = "versionDownloadManager-tests_test_lib",
     testonly = True,
@@ -108,30 +71,20 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":versionDownloadManager-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "//platform/versionDownloadManager",
-        "//platform/versionDownloadManager:versionDownloadManager_test_lib",
         "//platform/util/base",
-        "//platform/util/base:base_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "@lib//:kotlin-stdlib",
     ],
 )

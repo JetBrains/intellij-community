@@ -52,40 +52,6 @@ jvm_library(
         "//platform/statistics",
     ],
 )
-
-jvm_library(
-    name = "impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_impl",
-    module_name = "intellij.platform.ijent.community.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":impl",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-nio-fs:core-nio-fs_test_lib",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-        "//platform/ijent:ijent_test_lib",
-        "//platform/eel-provider:eel-provider_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/eel-nioFs-impl:eel-nioFs-impl_test_lib",
-        "//platform/eel-impl-base:eel-impl-base_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/progress/shared:ide-progress_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/statistics:statistics_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ijent.community.impl` end
 
 ### auto-generated section `iml intellij.platform.ijent.community.impl` start

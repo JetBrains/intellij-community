@@ -40,34 +40,6 @@ jvm_library(
         "//platform/analysis-impl",
     ],
 )
-
-jvm_library(
-    name = "java_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.markdown.java",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//plugins/markdown/core:markdown_test_lib",
-        "//plugins/markdown/execution:execution_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//java/java-indexing-api:indexing_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-impl:impl_test_lib",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.markdown.java` end
 
 ### auto-generated section `iml intellij.markdown.java` start

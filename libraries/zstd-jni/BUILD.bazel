@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-zstd-jni-zstd-jni"],
     runtime_deps = ["@lib//:libraries-zstd-jni-zstd-jni"],
 )
-
-jvm_library(
-    name = "zstd-jni_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.zstd.jni",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-zstd-jni-zstd-jni"],
-    runtime_deps = [":zstd-jni"],
-)
 ### auto-generated section `build intellij.libraries.zstd.jni` end
 
 ### auto-generated section `iml intellij.libraries.zstd.jni` start

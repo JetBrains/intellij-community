@@ -26,29 +26,6 @@ jvm_library(
         "@community//build:zip",
     ],
 )
-
-jvm_library(
-    name = "plugin-preparation_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.pluginPreparation",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":plugin-preparation",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/commons/compress:compress_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "@community//build:zip_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.buildScripts.pluginPreparation` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.pluginPreparation` start

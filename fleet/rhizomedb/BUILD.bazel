@@ -67,31 +67,6 @@ jvm_library(
         "//fleet/openmap",
     ],
 )
-
-jvm_library(
-    name = "rhizomedb_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_rhizomedb",
-    module_name = "fleet.rhizomedb",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":rhizomedb",
-        "//fleet/util/core:core_test_lib",
-        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
-        "//fleet/radixTrie:radixTrie_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//fleet/fastutil:fastutil_test_lib",
-        "//fleet/openmap:openmap_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.rhizomedb` end
 
 ### auto-generated section `iml fleet.rhizomedb` start

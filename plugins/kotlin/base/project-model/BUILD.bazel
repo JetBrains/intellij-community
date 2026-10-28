@@ -50,29 +50,6 @@ jvm_library(
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
     ],
 )
-
-jvm_library(
-    name = "project-model_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_project-model",
-    module_name = "intellij.kotlin.base.projectModel",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":project-model",
-        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.base.projectModel` end
 
 ### auto-generated section `iml intellij.kotlin.base.projectModel` start

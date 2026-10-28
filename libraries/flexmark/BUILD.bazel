@@ -16,19 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-flexmark-flexmark"],
     runtime_deps = ["@lib//:libraries-flexmark-flexmark"],
 )
-
-jvm_library(
-    name = "flexmark_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.flexmark",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-flexmark-flexmark"],
-    runtime_deps = [":flexmark"],
-)
 ### auto-generated section `build intellij.libraries.flexmark` end
 
 ### auto-generated section `iml intellij.libraries.flexmark` start

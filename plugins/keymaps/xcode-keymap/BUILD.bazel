@@ -27,22 +27,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
-
-jvm_library(
-    name = "keymap-xcode_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.keymap.xcode",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":keymap-xcode",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.keymap.xcode` end
 
 ### auto-generated section `plugin intellij.keymap.xcode` start

@@ -36,27 +36,6 @@ jvm_library(
     exports = ["//platform/scratch"],
     runtime_deps = ["//platform/scratch"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.scratch.plugin",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/scratch",
-        "//platform/scratch:scratch_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":plugin",
-        "//platform/scratch:scratch_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.scratch.plugin` end
 
 ### auto-generated section `plugin intellij.platform.scratch.plugin` start

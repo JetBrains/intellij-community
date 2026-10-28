@@ -3,21 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.java.dumb.completion.tests` start
 jvm_library(
-    name = "dumb-completion-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.dumb.completion.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "dumb-completion-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -32,20 +17,15 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":dumb-completion-tests",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//java/java-completion-tests:completion-tests",
         "//java/java-completion-tests:completion-tests_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.dumb.completion.tests` end

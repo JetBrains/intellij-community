@@ -33,27 +33,6 @@ jvm_library(
         "//plugins/grazie/src:core",
     ],
 )
-
-jvm_library(
-    name = "grazie_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.toml.grazie",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":grazie",
-        "//platform/core-api:core_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//plugins/toml/core:core_test_lib",
-        "//plugins/grazie/src:core_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.toml.grazie` end
 
 ### auto-generated section `iml intellij.toml.grazie` start

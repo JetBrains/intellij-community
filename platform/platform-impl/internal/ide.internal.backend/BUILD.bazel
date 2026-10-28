@@ -35,29 +35,6 @@ jvm_library(
         "//platform/platform-api:ide",
     ],
 )
-
-jvm_library(
-    name = "ide.internal.backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.internal.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide.internal.backend",
-        "//platform/platform-impl/internal:internal_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.internal.backend` end
 
 ### auto-generated section `iml intellij.platform.ide.internal.backend` start

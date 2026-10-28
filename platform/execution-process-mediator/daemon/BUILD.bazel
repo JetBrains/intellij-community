@@ -29,28 +29,6 @@ jvm_library(
         "//libraries/grpc-netty-shaded",
     ],
 )
-
-jvm_library(
-    name = "daemon_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.execution.process.mediator.daemon",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":daemon",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//libraries/protobuf:protobuf_test_lib",
-        "//platform/execution-process-mediator/common:common_test_lib",
-        "//libraries/grpc:grpc_test_lib",
-        "//libraries/grpc-netty-shaded:grpc-netty-shaded_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.execution.process.mediator.daemon` end
 
 ### auto-generated section `iml intellij.execution.process.mediator.daemon` start

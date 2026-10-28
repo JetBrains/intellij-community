@@ -36,30 +36,6 @@ jvm_library(
         "//plugins/coverage",
     ],
 )
-
-jvm_library(
-    name = "coverage_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.java.coverage",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":coverage",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/external-system-impl:externalSystem-impl_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/smRunner:smRunner_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/testRunner:testRunner_test_lib",
-        "//plugins/gradle:gradle_test_lib",
-        "//plugins/coverage:coverage_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.java.coverage` end
 
 ### auto-generated section `iml intellij.gradle.java.coverage` start

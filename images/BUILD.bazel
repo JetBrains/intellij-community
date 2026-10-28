@@ -88,48 +88,6 @@ jvm_library(
         "//jps/model-api:model",
     ],
 )
-
-jvm_library(
-    name = "images_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.images",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":images",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//libraries/commons/imaging:imaging_test_lib",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//xml/xml-parser:parser_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//xml/xml-psi-impl:psi-impl_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//jps/model-api:model_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.images` end
 
 ### auto-generated section `plugin intellij.platform.images` start
@@ -158,17 +116,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.images.tests` start
 jvm_library(
-    name = "images-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.images.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/plugin"],
-)
-
-jvm_library(
     name = "images-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -181,40 +128,23 @@ jvm_library(
     ),
     module_name = "intellij.platform.images.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":images-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//xml/plugin:plugin_test_lib",
-    ],
+    runtime_deps = ["//xml/plugin"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/jcef",
-        "//libraries/jcef:jcef_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/ui.jcef",
-        "//platform/ui.jcef:ui.jcef_test_lib",
         "@lib//:kotlin-stdlib",
         "//images",
-        "//images:images_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
         "//community-resources:customization",
-        "//community-resources:customization_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.images.tests` end

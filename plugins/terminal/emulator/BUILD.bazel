@@ -40,25 +40,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "emulator_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.emulator",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":emulator",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.terminal.emulator` end
 
 ### auto-generated section `iml intellij.terminal.emulator` start
@@ -73,17 +54,6 @@ exports_files(
 
 ### auto-generated section `build intellij.terminal.emulator.tests` start
 jvm_library(
-    name = "emulator-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.emulator.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/zstd-jni"],
-)
-
-jvm_library(
     name = "emulator-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -94,35 +64,20 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/terminal/emulator",
-        "//plugins/terminal/emulator:emulator_test_lib",
-    ],
+    associates = ["//plugins/terminal/emulator"],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":emulator-tests",
-        "//libraries/zstd-jni:zstd-jni_test_lib",
-    ],
+    runtime_deps = ["//libraries/zstd-jni"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/jediterm-core",
-        "//libraries/jediterm-core:jediterm-core_test_lib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/build-scripts/downloader",
-        "//platform/build-scripts/downloader:downloader_test_lib",
     ],
 )
 ### auto-generated section `build intellij.terminal.emulator.tests` end

@@ -45,40 +45,6 @@ jvm_library(
         "//libraries/ktor/client",
     ],
 )
-
-jvm_library(
-    name = "mcpserver.stdio_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.mcpserver.stdio",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:slf4j-api",
-        "@lib//:slf4j-jdk14",
-        "//libraries/ktor/server-sse:libraries-ktor-server-sse",
-        "//libraries/ktor/server-sse:libraries-ktor-server-sse_test_lib",
-        "//libraries/mcp-kotlin-sdk",
-        "//libraries/mcp-kotlin-sdk:mcp-kotlin-sdk_test_lib",
-        "//libraries/kotlin/logging",
-        "//libraries/kotlin/logging:logging_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":mcpserver.stdio",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/ktor/server-sse:libraries-ktor-server-sse_test_lib",
-        "//libraries/mcp-kotlin-sdk:mcp-kotlin-sdk_test_lib",
-        "//libraries/kotlin/logging:logging_test_lib",
-        "//libraries/io:io_test_lib",
-        "//libraries/ktor/client:client_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.mcpserver.stdio` end
 
 ### auto-generated section `iml intellij.mcpserver.stdio` start

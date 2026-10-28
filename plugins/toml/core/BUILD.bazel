@@ -43,33 +43,6 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
-
-jvm_library(
-    name = "core_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.toml.core",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":core",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/code-style-api:codeStyle_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/code-style-impl:codeStyle-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.toml.core` end
 
 ### auto-generated section `iml intellij.toml.core` start

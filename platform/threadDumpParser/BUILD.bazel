@@ -45,29 +45,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
     ],
 )
-
-jvm_library(
-    name = "threadDumpParser_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.threadDumpParser",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":threadDumpParser",
-        "//platform/util:util_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.threadDumpParser` end
 
 ### auto-generated section `iml intellij.platform.threadDumpParser` start
@@ -82,16 +59,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.threadDumpParser.tests` start
 jvm_library(
-    name = "threadDumpParser-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.threadDumpParser.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "threadDumpParser-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -104,20 +71,14 @@ jvm_library(
     ),
     module_name = "intellij.platform.threadDumpParser.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":threadDumpParser-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/threadDumpParser",
-        "//platform/threadDumpParser:threadDumpParser_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.threadDumpParser.tests` end

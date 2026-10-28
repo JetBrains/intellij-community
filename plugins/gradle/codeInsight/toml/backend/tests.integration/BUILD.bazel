@@ -3,23 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.codeInsight.toml.backend.tests.integration` start
 jvm_library(
-    name = "tests.integration",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.codeInsight.toml.backend.tests.integration",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/toml",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-        "//plugins/toml/core",
-    ],
-)
-
-jvm_library(
     name = "tests.integration_test_lib",
     testonly = True,
     srcs = glob(
@@ -34,41 +17,27 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":tests.integration",
-        "//plugins/toml:toml_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
-        "//plugins/toml/core:core_test_lib",
+        "//plugins/toml",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//plugins/toml/core",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/gradle/codeInsight",
-        "//plugins/gradle/codeInsight:codeInsight_test_lib",
         "//plugins/gradle/codeInsight/backend",
-        "//plugins/gradle/codeInsight/backend:backend_test_lib",
         "//plugins/gradle/codeInsight/toml",
-        "//plugins/gradle/codeInsight/toml:toml_test_lib",
         "//plugins/gradle/codeInsight/toml/backend",
-        "//plugins/gradle/codeInsight/toml/backend:backend_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
         "//plugins/gradle",
-        "//plugins/gradle:gradle_test_lib",
-        "//plugins/gradle:gradle-tests",
         "//plugins/gradle:gradle-tests_test_lib",
-        "//plugins/gradle/java:java-tests",
         "//plugins/gradle/java:java-tests_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.codeInsight.toml.backend.tests.integration` end

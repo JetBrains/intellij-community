@@ -60,37 +60,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-jvm_library(
-    name = "venv_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_venv",
-    module_name = "intellij.python.venv",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":venv",
-        "//python/python-venv/common:common_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//python/openapi:community_test_lib",
-        "//python/python-exec-service:community-execService_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//python/python-sdk/backend:backend_test_lib",
-        "//python/python-pytools/backend:backend_test_lib",
-        "//python/python-sdk/common:common_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//python/python-exec-service/execService.python:execService.python_test_lib",
-        "//platform/eel-provider:eel-provider_test_lib",
-        "//python/common:common_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.venv` end
 
 ### auto-generated section `iml intellij.python.venv` start
@@ -111,17 +80,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "venv-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.venv.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/plugin"],
-)
-
-jvm_library(
     name = "venv-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -139,38 +97,22 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":venv-tests",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//xml/plugin:plugin_test_lib",
-    ],
+    runtime_deps = ["//xml/plugin"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/openapi:community",
-        "//python/openapi:community_test_lib",
         "//python/python-sdk/backend",
-        "//python/python-sdk/backend:backend_test_lib",
-        "//python/junit5Tests-framework:community-junit5Tests-framework",
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/ide-core-impl",
         "//platform/execution",
-        "//platform/execution:execution_test_lib",
         "//platform/lang-impl",
-        "//platform/lang-impl:lang-impl_test_lib",
         "//platform/lang-core",
-        "//platform/lang-core:lang-core_test_lib",
         "//python/testFramework",
-        "//python/testFramework:testFramework_test_lib",
         "//python/python-venv:venv",
-        "//python/python-venv:venv_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.venv.tests` end

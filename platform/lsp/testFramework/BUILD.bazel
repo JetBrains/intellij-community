@@ -28,27 +28,6 @@ jvm_library(
         ":libraries_junit4_provided",
     ],
 )
-
-jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.lsp.testFramework",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/lsp:lsp_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.lsp.testFramework` end
 
 ### auto-generated section `iml intellij.platform.lsp.testFramework` start

@@ -43,33 +43,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "java-guiForms-compiler_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.guiForms.compiler",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//java/compiler/instrumentation-util",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":java-guiForms-compiler",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//libraries/asm:asm_test_lib",
-        "//libraries/jgoodies/forms:forms_test_lib",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.guiForms.compiler` end
 
 ### auto-generated section `iml intellij.java.guiForms.compiler` start
@@ -84,16 +57,6 @@ exports_files(
 
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` start
 jvm_library(
-    name = "java-guiForms-compiler-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.guiForms.compiler.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "java-guiForms-compiler-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -106,19 +69,13 @@ jvm_library(
     ),
     module_name = "intellij.java.guiForms.compiler.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":java-guiForms-compiler-tests"],
     deps = [
         # do not sort,
         "//platform/forms_rt:java-guiForms-rt",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/util/multiplatform",
-        "//platform/util/multiplatform:multiplatform_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//java/compiler/forms-compiler:java-guiForms-compiler",
-        "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.guiForms.compiler.tests` end

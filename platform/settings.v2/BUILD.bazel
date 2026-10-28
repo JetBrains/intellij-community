@@ -33,27 +33,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/core",
     ],
 )
-
-jvm_library(
-    name = "settings.v2_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.settings.v2",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":settings.v2",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/extensions:extensions_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.settings.v2` end
 
 ### auto-generated section `iml intellij.platform.settings.v2` start

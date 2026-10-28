@@ -28,24 +28,6 @@ jvm_library(
         "@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea",
     ],
 )
-
-jvm_library(
-    name = "libraries-kotlin-gradle-plugin-idea_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.kotlin.gradle.plugin.idea",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-kotlin-gradle-plugin-idea",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.kotlin.gradle.plugin.idea` end
 
 ### auto-generated section `iml intellij.libraries.kotlin.gradle.plugin.idea` start

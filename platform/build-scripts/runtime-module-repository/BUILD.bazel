@@ -50,32 +50,6 @@ jvm_library(
         "@community//build:zip",
     ],
 )
-
-jvm_library(
-    name = "runtime-module-repository_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.runtimeModuleRepository",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":runtime-module-repository",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//jps/model-impl:model-impl_test_lib",
-        "//platform/runtime/repository:repository_test_lib",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "@community//build:zip_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.buildScripts.runtimeModuleRepository` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.runtimeModuleRepository` start
@@ -89,16 +63,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.buildScripts.runtimeModuleRepository.tests` start
 jvm_library(
-    name = "buildScripts-runtimeModuleRepository-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.runtimeModuleRepository.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "buildScripts-runtimeModuleRepository-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -109,31 +73,19 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/build-scripts/runtime-module-repository",
-        "//platform/build-scripts/runtime-module-repository:runtime-module-repository_test_lib",
-    ],
+    associates = ["//platform/build-scripts/runtime-module-repository"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":buildScripts-runtimeModuleRepository-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/runtime/repository",
-        "//platform/runtime/repository:repository_test_lib",
         "//platform/pluginSystem/parser/impl",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//jps/model-serialization",
-        "//jps/model-serialization:model-serialization_test_lib",
         "//jps/model-impl",
-        "//jps/model-impl:model-impl_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.runtimeModuleRepository.tests` end

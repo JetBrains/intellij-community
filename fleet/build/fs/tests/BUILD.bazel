@@ -24,16 +24,6 @@ resourcegroup(
 )
 
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "fleet.build.fs.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -44,10 +34,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//fleet/build/fs",
-        "//fleet/build/fs:fs_test_lib",
-    ],
+    associates = ["//fleet/build/fs"],
     kotlinc_opts = ":custom_tests",
     resource_jars = [":tests_test_resources"],
     resource_strip_prefix = "resources",
@@ -55,15 +42,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
         "//libraries/commons/compress",
-        "//libraries/commons/compress:compress_test_lib",
         "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
     ],
 )
 ### auto-generated section `build fleet.build.fs.tests` end

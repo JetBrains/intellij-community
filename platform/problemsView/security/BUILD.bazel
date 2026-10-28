@@ -32,24 +32,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "security_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.problemView.security",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":security",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.problemView.security` end
 
 ### auto-generated section `iml intellij.platform.problemView.security` start

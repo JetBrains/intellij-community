@@ -16,23 +16,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["//plugins/jshell/protocol"],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.java.jshell.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//plugins/jshell/protocol:protocol_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.jshell.frontend` end
 
 ### auto-generated section `iml intellij.java.jshell.frontend` start

@@ -32,29 +32,6 @@ jvm_library(
         "//libraries/jspecify",
     ],
 )
-
-jvm_library(
-    name = "caffeine_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.caffeine",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:libraries-caffeine-caffeine",
-        "//libraries/jspecify",
-        "//libraries/jspecify:jspecify_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":caffeine",
-        "//libraries/jspecify:jspecify_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.caffeine` end
 
 ### auto-generated section `iml intellij.libraries.caffeine` start

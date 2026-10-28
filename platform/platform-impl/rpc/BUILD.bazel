@@ -43,41 +43,6 @@ jvm_library(
         "//platform/runtime/product",
     ],
 )
-
-jvm_library(
-    name = "rpc_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.rpc",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//fleet/openmap",
-        "//fleet/openmap:openmap_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":rpc",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/extensions:extensions_test_lib",
-        "//fleet/util/core:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/usageView:usageView_test_lib",
-        "//fleet/rpc:rpc_test_lib",
-        "//fleet/openmap:openmap_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/runtime/product:product_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.rpc` end
 
 ### auto-generated section `iml intellij.platform.ide.rpc` start

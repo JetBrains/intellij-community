@@ -16,16 +16,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "test",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "fleet.rhizomedb.transactor.rebase.test",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "test_test_lib",
     testonly = True,
     srcs = glob(
@@ -43,32 +33,20 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":test"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
         "//fleet/rhizomedb.transactor.rebase",
-        "//fleet/rhizomedb.transactor.rebase:rhizomedb.transactor.rebase_test_lib",
         "//fleet/rhizomedb.transactor",
-        "//fleet/rhizomedb.transactor:rhizomedb.transactor_test_lib",
         "//fleet/rhizomedb",
-        "//fleet/rhizomedb:rhizomedb_test_lib",
         "//fleet/util/core",
-        "//fleet/util/core:core_test_lib",
         "//fleet/util/serialization",
-        "//fleet/util/serialization:serialization_test_lib",
         "//fleet/rpc",
-        "//fleet/rpc:rpc_test_lib",
         "//fleet/rpc.server",
-        "//fleet/rpc.server:rpc.server_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
     ],
 )
 ### auto-generated section `build fleet.rhizomedb.transactor.rebase.test` end

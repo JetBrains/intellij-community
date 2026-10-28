@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
     runtime_deps = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
 )
-
-jvm_library(
-    name = "annotations_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.jackson.annotations",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jackson-annotations-jackson-annotations"],
-    runtime_deps = [":annotations"],
-)
 ### auto-generated section `build intellij.libraries.jackson.annotations` end
 
 ### auto-generated section `iml intellij.libraries.jackson.annotations` start

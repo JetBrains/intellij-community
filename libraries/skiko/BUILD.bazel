@@ -38,23 +38,6 @@ jvm_library(
         "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
     ],
 )
-
-jvm_library(
-    name = "skiko_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.skiko",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:libraries-skiko-jetbrains-skiko-awt-compose",
-        "@lib//:libraries-skiko-jetbrains-skiko-awt-runtime-all",
-    ],
-    runtime_deps = [":skiko"],
-)
 ### auto-generated section `build intellij.libraries.skiko` end
 
 ### auto-generated section `iml intellij.libraries.skiko` start

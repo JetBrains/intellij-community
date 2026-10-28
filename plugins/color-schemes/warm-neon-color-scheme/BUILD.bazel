@@ -27,22 +27,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/projectModel-impl"],
 )
-
-jvm_library(
-    name = "color-scheme-warmNeon_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.color.scheme.warmNeon",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":color-scheme-warmNeon",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.color.scheme.warmNeon` end
 
 ### auto-generated section `plugin intellij.color.scheme.warmNeon` start

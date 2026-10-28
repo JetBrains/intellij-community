@@ -36,34 +36,6 @@ jvm_library(
         "//fleet/openmap",
     ],
 )
-
-jvm_library(
-    name = "rpc-topics_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.rpc.topics",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//fleet/openmap",
-        "//fleet/openmap:openmap_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":rpc-topics",
-        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//fleet/openmap:openmap_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.rpc.topics` end
 
 ### auto-generated section `iml intellij.platform.rpc.topics` start

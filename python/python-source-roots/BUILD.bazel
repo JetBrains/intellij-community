@@ -63,50 +63,6 @@ jvm_library(
         "//python/python-refactoring:refactoring",
     ],
 )
-
-jvm_library(
-    name = "sourceRoots_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_sourceRoots",
-    module_name = "intellij.python.sourceRoots",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":sourceRoots",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/backend/workspace:workspace_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/extensions:extensions_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/workspace/jps:jps_test_lib",
-        "//platform/workspace/storage:storage_test_lib",
-        "//python/python-ast:ast_test_lib",
-        "//python/python-parser:parser_test_lib",
-        "//python/python-psi-api:psi_test_lib",
-        "//python/python-psi-impl:psi-impl_test_lib",
-        "//python/python-pyproject:pyproject_test_lib",
-        "//python/python-refactoring:refactoring_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.sourceRoots` end
 
 ### auto-generated section `iml intellij.python.sourceRoots` start

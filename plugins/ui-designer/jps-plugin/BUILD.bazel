@@ -34,34 +34,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-jvm_library(
-    name = "java-guiForms-jps_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.java.guiForms.jps",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java-guiForms-jps",
-        "//platform/util:util_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//jps/jps-builders:build_test_lib",
-        "@community//build:build-javac-rt_test_lib",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-        "//java/compiler/forms-compiler:java-guiForms-compiler_test_lib",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//libraries/asm:asm_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.guiForms.jps` end
 
 ### auto-generated section `iml intellij.java.guiForms.jps` start

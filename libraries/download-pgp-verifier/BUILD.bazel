@@ -28,24 +28,6 @@ jvm_library(
         "//libraries/bouncy-castle-pgp",
     ],
 )
-
-jvm_library(
-    name = "download-pgp-verifier_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.download.pgp.verifier",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-download-pgp-verifier-download-pgp-verifier"],
-    runtime_deps = [
-        # do not sort,
-        ":download-pgp-verifier",
-        "//libraries/bouncy-castle-pgp:bouncy-castle-pgp_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.download.pgp.verifier` end
 
 ### auto-generated section `iml intellij.libraries.download.pgp.verifier` start

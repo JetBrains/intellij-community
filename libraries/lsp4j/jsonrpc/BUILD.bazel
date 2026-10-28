@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
     runtime_deps = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
 )
-
-jvm_library(
-    name = "jsonrpc_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.eclipse.lsp4j.jsonrpc",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-eclipse-lsp4j-jsonrpc-eclipse-lsp4j-jsonrpc"],
-    runtime_deps = [":jsonrpc"],
-)
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j.jsonrpc` end
 
 ### auto-generated section `iml intellij.libraries.eclipse.lsp4j.jsonrpc` start

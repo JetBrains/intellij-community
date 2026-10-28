@@ -21,17 +21,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "testFramework",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "kotlin.fir.testFramework",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
-)
-
-jvm_library(
     name = "testFramework_test_lib",
     testonly = True,
     srcs = glob(
@@ -45,35 +34,20 @@ jvm_library(
     kotlinc_opts = ":custom_testFramework",
     module_name = "kotlin.fir.testFramework",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
-    ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
     deps = [
         # do not sort,
         "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/opentest4j",
-        "//libraries/opentest4j:opentest4j_test_lib",
         "//java/java-runtime:rt",
-        "//java/java-runtime:rt_test_lib",
-        "//plugins/kotlin/test-framework",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//java/java-psi-api:psi",
-        "//java/java-psi-api:psi_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/testFramework/core",
-        "//platform/testFramework/core:core_test_lib",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//platform/scratch/plugin",
-        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.fir.testFramework` end

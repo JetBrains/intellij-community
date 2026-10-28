@@ -38,23 +38,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
-
-jvm_library(
-    name = "descriptions_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_descriptions",
-    module_name = "intellij.kotlin.codeInsight.descriptions",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":descriptions",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.codeInsight.descriptions` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.descriptions` start

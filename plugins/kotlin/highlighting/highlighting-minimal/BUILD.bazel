@@ -58,35 +58,6 @@ jvm_library(
         "//platform/ide-core",
     ],
 )
-
-jvm_library(
-    name = "kotlin-highlighting-minimal_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin-highlighting-minimal",
-    module_name = "intellij.kotlin.highlighting.minimal",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-highlighting-minimal",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.highlighting.minimal` end
 
 ### auto-generated section `iml intellij.kotlin.highlighting.minimal` start

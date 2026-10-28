@@ -32,28 +32,6 @@ jvm_library(
         "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface",
     ],
 )
-
-jvm_library(
-    name = "libraries-kotlinc-symbol-light-classes_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.kotlinc.symbol.light.classes",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinc-symbol-light-classes-kotlinc-symbol-light-classes"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-kotlinc-symbol-light-classes",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.kotlinc.symbol.light.classes` end
 
 ### auto-generated section `iml intellij.libraries.kotlinc.symbol.light.classes` start

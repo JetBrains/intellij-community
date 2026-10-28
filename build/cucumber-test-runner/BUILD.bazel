@@ -28,27 +28,6 @@ jvm_library(
         ":libraries_cucumber-core1_provided",
     ],
 )
-
-jvm_library(
-    name = "cucumber-testRunner_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.cucumber.testRunner",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":cucumber-testRunner",
-        "//platform/core-api:core_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//libraries/cucumber-core1",
-        "//libraries/cucumber-core1:cucumber-core1_test_lib",
-        "//plugins/cucumber-jvm-formatter:cucumber-jvmFormatter_test_lib",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.cucumber.testRunner` end
 
 ### auto-generated section `iml intellij.cucumber.testRunner` start

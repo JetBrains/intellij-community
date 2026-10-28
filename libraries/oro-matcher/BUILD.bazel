@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
     runtime_deps = ["@lib//:libraries-oro-matcher-_oro_matcher"],
 )
-
-jvm_library(
-    name = "oro-matcher_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.oro.matcher",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-oro-matcher-_oro_matcher"],
-    runtime_deps = [":oro-matcher"],
-)
 ### auto-generated section `build intellij.libraries.oro.matcher` end
 
 ### auto-generated section `iml intellij.libraries.oro.matcher` start

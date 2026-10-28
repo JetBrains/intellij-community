@@ -62,25 +62,6 @@ jvm_library(
         ":fleet_util_multiplatform_provided",
     ],
 )
-
-jvm_library(
-    name = "multiplatform.shims_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_multiplatform.shims",
-    module_name = "fleet.multiplatform.shims",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":multiplatform.shims",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//fleet/util/multiplatform",
-        "//fleet/util/multiplatform:multiplatform_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.multiplatform.shims` end
 
 ### auto-generated section `iml fleet.multiplatform.shims` start

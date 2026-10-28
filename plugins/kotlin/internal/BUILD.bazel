@@ -61,37 +61,6 @@ jvm_library(
         "//plugins/kotlin/base/project-structure",
     ],
 )
-
-jvm_library(
-    name = "internal_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_internal",
-    module_name = "intellij.kotlin.internal",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":internal",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
-        "//java/openapi:java_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//libraries/kotlinc/low-level-api-fir:libraries-kotlinc-low-level-api-fir_test_lib",
-        "//plugins/kotlin/base/analysis:analysis_test_lib",
-        "//libraries/kotlinc/analysis-api-platform-interface:libraries-kotlinc-analysis-api-platform-interface_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.internal` end
 
 ### auto-generated section `iml intellij.kotlin.internal` start

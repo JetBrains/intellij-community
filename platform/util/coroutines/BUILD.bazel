@@ -41,25 +41,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-jvm_library(
-    name = "coroutines_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.util.coroutines",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":coroutines",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.util.coroutines` end
 
 ### auto-generated section `iml intellij.platform.util.coroutines` start
@@ -74,16 +55,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.util.coroutines.tests` start
 jvm_library(
-    name = "coroutines-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.util.coroutines.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "coroutines-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -96,24 +67,16 @@ jvm_library(
     ),
     module_name = "intellij.platform.util.coroutines.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":coroutines-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//platform/util/coroutines",
-        "//platform/util/coroutines:coroutines_test_lib",
         "//platform/util/concurrency",
-        "//platform/util/concurrency:concurrency_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.coroutines.tests` end

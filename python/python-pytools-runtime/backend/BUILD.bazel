@@ -45,32 +45,6 @@ jvm_library(
         "//python/python-pyproject:pyproject",
     ],
 )
-
-jvm_library(
-    name = "python-pytools-backend-runtime_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_python-pytools-backend-runtime",
-    module_name = "intellij.python.pytools.backend.runtime",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":python-pytools-backend-runtime",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/eel:eel_test_lib",
-        "//platform/eel-provider:eel-provider_test_lib",
-        "//python/openapi:community_test_lib",
-        "//python/python-exec-service:community-execService_test_lib",
-        "//python/python-pytools/backend:backend_test_lib",
-        "//python/python-sdk/backend:backend_test_lib",
-        "//python/python-pyproject:pyproject_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.pytools.backend.runtime` end
 
 ### auto-generated section `iml intellij.python.pytools.backend.runtime` start

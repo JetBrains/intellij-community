@@ -20,23 +20,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["@lib//:java-rt-ant-1-7-1-provided"],
 )
-
-jvm_library(
-    name = "rt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":rt",
-        "@lib//:java-rt-ant-1-7-1-provided",
-    ],
-)
 ### auto-generated section `build intellij.java.rt` end
 
 ### auto-generated section `iml intellij.java.rt` start

@@ -35,29 +35,6 @@ jvm_library(
         "//xml/xml-psi-api:psi",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.spellchecker.xml.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//spellchecker:spellchecker_test_lib",
-        "//spellchecker/xml:xml_test_lib",
-        "//xml/dom-openapi:dom_test_lib",
-        "//xml/impl:impl_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.spellchecker.xml.backend` end
 
 ### auto-generated section `iml intellij.spellchecker.xml.backend` start

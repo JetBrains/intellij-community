@@ -24,24 +24,6 @@ jvm_library(
         "//platform/core-api:core",
     ],
 )
-
-jvm_library(
-    name = "common_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.javaFX.common",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.javaFX.common` end
 
 ### auto-generated section `iml intellij.javaFX.common` start

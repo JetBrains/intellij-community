@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-xmlunit-core-_x_m_l_unit_core"],
     runtime_deps = ["@lib//:libraries-xmlunit-core-_x_m_l_unit_core"],
 )
-
-jvm_library(
-    name = "xmlunit-core_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.xmlunit.core",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-xmlunit-core-_x_m_l_unit_core"],
-    runtime_deps = [":xmlunit-core"],
-)
 ### auto-generated section `build intellij.libraries.xmlunit.core` end
 
 ### auto-generated section `iml intellij.libraries.xmlunit.core` start

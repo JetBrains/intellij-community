@@ -16,16 +16,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "fleet.build.s3.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -43,17 +33,13 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "//fleet/build/s3",
-        "//fleet/build/s3:s3_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:slf4j-api",
         "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
     ],
 )
 ### auto-generated section `build fleet.build.s3.tests` end

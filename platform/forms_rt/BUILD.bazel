@@ -15,19 +15,6 @@ jvm_library(
     module_name = "intellij.java.guiForms.rt",
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "java-guiForms-rt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.guiForms.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":java-guiForms-rt"],
-)
 ### auto-generated section `build intellij.java.guiForms.rt` end
 
 ### auto-generated section `iml intellij.java.guiForms.rt` start

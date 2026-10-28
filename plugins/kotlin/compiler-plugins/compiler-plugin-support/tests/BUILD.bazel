@@ -3,27 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.tests` start
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.kotlin.compilerPlugins.support.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin:kotlin-plugin-community-main",
-        "@lib//:kotlin-stdlib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
-        "//plugins/kotlin/base/facet",
-        "//platform/structuralsearch/plugin",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -38,43 +17,28 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":tests",
-        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
-        "//platform/structuralsearch/plugin:plugin_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//plugins/kotlin:kotlin-plugin-community-main",
+        "//platform/structuralsearch/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
         "//platform/lang-core",
-        "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//plugins/kotlin/base/facet",
-        "//plugins/kotlin/base/facet:facet_test_lib",
-        "//plugins/kotlin/base/facet/tests",
         "//plugins/kotlin/base/facet/tests:tests_test_lib",
         "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support",
-        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
         "//plugins/kotlin/base/plugin",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/scratch/plugin",
-        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.tests` end

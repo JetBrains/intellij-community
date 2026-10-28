@@ -3,17 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.maven.server.tests` start
 jvm_library(
-    name = "maven-server-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.maven.server.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["@lib//:kotlin-stdlib"],
-)
-
-jvm_library(
     name = "maven-server-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -26,18 +15,13 @@ jvm_library(
     ),
     module_name = "intellij.maven.server.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":maven-server-tests"],
     deps = [
         # do not sort,
         "//plugins/maven-server-api:maven-server",
-        "//plugins/maven-server-api:maven-server_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.server.tests` end

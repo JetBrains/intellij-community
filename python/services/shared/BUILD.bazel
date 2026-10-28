@@ -49,28 +49,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "shared_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_shared",
-    module_name = "intellij.python.community.services.shared",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":shared",
-        "//python/openapi:community_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/eel-provider:eel-provider_test_lib",
-        "//python/python-exec-service/execService.python:execService.python_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.community.services.shared` end
 
 ### auto-generated section `iml intellij.python.community.services.shared` start
@@ -91,16 +69,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "python-community-services-shared-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.community.services.shared.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "python-community-services-shared-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -118,22 +86,15 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":python-community-services-shared-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//python/openapi:community",
-        "//python/openapi:community_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/hamcrest",
-        "//libraries/hamcrest:hamcrest_test_lib",
         "//python/services/shared",
-        "//python/services/shared:shared_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.community.services.shared.tests` end

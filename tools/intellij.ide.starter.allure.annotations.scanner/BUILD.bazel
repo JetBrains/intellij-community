@@ -20,23 +20,6 @@ jvm_library(
         "//libraries/gson",
     ],
 )
-
-jvm_library(
-    name = "ide-starter-allure-annotations-scanner_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.ide.starter.allure.annotations.scanner",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-starter-allure-annotations-scanner",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/gson:gson_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.ide.starter.allure.annotations.scanner` end
 
 ### auto-generated section `iml intellij.ide.starter.allure.annotations.scanner` start

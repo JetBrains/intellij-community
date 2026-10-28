@@ -34,28 +34,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/json",
     ],
 )
-
-jvm_library(
-    name = "sh_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.sh",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":sh",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//plugins/terminal:terminal_test_lib",
-        "//plugins/sh/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.terminal.sh` end
 
 ### auto-generated section `iml intellij.terminal.sh` start

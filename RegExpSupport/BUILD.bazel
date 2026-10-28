@@ -56,40 +56,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-jvm_library(
-    name = "regexp_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.regexp",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":regexp",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/refactoring:refactoring_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.regexp` end
 
 ### auto-generated section `iml intellij.regexp` start
@@ -104,17 +70,6 @@ exports_files(
 
 ### auto-generated section `build intellij.regexp.tests` start
 jvm_library(
-    name = "regexp-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.regexp.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//xml/plugin"],
-)
-
-jvm_library(
     name = "regexp-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -127,57 +82,31 @@ jvm_library(
     ),
     module_name = "intellij.regexp.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":regexp-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//xml/plugin:plugin_test_lib",
-    ],
+    runtime_deps = ["//xml/plugin"],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/indexing-api:indexing",
-        "//platform/indexing-api:indexing_test_lib",
         "//platform/lang-api:lang",
-        "//platform/lang-api:lang_test_lib",
         "//platform/analysis-impl",
-        "//platform/analysis-impl:analysis-impl_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/projectModel-impl",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5/codeInsight",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/lang-impl",
-        "//platform/lang-impl:lang-impl_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/ide-core-impl",
         "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//RegExpSupport:regexp",
-        "//RegExpSupport:regexp_test_lib",
         "//platform/util/concurrency",
-        "//platform/util/concurrency:concurrency_test_lib",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
         "//community-resources:customization",
-        "//community-resources:customization_test_lib",
     ],
 )
 ### auto-generated section `build intellij.regexp.tests` end

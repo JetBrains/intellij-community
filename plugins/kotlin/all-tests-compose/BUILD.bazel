@@ -3,21 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build kotlin.compose-all-tests.k2` start
 jvm_library(
-    name = "compose-all-tests-k2",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "kotlin.compose-all-tests.k2",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/kotlin/tests-compose",
-        "//plugins/kotlin/jvm-debugger/test/compose",
-    ],
-)
-
-jvm_library(
     name = "compose-all-tests-k2_test_lib",
     testonly = True,
     srcs = glob(
@@ -30,16 +15,10 @@ jvm_library(
     ),
     module_name = "kotlin.compose-all-tests.k2",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":compose-all-tests-k2",
-        "//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib",
-    ],
+    runtime_deps = ["//plugins/kotlin/jvm-debugger/test/compose:compose_test_lib"],
     deps = [
         # do not sort,
-        "//plugins/kotlin/tests-compose",
         "//plugins/kotlin/tests-compose:tests-compose_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
     ],
 )

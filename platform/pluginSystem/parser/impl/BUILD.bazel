@@ -42,26 +42,6 @@ jvm_library(
         "//platform/util/base/multiplatform",
     ],
 )
-
-jvm_library(
-    name = "impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.pluginSystem.parser.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":impl",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//libraries/aalto-xml:aalto-xml_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl` end
 
 ### auto-generated section `iml intellij.platform.pluginSystem.parser.impl` start
@@ -76,16 +56,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` start
 jvm_library(
-    name = "pluginSystem-parser-impl-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.pluginSystem.parser.impl.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "pluginSystem-parser-impl-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -98,18 +68,13 @@ jvm_library(
     ),
     module_name = "intellij.platform.pluginSystem.parser.impl.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":pluginSystem-parser-impl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/util/xmlDom",
-        "//platform/util/xmlDom:xmlDom_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/pluginSystem/parser/impl",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.pluginSystem.parser.impl.tests` end

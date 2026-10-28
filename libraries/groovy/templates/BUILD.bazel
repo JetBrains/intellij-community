@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-groovy-templates-groovy-templates"],
     runtime_deps = ["@lib//:libraries-groovy-templates-groovy-templates"],
 )
-
-jvm_library(
-    name = "templates_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.groovy.templates",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-groovy-templates-groovy-templates"],
-    runtime_deps = [":templates"],
-)
 ### auto-generated section `build intellij.libraries.groovy.templates` end
 
 ### auto-generated section `iml intellij.libraries.groovy.templates` start

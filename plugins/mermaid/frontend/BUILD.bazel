@@ -38,36 +38,6 @@ jvm_library(
         "//platform/platform-frontend:frontend",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.mermaid.frontend",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//plugins/mermaid/markdown",
-        "//plugins/mermaid/markdown:markdown_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//plugins/mermaid/markdown:markdown_test_lib",
-        "//plugins/mermaid:mermaid_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.mermaid.frontend` end
 
 ### auto-generated section `iml intellij.mermaid.frontend` start

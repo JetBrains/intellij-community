@@ -61,21 +61,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "jewel-intUi-standalone-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.jewel.intUi.standalone.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-    ],
-)
-
-jvm_library(
     name = "jewel-intUi-standalone-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -86,36 +71,24 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
-    ],
+    associates = ["//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone"],
     kotlinc_opts = ":custom_jewel-intUi-standalone-tests",
     resource_strip_prefix = "src/test/resources",
     resources = glob(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":jewel-intUi-standalone-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/jna",
-        "//libraries/jna:jna_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.intUi.standalone.tests` end

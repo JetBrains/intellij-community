@@ -42,27 +42,6 @@ jvm_library(
         "//python/python-process-output/common",
     ],
 )
-
-jvm_library(
-    name = "common_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_common",
-    module_name = "intellij.python.community.impl.poetry.common",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//python/common:common_test_lib",
-        "//python/python-process-output/common:common_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.community.impl.poetry.common` end
 
 ### auto-generated section `iml intellij.python.community.impl.poetry.common` start

@@ -30,24 +30,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-jvm_library(
-    name = "frontend-baseline_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.performanceTesting.frontend.baseline",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend-baseline",
-        "//platform/platform-frontend:frontend_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/core-api:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.performanceTesting.frontend.baseline` end
 
 ### auto-generated section `iml intellij.performanceTesting.frontend.baseline` start

@@ -68,30 +68,6 @@ jvm_library(
         "//fleet/util/core",
     ],
 )
-
-jvm_library(
-    name = "rpc.server_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_rpc.server",
-    module_name = "fleet.rpc.server",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":rpc.server",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//fleet/rpc:rpc_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//fleet/reporting/api:api_test_lib",
-        "//fleet/reporting/shared:shared_test_lib",
-        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
-        "//fleet/util/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.rpc.server` end
 
 ### auto-generated section `iml fleet.rpc.server` start

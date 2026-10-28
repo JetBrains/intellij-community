@@ -45,33 +45,6 @@ jvm_library(
         "//platform/util/annotations",
     ],
 )
-
-jvm_library(
-    name = "ijent_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ijent",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/eel",
-        "//platform/eel:eel_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":ijent",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/eel:eel_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-        "//platform/util/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ijent` end
 
 ### auto-generated section `iml intellij.platform.ijent` start
@@ -86,24 +59,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.ijent.tests` start
 jvm_library(
-    name = "ijent-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ijent.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/eel/testFramework",
-        "//libraries/kotlinx/coroutines/test",
-        "//platform/testFramework/common",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "ijent-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -114,50 +69,31 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/ijent",
-        "//platform/ijent:ijent_test_lib",
-    ],
+    associates = ["//platform/ijent"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":ijent-tests",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/eel/testFramework",
-        "//platform/eel/testFramework:testFramework_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-nio-fs",
-        "//platform/core-nio-fs:core-nio-fs_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util/coroutines",
-        "//platform/util/coroutines:coroutines_test_lib",
         "//platform/eel-nioFs",
-        "//platform/eel-nioFs:eel-nioFs_test_lib",
         "//platform/ijent/impl",
-        "//platform/ijent/impl:impl_test_lib",
         "//platform/ijent/ui",
-        "//platform/ijent/ui:ui_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ijent.tests` end

@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-test-discovery-intellij-test-discovery"],
     runtime_deps = ["@lib//:libraries-test-discovery-intellij-test-discovery"],
 )
-
-jvm_library(
-    name = "test-discovery_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.test.discovery",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-test-discovery-intellij-test-discovery"],
-    runtime_deps = [":test-discovery"],
-)
 ### auto-generated section `build intellij.libraries.test.discovery` end
 
 ### auto-generated section `iml intellij.libraries.test.discovery` start

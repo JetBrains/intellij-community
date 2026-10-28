@@ -33,27 +33,6 @@ jvm_library(
         "//plugins/toml/core",
     ],
 )
-
-jvm_library(
-    name = "toml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.codeInsight.toml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":toml",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//plugins/toml/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.codeInsight.toml` end
 
 ### auto-generated section `iml intellij.gradle.codeInsight.toml` start

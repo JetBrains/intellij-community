@@ -42,36 +42,6 @@ jvm_library(
         "//python/python-zuban/common",
     ],
 )
-
-jvm_library(
-    name = "zuban_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.zuban",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":zuban",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/lsp4j:lsp4j_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/lsp:lsp_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//python/openapi:community_test_lib",
-        "//python:python-community-impl_test_lib",
-        "//python/python-lsp-core:lsp-core_test_lib",
-        "//python/python-lsp-core/common:common_test_lib",
-        "//python/python-pytools/backend:backend_test_lib",
-        "//python/python-sdk/backend:backend_test_lib",
-        "//python/python-zuban/common:common_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.zuban` end
 
 ### auto-generated section `iml intellij.python.zuban` start

@@ -12,9 +12,14 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` start
 jvm_library(
-    name = "tests",
+    name = "tests_test_lib",
+    testonly = True,
     srcs = glob(
-        [],
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
         allow_empty = True,
     ),
     module_name = "intellij.platform.icons.impl.intellij.tests",
@@ -31,61 +36,19 @@ jvm_library(
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],
-)
-
-jvm_library(
-    name = "tests_test_lib",
-    testonly = True,
-    srcs = glob(
-        [
-            "test/**/*.kt",
-            "test/**/*.java",
-            "test/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.icons.impl.intellij.tests",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/icons-api",
-        "//platform/icons-api:icons-api_test_lib",
-        "//platform/icons-api/rendering",
-        "//platform/icons-api/rendering:rendering_test_lib",
-        "//platform/icons-impl",
-        "//platform/icons-impl:icons-impl_test_lib",
-        "//platform/icons-impl/intellij",
-        "//platform/icons-impl/intellij:intellij_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
-    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/icons-api",
-        "//platform/icons-api:icons-api_test_lib",
         "//platform/icons-api/rendering",
-        "//platform/icons-api/rendering:rendering_test_lib",
         "//platform/icons-impl",
-        "//platform/icons-impl:icons-impl_test_lib",
         "//platform/icons-impl/intellij",
-        "//platform/icons-impl/intellij:intellij_test_lib",
         "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/icons",
-        "//platform/icons:icons_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.icons.impl.intellij.tests` end

@@ -50,44 +50,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.codeInsight.groovy.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/backend:backend_test_lib",
-        "//plugins/gradle/codeInsight:codeInsight_test_lib",
-        "//plugins/gradle/codeInsight/backend:backend_test_lib",
-        "//plugins/gradle/codeInsight/groovy:groovy_test_lib",
-        "//plugins/gradle:gradle_test_lib",
-        "//plugins/gradle/java:java_test_lib",
-        "//plugins/gradle/java/groovy:groovy_test_lib",
-        "//plugins/gradle/properties:properties_test_lib",
-        "//plugins/properties/properties-psi-api:psi_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//uast/uast-common:uast_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//plugins/groovy:groovy_test_lib",
-        "//plugins/groovy/groovy-psi:psi_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.codeInsight.groovy.backend` end
 
 ### auto-generated section `iml intellij.gradle.codeInsight.groovy.backend` start

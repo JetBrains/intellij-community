@@ -11,31 +11,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "conda",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.test.env.conda",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//python/python-test-env/core",
-        "//libraries/jetbrains/annotations",
-        "@lib//:kotlin-stdlib",
-        "//libraries/kotlinx/coroutines/core",
-        "//platform/util",
-        "//python:python-community-impl",
-        "//platform/core-api:core",
-        "//platform/projectModel-api:projectModel",
-        "//platform/execution",
-        "//platform/analysis-api:analysis",
-        "//python/python-exec-service:community-execService",
-        "//python/conda",
-    ],
-)
-
-jvm_library(
     name = "conda_test_lib",
     testonly = True,
     srcs = glob(
@@ -46,42 +21,27 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python:python-community-impl",
-        "//python:python-community-impl_test_lib",
-    ],
+    associates = ["//python:python-community-impl"],
     kotlinc_opts = ":custom_conda",
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":conda"],
     deps = [
         # do not sort,
-        "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/execution",
-        "//platform/execution:execution_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//python/python-exec-service:community-execService",
-        "//python/python-exec-service:community-execService_test_lib",
         "//python/python-sdk/backend",
-        "//python/python-sdk/backend:backend_test_lib",
         "//python/conda",
-        "//python/conda:conda_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.test.env.conda` end

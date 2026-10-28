@@ -39,34 +39,6 @@ jvm_library(
         "//libraries/fastutil",
     ],
 )
-
-jvm_library(
-    name = "vcs-log-graph-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.vcs.log.graph.impl",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/util",
-        "//platform/util:util_test_lib",
-        "//platform/vcs-log/graph-api:vcs-log-graph",
-        "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":vcs-log-graph-impl",
-        "//platform/util:util_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/vcs-log/graph-api:vcs-log-graph_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl` end
 
 ### auto-generated section `iml intellij.platform.vcs.log.graph.impl` start
@@ -81,16 +53,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl.tests` start
 jvm_library(
-    name = "vcs-log-graph-impl-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.vcs.log.graph.impl.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "vcs-log-graph-impl-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -101,25 +63,16 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/vcs-log/graph:vcs-log-graph-impl",
-        "//platform/vcs-log/graph:vcs-log-graph-impl_test_lib",
-    ],
+    associates = ["//platform/vcs-log/graph:vcs-log-graph-impl"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":vcs-log-graph-impl-tests"],
     deps = [
         # do not sort,
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
-        "//libraries/fastutil:fastutil_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.log.graph.impl.tests` end

@@ -41,35 +41,6 @@ jvm_library(
         "//libraries/jps-javac-extension",
     ],
 )
-
-jvm_library(
-    name = "fragments_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.compiler.fragments",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":fragments",
-        "//java/compiler/openapi:java-compiler_test_lib",
-        "//java/compiler/external-javac:external-javac_test_lib",
-        "@community//build:build-javac-rt_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//java/openapi:java_test_lib",
-        "//java/java-syntax:syntax_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/eel-provider:eel-provider_test_lib",
-        "//libraries/jps-javac-extension:jps-javac-extension_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.compiler.fragments` end
 
 ### auto-generated section `iml intellij.java.compiler.fragments` start

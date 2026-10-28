@@ -58,34 +58,6 @@ jvm_library(
         "//platform/core-api:core",
     ],
 )
-
-jvm_library(
-    name = "gradle_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_gradle",
-    module_name = "intellij.kotlin.compilerPlugins.support.gradle",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":gradle",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//plugins/kotlin/base/facet:facet_test_lib",
-        "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
-        "//plugins/kotlin/gradle/gradle-java:gradle-java_test_lib",
-        "//plugins/kotlin/compiler-plugins/compiler-plugin-support/common:kotlin-compilerPlugins-support_test_lib",
-        "//plugins/gradle:gradle-common_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//platform/core-api:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.compilerPlugins.support.gradle` end
 
 ### auto-generated section `iml intellij.kotlin.compilerPlugins.support.gradle` start

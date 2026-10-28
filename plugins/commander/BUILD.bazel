@@ -63,42 +63,6 @@ jvm_library(
         "//java/java-backend:backend",
     ],
 )
-
-jvm_library(
-    name = "commander_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.commander",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":commander",
-        "//java/java-impl:impl_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/diff-api:diff_test_lib",
-        "//platform/diff-impl:diff-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/lvcs-api:lvcs_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/structure-view-impl:structureView_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//java/java-backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.commander` end
 
 ### auto-generated section `plugin intellij.commander` start
@@ -121,16 +85,6 @@ exports_files(
 
 ### auto-generated section `build intellij.commander.tests` start
 jvm_library(
-    name = "commander-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.commander.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "commander-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -143,60 +97,32 @@ jvm_library(
     ),
     module_name = "intellij.commander.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":commander-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
     deps = [
         # do not sort,
         "//java/java-impl:impl",
-        "//java/java-impl:impl_test_lib",
         "//java/java-psi-api:psi",
-        "//java/java-psi-api:psi_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/lang-api:lang",
-        "//platform/lang-api:lang_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-impl:ide-impl",
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
         "//plugins/ui-designer:java-guiForms-designer",
-        "//plugins/ui-designer:java-guiForms-designer_test_lib",
         "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//platform/lang-core",
-        "//platform/lang-core:lang-core_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/structure-view-impl:structureView",
-        "//platform/structure-view-impl:structureView_test_lib",
         "//platform/util/jdom",
-        "//platform/util/jdom:jdom_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//plugins/commander",
-        "//plugins/commander:commander_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/structure-view-impl/plugin",
-        "//platform/structure-view-impl/plugin:plugin_test_lib",
         "//xml/plugin",
-        "//xml/plugin:plugin_test_lib",
         "//aether-dependency-resolver/plugin",
-        "//aether-dependency-resolver/plugin:plugin_test_lib",
         "//platform/structuralsearch/plugin",
-        "//platform/structuralsearch/plugin:plugin_test_lib",
         "//platform/testRunner/plugin",
-        "//platform/testRunner/plugin:plugin_test_lib",
         "//platform/vcs/plugin",
-        "//platform/vcs/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.commander.tests` end

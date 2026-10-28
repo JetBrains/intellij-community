@@ -21,29 +21,6 @@ jvm_library(
         "//platform/statistics/devkit/frontend",
     ],
 )
-
-jvm_library(
-    name = "dev-noJava-plugin-main_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.dev.noJava.plugin.main",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":dev-noJava-plugin-main",
-        "//plugins/dev/intellij.dev:dev_test_lib",
-        "//plugins/dev/intellij.dev.codeInsight:codeInsight_test_lib",
-        "//plugins/dev/intellij.dev.psiViewer:psiViewer_test_lib",
-        "//plugins/dev/intellij.dev.pluginLoading:pluginLoading_test_lib",
-        "//plugins/dev/intellij.dev.core:core_test_lib",
-        "//platform/statistics/devkit:devkit_test_lib",
-        "//platform/statistics/devkit/backend:backend_test_lib",
-        "//platform/statistics/devkit/frontend:frontend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.dev.noJava.plugin.main` end
 
 ### auto-generated section `iml intellij.dev.noJava.plugin.main` start
@@ -70,25 +47,6 @@ jvm_library(
         "//plugins/dev/intellij.java.dev:java-dev",
         "//plugins/dev/intellij.groovy.dev:groovy-dev",
         "//plugins/dev/intellij.kotlin.dev:kotlin-dev",
-    ],
-)
-
-jvm_library(
-    name = "dev-plugin-main_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.dev.plugin.main",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":dev-plugin-main",
-        "//plugins/dev:dev-noJava-plugin-main_test_lib",
-        "//plugins/dev/intellij.java.dev:java-dev_test_lib",
-        "//plugins/dev/intellij.groovy.dev:groovy-dev_test_lib",
-        "//plugins/dev/intellij.kotlin.dev:kotlin-dev_test_lib",
     ],
 )
 ### auto-generated section `build intellij.dev.plugin.main` end

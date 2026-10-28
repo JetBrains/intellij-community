@@ -37,33 +37,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "icons-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.icons.impl",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/icons-api",
-        "//platform/icons-api:icons-api_test_lib",
-        "//platform/icons-api/rendering",
-        "//platform/icons-api/rendering:rendering_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":icons-impl",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/icons-api:icons-api_test_lib",
-        "//platform/icons-api/rendering:rendering_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.icons.impl` end
 
 ### auto-generated section `iml intellij.platform.icons.impl` start

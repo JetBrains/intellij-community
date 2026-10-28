@@ -20,23 +20,6 @@ jvm_library(
         "//libraries/kotlin/logging",
     ],
 )
-
-jvm_library(
-    name = "mcp-kotlin-sdk_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.mcp.kotlin.sdk",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-mcp-kotlin-sdk-io-modelcontextprotocol-kotlin-sdk"],
-    runtime_deps = [
-        # do not sort,
-        ":mcp-kotlin-sdk",
-        "//libraries/kotlin/logging:logging_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.mcp.kotlin.sdk` end
 
 ### auto-generated section `iml intellij.libraries.mcp.kotlin.sdk` start

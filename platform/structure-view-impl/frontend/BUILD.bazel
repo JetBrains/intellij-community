@@ -47,41 +47,6 @@ jvm_library(
         "//platform/remote-topics/frontend",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.structureView.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//platform/structure-view-impl:structureView_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/platform-impl/concurrency:concurrency_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//fleet/rpc:rpc_test_lib",
-        "//platform/remote-topics/shared:rpc-topics_test_lib",
-        "//platform/remote-topics/frontend:frontend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.structureView.frontend` end
 
 ### auto-generated section `iml intellij.platform.structureView.frontend` start

@@ -65,43 +65,6 @@ jvm_library(
         "//libraries/kotlinx/serialization/cbor",
     ],
 )
-
-jvm_library(
-    name = "settings-local_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_settings-local",
-    module_name = "intellij.platform.settings.local",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":settings-local",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/extensions:extensions_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/settings:settings_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/kotlinx/serialization/protobuf:protobuf_test_lib",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-        "//libraries/mvstore:mvstore_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/object-serializer:object-serializer_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/aalto-xml:aalto-xml_test_lib",
-        "//libraries/kotlinx/serialization/cbor:cbor_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.settings.local` end
 
 ### auto-generated section `iml intellij.platform.settings.local` start
@@ -121,16 +84,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "settings-local-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.settings.local.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "settings-local-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -141,54 +94,29 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/settings-local",
-        "//platform/settings-local:settings-local_test_lib",
-    ],
+    associates = ["//platform/settings-local"],
     kotlinc_opts = ":custom_settings-local-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":settings-local-tests",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
     deps = [
         # do not sort,
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/extensions",
-        "//platform/extensions:extensions_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/settings",
-        "//platform/settings:settings_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//platform/projectModel-impl",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/ide-core",
         "//libraries/mvstore",
-        "//libraries/mvstore:mvstore_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//libraries/jackson3/dataformat-cbor:libraries-jackson3-dataformat-cbor",
-        "//libraries/jackson3/dataformat-cbor:libraries-jackson3-dataformat-cbor_test_lib",
         "//libraries/jackson3/databind",
-        "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml",
-        "//libraries/jackson3/dataformat-yaml:libraries-jackson3-dataformat-yaml_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/testFramework/core",
-        "//platform/testFramework/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.local.tests` end

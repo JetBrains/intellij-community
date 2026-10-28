@@ -39,19 +39,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["@lib//:kotlin-stdlib"],
 )
-
-jvm_library(
-    name = "multiplatform_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_multiplatform",
-    module_name = "fleet.util.multiplatform",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":multiplatform"],
-)
 ### auto-generated section `build fleet.util.multiplatform` end
 
 ### auto-generated section `iml fleet.util.multiplatform` start

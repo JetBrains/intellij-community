@@ -41,36 +41,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "dashboard_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.smRunner.dashboard",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":dashboard",
-        "//platform/smRunner:smRunner_test_lib",
-        "//platform/testRunner:testRunner_test_lib",
-        "//platform/execution.dashboard:execution.dashboard_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/consoleView:consoleView_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.smRunner.dashboard` end
 
 ### auto-generated section `iml intellij.platform.smRunner.dashboard` start

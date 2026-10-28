@@ -38,31 +38,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "terminal_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.vcs.git.terminal",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":terminal",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//plugins/git4idea/shared:shared_test_lib",
-        "//plugins/terminal:terminal_test_lib",
-        "//plugins/git4idea/backend:backend_test_lib",
-        "//plugins/terminal/completion:completion_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.vcs.git.terminal` end
 
 ### auto-generated section `iml intellij.vcs.git.terminal` start
@@ -77,24 +52,6 @@ exports_files(
 
 ### auto-generated section `build intellij.vcs.git.terminal.tests` start
 jvm_library(
-    name = "vcs-git-terminal-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.vcs.git.terminal.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/recentFiles/plugin",
-        "//plugins/git4idea:vcs-git",
-        "//platform/vcs/plugin",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "vcs-git-terminal-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -105,51 +62,33 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/git4idea/terminal",
-        "//plugins/git4idea/terminal:terminal_test_lib",
-    ],
+    associates = ["//plugins/git4idea/terminal"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":vcs-git-terminal-tests",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/recentFiles/plugin:plugin_test_lib",
-        "//plugins/git4idea:vcs-git_test_lib",
-        "//platform/vcs/plugin:plugin_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/recentFiles/plugin",
+        "//plugins/git4idea:vcs-git",
+        "//platform/vcs/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "//platform/ide-core",
         "//plugins/git4idea/shared",
-        "//plugins/git4idea/shared:shared_test_lib",
         "//plugins/terminal",
-        "//plugins/terminal:terminal_test_lib",
         "//plugins/git4idea/backend",
-        "//plugins/git4idea/backend:backend_test_lib",
         "//plugins/terminal/completion",
-        "//plugins/terminal/completion:completion_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/dvcs-impl:vcs-dvcs-impl",
-        "//platform/dvcs-impl:vcs-dvcs-impl_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/vcs-impl/shared",
-        "//platform/vcs-impl/shared:shared_test_lib",
         "//platform/vcs-api/shared",
-        "//platform/vcs-api/shared:shared_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/mockito",
-        "//libraries/mockito:mockito_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.vcs.git.terminal.tests` end

@@ -26,25 +26,6 @@ jvm_library(
         "//libraries/asm",
     ],
 )
-
-jvm_library(
-    name = "impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":impl",
-        "//platform/core-api:core_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//libraries/asm:asm_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.testFramework.impl` end
 
 ### auto-generated section `iml intellij.platform.testFramework.impl` start

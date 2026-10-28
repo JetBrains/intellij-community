@@ -14,18 +14,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "mps-resources_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.mps.resources",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":mps-resources"],
-)
 ### auto-generated section `build intellij.mps.resources` end
 
 ### auto-generated section `iml intellij.mps.resources` start

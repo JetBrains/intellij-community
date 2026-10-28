@@ -63,47 +63,6 @@ jvm_library(
         "//platform/eel-nioFs",
     ],
 )
-
-jvm_library(
-    name = "core-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.core.impl",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:kotlin-stdlib"],
-    runtime_deps = [
-        # do not sort,
-        ":core-impl",
-        "//platform/core-api:core_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-        "//libraries/aalto-xml:aalto-xml_test_lib",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//libraries/automaton:automaton_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//platform/util/diff:diff_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/productMode:productMode_test_lib",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-        "//platform/eel:eel_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/eel-nioFs:eel-nioFs_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.core.impl` end
 
 ### auto-generated section `iml intellij.platform.core.impl` start
@@ -119,22 +78,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.core.impl.tests` start
 jvm_library(
-    name = "core-impl-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.core.impl.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//community-resources:customization",
-        "//platform/settings-local",
-        "//platform/testFramework",
-    ],
-)
-
-jvm_library(
     name = "core-impl-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -145,35 +88,24 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
-    ],
+    associates = ["//platform/core-impl"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":core-impl-tests",
-        "//community-resources:customization_test_lib",
-        "//platform/settings-local:settings-local_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
+        "//community-resources:customization",
+        "//platform/settings-local",
+        "//platform/testFramework",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/util-ex",
-        "//platform/util-ex:util-ex_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.core.impl.tests` end

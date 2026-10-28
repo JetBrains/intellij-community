@@ -50,34 +50,6 @@ jvm_library(
         ":libraries_junit6-launcher_provided",
     ],
 )
-
-jvm_library(
-    name = "ide-starter-junit5_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_ide-starter-junit5",
-    module_name = "intellij.tools.ide.starter.junit5",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-starter-junit5",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-        "//platform/remote-driver/model:model_test_lib",
-        "//libraries/junit6-launcher",
-        "//libraries/junit6-launcher:junit6-launcher_test_lib",
-        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//platform/testFramework/common:common_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.ide.starter.junit5` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.junit5` start
@@ -96,16 +68,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "ide-starter-junit5-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.ide.starter.junit5.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "ide-starter-junit5-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -116,64 +78,38 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
-        "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
-    ],
+    associates = ["//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5"],
     kotlinc_opts = ":custom_ide-starter-junit5-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":ide-starter-junit5-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kodein-di-jvm",
-        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter",
-        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
-        "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server_test_lib",
         "//tools/intellij.tools.ide.starter.product.goland:ide-starter-product-goland",
-        "//tools/intellij.tools.ide.starter.product.goland:ide-starter-product-goland_test_lib",
         "//tools/intellij.tools.ide.starter.product.idea.community:ide-starter-product-idea-community",
-        "//tools/intellij.tools.ide.starter.product.idea.community:ide-starter-product-idea-community_test_lib",
         "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate",
-        "//tools/intellij.tools.ide.starter.product.idea.ultimate:ide-starter-product-idea-ultimate_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/mockito",
-        "//libraries/mockito:mockito_test_lib",
         "@lib//:mockito-junit-jupiter",
         "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
         "//libraries/junit6-launcher",
-        "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands",
-        "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands_test_lib",
         "//tools/intellij.tools.ide.util.common:ide-util-common",
-        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
-        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
         "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter",
-        "//tools/intellij.tools.ide.metrics.collector.starter:ide-metrics-collector-starter_test_lib",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/teamCity",
-        "//platform/testFramework/teamCity:teamCity_test_lib",
         "//libraries/teamcity/service-messages:libraries-teamcity-service-messages",
-        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
-        "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests",
         "//tools/intellij.tools.ide.starter/testSrc:tools-ide-starter-tests_test_lib",
     ],
 )

@@ -59,49 +59,6 @@ jvm_library(
         "//platform/vcs-api/shared",
     ],
 )
-
-jvm_library(
-    name = "shared_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.collaborationTools.shared",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":shared",
-        "//libraries/caffeine:caffeine_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/miglayout-swing:miglayout-swing_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/diff-api:diff_test_lib",
-        "//platform/diff-impl:diff-impl_test_lib",
-        "//platform/editor-ui-ex:editor-ex_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/observable:observable_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/util/diff:diff_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
-        "//platform/dvcs-impl/shared:shared_test_lib",
-        "//platform/vcs-impl/shared:shared_test_lib",
-        "//platform/vcs-api/shared:shared_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.collaborationTools.shared` end
 
 ### auto-generated section `iml intellij.platform.collaborationTools.shared` start

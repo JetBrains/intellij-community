@@ -53,29 +53,6 @@ jvm_library(
         "//plugins/git4idea/backend",
     ],
 )
-
-jvm_library(
-    name = "git_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_git",
-    module_name = "intellij.kotlin.git",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":git",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/vcs-api/vcs-api-core:vcs-core_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//plugins/git4idea:vcs-git_test_lib",
-        "//plugins/git4idea/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.git` end
 
 ### auto-generated section `iml intellij.kotlin.git` start

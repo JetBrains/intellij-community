@@ -47,35 +47,6 @@ jvm_library(
         "//platform/platform-frontend:frontend",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_frontend",
-    module_name = "intellij.python.zuban.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//python/python-pytools/common:common_test_lib",
-        "//python/python-lsp-core/common:common_test_lib",
-        "//python/python-zuban/common:common_test_lib",
-        "//python/python-lsp-core/frontend:frontend_test_lib",
-        "//python/python-pytools/frontend:frontend_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.zuban.frontend` end
 
 ### auto-generated section `iml intellij.python.zuban.frontend` start

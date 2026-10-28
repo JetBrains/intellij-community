@@ -80,37 +80,6 @@ jvm_library(
         ":libraries_jspecify_provided",
     ],
 )
-
-jvm_library(
-    name = "impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_impl",
-    module_name = "intellij.kotlin.gradle.tooling.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":impl",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
-        "//libraries/kotlin/gradle-plugin-idea-proto:libraries-kotlin-gradle-plugin-idea-proto_test_lib",
-        "//libraries/kotlin/gradle-plugin-idea:libraries-kotlin-gradle-plugin-idea_test_lib",
-        "//plugins/kotlin/gradle/gradle-tooling:kotlin-gradle-tooling_test_lib",
-        "//plugins/kotlin/base/project-model:project-model_test_lib",
-        "//plugins/gradle/tooling-extension-api:toolingExtension_test_lib",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl_test_lib",
-        "//platform/extensions",
-        "//platform/extensions:extensions_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/jspecify",
-        "//libraries/jspecify:jspecify_test_lib",
-        "//libraries/gradle:gradle_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.tooling.impl` start
@@ -125,16 +94,6 @@ exports_files(
 
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` start
 jvm_library(
-    name = "kotlin-gradle-tooling-impl-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.kotlin.gradle.tooling.impl.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "kotlin-gradle-tooling-impl-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -145,25 +104,16 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/gradle/gradle-tooling/impl",
-        "//plugins/kotlin/gradle/gradle-tooling/impl:impl_test_lib",
-    ],
+    associates = ["//plugins/kotlin/gradle/gradle-tooling/impl"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":kotlin-gradle-tooling-impl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core",
-        "//libraries/kotlin/tooling-core:libraries-kotlin-tooling-core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/extensions",
-        "//platform/extensions:extensions_test_lib",
         "//libraries/jspecify",
-        "//libraries/jspecify:jspecify_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.gradle.tooling.impl.tests` end

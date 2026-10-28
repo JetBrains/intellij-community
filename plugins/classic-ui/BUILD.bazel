@@ -27,22 +27,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/platform-impl:ide-impl"],
 )
-
-jvm_library(
-    name = "classic-ui_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.classic.ui",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":classic-ui",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.classic.ui` end
 
 ### auto-generated section `plugin intellij.classic.ui` start

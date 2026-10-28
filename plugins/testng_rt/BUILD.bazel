@@ -25,25 +25,6 @@ jvm_library(
         ":libraries_testng_provided",
     ],
 )
-
-jvm_library(
-    name = "testng-rt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.testng.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testng-rt",
-        "//libraries/testng",
-        "//libraries/testng:testng_test_lib",
-        "//java/java-runtime:rt_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.testng.rt` end
 
 ### auto-generated section `iml intellij.testng.rt` start

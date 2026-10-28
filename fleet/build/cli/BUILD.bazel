@@ -68,29 +68,6 @@ jvm_library(
         "@lib//:fleet-clikt",
     ],
 )
-
-jvm_library(
-    name = "cli_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_cli",
-    module_name = "fleet.build.cli",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:fleet-clikt-core",
-        "@lib//:fleet-clikt",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":cli",
-        "//libraries/io:io_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.build.cli` end
 
 ### auto-generated section `iml fleet.build.cli` start

@@ -28,22 +28,6 @@ jvm_library(
         "//plugins/gradle/codeInsight",
     ],
 )
-
-jvm_library(
-    name = "groovy_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.codeInsight.groovy",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":groovy",
-        "//plugins/gradle/codeInsight:codeInsight_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.codeInsight.groovy` end
 
 ### auto-generated section `iml intellij.gradle.codeInsight.groovy` start

@@ -45,28 +45,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "codecache_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_codecache",
-    module_name = "fleet.build.codecache",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":codecache",
-        "//fleet/bundles:bundles_test_lib",
-        "//fleet/codecache:codecache_test_lib",
-        "//fleet/build/platform:platform_test_lib",
-        "//fleet/build/fs:fs_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.build.codecache` end
 
 ### auto-generated section `iml fleet.build.codecache` start

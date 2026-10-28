@@ -30,22 +30,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//idea/customization/base"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.idea.customization.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":plugin",
-        "//idea/customization/base:base_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.idea.customization.plugin` end
 
 ### auto-generated section `iml intellij.idea.customization.plugin` start

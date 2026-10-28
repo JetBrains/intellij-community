@@ -19,18 +19,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "resources-applicationInfo_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.resources.applicationInfo",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":resources-applicationInfo"],
-)
 ### auto-generated section `build intellij.platform.resources.applicationInfo` end
 
 ### auto-generated section `iml intellij.platform.resources.applicationInfo` start

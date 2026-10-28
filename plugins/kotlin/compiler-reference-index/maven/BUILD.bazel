@@ -52,28 +52,6 @@ jvm_library(
         "//plugins/maven",
     ],
 )
-
-jvm_library(
-    name = "maven_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_maven",
-    module_name = "intellij.kotlin.compilerReferenceIndex.maven",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":maven",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
-        "//plugins/kotlin/compiler-reference-index:compiler-reference-index_test_lib",
-        "//plugins/maven:maven_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.compilerReferenceIndex.maven` end
 
 ### auto-generated section `iml intellij.kotlin.compilerReferenceIndex.maven` start

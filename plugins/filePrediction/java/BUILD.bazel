@@ -31,25 +31,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-jvm_library(
-    name = "java_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.filePrediction.java",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":java",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//uast/uast-common:uast_test_lib",
-        "//plugins/filePrediction:filePrediction_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.filePrediction.java` end
 
 ### auto-generated section `iml intellij.filePrediction.java` start

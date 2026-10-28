@@ -25,25 +25,6 @@ jvm_library(
         "//platform/util/zip",
     ],
 )
-
-jvm_library(
-    name = "boot_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.platform.boot",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":boot",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/zip:zip_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.boot` end
 
 ### auto-generated section `iml intellij.platform.boot` start

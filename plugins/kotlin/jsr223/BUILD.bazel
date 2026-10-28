@@ -54,29 +54,6 @@ jvm_library(
         "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin",
     ],
 )
-
-jvm_library(
-    name = "jsr223_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_jsr223",
-    module_name = "intellij.kotlin.jsr223",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jsr223",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-jvm:libraries-kotlinc-kotlin-scripting-jvm_test_lib",
-        "//libraries/kotlinc/scripting-compiler-plugin:libraries-kotlinc-scripting-compiler-plugin_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.jsr223` end
 
 ### auto-generated section `iml intellij.kotlin.jsr223` start
@@ -108,16 +85,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "jsr223-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.kotlin.jsr223.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "jsr223-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -128,22 +95,15 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/kotlin/jsr223",
-        "//plugins/kotlin/jsr223:jsr223_test_lib",
-    ],
+    associates = ["//plugins/kotlin/jsr223"],
     kotlinc_opts = ":custom_jsr223-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":jsr223-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-jupiter",
-        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.jsr223.tests` end

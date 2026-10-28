@@ -16,16 +16,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "fleet.build.http.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -43,15 +33,12 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "//fleet/build/http",
-        "//fleet/build/http:http_test_lib",
         "@lib//:kotlin-stdlib",
         "@lib//:fleet-io-ktor-client-mock",
         "//fleet/test-runtime",
-        "//fleet/test-runtime:test-runtime_test_lib",
     ],
 )
 ### auto-generated section `build fleet.build.http.tests` end

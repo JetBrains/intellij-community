@@ -10,16 +10,6 @@ jps_test(
 
 ### auto-generated section `build kotlin.util.test-generator-all` start
 jvm_library(
-    name = "test-generator-all",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "kotlin.util.test-generator-all",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "test-generator-all_test_lib",
     testonly = True,
     srcs = glob(
@@ -32,33 +22,21 @@ jvm_library(
     ),
     module_name = "kotlin.util.test-generator-all",
     visibility = ["//visibility:public"],
-    runtime_deps = [":test-generator-all"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "//plugins/kotlin/util/test-generator-api",
         "//plugins/kotlin/util/test-generator-api:test-generator-api_test_lib",
-        "//plugins/kotlin/util/test-generator-fir",
         "//plugins/kotlin/util/test-generator-fir:test-generator-fir_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/kotlin/base/testFramework",
-        "//plugins/kotlin/base/testFramework:testFramework_test_lib",
-        "//plugins/kotlin/tests-common:common-tests",
         "//plugins/kotlin/tests-common:common-tests_test_lib",
         "//plugins/kotlin/util/project-model-updater",
-        "//plugins/kotlin/util/project-model-updater:project-model-updater_test_lib",
-        "//plugins/kotlin/intellij.kotlin.base.test:base-test",
         "//plugins/kotlin/intellij.kotlin.base.test:base-test_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
-        "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests",
         "//plugins/kotlin/refactorings/kotlin.refactorings.tests.k2:kotlin-refactorings-tests_test_lib",
         "//platform/scratch/plugin",
-        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build kotlin.util.test-generator-all` end

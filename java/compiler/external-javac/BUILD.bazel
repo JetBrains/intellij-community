@@ -36,31 +36,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "external-javac_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.java.compiler.externalJavac",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":external-javac",
-        "//platform/util:util_test_lib",
-        "@community//build:build-javac-rt_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//libraries/jps-javac-extension:jps-javac-extension_test_lib",
-        "//libraries/protobuf:protobuf_test_lib",
-        "//libraries/netty/codec-protobuf:libraries-netty-codec-protobuf_test_lib",
-        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-        "//libraries/netty/buffer:buffer_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.compiler.externalJavac` end
 
 ### auto-generated section `iml intellij.java.compiler.externalJavac` start

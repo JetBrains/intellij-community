@@ -16,19 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-layoutlib-layoutlib"],
     runtime_deps = ["@lib//:libraries-layoutlib-layoutlib"],
 )
-
-jvm_library(
-    name = "layoutlib_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.layoutlib",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-layoutlib-layoutlib"],
-    runtime_deps = [":layoutlib"],
-)
 ### auto-generated section `build intellij.libraries.layoutlib` end
 
 ### auto-generated section `iml intellij.libraries.layoutlib` start

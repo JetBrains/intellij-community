@@ -35,23 +35,6 @@ jvm_library(
         "//standalone-analysis/java-impl:standaloneAnalysis-java-impl",
     ],
 )
-
-jvm_library(
-    name = "standaloneAnalysis-java-smoke_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.standaloneAnalysis.java.smoke",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":standaloneAnalysis-java-smoke",
-        "//standalone-analysis/java-impl:standaloneAnalysis-java-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.standaloneAnalysis.java.smoke` end
 
 ### auto-generated section `iml intellij.standaloneAnalysis.java.smoke` start

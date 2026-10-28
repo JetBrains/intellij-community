@@ -24,19 +24,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "java-coverage-rt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.java.coverage.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":java-coverage-rt"],
-)
 ### auto-generated section `build intellij.java.coverage.rt` end
 
 ### auto-generated section `iml intellij.java.coverage.rt` start

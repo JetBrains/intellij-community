@@ -51,37 +51,6 @@ jvm_library(
         ":libraries_junit4_provided",
     ],
 )
-
-jvm_library(
-    name = "ide-metrics-benchmark_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.ide.metrics.benchmark",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-metrics-benchmark",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
-        "//tools/intellij.tools.ide.util.common:ide-util-common_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//platform/boot:boot_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//.ownership/runtime-resolver:codeowners-runtime-resolver_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark` end
 
 ### auto-generated section `iml intellij.tools.ide.metrics.benchmark` start
@@ -95,21 +64,6 @@ exports_files(
 ### auto-generated section `iml intellij.tools.ide.metrics.benchmark` end
 
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark.tests` start
-jvm_library(
-    name = "ide-metrics-benchmark-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.ide.metrics.benchmark.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
 jvm_library(
     name = "ide-metrics-benchmark-tests_test_lib",
     testonly = True,
@@ -129,39 +83,25 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":ide-metrics-benchmark-tests",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
         "//libraries/jackson3/databind",
-        "//libraries/jackson3/databind:databind_test_lib",
         "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/diagnostic/telemetry",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector",
-        "//tools/intellij.tools.ide.metrics.collector:ide-metrics-collector_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-api:lang",
-        "//platform/lang-api:lang_test_lib",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.metrics.benchmark.tests` end

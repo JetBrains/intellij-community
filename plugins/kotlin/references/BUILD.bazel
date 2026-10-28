@@ -54,29 +54,6 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
-
-jvm_library(
-    name = "references_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_references",
-    module_name = "intellij.kotlin.references",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":references",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.references` end
 
 ### auto-generated section `iml intellij.kotlin.references` start

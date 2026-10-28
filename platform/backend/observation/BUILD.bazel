@@ -40,24 +40,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "observation_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.backend.observation",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":observation",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.backend.observation` end
 
 ### auto-generated section `iml intellij.platform.backend.observation` start
@@ -72,16 +54,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.backend.observation.tests` start
 jvm_library(
-    name = "observation-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.backend.observation.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "observation-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -92,23 +64,15 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/backend/observation",
-        "//platform/backend/observation:observation_test_lib",
-    ],
+    associates = ["//platform/backend/observation"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":observation-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.backend.observation.tests` end

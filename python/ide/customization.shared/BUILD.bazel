@@ -23,27 +23,6 @@ jvm_library(
         "//python/ide/customization.scratch",
     ],
 )
-
-jvm_library(
-    name = "customization.shared_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.pycharm.community.customization.shared",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":customization.shared",
-        "//python/ide/impl:impl_test_lib",
-        "//python/ide/implTraining/intellij.pycharm.community.ide.implTraining:pycharm-community-ide-implTraining_test_lib",
-        "//platform/whatsNew:whatsNew_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//python/ide/customization.backend:customization.backend_test_lib",
-        "//python/ide/customization.scratch:customization.scratch_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.pycharm.community.customization.shared` end
 
 ### auto-generated section `iml intellij.pycharm.community.customization.shared` start

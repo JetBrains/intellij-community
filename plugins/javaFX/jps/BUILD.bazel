@@ -32,32 +32,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-jvm_library(
-    name = "jps_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.javaFX.jps",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jps",
-        "//jps/jps-builders:build_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/util:util_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//plugins/javaFX/common:common_test_lib",
-        "//jps/model-impl:model-impl_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/base:base_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.javaFX.jps` end
 
 ### auto-generated section `iml intellij.javaFX.jps` start

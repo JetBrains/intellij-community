@@ -56,32 +56,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "jps_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.devkit.jps",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jps",
-        "//jps/model-api:model_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//jps/jps-builders:build_test_lib",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
-        "//libraries/asm:asm_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "@community//build:build-javac-rt_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.devkit.jps` end
 
 ### auto-generated section `iml intellij.devkit.jps` start
@@ -95,21 +69,6 @@ exports_files(
 
 ### auto-generated section `build intellij.devkit.jps.tests` start
 jvm_library(
-    name = "jps-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.devkit.jps.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/devkit/jps-plugin:jps",
-        "//jps/model-impl",
-    ],
-)
-
-jvm_library(
     name = "jps-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -122,39 +81,23 @@ jvm_library(
     ),
     module_name = "intellij.devkit.jps.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":jps-tests"],
     deps = [
         # do not sort,
         "//plugins/devkit/jps-plugin:jps",
-        "//plugins/devkit/jps-plugin:jps_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//jps/model-impl",
-        "//jps/model-impl:model-impl_test_lib",
-        "//jps/jps-builders:build-tests",
         "//jps/jps-builders:build-tests_test_lib",
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
-        "//jps/model-serialization:model-serialization-tests",
         "//jps/model-serialization:model-serialization-tests_test_lib",
         "//jps/jps-builders:build",
-        "//jps/jps-builders:build_test_lib",
         "//libraries/asm",
-        "//libraries/asm:asm_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/bazel-runfiles",
-        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//java/compiler/instrumentation-util",
-        "//java/compiler/instrumentation-util:instrumentation-util_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.jps.tests` end

@@ -3,16 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.buildScripts.codeOptimizer` start
 jvm_library(
-    name = "codeOptimizer",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.codeOptimizer",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "codeOptimizer_test_lib",
     testonly = True,
     srcs = glob(
@@ -29,7 +19,6 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":codeOptimizer"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",

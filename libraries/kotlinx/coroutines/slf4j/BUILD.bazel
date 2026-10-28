@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
     runtime_deps = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
 )
-
-jvm_library(
-    name = "slf4j_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.kotlinx.coroutines.slf4j",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlinx-coroutines-slf4j-kotlinx-coroutines-slf4j"],
-    runtime_deps = [":slf4j"],
-)
 ### auto-generated section `build intellij.libraries.kotlinx.coroutines.slf4j` end
 
 ### auto-generated section `iml intellij.libraries.kotlinx.coroutines.slf4j` start

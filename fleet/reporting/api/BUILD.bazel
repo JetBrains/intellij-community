@@ -50,23 +50,6 @@ jvm_library(
         "//libraries/kotlinx/coroutines/core",
     ],
 )
-
-jvm_library(
-    name = "api_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_api",
-    module_name = "fleet.reporting.api",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":api",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.reporting.api` end
 
 ### auto-generated section `iml fleet.reporting.api` start

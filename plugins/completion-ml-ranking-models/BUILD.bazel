@@ -126,37 +126,6 @@ jvm_library(
         "//libraries/completion-ranking-sh",
     ],
 )
-
-jvm_library(
-    name = "completion-ml-ranking-models_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.completionMlRankingModels",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":completion-ml-ranking-models",
-        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
-        "//libraries/completion-ranking-java:completion-ranking-java_test_lib",
-        "//libraries/completion-ranking-kotlin:completion-ranking-kotlin_test_lib",
-        "//plugins/completion-ml-ranking-models/libraries:libraries_test_lib",
-        "//libraries/completion-ranking-rust:completion-ranking-rust_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//libraries/completion-ranking-php:completion-ranking-php_test_lib",
-        "//libraries/completion-ranking-ruby:completion-ranking-ruby_test_lib",
-        "//libraries/completion-ranking-go:completion-ranking-go_test_lib",
-        "//libraries/completion-ranking-js:completion-ranking-js_test_lib",
-        "//libraries/completion-ranking-typescript:completion-ranking-typescript_test_lib",
-        "//libraries/completion-ranking-swift:completion-ranking-swift_test_lib",
-        "//libraries/completion-ranking-cpp:completion-ranking-cpp_test_lib",
-        "//libraries/completion-ranking-sh:completion-ranking-sh_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.completionMlRankingModels` end
 
 ### auto-generated section `iml intellij.completionMlRankingModels` start
@@ -171,16 +140,6 @@ exports_files(
 
 ### auto-generated section `build intellij.completionMlRankingModels.tests` start
 jvm_library(
-    name = "completionMlRankingModels-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.completionMlRankingModels.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "completionMlRankingModels-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -193,24 +152,14 @@ jvm_library(
     ),
     module_name = "intellij.completionMlRankingModels.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":completionMlRankingModels-tests",
-        "//platform/platform-impl/internal:internal_test_lib",
-    ],
     deps = [
         # do not sort,
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/completion-ml-ranking-models",
-        "//plugins/completion-ml-ranking-models:completion-ml-ranking-models_test_lib",
         "//plugins/completion-ml-ranking",
-        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
         "//platform/platform-impl/internal",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.completionMlRankingModels.tests` end

@@ -37,31 +37,6 @@ jvm_library(
         "//plugins/toml/core",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.toml.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/indexing-impl:indexing-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//plugins/toml/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.toml.backend` end
 
 ### auto-generated section `iml intellij.toml.backend` start

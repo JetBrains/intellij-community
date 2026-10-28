@@ -15,16 +15,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "ui-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.jewel.uiTests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "ui-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -42,38 +32,23 @@ jvm_library(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":ui-tests"],
     deps = [
         # do not sort,
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/skiko",
-        "//libraries/skiko:skiko_test_lib",
         "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
         "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//libraries/compose-runtime-desktop",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.uiTests` end

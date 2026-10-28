@@ -34,29 +34,6 @@ jvm_library(
         "//platform/util/base",
     ],
 )
-
-jvm_library(
-    name = "analysis_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.xml.analysis",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":analysis",
-        "//xml/xml-psi-api:psi_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/extensions:extensions_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.xml.analysis` end
 
 ### auto-generated section `iml intellij.xml.analysis` start

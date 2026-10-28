@@ -30,24 +30,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-jvm_library(
-    name = "recentProjects_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.recentProjects",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":recentProjects",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.recentProjects` end
 
 ### auto-generated section `iml intellij.platform.ide.recentProjects` start

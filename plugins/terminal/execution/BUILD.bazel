@@ -47,41 +47,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-jvm_library(
-    name = "execution_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.execution",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":execution",
-        "//platform/extensions:extensions_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/jediterm-core:jediterm-core_test_lib",
-        "//libraries/jediterm-ui:jediterm-ui_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//platform/terminal:terminal_test_lib",
-        "//plugins/terminal:terminal_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.terminal.execution` end
 
 ### auto-generated section `iml intellij.terminal.execution` start

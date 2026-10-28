@@ -35,29 +35,6 @@ jvm_library(
         "//platform/ide-core",
     ],
 )
-
-jvm_library(
-    name = "monolith_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.navbar.monolith",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":monolith",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/navbar/backend:backend_test_lib",
-        "//platform/navbar/frontend:frontend_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.navbar.monolith` end
 
 ### auto-generated section `iml intellij.platform.navbar.monolith` start

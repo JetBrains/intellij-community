@@ -33,19 +33,6 @@ jvm_library(
     module_name = "kotlin.compiler-plugins.android-extensions-stubs",
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "android-extensions-stubs_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_android-extensions-stubs",
-    module_name = "kotlin.compiler-plugins.android-extensions-stubs",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":android-extensions-stubs"],
-)
 ### auto-generated section `build kotlin.compiler-plugins.android-extensions-stubs` end
 
 ### auto-generated section `iml kotlin.compiler-plugins.android-extensions-stubs` start

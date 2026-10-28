@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
     runtime_deps = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
 )
-
-jvm_library(
-    name = "jps-javac-extension_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.jps.javac.extension",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jps-javac-extension-jps-javac-extension"],
-    runtime_deps = [":jps-javac-extension"],
-)
 ### auto-generated section `build intellij.libraries.jps.javac.extension` end
 
 ### auto-generated section `iml intellij.libraries.jps.javac.extension` start

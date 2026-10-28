@@ -24,19 +24,6 @@ jvm_library(
     module_name = "intellij.java.jshell.protocol",
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "protocol_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k11",
-    module_name = "intellij.java.jshell.protocol",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":protocol"],
-)
 ### auto-generated section `build intellij.java.jshell.protocol` end
 
 ### auto-generated section `iml intellij.java.jshell.protocol` start
@@ -50,16 +37,6 @@ exports_files(
 
 ### auto-generated section `build intellij.java.jshell.protocol.tests` start
 jvm_library(
-    name = "java-jshell-protocol-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.jshell.protocol.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "java-jshell-protocol-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -72,13 +49,10 @@ jvm_library(
     ),
     module_name = "intellij.java.jshell.protocol.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":java-jshell-protocol-tests"],
     deps = [
         # do not sort,
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/jshell/protocol",
-        "//plugins/jshell/protocol:protocol_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.jshell.protocol.tests` end

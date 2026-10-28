@@ -68,43 +68,6 @@ jvm_library(
         "//libraries/jgit",
     ],
 )
-
-jvm_library(
-    name = "images-build_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.images.build",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":images-build",
-        "//jps/model-api:model_test_lib",
-        "//jps/model-impl:model-impl_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/util/diff:diff_test_lib",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//platform/build-scripts/downloader:downloader_test_lib",
-        "//libraries/commons/imaging:imaging_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//build/tasks:tasks_test_lib",
-        "//platform/util/rt-java8:rt-java8_test_lib",
-        "//libraries/gson:gson_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/util/zip:zip_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/hash4j:hash4j_test_lib",
-        "//libraries/jgit:jgit_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.images.build` end
 
 ### auto-generated section `iml intellij.platform.images.build` start
@@ -118,17 +81,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.images.build.tests` start
 jvm_library(
-    name = "images-build-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.images.build.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/commons/imaging"],
-)
-
-jvm_library(
     name = "images-build-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -139,34 +91,19 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/build-scripts/icons:images-build",
-        "//platform/build-scripts/icons:images-build_test_lib",
-    ],
+    associates = ["//platform/build-scripts/icons:images-build"],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":images-build-tests",
-        "//libraries/commons/imaging:imaging_test_lib",
-    ],
+    runtime_deps = ["//libraries/commons/imaging"],
     deps = [
         # do not sort,
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/util-ex",
-        "//platform/util-ex:util-ex_test_lib",
         "//jps/model-serialization",
-        "//jps/model-serialization:model-serialization_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//platform/util/xmlDom",
-        "//platform/util/xmlDom:xmlDom_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//build/tasks:tasks-tests",
         "//build/tasks:tasks-tests_test_lib",
         "@lib//:platform-images-build-tests-pngencoder",
     ],

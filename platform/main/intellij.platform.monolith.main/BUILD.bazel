@@ -17,25 +17,6 @@ jvm_library(
         "//platform/navbar/monolith",
     ],
 )
-
-jvm_library(
-    name = "monolith-main_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.monolith.main",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":monolith-main",
-        "//platform/main/intellij.platform.frontend.main:frontend-main_test_lib",
-        "//platform/main/intellij.platform.backend.main:backend-main_test_lib",
-        "//platform/monolith:monolith_test_lib",
-        "//platform/navbar/monolith:monolith_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.monolith.main` end
 
 ### auto-generated section `iml intellij.platform.monolith.main` start

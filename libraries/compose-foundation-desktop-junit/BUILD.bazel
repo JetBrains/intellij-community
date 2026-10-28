@@ -2,24 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` start
 jvm_library(
-    name = "compose-foundation-desktop-junit",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.libraries.compose.foundation.desktop.junit",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/compose-foundation-desktop",
-        "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
-        "//libraries/kotlinx/coroutines/test",
-        "//libraries/junit4",
-        "//libraries/hamcrest",
-    ],
-)
-
-jvm_library(
     name = "compose-foundation-desktop-junit_test_lib",
     testonly = True,
     srcs = glob(
@@ -35,27 +17,18 @@ jvm_library(
     exports = [
         # do not sort,
         "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/hamcrest",
-        "//libraries/hamcrest:hamcrest_test_lib",
     ],
     runtime_deps = [
         # do not sort,
-        ":compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "@lib//:libraries-compose-foundation-desktop-junit-org-jetbrains-compose-ui-ui-test-junit4-desktop",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/hamcrest",
-        "//libraries/hamcrest:hamcrest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.libraries.compose.foundation.desktop.junit` end

@@ -33,28 +33,6 @@ jvm_library(
         "//json/backend",
     ],
 )
-
-jvm_library(
-    name = "json_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.mermaid.json",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":json",
-        "//platform/core-api:core_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//plugins/mermaid:mermaid_test_lib",
-        "//json/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.mermaid.json` end
 
 ### auto-generated section `iml intellij.mermaid.json` start

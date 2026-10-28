@@ -27,16 +27,6 @@ filegroup(
 
 ### auto-generated section `build intellij.java.guiForms.jps.tests` start
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.guiForms.jps.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -49,31 +39,19 @@ jvm_library(
     ),
     module_name = "intellij.java.guiForms.jps.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
     deps = [
         # do not sort,
-        "//jps/jps-builders:build-tests",
         "//jps/jps-builders:build-tests_test_lib",
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
-        "//plugins/ui-designer/jps-plugin:java-guiForms-jps_test_lib",
         "//libraries/asm",
-        "//libraries/asm:asm_test_lib",
         "//platform/forms_rt:java-guiForms-rt",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
         "//jps/jps-builders:build",
-        "//jps/jps-builders:build_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/bazel-runfiles",
-        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
-        "//jps/model-serialization:model-serialization-tests",
         "//jps/model-serialization:model-serialization-tests_test_lib",
         "//platform/util/base",
-        "//platform/util/base:base_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.guiForms.jps.tests` end

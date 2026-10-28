@@ -25,24 +25,6 @@ jvm_library(
         "//.ownership/monorepo-resolver:codeowners-monorepo-resolver",
     ],
 )
-
-jvm_library(
-    name = "teamCity_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.teamCity",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":teamCity",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
-        "//.ownership/monorepo-resolver:codeowners-monorepo-resolver_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.testFramework.teamCity` end
 
 ### auto-generated section `iml intellij.platform.testFramework.teamCity` start

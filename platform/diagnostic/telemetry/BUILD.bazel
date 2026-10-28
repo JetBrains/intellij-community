@@ -59,36 +59,6 @@ jvm_library(
         ":libraries_opentelemetry-extension-kotlin_provided",
     ],
 )
-
-jvm_library(
-    name = "telemetry_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.diagnostic.telemetry",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/diagnostic",
-        "//platform/diagnostic:diagnostic_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":telemetry",
-        "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/opentelemetry",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-extension-kotlin",
-        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.diagnostic.telemetry` end
 
 ### auto-generated section `iml intellij.platform.diagnostic.telemetry` start
@@ -103,16 +73,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.tests` start
 jvm_library(
-    name = "telemetry-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.diagnostic.telemetry.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "telemetry-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -125,28 +85,18 @@ jvm_library(
     ),
     module_name = "intellij.platform.diagnostic.telemetry.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":telemetry-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
         "//libraries/opentelemetry-semconv",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
         "//libraries/opentelemetry-extension-kotlin",
-        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//platform/diagnostic/telemetry",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
         "//platform/diagnostic/telemetry.exporters",
-        "//platform/diagnostic/telemetry.exporters:telemetry.exporters_test_lib",
         "//libraries/jackson3/jackson:libraries-jackson3",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.diagnostic.telemetry.tests` end

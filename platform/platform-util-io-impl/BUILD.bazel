@@ -29,23 +29,6 @@ jvm_library(
         "//libraries/jackson3/jackson:libraries-jackson3",
     ],
 )
-
-jvm_library(
-    name = "ide-util-io-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.util.io.impl",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-util-io-impl",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.util.io.impl` end
 
 ### auto-generated section `iml intellij.platform.ide.util.io.impl` start

@@ -30,24 +30,6 @@ jvm_library(
         "//platform/recentFiles/shared:recentFiles",
     ],
 )
-
-jvm_library(
-    name = "recentFiles_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.tabInEditor.recentFiles",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":recentFiles",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl/tab-in-editor:tab-in-editor_test_lib",
-        "//platform/recentFiles/shared:recentFiles_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.tabInEditor.recentFiles` end
 
 ### auto-generated section `iml intellij.platform.ide.tabInEditor.recentFiles` start

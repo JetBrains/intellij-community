@@ -24,22 +24,6 @@ jvm_library(
         "//platform/vcs-impl",
     ],
 )
-
-jvm_library(
-    name = "actions_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.vcs.impl.lang.actions",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":actions",
-        "//platform/vcs-impl:vcs-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.vcs.impl.lang.actions` end
 
 ### auto-generated section `iml intellij.platform.vcs.impl.lang.actions` start

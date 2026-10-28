@@ -33,18 +33,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.sh.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
-)
 ### auto-generated section `build intellij.sh.plugin` end
 
 ### auto-generated section `iml intellij.sh.plugin` start
@@ -77,30 +65,6 @@ jvm_library(
         "//plugins/sh/markdown",
         "//plugins/sh/python",
         "//plugins/sh/spellchecker",
-    ],
-)
-
-jvm_library(
-    name = "plugin-main_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.sh.plugin.main",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":plugin-main",
-        "//plugins/sh/plugin:plugin_test_lib",
-        "//plugins/sh/core:core_test_lib",
-        "//plugins/sh/execution:execution_test_lib",
-        "//plugins/sh/backend:backend_test_lib",
-        "//plugins/sh/terminal:terminal_test_lib",
-        "//plugins/sh/copyright:copyright_test_lib",
-        "//plugins/sh/markdown:markdown_test_lib",
-        "//plugins/sh/python:python_test_lib",
-        "//plugins/sh/spellchecker:spellchecker_test_lib",
     ],
 )
 ### auto-generated section `build intellij.sh.plugin.main` end

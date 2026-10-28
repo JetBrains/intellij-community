@@ -38,34 +38,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "tools-testsBootstrap_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.testsBootstrap",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tools-testsBootstrap",
-        "//platform/boot:boot_test_lib",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit6-launcher:junit6-launcher_test_lib",
-        "//libraries/junit6:junit6_test_lib",
-        "//libraries/junit6-vintage:junit6-vintage_test_lib",
-        "//libraries/teamcity/service-messages:libraries-teamcity-service-messages_test_lib",
-        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
-        "//libraries/opentest4j:opentest4j_test_lib",
-        "//platform/core-nio-fs:core-nio-fs_test_lib",
-        "//libraries/asm-tools:asm-tools_test_lib",
-        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.testsBootstrap` end
 
 ### auto-generated section `iml intellij.tools.testsBootstrap` start

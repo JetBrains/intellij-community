@@ -31,30 +31,6 @@ jvm_library(
         "//platform/util/concurrency",
     ],
 )
-
-jvm_library(
-    name = "performanceTesting_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.warmup.performanceTesting",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":performanceTesting",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/warmup:warmup_test_lib",
-        "//plugins/performanceTesting/core:performanceTesting_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/platform-impl/playback:playback_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/remote-driver/model:model_test_lib",
-        "//plugins/performanceTesting/commands-model:tools-ide-performanceTesting-commands_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.warmup.performanceTesting` end
 
 ### auto-generated section `iml intellij.platform.warmup.performanceTesting` start

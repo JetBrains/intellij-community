@@ -43,51 +43,6 @@ jvm_library(
         "//platform/jewel/markdown/ide-laf-bridge-styling",
     ],
 )
-
-jvm_library(
-    name = "markdown_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.compose.markdown",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/compose",
-        "//platform/compose:compose_test_lib",
-        "//platform/jewel/markdown/core",
-        "//platform/jewel/markdown/core:core_test_lib",
-        "//platform/jewel/markdown/extensions/autolink",
-        "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
-        "//platform/jewel/markdown/extensions/gfm-alerts",
-        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
-        "//platform/jewel/markdown/extensions/gfm-strikethrough",
-        "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_test_lib",
-        "//platform/jewel/markdown/extensions/front-matter",
-        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
-        "//platform/jewel/markdown/extensions/gfm-tables",
-        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
-        "//platform/jewel/markdown/extensions/images",
-        "//platform/jewel/markdown/extensions/images:images_test_lib",
-        "//platform/jewel/markdown/ide-laf-bridge-styling",
-        "//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":markdown",
-        "//platform/compose:compose_test_lib",
-        "//platform/jewel/markdown/core:core_test_lib",
-        "//platform/jewel/markdown/extensions/autolink:autolink_test_lib",
-        "//platform/jewel/markdown/extensions/gfm-alerts:gfm-alerts_test_lib",
-        "//platform/jewel/markdown/extensions/gfm-strikethrough:gfm-strikethrough_test_lib",
-        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
-        "//platform/jewel/markdown/extensions/gfm-tables:gfm-tables_test_lib",
-        "//platform/jewel/markdown/extensions/images:images_test_lib",
-        "//platform/jewel/markdown/ide-laf-bridge-styling:ide-laf-bridge-styling_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.compose.markdown` end
 
 ### auto-generated section `iml intellij.platform.compose.markdown` start

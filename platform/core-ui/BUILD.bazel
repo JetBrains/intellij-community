@@ -34,28 +34,6 @@ jvm_library(
         "//platform/icons-api",
     ],
 )
-
-jvm_library(
-    name = "core-ui_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.core.ui",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":core-ui",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/hash4j:hash4j_test_lib",
-        "//platform/icons-api:icons-api_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.core.ui` end
 
 ### auto-generated section `iml intellij.platform.core.ui` start

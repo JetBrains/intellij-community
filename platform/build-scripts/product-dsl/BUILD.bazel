@@ -55,43 +55,6 @@ jvm_library(
         "//libraries/opentelemetry",
     ],
 )
-
-jvm_library(
-    name = "product-dsl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_product-dsl",
-    module_name = "intellij.platform.buildScripts.productDsl",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/pluginSystem/parser/impl",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":product-dsl",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
-        "//platform/build-scripts/api:api_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/aalto-xml:aalto-xml_test_lib",
-        "//libraries/androidx-collections:androidx-collections_test_lib",
-        "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
-        "//platform/build-scripts/licenses:licenses_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.buildScripts.productDsl` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.productDsl` start
@@ -114,16 +77,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "buildScripts-productDsl-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.productDsl.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "buildScripts-productDsl-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -134,40 +87,24 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/build-scripts/product-dsl",
-        "//platform/build-scripts/product-dsl:product-dsl_test_lib",
-    ],
+    associates = ["//platform/build-scripts/product-dsl"],
     kotlinc_opts = ":custom_buildScripts-productDsl-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":buildScripts-productDsl-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/pluginSystem/parser/impl",
-        "//platform/pluginSystem/parser/impl:impl_test_lib",
         "//platform/build-scripts/api",
-        "//platform/build-scripts/api:api_test_lib",
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//jps/model-serialization",
-        "//jps/model-serialization:model-serialization_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//jps/model-impl",
-        "//jps/model-impl:model-impl_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//platform/build-scripts/product-dsl/plugin-graph",
-        "//platform/build-scripts/product-dsl/plugin-graph:plugin-graph_test_lib",
         "//platform/build-scripts/licenses",
-        "//platform/build-scripts/licenses:licenses_test_lib",
         "//libraries/opentelemetry",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.productDsl.tests` end

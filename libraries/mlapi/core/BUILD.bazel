@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-mlapi-core-jetbrains-mlapi-core"],
     runtime_deps = ["@lib//:libraries-mlapi-core-jetbrains-mlapi-core"],
 )
-
-jvm_library(
-    name = "core_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.mlapi.core",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-mlapi-core-jetbrains-mlapi-core"],
-    runtime_deps = [":core"],
-)
 ### auto-generated section `build intellij.libraries.mlapi.core` end
 
 ### auto-generated section `iml intellij.libraries.mlapi.core` start

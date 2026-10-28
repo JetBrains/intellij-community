@@ -21,18 +21,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "jdkAnnotations_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.jdkAnnotations",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":jdkAnnotations"],
-)
 ### auto-generated section `build intellij.java.jdkAnnotations` end
 
 ### auto-generated section `iml intellij.java.jdkAnnotations` start

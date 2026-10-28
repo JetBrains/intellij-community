@@ -34,41 +34,6 @@ jvm_library(
         "//platform/util/coroutines",
     ],
 )
-
-jvm_library(
-    name = "extensions_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.extensions",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":extensions",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.extensions` end
 
 ### auto-generated section `iml intellij.platform.extensions` start

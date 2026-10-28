@@ -11,9 +11,14 @@ jps_test(
 
 ### auto-generated section `build intellij.groovy.uast.tests` start
 jvm_library(
-    name = "uast-tests",
+    name = "uast-tests_test_lib",
+    testonly = True,
     srcs = glob(
-        [],
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+        ],
         allow_empty = True,
     ),
     module_name = "intellij.groovy.uast.tests",
@@ -29,57 +34,19 @@ jvm_library(
         "//community-resources:customization",
         "//platform/vcs/plugin",
     ],
-)
-
-jvm_library(
-    name = "uast-tests_test_lib",
-    testonly = True,
-    srcs = glob(
-        [
-            "test/**/*.kt",
-            "test/**/*.java",
-            "test/**/*.form",
-        ],
-        allow_empty = True,
-    ),
-    module_name = "intellij.groovy.uast.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":uast-tests",
-        "//xml/plugin:plugin_test_lib",
-        "//platform/structure-view-impl/plugin:plugin_test_lib",
-        "//aether-dependency-resolver/plugin:plugin_test_lib",
-        "//plugins/groovy-scripting:groovy-scripting_test_lib",
-        "//platform/testRunner/plugin:plugin_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
-        "//platform/vcs/plugin:plugin_test_lib",
-    ],
     deps = [
         # do not sort,
         "//java/openapi:java",
-        "//java/openapi:java_test_lib",
         "//java/java-psi-api:psi",
-        "//java/java-psi-api:psi_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/lang-api:lang",
-        "//platform/lang-api:lang_test_lib",
         "//plugins/groovy/groovy-psi:psi",
-        "//plugins/groovy/groovy-psi:psi_test_lib",
         "//uast/testFramework",
-        "//uast/testFramework:testFramework_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
         "//plugins/groovy",
-        "//plugins/groovy:groovy_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.groovy.uast.tests` end

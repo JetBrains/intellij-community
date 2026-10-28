@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
     runtime_deps = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
 )
-
-jvm_library(
-    name = "metadata_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.kotlin.metadata",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-kotlin-metadata-kotlin-metadata"],
-    runtime_deps = [":metadata"],
-)
 ### auto-generated section `build intellij.libraries.kotlin.metadata` end
 
 ### auto-generated section `iml intellij.libraries.kotlin.metadata` start

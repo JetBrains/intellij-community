@@ -63,38 +63,6 @@ jvm_library(
         "//platform/core-impl",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_frontend",
-    module_name = "intellij.python.processOutput.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//libraries/caffeine:caffeine_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//python/python-process-output/common:common_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//python/common:common_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.processOutput.frontend` end
 
 ### auto-generated section `iml intellij.python.processOutput.frontend` start
@@ -121,22 +89,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "python-processOutput-frontend-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.processOutput.frontend.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-        "//xml/plugin",
-    ],
-)
-
-jvm_library(
     name = "python-processOutput-frontend-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -147,10 +99,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/python-process-output/frontend",
-        "//python/python-process-output/frontend:frontend_test_lib",
-    ],
+    associates = ["//python/python-process-output/frontend"],
     kotlinc_opts = ":custom_python-processOutput-frontend-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
@@ -159,58 +108,35 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":python-processOutput-frontend-tests",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
-        "//xml/plugin:plugin_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+        "//xml/plugin",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/platform-api:ide",
-        "//platform/platform-api:ide_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//python/python-exec-service:community-execService",
-        "//python/python-exec-service:community-execService_test_lib",
         "//python/openapi:community",
-        "//python/openapi:community_test_lib",
         "//platform/util:util-ui",
-        "//platform/util:util-ui_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/ide-core",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//libraries/mockk",
-        "//libraries/mockk:mockk_test_lib",
         "//libraries/mockk/jvm",
-        "//libraries/mockk/jvm:jvm_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//python/python-process-output/common",
-        "//python/python-process-output/common:common_test_lib",
-        "//python/junit5Tests-framework:community-junit5Tests-framework",
         "//python/junit5Tests-framework:community-junit5Tests-framework_test_lib",
         "//libraries/kotlinx/coroutines/debug",
-        "//libraries/kotlinx/coroutines/debug:debug_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlinx/coroutines/test",
-        "//libraries/kotlinx/coroutines/test:test_test_lib",
-        "//python/python-test-env/junit5",
         "//python/python-test-env/junit5:junit5_test_lib",
         "//platform/eel",
-        "//platform/eel:eel_test_lib",
         "//platform/eel-nioFs",
-        "//platform/eel-nioFs:eel-nioFs_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.processOutput.frontend.tests` end

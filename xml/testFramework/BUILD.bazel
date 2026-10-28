@@ -36,36 +36,6 @@ jvm_library(
         ":libraries_junit6_provided",
     ],
 )
-
-jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.xml.testFramework",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//platform/core-api:core_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-        "//xml/xml-psi-impl:psi-impl_test_lib",
-        "//xml/xml-parser:parser_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
-        "//platform/syntax/syntax-psi:psi_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/testFramework/junit5:junit5_test_lib",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.xml.testFramework` end
 
 ### auto-generated section `iml intellij.xml.testFramework` start

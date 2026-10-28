@@ -37,31 +37,6 @@ jvm_library(
         "//platform/util/jdom",
     ],
 )
-
-jvm_library(
-    name = "consoleView_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.consoleView",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":consoleView",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.consoleView` end
 
 ### auto-generated section `iml intellij.platform.consoleView` start

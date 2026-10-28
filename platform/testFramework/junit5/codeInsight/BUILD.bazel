@@ -56,38 +56,6 @@ jvm_library(
         ":libraries_junit4_provided",
     ],
 )
-
-jvm_library(
-    name = "codeInsight_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.junit5.codeInsight",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":codeInsight",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//platform/testFramework/junit5:junit5_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight` end
 
 ### auto-generated section `iml intellij.platform.testFramework.junit5.codeInsight` start
@@ -101,21 +69,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.testFramework.junit5.codeInsight` end
 
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight.tests` start
-jvm_library(
-    name = "testFramework-junit5-codeInsight-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.testFramework.junit5.codeInsight.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
 jvm_library(
     name = "testFramework-junit5-codeInsight-tests_test_lib",
     testonly = True,
@@ -131,31 +84,21 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":testFramework-junit5-codeInsight-tests",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5/codeInsight",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/syntax/syntax-api:syntax",
-        "//platform/syntax/syntax-api:syntax_test_lib",
         "//platform/syntax/syntax-util:util",
-        "//platform/syntax/syntax-util:util_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.testFramework.junit5.codeInsight.tests` end

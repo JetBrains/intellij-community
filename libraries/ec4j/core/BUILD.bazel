@@ -1,5 +1,4 @@
 load("@community//platform/build-scripts/bazel-rules:ij_plugin_module.bzl", "ij_plugin_module")
-load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.libraries.ec4j.core` start
 ij_plugin_module(
@@ -17,20 +16,6 @@ ij_plugin_module(
     visibility = ["//visibility:public"],
     exports = ["@lib//:libraries-ec4j-core-ec4j-core"],
     runtime_deps = ["@lib//:libraries-ec4j-core-ec4j-core"],
-)
-
-jvm_library(
-    name = "core_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.ec4j.core",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-ec4j-core-ec4j-core"],
-    runtime_deps = [":core"],
 )
 ### auto-generated section `build intellij.libraries.ec4j.core` end
 

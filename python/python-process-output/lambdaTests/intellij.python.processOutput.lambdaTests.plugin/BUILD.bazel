@@ -2,16 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.python.processOutput.lambdaTests.plugin` start
 jvm_library(
-    name = "python-processOutput-lambdaTests-plugin",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.processOutput.lambdaTests.plugin",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "python-processOutput-lambdaTests-plugin_test_lib",
     testonly = True,
     srcs = glob(
@@ -24,7 +14,6 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":python-processOutput-lambdaTests-plugin"],
 )
 ### auto-generated section `build intellij.python.processOutput.lambdaTests.plugin` end
 

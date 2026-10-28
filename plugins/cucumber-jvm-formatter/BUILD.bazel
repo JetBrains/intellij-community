@@ -33,29 +33,6 @@ jvm_library(
         ":libraries_junit4_provided",
     ],
 )
-
-jvm_library(
-    name = "cucumber-jvmFormatter_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.cucumber.jvmFormatter",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":cucumber-jvmFormatter",
-        "//libraries/cucumber-core1",
-        "//libraries/cucumber-core1:cucumber-core1_test_lib",
-        "@lib//:cucumber-core-2-provided",
-        "//plugins/junit_rt:junit-rt_test_lib",
-        "//java/java-runtime:rt_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.cucumber.jvmFormatter` end
 
 ### auto-generated section `iml intellij.cucumber.jvmFormatter` start

@@ -24,31 +24,6 @@ jvm_library(
         "//libraries/kotlin/metadata",
     ],
 )
-
-jvm_library(
-    name = "apiDump_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.apiDump",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/kotlinx/bcv",
-        "//libraries/kotlinx/bcv:bcv_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":apiDump",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/asm-tools:asm-tools_test_lib",
-        "//libraries/kotlinx/bcv:bcv_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/kotlin/metadata:metadata_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.apiDump` end
 
 ### auto-generated section `iml intellij.tools.apiDump` start

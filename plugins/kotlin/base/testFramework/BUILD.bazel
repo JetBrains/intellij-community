@@ -54,51 +54,6 @@ jvm_library(
         ":libraries_junit6_provided",
     ],
 )
-
-jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.kotlin.base.testFramework",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//plugins/junit_rt:junit-rt",
-        "//plugins/junit_rt:junit-rt_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/analysis-api-impl-base:libraries-kotlinc-analysis-api-impl-base_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//java/java-syntax:syntax_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//java/testFramework:testFramework_test_lib",
-        "//plugins/junit_rt:junit-rt_test_lib",
-        "//java/java-runtime:rt_test_lib",
-        "//platform/code-style-api:codeStyle_test_lib",
-        "//plugins/kotlin/formatter/minimal:minimal_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//platform/progress/shared:ide-progress_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.base.testFramework` end
 
 ### auto-generated section `iml intellij.kotlin.base.testFramework` start

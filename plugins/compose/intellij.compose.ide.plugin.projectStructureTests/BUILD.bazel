@@ -3,16 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.compose.ide.plugin.projectStructureTests` start
 jvm_library(
-    name = "ide-plugin-projectStructureTests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.compose.ide.plugin.projectStructureTests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "ide-plugin-projectStructureTests_test_lib",
     testonly = True,
     srcs = glob(
@@ -25,21 +15,14 @@ jvm_library(
     ),
     module_name = "intellij.compose.ide.plugin.projectStructureTests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":ide-plugin-projectStructureTests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
-        "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests",
         "//plugins/compose/intellij.compose.ide.plugin.shared:ide-plugin-shared-tests_test_lib",
     ],
 )

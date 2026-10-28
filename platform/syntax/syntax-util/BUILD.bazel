@@ -53,28 +53,6 @@ jvm_library(
         "//platform/syntax/syntax-extensions:extensions",
     ],
 )
-
-jvm_library(
-    name = "util_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_util",
-    module_name = "intellij.platform.syntax.util",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":util",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/syntax/syntax-i18n:i18n_test_lib",
-        "//platform/syntax/syntax-extensions:extensions_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.syntax.util` end
 
 ### auto-generated section `iml intellij.platform.syntax.util` start
@@ -89,16 +67,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.syntax.util.tests` start
 jvm_library(
-    name = "util-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.syntax.util.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "util-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -111,22 +79,15 @@ jvm_library(
     ),
     module_name = "intellij.platform.syntax.util.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":util-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/multiplatformSupport",
-        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/syntax/syntax-api:syntax",
-        "//platform/syntax/syntax-api:syntax_test_lib",
         "//platform/syntax/syntax-util:util",
-        "//platform/syntax/syntax-util:util_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.util.tests` end

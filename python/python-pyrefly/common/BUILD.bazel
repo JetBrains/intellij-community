@@ -36,24 +36,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "common_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_common",
-    module_name = "intellij.python.pyrefly.common",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.pyrefly.common` end
 
 ### auto-generated section `iml intellij.python.pyrefly.common` start

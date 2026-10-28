@@ -45,30 +45,6 @@ jvm_library(
         "//libraries/netty/codec-compression:libraries-netty-codec-compression",
     ],
 )
-
-jvm_library(
-    name = "tools-ide-starter-bus_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.ide.starter.bus",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tools-ide-starter-bus",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/netty/codec-http:libraries-netty-codec-http_test_lib",
-        "//libraries/netty/buffer:buffer_test_lib",
-        "//platform/platform-util-netty:ide-util-netty_test_lib",
-        "//libraries/netty/codec-compression:libraries-netty-codec-compression_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.ide.starter.bus` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.bus` start
@@ -83,16 +59,6 @@ exports_files(
 
 ### auto-generated section `build intellij.tools.ide.starter.bus.tests` start
 jvm_library(
-    name = "tools-ide-starter-bus-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.ide.starter.bus.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tools-ide-starter-bus-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -105,16 +71,12 @@ jvm_library(
     ),
     module_name = "intellij.tools.ide.starter.bus.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tools-ide-starter-bus-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/performanceTesting/event-bus:tools-ide-starter-bus",
-        "//plugins/performanceTesting/event-bus:tools-ide-starter-bus_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.bus.tests` end

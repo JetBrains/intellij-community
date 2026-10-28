@@ -43,39 +43,6 @@ jvm_library(
         "//platform/eel-nioFs",
     ],
 )
-
-jvm_library(
-    name = "projectModel_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.projectModel",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":projectModel",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/workspace/storage:storage_test_lib",
-        "//platform/workspace/jps:jps_test_lib",
-        "//platform/backend/workspace:workspace_test_lib",
-        "//platform/util/xmlDom:xmlDom_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/eel:eel_test_lib",
-        "//platform/eel-nioFs:eel-nioFs_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.projectModel` end
 
 ### auto-generated section `iml intellij.platform.projectModel` start

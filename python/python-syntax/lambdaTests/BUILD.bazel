@@ -10,17 +10,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "lambdaTests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.syntax.lambdaTests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["@lib//:kotlin-stdlib"],
-)
-
-jvm_library(
     name = "lambdaTests_test_lib",
     testonly = True,
     srcs = glob(
@@ -38,55 +27,30 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":lambdaTests",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//tools/intellij.lambda.testFramework:lambda-testFramework",
-        "//tools/intellij.lambda.testFramework:lambda-testFramework_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide",
-        "//platform/platform-api:ide_test_lib",
         "//platform/ide-core",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/rd/core",
-        "//libraries/rd/core:core_test_lib",
         "//platform/remoteDev-util",
-        "//platform/remoteDev-util:remoteDev-util_test_lib",
         "//tools/intellij.tools.ide.starter:ide-starter",
-        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
         "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5",
-        "//tools/intellij.tools.ide.starter.junit5:ide-starter-junit5_test_lib",
         "//tools/intellij.tools.ide.starter.driver:ide-starter-driver",
-        "//tools/intellij.tools.ide.starter.driver:ide-starter-driver_test_lib",
         "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
-        "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server_test_lib",
         "//tools/intellij.tools.ide.starter.product.pycharm:ide-starter-product-pycharm",
-        "//tools/intellij.tools.ide.starter.product.pycharm:ide-starter-product-pycharm_test_lib",
         "//python/python-parser:parser",
-        "//python/python-parser:parser_test_lib",
         "//python/python-psi-impl:psi-impl",
-        "//python/python-psi-impl:psi-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.syntax.lambdaTests` end

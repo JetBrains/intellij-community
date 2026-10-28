@@ -15,16 +15,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.testFramework.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -35,32 +25,20 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/build-scripts/testFramework",
-        "//platform/build-scripts/testFramework:testFramework_test_lib",
-    ],
+    associates = ["//platform/build-scripts/testFramework"],
     kotlinc_opts = ":custom_tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/build-scripts/api",
-        "//platform/build-scripts/api:api_test_lib",
         "//platform/build-scripts",
-        "//platform/build-scripts:build-scripts_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//platform/distribution-content",
-        "//platform/distribution-content:distribution-content_test_lib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.testFramework.tests` end

@@ -3,23 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.kotlin.completion.ml.tests` start
 jvm_library(
-    name = "tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.kotlin.completion.ml.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//plugins/kotlin:kotlin-plugin-community-main",
-        "//plugins/kotlin/ml-completion:completion-ml",
-        "//platform/platform-impl/internal",
-    ],
-)
-
-jvm_library(
     name = "tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -32,22 +15,14 @@ jvm_library(
     ),
     module_name = "intellij.kotlin.completion.ml.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":tests",
-        "//plugins/kotlin:kotlin-plugin-community-main_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
-    ],
+    runtime_deps = ["//plugins/kotlin:kotlin-plugin-community-main"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/kotlin/ml-completion:completion-ml",
-        "//plugins/kotlin/ml-completion:completion-ml_test_lib",
         "//platform/platform-impl/internal",
         "//platform/scratch/plugin",
-        "//platform/scratch/plugin:plugin_test_lib",
     ],
 )
 ### auto-generated section `build intellij.kotlin.completion.ml.tests` end

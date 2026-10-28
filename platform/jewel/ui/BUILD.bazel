@@ -81,43 +81,6 @@ jvm_library(
         "//platform/icons-impl",
     ],
 )
-
-jvm_library(
-    name = "ui_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_ui",
-    module_name = "intellij.platform.jewel.ui",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "@lib//:platform-jewel-ui-org-jetbrains-compose-components-components-resources-desktop",
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//platform/icons-api",
-        "//platform/icons-api:icons-api_test_lib",
-        "//platform/icons-api/rendering",
-        "//platform/icons-api/rendering:rendering_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":ui",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/skiko:skiko_test_lib",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-        "//platform/icons-api:icons-api_test_lib",
-        "//platform/icons-api/rendering:rendering_test_lib",
-        "//platform/icons-impl:icons-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.jewel.ui` end
 
 ### auto-generated section `iml intellij.platform.jewel.ui` start
@@ -144,16 +107,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "ui-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.jewel.ui.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "ui-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -164,27 +117,20 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
-    ],
+    associates = ["//platform/jewel/ui"],
     kotlinc_opts = ":custom_ui-tests",
     resource_strip_prefix = "src/test/resources",
     resources = glob(
         ["src/test/resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":ui-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources",
         "@lib//:platform-jewel-ui-tests-org-jetbrains-compose-components-components-resources-desktop",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
     ],
 )

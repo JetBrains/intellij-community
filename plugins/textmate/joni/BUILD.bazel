@@ -39,23 +39,6 @@ jvm_library(
         "@lib//:slf4j-api",
     ],
 )
-
-jvm_library(
-    name = "joni_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.textmate.joni",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":joni",
-        "//plugins/textmate/core:core_test_lib",
-        "//libraries/joni:joni_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.textmate.joni` end
 
 ### auto-generated section `iml intellij.textmate.joni` start
@@ -70,16 +53,6 @@ exports_files(
 
 ### auto-generated section `build intellij.textmate.joni.tests` start
 jvm_library(
-    name = "joni-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.textmate.joni.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "joni-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -92,18 +65,13 @@ jvm_library(
     ),
     module_name = "intellij.textmate.joni.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":joni-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//plugins/textmate/core",
-        "//plugins/textmate/core:core_test_lib",
-        "//plugins/textmate/core/tests",
         "//plugins/textmate/core/tests:tests_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/textmate/joni",
-        "//plugins/textmate/joni:joni_test_lib",
     ],
 )
 ### auto-generated section `build intellij.textmate.joni.tests` end

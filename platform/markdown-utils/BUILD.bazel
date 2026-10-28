@@ -42,26 +42,6 @@ jvm_library(
         "//platform/lang-impl",
     ],
 )
-
-jvm_library(
-    name = "markdown-utils_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.markdown.utils",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":markdown-utils",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//libraries/markdown:markdown_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.markdown.utils` end
 
 ### auto-generated section `iml intellij.platform.markdown.utils` start
@@ -76,16 +56,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.markdown.utils.tests` start
 jvm_library(
-    name = "markdown-utils-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.markdown.utils.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "markdown-utils-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -98,26 +68,17 @@ jvm_library(
     ),
     module_name = "intellij.platform.markdown.utils.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":markdown-utils-tests"],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/util:util-ui",
-        "//platform/util:util-ui_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/markdown",
-        "//libraries/markdown:markdown_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "//platform/lang-impl",
-        "//platform/lang-impl:lang-impl_test_lib",
         "//platform/markdown-utils",
-        "//platform/markdown-utils:markdown-utils_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.markdown.utils.tests` end

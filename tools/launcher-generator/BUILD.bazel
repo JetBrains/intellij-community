@@ -23,23 +23,6 @@ jvm_library(
         "//libraries/commons/imaging",
     ],
 )
-
-jvm_library(
-    name = "launcher-generator_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.tools.launcherGenerator",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":launcher-generator",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/commons/imaging:imaging_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.launcherGenerator` end
 
 ### auto-generated section `iml intellij.tools.launcherGenerator` start

@@ -48,39 +48,6 @@ jvm_library(
         "//platform/analysis-impl",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_backend",
-    module_name = "intellij.python.requirements.backend",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//python/python-requirements/common",
-        "//python/python-requirements/common:common_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/backend:backend_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//python/python-requirements/common:common_test_lib",
-        "//python/openapi:community_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/stream:stream_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.requirements.backend` end
 
 ### auto-generated section `iml intellij.python.requirements.backend` start

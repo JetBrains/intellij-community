@@ -58,26 +58,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-jvm_library(
-    name = "serialization_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_serialization",
-    module_name = "fleet.util.serialization",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":serialization",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.util.serialization` end
 
 ### auto-generated section `iml fleet.util.serialization` start

@@ -20,24 +20,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "jdom_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.util.jdom",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":jdom",
-        "//libraries/jaxen:jaxen_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.util.jdom` end
 
 ### auto-generated section `iml intellij.platform.util.jdom` start

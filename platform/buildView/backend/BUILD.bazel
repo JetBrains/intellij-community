@@ -34,28 +34,6 @@ jvm_library(
         "//platform/kernel/rpc.backend",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildView.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/buildView:buildView_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.buildView.backend` end
 
 ### auto-generated section `iml intellij.platform.buildView.backend` start

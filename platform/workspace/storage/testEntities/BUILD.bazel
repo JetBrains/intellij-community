@@ -3,21 +3,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.platform.workspace.storage.testEntities` start
 jvm_library(
-    name = "testEntities",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.workspace.storage.testEntities",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//libraries/kotlin/reflect",
-    ],
-)
-
-jvm_library(
     name = "testEntities_test_lib",
     testonly = True,
     srcs = glob(
@@ -32,18 +17,13 @@ jvm_library(
     ),
     module_name = "intellij.platform.workspace.storage.testEntities",
     visibility = ["//visibility:public"],
-    runtime_deps = [":testEntities"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/workspace/storage",
-        "//platform/workspace/storage:storage_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/util/base/multiplatform",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//libraries/kotlin/reflect",
-        "//libraries/kotlin/reflect:reflect_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.workspace.storage.testEntities` end

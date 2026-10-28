@@ -44,24 +44,6 @@ jvm_library(
         "//fleet/util/logging/api",
     ],
 )
-
-jvm_library(
-    name = "slf4j_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_slf4j",
-    module_name = "fleet.util.logging.slf4j",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:slf4j-api"],
-    runtime_deps = [
-        # do not sort,
-        ":slf4j",
-        "//fleet/util/logging/api:api_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.util.logging.slf4j` end
 
 ### auto-generated section `iml fleet.util.logging.slf4j` start

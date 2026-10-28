@@ -16,20 +16,6 @@ jvm_library(
     exports = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
     runtime_deps = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
 )
-
-jvm_library(
-    name = "libraries-allure-java-commons_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.allure.java.commons",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-allure-java-commons-io-qameta-allure-java-commons"],
-    runtime_deps = [":libraries-allure-java-commons"],
-)
 ### auto-generated section `build intellij.libraries.allure.java.commons` end
 
 ### auto-generated section `iml intellij.libraries.allure.java.commons` start

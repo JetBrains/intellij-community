@@ -35,29 +35,6 @@ jvm_library(
         "//RegExpSupport:regexp",
     ],
 )
-
-jvm_library(
-    name = "regexp_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.xml.psi.impl.regexp",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":regexp",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util:util_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-        "//xml/xml-psi-impl:psi-impl_test_lib",
-        "//RegExpSupport:regexp_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.xml.psi.impl.regexp` end
 
 ### auto-generated section `iml intellij.xml.psi.impl.regexp` start

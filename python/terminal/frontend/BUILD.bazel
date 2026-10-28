@@ -42,29 +42,6 @@ jvm_library(
         "//plugins/terminal",
     ],
 )
-
-jvm_library(
-    name = "frontend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_frontend",
-    module_name = "intellij.python.terminal.frontend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontend",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//python/terminal/shared:shared_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/terminal/frontend:frontend_test_lib",
-        "//plugins/terminal:terminal_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.terminal.frontend` end
 
 ### auto-generated section `iml intellij.python.terminal.frontend` start

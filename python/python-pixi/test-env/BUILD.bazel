@@ -10,27 +10,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "python-pixi-test-env",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.pixi.test.env",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//libraries/jetbrains/annotations",
-        "//libraries/kotlinx/coroutines/core",
-        "@lib//:kotlin-stdlib",
-        "//platform/core-api:core",
-        "//platform/util",
-        "//python/openapi:community",
-        "//python/python-pixi/common",
-        "//python/python-test-env/core",
-    ],
-)
-
-jvm_library(
     name = "python-pixi-test-env_test_lib",
     testonly = True,
     srcs = glob(
@@ -48,23 +27,15 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":python-pixi-test-env"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//python/openapi:community",
-        "//python/openapi:community_test_lib",
         "//python/python-pixi/common",
-        "//python/python-pixi/common:common_test_lib",
-        "//python/python-test-env/core",
         "//python/python-test-env/core:core_test_lib",
     ],
 )

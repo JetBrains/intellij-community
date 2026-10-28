@@ -29,25 +29,6 @@ jvm_library(
         "//libraries/jackson/databind",
     ],
 )
-
-jvm_library(
-    name = "libraries-jackson-dataformat-toml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.jackson.dataformat.toml",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jackson-dataformat-toml-jackson-dataformat-toml"],
-    runtime_deps = [
-        # do not sort,
-        ":libraries-jackson-dataformat-toml",
-        "//libraries/jackson/jackson:jackson_test_lib",
-        "//libraries/jackson/databind:databind_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.jackson.dataformat.toml` end
 
 ### auto-generated section `iml intellij.libraries.jackson.dataformat.toml` start

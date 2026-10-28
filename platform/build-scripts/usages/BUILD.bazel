@@ -42,35 +42,6 @@ jvm_library(
         "//libraries/mvstore",
     ],
 )
-
-jvm_library(
-    name = "usages_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.usages",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":usages",
-        "//platform/util:util_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kaml:kaml_test_lib",
-        "@community//build:zip_test_lib",
-        "//libraries/hash4j:hash4j_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//jps/model-serialization:model-serialization_test_lib",
-        "@community//build:dependency-graph_test_lib",
-        "//libraries/mvstore:mvstore_test_lib",
-        "//jps/model-impl:model-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.buildScripts.usages` end
 
 ### auto-generated section `iml intellij.platform.buildScripts.usages` start
@@ -84,16 +55,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.buildScripts.usages.tests` start
 jvm_library(
-    name = "buildScripts-usages-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.buildScripts.usages.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "buildScripts-usages-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -104,29 +65,18 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/build-scripts/usages",
-        "//platform/build-scripts/usages:usages_test_lib",
-    ],
+    associates = ["//platform/build-scripts/usages"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":buildScripts-usages-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/asm",
-        "//libraries/asm:asm_test_lib",
         "//libraries/mvstore",
-        "//libraries/mvstore:mvstore_test_lib",
         "//jps/model-api:model",
-        "//jps/model-api:model_test_lib",
         "//jps/model-impl",
-        "//jps/model-impl:model-impl_test_lib",
         "@community//build:dependency-graph",
-        "@community//build:dependency-graph_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.buildScripts.usages.tests` end

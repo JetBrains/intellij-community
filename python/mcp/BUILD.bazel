@@ -48,33 +48,6 @@ jvm_library(
         "//python/python-uv/backend",
     ],
 )
-
-jvm_library(
-    name = "mcp_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.mcp",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":mcp",
-        "//plugins/mcp-server:mcpserver_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//python/python-sdk/backend:backend_test_lib",
-        "//python:python-community-impl_test_lib",
-        "//python/python-pyproject:pyproject_test_lib",
-        "//python/common:common_test_lib",
-        "//python/python-poetry/backend:backend_test_lib",
-        "//python/python-hatch:hatch_test_lib",
-        "//python/python-uv/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.mcp` end
 
 ### auto-generated section `iml intellij.python.mcp` start
@@ -89,17 +62,6 @@ exports_files(
 
 ### auto-generated section `build intellij.python.mcp.tests` start
 jvm_library(
-    name = "mcp-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.mcp.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/mcp-server/mcpserver.plugin"],
-)
-
-jvm_library(
     name = "mcp-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -110,27 +72,16 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/mcp",
-        "//python/mcp:mcp_test_lib",
-    ],
+    associates = ["//python/mcp"],
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":mcp-tests",
-        "//plugins/mcp-server/mcpserver.plugin:mcpserver.plugin_test_lib",
-    ],
+    runtime_deps = ["//plugins/mcp-server/mcpserver.plugin"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/junit6-jupiter",
-        "//libraries/junit6-jupiter:junit6-jupiter_test_lib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.python.mcp.tests` end

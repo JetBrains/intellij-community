@@ -60,46 +60,6 @@ jvm_library(
         "//platform/core-impl",
     ],
 )
-
-jvm_library(
-    name = "compose_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.compose",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
-        "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "//platform/jewel/ide-laf-bridge",
-        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
-        "@lib//:jetbrains-compose-components-ui-tooling-preview-desktop",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":compose",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/jewel/ui:ui_test_lib",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "//platform/jewel/ide-laf-bridge:ide-laf-bridge_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-        "//libraries/skiko:skiko_test_lib",
-        "//platform/diagnostic/telemetry:telemetry_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.compose` end
 
 ### auto-generated section `iml intellij.platform.compose` start
@@ -114,22 +74,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.compose.tests` start
 jvm_library(
-    name = "compose-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.compose.tests",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/jewel/ui",
-        "//platform/jewel/foundation",
-    ],
-    runtime_deps = ["//platform/compose/plugin"],
-)
-
-jvm_library(
     name = "compose-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -140,48 +84,28 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/compose",
-        "//platform/compose:compose_test_lib",
-    ],
+    associates = ["//platform/compose"],
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
         "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
     ],
-    runtime_deps = [
-        # do not sort,
-        ":compose-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/compose/plugin:plugin_test_lib",
-    ],
+    runtime_deps = ["//platform/compose/plugin"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
         "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
-        "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.compose.tests` end

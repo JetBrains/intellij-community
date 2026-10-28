@@ -35,29 +35,6 @@ jvm_library(
         "//python/python-parser:parser",
     ],
 )
-
-jvm_library(
-    name = "minimap_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.python.minimap",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":minimap",
-        "//plugins/minimap/core:core_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/structure-view-impl:structureView_test_lib",
-        "//python:python-community-impl_test_lib",
-        "//python/python-navigation:navigation_test_lib",
-        "//python/python-parser:parser_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.minimap` end
 
 ### auto-generated section `iml intellij.python.minimap` start

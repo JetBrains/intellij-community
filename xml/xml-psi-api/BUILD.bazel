@@ -36,30 +36,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-jvm_library(
-    name = "psi_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.xml.psi",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":psi",
-        "//xml/xml-parser:parser_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.xml.psi` end
 
 ### auto-generated section `iml intellij.xml.psi` start

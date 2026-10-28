@@ -66,42 +66,6 @@ jvm_library(
         "//plugins/kotlin/references",
     ],
 )
-
-jvm_library(
-    name = "statistics_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_statistics",
-    module_name = "intellij.kotlin.base.statistics",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":statistics",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//plugins/kotlin/base/platforms:platforms_test_lib",
-        "//plugins/kotlin/base/facet:facet_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//java/java-impl:impl_test_lib",
-        "//platform/external-system-api:externalSystem_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//plugins/kotlin/base/compiler-configuration:compiler-configuration_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//plugins/kotlin/references:references_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.base.statistics` end
 
 ### auto-generated section `iml intellij.kotlin.base.statistics` start

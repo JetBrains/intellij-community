@@ -35,29 +35,6 @@ jvm_library(
         "//platform/platform-impl/maintenance",
     ],
 )
-
-jvm_library(
-    name = "registry-ui_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.registry.ui",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":registry-ui",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/platform-impl/maintenance:maintenance_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.registry.ui` end
 
 ### auto-generated section `iml intellij.platform.registry.ui` start

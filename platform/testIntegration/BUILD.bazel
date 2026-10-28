@@ -30,25 +30,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "testIntegration_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.testIntegration",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testIntegration",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.testIntegration` end
 
 ### auto-generated section `iml intellij.platform.testIntegration` start

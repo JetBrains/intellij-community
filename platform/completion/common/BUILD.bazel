@@ -49,33 +49,6 @@ jvm_library(
         "//platform/lang-api:lang",
     ],
 )
-
-jvm_library(
-    name = "common_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.completion.common",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-        "//platform/kernel/rpc:rpc_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/platform-impl/rpc:rpc_test_lib",
-        "//platform/lang-api:lang_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.completion.common` end
 
 ### auto-generated section `iml intellij.platform.completion.common` start
@@ -90,16 +63,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.completion.common.tests` start
 jvm_library(
-    name = "common-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.completion.common.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "common-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -112,24 +75,16 @@ jvm_library(
     ),
     module_name = "intellij.platform.completion.common.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":common-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/lang-impl",
-        "//platform/lang-impl:lang-impl_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/kotlinx/serialization/json",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/completion/common",
-        "//platform/completion/common:common_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.completion.common.tests` end

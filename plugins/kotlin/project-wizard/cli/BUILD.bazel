@@ -55,28 +55,6 @@ jvm_library(
         "//plugins/kotlin/project-wizard/core",
     ],
 )
-
-jvm_library(
-    name = "cli_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_cli",
-    module_name = "intellij.kotlin.projectWizard.cli",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":cli",
-        "//platform/core-api:core_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/snakeyaml:snakeyaml_test_lib",
-        "//plugins/kotlin/project-wizard/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.projectWizard.cli` end
 
 ### auto-generated section `iml intellij.kotlin.projectWizard.cli` start

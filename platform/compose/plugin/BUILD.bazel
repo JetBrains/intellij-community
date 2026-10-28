@@ -83,18 +83,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.compose.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
-)
 ### auto-generated section `build intellij.platform.compose.plugin` end
 
 ### auto-generated section `iml intellij.platform.compose.plugin` start

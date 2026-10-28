@@ -16,18 +16,6 @@ jvm_library(
     module_name = "kotlin.jvm-debugger.test",
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "test_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "kotlin.jvm-debugger.test",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":test"],
-)
 ### auto-generated section `build kotlin.jvm-debugger.test` end
 
 ### auto-generated section `iml kotlin.jvm-debugger.test` start

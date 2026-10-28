@@ -50,25 +50,6 @@ jvm_library(
         "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common",
     ],
 )
-
-jvm_library(
-    name = "scripting_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_scripting",
-    module_name = "kotlin.scripting",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":scripting",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/kotlinc/kotlin-scripting-common:libraries-kotlinc-kotlin-scripting-common_test_lib",
-    ],
-)
 ### auto-generated section `build kotlin.scripting` end
 
 ### auto-generated section `iml kotlin.scripting` start

@@ -36,26 +36,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "shared_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.vcs.gitlab.shared",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":shared",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.vcs.gitlab.shared` end
 
 ### auto-generated section `iml intellij.vcs.gitlab.shared` start

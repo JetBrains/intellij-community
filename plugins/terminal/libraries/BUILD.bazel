@@ -16,19 +16,6 @@ jvm_library(
     exports = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
     runtime_deps = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
 )
-
-jvm_library(
-    name = "libraries-completionDbWithExtensions_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.libraries.completionDbWithExtensions",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:terminal-libraries-completion_db_with_extensions-terminal-completion-db-with-extensions"],
-    runtime_deps = [":libraries-completionDbWithExtensions"],
-)
 ### auto-generated section `build intellij.terminal.libraries.completionDbWithExtensions` end
 
 ### auto-generated section `iml intellij.terminal.libraries.completionDbWithExtensions` start

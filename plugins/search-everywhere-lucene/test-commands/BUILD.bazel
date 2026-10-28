@@ -32,26 +32,6 @@ jvm_library(
         "//platform/platform-impl/playback",
     ],
 )
-
-jvm_library(
-    name = "searchEverywhereLucene-performanceTesting_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.searchEverywhereLucene.performanceTesting",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":searchEverywhereLucene-performanceTesting",
-        "//plugins/performanceTesting/core:performanceTesting_test_lib",
-        "//plugins/search-everywhere-lucene/backend:backend_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/platform-impl/playback:playback_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.searchEverywhereLucene.performanceTesting` end
 
 ### auto-generated section `iml intellij.searchEverywhereLucene.performanceTesting` start

@@ -69,45 +69,6 @@ jvm_library(
         "//plugins/kotlin/base/code-insight",
     ],
 )
-
-jvm_library(
-    name = "kotlin-codeInsight-structuralSearch_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin-codeInsight-structuralSearch",
-    module_name = "intellij.kotlin.codeInsight.structuralSearch",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-codeInsight-structuralSearch",
-        "//plugins/kotlin/references:references_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//platform/duplicates-analysis:duplicates-analysis_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/structuralsearch:structuralSearch_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//plugins/kotlin/base/analysis:analysis_test_lib",
-        "//plugins/kotlin/base/psi:psi_test_lib",
-        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
-        "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates_test_lib",
-        "//plugins/kotlin/base/code-insight:code-insight_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.codeInsight.structuralSearch` end
 
 ### auto-generated section `iml intellij.kotlin.codeInsight.structuralSearch` start

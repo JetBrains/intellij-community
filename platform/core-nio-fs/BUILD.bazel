@@ -37,23 +37,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["//libraries/jetbrains/annotations"],
 )
-
-jvm_library(
-    name = "core-nio-fs_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    javac_opts = ":custom-javac-options",
-    module_name = "intellij.platform.core.nio.fs",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":core-nio-fs",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.core.nio.fs` end
 
 ### auto-generated section `iml intellij.platform.core.nio.fs` start
@@ -67,21 +50,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` start
 jvm_library(
-    name = "core-nio-fs-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.core.nio.fs.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/core-nio-fs",
-        "//platform/util",
-    ],
-)
-
-jvm_library(
     name = "core-nio-fs-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -94,26 +62,17 @@ jvm_library(
     ),
     module_name = "intellij.platform.core.nio.fs.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":core-nio-fs-tests"],
     deps = [
         # do not sort,
         "//platform/core-nio-fs",
-        "//platform/core-nio-fs:core-nio-fs_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//libraries/mockk",
-        "//libraries/mockk:mockk_test_lib",
         "//libraries/mockk/jvm",
-        "//libraries/mockk/jvm:jvm_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/reflect",
-        "//libraries/kotlin/reflect:reflect_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm",
-        "//libraries/kotlin/test-assertions-core-jvm:libraries-kotlinTestAssertionsCoreJvm_test_lib",
         "//libraries/mockito",
-        "//libraries/mockito:mockito_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.core.nio.fs.tests` end

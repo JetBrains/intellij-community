@@ -34,33 +34,6 @@ jvm_library(
         "//platform/util/annotations",
     ],
 )
-
-jvm_library(
-    name = "ide-util-io_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ide.util.io",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-util-io",
-        "//platform/core-api:core_test_lib",
-        "//libraries/guava:guava_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/diagnostic:diagnostic_test_lib",
-        "//platform/eel-nioFs:eel-nioFs_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/util/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.util.io` end
 
 ### auto-generated section `iml intellij.platform.ide.util.io` start

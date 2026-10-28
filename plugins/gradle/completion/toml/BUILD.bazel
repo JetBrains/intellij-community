@@ -42,33 +42,6 @@ jvm_library(
         "//platform/editor-ui-api:editor-ui",
     ],
 )
-
-jvm_library(
-    name = "toml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.completion.toml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":toml",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//plugins/toml/core:core_test_lib",
-        "//plugins/repository-search/completion:completion_test_lib",
-        "//plugins/gradle/completion:completion_test_lib",
-        "//plugins/gradle:gradle_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.completion.toml` end
 
 ### auto-generated section `iml intellij.gradle.completion.toml` start
@@ -82,23 +55,6 @@ exports_files(
 ### auto-generated section `iml intellij.gradle.completion.toml` end
 
 ### auto-generated section `build intellij.gradle.completion.toml.tests` start
-jvm_library(
-    name = "gradle-completion-toml-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.completion.toml.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//plugins/toml",
-        "//plugins/toml/core",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
 jvm_library(
     name = "gradle-completion-toml-tests_test_lib",
     testonly = True,
@@ -114,63 +70,38 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":gradle-completion-toml-tests",
-        "//plugins/toml:toml_test_lib",
-        "//plugins/toml/core:core_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//plugins/toml",
+        "//plugins/toml/core",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//plugins/repository-search/completion",
-        "//plugins/repository-search/completion:completion_test_lib",
         "//plugins/gradle/completion",
-        "//plugins/gradle/completion:completion_test_lib",
         "//plugins/gradle/completion/toml",
-        "//plugins/gradle/completion/toml:toml_test_lib",
         "//plugins/gradle",
-        "//plugins/gradle:gradle_test_lib",
         "//libraries/kotlin/test-junit:libraries-kotlin-test-junit",
-        "//libraries/kotlin/test-junit:libraries-kotlin-test-junit_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/common",
-        "//platform/testFramework/common:common_test_lib",
         "//java/testFramework",
-        "//java/testFramework:testFramework_test_lib",
         "//java/openapi:java",
-        "//java/openapi:java_test_lib",
         "//java/plugin",
-        "//java/plugin:plugin_test_lib",
         "//java/java-impl:impl",
-        "//java/java-impl:impl_test_lib",
-        "//plugins/gradle:gradle-tests",
         "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/groovy",
-        "//plugins/groovy:groovy_test_lib",
         "//plugins/groovy/testFramework",
-        "//plugins/groovy/testFramework:testFramework_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
         "//platform/eel-provider",
-        "//platform/eel-provider:eel-provider_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/util/jdom",
-        "//platform/util/jdom:jdom_test_lib",
         "//platform/analysis-impl",
-        "//platform/analysis-impl:analysis-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.completion.toml.tests` end

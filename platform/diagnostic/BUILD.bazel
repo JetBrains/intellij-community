@@ -22,25 +22,6 @@ jvm_library(
         "//libraries/fastutil",
     ],
 )
-
-jvm_library(
-    name = "diagnostic_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.diagnostic",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":diagnostic",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.diagnostic` end
 
 ### auto-generated section `iml intellij.platform.diagnostic` start

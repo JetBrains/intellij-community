@@ -75,38 +75,6 @@ jvm_library(
         "//fleet/openmap",
     ],
 )
-
-jvm_library(
-    name = "andel_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_andel",
-    module_name = "fleet.andel",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//fleet/bifurcan",
-        "//fleet/bifurcan:bifurcan_test_lib",
-        "//fleet/openmap",
-        "//fleet/openmap:openmap_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":andel",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//fleet/util/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//fleet/util/codepoints:codepoints_test_lib",
-        "//fleet/bifurcan:bifurcan_test_lib",
-        "//fleet/fastutil:fastutil_test_lib",
-        "//fleet/openmap:openmap_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.andel` end
 
 ### auto-generated section `iml fleet.andel` start

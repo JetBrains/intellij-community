@@ -49,24 +49,6 @@ jvm_library(
         "//fleet/util/serialization",
     ],
 )
-
-jvm_library(
-    name = "radixTrie_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_radixTrie",
-    module_name = "fleet.radixTrie",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":radixTrie",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//fleet/util/serialization:serialization_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.radixTrie` end
 
 ### auto-generated section `iml fleet.radixTrie` start

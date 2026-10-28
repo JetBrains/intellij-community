@@ -56,34 +56,6 @@ jvm_library(
         "//platform/ml-api:ml",
     ],
 )
-
-jvm_library(
-    name = "turboComplete_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.turboComplete",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":turboComplete",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/ml-impl:ml-impl_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
-        "//platform/ml-api:ml_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.turboComplete` end
 
 ### auto-generated section `plugin intellij.turboComplete` start
@@ -106,16 +78,6 @@ exports_files(
 
 ### auto-generated section `build intellij.turboComplete.tests` start
 jvm_library(
-    name = "turboComplete-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.turboComplete.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "turboComplete-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -128,18 +90,13 @@ jvm_library(
     ),
     module_name = "intellij.turboComplete.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":turboComplete-tests"],
     deps = [
         # do not sort,
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//plugins/turboComplete",
-        "//plugins/turboComplete:turboComplete_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/ml-impl",
-        "//platform/ml-impl:ml-impl_test_lib",
     ],
 )
 ### auto-generated section `build intellij.turboComplete.tests` end

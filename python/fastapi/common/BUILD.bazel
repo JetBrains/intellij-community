@@ -43,29 +43,6 @@ jvm_library(
         "//python:python-community-impl",
     ],
 )
-
-jvm_library(
-    name = "common_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_common",
-    module_name = "intellij.python.fastapi.common",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":common",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//python:python-community-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.fastapi.common` end
 
 ### auto-generated section `iml intellij.python.fastapi.common` start

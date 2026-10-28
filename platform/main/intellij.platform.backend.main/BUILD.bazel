@@ -37,45 +37,6 @@ jvm_library(
         "//platform/backend/workspace.impl",
     ],
 )
-
-jvm_library(
-    name = "backend-main_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.backend.main",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend-main",
-        "//platform/main/intellij.platform.main:main_test_lib",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//platform/navbar/backend:backend_test_lib",
-        "//platform/project/backend:backend_test_lib",
-        "//platform/progress/backend:backend_test_lib",
-        "//platform/xdebugger-impl/backend:backend_test_lib",
-        "//plugins/stream-debugger/backend:backend_test_lib",
-        "//platform/searchEverywhere/backend:backend_test_lib",
-        "//platform/vcs-impl:vcs-impl_test_lib",
-        "//platform/bookmarks/backend:backend_test_lib",
-        "//platform/recentFiles/backend:backend_test_lib",
-        "//platform/execution-impl/backend:backend_test_lib",
-        "//platform/execution.dashboard/backend:backend_test_lib",
-        "//spellchecker/xml:xml_test_lib",
-        "//spellchecker/xml/backend:backend_test_lib",
-        "//platform/find/backend:backend_test_lib",
-        "//platform/todo/backend:backend_test_lib",
-        "//platform/managed-cache/managed.cache.backend:managed.cache.backend_test_lib",
-        "//platform/scopes/backend:backend_test_lib",
-        "//platform/remote-topics/backend:backend_test_lib",
-        "//platform/buildView/backend:backend_test_lib",
-        "//platform/lang-impl/backend:backend_test_lib",
-        "//platform/pluginManager/backend:backend_test_lib",
-        "//platform/backend/workspace.impl:workspace.impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.backend.main` end
 
 ### auto-generated section `iml intellij.platform.backend.main` start

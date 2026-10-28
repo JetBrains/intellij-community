@@ -40,34 +40,6 @@ jvm_library(
         "//platform/platform-frontend:frontend",
     ],
 )
-
-jvm_library(
-    name = "structureView_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.lsp.impl.structureView",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":structureView",
-        "//libraries/lsp4j:lsp4j_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/lsp:lsp_test_lib",
-        "//platform/lsp-impl:lsp-impl_test_lib",
-        "//platform/structure-view-impl:structureView_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/platform-frontend:frontend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.lsp.impl.structureView` end
 
 ### auto-generated section `iml intellij.platform.lsp.impl.structureView` start

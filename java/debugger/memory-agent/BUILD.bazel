@@ -24,23 +24,6 @@ jvm_library(
         "@lib//:java-debugger-memory-agent-debugger-memory-agent",
     ],
 )
-
-jvm_library(
-    name = "java-debugger-memory-agent_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.java.debugger.memory.agent",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:java-debugger-memory-agent-debugger-memory-agent"],
-    runtime_deps = [
-        # do not sort,
-        ":java-debugger-memory-agent",
-        "//platform/backend:backend_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.java.debugger.memory.agent` end
 
 ### auto-generated section `iml intellij.java.debugger.memory.agent` start

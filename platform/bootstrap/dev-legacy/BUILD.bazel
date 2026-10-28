@@ -21,25 +21,6 @@ jvm_library(
         "//platform/util-class-loader:util-classLoader",
     ],
 )
-
-jvm_library(
-    name = "dev-legacy_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.bootstrap.dev.legacy",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":dev-legacy",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/boot:boot_test_lib",
-        "//platform/build-scripts/dev-server-legacy:buildScripts-devBuildServer-legacy_test_lib",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.bootstrap.dev.legacy` end
 
 ### auto-generated section `iml intellij.platform.bootstrap.dev.legacy` start

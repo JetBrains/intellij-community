@@ -40,35 +40,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "dashboard_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.junit.dashboard",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":dashboard",
-        "//plugins/junit:junit_test_lib",
-        "//platform/execution.dashboard:execution.dashboard_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/execution/openapi:java-execution_test_lib",
-        "//java/execution/impl:impl_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/smRunner:smRunner_test_lib",
-        "//platform/testRunner:testRunner_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.junit.dashboard` end
 
 ### auto-generated section `iml intellij.junit.dashboard` start

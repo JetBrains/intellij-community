@@ -26,27 +26,6 @@ jvm_library(
         "//platform/util-class-loader:util-classLoader",
     ],
 )
-
-jvm_library(
-    name = "dev_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.bootstrap.dev",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":dev",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/boot:boot_test_lib",
-        "//platform/build-scripts/dev-launch:dev-launch_test_lib",
-        "//platform/core-nio-fs:core-nio-fs_test_lib",
-        "//platform/devIdeConfig:devIdeConfig_test_lib",
-        "//platform/util-class-loader:util-classLoader_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.bootstrap.dev` end
 
 ### auto-generated section `iml intellij.platform.bootstrap.dev` start

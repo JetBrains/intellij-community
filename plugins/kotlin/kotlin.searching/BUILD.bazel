@@ -70,46 +70,6 @@ jvm_library(
         "//plugins/kotlin/base/psi",
     ],
 )
-
-jvm_library(
-    name = "kotlin.searching_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin.searching",
-    module_name = "intellij.kotlin.searching",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin.searching",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-indexing-api:indexing_test_lib",
-        "//plugins/kotlin/references:references_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//libraries/kotlinc/analysis-api:libraries-kotlinc-analysis-api_test_lib",
-        "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes_test_lib",
-        "//platform/usageView-impl:usageView-impl_test_lib",
-        "//plugins/kotlin/base/indices:indices_test_lib",
-        "//plugins/kotlin/base/project-structure:project-structure_test_lib",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//java/java-indexing-impl:indexing-impl_test_lib",
-        "//plugins/kotlin/base/analysis:analysis_test_lib",
-        "//plugins/kotlin/base/resources:kotlin-base-resources_test_lib",
-        "//plugins/kotlin/frontend-independent:frontend-independent_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/kotlin.searching/base:base_test_lib",
-        "//plugins/kotlin/base/facet:facet_test_lib",
-        "//plugins/kotlin/base/analysis-api/analysis-api-utils:kotlin-base-analysis-utils_test_lib",
-        "//plugins/kotlin/base/psi:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.searching` end
 
 ### auto-generated section `iml intellij.kotlin.searching` start

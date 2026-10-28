@@ -63,33 +63,6 @@ jvm_library(
         "//libraries/skiko",
     ],
 )
-
-jvm_library(
-    name = "foundation_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_foundation",
-    module_name = "intellij.platform.jewel.foundation",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/skiko",
-        "//libraries/skiko:skiko_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":foundation",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/skiko:skiko_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.jewel.foundation` end
 
 ### auto-generated section `iml intellij.platform.jewel.foundation` start
@@ -116,16 +89,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "foundation-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.jewel.foundation.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "foundation-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -136,22 +99,15 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
-    ],
+    associates = ["//platform/jewel/foundation"],
     kotlinc_opts = ":custom_foundation-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":foundation-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
         "//platform/bazel-runfiles",
-        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.foundation.tests` end

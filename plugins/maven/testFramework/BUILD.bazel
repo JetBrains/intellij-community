@@ -89,66 +89,6 @@ jvm_library(
         ":libraries_junit6-params_provided",
     ],
 )
-
-jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.maven.testFramework",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/code-style-api:codeStyle_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//java/java-syntax:syntax_test_lib",
-        "//platform/external-system-impl:externalSystem-impl_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//platform/lang-core:lang-core_test_lib",
-        "//platform/lang-api:lang_test_lib",
-        "//platform/refactoring:refactoring_test_lib",
-        "//platform/testFramework:testFramework_test_lib",
-        "//plugins/maven:maven_test_lib",
-        "//plugins/maven/plugin:plugin_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//java/java-runtime:rt_test_lib",
-        "//java/java-impl:impl_test_lib",
-        "//java/idea-ui:ui_test_lib",
-        "//platform/usageView:usageView_test_lib",
-        "//java/testFramework:testFramework_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//xml/xml-psi-api:psi_test_lib",
-        "//platform/backend/observation:observation_test_lib",
-        "//platform/backend/workspace:workspace_test_lib",
-        "//platform/workspace/storage:storage_test_lib",
-        "//libraries/bouncy-castle-provider:bouncy-castle-provider_test_lib",
-        "//platform/testFramework/eelJava:eelJava_test_lib",
-        "//platform/eel-provider:eel-provider_test_lib",
-        "//platform/util/progress:progress_test_lib",
-        "//xml/xml-analysis-api:analysis_test_lib",
-        "//xml/xml-analysis-impl:analysis-impl_test_lib",
-        "//platform/execution:execution_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//java/testFramework/backend:backend_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/testFramework/junit5:junit5_test_lib",
-        "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
-        "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
-        "//libraries/junit6-params",
-        "//libraries/junit6-params:junit6-params_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.maven.testFramework` end
 
 ### auto-generated section `iml intellij.maven.testFramework` start
@@ -163,17 +103,6 @@ exports_files(
 
 ### auto-generated section `build intellij.maven.testFramework.tests` start
 jvm_library(
-    name = "testFramework-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.maven.testFramework.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//plugins/maven/testFramework"],
-)
-
-jvm_library(
     name = "testFramework-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -186,20 +115,13 @@ jvm_library(
     ),
     module_name = "intellij.maven.testFramework.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework-tests",
-        "//plugins/maven/testFramework:testFramework_test_lib",
-    ],
+    runtime_deps = ["//plugins/maven/testFramework"],
     deps = [
         # do not sort,
         "//plugins/maven",
-        "//plugins/maven:maven_test_lib",
         "@lib//:maven-test_framework-tests-io-takari-maven-wrapper",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.maven.testFramework.tests` end

@@ -55,38 +55,6 @@ jvm_library(
         "//java/java-psi-api:psi",
     ],
 )
-
-jvm_library(
-    name = "apiDump-lang_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.devkit.apiDump.lang",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":apiDump-lang",
-        "//java/java-indexing-api:indexing_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//platform/usageView-impl:usageView-impl_test_lib",
-        "//platform/workspace/jps:jps_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/usageView:usageView_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//plugins/devkit/api-dump:api-dump_test_lib",
-        "//java/java-impl:impl_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.devkit.apiDump.lang` end
 
 ### auto-generated section `iml intellij.devkit.apiDump.lang` start
@@ -101,25 +69,6 @@ exports_files(
 
 ### auto-generated section `build intellij.devkit.apiDump.lang.tests` start
 jvm_library(
-    name = "apiDump-lang-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.devkit.apiDump.lang.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//xml/plugin",
-        "//java/plugin",
-        "//platform/structure-view-impl/plugin",
-        "//aether-dependency-resolver/plugin",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "apiDump-lang-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -130,50 +79,33 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/devkit/api-dump-lang:apiDump-lang",
-        "//plugins/devkit/api-dump-lang:apiDump-lang_test_lib",
-    ],
+    associates = ["//plugins/devkit/api-dump-lang:apiDump-lang"],
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":apiDump-lang-tests",
-        "//platform/ide-core:ide-core_test_lib",
-        "//xml/plugin:plugin_test_lib",
-        "//java/plugin:plugin_test_lib",
-        "//platform/structure-view-impl/plugin:plugin_test_lib",
-        "//aether-dependency-resolver/plugin:plugin_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//xml/plugin",
+        "//java/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/analysis-impl",
-        "//platform/analysis-impl:analysis-impl_test_lib",
         "//java/java-impl:impl",
-        "//java/java-impl:impl_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//platform/testFramework/junit5/codeInsight",
-        "//platform/testFramework/junit5/codeInsight:codeInsight_test_lib",
         "//plugins/devkit:devkit-plugin-main-noKotlin",
-        "//plugins/devkit:devkit-plugin-main-noKotlin_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.devkit.apiDump.lang.tests` end

@@ -26,23 +26,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = ["//libraries/jetbrains/annotations"],
 )
-
-jvm_library(
-    name = "util-rt_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.util.rt",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":util-rt",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.util.rt` end
 
 ### auto-generated section `iml intellij.platform.util.rt` start
@@ -56,16 +39,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.util.rt.tests` start
 jvm_library(
-    name = "util-rt-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.util.rt.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "util-rt-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -78,13 +51,10 @@ jvm_library(
     ),
     module_name = "intellij.platform.util.rt.tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":util-rt-tests"],
     deps = [
         # do not sort,
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/util-rt",
-        "//platform/util-rt:util-rt_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.rt.tests` end

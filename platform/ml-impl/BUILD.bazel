@@ -59,39 +59,6 @@ jvm_library(
         "//platform/ide-core-impl",
     ],
 )
-
-jvm_library(
-    name = "ml-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ml.impl",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:ngram-slp"],
-    runtime_deps = [
-        # do not sort,
-        ":ml-impl",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util-ex:util-ex_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
-        "//platform/backend:backend_test_lib",
-        "//platform/util/text-matching:text-matching_test_lib",
-        "//platform/lang-impl:lang-impl_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/ml-api:ml_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//libraries/kotlin/reflect:reflect_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ml.impl` end
 
 ### auto-generated section `iml intellij.platform.ml.impl` start
@@ -105,17 +72,6 @@ exports_files(
 ### auto-generated section `iml intellij.platform.ml.impl` end
 
 ### auto-generated section `build intellij.platform.ml.impl.tests` start
-jvm_library(
-    name = "ml-impl-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.ml.impl.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//platform/backend"],
-)
-
 jvm_library(
     name = "ml-impl-tests_test_lib",
     testonly = True,
@@ -133,44 +89,25 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ml-impl-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/backend:backend_test_lib",
-    ],
+    runtime_deps = ["//platform/backend"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/util-ex",
-        "//platform/util-ex:util-ex_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/lang-impl",
-        "//platform/lang-impl:lang-impl_test_lib",
         "//platform/ml-api:ml",
-        "//platform/ml-api:ml_test_lib",
         "//platform/statistics",
-        "//platform/statistics:statistics_test_lib",
         "//platform/statistics/testFramework",
-        "//platform/statistics/testFramework:testFramework_test_lib",
         "//platform/ml-impl",
-        "//platform/ml-impl:ml-impl_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.ml.impl.tests` end

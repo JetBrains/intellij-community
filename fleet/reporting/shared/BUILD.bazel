@@ -60,27 +60,6 @@ jvm_library(
         "//fleet/multiplatform.shims",
     ],
 )
-
-jvm_library(
-    name = "shared_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_shared",
-    module_name = "fleet.reporting.shared",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":shared",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//fleet/reporting/api:api_test_lib",
-        "//fleet/multiplatform.shims:multiplatform.shims_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.reporting.shared` end
 
 ### auto-generated section `iml fleet.reporting.shared` start

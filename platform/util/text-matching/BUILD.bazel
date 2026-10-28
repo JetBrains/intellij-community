@@ -44,25 +44,6 @@ jvm_library(
         "@lib//:kotlin-stdlib",
     ],
 )
-
-jvm_library(
-    name = "text-matching_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.util.text.matching",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":text-matching",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.util.text.matching` end
 
 ### auto-generated section `iml intellij.platform.util.text.matching` start
@@ -77,16 +58,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.util.text.matching.tests` start
 jvm_library(
-    name = "text-matching-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.util.text.matching.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "text-matching-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -100,28 +71,18 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/util/text-matching",
-        "//platform/util/text-matching:text-matching_test_lib",
-    ],
+    associates = ["//platform/util/text-matching"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":text-matching-tests"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/util/base",
-        "//platform/util/base:base_test_lib",
         "//platform/util/base/multiplatform",
-        "//platform/util/base/multiplatform:multiplatform_test_lib",
         "//platform/util-rt",
-        "//platform/util-rt:util-rt_test_lib",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
         "@lib//:kotlin-test-junit5",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.util.text.matching.tests` end

@@ -47,42 +47,6 @@ jvm_library(
         "//platform/analysis-api:analysis",
     ],
 )
-
-jvm_library(
-    name = "frontendProcessLauncher_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.remoteDev.frontendProcessLauncher",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":frontendProcessLauncher",
-        "//platform/core-api:core_test_lib",
-        "//platform/remoteDev-util:remoteDev-util_test_lib",
-        "//platform/runtime/repository:repository_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/progress/shared:ide-progress_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//libraries/download-pgp-verifier:download-pgp-verifier_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/rd-platform-community:rd-community_test_lib",
-        "//libraries/rd/core:core_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/util/progress:progress_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/bootstrap:bootstrap_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/productMode:productMode_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.remoteDev.frontendProcessLauncher` end
 
 ### auto-generated section `iml intellij.remoteDev.frontendProcessLauncher` start

@@ -37,26 +37,6 @@ jvm_library(
         ":libraries_kodein-di-jvm_provided",
     ],
 )
-
-jvm_library(
-    name = "ide-starter-product-gateway_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_ide-starter-product-gateway",
-    module_name = "intellij.tools.ide.starter.product.gateway",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":ide-starter-product-gateway",
-        "//tools/intellij.tools.ide.starter:ide-starter_test_lib",
-        "//libraries/junit6-launcher:junit6-launcher_test_lib",
-        "//libraries/kodein-di-jvm",
-        "//libraries/kodein-di-jvm:kodein-di-jvm_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.tools.ide.starter.product.gateway` end
 
 ### auto-generated section `iml intellij.tools.ide.starter.product.gateway` start

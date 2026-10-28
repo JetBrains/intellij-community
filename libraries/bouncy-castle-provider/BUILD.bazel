@@ -24,20 +24,6 @@ jvm_library(
     exports = ["@lib//:libraries-bouncy-castle-provider-bouncy-castle-provider"],
     runtime_deps = ["@lib//:libraries-bouncy-castle-provider-bouncy-castle-provider"],
 )
-
-jvm_library(
-    name = "bouncy-castle-provider_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.bouncy.castle.provider",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-bouncy-castle-provider-bouncy-castle-provider"],
-    runtime_deps = [":bouncy-castle-provider"],
-)
 ### auto-generated section `build intellij.libraries.bouncy.castle.provider` end
 
 ### auto-generated section `iml intellij.libraries.bouncy.castle.provider` start

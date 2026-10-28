@@ -2,16 +2,6 @@ load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.lambda.test.plugin` start
 jvm_library(
-    name = "plugin",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.lambda.test.plugin",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "plugin_test_lib",
     testonly = True,
     srcs = glob(
@@ -24,7 +14,6 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
 )
 ### auto-generated section `build intellij.lambda.test.plugin` end
 

@@ -19,23 +19,6 @@ jvm_library(
         "//platform/util",
     ],
 )
-
-jvm_library(
-    name = "debugger.ui.test.util_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.debugger.ui.test.util",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":debugger.ui.test.util",
-        "//platform/remote-driver/test-sdk:driver-sdk_test_lib",
-        "//platform/util:util_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.debugger.ui.test.util` end
 
 ### auto-generated section `iml intellij.debugger.ui.test.util` start

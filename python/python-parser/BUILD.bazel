@@ -51,31 +51,6 @@ jvm_library(
         "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable",
     ],
 )
-
-jvm_library(
-    name = "parser_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_parser",
-    module_name = "intellij.python.parser",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":parser",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.python.parser` end
 
 ### auto-generated section `iml intellij.python.parser` start

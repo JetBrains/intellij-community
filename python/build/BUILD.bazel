@@ -79,44 +79,6 @@ jvm_library(
         "//platform/eel",
     ],
 )
-
-jvm_library(
-    name = "build_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_build",
-    module_name = "intellij.pycharm.community.build",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":build",
-        "//build:build_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/build-scripts/downloader:downloader_test_lib",
-        "//build/tasks:tasks_test_lib",
-        "//libraries/opentelemetry:opentelemetry_test_lib",
-        "//libraries/opentelemetry-semconv:opentelemetry-semconv_test_lib",
-        "//libraries/opentelemetry-extension-kotlin:opentelemetry-extension-kotlin_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//python/python-sdk/backend:backend_test_lib",
-        "//python/python-pixi/common:common_test_lib",
-        "//python/python-parser:parser_test_lib",
-        "//jps/model-api:model_test_lib",
-        "//libraries/jsoup:jsoup_test_lib",
-        "//libraries/jackson/annotations:annotations_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin_test_lib",
-        "//platform/eel:eel_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.pycharm.community.build` end
 
 ### auto-generated section `iml intellij.pycharm.community.build` start
@@ -136,17 +98,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "pycharm-community-build-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.pycharm.community.build.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = ["//libraries/byte-buddy"],
-)
-
-jvm_library(
     name = "pycharm-community-build-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -157,42 +108,24 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//python/build",
-        "//python/build:build_test_lib",
-    ],
+    associates = ["//python/build"],
     kotlinc_opts = ":custom_pycharm-community-build-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":pycharm-community-build-tests",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/byte-buddy:byte-buddy_test_lib",
-    ],
+    runtime_deps = ["//libraries/byte-buddy"],
     deps = [
         # do not sort,
         "//build",
-        "//build:build_test_lib",
         "//platform/build-scripts/testFramework",
-        "//platform/build-scripts/testFramework:testFramework_test_lib",
         "@lib//:kotlin-stdlib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/build-scripts/downloader",
-        "//platform/build-scripts/downloader:downloader_test_lib",
         "//build/tasks",
-        "//build/tasks:tasks_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/assertj-core",
-        "//libraries/assertj-core:assertj-core_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/platform-util-io:ide-util-io",
         "//platform/ide-core",
         "//python/python-sdk/backend",
-        "//python/python-sdk/backend:backend_test_lib",
     ],
 )
 ### auto-generated section `build intellij.pycharm.community.build.tests` end

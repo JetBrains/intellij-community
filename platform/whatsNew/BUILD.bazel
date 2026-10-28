@@ -62,41 +62,6 @@ jvm_library(
         "//platform/welcome-screen",
     ],
 )
-
-jvm_library(
-    name = "whatsNew_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_whatsNew",
-    module_name = "intellij.platform.whatsNew",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":whatsNew",
-        "//platform/core-api:core_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/miglayout-swing:miglayout-swing_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/ui.jcef:ui.jcef_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/util/coroutines:coroutines_test_lib",
-        "//platform/welcome-screen:welcome-screen_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.whatsNew` end
 
 ### auto-generated section `iml intellij.platform.whatsNew` start
@@ -116,16 +81,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "whatsNew-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.whatsNew.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "whatsNew-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -136,46 +91,27 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/whatsNew",
-        "//platform/whatsNew:whatsNew_test_lib",
-    ],
+    associates = ["//platform/whatsNew"],
     kotlinc_opts = ":custom_whatsNew-tests",
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":whatsNew-tests",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-    ],
     deps = [
         # do not sort,
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide",
-        "//platform/platform-api:ide_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//platform/ide-core-impl",
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
-        "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin_test_lib",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.whatsNew.tests` end

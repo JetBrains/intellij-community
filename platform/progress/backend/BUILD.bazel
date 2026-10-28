@@ -36,30 +36,6 @@ jvm_library(
         "//fleet/rpc",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.progress.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/backend:backend_test_lib",
-        "//platform/util:util_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/progress/shared:ide-progress_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/project/shared:project_test_lib",
-        "//platform/kernel/rpc.backend:rpc.backend_test_lib",
-        "//platform/util/progress:progress_test_lib",
-        "//fleet/rpc:rpc_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.progress.backend` end
 
 ### auto-generated section `iml intellij.platform.progress.backend` start

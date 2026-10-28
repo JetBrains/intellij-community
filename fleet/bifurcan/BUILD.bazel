@@ -58,26 +58,6 @@ jvm_library(
         "//fleet/util/serialization",
     ],
 )
-
-jvm_library(
-    name = "bifurcan_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_bifurcan",
-    module_name = "fleet.bifurcan",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":bifurcan",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinx/collections-immutable:libraries-kotlinx-collections-immutable_test_lib",
-        "//fleet/util/serialization:serialization_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.bifurcan` end
 
 ### auto-generated section `iml fleet.bifurcan` start

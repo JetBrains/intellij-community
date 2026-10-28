@@ -58,47 +58,6 @@ jvm_library(
         "//platform/productMode",
     ],
 )
-
-jvm_library(
-    name = "update-checker_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_update-checker",
-    module_name = "intellij.platform.ide.updateChecker",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":update-checker",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/extensions:extensions_test_lib",
-        "//platform/projectModel-api:projectModel_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/platform-util-io:ide-util-io_test_lib",
-        "//platform/ide-core/plugins:plugins_test_lib",
-        "//platform/util/jdom:jdom_test_lib",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/http-client:http-client_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//platform/platform-impl/initial-config-import:initial-config-import_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//platform/forms_rt:java-guiForms-rt_test_lib",
-        "//platform/util/concurrency:concurrency_test_lib",
-        "//platform/util:util-ui_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/productMode:productMode_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.ide.updateChecker` end
 
 ### auto-generated section `iml intellij.platform.ide.updateChecker` start

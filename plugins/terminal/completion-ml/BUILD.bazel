@@ -33,27 +33,6 @@ jvm_library(
         "//libraries/completion-ranking-sh",
     ],
 )
-
-jvm_library(
-    name = "completion-ml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.terminal.completion.ml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":completion-ml",
-        "//platform/core-api:core_test_lib",
-        "//platform/util:util_test_lib",
-        "//plugins/terminal:terminal_test_lib",
-        "//plugins/completion-ml-ranking:completion-ml-ranking_test_lib",
-        "//platform/platform-impl/internal:internal_test_lib",
-        "//libraries/completion-ranking-sh:completion-ranking-sh_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.terminal.completion.ml` end
 
 ### auto-generated section `iml intellij.terminal.completion.ml` start

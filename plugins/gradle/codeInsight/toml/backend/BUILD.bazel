@@ -39,33 +39,6 @@ jvm_library(
         "//plugins/toml/core",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.gradle.codeInsight.toml.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/backend:backend_test_lib",
-        "//plugins/gradle/codeInsight:codeInsight_test_lib",
-        "//plugins/gradle/codeInsight/backend:backend_test_lib",
-        "//plugins/gradle/codeInsight/toml:toml_test_lib",
-        "//plugins/gradle/java:java_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/analysis-impl:analysis-impl_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//plugins/toml/core:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.gradle.codeInsight.toml.backend` end
 
 ### auto-generated section `iml intellij.gradle.codeInsight.toml.backend` start

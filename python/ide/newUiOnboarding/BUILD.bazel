@@ -19,23 +19,6 @@ jvm_library(
         "//platform/new-ui-onboarding",
     ],
 )
-
-jvm_library(
-    name = "newUiOnboarding_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.pycharm.community.newUiOnboarding",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":newUiOnboarding",
-        "//platform/backend:backend_test_lib",
-        "//platform/new-ui-onboarding:new-ui-onboarding_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.pycharm.community.newUiOnboarding` end
 
 ### auto-generated section `iml intellij.pycharm.community.newUiOnboarding` start

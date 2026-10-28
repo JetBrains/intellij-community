@@ -34,19 +34,6 @@ jvm_library(
     module_name = "kotlin.idea.tests",
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "tests_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_tests",
-    module_name = "kotlin.idea.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":tests"],
-)
 ### auto-generated section `build kotlin.idea.tests` end
 
 ### auto-generated section `iml kotlin.idea.tests` start

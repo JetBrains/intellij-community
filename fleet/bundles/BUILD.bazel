@@ -60,28 +60,6 @@ jvm_library(
         "//fleet/bifurcan",
     ],
 )
-
-jvm_library(
-    name = "bundles_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_bundles",
-    module_name = "fleet.bundles",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":bundles",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//libraries/kotlinx/serialization/json:json_test_lib",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//fleet/util/core:core_test_lib",
-        "//fleet/modules/api:api_test_lib",
-        "//fleet/bifurcan:bifurcan_test_lib",
-    ],
-)
 ### auto-generated section `build fleet.bundles` end
 
 ### auto-generated section `iml fleet.bundles` start

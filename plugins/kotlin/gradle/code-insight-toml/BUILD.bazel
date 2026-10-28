@@ -61,38 +61,6 @@ jvm_library(
         "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2",
     ],
 )
-
-jvm_library(
-    name = "kotlin-gradle-codeInsight-toml_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_kotlin-gradle-codeInsight-toml",
-    module_name = "intellij.kotlin.gradle.codeInsight.toml",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":kotlin-gradle-codeInsight-toml",
-        "//plugins/toml/core:core_test_lib",
-        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//plugins/kotlin/base/util:util_test_lib",
-        "//plugins/kotlin/base/plugin:plugin_test_lib",
-        "//platform/analysis-api:analysis_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//uast/uast-common:uast_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/indexing-api:indexing_test_lib",
-        "//plugins/gradle/java:java_test_lib",
-        "//plugins/toml:toml_test_lib",
-        "//plugins/gradle/java/toml:toml_test_lib",
-        "//libraries/kotlinc/analysis-api-k2:libraries-kotlinc-analysis-api-k2_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.kotlin.gradle.codeInsight.toml` end
 
 ### auto-generated section `iml intellij.kotlin.gradle.codeInsight.toml` start

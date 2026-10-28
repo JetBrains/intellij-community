@@ -26,38 +26,6 @@ jvm_library(
         "//java/java-syntax:syntax",
     ],
 )
-
-jvm_library(
-    name = "standaloneAnalysis-java_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.standaloneAnalysis.java",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//standalone-analysis/platform-api:standaloneAnalysis-platform",
-        "//standalone-analysis/platform-api:standaloneAnalysis-platform_test_lib",
-        "//java/java-psi-api:psi",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//java/java-syntax:syntax",
-        "//java/java-syntax:syntax_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":standaloneAnalysis-java",
-        "//standalone-analysis/platform-api:standaloneAnalysis-platform_test_lib",
-        "//java/java-psi-api:psi_test_lib",
-        "//java/java-frontback-psi-api:frontback-psi_test_lib",
-        "//java/java-syntax:syntax_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.standaloneAnalysis.java` end
 
 ### auto-generated section `iml intellij.standaloneAnalysis.java` start

@@ -47,37 +47,6 @@ jvm_library(
         "//platform/syntax/syntax-extensions:extensions",
     ],
 )
-
-jvm_library(
-    name = "psi_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_psi",
-    module_name = "intellij.platform.syntax.psi",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "//platform/syntax/syntax-api:syntax",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":psi",
-        "//platform/util:util_test_lib",
-        "//platform/util-rt:util-rt_test_lib",
-        "//platform/util/multiplatform:multiplatform_test_lib",
-        "//platform/util/base:base_test_lib",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//libraries/fastutil:fastutil_test_lib",
-        "//platform/syntax/syntax-util:util_test_lib",
-        "//platform/syntax/syntax-extensions:extensions_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.syntax.psi` end
 
 ### auto-generated section `iml intellij.platform.syntax.psi` start

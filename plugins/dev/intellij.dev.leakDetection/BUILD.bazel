@@ -48,34 +48,6 @@ jvm_library(
         "//libraries/jbr",
     ],
 )
-
-jvm_library(
-    name = "leakDetection_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.dev.leakDetection",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":leakDetection",
-        "//platform/core-api:core_test_lib",
-        "//platform/core-impl:core-impl_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/editor-ui-api:editor-ui_test_lib",
-        "//platform/platform-api:ide_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/service-container:service-container_test_lib",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-        "//platform/core-ui:core-ui_test_lib",
-        "//platform/progress/shared:ide-progress_test_lib",
-        "//libraries/jbr:jbr_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.dev.leakDetection` end
 
 ### auto-generated section `iml intellij.dev.leakDetection` start
@@ -90,21 +62,6 @@ exports_files(
 
 ### auto-generated section `build intellij.dev.leakDetection.tests` start
 jvm_library(
-    name = "leakDetection-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.dev.leakDetection.tests",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
-    ],
-)
-
-jvm_library(
     name = "leakDetection-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -115,10 +72,7 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//plugins/dev/intellij.dev.leakDetection:leakDetection",
-        "//plugins/dev/intellij.dev.leakDetection:leakDetection_test_lib",
-    ],
+    associates = ["//plugins/dev/intellij.dev.leakDetection:leakDetection"],
     resource_strip_prefix = "testResources",
     resources = glob(
         ["testResources/**/*"],
@@ -126,43 +80,27 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
-        ":leakDetection-tests",
-        "//platform/ide-core:ide-core_test_lib",
-        "//platform/ide-core-impl:ide-core-impl_test_lib",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/main/intellij.platform.monolith.main:monolith-main_test_lib",
-        "//community-resources:customization_test_lib",
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
     ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/core-impl",
-        "//platform/core-impl:core-impl_test_lib",
         "//platform/util",
-        "//platform/util:util_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
         "//platform/platform-api:ide",
-        "//platform/platform-api:ide_test_lib",
         "//platform/ide-core",
         "//platform/ide-core-impl",
         "//platform/platform-impl:ide-impl",
         "//platform/service-container",
-        "//platform/service-container:service-container_test_lib",
         "//platform/projectModel-impl",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
         "//platform/core-ui",
-        "//platform/core-ui:core-ui_test_lib",
         "//libraries/jbr",
-        "//libraries/jbr:jbr_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
     ],
 )
 ### auto-generated section `build intellij.dev.leakDetection.tests` end

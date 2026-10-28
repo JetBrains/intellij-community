@@ -21,23 +21,6 @@ jvm_library(
         "//libraries/jetbrains/annotations",
     ],
 )
-
-jvm_library(
-    name = "multiplatformSupport_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.platform.multiplatformSupport",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":multiplatformSupport",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.multiplatformSupport` end
 
 ### auto-generated section `iml intellij.platform.multiplatformSupport` start

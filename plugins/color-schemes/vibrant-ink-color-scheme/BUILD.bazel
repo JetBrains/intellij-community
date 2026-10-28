@@ -27,22 +27,6 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/projectModel-impl"],
 )
-
-jvm_library(
-    name = "color-scheme-vibrant_ink_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.color.scheme.vibrant_ink",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":color-scheme-vibrant_ink",
-        "//platform/projectModel-impl:projectModel-impl_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.color.scheme.vibrant_ink` end
 
 ### auto-generated section `plugin intellij.color.scheme.vibrant_ink` start

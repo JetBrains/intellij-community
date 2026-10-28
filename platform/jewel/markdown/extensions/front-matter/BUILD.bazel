@@ -57,29 +57,6 @@ jvm_library(
         "//libraries/compose-runtime-desktop",
     ],
 )
-
-jvm_library(
-    name = "front-matter_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_front-matter",
-    module_name = "intellij.platform.jewel.markdown.extensions.frontMatter",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":front-matter",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/jewel/markdown/core:core_test_lib",
-        "//platform/jewel/ui:ui_test_lib",
-        "//platform/jewel/foundation:foundation_test_lib",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.frontMatter` end
 
 ### auto-generated section `iml intellij.platform.jewel.markdown.extensions.frontMatter` start
@@ -106,16 +83,6 @@ create_kotlinc_options(
 )
 
 jvm_library(
-    name = "jewel-markdown-extensions-frontMatter-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.jewel.markdown.extensions.frontMatter.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "jewel-markdown-extensions-frontMatter-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -126,36 +93,22 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/jewel/markdown/extensions/front-matter",
-        "//platform/jewel/markdown/extensions/front-matter:front-matter_test_lib",
-    ],
+    associates = ["//platform/jewel/markdown/extensions/front-matter"],
     kotlinc_opts = ":custom_jewel-markdown-extensions-frontMatter-tests",
     visibility = ["//visibility:public"],
-    runtime_deps = [":jewel-markdown-extensions-frontMatter-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
-        "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/jewel/markdown/core",
-        "//platform/jewel/markdown/core:core_test_lib",
         "//platform/jewel/ui",
-        "//platform/jewel/ui:ui_test_lib",
         "//platform/jewel/foundation",
-        "//platform/jewel/foundation:foundation_test_lib",
         "//libraries/compose-foundation-desktop",
-        "//libraries/compose-foundation-desktop:compose-foundation-desktop_test_lib",
         "//libraries/compose-runtime-desktop",
-        "//libraries/compose-runtime-desktop:compose-runtime-desktop_test_lib",
-        "//libraries/compose-foundation-desktop-junit",
         "//libraries/compose-foundation-desktop-junit:compose-foundation-desktop-junit_test_lib",
-        "//platform/jewel/markdown/testing",
         "//platform/jewel/markdown/testing:testing_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.jewel.markdown.extensions.frontMatter.tests` end

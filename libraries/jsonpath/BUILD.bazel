@@ -29,25 +29,6 @@ jvm_library(
         "//libraries/jackson3/databind",
     ],
 )
-
-jvm_library(
-    name = "jsonpath_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.jsonpath",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-jsonpath-jsonpath"],
-    runtime_deps = [
-        # do not sort,
-        ":jsonpath",
-        "//libraries/jackson3/jackson:libraries-jackson3_test_lib",
-        "//libraries/jackson3/databind:databind_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.jsonpath` end
 
 ### auto-generated section `iml intellij.libraries.jsonpath` start

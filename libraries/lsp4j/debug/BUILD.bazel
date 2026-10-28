@@ -28,24 +28,6 @@ jvm_library(
         "//libraries/lsp4j/jsonrpc-debug:libraries-eclipse-lsp4j-jsonrpc-debug",
     ],
 )
-
-jvm_library(
-    name = "debug_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.libraries.eclipse.lsp4j.debug",
-    visibility = ["//visibility:public"],
-    exports = ["@lib//:libraries-eclipse-lsp4j-debug-eclipse-lsp4j-debug"],
-    runtime_deps = [
-        # do not sort,
-        ":debug",
-        "//libraries/lsp4j/jsonrpc-debug:libraries-eclipse-lsp4j-jsonrpc-debug_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.libraries.eclipse.lsp4j.debug` end
 
 ### auto-generated section `iml intellij.libraries.eclipse.lsp4j.debug` start

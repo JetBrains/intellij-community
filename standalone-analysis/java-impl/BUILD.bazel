@@ -28,41 +28,6 @@ jvm_library(
         "//java/java-indexing-serializers:indexing-serializers",
     ],
 )
-
-jvm_library(
-    name = "standaloneAnalysis-java-impl_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = "@community//:k8",
-    module_name = "intellij.standaloneAnalysis.java.impl",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//standalone-analysis/java-api:standaloneAnalysis-java",
-        "//standalone-analysis/java-api:standaloneAnalysis-java_test_lib",
-        "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl",
-        "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl_test_lib",
-        "//java/java-psi-impl:psi-impl",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//java/java-frontback-psi-impl:frontback-psi-impl",
-        "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
-        "//java/java-indexing-serializers:indexing-serializers",
-        "//java/java-indexing-serializers:indexing-serializers_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":standaloneAnalysis-java-impl",
-        "//standalone-analysis/java-api:standaloneAnalysis-java_test_lib",
-        "//standalone-analysis/platform-impl:standaloneAnalysis-platform-impl_test_lib",
-        "//java/java-psi-impl:psi-impl_test_lib",
-        "//java/java-frontback-psi-impl:frontback-psi-impl_test_lib",
-        "//java/java-indexing-serializers:indexing-serializers_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.standaloneAnalysis.java.impl` end
 
 ### auto-generated section `iml intellij.standaloneAnalysis.java.impl` start

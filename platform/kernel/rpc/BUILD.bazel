@@ -37,32 +37,6 @@ jvm_library(
         "//platform/kernel/rpc.lite",
     ],
 )
-
-jvm_library(
-    name = "rpc_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.rpc",
-    visibility = ["//visibility:public"],
-    exports = [
-        # do not sort,
-        "@lib//:kotlin-stdlib",
-        "//fleet/rpc",
-        "//fleet/rpc:rpc_test_lib",
-    ],
-    runtime_deps = [
-        # do not sort,
-        ":rpc",
-        "//platform/kernel/klogger:klogger_test_lib",
-        "//fleet/rpc:rpc_test_lib",
-        "//platform/util:util_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.rpc` end
 
 ### auto-generated section `iml intellij.platform.rpc` start

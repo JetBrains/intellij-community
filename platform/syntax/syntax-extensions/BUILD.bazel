@@ -57,26 +57,6 @@ jvm_library(
         ":platform_multiplatformSupport_provided",
     ],
 )
-
-jvm_library(
-    name = "extensions_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    kotlinc_opts = ":custom_extensions",
-    module_name = "intellij.platform.syntax.extensions",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":extensions",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//platform/multiplatformSupport",
-        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
-        "//platform/syntax/syntax-api:syntax_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.syntax.extensions` end
 
 ### auto-generated section `iml intellij.platform.syntax.extensions` start
@@ -91,16 +71,6 @@ exports_files(
 
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` start
 jvm_library(
-    name = "extensions-tests",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.syntax.extensions.tests",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "extensions-tests_test_lib",
     testonly = True,
     srcs = glob(
@@ -111,21 +81,14 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/syntax/syntax-extensions:extensions",
-        "//platform/syntax/syntax-extensions:extensions_test_lib",
-    ],
+    associates = ["//platform/syntax/syntax-extensions:extensions"],
     visibility = ["//visibility:public"],
-    runtime_deps = [":extensions-tests"],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/multiplatformSupport",
-        "//platform/multiplatformSupport:multiplatformSupport_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//libraries/kotlin/test:libraries-kotlinTest",
-        "//libraries/kotlin/test:libraries-kotlinTest_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.syntax.extensions.tests` end

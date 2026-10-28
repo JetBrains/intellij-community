@@ -14,18 +14,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "idea.product.modules_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.lsp.ui.idea.product.modules",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":idea.product.modules"],
-)
 ### auto-generated section `build intellij.lsp.ui.idea.product.modules` end
 
 ### auto-generated section `iml intellij.lsp.ui.idea.product.modules` start

@@ -26,25 +26,6 @@ jvm_library(
         "//platform/statistics/uploader",
     ],
 )
-
-jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.statistics.testFramework",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":testFramework",
-        "//platform/util:util_test_lib",
-        "//platform/statistics:statistics_test_lib",
-        "//platform/core-api:core_test_lib",
-        "//platform/statistics/uploader:uploader_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.statistics.testFramework` end
 
 ### auto-generated section `iml intellij.platform.statistics.testFramework` start

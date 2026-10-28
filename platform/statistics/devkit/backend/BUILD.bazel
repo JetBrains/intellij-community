@@ -24,23 +24,6 @@ jvm_library(
         "//platform/statistics/devkit",
     ],
 )
-
-jvm_library(
-    name = "backend_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.statistics.devkit.backend",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":backend",
-        "//platform/backend:backend_test_lib",
-        "//platform/statistics/devkit:devkit_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.statistics.devkit.backend` end
 
 ### auto-generated section `iml intellij.platform.statistics.devkit.backend` start

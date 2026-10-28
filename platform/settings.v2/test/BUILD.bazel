@@ -11,16 +11,6 @@ jps_test(
 
 ### auto-generated section `build intellij.platform.settings.v2.test` start
 jvm_library(
-    name = "test",
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.settings.v2.test",
-    visibility = ["//visibility:public"],
-)
-
-jvm_library(
     name = "test_test_lib",
     testonly = True,
     srcs = glob(
@@ -31,52 +21,30 @@ jvm_library(
         ],
         allow_empty = True,
     ),
-    associates = [
-        "//platform/settings.v2/backend",
-        "//platform/settings.v2/backend:backend_test_lib",
-    ],
+    associates = ["//platform/settings.v2/backend"],
     resource_strip_prefix = "resources",
     resources = glob(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":test",
-        "//platform/platform-impl:ide-impl_test_lib",
-        "//platform/ide-core:ide-core_test_lib",
-    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
         "//platform/settings.v2/shared",
-        "//platform/settings.v2/shared:shared_test_lib",
         "//libraries/jetbrains/annotations",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
         "//platform/settings.v2",
-        "//platform/settings.v2:settings.v2_test_lib",
         "//platform/core-api:core",
-        "//platform/core-api:core_test_lib",
         "//platform/projectModel-api:projectModel",
-        "//platform/projectModel-api:projectModel_test_lib",
         "//platform/platform-impl:ide-impl",
         "//platform/ide-core",
         "//platform/analysis-api:analysis",
-        "//platform/analysis-api:analysis_test_lib",
         "//xml/plugin",
-        "//xml/plugin:plugin_test_lib",
         "//platform/testFramework",
-        "//platform/testFramework:testFramework_test_lib",
         "//platform/testFramework/junit5",
-        "//platform/testFramework/junit5:junit5_test_lib",
         "//libraries/junit4",
-        "//libraries/junit4:junit4_test_lib",
         "//libraries/kotlinx/serialization/core",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/junit6",
-        "//libraries/junit6:junit6_test_lib",
         "//platform/editor-ui-api:editor-ui",
-        "//platform/editor-ui-api:editor-ui_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.settings.v2.test` end

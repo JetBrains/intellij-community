@@ -32,26 +32,6 @@ jvm_library(
         "//platform/core-api:core",
     ],
 )
-
-jvm_library(
-    name = "rpc_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.platform.execution.rpc",
-    visibility = ["//visibility:public"],
-    runtime_deps = [
-        # do not sort,
-        ":rpc",
-        "//libraries/jetbrains/annotations:annotations_test_lib",
-        "//libraries/kotlinx/serialization/core:core_test_lib",
-        "//platform/remote-topics/shared:rpc-topics_test_lib",
-        "//platform/execution-impl:execution-impl_test_lib",
-        "//platform/core-api:core_test_lib",
-    ],
-)
 ### auto-generated section `build intellij.platform.execution.rpc` end
 
 ### auto-generated section `iml intellij.platform.execution.rpc` start
