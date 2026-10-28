@@ -534,7 +534,9 @@ internal class WaitForFinishedCodeAnalysisListener(private val project: Project)
   fun printFileEditors(fileEditors: Collection<FileEditor>, status: String, traceId: UUID, reason: String) {
     try {
       val editorsMessage = fileEditors.joinToString(separator = "\n    ") { fileEditor -> fileEditor.description }
-      LOG.info("Daemon analyzer status $status, editors size = ${fileEditors.size}, reason = $reason, traceId = $traceId, editors = $editorsMessage; fileStatusMap:${DaemonCodeAnalyzerEx.getInstanceEx(project).fileStatusMap}")
+      // Each typed character cancels the daemon on the EDT, and the file status map prints every document of the IDE.
+      val fileStatusMap = if (reason.isEmpty()) "; fileStatusMap:${DaemonCodeAnalyzerEx.getInstanceEx(project).fileStatusMap}" else ""
+      LOG.info("Daemon analyzer status $status, editors size = ${fileEditors.size}, reason = $reason, traceId = $traceId, editors = $editorsMessage$fileStatusMap")
     }
     catch (e: Exception) {
       LOG.warn(e)
