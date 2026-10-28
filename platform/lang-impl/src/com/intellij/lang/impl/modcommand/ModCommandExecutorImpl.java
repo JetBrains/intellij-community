@@ -87,6 +87,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
@@ -657,10 +658,30 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   protected @Unmodifiable @NotNull List<@NotNull Fragment> calculateRanges(@NotNull ModUpdateFileText upd) {
     List<@NotNull Fragment> ranges = upd.updatedRanges();
     if (!ranges.isEmpty()) return ranges;
-    String oldText = upd.oldText();
-    String newText = upd.newText();
-    List<DiffFragment> fragments = ComparisonManager.getInstance().compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
-                                                                                DumbProgressIndicator.INSTANCE);
+    return calculateFragments(upd.oldText(), upd.newText());
+  }
+
+  /**
+   * Computes the fragments of a {@link ModUpdateFileText} command from the old and the new text.
+   * <p>
+   * Without the {@link ComparisonManager} service, the result is one fragment between the common prefix and the common suffix.
+   *
+   * @param oldText the text before the update
+   * @param newText the text after the update
+   * @return the changed fragments, sorted in ascending order
+   */
+  public static @Unmodifiable @NotNull List<@NotNull Fragment> calculateFragments(@NotNull String oldText, @NotNull String newText) {
+    // Do not use ComparisonManager.getInstance(), as it's NotNull, but we expect that the service could be absent in headless environments.
+    @SuppressWarnings("SimplifiableServiceRetrieving")
+    ComparisonManager comparisonManager = ApplicationManager.getApplication().getService(ComparisonManager.class);
+    if (comparisonManager == null) {
+      if (oldText.equals(newText)) return List.of();
+      int prefix = StringUtil.commonPrefixLength(oldText, newText);
+      int suffix = Math.min(StringUtil.commonSuffixLength(oldText, newText), Math.min(oldText.length(), newText.length()) - prefix);
+      return List.of(new Fragment(prefix, oldText.length() - prefix - suffix, newText.length() - prefix - suffix));
+    }
+    List<DiffFragment> fragments = comparisonManager.compareChars(oldText, newText, ComparisonPolicy.DEFAULT,
+                                                                  DumbProgressIndicator.INSTANCE);
     return ContainerUtil.map(fragments, fr -> new Fragment(fr.getStartOffset2(), fr.getEndOffset1() - fr.getStartOffset1(),
                                                            fr.getEndOffset2() - fr.getStartOffset2()));
   }

@@ -23,6 +23,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -653,6 +654,31 @@ public final class ToolsImpl implements Tools {
 
   public @Nullable List<ScopeToolState> getNonDefaultTools() {
     return myTools;
+  }
+
+  /**
+   * Creates a copy of the tool states, with a copy of the tool settings in each state.
+   * A change of the copy does not change this object.
+   *
+   * @param project the project that resolves the scopes of the states
+   */
+  @ApiStatus.Internal
+  public @NotNull ToolsImpl copy(@Nullable Project project) {
+    InspectionToolWrapper<?, ?> defaultTool = InspectionProfileImpl.copyToolSettings(myDefaultState.getTool());
+    ToolsImpl copy = new ToolsImpl(defaultTool, myDefaultState.getLevel(), myEnabled, myDefaultState.isEnabled());
+    copy.myDefaultState.setEditorAttributesExternalName(myDefaultState.getEditorAttributesExternalName());
+    if (myTools != null) {
+      for (ScopeToolState state : myTools) {
+        InspectionToolWrapper<?, ?> tool = InspectionProfileImpl.copyToolSettings(state.getTool());
+        NamedScope scope = state.getScope(project);
+        ScopeToolState stateCopy = scope != null
+                                   ? copy.addTool(scope, tool, state.isEnabled(), state.getLevel())
+                                   : copy.addTool(state.getScopeName(), tool, state.isEnabled(), state.getLevel());
+        stateCopy.setEditorAttributesExternalName(state.getEditorAttributesExternalName());
+      }
+    }
+    copy.setEnabled(myEnabled);
+    return copy;
   }
 
   private void disableWholeToolIfCan() {
