@@ -154,10 +154,14 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
         )
     );
 
+    let grant = testing::get(address, "/jcp/agent-spawner/hosts/v0/remote-control/availability");
+    assert_eq!((grant.status, grant.text()), (200, r#"{"available":false}"#.to_owned()));
+
     let record = testing::control(address, "GET", "/_lane/cloud/record", "").json();
     assert_eq!(record["discoveries"], 1);
     assert_eq!(record["served"][1], "GET /jcp/user-management/api/org-feature-flags?flags=ai-seats");
-    assert_eq!(record["served"].as_array().unwrap().len(), 8);
+    assert_eq!(record["served"].as_array().unwrap().len(), 9);
+    assert_eq!(record["served"][8], "GET /jcp/agent-spawner/hosts/v0/remote-control/availability");
     assert_eq!(record["served"][6], "GET /jcp/ai-management/api/provisioning/v1/mcp");
     assert_eq!(
         record["served"][7],

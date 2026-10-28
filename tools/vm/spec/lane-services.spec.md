@@ -231,6 +231,7 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
 | `/jcp/ai-management/api/provisioning/v1/acp` | 404 |
 | `/jcp/ai-management/api/provisioning/v1/mcp` | 404 |
 | `/jcp/repo-connections/tokens/state/meta` | the JetBrains VCS App can read and write every repository |
+| `/jcp/agent-spawner/hosts/v0/remote-control/availability` | `{"available":false}`: no mobile control grant |
 
 - The configuration names the emulator for every account URL and as the JCP URL.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
@@ -254,6 +255,10 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
 - The ACP and the MCP provisioning answer 404 with an empty body. The record lists them as served requests.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
+
+- The mobile control grant answers no grant, so a lane IDE keeps mobile control off. The record lists the
+  request as served.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
 - Any other path gets 501 with the text `the Air lane emulates no <target>`.
@@ -295,6 +300,7 @@ suite attaches the spawner to the Cloud agent of the suite, see [The UI-lane Con
 | the WebSocket upgrade of `/jcp/agent-spawner/acp` with a bearer token | `101`, then the bridge to the control server |
 | the same upgrade without a bearer token | 401 with an empty body |
 | `DELETE /jcp/agent-spawner/sessions/<id>` | 204, and the spawner records the decoded id |
+| `/jcp/agent-spawner/hosts/v0/remote-control/availability` | no grant, see the JetBrains Cloud emulator |
 | any other request below `/jcp/agent-spawner/` | 501, as an unexpected request |
 
 - The `101` answer has the accept key of RFC 6455. No extension or subprotocol is accepted.
