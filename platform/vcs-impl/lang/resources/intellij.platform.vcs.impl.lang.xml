@@ -31,7 +31,7 @@
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
-    <vcs.changes.changesViewModifier implementation="com.intellij.openapi.vcs.changes.StructuralChangesViewModifier"/>
+    <vcs.changes.changesViewModifier implementation="com.intellij.platform.vcs.impl.lang.changes.StructuralChangesViewModifier"/>
 
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
                         serviceImplementation="com.intellij.conversion.ConversionServiceImpl"/>
@@ -55,7 +55,7 @@
   </projectListeners>
 
   <actions resource-bundle="messages.VcsBundle">
-    <action id="ChangesView.ShowStructuralChanges" class="com.intellij.openapi.vcs.changes.ShowStructuralChangesAction">
+    <action id="ChangesView.ShowStructuralChanges" class="com.intellij.platform.vcs.impl.lang.changes.ShowStructuralChangesAction">
       <add-to-group group-id="ChangesView.ViewOptions"/>
     </action>
   </actions>

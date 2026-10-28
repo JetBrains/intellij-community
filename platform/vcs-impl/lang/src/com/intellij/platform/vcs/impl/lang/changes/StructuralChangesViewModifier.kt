@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vcs.changes
+package com.intellij.platform.vcs.impl.lang.changes
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.diff.comparison.ComparisonManager
@@ -34,6 +34,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.openapi.vcs.changes.ChangeListChange
+import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangesViewModifier
+import com.intellij.openapi.vcs.changes.ContentRevision
+import com.intellij.openapi.vcs.changes.CurrentContentRevision
+import com.intellij.openapi.vcs.changes.HunkLines
+import com.intellij.openapi.vcs.changes.HunkName
+import com.intellij.openapi.vcs.changes.HunkNamePart
+import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
+import com.intellij.openapi.vcs.changes.StructuralHunkNamer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
