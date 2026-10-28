@@ -2,7 +2,7 @@
 //! connection from a script.
 
 use std::net::{SocketAddr, TcpListener, TcpStream};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
@@ -46,16 +46,23 @@ pub(crate) fn failed(code: i32, stderr: &str) -> Ran {
     }
 }
 
-/// Child processes that answer by rule: the first rule whose text the joined call holds. A call without a rule
-/// answers exit 0 and no output. `git rev-parse --git-path yonder` answers a directory of the fake git directory
-/// before each rule. `run_to_file` writes the stdout of the rule into the file, and a stop that answers `true` stops the
-/// call as Ctrl+C would.
+/// The commit of HEAD of the fake checkout.
+pub(crate) const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
+
+/// Child processes that answer by rule: the first rule whose text the joined call holds. In the stdout of a rule,
+/// `@PATCH_DIR@` is the patch directory of the fake git directory. A call without a rule answers as bd answers in a
+/// clean checkout at [`COMMIT`]: `bd host snapshot` with the candidates `COMMIT`, `c1` and the merge base `m0`, `bd
+/// host pack` with a new pack file of `PACK` and 7 commits, and `bd host apply` with 1 file. Any other call answers
+/// exit 0 and no output. `run_to_file` writes the stdout of the rule into the file, and a stop that answers `true`
+/// stops the call as Ctrl+C would.
 #[derive(Default)]
 pub(crate) struct FakeProcesses {
     rules: Vec<(String, Ran)>,
     calls: Mutex<Vec<Call>>,
-    /// How long `git pack-objects` works. The watch asks the stop every 10 ms meanwhile, as the real one does.
+    /// How long `bd host pack` works. The watch asks the stop every 10 ms meanwhile, as the real one does.
     pack_time: Duration,
+    /// The bytes of each pack of `bd host pack`, `PACK` by default.
+    pack: Option<Vec<u8>>,
     git_dir: FakeGitDir,
 }
 
@@ -76,12 +83,33 @@ impl FakeProcesses {
         }
     }
 
+    /// The same processes with packs of `bytes`.
+    pub(crate) fn with_pack(mut self, bytes: Vec<u8>) -> Self {
+        self.pack = Some(bytes);
+        self
+    }
+
     /// The directory of the run records and the patches: `yonder/` of the fake git directory.
     pub(crate) fn run_files(&self) -> PathBuf {
         self.git_dir.0.path().join("yonder")
     }
 
-    /// The same processes with a `git pack-objects` that works for `time`.
+    /// The `--have` commits of each `bd host pack`, after its commit.
+    pub(crate) fn packs(&self) -> Vec<Vec<String>> {
+        self.calls()
+            .iter()
+            .filter(|call| call.text().contains(" host pack "))
+            .map(|call| {
+                let mut args = call.args.iter().skip_while(|arg| *arg != "pack").skip(1);
+                let commit = args.next().cloned().unwrap_or_default();
+                std::iter::once(commit)
+                    .chain(args.filter(|arg| *arg != "--have").cloned())
+                    .collect()
+            })
+            .collect()
+    }
+
+    /// The same processes with a `bd host pack` that works for `time`.
     pub(crate) const fn with_pack_time(mut self, time: Duration) -> Self {
         self.pack_time = time;
         self
@@ -98,13 +126,26 @@ impl FakeProcesses {
     fn answer(&self, call: &Call) -> Ran {
         self.calls.lock().unwrap_or_else(PoisonError::into_inner).push(call.clone());
         let text = call.text();
-        if text.contains("--git-path yonder") {
-            return ok(&format!("{}\n", self.run_files().display()));
+        let patch_dir = self.run_files().display().to_string();
+        if let Some((_, ran)) = self.rules.iter().find(|(rule, _)| text.contains(rule.as_str())) {
+            let stdout = String::from_utf8_lossy(&ran.stdout).replace("@PATCH_DIR@", &patch_dir);
+            return Ran {
+                stdout: stdout.into_bytes(),
+                ..ran.clone()
+            };
         }
-        self.rules
-            .iter()
-            .find(|(rule, _)| text.contains(rule.as_str()))
-            .map_or_else(|| ok(""), |(_, ran)| ran.clone())
+        if text.contains(" host snapshot") {
+            ok(&snapshot_json(COMMIT, COMMIT, &[], &[COMMIT, "c1", "m0"], &patch_dir))
+        } else if text.contains(" host pack ") {
+            let path = self.git_dir.0.path().join(format!("{}.pack", self.calls().len()));
+            let bytes = self.pack.clone().unwrap_or_else(|| b"PACK".to_vec());
+            std::fs::write(&path, &bytes).expect("the pack");
+            ok(&serde_json::json!({"schema": 2, "path": path, "bytes": bytes.len(), "commits": 7}).to_string())
+        } else if text.contains(" host apply ") {
+            ok(r#"{"schema":2,"patch":"p","files":1}"#)
+        } else {
+            ok("")
+        }
     }
 }
 
@@ -112,7 +153,7 @@ impl Processes for FakeProcesses {
     fn run(&self, call: &Call, stop: Stop<'_>) -> Ran {
         let ran = self.answer(call);
         let working = std::time::Instant::now();
-        while call.text().contains("pack-objects") && working.elapsed() < self.pack_time && !stop() {
+        while call.text().contains(" host pack ") && working.elapsed() < self.pack_time && !stop() {
             thread::sleep(Duration::from_millis(10));
         }
         if stop() {
@@ -124,6 +165,23 @@ impl Processes for FakeProcesses {
         }
         ran
     }
+}
+
+/// The answer of `bd host snapshot` of a checkout without a base and without `.yonder.toml`.
+pub(crate) fn snapshot_json(commit: &str, head: &str, changed: &[&str], candidates: &[&str], patch_dir: &str) -> String {
+    serde_json::json!({
+        "schema": 2,
+        "commit": commit,
+        "head": head,
+        "changed": changed,
+        "repository": "idea-1",
+        "git_dir": "/c/.git",
+        "patch_dir": patch_dir,
+        "candidates": candidates,
+        "blob": null,
+        "operation_id": "o",
+    })
+    .to_string()
 }
 
 /// What the agent does with the one request of a connection, after the hello.
@@ -299,30 +357,6 @@ pub(crate) fn host_file(agent: &FakeAgent, addresses: Vec<SocketAddr>) -> HostFi
         addresses,
         repo: "~/projects/idea-1".to_owned(),
     }
-}
-
-/// The variables of each real git of the tests: a test identity, and no configuration of the system or of the user.
-const TEST_GIT_ENV: [(&str, &str); 6] = [
-    ("GIT_CONFIG_NOSYSTEM", "1"),
-    ("GIT_CONFIG_GLOBAL", "/dev/null"),
-    ("GIT_AUTHOR_NAME", "t"),
-    ("GIT_AUTHOR_EMAIL", "t@t"),
-    ("GIT_COMMITTER_NAME", "t"),
-    ("GIT_COMMITTER_EMAIL", "t@t"),
-];
-
-/// Runs a real git in `dir` with [`TEST_GIT_ENV`], and answers its stdout without the trailing line end. A failed git
-/// fails the test.
-pub(crate) fn real_git(dir: &Path, args: &[&str]) -> String {
-    let ran = std::process::Command::new("git")
-        .arg("-C")
-        .arg(dir)
-        .args(args)
-        .envs(TEST_GIT_ENV)
-        .output();
-    let ran = ran.expect("git");
-    assert!(ran.status.success(), "git {args:?}: {}", String::from_utf8_lossy(&ran.stderr));
-    String::from_utf8_lossy(&ran.stdout).trim_end().to_owned()
 }
 
 /// The lines that a client said, collected for a test.

@@ -12,9 +12,9 @@ use std::path::Path;
 
 use yonder_link::proto::BASE_REFS;
 
-use crate::git::base_commit;
+use crate::bd::Snapshot;
 use crate::host::Host;
-use crate::pack::PackTarget;
+use crate::pack::{PackTarget, plan_pack};
 use crate::{Client, Refusal, code};
 
 /// What the base sync of a run needs.
@@ -26,6 +26,8 @@ pub(crate) struct BaseSync<'a> {
     pub(crate) commit: &'a str,
     /// The base that the last sync of the holder recorded.
     pub(crate) recorded: Option<&'a str>,
+    /// The snapshot of the run: its base and its candidates.
+    pub(crate) snapshot: &'a Snapshot,
 }
 
 impl Client<'_> {
@@ -49,13 +51,14 @@ impl Client<'_> {
 
     /// Sends the base when the host lacks it. Answers the commit of the base, or `None` when the checkout has no base.
     fn send_base(&self, host: &mut Host, sync: &BaseSync<'_>) -> Result<Option<String>, Refusal> {
-        let Some(base) = base_commit(self.processes, sync.checkout, &|| self.interrupted()) else {
+        let Some(base) = sync.snapshot.base.clone() else {
             return Ok(None);
         };
         if base == sync.commit {
             return Ok(Some(base));
         }
-        let present = self.present(host, sync.repo, sync.checkout, &base, &[Some(sync.commit), sync.recorded])?;
+        let extra = [Some(base.as_str()), Some(sync.commit), sync.recorded];
+        let present = self.present(host, sync.repo, sync.checkout, &sync.snapshot.candidates, &extra)?;
         if present.contains(&base) {
             return Ok(Some(base));
         }
@@ -68,7 +71,7 @@ impl Client<'_> {
             reference: &reference,
         };
         // The lines of the command go on meanwhile, so the steps of the sync stay quiet.
-        let plan = self.plan_pack(&alias, &target, &present)?;
+        let plan = plan_pack(&alias, &present)?;
         self.send_pack(host, &target, &plan, &|_| {})?;
         Ok(Some(base))
     }

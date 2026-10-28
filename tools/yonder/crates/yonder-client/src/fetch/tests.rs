@@ -52,7 +52,7 @@ fn a_fetch_without_directories_takes_what_the_record_asked_for() {
         outputs: vec!["results".to_owned()],
         changes: true,
     };
-    let files = RunFiles::of(&processes, &checkout, &never).expect("the run files");
+    let files = RunFiles::new(&processes.run_files()).expect("the run files");
     files.write("1-1", &record).expect("the record");
     let refusal = client(&setup, &processes, &|_| {}, &calm)
         .fetch(ALIAS, "1-1", &checkout, &[])
@@ -122,7 +122,7 @@ fn fetch_with(setup: &Setup, record: &RunRecord, local: impl FnOnce(&Path)) -> (
     let processes = FakeProcesses::default();
     let checkout = setup.checkout();
     local(&checkout);
-    RunFiles::of(&processes, &checkout, &never)
+    RunFiles::new(&processes.run_files())
         .expect("the run files")
         .write("1-1", record)
         .expect("the record");

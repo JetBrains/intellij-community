@@ -2,11 +2,12 @@
 //!
 //! A run:
 //!
-//! 1. Reads the commit of HEAD. Then it refuses a checkout with local changes, because only the commit reaches the
-//!    host, and meanwhile it asks the host which of the candidate commits it has (`Have`). The candidates include the
-//!    base that the last base sync of the holder recorded. A host that has none of them refuses with `behind` here.
-//!    With [`RunOptions::working_tree`] it takes the commit of the working tree instead, which `git.rs` writes through
-//!    a copy of the index, and asks the host after it. With [`RunOptions::repo_by_name`] the first `Have` goes to the
+//! 1. Reads the snapshot of HEAD with `bd host snapshot` (`bd.rs`): the commit, the candidate commits that the host
+//!    may have, and `.yonder.toml`. Then it refuses a checkout with local changes, because only the commit reaches the
+//!    host, and meanwhile it asks the host which of the candidates it has (`Have`). The candidates include the base
+//!    that the last base sync of the holder recorded. A host that has none of them refuses with `behind` here. With
+//!    [`RunOptions::working_tree`] it takes the commit of the working tree instead, which bd writes, and asks the host
+//!    after it. With [`RunOptions::repo_by_name`] the first `Have` goes to the
 //!    repository of the same name as the local one beside the repository of the host file, and to the one of the host
 //!    file when the host lacks it. The hello of the agent names its features: a run that needs one that the agent
 //!    lacks refuses here, and an option that the agent would ignore gets a warning.
@@ -27,7 +28,7 @@
 //!    only when it saw the end of the run and every file came. Otherwise the run stays on the agent, and the client
 //!    names `yonder fetch` and `yonder forget`.
 //! 7. Waits for the base sync. With [`RunOptions::apply`], it applies the patch of the changes of the command to the
-//!    working tree (`git apply`, the files only, not the index); the patch stays in `yonder/<run>.patch` of the git
+//!    working tree (`bd host apply`, the files only, not the index); the patch stays in `yonder/<run>.patch` of the git
 //!    directory of the checkout. Then it answers the steps of the run with their durations.
 //!
 //! A refusal tells by its [`crate::Exit`] whether the command ran: a refusal before the command is
@@ -47,13 +48,15 @@ use yonder_link::Closer;
 use yonder_link::proto::{Phase, Reply, Request, RunInfo, RunSpec, Stream};
 
 use crate::base::BaseSync;
-use crate::git::{FARTHEST, NEAR, Snapshot, add_candidate, candidates, check_clean, head_commit, repo_name, working_tree_commit};
+use crate::bd::{FARTHEST, NEAR, Scan, Snapshot};
 use crate::host::{AgentInfo, Host, Latest};
-use crate::pack::PackTarget;
+use crate::pack::{PackTarget, plan_pack};
 use crate::phases::{phase, phases_line};
-use crate::process::{Call, Ran, never};
 use crate::record::{RunFiles, RunRecord, outputs_of};
 use crate::{Client, Exit, Refusal, Timing, code, refused};
+
+/// How many changed paths the refusal of local changes shows.
+const SHOWN_CHANGES: usize = 5;
 
 /// How often the watch of a run asks whether the person pressed Ctrl+C.
 const INTERRUPT_POLL: Duration = Duration::from_millis(100);
@@ -66,9 +69,6 @@ const CANCEL_GRACE: Duration = Duration::from_millis(500);
 
 /// How many times the cancel of a run whose pack did not reach the host tries.
 const ABANDON_TRIES: u32 = 3;
-
-/// The deadline of `git apply` of the changes of a run.
-const APPLY_DEADLINE: Duration = Duration::from_secs(300);
 
 /// What a run does, from the side of the client.
 #[derive(Clone, Copy, Debug)]
@@ -203,27 +203,26 @@ impl Client<'_> {
         }
         let started = Instant::now();
         let mut host = self.host(alias).map_err(not_run)?;
-        let stop = || self.interrupted();
         let run = run_id();
         let reference = format!("refs/yonder/{run}");
         let recorded = self.config.base(alias, request.holder);
         let (snapshot, (repo, present)) = if options.working_tree {
-            let snapshot = working_tree_commit(self.processes, request.checkout, &stop).map_err(not_run)?;
+            let snapshot = self.snapshot(request.checkout, Scan::WorkingTree, NEAR).map_err(not_run)?;
             self.refuse_interrupt().map_err(not_run)?;
             let found = self
-                .present_in_repo(&mut host, request, options, &snapshot.commit, recorded.as_deref())
+                .present_in_repo(&mut host, request, options, &snapshot, recorded.as_deref())
                 .map_err(not_run)?;
             (snapshot, found)
         } else {
-            let commit = head_commit(self.processes, request.checkout, &stop).map_err(not_run)?;
+            let snapshot = self.snapshot(request.checkout, Scan::Head, NEAR).map_err(not_run)?;
             self.refuse_interrupt().map_err(not_run)?;
             // A checkout with local changes refuses at once: its refusal closes the connection of the `Have`.
             let asked = Arc::new(Latest::default());
             let (clean, found) = thread::scope(|scope| {
                 let mut asking = host.watched(Arc::clone(&asked));
-                let (commit, recorded) = (&commit, recorded.as_deref());
-                let found = scope.spawn(move || self.present_in_repo(&mut asking, request, options, commit, recorded));
-                let clean = check_clean(self.processes, request.checkout, &stop);
+                let (snapshot, recorded) = (&snapshot, recorded.as_deref());
+                let found = scope.spawn(move || self.present_in_repo(&mut asking, request, options, snapshot, recorded));
+                let clean = self.check_clean(request.checkout);
                 if clean.is_err() {
                     asked.close();
                 }
@@ -233,21 +232,15 @@ impl Client<'_> {
                 (clean, found)
             });
             clean.map_err(not_run)?;
-            let snapshot = Snapshot {
-                commit: commit.clone(),
-                head: commit,
-                changed: Vec::new(),
-            };
             (snapshot, found.map_err(not_run)?)
         };
         let commit = snapshot.commit.clone();
-        // Two short git calls, which Ctrl+C does not stop: the check after the plan of the pack refuses a press.
-        let files = RunFiles::of(self.processes, request.checkout, &never).map_err(not_run)?;
+        let files = RunFiles::new(&snapshot.patch_dir).map_err(not_run)?;
         let record = RunRecord {
             commit: commit.clone(),
             fetch: request.fetch.to_vec(),
             outputs: if options.outputs {
-                outputs_of(self.processes, request.checkout, &commit, &never).map_err(not_run)?
+                outputs_of(&snapshot).map_err(not_run)?
             } else {
                 Vec::new()
             },
@@ -262,7 +255,7 @@ impl Client<'_> {
         let plan = if present.contains(&commit) {
             None
         } else {
-            Some(self.plan_pack(alias, &target, &present).map_err(not_run)?)
+            Some(plan_pack(alias, &present).map_err(not_run)?)
         };
         self.refuse_interrupt().map_err(not_run)?;
         let spec = RunSpec {
@@ -287,6 +280,7 @@ impl Client<'_> {
             holder: request.holder,
             commit: &commit,
             recorded: recorded.as_deref(),
+            snapshot: &snapshot,
         };
         let watch = Watch::new();
         let mut phases = Vec::new();
@@ -367,20 +361,21 @@ impl Client<'_> {
         host: &mut Host,
         request: &RunRequest<'_>,
         options: &RunOptions,
-        commit: &str,
+        snapshot: &Snapshot,
         recorded: Option<&str>,
     ) -> Result<(String, Vec<String>), Refusal> {
         let default = host.file().repo.clone();
-        let stop = || self.interrupted();
         let named = match request.repo {
             Some(repo) => Some(repo.to_owned()),
-            None if options.repo_by_name => repo_name(self.processes, request.checkout, &stop)
-                .and_then(|name| sibling(&default, &name))
+            None if options.repo_by_name => snapshot
+                .repository
+                .as_deref()
+                .and_then(|name| sibling(&default, name))
                 .filter(|repo| *repo != default),
             None => None,
         };
         let asked = match &named {
-            Some(named) => match self.present(host, named, request.checkout, commit, &[recorded]) {
+            Some(named) => match self.present(host, named, request.checkout, &snapshot.candidates, &[recorded]) {
                 Err(refusal) if refusal.code == "repo_missing" && request.repo.is_none() => {
                     (self.say)(&format!(
                         "yonder: {} has no {named}; the run goes to {default}, the repository of its host file. --repo names another one",
@@ -396,7 +391,7 @@ impl Client<'_> {
             Some(found) => found?,
             None => (
                 default.clone(),
-                self.present(host, &default, request.checkout, commit, &[recorded])?,
+                self.present(host, &default, request.checkout, &snapshot.candidates, &[recorded])?,
             ),
         };
         Ok((repo, present))
@@ -418,32 +413,25 @@ impl Client<'_> {
             (self.say)("yonder: the command changed no file");
             return Ok(());
         };
-        let stop = || self.interrupted();
-        let git = |args: &[&str]| -> Ran {
-            self.processes
-                .run(&Call::new("git", args, APPLY_DEADLINE).in_dir(checkout.to_path_buf()), &stop)
-        };
-        let patch_text = patch.to_string_lossy();
-        let files = git(&["apply", "--numstat", &patch_text])
-            .stdout_text()
-            .lines()
-            .filter(|line| !line.trim().is_empty())
-            .count();
-        let applied = git(&["apply", "--whitespace=nowarn", &patch_text]);
-        if applied.ok() {
-            (self.say)(&format!(
-                "yonder: applied the changes of the command to {files} files of this working tree; `git apply -R {patch_text}` undoes them"
-            ));
-            return Ok(());
+        match self.apply_patch(checkout, patch) {
+            Ok(files) => {
+                (self.say)(&format!(
+                    "yonder: applied the changes of the command to {files} files of this working tree; `git apply -R {}` undoes them",
+                    patch.display()
+                ));
+                Ok(())
+            }
+            Err(refusal) if refusal.code == code::APPLY_FAILED => Err(Refusal::new(
+                code::APPLY_FAILED,
+                Exit::Refused,
+                format!(
+                    "the command of the run {run} exited with {code_of_command}, and its changes do not apply to this working tree: {}. The patch is {}",
+                    refusal.message,
+                    patch.display()
+                ),
+            )),
+            Err(refusal) => Err(Refusal::new(refusal.code, Exit::Refused, refusal.message)),
         }
-        Err(Refusal::new(
-            code::APPLY_FAILED,
-            Exit::Refused,
-            format!(
-                "the command of the run {run} exited with {code_of_command}, and its changes of {files} files do not apply to this working tree: {}. The patch is {patch_text}",
-                applied.said()
-            ),
-        ))
     }
 
     /// Sends `Start`. A reply that does not come can still leave the run on the agent, so the client cancels it then.
@@ -583,27 +571,50 @@ impl Client<'_> {
         Ok(info)
     }
 
-    /// The candidates of `commit` that the host has, with the commits of `extra`. The first `Have` names the near
-    /// candidates, which git finds at once. Only a host that has none of them gets a second `Have` with the first-parent
-    /// walk up to [`FARTHEST`], which reads up to 65537 commits.
+    /// The commits of `near` and `extra` that the host has. `near` are the candidates of the snapshot, which git finds
+    /// at once. Only a host that has none of them gets a second `Have` with the first-parent walk up to [`FARTHEST`],
+    /// which reads up to 65537 commits.
     pub(crate) fn present(
         &self,
         host: &mut Host,
         repo: &str,
         checkout: &Path,
-        commit: &str,
+        near: &[String],
         extra: &[Option<&str>],
     ) -> Result<Vec<String>, Refusal> {
-        let stop = || self.interrupted();
-        let ask = |farthest: usize, host: &mut Host| {
-            let mut found = candidates(self.processes, checkout, commit, farthest, &stop);
-            for extra in extra {
-                add_candidate(&mut found, *extra);
+        let ask = |candidates: &[String], host: &mut Host| {
+            let mut found = Vec::new();
+            for candidate in candidates.iter().map(String::as_str).map(Some).chain(extra.iter().copied()) {
+                add_candidate(&mut found, candidate);
             }
             self.have(host, repo, found)
         };
-        let present = ask(NEAR, host)?;
-        if present.is_empty() { ask(FARTHEST, host) } else { Ok(present) }
+        let present = ask(near, host)?;
+        if !present.is_empty() {
+            return Ok(present);
+        }
+        let far = self.snapshot(checkout, Scan::Head, FARTHEST)?;
+        ask(&far.candidates, host)
+    }
+
+    /// Refuses a checkout with local changes: tracked or untracked files that differ from HEAD. `git status` of a large
+    /// checkout reads every file, so a run asks the host meanwhile.
+    fn check_clean(&self, checkout: &Path) -> Result<(), Refusal> {
+        let changed = self.snapshot(checkout, Scan::Status, 1)?.changed;
+        if changed.is_empty() {
+            return Ok(());
+        }
+        let more = match changed.len() {
+            0..=SHOWN_CHANGES => String::new(),
+            count => format!("\n  (+{} more)", count - SHOWN_CHANGES),
+        };
+        Err(refused(
+            code::LOCAL_CHANGES,
+            format!(
+                "a remote run takes the committed HEAD only, and this checkout has local changes. Commit or stash them first:\n  {}{more}",
+                changed[..changed.len().min(SHOWN_CHANGES)].join("\n  ")
+            ),
+        ))
     }
 
     /// The commits of `candidates` that the host has.
@@ -892,7 +903,16 @@ fn classify(refusal: Refusal) -> Broken {
     }
 }
 
-/// The id of a new run: `<epoch ms>-<pid>`.
+/// Adds a commit to the candidates when it is a new one.
+fn add_candidate(candidates: &mut Vec<String>, commit: Option<&str>) {
+    if let Some(commit) = commit
+        && !commit.is_empty()
+        && !candidates.iter().any(|known| known == commit)
+    {
+        candidates.push(commit.to_owned());
+    }
+}
+
 /// The files of a run that came back.
 #[derive(Debug, Default)]
 pub(crate) struct Fetched {
@@ -954,6 +974,7 @@ fn sibling(repo: &str, name: &str) -> Option<String> {
     (!parent.is_empty()).then(|| format!("{parent}/{name}"))
 }
 
+/// The id of a new run: `<epoch ms>-<pid>`.
 fn run_id() -> String {
     let millis = SystemTime::now()
         .duration_since(UNIX_EPOCH)

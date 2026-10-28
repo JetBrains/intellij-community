@@ -8,29 +8,69 @@ use yonder_link::proto::{FileKind, RunInfo};
 use yonder_link::{Channel, Frame};
 
 use super::*;
-use crate::process::{Processes, Ran};
-use crate::testkit::{ALIAS, FakeProcesses, Said, Setup, calm, client, ok, real_git};
+use crate::process::{Limit, Processes, Ran};
+use crate::testkit::{ALIAS, COMMIT, FakeProcesses, Said, Setup, calm, client, ok};
 
-const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
-
-/// A clean checkout at [`COMMIT`], whose first-parent ancestors are `c1`, and whose pack is `PACK`.
+/// A clean checkout at [`COMMIT`], whose first-parent ancestor is `c1`, whose merge base is `m0`, and whose pack is
+/// `PACK` of 7 commits: the answers of the fake bd.
 fn checkout() -> FakeProcesses {
-    checkout_with(&[])
+    FakeProcesses::default()
 }
 
-/// The checkout of [`checkout`], whose calls answer the rules of `first` before its own.
+/// The checkout of [`checkout`], whose calls answer the rules of `first` first.
 fn checkout_with(first: &[(&str, Ran)]) -> FakeProcesses {
-    let head = format!("{COMMIT}\n");
-    let line = format!("{COMMIT}\nc1\n");
-    let rules = [
-        ("status --porcelain", ok("")),
-        ("rev-parse", ok(&head)),
-        ("rev-list --count", ok("7\n")),
-        ("rev-list", ok(&line)),
-        ("merge-base", ok("m0\n")),
-        ("pack-objects", ok("PACK")),
-    ];
-    FakeProcesses::new(&[first, &rules].concat())
+    FakeProcesses::new(first)
+}
+
+/// The answer of `bd host snapshot` of a commit on HEAD [`COMMIT`] in the repository `branch-deck`.
+struct Snap<'a> {
+    commit: &'a str,
+    changed: &'a [&'a str],
+    candidates: &'a [&'a str],
+    base: Option<&'a str>,
+    config: Option<&'a str>,
+}
+
+impl Default for Snap<'_> {
+    fn default() -> Self {
+        Self {
+            commit: COMMIT,
+            changed: &[],
+            candidates: &[COMMIT, "c1", "m0"],
+            base: None,
+            config: None,
+        }
+    }
+}
+
+impl Snap<'_> {
+    fn answer(&self) -> Ran {
+        ok(&serde_json::json!({
+            "schema": 2,
+            "commit": self.commit,
+            "head": COMMIT,
+            "changed": self.changed,
+            "repository": "branch-deck",
+            "git_dir": "/u/projects/branch-deck/.git",
+            "patch_dir": "@PATCH_DIR@",
+            "base": self.base,
+            "candidates": self.candidates,
+            "blob": self.config.map(|text| serde_json::json!({"path": ".yonder.toml", "id": "b1", "text": text})),
+            "operation_id": "o",
+        })
+        .to_string())
+    }
+}
+
+/// The answer of a bd that refuses with `git_error`.
+fn bd_refused(message: &str) -> Ran {
+    Ran {
+        code: Some(5),
+        stdout: serde_json::json!({"schema": 2, "error": {"code": "git_error", "message": message}})
+            .to_string()
+            .into_bytes(),
+        ..Ran::default()
+    }
 }
 
 /// The bytes of the last pack that reached the agent of [`agent`].
@@ -92,14 +132,13 @@ fn haves(setup: &Setup) -> Vec<Vec<String>> {
         .collect()
 }
 
-/// The input of each `git pack-objects`: the commit and the commits that the host has.
-fn pack_inputs(processes: &FakeProcesses) -> Vec<String> {
-    processes
-        .calls()
-        .into_iter()
-        .filter(|call| call.text().contains("pack-objects"))
-        .map(|call| String::from_utf8_lossy(&call.input).into_owned())
-        .collect()
+/// The commit and the `--have` commits of each `bd host pack`.
+fn pack_inputs(processes: &FakeProcesses) -> Vec<Vec<String>> {
+    processes.packs()
+}
+
+fn strings(items: &[&str]) -> Vec<String> {
+    items.iter().map(|item| (*item).to_owned()).collect()
 }
 
 /// Waits until `flag` is set, up to 5 s, as a command of the host that waits for an event.
@@ -275,21 +314,32 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
     assert!(yonder_link::proto::is_run_id(&outcome.run), "{}", outcome.run);
 
     assert_eq!(*packed.lock().unwrap_or_else(PoisonError::into_inner), b"PACK");
-    assert_eq!(pack_inputs(&processes), [format!("{COMMIT}\n^c1\n")]);
+    assert_eq!(pack_inputs(&processes), [strings(&[COMMIT, "c1"])]);
     let pack = processes
         .calls()
         .into_iter()
-        .find(|call| call.text().contains("pack-objects"))
+        .find(|call| call.text().contains(" host pack "))
         .expect("the pack");
     assert_eq!(
         pack.text(),
-        "git pack-objects --revs --thin --stdout --progress",
-        "the pack writes progress, which its quiet limit watches"
+        format!("bd -C {} host pack {COMMIT} --have c1", setup.checkout().display())
+    );
+    assert!(
+        matches!(pack.limit, Limit::Quiet(_)),
+        "bd writes the progress of git, which the quiet limit watches"
+    );
+    assert!(
+        processes.calls().iter().all(|call| call.program == "bd"),
+        "every local call goes to bd"
     );
 
     let lines = said.lines();
     assert!(lines.contains(&"progress".to_owned()), "{lines:#?}");
-    for line in ["> studio: pack 7 commits", "> studio: pack of 4 B ready", "> studio: sent 4 B"] {
+    for line in [
+        "> studio: pack the commits that studio lacks",
+        "> studio: pack of 7 commits, 4 B ready",
+        "> studio: sent 4 B",
+    ] {
         assert!(lines.contains(&line.to_owned()), "{line} in {lines:#?}");
     }
     assert_eq!(
@@ -442,7 +492,11 @@ const BASE: &str = "fedcba9876543210fedcba9876543210fedcba98";
 
 /// A clean checkout at [`COMMIT`] whose `origin/master` is [`BASE`].
 fn checkout_with_base() -> FakeProcesses {
-    checkout_with(&[("origin/master^{commit}", ok(&format!("{BASE}\n")))])
+    let snapshot = Snap {
+        base: Some(BASE),
+        ..Snap::default()
+    };
+    checkout_with(&[(" host snapshot", snapshot.answer())])
 }
 
 /// The packs that reached the agent, as their references.
@@ -541,7 +595,7 @@ fn the_base_goes_once_and_the_next_run_builds_on_it() {
     );
     let packs = pack_inputs(&processes);
     assert_eq!(packs.len(), 3, "{packs:#?}");
-    assert_eq!(packs[2], format!("{COMMIT}\n^c1\n^{BASE}\n"));
+    assert_eq!(packs[2], strings(&[COMMIT, "c1", BASE]));
     let lines = said.lines();
     assert!(!lines.iter().any(|line| line.contains("warning")), "{lines:#?}");
 }
@@ -609,7 +663,11 @@ fn ctrl_c_stops_the_base_sync_while_the_host_indexes_it() {
 #[test]
 fn local_changes_start_no_run_and_refuse_at_once() {
     let setup = Setup::new(|_, _| thread::sleep(Duration::from_secs(5)));
-    let processes = checkout_with(&[("status --porcelain", ok(" M a.txt\n"))]);
+    let dirty = Snap {
+        changed: &[" M a.txt"],
+        ..Snap::default()
+    };
+    let processes = checkout_with(&[("snapshot --farthest 1", dirty.answer())]);
     let started = Instant::now();
     let refusal = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect_err("local changes");
     assert_eq!(refusal.code, code::LOCAL_CHANGES);
@@ -649,15 +707,18 @@ fn heartbeats_keep_a_waiting_request_alive() {
     assert_eq!(runs, Vec::<RunInfo>::new());
 }
 
-/// A host without any of the candidate commits would need the whole history. The client refuses, names the count,
-/// and builds no pack.
+/// A host without any of the candidate commits would need the whole history. The client refuses and builds no pack.
 #[test]
 fn a_host_without_any_candidate_is_behind_and_gets_no_pack() {
     let (setup, _) = agent(&[], |_, _| false);
     let processes = checkout();
     let refusal = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect_err("behind");
     assert_eq!(refusal.code, code::BEHIND);
-    assert!(refusal.message.contains("all 7 commits of the history"), "{}", refusal.message);
+    assert!(
+        refusal.message.contains("the pack would hold the whole history"),
+        "{}",
+        refusal.message
+    );
     assert!(refusal.message.contains("`bt --host studio --prepare`"), "{}", refusal.message);
     assert_eq!(kinds(&setup), ["have", "have"], "the near candidates, then the long walk");
     assert_eq!(pack_inputs(&processes), Vec::<String>::new());
@@ -679,9 +740,11 @@ fn a_host_without_a_near_candidate_gets_the_long_walk() {
         }
         _ => false,
     });
-    let near = format!("{COMMIT}\nc1\n");
-    let far = format!("{COMMIT}\nc1\nfar\n");
-    let processes = checkout_with(&[("--max-count=17", ok(&near)), ("--max-count=65537", ok(&far))]);
+    let far = Snap {
+        candidates: &[COMMIT, "c1", "far", "m0"],
+        ..Snap::default()
+    };
+    let processes = checkout_with(&[("--farthest 65536", far.answer())]);
     let outcome = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect("the run");
     assert_eq!(outcome.code, 0);
     assert_eq!(
@@ -691,7 +754,7 @@ fn a_host_without_a_near_candidate_gets_the_long_walk() {
             vec![COMMIT.to_owned(), "c1".to_owned(), "far".to_owned(), "m0".to_owned()]
         ]
     );
-    assert_eq!(pack_inputs(&processes), [format!("{COMMIT}\n^far\n")]);
+    assert_eq!(pack_inputs(&processes), [strings(&[COMMIT, "far"])]);
 }
 
 /// Ctrl+C after `Have` stops the pack, and nothing more reaches the host.
@@ -729,7 +792,7 @@ fn a_slow_agent_reader_takes_a_large_pack() {
     });
     // Larger than the socket buffers of the loopback, so the writes wait for the reader.
     let pack = "x".repeat(4 * 1024 * 1024);
-    let processes = checkout_with(&[("pack-objects", ok(&pack))]);
+    let processes = checkout().with_pack(pack.clone().into_bytes());
     let (command, checkout_root) = (command(), setup.checkout());
     let timing = Timing {
         connect: Duration::from_secs(1),
@@ -761,7 +824,7 @@ fn a_link_lost_during_the_pack_cancels_the_started_run_with_a_link_refusal() {
         Request::Follow { .. } => true,
         _ => false,
     });
-    let processes = checkout_with(&[("pack-objects", ok(&"y".repeat(4 * 1024 * 1024)))]);
+    let processes = checkout().with_pack("y".repeat(4 * 1024 * 1024).into_bytes());
     let refusal = run_in(&setup, &processes, &|_| {}, &calm, &[]).expect_err("the link broke");
     assert!(matches!(refusal.code.as_ref(), code::LINK | code::TIMED_OUT), "{refusal:?}");
     assert!(
@@ -941,7 +1004,10 @@ fn the_pack_builds_after_the_start_and_keeps_its_connection_alive() {
             .position(|line| line == text)
             .unwrap_or_else(|| panic!("{text} in {lines:#?}"))
     };
-    assert!(at("yonder: lease /pool/1 (warm)") < at("> studio: pack of 4 B ready"), "{lines:#?}");
+    assert!(
+        at("yonder: lease /pool/1 (warm)") < at("> studio: pack of 7 commits, 4 B ready"),
+        "{lines:#?}"
+    );
     assert_eq!(
         outcome.phases.iter().map(|phase| phase.name.as_str()).collect::<Vec<_>>(),
         ["pack", "upload", "total"]
@@ -968,19 +1034,16 @@ fn ctrl_c_during_the_build_of_the_pack_cancels_the_run_on_the_host() {
 }
 
 /// A checkout with a tracked change and an untracked file on [`COMMIT`], whose commit of the working tree is `SNAP`. Its
-/// main checkout is `~/projects/branch-deck` here. `index` is the file that stands for its index.
-fn dirty_checkout(index: &Path) -> FakeProcesses {
-    checkout_with(&[
-        ("status --porcelain", ok(" M a.txt\0?? b.txt\0")),
-        ("--verify HEAD", ok(&format!("{COMMIT}\n"))),
-        ("--git-path index", ok(&format!("{}\n", index.display()))),
-        ("write-tree", ok("t1\n")),
-        ("^{tree}", ok("t0\n")),
-        ("cat-file commit", ok("tree t0\ncommitter t <t@t> 1700000000 +0200\n\nm\n")),
-        ("commit-tree", ok(&format!("{SNAP}\n"))),
-        ("--git-common-dir", ok("/u/projects/branch-deck/.git\n")),
-        ("rev-list", ok(&format!("{SNAP}\n{COMMIT}\n"))),
-    ])
+/// main checkout is `~/projects/branch-deck` here.
+fn dirty_checkout() -> FakeProcesses {
+    let snapshot = Snap {
+        commit: SNAP,
+        changed: &[" M a.txt", "?? b.txt"],
+        candidates: &[COMMIT, "m0"],
+        base: Some(COMMIT),
+        ..Snap::default()
+    };
+    checkout_with(&[("--working-tree", snapshot.answer())])
 }
 
 const SNAP: &str = "5555555555555555555555555555555555555555";
@@ -1025,11 +1088,9 @@ fn start_spec(setup: &Setup) -> RunSpec {
         .expect("a start")
 }
 
-/// A setup whose index file stands in a checkout of the working tree of [`dirty_checkout`].
-fn dirty_setup(setup: &Setup) -> FakeProcesses {
-    let index = setup.dir.path().join("index");
-    fs::write(&index, "an index").expect("the index");
-    dirty_checkout(&index)
+/// The processes of [`dirty_checkout`] for the checkout of `setup`.
+fn dirty_setup(_setup: &Setup) -> FakeProcesses {
+    dirty_checkout()
 }
 
 #[test]
@@ -1185,16 +1246,20 @@ fn a_refusal_before_the_command_is_not_run_and_one_after_it_is_not() {
     assert_eq!((no_host.code.as_ref(), no_host.exit.code()), (code::NO_HOST, 75));
 }
 
-/// A checkout with a commit of `a.txt`, in the directory of the setup.
-fn real_checkout(setup: &Setup) -> PathBuf {
-    let root = setup.checkout();
-    fs::create_dir_all(&root).expect("the checkout");
-    real_git(&root, &["init", "-q"]);
-    fs::write(root.join("a.txt"), "a\n").expect("a file");
-    fs::write(root.join(".gitignore"), "results/\n").expect("the ignore file");
-    real_git(&root, &["add", "--all"]);
-    real_git(&root, &["commit", "-q", "-m", "first"]);
-    root
+/// The checkout of the setup, whose HEAD has `.yonder.toml` of `config`, and the fake bd of it.
+fn checkout_of_config(setup: &Setup, config: Option<&str>) -> (PathBuf, FakeProcesses) {
+    let snapshot = Snap { config, ..Snap::default() };
+    (setup.checkout(), checkout_with(&[(" host snapshot", snapshot.answer())]))
+}
+
+/// The `bd host apply` calls of `processes`, as their patch files.
+fn applied(processes: &FakeProcesses) -> Vec<String> {
+    processes
+        .calls()
+        .iter()
+        .filter(|call| call.text().contains(" host apply "))
+        .filter_map(|call| call.args.last().cloned())
+        .collect()
 }
 
 const PATCH: &str = "diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-a\n+a formatted\n";
@@ -1218,47 +1283,29 @@ fn the_outputs_replace_their_local_copies_and_the_changes_apply_to_the_working_t
         ("results/sub/deep.txt".to_owned(), results, b"deep".to_vec()),
         ("changes.patch".to_owned(), FileKind::Changes, PATCH.as_bytes().to_vec()),
     ]);
-    let root = real_checkout(&setup);
-    fs::write(root.join(".yonder.toml"), "outputs = [\"results\"]\n").expect("the config of the working tree");
+    let (root, processes) = checkout_of_config(&setup, Some("outputs = [\"results\"]\n"));
     fs::create_dir_all(root.join("results")).expect("results");
     fs::write(root.join("results/old.txt"), "old").expect("an old local output");
     let said = Said::default();
-    let options = RunOptions {
-        working_tree: true,
-        outputs: true,
-        ..APPLY
-    };
-    let outcome = run_options(&setup, &crate::OsProcesses, &said, &root, &options).expect("the run");
+    let options = RunOptions { outputs: true, ..APPLY };
+    let outcome = run_options(&setup, &processes, &said, &root, &options).expect("the run");
     assert_eq!(outcome.fetched, ["results/new.txt", "results/sub/deep.txt"]);
     assert!(
         !root.join("results/old.txt").exists(),
         "the output of the run replaced the local one"
     );
     assert_eq!(fs::read_to_string(root.join("results/sub/deep.txt")).expect("deep"), "deep");
-    assert_eq!(fs::read_to_string(root.join("a.txt")).expect("a.txt"), "a formatted\n");
-    assert_eq!(real_git(&root, &["diff", "--cached", "--name-only"]), "", "the index stays");
-    let patch = format!(".git/yonder/{}.patch", outcome.run);
-    assert_eq!(fs::read_to_string(root.join(&patch)).expect("the kept patch"), PATCH);
-    // git names the patch by the real path of the checkout, which can differ from the temporary one by a link.
+    let patch = processes.run_files().join(format!("{}.patch", outcome.run));
+    assert_eq!(fs::read_to_string(&patch).expect("the kept patch"), PATCH);
+    assert_eq!(applied(&processes), [patch.display().to_string()], "bd applies the patch");
     assert!(
-        said.lines().iter().any(|line| line
-            .starts_with("yonder: applied the changes of the command to 1 files of this working tree; `git apply -R ")
-            && line.ends_with(&format!("/checkout/{patch}` undoes them"))),
+        said.lines().contains(&format!(
+            "yonder: applied the changes of the command to 1 files of this working tree; `git apply -R {}` undoes them",
+            patch.display()
+        )),
         "{:#?}",
         said.lines()
     );
-}
-
-/// The checkout of [`real_checkout`] with a second commit of `.yonder.toml` and a `src/` that git ignores, so the
-/// committed HEAD runs. A commit of the working tree would copy the index in the temporary directory, which a test of
-/// `git.rs` checks at the same time.
-fn committed_config(setup: &Setup, config: &str) -> PathBuf {
-    let root = real_checkout(setup);
-    fs::write(root.join(".yonder.toml"), config).expect("the config");
-    fs::write(root.join(".gitignore"), "results/\nsrc/\n").expect("the ignore file");
-    real_git(&root, &["add", "--all"]);
-    real_git(&root, &["commit", "-q", "-m", "config"]);
-    root
 }
 
 /// The host cannot choose what replaces a local path: the record of the run names the outputs of `.yonder.toml` of the
@@ -1281,19 +1328,19 @@ fn a_run_takes_no_output_and_no_changes_that_its_record_did_not_ask_for() {
             b"new".to_vec(),
         ),
     ]);
-    let root = committed_config(&setup, "outputs = [\"results\"]\n");
+    let (root, processes) = checkout_of_config(&setup, Some("outputs = [\"results\"]\n"));
     fs::create_dir_all(root.join("src")).expect("src");
-    fs::write(root.join("src/main.rs"), "mine").expect("an ignored local file");
+    fs::write(root.join("src/main.rs"), "mine").expect("a local file");
     let said = Said::default();
     let options = RunOptions {
         outputs: true,
         ..RunOptions::default()
     };
-    let outcome = run_options(&setup, &crate::OsProcesses, &said, &root, &options).expect("the run");
+    let outcome = run_options(&setup, &processes, &said, &root, &options).expect("the run");
     assert_eq!(outcome.fetched, Vec::<String>::new(), "the fetch failed");
     assert_eq!(fs::read_to_string(root.join("src/main.rs")).expect("the local file"), "mine");
     assert_eq!(fs::read_to_string(root.join("results/new.txt")).expect("the output"), "new");
-    assert!(!root.join(format!(".git/yonder/{}.patch", outcome.run)).exists());
+    assert!(!processes.run_files().join(format!("{}.patch", outcome.run)).exists());
     assert!(!kinds(&setup).contains(&"forget"), "the run stays on the host");
     assert!(
         said.lines()
@@ -1303,7 +1350,7 @@ fn a_run_takes_no_output_and_no_changes_that_its_record_did_not_ask_for() {
         said.lines()
     );
     let record: serde_json::Value =
-        serde_json::from_str(&fs::read_to_string(root.join(format!(".git/yonder/{}.json", outcome.run))).expect("the record"))
+        serde_json::from_str(&fs::read_to_string(processes.run_files().join(format!("{}.json", outcome.run))).expect("the record"))
             .expect("JSON");
     assert_eq!(
         record,
@@ -1315,12 +1362,12 @@ fn a_run_takes_no_output_and_no_changes_that_its_record_did_not_ask_for() {
 #[test]
 fn a_config_that_does_not_parse_starts_no_run_with_outputs() {
     let setup = fetching_agent(Vec::new());
-    let root = committed_config(&setup, "outputs = \"results\"\n");
+    let (root, processes) = checkout_of_config(&setup, Some("outputs = \"results\"\n"));
     let options = RunOptions {
         outputs: true,
         ..RunOptions::default()
     };
-    let refusal = run_options(&setup, &crate::OsProcesses, &Said::default(), &root, &options).expect_err("refused");
+    let refusal = run_options(&setup, &processes, &Said::default(), &root, &options).expect_err("refused");
     assert_eq!((refusal.code.as_ref(), refusal.exit), (code::BAD_CONFIG, Exit::NotRun));
     assert!(!kinds(&setup).contains(&"start"), "{:?}", kinds(&setup));
 }
@@ -1332,22 +1379,35 @@ fn changes_that_do_not_apply_refuse_and_keep_the_patch() {
         FileKind::Changes,
         PATCH.replace("-a\n", "-something else\n").into_bytes(),
     )]);
-    let root = real_checkout(&setup);
+    let processes = checkout_with(&[(" host apply ", bd_refused("error: patch failed: a.txt:1"))]);
+    let root = setup.checkout();
     let said = Said::default();
-    let refusal = run_options(&setup, &crate::OsProcesses, &said, &root, &APPLY).expect_err("refused");
+    let refusal = run_options(&setup, &processes, &said, &root, &APPLY).expect_err("refused");
     assert_eq!((refusal.code.as_ref(), refusal.exit), (code::APPLY_FAILED, Exit::Refused));
     assert!(refusal.message.contains("exited with 0"), "{}", refusal.message);
-    assert!(refusal.message.contains(".git/yonder/"), "{}", refusal.message);
-    assert_eq!(fs::read_to_string(root.join("a.txt")).expect("a.txt"), "a\n");
+    assert!(refusal.message.contains("error: patch failed: a.txt:1"), "{}", refusal.message);
+    let patch = processes.run_files().join(format!("{}.patch", run_of(&setup)));
+    assert!(
+        refusal.message.ends_with(&format!("The patch is {}", patch.display())),
+        "{}",
+        refusal.message
+    );
+    assert!(patch.is_file());
 
     let quiet = fetching_agent(Vec::new());
-    let root = real_checkout(&quiet);
-    run_options(&quiet, &crate::OsProcesses, &said, &root, &APPLY).expect("the run");
+    let processes = checkout();
+    run_options(&quiet, &processes, &said, &quiet.checkout(), &APPLY).expect("the run");
     assert!(
         said.lines().contains(&"yonder: the command changed no file".to_owned()),
         "{:#?}",
         said.lines()
     );
+    assert_eq!(applied(&processes), Vec::<String>::new());
+}
+
+/// The id of the run that reached the agent of `setup`.
+fn run_of(setup: &Setup) -> String {
+    start_spec(setup).run
 }
 
 #[test]
@@ -1361,8 +1421,7 @@ fn changes_that_did_not_come_refuse_with_the_fetch_that_copies_them() {
         });
         let _ = channel.send_bytes(b"four");
     });
-    let root = real_checkout(&setup);
-    let refusal = run_options(&setup, &crate::OsProcesses, &Said::default(), &root, &APPLY).expect_err("refused");
+    let refusal = run_options(&setup, &checkout(), &Said::default(), &setup.checkout(), &APPLY).expect_err("refused");
     assert_eq!((refusal.code.as_ref(), refusal.exit), (code::APPLY_FAILED, Exit::Refused));
     assert!(
         refusal.message.contains("did not come: `yonder fetch studio "),

@@ -37,7 +37,7 @@ yonder run <host> [--head] [--fetch <dir>]... [--apply] [--nice <0-19>] [--repo 
 - `--fetch <dir>` copies the new entries of `<dir>` back into this checkout. The path is relative to the root of the
   slot, such as `out/test-results`. Repeatable.
 - `--apply` brings back the changes that the command made to tracked files, such as `cargo fmt` or new snapshots, and
-  applies them with `git apply` to the working tree, not to the index. A patch that does not apply refuses with
+  applies them with `bd host apply` to the working tree, not to the index. A patch that does not apply refuses with
   `apply_failed` and keeps the patch in `<git dir>/yonder/<run>.patch`.
 - `--nice` is 10 by default, so the runs of `bt --host`, at the niceness of the agent, go first.
 - The run goes to the repository of the same name as this one on the host, beside the main repository of the host
@@ -168,6 +168,7 @@ host.
 | `old_agent` | The agent knows no upgrade request. Ask the user for `yonder prepare <host>`. |
 | `lease_failed`, `lock_timeout` | The host lent no slot. Exit 75: run locally, or try again later. |
 | `local_changes` | `--head` or `bt --host` with uncommitted or untracked changes. Commit first. |
+| `bd_failed` | A local call of Branch Deck (`bd host snapshot`, `pack` or `apply`) failed. yonder starts no git itself. Exit 75: run locally. A missing bd, or one without `bd host`, needs a newer Branch Deck on the `PATH`: give the message to the user. |
 | `old_git` | The git of the host is older than 2.56.0, and the agent cannot upgrade it. Exit 75: run locally. Give the message to the user: on macOS without Homebrew, the user installs Homebrew once at the host (it needs an administrator) and then runs `brew install git`. |
 
 ## The Local Network permission on macOS

@@ -14,8 +14,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use yonder_link::config;
 
-use crate::git::{config_text, git_dir_path};
-use crate::process::{Processes, Stop};
+use crate::bd::Snapshot;
 use crate::{Refusal, code, refused};
 
 /// How long the records and the patches stay in the git directory of a checkout.
@@ -46,10 +45,10 @@ impl RunRecord {
 pub(crate) struct RunFiles(PathBuf);
 
 impl RunFiles {
-    /// The directory of `checkout`, made when it is missing. Its files older than [`KEEP`] go.
-    pub(crate) fn of(processes: &dyn Processes, checkout: &Path, stop: Stop<'_>) -> Result<Self, Refusal> {
-        let dir = git_dir_path(processes, checkout, "yonder", stop)?;
-        fs::create_dir_all(&dir).map_err(|error| refused(code::GIT_FAILED, format!("cannot make {}: {error}", dir.display())))?;
+    /// The directory `dir`, the `patch_dir` of a snapshot, made when it is missing. Its files older than [`KEEP`] go.
+    pub(crate) fn new(dir: &Path) -> Result<Self, Refusal> {
+        let dir = dir.to_path_buf();
+        fs::create_dir_all(&dir).map_err(|error| refused(code::CONFIG, format!("cannot make {}: {error}", dir.display())))?;
         if let Ok(entries) = fs::read_dir(&dir) {
             for entry in entries.filter_map(Result::ok) {
                 let name = entry.file_name();
@@ -81,7 +80,7 @@ impl RunFiles {
         let path = self.record(run);
         let text = serde_json::to_string_pretty(record).map_err(io::Error::other);
         text.and_then(|text| fs::write(&path, text + "\n"))
-            .map_err(|error| refused(code::GIT_FAILED, format!("cannot write the run record {}: {error}", path.display())))
+            .map_err(|error| refused(code::CONFIG, format!("cannot write the run record {}: {error}", path.display())))
     }
 
     /// The record of `run`, or `None` when this checkout has none.
@@ -107,13 +106,14 @@ impl RunFiles {
     }
 }
 
-/// The outputs of `.yonder.toml` of `commit`. A commit without the file has none.
-pub(crate) fn outputs_of(processes: &dyn Processes, checkout: &Path, commit: &str, stop: Stop<'_>) -> Result<Vec<String>, Refusal> {
-    let Some(text) = config_text(processes, checkout, commit, stop)? else {
+/// The outputs of `.yonder.toml` of the commit of `snapshot`. A commit without the file has none.
+pub(crate) fn outputs_of(snapshot: &Snapshot) -> Result<Vec<String>, Refusal> {
+    let Some(blob) = &snapshot.blob else {
         return Ok(Vec::new());
     };
-    let parsed = config::parse(&text).map_err(|error| refused(code::BAD_CONFIG, format!("{error}, in the commit {commit}")))?;
-    Ok(parsed.outputs)
+    config::parse(&blob.text)
+        .map(|parsed| parsed.outputs)
+        .map_err(|error| refused(code::BAD_CONFIG, format!("{error}, in the commit {}", snapshot.commit)))
 }
 
 #[cfg(test)]

@@ -1,5 +1,5 @@
-//! The thin pack of a run or of a base. git builds it into a temporary file first, so a slow link never stalls git and a
-//! stuck git never holds a connection past its quiet limit. The client opens the connection of the pack before the
+//! The thin pack of a run or of a base. `bd host pack` builds it into a private file of bd first, so a slow link never
+//! stalls git and a stuck git never holds a connection past its quiet limit. The client opens the connection of the pack before the
 //! build, and sends an empty chunk every `HEARTBEAT_SECONDS` of the protocol while git works: the supervisor of the run
 //! then knows that its client is alive. Then the client sends the file on that connection.
 //!
@@ -9,23 +9,17 @@
 use std::fs::{self, File};
 use std::io::{self, Read};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use yonder_link::proto::{Reply, Request};
 use yonder_link::{Channel, LinkError};
 
-use crate::git::{commit_count, git_refusal, pack_call};
 use crate::host::Host;
-use crate::process::Stopped;
 use crate::{Client, Refusal, code, refused, size_text};
 
 /// How often the upload says how far it is.
 const PROGRESS_EVERY: Duration = Duration::from_secs(10);
-
-/// The count of the packs of this process, for the names of their files.
-static PACKS: AtomicU64 = AtomicU64::new(0);
 
 /// What a pack goes to.
 pub(crate) struct PackTarget<'a> {
@@ -35,11 +29,9 @@ pub(crate) struct PackTarget<'a> {
     pub(crate) reference: &'a str,
 }
 
-/// The pack of a target against the commits that the host has: what [`Client::plan_pack`] answers.
+/// The pack of a target against the commits that the host has: what [`plan_pack`] answers.
 pub(crate) struct PackPlan<'a> {
     present: &'a [String],
-    /// The count of the commits that the pack holds, when git can count them.
-    commits: Option<u64>,
 }
 
 /// How long the two halves of a sent pack took.
@@ -49,22 +41,6 @@ pub(crate) struct PackSteps {
 }
 
 impl Client<'_> {
-    /// The pack of the objects of the commit that the host lacks. Refuses with `behind` when the host has none of the
-    /// candidates.
-    pub(crate) fn plan_pack<'a>(&self, alias: &str, target: &PackTarget<'_>, present: &'a [String]) -> Result<PackPlan<'a>, Refusal> {
-        let commits = commit_count(self.processes, target.checkout, target.commit, present, &|| self.interrupted());
-        if present.is_empty() {
-            let history = commits.map_or_else(|| "the whole history".to_owned(), |all| format!("all {all} commits of the history"));
-            return Err(refused(
-                code::BEHIND,
-                format!(
-                    "{alias} has none of the commits near HEAD, so the pack would hold {history}. `bt --host {alias} --prepare` moves the master of the host to the local master"
-                ),
-            ));
-        }
-        Ok(PackPlan { present, commits })
-    }
-
     /// Opens the connection of the pack, builds the pack while an empty chunk keeps the connection alive, and sends it.
     /// The agent points the reference at the commit. `steps` takes the step lines. Ctrl+C stops the build, and the
     /// upload at the next chunk.
@@ -76,8 +52,7 @@ impl Client<'_> {
         steps: &dyn Fn(&str),
     ) -> Result<PackSteps, Refusal> {
         let alias = host.alias().to_owned();
-        let commits = plan.commits.map_or_else(|| "the".to_owned(), |count| count.to_string());
-        steps(&format!("> {alias}: pack {commits} commits"));
+        steps(&format!("> {alias}: pack the commits that {alias} lacks"));
         let building = Instant::now();
         let (mut channel, _) = host.connect()?;
         let request = Request::Pack {
@@ -86,25 +61,21 @@ impl Client<'_> {
             reference: target.reference.to_owned(),
         };
         channel.send(&request).map_err(|error| host.link_refusal(&error))?;
-        let file = PackFile::new();
-        let (built, mut channel) = self.build_beside(channel, target, plan.present, &file);
-        let built = match built {
-            Ok(()) => fs::metadata(file.path())
-                .map(|meta| meta.len())
-                .map_err(|error| refused(code::GIT_FAILED, format!("cannot read the pack {}: {error}", file.path().display()))),
-            Err(Built::Interrupted) => Err(interrupted()),
-            Err(Built::Git(refusal)) => Err(refusal),
-            Err(Built::Link(error)) => Err(host.link_refusal(&error)),
-        };
-        let size = match built {
-            Ok(size) => size,
+        let (built, mut channel) = self.build_beside(channel, target, plan.present);
+        let built = built.map_err(|failed| match failed {
+            Built::Interrupted => interrupted(),
+            Built::Bd(refusal) => refusal,
+            Built::Link(error) => host.link_refusal(&error),
+        });
+        let file = match built {
+            Ok(file) => file,
             Err(refusal) => {
                 channel.close();
                 return Err(refusal);
             }
         };
-        let build = building.elapsed();
-        steps(&format!("> {alias}: pack of {} ready", size_text(size)));
+        let (build, size) = (building.elapsed(), file.bytes);
+        steps(&format!("> {alias}: pack of {} commits, {} ready", file.commits, size_text(size)));
         let uploading = Instant::now();
         self.stream_pack(host, &mut channel, &file, size, steps)?;
         steps(&format!("> {alias}: sent {}", size_text(size)));
@@ -114,9 +85,9 @@ impl Client<'_> {
         })
     }
 
-    /// Builds the pack into `file`, and sends an empty chunk on `channel` at each keepalive time meanwhile. The watch
-    /// of the child asks the stop often, so the stop sends the chunks. A failed chunk stops the build.
-    fn build_beside(&self, channel: Channel, target: &PackTarget<'_>, present: &[String], file: &PackFile) -> (Result<(), Built>, Channel) {
+    /// Builds the pack with bd, and sends an empty chunk on `channel` at each keepalive time meanwhile. The watch of
+    /// the child asks the stop often, so the stop sends the chunks. A failed chunk stops the build.
+    fn build_beside(&self, channel: Channel, target: &PackTarget<'_>, present: &[String]) -> (Result<PackFile, Built>, Channel) {
         let kept = Mutex::new(Keepalive {
             channel,
             sent: Instant::now(),
@@ -135,16 +106,15 @@ impl Client<'_> {
             }
             kept.failed.is_some()
         };
-        let ran = self
-            .processes
-            .run_to_file(&pack_call(target.checkout, target.commit, present), file.path(), &stop);
+        let built = self.build_pack(target.checkout, target.commit, present, &stop).map(PackFile::from);
         let kept = kept.into_inner().unwrap_or_else(PoisonError::into_inner);
-        let built = match (kept.failed, ran.stopped) {
+        // A pack that is not sent goes with its guard here.
+        let built = match (kept.failed, built) {
             (Some(error), _) => Err(Built::Link(error)),
-            (None, Some(Stopped::Asked)) => Err(Built::Interrupted),
-            (None, _) if !ran.ok() => Err(Built::Git(git_refusal("git pack-objects", &ran))),
-            (None, _) if self.interrupted() => Err(Built::Interrupted),
-            (None, _) => Ok(()),
+            (None, Err(refusal)) if refusal.code == code::INTERRUPTED => Err(Built::Interrupted),
+            (None, Err(refusal)) => Err(Built::Bd(refusal)),
+            (None, Ok(_)) if self.interrupted() => Err(Built::Interrupted),
+            (None, Ok(pack)) => Ok(pack),
         };
         (built, kept.channel)
     }
@@ -154,7 +124,7 @@ impl Client<'_> {
         let alias = host.alias().to_owned();
         let stop = || self.interrupted();
         let mut reader = Upload {
-            file: File::open(file.path()).map_err(|error| refused(code::GIT_FAILED, format!("cannot open the pack: {error}")))?,
+            file: File::open(&file.path).map_err(|error| refused(code::BD_FAILED, format!("cannot open the pack: {error}")))?,
             stop: &stop,
         };
         let mut last_said = Instant::now();
@@ -182,7 +152,21 @@ impl Client<'_> {
     }
 }
 
-/// The connection of a pack while git builds the pack.
+/// The pack of the objects of the commit that the host lacks. Refuses with `behind` when the host has none of the
+/// candidates.
+pub(crate) fn plan_pack<'a>(alias: &str, present: &'a [String]) -> Result<PackPlan<'a>, Refusal> {
+    if present.is_empty() {
+        return Err(refused(
+            code::BEHIND,
+            format!(
+                "{alias} has none of the commits near HEAD, so the pack would hold the whole history. `bt --host {alias} --prepare` moves the master of the host to the local master"
+            ),
+        ));
+    }
+    Ok(PackPlan { present })
+}
+
+/// The connection of a pack while bd builds the pack.
 struct Keepalive {
     channel: Channel,
     sent: Instant,
@@ -192,7 +176,7 @@ struct Keepalive {
 /// Why the build of a pack gave no file.
 enum Built {
     Interrupted,
-    Git(Refusal),
+    Bd(Refusal),
     /// An empty chunk failed: the connection is gone.
     Link(LinkError),
 }
@@ -201,23 +185,26 @@ fn interrupted() -> Refusal {
     refused(code::INTERRUPTED, "Ctrl+C stopped the build of the pack")
 }
 
-/// The pack in the temporary directory, removed on every way out.
-struct PackFile(PathBuf);
+/// The pack file of bd, removed on every way out.
+struct PackFile {
+    path: PathBuf,
+    bytes: u64,
+    commits: u64,
+}
 
-impl PackFile {
-    fn new() -> Self {
-        let name = format!("yonder-{}-{}.pack", std::process::id(), PACKS.fetch_add(1, Ordering::Relaxed));
-        Self(std::env::temp_dir().join(name))
-    }
-
-    fn path(&self) -> &Path {
-        &self.0
+impl From<crate::bd::Pack> for PackFile {
+    fn from(pack: crate::bd::Pack) -> Self {
+        Self {
+            path: pack.path,
+            bytes: pack.bytes,
+            commits: pack.commits,
+        }
     }
 }
 
 impl Drop for PackFile {
     fn drop(&mut self) {
-        let _ = fs::remove_file(&self.0);
+        let _ = fs::remove_file(&self.path);
     }
 }
 

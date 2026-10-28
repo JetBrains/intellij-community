@@ -26,8 +26,8 @@ use std::path::{Path, PathBuf};
 use yonder_link::proto::{FileKind, Reply, Request, is_run_id};
 use yonder_link::{Channel, LinkError};
 
+use crate::bd::Scan;
 use crate::host::Host;
-use crate::process::never;
 use crate::record::{RunFiles, RunRecord};
 use crate::run::{Fetched, done};
 use crate::{Client, Refusal, code, refused};
@@ -44,7 +44,7 @@ impl Client<'_> {
         if !is_run_id(run) {
             return Err(refused(code::USAGE, format!("{run:?} cannot name a run")));
         }
-        let files = RunFiles::of(self.processes, checkout, &never)?;
+        let files = RunFiles::new(&self.snapshot(checkout, Scan::Head, 1)?.patch_dir)?;
         let record = match files.read(run)? {
             Some(record) if fetch.is_empty() => record,
             Some(record) => RunRecord {

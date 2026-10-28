@@ -2,7 +2,7 @@
 //!
 //! - [`config`]: the identity of the client and one host file per alias, under `~/.config/yonder/`.
 //! - [`host`]: the address choice and the hello of each connection to an agent.
-//! - [`process`]: the seam of the local git and ssh calls.
+//! - [`process`]: the seam of the local calls: `bd host` of Branch Deck, which does every git call, ssh and Bazel.
 //! - [`run`]: a run of a command of the committed HEAD or of the working tree on a host, the sync of its base, the
 //!   outputs and the changes that come back, and the requests of one reply.
 //! - `record`: the local record of each run, which says what a fetch of the run takes.
@@ -16,9 +16,9 @@
 
 mod agent;
 mod base;
+mod bd;
 pub mod config;
 mod fetch;
-mod git;
 pub mod host;
 pub mod interrupt;
 mod pack;
@@ -98,8 +98,11 @@ pub mod code {
     pub const LOCAL_CHANGES: &str = "local_changes";
     /// The host has none of the commits near HEAD, so the pack would hold the whole history.
     pub const BEHIND: &str = "behind";
-    /// A local git call failed, or the run record cannot be written.
+    /// A local git call failed.
     pub const GIT_FAILED: &str = "git_failed";
+    /// A call of `bd host` of Branch Deck failed: bd is missing or older than the client, or its git failed. The message
+    /// names the code of bd.
+    pub const BD_FAILED: &str = "bd_failed";
     /// `.yonder.toml` of the shipped commit does not parse, so the client cannot tell which outputs come back.
     pub const BAD_CONFIG: &str = "bad_config";
     /// An ssh call of `prepare` failed or did not end within its deadline.
@@ -176,6 +179,8 @@ impl Timing {
 pub struct Client<'a> {
     config: Config,
     processes: &'a dyn Processes,
+    /// The program of Branch Deck.
+    bd: &'a str,
     say: &'a (dyn Fn(&str) + Sync),
     /// The sink of the stdout lines of a run, or `None` to collect them into [`RunOutcome::stdout`].
     stdout: Option<&'a (dyn Fn(&str) + Sync)>,
@@ -195,6 +200,7 @@ impl<'a> Client<'a> {
         Self {
             config,
             processes,
+            bd: bd::PROGRAM,
             say,
             stdout: None,
             presses,
@@ -226,6 +232,13 @@ impl<'a> Client<'a> {
     /// The host of an alias, from its host file.
     pub fn host(&self, alias: &str) -> Result<Host, Refusal> {
         Host::open(&self.config, alias, self.timing)
+    }
+
+    /// Calls `bd` as `program`, such as a fake bd of a test.
+    #[cfg(test)]
+    pub(crate) const fn with_bd(mut self, program: &'a str) -> Self {
+        self.bd = program;
+        self
     }
 
     #[cfg(test)]
