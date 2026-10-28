@@ -53,9 +53,10 @@ impl AllowList {
         self.clients.get(fingerprint).map(String::as_str)
     }
 
-    /// Adds or renames a client. Answers whether the list changed.
-    pub fn add(&mut self, fingerprint: Fingerprint, name: &str) -> bool {
-        self.clients.insert(fingerprint, name.to_owned()).as_deref() != Some(name)
+    /// Adds or renames a client. Answers whether the list changed. Refuses a name that [`check_name`] refuses.
+    pub fn add(&mut self, fingerprint: Fingerprint, name: &str) -> io::Result<bool> {
+        check_name(name)?;
+        Ok(self.clients.insert(fingerprint, name.to_owned()).as_deref() != Some(name))
     }
 
     /// The text of the file, one client per line in fingerprint order.
@@ -65,6 +66,18 @@ impl AllowList {
             .map(|(fingerprint, name)| format!("{fingerprint} {name}\n"))
             .collect()
     }
+}
+
+/// Refuses a client name with a control character. A line break would start a second line of the file, which can
+/// name another fingerprint.
+pub fn check_name(name: &str) -> io::Result<()> {
+    if name.chars().any(char::is_control) {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            format!("the client name {name:?} has a control character"),
+        ));
+    }
+    Ok(())
 }
 
 #[cfg(test)]

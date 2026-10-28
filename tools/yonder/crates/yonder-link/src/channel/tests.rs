@@ -28,7 +28,7 @@ fn agent(clients: &[&Identity]) -> Agent {
     let allow = dir.path().join("clients");
     let mut list = AllowList::default();
     for client in clients {
-        list.add(client.fingerprint(), "test");
+        list.add(client.fingerprint(), "test").expect("a name");
     }
     std::fs::write(&allow, list.text()).expect("the allow list");
     let listener = TcpListener::bind("127.0.0.1:0").expect("a port");

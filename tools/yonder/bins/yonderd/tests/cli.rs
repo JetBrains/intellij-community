@@ -230,7 +230,7 @@ impl World {
         fs::create_dir_all(world.bd_dir()).expect("the bd directory");
         write_script(&world.bin().join("bd"), FAKE_BD);
         let mut allow = AllowList::default();
-        allow.add(world.client.fingerprint(), "test");
+        allow.add(world.client.fingerprint(), "test").expect("a name");
         fs::create_dir_all(world.home().join(".config/yonderd")).expect("the config directory");
         fs::write(world.home().join(".config/yonderd/clients"), allow.text()).expect("the allow list");
         Self { commit, ..world }
@@ -1291,6 +1291,26 @@ fn setup_adds_the_client_and_starts_the_agent() {
         .output()
         .expect("ran");
     assert_eq!(refused.status.code(), Some(2));
+
+    let other = Identity::generate().expect("another client").fingerprint().to_string();
+    let refused = world
+        .command()
+        .args([
+            "setup",
+            "--client",
+            &client,
+            "--name",
+            &format!("laptop\n{other} evil"),
+            "--listen-wait-ms",
+            "0",
+        ])
+        .output()
+        .expect("ran");
+    assert_eq!(refused.status.code(), Some(1));
+    let stderr = String::from_utf8_lossy(&refused.stderr);
+    assert!(stderr.contains(r#""code":"bad_request""#), "{stderr}");
+    let after = AllowList::read(&world.home().join(".config/yonderd/clients")).expect("the allow list");
+    assert_eq!(after, allow, "a refused name leaves the list as it was");
 }
 
 #[test]

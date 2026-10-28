@@ -152,7 +152,7 @@ impl FakeAgent {
         let dir = tempfile::tempdir().expect("a temporary directory");
         let allow = dir.path().join("clients");
         let mut list = AllowList::default();
-        list.add(client.fingerprint(), "test");
+        list.add(client.fingerprint(), "test").expect("a name");
         std::fs::write(&allow, list.text()).expect("the allow list");
         let listener = TcpListener::bind("127.0.0.1:0").expect("a port");
         let address = listener.local_addr().expect("the address");

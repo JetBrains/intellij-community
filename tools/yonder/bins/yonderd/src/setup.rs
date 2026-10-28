@@ -10,12 +10,12 @@ use std::process::Command;
 use std::time::{Duration, Instant};
 
 use serde::Serialize;
-use yonder_link::{AllowList, Fingerprint, Identity};
+use yonder_link::{AllowList, Fingerprint, Identity, allow};
 
 use crate::child;
 use crate::files::{private_dir, write_private};
 use crate::home::{Home, LAUNCHD_LABEL};
-use crate::refused::{AGENT_ERROR, LAUNCHD_FAILED, Refusal, refused};
+use crate::refused::{AGENT_ERROR, BAD_REQUEST, LAUNCHD_FAILED, Refusal, refused};
 
 /// The deadline of each launchctl call.
 const LAUNCHCTL: Duration = Duration::from_secs(30);
@@ -71,6 +71,7 @@ impl LaunchdStep {
 }
 
 pub(crate) fn setup(home: &Home, setup: &Setup<'_>, out: &mut dyn Write) -> Result<(), Refusal> {
+    allow::check_name(setup.name).map_err(|error| refused(BAD_REQUEST, error.to_string()))?;
     let identity_dir = home.identity_dir();
     let identity = Identity::load_or_create(&identity_dir).map_err(|error| {
         refused(
@@ -83,7 +84,10 @@ pub(crate) fn setup(home: &Home, setup: &Setup<'_>, out: &mut dyn Write) -> Resu
     private(home.cache_dir())?;
     let allow_file = home.allow_file();
     let mut allow = AllowList::read(&allow_file).map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
-    if allow.add(setup.client, setup.name) {
+    let changed = allow
+        .add(setup.client, setup.name)
+        .map_err(|error| refused(BAD_REQUEST, error.to_string()))?;
+    if changed {
         write_private(&allow_file, allow.text().as_bytes())
             .map_err(|error| refused(AGENT_ERROR, format!("cannot write {}: {error}", allow_file.display())))?;
     }

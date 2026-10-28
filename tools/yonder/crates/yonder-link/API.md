@@ -15,6 +15,7 @@ completes a byte stream.
 | No frame before the deadline of the socket | `LinkError::TimedOut` |
 | A certificate that the pin or the allow list does not name | `LinkError::Untrusted` |
 | An allow list line that is not `<64 hex digits> <name>` | an `InvalidData` error that names the file and the line |
+| A client name with a control character, such as a line break, in `AllowList::add` | an `InvalidInput` error that names the name |
 
 ## The refusal codes of the agent
 

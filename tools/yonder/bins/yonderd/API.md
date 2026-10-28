@@ -22,6 +22,7 @@ exits with 1. A usage error exits with 2.
 |---|---|
 | A command line that clap refuses, such as a fingerprint that is not 64 hex digits | exit 2, no JSON |
 | No `HOME` | `agent_error` |
+| A `setup` client name with a control character, such as a line break | `bad_request` |
 | An identity, an allow list, a plist, a lease file or a port that the agent cannot read or write | `agent_error` |
 | A failed `launchctl print`, `bootstrap`, `bootout` or `kickstart` | `launchd_failed` |
 | An `upgrade` or a `watchdog` that refuses, see [The upgrade](#the-upgrade) | `bad_binary`, `plist_changed`, `downgrade`, `upgrade_failed`, `launchd_failed` |
