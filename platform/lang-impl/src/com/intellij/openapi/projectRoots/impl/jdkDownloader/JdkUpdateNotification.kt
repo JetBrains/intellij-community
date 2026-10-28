@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.notification.Notification
@@ -237,6 +238,17 @@ class JdkUpdateNotification(
         }.commitChanges()
 
         (jdk.sdkType as? SdkType)?.setupSdkPaths(jdk)
+      }
+
+      val oldJdkPath = jdkHome?.let { runCatching { Path.of(it).toAbsolutePath().normalize() }.getOrNull() }
+      if (oldJdkPath != null && oldJdkPath != newJdkHome.toAbsolutePath().normalize()) {
+        withContext(Dispatchers.IO) {
+          runCatching { JdkInstaller.getInstance().removeOutdatedJdk(jdkHome) }
+            .onFailure { t ->
+              rethrowControlFlowException(t)
+              LOG.warn("Failed to remove outdated JDK at $jdkHome", t)
+            }
+        }
       }
       reachTerminalState()
     }

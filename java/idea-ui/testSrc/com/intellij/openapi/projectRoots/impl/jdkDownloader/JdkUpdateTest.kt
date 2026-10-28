@@ -125,6 +125,33 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
     doEventsWhile(5)
 
     Assert.assertEquals(customJdks, Paths.get(update.jdk.homePath!!).parent)
+    Assert.assertFalse(Files.exists(oldJdkHome))
+    Assert.assertFalse(Files.exists(customJdks.resolve(".old-jdk.intellij")))
+  }
+
+  @Test fun `test jdk update keeps old install used by another sdk`() {
+    val customJdks = tempDir.newDirectory("custom-jdks-in-use").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+    val update = newNotification("old-sdk-in-use", oldHome = oldJdkHome)!!
+
+    val anotherSdk = ProjectJdkTable.getInstance().createSdk("another-old-sdk", JavaSdk.getInstance())
+    val sdkModificator = anotherSdk.sdkModificator.apply {
+      homePath = oldJdkHome.toString()
+      versionString = mockZipOld.versionString
+    }
+    ApplicationManager.getApplication().runWriteAction {
+      sdkModificator.commitChanges()
+      ProjectJdkTable.getInstance().addJdk(anotherSdk, testRootDisposable)
+    }
+
+    update.fireAction()
+    doEventsWhile(5)
+
+    Assert.assertTrue(Files.exists(oldJdkHome))
+    Assert.assertTrue(Files.exists(customJdks.resolve(".old-jdk.intellij")))
+    Assert.assertEquals(listOf(oldJdkHome.toString()), service<JdkInstallerStore>().listOutdated())
   }
 
   @Test fun `test jdk update failed`() {
