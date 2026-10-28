@@ -531,7 +531,7 @@ class WSLDistributionTest {
 
           override val isIjentAvailable: Boolean = true
 
-          override fun isIjentInitialized(descriptor: EelDescriptor): Boolean = true
+          override fun isIjentInitialized(wslDistribution: WSLDistribution): Boolean = true
         },
         disposable,
       )

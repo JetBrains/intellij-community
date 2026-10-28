@@ -154,9 +154,8 @@ class ProductionWslIjentManager(private val scope: CoroutineScope) : WslIjentMan
     return getIjentSession(wslDistribution, project, rootUser, ParentOfIjentScopes(scope)).getIjentInstance(descriptor)
   }
 
-  override fun isIjentInitialized(descriptor: EelDescriptor): Boolean {
-    require(descriptor is WslEelDescriptor)
-    return ijentIdLabel(descriptor.distribution, false) in initializedIjents
+  override fun isIjentInitialized(wslDistribution: WSLDistribution): Boolean {
+    return ijentIdLabel(wslDistribution, false) in initializedIjents
   }
 
   private fun ijentIdLabel(wslDistribution: WSLDistribution, rootUser: Boolean): String =

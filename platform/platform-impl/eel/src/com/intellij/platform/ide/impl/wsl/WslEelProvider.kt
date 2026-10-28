@@ -87,11 +87,12 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
     return providersCache.computeIfAbsent(wslRoot) {
       val ijentFsProvider = IjentNioFileSystemProvider.getInstance()
 
-      val descriptor = WslEelDescriptor(WSLDistribution(distributionId), wslRoot)
+      val distribution = WSLDistribution(distributionId)
+      val descriptor = WslEelDescriptor(distribution, wslRoot)
       val ijentUri = URI("ijent", "wsl", "/$distributionId", null, null)
       try {
         val ijentFs = ijentFailSafeFileSystemApi(coroutineScope, descriptor, checkIsIjentInitialized = {
-          WslIjentManager.getInstance().isIjentInitialized(descriptor)
+          WslIjentManager.getInstance().isIjentInitialized(distribution)
         })
         val fs = ijentFsProvider.newFileSystem(ijentUri, IjentNioFileSystemProvider.newFileSystemMap(ijentFs))
 
@@ -151,7 +152,7 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
     val distributions = WslDistributionManager.getInstance().lastInstalledDistributions ?: return emptyList()
     return distributions
       // Enumerating file stores must not boot a distribution: `fileStores` of a lazily started IJent would start it.
-      .filter { WslIjentManager.getInstance().isIjentInitialized(WslEelDescriptor(it)) }
+      .filter { WslIjentManager.getInstance().isIjentInitialized(it) }
       // `roots` are Windows strings, while `compute` expects a sanitized path.
       .mapNotNull { compute(localFS, MultiRoutingFileSystem.sanitizeRoot(it.preferredRoot)) }
       .flatMap { it.fileStores }

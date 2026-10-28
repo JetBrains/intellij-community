@@ -58,7 +58,7 @@ interface WslIjentManager {
     sessionScope: ParentOfIjentScopes,
   ): IjentSession.Posix
 
-  fun isIjentInitialized(descriptor: EelDescriptor): Boolean
+  fun isIjentInitialized(wslDistribution: WSLDistribution): Boolean
 
   @Deprecated(
     "Use WslIjentAvailabilityService.runWslCommandsViaIjent",

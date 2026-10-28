@@ -13,7 +13,6 @@ import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributo
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Presentation
 import com.intellij.openapi.fileChooser.universal.UniversalFileChooserContributor.Root
 import com.intellij.platform.eel.impl.fileChooser.EelFileWatcherAdapter
-import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.impl.wsl.WslEelDescriptor
 import com.intellij.ui.BadgeIconSupplier
@@ -44,7 +43,7 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
       val id = canonicalRootId(uncRoot.pathString)
       handledIds += id
 
-      val isMounted = WslIjentManager.getInstance().isIjentInitialized(WslEelDescriptor(distribution))
+      val isMounted = WslIjentManager.getInstance().isIjentInitialized(distribution)
       val mountedRealPath = systemRootPaths.firstOrNull { canonicalRootId(it.pathString) == id }
 
       if (isMounted && mountedRealPath != null) {
@@ -76,31 +75,30 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
     return emptyList()
   }
 
-  override fun ownsPath(path: Path): Boolean = path.asEelPath().descriptor is WslEelDescriptor
+  override fun ownsPath(path: Path): Boolean = path.getEelDescriptor() is WslEelDescriptor
 
   override suspend fun getMountStatus(path: Path): MountStatus = withContext(Dispatchers.IO) {
-    val descriptor = path.asEelPath().descriptor as? WslEelDescriptor ?: return@withContext MountStatus.Unmounted
-    if (WslIjentManager.getInstance().isIjentInitialized(descriptor)) MountStatus.Mounted else MountStatus.Unmounted
+    val descriptor = path.getEelDescriptor() as? WslEelDescriptor ?: return@withContext MountStatus.Unmounted
+    if (WslIjentManager.getInstance().isIjentInitialized(descriptor.distribution)) MountStatus.Mounted else MountStatus.Unmounted
   }
 
   override suspend fun mount(path: Path) {
-    val descriptor = path.asEelPath().descriptor as? WslEelDescriptor ?: return
-    ensureIjentInitialized(descriptor)
+    val descriptor = path.getEelDescriptor() as? WslEelDescriptor ?: return
+    ensureIjentInitialized(descriptor.distribution)
   }
 
   override suspend fun mountVirtualRoot(virtualRoot: Root): Path? = withContext(Dispatchers.IO) {
     val distributionId = distributionIdFromRootId(virtualRoot.id) ?: return@withContext null
     val distribution = WslDistributionManager.getInstance().getOrCreateDistributionByMsId(distributionId)
-    val descriptor = WslEelDescriptor(distribution)
-    ensureIjentInitialized(descriptor)
+    ensureIjentInitialized(distribution)
     runCatching { Path.of(virtualRoot.id) }.getOrNull()
   }
 
   override fun getFileWatcherAdapter(): FileWatcherAdapter = EelFileWatcherAdapter()
 
   override suspend fun getPresentation(path: Path): Presentation? = withContext(Dispatchers.IO) {
-    val descriptor = path.asEelPath().descriptor as? WslEelDescriptor ?: return@withContext null
-    val isMounted = WslIjentManager.getInstance().isIjentInitialized(descriptor)
+    val descriptor = path.getEelDescriptor() as? WslEelDescriptor ?: return@withContext null
+    val isMounted = WslIjentManager.getInstance().isIjentInitialized(descriptor.distribution)
     Presentation(
       presentableName = descriptor.distribution.presentableName,
       icon = if (isMounted) MOUNTED_DISTRIBUTION_ICON else AllIcons.RunConfigurations.Wsl,
@@ -111,9 +109,9 @@ internal class WslFileChooserContributor : UniversalFileChooserContributor {
     return CoreBundle.message("file.chooser.loading.the.installed.wsl.distributions.list")
   }
 
-  private suspend fun ensureIjentInitialized(descriptor: WslEelDescriptor) {
+  private suspend fun ensureIjentInitialized(distribution: WSLDistribution) {
     withContext(Dispatchers.IO) {
-      WslIjentManager.instanceAsync().getIjentApi(descriptor, descriptor.distribution, null, false)
+      WslIjentManager.instanceAsync().getIjentApi(null, distribution, null, false)
     }
   }
 
