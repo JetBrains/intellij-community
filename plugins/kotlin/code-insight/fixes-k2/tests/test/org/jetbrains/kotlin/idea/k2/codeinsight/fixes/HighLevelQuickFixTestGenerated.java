@@ -9403,16 +9403,6 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/expressions/replaceIsCheckWithNullCheckKeepsComment.kt");
         }
 
-        @TestMetadata("replaceIsCheckWithNullCheckRelyingOnNullInWhen.kt")
-        public void testReplaceIsCheckWithNullCheckRelyingOnNullInWhen() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/expressions/replaceIsCheckWithNullCheckRelyingOnNullInWhen.kt");
-        }
-
-        @TestMetadata("replaceIsCheckWithNullCheckRelyingOnNullNegatedInWhen.kt")
-        public void testReplaceIsCheckWithNullCheckRelyingOnNullNegatedInWhen() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/expressions/replaceIsCheckWithNullCheckRelyingOnNullNegatedInWhen.kt");
-        }
-
         @TestMetadata("replaceIsCheckWithNullCheckSmartCastUsed.kt")
         public void testReplaceIsCheckWithNullCheckSmartCastUsed() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/expressions/replaceIsCheckWithNullCheckSmartCastUsed.kt");
