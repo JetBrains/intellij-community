@@ -40,7 +40,7 @@ internal class CancelSelection : TerminalEscapeHandler {
   override val order: Int
     get() = 200
 
-  override fun isEnabled(e: AnActionEvent): Boolean = e.terminalEditor?.selectionModel?.hasSelection() == true
+  override fun isEnabled(e: AnActionEvent): Boolean = e.terminalEditor?.selectionModel?.hasSelection(true) == true
 
   override fun execute(e: AnActionEvent) {
     e.terminalEditor?.selectionModel?.removeSelection(true)

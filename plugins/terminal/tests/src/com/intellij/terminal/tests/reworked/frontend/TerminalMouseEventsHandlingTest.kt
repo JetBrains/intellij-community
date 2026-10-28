@@ -655,6 +655,19 @@ internal class TerminalMouseEventsHandlingTest {
         assertThat(fixture.caretSelectionsByLine()).containsExactly("234", "234", "234")
       }
 
+      /** Unlike in a regular editor, a line that ends before the block keeps its caret, so a copy keeps the line. */
+      @Test
+      fun `alt press-drag-release keeps a caret on a line shorter than the rectangular selection`(): Unit = doTest { fixture ->
+        fixture.setText("# abcdef\n#\n# mnopqr")
+        val alt = InputEvent.ALT_DOWN_MASK or InputEvent.BUTTON1_DOWN_MASK
+
+        fixture.press(fixture.pointAt(row = 0, column = 4), alt)
+        fixture.drag(fixture.pointAt(row = 2, column = 7), alt)
+        fixture.release(fixture.pointAt(row = 2, column = 7), alt)
+
+        assertThat(fixture.caretSelectionsByLine()).containsExactly("cde", null, "opq")
+      }
+
       @Test
       fun `plain click after a rectangular selection removes it`(): Unit = doTest { fixture ->
         fixture.setText("0123456789\n0123456789\n0123456789")
@@ -681,6 +694,23 @@ internal class TerminalMouseEventsHandlingTest {
      */
     @Nested
     inner class MouseReportingEnabled {
+      @Test
+      fun `shift+alt press-drag-release keeps a caret on a line shorter than the rectangular selection`(): Unit =
+        doTest(isMouseReportingEnabled = true) { fixture ->
+          fixture.setText("# abcdef\n#\n# mnopqr")
+          val modifiers = InputEvent.SHIFT_DOWN_MASK or InputEvent.ALT_DOWN_MASK or InputEvent.BUTTON1_DOWN_MASK
+
+          fixture.press(fixture.pointAt(row = 0, column = 4), modifiers)
+          fixture.drag(fixture.pointAt(row = 2, column = 7), modifiers)
+          fixture.release(fixture.pointAt(row = 2, column = 7), modifiers)
+
+          assertThat(fixture.reportedEvents).isEmpty()
+          val carets = fixture.editor.caretModel.allCarets
+          val blockSelections = carets.filter { it.hasSelection() }.sortedBy { it.logicalPosition.line }.map { it.selectedText }
+          assertThat(blockSelections).containsExactly("cde", "opq")
+          assertThat(carets.filter { it.logicalPosition.line == 1 }.map { it.selectedText }).containsExactly(null)
+        }
+
       @Test
       fun `shift+alt press-drag-release creates a rectangular selection and is not reported`(): Unit =
         doTest(isMouseReportingEnabled = true) { fixture ->

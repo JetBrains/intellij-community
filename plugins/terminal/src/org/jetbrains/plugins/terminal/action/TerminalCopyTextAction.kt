@@ -34,7 +34,7 @@ internal class TerminalCopyTextAction : DumbAwareAction(), ActionRemoteBehaviorS
         editor.isPromptEditor || editor.isOutputEditor || editor.isAlternateBufferEditor || // gen1
         editor.isOutputModelEditor || editor.isAlternateBufferModelEditor // gen2
       )
-    val isEnabled = isVisible && editor.selectionModel.hasSelection()
+    val isEnabled = isVisible && editor.selectionModel.hasSelection(true)
     e.presentation.isVisible = isVisible
     e.presentation.isEnabled = isEnabled
   }

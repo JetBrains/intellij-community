@@ -28,6 +28,7 @@ import java.util.Objects;
 public final class EditorModificationUtil extends EditorModificationUtilEx {
   private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_HINT_KEY");
   private static final Key<Boolean> IGNORE_READ_ONLY_HINT_KEY = Key.create("IGNORE_READ_ONLY_HINT_KEY");
+  private static final Key<Boolean> KEEP_LINES_WITHOUT_SELECTION_IN_BLOCK_KEY = Key.create("KEEP_LINES_WITHOUT_SELECTION_IN_BLOCK_KEY");
 
   private EditorModificationUtil() { }
 
@@ -133,11 +134,21 @@ public final class EditorModificationUtil extends EditorModificationUtilEx {
         hasSelection |= startOffset != endOffset;
       }
     }
-    if (hasSelection && !editor.isColumnMode()) {
+    if (hasSelection && !editor.isColumnMode() && !KEEP_LINES_WITHOUT_SELECTION_IN_BLOCK_KEY.isIn(editor)) {
       // filtering out lines without selection
       caretStates.removeIf(state -> Objects.equals(state.getSelectionStart(), state.getSelectionEnd()));
     }
     return caretStates;
+  }
+
+  /**
+   * Makes a block selection in the editor keep a caret on each line, also on a line that has no selected text.
+   * By default, {@link #calcBlockSelectionState} removes the carets of such lines when other lines have selected text.
+   * Use it for an editor that does not change its text through carets.
+   */
+  @ApiStatus.Internal
+  public static void setKeepLinesWithoutSelectionInBlock(@NotNull Editor editor, boolean keep) {
+    editor.putUserData(KEEP_LINES_WITHOUT_SELECTION_IN_BLOCK_KEY, keep ? true : null);
   }
 
   @ApiStatus.Internal

@@ -73,6 +73,38 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
   }
 
   @Test
+  fun `copy on selection keeps a line of a block selection that ends before the block`() {
+    val editor = createTerminalEditor()
+    editor.document.setText(
+      """
+      # abcdef
+      #
+      # mnopqr
+      """.trimIndent()
+    )
+
+    editor.selectionModel.setBlockSelection(LogicalPosition(0, 4), LogicalPosition(2, 7))
+    assertThat(getClipboardText()).isEqualTo("cde\n\nopq")
+  }
+
+  @Test
+  fun `copy on selection keeps a line of a block selection that ends before the block in the alternate buffer editor`() {
+    val editor = createTerminalEditor { project, settings, scope ->
+      TerminalEditorFactory.createAlternateBufferEditor(project, settings, DocumentImpl("", true), scope)
+    }
+    editor.document.setText(
+      """
+      # abcdef
+      #
+      # mnopqr
+      """.trimIndent()
+    )
+
+    editor.selectionModel.setBlockSelection(LogicalPosition(0, 4), LogicalPosition(2, 7))
+    assertThat(getClipboardText()).isEqualTo("cde\n\nopq")
+  }
+
+  @Test
   fun `copy on selection works in the alternate buffer editor`() {
     val editor = createTerminalEditor { project, settings, scope ->
       TerminalEditorFactory.createAlternateBufferEditor(project, settings, DocumentImpl("", true), scope)

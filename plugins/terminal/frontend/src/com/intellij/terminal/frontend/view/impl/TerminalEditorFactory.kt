@@ -7,6 +7,7 @@ import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.EditorModificationUtil
 import com.intellij.openapi.editor.actions.ChangeEditorFontSizeStrategy
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.SettingsImpl
@@ -116,6 +117,8 @@ object TerminalEditorFactory {
     editor.settings.isBlockCursor = false // we paint our own cursor, but this setting affects mouse selection subtly (IJPL-190533)
     editor.contentComponent.focusTraversalKeysEnabled = false
     editor.contextMenuGroupId = "Terminal.ReworkedTerminalContextMenu"
+    // The terminal does not change the text through carets, so a block selection can keep a caret on a short line.
+    EditorModificationUtil.setKeepLinesWithoutSelectionInBlock(editor, true)
     configureSoftWraps(editor)
     CopyOnSelectionHandler.install(editor, settings)
 
