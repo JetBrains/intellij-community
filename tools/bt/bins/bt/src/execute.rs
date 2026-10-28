@@ -26,7 +26,8 @@ use bt_core::result::{FlakyRun, RunResult, RunStatus, TargetResult, TargetTiming
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
 use bt_core::scan::{ResolutionInputs, derive_package, read_text};
 use bt_core::selector::{
-    Resolution, Selector, SelectorKind, as_filter_or_package, directory_pattern, resolve_selector, suggest_names, wanted_simple_name,
+    Resolution, Selector, SelectorKind, as_filter_or_package, checkout_label, directory_pattern, resolve_selector, suggest_names,
+    wanted_simple_name,
 };
 use bt_core::shard_plan::{PROFILE_FILE, SHARD_PLAN_FILE, ShardPlan};
 use bt_core::suites::{named_suites, resolve_suite_run};
@@ -154,7 +155,7 @@ where
                 };
                 run_on_host(&host, CheckCommand::Build, args.json, &argv, runtime, link)
             }
-            None => Ok(execute_build(&args, runtime)),
+            None => execute_build(&args, runtime),
         },
         Invocation::Run(args) => match &args.host {
             Some(alias) => {
@@ -545,7 +546,7 @@ fn build_excluded_targets(runtime: &dyn Runtime, args: &[String]) -> Option<Outc
 fn list_candidates(runtime: &dyn Runtime, areas: &Areas, selector: &Selector, inputs: &ResolutionInputs<'_>) -> Result<String, Refusal> {
     match selector.kind {
         SelectorKind::Label | SelectorKind::Pattern => {
-            return Ok(format!("label   {}", selector.name));
+            return Ok(format!("label   {}", checkout_label(runtime, &selector.name)));
         }
         SelectorKind::Dir => {
             return Ok(format!("label   {}", directory_pattern(runtime, &selector.name)?));

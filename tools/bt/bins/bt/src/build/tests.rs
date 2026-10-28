@@ -2,8 +2,9 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::execute::execute;
-use bt_core::fake::{FakeRuntime, area_files, refusal};
+use bt_core::fake::{FakeRuntime, area_files, bep_lines, refusal};
 use bt_core::runtime::{CheckoutTree, SpawnResult};
+use serde_json::json;
 
 const RECORDS: &str = "/repo/.git/bd-checks.jsonl";
 const BEP_PATH: &str = "/tmp/air-bazel-build-bep.json";
@@ -23,6 +24,28 @@ fn checkout() -> FakeRuntime {
     fake
 }
 
+/// The BEP of a build that completed these targets.
+fn completed(fake: &FakeRuntime, labels: &[&str]) {
+    let mut events = vec![json!({"id": {"pattern": {"pattern": ["//plugins/air/..."]}}, "expanded": {}})];
+    for label in labels {
+        events.push(json!({"id": {"targetCompleted": {"label": label}}, "completed": {"success": true}}));
+    }
+    events.push(json!({"id": {"buildFinished": {}}, "finished": {"overallSuccess": true}}));
+    fake.put_absolute(BEP_PATH, &bep_lines(&events));
+}
+
+/// The ultimate root, with a directory of the community repository.
+fn ultimate_checkout() -> FakeRuntime {
+    let fake = checkout();
+    fake.put("community/MODULE.bazel", "");
+    fake.put("community/tools/vm/BUILD.bazel", "");
+    fake
+}
+
+/// What bazel prints for a pattern under a directory of `.bazelignore`, before it exits 0.
+const IGNORED_WARNING: &str = "WARNING: Pattern '//lib/...' was filtered out by ignored directory 'lib'\n\
+                               INFO: Found 1 target...\nINFO: Build completed successfully, 1 total action";
+
 fn build(argv: &[&str], fake: &FakeRuntime, bazel_exit: i32, output: &str) -> Outcome {
     fake.state().spawn_result = SpawnResult {
         exit_code: bazel_exit,
@@ -35,6 +58,7 @@ fn build(argv: &[&str], fake: &FakeRuntime, bazel_exit: i32, output: &str) -> Ou
 #[test]
 fn a_green_build_says_so_in_one_line_and_records_the_tree() {
     let fake = checkout();
+    completed(&fake, &["//plugins/air:a"]);
     let outcome = build(&["//plugins/air/..."], &fake, 0, "");
     assert_eq!(outcome.exit_code, exit::GREEN);
     assert_eq!(outcome.text, "BUILD OK  //plugins/air/...  5.0s");
@@ -96,6 +120,75 @@ fn a_bazel_that_fails_is_infrastructure() {
             outcome.text
         );
     }
+}
+
+/// Bazel exits 0 when every pattern named no target, as for a pattern under an ignored directory. That is no green.
+#[test]
+fn a_build_of_no_target_is_empty_and_records_nothing() {
+    let fake = checkout();
+    completed(&fake, &[]);
+    let outcome = build(&["//plugins/air/...", "--json"], &fake, 0, "INFO: Found 0 targets...");
+    assert_eq!(outcome.exit_code, exit::NO_TESTS);
+    assert_eq!(
+        outcome.text,
+        "BUILD EMPTY  //plugins/air/...  5.0s\ncause   the patterns name no target, so bazel built nothing"
+    );
+    assert_eq!(outcome.json.map(|payload| payload.status), Some(RunStatus::NoTests));
+    assert!(
+        fake.state().stderr.join("\n").contains("Found 0 targets"),
+        "the tail of bazel is missing"
+    );
+    assert!(!fake.state().files.contains_key(RECORDS));
+}
+
+/// Bazel builds the other patterns, so the BEP names targets. Only its warning names the dropped pattern.
+#[test]
+fn a_pattern_that_bazel_ignores_makes_the_build_empty() {
+    let fake = checkout();
+    completed(&fake, &["//plugins/air:a"]);
+    // A pattern after `--` goes to bazel as it is.
+    let outcome = build(&["//plugins/air/...", "--", "//lib/..."], &fake, 0, IGNORED_WARNING);
+    assert_eq!(outcome.exit_code, exit::NO_TESTS);
+    assert_eq!(
+        outcome.text,
+        "BUILD EMPTY  //plugins/air/...  5.0s\n\
+         ignored //lib/...  bazel ignores the directory lib, so the pattern names no target"
+    );
+    assert!(!fake.state().files.contains_key(RECORDS));
+}
+
+#[test]
+fn a_green_bazel_without_a_bep_event_is_infrastructure() {
+    let fake = checkout();
+    let outcome = build(&["//plugins/air/..."], &fake, 0, "");
+    assert_eq!(outcome.exit_code, exit::INFRA);
+    assert!(!fake.state().files.contains_key(RECORDS));
+}
+
+/// The root `.bazelignore` of the ultimate checkout lists `community`, so the build runs the `@community` pattern, and
+/// the digest and the record name it.
+#[test]
+fn a_pattern_under_community_of_the_ultimate_root_builds_in_the_community_repository() {
+    let fake = ultimate_checkout();
+    completed(&fake, &["@community//tools/vm:vm"]);
+    let outcome = build(&["//community/tools/vm/..."], &fake, 0, "");
+    assert_eq!(outcome.exit_code, exit::GREEN);
+    assert_eq!(outcome.text, "BUILD OK  @community//tools/vm/...  5.0s");
+    assert_eq!(fake.spawned()[0].last().map(String::as_str), Some("@community//tools/vm/..."));
+    let records = fake.state().files.get(RECORDS).cloned().expect("a record");
+    assert!(records.contains(r#""patterns":["@community//tools/vm/..."]"#), "{records}");
+}
+
+/// `bt` runs in the checkout root, also from `community/`, so `//tools/vm/...` names no directory there.
+#[test]
+fn a_pattern_of_a_missing_directory_is_refused_before_bazel() {
+    let fake = ultimate_checkout();
+    let failure = refusal(execute(["build", "//plugins/air/...", "//tools/vm/..."], &fake));
+    assert_eq!(failure.exit, exit::USAGE);
+    assert!(failure.message.starts_with("No such directory: tools/vm\n"), "{}", failure.message);
+    assert!(failure.message.contains("pass @community//tools/vm/..."), "{}", failure.message);
+    assert!(fake.spawned().is_empty());
+    assert!(fake.state().removed.is_empty(), "a BEP file was made");
 }
 
 #[test]

@@ -67,6 +67,14 @@ label for an explicit run. A module without a target of its own gets the code `m
 `bt build <pattern>...` runs `bazel build -k` over target patterns that start with `//` or `@`, with the UI of bazel
 silenced. The digest is `BUILD OK`, or `BUILD FAILED` with the compile errors and the targets that did not build.
 `bins/bt/src/build.rs` holds it. The exit code is 0, 5 for a build failure, or 6 for any other exit of bazel.
+
+Bazel exits 0 for a pattern under an ignored directory: it only warns, and it builds nothing for that pattern. So a
+green build is `BUILD OK` only when the BEP names a completed target and bazel dropped no pattern. Otherwise the digest
+is `BUILD EMPTY`, the exit code is 4, and the build records nothing. In the ultimate root, the root `.bazelignore`
+lists `community`, so `//community/<rest>` runs as `@community//<rest>`, as a directory selector does. A test run maps
+its label the same way. bt runs every pattern in the checkout root, whatever the working directory. A `//` pattern
+whose directory is not in the checkout is refused with exit 2, and the message names the `@community` spelling when
+the directory is under `community/`.
 `--json`, `--dry-run`, `--verbose` and `--host` work as for a test run.
 
 ## The check record

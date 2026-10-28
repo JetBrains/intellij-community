@@ -82,6 +82,21 @@ impl Layout {
         }
     }
 
+    /// The `@community` spelling of a label or a pattern of the root repository, when it names a package under
+    /// `community/` of the ultimate root: `//community/tools/vm/...` is `@community//tools/vm/...`, and
+    /// `//community:name` is `@community//:name`. `None` for every other value.
+    pub(crate) fn community_label(self, raw: &str) -> Option<String> {
+        let rest = match self {
+            Self::Ultimate => raw.strip_prefix("//community")?,
+            Self::Community => return None,
+        };
+        if rest.is_empty() {
+            return Some("@community//:community".to_owned());
+        }
+        let rest = rest.strip_prefix('/').or_else(|| rest.starts_with(':').then_some(rest))?;
+        Some(format!("@community//{rest}"))
+    }
+
     /// The repository and the package of a repo-relative directory. In the ultimate root, a directory under
     /// `community/` belongs to the `@community` repository.
     fn package(self, dir: &str) -> (&'static str, &str) {

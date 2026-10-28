@@ -447,6 +447,17 @@ fn a_directory_under_community_runs_in_the_community_repository() {
     assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
 }
 
+/// A run and its candidate list name the `@community` label for a label under `community/` of the ultimate root.
+#[test]
+fn a_label_under_community_runs_in_the_community_repository() {
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    for argv in [["//community/tools/bt/...", "--dry-run"], ["//community/tools/bt/...", "--list"]] {
+        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/bt/..."]);
+    }
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
+}
+
 #[test]
 fn the_all_lane_carries_no_extras_so_it_still_covers_integration() {
     let text = dry_run(&["--lane", "all"]);
