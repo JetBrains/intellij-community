@@ -168,29 +168,28 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
 
   /**
    * @deprecated The default browser is a browser now, see {@link #getDefaultBrowser()}.
-   * This method returns {@link DefaultBrowserPolicy#SYSTEM} for {@link SystemDefaultBrowser}.
-   * For a browser of the list, it returns {@link DefaultBrowserPolicy#FIRST}, but the browser is not always the first one.
+   * This method returns {@link DefaultBrowserPolicy#SYSTEM} for a browser without a path, such as {@link SystemDefaultBrowser}.
+   * For a browser with a path, it returns {@link DefaultBrowserPolicy#FIRST}, but the browser is not always the first one.
    */
   @Deprecated
   public @NotNull DefaultBrowserPolicy getDefaultBrowserPolicy() {
-    return getDefaultBrowser() == SystemDefaultBrowser.INSTANCE ? DefaultBrowserPolicy.SYSTEM : DefaultBrowserPolicy.FIRST;
+    return getDefaultBrowser().getPath() == null ? DefaultBrowserPolicy.SYSTEM : DefaultBrowserPolicy.FIRST;
   }
 
   /**
    * Returns the browser that opens a URL when the caller names no browser.
-   * It is the browser of the list that the developer picked, when that browser is active and has a path.
+   * It is the browser that the developer picked, found as {@link #findBrowserById(String)} finds it.
+   * A browser of the list must be active and have a path.
    * Otherwise, it is {@link SystemDefaultBrowser}.
    */
   @ApiStatus.Internal
   public @NotNull WebBrowser getDefaultBrowser() {
-    if (defaultBrowserId != null) {
-      for (ConfigurableWebBrowser browser : browsers) {
-        if (browser.getId().equals(defaultBrowserId)) {
-          return browser.isActive() && browser.getPath() != null ? browser : SystemDefaultBrowser.INSTANCE;
-        }
-      }
+    WebBrowser browser = defaultBrowserId == null ? null : findBrowserById(defaultBrowserId);
+    if (browser == null ||
+        browser instanceof ConfigurableWebBrowser configurable && (!configurable.isActive() || configurable.getPath() == null)) {
+      return SystemDefaultBrowser.INSTANCE;
     }
-    return SystemDefaultBrowser.INSTANCE;
+    return browser;
   }
 
   /**
@@ -219,9 +218,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
    */
   private void syncGeneralLocalSettings() {
     GeneralLocalSettings settings = GeneralLocalSettings.getInstance();
-    WebBrowser defaultBrowser = getDefaultBrowser();
-    settings.setUseDefaultBrowser(defaultBrowser == SystemDefaultBrowser.INSTANCE);
-    String path = defaultBrowser.getPath();
+    // the older code opens a browser without a path, such as a provided one, as the system default browser
+    String path = getDefaultBrowser().getPath();
+    settings.setUseDefaultBrowser(path == null);
     if (path != null) {
       settings.setBrowserPath(path);
     }
@@ -378,7 +377,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
   }
 
-  private static @Nullable UUID readId(String value, @Nullable BrowserFamily family, @NotNull List<ConfigurableWebBrowser> existingBrowsers) {
+  private static @Nullable UUID readId(String value,
+                                       @Nullable BrowserFamily family,
+                                       @NotNull List<ConfigurableWebBrowser> existingBrowsers) {
     if (StringUtil.isEmpty(value)) {
       if (family == null) {
         return null;
@@ -538,7 +539,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
                                       StringUtil.notNullize(element.getAttributeValue("name"), family == null ? "" : family.getName()),
                                       StringUtil.nullize(element.getAttributeValue("path"), true),
                                       false,
-                                      specificSettings == null && family != null ? family.createBrowserSpecificSettings() : specificSettings);
+                                      specificSettings == null && family != null
+                                      ? family.createBrowserSpecificSettings()
+                                      : specificSettings);
   }
 
   private static @Nullable BrowserSpecificSettings readSpecificSettings(@Nullable BrowserFamily family, @NotNull Element element) {
@@ -609,7 +612,8 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     // add removed/new predefined browsers
     Map<UUID, ConfigurableWebBrowser> idToBrowser = null;
     int n = list.size();
-    pb: for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
+    pb:
+    for (UUID predefinedBrowserId : PREDEFINED_BROWSER_IDS) {
       for (int i = 0; i < n; i++) {
         if (list.get(i).getId().equals(predefinedBrowserId)) {
           continue pb;
@@ -770,6 +774,9 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
   }
 
   /**
+   * Checks {@link SystemDefaultBrowser}, then the browsers of the list, then the browsers of a {@link WebBrowserProvider}.
+   * So a provider cannot take the id of the system default browser or of a browser of the list.
+   *
    * @param idOrFamilyName UUID or, due to backward compatibility, browser family name or JS debugger engine ID
    */
   public @Nullable WebBrowser findBrowserById(@Nullable String idOrFamilyName) {
@@ -778,25 +785,29 @@ public final class WebBrowserManager extends SimpleModificationTracker implement
     }
 
     UUID id = parseUuid(idOrFamilyName);
+    if (id != null) {
+      return findBrowserById(id);
+    }
+
+    for (ConfigurableWebBrowser browser : browsers) {
+      BrowserFamily family = browser.getFamily();
+      if (family != null && (family.name().equalsIgnoreCase(idOrFamilyName) || family.getName().equalsIgnoreCase(idOrFamilyName))) {
+        return browser;
+      }
+    }
+    return null;
+  }
+
+  private @Nullable WebBrowser findBrowserById(@NotNull UUID id) {
     if (SystemDefaultBrowser.INSTANCE.getId().equals(id)) {
       return SystemDefaultBrowser.INSTANCE;
     }
-    if (id == null) {
-      for (ConfigurableWebBrowser browser : browsers) {
-        BrowserFamily family = browser.getFamily();
-        if (family != null && (family.name().equalsIgnoreCase(idOrFamilyName) || family.getName().equalsIgnoreCase(idOrFamilyName))) {
-          return browser;
-        }
-      }
-      return null;
-    }
-
     for (ConfigurableWebBrowser browser : browsers) {
       if (browser.getId().equals(id)) {
         return browser;
       }
     }
-    return null;
+    return ContainerUtil.find(WebBrowserProvider.getAvailableBrowsers(), it -> it.getId().equals(id));
   }
 
   public @Nullable WebBrowser getFirstBrowserOrNull(@NotNull BrowserFamily family) {
