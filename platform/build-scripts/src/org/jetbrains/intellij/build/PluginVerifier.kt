@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
@@ -13,7 +13,7 @@ import kotlin.io.path.pathString
 import kotlin.io.path.readText
 
 
-private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.410"
+private const val DEFAULT_PLUGIN_VERIFIER_VERSION = "1.411"
 
 fun createPluginVerifier(
   pluginVerifierVersion: String = DEFAULT_PLUGIN_VERIFIER_VERSION,
