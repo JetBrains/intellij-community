@@ -37,7 +37,7 @@ pub const MODULE_NOT_MIGRATED: &str = "module_not_migrated";
 /// The two checkout layouts. They differ in the path of the migrated list, the repository of a community label and
 /// the path of `bt.cmd`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Layout {
+pub(crate) enum Layout {
     /// The ultimate root, with the community repository in `community/`.
     Ultimate,
     /// A community checkout, which is its own root.
@@ -46,7 +46,7 @@ enum Layout {
 
 impl Layout {
     /// The ultimate root holds `community/MODULE.bazel`. A community checkout has no `community/` directory.
-    fn detect(runtime: &dyn Runtime) -> Self {
+    pub(crate) fn detect(runtime: &dyn Runtime) -> Self {
         if runtime.exists(&repo_file(runtime, "community/MODULE.bazel")) {
             Self::Ultimate
         } else {
@@ -68,17 +68,31 @@ impl Layout {
         }
     }
 
-    /// The label of a target in a repo-relative directory. In the ultimate root, a directory under `community/`
-    /// belongs to the `@community` repository.
+    /// The label of a target in a repo-relative directory.
     fn label(self, dir: &str, name: &str) -> String {
+        let (repository, package) = self.package(dir);
+        format!("{repository}//{package}:{name}")
+    }
+
+    /// The recursive target pattern of a repo-relative directory: every target under it.
+    pub(crate) fn pattern(self, dir: &str) -> String {
+        match self.package(dir) {
+            (repository, "") => format!("{repository}//..."),
+            (repository, package) => format!("{repository}//{package}/..."),
+        }
+    }
+
+    /// The repository and the package of a repo-relative directory. In the ultimate root, a directory under
+    /// `community/` belongs to the `@community` repository.
+    fn package(self, dir: &str) -> (&'static str, &str) {
         let community = match self {
             Self::Ultimate if dir == "community" => Some(""),
             Self::Ultimate => dir.strip_prefix("community/"),
             Self::Community => None,
         };
         match community {
-            Some(rest) => format!("@community//{rest}:{name}"),
-            None => format!("//{dir}:{name}"),
+            Some(rest) => ("@community", rest),
+            None => ("", dir),
         }
     }
 }

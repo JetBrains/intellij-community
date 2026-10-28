@@ -266,6 +266,35 @@ fn a_directory_becomes_a_recursive_pattern() {
     }
 }
 
+/// The ultimate root ignores `community/`, so `//community/tools/vm/...` names no package there. The directory is a
+/// package of the `@community` repository.
+#[test]
+fn a_directory_under_community_of_the_ultimate_root_is_a_pattern_of_the_community_repository() {
+    let ultimate = || {
+        let fake = fake_air_tree();
+        fake.put("community/MODULE.bazel", "");
+        fake.put("community/tools/vm/BUILD.bazel", "");
+        fake
+    };
+    for (raw, pattern) in [
+        ("community/tools/vm", "@community//tools/vm/..."),
+        ("community/tools/vm/...", "@community//tools/vm/..."),
+        // Without the slash, the name reads as a package.
+        ("community/", "@community//..."),
+        ("plugins/air/shared/core", "//plugins/air/shared/core/..."),
+    ] {
+        let resolution = resolve_in(&ultimate(), raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
+        assert_eq!(resolution.labels, [pattern], "{raw}");
+        assert!(resolution.multi_target, "{raw}");
+    }
+
+    // A community checkout is its own root, so a directory named community there is a package of it.
+    let community = fake_air_tree();
+    community.put("community/tools/vm/BUILD.bazel", "");
+    let resolution = resolve_in(&community, "community/tools/vm").unwrap_or_else(|failure| panic!("{failure}"));
+    assert_eq!(resolution.labels, ["//community/tools/vm/..."]);
+}
+
 #[test]
 fn a_path_outside_the_repository_is_a_usage_refusal() {
     for raw in ["/elsewhere/plugins/air", "../other-repo/plugins"] {

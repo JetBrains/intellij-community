@@ -435,6 +435,18 @@ fn a_directory_inside_the_integration_tree_keeps_its_tags() {
     assert!(!text.contains("--test_tag_filters"), "{text}");
 }
 
+/// A run and its candidate list name one pattern for a directory under `community/` of the ultimate root.
+#[test]
+fn a_directory_under_community_runs_in_the_community_repository() {
+    let fake = fake_air_tree();
+    fake.put("community/MODULE.bazel", "");
+    fake.put("community/tools/vm/BUILD.bazel", "");
+    for argv in [["community/tools/vm", "--dry-run"], ["community/tools/vm", "--list"]] {
+        assert_mentions(&run(&argv, &fake).text, &["label   @community//tools/vm/..."]);
+    }
+    assert!(fake.spawned().is_empty(), "{:?}", fake.spawned());
+}
+
 #[test]
 fn the_all_lane_carries_no_extras_so_it_still_covers_integration() {
     let text = dry_run(&["--lane", "all"]);

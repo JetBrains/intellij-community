@@ -26,7 +26,7 @@ use bt_core::result::{FlakyRun, RunResult, RunStatus, TargetResult, TargetTiming
 use bt_core::runtime::{Runtime, SpawnResult, repo_file};
 use bt_core::scan::{ResolutionInputs, derive_package, read_text};
 use bt_core::selector::{
-    Resolution, Selector, SelectorKind, as_filter_or_package, repo_relative_dir, resolve_selector, suggest_names, wanted_simple_name,
+    Resolution, Selector, SelectorKind, as_filter_or_package, directory_pattern, resolve_selector, suggest_names, wanted_simple_name,
 };
 use bt_core::shard_plan::{PROFILE_FILE, SHARD_PLAN_FILE, ShardPlan};
 use bt_core::suites::{named_suites, resolve_suite_run};
@@ -548,7 +548,7 @@ fn list_candidates(runtime: &dyn Runtime, areas: &Areas, selector: &Selector, in
             return Ok(format!("label   {}", selector.name));
         }
         SelectorKind::Dir => {
-            return Ok(format!("label   //{}/...", repo_relative_dir(runtime, &selector.name)?));
+            return Ok(format!("label   {}", directory_pattern(runtime, &selector.name)?));
         }
         SelectorKind::Module => {
             let resolution = resolve_module(runtime, areas, &selector.name)?;

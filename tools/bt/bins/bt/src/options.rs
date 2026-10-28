@@ -26,7 +26,8 @@ Selectors (at most one):
   ClassName#method           bare simple name plus a single test method
   a.b.c.ClassName[#method]   fully-qualified name; resolves the label only
   a.b.c                      all-lowercase dotted package; runs the whole package
-  plugins/air/backend/vcs    directory; every test target under it, as //<dir>/...
+  plugins/air/backend/vcs    directory; every test target under it, as //<dir>/..., or as
+                             @community//<rest>/... for community/<rest> in the ultimate root
   //pkg:target               explicit label, no resolution (works outside every area)
   @repo//pkg:target          explicit label of another repository, such as @community, the same way
   //pkg/...                  wildcard pattern; a filter may not be combined with it

@@ -8,7 +8,7 @@ use refusal::Refusal;
 use crate::areas::{AREAS_FILE, Areas};
 use crate::catalog::read_suite_documents;
 use crate::exit::fail_usage;
-use crate::modules::resolve_module;
+use crate::modules::{Layout, resolve_module};
 use crate::runtime::{Platform, Runtime};
 use crate::scan::{Candidate, Index, ResolutionInputs, TestRoot, derive_package, read_dir_or_none, read_text};
 use crate::suites::{AffectedSuite, resolve_suite_run};
@@ -261,9 +261,8 @@ pub fn resolve_selector(runtime: &dyn Runtime, selector: &Selector, inputs: &Res
             });
         }
         SelectorKind::Dir => {
-            let dir = repo_relative_dir(runtime, &selector.name)?;
             return Ok(Resolution {
-                labels: vec![format!("//{dir}/...")],
+                labels: vec![directory_pattern(runtime, &selector.name)?],
                 multi_target: true,
                 ..Resolution::default()
             });
@@ -429,11 +428,18 @@ fn resolve_package(runtime: &dyn Runtime, selector: &Selector, inputs: &Resoluti
     })
 }
 
+/// The recursive target pattern of a directory selector. In the ultimate root, the root `.bazelignore` hides
+/// `community/`, so a directory under it is a package of the `@community` repository.
+pub fn directory_pattern(runtime: &dyn Runtime, raw: &str) -> Result<String, Refusal> {
+    let dir = repo_relative_dir(runtime, raw)?;
+    Ok(Layout::detect(runtime).pattern(&dir))
+}
+
 /// Resolves a directory selector against the repository root, not the process working directory: under `bt.cmd`
 /// the working directory is a runfiles tree, and a bazel target pattern is repo-relative anyway. A path that does
 /// not exist is a usage refusal rather than an empty pattern, because a typo would otherwise become a silent
 /// zero-target run reported as "no tests".
-pub fn repo_relative_dir(runtime: &dyn Runtime, raw: &str) -> Result<String, Refusal> {
+fn repo_relative_dir(runtime: &dyn Runtime, raw: &str) -> Result<String, Refusal> {
     // A trailing `/...` is bazel's wildcard rather than part of the path, and a Windows shell spells it with the
     // other separator.
     let trimmed = raw
