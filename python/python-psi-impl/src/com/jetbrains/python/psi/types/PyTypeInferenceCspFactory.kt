@@ -287,7 +287,7 @@ object PyTypeInferenceCspFactory {
     val (callSite, callableType) = si
     if (callSite !is PyCallExpression) throw NotSupportedException()
     if (callableType == null) throw NotSupportedException()
-    val mapping = PyCallExpressionHelper.mapArguments(callSite, callableType, context)
+    val mapping = PyCallExpressionHelper.mapArgumentsWithDefaults(callSite, callableType, context)
     if (!mapping.isComplete) throw NotSupportedException()
     val mappedParameters = mapping.mappedParameters
     val cspSubstitutions = GenericSubstitutions()

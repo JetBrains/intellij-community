@@ -14,7 +14,6 @@ import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.psi.impl.ArgumentMappingResults;
 import com.jetbrains.python.psi.impl.ParamHelper;
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
@@ -94,8 +93,8 @@ public class PyCallableTypeImpl implements PyCallableType {
     }
 
     PyCallableParameterListType parametersType = new PyCallableParameterListTypeImpl(ContainerUtil.notNullize(getParameters(context)));
-    ArgumentMappingResults mappingResults = PyCallExpressionHelper.analyzeArguments(arguments, parametersType, context);
-    final var substitutions = PyTypeChecker.unifyGenericCall(mappingResults.getMappedParameters(), context);
+    final var mappedParameters = PyCallExpressionHelper.analyzeArgumentsWithDefaults(arguments, parametersType, context);
+    final var substitutions = PyTypeChecker.unifyGenericCall(mappedParameters, context);
     final var substitutionsWithUnresolvedReturnGenerics =
       PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(this, myReturnType, substitutions, context);
     PyType typeAfterSubstitution = PyTypeChecker.substitute(myReturnType, substitutionsWithUnresolvedReturnGenerics, context);

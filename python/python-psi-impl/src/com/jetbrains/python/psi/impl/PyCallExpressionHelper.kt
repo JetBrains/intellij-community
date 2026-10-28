@@ -785,6 +785,62 @@ object PyCallExpressionHelper {
   }
 
   /**
+   * Like [mapArguments], but parameters that get no argument and fall back to their default value
+   * are also mapped: the default value expression is used as the key in [PyArgumentsMapping.getMappedParameters].
+   *
+   * Note that these keys are declaration-site expressions, not call-site arguments; they are not contained
+   * in [PyArgumentsMapping.getArguments]. Parameters whose default value has no PSI (e.g., synthetic callables)
+   * remain unmapped as in [mapArguments].
+   */
+  @JvmStatic
+  fun mapArgumentsWithDefaults(
+    call: PyCallExpression,
+    callableType: PyCallableType,
+    context: TypeEvalContext,
+  ): PyArgumentsMapping {
+    val arguments = call.arguments.asList()
+    val rawParameters = callableType.getParameters(context) ?: return PyArgumentsMapping.empty(call, arguments)
+    // Unpack the parameters the same way mapArguments does, so identity comparisons below work
+    val parameters = unpackParameters(rawParameters, arguments.map { PyCallableArgument(it) }, context)
+    val mapping = mapArguments(call, arguments, callableType, parameters, context)
+
+    val covered = buildSet {
+      addAll(mapping.mappedParameters.values)
+      addAll(mapping.mappedTupleParameters.values)
+      addAll(mapping.parametersMappedToVariadicPositionalArguments)
+      addAll(mapping.parametersMappedToVariadicKeywordArguments)
+    }
+    val defaultValueArguments = parameters
+      .filter { it !in covered && it.hasDefaultValue() && !it.isPositionalContainer && !it.isKeywordContainer }
+      .mapNotNull { parameter -> parameter.getDefaultValueStubSafe(context)?.let { it to parameter } }
+    if (defaultValueArguments.isEmpty()) return mapping
+
+    val mappedParameters = LinkedHashMap<PyExpression, PyCallableParameter>(mapping.mappedParameters)
+    for ((defaultValue, parameter) in defaultValueArguments) {
+      mappedParameters[defaultValue] = parameter
+    }
+
+    return PyArgumentsMapping(mapping.callSite,
+                              mapping.arguments,
+                              mapping.callableType,
+                              mappedParameters,
+                              mapping.unmappedParameters,
+                              mapping.unmappedContainerParameters,
+                              mapping.unmappedArguments,
+                              mapping.parametersMappedToVariadicPositionalArguments,
+                              mapping.parametersMappedToVariadicKeywordArguments,
+                              mapping.mappedTupleParameters)
+  }
+
+  private fun PyCallableParameter.getDefaultValueStubSafe(context: TypeEvalContext): PyExpression? {
+    val psi = parameter ?: return defaultValue // non-PSI parameter: expression is held directly, no file access
+    // both hasDefaultValue() and defaultValueText are answered from the stub
+    if (!psi.hasDefaultValue() || psi.defaultValueText == PyNames.ELLIPSIS) return null
+    if (!context.maySwitchToAST(psi)) return null
+    return psi.defaultValue
+  }
+
+  /**
    * Resolves the implicit `__init_subclass__` invoked when [this] is defined.
    *
    * Per PEP 487 the keyword arguments of a class definition (other than `metaclass`) are passed to the
@@ -1246,6 +1302,37 @@ object PyCallExpressionHelper {
     return ArgumentMappingResults(mappedParameters, unmappedParameters, unmappedContainerParameters, unmappedArguments,
                                   parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments,
                                   tupleMappedParameters)
+  }
+
+  /**
+   * Like [analyzeArguments], but also maps each parameter that gets no argument and has a default value.
+   * The type of the default value becomes the argument of such a parameter.
+   * The default value is evaluated in its declaration scope, not at the call site.
+   */
+  @JvmStatic
+  fun analyzeArgumentsWithDefaults(
+    arguments: List<PyCallableArgument>,
+    parametersType: PyCallableParameterListType,
+    context: TypeEvalContext,
+  ): Map<PyCallableArgument, PyCallableParameter> {
+    val parameters = unpackParameters(parametersType.parameters, arguments, context)
+    val results = analyzeArguments(arguments, parameters, context)
+    val covered = buildSet {
+      addAll(results.mappedParameters.values)
+      addAll(results.mappedTupleParameters.values)
+      addAll(results.parametersMappedToVariadicPositionalArguments)
+      addAll(results.parametersMappedToVariadicKeywordArguments)
+    }
+    val defaultValueArguments = parameters
+      .filter { it !in covered && it.hasDefaultValue() && !it.isPositionalContainer && !it.isKeywordContainer }
+      .mapNotNull { parameter -> parameter.getDefaultValueStubSafe(context)?.let { it to parameter } }
+    if (defaultValueArguments.isEmpty()) return results.mappedParameters
+
+    val mappedParameters = LinkedHashMap(results.mappedParameters)
+    for ((defaultValue, parameter) in defaultValueArguments) {
+      mappedParameters[PyCallableArgument(context.getType(defaultValue))] = parameter
+    }
+    return mappedParameters
   }
 
   private fun isParamSpecOrConcatenate(parameter: PyCallableParameter, context: TypeEvalContext): Boolean {

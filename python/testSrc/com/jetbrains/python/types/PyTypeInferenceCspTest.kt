@@ -896,6 +896,83 @@ class PyTypeInferenceCspTest : PyCodeInsightTestCase() {
     """.trimIndent())
 
   @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments simple`() = test("""
+      def f[T](p: T = 1) -> T : return p
+      res = f()
+      # └ TYPE Literal[1]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments conflicts with non-default argument`() = test("""
+      def f[T](p0: T, p1: T = 1) -> T : return p0
+      res = f("s")
+      # └ TYPE Literal["s", 1]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `multiple default function arguments conflict`() = test("""
+      def f[T](p0: T = "s", p1: T = 1) -> T : return p0
+      res = f()
+      # └ TYPE Literal["s", 1]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments does not constraint T`() = test("""
+      def f[T](p: T | None = None) -> T: ...
+      res = f()
+      # └ TYPE Unknown
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments with nested T`() = test("""
+      def f[T](p: list[T] = []) -> list[T]: ...
+      res = f()
+      # └ TYPE list[Unknown]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments conflict with default type argument`() = test("""
+      def f[T = str](p: T = 1) -> T: ...
+      res = f()
+      # └ TYPE Literal[1]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments with nested call with default argument`() = test("""
+      def g[S](s: S = 1) -> S: ...
+      def f[T](p: T = g()) -> T: ...
+      res = f() 
+      # └ TYPE Literal[1]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments with callable as default`() = test("""
+      from typing import Callable
+      def f[T](cb: Callable[[], T] = lambda: 1) -> T: ...
+      res = f()
+      # └ TYPE Literal[1]
+      """.trimIndent())
+
+  @Test
+  @TestFor(issues = ["PY-*****"])
+  fun `default function arguments located in other scope`() = test("""
+      class A:
+          D = "s"
+          def m[T](self, p: T = D) -> T: ...
+      a = A()
+      res = a.m()
+      # └ TYPE str
+      """.trimIndent())
+
+  @Test
   @TestFor(issues = ["PY-92184"])
   fun `tuple in generic explicit is valid`() = test("""
       from typing import Literal
