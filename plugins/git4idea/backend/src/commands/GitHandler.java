@@ -5,7 +5,6 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.ide.trustedProjects.TrustedProjects;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -72,6 +71,7 @@ public abstract class GitHandler {
 
   private boolean myPreValidateExecutable = true;
   private boolean myEnableInteractiveCallbacks = true;
+  private boolean myVersionCheck;
 
   protected final GeneralCommandLine myCommandLine;
   private final Map<String, String> myCustomEnv = new HashMap<>();
@@ -188,19 +188,17 @@ public abstract class GitHandler {
   }
 
   /**
-   * Returns the directory where the Git version check runs when there is no project.
-   * The IDE owns this directory, so the check does not depend on the trust of the process working directory.
+   * Marks this handler as the Git version check of {@code GitExecutableFileTester}.
+   * The check runs {@code git version} in a directory that the IDE selects, not in a project directory.
+   * So the trust check of {@link #start()} does not apply to it.
    */
   @ApiStatus.Internal
-  public static @NotNull Path getVersionCheckDirectory() {
-    return PathManager.getSystemDir().resolve("git-version-check");
+  public void setVersionCheck() {
+    myVersionCheck = true;
   }
 
-  private boolean isVersionCheckInIdeDirectory() {
-    Path workingDirectory = getWorkingDirectory();
-    return myCommand == GitCommand.VERSION &&
-           workingDirectory != null &&
-           workingDirectory.toAbsolutePath().normalize().equals(getVersionCheckDirectory().toAbsolutePath().normalize());
+  private boolean isVersionCheck() {
+    return myVersionCheck && myCommand == GitCommand.VERSION;
   }
 
   public VcsExecutableContext getExecutableContext() {
@@ -481,16 +479,20 @@ public abstract class GitHandler {
     return String.format("git %s took %s ms. Command parameters: %n%s", myCommand, time, myCommandLine.getCommandLineString());
   }
 
-  private void start() throws IOException {
-    if (myProject == null &&
-        !isVersionCheckInIdeDirectory() &&
-        !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
+  private void checkTrusted() {
+    if (myProject == null && !TrustedProjects.isProjectTrusted(Objects.requireNonNull(getWorkingDirectory()))) {
       throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in potentially untrusted project. " +
                                               "Pass Project to GitHandler constructor if applicable.");
     }
 
     if (myProject != null && !myProject.isDefault() && !TrustedProjects.isProjectTrusted(myProject)) {
       throw new GitCommandNotTrustedException("Shouldn't be possible to run a Git command in the safe mode");
+    }
+  }
+
+  private void start() throws IOException {
+    if (!isVersionCheck()) {
+      checkTrusted();
     }
 
     if (isStarted()) {

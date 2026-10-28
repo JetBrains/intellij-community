@@ -215,7 +215,7 @@ public class GitExecutableManager {
   @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull GitVersion identifyVersion(@Nullable Project project, @NotNull GitExecutable executable)
     throws GitVersionIdentificationException {
-    GitExecutableFileTester.TestResult result = myVersionCache.getResultFor(project, executable);
+    GitExecutableFileTester.TestResult result = myVersionCache.getResultFor(executable);
     if (result.getResult() == null) {
       Exception e = result.getException();
       if (e instanceof NoSuchFileException &&

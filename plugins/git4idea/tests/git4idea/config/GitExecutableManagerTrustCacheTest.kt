@@ -14,7 +14,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.test.GitPlatformTestContext
 import git4idea.test.gitPlatformContextFixture
 import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
@@ -30,7 +29,7 @@ internal class GitExecutableManagerTrustCacheTest {
   private lateinit var testDisposable: Disposable
 
   @Test
-  fun `an untrusted-project failure is not cached and does not poison a later trusted call`(): Unit = with(context) {
+  fun `the version check does not depend on the trust of the project, and the project commands still do`(): Unit = with(context) {
     TrustedProjectsTestUtil.enableTrustedProjectsCheck(testDisposable)
 
     val manager = GitExecutableManager.getInstance()
@@ -40,16 +39,11 @@ internal class GitExecutableManagerTrustCacheTest {
     // drop that entry so the call below genuinely re-tests under the trust state set here.
     manager.dropVersionCache(executable)
     TrustedProjects.setProjectTrusted(project, false)
-    val failure = assertThrows(GitVersionIdentificationException::class.java) {
-      manager.identifyVersion(project, executable)
-    }
-    assertTrue(failure.cause is GitCommandNotTrustedException)
+    assertTrue(manager.identifyVersion(project, executable).isSupported)
 
-    // Without the fix, the poisoned cache entry (same GitExecutable, unchanged mtime)
-    // would be replayed here even though the project is now trusted.
-    TrustedProjects.setProjectTrusted(project, true)
-    val version = manager.identifyVersion(project, executable)
-    assertTrue(version.isSupported)
+    val handler = GitLineHandler(project, projectNioRoot, executable, GitCommand.VERSION, emptyList())
+    val outcome = runCatching { Git.getInstance().runCommand(handler) }
+    assertTrue(outcome.exceptionOrNull() is GitCommandNotTrustedException, "$outcome")
   }
 
   @Test
