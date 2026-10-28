@@ -254,15 +254,10 @@ async fn an_exported_run_answers_the_copies_in_the_export() {
     let local = scratch.dir();
     let export = scratch.dir();
     let manifest = example_manifest();
-    let outputs = scratch.dir();
-    let placed = bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)
-        .split('/')
-        .fold(outputs.join(ROOT_DIR_NAME), |path, segment| path.join(segment));
-    copy_tree(&example_bundle(), &placed);
     let run_dir = export.join("run-studio");
     let zip = run_dir.join("traces").join("iter-1").join("1.zip");
     fs::create_dir_all(zip.parent().expect("a traces directory")).expect("create the traces directory");
-    pack(&outputs, &zip, &PackOptions::default()).expect("pack the golden bundle");
+    pack_golden_bundle(&scratch, &manifest, &zip);
     let report = run_dir.join("reports").join("iter-1.json");
     write_file(&report, b"{}");
     let entry = format!(

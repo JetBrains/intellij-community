@@ -135,13 +135,8 @@ fn new_fixture() -> Fixture {
         set_modified(&path, hour_ago);
     }
 
-    let outputs = scratch.dir();
-    let placed = bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)
-        .split('/')
-        .fold(outputs.join(ROOT_DIR_NAME), |path, segment| path.join(segment));
-    copy_tree(&example_bundle(), &placed);
     let zip_path = zip_root.join("outputs.zip");
-    pack(&outputs, &zip_path, &PackOptions::default()).expect("pack the golden bundle");
+    pack_golden_bundle(&scratch, &manifest, &zip_path);
     Fixture {
         scratch,
         dir_root,
@@ -151,6 +146,16 @@ fn new_fixture() -> Fixture {
         running_dir,
         manifest,
     }
+}
+
+/// Packs the golden bundle into `zip`, at the bundle path of `manifest` under the outputs root.
+fn pack_golden_bundle(scratch: &Scratch, manifest: &Manifest, zip: &Path) {
+    let outputs = scratch.dir();
+    let placed = bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)
+        .split('/')
+        .fold(outputs.join(ROOT_DIR_NAME), |path, segment| path.join(segment));
+    copy_tree(&example_bundle(), &placed);
+    pack(&outputs, zip, &PackOptions::default()).expect("pack the golden bundle");
 }
 
 /// The plan of the scenario of `manifest` in the lane `UI`.
