@@ -83,4 +83,9 @@ internal class ModuleAttachProcessorTest {
       assertThat(ModuleAttachProcessor().isEnabled(currentProject, existingProjectDir, null)).isFalse()
     }
   }
+
+  @Test
+  fun `enabled without a directory`() {
+    assertThat(ModuleAttachProcessor().isEnabled(null, null, null)).isTrue()
+  }
 }
