@@ -20,10 +20,12 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.lvcs.impl.actions.isShowSystemLabelsEnabled
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
+import com.intellij.ui.JBColor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 
 internal const val USE_OLD_CONTENT = true
 
@@ -175,9 +177,13 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     val activityId = item.activityId
     val provider = activityId?.let { ACTIVITY_PRESENTATION_PROVIDER_EP.findFirstSafe { it.id == activityId.providerId } }
     val icon = provider?.getIcon(activityId.kind)
+    val color = provider?.getColor(activityId.kind)
     return when (item) {
-      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon)
-      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon, item.color)
+      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon, color)
+      is LabelActivityItem -> {
+        ActivityPresentation(item.name ?: "", icon,
+                             color ?: item.color.takeIf { it != -1 }?.let { JBColor(it, Color(it).darker().rgb) })
+      }
       else -> null
     }
   }
