@@ -36,6 +36,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -133,6 +134,29 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
                                                                               boolean highlightErrorElements,
                                                                               boolean runAnnotators,
                                                                               boolean runVisitors) {
+    return runAnnotatorsInGeneralHighlighting(psiFile, startOffset, endOffset, visibleRange, highlightErrorElements, runAnnotators,
+                                              runVisitors, /*batchMode=*/ true,
+                                              info -> info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0);
+  }
+
+  /**
+   * Runs the general highlighting passes on the range of {@code psiFile} and returns the infos that {@code filter} accepts.
+   * The other overload runs in batch mode and keeps only the infos with a severity above {@link HighlightSeverity#INFORMATION}.
+   * Some annotators add no text attributes in batch mode, so a caller that needs them sets {@code batchMode} to {@code false}.
+   * The caller must run it under a {@link DaemonProgressIndicator}.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  @RequiresReadLock
+  public static @NotNull List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile psiFile,
+                                                                              int startOffset,
+                                                                              int endOffset,
+                                                                              @NotNull ProperTextRange visibleRange,
+                                                                              boolean highlightErrorElements,
+                                                                              boolean runAnnotators,
+                                                                              boolean runVisitors,
+                                                                              boolean batchMode,
+                                                                              @NotNull Predicate<? super HighlightInfo> filter) {
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertReadAccess();
     Project project = psiFile.getProject();
@@ -148,13 +172,13 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     DaemonCodeAnalyzerEx.getInstanceEx(project).runInsideAdditionalHighlightingSession(psiFile, EditorColorsUtil.getGlobalOrDefaultColorScheme(), visibleRange, false, _-> {
       GeneralHighlightingPass ghp = new GeneralHighlightingPass(
         psiFile, document, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors, highlightErrorElements,
-        /*batchMode=*/ true, HighlightInfoUpdater.EMPTY
+        batchMode, HighlightInfoUpdater.EMPTY
       );
       ghp.setContext(context);
 
       InjectedGeneralHighlightingPass ighp = new InjectedGeneralHighlightingPass(
         psiFile, document, null, startOffset, endOffset, true, visibleRange, null, runAnnotators, runVisitors,
-        highlightErrorElements, /*batchMode=*/ true, HighlightInfoUpdater.EMPTY
+        highlightErrorElements, batchMode, HighlightInfoUpdater.EMPTY
       );
       ighp.setContext(context);
 
@@ -167,7 +191,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
           List<HighlightInfo> infos = pass.getInfos();
           for (HighlightInfo info : infos) {
             if (info == null) continue;
-            if (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {
+            if (filter.test(info)) {
               result.add(info);
             }
           }
