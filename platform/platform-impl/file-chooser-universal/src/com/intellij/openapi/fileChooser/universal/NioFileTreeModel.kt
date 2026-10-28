@@ -36,7 +36,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
-import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -59,6 +58,7 @@ import kotlin.time.Duration.Companion.seconds
  * A listing runs in a cancellable coroutine on [Dispatchers.IO]; [invalidate] and a node
  * collapse cancel it, so a Refresh restarts the load. A child whose attributes do not
  * arrive in time appears as an unresolved node, and a lazy background job resolves it.
+ * A symlink is not expandable; it becomes expandable when the resolution finds a directory target.
  */
 @ApiStatus.Internal
 class NioFileTreeModel(
@@ -81,15 +81,26 @@ class NioFileTreeModel(
     private val RESOLVE_TIMEOUT = 10.seconds
 
     /**
+     * Whether a node may point to a directory. The listing uses this for the visibility filter
+     * and for the sort order, so a symlink that may target a directory stays visible
+     * in a directories-only chooser.
+     */
+    private fun mayPointToDirectory(path: Path?, attrs: BasicFileAttributes?): Boolean = when {
+      path == null -> true
+      attrs == null -> true
+      else -> attrs.isDirectory || attrs.isSymbolicLink
+    }
+
+    /**
      * Whether a node may have children. Resolved from [attrs] when the caller already read them
      * (children come from [PlatformNioHelper.visitDirectory] with attributes), so expanding
-     * a directory does not `stat` anything again. A symlink stays expandable until the lazy
-     * resolution reads its target, and an unresolved entry stays expandable too.
+     * a directory does not `stat` anything again. A symlink is not expandable; it becomes
+     * expandable when the lazy resolution finds a directory target (see [Node.applyResolved]).
      */
     private fun resolveIsDirectory(path: Path?, attrs: BasicFileAttributes?): Boolean = when {
       path == null -> true                                    // a virtual root is a container and must stay expandable
       attrs == null -> true                                   // a root or an unresolved entry stays expandable
-      else -> attrs.isDirectory || attrs.isSymbolicLink
+      else -> attrs.isDirectory
     }
 
     /** The icon of an entry whose target kind is not known yet: a question mark with the symlink arrow. */
@@ -334,10 +345,45 @@ class NioFileTreeModel(
       ensureActive()
       invoker.invoke {
         if (node.applyResolved(resolved)) {
-          val entry = getEntry(node, false)
-          if (entry != null) treeNodesChanged(entry, null, null)
+          updateEntryAfterResolve(node)
         }
       }
+    }
+  }
+
+  /**
+   * Updates the entry of [node] after a resolution. When the expandable state of the node
+   * changed, the leaf state of the entry follows it, and the listeners get a structure change,
+   * so the tree shows or hides the expand control.
+   */
+  private fun updateEntryAfterResolve(node: Node) {
+    val r = roots ?: return
+    for (root in r) {
+      val entry = root.tree.getEntry(node) ?: continue
+      if (entry.isLeaf == !node.isDirectory) {
+        treeNodesChanged(entry, null, null)
+      }
+      else {
+        setLeaf(root.tree, entry, !node.isDirectory)
+        treeStructureChanged(entry, null, null)
+      }
+      return
+    }
+  }
+
+  /**
+   * Updates the leaf state of the given entry.
+   * An entry that becomes a leaf loses its children.
+   * An entry that stops being a leaf requires a load of its children.
+   */
+  private fun setLeaf(tree: MapBasedTree<Path, Node>, entry: Entry<Node>, leaf: Boolean) {
+    if (entry.isLeaf == leaf) return
+    if (leaf) {
+      tree.update(entry, null)
+    }
+    else {
+      tree.update(entry, emptyList())
+      entry.invalidate()
     }
   }
 
@@ -370,8 +416,8 @@ class NioFileTreeModel(
     val path: Path,
     val attrs: BasicFileAttributes?,
   ) {
-    val isDirectory: Boolean
-      get() = resolveIsDirectory(path, attrs)
+    val mayBeDirectory: Boolean
+      get() = mayPointToDirectory(path, attrs)
   }
 
   private class State(
@@ -384,7 +430,7 @@ class NioFileTreeModel(
 
     fun compare(one: ChildEntry, two: ChildEntry): Int {
       if (sortDirectories) {
-        if (one.isDirectory != two.isDirectory) return if (one.isDirectory) -1 else 1
+        if (one.mayBeDirectory != two.mayBeDirectory) return if (one.mayBeDirectory) -1 else 1
       }
       return StringUtil.naturalCompare(model.contributor.fileName(one.path), model.contributor.fileName(two.path))
     }
@@ -393,11 +439,11 @@ class NioFileTreeModel(
       if (!descriptor.isShowHiddenFiles) {
         if (isHiddenFromAttrs(entry)) return false
       }
-      if (!descriptor.isChooseFiles && !entry.isDirectory &&
+      if (!descriptor.isChooseFiles && !entry.mayBeDirectory &&
           !(descriptor.isChooseJarContents && NioFileChooserUtil.isArchiveFile(entry.path))) {
         return false
       }
-      if (!entry.isDirectory) {
+      if (!entry.mayBeDirectory) {
         val extFilter = descriptor.extensionFilter
         if (extFilter != null) {
           val name = entry.path.fileName?.toString() ?: return false
@@ -453,8 +499,9 @@ class NioFileTreeModel(
     protected val contributor: UniversalFileChooserContributor?,
     path: Path?,
     attrs: BasicFileAttributes? = null,
-    isDirectory: Boolean? = null,) : NioFileNode(path) {
-    val isDirectory: Boolean = isDirectory ?: resolveIsDirectory(path, attrs)
+  ) : NioFileNode(path) {
+    var isDirectory: Boolean = resolveIsDirectory(path, attrs)
+      private set
     private val resolveState = AtomicReference(
       if (path != null && (attrs == null || attrs.isSymbolicLink)) ResolveState.UNRESOLVED else ResolveState.RESOLVED)
 
@@ -466,6 +513,13 @@ class NioFileTreeModel(
     fun startResolve(): Boolean =
       resolveState.compareAndSet(ResolveState.UNRESOLVED, ResolveState.RESOLVING) ||
       resolveState.compareAndSet(ResolveState.FAILED, ResolveState.RESOLVING)
+
+    /** Updates the expandable state after a resolution. Returns true when the state changed. */
+    private fun updateDirectory(value: Boolean): Boolean {
+      if (isDirectory == value) return false
+      isDirectory = value
+      return true
+    }
 
     /**
      * Applies the result of a lazy resolution. A null [resolved] means a timeout or an error.
@@ -482,13 +536,14 @@ class NioFileTreeModel(
       }
       resolveState.set(ResolveState.RESOLVED)
       val isSymlink = resolved.attrs.isSymbolicLink
+      var changed = updateDirectory(resolved.target.isDirectory)
       var icon: Icon? =
         if (resolved.target.isDirectory) PlatformIcons.FOLDER_ICON
         else FileTypeRegistry.getInstance().getFileTypeByFileName(p.fileName?.toString() ?: p.toString()).icon
       if (isSymlink && icon != null) {
         icon = withSymlinkOverlay(icon)
       }
-      var changed = updateIcon(icon)
+      changed = updateIcon(icon) || changed
       changed = updateValid(true) || changed
       changed = updateHidden(NioFileChooserUtil.isHidden(p, resolved.attrs)) || changed
       changed = updateSymlink(isSymlink) || changed
@@ -578,9 +633,9 @@ class NioFileTreeModel(
           val existing = tree.findEntry(entry.path)
           val node =
             if (existing != null && parent === existing.parentPath) existing.node
-            else Node(contributor, entry.path, entry.attrs, entry.isDirectory)
+            else Node(contributor, entry.path, entry.attrs)
           state.model.scheduleResolve(node, entry.attrs)
-          Pair.create(node, !entry.isDirectory)
+          Pair.create(node, !node.isDirectory)
         })
     }
   }
