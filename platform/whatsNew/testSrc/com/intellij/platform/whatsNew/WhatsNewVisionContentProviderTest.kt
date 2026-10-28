@@ -5,6 +5,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.io.TempDir
+import java.nio.file.Path
+import kotlin.io.path.createFile
+import kotlin.io.path.createParentDirectories
+import kotlin.io.path.writeText
 
 @TestApplication
 class WhatsNewVisionContentProviderTest {
@@ -22,6 +27,23 @@ class WhatsNewVisionContentProviderTest {
     runBlocking {
       Assertions.assertTrue(contentSource.checkAvailability(), "Resource availability check failed")
       Assertions.assertTrue(contentSource.openStream() != null, "Resource stream opening failed")
+    }
+  }
+
+  @Test
+  fun testMediaNextToTestJson(@TempDir dir: Path) {
+    val json = dir.resolve("vision.json").createFile()
+    dir.resolve("static/image.png").createParentDirectories().writeText("png")
+    val oldValue = System.setProperty("intellij.whats.new.vision.json", json.toString())
+    try {
+      val provider = WhatsNewInVisionContentProvider()
+      runBlocking {
+        Assertions.assertTrue(provider.getWhatsNewResource("static/image.png").checkAvailability())
+        Assertions.assertFalse(provider.getWhatsNewResource("static/missing.png").checkAvailability())
+      }
+    }
+    finally {
+      if (oldValue == null) System.clearProperty("intellij.whats.new.vision.json") else System.setProperty("intellij.whats.new.vision.json", oldValue)
     }
   }
 }

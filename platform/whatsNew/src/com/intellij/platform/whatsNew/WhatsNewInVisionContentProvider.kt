@@ -140,7 +140,15 @@ open class WhatsNewInVisionContentProvider {
     return container
   }
 
-  internal fun getWhatsNewResource(resourceName: String): ContentSource = getResource(getResourceNameByPath(resourceName))
+  /**
+   * In the test mode, the media are read from the directory of the test JSON file.
+   * Otherwise, they are read from the resources of the product.
+   */
+  internal fun getWhatsNewResource(resourceName: String): ContentSource {
+    val testJsonPath = System.getProperty(PROPERTY_WHATS_NEW_VISION_JSON)
+                       ?: return getResource(getResourceNameByPath(resourceName))
+    return PathContentSource(Path(testJsonPath).resolveSibling(resourceName))
+  }
 }
 
 private const val PROPERTY_WHATS_NEW_VISION_JSON = "intellij.whats.new.vision.json"
