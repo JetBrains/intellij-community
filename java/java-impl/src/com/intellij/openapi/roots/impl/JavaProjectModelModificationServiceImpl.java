@@ -41,6 +41,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 public final class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
 
@@ -50,6 +52,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
 
   @Override
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope, boolean exported) {
+    ModalityState modality = ModalityState.defaultModalityState();
     Promise<Void> promise = null;
     List<JavaProjectModelModifier> modifiers = getModelModifiers();
     for (int i = 0; i < modifiers.size() && promise == null; i++) {
@@ -57,11 +60,12 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.thenAsync(_ -> addJigsawModule(from, to, scope));
+    return promise.thenAsync(_ -> addJigsawModule(from, to, scope, modality));
   }
 
   @Override
   public Promise<Void> addDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
+    ModalityState modality = ModalityState.defaultModalityState();
     Promise<Void> promise = null;
     List<JavaProjectModelModifier> modifiers = getModelModifiers();
     for (int i = 0; i < modifiers.size() && promise == null; i++) {
@@ -69,13 +73,14 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     }
 
     promise = promise == null ? Promises.rejectedPromise() : promise;
-    return promise.thenAsync(_ -> addJigsawModule(from, library, scope));
+    return promise.thenAsync(_ -> addJigsawModule(from, library, scope, modality));
   }
 
   @Override
   public Promise<Void> addDependency(@NotNull Collection<? extends Module> from,
                                      @NotNull ExternalLibraryDescriptor libraryDescriptor,
                                      @NotNull DependencyScope scope) {
+    ModalityState modality = ModalityState.defaultModalityState();
     Promise<Void> promise = null;
     List<JavaProjectModelModifier> modifiers = getModelModifiers();
     for (int i = 0; i < modifiers.size() && promise == null; i++) {
@@ -86,7 +91,7 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
     return promise.thenAsync(_ -> {
       Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(myProject)
         .getLibraryByName(libraryDescriptor.getPresentableName());
-      List<Promise<?>> jigsawPromises = ContainerUtil.map(from, m -> addJigsawModule(m, library, scope));
+      List<Promise<?>> jigsawPromises = ContainerUtil.map(from, m -> addJigsawModule(m, library, scope, modality));
       return Promises.all(jigsawPromises, null);
     });
   }
@@ -124,20 +129,23 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
 
   private static Promise<Void> addJigsawModule(@NotNull Module from,
                                                @NotNull Module to,
-                                               @NotNull DependencyScope scope) {
-    return addJigsawModule(from, () -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST), scope);
+                                               @NotNull DependencyScope scope,
+                                               @NotNull ModalityState modality) {
+    return addJigsawModule(from, () -> JavaModuleGraphUtil.findDescriptorByModule(to, scope == DependencyScope.TEST), scope, modality);
   }
 
   private static Promise<Void> addJigsawModule(@NotNull Module from,
                                                @Nullable Library library,
-                                               @NotNull DependencyScope scope) {
+                                               @NotNull DependencyScope scope,
+                                               @NotNull ModalityState modality) {
     if (library == null) return Promises.resolvedPromise();
-    return addJigsawModule(from, () -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()), scope);
+    return addJigsawModule(from, () -> JavaModuleGraphUtil.findDescriptorByLibrary(library, from.getProject()), scope, modality);
   }
 
   private static Promise<Void> addJigsawModule(@NotNull Module from,
                                                @NotNull Callable<@Nullable PsiJavaModule> findTo,
-                                               @NotNull DependencyScope scope) {
+                                               @NotNull DependencyScope scope,
+                                               @NotNull ModalityState modality) {
     JavaSourceRootType rootType = scope == DependencyScope.TEST ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     VirtualFile moduleInfo = ReadAction.computeBlocking(
       () -> from.isDisposed() ? null : JBIterable.from(ModuleRootManager.getInstance(from).getSourceRoots(rootType))
@@ -152,17 +160,20 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
         return fromModule == null ? null : Couple.of(fromModule, to);
       })
       .expireWhen(from::isDisposed)
-      .finishOnUiThread(ModalityState.nonModal(), modules -> {
+      .finishOnUiThread(modality, modules -> {
         try {
-          if (modules == null) return;
-          CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-            WriteAction.run(() -> {
-              JavaModuleGraphUtil.addDependency(modules.first, modules.second, scope);
+          if (modules != null) {
+            CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+              WriteAction.run(() -> {
+                JavaModuleGraphUtil.addDependency(modules.first, modules.second, scope);
+              });
             });
-          });
-        }
-        finally {
+          }
           result.setResult(null);
+        }
+        catch (Throwable e) {
+          result.setError(e);
+          rethrowControlFlowException(e);
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService())
