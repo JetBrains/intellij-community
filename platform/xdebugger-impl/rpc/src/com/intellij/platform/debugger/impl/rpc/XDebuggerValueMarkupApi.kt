@@ -2,7 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.ide.ui.colors.ColorId
-import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
+import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -21,8 +21,7 @@ interface XDebuggerValueMarkupApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerValueMarkupApi {
-      // TODO: IJPL-252054
-      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XDebuggerValueMarkupApi>())
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueMarkupApi>())
     }
   }
 }

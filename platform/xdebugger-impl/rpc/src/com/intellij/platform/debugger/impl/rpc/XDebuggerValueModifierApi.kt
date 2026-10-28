@@ -2,7 +2,7 @@
 package com.intellij.platform.debugger.impl.rpc
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
+import com.intellij.platform.rpc.RemoteApiProviderService
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
@@ -19,8 +19,7 @@ interface XDebuggerValueModifierApi : RemoteApi<Unit> {
   companion object {
     @JvmStatic
     suspend fun getInstance(): XDebuggerValueModifierApi {
-      // TODO: IJPL-252054
-      return LiteRemoteApiProviderService.awaitConnectionAndResolve(remoteApiDescriptor<XDebuggerValueModifierApi>())
+      return RemoteApiProviderService.resolve(remoteApiDescriptor<XDebuggerValueModifierApi>())
     }
   }
 }

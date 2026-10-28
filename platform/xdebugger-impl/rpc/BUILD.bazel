@@ -24,7 +24,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     deps = [
         # do not sort,
-        "//platform/kernel/rpc.lite",
+        "//platform/kernel/rpc",
         "@lib//:kotlin-stdlib",
         "//platform/xdebugger-api:debugger",
         "//libraries/kotlinx/serialization/core",
@@ -54,7 +54,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         ":rpc",
-        "//platform/kernel/rpc.lite:rpc.lite_test_lib",
+        "//platform/kernel/rpc:rpc_test_lib",
         "//platform/xdebugger-api:debugger_test_lib",
         "//libraries/kotlinx/serialization/core:core_test_lib",
         "//libraries/kotlinx/serialization/json:json_test_lib",
