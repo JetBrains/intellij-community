@@ -23,7 +23,8 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 pub use roots::{
-    Origin, Root, RootKind, VM_EXPORT_DIR, VM_REPORTS_GLOB, VM_RUN_TRACES_DIR, VM_RUNS_DIR, VM_RUNS_GLOB, default_roots, within,
+    Origin, Root, RootKind, VM_EXPORT_DIR, VM_REPORTS_GLOB, VM_RUN_REPORTS_DIR, VM_RUN_TRACES_DIR, VM_RUNS_DIR, VM_RUNS_GLOB,
+    default_roots, within,
 };
 pub use scan::{Options, RootState, Scanner, Snapshot};
 pub use zips::{EntryMeta, InnerZip, ZipCache, ZipIndex, clean_bundle_path, read_zip, read_zip_reporting};

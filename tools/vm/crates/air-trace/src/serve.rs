@@ -11,7 +11,7 @@
 //! - `GET /__air/runs`: every bundle found, grouped by run, the controller's runs from their journals, and the
 //!   roots it looked in.
 //! - `GET /__air/run/<runId>?from=<offset>`: one controller run's summary and its journal's records from the
-//!   offset on.
+//!   offset on. A run of the VM export of the checkout answers the paths of its copies, not of the host it ran on.
 //! - `GET /__air/bundle/<id>/` lists one bundle's files; `GET /__air/bundle/<id>/<path>` serves one of them, with
 //!   `Range`. The id is opaque and stable: the same bundle at the same place has the same id across restarts, so a
 //!   viewer URL survives one.
@@ -62,13 +62,14 @@ use std::time::Duration;
 
 use avl_host_sys::viewer::{DETACH_IDLE_DEFAULT, DetachRequest, format_duration};
 use avl_host_sys::{Interrupts, Runner};
-use avl_trace_tools::discover::{Root, RootKind, VM_RUNS_DIR, default_roots};
+use avl_trace_tools::discover::{Root, RootKind, VM_EXPORT_DIR, VM_RUNS_DIR, default_roots};
 use avl_trace_tools::viewer::DEFAULT_SERVE_PORT;
 use avl_trace_tools::viewer::RUNS_ROUTE;
 use tokio::net::TcpListener;
 use tokio_util::sync::CancellationToken;
 
 use crate::{Exit, Refusal, code, usage};
+use journals::RunsDir;
 use service::{PidFile, detach};
 use state::{Log, Server, Settings};
 pub(crate) use state::{Runs, Scenario, group_runs, listed};
@@ -372,12 +373,21 @@ pub(crate) async fn serve(args: ServeArgs, program: &DetachProgram, context: Con
         settings.site_project = repo.as_ref().map(|repo| repo.join("plugins").join("air").join("docs"));
         settings.site_kernel = repo.as_ref().map(|repo| repo.join("community").join("tools").join("docs-site"));
     }
-    settings.repo_root = repo;
-    if !args.no_default_roots
-        && let Ok(runtime) = &runtime_root
-    {
-        settings.runs_dir = Some(runtime.join(VM_RUNS_DIR));
+    if !args.no_default_roots {
+        if let Ok(runtime) = &runtime_root {
+            settings.runs_dirs.push(RunsDir {
+                path: runtime.join(VM_RUNS_DIR),
+                exported: false,
+            });
+        }
+        if let Some(repo) = &repo {
+            settings.runs_dirs.push(RunsDir {
+                path: repo.join(VM_EXPORT_DIR).join(VM_RUNS_DIR),
+                exported: true,
+            });
+        }
     }
+    settings.repo_root = repo;
     let idle_exit = settings.idle_exit;
     let pid_file = settings.pid_file.clone();
 

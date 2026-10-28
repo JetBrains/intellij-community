@@ -16,7 +16,7 @@ use tokio_util::sync::CancellationToken;
 
 use super::BUNDLE_ROUTE;
 use super::events::{Frame, Tail, Watches, native_watch};
-use super::journals::{ControllerRun, Journals};
+use super::journals::{ControllerRun, Journals, RunsDir};
 use super::service::{Activity, SiteBuild, build_site};
 use crate::Refusal;
 use crate::plan::{Input, PlanResult};
@@ -49,8 +49,9 @@ pub(crate) struct Settings {
     /// and one for each inner zip that discovery extracted.
     pub cache_dir: PathBuf,
     pub roots: Vec<Root>,
-    /// The controller's runs, `<runtime root>/runs`, each with its journal; `None` for none.
-    pub runs_dir: Option<PathBuf>,
+    /// The directories of the controller's runs, each run with its journal: `<runtime root>/runs` and the runs of
+    /// the VM export of the checkout. The first directory that holds a run owns it.
+    pub runs_dirs: Vec<RunsDir>,
     pub log: Log,
     /// How long a directory bundle without a manifest may go unchanged and still be running.
     pub stale_after: Duration,
@@ -87,7 +88,7 @@ impl Settings {
             site_dir: None,
             cache_dir,
             roots,
-            runs_dir: None,
+            runs_dirs: Vec::new(),
             log: Arc::new(|_| {}),
             stale_after: Duration::from_mins(5),
             debounce: Duration::from_millis(300),
@@ -153,7 +154,7 @@ impl Server {
             nested_dir: Some(settings.cache_dir.clone()),
             ..Options::default()
         });
-        let journals = Journals::new(settings.runs_dir.clone());
+        let journals = Journals::new(settings.runs_dirs.clone());
         Arc::new(Self {
             settings,
             scanner,

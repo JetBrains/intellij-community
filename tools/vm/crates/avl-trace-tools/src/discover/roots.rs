@@ -81,6 +81,10 @@ pub const VM_EXPORT_DIR: &str = "out/air/vm-export";
 /// The directory inside one run's directory that holds its pulled traces, one directory for each iteration.
 pub const VM_RUN_TRACES_DIR: &str = "traces";
 
+/// The directory inside one exported run's directory that holds the report of each iteration, its JUnit XML and its
+/// evidence.
+pub const VM_RUN_REPORTS_DIR: &str = "reports";
+
 /// Where the controller leaves each scenario's trace of a run, under [VM_RUNS_DIR]:
 /// `<runId>/traces/<iterationId>/<n>.zip`. Spelled out because a const cannot join [VM_RUN_TRACES_DIR] in; a test
 /// pins the two together.
