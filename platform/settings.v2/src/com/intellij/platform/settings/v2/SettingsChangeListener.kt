@@ -16,6 +16,11 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  *   value that the key resolves there changed. It compares the stored values, not the values that a read returns.
  * - **key-only**, registered without a context: it is the context where the change was *detected*. The value of the
  *   key may have changed at or under that context. It is a hint to check again, not a guarantee of a difference.
+ *
+ * The callback fires only when the context that it gets is ready (ADR 0161). A change at a dirty context, such as a
+ * directory context while its file layer loads, waits until the context gets ready. Then a contextual callback fires
+ * once, and only when the stored value changed in total. A key-only callback fires once per changed context. A context
+ * under the context of a key-only callback can still be dirty. Check [SettingsContext.isReady] before you read there.
  */
 @Experimental
 fun interface SettingsChangeListener {

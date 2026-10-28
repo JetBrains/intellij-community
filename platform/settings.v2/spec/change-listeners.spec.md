@@ -48,8 +48,10 @@ and a context, but no value: it reads the current value itself.
   the context of the change, and a contextual listener carries its own context. The vault queues a notification at
   a dirty context, and delivers it when the context gets ready. This applies to a reload, a write and a push.
   See [ADR 0161](../adr/0161-a-listener-notification-waits-until-the-context-it-carries-is-ready.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsQueuedNotificationTest.kt
 - A queued contextual listener must fire only on a net change of its value. A queued key-only event must fire once
   per pair of a key and a changed context.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsQueuedNotificationTest.kt
 - `key.addListener(disposable, listener)` must fire on a change of the key at any context. It carries the context
   where the change happened.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
@@ -64,10 +66,11 @@ and a context, but no value: it reads the current value itself.
   [@test] ../test/src/com/intellij/platform/settings/v2/PerFileLayerTest.kt
 - A listener on a map key must be rejected.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
-- Disposing the `disposable` must remove the listener.
+- Disposing the `disposable` must remove the listener. A listener whose notification is queued must not fire after
+  the disposal.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsQueuedNotificationTest.kt
 - A contextual listener must fire at most once per model change, even when the change touches many layers.
-  Exception: two notifications at the same time can fire it twice for one change. See the risks below.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
 - A key-only listener must fire at most once per changed context in one model change. Each call carries one of
   these contexts.
@@ -81,11 +84,6 @@ and a context, but no value: it reads the current value itself.
 
 ## Open Questions / Risks
 
-- The vault notifies the listeners outside its lock. Two notifications can compare against the same old value and
-  fire a contextual listener twice for one change. This is accepted: it is rare, and a listener reads the current
-  value anyway.
 - No listener observes every key at a context.
-- The queue of the notifications at a dirty context is not built yet. Until then, the vault delivers every
-  notification at once, and a reload notifies after the install of each bucket. See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
 - A key-only event arrives when its context is ready, but a context under it can still be dirty. A listener that
   reads there must check the readiness itself.

@@ -94,6 +94,32 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   private val mySettingsKeyWatches = ConcurrentHashMap.newKeySet<SettingsKeyWatch>()
 
   /**
+   * Guards [queuedNotifications], the [current values][SettingsKeyWatch.currentValue] of the contextual watches, the
+   * removal of a watch, and the add of an entry to [unfinishedReloads]. The vault never calls a listener under it, and
+   * it never suspends under it.
+   */
+  private val notificationLock = Any()
+
+  /**
+   * Holds the listener notifications that wait until the context they carry is ready (ADR 0161). A key-only event
+   * carries the context of its change. A contextual watch carries its own context. Each contextual watch and each
+   * key-only event is in the queue once, so the queue folds several changes into one notification. Guarded by
+   * [notificationLock].
+   *
+   * These rules make the queue race-free:
+   * - Every notification goes into the queue. In the same [notificationLock] hold, [takeReadyNotifications] takes out
+   *   each notification whose context is ready.
+   * - A context gets dirty only when a reload goes into [unfinishedReloads], under [notificationLock]. So a context that
+   *   the take finds ready stays ready during the hold. A contextual watch resolves its value there.
+   * - A context gets ready only in [swapInReloadProgress], and a [notifyListeners] call always comes after it. That call
+   *   takes out a notification that was in the queue before the change. A notification that goes in after the change
+   *   finds the context ready in its own call.
+   * - A watch leaves the queue when it is disposed, under [notificationLock]. A watch that is not registered does not
+   *   go into the queue.
+   */
+  private val queuedNotifications = SettingsChangeEvents()
+
+  /**
    * Queues the spontaneous pushes of the layers, such as a watcher that reacts to an external edit. A single consumer
    * folds them into the model, so concurrent pushes serialize. The channel is unbounded, so [push] never blocks.
    */
@@ -130,8 +156,9 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    * Holds the requested reloads that have not finished, the running ones and the queued ones. Each one keeps its scope
    * and its [pending kinds][UnfinishedReload.pendingKinds] (ADR 0160). The same or overlapping scopes can be in it at
    * once. [reloadScope] adds the entry before it waits for [reloadMutexes], so a queued reload already makes its
-   * contexts dirty. There is no gap between the end of one reload and the start of the next one. [isDirty] iterates
-   * it with no lock.
+   * contexts dirty. There is no gap between the end of one reload and the start of the next one. [reloadScope] adds the
+   * entry under [notificationLock], because the add makes contexts dirty (see [queuedNotifications]). [isDirty]
+   * iterates it with no lock.
    */
   private val unfinishedReloads = CopyOnWriteArrayList<UnfinishedReload>()
 
@@ -236,7 +263,7 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   private suspend fun reloadScope(scopeContext: SettingsContext) {
     // Mark the scope dirty before the wait for the reload mutexes. See unfinishedReloads.
     val reload = UnfinishedReload(scopeContext)
-    unfinishedReloads.add(reload)
+    synchronized(notificationLock) { unfinishedReloads.add(reload) }
     loadingGeneration.update { it + 1 }
     val heldReloadMutexes = HeldReloadMutexes(reloadMutexes)
     try {
@@ -301,7 +328,8 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    * Swaps in [currentModel] with the [heldPushes] that get ready, then sets the pending kinds of [reload]. A held push
    * gets ready when the context of its store is not dirty with the new pending kinds. These pushes apply in arrival
    * order. So a context gets ready only after its held pushes are in the model, and a new push cannot apply before a
-   * held push of the same store (ADR 0160). Call under [vaultWriteMutex], and bump [loadingGeneration] after the hold.
+   * held push of the same store (ADR 0160). Call under [vaultWriteMutex]. After the hold, bump [loadingGeneration] and
+   * call [notifyListeners], so the queued notifications of the contexts that get ready deliver (ADR 0161).
    *
    * @param pendingKinds the new [pending kinds][UnfinishedReload.pendingKinds] of [reload]
    */
@@ -950,16 +978,28 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
       "Cannot listen on a SettingsMapKey ('${settingsKeyWatch.key.name}'): it holds slotted storage, not a value — listen on its child keys."
     }
     mySettingsKeyWatches.add(settingsKeyWatch)
-    Disposer.register(disposable) { mySettingsKeyWatches.remove(settingsKeyWatch) }
+    Disposer.register(disposable) { unregister(settingsKeyWatch) }
+  }
+
+  /**
+   * Removes [settingsKeyWatch] from [mySettingsKeyWatches] and from [queuedNotifications] in one [notificationLock]
+   * hold. So a disposed watch does not stay in the queue, and it does not fire from the queue.
+   */
+  private fun unregister(settingsKeyWatch: SettingsKeyWatch) {
+    synchronized(notificationLock) {
+      mySettingsKeyWatches.remove(settingsKeyWatch)
+      queuedNotifications.contextual.remove(settingsKeyWatch)
+      queuedNotifications.keyOnly.removeIf { it.settingsKeyWatch === settingsKeyWatch }
+    }
   }
 
   /**
    * Records into [settingsChangeEvents] the watches whose key the change at [changeContext] from [currentData] to
-   * [newData] touches. Here a contextual watch is only a candidate. [notifyListeners] resolves its value again and
-   * fires only on a net change, which is the real gate. So this method does not check whether [changeContext] is in
-   * the resolution chain of the watch. The new resolve covers every way a change can alter the value, or not alter it.
-   * This includes a cancellation across layers, such as a project write that restores the value of a file after an
-   * application write changed it.
+   * [newData] touches. Here a contextual watch is only a candidate. [takeReadyNotifications] resolves its value again
+   * when its context is ready, and fires it only on a net change, which is the real gate. So this method does not
+   * check whether [changeContext] is in the resolution chain of the watch. The new resolve covers every way a change
+   * can alter the value, or not alter it. This includes a cancellation across layers, such as a project write that
+   * restores the value of a file after an application write changed it.
    */
   private fun collectChangeEvents(
     changeContext: SettingsContext,
@@ -982,23 +1022,49 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   }
 
   /**
-   * Delivers the accumulated [events]. A contextual watch resolves its value again and fires only on a net change. A
-   * key-only watch fires once per changed context.
+   * Queues [events], then delivers every queued notification whose context is ready (ADR 0161). A notification at a
+   * dirty context stays in [queuedNotifications]. Call it after every model swap and after every readiness change, out
+   * of [vaultWriteMutex]. The listeners run with no lock held. A disposed watch does not fire.
    */
   private fun notifyListeners(events: SettingsChangeEvents) {
     // Every model swap funnels through here; ping the snapshot cache so it re-dumps and (if changed) re-saves.
     modelChanged.tryEmit(Unit)
-    for (watch in events.contextual) {
-      val value = watch.key.resolveRaw(watch.context!!)
-      if (value != watch.currentValue) {
-        watch.currentValue = value
-        notifyListeners(watch, watch.context)
-      }
-    }
-    for ((watch, context) in events.keyOnly) {
-      notifyListeners(watch, context)
+    for ((watch, context) in takeReadyNotifications(events)) {
+      if (watch in mySettingsKeyWatches) notifyListeners(watch, context)
     }
   }
+
+  /**
+   * Adds [events] of the registered watches to [queuedNotifications], and takes out every queued notification whose
+   * context is ready, in one [notificationLock] hold. A contextual watch resolves its value and is due only on a net
+   * change. Then it takes the new value as its [current value][SettingsKeyWatch.currentValue]. So it fires at most
+   * once, also when several changes affected it. A key-only event is due once per pair of a watch and a changed
+   * context.
+   *
+   * @return each due watch with the context that its listener gets, the contextual watches first
+   */
+  private fun takeReadyNotifications(events: SettingsChangeEvents): List<Pair<SettingsKeyWatch, SettingsContext>> =
+    synchronized(notificationLock) {
+      events.contextual.filterTo(queuedNotifications.contextual) { it in mySettingsKeyWatches }
+      events.keyOnly.filterTo(queuedNotifications.keyOnly) { it.settingsKeyWatch in mySettingsKeyWatches }
+      val dueNotifications = ArrayList<Pair<SettingsKeyWatch, SettingsContext>>()
+      queuedNotifications.contextual.removeIf { watch ->
+        val context = watch.context!!
+        if (isDirty(context)) return@removeIf false
+        val value = watch.key.resolveRaw(context)
+        if (value != watch.currentValue) {
+          watch.currentValue = value
+          dueNotifications.add(watch to context)
+        }
+        true
+      }
+      queuedNotifications.keyOnly.removeIf { event ->
+        if (isDirty(event.changeContext)) return@removeIf false
+        dueNotifications.add(event.settingsKeyWatch to event.changeContext)
+        true
+      }
+      dueNotifications
+    }
 
   private fun notifyListeners(settingsKeyWatch: SettingsKeyWatch, context: SettingsContext) {
     try {
@@ -1209,19 +1275,25 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
 
     /**
      * Holds the last raw resolved value, for the change deduplication. The values compare undecoded. A key-only watch
-     * does not use it.
+     * does not use it. After the construction, it is guarded by [notificationLock].
      */
-    @Volatile
     var currentValue: SettingsValue? = context?.let { key.resolveRaw(it) }
   }
 
-  /** Pairs a key-only watch with the context where the vault detected a change. A burst delivers each pair once. */
+  /**
+   * Pairs a key-only watch with the context where the vault detected a change. A burst delivers each pair once, and
+   * [queuedNotifications] holds each pair once.
+   */
   private data class SettingsKeyChangeEvent(val settingsKeyWatch: SettingsKeyWatch, val changeContext: SettingsContext)
 
-  /** Collects the watches that a model swap touched, with no duplicates. The vault delivers them once after the swap. */
+  /**
+   * Collects the contextual watches and the key-only events, with no duplicates and in arrival order. One instance
+   * collects the notifications of one model swap, and [notifyListeners] delivers them. [queuedNotifications] is the
+   * instance that holds the notifications at a dirty context.
+   */
   private class SettingsChangeEvents {
-    val contextual = HashSet<SettingsKeyWatch>()
-    val keyOnly = HashSet<SettingsKeyChangeEvent>()
+    val contextual = LinkedHashSet<SettingsKeyWatch>()
+    val keyOnly = LinkedHashSet<SettingsKeyChangeEvent>()
   }
 
   companion object {
