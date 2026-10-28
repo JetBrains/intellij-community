@@ -58,7 +58,7 @@ absolute path. Each layer has exactly one locality. Each key declares which loca
 - A plain write of a shareable key must land in the local layer.
   See [ADR 0076](../adr/0076-settings-have-three-layer-kinds-a-write-goes-to-local-by-default-and-team-editing-is-a-per-machine-mode.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLocalityTest.kt
-- A shareable write must fall back to the team layer when no context offers a local layer.
+- A shareable write must fall back to the team layer of a context when that context offers no local layer.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLocalityTest.kt
 - At each context, a write must try all its localities in order before it goes to a wider context. So a write can
   land in a team layer at a narrower context, not in a local layer at a wider one.
