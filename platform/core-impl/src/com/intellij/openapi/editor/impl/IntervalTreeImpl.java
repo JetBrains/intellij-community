@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -36,6 +36,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   static final Logger LOG = Logger.getInstance(IntervalTreeImpl.class);
   static final boolean DEBUG = LOG.isDebugEnabled() || ApplicationManager.getApplication() != null && ApplicationManager.getApplication().isUnitTestMode();
   private int keySize; // number of all intervals, counting all duplicates, some of them maybe gced
+  private boolean maxCorrectionDeferred;
   private final ReentrantReadWriteLock l = new ReentrantReadWriteLock();
 
   protected abstract int compareEqualStartIntervals(@NotNull IntervalNode<T> i1, @NotNull IntervalNode<T> i2);
@@ -981,7 +982,8 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
       assert c != 0;
       assert c < 0 && parent.getLeft() == root || c > 0 && parent.getRight() == root;
     }
-    assert delta + root.maxEnd == Math.max(maxLeftEnd, Math.max(maxRightEnd, delta + root.intervalEnd()));
+    int realMaxEnd = Math.max(maxLeftEnd, Math.max(maxRightEnd, delta + root.intervalEnd()));
+    assert maxCorrectionDeferred || delta + root.maxEnd == realMaxEnd;
     int myStartOffset = delta + root.intervalStart();
     assert maxLeftStart <= myStartOffset;
     assert minRightStart >= myStartOffset;
@@ -990,7 +992,7 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
     assert maxRightStart == Integer.MIN_VALUE || maxRightStart >= myStartOffset;
     int minStart = Math.min(minLeftStart, myStartOffset);
     int maxStart = Math.max(myStartOffset, Math.max(maxLeftStart, maxRightStart));
-    return new IntTrinity(minStart, maxStart, root.maxEnd + delta);
+    return new IntTrinity(minStart, maxStart, realMaxEnd);
   }
 
   @Override
@@ -1216,10 +1218,36 @@ public abstract class IntervalTreeImpl<T extends RangeMarkerEx> extends RedBlack
   // max of n.left's maxEnd, n.right's maxEnd and its own interval endOffset
   @ApiStatus.Internal
   protected void correctMax(@NotNull IntervalNode<T> node, int deltaUpToRoot) {
-    if (!node.isValid()) return;
+    if (!node.isValid() || maxCorrectionDeferred) return;
     int realMax = Math.max(Math.max(maxEndOf(node.getLeft(), deltaUpToRoot), maxEndOf(node.getRight(), deltaUpToRoot)),
                            deltaUpToRoot + node.intervalEnd());
     node.maxEnd = realMax - deltaUpToRoot;
+  }
+
+  /**
+   * Defers maxEnd correction under the write lock.
+   * Call {@link #finishDeferredMaxCorrection()} before a lookup can read maxEnd.
+   */
+  void deferMaxCorrection() {
+    assertUnderWriteLock();
+    assert !maxCorrectionDeferred;
+    maxCorrectionDeferred = true;
+  }
+
+  /** Recomputes maxEnd under the write lock, children before their parents. */
+  void finishDeferredMaxCorrection() {
+    assertUnderWriteLock();
+    assert maxCorrectionDeferred;
+    maxCorrectionDeferred = false;
+    correctMaxDown(getRoot(), 0);
+  }
+
+  private void correctMaxDown(@Nullable IntervalNode<T> node, int deltaUpToRootExclusive) {
+    if (node == null) return;
+    int delta = deltaUpToRootExclusive + (node.isValid() ? node.delta : 0);
+    correctMaxDown(node.getLeft(), delta);
+    correctMaxDown(node.getRight(), delta);
+    correctMax(node, delta);
   }
 
   private void correctMaxUp(@Nullable IntervalNode<T> node) {
