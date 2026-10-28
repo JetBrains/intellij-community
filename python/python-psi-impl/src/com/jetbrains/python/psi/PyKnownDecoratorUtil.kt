@@ -103,7 +103,9 @@ object PyKnownDecoratorUtil {
    * an import inside a function, and a member of a local object as in `@my_property.expression`.
    */
   private fun asKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
-    return computeKnownDecoratorsInFile(qualifiedName, file)
+    return PyUtil.getParameterizedCachedValue(file, qualifiedName) { name ->
+      computeKnownDecoratorsInFile(name, file)
+    }
   }
 
   private fun computeKnownDecoratorsInFile(qualifiedName: QualifiedName, file: PyFile): List<PyKnownDecorator> {
