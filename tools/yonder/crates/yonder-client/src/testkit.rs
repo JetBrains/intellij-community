@@ -47,23 +47,38 @@ pub(crate) fn failed(code: i32, stderr: &str) -> Ran {
 }
 
 /// Child processes that answer by rule: the first rule whose text the joined call holds. A call without a rule
-/// answers exit 0 and no output. `run_to_file` writes the stdout of the rule into the file, and a stop that answers
-/// `true` stops the call as Ctrl+C would.
+/// answers exit 0 and no output. `git rev-parse --git-path yonder` answers a directory of the fake git directory
+/// before each rule. `run_to_file` writes the stdout of the rule into the file, and a stop that answers `true` stops the
+/// call as Ctrl+C would.
 #[derive(Default)]
 pub(crate) struct FakeProcesses {
     rules: Vec<(String, Ran)>,
     calls: Mutex<Vec<Call>>,
     /// How long `git pack-objects` works. The watch asks the stop every 10 ms meanwhile, as the real one does.
     pack_time: Duration,
+    git_dir: FakeGitDir,
+}
+
+/// The git directory of a fake checkout, a temporary directory.
+pub(crate) struct FakeGitDir(tempfile::TempDir);
+
+impl Default for FakeGitDir {
+    fn default() -> Self {
+        Self(tempfile::tempdir().expect("a git directory"))
+    }
 }
 
 impl FakeProcesses {
     pub(crate) fn new(rules: &[(&str, Ran)]) -> Self {
         Self {
             rules: rules.iter().map(|(text, ran)| ((*text).to_owned(), ran.clone())).collect(),
-            calls: Mutex::default(),
-            pack_time: Duration::ZERO,
+            ..Self::default()
         }
+    }
+
+    /// The directory of the run records and the patches: `yonder/` of the fake git directory.
+    pub(crate) fn run_files(&self) -> PathBuf {
+        self.git_dir.0.path().join("yonder")
     }
 
     /// The same processes with a `git pack-objects` that works for `time`.
@@ -83,6 +98,9 @@ impl FakeProcesses {
     fn answer(&self, call: &Call) -> Ran {
         self.calls.lock().unwrap_or_else(PoisonError::into_inner).push(call.clone());
         let text = call.text();
+        if text.contains("--git-path yonder") {
+            return ok(&format!("{}\n", self.run_files().display()));
+        }
         self.rules
             .iter()
             .find(|(rule, _)| text.contains(rule.as_str()))

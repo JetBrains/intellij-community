@@ -30,10 +30,20 @@ same commit, and a second run of it sends no pack. The index, the files and the 
 and no ref names the commit: its objects are loose objects that `git gc` prunes. Ignored files stay local, and the host
 has its own.
 
+### The run record
+
+Before `Start`, the client writes `yonder/<run>.json` in the git directory of the checkout (`git rev-parse --git-path
+yonder`): `{"commit", "fetch", "outputs", "changes"}`. `fetch` holds the `fetch` directories of the run. `outputs` holds
+the outputs of `.yonder.toml` of the shipped commit when the run has `outputs`, else none. The client reads the file
+from the commit with `git ls-tree` and `git cat-file`, and parses it with `config` of `yonder-link`, the parser of the
+agent. A commit without the file has no outputs. A file that does not parse refuses with `bad_config`, and a git
+failure with `git_failed`, both before the start. `changes` is `apply`. A record and a patch older than 7 days there go.
+
+The record says what a fetch takes. So the host cannot choose which local paths it replaces: see [The fetch](#the-fetch).
+
 ### The changes
 
-With `apply`, the patch goes to `yonder/<run>.patch` in the git directory of the checkout (`git rev-parse --git-path
-yonder`), and a patch older than 7 days there goes. `git apply --whitespace=nowarn` applies it to the files of the
+With `apply`, the patch goes to `yonder/<run>.patch` in the git directory of the checkout, beside the record. `git apply --whitespace=nowarn` applies it to the files of the
 working tree, not to the index. A patch that does not apply, such as after a local edit of the same lines, refuses with
 `apply_failed` and names the patch, and the working tree stays as it was. `yonder fetch` of such a run writes the patch
 there too.
@@ -61,7 +71,7 @@ these:
 
 | Code | Input |
 |---|---|
-| `usage` | An alias that is not `[0-9A-Za-z._-]+`, a run without a command, or `prepare` without `--agent` outside a checkout of the monorepo. The last message names `--agent`. For a bootstrap of `upgrade`: no checkout, a `yonder-upgrade/` that is there already, or one that git ignores. |
+| `usage` | An alias that is not `[0-9A-Za-z._-]+`, a run without a command, a `fetch` of a run id that cannot name a file, a `fetch` without `--fetch` of a run that has no record in this checkout, a record that is not JSON of the record shape, or `prepare` without `--agent` outside a checkout of the monorepo. The last message names `--agent`. For a bootstrap of `upgrade`: no checkout, a `yonder-upgrade/` that is there already, or one that git ignores. |
 | `config` | No home directory, an identity that cannot be read or created, or a file that cannot be written. |
 | `no_host` | No host file for the alias. The message names `bt --host <alias> --prepare` and `yonder prepare`. |
 | `bad_host_file` | A host file that is not JSON of the host file shape, or that names another alias. |
@@ -73,7 +83,8 @@ these:
 | `local_changes` | The checkout has tracked or untracked changes. |
 | `behind` | The host has none of the candidate commits: HEAD, its first-parent ancestors at the distances 1, 2, 4 … 65536, and the merge bases with `master` and `origin/master`. The first `Have` names the distances up to 16, and only a host that has none of them gets the rest in a second `Have`. The message gives the commit count of the history and names `bt --host <alias> --prepare`. |
 | `fetch_failed` | Fetch did not copy every staged file. The run stays on the host for `yonder fetch` and `yonder forget`. |
-| `git_failed` | A local git call failed or ran past its deadline. |
+| `git_failed` | A local git call failed or ran past its deadline, or the run record cannot be written. |
+| `bad_config` | `.yonder.toml` of the shipped commit of a run with `outputs` does not parse, or it is not a UTF-8 file. The message is the one of the agent, with the commit. |
 | `ssh_failed` | An ssh call of `prepare` failed or ran past its deadline of 30 s (120 s for the copy). |
 | `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. For `upgrade`: a host that is not macOS, a binary of another platform than the hello names, a bootstrap run that failed or printed no line of `yonderd upgrade`, or an agent that answers with a third binary at the end. |
 | `rolled_back` | The new agent of `upgrade` did not answer in time, and the previous binary answers: the watchdog brought it back. The message names `~/.cache/yonderd/upgrade.json` and the log of the agent. |
@@ -81,11 +92,15 @@ these:
 | `old_agent` | The run needs a feature that the agent lacks, such as the changes of `apply`. The message names `yonder prepare`. An option that an older agent would ignore, such as `nice`, `.yonder.toml` or the login environment, only gets a `yonder: warning:` line. |
 | `apply_failed` | The changes of the command do not apply to the working tree, or they did not come because the fetch failed. The message gives the exit code of the command and the patch file, or `yonder fetch`, which writes the patch into the git directory of the checkout. |
 
-A fetched path that is absolute, has `..` or `\`, is not below a `fetch` directory or its output, or is inside a `.git`
-directory in any case (`.GIT`, `.git.`, `git~1`) is skipped, and the fetch then fails. The first file of an output
-removes the local file or directory of the output. `yonder fetch` without `--fetch` takes the `fetch` directories of
-the run from `Runs`. A run that names none can still bring outputs and changes, and a staged file of it is skipped.
-Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
+### The fetch
+
+A fetch takes only what the run record asks for. A fetched path that is absolute, has `..` or `\`, is not below a
+`fetch` directory of the record or its output, or is inside a `.git` directory in any case (`.GIT`, `.git.`, `git~1`) is
+skipped, and the fetch then fails. A file of an output that the record does not name, and the changes of a record
+without `changes`, are skipped too. The first file of an output removes the local file or directory of the output.
+`yonder fetch` reads the record of the run in the checkout of the working directory. An explicit `--fetch` replaces
+the `fetch` directories of the record. Without a record, `--fetch` takes the staged files below its directories only,
+and no `--fetch` refuses with `usage`. Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
 removes itself on the host (`Forget`) only when the client saw its end and every file came.
 
 A pack goes to a temporary file first, under `git pack-objects --progress` with a quiet limit of 60 s and no limit on
@@ -125,7 +140,7 @@ root, and `./bazel.cmd info execution_root` names that root. The monorepo has no
 1. The commit: `git rev-parse HEAD`, then `git status` and `Have` at the same time; local changes refuse at once. With
    `working_tree`, the commit of the working tree first, then `Have`. A host that has none of the candidates refuses
    with `behind`. The hello of the agent names its features, so a run that needs one that the agent lacks refuses here.
-   Ctrl+C up to here runs nothing on the host.
+   Then the client writes the run record. Ctrl+C up to here runs nothing on the host.
 2. `Start`. The host lends the run a host slot, or puts it in the queue of the slots. A start whose reply does not come is cancelled, and the
    run refuses with `link` or `timed_out`.
 3. `Follow` on a thread of its own, up to `Phases` and `Exit`. The lines of the host show while the pack builds.
@@ -137,7 +152,7 @@ root, and `./bazel.cmd info execution_root` names that root. The monorepo has no
    It goes once per run, after the pack of step 4. It skips the pack when the host has the commit. A failure is one
    `yonder: warning:` line on the stderr, and the run goes on. The end of the run waits for the sync, and Ctrl+C
    closes its connection.
-6. `Fetch` and `Forget`. A run with `outputs` or `apply` fetches even without a `fetch` directory.
+6. `Fetch` and `Forget`. A run whose record names outputs or changes fetches even without a `fetch` directory.
 7. With `apply`, `git apply` of the patch.
 
 Ctrl+C after the start, the build of the pack included, cancels the run on the host: the first press sends `Cancel`

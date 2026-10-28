@@ -79,12 +79,13 @@ enum Command {
     Attach { alias: String, run: String },
     /// Asks the host to interrupt a run, and returns when the host has the request. `attach` shows its end.
     Cancel { alias: String, run: String },
-    /// Copies the staged files of a run into this checkout, for a run whose files did not come.
+    /// Copies the files of a run into this checkout, for a run whose files did not come. The record of the run in this
+    /// checkout says which files come.
     Fetch {
         alias: String,
         run: String,
-        /// A directory relative to the slot root that each file must be below. Repeatable; without it, the fetch
-        /// directories of the run on the host.
+        /// A directory relative to the slot root that each staged file must be below. Repeatable; without it, the fetch
+        /// directories of the run record. Without a record, only the staged files below it come.
         #[arg(long = "fetch", value_name = "DIR")]
         fetch: Vec<String>,
     },

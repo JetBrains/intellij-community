@@ -880,7 +880,7 @@ fn a_cut_fetch_leaves_no_part_and_keeps_the_run() {
     let lines = said.lines();
     assert!(
         lines.iter().any(|line| line.contains("`yonder fetch studio ")
-            && line.contains(" --fetch out/bt-runs`")
+            && line.contains("` in this checkout copies its files again")
             && line.contains("`yonder forget studio ")),
         "{lines:#?}"
     );
@@ -1253,6 +1253,7 @@ fn the_outputs_replace_their_local_copies_and_the_changes_apply_to_the_working_t
         ("changes.patch".to_owned(), FileKind::Changes, PATCH.as_bytes().to_vec()),
     ]);
     let root = real_checkout(&setup);
+    fs::write(root.join(".yonder.toml"), "outputs = [\"results\"]\n").expect("the config of the working tree");
     fs::create_dir_all(root.join("results")).expect("results");
     fs::write(root.join("results/old.txt"), "old").expect("an old local output");
     let said = Said::default();
@@ -1280,6 +1281,82 @@ fn the_outputs_replace_their_local_copies_and_the_changes_apply_to_the_working_t
         "{:#?}",
         said.lines()
     );
+}
+
+/// The checkout of [`real_checkout`] with a second commit of `.yonder.toml` and a `src/` that git ignores, so the
+/// committed HEAD runs. A commit of the working tree would copy the index in the temporary directory, which a test of
+/// `git.rs` checks at the same time.
+fn committed_config(setup: &Setup, config: &str) -> PathBuf {
+    let root = real_checkout(setup);
+    fs::write(root.join(".yonder.toml"), config).expect("the config");
+    fs::write(root.join(".gitignore"), "results/\nsrc/\n").expect("the ignore file");
+    real_git(&root, &["add", "--all"]);
+    real_git(&root, &["commit", "-q", "-m", "config"]);
+    root
+}
+
+/// The host cannot choose what replaces a local path: the record of the run names the outputs of `.yonder.toml` of the
+/// shipped commit and whether the client asked for the changes. A file beyond the record is skipped, and the run keeps it
+/// on the host.
+#[test]
+fn a_run_takes_no_output_and_no_changes_that_its_record_did_not_ask_for() {
+    let setup = fetching_agent(vec![
+        (
+            "src/main.rs".to_owned(),
+            FileKind::Output { root: "src".to_owned() },
+            b"theirs".to_vec(),
+        ),
+        ("changes.patch".to_owned(), FileKind::Changes, PATCH.as_bytes().to_vec()),
+        (
+            "results/new.txt".to_owned(),
+            FileKind::Output {
+                root: "results".to_owned(),
+            },
+            b"new".to_vec(),
+        ),
+    ]);
+    let root = committed_config(&setup, "outputs = [\"results\"]\n");
+    fs::create_dir_all(root.join("src")).expect("src");
+    fs::write(root.join("src/main.rs"), "mine").expect("an ignored local file");
+    let said = Said::default();
+    let options = RunOptions {
+        outputs: true,
+        ..RunOptions::default()
+    };
+    let outcome = run_options(&setup, &crate::OsProcesses, &said, &root, &options).expect("the run");
+    assert_eq!(outcome.fetched, Vec::<String>::new(), "the fetch failed");
+    assert_eq!(fs::read_to_string(root.join("src/main.rs")).expect("the local file"), "mine");
+    assert_eq!(fs::read_to_string(root.join("results/new.txt")).expect("the output"), "new");
+    assert!(!root.join(format!(".git/yonder/{}.patch", outcome.run)).exists());
+    assert!(!kinds(&setup).contains(&"forget"), "the run stays on the host");
+    assert!(
+        said.lines()
+            .iter()
+            .any(|line| line.contains("2 of 3 files") && line.contains("src/main.rs, changes.patch")),
+        "{:#?}",
+        said.lines()
+    );
+    let record: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(root.join(format!(".git/yonder/{}.json", outcome.run))).expect("the record"))
+            .expect("JSON");
+    assert_eq!(
+        record,
+        serde_json::json!({"commit": outcome.commit, "fetch": [], "outputs": ["results"], "changes": false})
+    );
+}
+
+/// A commit whose `.yonder.toml` does not parse starts no run: the client cannot tell its outputs.
+#[test]
+fn a_config_that_does_not_parse_starts_no_run_with_outputs() {
+    let setup = fetching_agent(Vec::new());
+    let root = committed_config(&setup, "outputs = \"results\"\n");
+    let options = RunOptions {
+        outputs: true,
+        ..RunOptions::default()
+    };
+    let refusal = run_options(&setup, &crate::OsProcesses, &Said::default(), &root, &options).expect_err("refused");
+    assert_eq!((refusal.code.as_ref(), refusal.exit), (code::BAD_CONFIG, Exit::NotRun));
+    assert!(!kinds(&setup).contains(&"start"), "{:?}", kinds(&setup));
 }
 
 #[test]

@@ -104,7 +104,9 @@ command that follows the run.
 - `yonder attach <host> <run>` follows a run from its first line. Ctrl+C leaves, and the run goes on.
 - `yonder cancel <host> <run>` asks the host to interrupt a run. `attach` shows its end.
 - Ctrl+C in `yonder run` cancels the run on the host and shows the output to its end. A second Ctrl+C leaves at once.
-- `yonder fetch <host> <run> [--fetch <dir>]` copies the files of a run whose copy failed (`fetch_failed`).
+- `yonder fetch <host> <run> [--fetch <dir>]` copies the files of a run whose copy failed (`fetch_failed`). Run it in
+  the checkout of the run: the record of the run there says which files come. A file that the run did not ask for
+  never comes. Without the record, only `--fetch` directories come.
 - `yonder forget <host> <run>` removes a run and its files on the host. The host keeps an ended run for 24 h.
 
 ## The host slots

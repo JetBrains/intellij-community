@@ -7,6 +7,8 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
 
+use yonder_link::config::FILE;
+
 use crate::process::{Call, Limit, Processes, Ran, Stop};
 use crate::{Refusal, code, refused};
 
@@ -105,16 +107,7 @@ pub(crate) fn working_tree_commit(processes: &dyn Processes, checkout: &Path, st
         });
     }
     let index = IndexCopy::new();
-    let own = git(
-        processes,
-        checkout,
-        &["rev-parse", "--path-format=absolute", "--git-path", "index"],
-        stop,
-    );
-    if !own.ok() {
-        return Err(git_refusal("git rev-parse --git-path index", &own));
-    }
-    let own = PathBuf::from(own.stdout_text().trim());
+    let own = git_dir_path(processes, checkout, "index", stop)?;
     let index_text = index.0.to_string_lossy().into_owned();
     let with_index = |args: &[&str], input: Vec<u8>| {
         processes.run(
@@ -243,6 +236,49 @@ fn committer_date(processes: &dyn Processes, checkout: &Path, commit: &str, stop
             Some(format!("{seconds} {zone}"))
         });
     date.ok_or_else(|| refused(code::GIT_FAILED, format!("the commit {commit} has no committer line")))
+}
+
+/// The absolute path of `name` in the git directory of the checkout, as `git rev-parse --git-path` names it.
+pub(crate) fn git_dir_path(processes: &dyn Processes, checkout: &Path, name: &str, stop: Stop<'_>) -> Result<PathBuf, Refusal> {
+    let ran = git(
+        processes,
+        checkout,
+        &["rev-parse", "--path-format=absolute", "--git-path", name],
+        stop,
+    );
+    let path = ran.stdout_text().trim().to_owned();
+    if !ran.ok() || path.is_empty() {
+        return Err(git_refusal(&format!("git rev-parse --git-path {name}"), &ran));
+    }
+    Ok(PathBuf::from(path))
+}
+
+/// The text of `.yonder.toml` in the root of `commit`, or `None` when the commit has no such file.
+pub(crate) fn config_text(processes: &dyn Processes, checkout: &Path, commit: &str, stop: Stop<'_>) -> Result<Option<String>, Refusal> {
+    let listed = git(processes, checkout, &["ls-tree", "--full-tree", "-z", commit, "--", FILE], stop);
+    if !listed.ok() {
+        return Err(git_refusal("git ls-tree", &listed));
+    }
+    let text = listed.stdout_text();
+    let Some(entry) = text.split('\0').find(|entry| !entry.is_empty()) else {
+        return Ok(None);
+    };
+    // `<mode> <type> <object>\t<path>`
+    let mut fields = entry.split(['\t', ' ']);
+    let (_, kind, object) = (fields.next(), fields.next(), fields.next());
+    let (Some("blob"), Some(object)) = (kind, object) else {
+        return Err(refused(
+            code::BAD_CONFIG,
+            format!("{FILE} of the commit {commit} is not a file: {entry}"),
+        ));
+    };
+    let blob = git(processes, checkout, &["cat-file", "blob", object], stop);
+    if !blob.ok() {
+        return Err(git_refusal("git cat-file blob", &blob));
+    }
+    String::from_utf8(blob.stdout)
+        .map(Some)
+        .map_err(|error| refused(code::BAD_CONFIG, format!("{FILE} of the commit {commit} is not UTF-8: {error}")))
 }
 
 /// The name of the local repository: the directory of its main checkout, such as `branch-deck` for a linked worktree

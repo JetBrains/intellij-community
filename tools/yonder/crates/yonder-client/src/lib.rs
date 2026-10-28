@@ -5,6 +5,7 @@
 //! - [`process`]: the seam of the local git and ssh calls.
 //! - [`run`]: a run of a command of the committed HEAD or of the working tree on a host, the sync of its base, the
 //!   outputs and the changes that come back, and the requests of one reply.
+//! - `record`: the local record of each run, which says what a fetch of the run takes.
 //! - [`phases_line`]: the durations of the steps of a run.
 //! - [`prepare`]: makes a host ready over ssh.
 //! - [`upgrade`]: updates the agent of a host over the link, without ssh.
@@ -24,6 +25,7 @@ mod pack;
 mod phases;
 pub mod prepare;
 pub mod process;
+mod record;
 pub mod run;
 #[cfg(test)]
 mod testkit;
@@ -96,8 +98,10 @@ pub mod code {
     pub const LOCAL_CHANGES: &str = "local_changes";
     /// The host has none of the commits near HEAD, so the pack would hold the whole history.
     pub const BEHIND: &str = "behind";
-    /// A local git call failed.
+    /// A local git call failed, or the run record cannot be written.
     pub const GIT_FAILED: &str = "git_failed";
+    /// `.yonder.toml` of the shipped commit does not parse, so the client cannot tell which outputs come back.
+    pub const BAD_CONFIG: &str = "bad_config";
     /// An ssh call of `prepare` failed or did not end within its deadline.
     pub const SSH_FAILED: &str = "ssh_failed";
     /// The agent binary of `prepare` cannot be read, or it does not run on the host.

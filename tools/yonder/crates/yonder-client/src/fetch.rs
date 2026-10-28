@@ -4,40 +4,64 @@
 //! cut connection leaves no file that looks whole. A fetch that did not copy every file is a failure, and the run then
 //! keeps its stage on the agent for another `yonder fetch`.
 //!
-//! The host chooses the paths, so the client takes only a path below a `fetch` directory of the run, and never one
-//! inside a `.git` directory: a hook or a `core.fsmonitor` there would run code here. A file system that ignores the
-//! case, such as APFS, reads `.GIT` as `.git`, and Windows drops a trailing dot or space, so these spellings count too.
+//! The host chooses the paths, so the client takes only what the local record of the run asked for (`record.rs`): a
+//! staged path below a `fetch` directory of the record, a file of an output that the record names, and the changes when
+//! the record asked for them. It never takes a path inside a `.git` directory: a hook or a `core.fsmonitor` there would
+//! run code here. A file system that ignores the case, such as APFS, reads `.GIT` as `.git`, and Windows drops a
+//! trailing dot or space, so these spellings count too.
 //!
 //! A file of an output replaces the local copy of the output: the first file of an output removes the local file or
-//! directory of its path. The patch of the changes goes to the file that the run names, outside the working tree.
+//! directory of its path. The patch of the changes goes to the patch file of the run, in the git directory.
 
 use std::collections::BTreeSet;
 use std::fs;
 use std::io::{self, BufWriter, Write as _};
 use std::path::{Path, PathBuf};
 
-use yonder_link::proto::{FileKind, Reply, Request};
+use yonder_link::proto::{FileKind, Reply, Request, is_run_id};
 use yonder_link::{Channel, LinkError};
 
 use crate::host::Host;
-use crate::run::{Fetched, done, patch_path};
+use crate::process::never;
+use crate::record::{RunFiles, RunRecord};
+use crate::run::{Fetched, done};
 use crate::{Client, Refusal, code, refused};
 
 /// The suffix of a file that is not complete yet.
 const PART_SUFFIX: &str = ".yonder-part";
 
 impl Client<'_> {
-    /// Copies the staged files of a run into `checkout`. Each path must be below one of the `fetch` directories, or,
-    /// without them, below one of the `fetch` directories of the run on the agent. Answers the copied paths, relative to
-    /// the checkout with `/` separators.
+    /// Copies the files of a run into `checkout`, as its local record asks: the staged files below its `fetch`
+    /// directories, its outputs and its changes. An explicit `fetch` replaces the directories of the record. Without a
+    /// record, only the staged files below an explicit `fetch` come, and no `fetch` refuses. Answers the copied paths,
+    /// relative to the checkout with `/` separators.
     pub fn fetch(&self, alias: &str, run: &str, checkout: &Path, fetch: &[String]) -> Result<Vec<String>, Refusal> {
-        let mut host = self.host(alias)?;
-        let fetch = if fetch.is_empty() {
-            self.fetch_dirs_of(&mut host, run)?
-        } else {
-            fetch.to_vec()
+        if !is_run_id(run) {
+            return Err(refused(code::USAGE, format!("{run:?} cannot name a run")));
+        }
+        let files = RunFiles::of(self.processes, checkout, &never)?;
+        let record = match files.read(run)? {
+            Some(record) if fetch.is_empty() => record,
+            Some(record) => RunRecord {
+                fetch: fetch.to_vec(),
+                ..record
+            },
+            None if fetch.is_empty() => {
+                return Err(refused(
+                    code::USAGE,
+                    format!(
+                        "{} has no record of the run {run}, so the files to take are unknown: `--fetch <dir>` takes the staged files below a directory",
+                        files.dir().display()
+                    ),
+                ));
+            }
+            None => RunRecord {
+                fetch: fetch.to_vec(),
+                ..RunRecord::default()
+            },
         };
-        let fetched = self.fetch_run(&mut host, run, checkout, &fetch, None)?;
+        let mut host = self.host(alias)?;
+        let fetched = self.fetch_run(&mut host, run, checkout, &record, &files.patch(run))?;
         if let Some(changes) = &fetched.changes {
             (self.say)(&format!(
                 "yonder: the changes of the run {run} are in {}: `git apply` applies them",
@@ -45,20 +69,6 @@ impl Client<'_> {
             ));
         }
         Ok(fetched.files)
-    }
-
-    /// The `fetch` directories of a kept run, as the agent lists it.
-    fn fetch_dirs_of(&self, host: &mut Host, run: &str) -> Result<Vec<String>, Refusal> {
-        let listed = match host.request(&Request::Runs, self.timing.read)? {
-            (_, Reply::Runs { runs }) => runs,
-            (_, Reply::Refused { code, message }) => return Err(host.agent_refusal(code, &message)),
-            (_, reply) => return Err(host.unexpected(&reply)),
-        };
-        // A run without fetch directories can still have outputs and changes, which need none.
-        match listed.into_iter().find(|info| info.run == run) {
-            Some(info) => Ok(info.fetch),
-            None => Err(refused(code::USAGE, format!("{} keeps no run {run}", host.alias()))),
-        }
     }
 
     /// Removes a run and its stage on the agent.
@@ -71,15 +81,15 @@ impl Client<'_> {
         done(host, &Request::Forget { run: run.to_owned() }, self.timing.read)
     }
 
-    /// Copies the files of a run: the staged files below `checkout`, the outputs in place of their local copies, and
-    /// the patch of the changes to `changes`, or to the patch file of the run in the git directory of the checkout.
+    /// Copies the files of a run that `record` asks for: the staged files below `checkout`, the outputs in place of
+    /// their local copies, and the patch of the changes to `patch`. Each other file is skipped, and fails the fetch.
     pub(crate) fn fetch_run(
         &self,
         host: &mut Host,
         run: &str,
         checkout: &Path,
-        fetch: &[String],
-        changes: Option<&Path>,
+        record: &RunRecord,
+        patch: &Path,
     ) -> Result<Fetched, Refusal> {
         let (mut channel, mut reply) = host.request(&Request::Fetch { run: run.to_owned() }, self.timing.read)?;
         let mut fetched = Fetched {
@@ -97,7 +107,10 @@ impl Client<'_> {
                     kind,
                 } => {
                     let target = match &kind {
-                        FileKind::Staged => local_target(checkout, &path, fetch),
+                        FileKind::Staged => local_target(checkout, &path, &record.fetch),
+                        FileKind::Output { root } if !record.outputs.contains(root) => {
+                            Err(format!("the run did not ask for the output {root}"))
+                        }
                         FileKind::Output { root } => output_target(checkout, root, &path).inspect(|_| {
                             if replaced.insert(root.clone())
                                 && let Err(error) = remove_local(&checkout.join(root))
@@ -105,10 +118,8 @@ impl Client<'_> {
                                 (self.say)(&format!("yonder: cannot remove the local output {root}: {error}"));
                             }
                         }),
-                        FileKind::Changes => changes
-                            .map(Path::to_path_buf)
-                            .or_else(|| patch_path(self.processes, checkout, run))
-                            .ok_or_else(|| "git names no directory for the patch".to_owned()),
+                        FileKind::Changes if record.changes => Ok(patch.to_path_buf()),
+                        FileKind::Changes => Err("the run did not ask for its changes".to_owned()),
                     };
                     match target {
                         Ok(target) => match receive_file(&mut channel, &target, size, executable) {

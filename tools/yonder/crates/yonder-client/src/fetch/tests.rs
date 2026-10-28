@@ -1,68 +1,99 @@
 use pretty_assertions::assert_eq;
-use yonder_link::proto::RunInfo;
 
 use super::*;
 use crate::testkit::{ALIAS, FakeProcesses, Setup, calm, client};
 
-/// An agent that keeps the run `1-1` with the fetch directories `fetch`, and stages one file inside them and one
-/// outside.
-fn agent_of_one_run(fetch: Vec<String>) -> Setup {
+/// An agent that stages, for each fetch, one file inside `out/bt-runs` and one outside, a file of the output `src`,
+/// and the changes.
+fn agent_of_one_run() -> Setup {
     Setup::new(move |request, channel| {
         let _ = match request {
-            Request::Runs => channel.send(&Reply::Runs {
-                runs: vec![RunInfo {
-                    run: "1-1".to_owned(),
-                    holder: "h".to_owned(),
-                    commit: "c".to_owned(),
-                    command: vec!["true".to_owned()],
-                    started_ms: 1,
-                    exit: Some(0),
-                    phases: Vec::new(),
-                    fetch: fetch.clone(),
-                }],
-            }),
             Request::Fetch { .. } => {
-                for path in ["out/bt-runs/1/a.log", "scripts/hook.sh"] {
+                let files = [
+                    ("out/bt-runs/1/a.log", FileKind::Staged),
+                    ("scripts/hook.sh", FileKind::Staged),
+                    ("src/main.rs", FileKind::Output { root: "src".to_owned() }),
+                    ("changes.patch", FileKind::Changes),
+                ];
+                for (path, kind) in files {
                     let _ = channel.send(&Reply::File {
                         path: path.to_owned(),
                         size: 1,
                         executable: false,
-                        kind: FileKind::Staged,
+                        kind,
                     });
                     let _ = channel.send_bytes(b"x");
                     let _ = channel.send_end();
                 }
-                channel.send(&Reply::Fetched { files: 2, bytes: 2 })
+                channel.send(&Reply::Fetched { files: 4, bytes: 4 })
             }
             _ => channel.send(&Reply::refused("bad_request", "not in this script")),
         };
     })
 }
 
-/// `yonder fetch` without `--fetch` takes the fetch directories of the run, so a staged file outside them stays on the
-/// host. A run that names none can still have outputs and changes, which need no directory, but a staged file of it is
-/// skipped, and nothing comes.
-#[test]
-fn a_fetch_without_directories_takes_the_ones_of_the_run() {
-    let processes = FakeProcesses::default();
-    let setup = agent_of_one_run(vec!["out/bt-runs".to_owned()]);
+/// A checkout with a local `src/main.rs`, which a fetch must not replace unless the record asks for the output `src`.
+fn checkout_with_src(setup: &Setup) -> PathBuf {
     let checkout = setup.checkout();
+    fs::create_dir_all(checkout.join("src")).expect("src");
+    fs::write(checkout.join("src/main.rs"), "mine").expect("a local file");
+    checkout
+}
+
+/// `yonder fetch` without `--fetch` takes what the local record of the run asked for, and nothing that the host adds.
+#[test]
+fn a_fetch_without_directories_takes_what_the_record_asked_for() {
+    let processes = FakeProcesses::default();
+    let setup = agent_of_one_run();
+    let checkout = checkout_with_src(&setup);
+    let record = RunRecord {
+        commit: "c".to_owned(),
+        fetch: vec!["out/bt-runs".to_owned()],
+        outputs: vec!["results".to_owned()],
+        changes: true,
+    };
+    let files = RunFiles::of(&processes, &checkout, &never).expect("the run files");
+    files.write("1-1", &record).expect("the record");
     let refusal = client(&setup, &processes, &|_| {}, &calm)
         .fetch(ALIAS, "1-1", &checkout, &[])
-        .expect_err("one file is outside the directories");
+        .expect_err("two files are outside the record");
     assert_eq!(refusal.code, code::FETCH_FAILED);
-    assert!(refusal.message.contains("scripts/hook.sh"), "{}", refusal.message);
+    assert!(
+        refusal.message.contains("2 of 4 files") && refusal.message.contains("scripts/hook.sh, src/main.rs"),
+        "{}",
+        refusal.message
+    );
     assert!(checkout.join("out/bt-runs/1/a.log").is_file());
     assert!(!checkout.join("scripts/hook.sh").exists());
+    assert_eq!(fs::read_to_string(checkout.join("src/main.rs")).expect("the local file"), "mine");
+    assert_eq!(fs::read_to_string(files.patch("1-1")).expect("the changes"), "x");
+}
 
-    let setup = agent_of_one_run(Vec::new());
-    let checkout = setup.checkout();
+/// Without a record, an explicit `--fetch` takes the staged files only, and no `--fetch` refuses before a connection.
+#[test]
+fn a_fetch_without_a_record_takes_the_staged_files_of_its_directories_only() {
+    let processes = FakeProcesses::default();
+    let setup = agent_of_one_run();
+    let checkout = checkout_with_src(&setup);
     let refusal = client(&setup, &processes, &|_| {}, &calm)
         .fetch(ALIAS, "1-1", &checkout, &[])
-        .expect_err("no directories");
-    assert_eq!(refusal.code, code::FETCH_FAILED);
-    assert!(refusal.message.contains("2 of 2 files"), "{}", refusal.message);
-    assert!(!checkout.exists());
+        .expect_err("no record and no --fetch");
+    assert_eq!(refusal.code, code::USAGE);
+    assert!(refusal.message.contains("has no record of the run 1-1"), "{}", refusal.message);
+    assert!(setup.agent.requests().is_empty(), "{:?}", setup.agent.requests());
+
+    let refusal = client(&setup, &processes, &|_| {}, &calm)
+        .fetch(ALIAS, "1-1", &checkout, &fetch())
+        .expect_err("three files are outside --fetch");
+    assert!(refusal.message.contains("3 of 4 files"), "{}", refusal.message);
+    assert!(checkout.join("out/bt-runs/1/a.log").is_file());
+    assert_eq!(fs::read_to_string(checkout.join("src/main.rs")).expect("the local file"), "mine");
+    assert!(!processes.run_files().join("1-1.patch").exists());
+
+    let refusal = client(&setup, &processes, &|_| {}, &calm)
+        .fetch(ALIAS, "../1-1", &checkout, &fetch())
+        .expect_err("a bad run id");
+    assert_eq!(refusal.code, code::USAGE);
 }
 
 fn fetch() -> Vec<String> {
