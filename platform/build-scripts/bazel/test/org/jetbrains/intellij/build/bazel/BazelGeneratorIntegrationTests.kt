@@ -175,10 +175,6 @@ class BazelGeneratorIntegrationTests {
       |        ],
       |        "//conditions:default": [],
       |    }),
-      |    skip_unresolved_optional_modules = select({
-      |        "@community//build:is_inside_ultimate": False,
-      |        "//conditions:default": True,
-      |    }),
       |    visibility = ["//visibility:public"],
       |)
       |### auto-generated section `plugin intellij.plugin` end

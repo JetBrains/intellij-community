@@ -1032,8 +1032,6 @@ internal class BazelBuildFileGenerator(
         }
         if (contentModules.any { it.isUltimateModuleOfCommunityPlugin }) {
           option("content_modules", contentModulesWithUltimateModules(contentModules))
-          // the standalone community repository has no ultimate modules, so the plugin is packed without them
-          option("skip_unresolved_optional_modules", formatSelect(linkedMapOf(INSIDE_ULTIMATE_CONFIG_SETTING to false, "//conditions:default" to true)))
         }
         else {
           option("content_modules", contentModules.map { it.label }.unsorted())
