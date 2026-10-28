@@ -66,15 +66,16 @@ Options:
   --dry-run                print the resolved label, filter, and argv; run nothing
   --list                   print the resolution candidates for the selector; run nothing
   --verbose                also echo bazel's own captured output
-  --host <ssh alias>       run the committed HEAD on that machine over yonder: send the missing git
-                           objects, check the commit out in a host slot that the machine lends to
-                           this run only, run the same command, stream its output, copy back the
-                           kept logs of out/bt-runs; Ctrl+C cancels the run there; refused when the
-                           checkout has local changes; --prepare installs the agent first
+  --host <ssh alias>       run the committed HEAD on that machine through bd-host of Branch Deck: send
+                           the missing git objects, check the commit out in a host slot that the
+                           machine lends to this run only, run the same command, stream its output,
+                           copy back the kept logs of out/bt-runs; Ctrl+C cancels the run there;
+                           refused when the checkout has local changes; --prepare installs the agent
+                           first; `bd install` puts bd-host into ~/.local/bin
   --host-repo <path>       the main repository on the --host machine (env BT_HOST_REPO, default
                            the one of the host file of --prepare, ~/projects/idea-1)
   --prepare                with --host: make that machine ready, step by step (ssh, the repository,
-                           bd and its PATH, the tools, the yonder agent, the credentials, the remote
+                           the PATH, the tools, the bd-host agent, the credentials, the remote
                            cache), and say ok, done or missing for each; --dry-run changes nothing.
                            Run it in a terminal: the credential copy asks y/N and refuses without a
                            terminal

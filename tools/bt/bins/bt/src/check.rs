@@ -9,8 +9,8 @@
 //! A local run takes the tree before its first bazel spawn and again after a green result. It writes the record only
 //! when both are the same tree, so an edit during the run leaves no record. A red run leaves none. A record of a tree
 //! with local changes names those paths on the stderr: the pick finds the record only when the commit holds the same
-//! files. A `--host` run records the tree of the commit that the host ran: yonder refuses a checkout with local
-//! changes, so that tree is the tree of the checkout.
+//! files. A `--host` run records the tree of the commit that the host ran: `bd-host run --head` refuses a checkout
+//! with local changes, so that tree is the tree of the checkout.
 
 use bt_core::Runtime;
 use bt_core::exit;

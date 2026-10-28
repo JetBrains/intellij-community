@@ -15,7 +15,8 @@ use crate::digest::{
 };
 use crate::options::{Args, Invocation, parse_args};
 use crate::prepare::{Prepare, prepare_host};
-use crate::remote::{Host, HostLink, Yonder, run_on_host};
+use crate::remote::bd_host::BdHost;
+use crate::remote::{Host, HostLink, run_on_host};
 use bt_core::bep::{BepSummary, parse_bep};
 use bt_core::evidence::keep_failed_evidence;
 use bt_core::lanes::{
@@ -130,7 +131,7 @@ where
     I: IntoIterator<Item = T>,
     T: Into<OsString> + Clone,
 {
-    execute_with(argv, runtime, &Yonder::new(runtime))
+    execute_with(argv, runtime, &BdHost::new(runtime))
 }
 
 /// [`execute`] with the link to the agent of a `--host` machine, which the tests script.

@@ -129,10 +129,6 @@ verbose_file_reads = "warn"
 # Workspace crates.
 bt-core = { path = "crates/bt-core" }
 bt-junit = { path = "crates/bt-junit" }
-# The client of yonder, for `--host`, and its link. rules_rs finds the path of a crate of the lock only in a
-# dependency of a member, so `bt` names both. `defs.bzl` maps both to their targets in this module.
-yonder-client = { path = "../yonder/crates/yonder-client" }
-yonder-link = { path = "../yonder/crates/yonder-link" }
 
 # Documents and text.
 jiff = "0.2.37"
@@ -146,7 +142,8 @@ strsim = "0.11.1"
 # Command line.
 clap = { version = "4.6.7", features = ["derive", "env", "wrap_help"] }
 
-# System.
+# System. `bt --host` keeps a handler of Ctrl+C while `bd-host` runs, so bt waits for its end.
+ctrlc = "3.5.2"
 tempfile = "3.27.0"
 
 # Tests.
