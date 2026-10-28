@@ -10,50 +10,63 @@ class TypeEvalContextFactoryImpl : TypeEvalContextFactory {
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    return getContextFromCache(project, TypeEvalContextImpl(true, true, true, false, origin))
+    val constraints = TypeEvalConstraints(true, true, true, false, origin)
+    return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
   override fun userInitiated(
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    return getContextFromCache(project, TypeEvalContextImpl(true, true, false, false, origin))
+    val constraints = TypeEvalConstraints(true, true, false, false, origin)
+    return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
   override fun codeAnalysis(
     project: Project,
     origin: PsiFile?,
   ): TypeEvalContext {
-    return getContextFromCache(project, buildCodeAnalysisContext(origin))
+    // The registry key selects only the class that a miss builds. Both classes have the same constraints.
+    return getContextFromCache(project, TypeEvalConstraints(false, false, false, false, origin)) {
+      buildCodeAnalysisContext(origin)
+    }
   }
 
   override fun codeInsightFallback(project: Project?): TypeEvalContext {
-    val anchor = TypeEvalContextImpl(false, false, false, false, null)
+    val constraints = TypeEvalConstraints(false, false, false, false, null)
     if (project != null) {
-      return getContextFromCache(project, anchor)
+      return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
     }
-    return anchor
+    return TypeEvalContextImpl(constraints)
   }
 
   override fun externalContext(project: Project): TypeEvalContext {
-    val anchor = TypeEvalContextImpl(false, false, false, true, null)
-    return getContextFromCache(project, anchor)
+    val constraints = TypeEvalConstraints(false, false, false, true, null)
+    return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
   override fun deepCodeInsight(project: Project): TypeEvalContext {
-    return getContextFromCache(project, TypeEvalContextImpl(false, true, false, false, null))
+    val constraints = TypeEvalConstraints(false, true, false, false, null)
+    return getContextFromCache(project, constraints) { TypeEvalContextImpl(constraints) }
   }
 
   /**
-   * Moves context through cache returning one from cache (if exists).
+   * Returns the context the cache holds for these constraints, building one with [build] only if it holds none.
    *
    * @param project current project
-   * @param context context to fetch from cache
+   * @param constraints the constraints of the context wanted, which are also its key in the cache
+   * @param build builds the context, called only on a miss
    * @return context to use
-   * @see TypeEvalContextCache.getContext
+   * @see TypeEvalContextCacheImpl.getCachedContext
    */
-  private fun getContextFromCache(project: Project, context: TypeEvalContext): TypeEvalContext {
-    return project.service<TypeEvalContextCache>().getContext(context)
+  private inline fun getContextFromCache(
+    project: Project,
+    constraints: TypeEvalConstraints,
+    build: () -> TypeEvalContext,
+  ): TypeEvalContext {
+    val cache = project.service<TypeEvalContextCache>()
+    val cached = (cache as? TypeEvalContextCacheImpl)?.getCachedContext(constraints)
+    return cached ?: cache.getContext(build())
   }
 
   private fun buildCodeAnalysisContext(origin: PsiFile?): TypeEvalContext {
