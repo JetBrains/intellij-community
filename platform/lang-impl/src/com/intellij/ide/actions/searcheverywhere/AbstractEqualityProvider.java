@@ -7,6 +7,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ * Use {@link com.intellij.platform.searchEverywhere.equalityProviders.SeAbstractItemsEqualityProvider} instead.
+ */
+@Deprecated
 public abstract class AbstractEqualityProvider implements SEResultsEqualityProvider {
 
   @Override
