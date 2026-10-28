@@ -53,11 +53,7 @@ internal suspend fun WSLDistribution.createIjentSession(
 private suspend fun initMultipleTransports(wslDistribution: WSLDistribution, ijentSession: IjentSession.Posix) {
   val vmId = withContext(blockingDispatcher) { guessVmIdOfWsl() } ?: return
 
-  // TODO Looks weird. Why do we need a descriptor for this API call?
-  val descriptor = WslEelDescriptor(wslDistribution)
-  val ijentApi = ijentSession.getIjentInstance(descriptor)
-
-  if (!ijentApi.requestHyperVTransports(vmId)) {
+  if (!ijentSession.requestHyperVTransports(vmId)) {
     CONN_MGR_LOG.warn("Failed to initialize Hyper-V transports for WSL distribution ${wslDistribution.id}." +
                       " It will work, but significantly slower than it could.")
   }

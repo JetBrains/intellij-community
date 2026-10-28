@@ -11,6 +11,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.job
 import org.jetbrains.annotations.ApiStatus
+import java.util.UUID
 
 /**
  * Describes the IJent deployment state for a machine.
@@ -78,6 +79,7 @@ interface IjentSession {
 
   interface Posix : IjentSession {
     override fun getIjentInstance(descriptor: EelDescriptor): IjentPosixApi
+    suspend fun requestHyperVTransports(vmId: UUID): Boolean
   }
 
   interface Windows : IjentSession {
