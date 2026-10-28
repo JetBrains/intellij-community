@@ -17,7 +17,7 @@ internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<
 
   class State : BaseState() {
     var diffMode by enum(DirectoryDiffMode.WithLocal)
-    var showSystemLabels by property(true)
+    var showSystemLabels by property(false)
   }
 
   var diffMode: DirectoryDiffMode
