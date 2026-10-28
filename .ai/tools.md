@@ -6,6 +6,10 @@ inventories that the rules do not need in every session.
 The search wrappers are `./community/tools/fd.cmd` and `./community/tools/rg.cmd` in the monorepo, and
 `./tools/fd.cmd` and `./tools/rg.cmd` in a community checkout.
 
+The code index is `./community/tools/accio.cmd` in the monorepo, and `./tools/accio.cmd` in a community checkout.
+It runs the `accio` on the `PATH` when there is one. Else it runs the pinned build, which it downloads on the
+first run. `accio <command> --help` lists the commands.
+
 ## Search wrappers
 
 - `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`,

@@ -22,7 +22,8 @@ code, and dead code. Each tool gives candidates, not a proof. Read each candidat
 | `accio trace <Name> --direction callers`, `accio references <Name>` | the callers and every use of a name | the owner check, dead code |
 | `accio unused --scope <dir>/` | declarations, bundle keys and image variants used nowhere | dead code |
 
-Run jscpd only through `./community/tools/jscpd.cmd -c <config>`. `<config>` is the `.jscpd.json` of the area, for
+Without `accio` on the `PATH`, run `./community/tools/accio.cmd`. Run jscpd only through
+`./community/tools/jscpd.cmd -c <config>`. `<config>` is the `.jscpd.json` of the area, for
 example `plugins/air/.jscpd.json`. Write each JSON report to a temporary directory of your session. The `jscpd_test`
 target of the area runs the gate too, for example `//plugins/air:air-duplicate-code_test`.
 

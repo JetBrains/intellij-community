@@ -50,6 +50,7 @@
     ["bun", "community/.ai/skill-profile.mjs"],
     ["{{TOOLS_DIR}}/rg.cmd"],
     ["{{TOOLS_DIR}}/fd.cmd"],
+    ["{{TOOLS_DIR}}/accio.cmd"],
     ["{{TOOLS_DIR}}/jscpd.cmd"],
     ["{{TOOLS_DIR}}/bun.cmd"],
     ["{{TOOLS_DIR}}/uv.sh"],
