@@ -1177,6 +1177,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     try {
       advanceIndexVersion(indexId);
       getIndex(indexId).clear();
+      myLastIndexedDocStamps.clearForIndex(indexId);
+      myUpToDateIndicesForUnsavedOrTransactedDocuments.remove(indexId);
     }
     finally {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.remove();
