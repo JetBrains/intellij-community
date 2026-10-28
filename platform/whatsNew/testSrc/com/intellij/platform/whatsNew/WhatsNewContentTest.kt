@@ -40,7 +40,22 @@ class WhatsNewContentTest {
       publicVars = listOf(WhatsNewInVisionContentProvider.PublicVar(key, "")),
     )
     val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), page)
-    Assert.assertEquals("isAirButtonAltTextEnabled: 'true'", content.getContent(isWelcomeScreenProject = true))
-    Assert.assertEquals("isAirButtonAltTextEnabled: 'false'", content.getContent(isWelcomeScreenProject = false))
+    Assert.assertEquals("isAirButtonAltTextEnabled: 'true'", content.getContent(isWelcomeScreenProject = true, isChinaRegion = false))
+    Assert.assertEquals("isAirButtonAltTextEnabled: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false))
+  }
+
+  @Test
+  fun `Chinese variable follows the IDE region`() {
+    val key = $$"$__VISION_PAGE_SETTINGS_IS_CHINESE__$"
+    val page = WhatsNewInVisionContentProvider.Page(
+      id = 1,
+      actions = emptyList(),
+      html = "isChinese: '$key'",
+      languages = emptyList(),
+      publicVars = listOf(WhatsNewInVisionContentProvider.PublicVar(key, "")),
+    )
+    val content = WhatsNewVisionContent(WhatsNewInVisionContentProvider(), page)
+    Assert.assertEquals("isChinese: 'true'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = true))
+    Assert.assertEquals("isChinese: 'false'", content.getContent(isWelcomeScreenProject = false, isChinaRegion = false))
   }
 }
