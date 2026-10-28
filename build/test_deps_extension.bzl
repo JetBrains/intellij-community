@@ -119,7 +119,13 @@ def all_downloads_pinned(files):
     """Whether every file has a checksum known before it is downloaded."""
     return all([f.sha256 for f in files])
 
-def test_deps_repository(repository_name):
+def test_deps_repository(repository_name, remote_cacheable = True):
+    """Creates a test dependency repository.
+
+    Args:
+        repository_name: The repository name.
+        remote_cacheable: Whether pinned repository contents can use the remote cache.
+    """
     files = []
 
     def download_file(name, url, sha256):
@@ -149,7 +155,8 @@ def test_deps_repository(repository_name):
     def _impl(repository_ctx):
         # Taken from the fetch rather than asserted: `download_file` requires a checksum, so this is true
         # today, and it stays true by construction if that ever relaxes
-        return repository_ctx.repo_metadata(reproducible = write_downloads_repo(repository_ctx, files))
+        pinned = write_downloads_repo(repository_ctx, files)
+        return repository_ctx.repo_metadata(reproducible = pinned and remote_cacheable)
 
     def make_repository_rule():
         return repository_rule(
