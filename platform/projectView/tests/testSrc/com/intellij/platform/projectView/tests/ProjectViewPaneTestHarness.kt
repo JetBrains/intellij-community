@@ -20,6 +20,8 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Drives the real Project View pipeline for a single pane, almost end-to-end, and hands a
@@ -226,3 +228,18 @@ internal fun projectViewTestDataPath(testClass: Class<*>, relativePath: String):
   val direct = home.resolve(relativePath)
   return if (direct.exists()) direct else home.resolve("community/$relativePath")
 }
+
+/**
+ * The timeout of a Project View test.
+ *
+ * Bazel stops the whole test target after 60 seconds, and that includes the start of the application.
+ * This timeout fails a stuck test earlier, so the test log keeps the debug log of the failure.
+ */
+internal val PANE_TEST_TIMEOUT: Duration = 20.seconds
+
+/**
+ * The timeout of a wait for a change inside a Project View test.
+ *
+ * It is shorter than [PANE_TEST_TIMEOUT], so a stuck wait fails with its own message.
+ */
+internal val PANE_TEST_WAIT_TIMEOUT: Duration = PANE_TEST_TIMEOUT / 2

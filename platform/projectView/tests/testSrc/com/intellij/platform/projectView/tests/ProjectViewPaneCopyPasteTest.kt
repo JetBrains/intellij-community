@@ -18,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tests cut and copy for the frontend Project View: the requests the frontend copy/paste provider sends carry
@@ -44,7 +43,7 @@ internal class ProjectViewPaneCopyPasteTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `copy puts the selected file into the clipboard`() = timeoutRunBlocking(60.seconds) {
+  fun `copy puts the selected file into the clipboard`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get()
     withClipboardCleanUp {
       withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
@@ -60,7 +59,7 @@ internal class ProjectViewPaneCopyPasteTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `cut puts the selected file into the clipboard and marks it as cut`() = timeoutRunBlocking(60.seconds) {
+  fun `cut puts the selected file into the clipboard and marks it as cut`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get()
     withClipboardCleanUp {
       withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->

@@ -38,7 +38,6 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * The "All Changed Files" scope pane has to follow the VCS, end to end.
@@ -112,7 +111,7 @@ internal class ProjectViewChangedFilesScopePaneTest : AbstractProjectViewPaneTes
   )
 
   @Test
-  fun `a file that becomes changed appears in the All Changed Files pane`() = timeoutRunBlocking(60.seconds) {
+  fun `a file that becomes changed appears in the All Changed Files pane`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val project = appearingProject.get()
     val src = appearingSrcRoot.get().virtualFile // materialize the project + module + source root
     val changes = setUpChangedFilesScope(project, src, changed = listOf("Hello.txt"))
@@ -123,14 +122,14 @@ internal class ProjectViewChangedFilesScopePaneTest : AbstractProjectViewPaneTes
       changes.setChanged("Hello.txt", "sub/World.txt")
       refreshChangeLists(project)
 
-      waitUntilAssertSucceeds("'sub/World.txt' has become changed and should appear in the pane", 30.seconds) {
+      waitUntilAssertSucceeds("'sub/World.txt' has become changed and should appear in the pane", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTreeWithContentRoot(BOTH_CHANGED)
       }
     }
   }
 
   @Test
-  fun `a file that becomes unchanged disappears from the All Changed Files pane`() = timeoutRunBlocking(60.seconds) {
+  fun `a file that becomes unchanged disappears from the All Changed Files pane`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val project = disappearingProject.get()
     val src = disappearingSrcRoot.get().virtualFile
     val changes = setUpChangedFilesScope(project, src, changed = listOf("Hello.txt", "sub/World.txt"))
@@ -141,7 +140,7 @@ internal class ProjectViewChangedFilesScopePaneTest : AbstractProjectViewPaneTes
       changes.setChanged("sub/World.txt")
       refreshChangeLists(project)
 
-      waitUntilAssertSucceeds("'Hello.txt' is no longer changed and should be gone from the pane", 30.seconds) {
+      waitUntilAssertSucceeds("'Hello.txt' is no longer changed and should be gone from the pane", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTreeWithContentRoot(ONLY_WORLD_CHANGED)
       }
     }

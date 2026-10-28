@@ -32,7 +32,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
@@ -62,7 +61,7 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `the project files scope pane shows the project files`() = timeoutRunBlocking(60.seconds) {
+  fun `the project files scope pane shows the project files`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get() // materialize the project + module + source root before opening the pane
     withProjectViewPane(project.get(), projectFilesScopePaneId(project.get())) { pane ->
       pane.assertTreeWithContentRoot(
@@ -78,7 +77,7 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `adding and removing a scope adds and removes a pane`() = timeoutRunBlocking(60.seconds) {
+  fun `adding and removing a scope adds and removes a pane`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get()
     val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
     // Wait for the initial set of panes first, so that adding a scope is a real change.
@@ -103,7 +102,7 @@ internal class ProjectViewScopePaneTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `a frozen scope pane resumes its tree when it is selected again`() = timeoutRunBlocking(60.seconds) {
+  fun `a frozen scope pane resumes its tree when it is selected again`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = srcRoot.get().virtualFile
     val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
     val holder = NamedScopeManager.getInstance(project.get())

@@ -13,7 +13,6 @@ import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Delete for the frontend Project View, end to end: deleting a file node runs the real delete handler in the
@@ -44,7 +43,7 @@ internal class ProjectViewPaneDeleteTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `delete removes the selected file from the tree`() = timeoutRunBlocking(60.seconds) {
+  fun `delete removes the selected file from the tree`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get()
     // Otherwise the delete handler shows its confirmation dialog and the test would hang on it.
     DeleteHandler.overrideNeedsConfirmationInTests(false, disposable.get())
@@ -55,7 +54,7 @@ internal class ProjectViewPaneDeleteTest : AbstractProjectViewPaneTest() {
 
       // 30 seconds, not the 10-second default: the module now loads the Java plugin, which makes
       // the first refactoring slower than the default allows.
-      waitUntil("World.txt should have been deleted", 30.seconds) {
+      waitUntil("World.txt should have been deleted", PANE_TEST_WAIT_TIMEOUT) {
         !pane.dumpSubtree("pvDelete", "src", "sub").lines().map { it.trim() }.contains("World.txt")
       }
     }

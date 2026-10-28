@@ -20,7 +20,6 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Flatten Packages for the frontend Project View, end to end.
@@ -86,7 +85,7 @@ internal class ProjectViewPaneFlattenPackagesTest : AbstractProjectViewPaneTest(
   )
 
   @Test
-  fun `a new package appears in the flat list`() = timeoutRunBlocking(60.seconds) {
+  fun `a new package appears in the flat list`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = prepare(oneProject, oneSrcRoot)
     withProjectViewPane(oneProject.get(), ProjectPaneModel.ID) { pane ->
       pane.assertTree(FLAT_TREE)
@@ -98,14 +97,14 @@ internal class ProjectViewPaneFlattenPackagesTest : AbstractProjectViewPaneTest(
         VfsUtil.createDirectoryIfMissing(src, "org/pack").createChildData(this@ProjectViewPaneFlattenPackagesTest, "World.txt")
       }
 
-      waitUntilAssertSucceeds("'org.pack' should have joined the flat list under 'src'", 30.seconds) {
+      waitUntilAssertSucceeds("'org.pack' should have joined the flat list under 'src'", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTree(FLAT_TREE_WITH_PACK)
       }
     }
   }
 
   @Test
-  fun `a removed package disappears from the flat list`() = timeoutRunBlocking(60.seconds) {
+  fun `a removed package disappears from the flat list`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = prepare(twoProject, twoSrcRoot)
     withProjectViewPane(twoProject.get(), ProjectPaneModel.ID) { pane ->
       pane.assertTree(FLAT_TREE_WITH_PACK)
@@ -113,7 +112,7 @@ internal class ProjectViewPaneFlattenPackagesTest : AbstractProjectViewPaneTest(
       val pack = src.findFileByRelativePath("org/pack")!!
       edtWriteAction { pack.delete(this@ProjectViewPaneFlattenPackagesTest) }
 
-      waitUntilAssertSucceeds("'org.pack' should have left the flat list under 'src'", 30.seconds) {
+      waitUntilAssertSucceeds("'org.pack' should have left the flat list under 'src'", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTree(FLAT_TREE)
       }
     }
