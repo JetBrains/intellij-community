@@ -47,6 +47,9 @@ import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.util.ui.update.DebouncedUpdates;
+import com.intellij.util.ui.update.UpdateQueue;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,6 +113,13 @@ public final class ModulesDependenciesPanel extends JPanel implements Disposable
   private Content myContent;
   private Graph<Module> myModuleGraph;
   private final Map<Module, Boolean> myCycleMap = new HashMap<>();
+  private final UpdateQueue<Unit> myUpdateQueue = DebouncedUpdates.<Unit>forComponent(this, "ModulesDependenciesPanel", 200)
+    .runLatest(_ -> {
+      updateModuleGraph();
+      updateSplitterProportion();
+      updateLeftTree();
+    })
+    .cancelOnDispose(this);
 
   public ModulesDependenciesPanel(@NotNull Project project, Module @Nullable [] modules) {
     super(new BorderLayout());
@@ -138,9 +148,7 @@ public final class ModulesDependenciesPanel extends JPanel implements Disposable
     project.getMessageBus().connect(this).subscribe(ModuleRootListener.TOPIC, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
-        updateModuleGraph();
-        updateSplitterProportion();
-        updateLeftTree();
+        myUpdateQueue.queue(Unit.INSTANCE);
       }
     });
 
