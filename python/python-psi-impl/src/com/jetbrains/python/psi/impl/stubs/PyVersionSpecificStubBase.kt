@@ -31,12 +31,17 @@ internal abstract class PyVersionSpecificStubBase<T : PsiElement>(
   parent: StubElement<*>?,
   elementType: IStubElementType<*, *>?,
   override val versions: RangeSet<Version>,
-) : StubBase<T>(parent, elementType), PyVersionSpecificStub
+) : StubBase<T>(parent, elementType), PyVersionSpecificStub {
+  /** True for an element outside every `if sys.version_info` block, which is almost every element. */
+  private val allVersions: Boolean = versions.encloses(Range.all())
+
+  override fun containsVersion(version: Version): Boolean = allVersions || versions.contains(version)
+}
 
 internal fun getChildrenStubs(stub: StubElement<*>, languageLevel: LanguageLevel): Iterable<StubElement<*>> {
   val version = Version(languageLevel.majorVersion, languageLevel.minorVersion, 0)
   return stub.childrenStubs.asSequence()
-    .filter { it !is PyVersionSpecificStub || it.versions.contains(version) }
+    .filter { it !is PyVersionSpecificStub || it.containsVersion(version) }
     .asIterable()
 }
 
