@@ -1,0 +1,65 @@
+diff --git a/buildifier/factory.bzl b/buildifier/factory.bzl
+index d59ed2c..a66d60c 100644
+--- a/buildifier/factory.bzl
++++ b/buildifier/factory.bzl
+@@ -23,7 +23,7 @@ def buildifier_attr_factory(*, test_rule):
+         ),
+         "exclude_patterns": attr.string_list(
+             allow_empty = True,
+-            doc = "A list of glob patterns passed to the find command. E.g. './vendor/*' to exclude the Go vendor directory. In test rules, this attribute requires the use of the no_sandbox attribute.",
++            doc = "A list of glob patterns matched like the find command's -path option, on all platforms. E.g. './vendor/*' to exclude the Go vendor directory. In test rules, this attribute requires the use of the no_sandbox attribute.",
+         ),
+         "mode": attr.string(
+             default = "fix" if not test_rule else "diff",
+@@ -164,6 +164,7 @@ def buildifier_impl_factory(ctx, *, test_rule):
+         "{EXCLUDE_PATTERNS}": exclude_patterns_str,
+         "{FORMAT}": ctx.attr.format,
+         "{POWERSHELL_ARGS}": _powershell_array_literal(args),
++        "{POWERSHELL_EXCLUDE_PATTERNS}": _powershell_array_literal(ctx.attr.exclude_patterns),
+         "{SCAN_WORKSPACE}": "$true" if scan_workspace else "$false",
+         "{SOURCE_FILES}": _powershell_array_literal(source_files),
+         "{VERBOSE}": str(ctx.attr.verbose).lower(),
+diff --git a/runner.bat.template b/runner.bat.template
+index 586de81..5e7d70a 100644
+--- a/runner.bat.template
++++ b/runner.bat.template
+@@ -51,6 +51,8 @@ cd /d "%workspace_dir%" || exit /b 1
+ 
+ :workspace_found
+ REM Keep discovered paths inside PowerShell so cmd.exe never reparses them.
++REM Walk the workspace without entering excluded directories, matching each
++REM path like find's -path.
+ REM Process files in batches to stay below CreateProcess' command-line limit,
+ REM merging per-batch diagnostics when JSON output is requested.
+ set "BUILDIFIER_EXECUTABLE=%buildifier_path%"
+@@ -59,11 +61,25 @@ powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -Comma
+     "$buildifierArgs = @({POWERSHELL_ARGS});" ^
+     "$files = @({SOURCE_FILES});" ^
+     "if ({SCAN_WORKSPACE}) {" ^
+-        "$workspacePrefix = (Get-Location).Path.TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar;" ^
+-        "$files = @(Get-ChildItem -LiteralPath . -Recurse -File | Where-Object {" ^
+-            "($env:include_reparse_points -or -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint)) -and" ^
+-            "$_.Name -cmatch '^(BUILD|WORKSPACE|WORKSPACE\.bzlmod|WORKSPACE\.oss|BUILD\..*\.oss|WORKSPACE\..*\.oss)$|\.(bzl|sky|star|bazel|BUILD)$'" ^
+-        "} | ForEach-Object { $_.FullName.Substring($workspacePrefix.Length) });" ^
++        "$excludePatterns = @({POWERSHELL_EXCLUDE_PATTERNS});" ^
++        "$root = (Get-Location).Path;" ^
++        "$found = New-Object 'System.Collections.Generic.List[string]';" ^
++        "$pending = New-Object 'System.Collections.Generic.Stack[string]';" ^
++        "$pending.Push('');" ^
++        "while ($pending.Count -gt 0) {" ^
++            "$relativeDir = $pending.Pop();" ^
++            "foreach ($entry in [IO.DirectoryInfo]::new([IO.Path]::Combine($root, $relativeDir)).EnumerateFileSystemInfos()) {" ^
++                "if (-not $env:include_reparse_points -and ($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)) { continue };" ^
++                "$relativePath = if ($relativeDir) { $relativeDir + '/' + $entry.Name } else { $entry.Name };" ^
++                "$excluded = $false;" ^
++                "foreach ($pattern in $excludePatterns) { if (('./' + $relativePath) -clike $pattern) { $excluded = $true; break } };" ^
++                "if ($excluded) { continue };" ^
++                "if ($entry.Attributes -band [IO.FileAttributes]::Directory) { $pending.Push($relativePath) }" ^
++                "elseif ($entry.Name -cmatch '^(BUILD|WORKSPACE|WORKSPACE\.bzlmod|WORKSPACE\.oss|BUILD\..*\.oss|WORKSPACE\..*\.oss)$|\.(bzl|sky|star|bazel|BUILD)$') { $found.Add($relativePath.Replace('/', '\')) }" ^
++            "}" ^
++        "};" ^
++        "$found.Sort([StringComparer]::Ordinal);" ^
++        "$files = @($found);" ^
+     "};" ^
+     "if ($files.Count -eq 0) { Write-Error 'Failed to find files to analyze'; exit 1 };" ^
+     "$jsonOutput = '{FORMAT}' -eq 'json';" ^
