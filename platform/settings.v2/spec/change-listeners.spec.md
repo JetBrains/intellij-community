@@ -41,6 +41,9 @@ and a context, but no value: it reads the current value itself.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
 - A contextual listener must ignore other keys and changes outside its context chain.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
+- A reload that changes the value of an ancestor must fire a contextual listener at a descendant context, also when
+  no layer at the descendant context changed.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadListenerTest.kt
 - `key.addListener(disposable, listener)` must fire on a change of the key at any context. It carries the context
   where the change happened.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsChangeListenerTest.kt
