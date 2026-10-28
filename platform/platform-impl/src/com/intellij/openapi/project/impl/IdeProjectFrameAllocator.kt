@@ -321,9 +321,8 @@ internal class IdeProjectFrameAllocator(
                 projectFrameHelper.toolWindowPane
               }
               val projectFrameUiPolicy = projectFrameUiPolicyDeferred.await()
-              val earlyStartupToolWindowActivation = projectFrameUiPolicy?.let {
-                EarlyStartupToolWindowActivation.create(toolWindowManager, project, it)
-              }
+              val earlyStartupToolWindowActivation =
+                EarlyStartupToolWindowActivation.create(toolWindowManager, project, projectFrameUiPolicy)
               span("tool window manager init") {
                 toolWindowManager.init(
                   pane = toolWindowPane,
@@ -593,24 +592,39 @@ private suspend fun hideSplashWhenEditorOrToolWindowShown(project: Project) {
 }
 
 /**
- * Activates the Project view for [ProjectFrameUiPolicy.activatesProjectViewOnStartup] as soon as the tool windows of the default pane
- * are registered. The activation does not wait for the `toolWindowsRegistered` event, the activation action registration, and the
- * pending tasks. If the Project view is not registered at that time, [applyProjectFrameUiPolicy] activates it later.
+ * Shows the Project view as soon as the tool windows of the default pane are registered, so it paints with the frame.
+ * The show does not wait for the `toolWindowsRegistered` event, the activation action registration, and the pending tasks.
+ *
+ * A frame with [ProjectFrameUiPolicy.activatesProjectViewOnStartup] activates the Project view.
+ * If the Project view is not registered at that time, [applyProjectFrameUiPolicy] activates it later.
+ * A frame without a policy shows the Project view without activation, so the editor area can still take the focus.
+ * [openProjectViewIfNeeded] focuses it later, and shows it if this step did not.
  */
 private class EarlyStartupToolWindowActivation private constructor(
   private val toolWindowManager: ToolWindowManager,
   private val project: Project,
+  private val activates: Boolean,
 ) {
   companion object {
     /**
-     * Returns null if the early activation can change the result of [applyProjectFrameUiPolicy].
+     * Returns null if the project open does not show the Project view, see [ToolWindowManagerImpl.isShownOnStartupAllowed].
+     * Also returns null if the early activation can change the result of [applyProjectFrameUiPolicy].
      * [applyProjectFrameUiPolicy] hides the tool windows outside the exclusive showing set before the activation.
      */
-    fun create(
-      toolWindowManager: ToolWindowManager,
+    suspend fun create(
+      toolWindowManager: ToolWindowManagerImpl,
       project: Project,
-      projectFrameUiPolicy: ProjectFrameUiPolicy,
+      projectFrameUiPolicy: ProjectFrameUiPolicy?,
     ): EarlyStartupToolWindowActivation? {
+      if (projectFrameUiPolicy == null) {
+        if (!serviceAsync<RegistryManager>().`is`("ide.open.project.view.on.startup") ||
+            isNotificationSilentMode(project) ||
+            !toolWindowManager.isShownOnStartupAllowed(ToolWindowId.PROJECT_VIEW)) {
+          return null
+        }
+        return EarlyStartupToolWindowActivation(toolWindowManager, project, activates = false)
+      }
+
       if (!projectFrameUiPolicy.activatesProjectViewOnStartup) {
         return null
       }
@@ -618,12 +632,12 @@ private class EarlyStartupToolWindowActivation private constructor(
       if (exclusiveShowing.isNotEmpty() && ToolWindowId.PROJECT_VIEW !in exclusiveShowing) {
         return null
       }
-      return EarlyStartupToolWindowActivation(toolWindowManager, project)
+      return EarlyStartupToolWindowActivation(toolWindowManager, project, activates = true)
     }
   }
 
   /**
-   * True if [run] found the Project view and started its activation.
+   * True if [run] found the Project view and started its show.
    * It is read after `ToolWindowManagerImpl.init` returns, so the activation is not repeated.
    */
   @Volatile
@@ -639,7 +653,12 @@ private class EarlyStartupToolWindowActivation private constructor(
     val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW) ?: return
     // set before the activation: a failed activation is not repeated, the same as the activation through `invokeLater`
     isAttempted = true
-    toolWindow.activate(null)
+    if (activates) {
+      toolWindow.activate(null)
+    }
+    else {
+      toolWindow.show(null)
+    }
   }
 }
 
@@ -1121,6 +1140,9 @@ private fun installMaximizeListener(frame: IdeFrameImpl) {
 }
 
 /**
+ * Presents the Project view on a project open that restored no editors.
+ * [EarlyStartupToolWindowActivation] usually shows it already, with the first paint, so this step mostly decides the focus.
+ *
  * @param focusProjectView `false` when something else on this project's editor area takes focus instead — an empty state that claims
  * it — so the Project view is shown without activation rather than activated and then focused away from. Asked at the moment the
  * Project view is presented rather than in advance, because a claim on the editor area's focus can be given up before that moment.
