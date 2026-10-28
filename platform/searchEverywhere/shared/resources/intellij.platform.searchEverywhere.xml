@@ -51,6 +51,11 @@
     <extensionPoint name="searchEverywhere.tabBackendInfoProvider"
                     interface="com.intellij.platform.searchEverywhere.SeTabBackendInfoProvider"
                     dynamic="true"/>
+
+    <!-- Ordered. The first answer other than DoNothing wins. -->
+    <extensionPoint name="searchEverywhere.itemsEqualityProvider"
+                    interface="com.intellij.platform.searchEverywhere.equalityProviders.SeItemsEqualityProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
