@@ -35,6 +35,7 @@ import com.intellij.python.community.execService.impl.PathMapper
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.TargetEnvironmentRequestHandler
 import com.intellij.python.community.execService.impl.Uploader
+import com.intellij.python.community.execService.impl.toMap
 import com.intellij.python.community.execService.impl.resolveAgainst
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.Result
@@ -189,7 +190,7 @@ internal suspend fun createProcessLauncherOnTarget(
       Platform.UNIX -> EelOsFamily.Posix
       Platform.WINDOWS -> EelOsFamily.Windows
     }
-    for ((k, v) in launchRequest.getEnvMergingWithPathVars(env, osFamily)) {
+    for ((k, v) in (launchRequest.env + env).toMap(osFamily)) {
       commandLineBuilder.addEnvironmentVariable(k, v)
     }
   }.build()

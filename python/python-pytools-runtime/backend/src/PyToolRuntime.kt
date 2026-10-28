@@ -6,6 +6,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
@@ -27,7 +28,7 @@ data class PyToolRuntime(
   val execOptions: ExecOptions,
   private val execService: ExecService = ExecService(),
 ) {
-  fun withEnv(vararg envVars: Pair<String, String>): PyToolRuntime =
+  fun withEnv(vararg envVars: EnvVar): PyToolRuntime =
     copy(execOptions = execOptions.copy(env = execOptions.env + envVars))
 
   fun withWorkingDirectory(workDirectoryPath: Path): PyToolRuntime {

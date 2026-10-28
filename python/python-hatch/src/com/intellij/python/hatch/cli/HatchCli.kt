@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.eel.provider.utils.sendWholeText
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.hatch.runtime.HatchConstants
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
@@ -88,7 +89,7 @@ class HatchCli<P : PathHolder>(internal val runtime: PyToolRuntime) {
    * Run commands within project environments
    */
   suspend fun run(envName: String? = null, vararg command: String): PyResult<String> {
-    val envRuntime = envName?.let { runtime.withEnv(HatchConstants.AppEnvVars.ENV to it) } ?: runtime
+    val envRuntime = envName?.let { runtime.withEnv(EnvVar(HatchConstants.AppEnvVars.ENV, it)) } ?: runtime
     return envRuntime.executeAndHandleErrors("run", *command) { output ->
       if (output.exitCode != 0) return@executeAndHandleErrors Result.failure(null)
 

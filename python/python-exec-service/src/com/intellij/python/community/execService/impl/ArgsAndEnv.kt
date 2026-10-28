@@ -2,6 +2,8 @@
 package com.intellij.python.community.execService.impl
 
 import com.intellij.execution.target.FullPathOnTarget
+import com.intellij.python.community.execService.EnvVar
+import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.FileReporter
 import com.intellij.python.community.execService.HowToReportFile
 import com.intellij.python.community.execService.resolveAgainst
@@ -14,11 +16,11 @@ import java.nio.file.Path
  * [commandArgs] are the process arguments (for example, `--foo=path_to_file`) and [env] is the environment.
  */
 @ConsistentCopyVisibility
-internal data class ArgsAndEnv private constructor(val commandArgs: List<String>, val env: Map<String, String>) {
+internal data class ArgsAndEnv private constructor(val commandArgs: List<String>, val env: List<EnvVar>) {
   companion object {
     suspend fun create(args: List<Arg>, fileMapper: Uploader): Result<ArgsAndEnv, MessageError> {
       val commandArgs = mutableListOf<String>()
-      val env = mutableMapOf<String, String>()
+      val env = mutableListOf<EnvVar>()
       for (arg in args) {
         when (arg) {
           is Arg.FileArg -> {
@@ -44,15 +46,15 @@ internal data class ArgsAndEnv private constructor(val commandArgs: List<String>
       fileReporter: FileReporter,
       fileOnRemoteMachine: FullPathOnTarget,
       commandArgs: MutableList<String>,
-      env: MutableMap<String, String>,
+      envs: MutableList<EnvVar>,
     ) {
       val (value, howToReport) = fileReporter.howToReportFile(fileOnRemoteMachine)
       when (howToReport) {
         HowToReportFile.AnArgument -> {
           commandArgs.add(value)
         }
-        is HowToReportFile.EnvVar -> {
-          env[howToReport.varName] = value
+        is HowToReportFile.AsEnvVar -> {
+          envs += EnvVar(howToReport.varName, EnvVarVal.RemotePath(value))
         }
       }
     }

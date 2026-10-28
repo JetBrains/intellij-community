@@ -5,6 +5,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.DownloadConfig
+import com.intellij.python.community.execService.EnvVar
+import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pytools.resolveExecutable
@@ -44,14 +46,14 @@ private suspend fun <P : PathHolder> runUv(
   canChangeTomlOrLock: Boolean,
   args: Args,
 ): PyResult<String> {
-  val env = buildMap {
+  val env = buildList {
     if (venvPath == null) {
-      put("VIRTUAL_ENV", VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME)
+      add(EnvVar("VIRTUAL_ENV", VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
     }
     else {
-      put("VIRTUAL_ENV", venvPath.toStringOnRemoteMachine())
+      add(EnvVar("VIRTUAL_ENV", EnvVarVal.RemotePath(venvPath.toStringOnRemoteMachine())))
     }
-    venvPath?.let { put("UV_PROJECT_ENVIRONMENT", it.toStringOnRemoteMachine()) }
+    venvPath?.let { add(EnvVar("UV_PROJECT_ENVIRONMENT", EnvVarVal.RemotePath(it.toStringOnRemoteMachine()))) }
   }
   val bin = fileSystem.getBinaryToExec(uv, workingDir)
   val downloadConfig = if (canChangeTomlOrLock) DownloadConfig(relativePaths = listOf(PY_PROJECT_TOML, UV_LOCK.value)) else null

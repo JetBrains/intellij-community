@@ -3,6 +3,8 @@ package com.jetbrains.python.sdk.poetry
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.python.community.execService.EnvVar
+import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.python.validatePythonAndGetInfo
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonBinary
@@ -47,7 +49,7 @@ internal suspend fun runPoetry(
   projectPath: EelOrJustPath,
   vararg args: String,
   inProjectEnv: Boolean? = null,
-  baseEnv: Map<String, String> = emptyMap(),
+  baseEnv: List<EnvVar> = emptyList(),
 ): PyResult<String> {
   return runPoetry(
     fileSystem = projectPath.toEelFileSystem(),
@@ -89,10 +91,10 @@ private suspend fun <P : PathHolder> runPoetryWithSdk(
 ): PyResult<String> {
   val pythonPath = fileSystem.parsePath(sdkHomePath).getOr { return it }
   val pythonHomePath = fileSystem.resolvePythonHome(pythonPath)
-  val env = buildMap {
-    put("POETRY_VIRTUALENVS_IN_PROJECT", "false")
-    put("POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON", "true")
-    put("VIRTUAL_ENV", pythonHomePath.toStringOnRemoteMachine())
+  val env = buildList {
+    add(EnvVar("POETRY_VIRTUALENVS_IN_PROJECT", "false"))
+    add(EnvVar("POETRY_VIRTUALENVS_PREFER_ACTIVE_PYTHON", "true"))
+    add(EnvVar("VIRTUAL_ENV", EnvVarVal.RemotePath( pythonHomePath.toStringOnRemoteMachine())))
   }
   return runPoetry(
     fileSystem = fileSystem,

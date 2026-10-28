@@ -41,6 +41,7 @@ import com.intellij.python.community.execService.impl.Arg
 import com.intellij.python.community.execService.impl.PathMapper
 import com.intellij.python.community.execService.impl.PyExecBundle
 import com.intellij.python.community.execService.impl.Uploader
+import com.intellij.python.community.execService.impl.toMap
 import com.intellij.python.community.execService.impl.resolveAgainst
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.jetbrains.python.Result
@@ -140,7 +141,7 @@ internal suspend fun createProcessLauncherOnEel(
                                          binOnEel,
                                          exePath,
                                          args,
-                                         env = launchRequest.getEnvMergingWithPathVars(env, binOnEel.path.getEelDescriptor().osFamily),
+                                         env = (launchRequest.env + env).toMap(exePath.descriptor.osFamily),
                                          tty = launchRequest.usePty,
                                          downloads = dirsToDownload.mapNotNull { localDir -> remoteCopies[localDir]?.let { it to localDir } },
                                          portProxies = portProxies.values.toList()),

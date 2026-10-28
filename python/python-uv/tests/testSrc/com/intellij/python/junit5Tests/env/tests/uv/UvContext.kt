@@ -4,6 +4,8 @@ package com.intellij.python.junit5Tests.env.tests.uv
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.python.community.execService.BinOnEel
+import com.intellij.python.community.execService.EnvVar
+import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.junit5Tests.framework.resolvePythonTool
 import com.intellij.python.pytools.backend.runtime.PyToolRuntime
@@ -46,14 +48,14 @@ internal data class UvContext(
 
       val uvExecutablePath = VirtualEnvReader().resolvePythonHomeFromPythonBinary(pythonPath).resolvePythonTool("uv")
 
-      val envVars = mapOf(
-        UvConstants.ConfigEnvVars.CACHE_DIR to uvCacheDirPath.toString(),
-        UvConstants.ConfigEnvVars.TOOL_DIR to uvToolDirPath.toString(),
-        UvConstants.ConfigEnvVars.TOOL_BIN_DIR to uvToolBinDirPath.toString(),
-        UvConstants.AppEnvVars.PYTHON to pythonPath.toString(),
-        UvConstants.AppEnvVars.NO_PROGRESS to "1",
-        UvConstants.AppEnvVars.NO_COLOR to "1",
-      )
+      val envVars = buildList {
+        add(EnvVar(UvConstants.ConfigEnvVars.CACHE_DIR, EnvVarVal.NioPath(uvCacheDirPath)))
+        add(EnvVar(UvConstants.ConfigEnvVars.TOOL_DIR, EnvVarVal.NioPath(uvToolDirPath)))
+        add(EnvVar(UvConstants.ConfigEnvVars.TOOL_BIN_DIR, EnvVarVal.NioPath(uvToolBinDirPath)))
+        add(EnvVar(UvConstants.AppEnvVars.PYTHON, EnvVarVal.NioPath(pythonPath)))
+        add(EnvVar(UvConstants.AppEnvVars.NO_PROGRESS, "1"))
+        add(EnvVar(UvConstants.AppEnvVars.NO_COLOR, "1"))
+      }
 
       val runtime = PyToolRuntime(
         binary = BinOnEel(uvExecutablePath, realTempDir.asEelPath()),

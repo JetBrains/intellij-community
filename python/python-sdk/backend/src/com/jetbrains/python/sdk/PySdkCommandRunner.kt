@@ -7,6 +7,7 @@ import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinaryToExec
 import com.intellij.python.community.execService.ConcurrentProcessWeight
 import com.intellij.python.community.execService.DownloadConfig
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
@@ -24,7 +25,7 @@ import kotlin.time.Duration.Companion.minutes
 suspend fun runExecutableWithProgress(
   executable: Path, workDir: Path?,
   timeout: Duration = 10.minutes,
-  env: Map<String, String> = emptyMap(),
+  env: List<EnvVar> = emptyList(),
   vararg args: String,
 ): PyResult<String> {
   return runExecutableWithProgress(executable, workDir, timeout, env, *args, transformer = ZeroCodeStdoutTransformer)
@@ -34,7 +35,7 @@ suspend fun runExecutableWithProgress(
 suspend fun <T> runExecutableWithProgress(
   binaryToExec: BinaryToExec,
   timeout: Duration = 10.minutes,
-  env: Map<String, String> = emptyMap(),
+  env: List<EnvVar> = emptyList(),
   vararg args: String,
   transformer: ProcessOutputTransformer<T>,
   execService: ExecService = ExecService(),
@@ -48,7 +49,7 @@ suspend fun <T> runExecutableWithProgress(
 suspend fun <T> runExecutableWithProgress(
   binaryToExec: BinaryToExec,
   timeout: Duration = 10.minutes,
-  env: Map<String, String> = emptyMap(),
+  env: List<EnvVar> = emptyList(),
   args: Args,
   transformer: ProcessOutputTransformer<T>,
   execService: ExecService = ExecService(),
@@ -93,7 +94,7 @@ suspend fun <T> runExecutableWithProgress(
   executable: Path,
   workDir: Path?,
   timeout: Duration = 10.minutes,
-  env: Map<String, String> = emptyMap(),
+  env: List<EnvVar> = emptyList(),
   vararg args: String,
   transformer: ProcessOutputTransformer<T>,
 ): PyResult<T> {

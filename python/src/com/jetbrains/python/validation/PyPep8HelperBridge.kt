@@ -12,6 +12,7 @@ import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.PyHelper
 import com.intellij.python.community.execService.python.StdInProvider
 import com.intellij.python.community.execService.python.executeHelper
+import com.intellij.python.community.execService.toEnvVars
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PythonBinary
 import com.jetbrains.python.Result
@@ -42,4 +43,4 @@ private val log = fileLogger()
  * falls back to the locale encoding. That is the ANSI code page on Windows, and then `E501` counts UTF-8 bytes
  * instead of characters. UTF-8 mode makes that fallback UTF-8, and it also makes the helper write the report in UTF-8.
  */
-private val execOptions = ExecOptions(env = mapOf("PYTHONBUFFERED" to "1", "PYTHONUTF8" to "1"))
+private val execOptions = ExecOptions(env = mapOf("PYTHONBUFFERED" to "1", "PYTHONUTF8" to "1").toEnvVars())

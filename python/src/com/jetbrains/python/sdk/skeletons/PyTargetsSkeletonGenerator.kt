@@ -28,6 +28,7 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.HowToReportFile.AnArgument
@@ -236,11 +237,11 @@ internal class PyTargetsSkeletonGenerator(skeletonPath: Path, pySdk: Sdk, curren
       }
 
       val result = ExecService().executeHelperAdvanced(
-        python = ExecutablePython(binary, emptyList(), emptyMap()),
+        python = ExecutablePython(binary, emptyList(), emptyList()),
         helper = RelativePath { "generator3" / "__main__.py" },
         args = args,
         // The generation of a big SDK can take a long time. The old implementation also has no timeout.
-        options = ExecOptions(env = mapOf(PythonEnvUtil.PYTHONDONTWRITEBYTECODE to "1"), timeout = Duration.INFINITE),
+        options = ExecOptions(env = listOf(EnvVar(PythonEnvUtil.PYTHONDONTWRITEBYTECODE, "1")), timeout = Duration.INFINITE),
         procListener = PyProcessListener { event ->
           when (event) {
             is ProcessEvent.ProcessOutput -> when (event.stream) {

@@ -12,6 +12,7 @@ import com.intellij.python.community.execService.ExecService
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.ZeroCodeJsonParserTransformer
 import com.intellij.python.community.execService.ZeroCodeStdoutTransformer
+import com.intellij.python.community.execService.toEnvVars
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.packaging.common.PythonOutdatedPackage
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -160,7 +161,7 @@ internal object CondaExecutor {
     return runExecutableWithProgress(
       binaryToExec,
       timeout,
-      env = envs,
+      env = envs.toEnvVars(), // TODO: Should have been vars, but for now we leave it as is
       *runArgs,
       transformer = transformer,
       execService = execService,

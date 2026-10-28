@@ -1,18 +1,20 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.poetry
 
-import com.jetbrains.python.venvReader.VirtualEnvReader
-import com.intellij.python.sdk.backend.fileName
 import com.intellij.python.community.execService.DownloadConfig
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.UploadConfig
+import com.intellij.python.community.execService.withVar
 import com.intellij.python.community.impl.poetry.backend.PoetryPyTool
 import com.intellij.python.pyproject.PY_PROJECT_TOML
+import com.intellij.python.sdk.backend.fileName
 import com.intellij.python.sdk.backend.runTool
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.errorProcessing.PyResult
 import com.jetbrains.python.getOrNull
 import com.jetbrains.python.sdk.add.v2.FileSystem
 import com.jetbrains.python.sdk.add.v2.PathHolder
+import com.jetbrains.python.venvReader.VirtualEnvReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -55,13 +57,14 @@ suspend fun <P : PathHolder> runPoetry(
   vararg args: String,
   poetryExecutable: P? = null,
   inProjectEnv: Boolean? = null,
-  baseEnv: Map<String, String> = emptyMap(),
+  baseEnv: List<EnvVar> = emptyList(),
   uploadConfig: UploadConfig? = null,
   downloadConfig: DownloadConfig? = null,
 ): PyResult<String> {
-  val env = baseEnv.toMutableMap().apply {
-    if (inProjectEnv != null) put("POETRY_VIRTUALENVS_IN_PROJECT", inProjectEnv.toString())
-    putIfAbsent("POETRY_VIRTUALENVS_USE_POETRY_PYTHON", "true")
+  // A default: it comes before baseEnv, so a value in baseEnv wins.
+  var env = listOf(EnvVar("POETRY_VIRTUALENVS_USE_POETRY_PYTHON", "true")) + baseEnv
+  if (inProjectEnv != null) {
+    env = env.withVar("POETRY_VIRTUALENVS_IN_PROJECT", inProjectEnv.toString())
   }
   return fileSystem.runTool(
     executable = PoetryPyTool.getInstance(),
@@ -86,10 +89,10 @@ suspend fun <P : PathHolder> poetryCacheEnvRoots(fileSystem: FileSystem<P>, proj
   val output = runPoetry(fileSystem, projectPath, "env", "list", "--full-path", inProjectEnv = false, uploadConfig = uploadConfig)
     .getOr { return it }
   return PyResult.success(output.lineSequence()
-    .map { it.removeSuffix("(Activated)").trim() }
-    .filter { it.isNotBlank() }
-    .mapNotNull { fileSystem.parsePath(it).getOrNull() }
-    .toList())
+                            .map { it.removeSuffix("(Activated)").trim() }
+                            .filter { it.isNotBlank() }
+                            .mapNotNull { fileSystem.parsePath(it).getOrNull() }
+                            .toList())
 }
 
 /** The cache env among these env roots whose folder name ends with Python [version], or `null` when poetry has none. */
@@ -105,5 +108,6 @@ fun <P : PathHolder> List<P>.poetryCacheEnvFor(version: String): P? =
  */
 @ApiStatus.Internal
 suspend fun <P : PathHolder> poetryEnvRootOf(fileSystem: FileSystem<P>, projectPath: Path, envRef: String): PyResult<P?> =
-  if (envRef == POETRY_IN_PROJECT_ENV_REF) PyResult.success(fileSystem.resolveInWorkingDir(projectPath, VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
+  if (envRef == POETRY_IN_PROJECT_ENV_REF) PyResult.success(fileSystem.resolveInWorkingDir(projectPath,
+                                                                                           VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME))
   else poetryCacheEnvRoots(fileSystem, projectPath).mapSuccess { it.poetryCacheEnvFor(envRef) }

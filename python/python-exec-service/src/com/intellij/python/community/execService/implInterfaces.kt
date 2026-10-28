@@ -4,7 +4,7 @@ package com.intellij.python.community.execService
 import org.jetbrains.annotations.Nls
 
 internal sealed interface ExecOptionsBase {
-  val env: Map<String, String>
+  val env: List<EnvVar>
   val processDescription: @Nls String?
   val tty: TtySize?
   val uploadBeforeExecution: UploadConfig?

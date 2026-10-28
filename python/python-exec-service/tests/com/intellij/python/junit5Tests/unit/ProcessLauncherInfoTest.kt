@@ -30,7 +30,7 @@ internal class ProcessLauncherInfoTest {
     val workDir = (tempDir / "workDir").createDirectory()
     val launcher = createProcessLauncherOnEel(
       BinOnEel(path = tempDir / "tool", workDir = workDir.asEelPath()),
-      LaunchRequest(scopeToBind = this, args = Args(), env = emptyMap(), usePty = null),
+      LaunchRequest(scopeToBind = this, args = Args(), env = emptyList(), usePty = null),
     ).getOrThrow()
     workDir.deleteExisting()
     assertEquals(workDir.pathString, launcher.processCommands.info.cwd)

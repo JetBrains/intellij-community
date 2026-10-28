@@ -2,6 +2,7 @@
 package com.intellij.python.community.execService.python.advancedApi
 
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.asBinToExec
 import com.intellij.python.community.execService.python.PythonBinaryOnEelOrTarget
 import com.intellij.python.community.execService.python.advancedApi.ExecutablePython.Companion.vanillaExecutablePython
@@ -16,7 +17,7 @@ import com.jetbrains.python.PythonBinary
 data class ExecutablePython(
   val binary: BinaryToExec,
   val args: List<String>,
-  val env: Map<String, String>,
+  val env: List<EnvVar>,
 ) {
 
   companion object {
@@ -24,7 +25,7 @@ data class ExecutablePython(
      * Plain python that doesn't have args nor envs
      */
     fun vanillaExecutablePython(binary: PythonBinaryOnEelOrTarget): ExecutablePython =
-      ExecutablePython(binary, emptyList(), emptyMap())
+      ExecutablePython(binary, emptyList(), emptyList())
 
     fun vanillaExecutablePython(binary: PythonBinary): ExecutablePython = vanillaExecutablePython(binary.asBinToExec())
   }

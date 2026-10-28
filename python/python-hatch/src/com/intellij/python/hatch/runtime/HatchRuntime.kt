@@ -3,6 +3,7 @@ package com.intellij.python.hatch.runtime
 
 import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.UploadConfig
+import com.intellij.python.community.execService.toEnvVars
 import com.intellij.python.hatch.HatchExecutableNotFoundHatchError
 import com.intellij.python.hatch.HatchPyTool
 import com.intellij.python.hatch.WorkingDirectoryNotFoundHatchError
@@ -45,7 +46,7 @@ suspend fun <P : PathHolder> createHatchRuntime(
   val runtime = PyToolRuntime(
     binary = fileSystem.getBinaryToExec(actualHatchExecutable, workingDirectoryPath),
     execOptions = ExecOptions(
-      env = actualEnvVars,
+      env = actualEnvVars.toEnvVars(),
       uploadBeforeExecution = uploadBeforeExecution,
     )
   )

@@ -1,6 +1,5 @@
 package com.intellij.python.hatch.service
 
-import com.intellij.python.hatch.cli.DEFAULT_ENV_NAME
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileUtils
@@ -8,6 +7,8 @@ import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.python.community.execService.EnvVar
+import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.hatch.EnvironmentCreationHatchError
 import com.intellij.python.hatch.FileSystemOperationHatchError
@@ -16,6 +17,7 @@ import com.intellij.python.hatch.HatchService
 import com.intellij.python.hatch.HatchVirtualEnvironment
 import com.intellij.python.hatch.ProjectStructure
 import com.intellij.python.hatch.PythonVirtualEnvironment
+import com.intellij.python.hatch.cli.DEFAULT_ENV_NAME
 import com.intellij.python.hatch.cli.ENV_TYPE_VIRTUAL
 import com.intellij.python.hatch.cli.HatchCli
 import com.intellij.python.hatch.cli.HatchDetailedEnvironments
@@ -163,7 +165,7 @@ internal class CliBasedHatchService<P : PathHolder> private constructor(
     envName: String?,
   ): PyResult<PythonVirtualEnvironment.Existing<P>> {
     val pythonBasedRuntime = basePythonBinaryPath?.let { path ->
-      hatchRuntime.withEnv(HatchConstants.AppEnvVars.PYTHON to path.toStringOnRemoteMachine())
+      hatchRuntime.withEnv(EnvVar(HatchConstants.AppEnvVars.PYTHON, EnvVarVal.RemotePath(path.toStringOnRemoteMachine())))
     } ?: hatchRuntime
 
     val hatchEnv = pythonBasedRuntime.hatchCli<P>().env()

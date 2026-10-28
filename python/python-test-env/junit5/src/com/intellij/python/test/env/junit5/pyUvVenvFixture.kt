@@ -57,10 +57,9 @@ fun TestFixture<SdkFixture<PyEnvironment>>.pyUvVenvFixture(
 
   // Get or download UV executable
   val uvExecutable = getOrDownloadUvExecutable(LATEST_UV_VERSION)
-
   // Create venv using UV
   runExecutableWithProgress(
-    uvExecutable, venvDir.parent, 10.minutes, emptyMap(),
+    uvExecutable, venvDir.parent, 10.minutes, emptyList(),
     "venv", venvDir.pathString, "--python", env.pythonPath.pathString
   ).getOrThrow()
 
@@ -129,7 +128,7 @@ private suspend fun TestFixtureInitializer.R<PythonInterpreter>.initUvVenvInterp
 
   // Create venv using UV
   runExecutableWithProgress(
-    uvExecutable, venvDir.parent, 10.minutes, emptyMap(),
+    uvExecutable, venvDir.parent, 10.minutes, emptyList(),
     "venv", venvDir.pathString, "--python", env.pythonPath.pathString
   ).getOrThrow()
 

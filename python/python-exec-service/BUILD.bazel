@@ -130,7 +130,10 @@ exports_files(
 ### auto-generated section `build intellij.python.community.execService.tests` start
 create_kotlinc_options(
     name = "custom_community-execService-tests",
-    opt_in = ["kotlin.time.ExperimentalTime"],
+    opt_in = [
+        "kotlin.time.ExperimentalTime",
+        "com.jetbrains.python.PyInternalExecApi",
+    ],
     warn = "error",
     x_warning_level = ["DEPRECATION:warning"],
 )
@@ -179,6 +182,8 @@ jvm_library(
     ],
     deps = [
         # do not sort,
+        "//libraries/assertj-core",
+        "//libraries/assertj-core:assertj-core_test_lib",
         "@lib//:kotlin-stdlib",
         "//python/openapi:community",
         "//python/openapi:community_test_lib",

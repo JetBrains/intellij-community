@@ -4,6 +4,7 @@ package com.intellij.python.pytools
 import com.intellij.execution.target.FullPathOnTarget
 import com.intellij.python.pytools.backend.PyExecutable
 import com.intellij.python.community.execService.DownloadConfig
+import com.intellij.python.community.execService.EnvVar
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.sdk.backend.detectExecutableInPath
@@ -41,7 +42,7 @@ suspend fun <P : PathHolder, T> PyExecutable.runTool(
   pathFromSdk: FullPathOnTarget?,
   dirPath: Path?,
   vararg args: String,
-  env: Map<String, String> = emptyMap(),
+  env: List<EnvVar> = emptyList(),
   uploadConfig: UploadConfig? = null,
   downloadConfig: DownloadConfig? = null,
   transformer: ProcessOutputTransformer<T>,
@@ -69,7 +70,7 @@ suspend fun <P : PathHolder> PyExecutable.runTool(
   pathFromSdk: FullPathOnTarget?,
   dirPath: Path?,
   vararg args: String,
-  env: Map<String, String> = emptyMap(),
+  env: List<EnvVar> = emptyList(),
   uploadConfig: UploadConfig? = null,
   downloadConfig: DownloadConfig? = null,
 ): PyResult<String> =

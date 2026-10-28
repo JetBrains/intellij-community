@@ -4,6 +4,8 @@ package com.jetbrains.python.sdk.pipenv
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.python.community.execService.DownloadConfig
+import com.intellij.python.community.execService.EnvVar
+import com.intellij.python.community.execService.EnvVarVal
 import com.intellij.python.community.execService.ProcessOutputTransformer
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyInternalExecApi
@@ -35,7 +37,7 @@ internal suspend fun <P : PathHolder> runPipEnv(
   dirPath: Path?,
   vararg args: String,
   pipenvExecutable: P? = null,
-  baseEnv: Map<String, String> = emptyMap(),
+  baseEnv: List<EnvVar> = emptyList(),
   downloadConfig: DownloadConfig? = null,
 ): PyResult<String> =
   PipEnvPyTool.getInstance().runTool(
@@ -100,7 +102,7 @@ private suspend fun <P : PathHolder> runPipEnvWithSdk(
     fileSystem = fileSystem,
     dirPath = workingDirectory,
     args = args,
-    baseEnv = mapOf("VIRTUAL_ENV" to pythonHomePath.toStringOnRemoteMachine()),
+    baseEnv = listOf(EnvVar("VIRTUAL_ENV", EnvVarVal.RemotePath(pythonHomePath.toStringOnRemoteMachine()))),
     downloadConfig = PIPENV_PROJECT_DOWNLOAD_CONFIG.takeIf { args.firstOrNull() in PIPENV_PROJECT_MUTATING_COMMANDS },
   )
 }

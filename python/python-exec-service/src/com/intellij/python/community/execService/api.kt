@@ -307,7 +307,7 @@ data class UploadConfig(
  * To download a directory that is not the working directory, see [DirScope.downloadAfterExecution].
  */
 data class ExecOptions(
-  override val env: Map<String, String> = emptyMap(),
+  override val env: List<EnvVar> = emptyList(),
   override val processDescription: @Nls String? = null,
   val timeout: Duration = 5.minutes,
   override val tty: TtySize? = null,
@@ -323,7 +323,7 @@ data class ExecOptions(
  * Do not remove the `emptyMap()` argument. It selects the real constructor.
  * Without it this initializer calls the function below and reads an uninitialized value.
  */
-private val defaultExecOptions = ExecOptions(emptyMap())
+private val defaultExecOptions = ExecOptions(emptyList())
 
 /**
  * Returns the shared default [ExecOptions] instead of a new instance.
@@ -336,12 +336,18 @@ fun ExecOptions(): ExecOptions = defaultExecOptions
  * See [ExecOptions]
  */
 data class ExecGetProcessOptions(
-  override val env: Map<String, String> = emptyMap(),
+  override val env: List<EnvVar> = emptyList(),
   override val processDescription: @Nls String? = null,
   override val tty: TtySize? = null,
   override val uploadBeforeExecution: UploadConfig? = null,
   override val downloadAfterExecution: DownloadConfig? = null,
-) : ExecOptionsBase
+) : ExecOptionsBase {
+  @Deprecated("Use the one with envVars")
+  constructor(
+    env: Map<String, String>,
+    tty: TtySize? = null,
+  ) : this(env = env.toEnvVars(), tty = tty)
+}
 
 /**
  * The default [ExecGetProcessOptions].
@@ -350,7 +356,7 @@ data class ExecGetProcessOptions(
  * Do not remove the `emptyMap()` argument. It selects the real constructor.
  * Without it this initializer calls the function below and reads an uninitialized value.
  */
-private val defaultExecGetProcessOptions = ExecGetProcessOptions(emptyMap())
+private val defaultExecGetProcessOptions = ExecGetProcessOptions(emptyList())
 
 /**
  * Returns the shared default [ExecGetProcessOptions] instead of a new instance.
@@ -385,7 +391,7 @@ sealed interface HowToReportFile {
   /**
    * As a value of env variable [varName]
    */
-  class EnvVar(internal val varName: String) : HowToReportFile
+  class AsEnvVar(internal val varName: String) : HowToReportFile
 }
 
 
@@ -503,3 +509,47 @@ fun BinaryToExec.asGeneralCommandLine(): PyResult<GeneralCommandLine> = when (th
   is BinOnEel -> PyResult.success(GeneralCommandLine(path.toString()).withWorkingDirectory(workDir?.asNioPath()))
   is BinOnTarget -> PyResult.localizedError(message("py.exec.target.binaries.are.not.supported"))
 }
+
+
+/**
+ * Environment variable with [name] and [value].
+ * The API represents vars a list of this class. They will be merged right before execution.
+ * [name] is case-sensitive on POSIX and insensitive on Windows (the platform we execute the code on is taken into account)
+ * The merge logic depends on the [value] type.
+ */
+data class EnvVar(internal val name: String, internal val value: EnvVarVal) {
+  constructor(name: String, value: String) : this(name, EnvVarVal.BareStr(value))
+}
+
+/**
+ * Possible values for [EnvVar]
+ */
+sealed interface EnvVarVal {
+  /**
+   * Just a bare string: latter will rewrite the former.
+   */
+  data class BareStr(internal val str: String) : EnvVarVal
+
+  /**
+   * A path on the eel/target we execute command on (e.g. `/foo/`). [com.intellij.platform.util.annotations.paths.OsPath] string.
+   * These paths will be merged using os-specific separator.
+   *
+   * Only use if you have no [Path]. Use [NioPath] otherwise.
+   */
+  data class RemotePath(internal val path: FullPathOnTarget) : EnvVarVal
+
+  /**
+   * Same as [RemotePath], but also converts [path] to the right format. The preferred approach to represent paths.
+   */
+  data class NioPath(internal val path: Path) : EnvVarVal
+}
+
+/**
+ * Add[name] and [value] ([EnvVarVal.BareStr]) and return a new list
+ */
+fun List<EnvVar>.withVar(name: String, value: String): List<EnvVar> = this + listOf(EnvVar(name, value))
+
+/**
+ * Give a map of string/string ([EnvVarVal.BareStr]) convert it a list of [EnvVar] for an API.
+ */
+fun Map<String, String>.toEnvVars(): List<EnvVar> = map { EnvVar(it.key, it.value) }
