@@ -18,8 +18,12 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.impl.TestOnlyThreading
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
@@ -101,6 +105,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.ProjectLevel
 import com.intellij.util.ui.UIUtil
@@ -113,6 +118,7 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
@@ -228,6 +234,7 @@ class LineStatusTrackerManager(
     return getLineStatusTracker(document)
   }
 
+  @RequiresReadLock /* switchTracker */
   @RequiresEdt
   override fun requestTrackerFor(document: Document, requester: Any) {
     synchronized(LOCK) {
@@ -360,6 +367,7 @@ class LineStatusTrackerManager(
     }
   }
 
+  @RequiresReadLock /* switchTracker */
   @RequiresEdt
   private fun onFileChanged(virtualFile: VirtualFile) {
     val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
@@ -465,6 +473,8 @@ class LineStatusTrackerManager(
     getTrackerProvider(virtualFile, document) is ChangelistsAwareLocalStatusTrackerProvider
 
 
+  @RequiresReadLock /* installTracker */
+  @RequiresEdt
   private fun switchTracker(
     virtualFile: VirtualFile, document: Document,
     refreshExisting: Boolean = false,
@@ -485,6 +495,8 @@ class LineStatusTrackerManager(
     }
   }
 
+  @RequiresReadLock /* createTracker */
+  @RequiresEdt
   private fun installTracker(
     virtualFile: VirtualFile, document: Document,
     provider: LocalLineStatusTrackerProvider,
@@ -901,34 +913,40 @@ class LineStatusTrackerManager(
   private inner class MyDocumentListener : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
       if (!ApplicationManager.getApplication().isDispatchThread) return // disable for documents forUseInNonAWTThread
-      if (!partialChangeListsEnabled || project.isDisposed) return
+      ensureTrackerOnDocumentEvent(event)
+    }
+  }
 
-      val document = event.document
+  @RequiresReadLock /* installTracker */
+  @RequiresEdt
+  private fun ensureTrackerOnDocumentEvent(event: DocumentEvent) {
+    if (!partialChangeListsEnabled || project.isDisposed) return
 
-      val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
-      if (!virtualFile.isInLocalFileSystem) return
-      if (documentsInDefaultChangeList.contains(virtualFile)) return
+    val document = event.document
 
-      if (getLineStatusTracker(document) != null) return
+    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
+    if (!virtualFile.isInLocalFileSystem) return
+    if (documentsInDefaultChangeList.contains(virtualFile)) return
 
-      val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
-      val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
-      if (inAnotherChangelist) {
-        val provider = getTrackerProvider(virtualFile, document)
-        if (provider != ChangelistsLocalStatusTrackerProvider) return
+    if (getLineStatusTracker(document) != null) return
 
-        log("Tracker install from DocumentListener: ", virtualFile)
+    val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
+    val inAnotherChangelist = changeList != null && !ActiveChangeListTracker.getInstance(project).isActiveChangeList(changeList)
+    if (inAnotherChangelist) {
+      val provider = getTrackerProvider(virtualFile, document)
+      if (provider != ChangelistsLocalStatusTrackerProvider) return
 
-        val tracker = synchronized(LOCK) {
-          installTracker(virtualFile, document, provider)
-        }
-        if (tracker is ChangelistsLocalLineStatusTracker) {
-          tracker.replayChangesFromDocumentEvents(listOf(event))
-        }
+      log("Tracker install from DocumentListener: ", virtualFile)
+
+      val tracker = synchronized(LOCK) {
+        installTracker(virtualFile, document, provider)
       }
-      else {
-        documentsInDefaultChangeList.add(virtualFile)
+      if (tracker is ChangelistsLocalLineStatusTracker) {
+        tracker.replayChangesFromDocumentEvents(listOf(event))
       }
+    }
+    else {
+      documentsInDefaultChangeList.add(virtualFile)
     }
   }
 
@@ -1148,7 +1166,7 @@ class LineStatusTrackerManager(
 
   @RequiresEdt
   internal fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
-    runWriteAction {
+    runWriteAction { /* switchTracker */
       synchronized(LOCK) {
         if (isDisposed) return@runWriteAction
         for (state in trackerStates) {
@@ -1597,6 +1615,7 @@ interface LocalLineStatusTrackerProvider {
   fun isTrackedFile(project: Project, file: VirtualFile): Boolean
   fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean
 
+  @RequiresReadLock /* impls do FileDocumentManager.getInstance().getDocument(file) */
   @RequiresEdt
   fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>?
 
