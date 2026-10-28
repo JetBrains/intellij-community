@@ -55,8 +55,10 @@ internal class IdeProjectFrameHelper(
   }
 
   override suspend fun setProject(project: Project) {
-    if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
-      // a welcome-experience frame becomes interactive first: each north component, such as the navigation bar,
+    val capabilities = serviceAsync<ProjectFrameCapabilitiesService>().getAll(project)
+    if (capabilities.contains(ProjectFrameCapability.WELCOME_EXPERIENCE) ||
+        capabilities.contains(ProjectFrameCapability.INTERACTIVE_ON_EDITOR_SHOWN)) {
+      // such a frame becomes interactive first: each north component, such as the navigation bar,
       // builds its panel in EDT events that the tool window initialization would wait for
       launchAfterFrameLoading(scope = coroutineScope, frameLoadingDone = frameLoadingDone, isProjectOpen = { project.isOpen }) {
         installNorthComponents(project)

@@ -24,6 +24,13 @@ enum class ProjectFrameCapability {
   WELCOME_EXPERIENCE,
 
   /**
+   * Marks a frame that becomes interactive as soon as its restored editor is shown.
+   *
+   * The tool windows, the status bar widgets, the north components and the first fill of the main menu follow the editor.
+   */
+  INTERACTIVE_ON_EDITOR_SHOWN,
+
+  /**
    * Marks a project the IDE loaded without a frame of its own.
    *
    * The user sees no window for it. It runs one action for another frame, usually the welcome screen, and closes again.

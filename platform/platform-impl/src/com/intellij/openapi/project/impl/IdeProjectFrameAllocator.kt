@@ -164,7 +164,7 @@ internal class IdeProjectFrameAllocator(
     if (mainMenuFillPermit.isCompleted) {
       return
     }
-    if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+    if (becomesInteractiveOnContentPainted(project)) {
       @Suppress("UsagesOfObsoleteApi")
       permitMainMenuFillOnContentPainted(
         scope = (project as ComponentManagerEx).getCoroutineScope(),
@@ -234,12 +234,11 @@ internal class IdeProjectFrameAllocator(
 
           launch {
             val windowManager = serviceAsync<WindowManager>() as WindowManagerImpl
-            // a welcome-experience frame starts the progress reporting of its status bar with its widgets, once it is interactive
-            val isWelcomeExperience = serviceAsync<ProjectFrameCapabilitiesService>()
-              .has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)
+            // a frame that becomes interactive first starts the progress reporting of its status bar with its widgets, once it is interactive
+            val initializesStatusBar = !becomesInteractiveOnContentPainted(project)
             span("frame assignment", Dispatchers.ui(CoroutineSupport.UiDispatcherKind.STRICT)) {
               windowManager.assignFrame(frameHelper, project)
-              frameHelper.setRawProject(project, initializesStatusBar = !isWelcomeExperience)
+              frameHelper.setRawProject(project, initializesStatusBar = initializesStatusBar)
             }
           }
 
@@ -262,10 +261,18 @@ internal class IdeProjectFrameAllocator(
           val project = projectInitObservable.awaitProjectInit()
           span("restoreEditors") {
             val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
+            val interactiveOnEditorShown = serviceAsync<ProjectFrameCapabilitiesService>()
+              .has(project, ProjectFrameCapability.INTERACTIVE_ON_EDITOR_SHOWN)
             restoreEditors(
               project = project,
               fileEditorManager = fileEditorManager,
               opensFileAfterProjectOpen = options.opensFileAfterProjectOpen,
+              onEditorsShown = if (interactiveOnEditorShown) {
+                { completeFrameLoadingOnEditorsShown(project = project, done = frameLoadingDone, frameHelperInitJob = frameHelperInitJob) }
+              }
+              else {
+                null
+              },
             )
           }
 
@@ -284,14 +291,17 @@ internal class IdeProjectFrameAllocator(
               val projectFrameUiPolicyDeferred = async {
                 serviceAsync<ProjectFrameCapabilitiesService>().getUiPolicyForToolWindows(project)
               }
-              // a welcome-experience frame registers the tool windows it shows first, and every other one after its content paints
+              // a welcome-experience frame registers the tool windows it shows first, and every other one after its content paints;
+              // a frame that becomes interactive when its editor is shown registers every tool window after that
               val eagerToolWindowIdsDeferred = async {
-                if (serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
-                  val toolWindowManager = deferredToolWindowManager.await()
-                  toolWindowManager?.let { computeEagerToolWindowIdsOfWelcomeFrame(it, projectFrameUiPolicyDeferred.await()) }
-                }
-                else {
-                  null
+                val capabilities = serviceAsync<ProjectFrameCapabilitiesService>().getAll(project)
+                when {
+                  capabilities.contains(ProjectFrameCapability.WELCOME_EXPERIENCE) -> {
+                    val toolWindowManager = deferredToolWindowManager.await()
+                    toolWindowManager?.let { computeEagerToolWindowIdsOfWelcomeFrame(it, projectFrameUiPolicyDeferred.await()) }
+                  }
+                  capabilities.contains(ProjectFrameCapability.INTERACTIVE_ON_EDITOR_SHOWN) -> emptySet()
+                  else -> null
                 }
               }
               val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
@@ -368,7 +378,7 @@ internal class IdeProjectFrameAllocator(
             val frameHelper = deferredProjectFrameHelper.await()
             launch {
               StartupUiGate.awaitEditorsShown()
-              installStatusBarWidgetsAndUpdateTitle(frameHelper = frameHelper, project = project, frameLoadingJob = job)
+              installStatusBarWidgetsAndUpdateTitle(frameHelper = frameHelper, project = project, frameLoadingJob = job, frameLoadingDone = frameLoadingDone)
             }
 
             frameHelperInitJob.join() // initDockableContentFactory depends on it
@@ -757,6 +767,7 @@ private suspend fun restoreEditors(
   project: Project,
   fileEditorManager: FileEditorManagerImpl,
   opensFileAfterProjectOpen: Boolean,
+  onEditorsShown: (suspend () -> Unit)? = null,
 ) {
   coroutineScope {
     // only after FileEditorManager.init - DaemonCodeAnalyzer uses FileEditorManager
@@ -794,6 +805,7 @@ private suspend fun restoreEditors(
     }
     if (editorState == null) {
       StartUpMeasurer.addInstantEvent("no editors to restore")
+      onEditorsShown?.invoke()
       StartupUiGate.markEditorsShown()
       serviceAsync<StartUpPerformanceService>().editorRestoringTillHighlighted()
       return@coroutineScope
@@ -807,6 +819,8 @@ private suspend fun restoreEditors(
       span("editor reopening post-processing", Dispatchers.UI) {
         focusSelectedEditor(editorComponent)
       }
+      // before the gate opens: the loading layer leaves the EDT queue ahead of the work that the gate holds
+      onEditorsShown?.invoke()
     }
     finally {
       // the rest of the frame UI waits for the restored editor, its focus included
@@ -1253,11 +1267,23 @@ internal suspend fun isReadmeLookupOnStartupEnabled(project: Project): Boolean {
 /**
  * Installs the default status bar widgets of [project] and updates the frame title.
  * A [ProjectFrameCapability.WELCOME_EXPERIENCE] project installs its widgets after [frameLoadingJob] completes,
+ * and a [ProjectFrameCapability.INTERACTIVE_ON_EDITOR_SHOWN] project after [frameLoadingDone] completes,
  * because the creation and the `install` of each widget is an EDT event that delays the frame becoming interactive.
  * Its status bar starts the progress reporting at the same time, see [ProjectFrameHelper.setRawProject].
  */
-private suspend fun installStatusBarWidgetsAndUpdateTitle(frameHelper: IdeProjectFrameHelper, project: Project, frameLoadingJob: Job) {
-  if (!serviceAsync<ProjectFrameCapabilitiesService>().has(project, ProjectFrameCapability.WELCOME_EXPERIENCE)) {
+private suspend fun installStatusBarWidgetsAndUpdateTitle(
+  frameHelper: IdeProjectFrameHelper,
+  project: Project,
+  frameLoadingJob: Job,
+  frameLoadingDone: Job,
+) {
+  val capabilities = serviceAsync<ProjectFrameCapabilitiesService>().getAll(project)
+  val awaited = when {
+    capabilities.contains(ProjectFrameCapability.WELCOME_EXPERIENCE) -> frameLoadingJob
+    capabilities.contains(ProjectFrameCapability.INTERACTIVE_ON_EDITOR_SHOWN) -> frameLoadingDone
+    else -> null
+  }
+  if (awaited == null) {
     frameHelper.installDefaultProjectStatusBarWidgets(project)
     frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
     return
@@ -1265,8 +1291,8 @@ private suspend fun installStatusBarWidgetsAndUpdateTitle(frameHelper: IdeProjec
 
   frameHelper.updateTitle(serviceAsync<FrameTitleBuilder>().getProjectTitle(project), project)
   // the caller runs in the project scope, not as a child of the frame loading job, so the wait cannot deadlock
-  frameLoadingJob.join()
-  if (frameLoadingJob.isCancelled && !project.isOpen) {
+  awaited.join()
+  if (awaited.isCancelled && !project.isOpen) {
     return
   }
   withContext(Dispatchers.UiWithModelAccess) {
@@ -1320,6 +1346,28 @@ internal fun completeFrameLoadingOnContentPainted(
     }
   }
   foregroundJob.invokeOnCompletion { waiter.cancel() }
+}
+
+/**
+ * Tells if the frame of [project] becomes interactive when its content paints, before the rest of its UI initializes.
+ */
+private suspend fun becomesInteractiveOnContentPainted(project: Project): Boolean {
+  val capabilities = serviceAsync<ProjectFrameCapabilitiesService>().getAll(project)
+  return capabilities.contains(ProjectFrameCapability.WELCOME_EXPERIENCE) ||
+         capabilities.contains(ProjectFrameCapability.INTERACTIVE_ON_EDITOR_SHOWN)
+}
+
+/**
+ * Ends the loading state of the frame of [project] once its restored editor is shown, and reports the frame content as painted.
+ * [done] completes first, so the loading layer leaves the EDT queue before the content paint releases the tool windows and the menu fill.
+ */
+private suspend fun completeFrameLoadingOnEditorsShown(project: Project, done: CompletableJob, frameHelperInitJob: Job) {
+  frameHelperInitJob.join()
+  if (frameHelperInitJob.isCancelled) {
+    return
+  }
+  done.complete()
+  project.getOrCreateFrameContentPaintedDeferred().complete(Unit)
 }
 
 /**
