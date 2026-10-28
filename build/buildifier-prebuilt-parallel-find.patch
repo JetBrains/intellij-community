@@ -1,0 +1,110 @@
+diff --git a/buildifier/factory.bzl b/buildifier/factory.bzl
+index a66d60c..8a36227 100644
+--- a/buildifier/factory.bzl
++++ b/buildifier/factory.bzl
+@@ -132,12 +132,16 @@ def buildifier_impl_factory(ctx, *, test_rule):
+     if not test_rule and ctx.attr.disabled_rewrites:
+         args.append("-buildifier_disable={}".format(",".join(ctx.attr.disabled_rewrites)))
+ 
+-    exclude_patterns_str = ""
++    exclude_args = []
+     if ctx.attr.exclude_patterns:
+         if test_rule and not ctx.attr.no_sandbox:
+             fail("Cannot use 'exclude_patterns' in a test rule without 'no_sandbox'")
+-        exclude_patterns = ["-path %s" % shell.quote(pattern) for pattern in ctx.attr.exclude_patterns]
+-        exclude_patterns_str = "\\( " + " -o ".join(exclude_patterns) + " \\) -prune -o "
++        exclude_args.append("(")
++        for pattern in ctx.attr.exclude_patterns:
++            if len(exclude_args) > 1:
++                exclude_args.append("-o")
++            exclude_args.extend(["-path", pattern])
++        exclude_args.extend([")", "-prune", "-o"])
+ 
+     workspace = ""
+     if test_rule and ctx.attr.no_sandbox:
+@@ -161,7 +165,7 @@ def buildifier_impl_factory(ctx, *, test_rule):
+     substitutions = {
+         "{ARGS}": shell.array_literal(args),
+         "{BUILDIFIER_SHORT_PATH}": shell.quote(buildifier.short_path) if out_ext == ".bash" else buildifier.short_path,
+-        "{EXCLUDE_PATTERNS}": exclude_patterns_str,
++        "{EXCLUDE_ARGS}": shell.array_literal(exclude_args),
+         "{FORMAT}": ctx.attr.format,
+         "{POWERSHELL_ARGS}": _powershell_array_literal(args),
+         "{POWERSHELL_EXCLUDE_PATTERNS}": _powershell_array_literal(ctx.attr.exclude_patterns),
+diff --git a/runner.bash.template b/runner.bash.template
+index b9951e9..3bdf79e 100644
+--- a/runner.bash.template
++++ b/runner.bash.template
+@@ -4,6 +4,7 @@ set -euo pipefail
+ 
+ BUILDIFIER_SHORT_PATH={BUILDIFIER_SHORT_PATH}
+ ARGS={ARGS}
++EXCLUDE_ARGS={EXCLUDE_ARGS}
+ WORKSPACE="{WORKSPACE}"
+ 
+ function resolve_runfile() {
+@@ -71,19 +72,48 @@ else
+   fi
+ fi
+ 
+-# Run buildifier on all starlark files
+-find . \
+-  {EXCLUDE_PATTERNS} \
+-  -type "${FIND_FILE_TYPE:-f}" \
+-  \( -name '*.bzl' \
+-    -o -name '*.sky' \
+-    -o -name '*.star' \
+-    -o -name '*.bazel' \
+-    -o -name BUILD \
+-    -o -name '*.BUILD' \
+-    -o -name 'BUILD.*.oss' \
+-    -o -name WORKSPACE \
+-    -o -name WORKSPACE.bzlmod \
+-    -o -name WORKSPACE.oss \
+-    -o -name 'WORKSPACE.*.oss' \
+-  \) -exec "$buildifier_short_path" "${ARGS[@]}" {} +
++# Starlark files, with excluded paths pruned
++find_expression=(
++  ${EXCLUDE_ARGS[@]+"${EXCLUDE_ARGS[@]}"}
++  -type "${FIND_FILE_TYPE:-f}"
++  \( -name '*.bzl'
++    -o -name '*.sky'
++    -o -name '*.star'
++    -o -name '*.bazel'
++    -o -name BUILD
++    -o -name '*.BUILD'
++    -o -name 'BUILD.*.oss'
++    -o -name WORKSPACE
++    -o -name WORKSPACE.bzlmod
++    -o -name WORKSPACE.oss
++    -o -name 'WORKSPACE.*.oss'
++  \) -print0
++)
++
++# Walking the workspace dominates the run time, so walk it in parallel: files
++# at depths 1 and 2 first, then the directories at depth 2, in batches of 16
++# per find to limit process spawns. Each walk writes its own list so that
++# concurrent output never interleaves.
++jobs=$(getconf _NPROCESSORS_ONLN 2>/dev/null || echo 4)
++# More jobs do not walk faster
++if [[ $jobs -gt 8 ]]; then
++  jobs=8
++fi
++lists=$(mktemp -d)
++files=$(mktemp)
++trap 'rm -rf "$lists" "$files"' EXIT
++walk_status=0
++find . -maxdepth 2 "${find_expression[@]}" > "$lists/shallow" || walk_status=1
++# The inner script expands its own arguments: the find expression, then the roots
++# shellcheck disable=SC2016
++find . -maxdepth 2 ${EXCLUDE_ARGS[@]+"${EXCLUDE_ARGS[@]}"} -type d -path './*/*' -print0 |
++  LISTS="$lists" xargs -0 -n 16 -P "$jobs" bash -c \
++    'n=$1; shift; find "${@:n+1}" -mindepth 1 "${@:1:n}" > "$(mktemp "$LISTS/subtrees.XXXXXX")"' \
++    find-subtrees "${#find_expression[@]}" "${find_expression[@]}" || walk_status=1
++
++# Run buildifier on all starlark files, sorted for a stable output
++cat "$lists"/* | sort -z > "$files"
++if [[ -s "$files" ]] && ! xargs -0 "$buildifier_short_path" "${ARGS[@]}" < "$files"; then
++  exit 1
++fi
++exit "$walk_status"

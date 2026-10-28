@@ -41,6 +41,8 @@ single_version_override(
         "//:build/buildifier-prebuilt-exclude-patterns-prune.patch",
         # upstream Windows runner ignores exclude_patterns; this one prunes them while walking, like `find`
         "//:build/buildifier-prebuilt-windows-exclude-patterns.patch",
+        # upstream walks the workspace with a single `find`; this one walks the depth-2 directories in parallel
+        "//:build/buildifier-prebuilt-parallel-find.patch",
     ],
 )
 
