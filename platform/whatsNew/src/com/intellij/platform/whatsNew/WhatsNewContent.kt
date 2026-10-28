@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Version
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
 import com.intellij.platform.whatsNew.collectors.WhatsNewCounterUsageCollector
 import com.intellij.platform.whatsNew.reaction.FUSReactionChecker
@@ -173,6 +174,7 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     private const val ZOOM_KEY = $$"$__VISION_PAGE_SETTINGS_ZOOM_IN_ACTION__$"
     private const val GIF_KEY = $$"$__VISION_PAGE_SETTINGS_GIF_PLAYER_ACTION__$"
     private const val MEDIA_BASE_PATH_KEY = $$"$__VISION_PAGE_SETTINGS_MEDIA_BASE_PATH__$"
+    private const val AIR_BUTTON_ALT_TEXT_KEY = $$"$__VISION_PAGE_SETTINGS_IS_AIR_BUTTON_ALT_TEXT_ENABLED__$"
 
     private const val ZOOM_VALUE = "whatsnew.vision.zoom"
     private const val GIF_VALUE = "whatsnew.vision.gif"
@@ -209,6 +211,13 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
     multipageIds = page.multipageIds
     contentHash = DigestUtil.sha1Hex(page.html)
   }
+
+  /**
+   * Returns [content] with the project-dependent variables replaced.
+   * On the welcome screen, the Vision page shows the alternative label and action of the Air button.
+   */
+  internal fun getContent(isWelcomeScreenProject: Boolean): String =
+    content.replace(AIR_BUTTON_ALT_TEXT_KEY, isWelcomeScreenProject.toString())
 
   @OptIn(DelicateCoroutinesApi::class)
   private fun getRequestHandler(dataContext: DataContext?): HTMLEditorProvider.ResourceHandler? {
@@ -311,13 +320,14 @@ internal class WhatsNewVisionContent(val contentProvider: WhatsNewInVisionConten
   }
 
   private fun getRequest(startPageId: String, dataContext: DataContext?, project: Project): HTMLEditorProvider.Request {
+    val pageContent = getContent(WelcomeScreenProjectProvider.isWelcomeScreenProject(project))
     // One-page case
     val request = if (startPageId == WhatsNewInVisionContentProvider.DEFAULT_MULTIPAGE_ID || multipageIds.size == 1) {
-      html(content)
+      html(pageContent)
     }
     // Multipage case
     else {
-      html(content, "file:///jbcefbrowser#/$startPageId").withOnUrlChanged { oldUrl, newUrl ->
+      html(pageContent, "file:///jbcefbrowser#/$startPageId").withOnUrlChanged { oldUrl, newUrl ->
         WhatsNewCounterUsageCollector.multipageIdChanged(dataContext?.project, oldUrl?.substringAfter("#/"), newUrl.substringAfter("#/"))
       }
     }
