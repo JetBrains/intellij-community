@@ -18,7 +18,7 @@ import org.junitpioneer.jupiter.cartesian.CartesianParameterArgumentsProvider
 import java.lang.reflect.AnnotatedElement
 import java.lang.reflect.Parameter
 import java.util.stream.Stream
-import kotlin.jvm.optionals.getOrElse
+import kotlin.jvm.optionals.getOrNull
 
 @TestOnly
 internal class EelArgumentsProvider : ArgumentsProvider {
@@ -43,23 +43,34 @@ private fun getProvidersAsStream(context: ExtensionContext, eelHolderElem: Annot
   val limitLocalPlatform = eelHolderElem.getAnnotation(EelSource::class.java)?.limitLocalRunPlatform?.eelPlatform
   val allowLocal = limitLocalPlatform == null || limitLocalPlatform == Platform.current()
 
-  // method or class might have mandatory (e.g. WslTest) annotation
-  val elemForMandatoryAnno: AnnotatedElement = arrayOf(context.testMethod, context.testClass).first { it.isPresent }.getOrElse {
+  // method and class can both have a mandatory (e.g. WslTest) annotation
+  val elemsForMandatoryAnno: List<AnnotatedElement> = arrayOf(context.testMethod, context.testClass).mapNotNull { it.getOrNull() }
+  if (elemsForMandatoryAnno.isEmpty()) {
     error("No method nor class has ${EelHolder::class} argument")
   }
   val localProvider: Array<EelHolder> = if (allowLocal) arrayOf(LocalEelHolder) else emptyArray<EelHolder>()
   val providers: Array<EelHolder> = localProvider + getIjentTestProviders().flatMap { provider ->
-    createHolders(provider, elemForMandatoryAnno)
+    createHolders(provider, elemsForMandatoryAnno)
   }.toTypedArray<EelHolder>()
   return Stream.of(*providers)
 }
 
-private fun <T : Annotation> createHolders(
+/**
+ * Creates one holder for each annotation of [provider] on [annotatedElements].
+ *
+ * The test method and the test class can both have the same annotation. Equal annotations give one holder,
+ * so the test does not run two times in the same environment.
+ * Annotations that are different in one argument (for example, `mandatory`) give two holders.
+ */
+@TestOnly
+internal fun <T : Annotation> createHolders(
   provider: EelIjentTestProvider<T>,
-  annotatedElement: AnnotatedElement,
+  annotatedElements: List<AnnotatedElement>,
 ): List<EelHolderImpl<T>> {
   val annotations =
-    AnnotationUtils.findRepeatableAnnotations(annotatedElement, provider.mandatoryAnnotationClass.java)
+    annotatedElements.flatMap {
+      AnnotationUtils.findRepeatableAnnotations(it, provider.mandatoryAnnotationClass.java)
+    }.distinct()
   return if (annotations.isEmpty()) {
     listOf(EelHolderImpl(provider, null))
   }

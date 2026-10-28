@@ -12,8 +12,8 @@ const val DEFAULT_EEL_TEST_DOCKER_IMAGE: String = "debian"
  *
  * This annotation is repeatable: you might run one test multiple times with different images, i.e.:
  * ```kotlin
- * @DockerMandatoryTest("alpine")
- * @DockerMandatoryTest("debian")
+ * @DockerTest("alpine")
+ * @DockerTest("debian")
  * ```
  */
 @TestOnly
