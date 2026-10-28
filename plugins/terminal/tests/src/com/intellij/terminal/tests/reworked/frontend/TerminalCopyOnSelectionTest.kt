@@ -1,6 +1,12 @@
 package com.intellij.terminal.tests.reworked.frontend
 
 import com.intellij.mock.MockFocusManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionUiKind
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.impl.DocumentImpl
@@ -8,6 +14,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import com.intellij.terminal.frontend.view.impl.TerminalEditorFactory
 import com.intellij.terminal.tests.reworked.util.TerminalTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
@@ -102,6 +109,33 @@ internal class TerminalCopyOnSelectionTest : BasePlatformTestCase() {
 
     editor.selectionModel.setBlockSelection(LogicalPosition(0, 4), LogicalPosition(2, 7))
     assertThat(getClipboardText()).isEqualTo("cde\n\nopq")
+  }
+
+  @Test
+  fun `copy on selection does not change clipboard when escape removes block selection`() {
+    val editor = createTerminalEditor()
+    editor.document.setText(
+      """
+      first
+      second
+      third
+      """.trimIndent()
+    )
+    editor.selectionModel.setBlockSelection(LogicalPosition(0, 1), LogicalPosition(2, 4))
+    assertThat(getClipboardText()).isEqualTo("irs\neco\nhir")
+
+    val action = ActionManager.getInstance().getAction("Terminal.Escape")
+    val context = SimpleDataContext.builder()
+      .add(CommonDataKeys.PROJECT, project)
+      .add(TerminalPlatformDataKeys.EDITOR_KEY, editor)
+      .build()
+    val event = AnActionEvent.createEvent(action, context, null, "", ActionUiKind.NONE, null)
+    ActionUtil.updateAction(action, event)
+    check(event.presentation.isEnabledAndVisible) { "Setup failed: Terminal.Escape is not enabled" }
+    ActionUtil.performAction(action, event)
+
+    assertThat(editor.selectionModel.hasSelection(true)).isFalse()
+    assertThat(getClipboardText()).isEqualTo("irs\neco\nhir")
   }
 
   @Test
