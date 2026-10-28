@@ -15327,13 +15327,6 @@ java_library(
 )
 
 java_library(
-    name = "maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-event_listener-tests-com-google-inject-guice-no_aop-4-0"],
-)
-
-java_library(
     name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9",
     visibility = ["//visibility:public"],
     exports = [
@@ -15365,13 +15358,6 @@ java_library(
         ":org_sonatype_plexus-plexus-cipher-1_4_http_import",
         ":org_apache_commons-commons-lang3-3_4_http_import",
     ],
-)
-
-java_library(
-    name = "maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9-provided",
-    neverlink = True,
-    visibility = ["//visibility:public"],
-    exports = [":maven-server-event_listener-tests-org-apache-maven-maven-core-3-3-9"],
 )
 
 copy_file(

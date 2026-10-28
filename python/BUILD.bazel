@@ -848,7 +848,7 @@ jvm_library(
         ":python-community-impl-tests",
         "//platform/testRunner/plugin:plugin_test_lib",
         "//python:python-helpers_test_lib",
-        "@lib//ant/lib:ant-provided",
+        "@lib//ant/lib:ant",
         "@lib//:python-community-impl-tests-ml-completion-prev-exprs-models",
         "//libraries/jcef",
         "//libraries/jcef:jcef_test_lib",

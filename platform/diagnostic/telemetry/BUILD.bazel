@@ -128,7 +128,7 @@ jvm_library(
     runtime_deps = [":telemetry-tests"],
     deps = [
         # do not sort,
-        "@lib//:kotlin-stdlib-provided",
+        "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",
         "//libraries/kotlinx/coroutines/core:core_test_lib",
         "//libraries/opentelemetry",

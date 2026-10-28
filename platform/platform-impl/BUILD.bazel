@@ -500,7 +500,7 @@ jvm_library(
     ],
     deps = [
         # do not sort,
-        "@lib//:mac-provided",
+        "@lib//:mac",
         "//platform/testFramework",
         "//platform/testFramework:testFramework_test_lib",
         "//platform/pluginManager/testFramework",
