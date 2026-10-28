@@ -3,7 +3,6 @@ package com.intellij.platform.navbar.backend.impl
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
-import com.intellij.ide.projectView.impl.ProjectRootsUtil
 import com.intellij.model.Pointer
 import com.intellij.model.Pointer.hardPointer
 import com.intellij.openapi.editor.colors.CodeInsightColors.ERRORS_ATTRIBUTES
@@ -171,11 +170,8 @@ internal class PsiNavBarItem(data: PsiElement, val ownerExtension: NavBarModelEx
       return SimpleTextAttributes(null, color, navBarErrorAttributes.waveColor, style)
     }
     else {
-      if (data is PsiDirectory) {
-        val vDir = data.virtualFile
-        if (vDir.parent == null || ProjectRootsUtil.isModuleContentRoot(vDir, data.project)) {
-          return REGULAR_BOLD_ATTRIBUTES
-        }
+      if (data is PsiDirectory && data.isModuleContentRoot()) {
+        return REGULAR_BOLD_ATTRIBUTES
       }
 
       if (wolfHasProblemFilesBeneath(data)) {

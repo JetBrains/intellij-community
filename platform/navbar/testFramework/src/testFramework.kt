@@ -16,6 +16,7 @@ import com.intellij.platform.navbar.backend.impl.children
 import com.intellij.platform.navbar.backend.impl.compatibilityNavBarItem
 import com.intellij.platform.navbar.backend.impl.pathToItem
 import com.intellij.platform.navbar.frontend.contextModel
+import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -54,6 +55,24 @@ fun contextNavBarPathStrings(ctx: DataContext): List<String> {
 fun compatibilityNavBarItemPresentation(o: Any): NavBarItemPresentation? {
   val item = compatibilityNavBarItem(o, null)
   return item?.presentation()
+}
+
+/**
+ * The module content root flag of the presentation, for tests in modules that see only the test framework.
+ */
+@TestOnly
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+fun compatibilityNavBarItemIsModuleContentRoot(o: Any): Boolean? {
+  return (compatibilityNavBarItemPresentation(o) as? NavBarItemPresentationData)?.isModuleContentRoot
+}
+
+/**
+ * The text attributes of the presentation, for tests in modules that see only the test framework.
+ */
+@TestOnly
+@RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
+fun compatibilityNavBarItemTextAttributes(o: Any): SimpleTextAttributes? {
+  return (compatibilityNavBarItemPresentation(o) as? NavBarItemPresentationData)?.textAttributes
 }
 
 /**

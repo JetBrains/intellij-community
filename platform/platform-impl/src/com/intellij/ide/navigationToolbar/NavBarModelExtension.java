@@ -10,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.ApiStatus;
@@ -82,6 +83,16 @@ public interface NavBarModelExtension {
 
   @ApiStatus.Internal
   default Boolean shouldExpandOnClick(PsiElement psiElement) {
+    return null;
+  }
+
+  /**
+   * Tells if the directory is a module content root: the nav bar then shows it in bold, with the module icon.
+   * The first extension with a non-null answer wins. Return {@code null} to leave the decision to the other extensions,
+   * and to the project model when all of them return {@code null}.
+   */
+  @ApiStatus.Internal
+  default @Nullable Boolean isModuleContentRoot(@NotNull PsiDirectory directory) {
     return null;
   }
 }

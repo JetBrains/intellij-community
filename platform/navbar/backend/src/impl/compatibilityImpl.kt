@@ -11,7 +11,8 @@ import com.intellij.psi.PsiManager
 
 internal fun PsiDirectory.isModuleContentRoot(): Boolean {
   val dir = this.virtualFile
-  return dir.parent == null || ProjectRootsUtil.isModuleContentRoot(dir, project)
+  if (dir.parent == null) return true
+  return fromOldExtensions { it.isModuleContentRoot(this) } ?: ProjectRootsUtil.isModuleContentRoot(dir, project)
 }
 
 internal fun NavBarItem.psiDirectories(): List<PsiDirectory> {
