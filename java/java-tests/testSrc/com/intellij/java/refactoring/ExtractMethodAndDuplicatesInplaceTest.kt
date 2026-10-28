@@ -71,6 +71,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
   fun testReassignFinalFieldWriteOnly() = doTest()
   fun testConflictedNamesFiltered() = doTest()
   fun testVariableGetterSuggested() = doTest()
+  fun testElseIfWithOutputVariable() = doTest()
   fun testExactDuplicates() = doTest()
 
   fun testInvalidRename() {

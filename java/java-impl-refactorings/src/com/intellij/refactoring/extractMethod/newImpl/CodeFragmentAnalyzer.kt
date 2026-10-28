@@ -303,9 +303,9 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       val codeBlock = if (parent is PsiCodeBlock) {
         copyPlace.parent as PsiCodeBlock
       } else {
-        val block = copyPlace.parent.replace(factory.createCodeBlock()) as PsiCodeBlock
+        val block = factory.createCodeBlock()
         block.add(copyPlace)
-        block
+        parent.replace(block) as PsiCodeBlock
       }
       val artificialReturn = codeBlock.add(probeStatement) as PsiReturnStatement
       val artificialExpression = requireNotNull(artificialReturn.returnValue)
