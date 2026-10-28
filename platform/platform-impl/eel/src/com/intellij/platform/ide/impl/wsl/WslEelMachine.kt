@@ -63,8 +63,7 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
 
     val ijentPosixApi = distribution.getIjent(descriptor)
 
-    // Provide API explicitly to prevent SO
-    if (!isMirroredMode(desc = descriptor, eelApi = ijentPosixApi)) {
+    if (!isMirroredMode(distribution, eelApi = ijentPosixApi)) {
       return ijentPosixApi
     }
 

@@ -2,11 +2,12 @@
 package com.intellij.platform.ide.impl.wsl
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.platform.eel.ExecuteProcessException
 import com.intellij.platform.eel.convertToJVMProcess
 import com.intellij.platform.eel.getShell
-import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.EelProcessExecutionResult
 import com.intellij.platform.eel.provider.utils.stderrString
 import com.intellij.platform.eel.provider.utils.stdoutString
@@ -22,15 +23,15 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.toJavaDuration
 
 /**
- * Check if [desc] works in network mirrored mode.
- * If no [eelApi] provided, `toEelApi` will be used
+ * Checks if [wslDistribution] works in network mirrored mode.
+ * If no [eelApi] is provided, [WslIjentManager.getIjentApi] is used.
  */
-internal suspend fun isMirroredMode(desc: WslEelDescriptor, eelApi: IjentPosixApi?): Boolean = m.withLock {
-  val cachedValue = mirrorModeCache.getIfPresent(desc)
+internal suspend fun isMirroredMode(wslDistribution: WSLDistribution, eelApi: IjentPosixApi? = null): Boolean = m.withLock {
+  val cachedValue = mirrorModeCache.getIfPresent(wslDistribution)
   if (cachedValue != null) {
     return cachedValue
   }
-  val eelApi = eelApi ?: desc.toEelApi()
+  val eelApi = eelApi ?: WslIjentManager.instanceAsync().getIjentApi(null, wslDistribution, null, false)
   val result = run {
     val (shell, arg) = eelApi.exec.getShell()
     val result = try {
@@ -47,8 +48,8 @@ internal suspend fun isMirroredMode(desc: WslEelDescriptor, eelApi: IjentPosixAp
     }
     return@run result.stdoutString.trim() == "mirrored"
   }
-  log.info("For $desc mirrored mode is $result")
-  mirrorModeCache.put(desc, result)
+  log.info("For $wslDistribution mirrored mode is $result")
+  mirrorModeCache.put(wslDistribution, result)
   return result
 }
 
@@ -57,7 +58,7 @@ private val log = fileLogger()
 private val mirrorModeCache = Caffeine.newBuilder()
   .maximumSize(10)
   .expireAfterWrite(10.minutes.toJavaDuration())
-  .build<WslEelDescriptor, Boolean>()
+  .build<WSLDistribution, Boolean>()
 private val m = Mutex()
 
 /**

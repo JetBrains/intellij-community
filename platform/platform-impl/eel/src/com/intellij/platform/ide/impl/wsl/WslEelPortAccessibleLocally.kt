@@ -8,5 +8,5 @@ internal class WslEelPortAccessibleLocally : EelPortAccessibleLocallyTyped<WslEe
     localPort: UShort,
     eelPort: UShort,
     onEel: WslEelDescriptor,
-  ): Boolean = localPort == eelPort && isMirroredMode(desc = onEel, eelApi = null)
+  ): Boolean = localPort == eelPort && isMirroredMode(onEel.distribution)
 }
