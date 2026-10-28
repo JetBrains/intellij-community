@@ -1237,6 +1237,7 @@ plugins/compose/intellij.compose.ide.plugin.shared
 plugins/compose/intellij.compose.ide.plugin.tests.main
 plugins/configuration-script
 plugins/configuration-script/backend
+plugins/configuration-script/execution
 plugins/copyright
 plugins/copyright/vcs
 plugins/coverage

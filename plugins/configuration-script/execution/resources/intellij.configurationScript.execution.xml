@@ -1,0 +1,20 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <plugin id="com.intellij.configurationScript"/>
+    <module name="intellij.libraries.snakeyaml.engine"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.json"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.projectModel.impl"/>
+  </dependencies>
+  <!-- endregion -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.execution.MyRunConfigurationTemplateProvider"/>
+    <configurationScript.schemaGeneratorProvider implementation="com.intellij.configurationScript.execution.RunConfigurationSchemaGeneratorProvider"/>
+  </extensions>
+</idea-plugin>

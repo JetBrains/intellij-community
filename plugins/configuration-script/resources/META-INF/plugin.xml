@@ -20,8 +20,6 @@
     <module name="intellij.platform.configurationStore.impl"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.core.impl"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
     <module name="intellij.platform.lang"/>
@@ -34,14 +32,17 @@
   </dependencies>
   <content namespace="jetbrains">
     <module name="intellij.configurationScript.backend"/>
+    <module name="intellij.configurationScript.execution"/>
   </content>
+
+  <extensionPoints>
+    <extensionPoint name="schemaGeneratorProvider" interface="com.intellij.configurationScript.SchemaGeneratorProvider" dynamic="true"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.profile.codeInspection.InspectionProjectProfileManager"
                     serviceImplementation="com.intellij.configurationScript.inspection.ExternallyConfigurableProjectInspectionProfileManager"
                     overrides="true"/>
-
-    <runConfigurationTemplateProvider implementation="com.intellij.configurationScript.providers.MyRunConfigurationTemplateProvider"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationScript.providers.ConfigurationScriptProjectStoreFactory"

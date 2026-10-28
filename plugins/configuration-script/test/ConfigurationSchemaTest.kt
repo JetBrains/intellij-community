@@ -3,8 +3,8 @@ package com.intellij.configurationScript
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.configurationScript.execution.RunConfigurationJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
-import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
 import com.intellij.json.JsonFileType
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.updateSettings.impl.PluginsConfiguration

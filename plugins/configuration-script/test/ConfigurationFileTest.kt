@@ -1,8 +1,8 @@
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.configurationScript
 
-import com.intellij.configurationScript.providers.readRunConfigurations
-import com.intellij.configurationScript.schemaGenerators.rcTypeIdToPropertyName
+import com.intellij.configurationScript.execution.rcTypeIdToPropertyName
+import com.intellij.configurationScript.execution.readRunConfigurations
 //import com.intellij.execution.application.JvmMainMethodRunConfigurationOptions
 import com.intellij.execution.configurations.ConfigurationTypeBase
 import com.intellij.testFramework.ProjectRule

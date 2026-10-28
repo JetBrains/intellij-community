@@ -1,7 +1,6 @@
-package com.intellij.configurationScript.providers
+package com.intellij.configurationScript.execution
 
 import com.intellij.configurationScript.ConfigurationFileManager
-import com.intellij.configurationScript.Keys
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.execution.impl.RunConfigurationTemplateProvider
@@ -13,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 import org.snakeyaml.engine.v2.nodes.MappingNode
 import org.snakeyaml.engine.v2.nodes.ScalarNode
 
@@ -61,7 +61,8 @@ internal class MyRunConfigurationTemplateProvider(private val project: Project) 
   }
 }
 
-internal fun readRunConfigurations(rootNode: MappingNode, isTemplatesOnly: Boolean, processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
+@ApiStatus.Internal
+fun readRunConfigurations(rootNode: MappingNode, isTemplatesOnly: Boolean, processor: (factory: ConfigurationFactory, state: Any) -> Unit) {
   // later we can avoid full node graph building, but for now just use simple implementation (problem is that Yaml supports references and merge - proper support of it can be tricky)
   // "load" under the hood uses "compose" - i.e. Yaml itself doesn't use stream API to build object model.
   val dataReader = RunConfigurationListReader(processor)

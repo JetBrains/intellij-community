@@ -4,8 +4,8 @@ package com.intellij.configurationScript
 import com.intellij.configurationScript.inspection.InspectionJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.ComponentStateJsonSchemaGenerator
 import com.intellij.configurationScript.schemaGenerators.PluginJsonSchemaGenerator
-import com.intellij.configurationScript.schemaGenerators.RunConfigurationJsonSchemaGenerator
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.JsonObjectBuilder
 import org.jetbrains.io.json
@@ -15,15 +15,29 @@ internal val LOG = Logger.getInstance("#com.intellij.configurationScript")
 /** Builds the JSON schema of the configuration file. The build is slow, call it on demand. */
 @ApiStatus.Internal
 fun generateConfigurationSchema(): CharSequence {
-  return doGenerateConfigurationSchema(listOf(
-    PluginJsonSchemaGenerator(),
-    RunConfigurationJsonSchemaGenerator(),
-    ComponentStateJsonSchemaGenerator(),
-    InspectionJsonSchemaGenerator())
+  return doGenerateConfigurationSchema(
+    buildList {
+      add(PluginJsonSchemaGenerator())
+      SchemaGeneratorProvider.EP_NAME.extensionList.mapTo(this) { it.createGenerator() }
+      add(ComponentStateJsonSchemaGenerator())
+      add(InspectionJsonSchemaGenerator())
+    }
   )
 }
 
-internal interface SchemaGenerator {
+/** Creates a [SchemaGenerator] for a part of the configuration file schema that needs an optional dependency. */
+@ApiStatus.Internal
+interface SchemaGeneratorProvider {
+  companion object {
+    val EP_NAME: ExtensionPointName<SchemaGeneratorProvider> = ExtensionPointName("com.intellij.configurationScript.schemaGeneratorProvider")
+  }
+
+  /** Returns a new generator for each schema build, because a generator keeps the state of the build. */
+  fun createGenerator(): SchemaGenerator
+}
+
+@ApiStatus.Internal
+interface SchemaGenerator {
   val definitionNodeKey: CharSequence?
     get() = null
 
@@ -62,10 +76,4 @@ internal fun doGenerateConfigurationSchema(generators: List<SchemaGenerator>): C
     "additionalProperties" to false
   }
   return stringBuilder
-}
-
-@Suppress("JsonStandardCompliance")
-internal object Keys {
-  const val runConfigurations = "runConfigurations"
-  const val templates = "templates"
 }

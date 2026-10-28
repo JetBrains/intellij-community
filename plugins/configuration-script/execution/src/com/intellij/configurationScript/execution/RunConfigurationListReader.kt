@@ -1,10 +1,6 @@
-package com.intellij.configurationScript.providers
+package com.intellij.configurationScript.execution
 
-import com.intellij.configurationScript.Keys
-import com.intellij.configurationScript.LOG
 import com.intellij.configurationScript.readIntoObject
-import com.intellij.configurationScript.schemaGenerators.processConfigurationTypes
-import com.intellij.configurationScript.schemaGenerators.rcFactoryIdToPropertyName
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfigurationOptions

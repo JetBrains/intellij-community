@@ -9,12 +9,14 @@ import com.intellij.serialization.stateProperties.EnumStoredProperty
 import com.intellij.serialization.stateProperties.MapStoredProperty
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.containers.CollectionFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.JsonObjectBuilder
 import java.util.Locale
 import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.memberProperties
 
-internal class OptionClassJsonSchemaGenerator(val definitionNodeKey: String) {
+@ApiStatus.Internal
+class OptionClassJsonSchemaGenerator(val definitionNodeKey: String) {
   val definitionPointerPrefix = "#/$definitionNodeKey/"
   private val queue: MutableSet<Class<out BaseState>> = hashSetOf()
 
@@ -56,10 +58,11 @@ internal class OptionClassJsonSchemaGenerator(val definitionNodeKey: String) {
   }
 }
 
-internal fun buildJsonSchema(state: BaseState,
-                             builder: JsonObjectBuilder,
-                             subObjectSchemaGenerator: OptionClassJsonSchemaGenerator?,
-                             customFilter: ((name: String) -> Boolean)? = null) {
+@ApiStatus.Internal
+fun buildJsonSchema(state: BaseState,
+                    builder: JsonObjectBuilder,
+                    subObjectSchemaGenerator: OptionClassJsonSchemaGenerator?,
+                    customFilter: ((name: String) -> Boolean)? = null) {
   val properties = state.__getProperties()
   val memberProperties = state::class.memberProperties
   var propertyToAnnotation: MutableMap<String, Property>? = null

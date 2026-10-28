@@ -1,17 +1,32 @@
-package com.intellij.configurationScript.schemaGenerators
+package com.intellij.configurationScript.execution
 
-import com.intellij.configurationScript.Keys
-import com.intellij.configurationScript.LOG
 import com.intellij.configurationScript.SchemaGenerator
+import com.intellij.configurationScript.SchemaGeneratorProvider
+import com.intellij.configurationScript.schemaGenerators.OptionClassJsonSchemaGenerator
+import com.intellij.configurationScript.schemaGenerators.buildJsonSchema
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.execution.configurations.ConfigurationType
 import com.intellij.execution.configurations.RunConfigurationOptions
 import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ReflectionUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.io.JsonObjectBuilder
 import java.util.Locale
+
+internal val LOG = Logger.getInstance("#com.intellij.configurationScript.execution")
+
+@Suppress("JsonStandardCompliance")
+internal object Keys {
+  const val runConfigurations = "runConfigurations"
+  const val templates = "templates"
+}
+
+internal class RunConfigurationSchemaGeneratorProvider : SchemaGeneratorProvider {
+  override fun createGenerator(): SchemaGenerator = RunConfigurationJsonSchemaGenerator()
+}
 
 internal inline fun processConfigurationTypes(processor: (configurationType: ConfigurationType, propertyName: CharSequence, factories: Array<ConfigurationFactory>) -> Unit) {
   for (type in ConfigurationType.CONFIGURATION_TYPE_EP.extensionList) {
@@ -36,7 +51,8 @@ private inline fun processFactories(factories: Array<ConfigurationFactory>,
   }
 }
 
-internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
+@ApiStatus.Internal
+class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
   private val objectSchemaGenerator = OptionClassJsonSchemaGenerator("runConfigurationDefinitions")
 
   override val definitionNodeKey: CharSequence
@@ -211,7 +227,8 @@ internal class RunConfigurationJsonSchemaGenerator : SchemaGenerator {
 }
 
 // returns null if id is not valid
-internal fun rcTypeIdToPropertyName(configurationType: ConfigurationType): CharSequence? {
+@ApiStatus.Internal
+fun rcTypeIdToPropertyName(configurationType: ConfigurationType): CharSequence? {
   val result = idToPropertyName(configurationType.tag, configurationType, null) ?: return null
   if (StringUtil.equals(result, Keys.templates)) {
     LOG.error("Configuration type \"${configurationType.displayName}\" has forbidden id")
