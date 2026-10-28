@@ -74,6 +74,7 @@ interface VisualPosition {
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
+  fun getTextLength(): Int
   fun setText(text: String)
   fun getLineNumber(offset: Int): Int
   fun getLineStartOffset(line: Int): Int
