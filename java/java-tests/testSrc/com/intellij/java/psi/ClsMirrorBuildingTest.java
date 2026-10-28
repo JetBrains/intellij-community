@@ -4,6 +4,7 @@ package com.intellij.java.psi;
 import com.intellij.JavaTestUtil;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
@@ -13,6 +14,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ClassFileViewProvider;
@@ -35,6 +37,9 @@ import org.jetbrains.org.objectweb.asm.ClassReader;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testSimpleEnum() { doTest(); }
@@ -162,14 +167,14 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
 
   public void testDocumentReuse() throws IOException {
     File classFile = new File(FileUtil.getTempDirectory(), "ReuseTest.class");
-    FileUtil.writeToFile(classFile, "");
+    Files.write(classFile.toPath(), new byte[0]);
     VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(classFile.getPath());
     assertNotNull(classFile.getPath(), vFile);
     PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
     assertNotNull(psiFile);
     String testDir = getTestDataDir();
 
-    FileUtil.copy(new File(testDir, "pkg/ReuseTestV1.class"), classFile);
+    Files.copy(new File(testDir, "pkg/ReuseTestV1.class").toPath(), classFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     vFile.refresh(false, false);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     String text1 = BinaryFileTypeDecompilers.getInstance().allowDecompilerSlowOperation(() -> psiFile.getText());
@@ -179,7 +184,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
     assertNotNull(doc1);
     assertSame(doc1, PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
 
-    FileUtil.copy(new File(testDir, "pkg/ReuseTestV2.class"), classFile);
+    Files.copy(new File(testDir, "pkg/ReuseTestV2.class").toPath(), classFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
     vFile.refresh(false, false);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     String text2 = psiFile.getText();
@@ -259,6 +264,48 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testModuleInfo() {
     String testDir = getTestDataDir();
     doTest(testDir + "../stubBuilder/module-info.class", testDir + "module-info.txt");
+  }
+
+  public void testCopyClassFileDoesNotDecompile() throws Exception {
+    String testDir = getTestDataDir();
+    File srcClass = new File(testDir, "pkg/SimpleEnum.class");
+    Path destDir = Files.createDirectories(new File(FileUtil.getTempDirectory(), "copyClsTest_" + System.nanoTime()).toPath());
+    try {
+      Path destClass = destDir.resolve("SimpleEnum.class");
+      Files.copy(srcClass.toPath(), destClass);
+
+      VirtualFile vFile = StandardFileSystems.local().refreshAndFindFileByPath(destClass.toString());
+      assertNotNull(destClass.toString(), vFile);
+      VirtualFile parentDir = vFile.getParent();
+      assertNotNull(parentDir);
+
+      PsiFile psiFile = PsiManager.getInstance(getProject()).findFile(vFile);
+      assertNotNull(psiFile);
+
+      // Ensure no document is cached for the compiled file.
+      assertNull(FileDocumentManager.getInstance().getCachedDocument(vFile));
+
+      // Copy the .class file using PsiDirectory.copyFileFrom.
+      com.intellij.psi.PsiDirectory psiDir = PsiManager.getInstance(getProject()).findDirectory(parentDir);
+      assertNotNull(psiDir);
+      WriteAction.run(() -> {
+        psiDir.copyFileFrom("SimpleEnumCopy.class", psiFile);
+      });
+
+      // Verify the copy was created.
+      VirtualFile copiedVFile = parentDir.findChild("SimpleEnumCopy.class");
+      assertNotNull("Copied .class file should exist", copiedVFile);
+
+      // Verify that no document was created for either file.
+      // If getCachedDocument is used (instead of getDocument), no decompilation occurs.
+      assertNull("Original file must not have a cached document",
+        FileDocumentManager.getInstance().getCachedDocument(vFile));
+      assertNull("Copied file must not have a cached document",
+        FileDocumentManager.getInstance().getCachedDocument(copiedVFile));
+    }
+    finally {
+      NioFiles.deleteRecursively(destDir);
+    }
   }
 
   private static String getTestDataDir() {

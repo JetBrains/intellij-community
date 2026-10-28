@@ -13,7 +13,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.ui.Queryable;
@@ -411,12 +410,9 @@ public class PsiDirectoryImpl extends PsiElementBase implements PsiDirectory, Qu
   public @NotNull PsiFile copyFileFrom(@NotNull String newName, @NotNull PsiFile originalFile) throws IncorrectOperationException {
     checkCreateFile(newName);
 
-    VirtualFile originalVFile = originalFile.getVirtualFile();
-    if (originalVFile == null || !BinaryFileTypeDecompilers.getInstance().hasDecompiler(originalVFile)) {
-      Document document = PsiDocumentManager.getInstance(getProject()).getDocument(originalFile);
-      if (document != null) {
-        FileDocumentManager.getInstance().saveDocument(document);
-      }
+    Document document = PsiDocumentManager.getInstance(getProject()).getCachedDocument(originalFile);
+    if (document != null) {
+      FileDocumentManager.getInstance().saveDocument(document);
     }
 
     VirtualFile parent = getVirtualFile();
