@@ -5,24 +5,13 @@ import com.intellij.history.ActivityId
 import com.intellij.history.LocalHistory
 import com.intellij.history.core.HistoryPathFilter
 import com.intellij.history.integration.IntegrationTestCase
-import com.intellij.openapi.components.service
-import com.intellij.openapi.util.Disposer
-import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.util.application
 import junit.framework.TestCase
 
 class LocalHistoryActivityProviderTest : IntegrationTestCase() {
 
-  private val showSystemLabels get() = application.service<ActivityViewApplicationSettings>().showSystemLabels
-
   override fun setUp() {
     super.setUp()
-
-    val applicationSettings = application.service<ActivityViewApplicationSettings>()
-    val prev = applicationSettings.showSystemLabels
-    applicationSettings.showSystemLabels = false
-    Disposer.register(testRootDisposable) { applicationSettings.showSystemLabels = prev }
   }
 
   fun `test single file`() {
@@ -40,13 +29,13 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFile(file)
 
-    val fileActivity = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val fileActivity = provider.loadActivityList(scope, ActivityFilter(null, null, false))
     TestCase.assertEquals(/* file created + content changes */contents.size + 1, fileActivity.items.size)
 
     val activityContents = getContentFor(file, fileActivity.getChangeSets())
     TestCase.assertEquals(/* content before change happened */listOf("") + contents.dropLast(1), activityContents.reversed())
 
-    val filteredActivity = provider.filterActivityList(scope, fileActivity, ActivityFilter(null, keyword, showSystemLabels))
+    val filteredActivity = provider.filterActivityList(scope, fileActivity, ActivityFilter(null, keyword, false))
     TestCase.assertEquals(fileActivity.items[2], filteredActivity?.single())
   }
 
@@ -72,7 +61,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFile(file)
 
-    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, false))
     val labelNames = activityList.getLabelNameSet()
 
     TestCase.assertTrue(labelNames.containsAll(listOf(userLabel, visibleUserLabel)))
@@ -108,7 +97,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFile(file)
 
-    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, false))
     val labelNames = activityList.getLabelNameSet()
 
     TestCase.assertEquals(listOf(userLabel1, userLabel2, userLabel3, visibleEventLabel1, visibleEventLabel2), labelNames.toList().sorted())
@@ -129,7 +118,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFile(directory)
 
-    val directoryActivity = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val directoryActivity = provider.loadActivityList(scope, ActivityFilter(null, null, false))
     TestCase.assertEquals(4, directoryActivity.items.size)
     TestCase.assertEquals(listOf("label",
                                  "Modify ${file.name}",
@@ -159,7 +148,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.Recent
 
-    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, false))
     val labelNames = activityList.getLabelNameSet()
 
     TestCase.assertTrue(labelNames.containsAll(listOf(label1, label2)))
@@ -167,7 +156,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
 
     for (f in listOf(file, otherFile)) {
       val filter = HistoryPathFilter.create(file.name, project)
-      val fileActivity = provider.loadActivityList(scope, ActivityFilter(filter, null, showSystemLabels))
+      val fileActivity = provider.loadActivityList(scope, ActivityFilter(filter, null, false))
       TestCase.assertEquals(3, fileActivity.items.size)
 
       val activityContents = getContentFor(file, fileActivity.getChangeSets())
@@ -194,7 +183,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFiles(listOf(file, otherFile))
 
-    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, false))
 
     TestCase.assertEquals(listOf(visibleLabel,
                                  "Modify ${otherFile.name}",
@@ -223,7 +212,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFiles(listOf(file, directory))
 
-    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, false))
 
     TestCase.assertEquals(listOf("Modify ${file.name}",
                                  moveActionName,
@@ -244,7 +233,7 @@ class LocalHistoryActivityProviderTest : IntegrationTestCase() {
     val provider = LocalHistoryActivityProvider(project, gateway)
     val scope = ActivityScope.fromFiles(listOf(myRoot))
 
-    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, showSystemLabels))
+    val activityList = provider.loadActivityList(scope, ActivityFilter(null, null, false))
 
     TestCase.assertEquals(listOf("MODIFIED:${file.name}"), getDiffDataForSelection(provider, scope, activityList, 0, 1))
     TestCase.assertEquals(listOf("ADDED:${innerDirectory.name}"), getDiffDataForSelection(provider, scope, activityList, 1, 2))
