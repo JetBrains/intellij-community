@@ -50,11 +50,10 @@ before a read and at the close. `send`, `send_all`, `send_end`, `send_keepalive`
 
 ## Compatibility
 
-A change that an older end cannot read raises `SCHEMA_VERSION`. Each field after the first fields of schema 2 is
-optional: `RunSpec::nice`, `outputs` and `changes`, `Reply::Hello::features` and `binary_sha256`, `Request::Upgrade::force`,
-and `Reply::File::kind`. An older client
-does not send them, and an older agent ignores them. So an agent lists its features in its hello (`proto::feature`), and
-a client checks a feature before it relies on its field. An agent sends a file of another kind than
-`FileKind::Staged` only to a client that asked for outputs or changes, so an older client never gets one. An older agent
-cannot read `Request::Upgrade` and closes the connection, so a client sends it only to an agent with the feature
-`upgrade`. The SHA-256 of the binary names a build, because the version of the crate is the same for each build.
+A change that an older end cannot read raises `SCHEMA_VERSION`. The client and the agent are always replaced together,
+so the protocol keeps no field for an older end, with one exception: the upgrade. An agent lists its features in its
+hello (`proto::feature`), with the SHA-256 of its binary. An agent without the feature `upgrade` cannot read
+`Request::Upgrade` and closes the connection, so a client sends the request only to an agent with the feature. The
+hello, `Request::Upgrade`, `Reply::Upgraded`, the line of `yonderd version` and `yonderd check`, and the LaunchAgent
+keep their shapes, so the agent of a host takes the next binary over the link. The SHA-256 of the binary names a
+build, because the version of the crate is the same for each build.

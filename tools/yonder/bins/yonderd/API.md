@@ -11,7 +11,6 @@ The agent of yonder on a host: macOS and Linux. `crates/yonder-link/API.md` list
 | `setup --client <fingerprint> --name <name> [--port 7741]` | One JSON line `{"fingerprint": "<64 hex>", "port": 7741, "launchd": "bootstrapped" \| "restarted" \| "none"}`. |
 | `version` | One JSON line `{"version": "<cargo version>", "schema_version": 2, "features": [...], "sha256": "<64 hex>"}`. The SHA-256 of the binary is its build id, because the version is the same for each build. |
 | `check --plist <plist>` | The line of `version` with `"plist": "same" \| "changed" \| "unknown"`: whether `setup` of this build writes the LaunchAgent `plist` as it is. An upgrade runs it on the new binary. |
-| `upgrade <binary> [--force] [--launchctl launchctl]` | One JSON line `{"previous_sha256": "<64 hex>", "sha256": "<64 hex>", "version": "<cargo version>"}`. It installs `binary` as the request does, then runs `launchctl kickstart -k gui/<uid>/com.jetbrains.yonderd`. The bootstrap run of `yonder upgrade` starts it. |
 | `watchdog <binary> --sha256 <64 hex> --wait-ms <ms> [--launchctl launchctl]` | Lines in the log of the agent. An upgrade starts it, see [The upgrade](#the-upgrade). |
 | `dump-env <file>` | Nothing. The login shell runs it to write its environment into the file, see [The environment of a run](#the-environment-of-a-run). |
 
@@ -23,17 +22,15 @@ exits with 1. A usage error exits with 2.
 | A command line that clap refuses, such as a fingerprint that is not 64 hex digits | exit 2, no JSON |
 | No `HOME` | `agent_error` |
 | A `setup` client name with a control character, such as a line break | `bad_request` |
-| An identity, an allow list, a plist, a lease file or a port that the agent cannot read or write | `agent_error` |
+| An identity, an allow list, a plist or a port that the agent cannot read or write | `agent_error` |
 | A failed `launchctl print`, `bootstrap`, `bootout` or `kickstart` | `launchd_failed` |
-| An `upgrade` or a `watchdog` that refuses, see [The upgrade](#the-upgrade) | `bad_binary`, `plist_changed`, `downgrade`, `upgrade_failed`, `launchd_failed` |
+| A `watchdog` that refuses, see [The upgrade](#the-upgrade) | `upgrade_failed`, `launchd_failed` |
 
 A run borrows a host slot of the pool of Branch Deck for its run only, through `bd lease host` (`lend`, `give-back`,
 `fill`, `reclaim`; the "Host slots" of `spec/cli/lease.spec.md` in the Branch Deck repository). The bd of the host
 must name `lease_host_lend` in `bd schema`; else a run refuses with `lease_failed`. The keeper of `serve` wakes once a
-minute and at each `Start` of a repository: it returns each lease that a holder kept in `~/.cache/yonderd/leases/`
-before the host slots (`bd lease return --confirm-preserved`, once no old supervisor holds the lock of the holder),
-then runs `bd lease host reclaim`, then `bd lease host fill` once no such lease of the repository is left. A failed
-fill waits 1, 5, then 15 minutes.
+minute and at each `Start` of a repository: it runs `bd lease host reclaim`, then `bd lease host fill`. A failed fill
+waits 1, 5, then 15 minutes.
 
 ## The requests
 
@@ -44,13 +41,12 @@ fill waits 1, 5, then 15 minutes.
 | More than 1024 commits in one `Have` | `bad_request` |
 | A pack ref that is not `refs/yonder/<run id>` or `refs/yonder/base/<name>`, where a name has the rules of a run id | `bad_request` |
 | A start ref that is not `refs/yonder/<run>` of its own run | `bad_request`, and the ref stays |
-| A holder that cannot name a file (`[0-9A-Za-z._-]+`, no leading dot) | `bad_request` |
+| A holder that cannot name a base ref (`[0-9A-Za-z._-]+`, no leading dot) | `bad_request` |
 | A start with no command, or a fetch directory with a root, `.` or `..` | `bad_request` |
 | A follow offset that is not 0 or the offset after a line end of the log | `bad_request` |
 | A fetch or a forget of a run that goes on | `bad_request` |
 | A repository path that is no directory, or that git says is no repository | `repo_missing`, with the words of git |
 | A repository check that cannot run, such as a git that cannot start | `agent_error`, with the error of the start |
-| A `Lease` request of an older client | `bad_request`: host slots are lent per run (a `Release` answers `Done`) |
 | A start while the git of the host is older than the minimum and the agent cannot upgrade it, see [The git of the host](#the-git-of-the-host) | `old_git` |
 | A run whose upgrade of git failed while it waited, or whose `PATH` finds a git older than the minimum or no git | `old_git`, as the end of the run, before the command |
 | A run that waited for an upgrade of git for 91 min | `lock_timeout` |
@@ -94,9 +90,8 @@ fill waits 1, 5, then 15 minutes.
 - A follow of an ended run sends `Reply::Phases` right before its `Reply::Exit` or its `Reply::Refused`. `Runs` shows
   the phases that have ended so far. The phases are `git`, `slot`, `pack_wait`, `checkout`, `prepare`, `command` and
   `stage`, in this order. Only a run that waited for an upgrade of git has `git`. A run that ends early has only the phases up to its last step.
-- The hello lists the features of the agent: `config`, `login_env`, `nice` and `changes`, and `upgrade` on macOS
-  (`proto::feature`). It names the SHA-256 of the binary of the agent too. An agent
-  ignores a field of a start that it does not know, so a client checks the feature first.
+- The hello lists the features of the agent: `upgrade` on macOS (`proto::feature`). It names the SHA-256 of the binary
+  of the agent too.
 - Right before the command the run writes one line: `yonder: running in <slot> (slot <n>): load <l> on <c> cores, nice
   <n>, <limit> open files, git <version>, the login environment of <shell> from <age> ago`. The git is the one that the
   `PATH` of the command finds first, with the answer of `git --version`, such as `git 2.50.1 (Apple Git-155)`.
@@ -251,7 +246,7 @@ command comes after the prepare steps, so their changes stay out of the patch.
 
 A fetch sends the staged entries of the `fetch` directories (`FileKind::Staged`), then the files of each output
 (`FileKind::Output` with its path), then `changes.patch` (`FileKind::Changes`). A client that asked for neither outputs
-nor changes gets only the staged entries, as an older agent sends them.
+nor changes gets only the staged entries.
 
 ## The files
 
@@ -263,9 +258,9 @@ that succeeded in it.
 
 ## The upgrade
 
-`Request::Upgrade` and `yonderd upgrade <binary>` replace the binary that the first program argument of the LaunchAgent
-names, usually `~/.local/bin/yonderd`. They never change the identity, the allow list or the LaunchAgent: those stay
-with `setup`, so `yonder prepare`.
+`Request::Upgrade` replaces the binary that the first program argument of the LaunchAgent names, usually
+`~/.local/bin/yonderd`. It never changes the identity, the allow list or the LaunchAgent: those stay with `setup`, so
+`yonder prepare`. An agent without the feature `upgrade` knows no upgrade request: `yonder prepare` installs a new one.
 
 1. A watchdog of an earlier upgrade that still lives, as its flock on `~/.cache/yonderd/upgrade.lock` shows, refuses
    the upgrade.
@@ -281,13 +276,12 @@ with `setup`, so `yonder prepare`.
    `~/Library/Logs/yonderd.log`. It runs from `<binary>.previous` when that binary has the feature `upgrade`, else from
    the new binary. A watchdog that cannot start undoes the swap.
 7. The request answers `Reply::Upgraded`, waits up to `UPGRADE_DRAIN_SECONDS` for the requests that go on, less the
-   follows, and exits. launchd starts the new binary, because the LaunchAgent has `KeepAlive`. The command runs
-   `launchctl kickstart -k` instead.
+   follows, and exits. launchd starts the new binary, because the LaunchAgent has `KeepAlive`.
 
 Each `serve` writes `listening.json` once it listens: `{"sha256", "pid", "version"}` of its binary. The watchdog holds
 the flock of `upgrade.lock` while it lives. It waits for the file of a live process of the new binary and a TCP
-connection to the port of the LaunchAgent on the loopback address: `UPGRADE_DRAIN_SECONDS` plus
-`UPGRADE_WATCHDOG_SECONDS` for a request, `UPGRADE_WATCHDOG_SECONDS` for the command. Else it renames
+connection to the port of the LaunchAgent on the loopback address, for `UPGRADE_DRAIN_SECONDS` plus
+`UPGRADE_WATCHDOG_SECONDS`. Else it renames
 `<binary>.previous` back, runs `launchctl kickstart -k gui/<uid>/com.jetbrains.yonderd`, and waits as long again for a
 TCP connection to the port. It writes `~/.cache/yonderd/upgrade.json`: `{"sha256", "outcome", "at_ms"}`, with the
 outcome `listened`, `rolled_back` or `rolled_back_not_listening`. The check is no TLS hello, because the watchdog is no

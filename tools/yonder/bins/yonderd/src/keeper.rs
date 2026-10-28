@@ -1,11 +1,9 @@
 //! The keeper of the host slots: a thread of `serve` that wakes once a minute, and at each start of a run of a
-//! repository. Per repository it returns the leases that holders kept before the host slots (`lease::retire`), then
-//! takes up what no process acts on (`slots::reclaim`: a lend or a give-back of a gone supervisor, a clean or a shrink
-//! that died), then leases the missing slots (`slots::fill`). A fill can clone the whole checkout, so it runs on a thread
-//! of its own, one per repository at a time, and only once no lease of a holder is left: a fill beside the old leases
-//! would add slots that they hold, and nor while a supervisor of before the host slots lives (`RunDir::is_legacy`). A failed fill waits 1, 5, then 15 minutes before the next one. The repositories
-//! start from the repository list of the packs, the runs on disk and the lease files, so a restart of `serve` keeps
-//! them. While Homebrew upgrades git (`host_git`), a tick does nothing.
+//! repository. Per repository it takes up what no process acts on (`slots::reclaim`: a lend or a give-back of a gone
+//! supervisor, a clean or a shrink that died), then leases the missing slots (`slots::fill`). A fill can clone the whole
+//! checkout, so it runs on a thread of its own, one per repository at a time. A failed fill waits 1, 5, then 15 minutes
+//! before the next one. The repositories start from the repository list of the packs and the runs on disk, so a
+//! restart of `serve` keeps them. While Homebrew upgrades git (`host_git`), a tick does nothing.
 
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
@@ -18,7 +16,7 @@ use crate::child::never;
 use crate::home::Home;
 use crate::run::Runs;
 use crate::serve::log;
-use crate::{cleanup, host_git, lease, slots, tuning};
+use crate::{cleanup, host_git, slots, tuning};
 
 /// The waits after a failed fill: the first, the second, and every later one.
 const FILL_BACKOFF: [Duration; 3] = [Duration::from_mins(1), Duration::from_mins(5), Duration::from_mins(15)];
@@ -45,7 +43,6 @@ fn keep(home: &Home, woken: &mpsc::Receiver<PathBuf>) {
         .filter_map(|run| run.spec().ok())
         .map(|spec| home.expand(&spec.repo))
         .chain(cleanup::repos(home))
-        .chain(lease::repositories(&home.leases_dir()))
         .collect();
     let fills: Arc<Mutex<HashMap<PathBuf, Fill>>> = Arc::default();
     let mut said_unsupported = false;
@@ -74,13 +71,6 @@ fn keep(home: &Home, woken: &mpsc::Receiver<PathBuf>) {
 
 /// One tick of one repository.
 fn tend(home: &Home, repo: &Path, fills: &Arc<Mutex<HashMap<PathBuf, Fill>>>) {
-    // A supervisor of before the host slots takes a lease of its holder, also one that still waits for the lock of its
-    // holder and so shows no lease yet: no fill while one lives, or the pool would pass the count of the host slots
-    let legacy = Runs::new(home.runs_dir())
-        .list()
-        .iter()
-        .any(|run| run.is_legacy() && run.spec().is_ok_and(|spec| home.expand(&spec.repo) == repo));
-    let retired = lease::retire(&home.leases_dir(), repo, &never, &mut |line| log(line)) && !legacy;
     match slots::reclaim(repo) {
         Ok(lines) => {
             for line in lines {
@@ -88,9 +78,6 @@ fn tend(home: &Home, repo: &Path, fills: &Arc<Mutex<HashMap<PathBuf, Fill>>>) {
             }
         }
         Err(error) => log(&format!("cannot reclaim the host slots of {}: {error}", repo.display())),
-    }
-    if !retired {
-        return;
     }
     {
         let mut fills = fills.lock().unwrap_or_else(PoisonError::into_inner);

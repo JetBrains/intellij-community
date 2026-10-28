@@ -24,7 +24,7 @@ pub const PACK_WAIT_SECONDS: u64 = 30 * 60;
 
 /// How long the supervisor of a run waits for the next chunk of the pack of its reference. A client sends a chunk at
 /// least every [`HEARTBEAT_SECONDS`] on the connection of the pack, an empty one while it builds the pack. So a client
-/// that is gone ends the wait of its run in this time, and the lock and the lease of the holder go.
+/// that is gone ends the wait of its run in this time, and its host slot goes back.
 pub const PACK_STALL_SECONDS: u64 = 120;
 
 /// The prefix of the refs that a client keeps on the host as bases of its packs, see [`Request::Pack`].
@@ -41,32 +41,17 @@ pub const UPGRADE_WATCHDOG_SECONDS: u64 = 60;
 /// The largest agent binary of [`Request::Upgrade`].
 pub const MAX_BINARY: u64 = 256 * 1024 * 1024;
 
-/// What an agent does beyond the base of [`SCHEMA_VERSION`]. [`Reply::Hello`] lists the features of the agent. An agent
-/// ignores a field of a request that it does not know, so a client checks a feature before it relies on its field.
+/// What an agent does beyond the base of [`SCHEMA_VERSION`]. [`Reply::Hello`] lists the features of the agent, and
+/// `yonderd version` and `yonderd check` list them too. A client checks a feature before it sends its request.
 pub mod feature {
-    /// The agent reads `.yonder.toml` in the root of the commit: its prepare steps, its environment and its outputs, see
-    /// [`RunSpec::outputs`](super::RunSpec::outputs).
-    pub const CONFIG: &str = "config";
-    /// The agent gives the prepare steps and the command the login environment of its user and a raised limit of open
-    /// files.
-    pub const LOGIN_ENV: &str = "login_env";
-    /// [`RunSpec::nice`](super::RunSpec::nice).
-    pub const NICE: &str = "nice";
-    /// [`RunSpec::changes`](super::RunSpec::changes).
-    pub const CHANGES: &str = "changes";
-    /// [`Request::Upgrade`](super::Request::Upgrade), and the commands `yonderd upgrade` and `yonderd watchdog`. Only an
+    /// [`Request::Upgrade`](super::Request::Upgrade), and the commands `yonderd check` and `yonderd watchdog`. Only an
     /// agent on macOS has it, because only launchd starts the new binary.
     pub const UPGRADE: &str = "upgrade";
 }
 
-/// The features of an agent of this build on every platform.
-pub const FEATURES: [&str; 4] = [feature::CONFIG, feature::LOGIN_ENV, feature::NICE, feature::CHANGES];
-
-/// The features of an agent of this build on this platform, for its [`Reply::Hello`]: [`FEATURES`], and
-/// [`feature::UPGRADE`] on macOS.
+/// The features of an agent of this build on this platform, for its [`Reply::Hello`]: [`feature::UPGRADE`] on macOS.
 pub fn features() -> Vec<&'static str> {
-    let upgrade = cfg!(target_os = "macos").then_some(feature::UPGRADE);
-    FEATURES.into_iter().chain(upgrade).collect()
+    cfg!(target_os = "macos").then_some(feature::UPGRADE).into_iter().collect()
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -103,10 +88,6 @@ pub enum Request {
     Forget { run: String },
     /// The runs that the agent keeps. Reply: [`Reply::Runs`].
     Runs,
-    /// Takes or reuses the lease of `holder` without a run. Reply: [`Reply::Leased`].
-    Lease { repo: String, holder: String },
-    /// Returns the lease of `holder`. Reply: [`Reply::Done`].
-    Release { repo: String, holder: String },
     /// Replaces the agent binary that the LaunchAgent names. The new binary follows as a byte stream of `size` bytes
     /// whose SHA-256 is `sha256` (64 lower-case hex digits). Replies: [`Reply::Heartbeat`] while the agent checks the
     /// binary, then [`Reply::Upgraded`]. Feature [`feature::UPGRADE`].
@@ -115,7 +96,7 @@ pub enum Request {
     /// launchd starts the new binary. A watchdog restores the previous binary when the new one does not listen within
     /// [`UPGRADE_WATCHDOG_SECONDS`] after that. A run goes on, because its supervisor has a session of its own.
     ///
-    /// `force` takes a binary of a lower version too. An agent before the field ignores it.
+    /// `force` takes a binary of a lower version too.
     Upgrade {
         size: u64,
         sha256: String,
@@ -124,15 +105,14 @@ pub enum Request {
     },
 }
 
-/// What one run does. A field after `idle_hours` is optional: an older client does not send it, and an older agent
-/// ignores it.
+/// What one run does. The JSON of a field after `fetch` is optional, and its default is left out.
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct RunSpec {
     /// The id that the client chose: `<epoch ms>-<pid>`. It names the run directory, so it is `[0-9A-Za-z._-]+`.
     pub run: String,
     /// The main repository on the host. A leading `~/` is the home directory of the agent.
     pub repo: String,
-    /// The lease holder: one per local checkout, so two checkouts never share a slot.
+    /// The holder: one per local checkout. A run prefers the host slot that its holder used last.
     pub holder: String,
     /// The commit to check out in the slot.
     pub commit: String,
@@ -143,19 +123,15 @@ pub struct RunSpec {
     /// Directories relative to the slot root, such as `out/bt-runs`. Each entry that the command adds to one goes to
     /// the stage of the run, for [`Request::Fetch`].
     pub fetch: Vec<String>,
-    /// A lease of another holder that no run used for this many hours goes back to the pool after the run.
-    pub idle_hours: u32,
-    /// The niceness of the prepare steps and the command, 0 to 19. `None` keeps the niceness of the agent. Feature
-    /// [`feature::NICE`].
+    /// The niceness of the prepare steps and the command, 0 to 19. `None` keeps the niceness of the agent.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub nice: Option<u8>,
     /// Stage the outputs that `.yonder.toml` of the commit names, for [`Request::Fetch`]. The agent removes each output
     /// before the command, so only the outputs of this run come back. Without it the agent leaves the outputs alone.
-    /// Feature [`feature::CONFIG`].
     #[serde(default, skip_serializing_if = "is_false")]
     pub outputs: bool,
     /// Stage the changes that the command made to the files of the slot, as a patch for `git apply`, for
-    /// [`Request::Fetch`]. Feature [`feature::CHANGES`].
+    /// [`Request::Fetch`].
     #[serde(default, skip_serializing_if = "is_false")]
     pub changes: bool,
 }
@@ -169,11 +145,11 @@ pub enum Reply {
         /// `std::env::consts::OS` and `ARCH` of the agent.
         os: String,
         arch: String,
-        /// The features of the agent, see [`feature`]. An older agent sends none.
+        /// The features of the agent, see [`feature`].
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         features: Vec<String>,
-        /// The SHA-256 of the binary of the agent, see [`crate::digest`]. An older agent, or one that cannot read its
-        /// binary, sends none.
+        /// The SHA-256 of the binary of the agent, see [`crate::digest`]. An agent that cannot read its binary sends
+        /// none.
         #[serde(default, skip_serializing_if = "Option::is_none")]
         binary_sha256: Option<String>,
     },
@@ -207,8 +183,8 @@ pub enum Reply {
         path: String,
         size: u64,
         executable: bool,
-        /// What the file is. An older agent sends only [`FileKind::Staged`], and a client that set neither
-        /// [`RunSpec::outputs`] nor [`RunSpec::changes`] gets only those.
+        /// What the file is. A client that set neither [`RunSpec::outputs`] nor [`RunSpec::changes`] gets only
+        /// [`FileKind::Staged`].
         #[serde(default, skip_serializing_if = "FileKind::is_staged")]
         kind: FileKind,
     },
@@ -218,12 +194,6 @@ pub enum Reply {
     },
     Runs {
         runs: Vec<RunInfo>,
-    },
-    Leased {
-        slot: String,
-        lease_id: String,
-        /// `false` when the holder had the lease already.
-        fresh: bool,
     },
     Done {
         message: String,
@@ -288,8 +258,8 @@ pub struct RunInfo {
     pub fetch: Vec<String>,
 }
 
-/// One step of a run and its duration: `lock`, `lease`, `pack_wait`, `checkout`, `prepare`, `command`, `stage`. An older
-/// agent has no `prepare`. A client adds its own steps, such as `pack`, `upload` and `fetch`, when it reports a run.
+/// One step of a run and its duration: `git`, `slot`, `pack_wait`, `checkout`, `prepare`, `command`, `stage`. A client
+/// adds its own steps, such as `pack`, `upload` and `fetch`, when it reports a run.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Phase {
     pub name: String,
@@ -333,7 +303,7 @@ const fn is_false(value: &bool) -> bool {
     !*value
 }
 
-/// Whether `run` can name a run directory, a lease file and the last part of a git ref. A run id names the ref
+/// Whether `run` can name a run directory and the last part of a git ref. A run id names the ref
 /// `refs/yonder/<run>`, and a holder names `refs/yonder/base/<holder>`, so the rules of git refs hold too: no `..`, and
 /// no `.` or `.lock` at the end.
 pub fn is_run_id(run: &str) -> bool {

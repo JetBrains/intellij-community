@@ -38,8 +38,8 @@ install git` or `brew upgrade git` itself when its git is older. A host without 
 it. In a checkout of the monorepo it builds `@community//tools/yonder:yonderd` with Bazel, as `prepare` does, or it
 sends `--agent <path>`. The agent checks the binary, keeps the old one as `<binary>.previous`, and exits, so that
 launchd starts the new one. A watchdog there brings back the old binary when the new one does not listen in time. A run
-goes on. An agent that knows no upgrade request gets one run that carries the binary in `yonder-upgrade/` of the
-working tree, and the binary installs itself there. `bins/yonderd/API.md` has the steps, and `crates/yonder-client/API.md` the refusals.
+goes on. An agent that knows no upgrade request refuses, and `yonder prepare` installs a new one. `bins/yonderd/API.md`
+has the steps, and `crates/yonder-client/API.md` the refusals.
 
 ## The agent skill
 

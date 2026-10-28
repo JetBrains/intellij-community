@@ -113,16 +113,13 @@ enum Command {
     },
     /// Updates the agent on the host over the link, without ssh. The agent installs the new binary and restarts, and a
     /// watchdog there brings back the previous binary when the new one does not start. An agent that knows no upgrade
-    /// request gets a run that carries the binary in `yonder-upgrade/` of this working tree and installs it, once.
+    /// request refuses: `prepare` installs a new one.
     Upgrade {
         alias: String,
         /// A local `yonderd` binary for the host (default: the client builds `@community//tools/yonder:yonderd` with
         /// `./bazel.cmd` in the root of this checkout of the monorepo).
         #[arg(long)]
         agent: Option<PathBuf>,
-        /// The lease holder of the run of an agent that knows no upgrade request.
-        #[arg(long)]
-        holder: Option<String>,
         /// Send the binary that the agent runs already too, and let the agent take a binary of a lower version.
         #[arg(long)]
         force: bool,
@@ -312,28 +309,17 @@ fn execute(
                 prepared.host_file.display()
             )))
         }
-        Command::Upgrade {
-            alias,
-            agent,
-            holder: named,
-            force,
-        } => {
+        Command::Upgrade { alias, agent, force } => {
             install_interrupt(say, "Ctrl+C ends this process, and a child such as the Bazel build goes on");
             // The skill is local, so its refresh comes first and does not wait for the host.
             if let Some(said) = skill_dir.and_then(skill::refresh) {
                 say(&said);
             }
             let checkout = checkout_root(processes).ok();
-            let holder = named.unwrap_or_else(|| {
-                checkout
-                    .as_deref()
-                    .map_or_else(|| HOLDER_PREFIX.to_owned(), |root| holder(HOLDER_PREFIX, root))
-            });
             let upgraded = client.upgrade(&UpgradeRequest {
                 alias: &alias,
                 agent: agent.as_deref(),
                 checkout: checkout.as_deref(),
-                holder: &holder,
                 force,
             })?;
             Ok(answer(&upgraded_text(&alias, &upgraded)))
@@ -367,8 +353,7 @@ fn upgraded_text(alias: &str, upgraded: &yonder_client::Upgraded) -> String {
     );
     let how = match &upgraded.way {
         UpgradeWay::Current => return format!("yonderd {} on {alias} is current\n{answers}", short(&upgraded.sha256)),
-        UpgradeWay::Request => "over the link".to_owned(),
-        UpgradeWay::Bootstrap(run) => format!("through the run {run}"),
+        UpgradeWay::Request => "over the link",
     };
     let previous = upgraded
         .previous_sha256

@@ -295,20 +295,14 @@ fn fetch_and_forget_name_a_run() {
 }
 
 #[test]
-fn upgrade_takes_the_alias_an_agent_and_a_holder_and_refuses_an_unprepared_host() {
+fn upgrade_takes_the_alias_and_an_agent_and_refuses_an_unprepared_host() {
     let cli = Cli::try_parse_from(["yonder", "upgrade", "studio", "--agent", "/tmp/yonderd", "--force"]).expect("parsed");
-    let Command::Upgrade {
-        alias,
-        agent,
-        holder,
-        force,
-    } = cli.command
-    else {
+    let Command::Upgrade { alias, agent, force } = cli.command else {
         panic!("{cli:?}")
     };
     assert_eq!(
-        (alias.as_str(), agent, holder, force),
-        ("studio", Some(PathBuf::from("/tmp/yonderd")), None, true)
+        (alias.as_str(), agent, force),
+        ("studio", Some(PathBuf::from("/tmp/yonderd")), true)
     );
     let (code, _, said) = invoke(&["upgrade", "studio"]);
     assert_eq!(code, 255);
@@ -333,10 +327,6 @@ fn an_upgrade_says_how_the_binary_came_and_which_agent_answers() {
     assert_eq!(
         upgraded_text("studio", &upgraded(UpgradeWay::Request)),
         format!("upgraded yonderd on studio from aaaaaaaaaaaa to bbbbbbbbbbbb over the link\n{answers}")
-    );
-    assert_eq!(
-        upgraded_text("studio", &upgraded(UpgradeWay::Bootstrap("1-2".to_owned()))),
-        format!("upgraded yonderd on studio from aaaaaaaaaaaa to bbbbbbbbbbbb through the run 1-2\n{answers}")
     );
     assert_eq!(
         upgraded_text("studio", &upgraded(UpgradeWay::Current)),

@@ -1,10 +1,6 @@
-//! The upgrade of the agent binary without ssh. Two ways lead here, and both end in [`Install::run`]:
-//!
-//! - [`Request::Upgrade`] of a client: `serve` stages the binary of the byte stream, installs it, answers, waits for its
-//!   other requests, and exits. launchd then starts the new binary, because the LaunchAgent has `KeepAlive`.
-//! - `yonderd upgrade <binary>`: a run of a client starts it as the user, with a binary that the run shipped. An agent
-//!   without [`feature::UPGRADE`] knows no upgrade request, so a client takes this way once. The command restarts the
-//!   agent with `launchctl kickstart -k`.
+//! The upgrade of the agent binary without ssh: [`Request::Upgrade`] of a client. `serve` stages the binary of the byte
+//! stream, installs it with [`Install::run`], answers, waits for its other requests, and exits. launchd then starts the
+//! new binary, because the LaunchAgent has `KeepAlive`.
 //!
 //! The install refuses while the watchdog of an earlier upgrade lives. It stages the new binary beside the binary of the
 //! LaunchAgent and checks it with `<staged> check --plist <plist>`: the schema, the feature, and the LaunchAgent that the
@@ -32,7 +28,7 @@ use std::time::{Duration, Instant, SystemTime};
 
 use serde::{Deserialize, Serialize};
 use yonder_link::digest::{Sha256, sha256_file};
-use yonder_link::proto::{MAX_BINARY, SCHEMA_VERSION, feature};
+use yonder_link::proto::{SCHEMA_VERSION, feature};
 
 use crate::child;
 use crate::files::{open_private, private_dir, try_flock, try_flock_shared, write_private};
@@ -67,8 +63,8 @@ pub(crate) struct Listening {
     pub(crate) version: String,
 }
 
-/// What an upgrade did: the answer of the request and the line of the command.
-#[derive(Debug, PartialEq, Eq, Serialize)]
+/// What an upgrade did: the answer of the request.
+#[derive(Debug, PartialEq, Eq)]
 pub(crate) struct Upgraded {
     pub(crate) previous_sha256: String,
     pub(crate) sha256: String,
@@ -600,47 +596,6 @@ fn is_alive(pid: u32) -> bool {
     };
     // SAFETY: kill with the signal 0 sends nothing, takes plain integers, and touches no memory of this process.
     unsafe { libc::kill(pid, 0) == 0 }
-}
-
-/// `yonderd upgrade <binary>`: installs `binary` over the binary of the LaunchAgent, starts the watchdog, and restarts
-/// the agent.
-pub(crate) fn upgrade_from_file(
-    home: &Home,
-    binary: &Path,
-    launchctl_program: &Path,
-    wait: Duration,
-    force: bool,
-) -> Result<Upgraded, Refusal> {
-    check_launchd()?;
-    let target = launch_agent(home)?.exe;
-    let unreadable = |error: io::Error| refused(BAD_BINARY, format!("cannot read {}: {error}", binary.display()));
-    let mut source = File::open(binary).map_err(unreadable)?;
-    let size = source.metadata().map_err(unreadable)?.len();
-    if size > MAX_BINARY {
-        return Err(refused(
-            BAD_BINARY,
-            format!("{} has {size} bytes, more than {MAX_BINARY}", binary.display()),
-        ));
-    }
-    let mut staging = Staging::create(&target, MAX_BINARY)?;
-    io::copy(&mut source, &mut staging).map_err(|error| {
-        refused(
-            UPGRADE_FAILED,
-            format!("cannot copy {} to {}: {error}", binary.display(), target.display()),
-        )
-    })?;
-    let staged = staging.finish()?;
-    let upgraded = Install {
-        home,
-        target: &target,
-        launchctl: launchctl_program,
-        wait,
-        force,
-    }
-    .run(staged)?;
-    let (_, service) = service();
-    launchctl(launchctl_program, &["kickstart", "-k", &service]).map_err(|message| refused(LAUNCHD_FAILED, message))?;
-    Ok(upgraded)
 }
 
 #[cfg(test)]

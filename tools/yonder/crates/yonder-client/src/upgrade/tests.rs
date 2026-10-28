@@ -2,13 +2,9 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use pretty_assertions::assert_eq;
-use yonder_link::Channel;
-use yonder_link::proto::{FEATURES, RunSpec, Stream};
 
 use super::*;
-use crate::testkit::{FakeProcesses, Said, Setup, calm, client, failed, ok};
-
-const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
+use crate::testkit::{FakeProcesses, Said, Setup, calm, client};
 
 /// The head of a Mach-O binary of arm64, the platform of the fake agent, and a body.
 const MACHO_ARM64: &[u8] = b"\xcf\xfa\xed\xfe\x0c\x00\x00\x01 a yonderd of arm64";
@@ -18,7 +14,7 @@ const OLD: &str = "1111111111111111111111111111111111111111111111111111111111111
 
 /// The features of an agent of this build on macOS.
 fn with_upgrade() -> Vec<&'static str> {
-    FEATURES.into_iter().chain([feature::UPGRADE]).collect()
+    vec![feature::UPGRADE]
 }
 
 /// An agent of [`OLD`] that takes an upgrade. With `restarts`, the hellos after the upgrade name the new binary, as a
@@ -57,7 +53,6 @@ fn request<'a>(agent: Option<&'a Path>, checkout: Option<&'a Path>) -> UpgradeRe
         alias: "studio",
         agent,
         checkout,
-        holder: "yonder-0123456789ab",
         force: false,
     }
 }
@@ -161,130 +156,19 @@ fn the_previous_binary_that_answers_at_the_end_is_a_rollback() {
     );
 }
 
-/// The rules of a clean checkout at [`COMMIT`] whose `yonder-upgrade/yonderd` git does not ignore.
-fn bootstrap_checkout() -> FakeProcesses {
-    FakeProcesses::new(&[
-        ("check-ignore", failed(1, "")),
-        ("status --porcelain", ok("")),
-        ("rev-parse", ok(&format!("{COMMIT}\n"))),
-        ("rev-list --count", ok("7\n")),
-        ("rev-list", ok(&format!("{COMMIT}\n"))),
-    ])
-}
-
-/// The spec of a bootstrap run and the binary that the checkout held at its start.
-type Started = (RunSpec, Option<Vec<u8>>);
-
+/// An agent without the feature cannot read an upgrade request, so the client refuses before it sends the binary.
 #[test]
-fn an_agent_without_the_feature_gets_a_run_that_carries_the_binary_and_installs_it() {
-    let binary = Arc::new(Mutex::new(None));
-    let started: Arc<Mutex<Option<Started>>> = Arc::default();
-    let new = sha256_hex(MACHO_ARM64);
-    let line = format!(r#"{{"previous_sha256":"{OLD}","sha256":"{new}","version":"0.1.0"}}"#);
-    let checkout = Arc::new(Mutex::new(PathBuf::new()));
-    let setup = Setup::with_binary(&FEATURES, Arc::clone(&binary), {
-        let (started, new, checkout) = (Arc::clone(&started), new.clone(), Arc::clone(&checkout));
-        move |request, channel: &mut Channel| {
-            let _ = match request {
-                Request::Have { commits, .. } => channel.send(&Reply::Have { commits: commits.clone() }),
-                Request::Start(spec) => {
-                    let shipped = checkout
-                        .lock()
-                        .unwrap_or_else(PoisonError::into_inner)
-                        .join(BOOTSTRAP_DIR)
-                        .join("yonderd");
-                    *started.lock().unwrap_or_else(PoisonError::into_inner) = Some((spec.clone(), fs::read(shipped).ok()));
-                    channel.send(&Reply::Started { run: spec.run.clone() })
-                }
-                Request::Follow { .. } => {
-                    let _ = channel.send(&Reply::Output {
-                        stream: Stream::Stdout,
-                        text: line.clone(),
-                        end: 1,
-                    });
-                    *binary.lock().unwrap_or_else(PoisonError::into_inner) = Some(new.clone());
-                    channel.send(&Reply::Exit { code: 0 })
-                }
-                Request::Forget { .. } => channel.send(&Reply::Done {
-                    message: "removed".to_owned(),
-                }),
-                _ => channel.send(&Reply::refused("bad_request", "not in this script")),
-            };
-        }
-    });
-    let root = setup.checkout();
-    fs::create_dir_all(&root).expect("the checkout");
-    *checkout.lock().unwrap_or_else(PoisonError::into_inner) = root.clone();
+fn an_agent_without_the_feature_is_refused_before_the_binary_goes() {
+    let setup = Setup::with_features(&[], |_, _| {});
     let agent = binary_file(&setup, MACHO_ARM64);
-    let processes = bootstrap_checkout();
-    let said = Said::default();
-    let say = |line: &str| said.push(line);
-    let upgraded = client(&setup, &processes, &say, &calm)
-        .upgrade(&request(Some(&agent), Some(&root)))
-        .expect("upgraded");
-
-    let (spec, shipped) = started.lock().unwrap_or_else(PoisonError::into_inner).clone().expect("a run");
-    assert_eq!(upgraded.way, UpgradeWay::Bootstrap(spec.run.clone()));
-    assert_eq!(upgraded.sha256, new);
-    assert_eq!(upgraded.previous_sha256.as_deref(), Some(OLD));
-    assert_eq!(spec.command, ["/bin/sh", "-c", BOOTSTRAP_COMMAND, "yonder-upgrade/yonderd"]);
+    let refusal = client(&setup, &FakeProcesses::default(), &|_| {}, &calm)
+        .upgrade(&request(Some(&agent), None))
+        .expect_err("an agent without the feature");
+    assert_eq!(refusal.code, code::OLD_AGENT);
     assert_eq!(
-        (spec.repo.as_str(), spec.holder.as_str(), spec.commit.as_str()),
-        ("~/projects/idea-1", "yonder-0123456789ab", COMMIT)
+        refusal.message,
+        "the agent on studio knows no upgrade request: `yonder prepare studio` installs a new one over ssh"
     );
-    assert_eq!(spec.nice, None);
-    assert_eq!(
-        shipped.as_deref(),
-        Some(MACHO_ARM64),
-        "the working tree holds the binary during the run"
-    );
-    assert!(!root.join(BOOTSTRAP_DIR).exists(), "the directory goes after the run");
-    assert!(
-        processes
-            .texts()
-            .iter()
-            .any(|text| text.ends_with("check-ignore -q -- yonder-upgrade/yonderd")),
-        "{:?}",
-        processes.texts()
-    );
-    assert!(
-        said.lines()
-            .iter()
-            .any(|line| line.contains("knows no upgrade request, so a run carries the binary")),
-        "{:?}",
-        said.lines()
-    );
-}
-
-#[test]
-fn a_bootstrap_refuses_a_path_that_git_ignores_or_that_is_there_already() {
-    let setup = Setup::with_features(&FEATURES, |_, _| {});
-    let agent = binary_file(&setup, MACHO_ARM64);
-    let root = setup.checkout();
-    fs::create_dir_all(&root).expect("the checkout");
-    let ignoring = FakeProcesses::new(&[("check-ignore", ok(""))]);
-    let refusal = client(&setup, &ignoring, &|_| {}, &calm)
-        .upgrade(&request(Some(&agent), Some(&root)))
-        .expect_err("an ignored path");
-    assert_eq!(refusal.code, code::USAGE);
-    assert!(
-        refusal.message.contains("git ignores yonder-upgrade/yonderd"),
-        "{}",
-        refusal.message
-    );
-    assert!(!root.join(BOOTSTRAP_DIR).exists());
-
-    fs::create_dir(root.join(BOOTSTRAP_DIR)).expect("a directory of the user");
-    let refusal = client(&setup, &bootstrap_checkout(), &|_| {}, &calm)
-        .upgrade(&request(Some(&agent), Some(&root)))
-        .expect_err("the directory is there");
-    assert_eq!(refusal.code, code::USAGE);
-    assert!(
-        refusal.message.ends_with("is there already: remove it, and run the upgrade again"),
-        "{}",
-        refusal.message
-    );
-    assert!(root.join(BOOTSTRAP_DIR).is_dir(), "the directory of the user stays");
     assert_eq!(setup.agent.requests(), []);
 }
 
@@ -307,24 +191,4 @@ fn the_header_names_the_platform_of_a_binary() {
     for unknown in [&b"#!/bin/sh"[..], b"", &elf(0x28), b"\xcf\xfa\xed\xfe\x12\x00\x00\x00"] {
         assert_eq!(binary_platform(unknown), Platform::Unknown, "{unknown:?}");
     }
-}
-
-/// The command gives the shipped binary its mode, then runs `upgrade` of it with the rest of its arguments.
-#[test]
-fn the_bootstrap_command_makes_the_binary_executable_and_runs_its_upgrade() {
-    let slot = tempfile::tempdir().expect("a temporary slot");
-    fs::create_dir(slot.path().join(BOOTSTRAP_DIR)).expect("the directory");
-    fs::write(slot.path().join(BOOTSTRAP_DIR).join("yonderd"), "#!/bin/sh\necho \"$0 $*\"\n").expect("a binary without a mode");
-    let ran = std::process::Command::new("/bin/sh")
-        .args(["-c", BOOTSTRAP_COMMAND, "yonder-upgrade/yonderd", "--force"])
-        .current_dir(slot.path())
-        .output()
-        .expect("the command");
-    assert!(ran.status.success(), "{}", String::from_utf8_lossy(&ran.stderr));
-    // The script sees its own path as the kernel resolved it.
-    let stdout = String::from_utf8_lossy(&ran.stdout);
-    assert!(
-        stdout.ends_with("yonder-upgrade/yonderd upgrade yonder-upgrade/yonderd --force\n"),
-        "{stdout}"
-    );
 }

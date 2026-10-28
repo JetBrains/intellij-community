@@ -8,7 +8,7 @@ use std::sync::{Arc, Mutex, PoisonError};
 use std::thread;
 use std::time::Duration;
 
-use yonder_link::proto::{FEATURES, Reply, Request, SCHEMA_VERSION};
+use yonder_link::proto::{Reply, Request, SCHEMA_VERSION};
 use yonder_link::{AllowList, Channel, Identity, ServerTls};
 
 use crate::config::{Config, HostFile};
@@ -249,7 +249,7 @@ impl Setup {
     }
 
     pub(crate) fn with_schema(schema: u32, script: impl Fn(&Request, &mut Channel) + Send + Sync + 'static) -> Self {
-        Self::with_agent(schema, &FEATURES, Arc::default(), script)
+        Self::with_agent(schema, &[], Arc::default(), script)
     }
 
     /// A setup whose agent has only `features`: none for an agent older than the features.

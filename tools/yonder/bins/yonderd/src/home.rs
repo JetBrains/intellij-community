@@ -90,12 +90,6 @@ impl Home {
         self.dir.join(".cache/yonderd/git-users.lock")
     }
 
-    /// The lease file and the lock of each holder of before the host slots, which the keeper returns:
-    /// `~/.cache/yonderd/leases/`.
-    pub(crate) fn leases_dir(&self) -> PathBuf {
-        self.dir.join(".cache/yonderd/leases")
-    }
-
     /// The fingerprints of the prepare steps per host slot (`slots::Prepared`).
     pub(crate) fn slots_dir(&self) -> PathBuf {
         self.dir.join(".cache/yonderd/slots")

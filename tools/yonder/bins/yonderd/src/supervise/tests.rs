@@ -86,7 +86,6 @@ fn spec_of(commit: &str) -> RunSpec {
         reference: "refs/yonder/1-1".to_owned(),
         command: vec!["true".to_owned()],
         fetch: vec![],
-        idle_hours: 8,
         ..RunSpec::default()
     }
 }

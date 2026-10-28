@@ -44,8 +44,7 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use yonder_link::Closer;
-use yonder_link::config;
-use yonder_link::proto::{Phase, Reply, Request, RunInfo, RunSpec, Stream, feature};
+use yonder_link::proto::{Phase, Reply, Request, RunInfo, RunSpec, Stream};
 
 use crate::base::BaseSync;
 use crate::git::{FARTHEST, NEAR, Snapshot, add_candidate, candidates, check_clean, head_commit, repo_name, working_tree_commit};
@@ -70,11 +69,6 @@ const ABANDON_TRIES: u32 = 3;
 
 /// The deadline of `git apply` of the changes of a run.
 const APPLY_DEADLINE: Duration = Duration::from_secs(300);
-
-/// The idle hours of a run spec. The agent lends its host slots per run and ignores them; an agent of before the host
-/// slots returns, after each run, the leases of other holders that no run used for this long, so it is its old default
-/// and never 0, which would return every lease of the others.
-const OLD_AGENT_IDLE_HOURS: u32 = 8;
 
 /// What a run does, from the side of the client.
 #[derive(Clone, Copy, Debug)]
@@ -213,7 +207,7 @@ impl Client<'_> {
         let run = run_id();
         let reference = format!("refs/yonder/{run}");
         let recorded = self.config.base(alias, request.holder);
-        let (snapshot, (repo, present, features)) = if options.working_tree {
+        let (snapshot, (repo, present)) = if options.working_tree {
             let snapshot = working_tree_commit(self.processes, request.checkout, &stop).map_err(not_run)?;
             self.refuse_interrupt().map_err(not_run)?;
             let found = self
@@ -246,7 +240,6 @@ impl Client<'_> {
             };
             (snapshot, found.map_err(not_run)?)
         };
-        self.check_features(alias, &features, request.checkout, options).map_err(not_run)?;
         let commit = snapshot.commit.clone();
         // Two short git calls, which Ctrl+C does not stop: the check after the plan of the pack refuses a press.
         let files = RunFiles::of(self.processes, request.checkout, &never).map_err(not_run)?;
@@ -280,7 +273,6 @@ impl Client<'_> {
             reference: reference.clone(),
             command: request.command.to_vec(),
             fetch: request.fetch.to_vec(),
-            idle_hours: OLD_AGENT_IDLE_HOURS,
             nice: options.nice,
             outputs: options.outputs,
             changes: options.apply,
@@ -367,7 +359,7 @@ impl Client<'_> {
         })
     }
 
-    /// The repository of the run on the host, the candidates of `commit` that it has, and the features of the agent.
+    /// The repository of the run on the host, and the candidates of `commit` that it has.
     /// With [`RunOptions::repo_by_name`], a host that lacks the repository of the local name gets the repository of the
     /// host file instead.
     fn present_in_repo(
@@ -377,7 +369,7 @@ impl Client<'_> {
         options: &RunOptions,
         commit: &str,
         recorded: Option<&str>,
-    ) -> Result<(String, Vec<String>, Vec<String>), Refusal> {
+    ) -> Result<(String, Vec<String>), Refusal> {
         let default = host.file().repo.clone();
         let stop = || self.interrupted();
         let named = match request.repo {
@@ -407,37 +399,7 @@ impl Client<'_> {
                 self.present(host, &default, request.checkout, commit, &[recorded])?,
             ),
         };
-        Ok((repo, present, host.features().to_vec()))
-    }
-
-    /// Refuses a run that needs a feature that the agent lacks, and warns about an option that the agent would ignore.
-    fn check_features(&self, alias: &str, features: &[String], checkout: &Path, options: &RunOptions) -> Result<(), Refusal> {
-        let has = |feature: &str| features.iter().any(|known| known == feature);
-        if options.apply && !has(feature::CHANGES) {
-            return Err(refused(
-                code::OLD_AGENT,
-                format!(
-                    "the agent on {alias} cannot bring back the changes of a run (--apply): it is older than this client. `yonder upgrade {alias}` updates it"
-                ),
-            ));
-        }
-        let mut ignored = Vec::new();
-        if options.nice.is_some_and(|nice| nice > 0) && !has(feature::NICE) {
-            ignored.push("--nice");
-        }
-        if checkout.join(config::FILE).is_file() && !has(feature::CONFIG) {
-            ignored.push(config::FILE);
-        }
-        if !has(feature::LOGIN_ENV) {
-            ignored.push("the login environment");
-        }
-        if !ignored.is_empty() {
-            (self.say)(&format!(
-                "yonder: warning: the agent on {alias} is older than this client and ignores {}. `yonder upgrade {alias}` updates it",
-                ignored.join(", ")
-            ));
-        }
-        Ok(())
+        Ok((repo, present))
     }
 
     /// Applies the patch of the changes of the command to the working tree. A patch that does not apply stays, and the

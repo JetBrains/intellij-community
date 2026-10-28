@@ -3,39 +3,22 @@
 //! 1. The hello names the platform, the features and the binary of the agent.
 //! 2. The local binary is `--agent`, or the build of [`Client::build_agent`]. It must be of the platform of the host, and
 //!    the binary that the agent runs already is current, unless `force`.
-//! 3. An agent with [`feature::UPGRADE`] gets [`Request::Upgrade`] with the binary.
-//! 4. An agent without the feature cannot read the request. The binary then goes to [`BOOTSTRAP_DIR`] of the working
-//!    tree, a run carries it to a slot of the host, and the new binary installs itself there with `yonderd upgrade`,
-//!    with the same checks and the same watchdog. The directory goes after the run. So the first upgrade of such a host
-//!    works without ssh too.
-//! 5. The client connects again until the hello names the new binary. A hello of the previous binary at the end means
+//! 3. An agent with [`feature::UPGRADE`] gets [`Request::Upgrade`] with the binary. An agent without the feature cannot
+//!    read the request, so the client refuses, and `yonder prepare` installs a new agent over ssh.
+//! 4. The client connects again until the hello names the new binary. A hello of the previous binary at the end means
 //!    that the watchdog restored it.
 
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::thread;
 use std::time::{Duration, Instant};
 
-use serde::Deserialize;
 use yonder_link::proto::{Reply, Request, feature};
 
 use crate::config::check_alias;
 use crate::host::AgentInfo;
 use crate::prepare::sha256_hex;
-use crate::process::Call;
-use crate::run::{RunOptions, RunRequest};
 use crate::{Client, Refusal, code, no_monorepo, refused, size_text};
-
-/// The directory of the working tree that carries the binary of a bootstrap run: untracked, and not ignored, so the
-/// commit of the working tree holds it.
-pub const BOOTSTRAP_DIR: &str = "yonder-upgrade";
-
-/// The command of a bootstrap run, in the slot root on the host, with the binary as `$0`. A client on Windows writes no
-/// mode, so the command gives the binary its mode first.
-pub const BOOTSTRAP_COMMAND: &str = r#"chmod 0755 "$0" && exec "$0" upgrade "$0" "$@""#;
-
-/// The deadline of the local git call of a bootstrap.
-const GIT_DEADLINE: Duration = Duration::from_secs(30);
 
 /// The longest wait between two hellos after an upgrade.
 const MAX_POLL: Duration = Duration::from_secs(5);
@@ -47,10 +30,8 @@ pub struct UpgradeRequest<'a> {
     pub alias: &'a str,
     /// A local `yonderd` binary for the host, or `None` for the Bazel build in `checkout`.
     pub agent: Option<&'a Path>,
-    /// The root of the local checkout of the monorepo: the build of the agent, and the commit of a bootstrap run.
+    /// The root of the local checkout of the monorepo, for the build of the agent.
     pub checkout: Option<&'a Path>,
-    /// The lease holder of a bootstrap run.
-    pub holder: &'a str,
     /// Send the binary that the agent runs already too, and let the agent take a binary of a lower version.
     pub force: bool,
 }
@@ -62,8 +43,6 @@ pub enum UpgradeWay {
     Current,
     /// [`Request::Upgrade`] over the link.
     Request,
-    /// A bootstrap run with this id, which carried the binary in [`BOOTSTRAP_DIR`].
-    Bootstrap(String),
 }
 
 /// What `upgrade` did.
@@ -78,8 +57,7 @@ pub struct Upgraded {
     pub agent: AgentInfo,
 }
 
-/// The line of `yonderd upgrade`, and the fields of [`Reply::Upgraded`].
-#[derive(Deserialize)]
+/// The fields of [`Reply::Upgraded`].
 struct Installed {
     previous_sha256: String,
     sha256: String,
@@ -124,7 +102,10 @@ impl Client<'_> {
             });
         }
         if !host.features().iter().any(|known| known == feature::UPGRADE) {
-            return self.bootstrap(request, &binary);
+            return Err(refused(
+                code::OLD_AGENT,
+                format!("the agent on {alias} knows no upgrade request: `yonder prepare {alias}` installs a new one over ssh"),
+            ));
         }
         (self.say)(&format!("yonder: sending yonderd ({}) to {alias}", size_text(binary.len() as u64)));
         let (mut channel, _) = host.connect()?;
@@ -146,79 +127,6 @@ impl Client<'_> {
         };
         channel.close();
         self.wait_for_new(alias, UpgradeWay::Request, installed)
-    }
-
-    /// The upgrade of an agent without [`feature::UPGRADE`]: a run that carries `binary` in [`BOOTSTRAP_DIR`] of the
-    /// working tree, and runs `yonderd upgrade` of it in a slot of the host.
-    fn bootstrap(&self, request: &UpgradeRequest<'_>, binary: &[u8]) -> Result<Upgraded, Refusal> {
-        let alias = request.alias;
-        let checkout = request.checkout.ok_or_else(|| {
-            refused(
-                code::USAGE,
-                format!(
-                    "the working directory is in no git checkout, and the agent on {alias} knows no upgrade request, so a run of a checkout carries the binary: run `yonder upgrade {alias}` in a checkout of the repository of the host file"
-                ),
-            )
-        })?;
-        let shipped = Shipped::write(self, checkout, binary)?;
-        (self.say)(&format!(
-            "yonder: the agent on {alias} knows no upgrade request, so a run carries the binary in {BOOTSTRAP_DIR}/ of this working tree and installs it with `yonderd upgrade`"
-        ));
-        let mut command: Vec<String> = ["/bin/sh", "-c", BOOTSTRAP_COMMAND, &format!("{BOOTSTRAP_DIR}/yonderd")]
-            .into_iter()
-            .map(str::to_owned)
-            .collect();
-        if request.force {
-            command.push("--force".to_owned());
-        }
-        let run = RunRequest {
-            checkout,
-            repo: None,
-            holder: request.holder,
-            command: &command,
-            fetch: &[],
-        };
-        let options = RunOptions {
-            working_tree: true,
-            nice: None,
-            outputs: false,
-            apply: false,
-            repo_by_name: false,
-        };
-        // The line of `yonderd upgrade` comes in the stdout of the outcome, not in the stdout of this client.
-        let collecting = Client {
-            config: self.config.clone(),
-            stdout: None,
-            ..*self
-        };
-        let outcome = collecting.run_with(alias, &run, &options);
-        drop(shipped);
-        let outcome = outcome?;
-        if outcome.code != 0 {
-            return Err(refused(
-                code::AGENT_FAILED,
-                format!(
-                    "the bootstrap run {} on {alias} exited with {}; `yonder attach {alias} {}` shows its output again",
-                    outcome.run, outcome.code, outcome.run
-                ),
-            ));
-        }
-        let installed: Installed = outcome
-            .stdout
-            .lines()
-            .rev()
-            .find_map(|line| serde_json::from_str(line).ok())
-            .ok_or_else(|| {
-                refused(
-                    code::AGENT_FAILED,
-                    format!(
-                        "the bootstrap run {} on {alias} printed no line of `yonderd upgrade`: {}",
-                        outcome.run,
-                        outcome.stdout.trim()
-                    ),
-                )
-            })?;
-        self.wait_for_new(alias, UpgradeWay::Bootstrap(outcome.run), installed)
     }
 
     /// Connects again until the hello names the new binary, up to the upgrade time. Refuses with
@@ -292,59 +200,6 @@ impl Client<'_> {
                 )
             }
         })
-    }
-}
-
-/// The binary in [`BOOTSTRAP_DIR`] of a checkout for one bootstrap run. The directory goes when the value drops.
-struct Shipped {
-    dir: PathBuf,
-}
-
-impl Shipped {
-    /// Writes `binary` as `yonderd` into a new [`BOOTSTRAP_DIR`] of `checkout`. Refuses a directory
-    /// that is there already, and a path that git ignores, because the commit of the working tree would leave it out.
-    fn write(client: &Client<'_>, checkout: &Path, binary: &[u8]) -> Result<Self, Refusal> {
-        let dir = checkout.join(BOOTSTRAP_DIR);
-        if dir.exists() {
-            return Err(refused(
-                code::USAGE,
-                format!("{} is there already: remove it, and run the upgrade again", dir.display()),
-            ));
-        }
-        let path = format!("{BOOTSTRAP_DIR}/yonderd");
-        let checkout_text = checkout.to_string_lossy();
-        let ignored = client.child(&Call::new(
-            "git",
-            &["-C", &checkout_text, "check-ignore", "-q", "--", &path],
-            GIT_DEADLINE,
-        ));
-        match ignored.code {
-            Some(1) => {}
-            Some(0) => {
-                return Err(refused(
-                    code::USAGE,
-                    format!("git ignores {path} in {checkout_text}, so a run would not carry the binary"),
-                ));
-            }
-            _ => {
-                return Err(refused(
-                    code::GIT_FAILED,
-                    format!("`git check-ignore {path}` failed: {}", ignored.said()),
-                ));
-            }
-        }
-        let shipped = Self { dir };
-        let file = shipped.dir.join("yonderd");
-        fs::create_dir(&shipped.dir)
-            .and_then(|()| fs::write(&file, binary))
-            .map_err(|error| refused(code::CONFIG, format!("cannot write {}: {error}", file.display())))?;
-        Ok(shipped)
-    }
-}
-
-impl Drop for Shipped {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.dir);
     }
 }
 

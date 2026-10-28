@@ -14,7 +14,6 @@ fn spec(run: &str) -> RunSpec {
         reference: format!("refs/yonder/{run}"),
         command: vec!["true".to_owned()],
         fetch: vec!["out/bt-runs".to_owned()],
-        idle_hours: 8,
         ..RunSpec::default()
     }
 }

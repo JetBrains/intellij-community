@@ -35,7 +35,6 @@ fn a_start_carries_the_run_spec_inline() {
         reference: "refs/yonder/1-2".to_owned(),
         command: vec!["./community/tools/bt.cmd".to_owned(), "--lane".to_owned(), "fast".to_owned()],
         fetch: vec!["out/bt-runs".to_owned()],
-        idle_hours: 8,
         ..RunSpec::default()
     };
     let json = serde_json::to_string(&Request::Start(spec.clone())).expect("json");
@@ -73,13 +72,13 @@ fn the_phases_of_a_run_and_a_run_info_without_them_parse() {
 }
 
 #[test]
-fn the_optional_fields_of_a_start_stay_out_of_the_json_and_an_old_spec_parses() {
-    let old = r#"{"request":"start","run":"1-2","repo":"~/r","holder":"h","commit":"c","reference":"refs/yonder/1-2","command":["true"],"fetch":[],"idle_hours":8}"#;
-    let Request::Start(spec) = serde_json::from_str::<Request>(old).expect("a start of an older client") else {
+fn the_optional_fields_of_a_start_stay_out_of_the_json_and_a_spec_without_them_parses() {
+    let plain = r#"{"request":"start","run":"1-2","repo":"~/r","holder":"h","commit":"c","reference":"refs/yonder/1-2","command":["true"],"fetch":[]}"#;
+    let Request::Start(spec) = serde_json::from_str::<Request>(plain).expect("a start without the optional fields") else {
         panic!("not a start");
     };
     assert_eq!((spec.nice, spec.outputs, spec.changes), (None, false, false));
-    assert_eq!(serde_json::to_string(&Request::Start(spec.clone())).expect("json"), old);
+    assert_eq!(serde_json::to_string(&Request::Start(spec.clone())).expect("json"), plain);
 
     let new = RunSpec {
         nice: Some(10),
@@ -88,10 +87,7 @@ fn the_optional_fields_of_a_start_stay_out_of_the_json_and_an_old_spec_parses() 
         ..spec
     };
     let json = serde_json::to_string(&Request::Start(new.clone())).expect("json");
-    assert!(
-        json.ends_with(r#""idle_hours":8,"nice":10,"outputs":true,"changes":true}"#),
-        "{json}"
-    );
+    assert!(json.ends_with(r#""fetch":[],"nice":10,"outputs":true,"changes":true}"#), "{json}");
     assert_eq!(serde_json::from_str::<Request>(&json).expect("parsed"), Request::Start(new));
 }
 

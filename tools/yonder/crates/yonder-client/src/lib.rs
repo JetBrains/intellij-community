@@ -110,7 +110,7 @@ pub mod code {
     pub const INTERRUPTED: &str = "interrupted";
     /// Fetch did not copy every staged file of a run, so the run stays on the host.
     pub const FETCH_FAILED: &str = "fetch_failed";
-    /// The agent lacks a feature that the run needs, such as the changes of `--apply`: it is older than the client.
+    /// The agent lacks a feature that the request needs, such as an upgrade request: it is older than the client.
     pub const OLD_AGENT: &str = "old_agent";
     /// The changes of the command did not apply to the working tree. The patch stays in a file.
     pub const APPLY_FAILED: &str = "apply_failed";

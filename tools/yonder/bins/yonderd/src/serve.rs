@@ -2,9 +2,8 @@
 //! total deadline, then [`Request::Hello`], then one request. At most [`MAX_HANDSHAKES`] handshakes go on at a time, and
 //! at most [`MAX_HANDSHAKES_PER_PEER`] of one address, so one host of the network cannot hold all of them. A socket
 //! over a cap is closed at once. The sockets over a cap and the failed handshakes write one log line per minute with
-//! their count (`tally`). A request that waits for a lock, bd or git sends a heartbeat while it
-//! waits: `Have`, the end of `Pack`, `Lease` and `Release`. The requests of a repository and of a lease are here; the
-//! requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
+//! their count (`tally`). A request that waits for git sends a heartbeat while it waits: `Have` and the end of `Pack`.
+//! The requests of a repository are here; the requests of a run are in `run_requests`. A thread runs the cleanup of `cleanup` every hour. At its start `serve`
 //! raises its open-files limit, which each run inherits, and a thread captures the login environment of the user
 //! (`login_env`). Before its first thread it puts the programs of Homebrew before `/usr/bin` in its `PATH`, and once
 //! it listens it checks the git of the host and upgrades it when it is too old (`host_git`). A client after its hello keeps the host awake until its request ends (`awake`). Once it listens, it writes the listening file with the SHA-256 of its binary, for the watchdog of an
@@ -51,9 +50,6 @@ const PACK_READ_DEADLINE: Duration = Duration::from_secs(60);
 
 /// The shortest time between two progress notes of a pack.
 const PACK_PROGRESS_EVERY: Duration = Duration::from_secs(1);
-
-/// The answer to a lease or a release of a holder, which an older client sends.
-const NO_HOLDER_LEASES: &str = "host slots are lent per run on this host (bd lease host); there is no lease of a holder to take or release";
 
 /// The most commits of one [`Request::Have`].
 const MAX_HAVE: usize = 1024;
@@ -361,14 +357,6 @@ impl Agent {
                 answer(channel, self.forget(&run))
             }
             Request::Runs => answer(channel, Ok(self.list_runs())),
-            // A run borrows a host slot for its run only (`slots`), so there is nothing to take or keep
-            Request::Lease { .. } => answer(channel, Err(refused(BAD_REQUEST, NO_HOLDER_LEASES))),
-            Request::Release { .. } => answer(
-                channel,
-                Ok(Reply::Done {
-                    message: NO_HOLDER_LEASES.to_owned(),
-                }),
-            ),
             Request::Upgrade { .. } => answer(
                 channel,
                 Err(refused(BAD_REQUEST, "an upgrade comes as the request of its connection")),
@@ -722,12 +710,12 @@ impl Drop for Busy<'_> {
     }
 }
 
-/// Refuses a holder that cannot name a lease file.
+/// Refuses a holder that cannot name a base ref `refs/yonder/base/<holder>`.
 pub(crate) fn check_holder(holder: &str) -> Result<(), Refusal> {
     if yonder_link::proto::is_run_id(holder) {
         Ok(())
     } else {
-        Err(refused(BAD_REQUEST, format!("{holder:?} cannot name a lease holder")))
+        Err(refused(BAD_REQUEST, format!("{holder:?} cannot name a holder")))
     }
 }
 

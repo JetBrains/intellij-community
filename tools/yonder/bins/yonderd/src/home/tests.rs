@@ -18,7 +18,6 @@ fn the_files_of_the_agent_are_under_config_and_cache() {
     let home = Home::new(PathBuf::from("/h"));
     assert_eq!(home.allow_file(), Path::new("/h/.config/yonderd/clients"));
     assert_eq!(home.runs_dir(), Path::new("/h/.cache/yonderd/runs"));
-    assert_eq!(home.leases_dir(), Path::new("/h/.cache/yonderd/leases"));
     assert_eq!(
         home.launch_agent_file(),
         Path::new("/h/Library/LaunchAgents/com.jetbrains.yonderd.plist")

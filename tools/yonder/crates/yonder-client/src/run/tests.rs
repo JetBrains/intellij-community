@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicU32};
 use std::sync::{Mutex, PoisonError};
 
 use pretty_assertions::assert_eq;
-use yonder_link::proto::{FEATURES, FileKind, RunInfo};
+use yonder_link::proto::{FileKind, RunInfo};
 use yonder_link::{Channel, Frame};
 
 use super::*;
@@ -153,8 +153,6 @@ fn kind(request: &Request) -> &'static str {
         Request::Fetch { .. } => "fetch",
         Request::Forget { .. } => "forget",
         Request::Runs => "runs",
-        Request::Lease { .. } => "lease",
-        Request::Release { .. } => "release",
         Request::Upgrade { .. } => "upgrade",
     }
 }
@@ -272,7 +270,7 @@ fn a_run_packs_the_missing_objects_streams_the_stderr_and_fetches_the_staged_fil
         panic!("{requests:?}")
     };
     assert_eq!(spec.reference, format!("refs/yonder/{}", outcome.run));
-    assert_eq!((spec.holder.as_str(), spec.idle_hours), ("bt-remote-0123456789ab", 8));
+    assert_eq!(spec.holder, "bt-remote-0123456789ab");
     assert_eq!((spec.command.clone(), spec.fetch.clone()), (command(), fetch()));
     assert!(yonder_link::proto::is_run_id(&outcome.run), "{}", outcome.run);
 
@@ -1136,44 +1134,12 @@ fn echo_agent(features: &[&str], fetch: impl Fn(&mut Channel) + Send + Sync + 's
 
 /// An agent of this build that has every commit, ends each run with 0, and sends `files` in the fetch.
 fn fetching_agent(files: Vec<(String, FileKind, Vec<u8>)>) -> Setup {
-    echo_agent(&FEATURES, move |channel| {
+    echo_agent(&[], move |channel| {
         for (path, kind, bytes) in &files {
             send_kind(channel, path, bytes, kind.clone());
         }
         let _ = channel.send(&Reply::Fetched { files: 0, bytes: 0 });
     })
-}
-
-#[test]
-fn an_agent_older_than_the_features_refuses_apply_before_the_run_and_warns_about_the_rest() {
-    let setup = echo_agent(&[], |channel| done(channel, "no fetch"));
-    let processes = checkout();
-    let said = Said::default();
-    let checkout = setup.checkout();
-    fs::create_dir_all(&checkout).expect("the checkout");
-    fs::write(checkout.join(".yonder.toml"), "outputs = []\n").expect("the config");
-    let apply = RunOptions {
-        apply: true,
-        ..RunOptions::default()
-    };
-    let refusal = run_options(&setup, &processes, &said, &checkout, &apply).expect_err("refused");
-    assert_eq!((refusal.code.as_ref(), refusal.exit), (code::OLD_AGENT, Exit::NotRun));
-    assert!(refusal.message.contains("`yonder upgrade studio`"), "{}", refusal.message);
-    assert!(!kinds(&setup).contains(&"start"));
-
-    let nice = RunOptions {
-        nice: Some(10),
-        ..RunOptions::default()
-    };
-    run_options(&setup, &processes, &said, &checkout, &nice).expect("the run");
-    assert!(
-        said.lines().contains(
-            &"yonder: warning: the agent on studio is older than this client and ignores --nice, .yonder.toml, the login environment. `yonder upgrade studio` updates it"
-                .to_owned()
-        ),
-        "{:#?}",
-        said.lines()
-    );
 }
 
 /// A run that vanished on the host after it started (another client forgot it) may have run its command: the exit is no
@@ -1386,7 +1352,7 @@ fn changes_that_do_not_apply_refuse_and_keep_the_patch() {
 
 #[test]
 fn changes_that_did_not_come_refuse_with_the_fetch_that_copies_them() {
-    let setup = echo_agent(&FEATURES, |channel| {
+    let setup = echo_agent(&[], |channel| {
         let _ = channel.send(&Reply::File {
             path: "changes.patch".to_owned(),
             size: 10,

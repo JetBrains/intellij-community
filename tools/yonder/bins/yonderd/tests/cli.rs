@@ -52,9 +52,6 @@ fn agent_binary() -> PathBuf {
 /// below waits in it too) and answers `switched`, or `kept` at the commit. `fill` and `reclaim` answer nothing to do.
 /// `schema` names `lease_host_lend` unless `old-bd` exists, and `lease_host_checkout` unless `old-bd` or
 /// `no-host-checkout` exists.
-///
-/// `lease status` and `lease return` serve the return of the leases of holders: `alive` keeps the live lease ids, and
-/// `fail-return` makes a return fail.
 const FAKE_BD: &str = r#"#!/bin/sh
 state=$FAKE_BD_DIR
 printf '%s|%s\n' "$PWD" "$*" >>"$state/calls"
@@ -141,27 +138,6 @@ if [ "$1" = lease ] && [ "$2" = host ]; then
     reclaim) echo '{"schema":2,"reclaimed":[]}' ;;
     *) echo "fake bd: unknown host call: $verb" >&2; exit 2 ;;
   esac
-  exit 0
-fi
-if [ "$1" = lease ] && [ "$2" = status ]; then
-  printf '{"schema":2,"slots":['
-  sep=
-  if [ -e "$state/alive" ]; then
-    while read -r id; do
-      printf '%s{"slot":"s","path":"/p","state":"ready","lease":{"lease_id":"%s"}}' "$sep" "$id"
-      sep=,
-    done <"$state/alive"
-  fi
-  printf ']}\n'
-  exit 0
-fi
-if [ "$1" = -C ] && [ "$3" = lease ] && [ "$4" = return ]; then
-  id=$6
-  if [ -e "$state/fail-return" ]; then echo "the slot has local changes" >&2; exit 1; fi
-  if [ -e "$state/alive" ]; then
-    while read -r line; do [ "$line" = "$id" ] || echo "$line"; done <"$state/alive" >"$state/alive.tmp"
-    mv "$state/alive.tmp" "$state/alive"
-  fi
   exit 0
 fi
 echo "fake bd: unknown call: $*" >&2
@@ -299,7 +275,6 @@ impl World {
             reference: format!("refs/yonder/{run}"),
             command: vec!["/bin/sh".to_owned(), "-c".to_owned(), script.to_owned()],
             fetch: vec!["out/bt-runs".to_owned()],
-            idle_hours: 8,
             ..RunSpec::default()
         }
     }
@@ -990,74 +965,14 @@ fn two_runs_of_two_checkouts_run_at_once_in_two_host_slots() {
     assert_eq!(agent.follow("6-1", 0).end, Reply::Exit { code: 0 });
 }
 
-/// The keeper returns each lease that a holder kept before the host slots, once its holder is free, and adds slots only
-/// once none is left
+/// The keeper takes up what gone runs left and fills the host slots of each repository that a pack went to
 #[test]
-fn the_keeper_returns_the_leases_that_holders_kept_and_then_fills() {
+fn the_keeper_reclaims_and_fills_the_slots_of_a_known_repository() {
     let world = World::new();
-    let leases = world.home().join(".cache/yonderd/leases");
-    fs::create_dir_all(&leases).expect("the leases directory");
-    let repo = world.repo();
-    for holder in ["old", "busy"] {
-        fs::write(
-            leases.join(format!("{holder}.lease")),
-            format!("lease_id=lease-{holder}\nslot=/pool/{holder}\nused=1\nrepo={}\n", repo.display()),
-        )
-        .expect("a lease file");
-    }
-    fs::write(world.bd_dir().join("alive"), "lease-old\nlease-busy\n").expect("the live leases");
-    // An old supervisor that runs across the upgrade holds the lock of its holder; another one has not written the
-    // lease file of its holder yet, which comes only at its end.
-    let lock = fs::File::create(leases.join("busy.lock")).expect("the lock file");
-    lock.try_lock().expect("locked");
-    let ghost = fs::File::create(leases.join("ghost.lock")).expect("the lock file");
-    ghost.try_lock().expect("locked");
+    fs::create_dir_all(world.home().join(".cache/yonderd")).expect("the cache directory");
+    fs::write(world.home().join(".cache/yonderd/repos"), format!("{}\n", world.repo().display())).expect("the repository list");
     let agent = world.serve_with(&[("YONDERD_TEST_KEEPER_MS", "100")]);
     let world = &agent.world;
-    eventually("the return of the free holder", || !leases.join("old.lease").exists());
-    assert!(
-        world
-            .bd_calls()
-            .contains("/|-C /pool/old lease return --lease-id lease-old --confirm-preserved\n"),
-        "{}",
-        world.bd_calls()
-    );
-    assert!(leases.join("busy.lease").exists(), "a held holder keeps its lease");
-    assert!(
-        !world.bd_calls().contains("lease host fill"),
-        "no fill beside the old leases: {}",
-        world.bd_calls()
-    );
-
-    drop(lock);
-    eventually("the return of the other holder", || !leases.join("busy.lease").exists());
-    let reclaims = || world.bd_calls().matches("lease host reclaim -C ").count();
-    let seen = reclaims();
-    eventually("a later tick", || reclaims() > seen);
-    assert!(
-        !world.bd_calls().contains("lease host fill"),
-        "no fill while a lock is held: {}",
-        world.bd_calls()
-    );
-    drop(ghost);
-    // A supervisor of before the host slots that still waits for the lock of its holder: a live run without the mark
-    let legacy = world.home().join(".cache/yonderd/runs/99-1");
-    fs::create_dir_all(&legacy).expect("the run directory");
-    fs::write(
-        legacy.join("spec.json"),
-        serde_json::to_vec(&world.spec("99-1", "yonder-old", "true")).expect("the spec"),
-    )
-    .expect("the spec");
-    let legacy_lock = fs::File::create(legacy.join("lock")).expect("the lock of the run");
-    legacy_lock.try_lock().expect("locked");
-    let seen = reclaims();
-    eventually("a tick with the waiting supervisor", || reclaims() > seen + 1);
-    assert!(
-        !world.bd_calls().contains("lease host fill"),
-        "no fill while a supervisor of before lives: {}",
-        world.bd_calls()
-    );
-    drop(legacy_lock);
     eventually("the first fill", || world.bd_calls().contains("lease host fill -C "));
     assert!(world.bd_calls().contains("lease host reclaim -C "), "{}", world.bd_calls());
 }
@@ -1165,28 +1080,6 @@ chmod 755 "$bin/git"
     assert_eq!(fs::read_to_string(brew_bin.join("calls")).expect("the calls"), "install git\n");
     let state = fs::read_to_string(world.home().join(".cache/yonderd/git.json")).expect("the state");
     assert!(state.contains(r#""state":"ready""#), "{state}");
-}
-
-/// An older client asks for the lease of its holder, or releases it: there is none, slots are lent per run
-#[test]
-fn a_lease_or_a_release_of_a_holder_answers_that_slots_are_lent_per_run() {
-    let agent = World::new().serve();
-    let lease = agent.reply(&Request::Lease {
-        repo: "~/repo".to_owned(),
-        holder: HOLDER.to_owned(),
-    });
-    assert!(
-        matches!(&lease, Reply::Refused { code, message } if code == "bad_request" && message.contains("lent per run")),
-        "{lease:?}"
-    );
-    let release = agent.reply(&Request::Release {
-        repo: "~/repo".to_owned(),
-        holder: HOLDER.to_owned(),
-    });
-    assert!(
-        matches!(&release, Reply::Done { message } if message.contains("lent per run")),
-        "{release:?}"
-    );
 }
 
 #[test]

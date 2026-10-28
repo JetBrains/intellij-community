@@ -3,6 +3,7 @@ use std::os::unix::fs::PermissionsExt;
 use std::time::Instant;
 
 use pretty_assertions::assert_eq;
+use yonder_link::proto::MAX_BINARY;
 
 use super::*;
 use crate::setup::plist_text;
@@ -409,24 +410,4 @@ fn the_binary_of_the_launch_agent_is_the_program_of_its_plist() {
     let refusal = launch_agent(&world.home).expect_err("no LaunchAgent");
     assert_eq!(refusal.code, UPGRADE_FAILED);
     assert!(refusal.message.contains("`yonder prepare` writes it"), "{}", refusal.message);
-}
-
-#[test]
-fn the_command_installs_a_file_and_restarts_the_agent_under_launchd_only() {
-    let world = World::new();
-    write_executable(&world.target(), &world.agent_text("old", WITH_UPGRADE));
-    let new = world.agent_text("new", WITH_UPGRADE);
-    let source = world.dir.path().join("built-yonderd");
-    fs::write(&source, &new).expect("the built binary");
-    let upgraded = upgrade_from_file(&world.home, &source, &world.launchctl(), Duration::from_secs(5), false);
-    if cfg!(target_os = "macos") {
-        let upgraded = upgraded.expect("upgraded");
-        assert_eq!((upgraded.sha256, upgraded.version), (sha256_of(&new), "new".to_owned()));
-        assert_eq!(fs::read_to_string(world.target()).expect("the target"), new);
-        let (_, service) = service();
-        assert_eq!(world.launchctl_calls(), format!("kickstart -k {service}\n"));
-        assert!(wait_for_line(&world.watchdogs_file()).starts_with("old watchdog "));
-    } else {
-        assert_eq!(upgraded.expect_err("no launchd").code, UPGRADE_FAILED);
-    }
 }

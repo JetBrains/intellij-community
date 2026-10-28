@@ -63,10 +63,10 @@ use crate::login_env::LoginEnv;
 use crate::refused::{
     AGENT_ERROR, CHECKOUT_FAILED, LEASE_FAILED, LOCK_TIMEOUT, PACK_MISSING, PREPARE_FAILED, Refusal, SPAWN_FAILED, refused,
 };
-use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir};
+use crate::run::{EventLog, ExitRecord, MAX_EVENT_TEXT, RunDir, epoch_ms};
 use crate::slots::{self, GaveBack, Lend, Lent, Prepared, Queued};
 use crate::watch::Watch;
-use crate::{awake, config, git, host_git, lease, login_env, prepare, run_env, tuning};
+use crate::{awake, config, git, host_git, login_env, prepare, run_env, tuning};
 
 /// How long a run waits for a host slot.
 const SLOT_WAIT: Duration = Duration::from_secs(3600);
@@ -383,7 +383,7 @@ fn lent_line(lent: &Lent, repo: &Path) -> String {
     let used = lent.last_used_by_holder_ms.map_or_else(
         || "new to this checkout".to_owned(),
         |ms| {
-            let ago = (lease::now_seconds() * 1000).saturating_sub(ms) / 60_000;
+            let ago = epoch_ms(SystemTime::now()).saturating_sub(ms) / 60_000;
             format!("last used by this checkout {ago} min ago")
         },
     );

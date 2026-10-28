@@ -165,7 +165,7 @@ host.
 | `behind` | The host lacks the history near HEAD. The user runs the prepare step that the message names. |
 | `untrusted` | The agent identity changed, or the agent does not allow this client. The user runs the prepare again. |
 | `no_host` | This machine has no host file for the alias: the host was never prepared from here. |
-| `old_agent` | The agent lacks a feature of the run, such as `--apply`. Ask the user for `yonder upgrade <host>` on macOS, or `yonder prepare <host>`. |
+| `old_agent` | The agent knows no upgrade request. Ask the user for `yonder prepare <host>`. |
 | `lease_failed`, `lock_timeout` | The host lent no slot. Exit 75: run locally, or try again later. |
 | `local_changes` | `--head` or `bt --host` with uncommitted or untracked changes. Commit first. |
 | `old_git` | The git of the host is older than 2.56.0, and the agent cannot upgrade it. Exit 75: run locally. Give the message to the user: on macOS without Homebrew, the user installs Homebrew once at the host (it needs an administrator) and then runs `brew install git`. |

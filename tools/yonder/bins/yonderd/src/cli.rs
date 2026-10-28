@@ -16,7 +16,7 @@ use crate::home::Home;
 use crate::refused::{AGENT_ERROR, Refusal, UPGRADE_FAILED, refused};
 use crate::run::{ExitRecord, RunDir};
 use crate::serve::log;
-use crate::tuning;
+
 use crate::upgrade::{self, Watched};
 
 #[derive(Debug, Parser)]
@@ -73,19 +73,6 @@ enum Commands {
     },
     /// Prints the version and the protocol schema as one JSON line.
     Version,
-    /// Installs a new agent binary over the one of the LaunchAgent, starts the watchdog, and restarts the agent. A run
-    /// of `yonder upgrade` starts it on a host whose agent knows no upgrade request.
-    #[command(hide = true)]
-    Upgrade {
-        /// The new binary.
-        binary: PathBuf,
-        /// Take a binary of a lower version too.
-        #[arg(long)]
-        force: bool,
-        /// The launchctl program. A test gives a fake one.
-        #[arg(long, default_value = "launchctl", hide = true)]
-        launchctl: PathBuf,
-    },
     /// Prints the line of `version` with the state of the LaunchAgent `--plist` for this build: `same`, `changed` or
     /// `unknown`. An upgrade runs it on the new binary before the swap.
     #[command(hide = true)]
@@ -175,11 +162,6 @@ fn execute(command: Commands, stdout: &mut dyn Write) -> Result<(), Refusal> {
         }
         Commands::Check { plist } => writeln!(stdout, "{}", version_line(Some(upgrade::plist_state(&plist))))
             .map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}"))),
-        Commands::Upgrade { binary, force, launchctl } => {
-            let upgraded = upgrade::upgrade_from_file(&Home::from_env()?, &binary, &launchctl, tuning::upgrade_wait(), force)?;
-            let line = serde_json::to_string(&upgraded).map_err(|error| refused(AGENT_ERROR, error.to_string()))?;
-            writeln!(stdout, "{line}").map_err(|error| refused(AGENT_ERROR, format!("cannot write stdout: {error}")))
-        }
         Commands::Watchdog {
             binary,
             sha256,
