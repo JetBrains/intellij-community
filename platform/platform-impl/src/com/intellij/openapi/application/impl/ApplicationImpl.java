@@ -534,8 +534,14 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText
   ) {
     // disallow running a process in a separate thread from a write-action, or a thread will deadlock trying to acquire the read-lock
-    if (isDispatchThread() && isWriteAccessAllowed()) {
-      getLogger().debug("Starting process with progress from within write action makes no sense");
+    if (isWriteAccessAllowed()) {
+      if (isDispatchThread()) {
+        getLogger().debug("Starting process with progress from within write action makes no sense");
+      }
+      else {
+        getLogger().error("Starting process with progress from a background write action leads to deadlock: " +
+                          "the progress window is created on the EDT, and the EDT waits for the write lock");
+      }
       try {
         ProgressManager.getInstance().runProcess(process, new EmptyProgressIndicator());
       }
