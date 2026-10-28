@@ -147,6 +147,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   private volatile Map<String, Property> myLocalPropertyCache;
   private volatile @Nullable VersionSpecificChildren myVersionSpecificChildren;
+  private volatile @Nullable List<PyFunction> myMethods;
 
   /**
    * The children of {@code stub} that the language level of the file keeps.
@@ -629,8 +630,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
 
   @Override
   public PyFunction @NotNull [] getMethods() {
-    final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
-    return getClassChildren(functionDeclarationTokens, PyFunction.class, PyFunction.ARRAY_FACTORY);
+    // Do not cache the array: callers can change it, so each call gets a new one
+    List<PyFunction> methods = myMethods;
+    if (methods == null) {
+      final TokenSet functionDeclarationTokens = PythonDialectsTokenSetProvider.getInstance().getFunctionDeclarationTokens();
+      methods = getClassChildrenList(functionDeclarationTokens, PyFunction.class);
+      myMethods = methods;
+    }
+    return ContainerUtil.toArray(methods, PyFunction.ARRAY_FACTORY);
   }
 
   @Override
@@ -662,6 +669,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private <T extends StubBasedPsiElement<? extends StubElement<T>>> T @NotNull [] getClassChildren(@NotNull TokenSet elementTypes,
                                                                                                    @NotNull Class<T> childrenClass,
                                                                                                    @NotNull ArrayFactory<? extends T> factory) {
+    return ContainerUtil.toArray(getClassChildrenList(elementTypes, childrenClass), factory);
+  }
+
+  private <T extends StubBasedPsiElement<? extends StubElement<T>>> @NotNull List<T> getClassChildrenList(@NotNull TokenSet elementTypes,
+                                                                                                          @NotNull Class<T> childrenClass) {
     final List<T> result = new ArrayList<>();
     processClassLevelDeclarations(new PsiScopeProcessor() {
       @Override
@@ -672,7 +684,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
         return true;
       }
     });
-    return ContainerUtil.toArray(result, factory);
+    return result;
   }
 
   @ApiStatus.Internal
@@ -1562,6 +1574,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     myClassAttributesFromClassMethods = null;
     myLocalPropertyCache = null;
     myVersionSpecificChildren = null;
+    myMethods = null;
   }
 
   @Override
