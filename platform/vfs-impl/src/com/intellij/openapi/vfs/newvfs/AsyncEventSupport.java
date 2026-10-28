@@ -81,8 +81,12 @@ public final class AsyncEventSupport {
         if (asyncProcessedEvents.contains(events)) {
           return;
         }
-        drainAppliers(earlyAppliers, events);
-        drainAppliers(lateAppliers, events);
+        try {
+          drainAppliers(earlyAppliers, events);
+        }
+        finally {
+          drainAppliers(lateAppliers, events);
+        }
       }
     });
   }
