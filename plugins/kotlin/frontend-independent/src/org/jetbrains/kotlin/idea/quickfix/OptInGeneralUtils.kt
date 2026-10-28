@@ -138,7 +138,7 @@ abstract class OptInGeneralUtilsBase {
 
         val containingDeclarationCandidate = findContainingDeclarationCandidate(containingDeclaration)
         result.add(containingDeclarationCandidate)
-        if (containingDeclaration is KtClass && containingDeclaration.superTypeListEntries.any { it is KtSuperTypeCallEntry }) {
+        if (containingDeclaration is KtClass && element.findParentOfType<KtSuperTypeCallEntry>(strict = false) != null) {
             val constructor = containingDeclaration.primaryConstructor ?: containingDeclaration
             val constructorCandidate = CandidateData(constructor, AddAnnotationFix.Kind.Constructor)
             if (result.none { it.element == constructorCandidate.element && it.kind == constructorCandidate.kind }) {

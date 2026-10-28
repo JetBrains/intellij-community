@@ -2260,6 +2260,11 @@ public abstract class K2QuickFixTestGenerated extends AbstractK2QuickFixTest {
                 runTest("../../../idea/tests/testData/quickfix/optIn/nonTopLevelAnnotation2.kt");
             }
 
+            @TestMetadata("optInOnPrimaryConstructorFromInitBlock.kt")
+            public void testOptInOnPrimaryConstructorFromInitBlock() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/optIn/optInOnPrimaryConstructorFromInitBlock.kt");
+            }
+
             @TestMetadata("optInUnused.kt")
             public void testOptInUnused() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/optIn/optInUnused.kt");
