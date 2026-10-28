@@ -13,7 +13,7 @@ import java.text.CharacterIterator
 private const val COMPLEX_CHAR_START: Char = '\u0300' // start of Combining Diacritical Marks block
 
 internal class FontFallbackIteratorImpl private constructor(
-  private val fontPreferences: FontPreferences,
+  private val fontPreferences: FontPreferences, // a snapshot, see FontPreferences.getSnapshot
   private val fontRenderContext: FontRenderContext?,
   @FontStyle private val fontStyle: Int,
   private val trivialBreaker: BreakAtEveryCharacterIterator,
@@ -31,17 +31,18 @@ internal class FontFallbackIteratorImpl private constructor(
     context: FontRenderContext?,
     @FontStyle style: Int,
   ) : this(
-    preferences,
+    preferences.snapshot,
     context,
     style,
     BreakAtEveryCharacterIterator(),
   )
 
   fun withFontPreferences(preferences: FontPreferences): FontFallbackIteratorImpl {
-    if (fontPreferences === preferences) {
+    val newFontPreferences = preferences.snapshot
+    if (fontPreferences === newFontPreferences) {
       return this
     }
-    return copyWith(preferences, fontRenderContext, fontStyle)
+    return copyWith(newFontPreferences, fontRenderContext, fontStyle)
   }
 
   fun withFontRenderContext(context: FontRenderContext?): FontFallbackIteratorImpl {

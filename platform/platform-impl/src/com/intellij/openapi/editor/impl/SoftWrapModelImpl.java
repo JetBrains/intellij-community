@@ -20,7 +20,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
@@ -98,7 +98,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   private boolean myUseSoftWraps;
   private int myTabWidth = -1;
-  private final FontPreferencesImpl myFontPreferences = new FontPreferencesImpl();
+  private @NotNull FontPreferences myFontPreferences; // a snapshot, see FontPreferences.getSnapshot
 
   private boolean myForceAdditionalColumns;
   private boolean myBulkDocumentUpdateInProgress;
@@ -130,7 +130,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myUseSoftWraps = areSoftWrapsEnabledInEditor();
     reinitRecalculationManager();
 
-    this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
+    myFontPreferences = this.editor.getColorsScheme().getFontPreferences().getSnapshot();
 
     editor.addPropertyChangeListener(this, this);
 
@@ -213,10 +213,10 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myTabWidth = EditorUtil.getTabSize(editor);
     boolean tabWidthChanged = tabWidthBefore >= 0 && myTabWidth != tabWidthBefore;
 
-    boolean fontsChanged = false;
-    if (!myFontPreferences.equals(editor.getColorsScheme().getFontPreferences())) {
-      fontsChanged = true;
-      editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
+    var fontPreferences = editor.getColorsScheme().getFontPreferences().getSnapshot();
+    boolean fontsChanged = fontPreferences != myFontPreferences && !fontPreferences.equals(myFontPreferences);
+    if (fontsChanged) {
+      myFontPreferences = fontPreferences;
       myPainter.reinit();
     }
 

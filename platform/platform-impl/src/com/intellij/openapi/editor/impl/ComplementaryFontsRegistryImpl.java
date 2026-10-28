@@ -143,6 +143,8 @@ final class ComplementaryFontsRegistryImpl {
 
   void preloadGlyph(int codePoint, @FontStyle int style, @NotNull FontPreferences preferences) {
     style = validStyle(style);
+    // One version for all the reads below
+    preferences = preferences.getSnapshot();
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     for (int i = 0, len = fontFamilies.size(); i < len; i++) {
       Font font = FontFamilyService.getFont(
@@ -169,6 +171,8 @@ final class ComplementaryFontsRegistryImpl {
     @NotNull FontPreferences preferences,
     @Nullable FontRenderContext context
   ) {
+    // One version for all the reads below
+    preferences = preferences.getSnapshot();
     boolean tryDefaultFallback = true;
     List<String> fontFamilies = preferences.getEffectiveFontFamilies();
     boolean useLigatures = preferences.useLigatures();

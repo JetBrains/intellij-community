@@ -67,7 +67,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -186,7 +185,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   private final List<PrefixChangeListener> myPrefixChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final LookupPreview myPreview = new LookupPreview(this);
   // keeping our own copy of editor's font preferences, which can be used in non-EDT threads (to avoid race conditions)
-  private final FontPreferences myFontPreferences = new FontPreferencesImpl();
+  private final FontPreferences myFontPreferences;
 
   private final long myCreatedTimestamp;
   private final ClientProjectSession mySession;
@@ -237,7 +236,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     this.editor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     myArranger = arranger;
     myPresentableArranger = arranger;
-    this.editor.getColorsScheme().getFontPreferences().copyTo(myFontPreferences);
+    myFontPreferences = this.editor.getColorsScheme().getFontPreferences().getSnapshot();
 
     DaemonCodeAnalyzer.getInstance(session.getProject()).disableUpdateByTimer(this);
 
