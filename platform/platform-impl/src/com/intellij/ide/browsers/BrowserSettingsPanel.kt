@@ -35,12 +35,14 @@ import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 /**
- * An item of the "Default Browser" dropdown: [SystemDefaultBrowser] or a browser of the list.
+ * An item of the "Default Browser" dropdown: [SystemDefaultBrowser], a browser of a [WebBrowserProvider], or a browser of the list.
  * For a browser of the list, [id] is the id of the original row, see [BrowserSettingsConfigurable.originalOf].
  */
 internal data class BrowserChoice(val id: UUID, @NlsSafe val name: String, val icon: Icon) {
   companion object {
-    fun systemDefault(): BrowserChoice = BrowserChoice(SystemDefaultBrowser.id, SystemDefaultBrowser.name, SystemDefaultBrowser.icon)
+    fun systemDefault(): BrowserChoice = of(SystemDefaultBrowser)
+
+    fun of(browser: WebBrowser): BrowserChoice = BrowserChoice(browser.id, browser.name, browser.icon)
   }
 }
 
@@ -81,13 +83,17 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
   /** Fills the dropdown from the table and keeps the selected item. */
   private fun updateBrowserChoices() {
     val choice = defaultBrowserModel.selected
+    val systemDefault = if (canUseSystemDefaultBrowserPolicy()) listOf(BrowserChoice.systemDefault()) else emptyList()
+    val provided = WebBrowserProvider.getAvailableBrowsers().map { BrowserChoice.of(it) }
     val listed = listedBrowsers()
-    val choices = buildList {
-      if (canUseSystemDefaultBrowserPolicy()) add(BrowserChoice.systemDefault())
+    defaultBrowserModel.replaceAll(buildList {
+      addAll(systemDefault)
+      addAll(provided)
       addAll(listed)
-    }
-    defaultBrowserModel.replaceAll(choices)
-    defaultBrowserModel.selectedItem = choices.find { it.id == choice?.id } ?: fallbackChoice()
+    })
+    // the provided browsers come last, so a provider cannot take the id of the system default browser or of a browser of the list
+    val choiceById = sequenceOf(systemDefault, listed, provided).flatten().find { it.id == choice?.id }
+    defaultBrowserModel.selectedItem = choiceById ?: fallbackChoice()
   }
 
   /** Returns `null` when the system default is not available and the list has no active browser. */
@@ -96,8 +102,9 @@ internal class BrowserSettingsConfigurable : UnnamedConfigurable {
 
   /** The default browser that [WebBrowserManager] stores, as an item of the current dropdown. */
   private fun storedChoice(manager: WebBrowserManager): BrowserChoice? {
-    val id = manager.defaultBrowser.id
-    return listedBrowsers().find { it.id == id } ?: fallbackChoice()
+    val defaultBrowser = manager.defaultBrowser
+    if (WebBrowserProvider.getAvailableBrowsers().any { it === defaultBrowser }) return BrowserChoice.of(defaultBrowser)
+    return listedBrowsers().find { it.id == defaultBrowser.id } ?: fallbackChoice()
   }
 
   private val defaultBrowserChoice: BrowserChoice?
