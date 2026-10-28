@@ -136,8 +136,9 @@ internal class MultiverseFileViewProviderCache(
     }
 
     if (!canFileMapBeResurrected(vFile, fileMap)) {
+      // remove the map before the flag drops: a lock-free reader that sees no flag must not add a provider to a removed map
+      removeStaleFileMap(vFile, fileMap)
       dropPossibleInvalidation(fileMap)
-      remove(vFile)
       return null
     }
 
@@ -155,6 +156,14 @@ internal class MultiverseFileViewProviderCache(
 
 
     return fileMap
+  }
+
+  /**
+   * Removes [fileMap] only while it is still mapped to [vFile], so a map that another thread put later stays in the cache.
+   */
+  private fun removeStaleFileMap(vFile: VirtualFile, fileMap: FileProviderMap) {
+    log.doTrace { "removeStaleFileMap $vFile" }
+    cache.getCacheIfInitialized()?.remove(vFile, fileMap)
   }
 
   private fun dropPossibleInvalidation(fileMap: FileProviderMap) {
