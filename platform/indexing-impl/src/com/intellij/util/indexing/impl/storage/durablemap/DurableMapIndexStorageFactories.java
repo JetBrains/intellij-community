@@ -63,7 +63,7 @@ public final class DurableMapIndexStorageFactories {
       inputRemapping = ValueContainerInputRemapping.IDENTITY;
     }
     var valueContainerExternalizer = new ValueContainerExternalizer<>(valueExternalizer, inputRemapping);
-    DataExternalizerEx<UpdatableValueContainer<Value>> adaptedValueExternalizer = LegacyAdapter.adapt(valueContainerExternalizer);
+    DataExternalizerEx<UpdatableValueContainer<Value>> adaptedValueExternalizer = DataExternalizerEx.adapt(valueContainerExternalizer);
 
     if (keyIsUniqueForIndexedFile) {
       return DurableMapFactory.withDefaults(keyDescriptor, adaptedValueExternalizer);

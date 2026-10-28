@@ -2,6 +2,8 @@
 package com.intellij.util.indexing.storage.sharding;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.durablemap.DurableMapFactory;
 import com.intellij.util.indexing.InputMapExternalizer;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ShardableManyKeysIntegerToIntegerIndexExtension;
@@ -10,7 +12,6 @@ import com.intellij.util.indexing.impl.InputIndexDataExternalizer;
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapBasedForwardIndex;
-import com.intellij.util.indexing.impl.storage.durablemap.LegacyAdapter;
 import com.intellij.util.io.ByteSequenceDataExternalizer;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import org.junit.jupiter.api.Test;
@@ -60,8 +61,8 @@ class ShardedForwardIndexTest {
     var extension = new ShardableManyKeysIntegerToIntegerIndexExtension();
     var accessor = accessor(extension);
     var factory = DurableMapFactory.withDefaults(
-      LegacyAdapter.adapt(EnumeratorIntegerDescriptor.INSTANCE),
-      LegacyAdapter.adapt(ByteSequenceDataExternalizer.INSTANCE)
+      KeyDescriptorEx.adapt(EnumeratorIntegerDescriptor.INSTANCE),
+      DataExternalizerEx.adapt(ByteSequenceDataExternalizer.INSTANCE)
     );
     try (var index = new ShardedForwardIndex(extension,
                                              shardNo -> new DurableMapBasedForwardIndex(directory.resolve("shard-" + shardNo), factory))) {

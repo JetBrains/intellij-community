@@ -16,7 +16,7 @@ public final class CommonKeyDescriptors {
     throw new AssertionError("Bug: not for instantiation");
   }
 
-  public static KeyDescriptorEx<Integer> integer() {
+  public static InlineKeyDescriptorEx<Integer> integer() {
     return INTEGER_DESCRIPTOR;
   }
 
@@ -28,7 +28,7 @@ public final class CommonKeyDescriptors {
     return STRING_AS_UTF8_DESCRIPTOR;
   }
 
-  private static final KeyDescriptorEx<Integer> INTEGER_DESCRIPTOR = new KeyDescriptorEx<>() {
+  private static final InlineKeyDescriptorEx<Integer> INTEGER_DESCRIPTOR = new InlineKeyDescriptorEx<>() {
     @Override
     public int getHashCode(@NotNull Integer value) {
       return value.hashCode();
@@ -38,6 +38,16 @@ public final class CommonKeyDescriptors {
     public boolean isEqual(@NotNull Integer key1,
                            @NotNull Integer key2) {
       return Objects.equals(key1, key2);
+    }
+
+    @Override
+    public int toInt(@NotNull Integer value) {
+      return value;
+    }
+
+    @Override
+    public Integer fromInt(int code) {
+      return code;
     }
 
     @Override

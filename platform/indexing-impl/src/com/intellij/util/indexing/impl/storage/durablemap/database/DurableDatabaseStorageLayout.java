@@ -20,7 +20,6 @@ import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider
 import com.intellij.util.indexing.impl.storage.StorageRef;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage;
-import com.intellij.util.indexing.impl.storage.durablemap.LegacyAdapter;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +51,7 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
     DataExternalizer<Map<Key, Value>> inputMapExternalizer = DefaultIndexStorageLayoutProviderKt.defaultMapExternalizerFor(extension);
     forwardIndexAccessor = new MapForwardIndexAccessor<>(inputMapExternalizer);
 
-    KeyDescriptorEx<Key> keyDescriptor = LegacyAdapter.adapt(extension.getKeyDescriptor());
+    KeyDescriptorEx<Key> keyDescriptor = KeyDescriptorEx.adapt(extension.getKeyDescriptor());
     DataExternalizer<Value> valueExternalizer = extension.getValueExternalizer();
     valueMapAccessor = DurableDatabaseMapAccessors.valueMapAccessor(
       database,

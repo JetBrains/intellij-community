@@ -16,7 +16,6 @@ import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.StorageRef;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage;
-import com.intellij.util.indexing.impl.storage.durablemap.LegacyAdapter;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +41,7 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
     this.extension = extension;
     forwardIndexAccessor = new SingleEntryIndexForwardIndexAccessor<>(extension);
 
-    KeyDescriptorEx<Integer> keyDescriptor = LegacyAdapter.adapt(extension.getKeyDescriptor());
+    KeyDescriptorEx<Integer> keyDescriptor = KeyDescriptorEx.adapt(extension.getKeyDescriptor());
     DataExternalizer<Value> valueExternalizer = extension.getValueExternalizer();
     valueMapAccessor = DurableDatabaseMapAccessors.valueMapAccessor(
       database,

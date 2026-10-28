@@ -21,7 +21,6 @@ import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider
 import com.intellij.util.indexing.impl.storage.StorageRef;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage;
-import com.intellij.util.indexing.impl.storage.durablemap.LegacyAdapter;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.indexing.storage.sharding.ShardedForwardIndex;
@@ -57,7 +56,7 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
     this.extension = extension;
     this.invertedMapImplementation = invertedMapImplementation;
     this.forwardMapImplementation = forwardMapImplementation;
-    keyDescriptor = LegacyAdapter.adapt(extension.getKeyDescriptor());
+    keyDescriptor = KeyDescriptorEx.adapt(extension.getKeyDescriptor());
     valueExternalizer = extension.getValueExternalizer();
 
     DataExternalizer<Map<Key, Value>> inputMapExternalizer = DefaultIndexStorageLayoutProviderKt.defaultMapExternalizerFor(extension);

@@ -3,7 +3,6 @@ package com.intellij.platform.util.io.storages;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.io.DataEnumerator;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
@@ -49,28 +48,24 @@ public interface DataExternalizerEx<T> {
   }
 
   /**
-   * Adapts old-school {@link KeyDescriptor} to new {@link KeyDescriptorEx}.
-   * <p>
-   * <p/>
-   * Implementation is not 100% optimal -- it does unnecessary allocations and copying -- but usually good enough to
-   * start using new API (i.e. {@link DataEnumerator}), and see does it make any difference.
-   * <p/>
-   * Still, one could do better by using more 'idiomatic' API -- but it takes more effort.
+   * Adapts old-school {@link DataExternalizer} to new {@link DataExternalizerEx}.
+   * If an legacyDescriptor also implements {@link DataExternalizerEx} ('bilingual') -- it is returned as-is.
+   * Otherwise, an adaptor is used: it reserves hash and equality rules, but serialization format is not guaranteed
+   * to be binary-compatible with legacy one, and it is not guaranteed to be 100% optimal performance-wise.
    */
-  static <K> @NotNull DataExternalizerEx<K> adapt(@NotNull DataExternalizer<K> oldSchoolDescriptor) {
-    if (oldSchoolDescriptor instanceof KeyDescriptor<K> descriptor) {
+  static <K> @NotNull DataExternalizerEx<K> adapt(@NotNull DataExternalizer<K> legacyDescriptor) {
+    if (legacyDescriptor instanceof KeyDescriptor<K> descriptor) {
       return KeyDescriptorEx.adapt(descriptor);
     }
 
-    //Do not wrap, if oldSchoolDescriptor already implements new interface
-    // -> allows for 'bilingual' implementation (that implements both old&new
-    // ifaces) to work efficiently
-    if (oldSchoolDescriptor instanceof DataExternalizerEx<?> exExternalizer) {
+    //Do not wrap, if legacyDescriptor already implements new interface -> allows for 'bilingual' implementation
+    // (that implements both old&new ifaces) to work efficiently
+    if (legacyDescriptor instanceof DataExternalizerEx<?> exExternalizer) {
       //noinspection unchecked
       return (DataExternalizerEx<K>)exExternalizer;
     }
 
-    return new StreamDataExternalizerExAdapter<>(oldSchoolDescriptor);
+    return new StreamDataExternalizerExAdapter<>(legacyDescriptor);
   }
 
   /// Writes one record to a caller-owned segment.

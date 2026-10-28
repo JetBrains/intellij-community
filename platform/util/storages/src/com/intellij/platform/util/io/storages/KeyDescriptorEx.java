@@ -2,13 +2,16 @@
 package com.intellij.platform.util.io.storages;
 
 import com.intellij.util.containers.hash.EqualityPolicy;
-import com.intellij.util.io.DataEnumerator;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.lang.foreign.MemorySegment;
+
+import static com.intellij.platform.util.io.storages.PersistentFormatLayouts.JAVA_INT_UNALIGNED;
 
 /**
  * Full analog of {@link KeyDescriptor}, but with {@link MemorySegment} instead of {@link java.io.InputStream} and
@@ -26,37 +29,82 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerE
 
   /**
    * Adapts old-school {@link KeyDescriptor} to new {@link KeyDescriptorEx}.
-   * <p>
-   * <p/>
-   * Implementation is not 100% optimal -- it does unnecessary allocations and copying -- but usually good enough to
-   * start using new API (i.e. {@link DataEnumerator}), and see does it make any difference.
-   * <p/>
-   * Still, one could do better by using more 'idiomatic' API -- but it takes more effort.
+   * If a legacyDescriptor also implements {@link KeyDescriptorEx} ('bilingual') -- it is returned as-is.
+   * Otherwise, an adaptor is used: it reserves hash and equality rules, but serialization format is not guaranteed
+   * to be binary-compatible with legacy one, and it is not guaranteed to be 100% optimal performance-wise.
    */
-  static <K> @NotNull KeyDescriptorEx<K> adapt(@NotNull KeyDescriptor<K> oldSchoolDescriptor) {
-    Object candidate = oldSchoolDescriptor;
-    //Do not wrap, if oldSchoolDescriptor already implements new interface
-    // -> allows for 'bilingual' implementation (that implements both old&new
-    // ifaces) to work efficiently
+  static <K> @NotNull KeyDescriptorEx<K> adapt(@NotNull KeyDescriptor<K> legacyDescriptor) {
+    Object candidate = legacyDescriptor;
+    //Do not wrap, if legacyDescriptor already implements new interface -> allows for 'bilingual' implementation
+    // (that implements both old&new ifaces) to work efficiently
     if (candidate instanceof KeyDescriptorEx<?> exDescriptor) {
       //noinspection unchecked
       return (KeyDescriptorEx<K>)exDescriptor;
     }
 
-    // Serialization/deserialization just bridges between MemorySegment and ByteArrayInput/OutputStream
+    // The branch is optional: the InlineKeyDescriptor branch also handles integers, but it is more explicit
+    if (legacyDescriptor instanceof EnumeratorIntegerDescriptor) {
+      //noinspection unchecked
+      return (KeyDescriptorEx<K>)CommonKeyDescriptors.integer();
+    }
 
-    //MAYBE RC: one allocation & one copy could be removed by implementing something like MemorySegmentBackedInputStream
-    //          instead of UnsyncByteArrayInputStream
-    var externalizer = new StreamDataExternalizerExAdapter<>(oldSchoolDescriptor);
+    if (legacyDescriptor instanceof InlineKeyDescriptor<K> inlineDescriptor) {
+      return new InlineKeyDescriptorEx<>() {
+        @Override
+        public int toInt(K key) {
+          return inlineDescriptor.toInt(key);
+        }
+
+        @Override
+        public K fromInt(int code) {
+          return inlineDescriptor.fromInt(code);
+        }
+
+        @Override
+        public K read(@NotNull MemorySegment input) {
+          return fromInt(input.get(JAVA_INT_UNALIGNED, 0));
+        }
+
+        @Override
+        public KnownSizeRecordWriter writerFor(@NotNull K key) {
+          int code = toInt(key);
+          return new KnownSizeRecordWriter() {
+            @Override
+            public void write(@NotNull MemorySegment target, long startingOffset) {
+              target.set(JAVA_INT_UNALIGNED, startingOffset, code);
+            }
+
+            @Override
+            public int recordSize() {
+              return Integer.BYTES;
+            }
+          };
+        }
+
+        @Override
+        public int recordSizeIfConstant() {
+          return Integer.BYTES;
+        }
+
+        @Override
+        public String toString() {
+          return "InlineKeyDescriptorExAdapter[adapted: " + legacyDescriptor + "]";
+        }
+      };
+    }
+
+    // Default adapter: serializes value into byte[]-backed InputStream, and save byte[] in MemorySegment: not very
+    // effective, but usually good enough to start with
+    var externalizer = new StreamDataExternalizerExAdapter<>(legacyDescriptor);
     return new KeyDescriptorEx<>() {
       @Override
       public int getHashCode(K value) {
-        return oldSchoolDescriptor.getHashCode(value);
+        return legacyDescriptor.getHashCode(value);
       }
 
       @Override
       public boolean isEqual(K key1, K key2) {
-        return oldSchoolDescriptor.isEqual(key1, key2);
+        return legacyDescriptor.isEqual(key1, key2);
       }
 
       @Override
@@ -71,7 +119,7 @@ public interface KeyDescriptorEx<K> extends EqualityPolicy<K>, DataExternalizerE
 
       @Override
       public String toString() {
-        return "KeyDescriptorExAdapter[adapted: " + oldSchoolDescriptor + "]";
+        return "KeyDescriptorExAdapter[adapted: " + legacyDescriptor + "]";
       }
     };
   }
