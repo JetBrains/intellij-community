@@ -1108,6 +1108,7 @@ public final class ConfigImportHelper {
       for (var plugin : selectedCandidates) {
         if (PluginManagerCore.INSTANCE.isCompatible(plugin, options.compatibleBuildNumber)) {
           candidatePlugins.add(plugin);
+          nonLoadablePlugins.remove(plugin.getPluginId());
         }
         else {
           nonLoadablePlugins.put(plugin.getPluginId(), plugin);
