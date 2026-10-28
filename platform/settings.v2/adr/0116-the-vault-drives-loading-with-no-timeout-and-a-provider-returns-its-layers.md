@@ -4,7 +4,8 @@ Date: 2026-09-29. Merged: 2026-10-15.
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
+[ADR 0160](./0160-a-reload-installs-the-layers-kind-by-kind.md).
 
 ## Context
 

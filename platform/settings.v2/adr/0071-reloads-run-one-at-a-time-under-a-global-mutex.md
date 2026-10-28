@@ -4,7 +4,8 @@ Date: 2026-08-12
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Superseded by [ADR 0162](./0162-reloads-take-one-mutex-per-context-kind-from-the-application-down.md)
+([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
 
 ## Context
 

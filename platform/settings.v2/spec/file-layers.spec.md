@@ -88,6 +88,8 @@ file layer holds the settings of a directory and of each file in it, in one conf
   [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerProviderTest.kt
 - A project load must find every directory that holds a config of any locality: team, local or environmental.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFileLocalityTest.kt
+- The file layer must find the directory configs by their file names in the file name index. It must wait until
+  the index is ready, and it must not walk the project content. See [ADR 0163](../adr/0163-the-file-layer-finds-the-directory-configs-through-the-file-name-index.md).
 - Every layer must create a config file only on its first write. No layer creates an empty file when it starts.
   The application layer and the project layer also create a missing directory of the file. The file layer creates
   a config file only in an existing directory.
@@ -150,7 +152,10 @@ file layer holds the settings of a directory and of each file in it, in one conf
 
 ## Open Questions / Risks
 
-- The file layer finds configs by a scan of the whole project content. A large project needs an index instead.
+- The file layer still finds configs by a walk of the whole project content. The index lookup is not built yet.
+  See [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
+- The directory configs load only after indexing, also after a branch switch that starts indexing. If the file
+  name index can answer before indexing ends, the configs could load earlier. This is not checked yet.
 - A config in an excluded directory never loads.
 - A write of an environmental file inside the project tree is visible on a remote-dev frontend, where it does nothing.
   See [ADR 0097](../adr/0097-an-environmental-key-and-its-layer-stay-on-one-side.md).
