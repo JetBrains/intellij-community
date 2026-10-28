@@ -9,8 +9,11 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.html.createGlobalStyleSheet
 import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.ide.ui.laf.createBaseLaF
+import com.intellij.ide.ui.laf.isLinuxSystemFontCached
 import com.intellij.ide.ui.laf.isLinuxSystemFontWithoutGtkLaf
+import com.intellij.ide.ui.laf.readCachedLinuxSystemFont
 import com.intellij.ide.ui.laf.readLinuxSystemFont
+import com.intellij.ide.ui.laf.refreshLinuxSystemFontCache
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
@@ -65,7 +68,17 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
 
   val linuxSystemFontDeferred = if (isHeadless || OS.CURRENT != OS.Linux || !isLinuxSystemFontWithoutGtkLaf) null else {
     asyncScope.async(CoroutineName("system font reading") + Dispatchers.IO) {
-      readLinuxSystemFont()
+      val cachedFont = if (isLinuxSystemFontCached) readCachedLinuxSystemFont() else null
+      if (cachedFont == null) {
+        readLinuxSystemFont()
+      }
+      else {
+        // the desktop settings initialize off the startup path and refresh the stored font for the next start
+        asyncScope.launch(CoroutineName("system font cache refreshing") + Dispatchers.IO) {
+          refreshLinuxSystemFontCache()
+        }
+        cachedFont
+      }
     }
   }
 

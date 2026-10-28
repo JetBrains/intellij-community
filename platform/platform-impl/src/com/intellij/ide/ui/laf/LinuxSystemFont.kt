@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.diagnostic.runActivity
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.util.ui.StartupUiUtil
@@ -26,14 +27,52 @@ val isLinuxSystemFontWithoutGtkLaf: Boolean
   get() = EarlyAccessRegistryManager.getBoolean("ide.linux.system.font.without.gtk.laf")
 
 /**
+ * Whether a start takes the system font that the previous start stored, see [readCachedLinuxSystemFont].
+ * The first read of a `gnome.*` desktop property initializes the desktop settings, which takes long without a settings daemon.
+ */
+@get:Internal
+val isLinuxSystemFontCached: Boolean
+  get() = System.getProperty("ide.linux.system.font.cache").toBoolean()
+
+/**
  * The system font as `GTKLookAndFeel` resolves it, read from XSETTINGS or from the GTK settings without the look and feel.
  * Returns `null` when neither reports a font. May run on any thread.
  */
 @Internal
 fun readLinuxSystemFont(): FontUIResource? {
+  val settings = readSystemFontSettings() ?: return null
+  if (isLinuxSystemFontCached) {
+    writeSystemFontCache(settings)
+  }
+  return applySystemFontSettings(settings)
+}
+
+/**
+ * The system font that the previous start stored, or `null` without a stored font.
+ * The stored dpi becomes the `gnome.Xft/DPI` desktop property, so a later read of it does not initialize the desktop settings.
+ * The caller refreshes the stored font with [refreshLinuxSystemFontCache] off the startup path.
+ */
+@Internal
+fun readCachedLinuxSystemFont(): FontUIResource? {
+  val settings = readSystemFontCache() ?: return null
+  return applySystemFontSettings(settings)
+}
+
+/**
+ * Reads the live desktop settings and stores them for the next start. The current session keeps the font it started with.
+ */
+@Internal
+fun refreshLinuxSystemFontCache() {
+  readSystemFontSettings()?.let(::writeSystemFontCache)
+}
+
+private class SystemFontSettings(@JvmField val fontName: String, @JvmField val xftDpi: Int?, @JvmField val xftDpiFromDesktop: Boolean)
+
+private fun readSystemFontSettings(): SystemFontSettings? {
   val toolkit = Toolkit.getDefaultToolkit()
   var fontName = runActivity("desktop properties reading") { toolkit.getDesktopProperty("gnome.Gtk/FontName") as? String }
   var xftDpi = toolkit.getDesktopProperty("gnome.Xft/DPI") as? Int
+  val xftDpiFromDesktop = xftDpi != null
   if (fontName == null || xftDpi == null) {
     // no settings daemon: on X11 GTK takes settings.ini, then its own defaults; on Wayland it reads GSettings, so ask GTK there
     val gtkSettings = if (StartupUiUtil.isXToolkit()) readGtkSettingsIni() else readGtkSettings()
@@ -41,16 +80,52 @@ fun readLinuxSystemFont(): FontUIResource? {
     if (xftDpi == null) {
       // GTK assumes 96 dpi when the Xft.dpi resource is absent
       xftDpi = gtkSettings?.xftDpi ?: if (StartupUiUtil.isXToolkit()) (xrmXftDpi() ?: 96) * 1024 else null
-      if (xftDpi != null) {
-        // the IDE reads this property to undo the dpi scaling of the label font, see JBUIScale.computeSystemFontData
-        setXftDpiDesktopProperty(toolkit, xftDpi)
-      }
     }
   }
-  if (xftDpi != null && StartupUiUtil.isXToolkit()) {
-    setXftDpi(normalizeDpi(xftDpi))
+  return SystemFontSettings(fontName = fontName, xftDpi = xftDpi, xftDpiFromDesktop = xftDpiFromDesktop)
+}
+
+private fun applySystemFontSettings(settings: SystemFontSettings): FontUIResource {
+  val xftDpi = settings.xftDpi
+  if (xftDpi != null) {
+    if (!settings.xftDpiFromDesktop) {
+      // the IDE reads this property to undo the dpi scaling of the label font, see JBUIScale.computeSystemFontData
+      setXftDpiDesktopProperty(Toolkit.getDefaultToolkit(), xftDpi)
+    }
+    if (StartupUiUtil.isXToolkit()) {
+      setXftDpi(normalizeDpi(xftDpi))
+    }
   }
-  return runActivity("system font creation") { parsePangoFont(fontName, xftDpi) }
+  return runActivity("system font creation") { parsePangoFont(settings.fontName, xftDpi) }
+}
+
+private fun systemFontCacheFile(): Path = PathManager.getSystemDir().resolve("linux-system-font.txt")
+
+private fun readSystemFontCache(): SystemFontSettings? {
+  val file = systemFontCacheFile()
+  try {
+    if (!Files.isRegularFile(file)) {
+      return null
+    }
+    val lines = Files.readAllLines(file)
+    val fontName = lines.getOrNull(0)?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    return SystemFontSettings(fontName = fontName, xftDpi = lines.getOrNull(1)?.trim()?.toIntOrNull(), xftDpiFromDesktop = false)
+  }
+  catch (e: IOException) {
+    LOG.warn("Cannot read $file", e)
+    return null
+  }
+}
+
+private fun writeSystemFontCache(settings: SystemFontSettings) {
+  val file = systemFontCacheFile()
+  try {
+    Files.createDirectories(file.parent)
+    Files.writeString(file, "${settings.fontName}\n${settings.xftDpi ?: ""}\n")
+  }
+  catch (e: IOException) {
+    LOG.warn("Cannot write $file", e)
+  }
 }
 
 // a port of com.sun.java.swing.plaf.gtk.PangoFonts.lookupFont
