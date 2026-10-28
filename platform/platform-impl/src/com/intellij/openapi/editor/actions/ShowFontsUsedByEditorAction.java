@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -85,7 +85,7 @@ public final class ShowFontsUsedByEditorAction extends EditorAction implements A
       CharSequence text = document.getImmutableCharSequence();
       int textLength = document.getTextLength();
       IterationState it = new IterationState(editor, 0, textLength, null, false, true, false, false);
-      FontFallbackIterator ffi = new FontFallbackIterator().setPreferredFonts(editor.getColorsScheme().getFontPreferences());
+      FontFallbackIterator ffi = new FontFallbackIterator(editor.getColorsScheme().getFontPreferences(), null, Font.PLAIN);
       while (!it.atEnd()) {
         ffi.setFontStyle(it.getMergedAttributes().getFontType());
         int start = it.getStartOffset();

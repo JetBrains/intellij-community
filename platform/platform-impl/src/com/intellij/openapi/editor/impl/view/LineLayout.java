@@ -126,10 +126,11 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     if (text.isEmpty()) {
       return Collections.emptyList();
     }
-    FontFallbackIterator ffi = new FontFallbackIterator()
-      .setPreferredFonts(view.getEditor().getColorsScheme().getFontPreferences())
-      .setFontStyle(fontStyle)
-      .setFontRenderContext(view.getFontRenderContext());
+    FontFallbackIterator ffi = new FontFallbackIterator(
+      view.getEditor().getColorsScheme().getFontPreferences(),
+      view.getFontRenderContext(),
+      fontStyle
+    );
     char[] chars = CharArrayUtil.fromSequence(text);
     List<LineBidiRun> runs = BidiRunUtil.createRuns(view, chars, -1);
     for (LineBidiRun run : runs) {

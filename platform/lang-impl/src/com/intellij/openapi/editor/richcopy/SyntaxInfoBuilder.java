@@ -1,4 +1,4 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.richcopy;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.richcopy.model.SyntaxInfo;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.TokenType;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +66,7 @@ public final class SyntaxInfoBuilder {
   static final class MyMarkupIterator {
     private final SegmentIterator mySegmentIterator;
     private final RangeIterator myRangeIterator;
-    private int myCurrentFontStyle;
+    private @FontStyle int myCurrentFontStyle;
     private Color myCurrentForegroundColor;
     private Color myCurrentBackgroundColor;
 
@@ -484,17 +485,17 @@ public final class SyntaxInfoBuilder {
   }
 
   private static final class SegmentIterator {
-    private final FontFallbackIterator myIterator = new FontFallbackIterator();
+    private final FontFallbackIterator myIterator;
     private final CharSequence myCharSequence;
     private int myEndOffset;
     private boolean myAdvanceCalled;
 
     private SegmentIterator(CharSequence charSequence, FontPreferences fontPreferences) {
       myCharSequence = charSequence;
-      myIterator.setPreferredFonts(fontPreferences);
+      myIterator = new FontFallbackIterator(fontPreferences, null, Font.PLAIN);
     }
 
-    public void reset(int startOffset, int endOffset, int fontStyle) {
+    public void reset(int startOffset, int endOffset, @FontStyle int fontStyle) {
       myIterator.setFontStyle(fontStyle);
       myIterator.start(myCharSequence, startOffset, endOffset);
       myEndOffset = endOffset;

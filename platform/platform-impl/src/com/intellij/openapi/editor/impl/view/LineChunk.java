@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -95,18 +96,19 @@ class LineChunk {
       false,
       false
     );
-    FontFallbackIterator ffi = new FontFallbackIterator()
-      .setPreferredFonts(editor.getColorsScheme().getFontPreferences())
-      .setFontRenderContext(view.getFontRenderContext());
+    FontFallbackIterator ffi = new FontFallbackIterator(
+      editor.getColorsScheme().getFontPreferences(),
+      view.getFontRenderContext(),
+      Font.PLAIN
+    );
     boolean specialCharsEnabled = editor.getSettings().isShowingSpecialChars();
     char[] chars = CharArrayUtil.fromSequence(document.chars(), start, end);
-    int currentFontType = 0;
+    @FontStyle int currentFontType = Font.PLAIN;
     Color currentColor = null;
     int currentStart = start;
     while (!it.atEnd()) {
-      int fontType = it.getMergedAttributes().getFontType();
+      @FontStyle int fontType = it.getMergedAttributes().getFontType();
       Color color = it.getMergedAttributes().getForegroundColor();
-      //noinspection MagicConstant
       if (fontType != currentFontType || !color.equals(currentColor)) {
         int tokenStart = it.getStartOffset();
         if (tokenStart > currentStart) {
@@ -123,8 +125,8 @@ class LineChunk {
         }
         currentStart = tokenStart;
         currentColor = color;
-        //noinspection MagicConstant
-        ffi.setFontStyle(currentFontType = fontType);
+        currentFontType = fontType;
+        ffi.setFontStyle(currentFontType);
       }
       it.advance();
     }
