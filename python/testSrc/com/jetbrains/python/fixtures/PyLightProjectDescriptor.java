@@ -2,6 +2,10 @@
 package com.jetbrains.python.fixtures;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.python.sdk.backend.PyInterpreterLibraryFlowKt;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
@@ -65,11 +69,36 @@ public class PyLightProjectDescriptor extends LightProjectDescriptor {
     return PySdkNamesKt.PYTHON_MODULE_ID;
   }
 
+  /**
+   * The SDK of the module in the legacy flow: the platform adds it to the SDK table, writes it to the module, and removes
+   * it with the light project, as in older builds. The interpreter library flow gives the module an interpreter instead,
+   * see {@link #setUpProject}, so the platform gets no SDK.
+   */
   @Override
-  public Sdk getSdk() {
+  public final Sdk getSdk() {
+    return PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled() ? null : createMockSdk();
+  }
+
+  /** The mock SDK of the interpreter of the module, see {@link #setUpProject}. */
+  protected @NotNull Sdk createMockSdk() {
     return myName == null
            ? PythonMockSdk.create(myLevel)
            : PythonMockSdk.create(PythonTestUtil.getTestDataPath() + "/" + myName);
+  }
+
+  /**
+   * In the interpreter library flow, gives the Python project of the module an interpreter of {@link #createMockSdk()}.
+   * The registry holds it, owned by the Python project, and the SDK is in no SDK table. The interpreter lives as long as
+   * the light project. The legacy flow gets its SDK from {@link #getSdk()}.
+   */
+  @Override
+  public void setUpProject(@NotNull Project project, @NotNull SetupHandler handler) throws Exception {
+    super.setUpProject(project, handler);
+    if (!PyInterpreterLibraryFlowKt.isInterpreterLibraryFlowEnabled()) return;
+    Module module = ModuleManager.getInstance(project).findModuleByName(TEST_MODULE_NAME);
+    if (module != null) {
+      PyProjectStructureTestUtilKt.addMockPythonInterpreterForTests(module, createMockSdk());
+    }
   }
 
 

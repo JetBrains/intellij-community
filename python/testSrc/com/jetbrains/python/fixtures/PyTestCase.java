@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -43,6 +42,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.sdk.backend.PythonInterpreterExtKt;
+import com.intellij.python.sdk.backend.PythonInterpreterSdks;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -70,6 +70,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
+import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -152,13 +153,14 @@ public abstract class PyTestCase extends UsefulTestCase {
         if (myFixture.getModule() != null) {
           PyNamespacePackagesService.getInstance(myFixture.getModule()).resetAllNamespacePackages();
         }
+        // The light project keeps its interpreter, so a manager that this test built must not reach the next test.
+        PythonPackageManager.dropManagersForTests(myFixture.getProject());
         setLanguageLevel(null);
 
         myFixture.tearDown();
         myFixture = null;
       }
 
-      FilePropertyPusher.EP_NAME.findExtensionOrFail(PythonLanguageLevelPusher.class).flushLanguageLevelCache();
       IntentionalUnstubbing.resetForciblyUnstubbedFileSet();
     }
     catch (Throwable e) {
@@ -184,7 +186,7 @@ public abstract class PyTestCase extends UsefulTestCase {
       LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped");
       return;
     }
-    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
+    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, myFixture.getProject())) {
       assertRootNotParsed(currentFile, root, null);
     }
   }
@@ -233,7 +235,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                @NotNull String text,
                                                @NotNull Consumer<VirtualFile> fileConsumer) {
     final PythonInterpreter interpreter = getPythonInterpreter();
-    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter);
+    final VirtualFile libDir = interpreter == null ? null : PythonInterpreterExtKt.stdlibLibDirectory(interpreter, myFixture.getProject());
     if (libDir != null) {
       runWithAdditionalFileIn(relativePath, text, libDir, fileConsumer);
     }
@@ -251,7 +253,7 @@ public abstract class PyTestCase extends UsefulTestCase {
                                                     @NotNull String text,
                                                     @NotNull Consumer<VirtualFile> fileConsumer) {
     final PythonInterpreter interpreter = getPythonInterpreter();
-    final VirtualFile skeletonsDir = interpreter == null ? null : PythonInterpreterExtKt.skeletonsDirectory(interpreter);
+    final VirtualFile skeletonsDir = interpreter == null ? null : PythonInterpreterExtKt.skeletonsDirectory(interpreter, myFixture.getProject());
     if (skeletonsDir != null) {
       runWithAdditionalFileIn(relativePath, text, skeletonsDir, fileConsumer);
     }
@@ -325,6 +327,9 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
       modificator.commitChanges();
     });
+    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk);
+    // Resolve reads the roots of the interpreter library, which copies the roots of the SDK.
+    PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 
@@ -337,6 +342,9 @@ public abstract class PyTestCase extends UsefulTestCase {
       }
       modificator.commitChanges();
     });
+    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk);
+    // Resolve reads the roots of the interpreter library, which copies the roots of the SDK.
+    PyProjectStructureTestUtilKt.syncPythonInterpreterLibraries();
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects();
   }
 

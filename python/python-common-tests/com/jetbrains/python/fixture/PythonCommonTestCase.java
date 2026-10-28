@@ -131,7 +131,7 @@ public abstract class PythonCommonTestCase extends TestCase {
   protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
     final PythonInterpreter interpreter = myFixture.getPythonInterpreter();
     assertNotNull(interpreter);
-    for (VirtualFile root : PythonInterpreterExtKt.getClassRoots(interpreter)) {
+    for (VirtualFile root : PythonInterpreterExtKt.classRoots(interpreter, myFixture.getProject())) {
       assertRootNotParsed(currentFile, root, null);
     }
   }
@@ -387,16 +387,17 @@ public abstract class PythonCommonTestCase extends TestCase {
     runWithAdditionalClassEntryInSdkRoots(testDataDir, runnable);
   }
 
-  private static void runWithAdditionalRoot(@NotNull Sdk sdk,
-                                            @NotNull VirtualFile root,
-                                            @NotNull OrderRootType rootType,
-                                            @NotNull Consumer<VirtualFile> rootConsumer) {
+  private void runWithAdditionalRoot(@NotNull Sdk sdk,
+                                     @NotNull VirtualFile root,
+                                     @NotNull OrderRootType rootType,
+                                     @NotNull Consumer<VirtualFile> rootConsumer) {
     WriteAction.run(() -> {
       final SdkModificator modificator = sdk.getSdkModificator();
       assertNotNull(modificator);
       modificator.addRoot(root, rootType);
       modificator.commitChanges();
     });
+    myFixture.sdkRootsChanged(sdk);
     try {
       rootConsumer.accept(root);
     }
@@ -407,6 +408,7 @@ public abstract class PythonCommonTestCase extends TestCase {
         modificator.removeRoot(root, rootType);
         modificator.commitChanges();
       });
+      myFixture.sdkRootsChanged(sdk);
     }
   }
 

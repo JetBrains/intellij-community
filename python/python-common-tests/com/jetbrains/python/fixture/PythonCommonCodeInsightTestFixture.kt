@@ -5,6 +5,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -89,6 +90,13 @@ interface PythonCommonCodeInsightTestFixture {
   fun addExcludedRoot(rootPath: String)
 
   fun getLookupElements(): Array<LookupElement>?
+
+  /**
+   * Applies a change of the roots of [sdk], the SDK of [pythonInterpreter]. A test calls it after it edits the roots, so
+   * resolve sees the new roots.
+   */
+  fun sdkRootsChanged(sdk: Sdk) {
+  }
 
   // TODO: this belongs to test case not fixture [utikeev]
   fun runWithSourceRoots(sourceRoots: List<VirtualFile>, runnable: Runnable)

@@ -9,7 +9,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -31,6 +30,7 @@ import org.junit.Assert;
 import java.nio.file.Path;
 
 import static com.intellij.python.venv.VenvKt.createVenvAdditionalData;
+import static com.jetbrains.python.sdk.ModuleExKt.removeTestSdk;
 import static com.jetbrains.python.sdk.ModuleExKt.setPythonSdkForTests;
 
 
@@ -73,11 +73,13 @@ public final class PySdkTools {
       ref.set(sdk);
     });
 
+    // The SDK is in no SDK table. With a module, the Python project of the module holds it as its interpreter, see
+    // generateTempSkeletonsOrPackages, and it goes with the module's project or with parentDisposable.
     final Sdk sdk = ref.get();
-    if (sdk != null) {
-      ApplicationManager.getApplication().invokeAndWait(() -> SdkConfigurationUtil.addSdk(sdk));
+    if (module != null) {
+      setPythonSdkForTests(module, sdk);
       if (parentDisposable != null) {
-        Disposer.register(parentDisposable, () -> WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().removeJdk(sdk)));
+        Disposer.register(parentDisposable, () -> removeTestSdk(module, sdk));
       }
     }
     if (sdkCreationType != SdkCreationType.EMPTY_SDK) {
@@ -93,11 +95,11 @@ public final class PySdkTools {
 
 
   /**
-   * Adds installed eggs to SDK, generates skeletons (optionally) and associates it with module.
+   * Adds installed eggs to SDK and generates skeletons (optionally).
    *
    * @param sdk          sdk to process
    * @param addSkeletons add skeletons or only packages
-   * @param module       module to associate with (if provided)
+   * @param module       module whose project reads the interpreter paths (if provided)
    * @throws InvalidSdkException bas sdk
    */
   @RequiresBackgroundThread(generateAssertion = false)
@@ -109,8 +111,6 @@ public final class PySdkTools {
 
     if (module != null) {
       project = module.getProject();
-
-      setPythonSdkForTests(module, sdk);
     }
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();

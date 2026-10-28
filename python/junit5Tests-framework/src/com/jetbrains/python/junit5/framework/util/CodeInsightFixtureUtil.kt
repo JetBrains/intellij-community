@@ -92,7 +92,7 @@ fun CodeInsightTestFixture.assertSdkRootsNotParsed(currentFile: PsiFile) {
     LOG.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
     return
   }
-  for (root in interpreter.classRoots) {
+  for (root in interpreter.classRoots(currentFile.project)) {
     assertRootNotParsed(currentFile, root, null)
   }
 }

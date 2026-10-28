@@ -829,12 +829,8 @@ Typical pattern:
 
 ```kotlin
 private val tempPath = tempPathFixture()
-private val module = projectFixture().moduleFixture(tempPath, addPathToSourceRoot = true)
-private val venv = pySdkFixture().pyVenvFixture(
-  where = tempPath,
-  addToSdkTable = true,
-  moduleFixture = module,
-)
+private val pyProject = projectFixture().pyModuleFixture(tempPath, addPathToSourceRoot = true).pyProjectFixture()
+private val venv = pyEnvironmentFixture().pyVenvFixture(where = tempPath, pyProjectFixture = pyProject)
 ```
 
 ## `multiverseProjectFixture(...)`
@@ -984,7 +980,7 @@ Reference:
 Python uses the same core fixtures plus:
 
 - `@PyEnvTestCase`
-- `pySdkFixture()`
+- `pyEnvironmentFixture()`, `pyInterpreterFixture()`
 - `pyVenvFixture(...)`
 - local helper extensions for nested file creation and project bootstrap
 

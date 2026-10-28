@@ -405,6 +405,8 @@ abstract class PyCodeInsightTestCase {
       }
       modificator.commitChanges()
     }
+    // A module reads the roots of its interpreter from its interpreter library, which copies them from the SDK.
+    syncPythonInterpreterLibraries()
     IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
   }
 
@@ -579,7 +581,7 @@ abstract class PyCodeInsightTestCase {
       logger.warn("The interpreter is null. assertSdkRootsNotParsed is skipped")
       return
     }
-    for (root in interpreter.classRoots) {
+    for (root in interpreter.classRoots(myFixture.project)) {
       assertRootNotParsed(currentFile, root)
     }
   }

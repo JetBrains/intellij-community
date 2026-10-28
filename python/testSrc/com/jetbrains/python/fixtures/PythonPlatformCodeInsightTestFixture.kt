@@ -6,12 +6,15 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterSdks
+import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -133,6 +136,13 @@ class PythonPlatformCodeInsightTestFixture(languageLevel: LanguageLevel) : Pytho
   }
 
   override fun getLookupElements(): Array<LookupElement>? = myDelegateFixture.lookupElements
+
+  override fun sdkRootsChanged(sdk: Sdk) {
+    PythonInterpreterSdks.sdkChangedInOpenProjects(sdk)
+    // Resolve reads the roots of the interpreter library, which copies the roots of the SDK.
+    syncPythonInterpreterLibraries()
+    IndexingTestUtil.waitUntilIndexesAreReadyInAllOpenedProjects()
+  }
 
   override fun runWithSourceRoots(sourceRoots: List<VirtualFile>, runnable: Runnable) {
     sourceRoots.forEach { root -> PsiTestUtil.addSourceRoot(module, root) }
