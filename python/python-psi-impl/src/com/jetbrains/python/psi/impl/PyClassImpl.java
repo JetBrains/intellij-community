@@ -146,6 +146,13 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   private volatile @Nullable List<PyTargetExpression> myClassAttributesFromClassMethods;
 
   private volatile Map<String, Property> myLocalPropertyCache;
+  private volatile @Nullable VersionSpecificChildren myVersionSpecificChildren;
+
+  /**
+   * The children of {@code stub} that the language level of the file keeps.
+   * Keyed by the stub, not by the modification stamp: the stamp needs the containing file, which this cache avoids.
+   */
+  private record VersionSpecificChildren(@NotNull StubElement<?> stub, @NotNull Iterable<@NotNull StubElement<?>> children) {}
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
@@ -1441,7 +1448,14 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   private @NotNull Iterable<@NotNull StubElement<?>> getVersionSpecificChildrenStubs(@NotNull PyClassStub stub) {
-    return PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile()));
+    final VersionSpecificChildren cached = myVersionSpecificChildren;
+    if (cached != null && cached.stub() == stub) {
+      return cached.children();
+    }
+    final Iterable<@NotNull StubElement<?>> children =
+      PyVersionSpecificStubBaseKt.getChildrenStubs(stub, PyLanguageFacadeKt.getEffectiveLanguageLevel(getContainingFile()));
+    myVersionSpecificChildren = new VersionSpecificChildren(stub, children);
+    return children;
   }
 
   @Override
@@ -1541,6 +1555,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     myFallbackInstanceAttributes = null;
     myClassAttributesFromClassMethods = null;
     myLocalPropertyCache = null;
+    myVersionSpecificChildren = null;
   }
 
   @Override
