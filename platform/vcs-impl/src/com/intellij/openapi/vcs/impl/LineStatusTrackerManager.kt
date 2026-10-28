@@ -18,12 +18,8 @@ import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.ReadAction
-import com.intellij.openapi.application.UiWithModelAccess
-import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.TestOnlyThreading
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.application.runWriteAction
@@ -118,7 +114,6 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.yield
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
@@ -803,8 +798,9 @@ class LineStatusTrackerManager(
     override fun editorCreated(event: EditorFactoryEvent) {
       // Editors may be created on EDT without an implicit read lock, while requesting a tracker needs read access
       // (see ChangelistsLocalStatusTrackerProvider.createTracker -> FileDocumentManager.getDocument). Same as in `install`.
-      WriteIntentReadAction.run {
-        val editor = event.editor
+      val editor = event.editor
+      val modalityState = ModalityState.current()
+      coroutineScope.launch(Dispatchers.EDT + modalityState.asContextElement()) {
         if (isTrackedEditor(editor)) {
           requestTrackerFor(editor.document, editor)
         }
@@ -821,7 +817,7 @@ class LineStatusTrackerManager(
     private fun isTrackedEditor(editor: Editor): Boolean {
       // can't filter out "!isInLocalFileSystem" files, custom VcsBaseContentProvider can handle them
       // check for isDisposed - light project in tests
-      return !project.isDisposed &&
+      return !project.isDisposed && !editor.isDisposed &&
              (editor.project == null || editor.project == project) &&
              FileDocumentManager.getInstance().getFile(editor.document) != null
     }
