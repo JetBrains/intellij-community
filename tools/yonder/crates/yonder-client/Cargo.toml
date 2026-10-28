@@ -21,6 +21,10 @@ serde = { version = "1.0.229", features = ["derive"] }
 serde_json = "1.0.151"
 yonder-link = { path = "../yonder-link" }
 
+# The fetch: `O_NOFOLLOW` of the open of a part.
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.191"
+
 [dev-dependencies]
 pretty_assertions.workspace = true
 tempfile.workspace = true

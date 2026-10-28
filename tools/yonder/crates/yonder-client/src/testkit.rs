@@ -281,9 +281,11 @@ impl Setup {
         Self { dir, config, agent }
     }
 
-    /// The local checkout of the tests, inside the directory.
+    /// The local checkout of the tests, inside the directory, made on the first call. A fetch makes no checkout.
     pub(crate) fn checkout(&self) -> PathBuf {
-        self.dir.path().join("checkout")
+        let checkout = self.dir.path().join("checkout");
+        std::fs::create_dir_all(&checkout).expect("the checkout");
+        checkout
     }
 }
 

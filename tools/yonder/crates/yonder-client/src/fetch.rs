@@ -1,8 +1,13 @@
 //! The staged files of a run: `Fetch` copies them into the local checkout, and `Forget` removes the run on the agent.
 //!
 //! Each file goes to `<name>.yonder-part` first, and only a file of the size that the agent named takes its name. So a
-//! cut connection leaves no file that looks whole. A fetch that did not copy every file is a failure, and the run then
-//! keeps its stage on the agent for another `yonder fetch`.
+//! cut connection leaves no file that looks whole. A stream writes at most the size that the agent named, and the rest
+//! is read and dropped. A fetch that did not copy every file is a failure, and the run then keeps its stage on the agent
+//! for another `yonder fetch`.
+//!
+//! No write follows a local link: a target with a link in a parent directory below the checkout is refused, and the
+//! part is a new file that the open makes itself (`create_new`, and `O_NOFOLLOW` on Unix). A part that a cut fetch left
+//! goes first.
 //!
 //! The host chooses the paths, so the client takes only what the local record of the run asked for (`record.rs`): a
 //! staged path below a `fetch` directory of the record, a file of an output that the record names, and the changes when
@@ -15,7 +20,7 @@
 
 use std::collections::BTreeSet;
 use std::fs;
-use std::io::{self, BufWriter, Write as _};
+use std::io::{self, BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use yonder_link::proto::{FileKind, Reply, Request, is_run_id};
@@ -113,7 +118,7 @@ impl Client<'_> {
                         }
                         FileKind::Output { root } => output_target(checkout, root, &path).inspect(|_| {
                             if replaced.insert(root.clone())
-                                && let Err(error) = remove_local(&checkout.join(root))
+                                && let Err(error) = remove_output(checkout, root)
                             {
                                 (self.say)(&format!("yonder: cannot remove the local output {root}: {error}"));
                             }
@@ -121,8 +126,14 @@ impl Client<'_> {
                         FileKind::Changes if record.changes => Ok(patch.to_path_buf()),
                         FileKind::Changes => Err("the run did not ask for its changes".to_owned()),
                     };
+                    // The client chose the file of the patch, so only the paths of the host have parents to check.
+                    let base = if kind == FileKind::Changes {
+                        patch.parent().unwrap_or(patch)
+                    } else {
+                        checkout
+                    };
                     match target {
-                        Ok(target) => match receive_file(&mut channel, &target, size, executable) {
+                        Ok(target) => match receive_file(&mut channel, base, &target, size, executable) {
                             Ok(()) if kind == FileKind::Changes => fetched.changes = Some(target),
                             Ok(()) => fetched.files.push(path),
                             Err(Received::Link(error)) => return Err(host.link_refusal(&error)),
@@ -171,6 +182,38 @@ pub(crate) fn output_target(checkout: &Path, root: &str, path: &str) -> Result<P
     plain_target(checkout, path)
 }
 
+/// Removes the local copy of the output `root`. A link in a parent directory refuses, so the removal stays below the
+/// checkout.
+fn remove_output(checkout: &Path, root: &str) -> io::Result<()> {
+    let path = checkout.join(root);
+    check_parents(checkout, &path, false)?;
+    remove_local(&path)
+}
+
+/// Checks each directory between `base` and `target`: no one may be a link, so that a write or a removal at `target`
+/// stays below `base`. With `create`, a missing directory is made. Without it, a missing directory ends the check.
+fn check_parents(base: &Path, target: &Path, create: bool) -> io::Result<()> {
+    let Ok(below) = target.strip_prefix(base) else {
+        return Err(io::Error::other(format!("{} is not below {}", target.display(), base.display())));
+    };
+    let parts: Vec<_> = below.components().collect();
+    let mut dir = base.to_path_buf();
+    for part in &parts[..parts.len().saturating_sub(1)] {
+        dir.push(part);
+        match fs::symlink_metadata(&dir) {
+            Ok(metadata) if metadata.file_type().is_symlink() => {
+                return Err(io::Error::other(format!("{} is a link", dir.display())));
+            }
+            Ok(metadata) if metadata.is_dir() => {}
+            Ok(_) => return Err(io::Error::other(format!("{} is not a directory", dir.display()))),
+            Err(error) if error.kind() == io::ErrorKind::NotFound && create => fs::create_dir(&dir)?,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+            Err(error) => return Err(error),
+        }
+    }
+    Ok(())
+}
+
 /// Removes a local file, link or directory. A missing one is no failure.
 fn remove_local(path: &Path) -> io::Result<()> {
     let removed = match fs::symlink_metadata(path) {
@@ -192,14 +235,13 @@ enum Received {
     Local(String),
 }
 
-/// Writes the byte stream that comes next into `<target>.yonder-part`, checks its size, then renames it to `target`. A
-/// local failure still reads the stream to its end, so the channel stays in step. A cut stream removes the part.
-fn receive_file(channel: &mut Channel, target: &Path, size: u64, executable: bool) -> Result<(), Received> {
+/// Writes the byte stream that comes next into `<target>.yonder-part`, checks its size, then renames it to `target`.
+/// The parent directories of `target` below `base` are made, and a link among them refuses. Only `size` bytes go into
+/// the part. A local failure still reads the stream to its end, so the channel stays in step. A cut stream removes the
+/// part.
+fn receive_file(channel: &mut Channel, base: &Path, target: &Path, size: u64, executable: bool) -> Result<(), Received> {
     let part = part_path(target);
-    let opened = target
-        .parent()
-        .map_or(Ok(()), fs::create_dir_all)
-        .and_then(|()| fs::File::create(&part));
+    let opened = check_parents(base, target, true).and_then(|()| open_part(&part));
     let file = match opened {
         Ok(file) => file,
         Err(error) => {
@@ -207,9 +249,12 @@ fn receive_file(channel: &mut Channel, target: &Path, size: u64, executable: boo
             return Err(Received::Local(error.to_string()));
         }
     };
-    let mut writer = BufWriter::new(file);
+    let mut writer = Capped {
+        inner: BufWriter::new(file),
+        left: size,
+    };
     let received = channel.recv_stream(&mut writer);
-    let flushed = writer.flush();
+    let flushed = writer.inner.flush();
     drop(writer);
     let checked = match (received, flushed) {
         (Err(error), _) => Err(Received::Link(error)),
@@ -233,6 +278,41 @@ fn receive_file(channel: &mut Channel, target: &Path, size: u64, executable: boo
         let _ = fs::remove_file(&part);
     }
     checked
+}
+
+/// Makes the part as a new file. A part that a cut fetch left goes first: a file or a link, never what a link names.
+fn open_part(part: &Path) -> io::Result<fs::File> {
+    match fs::remove_file(part) {
+        Err(error) if error.kind() != io::ErrorKind::NotFound => return Err(error),
+        _ => {}
+    }
+    let mut options = fs::OpenOptions::new();
+    options.write(true).create_new(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt as _;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    options.open(part)
+}
+
+/// A writer that passes the first `left` bytes and drops the rest, so a stream over its size cannot fill the disk.
+struct Capped<W> {
+    inner: W,
+    left: u64,
+}
+
+impl<W: Write> Write for Capped<W> {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let taken = usize::try_from(self.left).map_or(buf.len(), |left| left.min(buf.len()));
+        self.inner.write_all(&buf[..taken])?;
+        self.left -= taken as u64;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        self.inner.flush()
+    }
 }
 
 #[cfg(unix)]

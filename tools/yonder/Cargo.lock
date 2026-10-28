@@ -972,6 +972,7 @@ name = "yonder-client"
 version = "0.1.0"
 dependencies = [
  "ctrlc",
+ "libc",
  "pretty_assertions",
  "refusal",
  "ring",

@@ -100,7 +100,11 @@ skipped, and the fetch then fails. A file of an output that the record does not 
 without `changes`, are skipped too. The first file of an output removes the local file or directory of the output.
 `yonder fetch` reads the record of the run in the checkout of the working directory. An explicit `--fetch` replaces
 the `fetch` directories of the record. Without a record, `--fetch` takes the staged files below its directories only,
-and no `--fetch` refuses with `usage`. Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
+and no `--fetch` refuses with `usage`. No write follows a local link. A file whose target has a link in a parent directory below the checkout is skipped,
+and so is an output whose local copy has one: the removal of the copy would leave the checkout. The part is a new file
+that the open makes itself (`create_new`, and `O_NOFOLLOW` on Unix), after the removal of a part that a cut fetch
+left, whether a file or a link. A stream writes at most the size that the agent named, and the client reads and drops
+the rest. Each file goes to `<name>.yonder-part` first and takes its name only at the size that the agent named. The run
 removes itself on the host (`Forget`) only when the client saw its end and every file came.
 
 A pack goes to a temporary file first, under `git pack-objects --progress` with a quiet limit of 60 s and no limit on
