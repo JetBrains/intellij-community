@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -34,13 +34,55 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
     return JAVA_21_ANNOTATED;
   }
 
-  @NotNull
   @Override
-  protected String getTestDataPath() {
+  protected @NotNull String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testEmptyConstructor() { runTest("01", null); }
+  public void testEmptyConstructor() { doTest("01", null); }
+  public void testSubclass() { doTest("02", null); }
+  public void testDefaultConstructor() { doTest("03", null); }
+  public void testDefaultConstructorWithTypeParams() { doTest("TypeParams", null); }
+  public void testPreserveComments() { doTest(); }
+  public void testInnerClass() { doTest("04", null); }
+  public void testNestedClass() { doTest("NestedClass", "OuterClass"); }
+  public void testNestedClass2() { doTest("NestedClass2", "InnerClass"); }
+  public void testAnonymousInheritor() { doTest("AnonymousInheritor", "Inner"); }
+  public void testAnonymousInheritor2() { doTest(); }
+  public void testSubclassVisibility() { doTest("05", null); }
+  public void testImplicitConstructorUsages() { doTest("06", null); }
+  public void testImplicitConstructorCreation() { doTest("07", null); }
+  public void testConstructorTypeParameters() { doTest("08", null); }
+  public void testInnerClass2() { doTest("InnerClass2", "SimpleClass"); }
+  public void testIncompleteClass() { assertNotAvailable(); }
+  public void testInjection() { doTest(); }
+  public void testRecords() { assertNotAvailable("RecordConstructor"); }
+  public void testImplicitClass() { assertNotAvailable(); }
+  public void testRedCode() { assertNotAvailable(); }
+  public void testImplicitClassNotAvailable() { assertNotAvailable("ImplicitClassAfterName"); }
+  public void testRedCodeFromIDEA376351() { assertNotAvailable(); }
+  public void testArrayCreation() { doTest(); }
+  public void testPrecariousAnchor() { doTest(); /* See IDEA-389677 */ }
+  public void testRawConstructorCall() { doTest(); }
+  public void testRawQualifiedInnerConstructorCall() { doTest(); }
+
+  public void testImplicitClassNotChoose() {
+    configureFromFileText("A.java", """
+      private static class Neste<caret>d {
+      }
+      
+      void main() {
+          new Nested();
+      }
+      """);
+    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
+    ModCommand command = action.perform(ActionContext.from(getEditor(), getFile()));
+    if (!(command instanceof ModChooseAction modChooseAction)) {
+      fail("must be chooser");
+      return;
+    }
+    assertSize(1, modChooseAction.actions());
+  }
 
   public void testWithSelection() {
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
@@ -61,95 +103,8 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
     checkResultByFile("/refactoring/replaceConstructorWithFactory/afterWithSelection.java");
   }
 
-  public void testSubclass() { runTest("02", null); }
-
-  public void testDefaultConstructor() { runTest("03", null); }
-
-  public void testDefaultConstructorWithTypeParams() { runTest("TypeParams", null); }
-
-  public void testPreserveComments() { runTest(getTestName(false), null); }
-
-  public void testInnerClass() { runTest("04", null); }
-
-  public void testNestedClass() { runTest("NestedClass", "OuterClass"); }
-
-  public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
-
-  public void testAnonymousInheritor() { runTest("AnonymousInheritor", "Inner"); }
-
-  public void testAnonymousInheritor2() { runTest("AnonymousInheritor2", null); }
-
-  public void testSubclassVisibility() { runTest("05", null); }
-
-  public void testImplicitConstructorUsages() { runTest("06", null); }
-
-  public void testImplicitConstructorCreation() { runTest("07", null); }
-
-  public void testConstructorTypeParameters() { runTest("08", null); }
-
-  public void testInnerClass2() { runTest("InnerClass2", "SimpleClass"); }
-
-  public void testIncompleteClass() {
-    assertNotAvailable("IncompleteClass");
-  }
-
-  public void testInjection() {
-    runTest("Injection", null);
-  }
-
-  public void testRecords() {
-    assertNotAvailable("RecordConstructor");
-  }
-
-  public void testImplicitClass() {
-    assertNotAvailable("ImplicitClass");
-  }
-
-  public void testImplicitClassNotChoose() {
-    configureFromFileText("A.java", """
-      private static class Neste<caret>d {
-      
-      }
-      
-      void main() {
-          new Nested();
-      }
-      """);
-    ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
-    ModCommand command = action.perform(ActionContext.from(getEditor(), getFile()));
-    if (!(command instanceof ModChooseAction modChooseAction)) {
-      fail("must be chooser");
-      return;
-    }
-    assertSize(1, modChooseAction.actions());
-  }
-
-  public void testRedCode() {
-    assertNotAvailable("RedCode");
-  }
-
-  public void testImplicitClassNotAvailable() {
-    assertNotAvailable("ImplicitClassAfterName");
-  }
-
-  public void testRedCodeFromIDEA376351() {
-    assertNotAvailable("RedCodeFromIDEA376351");
-  }
-
-  public void testArrayCreation() {
-    runTest("ArrayCreation", null);
-  }
-
-  public void testPrecariousAnchor() {
-    runTest("PrecariousAnchor", null); // See IDEA-389677
-  }
-
-  public void testRawConstructorCall() {
-    runTest("RawConstructorCall", null);
-  }
-
-  public void testRawQualifiedInnerConstructorCall() {
-    runTest("RawQualifiedInnerConstructorCall", null);
+  private void assertNotAvailable() {
+    assertNotAvailable(getTestName(false));
   }
 
   private void assertNotAvailable(String name) {
@@ -160,7 +115,11 @@ public class ReplaceConstructorWithFactoryTest extends LightJavaCodeInsightTestC
     assertNull(presentation);
   }
 
-  private void runTest(final String testName, @NonNls String targetClassName) {
+  private void doTest() {
+    doTest(getTestName(false), null);
+  }
+
+  private void doTest(String testName, @NonNls String targetClassName) {
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testName + ".java");
     setupEditorForInjectedLanguage();
     perform(targetClassName);

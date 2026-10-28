@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -37,7 +37,6 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiReturnStatement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiTypeParameter;
@@ -52,7 +51,6 @@ import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.ui.NewUiValue;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -100,7 +98,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     return ModCommand.chooseAction(JavaBundle.message("popup.title.choose.target.class"), options);
   }
 
-  private @NotNull List<PsiClass> getTargets(PsiMember constructorOrClass) {
+  private static @NotNull List<PsiClass> getTargets(PsiMember constructorOrClass) {
     return StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
       .select(PsiClass.class)
       .filter(cls -> !(cls instanceof PsiImplicitClass))
@@ -113,8 +111,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
                              @NotNull SmartPsiElementPointer<PsiMember> constructorOrClassPtr) {
     PsiMember constructorOrClass = constructorOrClassPtr.getElement();
     if (constructorOrClass == null) return;
-    UsageData usages = findUsages(constructorOrClass);
-    performRefactoring(constructorOrClass, cls, usages, updater);
+    performRefactoring(constructorOrClass, cls, findUsages(constructorOrClass), updater);
   }
 
   @PsiModifier.ModifierConstant
@@ -125,6 +122,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     for (String level : levels) {
       LightModifierList list = new LightModifierList(member.getManager(), JavaLanguage.INSTANCE, level);
       if (ContainerUtil.all(places, place -> JavaResolveUtil.isAccessible(member, containingClass, list, place, null, null))) {
+        //noinspection MagicConstant
         return level;
       }
     }
@@ -139,33 +137,25 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       constructorOrClass instanceof PsiClass cls ? cls : Objects.requireNonNull(constructorOrClass.getContainingClass()));
     PsiReferenceExpression classReferenceExpression = factory.createReferenceExpression(targetClass);
     List<String> names = suggestNames(targetClass, Objects.requireNonNull(wrContainingClass.getName()));
-    String factoryName = names.get(0);
+    String factoryName = names.getFirst();
     PsiReferenceExpression qualifiedMethodReference = (PsiReferenceExpression)factory.createExpressionFromText("A." + factoryName, null);
-    PsiMethod constructor = ObjectUtils.tryCast(constructorOrClass, PsiMethod.class);
+    PsiMethod constructor = constructorOrClass instanceof PsiMethod m ? m : null;
 
     PsiClass wrClass = updater.getWritable(targetClass);
-    PsiMethod wrConstructor = updater.getWritable(constructor);
     List<PsiNewExpression> writableUsages = ContainerUtil.map(usages.newUsages, updater::getWritable);
 
-    PsiMethod factoryMethod = createFactoryMethod(project, wrContainingClass, constructor, factoryName);
-    factoryMethod = (PsiMethod)wrClass.add(factoryMethod);
-
-    if (constructor == null) {
-      wrConstructor = (PsiMethod)wrContainingClass.add(factory.createConstructor());
-    }
-    
+    PsiMethod wrConstructor = constructor != null
+                              ? updater.getWritable(constructor)
+                              : (PsiMethod)wrContainingClass.add(factory.createConstructor());
     PsiUtil.setModifierProperty(wrConstructor, getMinimalAccessLevel(constructorOrClass, usages.otherUsages), true);
+    PsiMethod factoryMethod = (PsiMethod)wrClass.add(createFactoryMethod(project, wrContainingClass, constructor, factoryName));
 
     for (PsiNewExpression newExpression : writableUsages) {
-      if (newExpression.isArrayCreation()) {
-        continue;
-      }
+      if (newExpression.isArrayCreation()) continue;
 
-      var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
       CommentTracker ct = new CommentTracker();
-      
+      var factoryCall = (PsiMethodCallExpression)factory.createExpressionFromText(factoryName + "()", newExpression);
       factoryCall.getArgumentList().replace(Objects.requireNonNull(ct.markUnchanged(newExpression.getArgumentList())));
-
       PsiExpression newQualifier = ct.markUnchanged(newExpression.getQualifier());
 
       PsiReferenceExpression factoryCallRef = factoryCall.getMethodExpression();
@@ -193,10 +183,8 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
   /// Cast may be needed when `newExpression` type is raw and `newExpression` is not a statement.
   /// The actual necessity of the cast depends on the surrounding context in which `newExpression` is replaced with the factory method.
   private static @Nullable PsiClassType getTypeOfProbablyNeededCast(@NotNull PsiNewExpression newExpression) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(newExpression.getParent());
-    if (parent instanceof PsiExpressionStatement) return null;
-    PsiType type = newExpression.getType();
-    return type instanceof PsiClassType classType && classType.isRaw() ? classType : null;
+    if (PsiUtil.skipParenthesizedExprUp(newExpression.getParent()) instanceof PsiExpressionStatement) return null;
+    return newExpression.getType() instanceof PsiClassType classType && classType.isRaw() ? classType : null;
   }
 
   private static @NotNull PsiExpression castRawFactoryCall(@NotNull PsiElementFactory factory,
@@ -228,7 +216,8 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
   }
 
   private static PsiMethod createFactoryMethod(@NotNull Project project,
-                                               @NotNull PsiClass containingClass, @Nullable PsiMethod constructor,
+                                               @NotNull PsiClass containingClass,
+                                               @Nullable PsiMethod constructor,
                                                @NotNull String defaultFactoryName) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     PsiClassType type = factory.createType(containingClass, PsiSubstitutor.EMPTY);
@@ -246,18 +235,14 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
       }
     }
 
-    PsiReturnStatement returnStatement =
-      (PsiReturnStatement)factory.createStatementFromText("return new A();", null);
+    PsiReturnStatement returnStatement = (PsiReturnStatement)factory.createStatementFromText("return new A();", null);
     PsiNewExpression newExpression = (PsiNewExpression)Objects.requireNonNull(returnStatement.getReturnValue());
     PsiJavaCodeReferenceElement classRef = factory.createReferenceElementByType(type);
     Objects.requireNonNull(newExpression.getClassReference()).replace(classRef);
     PsiExpressionList argumentList = Objects.requireNonNull(newExpression.getArgumentList());
 
-    PsiParameter[] params = factoryMethod.getParameterList().getParameters();
-
-    for (PsiParameter parameter : params) {
-      PsiExpression paramRef = factory.createExpressionFromText(parameter.getName(), null);
-      argumentList.add(paramRef);
+    for (PsiParameter parameter : factoryMethod.getParameterList().getParameters()) {
+      argumentList.add(factory.createExpressionFromText(parameter.getName(), null));
     }
     Objects.requireNonNull(factoryMethod.getBody()).add(returnStatement);
 
@@ -265,7 +250,6 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     PsiUtil.setModifierProperty(factoryMethod, VisibilityUtil.getVisibilityModifier(visibilityOwner.getModifierList()), true);
 
     boolean inner = containingClass.getContainingClass() != null && !containingClass.hasModifierProperty(PsiModifier.STATIC);
-
     if (!inner) {
       PsiUtil.setModifierProperty(factoryMethod, PsiModifier.STATIC, true);
     }
@@ -273,9 +257,7 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     return (PsiMethod)CodeStyleManager.getInstance(project).reformat(factoryMethod);
   }
 
-
-  record UsageData(@NotNull List<@NotNull PsiNewExpression> newUsages, @NotNull List<@NotNull PsiElement> otherUsages) {
-  }
+  private record UsageData(@NotNull List<@NotNull PsiNewExpression> newUsages, @NotNull List<@NotNull PsiElement> otherUsages) {}
 
   private static @NotNull UsageData findUsages(@NotNull PsiMember constructorOrClass) {
     List<PsiNewExpression> newUsages = new ArrayList<>();
@@ -284,14 +266,15 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     for (PsiReference reference : ReferencesSearch.search(constructorOrClass, constructorOrClass.getUseScope(), false).asIterable()) {
       PsiElement element = reference.getElement();
 
-      if (element.getParent() instanceof PsiNewExpression newExpression) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiNewExpression newExpression ) {
         newUsages.add(newExpression);
       }
-      else if (element.getParent() instanceof PsiAnonymousClass || 
+      else if (parent instanceof PsiAnonymousClass ||
                "super".equals(element.getText()) || "this".equals(element.getText()) ||
                element instanceof PsiMethod method && method.isConstructor() ||
                element instanceof PsiClass ||
-               element.getParent() instanceof PsiReferenceList) {
+               parent instanceof PsiReferenceList) {
         otherUsages.add(element);
       }
     }
@@ -306,24 +289,23 @@ public final class ReplaceConstructorWithFactoryAction implements ModCommandActi
     if (element == null) return null;
     PsiMethod method = MethodUtils.getJavaMethodFromHeader(element);
     if (method != null) {
-      if (method.getBody() == null) return null;
-      if (!method.isConstructor()) return null;
-      var containingClass = method.getContainingClass();
-      if (!isSuitableClass(containingClass)) return null;
-      return method;
+      return method.getBody() == null || !method.isConstructor() || !isSuitableClass(method.getContainingClass()) ? null : method;
     }
     PsiClass containingClass = PsiUtil.getContainingClass(element);
-    if (!isSuitableClass(containingClass)) return null;
+    if (!isSuitableClass(containingClass) || containingClass.getConstructors().length > 0 || containingClass.getRBrace() == null) {
+      return null;
+    }
     PsiElement lBrace = containingClass.getLBrace();
-    if (lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset()) return null;
-    if (containingClass.getRBrace() == null) return null; // Incomplete class declaration: adding a method may cause errors
-    if (containingClass.getConstructors().length > 0) return null;
-    return containingClass;
+    return lBrace == null || element.getTextRange().getStartOffset() >= lBrace.getTextRange().getStartOffset() ? null : containingClass;
   }
 
   private static boolean isSuitableClass(PsiClass containingClass) {
-    return containingClass != null && !containingClass.isInterface() && !containingClass.isEnum() && !containingClass.isRecord() &&
-           !(containingClass instanceof PsiImplicitClass) && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT) && 
-           containingClass.getQualifiedName() != null;
+    return containingClass != null
+           && !containingClass.isInterface()
+           && !containingClass.isEnum()
+           && !containingClass.isRecord()
+           && !(containingClass instanceof PsiImplicitClass)
+           && !containingClass.hasModifierProperty(PsiModifier.ABSTRACT)
+           && containingClass.getQualifiedName() != null;
   }
 }
