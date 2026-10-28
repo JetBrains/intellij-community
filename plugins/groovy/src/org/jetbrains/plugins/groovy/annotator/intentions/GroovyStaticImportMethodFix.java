@@ -84,7 +84,7 @@ public class GroovyStaticImportMethodFix extends Intention {
 
   @Override
   public @NotNull String getFamilyName() {
-    return getText();
+    return GroovyBundle.message("static.import.method.fix");
   }
 
   private @Nullable GrReferenceExpression getMethodExpression() {

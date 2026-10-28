@@ -1,11 +1,16 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.highlighting;
 
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.psi.util.PsiTreeUtil;
 import junit.framework.TestCase;
+import org.jetbrains.plugins.groovy.GroovyBundle;
+import org.jetbrains.plugins.groovy.annotator.intentions.GroovyStaticImportMethodFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.transformations.TransformationUtilKt;
 
 public class GroovyHighlightingTest extends GrHighlightingTestBase {
@@ -1928,6 +1933,19 @@ public class GroovyHighlightingTest extends GrHighlightingTestBase {
       """);
 
     myFixture.getAvailableIntention("Static import method 'A.foo'");
+  }
+
+  public void testStaticImportFixFamilyNameAfterCallDeletion() {
+    var file = myFixture.configureByText("a.groovy", "foo()");
+    var call = PsiTreeUtil.findChildOfType(file, GrMethodCall.class);
+    assertNotNull(call);
+    var fix = new GroovyStaticImportMethodFix(call);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), call::delete);
+
+    assertFalse(call.isValid());
+    assertEquals(GroovyBundle.message("static.import.method.fix"), fix.getFamilyName());
+    assertFalse(fix.isAvailable(getProject(), myFixture.getEditor(), file));
   }
 
   public void testNoSOEInIndexPropertyAssignmentWithGenericFunction() {
