@@ -33,6 +33,21 @@ class GHPullRequestReviewThreadTest {
   }
 
   @Test
+  fun `mapToInEditorRange produces no range if the current start line is after the current end line`() {
+    val thread = Util.createPRThread(
+      startLine = 157, originalStartLine = 2,
+      line = 132, originalLine = 3,
+      commit = Commit.Last, originalCommit = Commit.Commit1,
+      side = Side.RIGHT,
+    )
+
+    val diffData = Util.mockDiffData()
+
+    assertThat(thread.mapToInEditorRange(diffData))
+      .isNull()
+  }
+
+  @Test
   fun `mapToInEditorRange tries to map current line numbers if not mapped to last commit`() {
     val thread = Util.createPRThread(
       startLine = 5, originalStartLine = 2,
@@ -49,6 +64,25 @@ class GHPullRequestReviewThreadTest {
 
     assertThat(thread.mapToInEditorRange(diffData))
       .isEqualTo(10..11)
+  }
+
+  @Test
+  fun `mapToInEditorRange produces no range if the mapped start line is after the mapped end line`() {
+    val thread = Util.createPRThread(
+      startLine = 157, originalStartLine = 2,
+      line = 132, originalLine = 3,
+      commit = Commit.Commit2, originalCommit = Commit.Commit1,
+      side = Side.RIGHT,
+    )
+
+    val diffData = Util.mockDiffData(mapping = { commit, side, lineIndex ->
+      if (commit == Commit.Commit2 && side == Side.RIGHT)
+        side to (lineIndex + 5)
+      else error("unexpected")
+    })
+
+    assertThat(thread.mapToInEditorRange(diffData))
+      .isNull()
   }
 
   @Test

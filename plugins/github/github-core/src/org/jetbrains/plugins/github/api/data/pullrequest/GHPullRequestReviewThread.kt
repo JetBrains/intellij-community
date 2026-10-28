@@ -140,6 +140,10 @@ fun GHPullRequestReviewThread.mapToInEditorRange(diffData: GitTextFilePatchWithH
   ) {
     val startLineIndex = (threadData.startLine ?: threadData.line) - 1
     val endLineIndex = threadData.line - 1
+    if (startLineIndex > endLineIndex) {
+      LOG.warn("Invalid comment range lines on commit ${threadData.commit?.oid}: ${threadData.startLine}..${threadData.line}")
+      return null
+    }
 
     return startLineIndex..endLineIndex
   }
