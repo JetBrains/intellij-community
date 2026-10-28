@@ -61,6 +61,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -765,6 +766,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         String jreHome = configuration.isAlternativeJrePathEnabled() ? configuration.getAlternativeJrePath() : null;
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
+          ProgressManager.checkCanceled();
           wWriter.println(toChangeWorkingDirectory ? ProgramParametersUtil.getWorkingDir(configuration, project, module)
                                                    : workingDirectory);
           wWriter.println(module.getName());

@@ -17,6 +17,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -46,6 +47,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGConfiguration> {
   private static final String COMMAND_LINE_ARGS_OUTPUT_DIRECTORY = "-d";
@@ -153,8 +156,8 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
     return new SearchingForTestsTask(getServerSocket(), config, myTempFile) {
       @Override
       protected void onFound() {
-        super.onFound();
         writeClassesPerModule(myClasses);
+        super.onFound();
       }
     };
   }
@@ -164,6 +167,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
       final Map<Module, List<String>> perModule = new TreeMap<>((o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
 
       for (final PsiClass psiClass : classes.keySet()) {
+        ProgressManager.checkCanceled();
         final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
         if (module != null) {
           List<String> list = perModule.get(module);
@@ -179,6 +183,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
         writeClassesPerModule(getConfiguration().getPackage(), getJavaParameters(), perModule, "");
       }
       catch (Exception e) {
+        rethrowControlFlowException(e);
         LOG.error(e);
       }
     }

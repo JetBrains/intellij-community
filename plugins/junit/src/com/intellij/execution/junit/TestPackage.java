@@ -53,6 +53,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
+
 public class TestPackage extends TestObject {
   protected static final Function<Location<?>, String> CLASS_NAME_FUNCTION = location -> {
     if (location instanceof MethodLocation) {
@@ -114,13 +116,18 @@ public class TestPackage extends TestObject {
           }
         }
         catch (Exception e) {
+          rethrowControlFlowException(e);
           LOG.warn("Failed to prepare JUnit test suite file", e);
         }
+      }
 
+      @Override
+      public void onSuccess() {
         myShouldExecuteFinishMethod = !TargetEnvironmentUtil.reuploadRootFile(myTempFile, getTargetEnvironmentRequest(),
                                                                               remoteEnvironment, getTargetProgressIndicator(),
                                                                               () -> ApplicationManager.getApplication()
                                                                             .invokeLater(super::finish, myProject.getDisposed()));
+        super.onSuccess();
       }
 
       @Override

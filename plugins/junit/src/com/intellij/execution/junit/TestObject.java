@@ -166,6 +166,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
 
       for (final T element : elements) {
+        ProgressManager.checkCanceled();
         final String name = nameFunction.fun(element);
         if (name == null) {
           continue;

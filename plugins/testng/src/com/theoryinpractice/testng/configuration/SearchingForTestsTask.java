@@ -8,6 +8,7 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -130,6 +131,7 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     final boolean findTestMethodsForClass = shouldSearchForTestMethods();
 
     for (final Map.Entry<PsiClass, Map<PsiMethod, List<String>>> entry : myClasses.entrySet()) {
+      ProgressManager.checkCanceled();
       final Map<PsiMethod, List<String>> depMethods = entry.getValue();
       LinkedHashMap<String, List<String>> methods = new LinkedHashMap<>();
       for (Map.Entry<PsiMethod, List<String>> method : depMethods.entrySet()) {

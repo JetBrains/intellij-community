@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
@@ -123,13 +123,14 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
       }
 
       ExecutionException[] onFoundEx = new ExecutionException[1];
-      Runnable runnable = () -> performWithIncompleteIndex(this::onFound, onFoundEx);
+      readAction = ReadAction.nonBlocking(() -> {
+        performWithIncompleteIndex(this::onFound, onFoundEx);
+        return null;
+      });
       if (requiresSmartMode() && !myAllowIndexInDumbMode) {
-        DumbService.getInstance(getProject()).runReadActionInSmartMode(runnable);
+        readAction = readAction.inSmartMode(myProject);
       }
-      else {
-        ReadAction.run(runnable::run);
-      }
+      readAction.executeSynchronously();
       if (onFoundEx[0] != null) {
         throw onFoundEx[0];
       }
