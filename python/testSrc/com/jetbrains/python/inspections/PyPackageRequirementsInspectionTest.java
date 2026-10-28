@@ -1,12 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.python.sdk.backend.PythonInterpreter;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.allure.Layers;
 import com.jetbrains.python.allure.Subsystems;
-
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.fixtures.PyProjectStructureTestUtilKt;
 import com.jetbrains.python.packaging.PyRequirement;
@@ -20,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-import static com.jetbrains.python.inspections.ModuleAssocToolKt.setAssociationToModuleAsync;
 import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePyPiPackageCacheService;
 import static com.jetbrains.python.packaging.management.TestPythonPackageManagerService.replacePythonPackageManagerServiceWithTestInstance;
 
@@ -44,10 +42,8 @@ public class PyPackageRequirementsInspectionTest extends PyInspectionTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    final PythonInterpreter interpreter = PyProjectStructureTestUtilKt.findPythonInterpreterForTests(myFixture.getModule());
-    assertNotNull(interpreter);
-    setAssociationToModuleAsync(interpreter, myFixture.getModule());
-
+    // The legacy flow gets a new SDK of the light project for each test, and the requirements file is next to the module.
+    PyProjectStructureTestUtilKt.ownModuleSdkForTests(myFixture.getModule());
     var cachedPackages = List.of("opster", "clevercss", "django", "test3", "pyzmq", "markdown", "pytest", "django-simple-captcha");
 
     replacePyPiPackageCacheService(myFixture.getProject(), cachedPackages);

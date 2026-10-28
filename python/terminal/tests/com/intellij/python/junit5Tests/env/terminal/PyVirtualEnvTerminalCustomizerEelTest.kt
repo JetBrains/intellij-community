@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.python.junit5Tests.env.terminal
 
-import com.intellij.openapi.application.edtWriteAction
-import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.platform.eel.getShell
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
@@ -13,7 +13,6 @@ import com.intellij.platform.testFramework.junit5.eel.params.api.TestApplication
 import com.intellij.platform.testFramework.junit5.eel.params.api.WslTest
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
-import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.terminal.PyVirtualEnvTerminalCustomizer
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
@@ -24,7 +23,6 @@ import com.jetbrains.python.getOrThrow
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.setPythonSdkForTests
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.terminal.startup.MutableShellExecOptionsImpl
@@ -64,11 +62,10 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
     val venvDir = workingDirectory.resolve(".venv")
     val venvPython = createVenv(python, venvDir).getOrThrow()
     val pyProject = pyProjectFixture.get()
-    val sdk = createSdk(pyProject, PathHolder.Eel(venvPython), createVenvAdditionalData(workingDirectory)).orThrow().getSdkAPI()
-    // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
-    edtWriteAction { ProjectJdkTable.getInstance().addJdk(sdk) }
+    val interpreter = checkNotNull(pyProject.setPythonInterpreter(
+      createSdk(pyProject, PathHolder.Eel(venvPython), createVenvAdditionalData(workingDirectory)).orThrow()
+    ).orThrow())
     try {
-      pyProject.residesOnModule.setPythonSdkForTests(sdk)
 
       val (shell, _) = eel.exec.getShell()
       val execOptions = MutableShellExecOptionsImpl(
@@ -89,9 +86,8 @@ internal class PyVirtualEnvTerminalCustomizerEelTest {
                             "Activation script must be inside $venvDirOnEel (the path inside the eel), but it is $source")
     }
     finally {
-      edtWriteAction {
-        ProjectJdkTable.getInstance().removeJdk(sdk)
-      }
+      pyProject.setPythonInterpreter(null).orThrow()
+      PythonInterpreterRegistry.getInstance(projectFixture.get()).removePythonInterpreter(pyProject, interpreter)
     }
   }
 }

@@ -9,9 +9,11 @@ import com.intellij.idea.IJIgnore
 import com.intellij.lang.documentation.CompositeDocumentationProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.QualifiedName
+import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibDocumentationLinkProvider
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.findPythonInterpreterForTests
 import junit.framework.TestCase
 import org.junit.Ignore
 
@@ -79,13 +81,14 @@ abstract class PyExternalDocTest : PyTestCase() {
         .fetchExternalDocumentation(myFixture.project, element, urls, false)!!.contains(expectedHtml))
   }
 
+  @Suppress("DEPRECATION") // The link provider takes an SDK.
     fun doUrl(qname: String, expectedUrl: String) {
     val ind = qname.lastIndexOf(".")
     val moduleName = qname.substring(0, ind)
     val elementName = qname.substring(ind+1)
     val p = PyStdlibDocumentationLinkProvider()
     TestCase.assertEquals(expectedUrl,
-                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), projectDescriptor!!.sdk)}.html#${p.fragmentName(
+                          "${p.webPageName(QualifiedName.fromDottedString(moduleName), checkNotNull(findPythonInterpreterForTests(myFixture.module)).getSdkAPI())}.html#${p.fragmentName(
                             moduleName)}.$elementName")
   }
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.python.sdk.backend.PythonInterpreter;
 import com.intellij.python.pyproject.model.evolution.EvoPyProjectModelKt;
 import com.intellij.python.sdk.backend.evolution.EvoPyProject;
 import com.intellij.testFramework.EdtTestUtil;
@@ -95,13 +96,14 @@ public class PythonSkeletonsTest extends PyEnvTestCase {
 
           final EvoPyProject evoPyProject = EvoPyProjectModelKt.findEvoPyProjectIfReady(module);
           assertNotNull(evoPyProject);
-          assertNotNull(evoPyProject.getInterpreter());
+          final PythonInterpreter interpreter = evoPyProject.getInterpreter();
+          assertNotNull(interpreter);
 
-          final Sdk sdkFromPsi = PyBuiltinCache.findSdkForFile(expr.getContainingFile());
-          assertNotNull(sdkFromPsi);
-          final PyFile builtinsFromSdkCache = PythonSdkPathCache.getInstance(project, sdkFromPsi).getBuiltins().getBuiltinsFile();
+          final PythonInterpreter interpreterFromPsi = PyBuiltinCache.findInterpreterForFile(expr.getContainingFile());
+          assertEquals(interpreter, interpreterFromPsi);
+          final PyFile builtinsFromSdkCache = PythonSdkPathCache.getInstance(project, interpreterFromPsi).getBuiltins().getBuiltinsFile();
           assertNotNull(builtinsFromSdkCache);
-          final PyFile builtins = PyBuiltinCache.getBuiltinsForSdk(project, sdk);
+          final PyFile builtins = PyBuiltinCache.getBuiltinsForInterpreter(project, interpreter);
           assertNotNull(builtins);
           assertEquals(builtins, builtinsFromSdkCache);
 

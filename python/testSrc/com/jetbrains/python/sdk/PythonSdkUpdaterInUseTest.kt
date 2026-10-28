@@ -70,8 +70,7 @@ internal class PythonSdkUpdaterInUseTest {
     try {
       // The check reads the current snapshot, so it must hold the interpreter list first.
       EvoPyProjectModel.getInstance(project).snapshot()
-      @Suppress("DEPRECATION") // The updater takes an SDK.
-      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter.getSdkAPI(), project)).isFalse()
+      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter, project)).isFalse()
     }
     finally {
       registry.removePythonInterpreter(pyProject, interpreter)
@@ -87,8 +86,7 @@ internal class PythonSdkUpdaterInUseTest {
     try {
       pyProject.setPythonInterpreter(interpreter)
       // Accepted, and in a unit test it then does nothing, see `PythonSdkUpdater.setEnabledInTests`.
-      @Suppress("DEPRECATION") // The updater takes an SDK.
-      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter.getSdkAPI(), project)).isTrue()
+      assertThat(PythonSdkUpdater.scheduleBackgroundUpdate(interpreter, project)).isTrue()
     }
     finally {
       pyProject.setPythonInterpreter(null)

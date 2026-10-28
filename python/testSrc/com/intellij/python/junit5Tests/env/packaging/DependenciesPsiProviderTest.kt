@@ -5,22 +5,22 @@ import com.intellij.codeInsight.hints.declarative.impl.inlineInlayTexts
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.python.community.helpersLocator.PythonHelpersLocator
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.metaInfo.Repository
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfo
 import com.intellij.python.junit5Tests.framework.metaInfo.TestClassInfoData
 import com.intellij.python.junit5Tests.framework.metaInfo.TestMethodInfoData
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
+import com.intellij.python.junit5Tests.framework.pyProjectFixture
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.python.venv.createVenv
 import com.intellij.python.venv.createVenvAdditionalData
 import com.intellij.testFramework.ExtensionTestUtil
@@ -49,13 +49,11 @@ import com.jetbrains.python.packaging.management.RequirementsProviderType
 import com.jetbrains.python.packaging.management.TestPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.packaging.management.TestPythonPackageManagerService
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.add.v2.PathHolder
 import com.jetbrains.python.sdk.createSdk
-import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.poetry.PyPoetrySdkAdditionalData
-import com.jetbrains.python.sdk.setPythonSdkForTests
-import com.jetbrains.python.sdk.setAssociationToModule
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.AfterEach
@@ -86,7 +84,8 @@ internal class DependenciesPsiProviderTest {
   private val projectFixture = projectFixture(tempPathFixture, openAfterCreation = true)
   private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
 
-  private val sdkFixture = pySdkFixture()
+  private val environmentFixture = pyEnvironmentFixture()
+  private val pyProjectFixture = moduleFixture.pyProjectFixture()
 
   private val codeInsightFixture = pyCodeInsightFixture(projectFixture, tempPathFixture)
 
@@ -242,25 +241,19 @@ internal class DependenciesPsiProviderTest {
         fixture.testRootDisposable,
       )
 
-      val env = sdkFixture.get().env
-      val sdk = withContext(Dispatchers.EDT) {
-        val module = moduleFixture.get()
-        val venvDir = tempPathFixture.get().resolve(".venv")
-        val venvPython = createVenv(env.pythonPath, venvDir).getOrThrow()
-        createSdk(ModuleOrProject.ModuleAndProject(module), PathHolder.Eel(venvPython), additionalData(module))
-          .orThrow()
-          .getSdkAPI()
-          .also {
-            // This test sets the SDK on its module through the platform, so it adds the SDK to the table itself.
-            edtWriteAction { ProjectJdkTable.getInstance().addJdk(it) }
-            module.setPythonSdkForTests(it)
-            it.setAssociationToModule(module)
-            beforePackageManager()
-          }
-      }
+      val env = environmentFixture.get()
+      val pyProject = pyProjectFixture.get()
+      val module = pyProject.residesOnModule
+      val venvDir = tempPathFixture.get().resolve(".venv")
+      val venvPython = withContext(Dispatchers.EDT) { createVenv(env.pythonPath, venvDir).getOrThrow() }
+      val built = createSdk(ModuleOrProject.ModuleAndProject(module), PathHolder.Eel(venvPython), additionalData(module)).orThrow()
+      val interpreter = checkNotNull(pyProject.setPythonInterpreter(built).orThrow())
+      withContext(Dispatchers.EDT) { beforePackageManager() }
 
+      @Suppress("DEPRECATION") // The test package manager reads its provider from the SDK.
+      val sdk = interpreter.getSdkAPI()
       sdk.putUserData(TestPythonPackageManager.REQUIREMENTS_PROVIDER_KEY, requirementsProviderType)
-      PythonPackageManager.forPythonInterpreter(project, sdk.pythonInterpreterResultAsync().orThrow()).waitForInit()
+      PythonPackageManager.forPythonInterpreter(project, interpreter).waitForInit()
 
       fixture.configureFromTempProjectFile(requirementsProviderType.filename)
 
@@ -270,9 +263,8 @@ internal class DependenciesPsiProviderTest {
         }
       }
       finally {
-        edtWriteAction {
-          ProjectJdkTable.getInstance().removeJdk(sdk)
-        }
+        pyProject.setPythonInterpreter(null).orThrow()
+        PythonInterpreterRegistry.getInstance(project).removePythonInterpreter(pyProject, interpreter)
       }
     }
   }

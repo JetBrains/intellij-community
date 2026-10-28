@@ -17,8 +17,8 @@ import org.junit.jupiter.api.Test
  * `workspace.xml`; on the next load the serializer tried to instantiate the `Sdk` interface and failed
  * (`NoSuchElementException: List is empty` from `createUsingKotlin`, i.e. `Sdk` has no constructors).
  *
- * The `sdk` object is transient runtime state — the persistent reference is the `sdk-home` path
- * ([PyConsoleOptions.PyConsoleSettings.getSdkHome]). It is now `@Transient`, so it is neither written nor read.
+ * The interpreter of the settings is transient runtime state, see [PyConsoleOptions.PyConsoleSettings.myPythonInterpreter].
+ * A console runs with the interpreter of its Python project, so the settings store no interpreter and no local path.
  */
 class PyConsoleOptionsSerializationTest {
 
@@ -114,5 +114,17 @@ class PyConsoleOptionsSerializationTest {
     val restored = legacy.deserialize(PyConsoleOptions.PyConsoleSettings::class.java)
     assertEquals("/work", restored.myWorkingDirectory)
     assertEquals("import sys", restored.myCustomStartScript)
+  }
+
+  /** An older build stores the `sdk-home` path. It is ignored, and the settings write no path back. */
+  @Test
+  fun `legacy sdk-home path is ignored and not written back`() {
+    val legacy = JDOMUtil.load("""<console-settings working-directory="/work" sdk-home="/usr/bin/python3" />""")
+
+    val restored = legacy.deserialize(PyConsoleOptions.PyConsoleSettings::class.java)
+
+    assertEquals("/work", restored.myWorkingDirectory)
+    val xml = serialize(restored)?.let { JDOMUtil.write(it) } ?: ""
+    assert(!xml.contains("sdk-home")) { "PyConsoleSettings must not write the sdk-home path, but got:\n$xml" }
   }
 }

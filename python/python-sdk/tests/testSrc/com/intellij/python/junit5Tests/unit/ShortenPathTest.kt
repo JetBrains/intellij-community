@@ -164,22 +164,6 @@ class ShortenPathTest {
     assertTrue(item.shortName.length <= 50)
   }
 
-  @Test
-  @DisplayName("a tool-supplied short label is shown as it stands and leaves the other names alone")
-  fun `tool short name replaces the short name only`() {
-    val cacheEnv = "~/Library/Caches/pypoetry/virtualenvs/myproject-AbCdEf12-py3.12"
-    val item = newItem(
-      name = cacheEnv,
-      isPathDerivedName = true,
-      suffix = "3.12.1",
-      toolShortName = "Python 3.12.1",
-    )
-    // No suffix after it: the tool wrote the whole label, so appending the version would state it twice.
-    assertEquals("Python 3.12.1", item.shortName)
-    assertEquals("$cacheEnv [3.12.1]", item.fullName)
-    assertEquals(cacheEnv, item.name)
-  }
-
   // --- toSectionLabel: the Evo widget's section headers ---
 
   @Test
@@ -210,7 +194,6 @@ class ShortenPathTest {
     name: String,
     isPathDerivedName: Boolean,
     suffix: String?,
-    toolShortName: String? = null,
   ) = PyInterpreterItem(
     ref = PyInterpreterRef.native(FusId("pip"), PyEnvRef(name)),
     name = name,
@@ -219,6 +202,5 @@ class ShortenPathTest {
     problem = null,
     icon = noIcon.rpcId(),
     isPathDerivedName = isPathDerivedName,
-    toolShortName = toolShortName,
   )
 }

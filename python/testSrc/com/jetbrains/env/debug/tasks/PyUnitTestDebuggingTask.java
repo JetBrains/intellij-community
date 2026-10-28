@@ -70,7 +70,6 @@ public class PyUnitTestDebuggingTask extends PyCustomConfigDebuggerTask {
     PyDebugRunner runner = (PyDebugRunner)ProgramRunner.getRunner(getExecutorId(), runConfiguration);
     Executor executor = DefaultDebugExecutor.getDebugExecutorInstance();
 
-    runConfiguration.setSdkHome(sdkHome);
     runConfiguration.setSdk(existingSdk);
     runConfiguration.setModule(myFixture.getModule());
     runConfiguration.setWorkingDirectory(myFixture.getTempDirPath());

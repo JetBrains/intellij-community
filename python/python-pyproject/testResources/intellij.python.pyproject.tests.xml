@@ -28,7 +28,9 @@
     <module name="intellij.platform.util.ex"/>
     <module name="intellij.platform.workspace.jps"/>
     <module name="intellij.platform.workspace.storage"/>
+    <module name="intellij.python.pytools.common"/>
     <module name="intellij.python.requirements.common"/>
+    <module name="intellij.python.sdk.common"/>
     <module name="intellij.python.test.env.common"/>
     <module name="intellij.python.test.env.junit5"/>
     <module name="intellij.toml.core"/>

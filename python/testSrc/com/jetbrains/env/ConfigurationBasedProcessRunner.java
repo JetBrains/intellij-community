@@ -88,7 +88,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     final ExecutionEnvironment executionEnvironment =
       // TODO: RENAME
       (myRerunExecutionEnvironment != null ? myRerunExecutionEnvironment : createExecutionEnvironment
-        (sdkPath, sdk, project, tempWorkingPath));
+        (sdk, project, tempWorkingPath));
 
     // Engine to be run after process end to post process console
     ProcessListener consolePostprocessor = new ProcessListener() {
@@ -98,7 +98,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
       }
     };
 
-    /// Find all available runners to report them to the test
+    // Find all available runners to report them to the test
     myAvailableRunnersForLastRun.clear();
     for (ProgramRunner<?> runner : ProgramRunner.PROGRAM_RUNNER_EP.getExtensions()) {
       for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
@@ -148,8 +148,7 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
   }
 
   @NotNull
-  private ExecutionEnvironment createExecutionEnvironment(@NotNull final String sdkPath,
-                                                          @Nullable final Sdk sdk,
+  private ExecutionEnvironment createExecutionEnvironment(@Nullable final Sdk sdk,
                                                           @NotNull final Project project,
                                                           @NotNull final String workingDir)
     throws ExecutionException {
@@ -160,7 +159,6 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     assert myExpectedConfigurationType.isInstance(configuration) :
       String.format("Expected configuration %s, but got %s", myExpectedConfigurationType, configuration.getClass());
 
-    configuration.setSdkHome(sdkPath);
     configuration.setSdk(sdk);
     configuration.setWorkingDirectory(workingDir);
 

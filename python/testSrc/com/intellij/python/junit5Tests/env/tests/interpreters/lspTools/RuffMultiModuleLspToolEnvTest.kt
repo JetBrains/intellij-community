@@ -2,17 +2,14 @@
 package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
 import com.intellij.python.pyproject.model.evolution.getInterpreter
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
@@ -108,13 +105,9 @@ class RuffMultiModuleLspToolEnvTest {
   private val rootModule: Module get() = rootPyProject.residesOnModule
   private val serviceModule: Module get() = servicePyProject.residesOnModule
 
-  // The test sets module and project SDKs the way the Project Structure dialog does.
-  @Suppress("DEPRECATION")
-  private val projectSdk: Sdk get() = projectSdkFixture.get().getSdkAPI()
-  @Suppress("DEPRECATION")
-  private val serviceSdk: Sdk get() = serviceSdkFixture.get().getSdkAPI()
-  @Suppress("DEPRECATION")
-  private val spareSdk: Sdk get() = spareSdkFixture.get().getSdkAPI()
+  private val projectInterpreter: PythonInterpreter get() = projectSdkFixture.get()
+  private val serviceInterpreter: PythonInterpreter get() = serviceSdkFixture.get()
+  private val spareInterpreter: PythonInterpreter get() = spareSdkFixture.get()
   private val codeInsightFixture by codeInsightFixture(projectFixture, projectPath)
 
   private val pinnedRuffVersion = LspToolVersions.requirement(RuffPyTool.getInstance()).substringAfter("==")
@@ -140,7 +133,7 @@ class RuffMultiModuleLspToolEnvTest {
     sparePyProject.installToolPackage("ruff==$SPARE_RUFF_VERSION")
     assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
 
-    ModuleRootModificationUtil.setModuleSdk(serviceModule, spareSdk)
+    servicePyProject.setPythonInterpreter(spareInterpreter).orThrow()
 
     val client = awaitRuffClientOf(serviceModule, "the Ruff server of module 'service' did not restart with Ruff $SPARE_RUFF_VERSION") {
       it.ruffVersion == SPARE_RUFF_VERSION
@@ -157,14 +150,14 @@ class RuffMultiModuleLspToolEnvTest {
     awaitOneRuffServer(pinnedRuffVersion)
   }
 
-  /** The Project Structure dialog changes the module model directly, and it fires no `PySdkListener` event. */
+  /** The service module moves to the interpreter of the root module, so it joins the server of that interpreter. */
   @Test
-  fun `a new module interpreter from the project model moves the module to the server of that interpreter`(): Unit =
+  fun `a module that moves to the interpreter of another module moves to the server of that interpreter`(): Unit =
     timeoutRunBlocking(12.minutes) {
       val (rootFile, serviceFile) = setUpModules()
       assertRuffChecks(serviceFile, serviceModule, SERVICE_RUFF_VERSION)
 
-      ModuleRootModificationUtil.setModuleSdk(serviceModule, projectSdk)
+      servicePyProject.setPythonInterpreter(projectInterpreter).orThrow()
 
       val client = awaitOneRuffServer(pinnedRuffVersion)
       awaitLspDiagnostics(client, serviceFile) { it.code?.get()?.toString() == "F401" }
@@ -172,14 +165,14 @@ class RuffMultiModuleLspToolEnvTest {
       awaitOneRuffServer(pinnedRuffVersion)
     }
 
-  /** A new project interpreter is also a new interpreter of each module that inherits it, and it fires only `rootsChanged`. */
+  /** The root module moves to the interpreter of the service module, so it joins the server of that interpreter. */
   @Test
-  fun `a new project interpreter moves a module that inherits it to the server of that interpreter`(): Unit =
+  fun `a new interpreter of the root module moves it to the server of that interpreter`(): Unit =
     timeoutRunBlocking(12.minutes) {
       val (rootFile, serviceFile) = setUpModules()
       assertRuffChecks(rootFile, rootModule, pinnedRuffVersion)
 
-      edtWriteAction { ProjectRootManager.getInstance(project).projectSdk = serviceSdk }
+      rootPyProject.setPythonInterpreter(serviceInterpreter).orThrow()
 
       val client = awaitOneRuffServer(SERVICE_RUFF_VERSION)
       awaitLspDiagnostics(client, rootFile) { it.code?.get()?.toString() == "F401" }
@@ -194,17 +187,14 @@ class RuffMultiModuleLspToolEnvTest {
 
   /**
    * Makes the project interpreter the interpreter of the root module, enables Ruff, and installs one Ruff version into
-   * each interpreter. With [oneInterpreter], the service module also inherits the project interpreter. Answers the
+   * each interpreter. With [oneInterpreter], the service module also gets the project interpreter. Answers the
    * files of the root module and of the service module.
    */
   private suspend fun setUpModules(oneInterpreter: Boolean = false): Pair<VirtualFile, VirtualFile> {
     assertNotEquals(pinnedRuffVersion, SERVICE_RUFF_VERSION, "the two interpreters must hold different Ruff versions")
     assertEquals(serviceSdkFixture.get(), serviceModule.asPyProject()?.getInterpreter(), "the service module must have its own interpreter")
-    edtWriteAction {
-      ProjectRootManager.getInstance(project).projectSdk = projectSdk
-      ModuleRootModificationUtil.setSdkInherited(rootModule)
-      if (oneInterpreter) ModuleRootModificationUtil.setSdkInherited(serviceModule)
-    }
+    rootPyProject.setPythonInterpreter(projectInterpreter).orThrow()
+    if (oneInterpreter) servicePyProject.setPythonInterpreter(projectInterpreter).orThrow()
     PyToolsState.getInstance(project).setEnabled(RuffPyTool.getInstance(), true)
     rootPyProject.installToolPackage("ruff==$pinnedRuffVersion")
     // The service module of [oneInterpreter] runs the project interpreter, which must keep the pinned Ruff.

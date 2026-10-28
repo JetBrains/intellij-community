@@ -7,9 +7,6 @@ import com.jetbrains.python.allure.Subsystems
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.lang.injection.MultiHostInjector
 import com.intellij.lang.injection.MultiHostRegistrar
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -18,6 +15,8 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.fixtures.PyTestCase
+import com.jetbrains.python.fixtures.findPythonInterpreterForTests
+import com.jetbrains.python.fixtures.setPythonInterpreterForTests
 
 @Subsystems.Inspections
 @Layers.Functional
@@ -96,13 +95,13 @@ class PyInspectionInjectionSuppressionTest : PyTestCase() {
 
   private fun runWithoutPythonSdk(action: () -> Unit) {
     val module = myFixture.module
-    val oldSdk: Sdk? = ModuleRootManager.getInstance(module).sdk
-    ModuleRootModificationUtil.setModuleSdk(module, null)
+    val interpreter = findPythonInterpreterForTests(module)
+    setPythonInterpreterForTests(module, null)
     try {
       action()
     }
     finally {
-      ModuleRootModificationUtil.setModuleSdk(module, oldSdk)
+      setPythonInterpreterForTests(module, interpreter)
     }
   }
 

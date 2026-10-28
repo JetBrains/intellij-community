@@ -6,6 +6,8 @@ import com.intellij.idea.TestFor
 import com.intellij.openapi.util.TextRange
 import com.intellij.python.zuban.zubanQuickFixes
 import com.intellij.testFramework.runInEdtAndGet
+import com.intellij.openapi.application.readAction
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
@@ -118,7 +120,8 @@ class PyLspUnresolvedReferenceQuickFixesTest : PyCodeInsightTestCase() {
     val range = TextRange(start, start + marked.length)
     // The quick fixes read only the code and the message, so the LSP range may stay empty.
     val diagnostic = Diagnostic(Range(Position(0, 0), Position(0, 0)), message, DiagnosticSeverity.Error, "test", diagnosticCode)
-    fixes(file, diagnostic, range).map { it.text }
+    // The annotator calls the fixes inside its job. The install fix asks the package manager, which needs a job.
+    runWithModalProgressBlocking(file.project, "") { readAction { fixes(file, diagnostic, range).map { it.text } } }
   }
 
   private companion object {

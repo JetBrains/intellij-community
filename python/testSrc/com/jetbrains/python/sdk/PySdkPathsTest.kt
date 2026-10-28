@@ -3,6 +3,9 @@ package com.jetbrains.python.sdk
 
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.fixtures.awaitPythonInterpreters
+import com.jetbrains.python.fixtures.syncPythonInterpreterLibraries
+import com.intellij.python.pyproject.model.evolution.interpreterSourceRootUrls
+import com.intellij.openapi.project.Project
 import com.jetbrains.python.sdk.setPythonSdkForTests
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -11,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runWriteActionAndWait
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -27,6 +31,7 @@ import com.intellij.platform.eel.isWindows
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.python.venv.sdk.flavors.VirtualEnvSdkFlavor
 import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -45,6 +50,7 @@ import org.jetbrains.annotations.NotNull
 import org.junit.Assume.assumeTrue
 import org.junit.ClassRule
 import org.junit.Rule
+import org.junit.rules.RuleChain
 import org.junit.Test
 
 @Subsystems.Interpreters
@@ -52,9 +58,14 @@ import org.junit.Test
 internal class PySdkPathsTest {
 
   companion object {
+    /**
+     * The test sets the interpreter of the module as the interpreter library flow does: it adds no SDK to the table, and
+     * it checks the source roots that the flow derives. The key is defined once the application loads the plugins, so it
+     * is set after [ApplicationRule].
+     */
     @JvmField
     @ClassRule
-    val appRule = ApplicationRule()
+    val appRule: RuleChain = RuleChain.outerRule(ApplicationRule()).around(RegistryKeyRule("python.interpreter.library.entries", true))
   }
 
   @Rule
@@ -96,13 +107,13 @@ internal class PySdkPathsTest {
     mockPythonPluginDisposable()
 
     val sdk = PythonMockSdk.create().also {
-      registerSdk(it)
+      // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
+      it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
 
     // Associated like its sibling `sysPathEntryIsModuleRoot`, because `updateSdkPaths` classifies a path against the
     // roots of the module the SDK names, and a mock SDK names none.
-    sdk.associateWith(moduleRoot)
     // Committed through the modificator, so the next commit of this SDK keeps the path. Written in place it was
     // dropped by whichever commit came first, and this test then passed because nothing was left to classify.
     runWriteActionAndWait {
@@ -123,13 +134,13 @@ internal class PySdkPathsTest {
     val (module, moduleRoot) = createModule()
 
     val sdk = PythonMockSdk.create().also {
-      registerSdk(it)
+      // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
+      it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, moduleRoot.path))
 
     mockPythonPluginDisposable()
-    sdk.associateWith(moduleRoot)
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module, listOf(moduleRoot), emptyList())
@@ -146,8 +157,9 @@ internal class PySdkPathsTest {
 
     val pythonVersion = LanguageLevel.getLatest().toPythonVersion()
     val sdk = PythonMockSdk.create(sdkPath)
-    registerSdk(sdk)
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
+    // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
+    sdk.associateWith(moduleRoot)
     module.setPythonSdkForTests(sdk)
 
     mockPythonPluginDisposable()
@@ -155,10 +167,7 @@ internal class PySdkPathsTest {
       sdk.pySdkAdditionalData
 
       sdk.sdkModificator.apply {
-        (sdkAdditionalData as PythonSdkAdditionalData).apply {
-          associatedModulePath = moduleRoot.path
-          setAddedPathsFromVirtualFiles(setOf(userAddedPath))
-        }
+        (sdkAdditionalData as PythonSdkAdditionalData).setAddedPathsFromVirtualFiles(setOf(userAddedPath))
         commitChanges()
       }
     }
@@ -186,13 +195,13 @@ internal class PySdkPathsTest {
     val entryPath = createSubdir(moduleRoot)
 
     val sdk = PythonMockSdk.create(sdkPath).also {
-      registerSdk(it)
+      // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
+      it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
     mockPythonPluginDisposable()
-    sdk.associateWith(moduleRoot)
     updateSdkPaths(sdk)
     checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
 
@@ -219,8 +228,7 @@ internal class PySdkPathsTest {
     val userAddedPath = createSubdir(sdkDir)
 
     val pythonVersion = LanguageLevel.getLatest().toPythonVersion()
-    val sdk = PythonMockSdk.create(sdkDir.path).also {
-      registerSdk(it)
+    val sdk = venvMockSdk(sdkDir).also {
       module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_PY_VERSION_KEY, pythonVersion)
@@ -248,8 +256,7 @@ internal class PySdkPathsTest {
 
     val entryPath = createSubdir(sdkDir)
 
-    val sdk = PythonMockSdk.create(sdkDir.path).also {
-      registerSdk(it)
+    val sdk = venvMockSdk(sdkDir).also {
       module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
@@ -267,17 +274,99 @@ internal class PySdkPathsTest {
     val entryPath1 = createSubdir(moduleRoot1)
     val entryPath2 = createSubdir(moduleRoot2)
 
-    val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot1).path).also {
-      registerSdk(it)
+    val sdk = venvMockSdk(createVenvStructureInModule(moduleRoot1)).also {
+      // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
+      it.associateWith(moduleRoot1)
       module1.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath1.path, entryPath2.path))
 
     mockPythonPluginDisposable()
-    sdk.associateWith(moduleRoot1)
     updateSdkPaths(sdk)
 
     checkRoots(sdk, module1, listOf(moduleRoot1, entryPath1), emptyList())
+  }
+
+  /**
+   * An editable package with its own `pyproject.toml` is a module nested in the project. Its directory is on `sys.path`,
+   * twice when a `.pth` file and its finder both add it, and the outer module gets no source root for it.
+   */
+  @Test
+  fun sysPathEntryThatIsANestedModuleRootConfiguresNoSourceRoot() {
+    val (outer, outerRoot) = createModule("outer")
+    val nestedRoot = runWriteActionAndWait { outerRoot.createChildDirectory(this, "editable") }
+    val nested = runWriteActionAndWait {
+      projectModel.moduleManager.newModule(projectModel.projectRootDir.resolve("nested/nested.iml"), PYTHON_MODULE_ID)
+    }
+    ModuleRootManager.getInstance(nested).modifiableModel.apply {
+      addContentEntry(nestedRoot)
+      runWriteActionAndWait { commit() }
+    }
+    val entryPath = createSubdir(outerRoot)
+
+    val sdk = venvMockSdk(createVenvStructureInModule(outerRoot)).also {
+      it.associateWith(outerRoot)
+      outer.setPythonSdkForTests(it)
+    }
+    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, nestedRoot.path, nestedRoot.path, entryPath.path))
+
+    mockPythonPluginDisposable()
+    updateSdkPaths(sdk)
+
+    checkRoots(sdk, outer, listOf(outerRoot, entryPath), emptyList())
+  }
+
+  /** A path of sys.path that the user excludes in the interpreter paths is no source root of the module any more. */
+  @Test
+  fun excludedSysPathEntryIsNoSourceRoot() {
+    val (module, moduleRoot) = createModule()
+    val entryPath = createSubdir(moduleRoot)
+    val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot).path).also {
+      it.associateWith(moduleRoot)
+      module.setPythonSdkForTests(it)
+    }
+    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
+    mockPythonPluginDisposable()
+    updateSdkPaths(sdk)
+    checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
+
+    runWriteActionAndWait {
+      sdk.sdkModificator.apply {
+        (sdkAdditionalData as PythonSdkAdditionalData).setExcludedPathsFromVirtualFiles(setOf(entryPath))
+        commitChanges()
+      }
+    }
+    updateSdkPaths(sdk)
+
+    checkRoots(sdk, module, listOf(moduleRoot), emptyList())
+  }
+
+  /** The source roots of an interpreter look to the Project Structure page as a root of the module file does: no change. */
+  @Test
+  fun interpreterSourceRootsLeaveTheRootModelUnchanged() {
+    val (module, moduleRoot) = createModule()
+    val entryPath = createSubdir(moduleRoot)
+    val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot).path).also {
+      it.associateWith(moduleRoot)
+      module.setPythonSdkForTests(it)
+    }
+    sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
+
+    mockPythonPluginDisposable()
+    updateSdkPaths(sdk)
+    checkRoots(sdk, module, listOf(moduleRoot, entryPath), emptyList())
+    // The page tells these roots apart from the roots of the module file, and does not let the user change them.
+    assertThat(interpreterSourceRootUrls(module)).containsExactly(entryPath.url)
+
+    val model = runReadActionBlocking { ModuleRootManager.getInstance(module).modifiableModel }
+    try {
+      // The page reads the properties of each source root, which builds them for a root that has none.
+      model.contentEntries.flatMap { it.sourceFolders.toList() }.forEach { it.jpsElement.properties }
+      assertThat(model.isChanged).isFalse()
+    }
+    finally {
+      runWriteActionAndWait { model.dispose() }
+    }
   }
 
   @Test
@@ -288,8 +377,7 @@ internal class PySdkPathsTest {
     val (module1, moduleRoot1) = createModule("m1")
     val (module2, moduleRoot2) = createModule("m2")
 
-    val sdk = PythonMockSdk.create(createVenvStructureInModule(moduleRoot1).path).also {
-      registerSdk(it)
+    val sdk = venvMockSdk(createVenvStructureInModule(moduleRoot1)).also {
       module1.setPythonSdkForTests(it)
     }
     mockPythonPluginDisposable()
@@ -393,7 +481,7 @@ internal class PySdkPathsTest {
   fun skeletonsUnderContentRootAreKept() {
     mockPythonPluginDisposable()
 
-    val sdk = PythonMockSdk.create().also { registerSdk(it) }
+    val sdk = PythonMockSdk.create()
 
     // The SDK's binary skeletons live at <systemPath>/python_stubs/<hash>. Open the enclosing
     // python_stubs directory as the module's content root so the skeletons dir sits under it, while
@@ -434,28 +522,37 @@ internal class PySdkPathsTest {
     val entryPath = createSubdir(moduleRoot)
 
     val sdk = PythonMockSdk.create(sdkPath).also {
-      registerSdk(it)
+      // The owner is part of the interpreter's key, so it is set before the module gets the interpreter.
+      it.associateWith(moduleRoot)
       module.setPythonSdkForTests(it)
     }
     sdk.putUserData(PythonSdkType.MOCK_SYS_PATH_KEY, listOf(sdk.homePath, entryPath.path))
 
     mockPythonPluginDisposable()
-    sdk.associateWith(moduleRoot)
 
-    awaitPythonInterpreters(projectModel.project)
-    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, null)
-    ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+    updateSdkPaths(sdk, project = null)
 
     checkRoots(sdk, module, moduleRoots = listOf(moduleRoot, entryPath), sdkRoots = emptyList())
   }
 
-  private fun registerSdk(it: Sdk) {
-    WriteAction.runAndWait<RuntimeException> {
-      ProjectJdkTable.getInstance().addJdk(it, projectModel.disposableRule.disposable)
-    }
-  }
 
   /** Associates the SDK with a module directory, as venv/uv SDK creation does; the updater keys project-local classification off it. */
+  /**
+   * A mock SDK of the venv in [venvDir], see [createVenvStructureInModule]. Its home is the binary the venv has, which is
+   * `Scripts/python.exe` on Windows. A home that does not exist names no interpreter.
+   */
+  private fun venvMockSdk(venvDir: VirtualFile): Sdk {
+    val sdk = PythonMockSdk.create(venvDir.path)
+    val binary = if (localEel.platform.isWindows) "Scripts/python.exe" else "bin/python"
+    runWriteActionAndWait {
+      sdk.sdkModificator.apply {
+        homePath = venvDir.toNioPath().resolve(binary).toString()
+        commitChanges()
+      }
+    }
+    return sdk
+  }
+
   private fun Sdk.associateWith(moduleDir: VirtualFile) {
     runWriteActionAndWait {
       sdkModificator.apply {
@@ -515,10 +612,15 @@ internal class PySdkPathsTest {
     Disposer.register(projectModel.project, PythonPluginDisposable.getInstance())
   }
 
-  private fun updateSdkPaths(sdk: @NotNull Sdk) {
+  /**
+   * Updates the paths of [sdk], see [PythonSdkUpdater], with [project] as the project that asks. In the interpreter
+   * library flow a module gets the source roots of its interpreter from the library sync, so the sync runs next.
+   */
+  private fun updateSdkPaths(sdk: @NotNull Sdk, project: Project? = projectModel.project) {
     awaitPythonInterpreters(projectModel.project)
-    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, projectModel.project)
+    PythonSdkUpdater.updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project)
     ApplicationManager.getApplication().invokeAndWait { PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue() }
+    syncPythonInterpreterLibraries(projectModel.project)
   }
 
   private fun checkRoots(

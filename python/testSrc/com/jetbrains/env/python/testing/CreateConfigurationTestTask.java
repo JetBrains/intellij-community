@@ -71,7 +71,6 @@ public abstract class CreateConfigurationTestTask<T extends AbstractPythonTestRu
       final T configuration =
         createFactory().createTemplateConfiguration(getProject());
       configuration.setModule(myFixture.getModule());
-      configuration.setSdkHome(sdkHome);
       configuration.setSdk(existingSdk);
       myConfiguration = configuration;
     }

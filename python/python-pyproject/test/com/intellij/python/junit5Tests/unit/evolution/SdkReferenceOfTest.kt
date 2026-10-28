@@ -14,7 +14,9 @@ import com.intellij.platform.workspace.jps.entities.SdkDependency
 import com.intellij.platform.workspace.jps.entities.SdkId
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.entities
+import com.intellij.python.pyproject.model.evolution.facetSdkName
 import com.intellij.python.pyproject.model.evolution.sdkReferenceOf
+import com.intellij.python.pyproject.model.evolution.withoutFacetSdkName
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import com.jetbrains.python.PyInternalExecApi
 import com.jetbrains.python.PyNames
@@ -70,6 +72,19 @@ internal class SdkReferenceOfTest {
     val storage = storage(dependencies = listOf(SdkDependency(jdk)))
 
     assertThat(sdkReferenceOf(storage.module(), storage)).isNull()
+  }
+
+  @Test
+  fun `a migrated facet names no SDK and keeps its other attributes`() {
+    val migrated = withoutFacetSdkName("""<configuration sdkName="Python 3.12" other="value" />""")
+
+    assertThat(migrated).isEqualTo("""<configuration sdkName="" other="value" />""")
+    assertThat(facetSdkName(migrated)).isNull()
+  }
+
+  @Test
+  fun `a facet that names no SDK stays the same`() {
+    assertThat(withoutFacetSdkName("""<configuration sdkName="" />""")).isEqualTo("""<configuration sdkName="" />""")
   }
 
   private fun storage(

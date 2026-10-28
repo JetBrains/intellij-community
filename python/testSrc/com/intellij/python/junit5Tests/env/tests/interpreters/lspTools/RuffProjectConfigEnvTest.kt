@@ -2,7 +2,7 @@
 package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
 import com.intellij.openapi.module.Module
-import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.idea.TestFor
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.EDT
@@ -74,10 +74,9 @@ class RuffProjectConfigEnvTest {
       withContext(Dispatchers.EDT) {
         ModuleRootModificationUtil.addContentRoot(module, secondRoot.toString())
         ModuleRootModificationUtil.addContentRoot(module, ownRoot.toString())
-        // The same interpreter, so the module runs the same Ruff.
-        @Suppress("DEPRECATION") // The test sets the module SDK the way the Project Structure dialog does.
-        ModuleRootModificationUtil.setModuleSdk(outsideModule, venv.getSdkAPI())
       }
+      // The same interpreter, so the module runs the same Ruff.
+      outsidePyProject.setPythonInterpreter(venv).orThrow()
       assertEquals(3, ModuleRootManager.getInstance(module).contentRoots.size)
     }
     // Not the `PyProject` of the module fixture. Its base dir is the first of the three content roots by URL, and the

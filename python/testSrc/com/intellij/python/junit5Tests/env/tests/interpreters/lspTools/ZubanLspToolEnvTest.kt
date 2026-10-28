@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.util.messageIfStringOrEmpty
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.test.env.junit5.LspToolVersions
@@ -177,12 +177,9 @@ class ZubanLspToolEnvTest {
     internal val project by projectFixture
     private val moduleFixture = projectFixture.pyModuleFixture(tempPathFixture, addPathToSourceRoot = true)
     internal val module by moduleFixture
-    internal val pyProject by moduleFixture.pyProjectFixture()
-    internal val venv by pySdkFixture().pyVenvFixture(
-      where = venvPathFixture,
-      addToSdkTable = true,
-      moduleFixture = moduleFixture,
-    )
+    private val pyProjectFixture = moduleFixture.pyProjectFixture()
+    internal val pyProject by pyProjectFixture
+    internal val venv by pyEnvironmentFixture().pyVenvFixture(where = venvPathFixture, pyProjectFixture = pyProjectFixture)
     internal val codeInsightFixture by codeInsightFixture(projectFixture, tempPathFixture)
   }
 }

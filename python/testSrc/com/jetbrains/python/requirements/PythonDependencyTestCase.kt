@@ -1,20 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.requirements
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.python.sdk.backend.getSdkAPI
-import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
-import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.fixtures.findPythonInterpreterForTests
-import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import com.jetbrains.python.PythonTestUtil
 import com.jetbrains.python.fixtures.PyLightProjectDescriptor
+import com.jetbrains.python.fixtures.awaitPythonInterpreters
+import com.jetbrains.python.fixtures.findPythonInterpreterForTests
+import com.jetbrains.python.fixtures.ownModuleSdkForTests
 import com.jetbrains.python.packaging.common.PythonSimplePackageDetails
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.PythonPackageManagerProvider
@@ -23,9 +20,9 @@ import com.jetbrains.python.packaging.management.TestPackageManagerProvider
 import com.jetbrains.python.packaging.management.TestPackageRepository
 import com.jetbrains.python.packaging.management.TestPythonPackageManager
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
+import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 
 abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
@@ -67,6 +64,8 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
+    // The legacy flow gets a new SDK of the light project for each test, and the Python project owns it.
+    ownModuleSdkForTests(myFixture.module)
     // The inspections read the interpreter from the Python project structure, which follows the new SDK in the background.
     awaitPythonInterpreters(myFixture.project)
   }
@@ -77,7 +76,7 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
       // A Python module, so the Python project structure holds a project for it.
       override fun getModuleTypeId(): String = PYTHON_MODULE_ID
 
-      override fun getSdk(): Sdk =
+      override fun createMockSdk(): Sdk =
         PythonMockSdk.create("Mock ${PyNames.PYTHON_SDK_ID_NAME} ${languageLevel.toPythonVersion()}",
                              "${PythonTestUtil.getTestDataPath()}/MockSdk", PythonSdkType.getInstance(), languageLevel)
     }
@@ -89,19 +88,11 @@ abstract class PythonDependencyTestCase : BasePlatformTestCase() {
   fun setDependencyRoot(providerType: RequirementsProviderType) {
     val interpreter = findPythonInterpreterForTests(myFixture.module)!!
     TestPythonPackageManager.setRequirementsProvider(interpreter, providerType)
-    // The association is data of the SDK, so the test edits the SDK.
-    @Suppress("DEPRECATION")
-    val sdk = interpreter.getSdkAPI()
-    val moduleDir = myFixture.findFileInTempDir(providerType.filename).parent
-    ApplicationManager.getApplication().runWriteAction {
-      val modificator = sdk.sdkModificator
-      (modificator.sdkAdditionalData as PythonSdkAdditionalData).associatedModulePath = moduleDir.path
-      modificator.commitChanges()
-    }
+    // The Python project owns the interpreter, so the manager finds the dependency file next to the module.
     // the initialization runs read actions, which a plain `runBlocking` on the EDT would deadlock against a
     // pending background write action
     runWithModalProgressBlocking(myFixture.project, "Initializing the test package manager") {
-      PythonPackageManager.forPythonInterpreter(myFixture.project, sdk.pythonInterpreterResultAsync().orThrow()).waitForInit()
+      PythonPackageManager.forPythonInterpreter(myFixture.project, interpreter).waitForInit()
     }
   }
 }

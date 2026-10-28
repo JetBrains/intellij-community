@@ -4,12 +4,10 @@ package com.jetbrains.python
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.impl.FilePropertyPusher
 import com.intellij.openapi.util.ThrowableComputable
@@ -18,6 +16,7 @@ import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.RegistryKeyRule
 import com.intellij.testFramework.RunsInEdt
 import com.intellij.testFramework.assertions.Assertions
 import com.intellij.testFramework.rules.ProjectModelRule
@@ -25,10 +24,12 @@ import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.writeChild
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher
+import com.jetbrains.python.fixtures.awaitPythonInterpreters
 import com.jetbrains.python.sdk.setPythonSdkForTests
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.RuleChain
 import org.junit.rules.TestName
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 
@@ -37,9 +38,13 @@ import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 @Layers.Functional
 class PyPushingTest {
   companion object {
+    /**
+     * The test sets the interpreter of the module as the interpreter library flow does: it adds no SDK to the table. The
+     * key is defined once the application loads the plugins, so it is set after [ApplicationRule].
+     */
     @JvmField
     @ClassRule
-    val appRule = ApplicationRule()
+    val appRule: RuleChain = RuleChain.outerRule(ApplicationRule()).around(RegistryKeyRule("python.interpreter.library.entries", true))
   }
 
   @Rule
@@ -75,8 +80,8 @@ class PyPushingTest {
     excludedDir.writeChild("someDir/ExcludedFile.py", "")
     val languageLevel = LanguageLevel.PYTHON312
     val sdk = PythonMockSdk.create(languageLevel)
-    WriteAction.runAndWait<RuntimeException> { ProjectJdkTable.getInstance().addJdk(sdk, disposableRule.disposable) }
     module.setPythonSdkForTests(sdk)
+    awaitPythonInterpreters(project)
     IndexingTestUtil.waitUntilIndexesAreReady(project)
 
     val pusher = FilePropertyPusher.EP_NAME.findExtension(PythonLanguageLevelPusher::class.java)

@@ -3,11 +3,8 @@ package com.jetbrains.python.types
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.TestDisposable
-import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.allure.Components
 import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
@@ -15,6 +12,8 @@ import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.docstrings.PyDocStringTypeProvider
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
+import com.jetbrains.python.fixtures.findPythonInterpreterForTests
+import com.jetbrains.python.fixtures.setPythonInterpreterForTests
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyKeyValueExpressionImpl
 import com.jetbrains.python.psi.impl.PyMappingPatternImpl
@@ -28,7 +27,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 /**
- * Type inference in a module that has no Python SDK, for example a project without an interpreter. [PyBuiltinCache]
+ * Type inference in a module that has no interpreter, for example a project without one. [PyBuiltinCache]
  * has no builtins there, so `dict`, `tuple` and `typing` do not resolve.
  */
 @TestFor(issues = ["PY-92874"])
@@ -40,11 +39,11 @@ class PyTypesWithoutBuiltinsTest : PyCodeInsightTestCase() {
   lateinit var testDisposable: Disposable
 
   @BeforeEach
-  fun removePythonSdk() {
+  fun removePythonInterpreter() {
     val module = myFixture.module
-    val sdk = ModuleRootManager.getInstance(module).sdk
-    runInEdtAndWait { ModuleRootModificationUtil.setModuleSdk(module, null) }
-    Disposer.register(testDisposable) { runInEdtAndWait { ModuleRootModificationUtil.setModuleSdk(module, sdk) } }
+    val interpreter = findPythonInterpreterForTests(module)
+    setPythonInterpreterForTests(module, null)
+    Disposer.register(testDisposable) { setPythonInterpreterForTests(module, interpreter) }
   }
 
   @Test

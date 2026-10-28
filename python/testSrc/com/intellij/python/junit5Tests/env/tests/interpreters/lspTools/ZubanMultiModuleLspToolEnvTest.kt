@@ -3,14 +3,10 @@ package com.intellij.python.junit5Tests.env.tests.interpreters.lspTools
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.lsp.api.LspClient
@@ -21,12 +17,14 @@ import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.python.junit5Tests.framework.LeakedProcessReporterExtension
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
-import com.intellij.python.junit5Tests.framework.env.pySdkFixture
+import com.intellij.python.junit5Tests.framework.env.pyEnvironmentFixture
 import com.intellij.python.junit5Tests.framework.pyModuleFixture
 import com.intellij.python.junit5Tests.framework.pyProjectFixture
 import com.intellij.python.junit5Tests.framework.subdirectoryFixture
 import com.intellij.python.lsp.core.pyServedProjects
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
 import com.intellij.python.pytools.backend.PyToolsState
+import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.test.env.junit5.LspToolVersions
 import com.intellij.python.test.env.junit5.installToolPackage
 import com.intellij.python.test.env.junit5.pyVenvFixture
@@ -84,15 +82,18 @@ class ZubanMultiModuleLspToolEnvTest {
   private val projectFixture = projectFixture(projectPath, openAfterCreation = true)
   private val rootModuleFixture = projectFixture.pyModuleFixture(projectPath, addPathToSourceRoot = true)
   private val serviceModuleFixture = projectFixture.pyModuleFixture(servicePath, addPathToSourceRoot = true)
-  private val projectSdkFixture = pySdkFixture().pyVenvFixture(where = projectPath, addToSdkTable = true)
-  private val serviceSdkFixture = pySdkFixture().pyVenvFixture(where = servicePath, addToSdkTable = true, serviceModuleFixture)
+  private val rootPyProjectFixture = rootModuleFixture.pyProjectFixture()
+  private val servicePyProjectFixture = serviceModuleFixture.pyProjectFixture()
+  private val environmentFixture = pyEnvironmentFixture()
+  private val rootInterpreterFixture = environmentFixture.pyVenvFixture(where = projectPath, pyProjectFixture = rootPyProjectFixture)
+  private val serviceInterpreterFixture = environmentFixture.pyVenvFixture(where = servicePath, pyProjectFixture = servicePyProjectFixture)
 
   private val project: Project by projectFixture
   private val rootModule: Module by rootModuleFixture
   private val serviceModule: Module by serviceModuleFixture
-  private val rootPyProject: PyProject by rootModuleFixture.pyProjectFixture()
-  private val servicePyProject: PyProject by serviceModuleFixture.pyProjectFixture()
-  private val projectSdk: Sdk by projectSdkFixture
+  private val rootPyProject: PyProject by rootPyProjectFixture
+  private val servicePyProject: PyProject by servicePyProjectFixture
+  private val rootInterpreter: PythonInterpreter by rootInterpreterFixture
   private val codeInsightFixture by codeInsightFixture(projectFixture, projectPath)
 
   @Test
@@ -118,13 +119,12 @@ class ZubanMultiModuleLspToolEnvTest {
     awaitZubanErrors(serviceClient, serviceFile) { errors -> errors.none { it.code?.left == "import-untyped" } }
   }
 
-  /** The Project Structure dialog changes the module model directly, and it fires no `PySdkListener` event. */
   @Test
   fun `a module that moves to the interpreter of another group joins its server`(): Unit = timeoutRunBlocking(12.minutes) {
     val (rootFile, serviceFile) = setUpModules(oneInterpreter = false)
     awaitZubanClientOf(serviceModule, "the service module needs a server of its own") { it.pyServedModulesForTest == listOf(serviceModule) }
 
-    ModuleRootModificationUtil.setModuleSdk(serviceModule, projectSdk)
+    servicePyProject.setPythonInterpreter(rootInterpreter).orThrow()
 
     val client = awaitOneZubanServer()
     awaitStubsError(client, rootFile)
@@ -137,17 +137,13 @@ class ZubanMultiModuleLspToolEnvTest {
   }
 
   /**
-   * Makes the project interpreter the interpreter of the root module, enables zuban, installs the pinned zuban into
-   * each interpreter, and opens one file of each module. With [oneInterpreter], the service module also inherits the
-   * project interpreter. Answers the files of the root module and of the service module.
+   * Gives each module the interpreter of its own venv, enables zuban, installs the pinned zuban into each interpreter,
+   * and opens one file of each module. With [oneInterpreter], the service module uses the interpreter of the root
+   * module instead. Answers the files of the root module and of the service module.
    */
   private suspend fun setUpModules(oneInterpreter: Boolean): Pair<VirtualFile, VirtualFile> {
-    serviceSdkFixture.get()
-    edtWriteAction {
-      ProjectRootManager.getInstance(project).projectSdk = projectSdk
-      ModuleRootModificationUtil.setSdkInherited(rootModule)
-      if (oneInterpreter) ModuleRootModificationUtil.setSdkInherited(serviceModule)
-    }
+    serviceInterpreterFixture.get()
+    if (oneInterpreter) servicePyProject.setPythonInterpreter(rootInterpreter).orThrow()
     PyToolsState.getInstance(project).setEnabled(zubanPyTool(), true)
     val zuban = LspToolVersions.requirement(zubanPyTool())
     rootPyProject.installToolPackage(zuban)

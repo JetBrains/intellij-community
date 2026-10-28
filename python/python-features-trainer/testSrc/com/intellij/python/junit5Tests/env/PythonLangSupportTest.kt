@@ -1,15 +1,14 @@
 package com.intellij.python.junit5Tests.env
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.python.community.services.internal.impl.VanillaPythonWithPythonInfoImpl
 import com.intellij.python.community.services.systemPython.SystemPythonService
 import com.intellij.python.community.services.systemPython.createVenvFromSystemPython
 import com.intellij.python.featuresTrainer.ift.PythonLangSupport
+import com.intellij.python.sdk.backend.PythonInterpreterRegistry
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.junit5Tests.framework.env.PyEnvTestCase
 import com.intellij.python.junit5Tests.framework.env.PythonBinaryPath
@@ -83,16 +82,14 @@ class PythonLangSupportTest {
     withContext(Dispatchers.IO) {
       sut.cleanupBeforeLessons(project)
     }
-    @Suppress("DEPRECATION") // The test removes the SDK from the table.
+    @Suppress("DEPRECATION") // The test reads the home path of the SDK and removes the SDK.
     val sdk = project.mainPythonInterpreterIfReady()!!.getSdkAPI()
     try {
       val pythonBinary = Path.of(sdk.homePath!!)
       Assertions.assertTrue(VanillaPythonWithPythonInfoImpl.createByPythonBinary(pythonBinary).orThrow().pythonInfo.languageLevel.isPy3K, "Sdk is broken")
     }
     finally {
-      edtWriteAction {
-        ProjectJdkTable.getInstance().removeJdk(sdk)
-      }
+      PythonInterpreterRegistry.getInstance(project).removeSdk(sdk)
       withContext(Dispatchers.EDT) {
         ProjectManager.getInstance().closeAndDispose(project)
       }
