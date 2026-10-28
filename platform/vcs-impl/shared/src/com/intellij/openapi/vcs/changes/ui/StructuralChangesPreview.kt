@@ -80,7 +80,8 @@ class StructuralChangesPreview(
     tree.addPropertyChangeListener(JTree.TREE_MODEL_PROPERTY, modelListener)
     val focusListener = object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
-        cancelPendingJob()
+        // A pending preview would have replaced the dim of the previous selection, so that dim ends with it.
+        if (pendingPreview?.isActive == true) cancelPendingPreview() else cancelPendingJob()
       }
     }
     tree.addFocusListener(focusListener)
@@ -144,33 +145,40 @@ class StructuralChangesPreview(
     selectionChanged()
   }
 
+  /** The dim of the previous selection stays until the preview of the new selection replaces it, or until it is clear that none will. */
   @RequiresEdt
   private fun selectionChanged() {
     // The model listener checks the selection after the update ends.
     if (tree.isModelUpdateInProgress) return
-    cancelPendingPreview()
-    if (!canPreviewSelection()) return
-    val node = tree.selectionPath?.lastPathComponent as? ChangesBrowserNode<*> ?: return
+    cancelPendingJob()
+    val node = tree.selectionPath?.lastPathComponent as? ChangesBrowserNode<*>
+    if (node == null || !canPreviewSelection()) {
+      clearHighlight()
+      return
+    }
     val model = tree.model
     val modality = ModalityState.defaultModalityState()
     pendingPreview = cs.launch(Dispatchers.EDT + modality.asContextElement()) {
       delay(Registry.intValue("ide.autoscroll.to.source.delay", 100).milliseconds)
-      if (!isCurrentSelection(model, node)) return@launch
-      val diffPreview = DataManager.getInstance().getDataContext(tree).getData(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW) as? EditorTabDiffPreview
-      if (diffPreview != null && isDiffable(node)) showDiff(diffPreview, node, model)
-      else showSource(node, model)
+      val replaced = isCurrentSelection(model, node) && preview(node, model)
+      if (!replaced) clearHighlight()
     }
+  }
+
+  /** Shows the preview of the node. Returns true when the dim of the node replaced the previous dim. */
+  private suspend fun preview(node: ChangesBrowserNode<*>, model: TreeModel): Boolean {
+    val diffPreview = DataManager.getInstance().getDataContext(tree).getData(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW) as? EditorTabDiffPreview
+    return if (diffPreview != null && isDiffable(node)) showDiff(diffPreview, node, model) else showSource(node, model)
   }
 
   private fun isDiffable(node: ChangesBrowserNode<*>): Boolean =
     node is ChangesBrowserChangeNode || node is ChangesBrowserStructuralNode<*> && node.getChangeNode() != null
 
-  private suspend fun showDiff(preview: EditorTabDiffPreview, node: ChangesBrowserNode<*>, model: TreeModel) {
+  private suspend fun showDiff(preview: EditorTabDiffPreview, node: ChangesBrowserNode<*>, model: TreeModel): Boolean {
     if (!preview.isPreviewOpen()) preview.openPreview(false)
-    val lines = (node as? ChangesBrowserStructuralNode<*>)?.getDiffLines() ?: return
-    val viewer = awaitViewer(preview, node.diffFile(), model, node) ?: return
-    val handle = highlighter()?.highlightDiff(viewer, lines) ?: return
-    keepHighlight(handle, node.userObject)
+    val lines = (node as? ChangesBrowserStructuralNode<*>)?.getDiffLines() ?: return false
+    val viewer = awaitViewer(preview, node.diffFile(), model, node) ?: return false
+    return replaceHighlight(node.userObject) { highlighter()?.highlightDiff(viewer, lines) }
   }
 
   /** Waits until the preview shows the file of the node and finishes its diff. The preview follows the tree selection on its own. */
@@ -187,18 +195,20 @@ class StructuralChangesPreview(
     return null
   }
 
-  private suspend fun showSource(node: ChangesBrowserNode<*>, model: TreeModel) {
+  private suspend fun showSource(node: ChangesBrowserNode<*>, model: TreeModel): Boolean {
     val preview = withContext(Dispatchers.Default) {
       readAction {
         val request = getPreviewNavigationRequest(node) ?: return@readAction null
         PreviewRequest(request, getHighlightTarget(node))
       }
-    } ?: return
-    if (!isCurrentSelection(model, node)) return
+    } ?: return false
+    if (!isCurrentSelection(model, node)) return false
     val options = NavigationOptions.defaultOptions()
       .requestFocus(false).preserveCaret(true).sourceNavigationOnly(true).recordAsBackHistory(false).forcePreviewTab(true)
     coroutineScope { requestNavigate(tree.project, preview.request, options, coroutineScope = this).await() }
-    if (isCurrentSelection(model, node)) preview.highlightTarget?.let { showHighlight(it) }
+    val target = preview.highlightTarget
+    if (target == null || !isCurrentSelection(model, node)) return false
+    return replaceHighlight(owner = null) { highlighter()?.highlight(target.file, target.range, target.modificationStamp) }
   }
 
   @RequiresEdt
@@ -240,12 +250,6 @@ class StructuralChangesPreview(
     return HighlightTarget(file, range, document.modificationStamp)
   }
 
-  @RequiresEdt
-  private fun showHighlight(target: HighlightTarget) {
-    val handle = highlighter()?.highlight(target.file, target.range, target.modificationStamp)
-    handle?.let { keepHighlight(it, owner = null) }
-  }
-
   /** Only the frontend module registers the highlighter. A process without that module shows the preview without the dim. */
   private fun highlighter(): StructuralChangesPreviewHighlighter? = tree.project.serviceOrNull()
 
@@ -260,6 +264,18 @@ class StructuralChangesPreview(
         highlightOwner = null
       }
     }
+  }
+
+  /**
+   * Ends the previous dim and starts the new one in the same event, so the editor never paints a frame without a dim in between. The new dim
+   * starts after the end of the previous one, because both can wrap the same divider painter.
+   */
+  @RequiresEdt
+  private fun replaceHighlight(owner: Any?, create: () -> Disposable?): Boolean {
+    clearHighlight()
+    val handle = create() ?: return false
+    keepHighlight(handle, owner)
+    return true
   }
 
   @RequiresEdt
