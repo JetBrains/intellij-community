@@ -74,6 +74,10 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   private final AtomicInteger myBatchFilesProcessingModeCount = new AtomicInteger(0);
 
+  /**
+   * A subscriber gets a physical change on the EDT, inside the write action. A non-physical change runs in place, on any thread.
+   * Use {@link AnyPsiChangeListenerBackgroundable#TOPIC} to get a physical change in place too.
+   */
   @Topic.ProjectLevel
   public static final Topic<AnyPsiChangeListener> ANY_PSI_CHANGE_TOPIC = new Topic<>(AnyPsiChangeListener.class, Topic.BroadcastDirection.TO_PARENT);
 
@@ -425,17 +429,22 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
     }
   }
 
+  /**
+   * Fires {@code event}, and a physical change on both {@link AnyPsiChangeListenerBackgroundable#TOPIC} and {@link #ANY_PSI_CHANGE_TOPIC}.
+   * The legacy topic joins the EDT transfer of the legacy preprocessors for a before-event, and the one of the legacy listeners for an
+   * after-event. So it costs no extra jump to the EDT while a legacy consumer remains.
+   */
   private void fireEvent(@NotNull PsiTreeChangeEventImpl event) {
     boolean isRealTreeChange = event.getCode() != PsiTreeChangeEventImpl.PsiEventType.PROPERTY_CHANGED
                                && event.getCode() != PsiTreeChangeEventImpl.PsiEventType.BEFORE_PROPERTY_CHANGE;
     boolean isBeforeEvent = isBeforeEvent(event.getCode());
 
-    if (isBeforeEvent) {
-      beforeChange(true);
-    }
     PsiFile file = event.getFile();
     if (file == null || PomModelImpl.shouldFirePhysicalPsiEvents(file)) {
       ThreadingAssertions.assertWriteAccess();
+    }
+    if (isBeforeEvent) {
+      myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).beforePsiChanged(true);
     }
     if (isRealTreeChange) {
       LOG.assertTrue(!myTreeChangeEventIsFiring, "Changes to PSI are not allowed inside event processing");
@@ -449,8 +458,11 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
           LOG.error(PluginException.createByClass(e, preprocessor.getClass()));
         }
       }
-      if (!myTreeChangePreprocessors.isEmpty()) {
+      if (isBeforeEvent || !myTreeChangePreprocessors.isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
+          if (isBeforeEvent) {
+            myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(true);
+          }
           for (PsiTreeChangePreprocessor preprocessor : myTreeChangePreprocessors) {
             try {
               preprocessor.treeChanged(event);
@@ -472,13 +484,16 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
         notifyPsiTreeChangeListener(event, listener);
       }
       List<PsiTreeChangeListener> listeners = PsiTreeChangeListener.EP.getExtensions(myProject);
-      if (!myTreeChangeListeners.isEmpty() || !listeners.isEmpty()) {
+      if (!isBeforeEvent || !myTreeChangeListeners.isEmpty() || !listeners.isEmpty()) {
         runWriteActionOnEdtRegardlessOfCurrentThread(() -> {
           for (PsiTreeChangeListener listener : myTreeChangeListeners) {
             notifyPsiTreeChangeListener(event, listener);
           }
           for (PsiTreeChangeListener listener : PsiTreeChangeListener.EP.getExtensions(myProject)) {
             notifyPsiTreeChangeListener(event, listener);
+          }
+          if (!isBeforeEvent) {
+            myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(true);
           }
         });
       }
@@ -489,7 +504,7 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
       }
     }
     if (!isBeforeEvent) {
-      afterChange(true);
+      myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).afterPsiChanged(true);
     }
   }
 
@@ -571,12 +586,27 @@ public final class PsiManagerImpl extends PsiManagerEx implements Disposable {
 
   @Override
   public void beforeChange(boolean isPhysical) {
-    myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical);
+    myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).beforePsiChanged(isPhysical);
+    runLegacyAnyPsiChange(isPhysical, () -> myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).beforePsiChanged(isPhysical));
   }
 
   @Override
   public void afterChange(boolean isPhysical) {
-    myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical);
+    runLegacyAnyPsiChange(isPhysical, () -> myProject.getMessageBus().syncPublisher(ANY_PSI_CHANGE_TOPIC).afterPsiChanged(isPhysical));
+    myProject.getMessageBus().syncPublisher(AnyPsiChangeListenerBackgroundable.TOPIC).afterPsiChanged(isPhysical);
+  }
+
+  /**
+   * A legacy subscriber gets a physical change on the EDT. Without the write lock, nothing can move to the EDT, so the subscriber runs
+   * in place, as before the background write action.
+   */
+  private static void runLegacyAnyPsiChange(boolean isPhysical, @NotNull Runnable action) {
+    if (isPhysical && ApplicationManager.getApplication().isWriteAccessAllowed()) {
+      runWriteActionOnEdtRegardlessOfCurrentThread(action);
+    }
+    else {
+      action.run();
+    }
   }
 
   @Override

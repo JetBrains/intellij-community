@@ -92,6 +92,9 @@ a:com.intellij.psi.AbstractFileViewProvider
 - com.intellij.openapi.util.UserDataHolderBase
 - com.intellij.psi.FileViewProvider
 - *p:cacheContentInVersionedEnvironment():Z
+*:com.intellij.psi.impl.AnyPsiChangeListenerBackgroundable
+- com.intellij.psi.impl.AnyPsiChangeListener
+- sf:TOPIC:com.intellij.util.messages.Topic
 c:com.intellij.psi.impl.GeneratedMarkerVisitor
 - com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
 - *:<init>(com.intellij.lang.ASTNode):V
