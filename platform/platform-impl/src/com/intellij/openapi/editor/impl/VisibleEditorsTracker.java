@@ -47,13 +47,13 @@ final class VisibleEditorsTracker {
   }
 
   private void commandStarted() {
+    myCurrentCommandStart = System.currentTimeMillis();
     for (Editor editor : EditorFactory.getInstance().getEditorList()) {
-      if (editor.getComponent().isShowing()) {
+      if (editor.getSettings().isAnimatedScrolling() && editor.getComponent().isShowing()) {
         myEditorsVisibleOnCommandStart.add(editor);
       }
 
       ((ScrollingModelImpl)editor.getScrollingModel()).finishAnimation();
-      myCurrentCommandStart = System.currentTimeMillis();
     }
   }
 
