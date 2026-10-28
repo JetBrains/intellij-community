@@ -7,6 +7,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ * Use {@link com.intellij.platform.searchEverywhere.equalityProviders.SePsiElementsEqualityProvider} instead.
+ */
+@Deprecated
 public final class PsiElementsEqualityProvider extends AbstractEqualityProvider {
 
   @Override

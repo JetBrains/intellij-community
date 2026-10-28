@@ -6,6 +6,11 @@ import com.intellij.ide.util.gotoByName.GotoActionModel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * @deprecated The old Search Everywhere is being sunset in favor of the new (Split) Search Everywhere ({@code com.intellij.platform.searchEverywhere}).
+ * Use {@link com.intellij.platform.searchEverywhere.equalityProviders.SeOptionsEqualityProvider} instead.
+ */
+@Deprecated
 @ApiStatus.Internal
 public final class OptionEqualityProvider extends AbstractEqualityProvider {
   @Override

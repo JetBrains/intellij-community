@@ -99,5 +99,15 @@
     <searchEverywhere.targetItemSelectionProcessor
       order="last"
       implementation="com.intellij.platform.searchEverywhere.providers.target.selection.SeDefaultTargetItemSelectionProcessor"/>
+
+    <!-- The same order as the legacy copies in lang-impl -->
+    <searchEverywhere.itemsEqualityProvider
+      implementation="com.intellij.platform.searchEverywhere.equalityProviders.SeTrivialItemsEqualityProvider"/>
+    <searchEverywhere.itemsEqualityProvider
+      implementation="com.intellij.platform.searchEverywhere.equalityProviders.SePsiElementsEqualityProvider"/>
+    <searchEverywhere.itemsEqualityProvider
+      implementation="com.intellij.platform.searchEverywhere.equalityProviders.SeActionsEqualityProvider"/>
+    <searchEverywhere.itemsEqualityProvider
+      implementation="com.intellij.platform.searchEverywhere.equalityProviders.SeOptionsEqualityProvider"/>
   </extensions>
 </idea-plugin>
