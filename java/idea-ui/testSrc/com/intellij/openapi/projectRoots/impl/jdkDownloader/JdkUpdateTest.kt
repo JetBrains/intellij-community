@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.application.subscribe
@@ -26,6 +26,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.awt.event.KeyEvent
+import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.Collections
@@ -65,10 +66,13 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
     .filter { !it.isExpired }
     .filter { it.groupId == "JDK Update" || it.groupId == "JDK Update Error" }
 
-  private fun newNotification(sdkName: String, oldVersion: JdkItem = mockZipOld, newVersion: JdkItem = mockZipNew): JdkUpdateNotification? {
+  private fun newNotification(sdkName: String,
+                              oldVersion: JdkItem = mockZipOld,
+                              newVersion: JdkItem = mockZipNew,
+                              oldHome: Path = tempDir.newDirectory().toPath()): JdkUpdateNotification? {
     val oldSdk = ProjectJdkTable.getInstance().findJdk(sdkName) ?: ProjectJdkTable.getInstance().createSdk(sdkName, JavaSdk.getInstance())
     val sdkModificator = oldSdk.sdkModificator
-    sdkModificator.homePath = tempDir.newDirectory().toString()
+    sdkModificator.homePath = oldHome.toString()
     sdkModificator.versionString = oldVersion.versionString
     ApplicationManager.getApplication().runWriteAction { sdkModificator.commitChanges() }
 
@@ -108,6 +112,19 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
     //Assert.assertEquals(JdkInstaller.getInstance().findJdkItemForInstalledJdk(update.jdk.homePath), update.newItem)
     Assert.assertEquals(service<JdkInstallerStore>().findInstallations(update.newItem), listOf(Paths.get(update.jdk.homePath!!)))
     Assert.assertEquals(service<JdkInstallerStore>().findInstallations(update.oldItem), listOf<Path>())
+  }
+
+  @Test fun `test jdk update keeps custom install location`() {
+    val customJdks = tempDir.newDirectory("custom-jdks").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+    val update = newNotification("old-sdk-custom", newVersion = mockZipNew.copy(jdkVersion = "17.0.777"), oldHome = oldJdkHome)!!
+
+    update.fireAction()
+    doEventsWhile(5)
+
+    Assert.assertEquals(customJdks, Paths.get(update.jdk.homePath!!).parent)
   }
 
   @Test fun `test jdk update failed`() {

@@ -204,7 +204,9 @@ class JdkUpdateNotification(
 
       val eel = jdk.homePath?.let { Path.of(it).getEelDescriptor().toEelApi() }
       val wsl = jdk.homePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
-      val request = installer.prepareJdkInstallation(newItem, installer.defaultInstallDir(newItem, eel, wsl))
+      val installDir = installer.installDirNextToInstalledJdk(jdk.homePath, newItem)
+                     ?: installer.defaultInstallDir(newItem, eel, wsl)
+      val request = installer.prepareJdkInstallation(newItem, installDir)
 
       coroutineToIndicator { indicator ->
         installer.installJdk(request, indicator, e.project)

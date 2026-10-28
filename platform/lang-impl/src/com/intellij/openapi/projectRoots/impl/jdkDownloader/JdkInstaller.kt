@@ -262,6 +262,12 @@ abstract class JdkInstallerBase {
 
   fun defaultInstallDir(newVersion: JdkItem): Path = defaultInstallDir(defaultInstallDir(null), newVersion)
 
+  fun installDirNextToInstalledJdk(jdkHome: String?, newVersion: JdkItem): Path? {
+    val jdkPath = jdkHome?.let { Path.of(it) } ?: return null
+    val markerFile = findMarkerFile(jdkPath) ?: return null
+    return markerFile.parent?.let { defaultInstallDir(it, newVersion) }
+  }
+
   protected fun defaultInstallDir(installDir: Path, newVersion: JdkItem): Path {
     val targetDir = installDir.resolve(newVersion.installFolderName)
     var count = 1
@@ -512,15 +518,7 @@ abstract class JdkInstallerBase {
       if (!jdkPath.isDirectory()) return null
       val predicate = JdkPredicate.forEel(jdkPath.getEelDescriptor().toEelApiBlocking())
 
-      // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
-      val markerFile = generateSequence(jdkPath) { file -> file.parent }
-                         .takeWhile {
-                           arrayOf<LinkOption>()
-                           it.isDirectory()
-                         }
-                         .take(5)
-                         .mapNotNull { markerFile(it) }
-                         .firstOrNull { it.isRegularFile() } ?: return null
+      val markerFile = findMarkerFile(jdkPath) ?: return null
 
       val json = JdkListParser.readTree(Files.readString(markerFile))
       return JdkListParser.parseJdkItem(json, predicate).firstOrNull()
@@ -529,6 +527,13 @@ abstract class JdkInstallerBase {
       return null
     }
   }
+
+  // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
+  private fun findMarkerFile(jdkPath: Path): Path? = generateSequence(jdkPath) { it.parent }
+    .takeWhile { it.isDirectory() }
+    .take(5)
+    .mapNotNull { markerFile(it) }
+    .firstOrNull { it.isRegularFile() }
 
   private fun findAlreadyInstalledJdk(feedItem: JdkItem, distribution: OsAbstractionForJdkInstaller?): JdkInstallRequest? {
     try {
