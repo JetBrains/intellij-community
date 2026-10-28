@@ -147,9 +147,8 @@ SQUOTE="'"
 }
 
 <OPTION_VALUE_STATE> {
-    [\S]+    { yypop(); return OPTION_VALUE_TOKEN; }
-    {DQUOTE} { yypop(); yypush(DQUOTE_STATE); return DQUOTE; }
-    {SQUOTE} { yypop(); yypush(SQUOTE_STATE); return SQUOTE; }
+    [^\s\-][\S]*        { yypop(); return OPTION_VALUE_TOKEN; }
+    [\S]                { yypop(); yypushback(yylength()); }
 }
 
 <URI_STATE> {

@@ -198,6 +198,46 @@ class RequirementsFileTest(val project: Project) {
     }
   }
 
+  // PY-73096: `--no-index --find-links URL` on a requirement line is standard pip syntax.
+  // The lexer used to greedily consume `--find-links` as the value of `--no-index`, leaving the URL at
+  // top level, which the parser then reported as `HASH expected, got 'n'` on the next requirement line.
+  @Test
+  fun testPy73096PipLikeOptionsOnConsecutiveLines() {
+    val text = "torch==2.0.1 --no-index --find-links https://download.pytorch.org/whl/cpu\n" +
+               "torchaudio==2.0.2 --no-index --find-links https://download.pytorch.org/whl/cpu\n"
+    runReadAction {
+      val file = PsiFileFactory.getInstance(project).createFileFromText("", RequirementsLanguage, text) as RequirementsFile
+      val errors = file.children.filterIsInstance<PsiErrorElement>()
+      if (errors.isNotEmpty()) {
+        val msgs = errors.joinToString("\n") { "  at offset ${it.textOffset} (${it.text.replace("\n", "\\n")}): ${it.errorDescription}" }
+        fail("Parse errors:\n$msgs")
+      }
+
+      val requirements = file.requirements()
+      assertEquals(2, requirements.size)
+      assertEquals("torch", requirements[0].name)
+      assertEquals("torchaudio", requirements[1].name)
+    }
+  }
+
+  // PY-73096 regression guard: a space-separated `--hash sha256:…` followed by another option must still
+  // parse as two separate options, not one option whose value swallows the next flag.
+  @Test
+  fun testPy73096SpaceSeparatedHashBeforeAnotherOption() {
+    val text = "mypackage==1.0 --hash sha256:09a6bb58a2f46ac7c9fd8ca824ff20ce19899b6009be888a8952de2235f2612c --no-index\n"
+    runReadAction {
+      val file = PsiFileFactory.getInstance(project).createFileFromText("", RequirementsLanguage, text) as RequirementsFile
+      val errors = file.children.filterIsInstance<PsiErrorElement>()
+      if (errors.isNotEmpty()) {
+        val msgs = errors.joinToString("\n") { "  at offset ${it.textOffset} (${it.text.replace("\n", "\\n")}): ${it.errorDescription}" }
+        fail("Parse errors:\n$msgs")
+      }
+      val requirements = file.requirements()
+      assertEquals(1, requirements.size)
+      assertEquals("mypackage", requirements[0].name)
+    }
+  }
+
   @Test
   fun testParseRequirements() {
     val text = """

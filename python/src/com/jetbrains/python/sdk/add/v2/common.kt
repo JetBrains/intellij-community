@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.module.Module
@@ -24,8 +25,6 @@ import com.intellij.python.community.impl.poetry.common.POETRY_TOOL_ID
 import com.intellij.python.community.impl.poetry.common.icons.PythonCommunityImplPoetryCommonIcons
 import com.intellij.python.hatch.common.icons.PythonHatchCommonIcons
 import com.intellij.python.hatch.impl.HATCH_TOOL_ID
-import com.intellij.python.pytools.backend.PyExecutable
-import com.intellij.python.pytools.backend.setCustomExecutablePath
 import com.intellij.python.sdk.backend.PythonInterpreter
 import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.python.sdk.backend.pythonInterpreterResultAsync
@@ -35,7 +34,6 @@ import com.intellij.python.venv.common.icons.PythonVenvCommonIcons
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.Result
 import com.jetbrains.python.errorProcessing.PyResult
@@ -53,6 +51,8 @@ import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.PythonInterpreterInstallationIdsHolder.Companion.PYTHON_INSTALLATION_INTERRUPTED
 import com.jetbrains.python.target.ui.TargetPanelExtension
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
@@ -187,10 +187,15 @@ enum class PythonInterpreterSelectionMethod {
   CREATE_NEW, SELECT_EXISTING
 }
 
-@RequiresEdt
 internal suspend fun installBaseSdk(installRequest: InstallablePythonSdk): kotlin.Result<PythonInterpreter> {
-  val installed = installRequest.install(null) {
-    PythonSdkUtil.getAllSdks()
+  // installBinary (reached via InstallablePythonSdk.install) is @RequiresEdt because it drives a
+  // modal ProgressManager.Task.WithResult. Callers of installBaseSdk run on background coroutines
+  // (PyV3ProjectBaseGenerator → generateAndGetSdk → setupVirtualenv / getOrInstallBasePython), so
+  // hop here instead of pushing the EDT contract onto every caller.
+  val installed = withContext(Dispatchers.EDT) {
+    installRequest.install(null) {
+      PythonSdkUtil.getAllSdks()
+    }
   }
 
   // Logs the failure and rethrows control flow exceptions (cancellation must not show the balloon)
