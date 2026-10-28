@@ -25,8 +25,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.containingSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.analysis.api.types.defaultType
 import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
+import org.jetbrains.kotlin.analysis.api.types.type
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.CallableReferenceFix
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.usages.KotlinByConventionCallUsage
@@ -42,7 +44,6 @@ import org.jetbrains.kotlin.idea.refactoring.conflicts.checkNewPropertyConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.checkRedeclarationConflicts
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerAlreadyDeclaredConflict
 import org.jetbrains.kotlin.idea.refactoring.conflicts.registerRetargetJobOnPotentialCandidates
-import org.jetbrains.kotlin.idea.refactoring.isCompanionMemberOf
 import org.jetbrains.kotlin.idea.refactoring.rename.BasicUnresolvableCollisionUsageInfo
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
@@ -154,36 +155,43 @@ class KotlinChangeSignatureConflictSearcher(
         if (function.isFromCompanionBlock && newReceiverInfo != null) {
             result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.block.function.cannot.have.receiver"))
         }
-        if (function.hasModifier(KtTokens.COMPANION_KEYWORD) && newReceiverInfo == null) {
-            result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.must.have.receiver"))
-        }
-        if (function.hasModifier(KtTokens.COMPANION_KEYWORD) &&
-            originalReceiverInfo != null &&
-            newReceiverInfo != null
-        ) {
-            fun hasCompanionExtensionRelevantUsages() = refUsages.get().any { usage ->
-                when (usage) {
-                    is KotlinParameterUsage -> usage.parameterInfo == newReceiverInfo || usage.parameterInfo == originalReceiverInfo
-                    is KotlinImplicitThisToParameterUsage -> usage.parameterInfo == originalReceiverInfo
-                    is KotlinFunctionCallUsage, is KotlinPropertyCallUsage, is KotlinByConventionCallUsage,
-                    is KotlinCallableReferenceUsage, is MethodCallUsageInfo, is KotlinOverrideUsageInfo, is OverriderUsageInfo -> true
-
-                    else -> false
-                }
-            }
-
-            if (newReceiverInfo.oldIndex != originalReceiverInfo.oldIndex) {
-                if (hasCompanionExtensionRelevantUsages()) {
-                    result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.cannot.replace.receiver"))
-                }
+        if (function.hasModifier(KtTokens.COMPANION_KEYWORD)) {
+            if (newReceiverInfo == null) {
+                result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.must.have.receiver"))
             } else {
-                val originalReceiverType = originalReceiverInfo.originalType.text
+                fun hasCompanionExtensionRelevantUsages() = refUsages.get().any { usage ->
+                    when (usage) {
+                        is KotlinParameterUsage -> usage.parameterInfo == newReceiverInfo || usage.parameterInfo == originalReceiverInfo
+                        is KotlinImplicitThisToParameterUsage -> usage.parameterInfo == originalReceiverInfo
+                        is KotlinFunctionCallUsage, is KotlinPropertyCallUsage, is KotlinByConventionCallUsage,
+                        is KotlinCallableReferenceUsage, is MethodCallUsageInfo, is KotlinOverrideUsageInfo, is OverriderUsageInfo -> true
+
+                        else -> false
+                    }
+                }
+
+                val originalReceiverType = originalReceiverInfo?.originalType?.text
                 val newReceiverType = newReceiverInfo.currentType.text
-                if (originalReceiverType != null && newReceiverType != null &&
-                    !areTypesTheSame(originalReceiverType, newReceiverType, function) &&
-                    hasCompanionExtensionRelevantUsages()
-                ) {
-                    result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.changed.receiver.type"))
+                if (newReceiverInfo.oldIndex != originalReceiverInfo?.oldIndex) {
+                    if (hasCompanionExtensionRelevantUsages()) {
+                        result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.cannot.replace.receiver"))
+                    }
+                } else {
+                    if (originalReceiverType != null && newReceiverType != null &&
+                        !areTypesTheSame(originalReceiverType, newReceiverType, function) &&
+                        hasCompanionExtensionRelevantUsages()
+                    ) {
+                        result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.changed.receiver.type"))
+                    }
+                }
+                if (newReceiverType != null) {
+                    val typeFragment = KtPsiFactory(function.project).createTypeCodeFragment(newReceiverType, function)
+                    val isNullable = analyze(typeFragment) {
+                        typeFragment.getContentElement()?.type?.isMarkedNullable == true
+                    }
+                    if (isNullable) {
+                        result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.nullable.receiver"))
+                    }
                 }
             }
         }

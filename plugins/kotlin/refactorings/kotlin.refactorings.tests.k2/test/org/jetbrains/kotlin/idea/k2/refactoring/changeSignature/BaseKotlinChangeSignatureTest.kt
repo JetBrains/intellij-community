@@ -336,8 +336,10 @@ public @interface NotNull {
     protected open fun doTestConflict(configure: C.() -> Unit = {}) = runAndCheckConflicts {
         configureFiles()
 
-        doRefactoring(configure)
-        compareEditorsWithExpectedData()
+        withCustomCompilerOptions(file.text, project, module) {
+            doRefactoring(configure)
+            compareEditorsWithExpectedData()
+        }
     }
 
     protected fun doTestUnmodifiable(configure: C.() -> Unit = {}) {
@@ -960,6 +962,8 @@ public @interface NotNull {
 
     fun testCompanionExtensionChangeReceiverType() = doTestConflict { receiverParameterInfo!!.setType("OtherHost") }
     fun testCompanionExtensionChangeReceiverTypeUnused() = doTest { receiverParameterInfo!!.setType("OtherHost") }
+
+    fun testCompanionExtensionNullableReceiver() = doTestConflict { receiverParameterInfo!!.setType("Host?") }
 
     fun testParameterToReceiverExplicitReceiver() = doTest { receiverParameterInfo = newParameters[0] }
 

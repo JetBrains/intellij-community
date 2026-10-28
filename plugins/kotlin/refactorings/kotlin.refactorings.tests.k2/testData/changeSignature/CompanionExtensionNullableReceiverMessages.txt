@@ -1,0 +1,2 @@
+A companion extension receiver cannot be nullable
+Changing the receiver type of a companion extension can break its calls
