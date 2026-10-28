@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.typing
 
+import com.intellij.openapi.util.RecursionManager
 import com.intellij.psi.util.contextOfType
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
@@ -23,6 +24,8 @@ import com.jetbrains.python.psi.types.PyTypeMember
 import com.jetbrains.python.psi.types.PyTypedDictType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
+import java.util.Collections
+import java.util.concurrent.ConcurrentHashMap
 
 
 fun PyClassLikeType.isProtocol(context: TypeEvalContext): Boolean = containsProtocol(getSuperClassTypes(context))
@@ -44,6 +47,26 @@ fun matchingProtocolDefinitions(expected: PyType?, actual: PyType?, context: Typ
 typealias ProtocolAndSubclassElements = Pair<PyTypeMember, List<PyTypeMember>>
 
 fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, context: TypeEvalContext): List<ProtocolAndSubclassElements> {
+  val cache = context.getProtocolMembersCache()
+  // Not `computeIfAbsent`: the computation runs type evaluation, which can call this again and deadlock the map
+  val forProtocol = cache[protocol.pyClass]
+                    ?: ConcurrentHashMap<Pair<PyClassType, PyClassType>, List<ProtocolAndSubclassElements>>()
+                      .let { cache.putIfAbsent(protocol.pyClass, it) ?: it }
+  val pair = protocol to subclass
+  forProtocol[pair]?.let { return it }
+  val stamp = RecursionManager.markStack()
+  val members = computeProtocolSubclass(protocol, subclass, context)
+  if (stamp.mayCacheNow()) {
+    forProtocol[pair] = members
+  }
+  return members
+}
+
+private fun computeProtocolSubclass(
+  protocol: PyClassType,
+  subclass: PyClassType,
+  context: TypeEvalContext,
+): List<ProtocolAndSubclassElements> {
   val resolveContext = PyResolveContext.defaultContext(context)
   val result = mutableListOf<Pair<PyTypeMember, List<PyTypeMember>>>()
 
@@ -77,7 +100,8 @@ fun inspectProtocolSubclass(protocol: PyClassType, subclass: PyClassType, contex
     }
   }
 
-  return result
+  // The list is cached and shared by all callers
+  return Collections.unmodifiableList(result)
 }
 
 private fun PyClassType.findProtocolMember(name: String, context: TypeEvalContext): List<PyTypeMember> {
