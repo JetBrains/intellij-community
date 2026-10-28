@@ -17,6 +17,6 @@
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.module.ModuleStateApiProvider"
                                             apiInterfaces="com.intellij.platform.project.module.ModuleStateApi"/>
     <platform.rpc.backend.remoteApiProvider implementation="com.intellij.platform.project.backend.OpenFileChooserApiProvider"
-                                            apiInterfaces="com.intellij.platform.project.OpenFileChooserApi"/>
+                                            apiInterfaces="com.intellij.ide.rpc.OpenFileChooserApi"/>
   </extensions>
 </idea-plugin>

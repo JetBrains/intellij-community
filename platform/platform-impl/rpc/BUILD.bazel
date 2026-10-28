@@ -41,6 +41,7 @@ jvm_library(
         "//platform/kernel/rpc.lite",
         "//platform/platform-api:ide",
         "//platform/runtime/product",
+        "//platform/project/shared:project",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.rpc` end
