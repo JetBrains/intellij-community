@@ -27,6 +27,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionS
 import org.jetbrains.plugins.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
+import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.assertNotNull
@@ -148,6 +149,14 @@ internal class KotlinGradleDependenciesCompletionPerformanceTest : AbstractGradl
       GradleTestFixtureBuilder.create("KotlinGradleDependenciesCompletionPerformanceTest") { gradleVersion ->
         withSettingsFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
           setProjectName("KotlinGradleDependenciesCompletionPerformanceTest")
+          val mirrorUrl = GradleEnvironment.Urls.getMavenRepositoryUrl()
+          if (mirrorUrl != null) {
+            pluginManagement {
+              call("repositories") {
+                call("maven", "url" to mirrorUrl)
+              }
+            }
+          }
         }
         withBuildFile(gradleVersion, gradleDsl = GradleDsl.KOTLIN) {
           withKotlinJvmPlugin()
