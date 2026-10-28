@@ -165,12 +165,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
           }
           else {
             locations = locations.stream()
-              .distinct() // distinct once before fanning out
-              .flatMap(l -> {
-                List<Location> list = bytecodeInspector.findInlineConditionalReturnLocations(l.method(), position.getLine() + 1);
-                return list != null ? list.stream() : Stream.of(l);
-              })
-              .distinct() // distinct again after fanning out
+              .map(l -> l.method())
+              .distinct()
+              .flatMap(m -> JavaLineBreakpointType.collectInlineConditionalReturnLocations(m, position.getLine() + 1))
               .toList();
           }
         }

@@ -1,14 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger
 
-import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.ThrowableComputable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import com.sun.jdi.VirtualMachine
-import org.jetbrains.org.objectweb.asm.Opcodes
 
 
 /**
@@ -35,7 +31,7 @@ interface BytecodeInspector {
    *
    * Returns null if vm lacks required capabilities.
    */
-  fun findInlineConditionalReturnLocations(method: Method, lineNumber: Int): List<Location>?
+  fun findInlineConditionalReturnLocations(method: Method, lineNumber: Int): List<Location>
 
   /**
    * Returns true if the location corresponds to a conditional return statement.

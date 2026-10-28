@@ -13,20 +13,15 @@ import org.jetbrains.org.objectweb.asm.Opcodes
  * A [BytecodeInspector] for Java VM
  */
 class BytecodeInspectorImpl : BytecodeInspector {
-  override fun isApplicable(virtualMachine: VirtualMachine): Boolean = !DebuggerUtils.isAndroidVM(virtualMachine)
+  override fun isApplicable(virtualMachine: VirtualMachine): Boolean {
+    return !DebuggerUtils.isAndroidVM(virtualMachine) && virtualMachine.canGetBytecodes() && virtualMachine.canGetConstantPool()
+  }
 
-  override fun findInlineConditionalReturnLocations(method: Method, lineNumber: Int): List<Location>? {
-    val vm = method.virtualMachine()
-    if (!vm.canGetBytecodes() || !vm.canGetConstantPool()) {
-      return null
-    }
+  override fun findInlineConditionalReturnLocations(method: Method, lineNumber: Int): List<Location> {
     return JavaLineBreakpointType.collectInlineConditionalReturnLocations(method, lineNumber).toList()
   }
 
   override fun isConditionalReturnLocation(location: Location): Boolean {
-    if (!location.virtualMachine().canGetBytecodes()) {
-      return false
-    }
     val bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes()
     val bytecodeOffs = location.codeIndex().toInt()
 
