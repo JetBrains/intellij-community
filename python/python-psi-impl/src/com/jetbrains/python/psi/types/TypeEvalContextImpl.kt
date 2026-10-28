@@ -23,6 +23,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightCounters
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyCallable
+import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyExpression
 import com.jetbrains.python.psi.PyExpressionCodeFragment
 import com.jetbrains.python.psi.PyFile
@@ -88,6 +89,8 @@ open class TypeEvalContextImpl internal constructor(
   protected val contextTypeCache: ConcurrentMap<Pair<Any, Any>, PyType> = getConcurrentMapForCachingTypes()
   protected val myVarianceCache: MutableMap<PyTypeParameterType, PyVariance> = getConcurrentMapForCaching()
   protected val mySubstitutionsCache: MutableMap<SubstitutionsIdentifier, PyTypeChecker.GenericSubstitutions> = getConcurrentMapForCaching()
+  protected val myClassMethodPresenceCache: ConcurrentMap<PyClass, ConcurrentMap<Pair<String, Boolean>, Boolean>> =
+    getConcurrentMapForCaching()
 
   init {
     PyCodeInsightCounters.inc(Counter.CONTEXTS_CONSTRUCTED)
@@ -380,6 +383,11 @@ open class TypeEvalContextImpl internal constructor(
   @ApiStatus.Internal
   override fun getVarianceCache(): MutableMap<PyTypeParameterType, PyVariance> {
     return myVarianceCache
+  }
+
+  @ApiStatus.Internal
+  override fun getClassMethodPresenceCache(): ConcurrentMap<PyClass, ConcurrentMap<Pair<String, Boolean>, Boolean>> {
+    return myClassMethodPresenceCache
   }
 
   override fun equals(other: Any?): Boolean {
