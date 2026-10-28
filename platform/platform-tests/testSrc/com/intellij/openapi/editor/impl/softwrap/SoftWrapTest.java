@@ -5,6 +5,10 @@ import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.SoftWrap;
+import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
+import com.intellij.openapi.editor.ex.SoftWrapChangeListener;
+import com.intellij.openapi.editor.ex.SoftWrapModelEx;
 import com.intellij.openapi.editor.impl.EditorModelFixture;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
@@ -16,9 +20,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.editor.colors.FontPreferencesTest.getExistingNonDefaultFontName;
 import static com.intellij.openapi.editor.impl.EditorModelFixtureKt.editorModelFixture;
 import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.CodeInsightFixtureKt.codeInsightModuleFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
@@ -65,6 +71,37 @@ public class SoftWrapTest {
   public void testNoWrapInsideFoldRegion() {
     myFixture.runTest(() -> {
       doTestSoftWraps(10, "start<fold text='.....'>text with space</fold><wrap>end");
+    });
+  }
+
+  @Test
+  public void testChangeOfEffectiveFontFamiliesOnlyResetsSoftWraps() {
+    myFixture.runTest(() -> {
+      myFixture.init("some text that is long enough to wrap", PlainTextFileType.INSTANCE);
+      Editor editor = myFixture.getEditor();
+      EditorTestUtil.configureSoftWraps(editor, 10);
+      String fontFamily = getExistingNonDefaultFontName();
+      var first = new FontPreferencesImpl();
+      first.register(fontFamily, 14);
+      editor.getColorsScheme().setFontPreferences(first);
+
+      var changes = new AtomicInteger();
+      ((SoftWrapModelEx)editor.getSoftWrapModel()).addSoftWrapChangeListener(new SoftWrapChangeListener() {
+        @Override
+        public void softWrapsChanged() {
+          changes.incrementAndGet();
+        }
+
+        @Override
+        public void recalculationEnds() {
+        }
+      });
+      var second = new FontPreferencesImpl();
+      first.copyTo(second);
+      second.setEffectiveFontFamilies(List.of(fontFamily, FontPreferences.DEFAULT_FONT_NAME));
+      editor.getColorsScheme().setFontPreferences(second);
+
+      assertTrue(changes.get() > 0, "Soft wraps were not reset");
     });
   }
 

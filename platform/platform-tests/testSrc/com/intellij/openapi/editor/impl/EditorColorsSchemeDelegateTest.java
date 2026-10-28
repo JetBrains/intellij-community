@@ -25,6 +25,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.openapi.editor.colors.FontPreferencesTest.getExistingNonDefaultFontName;
@@ -129,6 +130,27 @@ public class EditorColorsSchemeDelegateTest {
         assertNotEquals(initialSpacing, e1.getColorsScheme().getLineSpacing());
         assertEquals(initialSpacing, e2.getColorsScheme().getLineSpacing());
       }));
+    });
+  }
+
+  @Test
+  public void testFontPreferencesThatDifferOnlyInEffectiveFamiliesReachEditor() {
+    myFixture.runTest(() -> {
+      Document document = EditorFactory.getInstance().createDocument("");
+      doInEditor(document, editor -> {
+        String fontFamily = getExistingNonDefaultFontName();
+        var first = new FontPreferencesImpl();
+        first.register(fontFamily, 14);
+        editor.getColorsScheme().setFontPreferences(first);
+
+        var second = new FontPreferencesImpl();
+        first.copyTo(second);
+        var effectiveFontFamilies = List.of(fontFamily, FontPreferences.DEFAULT_FONT_NAME);
+        second.setEffectiveFontFamilies(effectiveFontFamilies);
+        editor.getColorsScheme().setFontPreferences(second);
+
+        assertEquals(effectiveFontFamilies, editor.getColorsScheme().getFontPreferences().getEffectiveFontFamilies());
+      });
     });
   }
 

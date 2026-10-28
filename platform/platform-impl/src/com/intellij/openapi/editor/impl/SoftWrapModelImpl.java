@@ -214,7 +214,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     boolean tabWidthChanged = tabWidthBefore >= 0 && myTabWidth != tabWidthBefore;
 
     var fontPreferences = editor.getColorsScheme().getFontPreferences().getSnapshot();
-    boolean fontsChanged = fontPreferences != myFontPreferences && !fontPreferences.equals(myFontPreferences);
+    boolean fontsChanged = fontPreferences != myFontPreferences;
     if (fontsChanged) {
       myFontPreferences = fontPreferences;
       myPainter.reinit();
