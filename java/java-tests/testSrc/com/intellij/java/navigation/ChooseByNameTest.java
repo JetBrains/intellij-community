@@ -4,10 +4,7 @@ package com.intellij.java.navigation;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
 import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.actions.searcheverywhere.FileSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.WeightedSearchEverywhereContributor;
 import com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.java.JavaLanguage;
@@ -27,6 +24,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.searchEverywhere.SeItem;
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils;
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetItemsProvider;
+import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixture;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -50,12 +51,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @SuppressWarnings("NewClassNamingConvention")
@@ -69,6 +69,19 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     suite.addTestSuite(ChooseByNameTest.class);
     TestIndexingModeSupporter.addTest(ChooseByNameTest.class, new TestIndexingModeSupporter.FullIndexSuite(), suite);
     return TestFrameworkUtil.flattenSuite(suite);
+  }
+
+  /** Tells which goto providers the test checks: the coroutine based ones, or the legacy based ones. */
+  protected boolean isCoroutineBasedGoto() {
+    return true;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    setRegistryPropertyForTest(SeProvidersTestFixture.COROUTINE_BASED_GOTO_KEY, String.valueOf(isCoroutineBasedGoto()));
+    // Some tests check the order of the items with an equal weight. A slow presentation must not change it.
+    SeTargetItemsProvider.setPresentationOrderTimeoutForTests(Duration.ofMinutes(1), getTestRootDisposable());
   }
 
   public void test_goto_class_order_by_matching_degree() {
@@ -205,7 +218,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile outside = addEmptyFile(".idea/workspace.xml");
     PsiFile inside = addEmptyFile("workspace.txt");
     assertOrderedEquals(gotoFile("work", false), List.of(inside));
-    assertOrderedEquals(gotoFile("work", true), List.of(inside, outside));
+    // The everywhere scope also holds the files of the IDE, such as the XHTML modules. Only the files of the test matter here.
+    List<PsiFile> everywhere = ContainerUtil.filter(gotoFile("work", true), file -> file == inside || file == outside);
+    assertOrderedEquals(everywhere, List.of(inside, outside));
   }
 
   public void test_prefer_better_path_matches() {
@@ -238,11 +253,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile fooContext = addEmptyFile("foo/context.html");
     PsiFile barContext = addEmptyFile("bar/context.html");
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), fooContext);
-    assertOrderedEquals(calcContributorElements(contributor, "index"), List.of(fooIndex, barIndex));
-
-    contributor = createFileContributor(getProject(), getTestRootDisposable(), barContext);
-    assertOrderedEquals(calcContributorElements(contributor, "index"), List.of(barIndex, fooIndex));
+    assertOrderedEquals(gotoFile("index", false, fooContext), List.of(fooIndex, barIndex));
+    assertOrderedEquals(gotoFile("index", false, barContext), List.of(barIndex, fooIndex));
   }
 
   private PsiFile addEmptyFile(String relativePath) {
@@ -271,28 +283,28 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile fooIndex = addEmptyFile("foo/index.html");
     PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), fooIndex);
+    SeProvidersTestFixture fixture = createFixture(fooIndex);
 
     PsiDirectory fooDir = fooIndex.getContainingDirectory();
     PsiDirectory barDir = barIndex.getContainingDirectory();
 
     fuzzySearchRegistryValue.setValue(false);
 
-    assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir));
-    assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir));
-    assertOrderedEquals(calcContributorElements(contributor, "/foo"), List.of(fooDir));
-    assertOrderedEquals(calcContributorElements(contributor, "\\foo"), List.of(fooDir));
-    assertOrderedEquals(calcContributorElements(contributor, "foo"), List.of(fooDir));
-    assertOrderedEquals(calcContributorElements(contributor, "/index.html"), List.of(fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "\\index.html"), List.of(fooIndex));
-    assertEmpty(calcContributorElements(contributor, "index.html/"));
-    assertEmpty(calcContributorElements(contributor, "index.html\\"));
-    assertOrderedEquals(calcContributorElements(contributor, "bar.txt/"), List.of(barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "bar.txt\\"), List.of(barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "/bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "\\bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "foo/"), List.of(fooDir));
+    assertOrderedEquals(findFiles(fixture, "foo\\"), List.of(fooDir));
+    assertOrderedEquals(findFiles(fixture, "/foo"), List.of(fooDir));
+    assertOrderedEquals(findFiles(fixture, "\\foo"), List.of(fooDir));
+    assertOrderedEquals(findFiles(fixture, "foo"), List.of(fooDir));
+    assertOrderedEquals(findFiles(fixture, "/index.html"), List.of(fooIndex));
+    assertOrderedEquals(findFiles(fixture, "\\index.html"), List.of(fooIndex));
+    assertEmpty(findFiles(fixture, "index.html/"));
+    assertEmpty(findFiles(fixture, "index.html\\"));
+    assertOrderedEquals(findFiles(fixture, "bar.txt/"), List.of(barDir));
+    assertOrderedEquals(findFiles(fixture, "bar.txt\\"), List.of(barDir));
+    assertOrderedEquals(findFiles(fixture, "/bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "\\bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "bar"), List.of(barIndex, barDir));
 
     fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
@@ -301,7 +313,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile fooIndex = addEmptyFile("foo/index.html");
     PsiFile barIndex = addEmptyFile("bar.txt/bar.txt");
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), fooIndex);
+    SeProvidersTestFixture fixture = createFixture(fooIndex);
 
     PsiDirectory fooDir = fooIndex.getContainingDirectory();
     PsiDirectory barDir = barIndex.getContainingDirectory();
@@ -309,21 +321,21 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     // With fuzzy search enabled, the search also shows files inside the directory.
     fuzzySearchRegistryValue.setValue(true);
 
-    assertOrderedEquals(calcContributorElements(contributor, "foo/"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "foo\\"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "/foo"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "\\foo"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "foo"), List.of(fooDir, fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "/index.html"), List.of(fooIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "\\index.html"), List.of(fooIndex));
-    assertEmpty(calcContributorElements(contributor, "index.html/"));
-    assertEmpty(calcContributorElements(contributor, "index.html\\"));
-    assertOrderedEquals(calcContributorElements(contributor, "bar.txt/"), List.of(barDir, barIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "bar.txt\\"), List.of(barDir, barIndex));
-    assertOrderedEquals(calcContributorElements(contributor, "/bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "\\bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "bar.txt"), List.of(barIndex, barDir));
-    assertOrderedEquals(calcContributorElements(contributor, "bar"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "foo/"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(findFiles(fixture, "foo\\"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(findFiles(fixture, "/foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(findFiles(fixture, "\\foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(findFiles(fixture, "foo"), List.of(fooDir, fooIndex));
+    assertOrderedEquals(findFiles(fixture, "/index.html"), List.of(fooIndex));
+    assertOrderedEquals(findFiles(fixture, "\\index.html"), List.of(fooIndex));
+    assertEmpty(findFiles(fixture, "index.html/"));
+    assertEmpty(findFiles(fixture, "index.html\\"));
+    assertOrderedEquals(findFiles(fixture, "bar.txt/"), List.of(barDir, barIndex));
+    assertOrderedEquals(findFiles(fixture, "bar.txt\\"), List.of(barDir, barIndex));
+    assertOrderedEquals(findFiles(fixture, "/bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "\\bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "bar.txt"), List.of(barIndex, barDir));
+    assertOrderedEquals(findFiles(fixture, "bar"), List.of(barIndex, barDir));
 
     fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
@@ -334,10 +346,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
     fuzzySearchRegistryValue.setValue(false);
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
-    List<?> popupElements = calcContributorElements(contributor, "foo");
-
-    assertOrderedEquals(popupElements, List.of(fooFile, fooDir));
+    assertOrderedEquals(gotoFile("foo"), List.of(fooFile, fooDir));
 
     fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
@@ -350,10 +359,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     // With fuzzy search enabled, the search also shows files inside the directory.
     fuzzySearchRegistryValue.setValue(true);
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
-    List<?> popupElements = calcContributorElements(contributor, "foo");
-
-    assertOrderedEquals(popupElements, List.of(fooFile, fooDir, barFile));
+    assertOrderedEquals(gotoFile("foo"), List.of(fooFile, fooDir, barFile));
 
     fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
   }
@@ -424,8 +430,13 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(gotoClass("goo.baz.Bar"), List.of(bar2));
   }
 
-  private static List<PsiElement> filterJavaOnly(List<PsiElement> elems) {
-    return new ArrayList<>(ContainerUtil.filter(elems, elem -> elem.getLanguage().equals(JavaLanguage.INSTANCE)));
+  /**
+   * Keeps the Java methods named {@code run}.
+   * Search Everywhere drops the trailing space of the search text, so "run " also finds the longer names.
+   */
+  private static List<PsiElement> filterJavaRunMethods(List<PsiElement> elems) {
+    return new ArrayList<>(ContainerUtil.filter(elems, elem -> elem.getLanguage().equals(JavaLanguage.INSTANCE) &&
+                                                               elem instanceof PsiMethod method && method.getName().equals("run")));
   }
 
   public void test_super_method_in_jdk() {
@@ -446,7 +457,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
       () -> myFixture.findClass("java.security.PrivilegedExceptionAction").getMethods()[0]
     );
 
-    List<PsiElement> withLibs = filterJavaOnly(gotoSymbol("run ", true));
+    List<PsiElement> withLibs = filterJavaRunMethods(gotoSymbol("run ", true));
     withLibs.remove(sdkRun2);
     withLibs.remove(sdkRun3);
     if (!DumbService.isDumb(myFixture.getProject())) { // in dumb mode overridden are also shown
@@ -454,7 +465,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     }
     assertDoesntContain(withLibs, ourRun);
 
-    List<PsiElement> noLibs = filterJavaOnly(gotoSymbol("run ", false));
+    List<PsiElement> noLibs = filterJavaRunMethods(gotoSymbol("run ", false));
     assertOrderedEquals(noLibs, List.of(ourRun));
     assertDoesntContain(noLibs, sdkRun);
   }
@@ -475,21 +486,17 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     assertOrderedEquals(variants, List.of(file1.getScriptClass(), file2.getScriptClass()));
   }
 
-  public void test_prefer_case_insensitive_exact_prefix_match() {
-    PsiClass wanted = myFixture.addClass("class XFile {}");
-    PsiClass smth1 = myFixture.addClass("class xfilterExprOwner {}");
-    PsiClass smth2 = myFixture.addClass("class xfile_baton_t {}");
-    SearchEverywhereContributor<Object> contributor = createClassContributor(getProject(), getTestRootDisposable());
-    List<?> popupElements = calcContributorElements(contributor, "xfile");
-    assertOrderedEquals(popupElements, List.of(wanted, smth2, smth1));
+  public void test_prefer_exact_case_prefix_match_to_case_insensitive_name_match() {
+    PsiClass caseInsensitiveName = myFixture.addClass("class XFile {}");
+    PsiClass camelMatch = myFixture.addClass("class xfilterExprOwner {}");
+    PsiClass exactCasePrefix = myFixture.addClass("class xfile_baton_t {}");
+    assertOrderedEquals(gotoClass("xfile"), List.of(exactCasePrefix, caseInsensitiveName, camelMatch));
   }
 
   public void test_prefer_prefix_match() {
     PsiClass wanted = myFixture.addClass("class PsiClassImpl {}");
     PsiClass smth = myFixture.addClass("class DroolsPsiClassImpl {}");
-    SearchEverywhereContributor<Object> contributor = createClassContributor(getProject(), getTestRootDisposable());
-    List<?> popupElements = calcContributorElements(contributor, "PsiCl");
-    assertOrderedEquals(popupElements, List.of(wanted, smth));
+    assertOrderedEquals(gotoClass("PsiCl"), List.of(wanted, smth));
   }
 
   public void test_out_of_project_content_files() {
@@ -504,12 +511,11 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiClass foo = myFixture.addClass("package foo; class List {}");
     PsiClass bar = myFixture.addClass("package bar; class List {}");
 
-    SearchEverywhereContributor<Object> contributor =
-      createClassContributor(getProject(), getTestRootDisposable(), myFixture.addClass("class Context {}").getContainingFile());
-    assertOrderedEquals(calcContributorElements(contributor, "List"), List.of(bar, foo));
+    SeProvidersTestFixture fixture = createFixture(myFixture.addClass("class Context {}").getContainingFile());
+    assertOrderedEquals(findElements(fixture, SeProviderIdUtils.CLASSES_ID, "List", false), List.of(bar, foo));
 
     JavaProjectCodeInsightSettings.setExcludedNames(getProject(), getTestRootDisposable(), "bar");
-    assertOrderedEquals(calcContributorElements(contributor, "List"), List.of(foo, bar));
+    assertOrderedEquals(findElements(fixture, SeProviderIdUtils.CLASSES_ID, "List", false), List.of(foo, bar));
   }
 
   public void test_file_path_matching_without_slashes() {
@@ -545,7 +551,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   public void test_show_matches_from_different_suffixes() {
     PsiFile enumControl = addEmptyFile("sample/EnumControl.java");
     PsiFile control = addEmptyFile("sample/ControlSmth.java");
-    assertOrderedEquals(gotoFile("samplecontrol", false), List.of(enumControl, control));
+    assertOrderedEquals(gotoFile("samplecontrol", false), List.of(control, enumControl));
   }
 
   public void test_show_longer_suffix_matches_from_jdk_and_shorter_from_project() {
@@ -562,7 +568,10 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void test_fix_keyboard_layout() {
-    assertEquals("String", gotoClass("Ыекштп", true).get(0).getName());
+    // The everywhere scope also holds the classes of other languages, such as the String interface of TypeScript.
+    PsiClass firstClass = ContainerUtil.findInstance(gotoClass("Ыекштп", true), PsiClass.class);
+    assertNotNull(firstClass);
+    assertEquals("String", firstClass.getName());
     @Nullable Object symbol =
       ContainerUtil.find(gotoSymbol("Ыекштп", true), sym -> sym instanceof PsiClass clazz && clazz.getName().equals("String"));
     assertNotNull(symbol);
@@ -587,19 +596,14 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile file1 = addEmptyFile("Folder/Web/SubFolder/Flow.html");
     PsiFile file2 = addEmptyFile("Folder/Web/SubFolder/Flow/Helper.html");
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
-    List<Object> files =
-      calcWeightedContributorElements((WeightedSearchEverywhereContributor<?>)contributor, "Folder/Web/SubFolder/Flow.html");
-    assertOrderedEquals(files, List.of(file1, file2));
+    assertOrderedEquals(withoutRepeats(gotoFile("Folder/Web/SubFolder/Flow.html")), List.of(file1, file2));
   }
 
   public void test_prefer_name_match_over_path_match() {
     PsiFile nameMatchFile = addEmptyFile("JBCefBrowser.java");
     PsiFile pathMatchFile = addEmptyFile("com/elements/folder/WebBrowser.java");
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable());
-    List<Object> files = calcWeightedContributorElements((WeightedSearchEverywhereContributor<?>)contributor, "CefBrowser");
-    assertOrderedEquals(files, List.of(nameMatchFile, pathMatchFile));
+    assertOrderedEquals(withoutRepeats(gotoFile("CefBrowser")), List.of(nameMatchFile, pathMatchFile));
   }
 
   public void test_matching_file_in_a_matching_directory() {
@@ -773,10 +777,9 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     PsiFile file = addEmptyFile("foo/bar/goo/doo/index.html");
     PsiDirectory dooDir = file.getContainingDirectory();
 
-    SearchEverywhereContributor<Object> contributor = createFileContributor(getProject(), getTestRootDisposable(), file);
     fuzzySearchRegistryValue.setValue(false);
     try {
-      assertOrderedEquals(calcContributorElements(contributor, "foo/bar/goo/doo/"), List.of(dooDir));
+      assertOrderedEquals(gotoFile("foo/bar/goo/doo/", false, file), List.of(dooDir));
     }
     finally {
       fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
@@ -790,13 +793,11 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
    */
   public void test_a_repeated_file_keeps_its_better_weight() {
     PsiFile file = addEmptyFile("shop/" + ("a".repeat(250) + "/").repeat(6) + "billing/billing.txt");
-    WeightedSearchEverywhereContributor<?> contributor =
-      (WeightedSearchEverywhereContributor<?>)createFileContributor(getProject(), getTestRootDisposable(), file);
+    SeProvidersTestFixture fixture = createFixture(file);
     fuzzySearchRegistryValue.setValue(true);
     try {
-      List<Integer> weights = weightsOf(contributor, "shop/billing", file);
-      assertTrue("the name weight must be below the child weight: " + weights, weights.getFirst() < 0);
-      assertEquals(weights.toString(), 0, (int)Collections.max(weights));
+      // Search Everywhere shows one copy of the file, and it must be the child copy with the better weight.
+      assertEquals(List.of(0), weightsOf(fixture, SeProviderIdUtils.FILES_ID, "shop/billing", file));
     }
     finally {
       fuzzySearchRegistryValue.setValue(isFuzzySearchEnabled);
@@ -805,51 +806,49 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void test_exactly_matching_qualified_symbol_gets_the_exact_match_degree() {
     PsiMethod method = myFixture.addClass("package foo; class Bar { void createBreakpoints() {} }").getMethods()[0];
-    WeightedSearchEverywhereContributor<?> contributor =
-      (WeightedSearchEverywhereContributor<?>)createSymbolContributor(getProject(), getTestRootDisposable(), null, false);
+    SeProvidersTestFixture fixture = createFixture(null);
+    String symbols = SeProviderIdUtils.SYMBOLS_ID;
 
     int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
-    assertTrue(weightOf(contributor, "foo.Bar#createBreakpoints", method) >= exactMatchDegree);
+    assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreakpoints", method) >= exactMatchDegree);
     // '#' and '.' are both name separators, so both spellings name the method exactly.
-    assertTrue(weightOf(contributor, "foo.Bar.createBreakpoints", method) >= exactMatchDegree);
+    assertTrue(weightOf(fixture, symbols, "foo.Bar.createBreakpoints", method) >= exactMatchDegree);
     // The user can leave out a part of the qualifier.
-    assertTrue(weightOf(contributor, "Bar#createBreakpoints", method) >= exactMatchDegree);
+    assertTrue(weightOf(fixture, symbols, "Bar#createBreakpoints", method) >= exactMatchDegree);
     // A search text without a separator says nothing about the qualifier.
-    assertTrue(weightOf(contributor, "createBreakpoints", method) < exactMatchDegree);
+    assertTrue(weightOf(fixture, symbols, "createBreakpoints", method) < exactMatchDegree);
     // A partial name is not an exact match.
-    assertTrue(weightOf(contributor, "foo.Bar#createBreak", method) < exactMatchDegree);
+    assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreak", method) < exactMatchDegree);
     // A Copy Reference result carries a signature. A signature is not a part of a name.
-    assertTrue(weightOf(contributor, "foo.Bar#createBreakpoints()", method) >= exactMatchDegree);
+    assertTrue(weightOf(fixture, symbols, "foo.Bar#createBreakpoints()", method) >= exactMatchDegree);
 
     // The split Search Everywhere reads the exactness back from the weight, so the weight of a real
     // exact match must pass isInExactMatchDegreeRange.
     assertTrue(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
-      weightOf(contributor, "foo.Bar#createBreakpoints", method)));
+      weightOf(fixture, symbols, "foo.Bar#createBreakpoints", method)));
     assertFalse(DefaultChooseByNameItemProvider.isInExactMatchDegreeRange(
-      weightOf(contributor, "createBreakpoints", method)));
+      weightOf(fixture, symbols, "createBreakpoints", method)));
   }
 
   public void test_exactly_matching_qualified_class_gets_the_exact_match_degree() {
     PsiClass barClass = myFixture.addClass("package foo; class Bar { }");
-    WeightedSearchEverywhereContributor<?> contributor =
-      (WeightedSearchEverywhereContributor<?>)createClassContributor(getProject(), getTestRootDisposable(), null, false);
+    SeProvidersTestFixture fixture = createFixture(null);
 
     int exactMatchDegree = DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE;
-    assertTrue(weightOf(contributor, "foo.Bar", barClass) >= exactMatchDegree);
-    assertTrue(weightOf(contributor, "foo.Ba", barClass) < exactMatchDegree);
+    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar", barClass) >= exactMatchDegree);
+    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Ba", barClass) < exactMatchDegree);
   }
 
   public void test_a_class_is_not_an_exact_match_for_a_member_search_text() {
     PsiClass barClass = myFixture.addClass("package foo; class Bar { String baz; }");
-    WeightedSearchEverywhereContributor<?> contributor =
-      (WeightedSearchEverywhereContributor<?>)createClassContributor(getProject(), getTestRootDisposable(), null, false);
+    SeProvidersTestFixture fixture = createFixture(null);
 
     // The Classes tab drops "#baz" from the search text, because it navigates to the member after
     // it opens the class. The class alone does not answer the whole search text, so it must not
     // get the exact match degree.
-    assertTrue(weightOf(contributor, "foo.Bar#baz", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar#baz", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
     // The same holds for an anonymous class search text.
-    assertTrue(weightOf(contributor, "foo.Bar$1", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
+    assertTrue(weightOf(fixture, SeProviderIdUtils.CLASSES_ID, "foo.Bar$1", barClass) < DefaultChooseByNameItemProvider.EXACT_MATCH_DEGREE);
   }
 
   private static void withLiteralPathLookupDisabled(Runnable action) {
@@ -864,26 +863,56 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
-  /** @return the weight of each copy of the item, in the order of the search */
-  private static List<Integer> weightsOf(WeightedSearchEverywhereContributor<?> contributor, String text, Object item) {
-    List<?> items = contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
+  /** @return the weight of each copy of the item, the best weight first */
+  private static List<Integer> weightsOf(SeProvidersTestFixture fixture, String providerId, String text, Object item) {
     List<Integer> weights = new ArrayList<>();
-    for (Object each : items) {
-      FoundItemDescriptor<?> descriptor = (FoundItemDescriptor<?>)each;
-      if (item.equals(descriptor.getItem())) weights.add(descriptor.getWeight());
+    for (SeItem each : fixture.searchBlocking(providerId, text, false, false, ELEMENTS_LIMIT)) {
+      if (item.equals(SeProvidersTestFixture.elementOf(each))) weights.add(each.weight());
     }
     assertFalse("The search for '" + text + "' did not return " + item, weights.isEmpty());
     return weights;
   }
 
-  private static int weightOf(WeightedSearchEverywhereContributor<?> contributor, String text, Object item) {
-    return weightsOf(contributor, text, item).getFirst();
+  private static int weightOf(SeProvidersTestFixture fixture, String providerId, String text, Object item) {
+    return weightsOf(fixture, providerId, text, item).getFirst();
+  }
+
+  /** Opens a new Search Everywhere session. Its providers go away with the test. */
+  private SeProvidersTestFixture createFixture(@Nullable PsiElement context) {
+    return createFixture(getTestRootDisposable(), context);
+  }
+
+  private SeProvidersTestFixture createFixture(Disposable parentDisposable, @Nullable PsiElement context) {
+    return SeProvidersTestFixture.createBlocking(getProject(), parentDisposable, ObjectUtils.tryCast(context, PsiFile.class));
+  }
+
+  private static List<?> findElements(SeProvidersTestFixture fixture, String providerId, String text, boolean everywhere) {
+    return fixture.findElementsBlocking(providerId, text, everywhere, false, ELEMENTS_LIMIT);
+  }
+
+  private static List<?> findFiles(SeProvidersTestFixture fixture, String text) {
+    return findElements(fixture, SeProviderIdUtils.FILES_ID, text, false);
+  }
+
+  /** Searches in a new session, as a new popup does, and closes the session after the search. */
+  private List<?> findElements(String providerId, String text, boolean everywhere, @Nullable PsiElement context) {
+    Disposable disposable = Disposer.newDisposable("ChooseByNameTest search");
+    try {
+      return findElements(createFixture(disposable, context), providerId, text, everywhere);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  /** @return the elements without their repeated copies. The search puts the best copy first, and this keeps it. */
+  private static List<?> withoutRepeats(List<?> elements) {
+    return new ArrayList<>(new LinkedHashSet<>(elements));
   }
 
   @SuppressWarnings("unchecked")
   private List<PsiClass> gotoClass(String text, boolean checkboxState, PsiElement context) {
-    return (List<PsiClass>)getContributorElements(createClassContributor(getProject(), getTestRootDisposable(), context, checkboxState),
-                                                  text);
+    return (List<PsiClass>)findElements(SeProviderIdUtils.CLASSES_ID, text, checkboxState, context);
   }
 
   private List<PsiClass> gotoClass(String text, boolean checkboxState) {
@@ -896,8 +925,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   @SuppressWarnings("unchecked")
   private List<PsiElement> gotoSymbol(String text, boolean checkboxState, PsiElement context) {
-    return (List<PsiElement>)getContributorElements(createSymbolContributor(getProject(), getTestRootDisposable(), context, checkboxState),
-                                                    text);
+    return (List<PsiElement>)findElements(SeProviderIdUtils.SYMBOLS_ID, text, checkboxState, context);
   }
 
   private List<PsiElement> gotoSymbol(String text, boolean checkboxState) {
@@ -910,8 +938,7 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   @SuppressWarnings("unchecked")
   private List<PsiFile> gotoFile(String text, boolean checkboxState, PsiElement context) {
-    return (List<PsiFile>)getContributorElements(createFileContributor(getProject(), getTestRootDisposable(), context, checkboxState),
-                                                 text);
+    return (List<PsiFile>)findElements(SeProviderIdUtils.FILES_ID, text, checkboxState, context);
   }
 
   private List<PsiFile> gotoFile(String text, boolean checkboxState) {
@@ -922,28 +949,8 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     return gotoFile(text, false, null);
   }
 
-  private static List<?> getContributorElements(SearchEverywhereContributor<?> contributor, String text) {
-    return calcContributorElements(contributor, text);
-  }
-
   public static List<?> calcContributorElements(SearchEverywhereContributor<?> contributor, String text) {
     return contributor.search(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
-  }
-
-  /**
-   * @return the found items, the best weight first.
-   * The provider can report one item more than once, so the result keeps the best copy, as Search Everywhere does.
-   */
-  public static List<Object> calcWeightedContributorElements(WeightedSearchEverywhereContributor<?> contributor, String text) {
-    List<?> items = contributor.searchWeightedElements(text, new MockProgressIndicator(), ELEMENTS_LIMIT).getItems();
-    Map<Object, Integer> bestWeights = new LinkedHashMap<>();
-    for (Object each : items) {
-      FoundItemDescriptor<?> descriptor = (FoundItemDescriptor<?>)each;
-      bestWeights.merge(descriptor.getItem(), descriptor.getWeight(), Math::max);
-    }
-    List<Map.Entry<Object, Integer>> sortedEntries =
-      ContainerUtil.sorted(bestWeights.entrySet(), Comparator.comparingInt(e -> -e.getValue()));
-    return ContainerUtil.map(sortedEntries, Map.Entry::getKey);
   }
 
   public static SearchEverywhereContributor<Object> createClassContributor(Project project,
@@ -954,12 +961,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     res.setEverywhere(everywhere);
     Disposer.register(parentDisposable, res);
     return res;
-  }
-
-  public static SearchEverywhereContributor<Object> createClassContributor(Project project,
-                                                                           Disposable parentDisposable,
-                                                                           PsiElement context) {
-    return ChooseByNameTest.createClassContributor(project, parentDisposable, context, false);
   }
 
   public static SearchEverywhereContributor<Object> createClassContributor(Project project, Disposable parentDisposable) {
@@ -984,16 +985,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
 
   public static SearchEverywhereContributor<Object> createFileContributor(Project project, Disposable parentDisposable) {
     return ChooseByNameTest.createFileContributor(project, parentDisposable, null, false);
-  }
-
-  public static SearchEverywhereContributor<Object> createSymbolContributor(Project project,
-                                                                            Disposable parentDisposable,
-                                                                            PsiElement context,
-                                                                            boolean everywhere) {
-    TestSymbolContributor res = new TestSymbolContributor(createEvent(project, context));
-    res.setEverywhere(everywhere);
-    Disposer.register(parentDisposable, res);
-    return res;
   }
 
   public static AnActionEvent createEvent(Project project, PsiElement context) {
@@ -1042,22 +1033,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     @Override
     public String getSearchProviderId() {
       return "FileSearchEverywhereContributor";
-    }
-  }
-
-  private static class TestSymbolContributor extends SymbolSearchEverywhereContributor {
-    private TestSymbolContributor(@NotNull AnActionEvent event) {
-      super(event);
-    }
-
-    public void setEverywhere(boolean state) {
-      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, state));
-    }
-
-    @NotNull
-    @Override
-    public String getSearchProviderId() {
-      return "SymbolSearchEverywhereContributor";
     }
   }
 }
