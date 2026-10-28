@@ -1,18 +1,26 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
 import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.runner.RunWith;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assume.assumeFalse;
@@ -77,6 +85,62 @@ public class IntervalTreeTest extends LightPlatformTestCase {
   public void test4() {
     create(29, 30);
     create(90, 91);
+  }
+
+  public void testReplacingMiddleOfDocumentWithManyMarkers() {
+    // so many markers change that the tree corrects maxEnd once after removing them, see RangeMarkerTree.updateAffectedNodes
+    DocumentImpl document = new DocumentImpl("abcdefghij\n".repeat(1_000));
+    int length = document.getTextLength();
+    int changeStart = length / 4;
+    int changeEnd = 3 * length / 4;
+    String replacement = "replacement\n";
+    int shift = replacement.length() - (changeEnd - changeStart);
+    List<RangeMarker> markers = new ArrayList<>();
+    for (int offset = 0; offset + 5 <= length; offset += 3) {
+      RangeMarker marker = document.createRangeMarker(offset, offset + 5);
+      marker.setGreedyToLeft(offset % 2 == 0);
+      marker.setGreedyToRight(offset % 5 == 0);
+      markers.add(marker);
+    }
+    for (int offset = 0; offset < length; offset += 1_000) {
+      markers.add(document.createRangeMarker(offset, offset));
+      markers.add(document.createRangeMarker(offset, Math.min(length, offset + 4_000)));
+    }
+    RangeMarker enclosing = document.createRangeMarker(changeStart - 1, changeEnd + 1);
+    markers.add(enclosing);
+    List<TextRange> before = ContainerUtil.map(markers, RangeMarker::getTextRange);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> document.replaceString(changeStart, changeEnd, replacement));
+
+    for (int i = 0; i < markers.size(); i++) {
+      RangeMarker marker = markers.get(i);
+      TextRange range = before.get(i);
+      if (range.getEndOffset() < changeStart) {
+        assertEquals(range, marker.getTextRange());
+      }
+      else if (range.getStartOffset() > changeEnd) {
+        assertEquals(range.shiftRight(shift), marker.getTextRange());
+      }
+      else if (range.getStartOffset() > changeStart && range.getEndOffset() < changeEnd) {
+        assertFalse(marker.isValid());
+      }
+    }
+    assertEquals(new TextRange(changeStart - 1, changeEnd + 1 + shift), enclosing.getTextRange());
+
+    // overlap queries skip subtrees by maxEnd, so they find every valid marker only if each maxEnd is right
+    List<RangeMarker> valid = ContainerUtil.filter(markers, RangeMarker::isValid);
+    for (int start = 0; start <= document.getTextLength(); start += 97) {
+      int end = Math.min(document.getTextLength(), start + 500);
+      Set<RangeMarker> expected = new HashSet<>();
+      for (RangeMarker marker : valid) {
+        if (Math.max(marker.getStartOffset(), start) <= Math.min(marker.getEndOffset(), end)) {
+          expected.add(marker);
+        }
+      }
+      Set<RangeMarker> found = new HashSet<>();
+      document.processRangeMarkersOverlappingWith(start, end, new CommonProcessors.CollectProcessor<>(found));
+      assertEquals(expected, found);
+    }
   }
 
   public void testDeliciousRandomOrder() {

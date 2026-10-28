@@ -1809,6 +1809,27 @@ public class RangeMarkerTest {
 
   @PerformanceUnitTest
   @Test
+  public void testReplaceMostOfDocumentWithManyMarkersPerformance() {
+    String text = StringUtil.repeat("abcdefghij\n", 80_000);
+    int N = 80_000;
+    Ref<DocumentEx> doc = new Ref<>();
+    List<RangeMarker> markers = new ArrayList<>(N);
+    Benchmark.newBenchmark(classPlusTestName(), () -> {
+      replaceString(doc.get(), text.length() / 4, text.length(), "replacement\n");
+    }).setup(() -> {
+      markers.forEach(RangeMarker::dispose);
+      markers.clear();
+      doc.set(new DocumentImpl(text));
+      for (int i = 0; i < N; i++) {
+        int offset = i * (text.length() / N);
+        markers.add(doc.get().createRangeMarker(offset, offset + 5));
+      }
+    }).runAsStressTest().start();
+    assertEquals(N / 4, markers.stream().filter(RangeMarker::isValid).count());
+  }
+
+  @PerformanceUnitTest
+  @Test
   public void testRMInsertDisposePerformance() {
     DocumentEx doc = new DocumentImpl(StringUtil.repeat("blah", 1000));
     int N = 1_000_000;

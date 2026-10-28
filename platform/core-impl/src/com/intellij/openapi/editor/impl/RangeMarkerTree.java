@@ -253,27 +253,40 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     }
     int affectedSize = affected.size();
     List<T> invalidated = new ArrayList<>(affectedSize);
-    // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
-    for (int i = affectedSize - 1; i >= 0; i--) {
-      IntervalNode<T> node = affected.get(i);
-      // assumption: interval.getEndOffset() will never be accessed during remove()
-      int startOffset = node.intervalStart();
-      int endOffset = node.intervalEnd();
-      removeNode(node);
-      checkMax(false);
-      node.setParent(null);
-      node.setLeft(null);
-      node.setRight(null);
-      node.setValid(true);
-      if (reTargetShift == 0) {
-        // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
-        node.clearDelta();
-        assert node.intervalStart() == startOffset;
-        assert node.intervalEnd() == endOffset;
+    // each removal corrects maxEnd up to the root, which can visit every affected node still in the tree,
+    // so for many of them it is cheaper to correct maxEnd once afterward, which visits every node once
+    boolean correctMaxOnce = (long)affectedSize * affectedSize > nodeSize();
+    if (correctMaxOnce) {
+      deferMaxCorrection();
+    }
+    try {
+      // reverse direction to visit leaves first - it's cheaper to compute maxEndOf for them first
+      for (int i = affectedSize - 1; i >= 0; i--) {
+        IntervalNode<T> node = affected.get(i);
+        // assumption: interval.getEndOffset() will never be accessed during remove()
+        int startOffset = node.intervalStart();
+        int endOffset = node.intervalEnd();
+        removeNode(node);
+        checkMax(false);
+        node.setParent(null);
+        node.setLeft(null);
+        node.setRight(null);
+        node.setValid(true);
+        if (reTargetShift == 0) {
+          // we can do it because all the deltas up from the root to this node were cleared in the collectAffectedMarkersAndShiftSubtrees
+          node.clearDelta();
+          assert node.intervalStart() == startOffset;
+          assert node.intervalEnd() == endOffset;
+        }
+        else {
+          node.changeDelta(reTargetShift);
+          pushDelta(node);
+        }
       }
-      else {
-        node.changeDelta(reTargetShift);
-        pushDelta(node);
+    }
+    finally {
+      if (correctMaxOnce) {
+        finishDeferredMaxCorrection();
       }
     }
     checkMax(true);
