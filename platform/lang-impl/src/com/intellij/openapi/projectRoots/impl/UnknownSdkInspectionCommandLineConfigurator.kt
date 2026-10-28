@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
@@ -47,10 +47,9 @@ internal suspend fun configureUnknownSdks(project: Project) {
   UnknownSdkActivityFinishedService.getInstance(project).await()
 }
 
-private fun fixUnknownSdks(project: Project, indicator: ProgressIndicator) {
-  indicator.withPushPop {
-    indicator.text = ProjectBundle.message("config.unknown.progress.scanning")
 internal suspend fun runUnknownSdkFix(project: Project) {
+  val workspaceModel = WorkspaceModel.getInstance(project)
+  (workspaceModel as? WorkspaceModelInternal)?.awaitSynchronizationWithJpsModel()
   fixUnknownSdks(project)
 }
 
