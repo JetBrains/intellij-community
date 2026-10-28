@@ -37,12 +37,9 @@ single_version_override(
     module_name = "buildifier_prebuilt",
     patch_strip = 1,
     patches = [
-        # upstream binds `-prune` only to the last exclude pattern, so `find` walks node_modules, out and .git
-        "//:build/buildifier-prebuilt-exclude-patterns-prune.patch",
-        # upstream Windows runner ignores exclude_patterns; this one prunes them while walking, like `find`
-        "//:build/buildifier-prebuilt-windows-exclude-patterns.patch",
-        # upstream walks the workspace with a single `find`; this one walks the depth-2 directories in parallel
-        "//:build/buildifier-prebuilt-parallel-find.patch",
+        "//:build/buildifier-prebuilt-exclude-patterns-prune.patch",  # TODO: remove once https://github.com/keith/buildifier-prebuilt/commit/c08c9afd96151d3794590beb986d037d10b847a3 is released
+        "//:build/buildifier-prebuilt-windows-exclude-patterns.patch",  # TODO: remove once an equivalent of https://github.com/bazel-contrib/buildtools/pull/1490 is merged
+        "//:build/buildifier-prebuilt-parallel-find.patch",  # TODO: remove once an equivalent of https://github.com/bazel-contrib/buildtools/pull/1490 is merged
     ],
 )
 
