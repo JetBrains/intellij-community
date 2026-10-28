@@ -104,6 +104,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
   private volatile @Nullable List<String> myDunderAll;
   private volatile boolean myDunderAllCalculated;
   private volatile @NotNull SoftReference<ExportedNameCache> myExportedNameCache = new SoftReference<>(null);
+  private volatile @NotNull SoftReference<TopLevelStubChildren> myTopLevelStubChildren = new SoftReference<>(null);
   private final @NotNull PsiModificationTracker myModificationTracker;
 
   private final class ExportedNameCache {
@@ -732,6 +733,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     myDunderAllCalculated = false;
     myFutureFeatures.clear(); // probably no need to synchronize
     myExportedNameCache.clear();
+    myTopLevelStubChildren.clear();
   }
 
   @Override
@@ -820,8 +822,69 @@ public class PyFileImpl extends PsiFileBase implements PyFile {
     };
   }
 
+  /** The types that the callers of {@link #collectChildren} ask for. */
+  private static final List<Class<? extends PyElement>> TOP_LEVEL_CHILD_TYPES =
+    List.of(PyClass.class, PyFunction.class, PyTargetExpression.class,
+            PyImportStatement.class, PyFromImportStatement.class, PyTypeAliasStatement.class);
+
+  /**
+   * The top-level children of the stub of this file, grouped by {@link #TOP_LEVEL_CHILD_TYPES}.
+   * <p>
+   * Only the stub path is cached: one walk over the stub fills all groups. The AST path changes its traversal
+   * with the requested type, so one walk is not equivalent there.
+   */
+  private final class TopLevelStubChildren {
+    private final long myModificationStamp;
+    private final Map<Class<? extends PyElement>, List<PyElement>> myByType;
+
+    private TopLevelStubChildren(@NotNull StubElement<?> stub, long modificationStamp) {
+      myModificationStamp = modificationStamp;
+      final Map<Class<? extends PyElement>, List<PyElement>> byType = new HashMap<>();
+      for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
+        byType.put(type, new ArrayList<>());
+      }
+      final LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(PyFileImpl.this);
+      for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {
+        final PsiElement childPsi = child.getPsi();
+        for (Class<? extends PyElement> type : TOP_LEVEL_CHILD_TYPES) {
+          if (type.isInstance(childPsi)) {
+            byType.get(type).add((PyElement)childPsi);
+          }
+        }
+      }
+      byType.replaceAll((_, children) -> List.copyOf(children));
+      myByType = byType;
+    }
+
+    private long getModificationStamp() {
+      return myModificationStamp;
+    }
+
+    private <T extends PyElement> @NotNull List<T> get(@NotNull Class<T> type) {
+      //noinspection unchecked
+      return (List<T>)myByType.get(type);
+    }
+  }
+
+  private @NotNull TopLevelStubChildren getTopLevelStubChildren(@NotNull StubElement<?> stub) {
+    TopLevelStubChildren cache = myTopLevelStubChildren.get();
+    final long modificationStamp = getModificationStamp();
+    if (cache != null && modificationStamp != cache.getModificationStamp()) {
+      myTopLevelStubChildren.clear();
+      cache = null;
+    }
+    if (cache == null) {
+      cache = new TopLevelStubChildren(stub, modificationStamp);
+      myTopLevelStubChildren = new SoftReference<>(cache);
+    }
+    return cache;
+  }
+
   private @NotNull <T extends PyElement> List<T> collectChildren(Class<T> type) {
     @Nullable StubElement<?> stub = getGreenStub();
+    if (stub != null && TOP_LEVEL_CHILD_TYPES.contains(type)) {
+      return getTopLevelStubChildren(stub).get(type);
+    }
     @NotNull LanguageLevel languageLevel = PyLanguageFacadeKt.getEffectiveLanguageLevel(this);
     final List<T> result = new ArrayList<>();
     if (stub != null) {
