@@ -54,13 +54,6 @@
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.coverage.CoverageLogger"/>
-    <toolWindow id="Coverage"
-                anchor="right"
-                factoryClass="com.intellij.coverage.view.CoverageToolWindowFactory"
-                icon="AllIcons.Toolwindows.ToolWindowCoverage"
-                secondary="true"
-                canCloseContents="true"
-                doNotActivateOnStart="true" />
     <projectSettings service="com.intellij.coverage.CoverageOptionsProvider"/>
     <projectSettings service="com.intellij.coverage.CoverageDataSuitesManager"/>
     <projectSettings service="com.intellij.coverage.view.CoverageViewManager"/>

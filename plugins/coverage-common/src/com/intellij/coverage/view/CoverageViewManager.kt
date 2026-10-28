@@ -1,9 +1,12 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view
 
+import com.intellij.coverage.CoverageBundle
 import com.intellij.coverage.CoverageOptionsProvider
 import com.intellij.coverage.CoverageSuitesBundle
 import com.intellij.coverage.view.CoverageViewManager.StateBean
+import com.intellij.icons.AllIcons
+import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.PersistentStateComponent
@@ -16,7 +19,9 @@ import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.ContentManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -28,7 +33,7 @@ import org.jetbrains.annotations.NonNls
 @State(name = "CoverageViewManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 class CoverageViewManager(private val myProject: Project) : PersistentStateComponent<StateBean?>, Disposable.Default {
-  var stateBean = StateBean()
+  var stateBean: StateBean = StateBean()
     private set
   private val myViews: MutableMap<CoverageSuitesBundle, CoverageView> = HashMap()
 
@@ -70,7 +75,7 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
   @RequiresEdt
   fun createView(suitesBundle: CoverageSuitesBundle, activate: Boolean) {
     var coverageView = myViews[suitesBundle]
-    val manager = getContentManager() ?: return
+    val manager = getContentManager()
     val content = if (coverageView == null) {
       coverageView = CoverageView(myProject, suitesBundle)
       myViews[suitesBundle] = coverageView
@@ -116,9 +121,24 @@ class CoverageViewManager(private val myProject: Project) : PersistentStateCompo
     }
   }
 
-  private fun getContentManager(): ContentManager? {
+  @RequiresEdt
+  private fun getContentManager(): ContentManager {
     myContentManager?.also { return it }
-    return getToolWindow()?.contentManager?.also { myContentManager = it }
+    val toolWindowManager = ToolWindowManager.getInstance(myProject)
+    val toolWindow = toolWindowManager.getToolWindow(TOOLWINDOW_ID) ?: toolWindowManager.registerToolWindow(RegisterToolWindowTask(
+      id = TOOLWINDOW_ID,
+      anchor = ToolWindowAnchor.RIGHT,
+      sideTool = true,
+      shouldBeAvailable = false,
+      icon = AllIcons.Toolwindows.ToolWindowCoverage,
+      stripeTitle = CoverageBundle.messagePointer("coverage.view.title"),
+    ))
+    toolWindow.helpId = CoverageView.HELP_ID
+    toolWindow.setToHideOnEmptyContent(true)
+    return toolWindow.contentManager.also {
+      ContentManagerWatcher.watchContentManager(toolWindow, it)
+      myContentManager = it
+    }
   }
 
   private fun getToolWindow(): ToolWindow? = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID)

@@ -11,7 +11,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -20,11 +19,6 @@ private const val TIMEOUT_MS = 20_000L
 
 @RunWith(JUnit4::class)
 class CoverageViewTest : CoverageIntegrationBaseTest() {
-  @Before
-  fun init() {
-    registerCoverageToolWindow(myProject)
-  }
-
   @Test(timeout = TIMEOUT_MS)
   fun `test coverage toolwindow exists`() = runBlocking {
     val bundle = loadIJSuite()
@@ -92,7 +86,7 @@ class CoverageViewTest : CoverageIntegrationBaseTest() {
   private fun findCoverageView(bundle: CoverageSuitesBundle): CoverageView? = CoverageViewManager.getInstance(myProject).getView(bundle)
   private fun getCoverageToolWindow() = ToolWindowManager.getInstance(myProject).getToolWindow(CoverageViewManager.TOOLWINDOW_ID)
   private fun assertToolWindowExists() = Assert.assertNotNull(getCoverageToolWindow())
-  private fun assertToolWindowDoesNotExist() = getCoverageToolWindow()?.isActive == false
+  private fun assertToolWindowDoesNotExist() = Assert.assertNull(getCoverageToolWindow())
 }
 
 internal fun registerCoverageToolWindow(project: Project) {

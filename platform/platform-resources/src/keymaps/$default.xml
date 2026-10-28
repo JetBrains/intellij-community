@@ -940,8 +940,7 @@
   <action id="ActivateStructureToolWindow">
     <keyboard-shortcut first-keystroke="alt 7"/>
   </action>
-  <action id="ActivateHierarchyToolWindow"/>
-  <action id="ActivateServicesToolWindow">
+    <action id="ActivateServicesToolWindow">
     <keyboard-shortcut first-keystroke="alt 8"/>
   </action>
   <action id="ActivateVersionControlToolWindow">

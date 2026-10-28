@@ -688,10 +688,6 @@
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoDesktop"/>
     </reference>
 
-    <reference ref="ActivateHierarchyToolWindow">
-      <add-to-group group-id="ActivateToolWindowActions"/>
-    </reference>
-
     <reference ref="ClickLink"/>
 
     <reference ref="Internal.Dump">
