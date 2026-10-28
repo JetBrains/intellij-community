@@ -88,9 +88,9 @@
     <applicationService serviceImplementation="com.jetbrains.python.sdk.PySdkSettings"/>
     <applicationSettings service="com.jetbrains.python.sdk.PySdkSettings"/>
     <registryKey key="python.interpreter.library.entries"
-                 defaultValue="true"
+                 defaultValue="false"
                  restartRequired="true"
-                 description="A module names its Python interpreter by an interpreter library entry, and the IDE reads only that entry. Turn it off to name the interpreter by the Python SDK of the module, as older builds do."/>
+                 description="A module names its Python interpreter by an interpreter library entry, and the IDE reads only that entry. When it is off, a module names its interpreter by its Python SDK, as older builds do."/>
     <registryKey key="python.activate.env.reader.timeout.ms"
                  defaultValue="60000"
                  restartRequired="false"
