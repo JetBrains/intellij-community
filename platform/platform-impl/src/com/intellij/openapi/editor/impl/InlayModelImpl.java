@@ -232,13 +232,21 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
                                                                                      boolean relatesToPrecedingText,
                                                                                      int priority,
                                                                                      @NotNull T renderer) {
+    return addInlineElement(offset, relatesToPrecedingText, true, priority, renderer);
+  }
+
+  private @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
+                                                                                      boolean relatesToPrecedingText,
+                                                                                      boolean softWrappable,
+                                                                                      int priority,
+                                                                                      @NotNull T renderer) {
     EditorImpl.assertIsDispatchThread();
     Document document = myDocument;
     if (DocumentUtil.isInsideSurrogatePair(document, offset)) return null;
     offset = Math.clamp(offset, 0, document.getTextLength());
     InlineInlay<T> inlay = mySnapshotMarkerStorage == null
-                           ? new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, priority, renderer)
-                           : mySnapshotMarkerStorage.createInline(offset, relatesToPrecedingText, priority, renderer);
+                           ? new InlineInlayImpl<>(myEditor, offset, relatesToPrecedingText, softWrappable, priority, renderer)
+                           : mySnapshotMarkerStorage.createInline(offset, relatesToPrecedingText, softWrappable, priority, renderer);
     notifyAdded(inlay);
     if (myEditor.isDisposed()) {
       Disposer.dispose(inlay);
@@ -250,7 +258,8 @@ public final class InlayModelImpl implements InlayModel, InlayModelEx, Prioritiz
   public @Nullable <T extends EditorCustomElementRenderer> Inlay<T> addInlineElement(int offset,
                                                                                      @NotNull InlayProperties properties,
                                                                                      @NotNull T renderer) {
-    return addInlineElement(offset, properties.isRelatedToPrecedingText(), properties.getPriority(), renderer);
+    return addInlineElement(offset, properties.isRelatedToPrecedingText(), !properties.isSoftWrappingDisabled(),
+                            properties.getPriority(), renderer);
   }
 
   @Override
