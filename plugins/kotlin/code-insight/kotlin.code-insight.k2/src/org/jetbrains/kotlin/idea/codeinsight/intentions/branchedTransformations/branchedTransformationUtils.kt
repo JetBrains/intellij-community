@@ -110,6 +110,31 @@ fun KtWhenCondition.generateNewConditionWithSubject(subject: KtExpression?, isNu
     }
 }
 
+fun KtWhenExpression.generateExpressionWithoutSubject(
+    generateCondition: (KtWhenCondition) -> KtExpression,
+): KtExpression = KtPsiFactory(project).buildExpression {
+    appendFixedText("when {\n")
+    for (entry in entries) {
+        val branchExpression = entry.expression
+        if (entry.isElse) {
+            appendFixedText("else")
+        } else {
+            appendExpressions(entry.conditions.map(generateCondition), separator = "||")
+            val guardExpression = entry.guard?.getExpression()
+            if (guardExpression != null) {
+                if (entry.elseKeyword == null) {
+                    appendFixedText("&&")
+                }
+                appendExpression(guardExpression)
+            }
+        }
+        appendFixedText("->")
+        appendExpression(branchExpression)
+        appendFixedText("\n")
+    }
+    appendFixedText("}")
+}
+
 /**
  * Returns a new condition expression by combining conditions of a when expression with '||' operation. For example,
  *

@@ -14,12 +14,11 @@ import org.jetbrains.kotlin.analysis.api.expressions.isUsedAsExpression
 import org.jetbrains.kotlin.analysis.api.types.isMarkedNullable
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.generateExpressionWithoutSubject
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.generateNewConditionWithSubject
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
-import org.jetbrains.kotlin.psi.buildExpression
 
 class EliminateWhenSubjectIntention : KotlinApplicableModCommandAction<KtWhenExpression, Boolean>(KtWhenExpression::class) {
     override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("inline.when.argument")
@@ -48,33 +47,8 @@ class EliminateWhenSubjectIntention : KotlinApplicableModCommandAction<KtWhenExp
 
         val commentSaver = CommentSaver(element, saveLineBreaks = true)
 
-        val whenExpression = KtPsiFactory(element.project).buildExpression {
-            appendFixedText("when {\n")
-
-            for (entry in element.entries) {
-                val branchExpression = entry.expression
-
-                if (entry.isElse) {
-                    appendFixedText("else")
-                } else {
-                    appendExpressions(
-                        entry.conditions.map { it.generateNewConditionWithSubject(subject, elementContext) }, separator = "||"
-                    )
-                    val guardExpression = entry.guard?.getExpression()
-                    if (guardExpression != null) {
-                        if (entry.elseKeyword == null) {
-                            appendFixedText("&&")
-                        }
-                        appendExpression(guardExpression)
-                    }
-                }
-                appendFixedText("->")
-
-                appendExpression(branchExpression)
-                appendFixedText("\n")
-            }
-
-            appendFixedText("}")
+        val whenExpression = element.generateExpressionWithoutSubject { condition ->
+            condition.generateNewConditionWithSubject(subject, elementContext)
         }
 
         val result = element.replace(whenExpression)

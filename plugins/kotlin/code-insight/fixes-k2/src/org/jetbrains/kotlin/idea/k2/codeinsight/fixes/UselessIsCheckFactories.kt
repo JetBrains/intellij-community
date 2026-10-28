@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.analysis.api.types.semanticallyEquals
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
+import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.generateExpressionWithoutSubject
 import org.jetbrains.kotlin.idea.codeinsight.intentions.branchedTransformations.generateNewConditionWithSubject
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFix
 import org.jetbrains.kotlin.idea.quickfix.RemoveUselessIsCheckFixForWhen
@@ -45,7 +46,6 @@ import org.jetbrains.kotlin.psi.KtWhenCondition
 import org.jetbrains.kotlin.psi.KtWhenConditionIsPattern
 import org.jetbrains.kotlin.psi.KtWhenEntry
 import org.jetbrains.kotlin.psi.KtWhenExpression
-import org.jetbrains.kotlin.psi.buildExpression
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -236,28 +236,8 @@ private class ReplaceWhenIsCheckWithNullCheckFix(
         val subject = whenExpression.subjectExpression ?: return
 
         val commentSaver = CommentSaver(whenExpression, saveLineBreaks = true)
-        val newExpression = KtPsiFactory(context.project).buildExpression {
-            appendFixedText("when {\n")
-            for (entry in whenExpression.entries) {
-                val branchExpression = entry.expression
-                if (entry.isElse) {
-                    appendFixedText("else")
-                } else {
-                    appendExpressions(
-                        entry.conditions.map { it.generateNullCheckCondition(subject, element) },
-                        separator = "||",
-                    )
-                    val guardExpression = entry.guard?.getExpression()
-                    if (guardExpression != null) {
-                        appendFixedText("&&")
-                        appendExpression(guardExpression)
-                    }
-                }
-                appendFixedText("->")
-                appendExpression(branchExpression)
-                appendFixedText("\n")
-            }
-            appendFixedText("}")
+        val newExpression = whenExpression.generateExpressionWithoutSubject { condition ->
+            condition.generateNullCheckCondition(subject, element)
         }
 
         val result = whenExpression.replace(newExpression)
