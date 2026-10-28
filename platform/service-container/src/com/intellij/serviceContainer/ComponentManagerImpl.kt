@@ -1748,7 +1748,7 @@ private val isPreparingInitialization: ThreadLocal<Boolean> = ThreadLocal.withIn
  */
 private fun prepareInitialization(holder: InstanceHolder, keyClass: Class<*>?) {
   // the preparation can request other instances; do not prepare them, to prevent an endless recursion
-  if (isPreparingInitialization.get() || !Registry.`is`("ide.service.preload.state", true)) {
+  if (isPreparingInitialization.get() || !LoadingState.COMPONENTS_LOADED.isOccurred ||  !Registry.`is`("ide.service.preload.state", true)) {
     return
   }
 
