@@ -463,6 +463,27 @@ fun <T : CommandChain> T.delayType(
   addCommand("${CMD_PREFIX}delayType", "$delayMs|$text|$calculateAnalyzesTime|$disableWriteProtection")
 }
 
+/**
+ * Runs the editor action [actionId] [times] times, [delayMs] after each run, and records the typing latency like [delayType].
+ * A non-empty [clipboardText] goes to the clipboard before the first run.
+ *
+ * @see [com.jetbrains.performancePlugin.commands.DelayEditorActionCommand]
+ */
+fun <T : CommandChain> T.delayEditorAction(delayMs: Int, actionId: String, times: Int, clipboardText: String = ""): T = apply {
+  require(clipboardText.none { it == '|' || it == '\n' || it == '\r' }) { "The clipboard text cannot hold '|' or a line break" }
+  addCommand("${CMD_PREFIX}delayEditorAction", "$delayMs|$actionId|$clipboardText|$times")
+}
+
+/** Presses Backspace [times] times, [delayMs] apart, and records the typing latency like [delayType]. */
+fun <T : CommandChain> T.delayBackspace(delayMs: Int, times: Int): T =
+  delayEditorAction(delayMs, actionId = "EditorBackSpace", times)
+
+/** Pastes [text] [times] times, [delayMs] apart, and records the typing latency like [delayType]. */
+fun <T : CommandChain> T.delayPaste(delayMs: Int, text: String, times: Int): T = apply {
+  require(text.isNotEmpty()) { "Nothing to paste" }
+  delayEditorAction(delayMs, actionId = "EditorPaste", times, clipboardText = text)
+}
+
 fun <T : CommandChain> T.doLocalInspection(spanTag: String? = null): T = apply {
   val spanTagLine = spanTag?.let { " spanTag $spanTag" } ?: ""
   addCommand("${CMD_PREFIX}doLocalInspection" + spanTagLine)

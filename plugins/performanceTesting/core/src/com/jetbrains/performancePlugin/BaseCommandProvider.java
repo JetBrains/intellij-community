@@ -26,6 +26,7 @@ import com.jetbrains.performancePlugin.commands.ConditionalMemoryDumpCommand;
 import com.jetbrains.performancePlugin.commands.ConfigureNamedScopeCommand;
 import com.jetbrains.performancePlugin.commands.CreateAllServicesAndExtensionsCommand;
 import com.jetbrains.performancePlugin.commands.CreateScratchFile;
+import com.jetbrains.performancePlugin.commands.DelayEditorActionCommand;
 import com.jetbrains.performancePlugin.commands.DelayTypeCommand;
 import com.jetbrains.performancePlugin.commands.DeleteFileCommand;
 import com.jetbrains.performancePlugin.commands.DetectProjectLeaksCommand;
@@ -137,6 +138,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(DoLocalInspection.PREFIX, DoLocalInspection::new),
       Map.entry(CompletionCommand.PREFIX, CompletionCommand::new),
       Map.entry(DelayTypeCommand.PREFIX, DelayTypeCommand::new),
+      Map.entry(DelayEditorActionCommand.PREFIX, DelayEditorActionCommand::new),
       Map.entry(ReplaceTextCommand.PREFIX, ReplaceTextCommand::new),
       Map.entry(ExitAppCommand.PREFIX, ExitAppCommand::new),
       Map.entry(ExitAppWithTimeoutCommand.PREFIX, ExitAppWithTimeoutCommand::new),
