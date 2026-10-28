@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.PackageIndex
 import com.intellij.openapi.vfs.VirtualFile
@@ -33,10 +34,10 @@ internal class SearchEverywhereJavaPsiElementFeatureProvider : SearchEverywhereE
   override fun getElementFeatures(element: Any, currentTime: Long, searchQuery: String, elementPriority: Int, cache: FeaturesProviderCache?, correction: SearchEverywhereSpellCheckResult): List<EventPair<*>> {
     val psiElement = SearchEverywherePsiElementFeaturesProviderUtils.getPsiElementOrNull(element) ?: return emptyList()
 
-    val file = getContainingFile(psiElement) ?: return emptyList()
+    val (file, project) = getContainingFileAndProject(psiElement) ?: return emptyList()
 
     val openedFile = cache?.currentlyOpenedFile
-    val (packageDistance, normalizedPackageDistance) = calculatePackageDistance(file, psiElement.project, openedFile) ?: return emptyList()
+    val (packageDistance, normalizedPackageDistance) = calculatePackageDistance(file, project, openedFile) ?: return emptyList()
 
     return listOf(
       PACKAGE_DISTANCE_DATA_KEY.with(packageDistance),
@@ -101,16 +102,17 @@ internal class SearchEverywhereJavaPsiElementFeatureProvider : SearchEverywhereE
     return Pair(distance, normalizedDistance)
   }
 
-  private fun getContainingFile(item: PsiElement): VirtualFile? {
+  private fun getContainingFileAndProject(item: PsiElement): Pair<VirtualFile, Project>? {
     if (item is PsiFileSystemItem) {
-      return item.virtualFile
+      return item.virtualFile?.let { it to item.project }
     }
 
-    return ReadAction.compute<VirtualFile?, Nothing> {
+    return runReadActionBlocking {
       try {
-        item.containingFile?.virtualFile
+        val psiFile = item.containingFile ?: return@runReadActionBlocking null
+        psiFile.virtualFile?.let { it to psiFile.project }
       }
-      catch (ex: PsiInvalidElementAccessException) {
+      catch (_: PsiInvalidElementAccessException) {
         null
       }
     }
