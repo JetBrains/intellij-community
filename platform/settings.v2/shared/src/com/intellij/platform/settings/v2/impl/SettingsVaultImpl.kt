@@ -42,6 +42,8 @@ import com.intellij.platform.settings.v2.impl.cache.isSnapshotCacheEnabled
 import com.intellij.platform.settings.v2.impl.providers.AppDefaultsLayerProvider
 import com.intellij.platform.settings.v2.impl.providers.AppLayerProvider
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
@@ -127,18 +129,19 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
   /**
    * Holds the requested reloads that have not finished, the running ones and the queued ones. Each one keeps its scope
    * and its [pending kinds][UnfinishedReload.pendingKinds] (ADR 0160). The same or overlapping scopes can be in it at
-   * once. [reloadScope] adds the entry before it waits for [reloadMutex], so a queued reload already makes its contexts
-   * dirty. There is no gap between the end of one reload and the start of the next one. [isDirty] iterates it with no
-   * lock.
+   * once. [reloadScope] adds the entry before it waits for [reloadMutexes], so a queued reload already makes its
+   * contexts dirty. There is no gap between the end of one reload and the start of the next one. [isDirty] iterates
+   * it with no lock.
    */
   private val unfinishedReloads = CopyOnWriteArrayList<UnfinishedReload>()
 
   /**
-   * Serializes whole reloads (gather and install), so two reloads of overlapping scopes never interleave (ADR 0071).
-   * A slow reload cannot finish last and overwrite a newer one with the stale snapshot of its gather. It blocks only
-   * other reloads, not reads or mutations.
+   * Holds one reload mutex per context kind (ADR 0162). Every reload takes all of them, whatever its scope, from
+   * [SettingsContextKind.APPLICATION] down to [SettingsContextKind.FILE]. So the asks and the installs of one kind keep
+   * the order of the reloads. A slow reload cannot install last and overwrite a newer one with the stale data of its
+   * ask. A mutex blocks only other reloads, not reads or mutations. See [installKindByKind].
    */
-  private val reloadMutex = Mutex()
+  private val reloadMutexes: Map<SettingsContextKind, Mutex> = SettingsContextKind.entries.associateWith { Mutex() }
 
   /**
    * Holds a counter that grows on every readiness change: a reload that [unfinishedReloads] gets or drops, and a
@@ -227,29 +230,55 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
       .fold(scopeContext) { widest, storageContext -> if (storageContext.isAncestorOf(widest, strict = true)) storageContext else widest }
 
   /**
-   * Reloads [scopeContext] kind by kind (ADR 0160). It asks every provider at once under [reloadMutex]. The bucket of
-   * a kind installs when every provider whose range of context kinds contains the kind has answered. So the buckets
-   * install in the order in which their providers answer. See [installBucket].
+   * Reloads [scopeContext] kind by kind (ADR 0160, ADR 0162). See [installKindByKind]. On a failure or a cancellation
+   * of the caller, the reload releases every reload mutex that it holds, and every pending kind stops being pending.
    */
   private suspend fun reloadScope(scopeContext: SettingsContext) {
-    // Mark the scope dirty before the wait for reloadMutex. See unfinishedReloads and reloadMutex.
+    // Mark the scope dirty before the wait for the reload mutexes. See unfinishedReloads.
     val reload = UnfinishedReload(scopeContext)
     unfinishedReloads.add(reload)
     loadingGeneration.update { it + 1 }
+    val heldReloadMutexes = HeldReloadMutexes(reloadMutexes)
     try {
-      reloadMutex.withLock {
-        coroutineScope {
-          val providers = LayerProvider.EP_NAME.extensionList
-          val answers = providers.associateWith { provider -> async { requestDataOrNull(provider, scopeContext) } }
-          for (kind in SettingsContextKind.entries) {
-            val bucketAnswers = providers.filter { kind in it.contextKindRange }.map { it to answers.getValue(it) }
-            launch { installBucket(reload, kind, bucketAnswers.map { (provider, answer) -> provider to answer.await() }) }
-          }
-        }
-      }
+      coroutineScope { installKindByKind(reload, heldReloadMutexes) }
     }
     finally {
-      withContext(NonCancellable) { finishReload(reload) }
+      withContext(NonCancellable) {
+        heldReloadMutexes.unlockAll()
+        finishReload(reload)
+      }
+    }
+  }
+
+  /**
+   * Takes the [reloadMutexes] hand over hand, from the widest kind to the narrowest kind (ADR 0162). It takes the
+   * mutex of the next kind as soon as it can, before it releases the mutex of the current kind.
+   *
+   * - It asks a provider as soon as it holds the mutex of the widest kind of the provider. So a reload that no other
+   *   reload blocks asks every provider at once.
+   * - It installs the bucket of a kind while it holds the mutex of that kind (ADR 0160). See [installBucket].
+   * - It releases the mutex of a kind after the install of its bucket, once it holds the next mutex. The mutex of the
+   *   narrowest kind stays held until [reloadScope] ends.
+   *
+   * @param heldReloadMutexes the reload mutexes that this reload holds, which [reloadScope] releases at the end
+   */
+  private suspend fun CoroutineScope.installKindByKind(reload: UnfinishedReload, heldReloadMutexes: HeldReloadMutexes) {
+    val providers = LayerProvider.EP_NAME.extensionList
+    val answers = HashMap<LayerProvider, Deferred<List<LayerData>?>>()
+    var widerBucket: Pair<SettingsContextKind, Job>? = null
+    for (kind in SettingsContextKind.entries) {
+      heldReloadMutexes.lock(kind)
+      widerBucket?.let { (widerKind, bucketInstall) ->
+        launch {
+          bucketInstall.join()
+          heldReloadMutexes.unlock(widerKind)
+        }
+      }
+      for (provider in providers) {
+        if (provider.contextKindRange.widestKind == kind) answers[provider] = async { requestDataOrNull(provider, reload.scopeContext) }
+      }
+      val bucketAnswers = providers.filter { kind in it.contextKindRange }.map { it to answers.getValue(it) }
+      widerBucket = kind to launch { installBucket(reload, kind, bucketAnswers.map { (provider, answer) -> provider to answer.await() }) }
     }
   }
 
@@ -321,7 +350,8 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
    * the stale layers of [kind] under the scope (ADR 0065). A stale layer is in the model, and a returning provider did
    * not supply it again. A layer with a pending save is not stale, because an unpersisted mutation must survive until
    * the disk catches up. The install, the sweep and the readiness change run under one [vaultWriteMutex] hold, so the
-   * bucket swaps in atomically, and the change events deliver once.
+   * bucket swaps in atomically, and the change events deliver once. The caller holds the reload mutex of [kind]
+   * (ADR 0162).
    *
    * @param answers the answer of each provider whose range of context kinds contains [kind], or `null` for a provider
    *   that failed. The vault does not sweep a failed provider.
@@ -1141,6 +1171,30 @@ internal class SettingsVaultImpl(private val scope: CoroutineScope) : SettingsVa
      */
     fun keepsDirty(context: SettingsContext, pendingKinds: Set<SettingsContextKind> = this.pendingKinds): Boolean =
       scopeContext.isAncestorOf(context, strict = false) && pendingKinds.any { it <= context.kind }
+  }
+
+  /**
+   * Holds the reload mutexes that one reload holds (ADR 0162). A mutex is released once, either when the reload is
+   * done with its kind or at the end of the reload. So a failed or a cancelled reload leaks no mutex.
+   */
+  private class HeldReloadMutexes(private val reloadMutexes: Map<SettingsContextKind, Mutex>) {
+    private val heldKinds = ConcurrentHashMap.newKeySet<SettingsContextKind>()
+
+    /** Takes the reload mutex of [kind], and suspends until it gets it. */
+    suspend fun lock(kind: SettingsContextKind) {
+      reloadMutexes.getValue(kind).lock()
+      heldKinds.add(kind)
+    }
+
+    /** Releases the reload mutex of [kind]. It does nothing when the reload has released it already. */
+    fun unlock(kind: SettingsContextKind) {
+      if (heldKinds.remove(kind)) reloadMutexes.getValue(kind).unlock()
+    }
+
+    /** Releases every reload mutex that is still held. Call it only when no other coroutine of the reload runs. */
+    fun unlockAll() {
+      for (kind in heldKinds.toList()) unlock(kind)
+    }
   }
 
   // -- watch bookkeeping -----------------------------------------------------------------------------------------

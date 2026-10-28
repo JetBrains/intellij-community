@@ -38,8 +38,12 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 ### Reload
 
 - The vault must reload the application scope at startup, and a project scope when the project opens.
-- `reload(scope)` must ask every provider for its data of the scope. It asks a provider as soon as it holds the
-  mutex of the widest kind of the provider, so a reload that no other reload blocks asks every provider at once. See [ADR 0116](../adr/0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md).
+- `reload(scope)` must ask every provider for its data of the scope. See
+  [ADR 0116](../adr/0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md). It asks a
+  provider as soon as it holds the mutex of the widest kind of the provider, so a reload that no other reload blocks
+  asks every provider at once. See
+  [ADR 0162](../adr/0162-reloads-take-one-mutex-per-context-kind-from-the-application-down.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadMutexTest.kt
 - A provider must declare the range of context kinds that it supplies layers at: its widest kind and its narrowest
   kind. The narrowest kind can be open. A provider that declares nothing covers every kind. See
   [ADR 0159](../adr/0159-a-provider-declares-the-context-kinds-it-supplies-layers-at.md).
@@ -73,9 +77,11 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   kind before it releases the mutex of the current kind, and it takes each next mutex as soon as it can. It asks a
   provider under the mutex of the widest kind of the provider, and installs a bucket under the mutex of its kind. So the asks and the installs of one kind keep
   their order. See [ADR 0162](../adr/0162-reloads-take-one-mutex-per-context-kind-from-the-application-down.md).
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadMutexTest.kt
 - A reload must end when the scope of its caller is cancelled. The context then stops being dirty.
   See [ADR 0116](../adr/0116-the-vault-drives-loading-with-no-timeout-and-a-provider-returns-its-layers.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadMutexTest.kt
 - A provider that registers later must load the application scope on its own.
 - A provider that unloads must take its layers along. The listeners of the keys that those layers held must fire.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsProviderUnloadTest.kt
@@ -148,8 +154,6 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   model over the file of the new branch.
 - A newer reload could cancel the asks of an older overlapping reload, instead of the reload mutexes. See
   [IJPL-259868](https://youtrack.jetbrains.com/issue/IJPL-259868).
-- The mutex per kind is not built yet. Until then, the reloads run one at a time under one global mutex. See
-  [IJPL-259782](https://youtrack.jetbrains.com/issue/IJPL-259782).
 - A slow provider with a wide range of kinds delays every context that it covers.
 - Migration of settings data is not built. It waits until remote development is done. See
   [ADR 0142](../adr/0142-migration-waits-until-remote-development-is-done.md).

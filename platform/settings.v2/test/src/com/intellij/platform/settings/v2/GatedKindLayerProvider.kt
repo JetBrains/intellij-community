@@ -65,10 +65,15 @@ internal class GatedKindLayerProvider(
   /** Counts the [requestData] calls that have read [values]. A held load counts before it waits for [gate]. */
   val requests: MutableStateFlow<Int> = MutableStateFlow(0)
 
+  /** Runs when a [requestData] call starts, so a test can see the model at the moment the vault asks this provider. */
+  @Volatile
+  var onRequest: (() -> Unit)? = null
+
   override fun availableLocalities(context: SettingsContext): Set<LayerLocality> =
     if (context.kind in contextKindRange) setOf(LayerLocality.LOCAL) else emptySet()
 
   override suspend fun requestData(scopeContext: SettingsContext): List<LayerData> {
+    onRequest?.invoke()
     val layers = values.entries
       .filter { (context, _) -> scopeContext.isAncestorOf(context, strict = false) }
       .map { (context, value) -> layer(context, value) }
