@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.engine.withDebugContext
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.LightProjectDescriptor
@@ -35,6 +36,8 @@ import java.util.regex.Pattern
 import java.util.zip.ZipFile
 
 abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCase() {
+    override fun runInDispatchThread(): Boolean = false
+
     public override fun setUp() {
         super.setUp()
         myFixture.testDataPath = DEBUGGER_TESTDATA_PATH_BASE
@@ -61,20 +64,21 @@ abstract class AbstractPositionManagerTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     private fun performTest() {
-        val project = project
-        val files: List<KtFile> = ArrayList(project.allKotlinFiles())
-        if (files.isEmpty()) return
-
-        val breakpoints: MutableList<Breakpoint> = Lists.newArrayList()
-        for (file in files) {
-            breakpoints.addAll(extractBreakpointsInfo(file, file.text))
+        val breakpoints = mutableListOf<Breakpoint>()
+        val sources = runReadActionBlocking {
+            project.allKotlinFiles().map { file ->
+                val text = file.text
+                breakpoints.addAll(extractBreakpointsInfo(file, text))
+                file.name to text
+            }
         }
+        if (sources.isEmpty()) return
 
         val tempDir = createTempDirectory("debugger-test-").toFile()
         try {
-            val sourceFiles = files.map { ktFile ->
-                val file = File(tempDir, ktFile.name)
-                file.writeText(ktFile.text)
+            val sourceFiles = sources.map { (name, text) ->
+                val file = File(tempDir, name)
+                file.writeText(text)
                 file
             }
 
