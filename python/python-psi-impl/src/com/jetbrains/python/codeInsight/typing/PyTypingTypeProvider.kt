@@ -729,12 +729,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
     private var myContextStrongHashValue: HashValue128? = null
 
     private fun recomputeStrongHashValue() {
-      myContextStrongHashValue = Hashing.xxh3_128().hashCharsTo128Bits(
-        buildList {
-          add(if (isComputeTypeParameterScopeEnabled) "1" else "0")
-          add(typeAliasStack.map { it.qualifiedName })
-        }.joinToString("#")
-      )
+      // Runs on each push and pop of the type alias stack, so hash one buffer without intermediate strings
+      val chars = StringBuilder()
+      chars.append(if (isComputeTypeParameterScopeEnabled) '1' else '0').append('#')
+      typeAliasStack.joinTo(chars, prefix = "[", postfix = "]") { it.qualifiedName.toString() }
+      myContextStrongHashValue = Hashing.xxh3_128().hashCharsTo128Bits(chars)
     }
 
     private val contextStrongHashValue: HashValue128
