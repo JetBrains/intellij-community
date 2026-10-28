@@ -262,6 +262,43 @@ internal class ChangesBrowserStructuralNodeTest {
     }
 
   @Test
+  fun `test the dim of a hunk stays until the dim of the next hunk replaces it`(@TestDisposable disposable: Disposable): Unit =
+    timeoutRunBlocking {
+      val highlights = recordHighlights(disposable)
+      val file = LightVirtualFile("highlight-replace.txt", "first\nsecond\n")
+      val fixture = createHighlightFixture(file)
+      try {
+        coroutineScope {
+          val previewScope = this
+          withContext(Dispatchers.EDT) {
+            fixture.view.previewShowing = true
+            fixture.view.previewFocus = true
+            StructuralChangesPreview(fixture.view, previewScope).install()
+            fixture.view.selectionPath = TreePath(fixture.first.path)
+          }
+          val first = highlights.receive()
+
+          withContext(Dispatchers.EDT) {
+            fixture.view.selectionPath = TreePath(fixture.second.path)
+            assertFalse(first.disposed.isCompleted, "The dim of the first hunk stays while the preview of the second hunk waits")
+          }
+          val second = highlights.receive()
+          assertTrue(second.earlierEnded, "The dim of the first hunk ends before the dim of the second hunk starts")
+
+          withContext(Dispatchers.EDT) {
+            fixture.view.selectionPath = TreePath(fixture.fileNode.path)
+          }
+          second.disposed.await()
+        }
+      }
+      finally {
+        withContext(NonCancellable + Dispatchers.EDT) {
+          FileEditorManager.getInstance(project).closeFile(file)
+        }
+      }
+    }
+
+  @Test
   fun `test a refresh after the highlight ends outside the preview shows no preview again`(@TestDisposable disposable: Disposable): Unit =
     timeoutRunBlocking {
       val highlights = recordHighlights(disposable)
@@ -957,9 +994,11 @@ internal class ChangesBrowserStructuralNodeTest {
 
   private fun recordHighlights(disposable: Disposable): Channel<HighlightRequest> {
     val requests = Channel<HighlightRequest>(Channel.UNLIMITED)
+    val earlier = ArrayList<HighlightRequest>()
     project.replaceService(StructuralChangesPreviewHighlighter::class.java, object : StructuralChangesPreviewHighlighter {
       override fun highlight(file: VirtualFile, range: TextRange, modificationStamp: Long): Disposable {
-        val request = HighlightRequest(file, range)
+        val request = HighlightRequest(file, range, earlierEnded = earlier.all { it.disposed.isCompleted })
+        earlier.add(request)
         requests.trySend(request).getOrThrow()
         return request.handle
       }
@@ -1160,6 +1199,8 @@ internal class ChangesBrowserStructuralNodeTest {
   private data class HighlightRequest(
     val file: VirtualFile,
     val range: TextRange,
+    /** True when every earlier highlight had ended at the start of this one. */
+    val earlierEnded: Boolean,
     val disposed: CompletableDeferred<Unit> = CompletableDeferred(),
   ) {
     val handle: Disposable = Disposable { disposed.complete(Unit) }
