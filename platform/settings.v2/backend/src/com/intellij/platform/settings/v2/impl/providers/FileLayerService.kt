@@ -32,6 +32,8 @@ import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.ProjectScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
@@ -195,15 +197,30 @@ internal class FileLayerService(private val project: Project, private val scope:
   /**
    * Returns the contexts of the directories in the project content that hold a config of any locality. It looks up
    * the [CONFIG_FILE_NAMES] in the [FilenameIndex] and walks no directory (ADR 0163). The content scope keeps out the
-   * excluded directories and the libraries. It suspends until the project is in smart mode, so the index is ready.
+   * excluded directories and the libraries.
+   *
+   * It suspends until the project is in smart mode, so the index is ready. The wait runs in the [scope] of this
+   * service, because the platform drops a wait for smart mode when the project closes and never resumes it. So a
+   * close ends the wait, and the closed project gives no directories.
    */
-  private suspend fun findConfigDirectories(): List<SettingsContext> = smartReadAction(project) {
-    val configDirectories = LinkedHashSet<VirtualFile>()
-    FilenameIndex.processFilesByNames(CONFIG_FILE_NAMES, true, ProjectScope.getContentScope(project), null) { file ->
-      if (!file.isDirectory) file.parent?.let(configDirectories::add)
-      true
+  private suspend fun findConfigDirectories(): List<SettingsContext> {
+    val lookup = scope.async {
+      smartReadAction(project) {
+        val configDirectories = LinkedHashSet<VirtualFile>()
+        FilenameIndex.processFilesByNames(CONFIG_FILE_NAMES, true, ProjectScope.getContentScope(project), null) { file ->
+          if (!file.isDirectory) file.parent?.let(configDirectories::add)
+          true
+        }
+        configDirectories.map { SettingsContext.file(it, project) }
+      }
     }
-    configDirectories.map { SettingsContext.file(it, project) }
+    try {
+      lookup.join()
+    }
+    finally {
+      lookup.cancel()
+    }
+    return if (lookup.isCancelled && !scope.isActive) emptyList() else lookup.await()
   }
 
   // Do not inline. BaseLayerService sits in the same package in another module, so another class loader, and a

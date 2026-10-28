@@ -100,6 +100,9 @@ file layer holds the settings of a directory and of each file in it, in one conf
   project open in its own coroutine, and indexing does not wait for it.
 - The file layer must find only the configs in the project content. A config in an excluded directory never loads.
   [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
+- A project that closes while the file layer waits for its index must end the wait, and it must give no configs.
+  The platform drops a wait for smart mode when the project closes and never resumes it.
+  [@test] ../test/src/com/intellij/platform/settings/v2/FileLayerIndexLookupTest.kt
 - Every layer must create a config file only on its first write. No layer creates an empty file when it starts.
   The application layer and the project layer also create a missing directory of the file. The file layer creates
   a config file only in an existing directory.
