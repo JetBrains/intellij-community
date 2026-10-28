@@ -28,7 +28,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 @TestApplication
 internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() {
@@ -52,12 +51,19 @@ internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() 
   }
 
   @AfterEach
-  fun removeCustomScopes() {
-    NamedScopeManager.getInstance(project.get()).removeAllSets()
+  fun removeCustomScopes(): Unit = timeoutRunBlocking {
+    val holder = NamedScopeManager.getInstance(project.get())
+    val paneIds = holder.editableScopes.map { ScopePaneModel.paneId(NamedScopeFilter(holder, it)) }
+    holder.removeAllSets()
+    // The next test can add a scope with the same name, and its awaitPane must not find the pane of this test.
+    val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
+    for (paneId in paneIds) {
+      aggregator.awaitPaneGone(paneId)
+    }
   }
 
   @Test
-  fun `Select In searches the scope of its own pane first`() = timeoutRunBlocking(60.seconds) {
+  fun `Select In searches the scope of its own pane first`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val hello = srcRoot.get().virtualFile.findChild("Hello.txt")!!
     val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
     val holder = NamedScopeManager.getInstance(project.get())
@@ -71,7 +77,7 @@ internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() 
   }
 
   @Test
-  fun `Select In searches the first other scope that contains the file`() = timeoutRunBlocking(60.seconds) {
+  fun `Select In searches the first other scope that contains the file`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = srcRoot.get().virtualFile
     // A sibling of Hello.txt, so the hello pane shows its directory, but not the file.
     val other = edtWriteAction { src.createChildData(this@ProjectViewScopePaneSelectInTest, "Other.txt") }
@@ -112,7 +118,7 @@ internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() 
   }
 
   @Test
-  fun `Select In searches another scope when no scope pane is live`() = timeoutRunBlocking(60.seconds) {
+  fun `Select In searches another scope when no scope pane is live`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = srcRoot.get().virtualFile
     val other = edtWriteAction { src.createChildData(this@ProjectViewScopePaneSelectInTest, "Other.txt") }
     val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())
@@ -138,7 +144,7 @@ internal class ProjectViewScopePaneSelectInTest : AbstractProjectViewPaneTest() 
   }
 
   @Test
-  fun `the selected pane is live again after Select In has searched another pane`(): Unit = timeoutRunBlocking(60.seconds) {
+  fun `the selected pane is live again after Select In has searched another pane`(): Unit = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = srcRoot.get().virtualFile
     val hello = src.findChild("Hello.txt")!!
     val aggregator = FrontendProjectViewPaneAggregator.getInstance(project.get())

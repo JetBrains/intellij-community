@@ -20,7 +20,6 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Compact Middle Packages for the frontend Project View, end to end.
@@ -81,7 +80,7 @@ internal class ProjectViewPaneCompactPackagesTest : AbstractProjectViewPaneTest(
   )
 
   @Test
-  fun `a new sibling package splits the compacted node`() = timeoutRunBlocking(60.seconds) {
+  fun `a new sibling package splits the compacted node`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = prepare(compactedProject, compactedSrcRoot)
     withProjectViewPane(compactedProject.get(), ProjectPaneModel.ID) { pane ->
       pane.assertTree(COMPACTED_TREE)
@@ -93,14 +92,14 @@ internal class ProjectViewPaneCompactPackagesTest : AbstractProjectViewPaneTest(
         VfsUtil.createDirectoryIfMissing(src, "org/pack").createChildData(this@ProjectViewPaneCompactPackagesTest, "World.txt")
       }
 
-      waitUntilAssertSucceeds("'org.example' should have split into 'org' with 'example' and 'pack'", 30.seconds) {
+      waitUntilAssertSucceeds("'org.example' should have split into 'org' with 'example' and 'pack'", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTree(SPLIT_TREE)
       }
     }
   }
 
   @Test
-  fun `removing a sibling package compacts the node again`() = timeoutRunBlocking(60.seconds) {
+  fun `removing a sibling package compacts the node again`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = prepare(splitProject, splitSrcRoot)
     withProjectViewPane(splitProject.get(), ProjectPaneModel.ID) { pane ->
       pane.assertTree(SPLIT_TREE)
@@ -110,7 +109,7 @@ internal class ProjectViewPaneCompactPackagesTest : AbstractProjectViewPaneTest(
       val sibling = src.findFileByRelativePath("org/pack")!!
       edtWriteAction { sibling.delete(this@ProjectViewPaneCompactPackagesTest) }
 
-      waitUntilAssertSucceeds("'org' should have compacted back into 'org.example'", 30.seconds) {
+      waitUntilAssertSucceeds("'org' should have compacted back into 'org.example'", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTree(COMPACTED_TREE)
       }
     }

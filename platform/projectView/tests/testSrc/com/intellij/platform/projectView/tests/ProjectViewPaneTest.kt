@@ -10,7 +10,6 @@ import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Example almost-end-to-end test for the frontend Project View.
@@ -41,7 +40,7 @@ internal class ProjectViewPaneTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `project pane tree and subtree assert tests`() = timeoutRunBlocking(60.seconds) {
+  fun `project pane tree and subtree assert tests`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get() // materialize the project + module + source root before opening the pane
     withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
       pane.assertTree(

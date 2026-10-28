@@ -23,7 +23,6 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.sourceRootFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * One directory under two sections of the project node (IJPL-258255).
@@ -48,7 +47,7 @@ internal class ProjectViewPaneSameDirectoryTwiceTest : AbstractProjectViewPaneTe
   private val disposable = disposableFixture()
 
   @Test
-  fun `a directory under two sections keeps its children in each section`() = timeoutRunBlocking(60.seconds) {
+  fun `a directory under two sections keeps its children in each section`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = srcRoot.get() // materialize the project + module + source root before opening the pane
     TreeStructureProvider.EP.getPoint(project.get()).registerExtension(TwoSectionsTreeStructureProvider(src), disposable.get())
     withProjectViewPane(project.get(), ProjectPaneModel.ID) { pane ->
@@ -73,7 +72,7 @@ internal class ProjectViewPaneSameDirectoryTwiceTest : AbstractProjectViewPaneTe
         src.virtualFile.findChild("parent")!!.createChildData(this@ProjectViewPaneSameDirectoryTwiceTest, "New.txt")
       }
 
-      waitUntilAssertSucceeds("'New.txt' should have appeared under 'src/parent' only", 30.seconds) {
+      waitUntilAssertSucceeds("'New.txt' should have appeared under 'src/parent' only", PANE_TEST_WAIT_TIMEOUT) {
         pane.assertTree(
           """
           pvSameDir

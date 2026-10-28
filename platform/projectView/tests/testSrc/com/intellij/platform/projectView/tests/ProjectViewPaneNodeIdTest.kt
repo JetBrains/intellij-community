@@ -27,7 +27,6 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Test
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * A node keeps its ID when the children update gets a new user object for the same node.
@@ -58,7 +57,7 @@ internal class ProjectViewPaneNodeIdTest : AbstractProjectViewPaneTest() {
   private val markers = MarkerTreeStructureProvider()
 
   @Test
-  fun `a file node keeps its ID when the PSI of the file is created again`() = timeoutRunBlocking(60.seconds) {
+  fun `a file node keeps its ID when the PSI of the file is created again`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val src = srcRoot.get().virtualFile
     val hello = src.findChild("Hello.txt")!!
     registerMarkers()
@@ -87,7 +86,7 @@ internal class ProjectViewPaneNodeIdTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `a file node keeps its ID when the file is renamed`() = timeoutRunBlocking(60.seconds) {
+  fun `a file node keeps its ID when the file is renamed`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     val sub = srcRoot.get().virtualFile.findChild("sub")!!
     val world = sub.findChild("World.txt")!!
     registerMarkers()
@@ -122,7 +121,7 @@ internal class ProjectViewPaneNodeIdTest : AbstractProjectViewPaneTest() {
     edtWriteAction {
       AdditionalLibraryRootsListener.fireAdditionalLibraryChanged(project.get(), null, emptyList(), emptyList(), "ProjectViewPaneNodeIdTest")
     }
-    waitUntil("$MARKER should have appeared under '${pathToDir.last()}'", 30.seconds) {
+    waitUntil("$MARKER should have appeared under '${pathToDir.last()}'", PANE_TEST_WAIT_TIMEOUT) {
       MARKER in pane.dumpSubtree(*pathToDir).lines().map { it.trim() }
     }
   }

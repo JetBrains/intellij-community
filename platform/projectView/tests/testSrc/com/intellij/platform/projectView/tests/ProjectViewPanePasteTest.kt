@@ -20,7 +20,6 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Paste for the frontend Project View, end to end: copying a file node and pasting it into a directory node
@@ -50,7 +49,7 @@ internal class ProjectViewPanePasteTest : AbstractProjectViewPaneTest() {
   }
 
   @Test
-  fun `copy and paste duplicates the file into the target directory`() = timeoutRunBlocking(60.seconds) {
+  fun `copy and paste duplicates the file into the target directory`() = timeoutRunBlocking(PANE_TEST_TIMEOUT) {
     srcRoot.get()
     val project = project.get()
     try {
@@ -61,7 +60,7 @@ internal class ProjectViewPanePasteTest : AbstractProjectViewPaneTest() {
         pane.requestCopy(hello)
         // 30 seconds, not the 10-second default: the module now loads the Java plugin, which makes
         // the first paste slower than the default allows.
-        waitUntil("Hello.txt should have been copied into the clipboard", 30.seconds) {
+        waitUntil("Hello.txt should have been copied into the clipboard", PANE_TEST_WAIT_TIMEOUT) {
           readAction {
             PsiCopyPasteManager.getInstance().getElements(BooleanArray(1))?.map { (it as PsiFileSystemItem).name }
           } == listOf("Hello.txt")
@@ -71,7 +70,7 @@ internal class ProjectViewPanePasteTest : AbstractProjectViewPaneTest() {
 
         // In unit test mode CopyFilesOrDirectoriesHandler skips its dialog and copies into the target
         // directory under the same name, so the tree gains src/sub/Hello.txt.
-        waitUntil("Hello.txt should have been pasted into src/sub", 30.seconds) {
+        waitUntil("Hello.txt should have been pasted into src/sub", PANE_TEST_WAIT_TIMEOUT) {
           pane.dumpSubtree("pvPaste", "src", "sub").lines().map { it.trim() }.contains("Hello.txt")
         }
         assertEquals(
