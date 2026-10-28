@@ -59,6 +59,7 @@ jvm_library(
         "//platform/ui.jcef",
         "//platform/analysis-api:analysis",
         "//platform/util/coroutines",
+        "//platform/welcome-screen",
     ],
 )
 
@@ -93,6 +94,7 @@ jvm_library(
         "//platform/ui.jcef:ui.jcef_test_lib",
         "//platform/analysis-api:analysis_test_lib",
         "//platform/util/coroutines:coroutines_test_lib",
+        "//platform/welcome-screen:welcome-screen_test_lib",
     ],
 )
 ### auto-generated section `build intellij.platform.whatsNew` end
