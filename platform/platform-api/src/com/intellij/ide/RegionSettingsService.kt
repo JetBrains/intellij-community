@@ -44,6 +44,7 @@ class RegionSettingsService(coroutineScope: CoroutineScope) {
      * Note that obtaining the service instance does not guarantee that the region is already cached,
      * see [getCurrentRegionIfKnown].
      */
+    @JvmStatic
     fun getInstance(): RegionSettingsService = service()
 
     suspend fun getInstanceAsync(): RegionSettingsService = serviceAsync()

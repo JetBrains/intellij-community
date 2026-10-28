@@ -26,6 +26,7 @@ f:com.intellij.execution.wsl.WSLCommandLineOptions
 - f:getCurrentRegion(kotlin.coroutines.Continuation):java.lang.Object
 - f:getCurrentRegionBlocking():com.intellij.ide.Region
 - f:getCurrentRegionIfKnown():com.intellij.ide.Region
+- *sf:getInstance():com.intellij.ide.RegionSettingsService
 *f:com.intellij.ide.RegionSettingsService$Companion
 - f:getInstance():com.intellij.ide.RegionSettingsService
 - f:getInstanceAsync(kotlin.coroutines.Continuation):java.lang.Object
