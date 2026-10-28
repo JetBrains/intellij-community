@@ -1,5 +1,5 @@
 {
-  "path": ["../../tools/bt", "../../tools/vm", "../../tools/yonder", "../dev-dist-tools", ".", "../../tools/jscpd-test"],
+  "path": ["../../tools/bt", "../../tools/vm","../dev-dist-tools", ".", "../../tools/jscpd-test"],
   "format": ["rust"],
   "minTokens": 50,
   "minLines": 5,

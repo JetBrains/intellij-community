@@ -6,7 +6,6 @@ load("@avl//:data.bzl", AVL = "DEP_DATA")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
 load("@bt//:data.bzl", BT = "DEP_DATA")
 load("@ddt//:data.bzl", DDT = "DEP_DATA")
-load("@yonder//:data.bzl", YONDER = "DEP_DATA")
 load("//tools/jscpd-test:defs.bzl", "jscpd_test")
 load(":defs.bzl", "COMMUNITY_WORKSPACE_LINTS", "NOT_ON_WINDOWS", "rust_lints_equal_check", "rust_tool_sources")
 
@@ -33,12 +32,12 @@ build_test(
 )
 
 # The copy-paste gate of the community Rust tool workspaces: it fails on each clone that jscpd finds with
-# `.jscpd.json`. It reads the declared sources of every crate of the four crate hubs and of the two binaries without a
+# `.jscpd.json`. It reads the declared sources of every crate of the three crate hubs and of the two binaries without a
 # hub, so Bazel caches it until a Rust file changes. A Windows host has no runfiles tree to scan.
 jscpd_test(
     name = "duplicate-code_test",
     size = "small",
-    srcs = rust_tool_sources(AVL, BT, DDT, YONDER) + [
+    srcs = rust_tool_sources(AVL, BT, DDT) + [
         "//build/rust-tools/libtest-junit-wrapper:libtest-junit-wrapper_sources",
         "//build/rust-tools/libtest-junit-wrapper/e2e:e2e_sources",
         "//tools/jscpd-test:jscpd-test_sources",

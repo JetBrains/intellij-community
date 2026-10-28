@@ -18,7 +18,7 @@ vocabulary! {
         /// the host while the run goes on.
         VmRuns = "vm-runs",
         /// The runs that the controller exported into the checkout, as [VM_RUNS_GLOB] under
-        /// `<repo>/out/air/vm-export/runs`: the runs of another host, which yonder copied back.
+        /// `<repo>/out/air/vm-export/runs`: the runs of another host, which `bd-host` copied back.
         VmExport = "vm-export",
         /// A `--root`.
         Flag = "flag",

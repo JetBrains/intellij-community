@@ -59,7 +59,6 @@ COMMUNITY_WORKSPACE_LINTS = [
     Label("@ddt//:workspace_cargo_lints"),
     Label("@bt//:workspace_cargo_lints"),
     Label("@avl//:workspace_cargo_lints"),
-    Label("@yonder//:workspace_cargo_lints"),
 ]
 
 _LINT_FIELDS = ["rustc_lint_flags", "clippy_lint_flags", "rustdoc_lint_flags"]
