@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightCounters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
@@ -87,6 +88,15 @@ public final class TypeEvalContextCacheImpl implements TypeEvalContextCache {
   @Override
   public @NotNull TypeEvalContext getContext(@NotNull TypeEvalContext standard) {
     return retrieveFromStorage(standard, myCachedMapStorage);
+  }
+
+  /**
+   * Returns the context that this cache holds for {@code constraints}, or null.
+   * Lets the factory skip building a context on a hit. Not on {@link TypeEvalContextCache}: {@link TypeEvalConstraints}
+   * is not in the API module.
+   */
+  @Nullable TypeEvalContext getCachedContext(@NotNull TypeEvalConstraints constraints) {
+    return myCachedMapStorage.getValue().get(constraints);
   }
 
   @Override
