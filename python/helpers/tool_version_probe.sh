@@ -190,6 +190,7 @@ emit_environment_probes_in_directory() {
 #   --python <path-or-empty>
 #   --detect-environments <directory-or-empty>
 #   repeated <tool-name> <search-path-count> <search-path>...
+# A relative --detect-environments directory resolves against the process working directory.
 # A search path is one of:
 #   absolute <directory>
 #   env <variable> <component-count> <component>...
@@ -236,6 +237,11 @@ first_environment=1
 if [ -n "$DETECT_ENVIRONMENTS_DIRECTORY" ]; then
   REQUESTED_WORKING_DIRECTORY=$DETECT_ENVIRONMENTS_DIRECTORY
   REQUESTED_WORKING_DIRECTORY_CANONICAL=$(canonical_directory "$REQUESTED_WORKING_DIRECTORY")
+  # A relative directory gives relative environment paths, so probe it through its absolute path.
+  case "$REQUESTED_WORKING_DIRECTORY" in
+    /*) ;;
+    *) REQUESTED_WORKING_DIRECTORY=$REQUESTED_WORKING_DIRECTORY_CANONICAL ;;
+  esac
   TARGET_WORKING_DIRECTORY=$(pwd -P 2>/dev/null || true)
   if [ -n "$REQUESTED_WORKING_DIRECTORY_CANONICAL" ]; then
     emit_environment_probes_in_directory "$REQUESTED_WORKING_DIRECTORY"
