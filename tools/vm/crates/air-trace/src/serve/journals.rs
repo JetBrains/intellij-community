@@ -175,7 +175,7 @@ impl Journals {
     }
 
     /// Whether the server reads no controller runs.
-    pub(crate) fn is_empty(&self) -> bool {
+    pub(crate) const fn is_empty(&self) -> bool {
         self.dirs.is_empty()
     }
 
