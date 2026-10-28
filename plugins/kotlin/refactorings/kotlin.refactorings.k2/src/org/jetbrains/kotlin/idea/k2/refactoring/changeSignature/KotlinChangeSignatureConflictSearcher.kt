@@ -172,7 +172,7 @@ class KotlinChangeSignatureConflictSearcher(
 
                 val originalReceiverType = originalReceiverInfo?.originalType?.text
                 val newReceiverType = newReceiverInfo.currentType.text
-                if (newReceiverInfo.oldIndex != originalReceiverInfo?.oldIndex) {
+                if (originalReceiverInfo != null && newReceiverInfo.oldIndex != originalReceiverInfo.oldIndex || newReceiverInfo.wasContextParameter) {
                     if (hasCompanionExtensionRelevantUsages()) {
                         result.putValue(function, KotlinBundle.message("change.signature.conflict.text.companion.extension.cannot.replace.receiver"))
                     }

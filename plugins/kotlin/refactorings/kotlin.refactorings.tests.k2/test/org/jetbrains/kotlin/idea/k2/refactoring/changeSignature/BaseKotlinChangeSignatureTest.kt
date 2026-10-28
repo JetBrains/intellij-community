@@ -965,6 +965,12 @@ public @interface NotNull {
 
     fun testCompanionExtensionNullableReceiver() = doTestConflict { receiverParameterInfo!!.setType("Host?") }
 
+    fun testCompanionExtensionContextParameterToReceiver() = doTestConflict {
+        val contextParameter = newParameters[0]
+        contextParameter.isContextParameter = false
+        receiverParameterInfo = contextParameter
+    }
+
     fun testParameterToReceiverExplicitReceiver() = doTest { receiverParameterInfo = newParameters[0] }
 
     fun testParameterToReceiverImplicitReceivers() = doTest { receiverParameterInfo = newParameters[0] }
