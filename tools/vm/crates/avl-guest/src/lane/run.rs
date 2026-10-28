@@ -232,7 +232,11 @@ fn record_refusal(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>,
         return;
     }
     if let Err(error) = run_result::write(&file, &run_result::refused(&args.lane, &refusal.code, &refusal.message)) {
-        eprintln!("lane-run: cannot write the run result {} of the refusal {}: {error}", file.display(), refusal.code);
+        eprintln!(
+            "lane-run: cannot write the run result {} of the refusal {}: {error}",
+            file.display(),
+            refusal.code
+        );
     }
 }
 
