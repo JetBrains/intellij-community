@@ -5,19 +5,13 @@ use yonder_client::{Phase, Ran, Stop};
 
 use super::*;
 
-/// Child processes that answer `git rev-parse --show-toplevel` with `/c` and every other call with exit 0.
+/// Child processes that answer every call with exit 0.
 struct Checkout;
 
 impl Processes for Checkout {
-    fn run(&self, call: &Call, _: Stop<'_>) -> Ran {
-        let stdout = if call.text().contains("--show-toplevel") {
-            b"/c\n".to_vec()
-        } else {
-            Vec::new()
-        };
+    fn run(&self, _: &Call, _: Stop<'_>) -> Ran {
         Ran {
             code: Some(0),
-            stdout,
             ..Ran::default()
         }
     }
@@ -29,14 +23,16 @@ fn invoke(args: &[&str]) -> (u8, String, Vec<String>) {
     invoke_in(home.path(), args)
 }
 
-/// One invocation with the configuration directory and the skill directory of the home directory `home`.
+/// One invocation with the configuration directory and the skill directory of the home directory `home`, which is a
+/// checkout too.
 fn invoke_in(home: &Path, args: &[&str]) -> (u8, String, Vec<String>) {
+    fs::create_dir_all(home.join(".git")).expect("the git directory");
     let said = Mutex::new(Vec::new());
     let say = |line: &str| said.lock().unwrap_or_else(PoisonError::into_inner).push(line.to_owned());
     let mut stdout = Vec::new();
     let argv = std::iter::once("yonder").chain(args.iter().copied());
     let skills = home.join("skills/yonder");
-    let code = run(argv, Ok(Config::in_home(home)), Some(&skills), &Checkout, &mut stdout, &say);
+    let code = run(argv, Ok(Config::in_home(home)), Some(&skills), home, &Checkout, &mut stdout, &say);
     let said = said.into_inner().unwrap_or_else(PoisonError::into_inner);
     (code, String::from_utf8_lossy(&stdout).into_owned(), said)
 }
@@ -162,8 +158,8 @@ fn a_listed_run_shows_its_long_steps() {
 /// The output that `cquery --output=files` names, relative to the execution root.
 const AGENT_OUTPUT: &str = "bazel-out/local_macos-fastbuild/bin/external/community+/tools/yonder/yonderd";
 
-/// Child processes of `prepare`: the checkout root of `git rev-parse` (none outside a checkout), a green Bazel whose
-/// execution root is `<root>/execroot`, and an ssh that cannot connect. Each call is recorded.
+/// Child processes of `prepare` in the checkout `root` (none outside a checkout): a green Bazel whose execution root is
+/// `<root>/execroot`, and an ssh that cannot connect. Each call is recorded.
 struct Preparing {
     root: Option<PathBuf>,
     calls: Mutex<Vec<String>>,
@@ -179,12 +175,6 @@ impl Processes for Preparing {
             stderr: stderr.to_owned(),
             ..Ran::default()
         };
-        if text.contains("--show-toplevel") {
-            return match &self.root {
-                Some(root) => answer(0, format!("{}\n", root.display()), ""),
-                None => answer(128, String::new(), "fatal: not a git repository"),
-            };
-        }
         if text.contains(" cquery ") {
             return answer(0, format!("{AGENT_OUTPUT}\n"), "");
         }
@@ -207,10 +197,15 @@ fn prepare_in(root: Option<PathBuf>, args: &[&str]) -> (u8, Vec<String>, Vec<Str
     let said = Mutex::new(Vec::new());
     let say = |line: &str| said.lock().unwrap_or_else(PoisonError::into_inner).push(line.to_owned());
     let argv = ["yonder", "prepare"].into_iter().chain(args.iter().copied());
+    let working = processes.root.clone().unwrap_or_else(|| dir.path().join("outside"));
+    if let Some(root) = &processes.root {
+        fs::create_dir_all(root.join(".git")).expect("the git directory");
+    }
     let code = run(
         argv,
         Ok(Config::new(dir.path().to_path_buf())),
         None,
+        &working,
         &processes,
         &mut Vec::new(),
         &say,
@@ -225,26 +220,25 @@ fn prepare_in(root: Option<PathBuf>, args: &[&str]) -> (u8, Vec<String>, Vec<Str
 fn prepare_without_an_agent_builds_it_in_the_monorepo() {
     let checkout = tempfile::tempdir().expect("a checkout");
     let root = checkout.path().to_path_buf();
-    std::fs::create_dir_all(root.join("community/tools/yonder")).expect("the agent sources");
+    fs::create_dir_all(root.join("community/tools/yonder")).expect("the agent sources");
     let binary = root.join("execroot").join(AGENT_OUTPUT);
-    std::fs::create_dir_all(binary.parent().expect("a parent")).expect("the output directory");
-    std::fs::write(&binary, b"yonderd").expect("the binary");
+    fs::create_dir_all(binary.parent().expect("a parent")).expect("the output directory");
+    fs::write(&binary, b"yonderd").expect("the binary");
 
     let (code, calls, said) = prepare_in(Some(root.clone()), &["studio"]);
     assert_eq!(code, 255, "{said:?}");
     let label = "@community//tools/yonder:yonderd";
     let wrapper = root.join("bazel.cmd");
-    assert_eq!(calls[0], "git rev-parse --show-toplevel");
-    assert!(calls[1].ends_with(&format!("{} build {label}", wrapper.display())), "{calls:#?}");
+    assert!(calls[0].ends_with(&format!("{} build {label}", wrapper.display())), "{calls:#?}");
     assert!(
-        calls[2].ends_with(&format!("{} cquery --output=files {label}", wrapper.display())),
+        calls[1].ends_with(&format!("{} cquery --output=files {label}", wrapper.display())),
         "{calls:#?}"
     );
     assert!(
-        calls[3].ends_with(&format!("{} info execution_root", wrapper.display())),
+        calls[2].ends_with(&format!("{} info execution_root", wrapper.display())),
         "{calls:#?}"
     );
-    assert!(calls[4..].iter().any(|call| call.starts_with("ssh -o BatchMode=yes")), "{calls:#?}");
+    assert!(calls[3..].iter().any(|call| call.starts_with("ssh -o BatchMode=yes")), "{calls:#?}");
     assert!(
         said.last().is_some_and(|line| line.starts_with("yonder: ssh_failed: ")),
         "the build went through, and the copy failed at ssh: {said:#?}"
@@ -348,7 +342,7 @@ fn skill_install_writes_the_skill_of_the_user_and_then_finds_it_current() {
         ),
         "{said:?}"
     );
-    assert_eq!(std::fs::read_to_string(dir.join("SKILL.md")).expect("the skill"), skill::SKILL);
+    assert_eq!(fs::read_to_string(dir.join("SKILL.md")).expect("the skill"), skill::SKILL);
 
     let (code, stdout, _) = invoke_in(home.path(), &["skill", "install"]);
     assert_eq!(
@@ -367,7 +361,7 @@ fn skill_install_refuses_an_edited_copy_without_force() {
     let other = home.path().join("codex/yonder");
     let dir = other.to_str().expect("a UTF-8 path");
     assert_eq!(invoke_in(home.path(), &["skill", "install", "--dir", dir]).0, 0);
-    std::fs::write(other.join("SKILL.md"), "mine").expect("written");
+    fs::write(other.join("SKILL.md"), "mine").expect("written");
 
     let (code, stdout, said) = invoke_in(home.path(), &["skill", "install", "--dir", dir]);
     assert_eq!((code, stdout.as_str()), (255, ""));
@@ -398,13 +392,13 @@ fn upgrade_refreshes_an_installed_skill_of_another_build() {
     assert_eq!(invoke_in(home.path(), &["skill", "install"]).0, 0);
     let marker = dir.join(".yonder-skill.sha256");
     let old = "old words";
-    std::fs::write(dir.join("SKILL.md"), old).expect("written");
-    let lines = std::fs::read_to_string(&marker).expect("the marker");
+    fs::write(dir.join("SKILL.md"), old).expect("written");
+    let lines = fs::read_to_string(&marker).expect("the marker");
     let sha256 = lines.split_once("  ").expect("a marker line").0;
     let mut digest = yonder_link::digest::Sha256::default();
     digest.update(old.as_bytes());
     let old_marker = lines.replacen(sha256, &digest.hex(), 1);
-    std::fs::write(&marker, &old_marker).expect("written");
+    fs::write(&marker, &old_marker).expect("written");
     let mut digest = yonder_link::digest::Sha256::default();
     digest.update(old_marker.as_bytes());
     let old_build = digest.hex()[..12].to_owned();
@@ -420,5 +414,5 @@ fn upgrade_refreshes_an_installed_skill_of_another_build() {
         )
     );
     assert!(said[1].starts_with("yonder: no_host: "), "{said:?}");
-    assert_eq!(std::fs::read_to_string(dir.join("SKILL.md")).expect("the skill"), skill::SKILL);
+    assert_eq!(fs::read_to_string(dir.join("SKILL.md")).expect("the skill"), skill::SKILL);
 }

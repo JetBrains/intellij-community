@@ -80,7 +80,7 @@ these:
 
 | Code | Input |
 |---|---|
-| `usage` | An alias that is not `[0-9A-Za-z._-]+`, a run without a command, a `fetch` of a run id that cannot name a file, a `fetch` without `--fetch` of a run that has no record in this checkout, a record that is not JSON of the record shape, or `prepare` without `--agent` outside a checkout of the monorepo. The last message names `--agent`. |
+| `usage` | An alias that is not `[0-9A-Za-z._-]+`, a run without a command, a working directory of `yonder` in no git checkout, a `fetch` of a run id that cannot name a file, a `fetch` without `--fetch` of a run that has no record in this checkout, a record that is not JSON of the record shape, or `prepare` without `--agent` outside a checkout of the monorepo. The last message names `--agent`. |
 | `config` | No home directory, an identity that cannot be read or created, or a file that cannot be written, such as the run record. |
 | `no_host` | No host file for the alias. The message names `bt --host <alias> --prepare` and `yonder prepare`. |
 | `bad_host_file` | A host file that is not JSON of the host file shape, or that names another alias. |
@@ -93,7 +93,6 @@ these:
 | `behind` | The host has none of the candidate commits: HEAD, its first-parent ancestors at the distances 1, 2, 4 … 65536, and the merge bases with `master` and `origin/master`. The first `Have` names the distances up to 16, and only a host that has none of them gets the rest in a second `Have`. The message gives the commit count of the history and names `bt --host <alias> --prepare`. |
 | `fetch_failed` | Fetch did not copy every staged file. The run stays on the host for `yonder fetch` and `yonder forget`. |
 | `bd_failed` | A call of `bd host` failed or ran past its limit: bd is missing or has no `bd host`, or its git failed. The message names the code and the message of bd. |
-| `git_failed` | `yonder`: the working directory is in no git checkout. |
 | `bad_config` | `.yonder.toml` of the shipped commit of a run with `outputs` does not parse, or it is not a UTF-8 file. The message is the one of the agent, with the commit. |
 | `ssh_failed` | An ssh call of `prepare` failed or ran past its deadline of 30 s (120 s for the copy). |
 | `agent_failed` | The agent binary cannot be read, its Bazel build failed or wrote nothing for 30 min, `cquery` named no `yonderd` file, `yonderd setup` failed on the host, or it printed no setup line. For `upgrade`: a host that is not macOS, a binary of another platform than the hello names, a bootstrap run that failed or printed no line of `yonderd upgrade`, or an agent that answers with a third binary at the end. |

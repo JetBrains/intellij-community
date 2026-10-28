@@ -16,6 +16,7 @@ fn main() -> ExitCode {
         std::env::args_os(),
         yonder_client::Config::of_user(),
         skill::user_dir().as_deref(),
+        &std::env::current_dir().unwrap_or_else(|_| ".".into()),
         &yonder_client::OsProcesses,
         &mut std::io::stdout(),
         &say,

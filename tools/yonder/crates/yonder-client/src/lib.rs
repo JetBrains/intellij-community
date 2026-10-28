@@ -98,8 +98,6 @@ pub mod code {
     pub const LOCAL_CHANGES: &str = "local_changes";
     /// The host has none of the commits near HEAD, so the pack would hold the whole history.
     pub const BEHIND: &str = "behind";
-    /// A local git call failed.
-    pub const GIT_FAILED: &str = "git_failed";
     /// A call of `bd host` of Branch Deck failed: bd is missing or older than the client, or its git failed. The message
     /// names the code of bd.
     pub const BD_FAILED: &str = "bd_failed";

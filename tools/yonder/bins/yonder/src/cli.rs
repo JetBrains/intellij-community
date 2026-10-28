@@ -4,6 +4,7 @@
 //! refuses leaves by 2.
 
 use std::ffi::OsString;
+use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, PoisonError};
@@ -28,8 +29,8 @@ const USAGE_EXIT: u8 = 2;
 /// run at the niceness of the agent.
 const DEFAULT_NICE: u8 = 10;
 
-/// The deadline of the local git call that finds the checkout root.
-const GIT_DEADLINE: Duration = Duration::from_secs(30);
+/// The deadline of the `hostname` call.
+const HOSTNAME_DEADLINE: Duration = Duration::from_secs(30);
 
 #[derive(Debug, Parser)]
 #[command(
@@ -148,11 +149,12 @@ enum SkillCommand {
 }
 
 /// One invocation, with the program name first. `skill_dir` is the skill directory of the user, `None` without a home
-/// directory. Answers the exit code.
+/// directory. `dir` is the working directory. Answers the exit code.
 pub(crate) fn run<I, T>(
     argv: I,
     config: Result<Config, Refusal>,
     skill_dir: Option<&Path>,
+    dir: &Path,
     processes: &dyn Processes,
     stdout: &mut (dyn Write + Send),
     say: &(dyn Fn(&str) + Sync),
@@ -173,7 +175,7 @@ where
             return USAGE_EXIT;
         }
     };
-    match config.and_then(|config| execute(cli.command, config, skill_dir, processes, stdout, say)) {
+    match config.and_then(|config| execute(cli.command, config, skill_dir, dir, processes, stdout, say)) {
         Ok(code) => code,
         Err(refusal) => {
             say(&format!("yonder: {}: {}", refusal.code, refusal.message));
@@ -186,6 +188,7 @@ fn execute(
     command: Command,
     config: Config,
     skill_dir: Option<&Path>,
+    dir: &Path,
     processes: &dyn Processes,
     stdout: &mut (dyn Write + Send),
     say: &(dyn Fn(&str) + Sync),
@@ -213,7 +216,7 @@ fn execute(
             apply,
             command,
         } => {
-            let checkout = checkout_root(processes)?;
+            let checkout = checkout_root(dir)?;
             let holder = holder_of(named, &checkout);
             install_interrupt(say, "Ctrl+C ends this process, and the run goes on on the host");
             let request = RunRequest {
@@ -251,7 +254,7 @@ fn execute(
         }
         Command::Cancel { alias, run } => Ok(answer(&client.cancel(&alias, &run)?)),
         Command::Fetch { alias, run, fetch } => {
-            let checkout = checkout_root(processes)?;
+            let checkout = checkout_root(dir)?;
             let fetched = client.fetch(&alias, &run, &checkout, &fetch)?;
             Ok(answer(&format!(
                 "copied {} files of the run {run} into {}",
@@ -282,7 +285,7 @@ fn execute(
             let agent = if let Some(agent) = agent {
                 agent
             } else {
-                let root = checkout_root(processes).map_err(|refusal| no_monorepo(&refusal.message))?;
+                let root = checkout_root(dir).map_err(|refusal| no_monorepo(&refusal.message))?;
                 client.build_agent(&root)?
             };
             let name = name.unwrap_or_else(|| format!("yonder on {}", local_name(processes)));
@@ -315,7 +318,7 @@ fn execute(
             if let Some(said) = skill_dir.and_then(skill::refresh) {
                 say(&said);
             }
-            let checkout = checkout_root(processes).ok();
+            let checkout = checkout_root(dir).ok();
             let upgraded = client.upgrade(&UpgradeRequest {
                 alias: &alias,
                 agent: agent.as_deref(),
@@ -395,23 +398,24 @@ fn holder_of(named: Option<String>, checkout: &Path) -> String {
     named.unwrap_or_else(|| holder(HOLDER_PREFIX, checkout))
 }
 
-/// The root of the checkout of the working directory.
-fn checkout_root(processes: &dyn Processes) -> Result<PathBuf, Refusal> {
-    let ran = processes.run(&Call::new("git", &["rev-parse", "--show-toplevel"], GIT_DEADLINE), &never);
-    let root = ran.stdout_text().trim().to_owned();
-    if !ran.ok() || root.is_empty() {
-        return Err(Refusal::new(
-            code::GIT_FAILED,
-            Exit::Refused,
-            format!("the working directory is in no git checkout: {}", ran.said()),
-        ));
-    }
-    Ok(Path::new(&root).to_path_buf())
+/// The root of the checkout of the working directory `dir`: the nearest directory with a `.git` entry, a directory or
+/// the file of a linked worktree. yonder starts no git, so it reads the file system.
+fn checkout_root(dir: &Path) -> Result<PathBuf, Refusal> {
+    dir.ancestors()
+        .find(|ancestor| fs::symlink_metadata(ancestor.join(".git")).is_ok())
+        .map(Path::to_path_buf)
+        .ok_or_else(|| {
+            Refusal::new(
+                code::USAGE,
+                Exit::Refused,
+                format!("the working directory {} is in no git checkout", dir.display()),
+            )
+        })
 }
 
 /// The host name of this machine for the allow list of the agent, or `client`.
 fn local_name(processes: &dyn Processes) -> String {
-    let ran = processes.run(&Call::new("hostname", &[] as &[&str], GIT_DEADLINE), &never);
+    let ran = processes.run(&Call::new("hostname", &[] as &[&str], HOSTNAME_DEADLINE), &never);
     let name = ran.stdout_text().trim().to_owned();
     if ran.ok() && !name.is_empty() { name } else { "client".to_owned() }
 }
