@@ -4,22 +4,23 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyNamedParameter
-import com.jetbrains.python.psi.stubs.PyLiteralKind
-import com.jetbrains.python.psi.types.PyTypeChecker.collectGenerics
-import com.jetbrains.python.psi.types.PyTypeInferenceCspFactory
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper
+import com.jetbrains.python.psi.types.PyCallableParameterImpl
+import com.jetbrains.python.psi.types.PyTypeVarType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 /**
  * Reports a PEP 696 type parameter default (e.g. `int` in `def f[T = int]`) that can never be used because a parameter
- * typed with that type variable has its own default value. In that case the parameter default always determines the
- * type variable (see PyTypeInferenceCspFactory), so the declared type-parameter default is unreachable.
+ * of type `T` has a default value. A call then always solves `T`: an argument solves it, or the parameter default does
+ * (see [PyCallExpressionHelper.mapArgumentsWithDefaults]).
  *
  * Example:
  * ```
- * def f[T = int](a: T = 0, b: T = 0) -> None: ...  # `int` is never used: `f()` yields `Literal[0]`, `f(x, x)` yields the type of `x`
+ * def f[T = int](a: T = 0) -> T: ...  # `int` is never used: `f()` yields `Literal[0]`, `f(x)` yields the type of `x`
  * ```
  */
 class PyShadowedTypeParameterDefaultInspection : PyInspection() {
@@ -41,26 +42,18 @@ class PyShadowedTypeParameterDefaultInspection : PyInspection() {
       val defaultedTypeParameters = typeParameters.filter { it.defaultExpression != null }
       if (defaultedTypeParameters.isEmpty()) return
 
-      // Names of this function's type parameters that a parameter pins through its own (stub-safe) default value.
-      // Only `None` and literal defaults are considered, since those are exactly the defaults that override the
-      // declared PEP 696 default; an arbitrary-expression default keeps deferring to the declared default.
+      // Only a parameter of type `T` itself pins `T`. In `T | str`, an argument of type `str` leaves `T` unsolved.
       val pinnedTypeParameterNames = HashSet<String>()
       for (parameter in node.parameterList.parameters) {
         val namedParameter = parameter as? PyNamedParameter ?: continue
         if (namedParameter.isPositionalContainer || namedParameter.isKeywordContainer) continue
-        val defaultValue = namedParameter.defaultValue ?: continue
-        val literalKind = PyLiteralKind.fromExpression(defaultValue) ?: continue
-        // A `None` default is absorbed by an explicit `... | None` annotation, so it does not pin the type variable
-        // there (mirrors PyTypeInferenceCspFactory) and the PEP 696 default is still used, hence not shadowed.
-        if (literalKind == PyLiteralKind.NONE &&
-            PyTypeInferenceCspFactory.parameterAnnotationAdmitsNone(namedParameter, myTypeEvalContext)) {
+        val defaultValueText = namedParameter.defaultValueText ?: continue
+        if (defaultValueText == PyNames.ELLIPSIS && PyCallExpressionHelper.isPlaceholderEllipsisDefault(namedParameter, myTypeEvalContext)) {
           continue
         }
-        val parameterType = namedParameter.getArgumentType(myTypeEvalContext)
-        for (typeVar in parameterType.collectGenerics(myTypeEvalContext).typeVars) {
-          if (typeVar.scopeOwner == node) {
-            pinnedTypeParameterNames.add(typeVar.name)
-          }
+        val parameterType = PyCallableParameterImpl.psi(namedParameter).getArgumentType(myTypeEvalContext)
+        if (parameterType is PyTypeVarType && parameterType.scopeOwner == node) {
+          pinnedTypeParameterNames.add(parameterType.name)
         }
       }
       if (pinnedTypeParameterNames.isEmpty()) return

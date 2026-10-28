@@ -500,7 +500,7 @@ class PyTypeAliasAndDefaultsTest : PyCodeInsightTestCase() {
       T1 = TypeVar("T1", default=str)
       T2 = TypeVar("T2", default=bool)
       class Box(Generic[T, T1, T2]):
-          def __init__(self, a: T = None, b: T1 = None, c: T2 = None):
+          def __init__(self, a: T | None = None, b: T1 | None = None, c: T2 | None = None):
               self.value = a
               self.value1 = b
               self.value2 = c

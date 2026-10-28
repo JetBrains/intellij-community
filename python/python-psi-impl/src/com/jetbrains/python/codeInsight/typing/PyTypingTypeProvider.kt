@@ -135,6 +135,7 @@ import com.jetbrains.python.psi.types.PyTypeParameterMapping
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyLegacyDocstringTypeParser
 import com.jetbrains.python.psi.types.PyTypeUtil
+import com.jetbrains.python.psi.types.PyTypeUtil.asUnionSequence
 import com.jetbrains.python.psi.types.PyTypeUtil.convertToType
 import com.jetbrains.python.psi.types.PyTypeUtil.derefOrUnknown
 import com.jetbrains.python.psi.types.PyTypeUtil.toKeywordContainerType
@@ -224,7 +225,11 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       return Ref(param.toKeywordContainerType(type) ?: PyAnyType.unknown)
     }
     if (PyNames.NONE == param.defaultValueText) {
-      return Ref(PyUnionType.unionOrUnknown(type, PyBuiltinCache.getInstance(param).noneType ?: PyAnyType.unknown))
+      val noneType = PyBuiltinCache.getInstance(param).noneType
+      // A type variable that admits `None` is solved by the `None` default, so the parameter type is not widened
+      if (type.asUnionSequence().none { it is PyTypeVarType && it.admitsNone(noneType, context.typeContext) }) {
+        return Ref(PyUnionType.unionOrUnknown(type, noneType ?: PyAnyType.unknown))
+      }
     }
     if (context.typeContext.maySwitchToAST(param)) {
       val defaultValue = param.defaultValue
@@ -3163,4 +3168,13 @@ class PyTypingTypeProvider : PyTypeProviderWithCustomContext<Context?>() {
       }
     }
   }
+}
+
+/**
+ * Tells if the solver may set this type variable to `None`.
+ * This is the case when the type variable has no bound, a bound that accepts `None`, or a constraint that accepts `None`.
+ */
+private fun PyTypeVarType.admitsNone(noneType: PyType?, context: TypeEvalContext): Boolean {
+  if (constraints.isNotEmpty()) return noneType != null && constraints.any { PyTypeChecker.match(it, noneType, context) }
+  return bound == null || noneType != null && PyTypeChecker.match(bound, noneType, context)
 }

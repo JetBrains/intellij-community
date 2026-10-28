@@ -7,7 +7,7 @@
   argument determines it. Either way the declared type parameter default is never applied.
 </p>
 <pre><code class="language-python">
-def f[T = int](a: T = None) -> T:  # 'int' is never used: f() yields None, f(x) yields the type of x
+def f[T = int](a: T = 0) -> T:  # 'int' is never used: f() yields Literal[0], f(x) yields the type of x
     return a
 </code></pre>
 </body>

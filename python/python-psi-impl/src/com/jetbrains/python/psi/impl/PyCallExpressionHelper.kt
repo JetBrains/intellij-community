@@ -19,6 +19,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightCounters.Counter
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.typing.PyTypedDictTypeProvider.Helper.isTypingTypedDictInheritor
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
+import com.jetbrains.python.codeInsight.typing.isProtocol
 import com.jetbrains.python.inspections.PyInspectionMessages.ProblemMessage
 import com.jetbrains.python.psi.AccessDirection
 import com.jetbrains.python.psi.PyAugAssignmentStatement
@@ -77,6 +78,7 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeChecker
 import com.jetbrains.python.psi.types.PyTypeChecker.GenericSubstitutions
 import com.jetbrains.python.psi.types.PyTypeMember
+import com.jetbrains.python.psi.types.PyTypeChecker.hasGenerics
 import com.jetbrains.python.psi.types.PyTypeParameterType
 import com.jetbrains.python.psi.types.PyTypeUtil
 import com.jetbrains.python.psi.types.PyTypeUtil.compositeComponents
@@ -900,8 +902,10 @@ object PyCallExpressionHelper {
    * are also mapped: the default value expression is used as the key in [PyArgumentsMapping.getMappedParameters].
    *
    * Note that these keys are declaration-site expressions, not call-site arguments; they are not contained
-   * in [PyArgumentsMapping.getArguments]. Parameters whose default value has no PSI (e.g., synthetic callables)
-   * remain unmapped as in [mapArguments].
+   * in [PyArgumentsMapping.getArguments]. Only a parameter whose type has generics gets its default mapped.
+   * When the callable's file may not be switched to AST, only a default
+   * without names is mapped, as an expression parsed from the stub text of the default value.
+   * Parameters whose default value has no PSI (e.g., synthetic callables) remain unmapped as in [mapArguments].
    */
   @JvmStatic
   fun mapArgumentsWithDefaults(
@@ -942,12 +946,33 @@ object PyCallExpressionHelper {
                               mapping.mappedTupleParameters.mapKeys { (argument, _) -> argument.expression!! })
   }
 
+  /**
+   * Tells if an `...` default of [parameter] only marks that the parameter has a default value.
+   * This is the case in a stub file, in an overload signature, and in a protocol method.
+   * Such a default does not solve a type variable, so [mapArgumentsWithDefaults] does not map it.
+   */
+  @JvmStatic
+  fun isPlaceholderEllipsisDefault(parameter: PyParameter, context: TypeEvalContext): Boolean {
+    if (PyiUtil.isInsideStub(parameter)) return true
+    val function = PsiTreeUtil.getStubOrPsiParentOfType(parameter, PyFunction::class.java) ?: return false
+    if (PyiUtil.isOverload(function, context)) return true
+    return function.containingClass?.isProtocol(context) == true
+  }
+
   private fun PyCallableParameter.getDefaultValueStubSafe(context: TypeEvalContext): PyExpression? {
+    // A default value only solves a type variable, so a parameter type without generics needs no mapped default
+    if (!getArgumentType(context).hasGenerics(context)) return null
     val psi = parameter ?: return defaultValue // non-PSI parameter: expression is held directly, no file access
     // both hasDefaultValue() and defaultValueText are answered from the stub
-    if (!psi.hasDefaultValue() || psi.defaultValueText == PyNames.ELLIPSIS) return null
-    if (!context.maySwitchToAST(psi)) return null
-    return psi.defaultValue
+    if (!psi.hasDefaultValue()) return null
+    val defaultValueText = psi.defaultValueText ?: return null
+    if (defaultValueText == PyNames.ELLIPSIS && isPlaceholderEllipsisDefault(psi, context)) return null
+    if (context.maySwitchToAST(psi)) return psi.defaultValue
+    // Without the AST, the default is parsed from its stub text instead,
+    // so that its type does not depend on whether the callable's file may be parsed.
+    // A name in such a fragment is typed as Any (see PyReferenceExpressionImpl), so only a default without names is mapped.
+    val fragment = PyUtil.createExpressionFromFragment(defaultValueText, psi) ?: return null
+    return fragment.takeIf { PsiTreeUtil.findChildOfType(it, PyReferenceExpression::class.java, false) == null }
   }
 
   /**
@@ -1438,6 +1463,7 @@ object PyCallExpressionHelper {
 
   /**
    * Like [analyzeArguments], but also maps each parameter that gets no argument and has a default value.
+   * Only a parameter whose type has generics gets its default mapped.
    * The type of the default value becomes the argument of such a parameter.
    * The default value is evaluated in its declaration scope, not at the call site.
    */
