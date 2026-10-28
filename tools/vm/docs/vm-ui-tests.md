@@ -865,7 +865,7 @@ that could not be pulled leaves a green run green.
 | launcher | where the bundles land | who cleans up |
 | --- | --- | --- |
 | the lane daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
-| a `vm.cmd` run with `AIR_VM_EXPORT`, such as a run on the Mac Studio through `bd-host` | a copy of the run's journal, its reports and the zips of the scenarios that did not pass (`all`: every zip) in `out/air/vm-export/runs/<runId>/` of the checkout. `.yonder.toml` sets the variable and names the directory in its `outputs`, so `bd-host` copies it back. Under `failed`, a run that failed nothing exports nothing | the next `bd-host` run with an export, which replaces the directory |
+| a `vm.cmd` run with `AIR_VM_EXPORT`, such as a run on the Mac Studio through `bd-host` | a copy of the run's journal, its reports and the zips of the scenarios that did not pass (`all`: every zip) in `out/air/vm-export/runs/<runId>/` of the checkout. `[host]` of `.branchdeck.toml` sets the variable and names the directory in its `outputs`, so `bd-host` copies it back. Under `failed`, a run that failed nothing exports nothing | the next `bd-host` run with an export, which replaces the directory |
 | a Bazel test, host `bt.cmd` included | `air-traces/` in the target's `bazel-testlogs/.../test.outputs/`, with `lane/` beside it for a run that is not green. A local Bazel packs them into `outputs.zip` there, and the TeamCity build keeps them as files in `bazel.logs.zip` | Bazel |
 
 A bundle is `<root>/<runId>/<TestClass>/<scenario>/`. A second attempt of the same scenario in one run is
