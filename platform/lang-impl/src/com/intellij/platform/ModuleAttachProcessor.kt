@@ -46,7 +46,9 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
   }
 
   override fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean {
-    val dotIdeaDir = projectDir?.resolve(Project.DIRECTORY_STORE_FOLDER) ?: return false
+    // A null directory asks whether the product can attach projects at all, see [ProjectAttachProcessor.canAttachToProject].
+    if (projectDir == null) return true
+    val dotIdeaDir = projectDir.resolve(Project.DIRECTORY_STORE_FOLDER)
     return Files.exists(dotIdeaDir) &&
            projectDir.directoryStreamIfExists({ path: Path ->
                                                 path.fileName.toString().endsWith(ModuleManagerEx.IML_EXTENSION)
