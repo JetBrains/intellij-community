@@ -163,7 +163,6 @@
     <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.frontend" scope="RUNTIME" />
