@@ -3,13 +3,21 @@ package com.intellij.python.junit5Tests.unit.alsoWin.pyproject.model
 
 import com.intellij.facet.FacetType
 import com.intellij.facet.mock.MockFacetType
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.fileLogger
+import com.intellij.openapi.module.EmptyModuleType
+import com.intellij.openapi.module.ModuleType
+import com.intellij.openapi.module.ModuleTypeManager
+import com.intellij.openapi.module.UnknownModuleType
+import com.intellij.openapi.module.impl.ModuleTypeManagerImpl
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.writeText
+import com.intellij.platform.ImportNewProjectAttachProcessor
 import com.intellij.platform.attachToProjectAsync
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
@@ -32,7 +40,9 @@ import com.intellij.python.pyproject.model.internal.MODEL_REBUILD
 import com.intellij.python.pyproject.model.internal.platformBridge.toRebuildRequest
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.junit5.fixture.disposableFixture
+import com.intellij.testFramework.replaceService
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
 import com.intellij.util.io.createDirectories
@@ -75,7 +85,7 @@ internal class PyProjectTomlLifecycleTest {
 
 
   @Test
-  fun `attach workspace`(@TempDir workspace2Parent: Path): Unit = timeoutRunBlocking {
+  fun `attach workspace`(@TempDir workspace2Parent: Path, @TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
 
     val projectRebuiltTimesCounter = AtomicInteger()
     val projectRebuiltTwoTimes = CompletableDeferred<Unit>()
@@ -113,7 +123,12 @@ internal class PyProjectTomlLifecycleTest {
     try {
       val moduleAttachedDef = CompletableDeferred<Unit>()
       val workspace2Nio = workspace2.toNioPath()
-      attachToProjectAsync(f.project, workspace2Nio, callback = { _, _ -> moduleAttachedDef.complete(Unit) })
+      // The test classpath registers no `ProjectAttachProcessor`, so pass the one PyCharm uses for a directory without `.idea`.
+      // That processor creates the module with the default module type. PyCharm makes it a Python module, and the sync adopts it.
+      ApplicationManager.getApplication().replaceService(ModuleTypeManager::class.java, PythonDefaultModuleTypeManager(), disposable)
+      val attached = attachToProjectAsync(f.project, workspace2Nio, processor = ImportNewProjectAttachProcessor(),
+                                          callback = { _, _ -> moduleAttachedDef.complete(Unit) })
+      assertThat(attached).describedAs("attach $workspace2Nio").isTrue()
       log.info("Waiting for the module attach callback")
       moduleAttachedDef.await()
       log.info("Waiting for the WSM update")
@@ -140,6 +155,14 @@ internal class PyProjectTomlLifecycleTest {
     finally {
       tracker.cancelAndJoin()
     }
+  }
+
+  /**
+   * Makes a Python module the default, as `PythonModuleTypeManager` of PyCharm does.
+   * The Python module type of PyCharm is not on the test classpath, and only the id of the type goes into the module.
+   */
+  private class PythonDefaultModuleTypeManager : ModuleTypeManagerImpl() {
+    override fun getDefaultModuleType(): ModuleType<*> = UnknownModuleType(PYTHON, EmptyModuleType.getInstance())
   }
 
   /**
