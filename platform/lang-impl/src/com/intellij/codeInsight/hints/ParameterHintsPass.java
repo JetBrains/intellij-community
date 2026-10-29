@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.multiverse.CodeInsightContextUtil;
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.diagnostic.PluginExceptionUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ModalityState;
@@ -105,7 +106,10 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     if (provider == null || !provider.canShowHintsWhenDisabled() && !isEnabled(language) || DiffUtil.isDiffEditor(myEditor)) return;
     if (!HighlightingLevelManager.getInstance(myFile.getProject()).shouldHighlight(myFile)) return;
 
-    provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
+    PluginExceptionUtil.computeOrLogPluginException(provider.getClass(), () -> {
+      provider.createTraversal(myRootElement).forEach(element -> process(element, provider));
+      return true;
+    });
   }
 
   private static boolean isEnabled(Language language) {
