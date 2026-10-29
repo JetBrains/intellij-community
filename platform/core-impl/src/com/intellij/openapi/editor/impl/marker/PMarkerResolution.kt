@@ -35,3 +35,33 @@ object PMarkerResolution {
 
   fun toTextRange(range: Long): TextRange = TextRangeScalarUtil.create(range and INVALID_FLAG.inv())
 }
+
+/**
+ * Maps cached offsets across one edit without retaining the previous root.
+ *
+ * @property previousIdentity the resolution identity before the edit.
+ * @property unchangedPrefixEnd ranges with an old end strictly below this offset remain unchanged.
+ * @property editEnd ranges with an old start strictly above this offset shift by [delta].
+ * @property delta the change in the document length.
+ */
+internal class PMarkerResolutionUpdate(
+  private val previousIdentity: Any,
+  private val unchangedPrefixEnd: Int,
+  private val editEnd: Int,
+  private val delta: Int,
+) {
+  /** Advances a valid resolution, or requests full resolution when the identity or range does not match this edit. */
+  fun advance(previousIdentity: Any, resolution: Long): Long {
+    if (this.previousIdentity !== previousIdentity || !PMarkerResolution.isValid(resolution)) return PMarkerResolution.UNRESOLVED
+    val startOffset = PMarkerResolution.startOffset(resolution)
+    val endOffset = PMarkerResolution.endOffset(resolution)
+    return when {
+      endOffset < unchangedPrefixEnd -> resolution
+      startOffset > editEnd -> {
+        if (delta == 0) resolution
+        else PMarkerResolution.valid(TextRangeScalarUtil.shift(resolution, delta))
+      }
+      else -> PMarkerResolution.UNRESOLVED
+    }
+  }
+}

@@ -41,23 +41,8 @@ open class PMarkerRootImpl private constructor(
   /**
    * Describes one direct text edit. Null for moves, full traversals, and changes to the marker structure.
    */
-  private val resolutionUpdate: ResolutionUpdate? = null,
+  private val resolutionUpdate: PMarkerResolutionUpdate? = null,
 ) : PMarkerRoot {
-  /**
-   * Maps cached offsets across one edit without retaining the previous root.
-   *
-   * @property previousIdentity The [resolutionCacheIdentity] before the edit.
-   * @property unchangedPrefixEnd Ranges with an old end strictly below this offset remain unchanged.
-   * @property editEnd Ranges with an old start strictly above this offset shift by [delta].
-   * @property delta The change in the document length.
-   */
-  private data class ResolutionUpdate(
-    val previousIdentity: Any,
-    val unchangedPrefixEnd: Int,
-    val editEnd: Int,
-    val delta: Int,
-  )
-
   /**
    * Advances a valid cached resolution across one direct edit without traversing the tree.
    * Reuses unchanged offsets before the affected area and adds the edit delta after it.
@@ -68,20 +53,8 @@ open class PMarkerRootImpl private constructor(
    * @param previousIdentity The root identity associated with [resolution].
    * @param resolution The cached resolution before the edit.
    */
-  override fun advanceResolution(previousIdentity: Any, resolution: Long): Long {
-    val update = resolutionUpdate ?: return PMarkerResolution.UNRESOLVED
-    if (update.previousIdentity !== previousIdentity || !PMarkerResolution.isValid(resolution)) return PMarkerResolution.UNRESOLVED
-    val startOffset = PMarkerResolution.startOffset(resolution)
-    val endOffset = PMarkerResolution.endOffset(resolution)
-    return when {
-      endOffset < update.unchangedPrefixEnd -> resolution
-      startOffset > update.editEnd -> {
-        if (update.delta == 0) resolution
-        else PMarkerResolution.valid(TextRangeScalarUtil.shift(resolution, update.delta))
-      }
-      else -> PMarkerResolution.UNRESOLVED
-    }
-  }
+  override fun advanceResolution(previousIdentity: Any, resolution: Long): Long =
+    resolutionUpdate?.advance(previousIdentity, resolution) ?: PMarkerResolution.UNRESOLVED
 
   override fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
     if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
@@ -284,8 +257,8 @@ open class PMarkerRootImpl private constructor(
     val delta = newLength - oldLength
     val editor = MapBatchEditor(states, persistentMarkerCount)
 
-    val (before, fromEditStart) = splitByStart(editor, rootId, editStart, equalGoesLeft = false)
-    val (middle, after) = splitByStart(editor, fromEditStart, editEnd, equalGoesLeft = true)
+    val [before, fromEditStart] = splitByStart(editor, rootId, editStart, equalGoesLeft = false)
+    val [middle, after] = splitByStart(editor, fromEditStart, editEnd, equalGoesLeft = true)
 
     val updatedBefore = updateMarkersStartingBeforeEdit(
       editor, before, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
@@ -322,7 +295,7 @@ open class PMarkerRootImpl private constructor(
     }
     editor.setParent(newRoot, NULL_NODE)
     val resolutionUpdate = if (patch.moveOffset() == editStart) {
-      ResolutionUpdate(resolutionCacheIdentity, minOf(editStart, editor.firstChangedEnd), editEnd, delta)
+      PMarkerResolutionUpdate(resolutionCacheIdentity, minOf(editStart, editor.firstChangedEnd), editEnd, delta)
     }
     else {
       null
@@ -819,7 +792,7 @@ open class PMarkerRootImpl private constructor(
 
     private object EMPTY : PMarkerRootImpl(
       NULL_NODE,
-      PersistentLongMap.empty(PersistentLongMapImplementation.VECTOR_64),
+      PersistentLongMap.empty(),
       0,
     ) {
       override fun toString(): String = "EMPTY"
@@ -1155,14 +1128,14 @@ open class PMarkerRootImpl private constructor(
       detachAsLeaf(editor, rootId)
 
       return if (goesLeft) {
-        val (middle, greater) = splitByStart(editor, rightId, boundaryOffset, equalGoesLeft)
+        val [middle, greater] = splitByStart(editor, rightId, boundaryOffset, equalGoesLeft)
         val lessOrEqual = joinPrepared(editor, leftId, rootId, middle)
         editor.setParent(lessOrEqual, NULL_NODE)
         editor.setParent(greater, NULL_NODE)
         lessOrEqual to greater
       }
       else {
-        val (less, middle) = splitByStart(editor, leftId, boundaryOffset, equalGoesLeft)
+        val [less, middle] = splitByStart(editor, leftId, boundaryOffset, equalGoesLeft)
         val greaterOrEqual = joinPrepared(editor, middle, rootId, rightId)
         editor.setParent(less, NULL_NODE)
         editor.setParent(greaterOrEqual, NULL_NODE)
@@ -1221,7 +1194,7 @@ open class PMarkerRootImpl private constructor(
       editor: MapBatchEditor,
       rootId: Long,
       ancestorDelta: Int,
-      destination: MutableList<MarkerEntry>,
+      destination: MutableList<in MarkerEntry>,
     ) {
       if (rootId == NULL_NODE) return
       val node = editor.valid(rootId)
