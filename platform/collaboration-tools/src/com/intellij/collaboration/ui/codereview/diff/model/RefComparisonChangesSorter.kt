@@ -25,9 +25,7 @@ fun interface RefComparisonChangesSorter {
   class Grouping(private val project: Project, private val groupings: Set<String>) : RefComparisonChangesSorter {
     // TODO: don't build the tree, implement a comparator
     override fun sort(changes: List<RefComparisonChange>): List<RefComparisonChange> {
-      val groupingFactory = ChangesGroupingSupport(project, Unit, false).apply {
-        setGroupingKeysOrSkip(groupings)
-      }.grouping
+      val groupingFactory = ChangesGroupingSupport.createGroupingFactory(groupings)
       val model = TreeModelBuilder(project, groupingFactory).apply {
         for (change in changes) {
           insertChangeNode(change.filePath, myRoot, Node(change))

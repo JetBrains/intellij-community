@@ -39,7 +39,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     changeSupport.firePropertyChange(PROP_GROUPING_KEYS, oldGroupingKeys, _groupingKeys.toSet())
   }
 
-  val grouping: ChangesGroupingPolicyFactory get() = CombinedGroupingPolicyFactory()
+  val grouping: ChangesGroupingPolicyFactory get() = CombinedGroupingPolicyFactory(showConflictsNode) { _groupingKeys }
   val isNone: Boolean get() = _groupingKeys.isEmpty()
   val isDirectory: Boolean get() = this[DIRECTORY_GROUPING]
 
@@ -69,10 +69,13 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     changeSupport.removePropertyChangeListener(listener)
   }
 
-  private inner class CombinedGroupingPolicyFactory : ChangesGroupingPolicyFactory() {
+  private class CombinedGroupingPolicyFactory(
+    private val showConflictsNode: Boolean,
+    private val groupingKeys: () -> Collection<String>,
+  ) : ChangesGroupingPolicyFactory() {
     override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): ChangesGroupingPolicy {
       var result = DefaultChangesGroupingPolicy.Factory(showConflictsNode).createGroupingPolicy(project, model)
-      sortedFactoriesFor(_groupingKeys).forEach { factory ->
+      sortedFactoriesFor(groupingKeys()).forEach { factory ->
         result = factory.createGroupingPolicy(project, model).apply { setNextGroupingPolicy(result) }
       }
       return result
@@ -98,6 +101,16 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     fun findFactory(key: String): ChangesGroupingPolicyFactory? {
       val availableFactories = GroupingPolicyFactoryHolder.getInstance().factories
       return availableFactories.keyToFactory[key]
+    }
+
+    /**
+     * Creates a grouping factory for a fixed set of [groupingKeys].
+     * The function skips an unknown key.
+     */
+    @ApiStatus.Internal
+    fun createGroupingFactory(groupingKeys: Collection<String>, showConflictsNode: Boolean = false): ChangesGroupingPolicyFactory {
+      val keys = groupingKeys.filter { findFactory(it) != null }
+      return CombinedGroupingPolicyFactory(showConflictsNode) { keys }
     }
 
     private fun sortedFactoriesFor(keys: Collection<String>): List<ChangesGroupingPolicyFactory> {
