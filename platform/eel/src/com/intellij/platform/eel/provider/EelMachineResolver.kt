@@ -61,14 +61,14 @@ suspend fun EelDescriptor.toEelApi(): EelApi {
 /**
  * SPI that maps an [EelDescriptor] to the [EelMachine] backing it.
  *
- * Each environment integration (WSL, Docker, SSH, …) contributes a resolver, discovered via [EelMachineResolverProvider]. Application
+ * Each environment integration (WSL, Docker, SSH, …) contributes a resolver, discovered via [EelMachineResolver.Provider]. Application
  * code does not implement or call this directly — use the `EelDescriptor.resolveEelMachine` / `EelDescriptor.getResolvedEelMachine`
  * extensions instead.
  */
 @ApiStatus.Experimental
 interface EelMachineResolver {
   companion object {
-    private val resolver = ServiceLoader.load(EelMachineResolverProvider::class.java, EelMachineResolverProvider::class.java.classLoader)
+    private val resolver = ServiceLoader.load(Provider::class.java, Provider::class.java.classLoader)
       .firstOrNull()
 
     fun getAll(): List<EelMachineResolver> {
@@ -84,6 +84,14 @@ interface EelMachineResolver {
         it.resolveEelMachineByInternalName(internalName)
       } ?: throw IllegalStateException("No EelMachine found for internal name: $internalName")
     }
+  }
+
+  /**
+   * SPI for providing [EelMachineResolver] instances. Loaded via [ServiceLoader] from `eel-impl`.
+   */
+  @ApiStatus.Internal
+  interface Provider {
+    fun getAll(): List<EelMachineResolver>
   }
 
   @ApiStatus.Internal
@@ -109,14 +117,6 @@ interface EelMachineResolver {
 
   @ApiStatus.Internal
   suspend fun resolveEelMachineByInternalName(internalName: String): EelMachine?
-}
-
-/**
- * SPI for providing [EelMachineResolver] instances. Loaded via [ServiceLoader] from `eel-impl`.
- */
-@ApiStatus.Internal
-fun interface EelMachineResolverProvider {
-  fun getAll(): List<EelMachineResolver>
 }
 
 /**

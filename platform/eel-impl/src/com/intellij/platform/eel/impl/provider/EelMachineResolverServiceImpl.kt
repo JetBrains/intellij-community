@@ -3,11 +3,12 @@ package com.intellij.platform.eel.impl.provider
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.provider.EelMachineResolver
-import com.intellij.platform.eel.provider.EelMachineResolverProvider
 import org.jetbrains.annotations.ApiStatus
 
-internal class EelMachineResolverProviderImpl : EelMachineResolverProvider {
-  override fun getAll(): List<EelMachineResolver> = EelMachineResolverEpBridge.EP_NAME.extensionList
+internal class EelMachineResolverProviderImpl : EelMachineResolver.Provider {
+  override fun getAll(): List<EelMachineResolver> {
+    return EelMachineResolverEpBridge.EP_NAME.extensionList
+  }
 }
 
 @ApiStatus.Internal
