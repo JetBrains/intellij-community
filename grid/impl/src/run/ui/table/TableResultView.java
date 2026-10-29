@@ -1006,6 +1006,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     @Override
     public @NotNull GridRowHeader createRowHeader() {
       GridRowHeader header = myResultPanel.createRowHeader(TableResultView.this);
+      // Disposed when replaced, and with the view at the latest; one made after the view is gone follows nothing.
+      if (!Disposer.tryRegister(TableResultView.this, header)) Disposer.dispose(header);
       header.updatePreferredSize();
       return header;
     }

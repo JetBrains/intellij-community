@@ -4,6 +4,7 @@ import com.intellij.database.datagrid.DataGrid
 import com.intellij.database.datagrid.GridColumn
 import com.intellij.database.datagrid.GridUtil
 import com.intellij.database.datagrid.ModelIndex
+import com.intellij.database.run.ui.grid.GridRowHeader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.util.Disposer
@@ -15,6 +16,7 @@ import java.awt.event.MouseListener
 import javax.swing.AbstractAction
 import javax.swing.ActionMap
 import javax.swing.DefaultListSelectionModel
+import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeEvent
@@ -116,7 +118,7 @@ internal class FrozenColumnsController(
     showRowNumbers = show
     val parent = findScrollPane() ?: return
     if (primaryView.isTransposed) {
-      parent.setRowHeaderView(primaryView.createSizedRowHeader())
+      replaceRowHeaderView(parent, primaryView.createSizedRowHeader())
       return
     }
     if (frozenView != null) {
@@ -125,8 +127,7 @@ internal class FrozenColumnsController(
       parent.repaint()
       return
     }
-    if (showRowNumbers) parent.setRowHeaderView(primaryView.createSizedRowHeader())
-    else parent.setRowHeader(null)
+    replaceRowHeaderView(parent, if (showRowNumbers) primaryView.createSizedRowHeader() else null)
   }
 
   fun refreshRowNumbers() {
@@ -456,6 +457,7 @@ internal class FrozenColumnsController(
     val current = if (view === primaryView) lead else order.primaryIndexOfFrozen(lead) ?: return false
     val row = leadRow(view)
     if (row < 0) return false
+    if (wrapsRows && !extend && moveWithinSelection(frozen, order, row, current, forward)) return true
     // Swing steps through column-model indices, including hidden pinned placeholders.
     val swingTarget = lead + if (forward) 1 else -1
     val swingHitsPlaceholder = view === primaryView && isPinnedPlaceholder(primaryView.columnModel, swingTarget)
@@ -467,6 +469,57 @@ internal class FrozenColumnsController(
     val focusTarget = if (isPinnedPlaceholder(primaryView.columnModel, target)) frozen else primaryView
     val handledHere = extend || focusTarget !== view || (view === primaryView && target != swingTarget)
     return handledHere && changeColumnSelection(order, row, target, extend, focusTarget)
+  }
+
+  /**
+   * Tab inside a selection of several cells moves the lead through the selection and keeps it, as Swing does in one table: it
+   * steps through the selected cells in displayed order, row by row, and wraps from the last one to the first.
+   */
+  private fun moveWithinSelection(frozen: GridTable, order: DisplayedColumnOrder, row: Int, column: Int, forward: Boolean): Boolean {
+    val rows = primaryView.selectionModel
+    val columns = primaryView.columnModel.selectionModel
+    val displayed = order.primaryViewIndices
+    val selectedPositions = displayed.indices.filter { columns.isSelectedIndex(displayed[it]) }
+    if (rows.isSelectionEmpty || selectedPositions.isEmpty()) return false
+    val oneCell = rows.minSelectionIndex == rows.maxSelectionIndex && selectedPositions.size == 1
+    if (oneCell && rows.isSelectedIndex(row) && columns.isSelectedIndex(column)) return false
+
+    val firstColumn = selectedPositions.first()
+    val lastColumn = selectedPositions.last()
+    var nextRow = row.coerceIn(rows.minSelectionIndex - 1, rows.maxSelectionIndex + 1)
+    var position = displayed.indexOf(column).coerceIn(firstColumn - 1, lastColumn + 1)
+    do {
+      position += if (forward) 1 else -1
+      if (position > lastColumn) {
+        position = firstColumn
+        nextRow = if (nextRow >= rows.maxSelectionIndex) rows.minSelectionIndex else nextRow + 1
+      }
+      else if (position < firstColumn) {
+        position = lastColumn
+        nextRow = if (nextRow <= rows.minSelectionIndex) rows.maxSelectionIndex else nextRow - 1
+      }
+    }
+    while (!rows.isSelectedIndex(nextRow) || !columns.isSelectedIndex(displayed[position]))
+
+    val target = displayed[position]
+    if (!stopEditingBeforeSelectionChange(primaryView, nextRow, target)) return true
+    val pinned = isPinnedPlaceholder(primaryView.columnModel, target)
+    // Selecting a selected index again moves the lead and the anchor to it and leaves the selection as it is.
+    val moveLead = {
+      rows.addSelectionInterval(nextRow, nextRow)
+      columns.addSelectionInterval(target, target)
+    }
+    if (pinned) {
+      runWithAutoscrollLocked(resultPanel, moveLead)
+      layout.scrollFrozenColumnToVisible(target)
+    }
+    else {
+      moveLead()
+    }
+    // For a pinned cell the main table's placeholder is zero wide, so this only reveals the row.
+    primaryView.scrollRectToVisible(primaryView.getCellRect(nextRow, target, false))
+    (if (pinned) frozen else primaryView).requestFocusInWindow()
+    return true
   }
 
   /**
@@ -533,7 +586,11 @@ internal class FrozenColumnsController(
       // The selected placeholder is already represented in the fixed strip, so it must not move the main viewport.
       primaryView.changeSelection(row, target, false, false)
     }
-    if (focusTarget !== primaryView) layout.scrollFrozenColumnToVisible(target)
+    if (focusTarget !== primaryView) {
+      layout.scrollFrozenColumnToVisible(target)
+      // The main table's placeholder is zero wide, so this only reveals the row, which Tab may have changed when it wrapped.
+      primaryView.scrollRectToVisible(primaryView.getCellRect(row, target, false))
+    }
     focusTarget.requestFocusInWindow()
     return true
   }
@@ -655,4 +712,11 @@ internal fun runWithAutoscrollLocked(grid: DataGrid, action: () -> Unit) {
   val locker = grid.autoscrollLocker
   if (locker.locked()) action()
   else locker.runWithLock { action() }
+}
+
+/** Shows [header] in the row header of [parent], and lets go of a row-number gutter it replaces, which listens to the main table. */
+internal fun replaceRowHeaderView(parent: TableScrollPane, header: JComponent?) {
+  val replaced = parent.rowHeader?.view as? GridRowHeader
+  if (header == null) parent.setRowHeader(null) else parent.setRowHeaderView(header)
+  if (replaced != null && replaced !== header) Disposer.dispose(replaced)
 }

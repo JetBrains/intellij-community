@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.CellRendererPanel;
 import com.intellij.ui.ComponentUtil;
@@ -66,6 +67,13 @@ public class TableResultRowHeader extends GridRowHeader {
   private final JBTable myTable;
   private final ActionGroup myPopupActions;
   private final RowHeaderCellRenderer myRenderer;
+  private final TableHoverListener myHoverListener = new TableHoverListener() {
+    @Override
+    public void onHover(@NotNull JTable table, int row, int column) {
+      revalidate();
+      repaint();
+    }
+  };
 
   public TableResultRowHeader(@NotNull DataGrid grid, @NotNull TableResultView view, @Nullable ActionGroup popupActions) {
     super(view.rowHeaderTable(), () -> view.getShowHorizontalLines(), () -> view.rowHeaderTable().getShowLastHorizontalLine());
@@ -78,13 +86,8 @@ public class TableResultRowHeader extends GridRowHeader {
     GutterMouseListener mouseListener = new GutterMouseListener();
     addMouseMotionListener(mouseListener);
     addMouseListener(mouseListener);
-    new TableHoverListener() {
-      @Override
-      public void onHover(@NotNull JTable table, int row, int column) {
-        revalidate();
-        repaint();
-      }
-    }.addTo(myTable);
+    myHoverListener.addTo(myTable);
+    Disposer.register(this, () -> myHoverListener.removeFrom(myTable));
   }
 
   protected @NotNull RowHeaderCellComponentBase createRegularRenderer() {

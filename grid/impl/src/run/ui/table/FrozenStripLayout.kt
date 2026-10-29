@@ -2,6 +2,7 @@ package com.intellij.database.run.ui.table
 
 import com.intellij.database.DataGridBundle
 import com.intellij.database.run.ui.grid.GridRowHeader
+import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBScrollBar
@@ -110,7 +111,7 @@ internal class FrozenStripLayout(
     // A pinch takes the magnificator of the view of the viewport under the pointer; over the pinned part that is this row header.
     ClientProperty.put(rowHeader, Magnificator.CLIENT_PROPERTY_KEY, pinnedPartMagnificator)
     // Reuse installed components to avoid relayout and flicker when pinning another column.
-    if (parent.rowHeader?.view !== rowHeader) parent.setRowHeaderView(rowHeader)
+    if (parent.rowHeader?.view !== rowHeader) replaceRowHeaderView(parent, rowHeader)
     if (parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== corner) {
       parent.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
     }
@@ -379,6 +380,8 @@ internal class FrozenStripLayout(
     scrolling?.uninstall(frozenView, rowHeader)
     scrolling = null
     updatingFrozenViewport = false
+    // The gutter listens to the main table, and its panel holds the strip, so it must stop listening when the strip goes.
+    rowHeader?.let(Disposer::dispose)
     rowHeader = null
     gutterWrappers = null
     lowerCorner = null

@@ -1,5 +1,7 @@
 package com.intellij.database.run.ui.grid;
 
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
 import sun.swing.SwingUtilities2;
@@ -7,6 +9,8 @@ import sun.swing.SwingUtilities2;
 import javax.swing.CellRendererPane;
 import javax.swing.JComponent;
 import javax.swing.JTable;
+import javax.swing.event.TableModelListener;
+import javax.swing.table.TableModel;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Component;
@@ -18,9 +22,11 @@ import java.awt.Rectangle;
 import java.awt.Stroke;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.ComponentListener;
 import java.util.function.Supplier;
 
-public abstract class GridRowHeader extends JComponent {
+/** A row header that follows a table; disposing it stops following the table, which outlives a header the view replaced or dropped. */
+public abstract class GridRowHeader extends JComponent implements Disposable {
   private static final int MIN_PREFERRED_WIDTH = 15;
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final Supplier<Boolean> myPaintHorizontalLines;
@@ -83,9 +89,12 @@ public abstract class GridRowHeader extends JComponent {
   }
 
   private void initListeners(JTable table) {
-    table.getModel().addTableModelListener(e -> updatePreferredSize());
+    TableModel model = table.getModel();
+    TableModelListener modelListener = e -> updatePreferredSize();
+    model.addTableModelListener(modelListener);
+    Disposer.register(this, () -> model.removeTableModelListener(modelListener));
     addPropertyChangeListener("rowHeight", e -> updatePreferredSize());
-    table.addComponentListener(new ComponentAdapter() {
+    ComponentListener sizeListener = new ComponentAdapter() {
       int myPreviousTableHeight;
 
       @Override
@@ -96,7 +105,14 @@ public abstract class GridRowHeader extends JComponent {
           myPreviousTableHeight = c.getHeight();
         }
       }
-    });
+    };
+    table.addComponentListener(sizeListener);
+    Disposer.register(this, () -> table.removeComponentListener(sizeListener));
+  }
+
+  @Override
+  public void dispose() {
+    // The listeners on the table are child disposables.
   }
 
   public void updatePreferredSize() {
