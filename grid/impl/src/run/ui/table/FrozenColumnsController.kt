@@ -47,8 +47,6 @@ import javax.swing.event.ListSelectionListener
 import javax.swing.event.MouseInputAdapter
 import javax.swing.event.TableColumnModelEvent
 import javax.swing.event.TableColumnModelListener
-import javax.swing.event.TableModelEvent
-import javax.swing.event.TableModelListener
 import javax.swing.table.TableColumnModel
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -336,7 +334,6 @@ internal class FrozenColumnsController(
     frozen.applyAppearance(primaryView.captureAppearance())
     installFrozenRegion(parent)
     mirrorColumnSelection(primaryView.columnModel.selectionModel, frozen.columnModel.selectionModel, false)
-    frozen.updateSortKeysFromColumnAttributes()
     parent.revalidate()
     parent.repaint()
   }
@@ -344,9 +341,10 @@ internal class FrozenColumnsController(
   private fun createFrozenView(parent: TableScrollPane): GridTable {
     originalCorner = parent.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
     originalLowerCorner = parent.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
-    val frozen = FrozenStripTable(resultPanel, columnHeaderPopupActions, rowHeaderPopupActions)
+    val frozen = FrozenStripTable(resultPanel, primaryView.model, columnHeaderPopupActions, rowHeaderPopupActions)
       .also { it.installHost(hostFactory(it)) }
-    // Rows share one model; columns use separate models mirrored below so selection paints correctly in both tables.
+    // The tables share the data model, the row order and the row selection; columns use separate models, mirrored below, so
+    // that selection paints correctly in both tables.
     frozen.selectionModel = primaryView.selectionModel
     TableSelectionModel.install(frozen, resultPanel)
     componentMouseListeners.forEach(frozen::addMouseListener)
@@ -361,19 +359,7 @@ internal class FrozenColumnsController(
     val columnOrderMirror = createFrozenColumnOrderMirror(frozen)
     val moveColumnListener = createFrozenMoveColumnListener(frozen)
     installFrozenScrolling(parent, frozen)
-
-    // The frozen table has its own model instance, so forward granular updates without stacking listeners on rebuild.
-    // Preserve the request place so Record View recognizes its own edits and keeps the caret.
-    // The strip can go away between the event and its removal, so read it through the region instead of capturing it.
-    val modelSync = TableModelListener { event ->
-      val model = (frozenView ?: return@TableModelListener).model
-      model.fireTableChanged(
-        if (event is GridTableModel.RequestedTableModelEvent)
-          GridTableModel.RequestedTableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type, event.place)
-        else TableModelEvent(model, event.firstRow, event.lastRow, event.column, event.type))
-    }
-    primaryView.model.addTableModelListener(modelSync)
-    region = FrozenRegion(frozen, modelSync, mirror, frozenMirror, columnOrderMirror, moveColumnListener)
+    region = FrozenRegion(frozen, mirror, frozenMirror, columnOrderMirror, moveColumnListener)
     return frozen
   }
 
@@ -829,7 +815,6 @@ internal class FrozenColumnsController(
    */
   private class FrozenRegion(
     val view: GridTable,
-    val modelSync: TableModelListener,
     val mainColumnMirror: ListSelectionListener,
     val columnMirror: ListSelectionListener,
     val columnOrderMirror: TableColumnModelListener,
@@ -840,7 +825,6 @@ internal class FrozenColumnsController(
     var lowerCorner: JComponent? = null
 
     fun dispose(primary: GridTable, sharedMouseListeners: List<MouseListener>) {
-      primary.model.removeTableModelListener(modelSync)
       primary.columnModel.selectionModel.removeListSelectionListener(mainColumnMirror)
       view.columnModel.selectionModel.removeListSelectionListener(columnMirror)
       view.columnModel.removeColumnModelListener(columnOrderMirror)
@@ -850,6 +834,7 @@ internal class FrozenColumnsController(
       // JTable and TableExpandableItemsHandler both listen to the row selection model. Replacing the shared model
       // lets each unregister from the primary view before the strip becomes otherwise unreachable.
       view.selectionModel = DefaultListSelectionModel()
+      view.detachModel()
       Disposer.dispose(view)
     }
   }

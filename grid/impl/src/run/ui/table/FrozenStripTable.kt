@@ -11,9 +11,10 @@ import kotlin.math.min
 /** Renders the pinned part of the complete view. */
 internal class FrozenStripTable(
   grid: DataGrid,
+  model: GridTableModel,
   columnActions: ActionGroup,
   rowActions: ActionGroup,
-) : GridTable(grid, columnActions, rowActions) {
+) : GridTable(grid, model, columnActions, rowActions) {
   override fun paintTrailingDivider(g: Graphics, bottom: Int) {
     paintPinDivider(g, this, bottom)
   }

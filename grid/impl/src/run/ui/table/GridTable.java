@@ -105,6 +105,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
@@ -126,7 +127,6 @@ import javax.swing.Action;
 import javax.swing.ActionMap;
 import javax.swing.BoxLayout;
 import javax.swing.CellRendererPane;
-import javax.swing.DefaultRowSorter;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -247,10 +247,14 @@ class GridTable extends JBTableWithResizableCells
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
   /** False once this table is disposed, after which it stops driving the column order of the grid. */
   private boolean myDrivesColumnOrder = true;
+  /** True once {@link #detachModel} has moved a dropped table off the shared data model; its events are no change of the grid. */
+  private boolean myModelDetached;
 
   private static final Logger LOG = Logger.getInstance(GridTable.class);
 
   private GridTableHost myHost;
+  /** The view's row heights, which this table applies to itself; null until the host is installed. */
+  private @Nullable RowHeightModel myRowHeights;
   private ColumnHeaderPainter myColumnHeaderPainter;
   private Int2ObjectMap<ColumnWidthState> myUntransposedColumnWidths;
 
@@ -272,7 +276,18 @@ class GridTable extends JBTableWithResizableCells
   protected GridTable(@NotNull DataGrid resultPanel,
                       @NotNull ActionGroup columnHeaderPopupActions,
                       @NotNull ActionGroup rowHeaderPopupActions) {
-    super(new RegularGridTableModel(resultPanel), new MyTableColumnModel());
+    this(resultPanel, new RegularGridTableModel(resultPanel), columnHeaderPopupActions, rowHeaderPopupActions);
+  }
+
+  /**
+   * Creates a table over {@code model}, which another table of the view may already show. The model is passed here rather than
+   * set later, because a later {@link #setModel} would clear the shared row selection and create another row sorter.
+   */
+  protected GridTable(@NotNull DataGrid resultPanel,
+                      @NotNull GridTableModel model,
+                      @NotNull ActionGroup columnHeaderPopupActions,
+                      @NotNull ActionGroup rowHeaderPopupActions) {
+    super(model, new MyTableColumnModel());
     myResultPanel = resultPanel;
     myColumnHeaderPopupActions = columnHeaderPopupActions;
     myRowHeaderPopupActions = rowHeaderPopupActions;
@@ -717,11 +732,9 @@ class GridTable extends JBTableWithResizableCells
     return myHost == null ? myClickedHeaderColumnIdx : myHost.getContextColumn();
   }
 
-  public void updateSortKeysFromColumnAttributes() {
-    RowSorter<? extends TableModel> rowSorter = getRowSorter();
-    if (rowSorter != null) {
-      rowSorter.setSortKeys(isTransposed() || myResultPanel.isSortViaOrderBy() ? null : createSortKeys());
-    }
+  /** The keys the view's sorter sorts by locally, or null when the grid doesn't sort locally. */
+  @Nullable List<RowSorter.SortKey> sortKeysFromColumnAttributes() {
+    return isTransposed() || myResultPanel.isSortViaOrderBy() ? null : createSortKeys();
   }
 
   public void orderingAndVisibilityChanged() {
@@ -1046,15 +1059,47 @@ class GridTable extends JBTableWithResizableCells
     return "";
   }
 
+  /** Stores the height in the view's row heights, which every table of the view then applies to itself. */
   @Override
   public void setRowHeight(int row, int rowHeight) {
     if (row < 0 || row >= getRowCount()) {
       return;
     }
+    if (myHost != null) {
+      myHost.setRowHeight(row, rowHeight);
+    }
+    else {
+      applyRowHeight(row, rowHeight);
+    }
+  }
 
+  /** Setting the uniform height drops the per-row heights of this table, so it applies the view's row heights again. */
+  @Override
+  public void setRowHeight(int rowHeight) {
+    super.setRowHeight(rowHeight);
+    applyStoredRowHeights();
+  }
+
+  private void applyStoredRowHeights() {
+    if (myRowHeights == null) return;
+    for (Map.Entry<Integer, Integer> height : myRowHeights.heightsByModelRow().entrySet()) {
+      applyModelRowHeight(height.getKey(), height.getValue());
+    }
+  }
+
+  private void applyStoredRowHeight(int modelRow) {
+    Integer height = Objects.requireNonNull(myRowHeights).heightOf(modelRow);
+    applyModelRowHeight(modelRow, height != null ? height : getRowHeight());
+  }
+
+  private void applyModelRowHeight(int modelRow, int rowHeight) {
+    if (modelRow >= getModel().getRowCount()) return;
+    int row = convertRowIndexToView(modelRow);
+    if (row >= 0) applyRowHeight(row, rowHeight);
+  }
+
+  private void applyRowHeight(int row, int rowHeight) {
     super.setRowHeight(row, rowHeight);
-
-    if (myHost != null) myHost.syncRowHeight(row, rowHeight);
 
     Container parent = getParent();
     if (parent instanceof JViewport) {
@@ -1239,15 +1284,6 @@ class GridTable extends JBTableWithResizableCells
   public void resetColumnWidths() {
     for (TableResultViewColumn column : myColumnCache) {
       column.clearWidthSetByUser();
-    }
-  }
-
-  public void resetRowHeights() {
-    int defaultRowHeight = getRowHeight();
-    for (int i = 0; i < getRowCount(); i++) {
-      if (getRowHeight(i) != defaultRowHeight) {
-        setRowHeight(i, defaultRowHeight);
-      }
     }
   }
 
@@ -1536,30 +1572,27 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  @Override
-  public void setModel(@NotNull TableModel model) {
-    super.setModel(model);
-
-    final TableRowSorter<TableModel> rowSorter = createRowSorter(model);
+  /** A sorter of this table's model, set up as the grid sorts rows; the view owns it, see {@link TableRowOrder}. */
+  @NotNull TableRowSorter<TableModel> createGridRowSorter() {
+    TableRowSorter<TableModel> rowSorter = createRowSorter(getModel());
     rowSorter.setMaxSortKeys(1);
     rowSorter.setSortsOnUpdates(isSortOnUpdates());
-
-    SwingUtilities.invokeLater(() -> {
-      if (getRowSorter() == rowSorter) {
-        // row sorter will be set after the table is updated from passed model
-        updateRowFilter();
-      }
-    });
-
-    setRowSorter(rowSorter);
+    return rowSorter;
   }
 
-  public void updateRowFilter() {
-    DefaultRowSorter<? extends TableModel, Integer> sorter = (DefaultRowSorter<? extends TableModel, Integer>)getRowSorter();
-    sorter.setRowFilter(createFilter());
+  /** The filter belongs to the view's sorter, so the view filters the rows of every table. */
+  void updateRowFilter() {
+    if (myHost != null) myHost.updateRowFilter();
   }
 
-  private @NotNull RowFilter<TableModel, Integer> createFilter() {
+  /** The tables of a view share its sorter, which only the view tells about data changes; see {@link TableRowOrder}. */
+  @Override
+  public @Nullable RowSorter<? extends TableModel> getRowSorter() {
+    RowSorter<? extends TableModel> shared = myHost == null || myModelDetached ? null : myHost.getRowSorter();
+    return shared != null ? shared : super.getRowSorter();
+  }
+
+  @NotNull RowFilter<TableModel, Integer> createFilter() {
     RowFilter<TableModel, Integer> baseFilter = isTransposed() ?
                                                 new MyTransposedViewColumnFilter(myResultPanel) :
                                                 new MySearchRowFilter(myResultPanel, getLocalFilterState());
@@ -1788,6 +1821,12 @@ class GridTable extends JBTableWithResizableCells
   }
 
   private void updateFonts() {
+    updateFonts(true);
+  }
+
+  /** A font change resets the grid's per-row heights, which were set for the old font; setting up a pinned table does not. */
+  private void updateFonts(boolean resetRowHeights) {
+    if (resetRowHeights && myRowHeights != null) myRowHeights.clear();
     Font font = getFont();
     setFont(font);
     setRowHeight(getRowHeight());
@@ -1897,9 +1936,22 @@ class GridTable extends JBTableWithResizableCells
       super.tableChanged(e);
       return;
     }
+    // The view updates every table for a change of rows, after it has updated the shared sorter and selection.
+    if (myHost != null && !myModelDetached && e != null && e.getFirstRow() != TableModelEvent.HEADER_ROW) return;
     myResultPanel.getAutoscrollLocker().runWithLock(() -> super.tableChanged(e));
+    if (myModelDetached) return;
     myResultPanel.fireContentChanged(
       e instanceof GridTableModel.RequestedTableModelEvent ? ((GridTableModel.RequestedTableModelEvent)e).getPlace() : null);
+  }
+
+  /**
+   * Moves a dropped table off the data model it shared with the main table, so the model no longer holds it. The private model
+   * listeners of {@link JBTable} and {@link TableExpandableItemsHandler} leave a model only when the model property changes.
+   * Call it after the table has its own row selection model again: a model change clears the row selection.
+   */
+  void detachModel() {
+    myModelDetached = true;
+    super.setModel(new RegularGridTableModel(myResultPanel));
   }
 
   @Override
@@ -3244,6 +3296,15 @@ class GridTable extends JBTableWithResizableCells
   final void installHost(@NotNull GridTableHost host) {
     myHost = host;
     host.installColumnNavigationActions(getActionMap());
+    myRowHeights = host.getRowHeights();
+    myRowHeights.addListener(new RowHeightModel.Listener() {
+      @Override
+      public void rowHeightChanged(int modelRow) { applyStoredRowHeight(modelRow); }
+
+      @Override
+      public void rowHeightsCleared() { setRowHeight(getRowHeight()); }
+    }, this);
+    applyStoredRowHeights();
   }
 
   final void setColumnHeaderPainter(@Nullable ColumnHeaderPainter painter) {
@@ -3277,7 +3338,7 @@ class GridTable extends JBTableWithResizableCells
     setHoveredRowHighlightMode(appearance.hoverMode());
     myFontSizeIncrement = appearance.fontIncrement();
     myFontSizeScale = appearance.fontScale();
-    updateFonts();
+    updateFonts(false);
     setRowHeight(appearance.rowHeight());
     setAdditionalRowsCount(appearance.additionalRows());
     setVisibleRowCount(appearance.visibleRows());

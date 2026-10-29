@@ -12,6 +12,8 @@ import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.util.Ref
 import java.awt.event.MouseEvent
 import javax.swing.ActionMap
+import javax.swing.RowSorter
+import javax.swing.table.TableModel
 
 /** Requests that a local table sends to the complete view. */
 internal interface GridTableHost {
@@ -28,7 +30,14 @@ internal interface GridTableHost {
   fun adjustColumnMoveTarget(target: Int): Int
   fun constrainFrozenColumnResize(column: TableResultViewColumn, width: Int): Int
   fun columnMarginChanged()
-  fun syncRowHeight(row: Int, height: Int)
+  /** Stores a height for [row] of the table in [getRowHeights], which every table of the view then applies. */
+  fun setRowHeight(row: Int, height: Int)
+  /** The rows with a height of their own, which every table of the view applies to itself. */
+  fun getRowHeights(): RowHeightModel
+  /** The sorter that orders and filters the rows of every table of the view; only the view tells it about data changes. */
+  fun getRowSorter(): RowSorter<out TableModel>
+  /** Filters the rows of every table of the view again. */
+  fun updateRowFilter()
   fun changeFontSize(increment: Int, scale: Double)
   /** A click on a column header of the table sorts the grid by that column. */
   fun toggleSortOrder(column: ModelIndex<GridColumn>, additive: Boolean)

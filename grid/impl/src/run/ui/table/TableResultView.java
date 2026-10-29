@@ -45,6 +45,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.Comparing;
@@ -72,11 +73,13 @@ import javax.swing.JScrollBar;
 import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
 import javax.swing.SwingUtilities;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.ComponentOrientation;
@@ -102,12 +105,14 @@ import java.util.function.Consumer;
  * sorting, transposing, the statistics header, and writing the values that cell editors commit.
  * <p>
  * A call that reaches only the main table is correct for one of two reasons. Either the pinned table follows it: it shares the
- * row selection and the data model events, mirrors the column selection and order, and is rebuilt from the main table's columns
+ * data model and the row selection, mirrors the column selection and order, and is rebuilt from the main table's columns
  * whenever the layout is refreshed. Or the call reads geometry, appearance or indices that are the same in both tables, since the
  * main table also holds every pinned column as a zero-width placeholder.
  */
 public final class TableResultView implements ResultView, ResultViewWithCells, ResultViewWithColumns, ResultViewWithRows,
                                               ResultViewWithFrozenColumns, EditorColorsListener, UISettingsListener {
+  private static final Logger LOG = Logger.getInstance(TableResultView.class);
+
   private final DataGrid myResultPanel;
   private final GridTable myPrimary;
   private final FrozenColumnsController myFrozenColumnsController;
@@ -121,11 +126,14 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   private final GridSelectionGrower myGrower;
   private boolean myWasAutomaticallyTransposed;
   private final TableCellImageCache myCellImageCache;
+  private final RowHeightModel myRowHeights = new RowHeightModel();
+  private final TableRowOrder myRowOrder;
 
   public TableResultView(@NotNull DataGrid grid, @NotNull ActionGroup columnActions, @NotNull ActionGroup rowActions) {
     myResultPanel = grid;
     myContextColumn = ModelIndex.forColumn(grid, -1);
     myPrimary = new GridTable(grid, columnActions, rowActions);
+    myRowOrder = new TableRowOrder(grid, myPrimary, myRowHeights, this::tables);
     // One cache for the cell images of every table of the view.
     myCellImageCache = new TableCellImageCache(this, this);
     myFloatingToolbar = new TableFloatingToolbarController(grid, grid.getCoroutineScope());
@@ -190,6 +198,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   private @Nullable GridTable getFrozenView() {
     return myFrozenColumnsController.getFrozenView();
+  }
+
+  private List<GridTable> tables() {
+    GridTable frozen = getFrozenView();
+    return frozen == null ? List.of(myPrimary) : List.of(myPrimary, frozen);
   }
 
   private void forEachTable(Consumer<GridTable> operation) {
@@ -377,6 +390,8 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     if (isTransposed() == transposed) return;
     // A transposed grid has no pinned columns by design: drop them first; the grid pins them again when its layout is refreshed.
     if (transposed) setFrozenColumns(Set.of());
+    // The transpose replaces the data model, which a pinned table would go on showing.
+    LOG.assertTrue(getFrozenView() == null, "A transposed grid has no pinned table");
     myPrimary.transpose(transposed);
     myFrozenColumnsController.refreshRowNumbers();
   }
@@ -511,7 +526,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void updateSortKeysFromColumnAttributes() {
-    forEachTable(table -> table.updateSortKeysFromColumnAttributes());
+    myRowOrder.updateSortKeys();
   }
 
   @Override
@@ -566,13 +581,15 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     forEachTable(table -> table.clearCache(columnIdx));
   }
 
+  /** Takes a row of the main table; both tables show the same rows. */
   void setRowHeight(int row, int rowHeight) {
-    forEachTable(table -> table.setRowHeight(row, rowHeight));
+    if (row < 0 || row >= myPrimary.getRowCount()) return;
+    myRowHeights.setHeight(myPrimary.convertRowIndexToModel(row), rowHeight);
   }
 
   @Override
   public void columnsAdded(ModelIndexSet<GridColumn> columnIndices) {
-    // The pinned table gets the model event through its model sync and is rebuilt when the grid refreshes the pins.
+    // The pinned table gets the model event from the shared data model and is rebuilt when the grid refreshes the pins.
     myPrimary.columnsAdded(columnIndices);
   }
 
@@ -588,7 +605,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void rowsAdded(ModelIndexSet<GridRow> rows) {
-    // The pinned table gets the model event through its model sync.
+    // The pinned table gets the model event from the shared data model.
     myPrimary.rowsAdded(rows);
   }
 
@@ -666,7 +683,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   @Override
   public void resetRowHeights() {
-    forEachTable(table -> table.resetRowHeights());
+    myRowHeights.clear();
   }
 
   public @NotNull LocalFilterState getLocalFilterState() {
@@ -674,7 +691,7 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
   }
 
   public void updateRowFilter() {
-    forEachTable(table -> table.updateRowFilter());
+    myRowOrder.updateRowFilter();
   }
 
   @Override
@@ -1035,13 +1052,20 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
     public void columnMarginChanged() { myFrozenColumnsController.columnMarginChanged(myTable); }
 
     @Override
-    public void syncRowHeight(int row, int height) {
-      // A table changes a row height by itself on a cell resize or for multiline rows; the other table follows.
-      GridTable frozen = getFrozenView();
-      if (myTable != myPrimary && myTable != frozen) return;
-      GridTable other = isPrimary() ? frozen : myPrimary;
-      if (other != null && row < other.getRowCount() && other.getRowHeight(row) != height) other.setRowHeight(row, height);
+    public void setRowHeight(int row, int height) {
+      // A dropped pinned table can still restore an editor's row height late, but its rows no longer match the grid's.
+      if (myTable != myPrimary && myTable != getFrozenView()) return;
+      myRowHeights.setHeight(myTable.convertRowIndexToModel(row), height);
     }
+
+    @Override
+    public @NotNull RowHeightModel getRowHeights() { return myRowHeights; }
+
+    @Override
+    public @NotNull RowSorter<? extends TableModel> getRowSorter() { return myRowOrder.getSorter(); }
+
+    @Override
+    public void updateRowFilter() { TableResultView.this.updateRowFilter(); }
 
     @Override
     public void changeFontSize(int increment, double scale) { TableResultView.this.changeFontSize(increment, scale); }
@@ -1202,7 +1226,11 @@ public final class TableResultView implements ResultView, ResultViewWithCells, R
 
   public int getHeaderDraggedDistance() { return myPrimary.getTableHeader().getDraggedDistance(); }
 
-  public void refreshCells() { forEachTable(table -> table.tableChanged(null)); }
+  /** Refreshes the tables as for a new structure of the data, which also forgets the row order and the row heights. */
+  public void refreshCells() {
+    myRowOrder.structureChanged();
+    forEachTable(table -> table.tableChanged(null));
+  }
 
   /** Takes a point in the main table's coordinates. */
   public int columnAtPoint(@NotNull Point point) { return myPrimary.columnAtPoint(point); }
