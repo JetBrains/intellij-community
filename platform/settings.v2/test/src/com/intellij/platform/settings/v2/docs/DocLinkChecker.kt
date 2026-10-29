@@ -174,22 +174,12 @@ class DocLinkChecker(
     private val FRONT_MATTER = Regex("""\A---\n.*?\n---\n""", RegexOption.DOT_MATCHES_ALL)
     private val TARGETS_BLOCK = Regex("""^targets:\n(?:[ \t]+-.*\n)*""", RegexOption.MULTILINE)
     private val TARGET_ENTRY = Regex("""^[ \t]+-[ \t]+(\S+)""", RegexOption.MULTILINE)
-    private val FENCED_CODE = Regex("""^[ \t]*```.*?^[ \t]*```""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
-    private val INLINE_CODE = Regex("""`[^`\n]+`""")
     private val WHITESPACE = Regex("""\s+""")
-    private val NOT_NEWLINE = Regex("""[^\n]""")
     private val ADR_FILE = Regex("""(\d{4})-.*\.md""")
 
     /** Returns the number of the ADR file [file], or `null` when its name is not `NNNN-<slug>.md`. */
     fun adrNumber(file: Path): String? = ADR_FILE.matchEntire(file.name)?.groupValues?.get(1)
 
     private fun isExternal(target: String): Boolean = target.contains("://") || target.startsWith("mailto:")
-
-    /** Returns [text] with its fenced code blocks and inline code spans blanked out, so the offsets stay the same. */
-    private fun withoutCode(text: String): String = blank(blank(text, FENCED_CODE), INLINE_CODE)
-
-    /** Returns [text] with each match of [pattern] replaced by spaces, keeping the line breaks. */
-    private fun blank(text: String, pattern: Regex): String =
-      pattern.replace(text) { match -> match.value.replace(NOT_NEWLINE, " ") }
   }
 }

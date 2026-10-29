@@ -6,8 +6,8 @@ import java.nio.file.Path
 /**
  * Holds one problem that a documentation check found.
  *
- * @property file the file that holds the problem.
- * @property line the 1-based line of the problem, or `0` when the problem belongs to the whole file.
+ * @property file the file or the folder that holds the problem.
+ * @property line the 1-based line of the problem, or `0` when the problem belongs to the whole file or folder.
  * @property message the description of the problem.
  */
 data class DocProblem(val file: Path, val line: Int, val message: String) {

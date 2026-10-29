@@ -9,3 +9,14 @@ internal fun readDocText(file: Path): String = file.readText().replace("\r\n", "
 
 /** Returns the 1-based line of [offset] in [text]. */
 internal fun lineOf(text: String, offset: Int): Int = text.subSequence(0, offset).count { it == '\n' } + 1
+
+/** Returns [text] with its fenced code blocks and inline code spans blanked out, so the offsets stay the same. */
+internal fun withoutCode(text: String): String = blank(blank(text, FENCED_CODE), INLINE_CODE)
+
+/** Returns [text] with each match of [pattern] replaced by spaces, keeping the line breaks. */
+internal fun blank(text: String, pattern: Regex): String =
+  pattern.replace(text) { match -> match.value.replace(NOT_NEWLINE, " ") }
+
+private val FENCED_CODE = Regex("""^[ \t]*```.*?^[ \t]*```""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+private val INLINE_CODE = Regex("""`[^`\n]+`""")
+private val NOT_NEWLINE = Regex("""[^\n]""")

@@ -21,7 +21,25 @@ internal class AdrFile(val number: String, val file: Path, val text: String, val
   /** Holds the first word of [status], such as [PROPOSED_STATUS]. */
   val statusWord: String
     get() = STATUS_WORD.find(status)?.value.orEmpty()
+
+  /** Returns the fold entries `### NNNN, ...` of the `Earlier decisions` section of a merged ADR. */
+  fun foldEntries(): List<FoldEntry> {
+    val prose = withoutCode(text)
+    val section = EARLIER_DECISIONS_SECTION.find(prose) ?: return emptyList()
+    val sectionOffset = section.groups[1]!!.range.first
+    return FOLD_ENTRY.findAll(section.groupValues[1]).map { entry ->
+      FoldEntry(entry.groupValues[1], lineOf(text, sectionOffset + entry.range.first))
+    }.toList()
+  }
 }
+
+/**
+ * Holds one fold entry of a merged ADR.
+ *
+ * @property number the number of the folded ADR.
+ * @property line the 1-based line of the entry heading.
+ */
+internal class FoldEntry(val number: String, val line: Int)
 
 /** Reads every `NNNN-<slug>.md` file in [adrDir], sorted by name. Returns an empty list when [adrDir] does not exist. */
 internal fun readAdrFiles(adrDir: Path): List<AdrFile> {
@@ -35,5 +53,10 @@ internal fun readAdrFiles(adrDir: Path): List<AdrFile> {
   }
 }
 
-private val STATUS_SECTION = Regex("""^## Status\n(.*?)(?=^## |\z)""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+private fun sectionPattern(heading: String): Regex =
+  Regex("""^## $heading\n(.*?)(?=^## |\z)""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
+
+private val STATUS_SECTION = sectionPattern("Status")
+private val EARLIER_DECISIONS_SECTION = sectionPattern("Earlier decisions")
 private val STATUS_WORD = Regex("""\w+""")
+private val FOLD_ENTRY = Regex("""^### (\d{4}),""", RegexOption.MULTILINE)
