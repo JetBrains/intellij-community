@@ -6,6 +6,7 @@ package com.intellij.platform.ijent.spi
 import com.intellij.platform.eel.EelUnavailableException.CommunicationFailure
 import com.intellij.platform.eel.channels.EelReceiveChannelException
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.charset.StandardCharsets
@@ -14,6 +15,10 @@ import java.util.UUID
 internal data class ShellBootstrap(val marker: String, val command: String)
 
 /** Returns the shell command used for deployment and Windows recovery. */
+@VisibleToClasses(
+  "com.intellij.platform.ijent.spi.IjentShellBootstrapTest",
+  "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisorKt",
+)
 fun getIjentShellBootstrapCommand(): String = createShellBootstrap().command
 
 internal fun createShellBootstrap(): ShellBootstrap {
