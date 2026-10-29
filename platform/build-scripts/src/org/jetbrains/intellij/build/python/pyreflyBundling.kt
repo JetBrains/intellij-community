@@ -70,11 +70,12 @@ private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): DevPlugin
 
 /**
  * Declares pyrefly for every distribution. The dev distribution bundles it from these declarations. Production copies
- * the files only when [isPyreflyBundlingEnabled] is true.
+ * the files only when [isPyreflyBundlingEnabled] is true. The value is read once, when the layout is declared.
  */
 fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
+  val bundlingEnabled = isPyreflyBundlingEnabled()
   withGeneratedResources(PYREFLY_LICENSE_DEV_SPEC) { targetDir, context ->
-    if (isPyreflyStepEnabled()) {
+    if (isPyreflyStepEnabled(bundlingEnabled)) {
       copyPyreflyLicenseReport(targetDir, context)
     }
   }
@@ -82,12 +83,12 @@ fun PluginLayout.PluginLayoutSpec.withBundledPyrefly() {
   for (platform in SUPPORTED_DISTRIBUTIONS) {
     val (os, arch) = platform
     withGeneratedPlatformResources(platform, pyreflyBinaryDevSpec(os, arch)) { targetDir, context ->
-      if (isPyreflyStepEnabled()) {
+      if (isPyreflyStepEnabled(bundlingEnabled)) {
         copyPyreflyBinary(targetDir, context, os, arch)
       }
     }
 
-    if (os != OsFamily.WINDOWS && isPyreflyBundlingEnabled()) {
+    if (os != OsFamily.WINDOWS && bundlingEnabled) {
       withPlatformExecutable(platform, "$PYREFLY_DIR_NAME/${pyreflyPlatformDirName(os, arch)}/${os.binaryName(PYREFLY_BINARY_NAME)}")
     }
   }
@@ -103,8 +104,8 @@ fun PluginLayout.PluginLayoutSpec.withPublishedPyrefly(dist: SupportedDistributi
 
 fun isPyreflyBundlingEnabled(): Boolean = System.getProperty(PYREFLY_BUNDLE_ENABLED_PROPERTY).toBoolean()
 
-private fun isPyreflyStepEnabled(): Boolean {
-  if (isPyreflyBundlingEnabled()) {
+private fun isPyreflyStepEnabled(bundlingEnabled: Boolean): Boolean {
+  if (bundlingEnabled) {
     return true
   }
   Span.current().addEvent("skip the Pyrefly bundling, because '$PYREFLY_BUNDLE_ENABLED_PROPERTY' is false")
