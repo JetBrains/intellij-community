@@ -2,9 +2,13 @@
 package com.intellij.platform.eel.tcp
 
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.Path
 import kotlin.io.path.Path
 
+@VisibleToClasses(
+  "com.intellij.platform.frontend.split.baseline.eel.RdEelFileChooserContributor",
+)
 object SshEelConsts {
   const val SCHEME: String = "ssh"
 
@@ -26,9 +30,6 @@ object SshEelConsts {
     val configId = internalName.removePrefix("$SCHEME-")
     return configId.ifEmpty { null }
   }
-
-  fun pathFromInternalName(internalName: String, osFamily: EelOsFamily): Path =
-    Path("${TcpEelConstants.TCP_PATH_PREFIX}$internalName-${osFamily.name.lowercase()}")
 
   fun pathFromSshId(sshId: String, osFamily: EelOsFamily): Path =
     Path("${TcpEelConstants.TCP_PATH_PREFIX}$SCHEME-$sshId-${osFamily.name.lowercase()}")
