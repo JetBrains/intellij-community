@@ -18,13 +18,18 @@ import java.util.concurrent.ConcurrentMap;
 
 public final class AttributesFlyweight {
   /**
-   * A lossy cache in front of {@link #ENTRIES}, indexed by the hash code. A lookup that finds its flyweight here allocates nothing.
+   * A lossy cache of some {@link #INTERNED} flyweights, indexed by the hash code.
+   * A lookup that finds its flyweight here allocates nothing.
    * A miss fills only an empty slot, so after a warm-up the threads only read the array and do not contend.
    * A racy read is safe, because all fields of a flyweight are final.
    */
   private static final AttributesFlyweight[] FRONT = new AttributesFlyweight[1024];
 
-  private static final ConcurrentMap<AttributesFlyweight, AttributesFlyweight> ENTRIES = new ConcurrentHashMap<>();
+  /**
+   * The canonical flyweights. Each flyweight maps to itself, so a lookup with an equal candidate returns the canonical instance.
+   * It is a map, not a set, because a set cannot return the element that it holds.
+   */
+  private static final ConcurrentMap<AttributesFlyweight, AttributesFlyweight> INTERNED = new ConcurrentHashMap<>();
 
   public static @NotNull AttributesFlyweight create(
     Color foreground,
@@ -54,14 +59,9 @@ public final class AttributesFlyweight {
         cached.matches(hashCode, foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor)) {
       return cached;
     }
-    AttributesFlyweight candidate = new AttributesFlyweight(
+    AttributesFlyweight flyweight = intern(new AttributesFlyweight(
       hashCode, foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor
-    );
-    AttributesFlyweight flyweight = ENTRIES.get(candidate);
-    if (flyweight == null) {
-      AttributesFlyweight existing = ENTRIES.putIfAbsent(candidate, candidate);
-      flyweight = existing != null ? existing : candidate;
-    }
+    ));
     if (cached == null) {
       FRONT[slot] = flyweight;
     }
@@ -291,6 +291,18 @@ public final class AttributesFlyweight {
   public @NonNls String toString() {
     return "AttributesFlyweight{myForeground=" + myForeground + ", myBackground=" + myBackground + ", myFontType=" + myFontType +
            ", myEffectColor=" + myEffectColor + ", myEffectType=" + myEffectType + ", myErrorStripeColor=" + myErrorStripeColor + '}';
+  }
+
+  /**
+   * Returns the canonical flyweight that equals {@code candidate}. When there is none, {@code candidate} becomes canonical.
+   */
+  private static @NotNull AttributesFlyweight intern(@NotNull AttributesFlyweight candidate) {
+    AttributesFlyweight interned = INTERNED.get(candidate);
+    if (interned != null) {
+      return interned;
+    }
+    AttributesFlyweight existing = INTERNED.putIfAbsent(candidate, candidate);
+    return existing != null ? existing : candidate;
   }
 
   private static int computeHashCode(
