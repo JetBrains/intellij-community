@@ -16,9 +16,11 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
+import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -34,6 +36,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
 import java.awt.Color
+import java.awt.Font
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.FutureTask
@@ -107,6 +110,42 @@ class SnapshotRangeHighlighterImplTest {
     finally {
       model.dispose()
     }
+  }
+
+  @Test
+  fun `a font families change is a font style change`(@TestDisposable disposable: Disposable) {
+    val document = DocumentImpl("abc", true)
+    val model = MarkupModelImpl(document)
+    try {
+      val highlighter = model.addRangeHighlighter(0, 3, 0, null, HighlighterTargetArea.EXACT_RANGE) as RangeHighlighterEx
+      Assertions.assertThat(highlighter.javaClass.simpleName).isEqualTo("SnapshotRangeHighlighterImpl")
+      val fontStyleChanges = ArrayList<Boolean>()
+      model.addMarkupModelListener(disposable, object : MarkupModelListener {
+        override fun attributesChanged(
+          highlighter: RangeHighlighterEx,
+          renderersChanged: Boolean,
+          fontStyleChanged: Boolean,
+          foregroundColorChanged: Boolean,
+        ) {
+          fontStyleChanges.add(fontStyleChanged)
+        }
+      })
+
+      highlighter.setTextAttributes(attributes(Color.RED, FontFamilies.of("JetBrains Mono")))
+      highlighter.setTextAttributes(attributes(Color.RED, FontFamilies.of("Noto Serif")))
+      highlighter.setTextAttributes(attributes(Color.BLUE, FontFamilies.of("Noto Serif")))
+
+      Assertions.assertThat(fontStyleChanges).containsExactly(true, true, false)
+    }
+    finally {
+      model.dispose()
+    }
+  }
+
+  private fun attributes(background: Color, fontFamilies: FontFamilies): TextAttributes {
+    val attributes = TextAttributes(null, background, null, null, Font.PLAIN)
+    attributes.fontFamilies = fontFamilies
+    return attributes
   }
 
   @Test

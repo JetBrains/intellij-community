@@ -42,6 +42,8 @@ import kotlinx.coroutines.flow.Flow;
 import kotlinx.coroutines.flow.FlowKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.editor.markup.FontFamilies;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -58,6 +60,7 @@ import static com.intellij.platform.testFramework.junit5.codeInsight.fixture.Cod
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.projectFixture;
 import static com.intellij.testFramework.junit5.fixture.FixturesKt.tempPathFixture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -77,6 +80,19 @@ public class EditorUtilTest {
   @BeforeEach
   void setUp() {
     myFixture = editorFixture.get();
+  }
+
+  @Test
+  public void testFontFamiliesImpactFontStyle() {
+    TextAttributes attributes = new TextAttributes();
+    assertFalse(EditorUtil.attributesImpactFontStyle(attributes));
+    assertFalse(EditorUtil.attributesImpactFontStyleOrColor(attributes));
+
+    attributes.setFontFamilies(FontFamilies.of("JetBrains Mono"));
+
+    assertTrue(EditorUtil.attributesImpactFontStyle(attributes));
+    assertTrue(EditorUtil.attributesImpactFontStyleOrColor(attributes));
+    assertFalse(EditorUtil.attributesImpactForegroundColor(attributes));
   }
 
   @Test

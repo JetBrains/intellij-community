@@ -1122,13 +1122,20 @@ public final class EditorUtil {
     });
   }
 
+  /**
+   * Whether the attributes can change the font or the foreground color of the text.
+   * The font style and the font families change the font.
+   */
   public static boolean attributesImpactFontStyleOrColor(@Nullable TextAttributes attributes) {
-    return attributes == TextAttributes.ERASE_MARKER ||
-           (attributes != null && (attributes.getFontType() != Font.PLAIN || attributes.getForegroundColor() != null));
+    return attributesImpactFontStyle(attributes) || attributesImpactForegroundColor(attributes);
   }
 
+  /**
+   * Whether the attributes can change the font of the text: its font style or its font families.
+   */
   public static boolean attributesImpactFontStyle(@Nullable TextAttributes attributes) {
-    return attributes == TextAttributes.ERASE_MARKER || (attributes != null && attributes.getFontType() != Font.PLAIN);
+    return attributes == TextAttributes.ERASE_MARKER ||
+           (attributes != null && (attributes.getFontType() != Font.PLAIN || attributes.getFontFamilies() != null));
   }
 
   public static boolean attributesImpactForegroundColor(@Nullable TextAttributes attributes) {

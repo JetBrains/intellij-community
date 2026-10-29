@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -263,8 +264,12 @@ public final class ImmediatePainter {
     }
   }
 
+  /**
+   * Whether this painter can draw text with these attributes. It draws with the editor fonts only, so it skips font families.
+   */
   private static boolean canRender(final TextAttributes attributes) {
-    return attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null;
+    return (attributes.getEffectType() != EffectType.BOXED || attributes.getEffectColor() == null) &&
+           attributes.getFontFamilies() == null;
   }
 
   private void paintWithDoubleBuffering(final Graphics2D graphics, final Consumer<? super Graphics2D> painter) {
@@ -442,6 +447,7 @@ public final class ImmediatePainter {
     Color effect = null;
     EffectType effectType = null;
     int fontType = 0;
+    FontFamilies fontFamilies = null;
 
     for (int i = 0; i < cachedAttributes.size(); i++) {
       TextAttributes attrs = cachedAttributes.get(i);
@@ -458,6 +464,10 @@ public final class ImmediatePainter {
         fontType = attrs.getFontType();
       }
 
+      if (fontFamilies == null) {
+        fontFamilies = attrs.getFontFamilies();
+      }
+
       if (effect == null) {
         effect = attrs.getEffectColor();
         effectType = attrs.getEffectType();
@@ -471,6 +481,7 @@ public final class ImmediatePainter {
     if (fontType == Font.PLAIN) fontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
 
     Objects.requireNonNull(attributes).setAttributes(foreground, background, effect, null, effectType, fontType);
+    attributes.setFontFamilies(fontFamilies);
   }
 
   private static void pause() {

@@ -28,6 +28,10 @@ public interface MarkupModelListener extends EventListener {
   default void attributesChanged(@NotNull RangeHighlighterEx highlighter, boolean renderersChanged, boolean fontStyleOrColorChanged) {
   }
 
+  /**
+   * Called when the attributes of the {@code highlighter} change.
+   * {@code fontStyleChanged} is {@code true} when the change can affect the font of the text: its font style or its font families.
+   */
   default void attributesChanged(@NotNull RangeHighlighterEx highlighter,
                                  boolean renderersChanged, boolean fontStyleChanged, boolean foregroundColorChanged) {
     attributesChanged(highlighter, renderersChanged, fontStyleChanged || foregroundColorChanged);

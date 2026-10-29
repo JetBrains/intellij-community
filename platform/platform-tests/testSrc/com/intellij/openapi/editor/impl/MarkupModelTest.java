@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.ex.MarkupIterator;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.awt.Color;
+import java.awt.Font;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
@@ -84,6 +86,40 @@ public class MarkupModelTest {
       highlighter.setGutterIconRenderer(null);
       assertIteratorEmpty(markupModel.overlappingGutterIterator(0, 1));
     });
+  }
+
+  @Test
+  public void testFontFamiliesChangeIsFontStyleChange() {
+    myFixture.runTest(() -> {
+      myFixture.initText("abc");
+      Document document = getDocument(myFixture.getFile());
+      MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myFixture.getProject(), true);
+      RangeHighlighterEx highlighter =
+        (RangeHighlighterEx)markupModel.addRangeHighlighter(0, 3, 0, null, HighlighterTargetArea.EXACT_RANGE);
+      assertEquals("RangeHighlighterImpl", highlighter.getClass().getSimpleName());
+      List<Boolean> fontStyleChanges = new ArrayList<>();
+      markupModel.addMarkupModelListener(myFixture.getTestRootDisposable(), new MarkupModelListener() {
+        @Override
+        public void attributesChanged(@NotNull RangeHighlighterEx changed,
+                                      boolean renderersChanged,
+                                      boolean fontStyleChanged,
+                                      boolean foregroundColorChanged) {
+          fontStyleChanges.add(fontStyleChanged);
+        }
+      });
+
+      highlighter.setTextAttributes(attributes(Color.RED, FontFamilies.of("JetBrains Mono")));
+      highlighter.setTextAttributes(attributes(Color.RED, FontFamilies.of("Noto Serif")));
+      highlighter.setTextAttributes(attributes(Color.BLUE, FontFamilies.of("Noto Serif")));
+
+      assertEquals(List.of(true, true, false), fontStyleChanges);
+    });
+  }
+
+  private static TextAttributes attributes(Color background, FontFamilies fontFamilies) {
+    TextAttributes attributes = new TextAttributes(null, background, null, null, Font.PLAIN);
+    attributes.setFontFamilies(fontFamilies);
+    return attributes;
   }
 
   private static void assertIteratorEmpty(MarkupIterator<RangeHighlighterEx> iterator) {

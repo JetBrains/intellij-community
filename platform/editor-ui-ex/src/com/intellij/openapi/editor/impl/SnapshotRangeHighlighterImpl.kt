@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PersistentHighlighterPolicy
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+import com.intellij.openapi.editor.markup.FontFamilies
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.LineMarkerRenderer
@@ -108,7 +109,9 @@ internal class SnapshotRangeHighlighterImpl private constructor(
     val erasedChanged = old === TextAttributes.ERASE_MARKER || textAttributes === TextAttributes.ERASE_MARKER ||
                         old == null && textAttributesKey != null
     if (erasedChanged || old != textAttributes) {
-      val fontStyleChanged = erasedChanged || fontStyle(old) != fontStyle(textAttributes)
+      val fontStyleChanged = erasedChanged ||
+                             fontStyle(old) != fontStyle(textAttributes) ||
+                             fontFamilies(old) != fontFamilies(textAttributes)
       val foregroundColorChanged = erasedChanged || foregroundColor(old) != foregroundColor(textAttributes)
       fireChanged(false, fontStyleChanged, foregroundColorChanged)
     }
@@ -406,6 +409,8 @@ internal class SnapshotRangeHighlighterImpl private constructor(
     }
 
     private fun fontStyle(attributes: TextAttributes?): Int = attributes?.fontType ?: Font.PLAIN
+
+    private fun fontFamilies(attributes: TextAttributes?): FontFamilies? = attributes?.fontFamilies
 
     private fun foregroundColor(attributes: TextAttributes?): Color? = attributes?.foregroundColor
   }

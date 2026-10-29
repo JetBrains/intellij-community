@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.LineMarkerRenderer;
@@ -169,7 +170,9 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
                 old == null && myTextAttributesKey != null;
     boolean attributesChanged = !Objects.equals(old, textAttributes);
     if (erasedChanged || attributesChanged) {
-      boolean fontStyleChanged = erasedChanged || getFontStyle(old) != getFontStyle(textAttributes);
+      boolean fontStyleChanged = erasedChanged ||
+                                 getFontStyle(old) != getFontStyle(textAttributes) ||
+                                 !Objects.equals(getFontFamilies(old), getFontFamilies(textAttributes));
       boolean foregroundColorChanged = erasedChanged || !Objects.equals(getForegroundColor(old), getForegroundColor(textAttributes));
       fireChanged(false, fontStyleChanged, foregroundColorChanged);
     }
@@ -198,6 +201,10 @@ sealed class RangeHighlighterImpl extends RangeMarkerImpl implements RangeHighli
 
   private static int getFontStyle(@Nullable TextAttributes textAttributes) {
     return textAttributes == null ? Font.PLAIN : textAttributes.getFontType();
+  }
+
+  private static @Nullable FontFamilies getFontFamilies(@Nullable TextAttributes textAttributes) {
+    return textAttributes == null ? null : textAttributes.getFontFamilies();
   }
 
   private static Color getForegroundColor(TextAttributes textAttributes) {
