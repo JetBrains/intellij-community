@@ -66,9 +66,9 @@ Available through ijproxy or JetBrains MCP: `lint_files`, `get_symbol_info`, `re
 
 ### Tooling rules
 
-- Search with accio, not with the ijproxy `search_*` tools or `{{TOOLS_DIR}}/fd.cmd`.
+- Search the repository with accio, not with the ijproxy `search_*` tools.
 <!-- IF_EDITION:ULTIMATE -->- Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `./bazel.cmd run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.<!-- /IF_EDITION:ULTIMATE -->
-- Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position.
+- Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools and the `find` command are denied. Use `grep` only as a pipeline filter: a recursive `grep` is denied.
 - Prefer a spelling the allowlist knows, because a novel one asks for a prompt. Add a new entry to `{{COMMUNITY_DIR}}.ai/tool-permissions.json`, never to a harness allowlist.
 - Shell is allowed where this guide documents it, and for git, build, and test. Prefer `git_status` when that tool is available. Outside the working copy it is task-scoped: read what this repo's tooling produced, or what the user or a skill named, and never survey the machine.
 

@@ -202,7 +202,9 @@ describe('render-guides skills', () => {
 
     ok(ultimate.allow.some(argv => argv[0] === './community/tools/rg.cmd'), 'ultimate list should use ./community/tools')
     ok(community.allow.some(argv => argv[0] === './tools/rg.cmd'), 'community list should use ./tools')
-    ok(ultimate.deny.some(argv => argv[0] === 'grep'), 'grep should be denied')
+    ok(ultimate.deny.some(argv => argv[0] === 'find'), 'find should be denied')
+    ok(ultimate.allow.some(argv => argv[0] === 'grep' && argv.length === 1), 'grep should be allowed as a pipeline filter')
+    ok(ultimate.deny.some(argv => argv[0] === 'grep' && argv[1] === '-r'), 'a recursive grep should be denied')
     ok(ultimate.denyTools.includes('Grep'), 'the Grep tool should be denied')
     ok(ultimate.additionalDirectories.includes('~/.branch-deck/pool'), 'the lease pool should be a working directory')
   })
