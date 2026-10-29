@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.runners.ExecutionEnvironment
+import java.io.File
 
 private const val PROVIDER_ENV = "INTELLIJ_DEBUGGER_TESTS_VM_ATTACHER"
 private const val PROVIDER_PROPERTY = "intellij.debugger.tests.vm.attacher"
@@ -27,6 +28,9 @@ private const val PROVIDER_PROPERTY = "intellij.debugger.tests.vm.attacher"
 interface VmAttacher {
     /** Perform any setup operations */
     fun setUp() {}
+
+    /** Override expected output file */
+    fun getExpectedOutputFile(testDataPath: String, testName: String): File? = null
 
     /** Perform any tear down operations */
     fun tearDown() {}

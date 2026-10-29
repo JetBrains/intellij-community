@@ -758,8 +758,13 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
             ".indy.out".takeIf { lambdasGenerationScheme() == JvmClosureGenerationScheme.INDY },
             ".out",
         )
-        return extensions.filterNotNull()
-            .map { File(getTestDataPath(), getTestName(true) + it) }
+        val testDataPath = getTestDataPath()
+        val testName = getTestName(true)
+        val override = VmAttacher.getInstance().getExpectedOutputFile(testDataPath, testName)
+        return override ?: extensions.filterNotNull()
+            .map {
+                File(testDataPath, testName + it)
+            }
             .run { firstOrNull(File::exists) ?: last() }
     }
 
