@@ -3,7 +3,9 @@ package com.intellij.platform.lsp.impl.features.completion
 import com.google.gson.JsonNull
 import com.google.gson.JsonObject
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.impl.LspClientImpl
+import com.intellij.platform.lsp.impl.getCompletionTriggerCharacters
 import org.eclipse.lsp4j.ApplyKind
 import org.eclipse.lsp4j.CompletionApplyKind
 import org.eclipse.lsp4j.CompletionContext
@@ -18,12 +20,13 @@ import java.util.Objects
 
 internal fun createCompletionContext(
   lspClient: LspClientImpl,
+  file: VirtualFile,
   document: Document,
   offset: Int,
   isAutoPopup: Boolean,
 ): CompletionContext = when {
   isAutoPopup -> getTypedChar(document, offset)
-                   ?.takeIf { isCompletionTriggerCharacter(lspClient, it) }
+                   ?.takeIf { isCompletionTriggerCharacter(lspClient, file, it) }
                  ?.let { CompletionContext(CompletionTriggerKind.TriggerCharacter, it) }
                ?: CompletionContext(CompletionTriggerKind.Invoked)
   else -> CompletionContext(CompletionTriggerKind.Invoked)
@@ -42,8 +45,8 @@ internal fun Either<List<CompletionItem>, CompletionList>.toCompletionList(): Co
 private fun getTypedChar(document: Document, offset: Int): String? =
   if (offset > 0 && offset <= document.textLength) document.charsSequence[offset - 1].toString() else null
 
-private fun isCompletionTriggerCharacter(lspClient: LspClientImpl, typedChar: String): Boolean =
-  lspClient.serverCapabilities?.completionProvider?.triggerCharacters?.contains(typedChar) == true
+private fun isCompletionTriggerCharacter(lspClient: LspClientImpl, file: VirtualFile, typedChar: String): Boolean =
+  lspClient.getCompletionTriggerCharacters(file)?.contains(typedChar) == true
 
 private fun applyItemDefaults(item: CompletionItem, itemDefaults: CompletionItemDefaults, applyKind: CompletionApplyKind?) {
   item.commitCharacters = when (applyKind?.commitCharacters) {

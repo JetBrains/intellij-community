@@ -36,11 +36,15 @@ import org.eclipse.lsp4j.CompletionItemLabelDetails
 import org.eclipse.lsp4j.CompletionItemTag
 import org.eclipse.lsp4j.CompletionList
 import org.eclipse.lsp4j.CompletionOptions
+import org.eclipse.lsp4j.CompletionRegistrationOptions
+import org.eclipse.lsp4j.CompletionTriggerKind
 import org.eclipse.lsp4j.InsertReplaceRange
 import org.eclipse.lsp4j.InsertTextFormat
 import org.eclipse.lsp4j.InsertTextMode
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.TextEdit
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -65,14 +69,19 @@ internal class LspCompletionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
-    configureServerCapabilities = {
-      completionProvider = CompletionOptions().apply {
-        resolveProvider = true
-        triggerCharacters = listOf("|")
-      }
-    },
-  )
+  /**
+   * Each nested class that uses the server declares its own fixture.
+   * [DynamicRegistration] needs a server without the static completion capability.
+   */
+  private fun completionIntegrationFixture() =
+    projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = {
+        completionProvider = CompletionOptions().apply {
+          resolveProvider = true
+          triggerCharacters = listOf("|")
+        }
+      },
+    )
 
   /**
    * Waits until the lookup resolves [element] in the background, then renders [element] with its expensive renderer.
@@ -94,6 +103,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class BasicCompletion {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `basic completion returns items from server`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
@@ -219,6 +230,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class TriggerCharacters {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `completion triggered by triggerCharacters from server capabilities`(): Unit = timeoutRunBlocking {
       val autoPopupTester = CompletionAutoPopupTester(codeInsightFixture)
@@ -241,6 +254,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class CompletionItemResolve {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `completion item resolve fetches additional details`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
@@ -313,6 +328,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class CompletionPrefix {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `completion prefix calculated from textEdit range`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hel<caret>").virtualFile
@@ -339,6 +356,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class ItemPresentation {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `completion item strikeout for deprecated tag`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
@@ -457,6 +476,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class InsertTextFormatTests {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `plaintext format completion items inserted as-is`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
@@ -486,6 +507,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class InsertTextModeTests {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `adjustIndentation insert text mode adjusts whitespace`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "  <caret>").virtualFile
@@ -545,6 +568,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class AdditionalTextEdits {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `completion item with additionalTextEdits applies all edits`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
@@ -576,6 +601,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class ItemDefaults {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `default editRange is applied with textEditText or label`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hel<caret>").virtualFile
@@ -805,6 +832,8 @@ internal class LspCompletionTest {
 
   @Nested
   inner class Cancellation {
+    private val fakeLspIntegration by completionIntegrationFixture()
+
     @Test
     fun `cancelled completion sends cancelRequest to the server`(): Unit = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
@@ -838,6 +867,112 @@ internal class LspCompletionTest {
         assertTrue(pendingResponse.isCancelled)
       }
       caller.join()
+    }
+  }
+
+  @Nested
+  inner class DynamicRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+
+    @Test
+    fun `completion works with a dynamic registration only`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("completion", "textDocument/completion", CompletionRegistrationOptions())))
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forLeft(listOf(CompletionItem("hello"), CompletionItem("world")))
+      }
+
+      val lookupElements = codeInsightFixture.completeBasic()
+      serverSession.awaitExpected()
+
+      assertNotNull(lookupElements)
+      assertEquals(setOf("hello", "world"), lookupElements!!.map { it.lookupString }.toSet())
+    }
+
+    @Test
+    fun `a trigger character of the dynamic registration opens the completion popup`(): Unit = timeoutRunBlocking {
+      val autoPopupTester = CompletionAutoPopupTester(codeInsightFixture)
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "foo<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("completion", "textDocument/completion", CompletionRegistrationOptions().apply {
+          triggerCharacters = listOf("|")
+        })))
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION, {
+        it.textDocument.uri == serverSession.fileUri(virtualFile) &&
+        it.context?.triggerKind == CompletionTriggerKind.TriggerCharacter &&
+        it.context?.triggerCharacter == "|"
+      }) {
+        Either.forLeft(listOf(CompletionItem("bar")))
+      }
+
+      autoPopupTester.runWithAutoPopupEnabled {
+        autoPopupTester.typeWithPauses("|")
+      }
+      serverSession.awaitExpected()
+    }
+
+    @Test
+    fun `completion item resolve uses the resolve provider of the dynamic registration`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("completion", "textDocument/completion", CompletionRegistrationOptions().apply {
+          resolveProvider = true
+        })))
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forLeft(listOf(CompletionItem("myItem")))
+      }
+      serverSession.expectRequest(serverSession.COMPLETION_ITEM_RESOLVE, { it.label == "myItem" }) {
+        CompletionItem("myItem").apply { detail = "fun myItem(): String" }
+      }
+
+      val element = codeInsightFixture.completeBasic()!!.single()
+      serverSession.awaitExpected()
+
+      assertEquals("fun myItem(): String", awaitResolveAndRender(element).typeText)
+    }
+
+    @Suppress("AssertBetweenInconvertibleTypes") // Qodana bug
+    @Test
+    fun `completion is not requested without a dynamic registration`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+
+      // The completion contributor asks the server synchronously.
+      codeInsightFixture.completeBasic()
+
+      assertEquals(emptyList<Any>(), serverSession.receivedRequests(serverSession.COMPLETION),
+                   "Expected no textDocument/completion without a registration")
+    }
+
+    @Suppress("AssertBetweenInconvertibleTypes") // Qodana bug
+    @Test
+    fun `completion item resolve is not sent when the dynamic registration has no resolve provider`(): Unit = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "<caret>").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("completion", "textDocument/completion", CompletionRegistrationOptions())))
+      }
+
+      serverSession.expectRequest(serverSession.COMPLETION, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+        Either.forLeft(listOf(CompletionItem("myItem")))
+      }
+
+      val element = codeInsightFixture.completeBasic()!!.single()
+      // `resolveCompletionItem()` decides about the resolve. It returns after the resolve response, if it sends the request.
+      (element.`object` as LspCompletionObject).resolveCompletionItem()
+
+      assertEquals(emptyList<Any>(), serverSession.receivedRequests(serverSession.COMPLETION_ITEM_RESOLVE),
+                   "Expected no completionItem/resolve when the server does not support it")
     }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.getCompletionTriggerCharacters
 import com.intellij.psi.PsiFile
 
 /**
@@ -22,7 +23,7 @@ internal class LspAutoPopupTypedHandler : TypedHandlerDelegate() {
                ?: return Result.CONTINUE
 
     for (client in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
-      if (client.serverCapabilities?.completionProvider?.triggerCharacters?.contains(charTyped.toString()) != true) continue
+      if (client.getCompletionTriggerCharacters(file)?.contains(charTyped.toString()) != true) continue
       val completionSupport = client.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: continue
       if (!completionSupport.isTriggerCharacterRespected(charTyped)) continue
 

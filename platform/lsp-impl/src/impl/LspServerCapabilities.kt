@@ -55,6 +55,19 @@ internal fun LspClientImpl.hasCodeActionResolveProvider(): Boolean =
   serverCapabilities?.codeActionProvider?.right?.resolveProvider == true ||
   dynamicCapabilities.getCapabilityRegistrationOptions(LspDynamicCapabilities.codeAction).any { it.resolveProvider == true }
 
+internal fun LspClientImpl.supportsCompletion(file: VirtualFile): Boolean =
+  serverCapabilities?.completionProvider != null ||
+  hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.completion)
+
+internal fun LspClientImpl.getCompletionTriggerCharacters(file: VirtualFile): List<String>? =
+  getDynamicCapabilityOptionsForFile(file, LspDynamicCapabilities.completion)?.triggerCharacters
+  ?: serverCapabilities?.completionProvider?.triggerCharacters
+
+internal fun LspClientImpl.supportsCompletionResolve(file: VirtualFile): Boolean =
+  getDynamicCapabilityOptionsForFile(file, LspDynamicCapabilities.completion)?.resolveProvider
+  ?: serverCapabilities?.completionProvider?.resolveProvider
+  ?: false
+
 internal fun LspClientImpl.supportsGotoDefinition(): Boolean = serverCapabilities?.definitionProvider?.let { it.left ?: true } == true
 
 internal fun LspClientImpl.supportsGotoTypeDefinition(): Boolean = serverCapabilities?.typeDefinitionProvider?.let { it.left ?: true } == true

@@ -28,10 +28,12 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
  * Implementing [Pointer], [Symbol], and [DocumentationTarget] is needed so that
  * [IdeDocumentationTargetProviderImpl.documentationTargets][com.intellij.lang.documentation.ide.impl.IdeDocumentationTargetProviderImpl.documentationTargets]
  * could select this object to be a [DocumentationTarget] for the corresponding [LookupElement].
+ *
  */
 internal class LspCompletionObject(
   val lspClient: LspClientImpl,
   private val requestSemaphore: Semaphore,
+  private val supportsCompletionResolve: Boolean,
   private val initialCompletionItem: CompletionItem,
 ) : Pointer<LspCompletionObject>, Symbol, DocumentationTarget {
 
@@ -48,7 +50,7 @@ internal class LspCompletionObject(
   internal suspend fun resolveCompletionItem() {
     if (resolvedCompletionItem != null) return
 
-    if (lspClient.serverCapabilities?.completionProvider?.resolveProvider != true) {
+    if (!supportsCompletionResolve) {
       resolvedCompletionItem = initialCompletionItem
       return
     }
@@ -73,7 +75,7 @@ internal class LspCompletionObject(
     initialCompletionItem.documentation?.let { return lsp4jDocsToDocumentation(it) }
 
     if (resolvedCompletionItem != null) return null
-    if (lspClient.serverCapabilities?.completionProvider?.resolveProvider != true) return null
+    if (!supportsCompletionResolve) return null
 
     return DocumentationResult.asyncDocumentation {
       resolvedCompletionItem = lspClient.sendRequest { it.textDocumentService.resolveCompletionItem(initialCompletionItem) }

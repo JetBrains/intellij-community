@@ -137,6 +137,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       linkSupport = true
     }
     completion = CompletionCapabilities().apply {
+      dynamicRegistration = true
       completionItem = CompletionItemCapabilities().apply {
         documentationFormat = listOf(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT)
         deprecatedSupport = true

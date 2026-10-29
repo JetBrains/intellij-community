@@ -83,7 +83,7 @@ class LspRequestExecutor(
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun getCompletionListAsync(file: VirtualFile, offset: Int, isAutoPopup: Boolean): CompletableFuture<CompletionList?> {
     val host = documentMapping.unwrapInjection(file, offset) ?: return CompletableFuture.completedFuture(null)
-    val completionContext = createCompletionContext(lspClient, host.hostDocument, host.hostOffset, isAutoPopup)
+    val completionContext = createCompletionContext(lspClient, host.hostFile, host.hostDocument, host.hostOffset, isAutoPopup)
     return documentMapping.withDocumentAtOffset(host.hostFile, host.hostDocument, host.hostOffset) { lspDocument, position ->
       val params = CompletionParams(lspDocument.id, position, completionContext)
       val source = doSendRequestAsync { it.textDocumentService.completion(params) }

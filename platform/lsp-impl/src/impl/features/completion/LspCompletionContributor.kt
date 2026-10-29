@@ -16,6 +16,8 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.lsp.api.customization.LspCompletionSupport
 import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
+import com.intellij.platform.lsp.impl.supportsCompletion
+import com.intellij.platform.lsp.impl.supportsCompletionResolve
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import kotlinx.coroutines.sync.Semaphore
 import org.eclipse.lsp4j.CompletionItem
@@ -37,7 +39,7 @@ class LspCompletionContributor : CompletionContributor(), DumbAware, FrontendCom
     for (client in LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(file)) {
       ProgressManager.checkCanceled()
 
-      client.serverCapabilities?.completionProvider ?: continue
+      if (!client.supportsCompletion(file)) continue
       val completionSupport = client.descriptor.lspCustomization.completionCustomizer as? LspCompletionSupport ?: continue
       if (!completionSupport.shouldRunCodeCompletion(parameters)) continue
 
@@ -85,6 +87,8 @@ fun <T> processCompletionItemsImpl(
   // other commands and may lead to unresponsiveness of the server if completion item resolve takes a lot of time.
   // Not every LSP supports command cancellation properly.
   val requestSemaphore = Semaphore(2)
+  val file = FileDocumentManager.getInstance().getFile(document)
+  val supportsCompletionResolve = file != null && lspClient.supportsCompletionResolve(file)
   for (item in items) {
     val lookupElement = createLookupElement(item) ?: continue
     val completionItem = lookupElement.`object` as? CompletionItem ?: continue
@@ -98,7 +102,9 @@ fun <T> processCompletionItemsImpl(
       }
     }
 
-    currentResultSet.addElement(LspLookupElementDecorator(lspClient, requestSemaphore, lookupElement, completionItem))
+    currentResultSet.addElement(
+      LspLookupElementDecorator(lspClient, requestSemaphore, supportsCompletionResolve, lookupElement, completionItem)
+    )
   }
 }
 

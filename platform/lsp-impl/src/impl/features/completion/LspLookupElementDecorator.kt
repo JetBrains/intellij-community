@@ -20,11 +20,13 @@ import org.eclipse.lsp4j.CompletionItem
 internal class LspLookupElementDecorator(
   lspClient: LspClientImpl,
   requestSemaphore: Semaphore,
+  supportsCompletionResolve: Boolean,
   lookupElement: LookupElement,
   completionItem: CompletionItem,
 ) : LookupElementDecorator<LookupElement>(lookupElement) {
 
-  private val lspCompletionObject: LspCompletionObject = LspCompletionObject(lspClient, requestSemaphore, completionItem)
+  private val lspCompletionObject: LspCompletionObject =
+    LspCompletionObject(lspClient, requestSemaphore, supportsCompletionResolve, completionItem)
 
   override fun getObject(): LspCompletionObject = lspCompletionObject
 
