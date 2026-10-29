@@ -2,8 +2,8 @@
 package com.intellij.debugger.streams.ui.impl
 
 import com.intellij.debugger.DebuggerContext
-import com.intellij.debugger.engine.ContextUtil
 import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.memory.utils.InstanceValueDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
@@ -32,6 +32,7 @@ internal class PrimitiveValueDescriptor internal constructor(project: Project, v
     }
 
     val elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory()
-    return elementFactory.createExpressionFromText(value.toString(), ContextUtil.getContextElement(debuggerContext))
+    val contextElement = (debuggerContext as DebuggerContextImpl?)?.contextElement
+    return elementFactory.createExpressionFromText(value.toString(), contextElement)
   }
 }

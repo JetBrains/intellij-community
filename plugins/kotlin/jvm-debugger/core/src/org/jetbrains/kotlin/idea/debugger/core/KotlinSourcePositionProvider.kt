@@ -5,7 +5,6 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.SourcePositionProvider
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerContextUtil
-import com.intellij.debugger.impl.PositionUtil
 import com.intellij.debugger.ui.tree.FieldDescriptor
 import com.intellij.debugger.ui.tree.LocalVariableDescriptor
 import com.intellij.debugger.ui.tree.NodeDescriptor
@@ -71,7 +70,7 @@ class KotlinSourcePositionProvider : SourcePositionProvider() {
         context: DebuggerContextImpl,
         nearest: Boolean
     ): SourcePosition? {
-        val place = PositionUtil.getContextElement(context) ?: return null
+        val place = context.getContextElement() ?: return null
         if (place.containingFile !is KtFile) return null
 
         val contextElement = CodeFragmentContextTuner.getInstance().tuneContextElement(place) ?: return null

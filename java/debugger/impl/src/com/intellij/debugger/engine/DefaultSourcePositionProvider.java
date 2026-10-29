@@ -6,7 +6,6 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerContextUtil;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
 import com.intellij.debugger.ui.impl.watch.CurrentMethodReturnValueDescriptorImpl;
@@ -93,7 +92,7 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
     if (fieldName.startsWith(FieldDescriptorImpl.OUTER_LOCAL_VAR_FIELD_PREFIX)) {
       // this field actually mirrors a local variable in the outer class
       String varName = fieldName.substring(fieldName.lastIndexOf('$') + 1);
-      PsiElement element = PositionUtil.getContextElement(context);
+      PsiElement element = context.getContextElement();
       if (element == null) {
         return null;
       }
@@ -172,7 +171,7 @@ public final class DefaultSourcePositionProvider extends SourcePositionProvider 
                                                                             @NotNull Project project,
                                                                             @NotNull DebuggerContextImpl context,
                                                                             boolean nearest) {
-    PsiElement place = PositionUtil.getContextElement(context);
+    PsiElement place = context.getContextElement();
     if (place == null) return null;
 
     PsiVariable psiVariable = JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place);

@@ -627,6 +627,11 @@ public abstract class DebuggerUtils {
 
   public abstract TextWithImports createExpressionWithImports(@NonNls String expression);
 
+  /**
+   * @deprecated Use {@code DebuggerContextImpl.getContextElement()} for cached PSI.
+   * Use {@code ContextUtil.prepareContext(context)} to prepare a context from JVM data before entering a read action.
+   */
+  @Deprecated
   public abstract PsiElement getContextElement(final StackFrameContext context);
 
   public abstract PsiClass chooseClassDialog(String title, Project project);

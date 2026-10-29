@@ -6,13 +6,10 @@
  */
 package com.intellij.debugger.ui.impl.watch;
 
-import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiCodeFragment;
 import com.sun.jdi.Value;
 
 public class WatchItemDescriptor extends EvaluationDescriptor {
@@ -53,10 +50,5 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
   @Override
   protected EvaluationContextImpl getEvaluationContext(EvaluationContextImpl evaluationContext) {
     return evaluationContext;
-  }
-
-  @Override
-  protected PsiCodeFragment getEvaluationCode(StackFrameContext context) {
-    return createCodeFragment(PositionUtil.getContextElement(context));
   }
 }

@@ -15,12 +15,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PositionUtil extends ContextUtil {
+  /**
+   * @deprecated Use {@link DebuggerContextImpl#getSourcePosition()} for cached data.
+   * Use {@link ContextUtil#getSourcePosition(StackFrameContext)} to query the JVM on the debugger manager thread without a read lock.
+   */
+  @Deprecated
   public static SourcePosition getSourcePosition(final StackFrameContext context) {
     if (context instanceof DebuggerContextImpl debuggerContext) return debuggerContext.getSourcePosition();
 
     return ContextUtil.getSourcePosition(context);
   }
 
+  /**
+   * @deprecated Use {@link DebuggerContextImpl#getContextElement()} for cached PSI.
+   * Use {@link ContextUtil#prepareContext(StackFrameContext)} to prepare a context from JVM data before entering a read action.
+   */
+  @Deprecated
   public static @Nullable PsiElement getContextElement(final StackFrameContext context) {
     if (context instanceof DebuggerContextImpl debuggerContext) return debuggerContext.getContextElement();
 

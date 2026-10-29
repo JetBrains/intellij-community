@@ -13,7 +13,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ViewsGeneralSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -188,7 +187,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
     String fieldName;
     if (isStatic()) {
       String typeName = myField.declaringType().name().replace('$', '.');
-      typeName = DebuggerTreeNodeExpression.normalize(typeName, PositionUtil.getContextElement(context), myProject);
+      typeName = DebuggerTreeNodeExpression.normalize(typeName, ((DebuggerContextImpl)context).getContextElement(), myProject);
       fieldName = typeName + "." + getName();
     }
     else {

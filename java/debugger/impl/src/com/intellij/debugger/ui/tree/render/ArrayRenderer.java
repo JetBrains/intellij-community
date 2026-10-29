@@ -43,6 +43,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XCompositeNode;
@@ -369,15 +370,18 @@ public class ArrayRenderer extends NodeRendererImpl {
       if (arrayLength > 0) {
         builder.initChildrenArrayRenderer(this, arrayLength);
 
+        var componentTypeName = ((ArrayType)array.type()).componentTypeName();
+        var preparedContext = ContextUtil.prepareContext(evaluationContext);
         CachedEvaluator cachedEvaluator = new CachedEvaluator() {
           @Override
           protected String getClassName() {
-            return ((ArrayType)array.type()).componentTypeName();
+            return componentTypeName;
           }
 
           @Override
+          @RequiresReadLock
           protected PsiElement overrideContext(PsiElement context) {
-            return ContextUtil.getContextElement(evaluationContext);
+            return preparedContext.getContextElement();
           }
         };
         cachedEvaluator.setReferenceExpression(TextWithImportsImpl.fromXExpression(myExpression));

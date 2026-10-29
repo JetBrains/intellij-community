@@ -4,7 +4,6 @@ package com.intellij.debugger.engine;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -22,7 +21,6 @@ import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiElement;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.sun.jdi.ClassLoaderReference;
@@ -145,9 +143,9 @@ public abstract class JavaValueModifier extends XValueModifier {
 
   protected interface SetValueRunnable {
     void setValue(EvaluationContextImpl evaluationContext, Value newValue) throws ClassNotLoadedException,
-                                                                                          InvalidTypeException,
-                                                                                          EvaluateException,
-                                                                                          IncompatibleThreadStateException;
+                                                                                  InvalidTypeException,
+                                                                                  EvaluateException,
+                                                                                  IncompatibleThreadStateException;
 
     default ClassLoaderReference getClassLoader(EvaluationContextImpl evaluationContext) throws EvaluateException {
       return evaluationContext.getClassLoader();
@@ -171,7 +169,8 @@ public abstract class JavaValueModifier extends XValueModifier {
     return null;
   }
 
-  private static void setValue(ExpressionEvaluator evaluator, EvaluationContextImpl evaluationContext, SetValueRunnable setValueRunnable) throws EvaluateException {
+  private static void setValue(ExpressionEvaluator evaluator, EvaluationContextImpl evaluationContext, SetValueRunnable setValueRunnable)
+    throws EvaluateException {
     Value value;
     try {
       value = evaluator.evaluate(evaluationContext);
@@ -233,13 +232,14 @@ public abstract class JavaValueModifier extends XValueModifier {
 
               if (evaluator == null) {
                 Project project = evaluationContext.getProject();
-                SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-                PsiElement context = ContextUtil.getContextElement(evaluationContext, position);
+                var preparedContext = ContextUtil.prepareContext(evaluationContext);
                 evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project, new EvaluatingComputable<>() {
                   @Override
                   public ExpressionEvaluator compute() throws EvaluateException {
-                    return EvaluatorBuilderImpl
-                      .build(TextWithImportsImpl.fromXExpression(expression), context, position, project);
+                    return EvaluatorBuilderImpl.build(TextWithImportsImpl.fromXExpression(expression),
+                                                      preparedContext.getContextElement(),
+                                                      preparedContext.getSourcePosition(),
+                                                      project);
                   }
                 });
               }

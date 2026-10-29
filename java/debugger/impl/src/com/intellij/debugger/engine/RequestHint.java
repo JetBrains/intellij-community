@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Range;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
 import com.sun.jdi.VMDisconnectedException;
@@ -174,7 +175,9 @@ public class RequestHint {
            DebuggerUtilsEx.isLambdaClassName(method.declaringType().name());
   }
 
+  @RequiresReadLockAbsence
   protected final @Nullable Integer processSteppingFilters(@NotNull SuspendContextImpl context, @Nullable Location location) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     final DebuggerSettings settings = DebuggerSettings.getInstance();
 
     if ((myMethodFilter != null || (settings.SKIP_SYNTHETIC_METHODS && !myIgnoreFilters)) &&
@@ -184,10 +187,11 @@ public class RequestHint {
 
     if (!myIgnoreFilters) {
       if (settings.SKIP_GETTERS) {
-        boolean isGetter = ReadAction.compute(() -> {
-          PsiElement contextElement = ContextUtil.getContextElement(context);
+        var position = ContextUtil.getSourcePosition(context);
+        boolean isGetter = ReadAction.computeBlocking(() -> {
+          PsiElement contextElement = ContextUtil.getContextElement(position);
           return contextElement != null && DebuggerUtils.isInsideSimpleGetter(contextElement);
-        }).booleanValue();
+        });
 
         if (isGetter) {
           return StepRequest.STEP_OUT;

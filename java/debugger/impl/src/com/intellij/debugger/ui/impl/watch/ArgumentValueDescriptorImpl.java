@@ -9,7 +9,6 @@ import com.intellij.debugger.engine.JavaValueModifier;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.debugger.jdi.LocalVariablesUtil;
 import com.intellij.openapi.project.Project;
@@ -68,7 +67,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl {
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     try {
-      return elementFactory.createExpressionFromText(getName(), PositionUtil.getContextElement(context));
+      return elementFactory.createExpressionFromText(getName(), ((DebuggerContextImpl)context).getContextElement());
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(JavaDebuggerBundle.message("error.invalid.local.variable.name", getName()), e);

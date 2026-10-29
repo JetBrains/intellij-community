@@ -15,7 +15,6 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.EditorTextProvider;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.ui.impl.watch.CompilingEvaluatorImpl;
 import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
 import com.intellij.debugger.ui.impl.watch.WatchItemDescriptor;
@@ -80,15 +79,16 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
     evaluate(baseCallback, (DebuggerContextImpl debuggerContext, EvaluationContextImpl evalContext) -> {
       Project project = myDebugProcess.getProject();
       Ref<TextWithImportsImpl> text = new Ref<>();
-      ExpressionEvaluator evaluator = ReadAction.compute(() -> {
+      var sourcePosition = ContextUtil.getSourcePosition(evalContext);
+      ExpressionEvaluator evaluator = ReadAction.computeBlocking(() -> {
         text.set(new TextWithImportsImpl(element));
         CodeFragmentFactory factory = DebuggerUtilsEx.getCodeFragmentFactory(element, null);
         try {
           if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");
-          return factory.getEvaluatorBuilder().build(element, ContextUtil.getSourcePosition(evalContext));
+          return factory.getEvaluatorBuilder().build(element, sourcePosition);
         }
         catch (UnsupportedExpressionException ex) {
-          PsiElement context = PositionUtil.getContextElement(debuggerContext);
+          PsiElement context = debuggerContext.getContextElement();
           ExpressionEvaluator eval = CompilingEvaluatorImpl.create(project, context, e ->
             factory.createPsiCodeFragment(text.get(), context, project));
           if (eval != null) {

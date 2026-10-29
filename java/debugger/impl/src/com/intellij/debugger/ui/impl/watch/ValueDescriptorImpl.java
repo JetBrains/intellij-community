@@ -13,7 +13,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.memory.utils.NamesUtils;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
@@ -649,7 +648,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         }
         res = promise.then(_ -> ReadAction.nonBlocking(() -> JavaPsiFacade.getElementFactory(myProject)
           .createExpressionFromText(markName + CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX,
-                                    PositionUtil.getContextElement(context))).executeSynchronously());
+                                    context.getContextElement())).executeSynchronously());
       }
       else {
         res = Promises.resolvedPromise(null);

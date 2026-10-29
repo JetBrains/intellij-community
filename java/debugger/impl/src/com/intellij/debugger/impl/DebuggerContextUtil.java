@@ -87,7 +87,7 @@ public final class DebuggerContextUtil {
       Editor editor = FileEditorManager.getInstance(file.getProject()).getSelectedTextEditor(true);
       if (editor == null || position == null || !position.getFile().equals(file.getOriginalFile().getVirtualFile())) return null;
 
-      PsiMethod method = PsiTreeUtil.getParentOfType(PositionUtil.getContextElement(context), PsiMethod.class, false);
+      PsiMethod method = PsiTreeUtil.getParentOfType(context.getContextElement(), PsiMethod.class, false);
       PsiElement searchScope = method != null ? method : file;
       final Collection<TextRange> ranges = findUsages.apply(searchScope);
       final int breakPointLine = position.getLine();

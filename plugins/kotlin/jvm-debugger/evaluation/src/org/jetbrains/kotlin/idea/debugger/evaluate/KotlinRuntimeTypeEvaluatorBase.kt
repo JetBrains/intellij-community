@@ -45,15 +45,12 @@ abstract class KotlinRuntimeTypeEvaluatorBase<T>(
     protected abstract fun getCastableRuntimeType(scope: GlobalSearchScope, value: Value): T?
 
     override fun evaluate(evaluationContext: EvaluationContextImpl): T? {
-        val project = evaluationContext.project
-
-        val codeFragment = runReadAction {
-            KtPsiFactory(myElement.project).createBlockCodeFragment(
+        val sourcePosition = ContextUtil.getSourcePosition(evaluationContext)
+        val evaluator = DebuggerInvocationUtil.commitAndRunReadAction(evaluationContext.project) {
+            val codeFragment = KtPsiFactory(myElement.project).createBlockCodeFragment(
                 myElement.text, myElement.containingFile.context
             )
-        }
-        val evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project) {
-            KotlinEvaluatorBuilder.build(codeFragment, ContextUtil.getSourcePosition(evaluationContext))
+            KotlinEvaluatorBuilder.build(codeFragment, sourcePosition)
         }
 
         val value = evaluator.evaluate(evaluationContext)

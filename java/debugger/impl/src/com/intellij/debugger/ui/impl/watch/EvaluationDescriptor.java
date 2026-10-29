@@ -4,11 +4,10 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.JavaValueModifier;
-import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -29,6 +28,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionCodeFragment;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.evaluate.XEvaluationOrigin;
@@ -60,22 +61,34 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
 
   protected abstract EvaluationContextImpl getEvaluationContext(EvaluationContextImpl evaluationContext);
 
-  protected abstract PsiCodeFragment getEvaluationCode(StackFrameContext context) throws EvaluateException;
+  /**
+   * Builds a code fragment from the PSI context that the caller has already prepared.
+   * Runs under a read action. Overrides may use a different PSI context but must perform only PSI work.
+   * Collect any required JVM data before calling this method.
+   */
+  @RequiresReadLock
+  protected PsiCodeFragment getEvaluationCode(PsiElement context) throws EvaluateException {
+    return createCodeFragment(context);
+  }
 
+  @RequiresReadLock
   public PsiCodeFragment createCodeFragment(PsiElement context) {
     TextWithImports text = getEvaluationText();
     return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context).createPsiCodeFragment(text, context, myProject);
   }
 
   @ApiStatus.Experimental
+  @RequiresReadLockAbsence
   protected @NotNull ExpressionEvaluator getEvaluator(EvaluationContextImpl evaluationContext) throws EvaluateException {
-    SourcePosition position = ContextUtil.getSourcePosition(evaluationContext);
-    return ReadAction.compute(() -> {
-      PsiCodeFragment code = getEvaluationCode(evaluationContext);
-      PsiElement psiContext = ContextUtil.getContextElement(evaluationContext, position);
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    var preparedContext = ContextUtil.prepareContext(evaluationContext);
+    return ReadAction.computeBlocking(() -> {
+      PsiElement psiContext = preparedContext.getContextElement();
+      PsiCodeFragment code = getEvaluationCode(psiContext);
       try {
         if (Registry.is("debugger.compiling.evaluator.force")) throw new UnsupportedExpressionException("force compilation");
-        return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder().build(code, position);
+        return DebuggerUtilsEx.findAppropriateCodeFragmentFactory(getEvaluationText(), psiContext).getEvaluatorBuilder()
+          .build(code, preparedContext.getSourcePosition());
       }
       catch (UnsupportedExpressionException ex) {
         ExpressionEvaluator eval = CompilingEvaluatorImpl.create(myProject, code.getContext(), element -> code);
@@ -88,7 +101,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   }
 
   @Override
+  @RequiresReadLockAbsence
   public final Value calcValue(EvaluationContextImpl evaluationContext) throws EvaluateException {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
     try {
       PsiDocumentManager.getInstance(myProject).commitAndRunReadAction(() -> {});
 
@@ -133,8 +148,9 @@ public abstract class EvaluationDescriptor extends ValueDescriptorImpl {
   }
 
   @Override
+  @RequiresReadLock
   public PsiExpression getDescriptorEvaluation(DebuggerContext context) throws EvaluateException {
-    PsiElement evaluationCode = getEvaluationCode(context);
+    PsiElement evaluationCode = getEvaluationCode(((DebuggerContextImpl)context).getContextElement());
     if (evaluationCode instanceof PsiExpressionCodeFragment fragment) {
       return fragment.getExpression();
     }

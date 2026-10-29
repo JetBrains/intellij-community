@@ -122,12 +122,14 @@ class LocalVariableEvaluator implements ModifiableEvaluator {
                                                        final String name,
                                                        final Project project,
                                                        final DebugProcess process) {
-    PsiElement place = ContextUtil.getContextElement(new SimpleStackFrameContext(frame, process));
-    if (place == null) {
-      return null;
-    }
-    return ReadAction.compute(() ->
-      JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place));
+    var preparedContext = ContextUtil.prepareContext(new SimpleStackFrameContext(frame, process));
+    return ReadAction.computeBlocking(() -> {
+      PsiElement place = preparedContext.getContextElement();
+      if (place == null) {
+        return null;
+      }
+      return JavaPsiFacade.getInstance(project).getResolveHelper().resolveReferencedVariable(name, place);
+    });
   }
 
   @Override

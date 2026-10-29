@@ -200,6 +200,7 @@ public final class DebuggerUtilsImpl extends DebuggerUtilsEx {
   }
 
   @Override
+  @Deprecated
   public PsiElement getContextElement(StackFrameContext context) {
     return PositionUtil.getContextElement(context);
   }

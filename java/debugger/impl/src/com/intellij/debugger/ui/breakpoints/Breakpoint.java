@@ -418,11 +418,13 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         TextWithImports logMessage = getLogMessage();
         ExpressionEvaluator evaluator = null;
         try {
-          SourcePosition position = ContextUtil.getSourcePosition(context);
-          PsiElement element = ContextUtil.getContextElement(context, position);
-          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject,
-            () -> EvaluatorCache.cacheOrGet("LogMessageEvaluator", event.request(), element, logMessage, () ->
-              createExpressionEvaluator(myProject, element, position, logMessage, this::createLogMessageCodeFragment)));
+          var preparedContext = ContextUtil.prepareContext(context);
+          evaluator = DebuggerInvocationUtil.commitAndRunReadAction(myProject, () -> {
+            PsiElement element = preparedContext.getContextElement();
+            return EvaluatorCache.cacheOrGet("LogMessageEvaluator", event.request(), element, logMessage, () ->
+              createExpressionEvaluator(myProject, element, preparedContext.getSourcePosition(), logMessage,
+                                        this::createLogMessageCodeFragment));
+          });
           Value eval = evaluator.evaluate(context);
           JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, true, XEvaluationOrigin.BREAKPOINT_LOG);
           buf.append(eval instanceof VoidValue ? "void" : DebuggerUtils.getValueAsString(context, eval));
