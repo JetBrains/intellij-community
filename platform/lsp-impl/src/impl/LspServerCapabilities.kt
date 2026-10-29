@@ -34,14 +34,21 @@ internal fun LspClientImpl.supportsFoldingRange(file: VirtualFile): Boolean =
   serverCapabilities?.foldingRangeProvider?.let { it.left ?: true }
   ?: hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.foldingRange)
 
-internal fun LspClientImpl.supportsCodeActions(codeActionKindsFilter: (List<String>) -> Boolean): Boolean =
-  serverCapabilities?.codeActionProvider?.let {
-    if (it.isLeft) return it.left!!
-    val kinds = it.right!!.codeActionKinds
-    if (kinds == null) return true // well, the server doesn't have to list code action kinds explicitly, but it does support them!
-    return codeActionKindsFilter(kinds)
+/**
+ * A capability without listed kinds supports every kind. For it, the IDE does not call [codeActionKindsFilter].
+ * The static capabilities do not veto a dynamic registration. Every dynamic registration that matches [file] counts.
+ */
+internal fun LspClientImpl.supportsCodeActions(file: VirtualFile, codeActionKindsFilter: (List<String>) -> Boolean): Boolean {
+  val provider = serverCapabilities?.codeActionProvider
+  val staticSupport = when {
+    provider == null -> false
+    provider.isLeft -> provider.left == true
+    else -> provider.right?.codeActionKinds?.let(codeActionKindsFilter) != false
   }
-  ?: false
+  if (staticSupport) return true
+  return getDynamicCapabilityOptionsListForFile(file, LspDynamicCapabilities.codeAction)
+    .any { it.codeActionKinds?.let(codeActionKindsFilter) != false }
+}
 
 internal fun LspClientImpl.supportsGotoDefinition(): Boolean = serverCapabilities?.definitionProvider?.let { it.left ?: true } == true
 
@@ -118,9 +125,22 @@ internal fun LspClientImpl.supportsCodeActionsOfKind(file: VirtualFile, kind: St
     .any { it.codeActionKinds?.matchesCodeActionKind(kind) != false }
 }
 
+/**
+ * Unlike [supportsCodeActionsOfKind], the server must list [kind] or a child of [kind].
+ * For example, `source.organizeImports.ts` is a child of `source.organizeImports`.
+ * A parent kind, `codeActionProvider: true`, and a capability without `codeActionKinds` do not count.
+ */
+internal fun LspClientImpl.supportsExplicitlyCodeActionOfKind(file: VirtualFile, kind: String): Boolean =
+  serverCapabilities?.codeActionProvider?.right?.codeActionKinds?.containsCodeActionKindOrChild(kind) == true ||
+  getDynamicCapabilityOptionsListForFile(file, LspDynamicCapabilities.codeAction)
+    .any { it.codeActionKinds?.containsCodeActionKindOrChild(kind) == true }
+
 // a kind covers its own dot-separated subtree only: `refactor.extract.variable2` is not under `refactor.extract.variable`
 private fun List<String>.matchesCodeActionKind(kind: String): Boolean =
   any { it == kind || kind.startsWith("$it.") || it.startsWith("$kind.") }
+
+private fun List<String>.containsCodeActionKindOrChild(kind: String): Boolean =
+  any { it == kind || it.startsWith("$kind.") }
 
 internal fun LspClientImpl.getDidSaveOptions(file: VirtualFile): SaveOptions? {
   val textDocumentSync = serverCapabilities?.textDocumentSync

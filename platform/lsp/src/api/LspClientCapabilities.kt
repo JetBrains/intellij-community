@@ -215,6 +215,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       dataSupport = true
     }
     codeAction = CodeActionCapabilities().apply {
+      dynamicRegistration = true
       codeActionLiteralSupport = CodeActionLiteralSupportCapabilities().apply {
         codeActionKind = CodeActionKindCapabilities(
             listOf(

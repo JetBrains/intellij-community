@@ -53,7 +53,9 @@ internal class LspDiagnosticAndLazyQuickFixes(val diagnostic: Diagnostic, val do
     val codeActionsCustomizer = lspClient.descriptor.lspCustomization.codeActionsCustomizer
     val clientSupportsQuickFixes = codeActionsCustomizer is LspCodeActionsSupport && codeActionsCustomizer.quickFixesSupport
     if (!clientSupportsQuickFixes) return emptyList()
-    val serverSupportsQuickFixes = lspClient.supportsCodeActions { kinds -> kinds.any { kind -> kind.startsWith(CodeActionKind.QuickFix) } }
+    val serverSupportsQuickFixes = lspClient.supportsCodeActions(file) { kinds ->
+      kinds.any { kind -> kind.startsWith(CodeActionKind.QuickFix) }
+    }
     if (!serverSupportsQuickFixes) return emptyList()
 
     val quickFixSet = LspQuickFixSet(lspClient, file, diagnostic, documentId)

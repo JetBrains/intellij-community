@@ -5,7 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.platform.lsp.api.LspServer
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import org.eclipse.lsp4j.CodeActionKind
 
 /**
  * Customizes the 'Optimize Imports' feature behavior.
@@ -34,9 +33,13 @@ open class LspOptimizeImportsSupport : LspOptimizeImportsCustomizer() {
    *
    * If this function returns `false`, the IDE will use its internal import optimizer (if it exists) for this file.
    *
-   * The default implementation returns `true` only when:
-   * - The IDE cannot optimize imports in this file itself, AND
-   * - The server advertises support for the code action kind `"source.organizeImports"`
+   * This function is called only if the server lists the `"source.organizeImports"` code action kind for this file,
+   * in the static capabilities or in a dynamic `textDocument/codeAction` registration.
+   * A child kind such as `"source.organizeImports.ts"` also counts.
+   * A parent kind such as `"source"`, `codeActionProvider: true`, and a capability without `codeActionKinds` do not count.
+   * Return `false` for a file if the server cannot organize imports in it.
+   *
+   * The default implementation returns `true` only when the IDE cannot optimize imports in this file itself.
    *
    * Implementation may look like this:
    *
@@ -68,11 +71,7 @@ open class LspOptimizeImportsSupport : LspOptimizeImportsCustomizer() {
     lspServer: LspServer,
     file: VirtualFile,
     ideCanOptimizeImportsInThisFileItself: Boolean,
-  ): Boolean {
-    if (ideCanOptimizeImportsInThisFileItself) return false
-    val codeActionKinds = lspServer.initializeResult?.capabilities?.codeActionProvider?.right?.codeActionKinds ?: return false
-    return codeActionKinds.contains(CodeActionKind.SourceOrganizeImports)
-  }
+  ): Boolean = !ideCanOptimizeImportsInThisFileItself
 }
 
 object LspOptimizeImportsDisabled : LspOptimizeImportsCustomizer()

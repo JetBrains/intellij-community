@@ -75,7 +75,9 @@ internal class LspIntentionActionService(private val project: Project) : Disposa
                                  ?.takeIf { it.intentionActionsSupport }
                                ?: continue
       // When asking for Intentions, we are not interested in servers that support only quick fixes
-      val somethingButQuickFix = lspClient.supportsCodeActions { kinds -> kinds.any { kind -> !kind.startsWith(CodeActionKind.QuickFix) } }
+      val somethingButQuickFix = lspClient.supportsCodeActions(file) { kinds ->
+        kinds.any { kind -> !kind.startsWith(CodeActionKind.QuickFix) }
+      }
       if (!somethingButQuickFix) continue
 
       val hostRange = getLsp4jRange(document, offset, length)

@@ -14,6 +14,7 @@ import com.intellij.platform.lsp.impl.LspClientManagerImpl
 import com.intellij.platform.lsp.impl.documentMapping
 import com.intellij.platform.lsp.impl.features.executeCommandExpectingWorkspaceEdit
 import com.intellij.platform.lsp.impl.features.intention.toCodeAction
+import com.intellij.platform.lsp.impl.supportsExplicitlyCodeActionOfKind
 import com.intellij.platform.lsp.impl.util.LspWorkspaceEditApplier
 import com.intellij.psi.PsiFile
 import org.eclipse.lsp4j.CodeAction
@@ -101,9 +102,10 @@ internal fun findClientToOptimizeImports(psiFile: PsiFile): LspClient? {
   }
 }
 
-private fun canClientOptimizeImports(lspClient: LspClient, psiFile: PsiFile, virtualFile: VirtualFile): Boolean {
+private fun canClientOptimizeImports(lspClient: LspClientImpl, psiFile: PsiFile, virtualFile: VirtualFile): Boolean {
   val optimizeImportsSupport =
     lspClient.descriptor.lspCustomization.optimizeImportsCustomizer as? LspOptimizeImportsSupport ?: return false
+  if (!lspClient.supportsExplicitlyCodeActionOfKind(virtualFile, SourceOrganizeImports)) return false
   // `LspImportOptimizer` should not come to the stage if any other `ImportOptimizer` wants to do its job for this file.
   // Need to check if there's any other `FormattingService`/`ImportOptimizer` that wants to handle this file.
   // `CoreFormattingService` is special, it is registered as the last one, and it iterates `ImportOptimizer` extensions.
@@ -112,7 +114,7 @@ private fun canClientOptimizeImports(lspClient: LspClient, psiFile: PsiFile, vir
   val ideCanOptimizeImportsInThisFileItself =
     doesOtherFormattingServiceWantToWork(psiFile) || doesOtherImportOptimizerWantToWork(psiFile)
   return optimizeImportsSupport
-    .shouldOptimizeImportsInThisFileExclusivelyByServer(lspClient, virtualFile, ideCanOptimizeImportsInThisFileItself)
+    .shouldOptimizeImportsInThisFileExclusivelyByServer(lspClient as LspClient, virtualFile, ideCanOptimizeImportsInThisFileItself)
 }
 
 // The logic is similar to `OptimizeImportsProcessor.collectOptimizers()`,
