@@ -190,6 +190,14 @@ e:com.intellij.openapi.editor.markup.EffectType
 - java.lang.Enum
 - *sf:FADED:com.intellij.openapi.editor.markup.EffectType
 - *sf:SLIGHTLY_WIDER_BOX:com.intellij.openapi.editor.markup.EffectType
+*:com.intellij.openapi.editor.markup.FontFamilies
+- *sf:Companion:com.intellij.openapi.editor.markup.FontFamilies$Companion
+- a:names():java.util.List
+- *s:of(java.util.List):com.intellij.openapi.editor.markup.FontFamilies
+- *s:of(java.lang.String[]):com.intellij.openapi.editor.markup.FontFamilies
+*f:com.intellij.openapi.editor.markup.FontFamilies$Companion
+- f:of(java.util.List):com.intellij.openapi.editor.markup.FontFamilies
+- f:of(java.lang.String[]):com.intellij.openapi.editor.markup.FontFamilies
 c:com.intellij.openapi.editor.markup.TextAttributes
 - java.lang.Cloneable
 - *:forEachAdditionalEffect(java.util.function.BiConsumer):V
