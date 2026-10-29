@@ -319,6 +319,9 @@ f:git4idea.ui.ComboBoxWithAutoCompletion
 - f:addDocumentListener(com.intellij.openapi.editor.event.DocumentListener):V
 - f:setPlaceholder(java.lang.String):V
 - f:updatePreserving(kotlin.jvm.functions.Function0):V
+f:git4idea.ui.StashInfo
+- <init>(com.intellij.openapi.vfs.VirtualFile,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash,java.util.List,J,java.lang.String,java.lang.String,java.lang.String):V
+- f:getBaseHash():com.intellij.vcs.log.Hash
 f:git4idea.ui.branch.GitBranchPopupActions
 - s:getSelectedBranchFullPresentation(java.lang.String):java.lang.String
 c:git4idea.ui.branch.GitBranchWidget

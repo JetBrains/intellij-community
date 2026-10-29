@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui
 
 import com.intellij.openapi.util.NlsSafe
@@ -8,15 +8,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
 import git4idea.GitUtil
 import org.jetbrains.annotations.Nls
-import java.util.regex.Pattern
 
 /**
  * Information about one stash.
  *
  * @param stash stash codename (e.g. stash@{1})
  */
-class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Hash>, val authorTime: Long,
-                val stash: @NlsSafe String, val branch: @NlsSafe String?, val message: @NlsSafe @Nls String) {
+class StashInfo(
+  val root: VirtualFile, val hash: Hash, val baseHash: Hash, val parentHashes: List<Hash>, val authorTime: Long,
+  val stash: @NlsSafe String, val branch: @NlsSafe String?, val message: @NlsSafe @Nls String,
+) {
   val text: @Nls String // The formatted text representation
 
   init {
@@ -34,7 +35,14 @@ class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Ha
   companion object {
     val StashInfo.subject: @NlsSafe String
       get() {
-        return Pattern.compile("^" + GitUtil.HASH_REGEX.pattern()).matcher(message).replaceFirst("").trim()
+        if (branch?.startsWith("WIP on ") != true) return message
+
+        val messageHash = message.takeWhile { !it.isWhitespace() }
+
+        // The first word must have a valid hash format and match the start of the base hash.
+        if (!GitUtil.HASH_REGEX.matcher(messageHash).matches() || !baseHash.asString().startsWith(messageHash)) return message
+
+        return message.drop(messageHash.length).trimStart().ifEmpty { message }
       }
 
     val StashInfo.branchName: @NlsSafe String?
