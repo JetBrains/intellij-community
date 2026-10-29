@@ -4,6 +4,8 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
@@ -29,23 +31,26 @@ import com.intellij.python.requirements.pyRequirement
 import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import com.jetbrains.python.sdk.PySdkListener
 import com.jetbrains.python.sdk.pythonSdk
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 internal class RestartLspServersListener(val project: Project) : PyLspListener, ModuleListener, PySdkListener,
                                                                  PythonPackageManagementListener {
   override fun moduleSdkUpdated(module: Module, prevSdk: Sdk?, newSdk: Sdk?) {
-    updateModules()
+    project.service<TypeEngineSupportCheck>().request()
     updateLspServers()
   }
 
   override fun modulesAdded(project: Project, modules: List<Module?>) {
-    updateModules()
+    project.service<TypeEngineSupportCheck>().request()
   }
 
   override fun moduleRemoved(project: Project, module: Module) {
-    updateModules()
+    project.service<TypeEngineSupportCheck>().request()
   }
 
   override fun packagesChanged(sdk: Sdk) {
@@ -115,8 +120,8 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
     }
   }
 
-  private fun updateModules() {
-    val isSupported = PyTypeEngineUtils.isExternalTypeEngineSupported(project)
+  internal suspend fun updateModules() {
+    val isSupported = readAction { PyTypeEngineUtils.isExternalTypeEngineSupported(project) }
     val typeEngineProjectSettings = PyTypeEngineProjectSettings.getInstance(project)
 
     if (!isSupported && typeEngineProjectSettings.typeEngine != PyTypeEngineType.PYCHARM) {
@@ -132,5 +137,25 @@ internal class RestartLspServersListener(val project: Project) : PyLspListener, 
         PsiDocumentManager.getInstance(project).reparseFiles(listOf(), true)
       }
     }
+  }
+}
+
+/**
+ * Checks once for a batch of module changes whether the project still supports the external type engine.
+ * The project model sends one module event per module inside a write action, so the listener does not do the check.
+ */
+@Service(Service.Level.PROJECT)
+internal class TypeEngineSupportCheck(project: Project, coroutineScope: CoroutineScope) {
+  private val requests = Channel<Unit>(Channel.CONFLATED)
+
+  init {
+    val listener = RestartLspServersListener(project)
+    coroutineScope.launch {
+      requests.consumeEach { listener.updateModules() }
+    }
+  }
+
+  fun request() {
+    requests.trySend(Unit)
   }
 }
