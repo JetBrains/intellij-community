@@ -175,6 +175,26 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
 }
 
 #[test]
+fn the_agreement_routes_answer_404_and_the_record_lists_them_as_served() {
+    let service = start_cloud(Organization::CloudWorkspace);
+    let address = service.address();
+    let targets = [
+        "/lservice/rpc/obtainAgreement.action?productCode=AI&fileName=aiEuaPlatform&existingVersion=unknown",
+        "/lservice/rpc/obtainAgreement.action?productCode=II&fileName=privacy&existingVersion=999.999",
+        "/lservice/rpc/fetchData.action?productCode=II",
+    ];
+    for target in targets {
+        let answer = testing::get(address, target);
+        assert_eq!((answer.status, answer.raw_body.len()), (404, 0), "{target}");
+    }
+    let record = testing::control(address, "GET", "/_lane/cloud/record", "").json();
+    assert_eq!(
+        record,
+        json!({ "discoveries": 0, "served": targets.map(|target| format!("GET {target}")), "unexpected": [] })
+    );
+}
+
+#[test]
 fn an_unknown_path_answers_501_and_the_clear_answers_the_record_it_cleared() {
     let service = start_cloud(Organization::None);
     let address = service.address();

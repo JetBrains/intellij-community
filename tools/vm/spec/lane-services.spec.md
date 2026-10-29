@@ -232,6 +232,8 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
 | `/jcp/ai-management/api/provisioning/v1/mcp` | 404 |
 | `/jcp/repo-connections/tokens/state/meta` | the JetBrains VCS App can read and write every repository |
 | `/jcp/agent-spawner/hosts/v0/remote-control/availability` | `{"available":false}`: no mobile control grant |
+| `/lservice/rpc/obtainAgreement.action` | 404: the account has no agreement document |
+| `/lservice/rpc/fetchData.action` | 404: the account has no revocation list and no block list |
 
 - The configuration names the emulator for every account URL and as the JCP URL.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
@@ -261,6 +263,10 @@ The emulator serves one account user with the id `air-lane-user`. A path with a 
   request as served.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
+- The agreement routes answer 404 with an empty body. The IDE reads the AI terms there. Five minutes after its
+  start, the IDE also updates its privacy policy there. The record lists each of these requests as served.
+  [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
+
 - Any other path gets 501 with the text `the Air lane emulates no <target>`.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
@@ -278,7 +284,7 @@ The record is `{"discoveries": n, "served": [request], "unexpected": [request]}`
 The spawner record is `{"agentKey", "dials": [dial], "deleted": [id], "failNext": [status]}`. A dial is
 `{"index", "authorization", "outcome"}`.
 
-- The record counts each AI access discovery and lists each JCP request in arrival order.
+- The record counts each AI access discovery and lists each JCP request and each agreement request in arrival order.
   [@test] ../crates/avl-guest/src/lane/services/cloud/tests.rs
 
 - The record lists each request that got 501 in arrival order.

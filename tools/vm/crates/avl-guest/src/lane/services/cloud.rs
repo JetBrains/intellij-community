@@ -5,8 +5,8 @@
 //! IDE restart. The JCP routes answer the AI access discovery and the provisioning that Air reads before it offers a
 //! cloud run, the repository access check of `repo-connections` that Air makes before it launches one, and the
 //! mobile control grant that a signed-in IDE asks the Agent Spawner for. [spawner]
-//! serves the Agent Spawner below them. A request to any other path answers 501, and the
-//! emulator records it.
+//! serves the Agent Spawner below them. The agreement routes of the license service answer that the account has no
+//! document. A request to any other path answers 501, and the emulator records it.
 
 use std::sync::{Mutex, MutexGuard};
 
@@ -52,6 +52,10 @@ const ACP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/acp";
 const MCP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/mcp";
 const REPOSITORY_ACCESS_PATH: &str = "/repo-connections/tokens/state/meta";
 const MOBILE_CONTROL_GRANT_PATH: &str = "/agent-spawner/hosts/v0/remote-control/availability";
+/// The read of an agreement document: the AI terms of Air, and the privacy policy that the IDE updates on its own.
+const OBTAIN_AGREEMENT_PATH: &str = "/lservice/rpc/obtainAgreement.action";
+/// The read of the revocation and block lists, which the IDE updates with its privacy policy.
+const FETCH_DATA_PATH: &str = "/lservice/rpc/fetchData.action";
 
 /// The largest `count` of the control route `spawner/fail`.
 const MAX_FAILED_DIALS: usize = 100;
@@ -88,7 +92,7 @@ pub(crate) enum Organization {
 pub(crate) struct Record {
     /// How many AI access discoveries the IDE made.
     pub discoveries: usize,
-    /// Every request that a JCP route answered, as `METHOD target`, in arrival order.
+    /// Every request that a JCP route or an agreement route answered, as `METHOD target`, in arrival order.
     pub served: Vec<String>,
     /// Every request that the emulator could not answer, as `METHOD target`, in arrival order.
     pub unexpected: Vec<String>,
@@ -151,6 +155,7 @@ impl Handler for Cloud {
                 JSON,
                 r#"{"jwt":"air-lane-orgs-user-info","expires_in":3600}"#,
             )),
+            OBTAIN_AGREEMENT_PATH | FETCH_DATA_PATH => Some(self.no_agreement_document(request)),
             _ => path
                 .strip_prefix(JCP_PATH)
                 .filter(|jcp| jcp.starts_with('/'))
@@ -265,6 +270,12 @@ impl Cloud {
             self.base_url
         );
         format!("{}.{}.signature", Base64::Url.encode(b"{}"), Base64::Url.encode(payload.as_bytes()))
+    }
+
+    /// Answers an agreement route: the emulated account has no document, so the IDE keeps the documents that it has.
+    fn no_agreement_document(&self, request: &Request) -> Response {
+        self.lock().served.push(format!("{} {}", request.method, request.target()));
+        Response::empty(404)
     }
 
     /// Answers a request below the JCP base URL, or `None` when no JCP route owns `path`.
