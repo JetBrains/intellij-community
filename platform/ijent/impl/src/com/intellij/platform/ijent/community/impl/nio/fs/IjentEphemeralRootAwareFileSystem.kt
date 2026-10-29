@@ -17,6 +17,7 @@ import com.intellij.platform.eel.provider.utils.impl.ijentToLocal
 import com.intellij.platform.eel.provider.utils.impl.localToIjent
 import com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
@@ -285,6 +286,15 @@ class IjentEphemeralRootAwarePath(
 }
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.docker.ijent.mrfs.EelDockerMrfsBackend",
+  "com.intellij.platform.eel.tcp.TcpEelMrfsBackend",
+  "com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend",
+  "com.intellij.platform.ijent.community.impl.nio.IjentEphemeralRootAwarePathTest",
+  "com.intellij.platform.ijent.functional.fs.IjentEphemeralRootAwareFsTestUtilKt",
+  "com.intellij.platform.ijent.functional.fs.RootAwareFsContext",
+  "com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend",
+)
 class IjentEphemeralRootAwareFileSystemProvider(
   val root: Path,
   private val ijentFsProvider: FileSystemProvider,

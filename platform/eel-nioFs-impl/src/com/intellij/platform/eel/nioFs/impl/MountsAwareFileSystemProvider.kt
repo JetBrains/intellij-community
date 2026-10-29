@@ -13,6 +13,7 @@ import com.intellij.platform.eel.provider.EelMountRoot
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.eel.provider.transformPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
@@ -38,6 +39,9 @@ import java.util.concurrent.ExecutorService
  * A file system provider that optimizes access to files in Docker containers by directly accessing
  * mounted volumes when possible, instead of going through ijent.
  */
+@VisibleToClasses(
+  "com.intellij.docker.ijent.DockerMountsAwareFileSystemProvider",
+)
 abstract class MountsAwareFileSystemProvider(
   protected val delegate: FileSystemProvider,
   internal val mountProvider: EelMountProvider,
@@ -48,7 +52,7 @@ abstract class MountsAwareFileSystemProvider(
   override fun wrapDelegatePath(delegatePath: Path?): Path? = delegatePath
   override fun toDelegatePath(path: Path?): Path? = path
 
-  abstract fun unwrapEelPath(path: Path): Pair<EelPath, EelFileSystemApi>?
+  protected abstract fun unwrapEelPath(path: Path): Pair<EelPath, EelFileSystemApi>?
 
   /**
    * Checks if the given path is in a mounted volume and can be accessed directly.
@@ -71,7 +75,7 @@ abstract class MountsAwareFileSystemProvider(
   }
 
 
-  protected fun <T> tryUseDirectAccess(source: Path, target: Path, vararg attrs: FileAttribute<*>, block: (Path, Path) -> T): T? {
+  internal fun <T> tryUseDirectAccess(source: Path, target: Path, vararg attrs: FileAttribute<*>, block: (Path, Path) -> T): T? {
     val sourceDirect = getDirectAccessPath(source, -attrs) ?: return null
     val targetDirect = getDirectAccessPath(target, -attrs) ?: return null
 
@@ -92,7 +96,7 @@ abstract class MountsAwareFileSystemProvider(
     else EelMountRoot.DirectAccessOptions.BasicAttributes
   }
 
-  protected fun <T> Path.tryUseDirectAccess(
+  internal fun <T> Path.tryUseDirectAccess(
     directAccess: EelMountRoot.DirectAccessOptions = EelMountRoot.DirectAccessOptions.BasicAttributes,
     block: (directPath: Path) -> T,
   ): T? {
@@ -284,6 +288,9 @@ abstract class MountsAwareFileSystemProvider(
  * A file system that uses MountsAwareFileSystemProvider to optimize access to files in Docker containers.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.MountsAwareFileSystemProvider",
+)
 class MountsAwareFileSystem(
   private val provider: MountsAwareFileSystemProvider,
   private val delegate: FileSystem,

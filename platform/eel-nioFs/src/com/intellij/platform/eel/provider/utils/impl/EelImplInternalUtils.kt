@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider.utils.impl
 
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -9,6 +10,10 @@ import java.nio.file.Path
 /**  [path] is `\\wsl.localhost\Ubuntu\mnt\c\Program Files`, then actual path is `C:\Program Files` */
 @ApiStatus.Internal
 @EelDelicateApi
+@VisibleToClasses(
+  "com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend",
+  "org.jetbrains.idea.maven.utils.MavenEelUtil",
+)
 fun getActualWslPath(path: Path): Path = path.run {
   if (
     isAbsolute &&

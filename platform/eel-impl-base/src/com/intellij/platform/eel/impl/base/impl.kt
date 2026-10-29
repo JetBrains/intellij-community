@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.impl.base
 
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
@@ -14,6 +15,12 @@ import kotlin.coroutines.cancellation.CancellationException
 
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.python.community.execService.impl.processLaunchers.EelProcessCommands",
+  "com.intellij.python.community.execService.impl.processLaunchers.ProcessCommands",
+  "com.intellij.python.community.execService.impl.processLaunchers.ProcessLauncher",
+  "com.intellij.python.community.execService.impl.processLaunchers.TargetProcessCommands",
+)
 class ProcessFunctions(
   val waitForExit: suspend () -> Unit,
   private val killProcess: suspend () -> Unit,
@@ -56,6 +63,9 @@ class ProcessFunctions(
  * Do not call it directly. Use [com.intellij.platform.eel.EelExecApi.ExecuteProcessOptions.scope]
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.python.community.execService.impl.processLaunchers.TargetProcessCommands",
+)
 fun CoroutineScope.bindProcessToScopeImpl(
   warn: (String) -> Unit,
   processNameForDebug: String,
