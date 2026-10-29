@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileChangeType
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchEvent
@@ -9,6 +10,9 @@ import java.nio.file.WatchKey
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioWatchService",
+)
 internal class IjentNioWatchKey(
   private val watchable: Path,
   private val watchService: IjentNioWatchService,
