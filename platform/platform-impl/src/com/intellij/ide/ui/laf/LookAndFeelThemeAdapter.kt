@@ -1,6 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
-
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:OptIn(LowLevelLocalMachineAccess::class)
 package com.intellij.ide.ui.laf
 
 import com.intellij.icons.AllIcons
@@ -10,13 +9,14 @@ import com.intellij.idea.AppMode
 import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.TableActions
 import com.intellij.util.ResourceUtil
+import com.intellij.util.system.LowLevelLocalMachineAccess
+import com.intellij.util.system.OS
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBInsets
-import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
 import java.awt.GraphicsEnvironment
@@ -37,14 +37,11 @@ import javax.swing.plaf.basic.BasicLookAndFeel
 import javax.swing.plaf.metal.MetalLookAndFeel
 import javax.swing.text.DefaultEditorKit
 
-@Internal
-class LookAndFeelThemeAdapter(
-  private val base: LookAndFeel,
-  private val theme: UIThemeLookAndFeelInfo,
-) : BasicLookAndFeel() {
+@ApiStatus.Internal
+class LookAndFeelThemeAdapter(private val base: LookAndFeel, private val theme: UIThemeLookAndFeelInfo) : BasicLookAndFeel() {
   companion object {
     @JvmField
-    val preInitializedBaseLaf: AtomicReference<LookAndFeel?> = AtomicReference<LookAndFeel?>()
+    val preInitializedBaseLaf: AtomicReference<LookAndFeel?> = AtomicReference()
 
     @JvmStatic
     var isAltPressed: Boolean = false
@@ -53,23 +50,25 @@ class LookAndFeelThemeAdapter(
 
   override fun getDefaults(): UIDefaults {
     val defaults = base.defaults
+
     initBaseLaF(defaults)
 
-    defaults.put("Menu.arrowIcon", DefaultMenuArrowIcon)
-    defaults.put("MenuItem.background", UIManager.getColor("Menu.background"))
+    defaults["Menu.arrowIcon"] = DefaultMenuArrowIcon
+    defaults["MenuItem.background"] = UIManager.getColor("Menu.background")
 
     theme.installTheme(defaults)
 
-    defaults.put("Tree.ancestorInputMap", null)
+    defaults["Tree.ancestorInputMap"] = null
 
-    if (SystemInfoRt.isLinux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
+    if (OS.CURRENT == OS.Linux && listOf("CN", "JP", "KR", "TW").contains(Locale.getDefault().country)) {
       for (key in defaults.keys) {
         if (key.toString().endsWith(".font")) {
           val font = toFont(defaults, key)
-          defaults.put(key, FontUIResource("Dialog", font.style, font.size))
+          defaults[key] = FontUIResource("Dialog", font.style, font.size)
         }
       }
     }
+
     return defaults
   }
 
@@ -109,14 +108,14 @@ internal fun initBaseLaF(defaults: UIDefaults) {
   // these icons are only needed to prevent Swing from trying to fetch defaults with AWT ImageFetcher threads (IDEA-322089),
   // but might as well just put something sensibly-looking there, just in case they show up due to some bug
   val folderIcon = LazyValue { AllIcons.Nodes.Folder }
-  defaults.put("Tree.openIcon", folderIcon)
-  defaults.put("Tree.closedIcon", folderIcon)
-  defaults.put("Tree.leafIcon", LazyValue { AllIcons.FileTypes.Any_type })
+  defaults["Tree.openIcon"] = folderIcon
+  defaults["Tree.closedIcon"] = folderIcon
+  defaults["Tree.leafIcon"] = LazyValue { AllIcons.FileTypes.Any_type }
   // our themes actually set these two, but just in case
-  defaults.put("Tree.expandedIcon", LazyValue { AllIcons.Toolbar.Expand })
-  defaults.put("Tree.collapsedIcon", LazyValue { AllIcons.Actions.ArrowExpand })
+  defaults["Tree.expandedIcon"] = LazyValue { AllIcons.Toolbar.Expand }
+  defaults["Tree.collapsedIcon"] = LazyValue { AllIcons.Actions.ArrowExpand }
 
-  defaults.put("Table.ancestorInputMap", UIDefaults.LazyInputMap(arrayOf<Any>(
+  defaults["Table.ancestorInputMap"] = UIDefaults.LazyInputMap(arrayOf<Any>(
     "ctrl C", "copy",
     "meta C", "copy",
     "ctrl V", "paste",
@@ -168,25 +167,25 @@ internal fun initBaseLaF(defaults: UIDefaults) {
     "meta A", "selectAll",
     "ESCAPE", "cancel",
     "F2", "startEditing"
-  )))
+  ))
 
   defaults.remove("Spinner.arrowButtonBorder")
-  defaults.put("Spinner.arrowButtonSize", JBDimension(16, 5).asUIResource())
+  defaults["Spinner.arrowButtonSize"] = JBDimension(16, 5).asUIResource()
   if (ClientSystemInfo.isMac()) {
-    defaults.put("RootPane.defaultButtonWindowKeyBindings", arrayOf<Any>(
+    defaults["RootPane.defaultButtonWindowKeyBindings"] = arrayOf<Any>(
       "ENTER", "press",
       "released ENTER", "release",
       "ctrl ENTER", "press",
       "ctrl released ENTER", "release",
       "meta ENTER", "press",
       "meta released ENTER", "release"
-    ))
+    )
   }
-  defaults.put("EditorPane.font", toFont(defaults, "TextField.font"))
+  defaults["EditorPane.font"] = toFont(defaults, "TextField.font")
 
   patchFileChooserStrings(defaults)
 
-  defaults.put("Balloon.error.textInsets", JBInsets(3, 8, 3, 8).asUIResource())
+  defaults["Balloon.error.textInsets"] = JBInsets(3, 8, 3, 8).asUIResource()
 }
 
 private fun patchFileChooserStrings(defaults: UIDefaults) {
@@ -198,7 +197,7 @@ private fun patchFileChooserStrings(defaults: UIDefaults) {
   if (!defaults.containsKey(fileChooserTextKeys[0])) {
     // Alloy L&F does not define strings for names of context menu actions, so we have to patch them in here
     for (key in fileChooserTextKeys) {
-      defaults.put(key, LazyValue { IdeBundle.message(key) })
+      defaults[key] = LazyValue { IdeBundle.message(key) }
     }
   }
 }
@@ -207,34 +206,34 @@ private fun patchComboBox(defaults: UIDefaults) {
   val metalDefaults = MetalLookAndFeel().getDefaults()
   defaults.remove("ComboBox.ancestorInputMap")
   defaults.remove("ComboBox.actionMap")
-  defaults.put("ComboBox.ancestorInputMap", metalDefaults.get("ComboBox.ancestorInputMap"))
-  defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"))
+  defaults["ComboBox.ancestorInputMap"] = metalDefaults["ComboBox.ancestorInputMap"]
+  defaults["ComboBox.actionMap"] = metalDefaults["ComboBox.actionMap"]
 }
 
 internal fun initInputMapDefaults(defaults: UIDefaults) {
   // Make ENTER work in JTrees
-  val treeInputMap = defaults.get("Tree.focusInputMap") as InputMap?
+  val treeInputMap = defaults["Tree.focusInputMap"] as InputMap?
   treeInputMap?.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), "toggle")
   // Cut/Copy/Paste in JTextAreas
-  val textAreaInputMap = defaults.get("TextArea.focusInputMap") as InputMap?
+  val textAreaInputMap = defaults["TextArea.focusInputMap"] as InputMap?
   if (textAreaInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
     installCutCopyPasteShortcuts(inputMap = textAreaInputMap, useSimpleActionKeys = false)
   }
   // Cut/Copy/Paste in JTextFields
-  val textFieldInputMap = defaults.get("TextField.focusInputMap") as InputMap?
+  val textFieldInputMap = defaults["TextField.focusInputMap"] as InputMap?
   if (textFieldInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
     installCutCopyPasteShortcuts(inputMap = textFieldInputMap, useSimpleActionKeys = false)
   }
   // Cut/Copy/Paste in JPasswordField
-  val passwordFieldInputMap = defaults.get("PasswordField.focusInputMap") as InputMap?
+  val passwordFieldInputMap = defaults["PasswordField.focusInputMap"] as InputMap?
   if (passwordFieldInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
     installCutCopyPasteShortcuts(inputMap = passwordFieldInputMap, useSimpleActionKeys = false)
   }
   // Cut/Copy/Paste in JTables
-  val tableInputMap = defaults.get("Table.ancestorInputMap") as InputMap?
+  val tableInputMap = defaults["Table.ancestorInputMap"] as InputMap?
   if (tableInputMap != null) {
     // It really can be null, for example, when LAF isn't properly initialized (an Alloy license problem)
     installCutCopyPasteShortcuts(inputMap = tableInputMap, useSimpleActionKeys = true)
@@ -256,7 +255,7 @@ private fun installCutCopyPasteShortcuts(inputMap: InputMap, useSimpleActionKeys
 }
 
 private fun toFont(defaults: UIDefaults, key: Any): Font {
-  var value = defaults.get(key)
+  var value = defaults[key]
   if (value is Font) {
     return value
   }
@@ -270,16 +269,15 @@ private fun toFont(defaults: UIDefaults, key: Any): Font {
 }
 
 internal fun createRawDarculaTheme(): UITheme {
-  val classLoader = LookAndFeelThemeAdapter::class.java.getClassLoader()
+  val classLoader = LookAndFeelThemeAdapter::class.java.classLoader
   val filename = "themes/darcula.theme.json"
-  val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /* checkParents */true)
+  val data = ResourceUtil.getResourceAsBytes(filename, classLoader, /*checkParents =*/ true)
              ?: throw RuntimeException("Can't load $filename")
-
-  val theme = UITheme.loadDeprecatedFromJson(data = data, themeId = "Darcula", classLoader = classLoader)
+  val theme = UITheme.loadDeprecatedFromJson(data, themeId = "Darcula", classLoader)
   return theme
 }
 
-@Internal
+@ApiStatus.Internal
 @VisibleForTesting
 fun setEarlyUiLaF() {
   // it is important to use class loader of a current instance class (LaF in plugin)
@@ -288,13 +286,12 @@ fun setEarlyUiLaF() {
   UIManager.setLookAndFeel(laf)
 }
 
-// used by Rider
-@Internal
+@ApiStatus.Internal
 fun createBaseLaF(): LookAndFeel = createBaseLaF(linuxSystemFont = null)
 
-@Internal
+@ApiStatus.Internal
 fun createBaseLaF(linuxSystemFont: FontUIResource?): LookAndFeel {
-  if (SystemInfoRt.isMac) {
+  if (OS.CURRENT == OS.macOS) {
     if (AppMode.isRemoteDevHost()) {
       return IdeaLaf(customFontDefaults = null)
     }
@@ -303,14 +300,14 @@ fun createBaseLaF(linuxSystemFont: FontUIResource?): LookAndFeel {
       return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
     }
   }
-  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
+  else if (OS.CURRENT != OS.Linux || GraphicsEnvironment.isHeadless()) {
     return IdeaLaf(customFontDefaults = null)
   }
 
   if (isLinuxSystemFontWithoutGtkLaf) {
     val systemFont = linuxSystemFont ?: readLinuxSystemFont()
     if (systemFont != null) {
-      return IdeaLaf(customFontDefaults = null, systemFont = systemFont)
+      return IdeaLaf(customFontDefaults = null, systemFont)
     }
   }
 
@@ -330,15 +327,15 @@ fun createBaseLaF(linuxSystemFont: FontUIResource?): LookAndFeel {
       for (key in gtkDefaults.keys) {
         if (key.toString().endsWith(".font")) {
           // `UIDefaults#get` unwraps lazy values
-          fontDefaults.put(key, gtkDefaults[key])
+          fontDefaults[key] = gtkDefaults[key]
         }
       }
-      @Suppress("UsePropertyAccessSyntax")
-      return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
+      return IdeaLaf(customFontDefaults = fontDefaults.takeIf { it.isNotEmpty() })
     }
   }
   catch (e: Exception) {
     logger<IdeaLaf>().warn(e)
   }
+
   return IdeaLaf(customFontDefaults = null)
 }

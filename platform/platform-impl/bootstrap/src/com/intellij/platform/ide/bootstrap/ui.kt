@@ -223,7 +223,7 @@ fun checkHiDPISettings() {
 }
 
 // must happen after initUi
-internal fun scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(
+internal fun scheduleUpdateFrameClassAndWindowIcon(
   scope: CoroutineScope,
   initAwtToolkitJob: Job,
   initUiScale: Job,

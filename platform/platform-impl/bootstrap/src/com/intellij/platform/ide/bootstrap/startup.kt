@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("StartupUtil")
 @file:OptIn(LowLevelLocalMachineAccess::class)
-
+@file:Suppress("UseOptimizedEelFunctions")
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.BundleBase
@@ -35,6 +35,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.awaitWithCheckCanceled
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ShutDownTracker
+import com.intellij.openapi.wm.impl.EarlyProjectFrame
+import com.intellij.openapi.wm.impl.loadFrameClasses
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.ui.mac.initMacApplication
@@ -48,8 +50,6 @@ import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.singleProduct.migrateCommunityToSingleProductIfNeeded
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
-import com.intellij.openapi.wm.impl.EarlyProjectFrame
-import com.intellij.openapi.wm.impl.loadFrameClasses
 import com.intellij.util.ui.RawSwingDispatcher
 import com.jetbrains.JBR
 import kotlinx.collections.immutable.toImmutableMap
@@ -193,7 +193,7 @@ fun startApplication(
   }
 
   if (initUiScale != null) {
-    scheduleUpdateFrameClassAndWindowIconAndPreloadSystemFonts(scope, initAwtToolkitJob, initUiScale, initLafJob, appInfoDeferred)
+    scheduleUpdateFrameClassAndWindowIcon(scope, initAwtToolkitJob, initUiScale, initLafJob, appInfoDeferred)
   }
 
   val zipPoolDeferred = scope.async {
@@ -239,14 +239,7 @@ fun startApplication(
     }
   }
 
-  scheduleSystemLibSetupAndLogInfoAndInitMacApp(
-    scope = scope,
-    logDeferred = logDeferred,
-    appInfoDeferred = appInfoDeferred,
-    initUiDeferred = initLafJob,
-    args = args,
-    mainScope = mainScope,
-  )
+  scheduleSystemLibSetupAndLogInfoAndInitMacApp(scope, logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = scope.async { loadEuaDocument(appInfoDeferred) }
 
@@ -573,6 +566,7 @@ private fun lockSystemDirs(args: List<String>) {
   val directoryLock = DirectoryLock(PathManager.getConfigDir(), PathManager.getSystemDir()) { processorArgs ->
     @Suppress("RAW_RUN_BLOCKING")
     runBlocking {
+      @Suppress("SuppressedCancellationException")
       try {
         commandProcessor.get().invoke(processorArgs).await()
       }
