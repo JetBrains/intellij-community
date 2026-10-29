@@ -112,11 +112,13 @@ fn only_a_summary_without_failures_is_green() {
     assert!(!is_green(format!("{note}\nnot a record\n{}\n", summary(false)).as_bytes()));
 }
 
-/// The steps of an end, which each say that they ran. The end answers `green`, and the XML write fails on `refuse_xml`.
+/// The steps of an end, which each say that they ran. The end answers `green`, the XML write fails on `refuse_xml`, and
+/// the stream failed an attempt on `failed_an_attempt`.
 struct FakeEnding {
     ran: Vec<&'static str>,
     green: bool,
     refuse_xml: bool,
+    failed_an_attempt: bool,
 }
 
 impl Ending for FakeEnding {
@@ -138,9 +140,46 @@ impl Ending for FakeEnding {
         Ok(self.green && quit.is_ok())
     }
 
+    fn failed_an_attempt(&self) -> bool {
+        self.failed_an_attempt
+    }
+
     fn keep_evidence(&mut self) {
         self.ran.push("evidence");
     }
+}
+
+/// The steps that [`finish`] runs over a [`FakeEnding`]: its outcome, the steps that ran, and the `timing` records.
+fn finished_steps(green: bool, refuse_xml: bool, failed_an_attempt: bool) -> (Result<bool, String>, Vec<&'static str>, Vec<String>) {
+    let mut stream = format!("{}\n", summary(false)).into_bytes();
+    let mut ending = FakeEnding {
+        ran: Vec::new(),
+        green,
+        refuse_xml,
+        failed_an_attempt,
+    };
+    let outcome = finish(&mut stream, &mut ending);
+    let text = String::from_utf8(stream.clone()).unwrap();
+    let timed: Vec<String> = text
+        .lines()
+        .skip(1)
+        .map(|line| match decode_run_event(line.as_bytes()).unwrap().kind {
+            RunEventKind::Timing(timing) if timing.subject.is_none() => timing.step,
+            other => panic!("{other:?}"),
+        })
+        .collect();
+    assert!(is_green(&stream), "{text}");
+    (outcome.map_err(|refusal| refusal.code.into_owned()), ending.ran, timed)
+}
+
+// A run that its rerun made green keeps the evidence of the failed attempt, as a run that is not green does, and it
+// stays green.
+#[test]
+fn a_run_that_its_rerun_made_green_keeps_the_evidence_of_its_failed_attempt() {
+    let (outcome, ran, timed) = finished_steps(true, false, true);
+    assert_eq!(outcome, Ok(true));
+    assert_eq!(ran, ["xml", "quit", "end", "evidence"]);
+    assert_eq!(timed.last().map(String::as_str), Some("lane-run-evidence"));
 }
 
 // After the summary of its iteration, lane-run runs its own steps in order and writes the `timing` record of each after
@@ -148,26 +187,7 @@ impl Ending for FakeEnding {
 // with them is still green. A JUnit XML that cannot be written is the refusal of the run, after every step ran.
 #[test]
 fn the_steps_after_the_iteration_are_timing_records_after_the_summary() {
-    let steps = |green: bool, refuse_xml: bool| {
-        let mut stream = format!("{}\n", summary(false)).into_bytes();
-        let mut ending = FakeEnding {
-            ran: Vec::new(),
-            green,
-            refuse_xml,
-        };
-        let outcome = finish(&mut stream, &mut ending);
-        let text = String::from_utf8(stream.clone()).unwrap();
-        let timed: Vec<String> = text
-            .lines()
-            .skip(1)
-            .map(|line| match decode_run_event(line.as_bytes()).unwrap().kind {
-                RunEventKind::Timing(timing) if timing.subject.is_none() => timing.step,
-                other => panic!("{other:?}"),
-            })
-            .collect();
-        assert!(is_green(&stream), "{text}");
-        (outcome.map_err(|refusal| refusal.code.into_owned()), ending.ran, timed)
-    };
+    let steps = |green: bool, refuse_xml: bool| finished_steps(green, refuse_xml, false);
     assert_eq!(
         steps(true, false),
         (

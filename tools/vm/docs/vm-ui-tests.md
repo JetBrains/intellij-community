@@ -708,6 +708,14 @@ budget and the hard stop each write a build problem with the identity `lane-run-
 of a run that is not green and the hard stop also keep its evidence in `lane/` of `TEST_UNDECLARED_OUTPUTS_DIR`, as
 the next section states.
 
+`lane-run` runs each failed scenario of the lane IDE once more, on a recycled IDE, after the last suite of the lane
+IDE. A pass of the rerun makes the run green, and the JUnit XML keeps both attempts, so TeamCity shows the test as
+flaky when the build has the failure condition "Support test retry". More than 3 failures rerun nothing. The lane
+daemon of a worker reruns nothing, so `vm.cmd run` shows each flake.
+`env AIR_LANE_INJECT_FAILURE='first:<scenario>'` (or `every:`) with `--test_env` fails a scenario on purpose, to
+see the rerun. [lane-run reruns each failed scenario once](decisions/2026-10-29-lane-run-reruns-each-failed-scenario-once.md)
+records why.
+
 **The versioned JSON report is the contract, and the run stream is its one source.** The report, the
 JUnit XML and the TeamCity service messages are three readers of that stream. The controller writes
 the XML of each iteration beside its report, and the XML of the command to the file that

@@ -32,6 +32,7 @@ use super::live::LiveRun;
 use super::package::sha256_hex;
 use super::program::{Failure, IdeProcess, Lane, Runner, Suite, case_identity, class_label, kind};
 use super::readiness::{self, Bridge, READY_TIMEOUT, request};
+use super::rerun::Rerun;
 use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
 use super::stream::Stream;
@@ -270,17 +271,20 @@ pub(crate) fn apply_filters(
 }
 
 /// Runs one iteration of `request` and writes its records to `out`. A write that fails ends the stream, not the run.
-/// The JUnit XML of the records goes to [`TEST_XML_FILE`] of the iteration directory, and the run answers it.
+/// The JUnit XML of the records goes to [`TEST_XML_FILE`] of the iteration directory, and the run answers it. The lane
+/// daemon reruns no failed scenario.
 pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + Send)) -> String {
-    run_split(daemon, request, RunnerSplit::WHOLE, &[], out)
+    run_split(daemon, request, RunnerSplit::WHOLE, &[], None, out)
 }
 
-/// [`run`] of the share `split` of the selected suites. The stream carries `notes` right after the start of the run.
+/// [`run`] of the share `split` of the selected suites, with the rerun `rerun` of a `lane-run`. The stream carries
+/// `notes` right after the start of the run.
 pub(crate) fn run_split(
     daemon: &Daemon,
     request: &RunRequest,
     split: RunnerSplit,
     notes: &[String],
+    rerun: Option<&Rerun>,
     out: &mut (dyn Write + Send),
 ) -> String {
     let stream = Stream::new(out);
@@ -306,7 +310,7 @@ pub(crate) fn run_split(
     // The budget of the run counts from the request, so the boot of the IDE spends it too.
     let run_end = request.run_budget_sec.map(|seconds| Instant::now() + Duration::from_secs(seconds));
     let executed = panic::catch_unwind(AssertUnwindSafe(|| {
-        execute(daemon, request, split, &stream, &iteration_dir, &iteration_id, run_end)
+        execute(daemon, request, split, rerun, &stream, &iteration_dir, &iteration_id, run_end)
     }))
     .unwrap_or_else(|panic| {
         let message = panic
@@ -409,10 +413,12 @@ pub(crate) fn lane_key(daemon: &Daemon, selection: &Selection, product_stamp: &s
 ///
 /// A live lane provisions its account before the IDE, and its run ends after the scenarios, also after a failure,
 /// before the summary of the iteration.
+#[expect(clippy::too_many_arguments, reason = "the parts of one iteration that the caller resolved once")]
 fn execute(
     daemon: &Daemon,
     request: &RunRequest,
     split: RunnerSplit,
+    rerun: Option<&Rerun>,
     stream: &Stream<'_>,
     iteration_dir: &Path,
     iteration_id: &str,
@@ -443,6 +449,7 @@ fn execute(
         &fake_agent_jar,
         &selection,
         live.as_ref(),
+        rerun,
         run_end,
     );
     let Some(live) = live else {
@@ -509,6 +516,7 @@ fn execute_selection(
     fake_agent_jar: &Path,
     selection: &Selection,
     live: Option<&LiveRun>,
+    rerun: Option<&Rerun>,
     run_end: Option<Instant>,
 ) -> Result<bool, String> {
     let lane = request.lane.as_deref().unwrap_or_default();
@@ -629,6 +637,7 @@ fn execute_selection(
             .expect("the watchdog thread starts");
         Runner::new(&daemon_lane, stream, &watch, &selection.lane, iteration_dir, trace)
             .with_session_logs(staged.logs.clone())
+            .with_rerun(rerun.cloned())
             .run(&selection.suites);
         watch.completed(stream);
     });

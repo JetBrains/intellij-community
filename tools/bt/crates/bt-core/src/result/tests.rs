@@ -385,6 +385,41 @@ fn only_the_final_attempt_counts_and_the_retry_is_reported_as_flaky() {
     );
 }
 
+// The Air lane-run reruns a failed scenario once and writes both attempts as cases of the same name. A failure that a
+// later pass follows is flaky: the run is green, and the case is no failure. A case that fails both attempts stays a
+// failure of the run.
+#[test]
+fn a_failed_case_that_a_later_case_of_its_name_passed_is_flaky() {
+    let fake = FakeRuntime::new([]);
+    fake.put_absolute(
+        "/exec/testlogs/p/t/test.xml",
+        &suite_xml(&suite("FooTest", vec![failing("a", "E", "boom", ""), case("b"), case("a")])),
+    );
+    let bep = bep_of(&fake, &[test_result_event(&at("//p:t", "/exec/testlogs/p/t/test.xml"))]);
+    let result = collect_results(&fake, &bep, 5000, 0, "");
+    assert_eq!(result.status, RunStatus::Pass);
+    assert!(result.failures.is_empty(), "{:?}", result.failures);
+    assert_eq!((result.targets[0].failed, result.targets[0].flaky), (0, 1));
+    assert_eq!(
+        result.flaky,
+        [FlakyRun {
+            id: "//p:t FooTest.a".to_owned(),
+            attempts: 2
+        }]
+    );
+
+    let result = collect_failed(
+        &suite_xml(&suite(
+            "FooTest",
+            vec![failing("a", "E", "boom", ""), failing("a", "E", "boom again", "")],
+        )),
+        &failed_attempt(),
+    );
+    assert_eq!(result.status, RunStatus::Fail);
+    assert_eq!(result.failures.len(), 2);
+    assert_eq!((result.targets[0].failed, result.targets[0].flaky), (2, 0));
+}
+
 /// A cache hit still has a test.xml, and reading it is what keeps a cached lane from reporting zero tests.
 #[test]
 fn a_cached_replay_still_reports_the_real_test_count() {

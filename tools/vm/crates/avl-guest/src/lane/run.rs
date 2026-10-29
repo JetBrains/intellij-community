@@ -12,7 +12,8 @@
 //! [`super::evidence`] states. On a TeamCity build that names a build log file, the run shows in the build log while it
 //! goes on, as [`super::build_log`] states. [`VIDEO_VARIABLE`] can keep the video of a scenario that did not pass only,
 //! as [`video_retention`] states. A TeamCity build on Linux lets the recorder read the screen, and the run then starts an
-//! X display of its own, as [`super::own_display`] states.
+//! X display of its own, as [`super::own_display`] states. Each failed scenario of the lane IDE runs once more at the
+//! end of the suites of the lane IDE, as [`super::rerun`] states.
 //!
 //! With `--plan-only` it stops before the IDE: it stages the inputs and selects the documents as a run does, and it
 //! writes the [`RunPlan`] on standard output. So a host proves a lane rule and its runfiles without a lane IDE.
@@ -44,6 +45,7 @@ use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, Mo
 use super::own_display;
 use super::package::sha256_hex;
 use super::performance;
+use super::rerun;
 use super::run_result::{self, RunEnd};
 use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
@@ -243,6 +245,7 @@ fn record_refusal(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>,
 fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Result<u8, AgentRefusal> {
     let started = Instant::now();
     let flags = jvm_flags(&args.jvm_flags)?;
+    let rerun = rerun::from_environment(variable)?;
     refuse_shards(variable)?;
     let keep_video = video_retention(variable)?;
     // A plan launches no IDE, so it spends no budget.
@@ -278,6 +281,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
     launch_inputs.trace.keep_video = keep_video;
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
+    notes.extend(rerun.injected.iter().map(rerun::Injection::describe));
     // Held to the end of the run: its drop stops the display.
     let run_display = if owns_screen && !args.plan_only {
         let (display, note) = own_display::take(&root, &variable(DISPLAY_VARIABLE).unwrap_or_default(), variable("PATH").as_deref())?;
@@ -385,7 +389,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
                 "cannot start the monitor, so the run has no hang report and no hard stop: {error}"
             ));
         }
-        let xml = iteration::run_split(&daemon, &request, flags.split, &notes, &mut tee);
+        let xml = iteration::run_split(&daemon, &request, flags.split, &notes, Some(&rerun), &mut tee);
         monitor.run_returned();
         let mut ending = LaneRunEnding {
             daemon: &daemon,
@@ -416,18 +420,21 @@ pub(crate) trait Ending {
     /// green. `quit` is the outcome of [`Ending::quit`].
     fn end(&mut self, quit: &Result<(), AgentRefusal>) -> Result<bool, AgentRefusal>;
 
-    /// Keeps the evidence of a run that is not green.
+    /// Whether a scenario of the run stream that [`Ending::end`] read failed an attempt, also one that its rerun passed.
+    fn failed_an_attempt(&self) -> bool;
+
+    /// Keeps the evidence of a run that is not green, or that failed an attempt.
     fn keep_evidence(&mut self);
 }
 
 /// Runs the steps of `ending` in order, and writes the `timing` record of each into `out` after it: `lane-run-xml`,
-/// `lane-run-quit`, `lane-run-end` and, for a run that is not green, `lane-run-evidence`. It answers whether the run is
-/// green, and a JUnit XML that it could not write is its refusal.
+/// `lane-run-quit`, `lane-run-end` and, for a run that is not green or that failed an attempt, `lane-run-evidence`. It
+/// answers whether the run is green, and a JUnit XML that it could not write is its refusal.
 pub(crate) fn finish(out: &mut impl Write, ending: &mut dyn Ending) -> Result<bool, AgentRefusal> {
     let written = timed(out, TimedStep::LaneRunXml, || ending.write_xml());
     let quit = timed(out, TimedStep::LaneRunQuit, || ending.quit());
     let green = timed(out, TimedStep::LaneRunEnd, || ending.end(&quit))?;
-    if !green {
+    if !green || ending.failed_an_attempt() {
         timed(out, TimedStep::LaneRunEvidence, || ending.keep_evidence());
     }
     written?;
@@ -506,6 +513,12 @@ impl Ending for LaneRunEnding<'_> {
             log(line);
         }
         Ok(green)
+    }
+
+    fn failed_an_attempt(&self) -> bool {
+        self.events
+            .iter()
+            .any(|event| matches!(&event.kind, RunEventKind::TestFinished(finished) if finished.status == avl_junit::cases::STATUS_FAILED))
     }
 
     fn keep_evidence(&mut self) {

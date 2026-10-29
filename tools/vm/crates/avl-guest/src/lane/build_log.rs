@@ -6,7 +6,7 @@
 //! goes on:
 //!
 //! - `progressMessage` at the start of each scenario, `<lane> <n>/<total>: <scenario>`, and at its end with its status
-//!   and duration.
+//!   and duration. A rerun of a scenario is `<lane> rerun: <scenario>`.
 //! - `publishArtifacts` of the video and the failure picture of a failed or aborted scenario. A scan of the trace root
 //!   after each scenario and at the summary of the run finds the bundle. The paths are the ones of
 //!   [`avl_trace_tools::artifacts`], so the publish of `air-trace teamcity-publish` after the test replaces the same
@@ -19,7 +19,7 @@
 //! Each message is one line, and one write call writes it. When a write fails, the log gets one line, and the channel
 //! stays off for the rest of the run. The channel never fails a run.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 use std::path::{Path, PathBuf};
@@ -53,8 +53,10 @@ pub(crate) struct BuildLog {
     pending: Vec<u8>,
     /// The scenarios of the plan.
     total: u32,
-    /// The scenarios that started so far.
+    /// The scenarios that started so far, without the reruns.
     started: u32,
+    /// The ids of the scenarios that started, and whether the last start of each was a rerun.
+    attempts: HashMap<String, bool>,
 }
 
 /// The bundles of a run and the artifacts of its failed scenarios.
@@ -108,6 +110,7 @@ impl BuildLog {
             pending: Vec::new(),
             total: 0,
             started: 0,
+            attempts: HashMap::new(),
         }
     }
 
@@ -129,14 +132,19 @@ impl BuildLog {
         match kind {
             RunEventKind::PlanStarted(plan) => self.total = plan.discovered_executions,
             RunEventKind::TestStarted(started) => {
-                self.started += 1;
-                let text = format!("{}: {}", self.position(), started.execution.display_name);
+                let rerun = self.attempts.contains_key(&started.execution.id);
+                self.attempts.insert(started.execution.id.clone(), rerun);
+                if !rerun {
+                    self.started += 1;
+                }
+                let text = format!("{}: {}", self.position(rerun), started.execution.display_name);
                 self.progress(&text);
             }
             RunEventKind::TestFinished(finished) => {
+                let rerun = self.attempts.get(&finished.execution.id).copied().unwrap_or_default();
                 let text = format!(
                     "{}: {} {} ({})",
-                    self.position(),
+                    self.position(rerun),
                     finished.execution.display_name,
                     status_word(&finished.status),
                     duration(finished.duration_ms)
@@ -158,9 +166,13 @@ impl BuildLog {
         }
     }
 
-    /// `<lane> <n>/<total>` of the scenario that started last.
-    fn position(&self) -> String {
-        format!("{} {}/{}", self.lane, self.started, self.total)
+    /// `<lane> <n>/<total>` of the scenario that started last, or `<lane> rerun` of a rerun.
+    fn position(&self, rerun: bool) -> String {
+        if rerun {
+            format!("{} rerun", self.lane)
+        } else {
+            format!("{} {}/{}", self.lane, self.started, self.total)
+        }
     }
 
     fn progress(&mut self, text: &str) {

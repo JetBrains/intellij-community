@@ -169,6 +169,13 @@ pub fn relativize_testlogs(path: &str) -> String {
     }
 }
 
+/// Whether a case of `later`, the cases after `case` in its suite, passed under the class and the name of `case`.
+fn passed_later(later: &[TestCase], case: &TestCase) -> bool {
+    later
+        .iter()
+        .any(|next| next.outcome == junit::Outcome::Passed && next.class_name == case.class_name && next.name == case.name)
+}
+
 /// Strips the sandbox prefix off a compiler-reported path so it is clickable in the repo.
 pub fn relativize_source_path(path: &str) -> &str {
     path.split_once("/execroot/_main/").map_or(path, |(_, relative)| relative)
@@ -284,15 +291,35 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             *target.class_seconds.entry(suite.name.clone()).or_default() += suite.time_seconds;
             target.tests += suite.tests;
             target.skipped += suite.skipped;
-            let before = failures.len();
-            failures.extend(suite.cases.into_iter().filter(|case| case.outcome == junit::Outcome::Failed));
-            let counted = failures.len() - before;
+            let counted = suite.cases.iter().filter(|case| case.outcome == junit::Outcome::Failed).count();
+            // A runner that reruns a failed test, as the Air lane-run does, writes each attempt as a case of the same
+            // name. A failure that a later pass follows is flaky, not failed.
+            let retried: Vec<FlakyRun> = suite
+                .cases
+                .iter()
+                .enumerate()
+                .filter(|(index, case)| case.outcome == junit::Outcome::Failed && passed_later(&suite.cases[index + 1..], case))
+                .map(|(_, case)| FlakyRun {
+                    id: format!("{} {}.{}", last.label, case.class_name, case.name),
+                    attempts: 2,
+                })
+                .collect();
+            failures.extend(
+                suite
+                    .cases
+                    .iter()
+                    .enumerate()
+                    .filter(|(index, case)| case.outcome == junit::Outcome::Failed && !passed_later(&suite.cases[index + 1..], case))
+                    .map(|(_, case)| case.clone()),
+            );
             // Trust the suite header when a runner reported counts without per-case failure elements.
             target.failed += if counted == 0 {
                 suite.failures + suite.errors
             } else {
-                u32::try_from(counted).unwrap_or(u32::MAX)
+                u32::try_from(counted - retried.len()).unwrap_or(u32::MAX)
             };
+            target.flaky += u32::try_from(retried.len()).unwrap_or(u32::MAX);
+            flaky.extend(retried);
         }
 
         if group.len() > 1 && passed {

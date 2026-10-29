@@ -5,7 +5,8 @@
 //! the typed failure. A scenario that the recycle budget never let run is `testSkipped` with its reason, and no
 //! `testStarted`. A suite whose prologue failed is one `containerFailed`. The case of a scenario names the
 //! `testClass` label of its suite as its class and the JUnit factory method as its method, as the JVM daemon named a
-//! dynamic test. Its id is `[engine:lane-daemon]/[suite:<suite>]/[scenario:<name>]`.
+//! dynamic test. Its id is `[engine:lane-daemon]/[suite:<suite>]/[scenario:<name>]`. A rerun of a scenario is a second
+//! case of the same id, and its pass takes the failure of the first attempt out of the counts.
 //!
 //! The stream is shared: the run thread writes the records of the scenarios, and the watchdog thread writes its
 //! heartbeat and the slow-step records while the run thread waits for the IDE.
@@ -13,6 +14,7 @@
 //! The stream also keeps each record but `output`, so the iteration renders its JUnit XML from the same account, also
 //! after the reader of the stream went away.
 
+use std::collections::HashSet;
 use std::io::Write;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
@@ -75,7 +77,9 @@ impl CaseIdentity {
 /// The counts of the summary.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(crate) struct Counts {
+    /// The attempts that started: a rerun counts again.
     pub started: u32,
+    /// The scenarios whose last attempt failed.
     pub failed: u32,
     pub skipped: u32,
     pub container_failures: u32,
@@ -85,6 +89,8 @@ struct Inner<'a> {
     out: &'a mut (dyn Write + Send),
     broken: bool,
     counts: Counts,
+    /// The ids of the scenarios that [`Counts::failed`] counts.
+    failed: HashSet<String>,
     /// Each record but `output`, in stream order: what the JUnit XML reads.
     kept: Vec<RunEvent>,
 }
@@ -102,6 +108,7 @@ impl<'a> Stream<'a> {
                 out,
                 broken: false,
                 counts: Counts::default(),
+                failed: HashSet::new(),
                 kept: Vec::new(),
             }),
         }
@@ -180,7 +187,8 @@ impl<'a> Stream<'a> {
         }));
     }
 
-    /// The `testFinished` record of a scenario that started, and its case.
+    /// The `testFinished` record of a scenario that started, and its case. A pass of a scenario that failed before in
+    /// the stream takes that failure out of the counts, and a second failure of a scenario counts once.
     pub(crate) fn finished(
         &self,
         case: &CaseIdentity,
@@ -189,17 +197,26 @@ impl<'a> Stream<'a> {
         failure: Option<TypedFailure>,
         report: ScenarioReport,
     ) {
+        let execution = case.execution();
         {
             let mut inner = self.lock();
             match status {
-                CaseStatus::Successful => {}
-                CaseStatus::Failed => inner.counts.failed += 1,
+                CaseStatus::Successful => {
+                    if inner.failed.remove(&execution.id) {
+                        inner.counts.failed -= 1;
+                    }
+                }
+                CaseStatus::Failed => {
+                    if inner.failed.insert(execution.id.clone()) {
+                        inner.counts.failed += 1;
+                    }
+                }
                 CaseStatus::Aborted => inner.counts.skipped += 1,
             }
         }
         self.emit(&RunEventKind::TestFinished(TestFinished {
             timestamp: now_stamp(),
-            execution: case.execution(),
+            execution,
             status: status.wire().to_owned(),
             duration_ms: i64::try_from(duration.as_millis()).unwrap_or(i64::MAX),
             failure: failure.unwrap_or_default(),

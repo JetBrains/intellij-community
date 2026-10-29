@@ -591,6 +591,8 @@ struct Setup {
     recording: Recording,
     document: LaneDocument,
     session_logs: Vec<StagedLog>,
+    /// The rerun of a `lane-run`, or `None` for the lane daemon.
+    rerun: Option<Rerun>,
 }
 
 impl Default for Setup {
@@ -603,6 +605,7 @@ impl Default for Setup {
             recording: Recording::default(),
             document: lane_document(),
             session_logs: Vec::new(),
+            rerun: None,
         }
     }
 }
@@ -617,6 +620,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
         recording,
         document,
         session_logs,
+        rerun,
     } = setup;
     let (slow_step, margin, active) = (*slow_step, *margin, *active);
     let iteration = TempDir::new().unwrap();
@@ -643,6 +647,7 @@ fn run_set(fake: &Fake, suites: &[Suite], setup: &Setup) -> Ran {
             Runner::new(fake, &stream, &watch, document, iteration.path(), trace)
                 .with_instruction_margin(margin)
                 .with_session_logs(session_logs.clone())
+                .with_rerun(rerun.clone())
                 .run(suites);
             watch.completed(&stream);
         });
@@ -2204,4 +2209,179 @@ fn a_failed_scenario_attaches_the_codex_daemon_ledger_and_records_of_the_ide() {
     let ran = run_one_assertion(&failing_assertion());
     assert_eq!(ran.events("testFinished")[0]["status"], "FAILED");
     assert_eq!(codex_attachments(&ran), []);
+}
+
+/// A rerun of `lane-run` with the injections of `value`, as `AIR_LANE_INJECT_FAILURE` spells them.
+fn rerun_injecting(value: &str) -> Rerun {
+    let value = value.to_owned();
+    rerun::from_environment(&move |_| Some(value.clone())).unwrap()
+}
+
+/// Runs `suites` against `fake` with `rerun`, and the run budget `run_budget`.
+fn run_rerun(fake: &Fake, suites: &[Suite], rerun: Option<Rerun>, run_budget: Option<Duration>) -> Ran {
+    run_set(
+        fake,
+        suites,
+        &Setup {
+            run_budget,
+            rerun,
+            ..Setup::default()
+        },
+    )
+}
+
+impl Ran {
+    /// The text of each `output` record that starts with `lane-run`.
+    fn rerun_notes(&self) -> Vec<String> {
+        self.events("output")
+            .iter()
+            .filter_map(|record| record["text"].as_str())
+            .filter(|text| text.starts_with("lane-run"))
+            .map(str::to_owned)
+            .collect()
+    }
+}
+
+fn finished(name: &str, status: &str) -> (String, String) {
+    (name.to_owned(), status.to_owned())
+}
+
+// The rerun of lane-run runs a failed scenario once more after the last suite of the shared IDE. The IDE is recycled
+// first, so the rerun runs on a new IDE process, after the prologue of its suite and its own reset. The pass of the
+// rerun takes the failure out of the counts, and the stream keeps both attempts.
+#[test]
+fn a_failed_scenario_runs_once_more_on_a_recycled_ide_and_its_pass_clears_the_failure() {
+    let fake = Fake::new(Script::default());
+    let ran = run_rerun(
+        &fake,
+        &[select_story(&["first", "second"])],
+        Some(rerun_injecting("first:first")),
+        Some(Duration::from_mins(30)),
+    );
+    assert_eq!(
+        ran.finished_statuses(),
+        [
+            finished("first", "FAILED"),
+            finished("second", "SUCCESSFUL"),
+            finished("first", "SUCCESSFUL")
+        ]
+    );
+    let failed = ran.events("testFinished")[0];
+    assert_eq!(failed["type"], kind::INJECTED);
+    assert_eq!(
+        failed["message"],
+        "$AIR_LANE_INJECT_FAILURE fails the first attempt of the scenario 'first'"
+    );
+    assert_eq!(ran.counts.failed, 0);
+    assert_eq!(ran.counts.started, 3);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
+    let selects: Vec<u32> = fake
+        .requests()
+        .into_iter()
+        .filter(|(_, kind)| kind == "action/rename-session-select")
+        .map(|(pid, _)| pid)
+        .collect();
+    assert_eq!(selects, [1, 1, 2], "the rerun runs on the recycled IDE");
+    assert_eq!(
+        fake.requests().iter().filter(|(_, kind)| kind == "ResetManagedAgents").count(),
+        2,
+        "the prologue runs again before the rerun"
+    );
+    assert_eq!(
+        ran.rerun_notes(),
+        [
+            "lane-run reruns 1 failed scenario(s) once on a recycled IDE: 'first'",
+            "lane-run rerun: 1 of 1 failed scenario(s) passed",
+        ]
+    );
+}
+
+/// A fake whose assertion `rename-session-title` fails each time.
+fn title_never_shows() -> Fake {
+    let failure = json!({"type": "java.lang.IllegalStateException", "message": "the title does not show"});
+    Fake::new(Script {
+        failures: BTreeMap::from([("assertion/rename-session-title".to_owned(), failure)]),
+        ..Script::default()
+    })
+}
+
+// A scenario that fails its rerun too stays failed, and it counts as one failed scenario.
+#[test]
+fn a_scenario_that_fails_twice_stays_failed_after_one_rerun() {
+    let fake = title_never_shows();
+    let ran = run_rerun(&fake, &[title_story()], Some(Rerun::default()), None);
+    assert_eq!(
+        ran.finished_statuses(),
+        [finished("renames", "FAILED"), finished("renames", "FAILED")]
+    );
+    assert_eq!(ran.counts.failed, 1);
+    assert_eq!(
+        ran.rerun_notes(),
+        [
+            "lane-run reruns 1 failed scenario(s) once on a recycled IDE: 'renames'",
+            "lane-run rerun: 0 of 1 failed scenario(s) passed",
+        ]
+    );
+}
+
+// The lane daemon of a worker has no rerun: a failed scenario runs once, and no failure is injected.
+#[test]
+fn a_runner_without_a_rerun_reruns_nothing_and_injects_nothing() {
+    let fake = title_never_shows();
+    let ran = run(&fake, &[title_story(), select_story(&["first"])], None);
+    assert_eq!(
+        ran.finished_statuses(),
+        [finished("renames", "FAILED"), finished("first", "SUCCESSFUL")]
+    );
+    assert_eq!(ran.rerun_notes(), Vec::<String>::new());
+    assert_eq!(*fake.relaunches.lock().unwrap(), []);
+}
+
+// More failed scenarios than the limit are a break: no scenario reruns, and a note says why. A run whose budget left
+// cannot hold the recycle reruns nothing either.
+#[test]
+fn more_failed_scenarios_than_the_limit_or_too_little_budget_rerun_none() {
+    let fake = Fake::new(Script::default());
+    let names = ["a", "b", "c", "d"];
+    let every = names.map(|name| format!("every:{name}")).join(";");
+    let ran = run_rerun(&fake, &[select_story(&names)], Some(rerun_injecting(&every)), None);
+    assert_eq!(ran.finished_statuses().len(), 4);
+    assert_eq!(ran.counts.failed, 4);
+    assert_eq!(
+        ran.rerun_notes(),
+        ["lane-run reruns no failed scenario: 4 scenarios and suite prologues failed, more than 3, which is a break and not a flake"]
+    );
+    assert_eq!(*fake.relaunches.lock().unwrap(), []);
+
+    let fake = Fake::new(Script::default());
+    let ran = run_rerun(
+        &fake,
+        &[select_story(&["a"])],
+        Some(rerun_injecting("first:a")),
+        Some(Duration::from_mins(10)),
+    );
+    assert_eq!(ran.finished_statuses(), [finished("a", "FAILED")]);
+    let notes = ran.rerun_notes();
+    assert_eq!(notes.len(), 1, "{notes:?}");
+    assert!(
+        notes[0].starts_with("lane-run reruns no failed scenario: the lane budget left "),
+        "{notes:?}"
+    );
+    assert_eq!(*fake.relaunches.lock().unwrap(), []);
+}
+
+// A recycle that fails before the rerun leaves the failures as they are.
+#[test]
+fn a_recycle_that_fails_before_the_rerun_leaves_the_failure() {
+    let fake = Fake::new(Script::default());
+    *fake.refused_part.lock().unwrap() = Some(RelaunchPart::Ready);
+    let ran = run_rerun(&fake, &[select_story(&["a"])], Some(rerun_injecting("first:a")), None);
+    assert_eq!(ran.finished_statuses(), [finished("a", "FAILED")]);
+    assert_eq!(ran.counts.failed, 1);
+    let notes = ran.rerun_notes();
+    assert_eq!(notes.len(), 2, "{notes:?}");
+    assert!(
+        notes[1].starts_with("lane-run reruns no failed scenario: the recycle before the rerun failed: lane_ide_not_ready"),
+        "{notes:?}"
+    );
 }

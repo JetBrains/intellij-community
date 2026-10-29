@@ -287,6 +287,7 @@ fn the_notes_of_a_lane_run_follow_the_start_of_the_run() {
         &request,
         iteration::RunnerSplit { index: 1, count: 2 },
         &notes,
+        None,
         &mut out,
     );
 

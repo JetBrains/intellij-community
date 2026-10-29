@@ -17,6 +17,9 @@
 //! 4. A failure snapshot on failure, then `reset:after`, then `done`. The `reset:after` of a failed scenario also sends
 //!    the managed-agent baseline again when its suite has a `managedAgentInstall`, see [`Runner::managed_agent_baseline`].
 //!
+//! A runner of `lane-run` then runs each failed scenario of the shared IDE once more, on a recycled IDE, see
+//! [`Runner::rerun_failed`] and [`super::rerun`].
+//!
 //! A suite of the launch profile `bare` runs after the suites of the shared IDE, on an IDE of its own, see
 //! [`Runner::bare_suite`]. Its scenarios run their programs with no reset and no preparation, and the IDE gets no request
 //! before the first instruction.
@@ -53,6 +56,7 @@ use super::host_ids::{self, HostId, HostSide, ServiceControl};
 use super::ide::{Relaunch, RelaunchPart, RelaunchParts};
 use super::readiness::{READY_TIMEOUT, request};
 use super::recycle::{Isolation, RecycleBudget, ResetPhase, never_ran};
+use super::rerun::{self, Rerun};
 use super::session_logs::{self, StagedLog};
 use super::stream::{CaseIdentity, CaseStatus, Stream};
 use super::trace::{Trace, TraceFailure};
@@ -82,6 +86,8 @@ pub(crate) mod kind {
     pub(crate) const EXPIRED: &str = "lane_watchdog_expired";
     /// The IDE of a suite of its own did not launch or did not get ready, or the lane services of the IDE do not run.
     pub(crate) const LAUNCH: &str = "lane_launch";
+    /// `AIR_LANE_INJECT_FAILURE` failed the scenario on purpose.
+    pub(crate) const INJECTED: &str = "lane_injected_failure";
 }
 
 /// What the transport of an instruction waits past its deadline, before the grace of the bridge client. It is longer than
@@ -354,6 +360,12 @@ pub(crate) struct Runner<'r, 's> {
     instruction_margin: Duration,
     /// The recorded sessions in the context of the lane IDE, the runner value [`session_log::RUNNER_VALUE`].
     session_logs: Vec<StagedLog>,
+    /// The rerun of a `lane-run`, or `None` for the lane daemon, which reruns nothing.
+    rerun: Option<Rerun>,
+    /// Each scenario of the shared IDE that failed: the position of its suite and the index of its scenario.
+    failed: RefCell<Vec<(usize, usize)>>,
+    /// Whether the scenarios that run now are reruns.
+    rerunning: Cell<bool>,
 }
 
 impl<'r, 's> Runner<'r, 's> {
@@ -378,7 +390,16 @@ impl<'r, 's> Runner<'r, 's> {
             bare: Cell::new(false),
             instruction_margin: INSTRUCTION_MARGIN,
             session_logs: Vec::new(),
+            rerun: None,
+            failed: RefCell::new(Vec::new()),
+            rerunning: Cell::new(false),
         }
+    }
+
+    /// The same runner with the rerun `rerun` of a `lane-run`.
+    pub(crate) fn with_rerun(mut self, rerun: Option<Rerun>) -> Self {
+        self.rerun = rerun;
+        self
     }
 
     /// The same runner with the recorded sessions `logs` of the run.
@@ -479,19 +500,23 @@ impl<'r, 's> Runner<'r, 's> {
     }
 
     /// Runs every scenario of `suites`, in order, and closes the trace. A run that the watchdog ended starts no further
-    /// scenario. The suites of a bare IDE run last, so the IDE of the lane quits once per run.
+    /// scenario. The reruns follow the suites of the shared IDE. The suites of a bare IDE run last, so the IDE of the lane
+    /// quits once per run.
     pub(crate) fn run(self, suites: &[Suite]) {
         self.report_trace_failure();
         let (bare, shared): (Vec<&Suite>, Vec<&Suite>) = suites.iter().partition(|suite| suite.program.launch.is_some());
-        for suite in shared.into_iter().chain(bare) {
+        for (position, suite) in shared.iter().enumerate() {
             if self.watch.expired().is_some() {
                 break;
             }
-            if suite.program.launch.is_some() {
-                self.bare_suite(suite);
-            } else {
-                self.suite(suite);
+            self.suite(position, suite);
+        }
+        self.rerun_failed(&shared);
+        for suite in bare {
+            if self.watch.expired().is_some() {
+                break;
             }
+            self.bare_suite(suite);
         }
         if let Some(report) = self.isolation.borrow().report() {
             self.stream.note(report);
@@ -500,7 +525,8 @@ impl<'r, 's> Runner<'r, 's> {
         self.report_trace_failure();
     }
 
-    fn suite(&self, suite: &Suite) {
+    /// The suite at `position` of the suites of the shared IDE: its prologue, then each scenario.
+    fn suite(&self, position: usize, suite: &Suite) {
         let program = &suite.program;
         let reset = match self.prologue(program) {
             Ok(reset) => reset,
@@ -510,12 +536,92 @@ impl<'r, 's> Runner<'r, 's> {
                 return;
             }
         };
-        for (profile, raw) in program.profiles.iter().zip(&suite.raw_profiles) {
+        for (index, (profile, raw)) in program.profiles.iter().zip(&suite.raw_profiles).enumerate() {
             if self.watch.expired().is_some() {
                 return;
             }
-            self.scenario(program, profile, raw, &reset);
+            if self.scenario(program, profile, raw, &reset) == Some(CaseStatus::Failed) {
+                self.failed.borrow_mut().push((position, index));
+            }
         }
+    }
+
+    /// Runs each failed scenario of the shared IDE once more, when the runner has a rerun and [`rerun::refusal`] lets
+    /// it. The IDE is recycled once first, so each rerun gets a new IDE process and then the reset of its scenario. The
+    /// prologue of a suite runs again before its reruns. A recycle or a prologue that fails ends the reruns that depend on
+    /// it, with a note, and the failures stay.
+    fn rerun_failed(&self, shared: &[&Suite]) {
+        if self.rerun.is_none() {
+            return;
+        }
+        let failed = self.failed.take();
+        if failed.is_empty() {
+            return;
+        }
+        let counts = self.stream.counts();
+        let refused = rerun::refusal(rerun::Moment {
+            failed: counts.failed + counts.container_failures,
+            expired: self.watch.expired().is_some(),
+            exhausted: self.isolation.borrow().exhausted(),
+            live: self.document.live.is_some(),
+            budget_left: self.watch.budget_left(),
+            recycle_need: RECYCLE_NEED,
+        });
+        if let Some(reason) = refused {
+            self.stream.note(format!("lane-run reruns no failed scenario: {reason}"));
+            return;
+        }
+        let names: Vec<String> = failed
+            .iter()
+            .map(|(position, index)| format!("'{}'", shared[*position].program.profiles[*index].name))
+            .collect();
+        self.stream.note(format!(
+            "lane-run reruns {} failed scenario(s) once on a recycled IDE: {}",
+            failed.len(),
+            names.join(", ")
+        ));
+        if let Err(error) = self.relaunch_span(Relaunch::Recycle, &mut |_| Ok(())) {
+            self.stream.note(format!(
+                "lane-run reruns no failed scenario: the recycle before the rerun failed: {error}"
+            ));
+            return;
+        }
+        self.rerunning.set(true);
+        let mut passed = 0;
+        let mut position = 0;
+        while position < failed.len() {
+            let suite = shared[failed[position].0];
+            let indexes: Vec<usize> = failed[position..]
+                .iter()
+                .take_while(|(next, _)| *next == failed[position].0)
+                .map(|(_, index)| *index)
+                .collect();
+            position += indexes.len();
+            if self.watch.expired().is_some() || self.isolation.borrow().exhausted() {
+                break;
+            }
+            let program = &suite.program;
+            let reset = match self.prologue(program) {
+                Ok(reset) => reset,
+                Err(failure) => {
+                    self.stream.note(format!(
+                        "lane-run reruns no scenario of the suite '{}': its prologue failed: {}",
+                        program.suite, failure.message
+                    ));
+                    continue;
+                }
+            };
+            for index in indexes {
+                if self.watch.expired().is_some() {
+                    break;
+                }
+                let status = self.scenario(program, &program.profiles[index], &suite.raw_profiles[index], &reset);
+                passed += usize::from(status == Some(CaseStatus::Successful));
+            }
+        }
+        self.rerunning.set(false);
+        self.stream
+            .note(format!("lane-run rerun: {passed} of {} failed scenario(s) passed", failed.len()));
     }
 
     /// The prologue of a suite: the document, the declared CLIs, the managed-agent baseline, and the Agent Spawner of the
@@ -711,23 +817,23 @@ impl<'r, 's> Runner<'r, 's> {
         Some(started)
     }
 
-    fn scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue, reset: &ScenarioReset<'_>) {
+    /// Runs one scenario of the shared IDE, and answers its status, or `None` for a scenario that never started.
+    fn scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue, reset: &ScenarioReset<'_>) -> Option<CaseStatus> {
         let case = case_identity(suite, profile);
         if self.isolation.borrow().exhausted() {
             let reason = self.isolation.borrow().exhaustion_reason();
             self.stream.skipped(&case, never_ran(&profile.name, &reason));
-            return;
+            return None;
         }
-        let Some(started) = self.start_case(suite, profile, &case) else {
-            return;
-        };
+        let started = self.start_case(suite, profile, &case)?;
         self.trace()
             .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
         let fixture = suite.fixtures.get(&profile.fixture).cloned().unwrap_or_default();
 
         let mut verdict = self
             .traced_reset(ResetPhase::Before, &profile.name, reset.reset, None)
-            .and_then(|()| self.body(suite, profile, &fixture));
+            .and_then(|()| self.body(suite, profile, &fixture))
+            .and_then(|()| self.injected_failure(profile));
         if verdict.is_err() {
             self.trace().snap_failure();
             self.attach_codex_daemons();
@@ -746,11 +852,27 @@ impl<'r, 's> Runner<'r, 's> {
                 (primary, Ok(())) => primary,
             };
         }
-        self.finish(&case, started, verdict);
+        Some(self.finish(&case, started, verdict))
     }
 
-    /// Ends the case of a scenario that started: the end of its trace, its `testFinished` and its watchdog state.
-    fn finish(&self, case: &CaseIdentity, started: Instant, verdict: Result<(), Failure>) {
+    /// The failure that an injection of the rerun asks for in this attempt of `profile`, after a body that passed.
+    fn injected_failure(&self, profile: &ScenarioProgram) -> Result<(), Failure> {
+        let names: Vec<&str> = std::iter::once(profile.name.as_str()).chain(profile.key.as_deref()).collect();
+        let rerunning = self.rerunning.get();
+        match self
+            .rerun
+            .iter()
+            .flat_map(|rerun| &rerun.injected)
+            .find(|injection| injection.fails(&names, rerunning))
+        {
+            Some(injection) => Err(Failure::runner(kind::INJECTED, injection.describe())),
+            None => Ok(()),
+        }
+    }
+
+    /// Ends the case of a scenario that started: the end of its trace, its `testFinished` and its watchdog state. It
+    /// answers the status of the case.
+    fn finish(&self, case: &CaseIdentity, started: Instant, verdict: Result<(), Failure>) -> CaseStatus {
         // A watchdog that ended the run killed the IDE under this scenario, so its failure is no verdict about it.
         let expired = self.watch.expired().is_some();
         let failure = verdict.err().map(|failure| Failure {
@@ -773,6 +895,7 @@ impl<'r, 's> Runner<'r, 's> {
         self.stream
             .finished(case, status, started.elapsed(), failure.as_ref().map(Failure::typed), report);
         self.watch.execution_finished(self.stream);
+        status
     }
 
     /// A suite of the launch profile `bare`, on an IDE of its own. The lane quits its IDE and launches a bare one, each
