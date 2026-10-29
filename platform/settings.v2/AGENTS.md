@@ -73,6 +73,8 @@ override it.
   issue.
 - An agent writes a new ADR as `Proposed`. Only the user accepts it. The agent sets `Accepted` only after the user
   says so, in the conversation. Code and specs may follow a `Proposed` ADR.
+- A `Proposed` ADR does not go to master. `SettingsDocsTest` fails on each `Proposed` ADR, also during the work on a
+  branch. Such a failure is expected until the user accepts the ADR.
 - A `Proposed` ADR that amends or supersedes another ADR does not change the status of that ADR. The old status
   changes when the new ADR is accepted.
 - An accepted ADR is not rewritten. A change to the decision is a new ADR that amends or supersedes it, and only

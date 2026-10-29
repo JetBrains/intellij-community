@@ -9,8 +9,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Checks the specs, the ADRs and the sources of settings v2 with [DocLinkChecker], [AdrChainChecker] and
- * [AdrNumberChecker].
+ * Checks the specs, the ADRs and the sources of settings v2 with [DocLinkChecker], [AdrChainChecker],
+ * [AdrNumberChecker] and [ProposedAdrChecker].
  *
  * The settings v2 modules outside `community/` live in `remote-dev/settings/v2`. A run from the community repository
  * has no such folder, and it skips the links that go there.
@@ -19,6 +19,7 @@ class SettingsDocsTest {
   private val repositoryRoot = Path.of(IdeaTestExecutionPolicy.getHomePathWithPolicy()).normalize()
   private val featureRoot = Path.of(PlatformTestUtil.getCommunityPath(), "platform", "settings.v2").normalize()
   private val remoteDevRoot = repositoryRoot.resolve("remote-dev/settings/v2")
+  private val adrDir = featureRoot.resolve(DocLinkChecker.ADR_DIR)
 
   @Test
   fun `every link between the specs, the ADRs and the sources resolves`() {
@@ -36,13 +37,18 @@ class SettingsDocsTest {
 
   @Test
   fun `no ADR chain is longer than the limit`() {
-    val checker = AdrChainChecker(featureRoot.resolve(DocLinkChecker.ADR_DIR), MAX_ADR_CHAIN_LENGTH)
+    val checker = AdrChainChecker(adrDir, MAX_ADR_CHAIN_LENGTH)
     assertNoProblems(checker.findProblems())
   }
 
   @Test
   fun `each ADR number belongs to one ADR file or one fold entry`() {
-    assertNoProblems(AdrNumberChecker(featureRoot.resolve(DocLinkChecker.ADR_DIR)).findProblems())
+    assertNoProblems(AdrNumberChecker(adrDir).findProblems())
+  }
+
+  @Test
+  fun `no ADR is Proposed`() {
+    assertNoProblems(ProposedAdrChecker(adrDir).findProblems())
   }
 
   private fun assertNoProblems(problems: List<DocProblem>) {
