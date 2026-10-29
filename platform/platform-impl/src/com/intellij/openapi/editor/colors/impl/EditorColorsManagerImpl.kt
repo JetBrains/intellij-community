@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.openapi.editor.colors.impl
@@ -628,7 +628,6 @@ class EditorColorsManagerImpl @NonInjectable constructor(schemeManagerFactory: S
     }
 
     if (name == "Solarized Dark" || name == "Solarized Light") {
-      @Suppress("SpellCheckingInspection")
       val solarizedPluginsContainingSchemesWithTheSameName = arrayOf(
         PluginId.getId("solarized"),
         PluginId.getId("com.tylerthrailkill.intellij.solarized")

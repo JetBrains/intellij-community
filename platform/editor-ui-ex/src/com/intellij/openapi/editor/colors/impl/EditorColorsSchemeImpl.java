@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -168,8 +168,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       }
     }
     filters.add(key -> attributesMap.containsKey(key.getExternalName()));
-    if (parentScheme instanceof EditorColorsSchemeImpl &&
-        !((EditorColorsSchemeImpl)parentScheme).compareAttributes(otherScheme, filters, useDefaults)) {
+    if (parentScheme instanceof EditorColorsSchemeImpl scheme &&
+        !scheme.compareAttributes(otherScheme, filters, useDefaults)) {
       return false;
     }
     return true;
@@ -185,8 +185,8 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
       }
     }
     filters.add(key -> !colorMap.containsKey(key));
-    if (parentScheme instanceof EditorColorsSchemeImpl &&
-        !((EditorColorsSchemeImpl)parentScheme).compareColors(otherScheme, filters)) {
+    if (parentScheme instanceof EditorColorsSchemeImpl scheme &&
+        !scheme.compareColors(otherScheme, filters)) {
       return false;
     }
     return true;

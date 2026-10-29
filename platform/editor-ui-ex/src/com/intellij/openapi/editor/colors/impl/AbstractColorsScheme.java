@@ -57,22 +57,15 @@ import java.util.stream.Collectors;
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(AbstractColorsScheme.class);
 
+  public static final int CURR_VERSION = 142;
   public static final TextAttributes INHERITED_ATTRS_MARKER = new TextAttributes();
   public static final Color INHERITED_COLOR_MARKER = JBColor.marker("INHERITED_COLOR_MARKER");
   public static final Color NULL_COLOR_MARKER = JBColor.marker("NULL_COLOR_MARKER");
-
-  public static final int CURR_VERSION = 142;
-
-  @ApiStatus.Internal
-  public static final String ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION = "editor.color.scheme.mark.colors";
-
-  @SuppressWarnings("StaticNonFinalField") @VisibleForTesting
-  public static @NotNull Function<String, EditorColorsScheme> getSchemeById = it -> EditorColorsManager.getInstance().getScheme(it);
-
   public static final String NAME_BUNDLE_PROPERTY = "lcNameBundle";
   public static final String NAME_KEY_PROPERTY = "lcNameKey";
   public static final @NonNls String NAME_ATTR = "name";
   public static final @NonNls String META_INFO_PLUGIN_ID = "pluginId";
+
   private static final @NonNls String EDITOR_FONT = "font";
   private static final @NonNls String CONSOLE_FONT = "console-font";
   private static final @NonNls String EDITOR_FONT_NAME = "EDITOR_FONT_NAME";
@@ -110,22 +103,24 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
 
+  @ApiStatus.Internal
+  public static final String ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION = "editor.color.scheme.mark.colors";
+
+  @SuppressWarnings("StaticNonFinalField") @VisibleForTesting
+  public static @NotNull Function<String, EditorColorsScheme> getSchemeById = it -> EditorColorsManager.getInstance().getScheme(it);
+
   private final boolean myMarkColorIds = SystemProperties.getBooleanProperty(ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION, false);
   private final TextAttributesReader myValueReader = new TextAttributesReader();
-  //region Meta info-related fields
   private final Properties metaInfo = new Properties();
   protected EditorColorsScheme parentScheme;
   Map<ColorKey, Color> colorMap = new HashMap<>();
   Map<@NonNls String, TextAttributes> attributesMap = new HashMap<>();
-  private @NotNull FontPreferences fontPreferences =
-    new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
+  private @NotNull FontPreferences fontPreferences = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
   private @NotNull FontPreferences consoleFontPreferences = new DelegatingFontPreferences(() -> fontPreferences);
   private String schemeName;
   private boolean canBeDeleted = true;
-  // version influences an XML format and triggers migration
-  private int version = CURR_VERSION;
+  private int version = CURR_VERSION; // version influences an XML format and triggers migration
   private Color deprecatedBackgroundColor;
-  //endregion
 
   protected AbstractColorsScheme(EditorColorsScheme parentScheme) {
     this.parentScheme = parentScheme;
@@ -187,7 +182,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public boolean isUseAppFontPreferencesInEditor() {
-    return fontPreferences instanceof DelegatingFontPreferences;
+    return isEditorDelegating();
   }
 
   @Override
@@ -201,8 +196,11 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
-  public @NotNull Font getFont(EditorFontType key) {
-    return fontPreferences instanceof DelegatingFontPreferences ? getInstance().getFont(key) : super.getFont(key);
+  public @NotNull Font getFont(@Nullable EditorFontType key) {
+    if (isEditorDelegating()) {
+      return getInstance().getFont(key);
+    }
+    return super.getFont(key);
   }
 
   @Override
@@ -326,7 +324,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public boolean isUseEditorFontPreferencesInConsole() {
-    return consoleFontPreferences instanceof DelegatingFontPreferences;
+    return isConsoleDelegating();
   }
 
   @Override
@@ -413,9 +411,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   public void copyTo(@NotNull AbstractColorsScheme newScheme) {
     boolean noName = newScheme.schemeName == null;
-    boolean consoleDelegating = consoleFontPreferences instanceof DelegatingFontPreferences;
-    boolean editorDelegating = fontPreferences instanceof DelegatingFontPreferences;
-
+    boolean consoleDelegating = isConsoleDelegating();
+    boolean editorDelegating = isEditorDelegating();
     if (consoleDelegating) {
       newScheme.setUseEditorFontPreferencesInConsole();
     }
@@ -512,7 +509,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
      * will be able to restore the font size according to its scale and the IDE HiDPI mode. The default
      * FONT_SCALE value should also be written for that reason.
      */
-    if (!(fontPreferences instanceof DelegatingFontPreferences) || !(consoleFontPreferences instanceof DelegatingFontPreferences)) {
+    if (!isEditorDelegating() || !isConsoleDelegating()) {
       // must precede font options
       JdomKt.addOptionTag(parentNode, FONT_SCALE, String.valueOf(UISettings.getDefFontScale()));
     }
@@ -533,7 +530,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     // to specify a font sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
     // That's why we want to use an old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = fontPreferences.getEffectiveFontFamilies().size() <= 1;
-    if (!(fontPreferences instanceof DelegatingFontPreferences)) {
+    if (!isEditorDelegating()) {
       JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
       if (useOldFontFormat) {
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
@@ -545,7 +542,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       writeLigaturesPreferences(parentNode, fontPreferences, EDITOR_LIGATURES);
     }
 
-    if (!(consoleFontPreferences instanceof DelegatingFontPreferences)) {
+    if (!isConsoleDelegating()) {
       if (consoleFontPreferences.getEffectiveFontFamilies().size() <= 1) {
         JdomKt.addOptionTag(parentNode, CONSOLE_FONT_NAME, getConsoleFontName());
 
@@ -558,7 +555,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         writeFontPreferences(CONSOLE_FONT, parentNode, consoleFontPreferences);
       }
       writeLigaturesPreferences(parentNode, consoleFontPreferences, CONSOLE_LIGATURES);
-      if ((fontPreferences instanceof DelegatingFontPreferences) || getConsoleLineSpacing() != getLineSpacing()) {
+      if (isEditorDelegating() || getConsoleLineSpacing() != getLineSpacing()) {
         JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(getConsoleLineSpacing()));
       }
     }
@@ -808,17 +805,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       if (!colorsEqual(c1, c2)) return false;
     }
     return true;
-  }
-
-  protected static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
-    if (c1 == NULL_COLOR_MARKER) return c1 == c2;
-    return Comparing.equal(c1, c2 == NULL_COLOR_MARKER ? null : c2);
-  }
-
-  protected static boolean areDelegatingOrEqual(@NotNull FontPreferences preferences1, @NotNull FontPreferences preferences2) {
-    boolean isDelegating1 = preferences1 instanceof DelegatingFontPreferences;
-    boolean isDelegating2 = preferences2 instanceof DelegatingFontPreferences;
-    return isDelegating1 || isDelegating2 ? isDelegating1 && isDelegating2 : preferences1.equals(preferences2);
   }
 
   private void readScheme(@NotNull Element node) {
@@ -1088,7 +1074,10 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     fontPreferences.copyTo(editableFontPreferences);
     if (LOG.isDebugEnabled()) {
       String message = "ensureEditableFontPreferences in %s. %s, size: %d".formatted(
-        debugSchemeName(), editableFontPreferences, editableFontPreferences.getSize(editableFontPreferences.getFontFamily()));
+        debugSchemeName(),
+        editableFontPreferences,
+        editableFontPreferences.getSize(editableFontPreferences.getFontFamily())
+      );
       Throwable stack = new Throwable(message);
       LOG.debug(message, stack);
     }
@@ -1107,6 +1096,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return editableFontPreferences;
   }
 
+  private boolean isEditorDelegating() {
+    return fontPreferences instanceof DelegatingFontPreferences;
+  }
+
+  private boolean isConsoleDelegating() {
+    return consoleFontPreferences instanceof DelegatingFontPreferences;
+  }
+
   private String debugSchemeName() {
     try {
       if (schemeName != null) {
@@ -1120,6 +1117,22 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       LOG.warn("An exception occurred while trying to get scheme name", e);
       return "null(e)";
     }
+  }
+
+  protected static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
+    if (c1 == NULL_COLOR_MARKER) {
+      return c1 == c2;
+    }
+    return Comparing.equal(c1, c2 == NULL_COLOR_MARKER ? null : c2);
+  }
+
+  protected static boolean areDelegatingOrEqual(@NotNull FontPreferences preferences1, @NotNull FontPreferences preferences2) {
+    boolean isDelegating1 = preferences1 instanceof DelegatingFontPreferences;
+    boolean isDelegating2 = preferences2 instanceof DelegatingFontPreferences;
+    if (isDelegating1 || isDelegating2) {
+      return isDelegating1 && isDelegating2;
+    }
+    return preferences1.equals(preferences2);
   }
 
   private static @NotNull EditorColorsScheme getDefaultScheme(@NotNull String name) {
@@ -1166,19 +1179,5 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
     EditorColorsScheme parent = absScheme.parentScheme;
     return parent != null ? getBaseDefaultScheme(parent) : null;
-  }
-
-  private static class TemporaryParent extends EditorColorsSchemeImpl {
-
-    private final String myParentName;
-
-    TemporaryParent(@NotNull String parentName) {
-      super(EmptyColorScheme.getEmptyScheme());
-      myParentName = parentName;
-    }
-
-    public @NonNls String getParentName() {
-      return myParentName;
-    }
   }
 }

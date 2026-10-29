@@ -152,8 +152,10 @@ final class FontFamilyServiceImpl extends FontFamilyService {
                                       @Nullable String boldSubFamily,
                                       @JdkConstants.FontStyle int style) {
     FontFamily fontFamily = myFamilies.get(family);
-    return fontFamily == null ? super.getFontImpl(family, regularSubFamily, boldSubFamily, style)
-                              : fontFamily.getFont(regularSubFamily, boldSubFamily, style);
+    if (fontFamily == null) {
+      return super.getFontImpl(family, regularSubFamily, boldSubFamily, style);
+    }
+    return fontFamily.getFont(regularSubFamily, boldSubFamily, style);
   }
 
   @Override
@@ -338,7 +340,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           italics.put(subFamily, italicSubFamily == null ? members.get(subFamily).deriveFont(SYNTHETIC_ITALICS_TRANSFORM)
                                                          : members.get(italicSubFamily));
 
-          candidates.forEach((original, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
+          candidates.forEach((_, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
           candidates.put(subFamily, new Candidate(subFamily, weight + PREFERRED_BOLD_WEIGHT_DIFF));
         });
         recommendedSubFamily = preferred.bestSubFamily;
@@ -346,7 +348,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
         candidates.clear();
         baseSet.forEachDescending((weight, subFamily) -> {
-          candidates.forEach((original, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
+          candidates.forEach((_, candidate) -> candidate.updateIfBetterMatch(weight, subFamily));
           candidates.put(subFamily, new Candidate(subFamily, weight - PREFERRED_BOLD_WEIGHT_DIFF));
         });
         candidates.forEach((original, plainCandidate) -> recommendedPlainSubFamilies.put(original, plainCandidate.bestSubFamily));

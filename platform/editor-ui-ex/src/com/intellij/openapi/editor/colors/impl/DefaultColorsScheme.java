@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -33,7 +33,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
 
     TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
     TextAttributes fallback = fallbackKey == null ? null : getFallbackAttributes(fallbackKey);
-    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_ATTRS_MARKER) return fallback;
+    if (fallback != null && fallback != INHERITED_ATTRS_MARKER) return fallback;
 
     if (!useDefaults) return null;
     TextAttributes keyDefaults = getKeyDefaults(key);
@@ -56,7 +56,7 @@ public class DefaultColorsScheme extends AbstractColorsScheme {
 
     ColorKey fallbackKey = key.getFallbackColorKey();
     Color fallback = fallbackKey == null ? null : getFallbackColor(fallbackKey);
-    if (fallback != null && fallback != AbstractColorsScheme.INHERITED_COLOR_MARKER) return fallback;
+    if (fallback != null && fallback != INHERITED_COLOR_MARKER) return fallback;
 
     if (!useDefaults) return null;
     Color keyDefaults = key.getDefaultColor();

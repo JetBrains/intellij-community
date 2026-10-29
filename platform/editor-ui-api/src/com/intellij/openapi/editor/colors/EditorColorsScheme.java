@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -28,13 +28,12 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
     return getAttributes(key);
   }
 
-  @NotNull
-  Color getDefaultBackground();
-  @NotNull
-  Color getDefaultForeground();
+  @NotNull Color getDefaultBackground();
 
-  @Nullable
-  Color getColor(ColorKey key);
+  @NotNull Color getDefaultForeground();
+
+  @Nullable Color getColor(ColorKey key);
+
   void setColor(ColorKey key, Color color);
 
   /**
@@ -49,16 +48,16 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    *
    * @return    font preferences to use
    */
-  @NotNull
-  FontPreferences getFontPreferences();
+  @NotNull FontPreferences getFontPreferences();
+
   void setFontPreferences(@NotNull FontPreferences preferences);
 
-  @NlsSafe
-  String getEditorFontName();
+  @NlsSafe String getEditorFontName();
 
   void setEditorFontName(String fontName);
 
   int getEditorFontSize();
+
   /**
    * Floating-point version of {@link #getEditorFontSize()}
    */
@@ -73,6 +72,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setEditorFontSize(int fontSize);
+
   /**
    * Floating-point version of {@link #setEditorFontSize(int)}
    */
@@ -81,7 +81,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   }
 
   @NotNull
-  Font getFont(EditorFontType key);
+  Font getFont(@Nullable EditorFontType key);
 
   float getLineSpacing();
 
@@ -109,27 +109,38 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    */
   @NotNull
   FontPreferences getConsoleFontPreferences();
+
   void setConsoleFontPreferences(@NotNull FontPreferences preferences);
 
-  default void setUseEditorFontPreferencesInConsole() {}
-  default boolean isUseEditorFontPreferencesInConsole() {return false;}
+  default void setUseEditorFontPreferencesInConsole() {
+  }
 
-  default void setUseAppFontPreferencesInEditor() {}
-  default boolean isUseAppFontPreferencesInEditor() {return false;}
+  default boolean isUseEditorFontPreferencesInConsole() {
+    return false;
+  }
 
-  @NlsSafe
-  String getConsoleFontName();
+  default void setUseAppFontPreferencesInEditor() {
+  }
+
+  default boolean isUseAppFontPreferencesInEditor() {
+    return false;
+  }
+
+  @NlsSafe String getConsoleFontName();
 
   void setConsoleFontName(String fontName);
 
   int getConsoleFontSize();
+
   /**
    * Floating-point version of {@link #getConsoleFontSize()}
    */
   default float getConsoleFontSize2D() {
     return getConsoleFontSize();
   }
+
   void setConsoleFontSize(int fontSize);
+
   /**
    * Floating-point version of {@link #setConsoleFontSize(int)}
    */
@@ -138,6 +149,7 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
   }
 
   float getConsoleLineSpacing();
+
   void setConsoleLineSpacing(float lineSpacing);
 
   void readExternal(Element parentNode);

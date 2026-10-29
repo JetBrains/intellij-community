@@ -212,13 +212,17 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
 
   @Override
   public @NotNull FontPreferences getConsoleFontPreferences() {
-    return myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty() ?
-           getDelegate().getConsoleFontPreferences() : myConsoleFontPreferences;
+    if (myConsoleFontPreferences.getEffectiveFontFamilies().isEmpty()) {
+      return getDelegate().getConsoleFontPreferences();
+    }
+    return myConsoleFontPreferences;
   }
 
   @Override
   public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
-    if (preferences.getSnapshot() == myConsoleFontPreferences.getSnapshot()) return;
+    if (preferences.getSnapshot() == myConsoleFontPreferences.getSnapshot()) {
+      return;
+    }
     preferences.copyTo(myConsoleFontPreferences);
     reinitFontsAndSettings();
   }
@@ -236,7 +240,9 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
 
   @Override
   public void setEditorFontName(String fontName) {
-    if (Objects.equals(fontName, myFaceName)) return;
+    if (Objects.equals(fontName, myFaceName)) {
+      return;
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Font name overridden for " + myEditor, new Throwable());
     }
@@ -275,11 +281,9 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   public void setConsoleFontSize(float fontSize) {
     if (fontSize == super.getConsoleFontSize2D()) {
       myConsoleFontSize = FONT_SIZE_TO_IGNORE;
-    }
-    else {
+    } else {
       myConsoleFontSize = fontSize;
     }
-
     reinitFontsAndSettings();
   }
 
@@ -319,6 +323,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     reinitFontsAndSettings();
   }
 
+  /// @noinspection MethodDoesntCallSuperMethod legacy
   @Override
   public @Nullable Object clone() {
     return null;
