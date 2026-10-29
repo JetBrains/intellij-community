@@ -97,13 +97,13 @@ describe('render-guides skills', () => {
 
     for (const [output, content] of renderedOutputs) {
       ok(!content.includes('{{COMMUNITY_DIR}}'), `${output} should not keep the COMMUNITY_DIR placeholder`)
-      const expectedProductDsl =
+      const expectedEelGuide =
         output === 'community/AGENTS.md'
-          ? 'platform/build-scripts/product-dsl/'
-          : 'community/platform/build-scripts/product-dsl/'
+          ? 'platform/eel/AGENTS.md'
+          : 'community/platform/eel/AGENTS.md'
       ok(
-        content.includes(`(\`${expectedProductDsl}\`)`),
-        `${output} should reference ${expectedProductDsl}`,
+        content.includes(`\`${expectedEelGuide}\``),
+        `${output} should reference ${expectedEelGuide}`,
       )
     }
   })

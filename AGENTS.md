@@ -4,7 +4,6 @@
 
 ## Project Invariants
 
-- A module or plugin directory can hold its own AGENTS or CLAUDE instructions. Follow them when they are present.
 - `*.iml` files are the source of truth. They generate the `BUILD.bazel` files.
 - Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazelCommunityOnly.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps `modules.xml` in canonical order.
 - User-visible strings belong in `*.properties` for localization.
@@ -32,14 +31,7 @@ This repository is too large for an ad hoc Git worktree or clone. Create one onl
 
 ## Module-specific rules
 
-Read the referenced rules before you edit or review a file under these roots. They override the general guidance here.
-
-- **Product DSL** (`platform/build-scripts/product-dsl/`): follow its `AGENTS.md`.
-- **IJ Proxy MCP server** (`build/mcp-servers/ij-proxy/`):
-  - Tests: run `bun run build` and `bun test`.
-  - Bazel: do not run a Bazel build or test here.
-- **Eel / IJent** (`platform/eel*/`, `platform/ijent/`): read `platform/eel/AGENTS.md` first.
-- **PyCharm** (`./python`): start a PY-NNNNN issue at `./python/.ai/index.md`.
+Before you edit or review a file, read every `AGENTS.md` between its directory and the repository root. They override the general guidance here. The Eel and IJent modules (`platform/eel*/`, `platform/ijent/`) share `platform/eel/AGENTS.md`.
 
 ## Mandatory Rules
 
