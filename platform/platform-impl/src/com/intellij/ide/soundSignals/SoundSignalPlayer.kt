@@ -89,4 +89,4 @@ internal class SoundSignalPlayerImpl(private val scope: CoroutineScope) : SoundS
 
 private val LOG = logger<SoundSignalPlayerImpl>()
 
-private val PREVIEW_DELAY = 100.milliseconds
+internal val PREVIEW_DELAY = 100.milliseconds

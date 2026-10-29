@@ -13,6 +13,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.DefaultPluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.Disposer
@@ -139,6 +140,13 @@ class NotificationsBeeperTest {
     enablePlaySound(SIGNAL_GROUP)
     notifySignalGroup()
     assertThat(pluginLoader.requested).containsExactly("sounds/signal.wav")
+  }
+
+  @Test
+  fun `the preview of a group with its own sound plays that sound, also with Play sound off`() {
+    service<NotificationSoundPlayer>().preview(BOUND_GROUP)
+
+    assertThat(pluginLoader.requested).containsExactly("sounds/bound.wav")
   }
 
   private fun signalTest(body: (AccessibilitySettings) -> Unit): Unit = withSoundSignalsSettings { settings ->
