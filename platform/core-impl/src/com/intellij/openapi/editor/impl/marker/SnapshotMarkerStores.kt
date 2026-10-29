@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore.CapturedR
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.IdentityHashMap
 
 /**
  * Applies each [DocumentOp] to all marker roots for one document.
@@ -20,18 +21,24 @@ import org.jetbrains.annotations.TestOnly
 @ApiStatus.Internal
 class SnapshotMarkerStores {
   private val stores: MutableList<SnapshotMarkerRootStore<*>> = ContainerUtil.createEmptyCOWList()
+  private val currentRoots: MutableMap<SnapshotMarkerRootStore<*>, SnapshotMarkerRootStore.CurrentRootCache> = IdentityHashMap()
   private var storeVersion: Long = 0
 
-  internal fun register(store: SnapshotMarkerRootStore<*>) {
+  /** The commit gate guards this flag. A lookup must not fill a slot while publication changes the current snapshot. */
+  internal var isPublishing: Boolean = false
+    private set
+
+  internal fun register(store: SnapshotMarkerRootStore<*>): SnapshotMarkerRootStore.CurrentRootCache =
     synchronized(this) {
       stores.add(store)
       storeVersion++
+      SnapshotMarkerRootStore.CurrentRootCache().also { currentRoots[store] = it }
     }
-  }
 
   internal fun unregister(store: SnapshotMarkerRootStore<*>) {
     synchronized(this) {
       stores.remove(store)
+      currentRoots.remove(store)?.state = null
       storeVersion++
     }
   }
@@ -99,9 +106,23 @@ class SnapshotMarkerStores {
       for (i in capturedRoots.indices) {
         val captured = capturedRoots[i]
         val state = captured.afterState ?: continue
-        captured.store.installRoot(afterSnapshot, state)
+        captured.afterState = captured.store.installRoot(afterSnapshot, state)
       }
-      publish()
+      isPublishing = true
+      for (cache in currentRoots.values) cache.state = null
+      try {
+        publish()
+      }
+      finally {
+        isPublishing = false
+      }
+      for (i in capturedRoots.indices) {
+        val captured = capturedRoots[i]
+        val state = captured.afterState ?: continue
+        if (captured.store.isCurrentSnapshot(afterSnapshot)) {
+          currentRoots[captured.store]?.state = SnapshotMarkerRootStore.CurrentRootCache.State(afterSnapshot, state.rootReference)
+        }
+      }
       true
     }
   }

@@ -67,6 +67,7 @@ class SnapshotMarkerEngineImplTest {
     val reference = fixture.rootStore.rootReference(snapshot)
     val marker = fixture.document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
     assertEquals(TextRange(2, 4), marker.textRange)
+    assertSame(reference.get(), fixture.rootStore.root(snapshot))
 
     fixture.rootStore.updateRoot(snapshot) {
       applyPatch(it, "abcdef", textPatch(0, 0, "x"))
@@ -74,6 +75,7 @@ class SnapshotMarkerEngineImplTest {
 
     assertSame(snapshot, fixture.document.core.snapshot())
     assertSame(reference, marker.currentRootReference())
+    assertSame(reference.get(), fixture.rootStore.root(snapshot))
     assertEquals(TextRange(3, 5), marker.textRange)
   }
 
@@ -82,14 +84,39 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = fixture.document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
     val reference = marker.currentRootReference()
+    val originalRoot = reference.get()
     assertEquals(TextRange(2, 4), marker.textRange)
 
     fixture.document.insertString(0, "XX")
 
     assertNotSame(reference, marker.currentRootReference())
+    assertSame(marker.currentRootReference().get(), fixture.rootStore.root(fixture.document.core.snapshot()))
+    assertSame(originalRoot, fixture.rootStore.root(fixture.initialSnapshot))
     assertEquals(TextRange(4, 6), marker.textRange)
     assertSame(reference, fixture.rootStore.rootReference(fixture.initialSnapshot))
     assertEquals(TextRange(4, 6), marker.textRange)
+  }
+
+  @Test
+  fun `root lookup does not create a root for an unknown snapshot`() {
+    val fixture = Fixture("abcdef")
+    fixture.rootStore.rootReference(fixture.initialSnapshot)
+    val snapshot = fixture.initialSnapshot.newInstance()
+
+    assertNull(fixture.rootStore.root(snapshot))
+    assertFalse(fixture.rootStore.containsSnapshot(snapshot))
+  }
+
+  @Test
+  fun `root lookup returns no root after store disposal`() {
+    val fixture = Fixture("abcdef")
+    val snapshot = fixture.initialSnapshot
+    val reference = fixture.rootStore.rootReference(snapshot)
+    assertSame(reference.get(), fixture.rootStore.root(snapshot))
+
+    fixture.rootStore.dispose(fixture.document.snapshotMarkerStores)
+
+    assertNull(fixture.rootStore.root(snapshot))
   }
 
   @Test
@@ -271,6 +298,7 @@ class SnapshotMarkerEngineImplTest {
       val snapshot = fixture.initialSnapshot.newInstance()
       val reference = fixture.rootStore.rootReference(snapshot)
       assertSame(reference, fixture.rootStore.rootReference(snapshot))
+      assertSame(reference.get(), fixture.rootStore.root(snapshot))
       return WeakReference(snapshot) to WeakReference(reference)
     }
     val [snapshot, reference] = cacheDetachedRoot()
