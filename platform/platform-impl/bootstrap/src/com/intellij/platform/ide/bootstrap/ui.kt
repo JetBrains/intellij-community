@@ -11,13 +11,13 @@ import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
 import com.intellij.ide.ui.laf.createBaseLaF
 import com.intellij.ide.ui.laf.isLinuxSystemFontWithoutGtkLaf
 import com.intellij.ide.ui.laf.readLinuxSystemFont
-import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.setUserInteractiveQosForEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.wm.WeakFocusStackManager
+import com.intellij.openapi.wm.impl.EarlyProjectFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.icons.impl.intellij.IntelliJIconManager
 import com.intellij.ui.AppUIUtil
@@ -63,34 +63,24 @@ internal suspend fun initUi(initAwtToolkitJob: Job, isHeadless: Boolean, asyncSc
 
   initAwtToolkitJob.join()
 
-  val systemFontDeferred = if (isHeadless || OS.CURRENT != OS.Linux || !isLinuxSystemFontWithoutGtkLaf) {
-    null
-  }
-  else {
+  val linuxSystemFontDeferred = if (isHeadless || OS.CURRENT != OS.Linux || !isLinuxSystemFontWithoutGtkLaf) null else {
     asyncScope.async(CoroutineName("system font reading") + Dispatchers.IO) {
       readLinuxSystemFont()
     }
   }
 
-  // the system font reading shares the fontconfig lock with the scan, so the scan starts after the base LaF when the reading is on
-  val preloadFontJob = if (isHeadless || systemFontDeferred != null) null else preloadSystemFonts(asyncScope)
-
   // SwingDispatcher must be used after Toolkit init
   span("initUi", RawSwingDispatcher) {
-    initLafAndScale(isHeadless = isHeadless, preloadFontJob = preloadFontJob, systemFontDeferred = systemFontDeferred)
+    initLafAndScale(isHeadless, linuxSystemFontDeferred)
   }
 
-  if (systemFontDeferred != null) {
-    preloadSystemFonts(asyncScope)
-  }
-}
-
-private fun preloadSystemFonts(asyncScope: CoroutineScope): Job {
-  return asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
-    // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
-    Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
-    // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
-    GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+  if (!isHeadless) {
+    asyncScope.launch(CoroutineName("system fonts loading") + Dispatchers.IO) {
+      // forces loading of all system fonts; the following statement alone might not do it (see JBR-1825)
+      Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).family
+      // caches available font family names for the default locale to speed up editor reopening (see `ComplementaryFontsRegistry`)
+      GraphicsEnvironment.getLocalGraphicsEnvironment().availableFontFamilyNames
+    }
   }
 }
 
@@ -106,7 +96,7 @@ internal suspend fun configureCssUiDefaults() {
   }
 }
 
-private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?, systemFontDeferred: Deferred<FontUIResource?>?) {
+private suspend fun initLafAndScale(isHeadless: Boolean, linuxSystemFontDeferred: Deferred<FontUIResource?>?) {
   if (!isHeadless) {
     span("graphics environment checking") {
       if (GraphicsEnvironment.getLocalGraphicsEnvironment().isHeadlessInstance) {
@@ -114,18 +104,17 @@ private suspend fun initLafAndScale(isHeadless: Boolean, preloadFontJob: Job?, s
         exitProcess(AppExitCodes.NO_GRAPHICS)
       }
     }
-
-    // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-    if (OS.CURRENT == OS.Linux && systemFontDeferred == null) {
-      preloadFontJob?.join()
-    }
   }
 
-  if (systemFontDeferred != null && EarlyProjectFrame.isExpected) {
+  if (linuxSystemFontDeferred != null && EarlyProjectFrame.isExpected) {
     // the EDT idles while the system font is read: the early frame is created in that gap and shown once the scale is known
     SwingUtilities.invokeLater { EarlyProjectFrame.create() }
   }
-  val baseLaF = span("base LaF creation") { createBaseLaF(linuxSystemFont = systemFontDeferred?.await()) }
+
+  // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
+  val baseLaF = span("base LaF creation") {
+    createBaseLaF(linuxSystemFont = linuxSystemFontDeferred?.await())
+  }
   span("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
