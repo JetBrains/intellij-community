@@ -16,7 +16,6 @@ import com.intellij.debugger.streams.core.trace.interpretStreamResult
 import com.intellij.debugger.streams.core.wrapper.StreamChain
 import com.intellij.debugger.streams.lib.impl.BreakpointBasedLibrarySupport
 import com.intellij.debugger.streams.ui.impl.PrimitiveValueDescriptor
-import com.intellij.xdebugger.frame.XValue
 import com.sun.jdi.Value
 
 /**
@@ -55,14 +54,8 @@ internal class BreakpointBasedStreamTracer(
         chain
       )
       when (result) {
-        is TracingResult.Success -> {
-          val xValue = createXValue(result.evaluationContext, result.rawTrace)
-          interpretStreamResult(xDebugProcess.session, xValueInterpreter, resultInterpreter, xValue, chain)
-        }
-        is TracingResult.TargetVmException -> {
-          val xValue = createXValue(result.evaluationContext, result.exception)
-          interpretStreamResult(xDebugProcess.session, xValueInterpreter, resultInterpreter, xValue, chain)
-        }
+        is TracingResult.Success -> interpretResult(result.evaluationContext, result.rawTrace, chain)
+        is TracingResult.TargetVmException -> interpretResult(result.evaluationContext, result.exception, chain)
         is TracingResult.Error -> StreamTracer.Result.EvaluationFailed("", result.errorMessage)
       }
     } finally {
@@ -89,14 +82,16 @@ internal class BreakpointBasedStreamTracer(
     })
   }
 
-  private suspend fun createXValue(
+  private suspend fun interpretResult(
     evaluationContext: EvaluationContextImpl,
     jvmValue: Value,
-  ): XValue {
+    chain: StreamChain,
+  ): StreamTracer.Result {
     return withDebugContext(evaluationContext.managerThread) {
       val nodeManager = xDebugProcess.nodeManager
       val valueDescriptor = PrimitiveValueDescriptor(xDebugProcess.session.project, jvmValue)
-      InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
+      val xValue = InstanceJavaValue(valueDescriptor, evaluationContext, nodeManager)
+      interpretStreamResult(xDebugProcess.session, xValueInterpreter, resultInterpreter, xValue, chain)
     }
   }
 }
