@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 @State(name = "DefaultFont", storages = {
-  @Storage(value = AppEditorFontOptions.STORAGE_NAME),
+  @Storage(AppEditorFontOptions.STORAGE_NAME),
   @Storage(value = "editor.xml", deprecated = true)
 }, category = SettingsCategory.UI)
 public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOptions.PersistentFontPreferences> {
@@ -27,13 +27,13 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
   @ApiStatus.Internal
   public static final String STORAGE_NAME = "editor-font.xml";
 
-  @Override
-  protected PersistentFontPreferences createFontState(@NotNull FontPreferences fontPreferences) {
-    return new PersistentFontPreferences(fontPreferences);
-  }
-
   public static AppEditorFontOptions getInstance() {
     return ApplicationManager.getApplication().getService(AppEditorFontOptions.class);
+  }
+
+  @Override
+  protected @NotNull PersistentFontPreferences createFontState(@NotNull FontPreferences fontPreferences) {
+    return new PersistentFontPreferences(fontPreferences);
   }
 
   public static class PersistentFontPreferences {
@@ -70,7 +70,7 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
       }
     }
 
-    public PersistentFontPreferences(FontPreferences fontPreferences) {
+    public PersistentFontPreferences(@NotNull FontPreferences fontPreferences) {
       FONT_FAMILY = fontPreferences.getFontFamily();
       FONT_REGULAR_SUB_FAMILY = fontPreferences.getRegularSubFamily();
       FONT_BOLD_SUB_FAMILY = fontPreferences.getBoldSubFamily();
@@ -86,7 +86,7 @@ public final class AppEditorFontOptions extends AppFontOptions<AppEditorFontOpti
       }
     }
 
-    protected static PersistentFontPreferences getDefaultState() {
+    protected static @NotNull PersistentFontPreferences getDefaultState() {
       PersistentFontPreferences preferences = new PersistentFontPreferences();
       preferences.VERSION = CURR_FONT_PREF_VERSION;
       return preferences;

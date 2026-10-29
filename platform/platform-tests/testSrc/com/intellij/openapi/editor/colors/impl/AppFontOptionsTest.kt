@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.ModifiableFontPreferences
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
+import com.intellij.util.xmlb.XmlSerializer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -41,6 +42,16 @@ internal class AppFontOptionsTest {
     cache.resets = 0
     toggleLigatures(options)
     assertThat(cache.resets).isEqualTo(1)
+  }
+
+  @Test
+  fun `a custom console font stays after a save and a load`() {
+    val options = AppConsoleFontOptions()
+    options.isUseEditorFont = false
+    val element = XmlSerializer.serialize(options.state)
+    val loaded = AppConsoleFontOptions()
+    loaded.loadState(XmlSerializer.deserialize(element, AppConsoleFontOptions.ConsoleFontState::class.java))
+    assertThat(loaded.isUseEditorFont).isFalse()
   }
 
   private fun toggleLigatures(options: AppEditorFontOptions) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +44,7 @@ public final class AppConsoleFontOptions extends AppFontOptions<AppConsoleFontOp
 
   @Override
   public void loadState(@NotNull ConsoleFontState state) {
-    if (state.USE_EDITOR_FONT) {
+    if (state.useEditorFont()) {
       setUseEditorFont(true);
     }
     else {
@@ -55,7 +56,7 @@ public final class AppConsoleFontOptions extends AppFontOptions<AppConsoleFontOp
   public void setUseEditorFont(boolean useEditorFont) {
     if (useEditorFont) {
       myDelegatingPreferences = new DelegatingFontPreferences(()->AppEditorFontOptions.getInstance().getFontPreferences());
-      myTracker.incModificationCount();
+      incModificationCount();
     }
     else {
       myDelegatingPreferences = null;
@@ -67,16 +68,22 @@ public final class AppConsoleFontOptions extends AppFontOptions<AppConsoleFontOp
     return myDelegatingPreferences != null;
   }
 
-  static class ConsoleFontState extends AppEditorFontOptions.PersistentFontPreferences {
-    public boolean USE_EDITOR_FONT = true;
+  @ApiStatus.Internal
+  public static class ConsoleFontState extends AppEditorFontOptions.PersistentFontPreferences {
+    @OptionTag
+    private boolean USE_EDITOR_FONT = true;
 
     ConsoleFontState() {
       super();
     }
 
-    ConsoleFontState(FontPreferences fontPreferences) {
+    ConsoleFontState(@NotNull FontPreferences fontPreferences) {
       super(fontPreferences);
       USE_EDITOR_FONT = false;
+    }
+
+    boolean useEditorFont() {
+      return USE_EDITOR_FONT;
     }
   }
 }

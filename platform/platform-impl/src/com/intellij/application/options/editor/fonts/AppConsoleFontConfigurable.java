@@ -9,10 +9,10 @@ import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.openapi.editor.colors.impl.AppFontOptions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JCheckBox;
 import javax.swing.JComponent;
@@ -131,15 +131,16 @@ public final class AppConsoleFontConfigurable extends AppFontConfigurable {
   }
 
   public static final class Provider extends ConfigurableProvider {
+    private static final boolean APP_CONSOLE_FONT_ENABLED = SystemProperties.getBooleanProperty("app.console.font.enabled", false);
 
     @Override
-    public @Nullable Configurable createConfigurable() {
+    public @NotNull Configurable createConfigurable() {
       return new AppConsoleFontConfigurable();
     }
 
     @Override
     public boolean canCreateConfigurable() {
-      return AppFontOptions.APP_CONSOLE_FONT_ENABLED;
+      return APP_CONSOLE_FONT_ENABLED;
     }
   }
 }
