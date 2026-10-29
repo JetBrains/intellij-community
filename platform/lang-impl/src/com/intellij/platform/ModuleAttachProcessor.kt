@@ -102,10 +102,6 @@ class ModuleAttachProcessor : ProjectAttachProcessor() {
                                Messages.getQuestionIcon()) != Messages.YES
     }
   }
-
-  override fun beforeDetach(module: Module) {
-    module.project.messageBus.syncPublisher(ModuleAttachListener.TOPIC).beforeDetach(module)
-  }
 }
 
 private suspend fun findMainModule(project: Project, projectDir: Path): Module? {

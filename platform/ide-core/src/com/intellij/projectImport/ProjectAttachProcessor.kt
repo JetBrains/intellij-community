@@ -3,7 +3,6 @@ package com.intellij.projectImport
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
@@ -50,8 +49,6 @@ open class ProjectAttachProcessor {
   }
 
   open suspend fun beforeAttach(project: Project?) {}
-
-  open fun beforeDetach(module: Module) {}
 
   open fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean = true
 
