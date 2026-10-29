@@ -33,7 +33,7 @@ private val LOG = logger<WorkspaceModelCacheAttachProcessor>()
 @InternalIgnoreDependencyViolation
 class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
   override fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean {
-    if (projectDir == null) return false
+    if (projectDir == null) return true
     val projectWsmCachePath = getProjectDataPathRoot(projectDir).resolve(WorkspaceModelCacheImpl.DATA_DIR_NAME)
     val cacheFile = projectWsmCachePath.resolve("cache.data")
     return cacheFile.exists()
