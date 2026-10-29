@@ -43,6 +43,7 @@ import com.intellij.platform.projectView.frontend.impl.FrontendProjectViewUpdate
 import com.intellij.platform.projectView.frontend.impl.TreeBasedFrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPane
 import com.intellij.platform.projectView.frontend.pane.FrontendProjectViewPaneAggregator
+import com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptions
 import com.intellij.platform.projectView.frontend.pane.RestorePaneStateOptionsImpl
 import com.intellij.platform.projectView.frontend.pane.id
 import com.intellij.platform.projectView.pane.ProjectViewClearStateEvent
@@ -160,7 +161,13 @@ internal class ProjectViewToolWindowServiceImpl(
     if (action != null) toolWindow.setTitleActions(listOf(ProjectViewToolbarActionGroup(action)))
     toolWindow.setAdditionalGearActions(menuActionGroup)
     toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-    addCachedPaneContent(toolWindow)
+    try {
+      addCachedPaneContent(toolWindow)
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LOG.error("Failed to add the cached pane", e)
+    }
   }
 
   /**
@@ -437,7 +444,7 @@ internal class ProjectViewToolWindowServiceImpl(
     val isLightToSmartMigration =
       paneState?.paneKind == ProjectViewPaneKind.LIGHT &&
       pane.descriptorImpl.kind == ProjectViewPaneKind.BACKEND
-    pane.restoreStateFrom(paneState?.element, RestorePaneStateOptionsImpl(restoreSelection = isLightToSmartMigration))
+    pane.safeRestoreStateFrom(paneState?.element, RestorePaneStateOptionsImpl(restoreSelection = isLightToSmartMigration))
     LOG.debug { "Applied the loaded state for ${pane.id}" }
   }
   
@@ -450,7 +457,7 @@ internal class ProjectViewToolWindowServiceImpl(
     val paneElement = Element("pane")
     paneElement.setAttribute("pane", pane.id.idString)
     paneElement.setAttribute(PRESENTABLE_NAME_ATTRIBUTE, pane.descriptorImpl.presentableName)
-    if (pane.saveStateTo(paneElement)) {
+    if (pane.safeSaveStateTo(paneElement)) {
       persistentState.putPaneState(pane.id, PaneState(paneElement, pane.descriptorImpl.kind))
       LOG.debug { "Saved the last state for ${pane.id}" }
     }
@@ -871,6 +878,37 @@ private const val PRESENTABLE_NAME_ATTRIBUTE = "presentableName"
 
 private val FrontendProjectViewPane.descriptorImpl: ProjectViewPaneDescriptorImpl
   get() = descriptor as ProjectViewPaneDescriptorImpl
+
+/**
+ * Calls [FrontendProjectViewPane.restoreStateFrom] and logs an exception instead of throwing it.
+ */
+@RequiresEdt
+private fun FrontendProjectViewPane.safeRestoreStateFrom(element: Element?, options: RestorePaneStateOptions) {
+  try {
+    restoreStateFrom(element, options)
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    LOG.error("Failed to restore the state of the pane $id", e)
+  }
+}
+
+/**
+ * Calls [FrontendProjectViewPane.saveStateTo] and logs an exception instead of throwing it.
+ *
+ * @return `false` if [FrontendProjectViewPane.saveStateTo] throws, so the partly written state is not persisted
+ */
+@RequiresEdt
+private fun FrontendProjectViewPane.safeSaveStateTo(element: Element): Boolean {
+  return try {
+    saveStateTo(element)
+  }
+  catch (e: Throwable) {
+    rethrowControlFlowException(e)
+    LOG.error("Failed to save the state of the pane $id", e)
+    false
+  }
+}
 
 /**
  * How long the tool window waits for the pane to select.
