@@ -204,7 +204,11 @@ abstract class MountsAwareFileSystemProvider(
     val directDir = dir?.let(::getDirectAccessPath) ?: return delegate.newDirectoryStream(dir, filter)
 
     return try {
-      val stream = Files.newDirectoryStream(directDir)
+      fun toContainerPath(path: Path): Path = dir.resolve(directDir.relativize(path).toString())
+
+      val stream = Files.newDirectoryStream(directDir) { path ->
+        filter == null || filter.accept(toContainerPath(path))
+      }
 
       object : DirectoryStream<Path?> {
         override fun iterator(): MutableIterator<Path?> {
@@ -212,12 +216,7 @@ abstract class MountsAwareFileSystemProvider(
 
           return object : MutableIterator<Path?> {
             override fun hasNext() = it.hasNext()
-            override fun next(): Path {
-              val next = it.next()
-              val rel = directDir.relativize(next).toString()
-              val containerPath = dir.resolve(rel)
-              return if (filter == null || filter.accept(containerPath)) containerPath else next()
-            }
+            override fun next(): Path = toContainerPath(it.next())
 
             override fun remove() = it.remove()
           }
