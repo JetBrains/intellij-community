@@ -9,6 +9,7 @@ import com.intellij.platform.eel.ReadResult
 import com.intellij.platform.eel.channels.sendWholeBuffer
 import com.intellij.platform.eel.getAcceptorForRemotePort
 import com.intellij.platform.eel.getConnectionToRemotePort
+import com.intellij.platform.eel.impl.local.tunnels.ConnectionAcceptorImpl
 import com.intellij.platform.eel.listenOnUnixSocket
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asEelPath
@@ -23,7 +24,9 @@ import io.ktor.util.decodeString
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.plus
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -33,11 +36,15 @@ import org.junit.jupiter.api.io.TempDir
 import org.junit.jupiter.api.io.TempDirFactory
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
+import java.net.InetSocketAddress
 import java.net.UnixDomainSocketAddress
 import java.nio.ByteBuffer
+import java.nio.channels.ClosedChannelException
+import java.nio.channels.ServerSocketChannel
 import java.nio.channels.SocketChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.Executor
 import kotlin.test.assertEquals
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
@@ -97,6 +104,26 @@ class EelLocalTunnelApiTest {
       Assertions.assertEquals(NetworkConstants.HELLO_FROM_SERVER, NetworkConstants.fromByteBuffer(buffer.flip()))
       connection.sendChannel.sendWholeBuffer(NetworkConstants.HELLO_FROM_CLIENT.toBuffer()) //      Helper closes the stream, so does the channel
       Assertions.assertEquals(ReadResult.EOF, connection.receiveChannel.receive(ByteBuffer.allocate(1)))
+    }
+  }
+
+  @Test
+  fun testSocketClosedBeforeAcceptorStarts(): Unit = timeoutRunBlocking {
+    val tasks = ArrayDeque<Runnable>()
+    val dispatcher = Executor { tasks.addLast(it) }.asCoroutineDispatcher()
+    ServerSocketChannel.open().use { socket ->
+      socket.bind(InetSocketAddress("127.0.0.1", 0))
+      val acceptor = ConnectionAcceptorImpl(socket, this + dispatcher)
+      try {
+        socket.close()
+        tasks.removeFirst().run()
+        val result = acceptor.incomingConnections.tryReceive()
+        Assertions.assertTrue(result.isClosed)
+        Assertions.assertInstanceOf(ClosedChannelException::class.java, result.exceptionOrNull())
+      }
+      finally {
+        acceptor.close()
+      }
     }
   }
 

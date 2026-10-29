@@ -41,7 +41,9 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.net.BindException
 import java.net.InetSocketAddress
@@ -211,7 +213,7 @@ private suspend fun getAcceptorForRemotePortImpl(args: GetAcceptorForRemotePort)
     }
   }
   args.configureServerSocket(ConfigurableServerSocketImpl(channel.socket()))
-  return ConnectionAcceptorImpl(channel)
+  return ConnectionAcceptorImpl(channel, ApplicationManager.getApplication().service<MyService>().scope + Dispatchers.IO)
 }
 
 private val EelIpPreference.protocolFamily: ProtocolFamily?
@@ -223,7 +225,8 @@ private val EelIpPreference.protocolFamily: ProtocolFamily?
 
 private val HostAddress.asInetSocketAddress: InetSocketAddress get() = InetSocketAddress(hostname, port.toInt())
 
-private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocketChannel) : ConnectionAcceptor {
+@VisibleForTesting
+class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocketChannel, scope: CoroutineScope) : ConnectionAcceptor {
   private val _incomingConnections = Channel<Connection>()
   override val incomingConnections: ReceiveChannel<Connection> = _incomingConnections
   override val boundAddress: ResolvedSocketAddress = boundServerSocket.localAddress.asResolvedSocketAddress
@@ -234,11 +237,11 @@ private class ConnectionAcceptorImpl(private val boundServerSocket: ServerSocket
     assert(boundServerSocket.isOpen)
     boundServerSocket.configureBlocking(false)
     listenSocket =
-      ApplicationManager.getApplication().service<MyService>().scope.launch(Dispatchers.IO + CoroutineName("eel socket accept")) {
+      scope.launch(CoroutineName("eel socket accept")) {
         val selector = Selector.open()
-        boundServerSocket.register(selector, SelectionKey.OP_ACCEPT)
 
         try {
+          boundServerSocket.register(selector, SelectionKey.OP_ACCEPT)
           while (isActive) {
             while (selector.select(100) == 0) {  // 100 was taken just as a beautiful number with no research.
               ensureActive()
