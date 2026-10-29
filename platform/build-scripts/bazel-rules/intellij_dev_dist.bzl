@@ -648,7 +648,7 @@ def _names_destination(pattern, destination):
 def _place_unpacked_archives(ctx, files, records, destinations, executables):
     """Places every file of each `unpacked_archives` target at `<directory>/<path in the archive>`.
 
-    The path in the archive is the label name of the file. The BUILD file of a `dev_launch_extracted_repo` exports each
+    The path in the archive is the label name of the file. The BUILD file of a `extracted_download_repo` exports each
     file by its path in the root package, so the name is the path below the archive root. When the archive has an
     executable list, a record also states `executableList` and `archivePath`. The collector then refuses an archive file
     that the executable list names and the record does not mark. An archive without a list gets no such check, as a
@@ -802,7 +802,7 @@ intellij_dev_packed_jars_component = rule(
         "executable_files": attr.string_keyed_label_dict(allow_files = True, doc = "Maps each distribution path to its source label. The composer copies the file with the executable bit."),
         "unpacked_archives": attr.label_keyed_string_dict(
             allow_files = True,
-            doc = "Maps the `:files` filegroup of a `dev_launch_extracted_repo` to a distribution directory. " +
+            doc = "Maps the `:files` filegroup of a `extracted_download_repo` to a distribution directory. " +
                   "Each file goes to `<directory>/<path in the archive>`.",
         ),
         "unpacked_archive_executables": attr.string_list(
@@ -812,7 +812,7 @@ intellij_dev_packed_jars_component = rule(
         "unpacked_archive_executable_lists": attr.string_keyed_label_dict(
             allow_files = True,
             doc = "Maps a directory of `unpacked_archives` to the executable list of its archive, " +
-                  "`dev_launch_executables.json` of a `dev_launch_extracted_repo` with `executable_list`. " +
+                  "`executables.json` of a `extracted_download_repo` with `executable_list`. " +
                   "A directory without a list gets no check of the executable bits.",
         ),
         "plugin_classpath_prefix": attr.label(

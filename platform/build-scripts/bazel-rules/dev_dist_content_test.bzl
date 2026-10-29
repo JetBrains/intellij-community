@@ -26,7 +26,7 @@ load(
 
 # The fixture of an unpacked archive, with the files `bin/tool`, `lib/helper` and `lib/sub/data.txt`.
 _UNPACKED_ARCHIVE = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:files")
-_UNPACKED_ARCHIVE_EXECUTABLE_LIST = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:dev_launch_executables.json")
+_UNPACKED_ARCHIVE_EXECUTABLE_LIST = Label("//platform/build-scripts/bazel-rules/testdata/unpacked_archive:executables.json")
 
 # The application info of the fixture product, an EAP product without a release date.
 _FIXTURE_APPLICATION_INFO = Label("//platform/build-scripts/bazel-rules:testdata/ApplicationInfo.xml")
@@ -569,7 +569,7 @@ def _unpacked_archive_component_test_impl(ctx):
     # the archive, and the list is an input of the collector. Without a list, the record states neither.
     collector = [action for action in analysistest.target_actions(env) if action.mnemonic == "IntellijDevFiles"]
     asserts.equals(env, 1, len(collector))
-    executable_list = [file for file in collector[0].inputs.to_list() if file.basename == "dev_launch_executables.json"] if collector else []
+    executable_list = [file for file in collector[0].inputs.to_list() if file.basename == "executables.json"] if collector else []
     asserts.equals(env, 1 if ctx.attr.executable_list else 0, len(executable_list))
     written = [
         json.decode(action.content)

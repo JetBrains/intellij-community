@@ -11,20 +11,17 @@ undeclared URL - and only on the platform that has it wrong.
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
 load(
     ":dev_launch_dependencies.bzl",
-    "HOST_PLATFORMS",
     "jbr_runtime_archive_root",
     "jbr_runtime_url",
     "jbr_url",
     "jcef_url",
     "lib_ghostty_vt_url",
-    "maven_coordinates_urls",
-    "maven_url",
-    "platform_parts",
     "pyrefly_platform_directory",
     "pyrefly_url",
-    "text_repo_files",
 )
-load(":test_deps_extension.bzl", "all_downloads_pinned", "find_download_conflict", "manifest_content")
+load(":download_helpers.bzl", "maven_coordinates_urls", "maven_url")
+load(":download_rules.bzl", "all_downloads_pinned", "find_download_conflict", "manifest_content", "text_repo_files")
+load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 
 _JBR = "https://cache-redirector.jetbrains.com/intellij-jbr"
 _MAVEN = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"

@@ -28,96 +28,8 @@ Then BUILD files can use labels like @my_repo_name//:foo.zip or the convenience 
 # because the desired workflow is to declare files in per-module .bzl files, not
 # inside MODULE.bazel. The use_repo_rule pattern fits that requirement.
 
-load("@bazel_tools//tools/build_defs/repo:cache.bzl", "DEFAULT_CANONICAL_ID_ENV", "get_default_canonical_id")
-load("@bazel_tools//tools/build_defs/repo:utils.bzl", "get_auth")
-
-_PRELOADED_DOWNLOADS_MANIFEST = "preloaded-downloads-v1.tsv"
-_PRELOADED_DOWNLOADS_MANIFEST_HEADER = "intellij-build-downloads\t1"
-
-def write_downloads_repo(repository_ctx, files):
-    """Fetches every declared file and materializes the repository the build sees.
-
-    `files` is a list of `struct(name, url, sha256)`. An empty `sha256` downloads unpinned, which
-    only makes sense for a repository whose URLs are derived from versions the checkout owns: such
-    a repository is refetched exactly when its artifact changed, so there is no cached copy a
-    checksum could have spared us. The manifest records the hash Bazel observed either way, so the
-    runtime keeps its content-addressed lookup.
-
-    Returns whether every file was checksum-pinned before the download - which is what makes the
-    result reproducible, and the repository shareable through the repo contents cache.
-    """
-    conflict = find_download_conflict(files)
-    if conflict:
-        fail(conflict)
-
-    downloads = []
-    for f in files:
-        # Without a canonical id, any cache entry whose checksum matches satisfies the request, whatever
-        # URL put it there. Bazel recommends one wherever a checksum is given, and an unpinned entry gets
-        # the same treatment so that its cache hit is still tied to the URL it came from.
-        downloads.append(repository_ctx.download(
-            url = f.url,
-            output = f.name,
-            sha256 = f.sha256,
-            block = False,
-            canonical_id = get_default_canonical_id(repository_ctx, [f.url]),
-            auth = get_auth(repository_ctx, [f.url]),
-        ))
-
-    pinned = True
-    rows = []
-    for index, download in enumerate(downloads):
-        f = files[index]
-        if not f.sha256:
-            pinned = False
-        rows.append("%s\t%s\t%s" % (f.name, download.wait().sha256, f.url))
-
-    repository_ctx.file(_PRELOADED_DOWNLOADS_MANIFEST, manifest_content(rows))
-    names = [f.name for f in files]
-    repository_ctx.file(
-        "BUILD",
-        """
-package(default_visibility = ["//visibility:public"])
-exports_files([
-{exported}
-])
-filegroup(
-    name = "files",
-    srcs = [
-{artifacts}
-    ],
-)
-""".format(
-            exported = ",\n".join(["  \"%s\"" % name for name in names + [_PRELOADED_DOWNLOADS_MANIFEST]]),
-            artifacts = "\n".join(["        \"%s\"," % name for name in names]),
-        ),
-    )
-    return pinned
-
-def manifest_content(rows):
-    """The preloaded-downloads manifest holding [rows], each already `name<tab>sha256<tab>url`.
-
-    Joined with the header rather than concatenated after it, because a repository that declares no file
-    has no rows, and concatenation would leave a blank line that `PreloadedDownloads.parse` rejects.
-    """
-    return "\n".join([_PRELOADED_DOWNLOADS_MANIFEST_HEADER] + rows) + "\n"
-
-def find_download_conflict(files):
-    """Returns an error for duplicate output names or URLs, or `None` when [files] are safe to fetch."""
-    names = set()
-    urls = set()
-    for f in files:
-        if f.name in names:
-            return "download repository has duplicate output file name: %s" % f.name
-        if f.url in urls:
-            return "download repository has duplicate URL: %s" % f.url
-        names.add(f.name)
-        urls.add(f.url)
-    return None
-
-def all_downloads_pinned(files):
-    """Whether every file has a checksum known before it is downloaded."""
-    return all([f.sha256 for f in files])
+load("@bazel_tools//tools/build_defs/repo:cache.bzl", "DEFAULT_CANONICAL_ID_ENV")
+load(":download_rules.bzl", "MANIFEST_NAME", "write_downloads_repo")
 
 def test_deps_repository(repository_name, remote_cacheable = True):
     """Creates a test dependency repository.
@@ -131,7 +43,7 @@ def test_deps_repository(repository_name, remote_cacheable = True):
     def download_file(name, url, sha256):
         if not name or name.startswith("/") or "\\" in name:
             fail("test_deps_repository requires a non-empty repository-relative name, got: " + name)
-        if name == "files" or name == _PRELOADED_DOWNLOADS_MANIFEST:
+        if name == "files" or name == MANIFEST_NAME:
             fail("test_deps_repository reserves the name '%s' for the repository it generates" % name)
         for part in name.split("/"):
             if not part or part == "." or part == "..":
@@ -168,7 +80,7 @@ def test_deps_repository(repository_name, remote_cacheable = True):
         return ["@%s//:%s" % (repository_name, f.name) for f in files]
 
     def manifest_target():
-        return "@%s//:%s" % (repository_name, _PRELOADED_DOWNLOADS_MANIFEST)
+        return "@%s//:%s" % (repository_name, MANIFEST_NAME)
 
     return struct(
         repository_name = repository_name,
