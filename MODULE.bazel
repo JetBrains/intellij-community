@@ -252,21 +252,13 @@ bazel_dep(name = "rules_go", version = "0.63.0")
 # Rust, for the dev-distribution tools in //build/dev-dist-tools. rules_rs supplies the Rust toolchains and the
 # `@rules_rust` facade. The ultimate root declares the same `bazel_dep`, override and toolchain tag.
 # `BazelProjectStructureTest` requires identical dependencies, overrides and patch files in both roots.
-bazel_dep(name = "rules_rs", version = "0.1.3")
-
-# `archive_override`, not `single_version_override`: 0.1.3 is not in the Bazel Central Registry yet.
-# TODO: go back to `single_version_override` once https://github.com/bazelbuild/bazel-central-registry/pull/11208
-# lands. The `bazel_dep` version above is a label then. An override ignores it.
-archive_override(
+bazel_dep(name = "rules_rs", version = "0.2.0")
+single_version_override(
     module_name = "rules_rs",
     patch_strip = 1,
     patches = [
-        "//:build/rules_rs-0.1.3-github-crate-tarball.patch",  # TODO: remove that once merged to upstream https://github.com/hermeticbuild/rules_rs/pull/247
-        "//:build/rules_rs-0.1.3-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream, with rules_rust-bootstrap-toolchain-type.patch
+        "//:build/rules_rs-0.2.0-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream, with rules_rust-bootstrap-toolchain-type.patch
     ],
-    sha256 = "a345fe3fa11fbccec1de3e19c9597fef7e0cebb9af9ef3847d74abf26f222c8b",
-    strip_prefix = "rules_rs-0.1.3",
-    url = "https://github.com/hermeticbuild/rules_rs/releases/download/v0.1.3/rules_rs-v0.1.3.tar.gz",
 )
 
 rules_rust = use_extension("@rules_rs//rs:rules_rust.bzl", "rules_rust")
@@ -281,7 +273,7 @@ rules_rust.patch(
         # transitions manually everywhere or with a wrapper or child rule
         "//:build/rules_rust-msvc-crt-transition.patch",
         # A toolchain type selects the bootstrap Rust toolchain, so the process wrapper keeps the configuration of the
-        # cc toolchain and compiler-rt. It needs rules_rs-0.1.3-bootstrap-toolchain-type.patch.
+        # cc toolchain and compiler-rt. It needs rules_rs-0.2.0-bootstrap-toolchain-type.patch.
         "//:build/rules_rust-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream
     ],
     strip = 1,

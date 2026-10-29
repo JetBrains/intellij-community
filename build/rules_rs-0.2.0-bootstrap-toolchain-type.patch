@@ -51,7 +51,7 @@ the bootstrap type. They do not set `bootstrap_setting` now.
 diff --git a/rs/toolchains/declare_rustc_toolchains.bzl b/rs/toolchains/declare_rustc_toolchains.bzl
 --- a/rs/toolchains/declare_rustc_toolchains.bzl
 +++ b/rs/toolchains/declare_rustc_toolchains.bzl
-@@ -256,7 +256,6 @@
+@@ -290,7 +290,6 @@ def declare_rustc_toolchains(
          ]:
              target_kind = "bpf" if is_bpf else "non_bpf"
              bootstrap_suffix = "_bootstrap" if bootstrapping else ""
@@ -59,12 +59,11 @@ diff --git a/rs/toolchains/declare_rustc_toolchains.bzl b/rs/toolchains/declare_
              toolchain_suffix = "_bpf" if is_bpf else bootstrap_suffix
              native.toolchain(
                  name = name + "_{}_{}_to_{}_targets_{}{}".format(
-@@ -273,10 +272,12 @@
-                 target_settings = [
-                     target_triples_label,
+@@ -303,9 +302,11 @@ def declare_rustc_toolchains(
+                 exec_compatible_with = exec_compatible_with,
+                 target_settings = target_settings + [
                      "@rules_rs//rs/toolchains:bpf_targets" if is_bpf else "@rules_rs//rs/toolchains:non_bpf_targets",
 -                    bootstrap_setting,
-                     "@rules_rust//rust/toolchain/channel:" + channel,
                  ],
                  toolchain = rust_toolchain_name + toolchain_suffix,
 -                toolchain_type = "@rules_rust//rust:toolchain_type",
@@ -77,40 +76,44 @@ diff --git a/rs/toolchains/declare_rustc_toolchains.bzl b/rs/toolchains/declare_
 diff --git a/rs/toolchains/tests/declare_rustc_toolchains_test.bzl b/rs/toolchains/tests/declare_rustc_toolchains_test.bzl
 --- a/rs/toolchains/tests/declare_rustc_toolchains_test.bzl
 +++ b/rs/toolchains/tests/declare_rustc_toolchains_test.bzl
-@@ -4,8 +4,8 @@
+@@ -4,9 +4,9 @@ load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
  load("//rs/toolchains:declare_rustc_toolchains.bzl", "declare_rustc_toolchains")
  
  _RUST_TOOLCHAIN = "@rules_rust//rust:toolchain_type"
 +_RUST_BOOTSTRAP_TOOLCHAIN = "@rules_rust//rust:bootstrap_toolchain_type"
+ _CARGO_TOOLCHAIN = "@rules_rust//cargo:toolchain_type"
  _PLATFORM = "//command_line_option:platforms"
 -_BOOTSTRAP = str(Label("@rules_rust//rust/private:bootstrap_setting"))
  _SOURCE_STDLIB = str(Label("//rs/private:source_stdlib_building"))
  _PACKAGE = "//rs/toolchains/tests:"
  
-@@ -17,6 +17,14 @@
-     toolchains = [_RUST_TOOLCHAIN],
+@@ -23,6 +23,17 @@ _resolved_toolchain = rule(
+     toolchains = [_RUST_TOOLCHAIN, _CARGO_TOOLCHAIN],
  )
  
 +def _resolved_bootstrap_toolchain_impl(ctx):
-+    return [ctx.toolchains[_RUST_BOOTSTRAP_TOOLCHAIN]]
++    return [_ResolvedToolchains(
++        rust = ctx.toolchains[_RUST_BOOTSTRAP_TOOLCHAIN],
++        cargo = ctx.toolchains[_CARGO_TOOLCHAIN],
++    )]
 +
 +_resolved_bootstrap_toolchain = rule(
 +    implementation = _resolved_bootstrap_toolchain_impl,
-+    toolchains = [_RUST_BOOTSTRAP_TOOLCHAIN],
++    toolchains = [_RUST_BOOTSTRAP_TOOLCHAIN, _CARGO_TOOLCHAIN],
 +)
 +
  def _selection_test_impl(ctx):
      env = analysistest.begin(ctx)
-     toolchain = analysistest.target_under_test(env)[platform_common.ToolchainInfo]
-@@ -37,7 +45,6 @@
+     resolved = analysistest.target_under_test(env)[_ResolvedToolchains]
+@@ -59,7 +70,6 @@ def _selection_test(triple, bootstrap = False, exec_triple = "x86_64-unknown-lin
          },
          config_settings = {
              _PLATFORM: str(Label("//rs/platforms:" + triple)),
 -            _BOOTSTRAP: bootstrap,
              # Analyze BPF toolchain selection without building its source stdlib.
              _SOURCE_STDLIB: True,
-             "//command_line_option:extra_execution_platforms": [str(Label("//rs/platforms:x86_64-unknown-linux-gnu"))],
-@@ -103,6 +110,7 @@
+             "//command_line_option:extra_execution_platforms": [str(Label("//rs/platforms:" + exec_triple))],
+@@ -140,6 +150,7 @@ def declare_rustc_toolchains_test_suite(name):
          tags = ["manual"],
      )
      _resolved_toolchain(name = "resolved_toolchain", tags = ["manual"])
@@ -118,7 +121,7 @@ diff --git a/rs/toolchains/tests/declare_rustc_toolchains_test.bzl b/rs/toolchai
  
      tests = []
      for test_name, test_rule, kwargs in [
-@@ -116,7 +124,7 @@
+@@ -160,7 +171,7 @@ def declare_rustc_toolchains_test_suite(name):
      ]:
          test_rule(
              name = test_name + "_test",

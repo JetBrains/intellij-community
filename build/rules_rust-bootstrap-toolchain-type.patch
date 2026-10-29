@@ -1,6 +1,6 @@
 Select the bootstrap Rust toolchain with a toolchain type, not with a build setting.
 
-Companion patch: rules_rs-0.1.3-bootstrap-toolchain-type.patch. Apply both, or neither.
+Companion patch: rules_rs-0.2.0-bootstrap-toolchain-type.patch. Apply both, or neither.
 
 # The problem
 
@@ -113,25 +113,13 @@ The process wrapper shares the cc toolchain and compiler-rt with all other exec 
 - `bootstrap_setting`, `:bootstrapped` and `:bootstrapping` stay, but no rule sets the setting now. rules_rs writes
   the setting in `rs/private/source_stdlib.bzl`, and `@rules_rs//rs/toolchains:all_targets` selects on the config
   settings. A removal would break them.
-- `_build_file_for_toolchain_template` in `rust/private/repository_utils.bzl` registers the `_bootstrap` toolchain
+- `BUILD_for_toolchain` in `rust/private/repository_utils.bzl` registers the `_bootstrap` toolchain
   under the new type. It does this only for a Rust toolchain, not for rustfmt or rust-analyzer.
 - A module that declares its own Rust toolchains must register the `_bootstrap` toolchain under
   `@rules_rust//rust:bootstrap_toolchain_type`, without the `:bootstrapping` target setting. Otherwise
   `rust_binary_without_process_wrapper` finds no toolchain. rules_rs does this in the companion patch.
 - `rust_test_without_process_wrapper_test` keeps `//rust:toolchain_type`, because it uses the process wrapper.
 
-diff --git a/ffi/rs/allocator_library/BUILD.bazel b/ffi/rs/allocator_library/BUILD.bazel
---- a/ffi/rs/allocator_library/BUILD.bazel
-+++ b/ffi/rs/allocator_library/BUILD.bazel
-@@ -25,7 +25,7 @@
- rust_static_library_without_process_wrapper(
-     name = "allocator_library_without_process_wrapper",
-     srcs = ["empty.rs"],
--    allocator_libraries = "@rules_rust//ffi/rs:empty_allocator_libraries",
-+    allocator_libraries = "@rules_rust//ffi/rs:empty_allocator_libraries_without_process_wrapper",
-     edition = "2021",
-     tags = ["manual"],
- )
 diff --git a/ffi/rs/BUILD.bazel b/ffi/rs/BUILD.bazel
 --- a/ffi/rs/BUILD.bazel
 +++ b/ffi/rs/BUILD.bazel
@@ -144,7 +132,7 @@ diff --git a/ffi/rs/BUILD.bazel b/ffi/rs/BUILD.bazel
  
  rust_allocator_libraries(
      name = "allocator_libraries_with_mangling_support",
-@@ -15,6 +15,17 @@
+@@ -15,6 +15,17 @@ rust_allocator_libraries(
      visibility = ["//visibility:public"],
  )
  
@@ -162,7 +150,7 @@ diff --git a/ffi/rs/BUILD.bazel b/ffi/rs/BUILD.bazel
  alias(
      name = "default_allocator_libraries",
      actual = select({
-@@ -30,7 +41,7 @@
+@@ -30,7 +41,7 @@ cc_library(
  )
  
  # Allocator libraries used while bootstrapping the process wrapper.
@@ -171,10 +159,22 @@ diff --git a/ffi/rs/BUILD.bazel b/ffi/rs/BUILD.bazel
      name = "allocator_libraries_with_mangling_support_without_process_wrapper",
      allocator_library = "@rules_rust//ffi/rs/allocator_library:allocator_library_without_process_wrapper",
      # no need for a global allocator library, since the process wrapper
+diff --git a/ffi/rs/allocator_library/BUILD.bazel b/ffi/rs/allocator_library/BUILD.bazel
+--- a/ffi/rs/allocator_library/BUILD.bazel
++++ b/ffi/rs/allocator_library/BUILD.bazel
+@@ -25,7 +25,7 @@ rust_static_library(
+ rust_static_library_without_process_wrapper(
+     name = "allocator_library_without_process_wrapper",
+     srcs = ["empty.rs"],
+-    allocator_libraries = "@rules_rust//ffi/rs:empty_allocator_libraries",
++    allocator_libraries = "@rules_rust//ffi/rs:empty_allocator_libraries_without_process_wrapper",
+     edition = "2021",
+     tags = ["manual"],
+ )
 diff --git a/rust/BUILD.bazel b/rust/BUILD.bazel
 --- a/rust/BUILD.bazel
 +++ b/rust/BUILD.bazel
-@@ -12,6 +12,14 @@
+@@ -12,6 +12,14 @@ toolchain_type(
      name = "toolchain_type",
  )
  
@@ -192,7 +192,7 @@ diff --git a/rust/BUILD.bazel b/rust/BUILD.bazel
 diff --git a/rust/private/BUILD.bazel b/rust/private/BUILD.bazel
 --- a/rust/private/BUILD.bazel
 +++ b/rust/private/BUILD.bazel
-@@ -75,8 +75,9 @@
+@@ -75,8 +75,9 @@ rust_analyzer_detect_sysroot(
      visibility = ["//visibility:public"],
  )
  
@@ -207,63 +207,111 @@ diff --git a/rust/private/BUILD.bazel b/rust/private/BUILD.bazel
 diff --git a/rust/private/repository_utils.bzl b/rust/private/repository_utils.bzl
 --- a/rust/private/repository_utils.bzl
 +++ b/rust/private/repository_utils.bzl
-@@ -565,23 +565,30 @@
-     target_compatible_with = {target_constraint_sets_serialized},
-     toolchain = "{toolchain}",
-     toolchain_type = "{toolchain_type}",
--    target_settings = [
--        "@rules_rust//rust/private:bootstrapped",{target_settings}
-+    target_settings = [{target_settings}
-     ],
- )
-+"""
- 
-+# Only a Rust toolchain has a `_bootstrap` variant. It is registered under its own toolchain type, which the
-+# `*_without_process_wrapper` rules ask for.
-+_build_file_for_bootstrap_toolchain_template = """
- toolchain(
-     name = "{name}_bootstrap",
-     exec_compatible_with = {exec_constraint_sets_serialized},
-     target_compatible_with = {target_constraint_sets_serialized},
-     toolchain = "{toolchain}_bootstrap",
--    toolchain_type = "{toolchain_type}",
--    target_settings = [
--        "@rules_rust//rust/private:bootstrapping",{target_settings}
-+    toolchain_type = "@rules_rust//rust:bootstrap_toolchain_type",
-+    target_settings = [{target_settings}
-     ],
- )
- """
- 
-+_RUST_TOOLCHAIN_TYPES = [
-+    "@rules_rust//rust:toolchain",
-+    "@rules_rust//rust:toolchain_type",
-+]
-+
- def BUILD_for_toolchain(
-         name,
-         toolchain,
-@@ -591,7 +598,11 @@
+@@ -591,22 +591,21 @@ def BUILD_for_toolchain(
+         target_settings,
+         target_compatible_with,
          exec_compatible_with):
-     target_settings_value = ",\n        ".join([repr(setting) for setting in target_settings])
+-    variants = [("", [])]
++    # Only a Rust toolchain has a `_bootstrap` variant. It is registered under its own toolchain type, which the
++    # `*_without_process_wrapper` rules ask for.
++    variants = [("", toolchain_type)]
+     if toolchain_type in ("@rules_rust//rust:toolchain", "@rules_rust//rust:toolchain_type"):
+-        variants = [
+-            ("", ["@rules_rust//rust/private:bootstrapped"]),
+-            ("_bootstrap", ["@rules_rust//rust/private:bootstrapping"]),
+-        ]
++        variants.append(("_bootstrap", "@rules_rust//rust:bootstrap_toolchain_type"))
+     return "\n".join([
+         _build_file_for_toolchain_template.format(
+             name = name + suffix,
+             exec_constraint_sets_serialized = json.encode(exec_compatible_with),
+             target_constraint_sets_serialized = json.encode(target_compatible_with),
+             toolchain = toolchain + suffix,
+-            toolchain_type = toolchain_type,
+-            target_settings = json.encode(settings + target_settings),
++            toolchain_type = variant_toolchain_type,
++            target_settings = json.encode(target_settings),
+         )
+-        for suffix, settings in variants
++        for suffix, variant_toolchain_type in variants
+     ])
  
--    return _build_file_for_toolchain_template.format(
-+    template = _build_file_for_toolchain_template
-+    if toolchain_type in _RUST_TOOLCHAIN_TYPES:
-+        template += _build_file_for_bootstrap_toolchain_template
-+
-+    return template.format(
-         name = name,
-         exec_constraint_sets_serialized = json.encode(exec_compatible_with),
-         target_constraint_sets_serialized = json.encode(target_compatible_with),
+ def load_rust_analyzer(ctx, target_triple, version, iso_date):
+diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
+--- a/rust/private/rust.bzl
++++ b/rust/private/rust.bzl
+@@ -1609,14 +1609,12 @@ _RustBuiltWithoutProcessWrapperInfo = provider(
+     fields = {},
+ )
+ 
+-def _bootstrap_process_wrapper_transition_impl(_settings, _attr):
+-    return {str(Label("//rust/private:bootstrap_setting")): True}
+-
+-_bootstrap_process_wrapper_transition = transition(
+-    implementation = _bootstrap_process_wrapper_transition_impl,
+-    inputs = [],
+-    outputs = [str(Label("//rust/private:bootstrap_setting"))],
+-)
++# The `*_without_process_wrapper` rules ask for this toolchain type, not `//rust:toolchain_type`. They do not use a
++# transition, so the process wrapper shares the configuration, and the cc toolchain, of the targets that use it.
++_BOOTSTRAP_TOOLCHAINS = [
++    str(Label("//rust:bootstrap_toolchain_type")),
++    config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
++]
+ 
+ def _rust_binary_without_process_wrapper_impl(ctx):
+     providers = _rust_binary_impl(ctx)
+@@ -1627,18 +1625,11 @@ rust_binary_without_process_wrapper = rule(
+     doc = "A variant of `rust_binary` that uses a minimal process wrapper for `Rustc` actions.",
+     provides = COMMON_PROVIDERS + [_RustBuiltWithoutProcessWrapperInfo],
+     attrs = _COMMON_ATTRS | _RUST_BINARY_ATTRS | {
+-        "_allowlist_function_transition": attr.label(
+-            default = Label("//tools/allowlists/function_transition_allowlist"),
+-        ),
+         "skip_deps_verification": attr.bool(default = True),
+     } | _WITHOUT_PROCESS_WRAPPER_ATTRS,
+     executable = True,
+     fragments = ["cpp"],
+-    cfg = _bootstrap_process_wrapper_transition,
+-    toolchains = [
+-        str(Label("//rust:toolchain_type")),
+-        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
+-    ],
++    toolchains = _BOOTSTRAP_TOOLCHAINS,
+ )
+ 
+ def _rust_library_without_process_wrapper_impl(ctx):
+@@ -1651,10 +1642,7 @@ rust_library_without_process_wrapper = rule(
+     provides = COMMON_PROVIDERS + [_RustBuiltWithoutProcessWrapperInfo],
+     attrs = _COMMON_ATTRS | _WITHOUT_PROCESS_WRAPPER_ATTRS,
+     fragments = ["cpp"],
+-    toolchains = [
+-        str(Label("//rust:toolchain_type")),
+-        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
+-    ],
++    toolchains = _BOOTSTRAP_TOOLCHAINS,
+ )
+ 
+ def _rust_static_library_without_process_wrapper_impl(ctx):
+@@ -1666,10 +1654,7 @@ rust_static_library_without_process_wrapper = rule(
+     doc = "A variant of `rust_static_library` that uses a minimal process wrapper for `Rustc` actions.",
+     attrs = _COMMON_ATTRS | _WITHOUT_PROCESS_WRAPPER_ATTRS,
+     fragments = ["cpp"],
+-    toolchains = [
+-        str(Label("//rust:toolchain_type")),
+-        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
+-    ],
++    toolchains = _BOOTSTRAP_TOOLCHAINS,
+     provides = [
+         CcInfo,
+         rust_common.test_crate_info,
 diff --git a/rust/private/rust_allocator_libraries.bzl b/rust/private/rust_allocator_libraries.bzl
 --- a/rust/private/rust_allocator_libraries.bzl
 +++ b/rust/private/rust_allocator_libraries.bzl
-@@ -286,22 +286,41 @@
-     )]
+@@ -287,21 +287,40 @@ def _rust_allocator_libraries_impl(ctx):
  
      return providers
-+
+ 
 +_RUST_ALLOCATOR_LIBRARIES_ATTRS = {
 +    "allocator_library": attr.label(
 +        doc = "An optional library to provide when a default rust allocator is used.",
@@ -274,7 +322,7 @@ diff --git a/rust/private/rust_allocator_libraries.bzl b/rust/private/rust_alloc
 +        providers = [AllocatorLibrariesImplInfo],
 +    ),
 +}
- 
++
  rust_allocator_libraries = rule(
      implementation = _rust_allocator_libraries_impl,
      provides = [AllocatorLibrariesInfo],
@@ -311,79 +359,10 @@ diff --git a/rust/private/rust_allocator_libraries.bzl b/rust/private/rust_alloc
 +        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
 +    ],
 +)
-diff --git a/rust/private/rust.bzl b/rust/private/rust.bzl
---- a/rust/private/rust.bzl
-+++ b/rust/private/rust.bzl
-@@ -1602,15 +1602,13 @@
-     doc = "A provider identifying the target having been built using a `*_without_process_wrapper` rule variant.",
-     fields = {},
- )
--
--def _bootstrap_process_wrapper_transition_impl(_settings, _attr):
--    return {str(Label("//rust/private:bootstrap_setting")): True}
- 
--_bootstrap_process_wrapper_transition = transition(
--    implementation = _bootstrap_process_wrapper_transition_impl,
--    inputs = [],
--    outputs = [str(Label("//rust/private:bootstrap_setting"))],
--)
-+# The `*_without_process_wrapper` rules ask for this toolchain type, not `//rust:toolchain_type`. They do not use a
-+# transition, so the process wrapper shares the configuration, and the cc toolchain, of the targets that use it.
-+_BOOTSTRAP_TOOLCHAINS = [
-+    str(Label("//rust:bootstrap_toolchain_type")),
-+    config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
-+]
- 
- def _rust_binary_without_process_wrapper_impl(ctx):
-     providers = _rust_binary_impl(ctx)
-@@ -1621,18 +1619,11 @@
-     doc = "A variant of `rust_binary` that uses a minimal process wrapper for `Rustc` actions.",
-     provides = COMMON_PROVIDERS + [_RustBuiltWithoutProcessWrapperInfo],
-     attrs = _common_attrs_for_binary_without_process_wrapper(_COMMON_ATTRS | _RUST_BINARY_ATTRS | {
--        "_allowlist_function_transition": attr.label(
--            default = Label("//tools/allowlists/function_transition_allowlist"),
--        ),
-         "skip_deps_verification": attr.bool(default = True),
-     }),
-     executable = True,
-     fragments = ["cpp"],
--    cfg = _bootstrap_process_wrapper_transition,
--    toolchains = [
--        str(Label("//rust:toolchain_type")),
--        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
--    ],
-+    toolchains = _BOOTSTRAP_TOOLCHAINS,
- )
- 
- def _rust_library_without_process_wrapper_impl(ctx):
-@@ -1645,10 +1636,7 @@
-     provides = COMMON_PROVIDERS + [_RustBuiltWithoutProcessWrapperInfo],
-     attrs = dict(_common_attrs_for_binary_without_process_wrapper(_COMMON_ATTRS).items()),
-     fragments = ["cpp"],
--    toolchains = [
--        str(Label("//rust:toolchain_type")),
--        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
--    ],
-+    toolchains = _BOOTSTRAP_TOOLCHAINS,
- )
- 
- def _rust_static_library_without_process_wrapper_impl(ctx):
-@@ -1660,10 +1648,7 @@
-     doc = "A variant of `rust_static_library` that uses a minimal process wrapper for `Rustc` actions.",
-     attrs = dict(_common_attrs_for_binary_without_process_wrapper(_COMMON_ATTRS).items()),
-     fragments = ["cpp"],
--    toolchains = [
--        str(Label("//rust:toolchain_type")),
--        config_common.toolchain_type("@bazel_tools//tools/cpp:toolchain_type", mandatory = False),
--    ],
-+    toolchains = _BOOTSTRAP_TOOLCHAINS,
-     provides = [
-         CcInfo,
-         rust_common.test_crate_info,
 diff --git a/rust/private/utils.bzl b/rust/private/utils.bzl
 --- a/rust/private/utils.bzl
 +++ b/rust/private/utils.bzl
-@@ -57,15 +57,22 @@
+@@ -57,15 +57,22 @@ def parse_env_strings(entries):
          env_vars[key] = val
      return env_vars
  
@@ -409,7 +388,7 @@ diff --git a/rust/private/utils.bzl b/rust/private/utils.bzl
 diff --git a/util/process_wrapper/BUILD.bazel b/util/process_wrapper/BUILD.bazel
 --- a/util/process_wrapper/BUILD.bazel
 +++ b/util/process_wrapper/BUILD.bazel
-@@ -6,7 +6,7 @@
+@@ -6,7 +6,7 @@ rust_binary_without_process_wrapper(
      srcs = glob(["*.rs"]),
      allocator_libraries = select({
          "@rules_rust//rust/settings:experimental_use_allocator_libraries_with_mangled_symbols_on": "@rules_rust//ffi/rs:allocator_libraries_with_mangling_support_without_process_wrapper",
@@ -418,7 +397,7 @@ diff --git a/util/process_wrapper/BUILD.bazel b/util/process_wrapper/BUILD.bazel
      }),
      edition = "2018",
      # To ensure the process wrapper is produced deterministically
-@@ -20,10 +20,6 @@
+@@ -20,10 +20,6 @@ rust_binary_without_process_wrapper(
          "@platforms//os:windows": ["-Cstrip=debuginfo"],
          "//conditions:default": [],
      }),
@@ -432,7 +411,7 @@ diff --git a/util/process_wrapper/BUILD.bazel b/util/process_wrapper/BUILD.bazel
 diff --git a/util/process_wrapper/BUILD.tinyjson.bazel b/util/process_wrapper/BUILD.tinyjson.bazel
 --- a/util/process_wrapper/BUILD.tinyjson.bazel
 +++ b/util/process_wrapper/BUILD.tinyjson.bazel
-@@ -4,7 +4,7 @@
+@@ -4,7 +4,7 @@ load("@rules_rust//rust/private:rust.bzl", "rust_library_without_process_wrapper
  rust_library_without_process_wrapper(
      name = "tinyjson",
      srcs = glob(["src/*.rs"]),

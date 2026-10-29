@@ -16,7 +16,7 @@ startup --host_jvm_args=-Xmx12g
 common --incompatible_autoload_externally=
 
 # MRI-5334: rules_rs must not run `git` to fetch a crate. It downloads a GitHub archive, or it fails.
-# Do not use the `crate.from_cargo` hub fallback `allow_git = "true"` in the monorepo, this is non-hermetic.
+# Do not use the `crate.from_cargo` hub attribute `allow_git_cli = True` in the monorepo, this is non-hermetic.
 common --repo_env=RULES_RS_ALLOW_GIT=false
 
 # IJI-2767 Bazel: move bazel output root to a standard location
