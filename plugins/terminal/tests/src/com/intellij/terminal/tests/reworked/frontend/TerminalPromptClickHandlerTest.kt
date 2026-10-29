@@ -63,12 +63,12 @@ internal class TerminalPromptClickHandlerTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `click in the prompt moves the cursor to the command start`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
+  fun `click in the prompt does not move the cursor`(): Unit = timeoutRunBlocking(context = Dispatchers.EDT) {
     val fixture = createFixture()
     fixture.typeCommand(prompt = "prompt> ", command = "ls -la")
     fixture.model.updateCursor(0, 14)
 
-    assertEquals(TerminalCursorMove(LEFT, 6), fixture.calculateMove(clickOffset = 3))
+    assertEquals(null, fixture.calculateMove(clickOffset = 3))
   }
 
   @Test

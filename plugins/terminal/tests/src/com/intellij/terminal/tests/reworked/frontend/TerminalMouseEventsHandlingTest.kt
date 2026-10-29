@@ -960,6 +960,19 @@ internal class TerminalMouseEventsHandlingTest {
       }
 
     @Test
+    fun `double click in the prompt does not move the cursor`(): Unit =
+      doPromptClickTest { fixture ->
+        fixture.typeCommand("ls -la")
+
+        val written = fixture.awaitInputEventsHandled {
+          fixture.click(column = 0)
+          fixture.click(column = 0, clickCount = 2)
+        }
+
+        assertThat(written).isEmpty()
+      }
+
+    @Test
     fun `click without the shell integration does not move the cursor`(): Unit =
       doPromptClickTest { fixture ->
         fixture.connector.feed("${PROMPT}ls -la")
