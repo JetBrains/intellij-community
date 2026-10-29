@@ -4,8 +4,11 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings;
+import com.intellij.codeInsight.completion.CodeCompletionHandlerBase;
+import com.intellij.codeInsight.completion.CompletionPhase;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement;
+import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -16,6 +19,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +36,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -1054,6 +1059,48 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     getLookup().setCurrentItem(getLookup().getItems().get(2));
     selectItem(getLookup().getItems().get(2), Lookup.NORMAL_SELECT_CHAR);
     checkResult();
+  }
+
+  @NeedsIndex.SmartMode(reason = "Ordering requires smart mode")
+  public void testSecondInvocationAfterSingleItemAutoInsertLeavesNoTailWatch() throws ClassNotFoundException {
+    myFixture.configureByText("a.java", """
+      class Foo {
+        static void _bar() {}
+        private static void _foo() {}
+      }
+      class Bar {
+        void m() {
+          Foo._<caret>
+        }
+      }""");
+
+    invokeBasicCompletionWithModifiers();
+    assertNull(getLookup());
+    assertTrue(myFixture.getEditor().getDocument().getText().contains("Foo._bar();"));
+    assertInstanceOf(CompletionServiceImpl.getCompletionPhase(), CompletionPhase.InsertedSingleItem.class);
+
+    invokeBasicCompletionWithModifiers();
+    assertStringItems("_bar", "_foo");
+    selectItem(getLookup().getItems().get(1), Lookup.NORMAL_SELECT_CHAR);
+    myFixture.checkResult("""
+      class Foo {
+        static void _bar() {}
+        private static void _foo() {}
+      }
+      class Bar {
+        void m() {
+          Foo._foo();<caret>
+        }
+      }""");
+
+    LeakHunter.checkLeak(myFixture.getEditor().getDocument(),
+                         Class.forName("com.intellij.codeInsight.completion.CompletionAssertions$RangeMarkerSpy"));
+  }
+
+  private void invokeBasicCompletionWithModifiers() {
+    CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+      CodeCompletionHandlerBase.createHandler(CompletionType.BASIC).invokeCompletion(getProject(), myFixture.getEditor(), 1, true);
+    }, null, null, myFixture.getEditor().getDocument());
   }
 
   public void testNoCommonPrefixInsideIdentifier() {
