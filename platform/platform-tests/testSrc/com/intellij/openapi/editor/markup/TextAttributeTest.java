@@ -7,6 +7,8 @@ import org.jdom.Element;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.util.EnumMap;
+import java.util.Map;
 
 @SuppressWarnings("UseJBColor")
 public class TextAttributeTest extends TestCase {
@@ -16,6 +18,56 @@ public class TextAttributeTest extends TestCase {
     TextAttributes otherAttributes = new TextAttributes();
     TextAttributes merge = TextAttributes.merge(attributes, otherAttributes);
     assertEquals(attributes, merge);
+  }
+
+  public void testMergeCoversColorsAndKeepsEffectsOfBothLayers() {
+    Color red = new Color(0xFF0000);
+    Color blue = new Color(0x0000FF);
+    TextAttributes under = new TextAttributes(red, null, red, EffectType.LINE_UNDERSCORE, Font.BOLD);
+    TextAttributes above = new TextAttributes(null, blue, blue, EffectType.STRIKEOUT, Font.ITALIC);
+
+    TextAttributes merge = TextAttributes.merge(under, above);
+
+    assertEquals(red, merge.getForegroundColor());
+    assertEquals(blue, merge.getBackgroundColor());
+    assertEquals(Font.BOLD | Font.ITALIC, merge.getFontType());
+    assertEquals(Map.of(EffectType.LINE_UNDERSCORE, red, EffectType.STRIKEOUT, blue), allEffects(merge));
+  }
+
+  public void testMergeWithoutEffectsResetsTheEffectType() {
+    TextAttributes under = new TextAttributes(null, null, null, null, Font.PLAIN);
+    TextAttributes above = new TextAttributes(new Color(0x00FF00), null, null, null, Font.PLAIN);
+
+    TextAttributes merge = TextAttributes.merge(under, above);
+
+    assertEquals(EffectType.BOXED, merge.getEffectType());
+    assertNull(merge.getEffectColor());
+    assertTrue(allEffects(merge).isEmpty());
+  }
+
+  public void testApplyToSetsEffectsOfTheBuilder() {
+    Color red = new Color(0xFF0000);
+    Color blue = new Color(0x0000FF);
+    TextAttributes attributes = new TextAttributes(blue, null, null, null, Font.BOLD);
+
+    TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, red).coverWith(EffectType.BOXED, blue).applyTo(attributes);
+
+    assertEquals(blue, attributes.getForegroundColor());
+    assertEquals(Font.BOLD, attributes.getFontType());
+    assertEquals(Map.of(EffectType.WAVE_UNDERSCORE, red, EffectType.BOXED, blue), allEffects(attributes));
+  }
+
+  /**
+   * A subclass can override the setters, so {@link TextAttributesEffectsBuilder#applyTo} must call them.
+   */
+  public void testApplyToCallsTheSettersOfASubclass() {
+    TextAttributesEffectsBuilder effects = TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, new Color(0xFF0000));
+    try {
+      effects.applyTo(new UnmodifiableTextAttributes());
+      fail("UnmodifiableTextAttributes must reject the effects");
+    }
+    catch (UnsupportedOperationException ignored) {
+    }
   }
 
   public void testWriteOpaqueColorsToElement() {
@@ -53,6 +105,12 @@ public class TextAttributeTest extends TestCase {
     TextAttributes attributes = new TextAttributes(element);
     assertEquals(new Color(0xAF, 0x1D, 0x1D), attributes.getForegroundColor());
     assertEquals(new Color(0x00, 0x00, 0xFF), attributes.getBackgroundColor());
+  }
+
+  private static Map<EffectType, Color> allEffects(TextAttributes attributes) {
+    Map<EffectType, Color> effects = new EnumMap<>(EffectType.class);
+    attributes.forEachEffect(effects::put);
+    return effects;
   }
 
   private static void addField(Element parent, String name, String value) {

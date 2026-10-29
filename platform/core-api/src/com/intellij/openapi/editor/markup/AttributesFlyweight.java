@@ -270,6 +270,24 @@ public final class AttributesFlyweight {
     return create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, additionalEffects, myErrorStripeColor);
   }
 
+  /**
+   * Returns a flyweight with the given fields and the error stripe color of this flyweight.
+   * Unlike a chain of the {@code with} methods, it looks up the cache at most once.
+   */
+  @NotNull AttributesFlyweight with(
+    @Nullable Color foreground,
+    @Nullable Color background,
+    @FontStyle int fontType,
+    @Nullable Color effectColor,
+    @Nullable EffectType effectType,
+    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects
+  ) {
+    if (hasFields(foreground, background, fontType, effectColor, effectType, additionalEffects, myErrorStripeColor)) {
+      return this;
+    }
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, myErrorStripeColor);
+  }
+
   void writeExternal(@NotNull Element element) {
     boolean writeAlpha = isTransparencySupported();
     writeColor(element, "FOREGROUND", getForeground(), writeAlpha);

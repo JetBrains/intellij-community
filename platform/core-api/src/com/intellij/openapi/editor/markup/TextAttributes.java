@@ -49,16 +49,29 @@ public class TextAttributes implements Cloneable {
     if (above == null) return under;
 
     TextAttributes attrs = under.clone();
-    if (above.getBackgroundColor() != null){
-      attrs.setBackgroundColor(above.getBackgroundColor());
+    if (attrs.getClass() != TextAttributes.class) {
+      // a subclass can override the setters, so it gets one setter call for each field
+      if (above.getBackgroundColor() != null) {
+        attrs.setBackgroundColor(above.getBackgroundColor());
+      }
+      if (above.getForegroundColor() != null) {
+        attrs.setForegroundColor(above.getForegroundColor());
+      }
+      attrs.setFontType(above.getFontType() | under.getFontType());
+      TextAttributesEffectsBuilder.create(under).coverWith(above).applyTo(attrs);
+      return attrs;
     }
-    if (above.getForegroundColor() != null){
-      attrs.setForegroundColor(above.getForegroundColor());
-    }
-    attrs.setFontType(above.getFontType() | under.getFontType());
 
-    TextAttributesEffectsBuilder.create(under).coverWith(above).applyTo(attrs);
-
+    AttributesFlyweight flyweight = attrs.attrs;
+    Color background = above.getBackgroundColor();
+    Color foreground = above.getForegroundColor();
+    int fontType = validFontType(above.getFontType() | under.getFontType());
+    attrs.attrs = TextAttributesEffectsBuilder.create(under).coverWith(above).applyTo(
+      flyweight,
+      foreground != null ? foreground : flyweight.getForeground(),
+      background != null ? background : flyweight.getBackground(),
+      fontType
+    );
     return attrs;
   }
 
@@ -120,6 +133,10 @@ public class TextAttributes implements Cloneable {
 
   public @NotNull AttributesFlyweight getFlyweight() {
     return attrs;
+  }
+
+  void setFlyweight(@NotNull AttributesFlyweight flyweight) {
+    attrs = flyweight;
   }
 
   public static @NotNull TextAttributes fromFlyweight(@NotNull AttributesFlyweight flyweight) {
@@ -217,11 +234,15 @@ public class TextAttributes implements Cloneable {
   }
 
   public void setFontType(@JdkConstants.FontStyle int type) {
+    attrs = attrs.withFontType(validFontType(type));
+  }
+
+  private static @JdkConstants.FontStyle int validFontType(@JdkConstants.FontStyle int type) {
     if (type < 0 || type > 3) {
       LOG.error("Wrong font type: " + type);
-      type = Font.PLAIN;
+      return Font.PLAIN;
     }
-    attrs = attrs.withFontType(type);
+    return type;
   }
 
   /** @noinspection MethodDoesntCallSuperMethod*/

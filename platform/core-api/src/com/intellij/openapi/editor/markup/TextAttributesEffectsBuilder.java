@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ui.JdkConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -146,6 +147,13 @@ public final class TextAttributesEffectsBuilder {
    * @apiNote this method is not a thread safe, builder can't be modified in some other thread when applying to something
    */
   public @NotNull TextAttributes applyTo(final @NotNull TextAttributes targetAttributes) {
+    if (targetAttributes.getClass() == TextAttributes.class) {
+      AttributesFlyweight flyweight = targetAttributes.getFlyweight();
+      targetAttributes.setFlyweight(applyTo(flyweight, flyweight.getForeground(), flyweight.getBackground(), flyweight.getFontType()));
+      return targetAttributes;
+    }
+
+    // a subclass can override the setters, so it gets one setter call for each effect field
     Iterator<EffectDescriptor> effectsIterator = myEffectsMap.values().iterator();
     if (!effectsIterator.hasNext()) {
       targetAttributes.setEffectColor(null);
@@ -156,22 +164,47 @@ public final class TextAttributesEffectsBuilder {
       EffectDescriptor mainEffectDescriptor = effectsIterator.next();
       targetAttributes.setEffectType(mainEffectDescriptor.effectType);
       targetAttributes.setEffectColor(mainEffectDescriptor.effectColor);
-
-      int effectsLeft = myEffectsMap.size() - 1;
-      if (effectsLeft == 0) {
-        targetAttributes.setAdditionalEffects(Collections.emptyMap());
-      }
-      else if (effectsLeft == 1) {
-        EffectDescriptor additionalEffect = effectsIterator.next();
-        targetAttributes.setAdditionalEffects(Collections.singletonMap(additionalEffect.effectType, additionalEffect.effectColor));
-      }
-      else {
-        Map<EffectType, Color> effectsMap = new EnumMap<>(EffectType.class);
-        effectsIterator.forEachRemaining(descriptor -> effectsMap.put(descriptor.effectType, descriptor.effectColor));
-        targetAttributes.setAdditionalEffects(effectsMap);
-      }
+      targetAttributes.setAdditionalEffects(additionalEffects(effectsIterator));
     }
     return targetAttributes;
+  }
+
+  /**
+   * Returns {@code flyweight} with the given colors and font type and the effects of this builder.
+   * It looks up the cache at most once.
+   */
+  @NotNull AttributesFlyweight applyTo(
+    @NotNull AttributesFlyweight flyweight,
+    @Nullable Color foreground,
+    @Nullable Color background,
+    @JdkConstants.FontStyle int fontType
+  ) {
+    Iterator<EffectDescriptor> effectsIterator = myEffectsMap.values().iterator();
+    if (!effectsIterator.hasNext()) {
+      return flyweight.with(foreground, background, fontType, null, BOXED, Collections.emptyMap());
+    }
+    EffectDescriptor mainEffectDescriptor = effectsIterator.next();
+    return flyweight.with(
+      foreground, background, fontType, mainEffectDescriptor.effectColor, mainEffectDescriptor.effectType,
+      additionalEffects(effectsIterator)
+    );
+  }
+
+  /**
+   * Collects the effects after the main one.
+   */
+  private @NotNull Map<EffectType, Color> additionalEffects(@NotNull Iterator<EffectDescriptor> effectsIterator) {
+    int effectsLeft = myEffectsMap.size() - 1;
+    if (effectsLeft == 0) {
+      return Collections.emptyMap();
+    }
+    if (effectsLeft == 1) {
+      EffectDescriptor additionalEffect = effectsIterator.next();
+      return Collections.singletonMap(additionalEffect.effectType, additionalEffect.effectColor);
+    }
+    Map<EffectType, Color> effectsMap = new EnumMap<>(EffectType.class);
+    effectsIterator.forEachRemaining(descriptor -> effectsMap.put(descriptor.effectType, descriptor.effectColor));
+    return effectsMap;
   }
 
   @Contract("null -> null")
