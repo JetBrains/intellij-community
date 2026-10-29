@@ -25,11 +25,27 @@ internal class AppFontOptionsTest {
   }
 
   @Test
-  fun `the first state load does not reset the editor font cache`() {
+  fun `a load of the same state does not reset the editor font cache`() {
     val options = AppEditorFontOptions()
     val state = AppEditorFontOptions.PersistentFontPreferences(options.fontPreferences)
     options.loadState(state)
     assertThat(cache.resets).isZero()
+  }
+
+  @Test
+  fun `a change without a state load resets the editor font cache`() {
+    val options = AppEditorFontOptions()
+    toggleLigatures(options)
+    assertThat(cache.resets).isEqualTo(1)
+  }
+
+  @Test
+  fun `the console switch to the editor font resets the editor font cache`() {
+    val options = AppConsoleFontOptions()
+    options.isUseEditorFont = false
+    cache.resets = 0
+    options.isUseEditorFont = true
+    assertThat(cache.resets).isEqualTo(1)
   }
 
   @Test

@@ -34,7 +34,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   @Deprecated
   protected final SimpleModificationTracker myTracker;
   private int myFontPrefVersion;
-  private boolean myCacheResetListenerAdded;
 
   public AppFontOptions() {
     myFontPreferences = new FontPreferencesImpl();
@@ -51,6 +50,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
         myFontPreferences.setBoldSubFamily(FontFamilyService.getRecommendedBoldSubFamily(FontPreferences.DEFAULT_FONT_NAME, regular));
       }
     }
+    myFontPreferences.addChangeListener((_) -> resetEditorFontCache());
   }
 
   protected abstract F createFontState(@NotNull FontPreferences fontPreferences);
@@ -78,7 +78,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   public void loadState(@NotNull F state) {
     copyState(state, myFontPreferences);
     myFontPrefVersion = state.VERSION;
-    addCacheResetListener();
   }
 
   public void update(@NotNull FontPreferences newPreferences) {
@@ -88,17 +87,6 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
 
   public @NotNull FontPreferences getFontPreferences() {
     return myFontPreferences;
-  }
-
-  /**
-   * Adds the listener once, after the first state load, so that the first load does not reset the cache.
-   * The cache can be in its initialization at that time, because {@link EditorFontCacheImpl} creates these options.
-   */
-  private void addCacheResetListener() {
-    if (!myCacheResetListenerAdded) {
-      myCacheResetListenerAdded = true;
-      myFontPreferences.addChangeListener((_) -> resetEditorFontCache());
-    }
   }
 
   private static void copyState(@NotNull PersistentFontPreferences state, @NotNull ModifiableFontPreferences fontPreferences) {
@@ -133,7 +121,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
     return new String[]{family, regularSubFamily, boldSubFamily};
   }
 
-  private static void resetEditorFontCache() {
+  static void resetEditorFontCache() {
     EditorFontCache cache = ApplicationManager.getApplication().getServiceIfCreated(EditorFontCache.class);
     if (cache != null) {
       cache.reset();

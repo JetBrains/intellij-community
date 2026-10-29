@@ -57,6 +57,7 @@ public final class AppConsoleFontOptions extends AppFontOptions<AppConsoleFontOp
     if (useEditorFont) {
       myDelegatingPreferences = new DelegatingFontPreferences(()->AppEditorFontOptions.getInstance().getFontPreferences());
       incModificationCount();
+      resetEditorFontCache();
     }
     else {
       myDelegatingPreferences = null;

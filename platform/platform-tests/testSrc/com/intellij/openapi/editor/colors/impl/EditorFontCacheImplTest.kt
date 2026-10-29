@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.awt.Font
 import java.util.function.Supplier
 
 @TestApplication
@@ -46,6 +47,16 @@ internal class EditorFontCacheImplTest {
     scheme.getFont(EditorFontType.PLAIN)
     scheme.setEditorFontSize(15f)
     assertThat(scheme.getFont(EditorFontType.PLAIN).size2D).isEqualTo(15f)
+  }
+
+  @Test
+  fun `a console font name change of a scheme resets the console fonts`() {
+    val scheme = EditorColorsSchemeImpl(null)
+    scheme.setEditorFontSize(13f)
+    scheme.setConsoleFontSize(20f)
+    val before = scheme.getFont(EditorFontType.CONSOLE_PLAIN)
+    scheme.setConsoleFontName(Font.MONOSPACED)
+    assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).family).isNotEqualTo(before.family)
   }
 
   @Test

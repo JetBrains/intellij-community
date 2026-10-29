@@ -1109,9 +1109,10 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
     if (consoleFontPreferences instanceof ModifiableFontPreferences modifiablePreferences) {
       return modifiablePreferences;
     }
-    ModifiableFontPreferences editableFontPreferences = new FontPreferencesImpl();
+    FontPreferencesImpl editableFontPreferences = new FontPreferencesImpl();
     consoleFontPreferences.copyTo(editableFontPreferences);
     consoleFontPreferences = editableFontPreferences;
+    editableFontPreferences.addChangeListener((_) -> initFonts());
     return editableFontPreferences;
   }
 
