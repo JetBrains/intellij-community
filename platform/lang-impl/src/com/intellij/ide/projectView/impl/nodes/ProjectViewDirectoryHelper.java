@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.FontUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -249,8 +250,7 @@ public class ProjectViewDirectoryHelper {
     ProjectRootManager prm = ProjectRootManager.getInstance(myProject);
 
     for (VirtualFile root : prm.getContentRoots()) {
-      VirtualFile parent = root.getParent();
-      if (isFileNotUnderContentRoot(parent)) {
+      if (isTopLevelRoot(root)) {
         topLevelContentRoots.add(root);
       }
     }
@@ -258,11 +258,8 @@ public class ProjectViewDirectoryHelper {
     for (UnloadedModuleDescription description : descriptions) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
         VirtualFile root = pointer.getFile();
-        if (root != null) {
-          VirtualFile parent = root.getParent();
-          if (isFileNotUnderContentRoot(parent)) {
-            topLevelContentRoots.add(root);
-          }
+        if (isTopLevelRoot(root)) {
+          topLevelContentRoots.add(root);
         }
       }
     }
@@ -271,11 +268,11 @@ public class ProjectViewDirectoryHelper {
 
   @NotNull Set<VirtualFile> topLevelBaseDirectories() {
     // A root's parent may still be recognized as a content root by the file index even after its module is
-    // unloaded (see ProjectRootsUtil#findUnloadedModuleByContentRoot), so isFileUnderContentRoot() - and not just
+    // unloaded (see ProjectRootsUtil#findUnloadedModuleByContentRoot), so isTopLevelRoot() - and not just
     // membership in the (loaded-only) BaseProjectDirectories set - is needed to correctly detect nested roots.
     Set<VirtualFile> result = new LinkedHashSet<>();
     for (VirtualFile root : BaseProjectDirectories.getBaseDirectories(myProject)) {
-      if (isFileNotUnderContentRoot(root.getParent())) {
+      if (isTopLevelRoot(root)) {
         result.add(root);
       }
     }
@@ -285,7 +282,7 @@ public class ProjectViewDirectoryHelper {
     for (UnloadedModuleDescription description : ModuleManager.getInstance(myProject).getUnloadedModuleDescriptions()) {
       for (VirtualFilePointer pointer : description.getContentRoots()) {
         VirtualFile root = pointer.getFile();
-        if (root != null && isFileNotUnderContentRoot(root.getParent())) {
+        if (isTopLevelRoot(root)) {
           result.add(root);
         }
       }
@@ -314,8 +311,11 @@ public class ProjectViewDirectoryHelper {
       .collect(Collectors.toList());
   }
 
-  private boolean isFileNotUnderContentRoot(@Nullable VirtualFile file) {
-    return file != null && file.isValid() && myFileIndex.getContentRootForFile(file, false) == null;
+  @Contract("null -> false")
+  private boolean isTopLevelRoot(@Nullable VirtualFile root) {
+    if (root == null || !root.isValid()) return false;
+    var parent = root.getParent();
+    return parent == null || parent.isValid() && myFileIndex.getContentRootForFile(parent, false) == null;
   }
 
   private PsiElement @NotNull [] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {

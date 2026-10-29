@@ -14,6 +14,7 @@ import com.intellij.project.stateStore
 import com.intellij.projectView.BaseProjectViewTestCase
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
 import com.intellij.workspaceModel.ide.registerProjectRoot
@@ -140,6 +141,44 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
           | module
           |  subdir
           | projectRoot
+          |  subdir
+          |
+          """.trimMargin())
+  }
+
+  fun `test deleted roots are not shown`() {
+    val root = directoryContent {
+      dir("module") {
+        dir("subdir") {}
+      }
+      dir("deletedModule") {
+        dir("subdir") {}
+      }
+      dir("deletedProjectRoot") {
+        dir("subdir") {}
+      }
+    }.generateInVirtualTempDir()
+    PsiTestUtil.addContentRoot(createModule("module"), root.findChild("module")!!)
+    PsiTestUtil.addContentRoot(createModule("deletedModule"), root.findChild("deletedModule")!!)
+    runWithModalProgressBlocking(myProject, "") {
+      registerProjectRoot(myProject, root.findChild("deletedProjectRoot")!!.toNioPath())
+    }
+    assertStructureEqual("""
+          |Project
+          | deletedModule
+          |  subdir
+          | deletedProjectRoot
+          |  subdir
+          | module
+          |  subdir
+          |
+          """.trimMargin())
+
+    VfsTestUtil.deleteFile(root.findChild("deletedModule")!!)
+    VfsTestUtil.deleteFile(root.findChild("deletedProjectRoot")!!)
+    assertStructureEqual("""
+          |Project
+          | module
           |  subdir
           |
           """.trimMargin())
