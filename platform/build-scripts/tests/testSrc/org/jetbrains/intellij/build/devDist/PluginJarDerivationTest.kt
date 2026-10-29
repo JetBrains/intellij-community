@@ -189,7 +189,7 @@ class PluginJarDerivationTest {
 
   @Test
   fun `a main module embedded in its own content gets its own jar and the conventional main jar only for co-packed members`() {
-    // `intellij.json` is the case: `lib/intellij.json.jar` holds the main module, and no `json.jar` is written.
+    // `lib/<main module>.jar` holds the main module, and no conventional main jar is written.
     val alone = derive(memberNames = listOf(MEMBER), derivedJars = mapOf(MEMBER to "modules/$MEMBER.jar"), closureMembers = setOf(MEMBER), mainModuleJar = "intellij.demo.jar")
     assertThat(alone.map { it.relativeOutputFile }).containsExactly("modules/$MEMBER.jar", "intellij.demo.jar")
     assertThat(alone.single { it.isMainJar }.contentModules).containsExactly("intellij.demo")
