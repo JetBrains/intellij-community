@@ -2,13 +2,8 @@
 # commands that check it. `lints.toml`, `rustfmt.toml` and `clippy.toml` are the sources, `sync.mjs` writes the copies,
 # and `defs.bzl` holds the rules that apply them under Bazel.
 
-load("@avl//:data.bzl", AVL = "DEP_DATA")
 load("@bazel_skylib//rules:build_test.bzl", "build_test")
-load("@bt//:data.bzl", BT = "DEP_DATA")
-load("@ddt//:data.bzl", DDT = "DEP_DATA")
-load("@yonder//:data.bzl", YONDER = "DEP_DATA")
-load("//tools/jscpd-test:defs.bzl", "jscpd_test")
-load(":defs.bzl", "COMMUNITY_WORKSPACE_LINTS", "NOT_ON_WINDOWS", "rust_lints_equal_check", "rust_tool_sources")
+load(":defs.bzl", "COMMUNITY_WORKSPACE_LINTS", "rust_lints_equal_check")
 
 # `community/.bazelrc` gives `clippy.toml` to the Bazel clippy aspect as `@rules_rust//rust/settings:clippy.toml`.
 exports_files(
@@ -32,19 +27,5 @@ build_test(
     targets = [":lints_equal_check"],
 )
 
-# The copy-paste gate of the community Rust tool workspaces: it fails on each clone that jscpd finds with
-# `.jscpd.json`. It reads the declared sources of every crate of the four crate hubs and of the two binaries without a
-# hub, so Bazel caches it until a Rust file changes. A Windows host has no runfiles tree to scan.
-jscpd_test(
-    name = "duplicate-code_test",
-    size = "small",
-    srcs = rust_tool_sources(AVL, BT, DDT, YONDER) + [
-        "//build/rust-tools/libtest-junit-wrapper:libtest-junit-wrapper_sources",
-        "//build/rust-tools/libtest-junit-wrapper/e2e:e2e_sources",
-        "//tools/jscpd-test:jscpd-test_sources",
-    ],
-    config = ".jscpd.json",
-    guide = "See the copy-paste item of community/build/rust-tools/README.md.",
-    junit_class = "community.build.rust-tools.DuplicateCode",
-    target_compatible_with = NOT_ON_WINDOWS,
-)
+# 263 only: this branch has no `//tools/jscpd-test`, so the copy-paste gate `duplicate-code_test` of master is absent. See
+# `plugins/air/BRANCH-263-DIVERGENCE.md` section 3.20.
