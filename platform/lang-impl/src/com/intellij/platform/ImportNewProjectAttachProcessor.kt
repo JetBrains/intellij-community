@@ -39,7 +39,7 @@ private val LOG = logger<ImportNewProjectAttachProcessor>()
 @InternalIgnoreDependencyViolation
 class ImportNewProjectAttachProcessor : ProjectAttachProcessor() {
   override fun isEnabled(project: Project?, projectDir: Path?, newProject: Project?): Boolean {
-    val dotIdeaDir = projectDir?.resolve(Project.DIRECTORY_STORE_FOLDER) ?: return false
+    val dotIdeaDir = projectDir?.resolve(Project.DIRECTORY_STORE_FOLDER) ?: return true
     return Files.notExists(dotIdeaDir)
   }
 
