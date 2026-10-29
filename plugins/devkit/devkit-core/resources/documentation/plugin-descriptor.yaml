@@ -634,7 +634,7 @@ elements:
                           - `on-demand` - the module is used by other modules of the plugin and doesn't provide user-visible functionality
                             itself.
                             The module is loaded if and only if another `required` or `optional` module, which depends on it, is loaded.
-                            **This option isn't implemented yet and currently behaves the same way as `optional`.**
+                            **Effective since 2026.3**; in older versions, it behaves the same way as `optional`.
                         defaultValue: |
                           `optional`
                     - attribute:
