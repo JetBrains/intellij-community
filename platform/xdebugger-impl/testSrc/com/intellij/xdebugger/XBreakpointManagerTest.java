@@ -27,6 +27,8 @@ import com.intellij.xdebugger.impl.breakpoints.BreakpointState;
 import com.intellij.xdebugger.impl.breakpoints.ThreadDumpCapturePolicy;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
+import kotlin.Unit;
+import kotlinx.coroutines.flow.MutableSharedFlow;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
@@ -518,6 +520,20 @@ public class XBreakpointManagerTest extends XBreakpointsTestCase {
     assertEquals(condition, breakpoint.getConditionExpression().getExpression());
     assertEquals(logExpression, breakpoint.getLogExpressionObject().getExpression());
     assertTrue(breakpoint.isTemporary());
+  }
+
+  @Test
+  public void testPresentationUpdateEmitsBreakpointChange() {
+    XLineBreakpoint<MyBreakpointProperties> breakpoint =
+      addLineBreakpoint(myBreakpointManager, "url", 239, new MyBreakpointProperties("123"));
+    @SuppressWarnings("unchecked")
+    var changedFlow = (MutableSharedFlow<Unit>)((XBreakpointBase<?, ?, ?>)breakpoint).breakpointChangedFlow();
+    changedFlow.resetReplayCache();
+
+    // the tooltip in the breakpoint state contains the error message, so the state must be sent again
+    myBreakpointManager.updateBreakpointPresentation(breakpoint, null, "error message");
+
+    assertThat(changedFlow.getReplayCache()).isNotEmpty();
   }
 
   @Test
