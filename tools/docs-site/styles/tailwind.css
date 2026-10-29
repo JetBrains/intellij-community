@@ -10,7 +10,7 @@
    block aliases them into shadcn's standard utility vocabulary (bg-background,
    text-muted-foreground, border-input, …), so color utilities emit var(--…) and follow the
    theme switch at runtime. Never hard-code px font sizes or use text-[..px] arbitrary values —
-   extend the @theme ramp instead. */
+   use a step of the @theme ramp instead. */
 
 @import 'tailwindcss';
 @import 'tw-animate-css';
@@ -24,193 +24,195 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ── design tokens ────────────────────────────────────────────────────────────
-   Values are literal OKLCH from Tailwind's default palette (categorical accents use -600
-   shades on light and -400 on dark; neutrals use the zinc scale; the primary is indigo —
-   indigo-600 on light, where it colors bare link text on white and shares the shade with
-   --layer-indigo, and indigo-300 on dark, one step brighter than --layer-indigo's indigo-400
-   so the two stay distinct). --brand-gradient runs from indigo to violet, one step darker on
-   dark so white text on it keeps its contrast. Components and canvas.css consume ONLY the
-   semantic tokens — never raw palette values.
+   The shadcn tokens are the stock values of `shadcn init` with the style Nova, the base color neutral, the theme blue,
+   and the stock radius. The theme sets --primary, --secondary, --sidebar-primary and their foregrounds. A text stays
+   foreground or muted-foreground. A fill with text is --primary with --primary-foreground. A thin mark (a rail, a
+   border, an icon, a dot) is --sidebar-primary, because the stock dark --primary is 2.24:1 on the page, under the 3:1
+   of a mark. The tokens below them are the domain tokens that shadcn has no token for:
 
-   Vocabulary shift from the pre-shadcn site: --primary is the indigo brand/link color (the old
-   --accent), while --accent is the neutral hover surface (the old --bg-hover). */
+   - --info, --success, --warning: a status. A status is a mark (an icon, a dot, a bar, a rail or a border), and the
+     text next to it is foreground or muted-foreground. Each takes the Tailwind step of the stock --destructive in its
+     own hue: step 600 in light, step 400 in dark. A mark needs 3:1. Green and amber take step 700 in light, because
+     a mark lies on --muted too, and step 600 is 2.95:1 there.
+   - --layer-*: the six lane colors of the diagrams, by the same rule. They keep their names, because the site configs
+     and the diagrams name them: indigo is purple, sky is teal, blue is pink.
+   - --brand-gradient: the product mark behind white text, in the two dark stops of the Air app icon.
+   - --primary-hover, --primary-pressed, --primary-disabled and the --*-surface and --*-border tints: the host contract
+     of the GenUI catalog, whose primitives this site renders (Air ADR 0218). The values are the stock states and tints:
+     bg-primary/80, 50 % for disabled, bg-<tone>/10 and border-<tone>/20.
+
+   scripts/themeContrast.test.ts checks only the status, lane and --sidebar-primary marks at 3:1 on the background, the
+   card and the muted panel, and white text at 4.5:1 on each stop of the brand gradient. */
 
 :root {
   color-scheme: light;
 
-  /* shadcn semantic tokens */
-  --background: #fff;
-  --foreground: oklch(21% 0.006 285.885); /* zinc-900 */
-  --card: #fff;
-  --card-foreground: var(--foreground);
-  --popover: #fff;
-  --popover-foreground: var(--foreground);
-  --primary: oklch(51.1% 0.262 276.966); /* indigo-600 */
-  --primary-foreground: #fff;
-  --primary-tint: color-mix(in srgb, var(--primary) 8%, transparent);
-  /* the default button states of the GenUI catalog (ADR 0218), with the catalog fallback formulas */
-  --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
-  --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
-  --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
-  /* the brand fill behind white text (the product mark, the Home hero) */
-  --brand-gradient: linear-gradient(135deg, oklch(51.1% 0.262 276.966) /* indigo-600 */, oklch(54.1% 0.281 293.009) /* violet-600 */);
-  --secondary: oklch(96.7% 0.001 286.375); /* zinc-100 */
-  --secondary-foreground: var(--foreground);
-  --muted: oklch(98.5% 0 0); /* zinc-50 */
-  --muted-foreground: oklch(55.2% 0.016 285.938); /* zinc-500 */
-  --accent: oklch(96.7% 0.001 286.375); /* zinc-100 */
-  --accent-foreground: var(--foreground);
-  --destructive: oklch(57.7% 0.245 27.325); /* red-600 */
-  --warning: oklch(66.6% 0.179 58.318); /* amber-600 */
-  --success: oklch(62.7% 0.194 149.214); /* green-600 */
-  --border: oklch(92% 0.004 286.32); /* zinc-200 */
-  --input: oklch(87.1% 0.006 286.286); /* zinc-300 */
-  --ring: var(--primary);
-  --radius: 10px;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.488 0.243 264.376);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+  --secondary: oklch(0.967 0.001 286.375);
+  --secondary-foreground: oklch(0.21 0.006 285.885);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.546 0.245 262.881);
+  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
 
   /* domain tokens */
-  --canvas: oklch(98.5% 0 0); /* zinc-50 */
-  --module-bg: oklch(96.7% 0.001 286.375); /* zinc-100 */
-  --edge-stroke: oklch(70.5% 0.015 286.067); /* zinc-400 */
-  --code-bg: rgb(0 0 0 / 6%);
+  --info: oklch(0.546 0.245 262.881); /* blue-600 */
+  --success: oklch(0.527 0.154 150.069); /* green-700 */
+  --warning: oklch(0.555 0.163 48.998); /* amber-700 */
 
-  /* hairline ring on raised/floating surfaces — the templates' dark ring-white/10 elevation
-     idiom; deliberately a no-op (transparent) in light, where borders + shadows carry depth */
-  --edge-highlight: transparent;
+  --layer-indigo: oklch(0.558 0.288 302.321); /* purple-600 */
+  --layer-sky: oklch(0.6 0.118 184.704); /* teal-600 */
+  --layer-blue: oklch(0.592 0.249 0.584); /* pink-600 */
+  --layer-green: oklch(0.527 0.154 150.069); /* green-700 */
+  --layer-amber: oklch(0.555 0.163 48.998); /* amber-700 */
+  --layer-red: oklch(0.577 0.245 27.325); /* red-600, the stock --destructive */
 
-  --shadow-tint: rgb(31 35 40 / 12%);
-  --shadow-tint-strong: rgb(31 35 40 / 22%);
-  --shadow-1: 0 1px 3px var(--shadow-tint);
-  --shadow-2: 0 8px 32px var(--shadow-tint-strong);
+  /* the Air app icon (fleet/resources/artwork/air/air-appicon.svg) fades from #1e6296 up to #000 */
+  --brand-gradient: linear-gradient(to top, #1e6296, #000);
 
-  --layer-indigo: oklch(51.1% 0.262 276.966); /* indigo-600 */
-  --layer-sky: oklch(58.8% 0.158 241.966); /* sky-600 */
-  --layer-blue: oklch(54.6% 0.245 262.881); /* blue-600 */
-  --layer-green: oklch(62.7% 0.194 149.214); /* green-600 */
-  --layer-amber: oklch(66.6% 0.179 58.318); /* amber-600 */
-  --layer-red: oklch(57.7% 0.245 27.325); /* red-600 */
-  --layer-neutral: oklch(55.2% 0.016 285.938); /* zinc-500 */
-
-  --tag-target: oklch(55.8% 0.288 302.321); /* purple-600 */
-  --tag-durable: oklch(62.7% 0.194 149.214); /* green-600 */
-  --tag-live: oklch(54.6% 0.245 262.881); /* blue-600 */
-  --tag-ui: oklch(57.7% 0.245 27.325); /* red-600 */
-  /* custom bronze — no Tailwind equivalent (amber is the "amber" layer, yellow too saturated) */
-  --tag-terminalBacked: #9a6a2f;
-  --tag-structured: oklch(60% 0.118 184.704); /* teal-600 */
-
-  /* structural scales (type ramp, radii, spacing) live in the @theme blocks below; font families
-     are 'Inter Variable' / 'JetBrains Mono Variable' from @fontsource-variable packages imported
-     in main.tsx */
-  font-family: var(--font-sans), sans-serif;
-  font-size: 15px;
-  line-height: 1.55;
+  /* the host contract of the GenUI catalog (catalog.css): each reads the token of the block where it applies */
+  --primary-hover: color-mix(in oklab, var(--primary) 80%, transparent);
+  --primary-pressed: color-mix(in oklab, var(--primary) 80%, transparent);
+  --primary-disabled: color-mix(in oklab, var(--primary) 50%, transparent);
+  --info-surface: color-mix(in oklab, var(--info) 10%, transparent);
+  --info-border: color-mix(in oklab, var(--info) 20%, transparent);
+  --success-surface: color-mix(in oklab, var(--success) 10%, transparent);
+  --success-border: color-mix(in oklab, var(--success) 20%, transparent);
+  --warning-surface: color-mix(in oklab, var(--warning) 10%, transparent);
+  --warning-border: color-mix(in oklab, var(--warning) 20%, transparent);
+  --destructive-surface: color-mix(in oklab, var(--destructive) 10%, transparent);
+  --destructive-border: color-mix(in oklab, var(--destructive) 20%, transparent);
 }
 
 .dark {
   color-scheme: dark;
 
-  --background: oklch(14.1% 0.005 285.823); /* zinc-950 */
-  --foreground: oklch(96.7% 0.001 286.375); /* zinc-100 */
-  --card: oklch(21% 0.006 285.885); /* zinc-900 */
-  --popover: oklch(21% 0.006 285.885); /* zinc-900 */
-  --primary: oklch(78.5% 0.115 274.713); /* indigo-300 */
-  --primary-foreground: oklch(14.1% 0.005 285.823); /* zinc-950 */
-  --primary-tint: color-mix(in srgb, var(--primary) 12%, transparent);
-  --primary-hover: color-mix(in oklab, var(--primary) 85%, var(--background));
-  --primary-pressed: color-mix(in oklab, var(--primary) 80%, var(--foreground));
-  --primary-disabled: color-mix(in oklab, var(--primary) 45%, var(--background));
-  --brand-gradient: linear-gradient(135deg, oklch(45.7% 0.24 277.023) /* indigo-700 */, oklch(49.1% 0.27 292.581) /* violet-700 */);
-  --secondary: oklch(27.4% 0.006 286.033); /* zinc-800 */
-  --muted: oklch(27.4% 0.006 286.033); /* zinc-800 */
-  --muted-foreground: oklch(70.5% 0.015 286.067); /* zinc-400 */
-  --accent: oklch(37% 0.013 285.805); /* zinc-700 */
-  --destructive: oklch(70.4% 0.191 22.216); /* red-400 */
-  --warning: oklch(82.8% 0.189 84.429); /* amber-400 */
-  --success: oklch(79.2% 0.209 151.711); /* green-400 */
-  --border: oklch(27.4% 0.006 286.033); /* zinc-800 */
-  --input: oklch(37% 0.013 285.805); /* zinc-700 */
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.424 0.199 265.638);
+  --primary-foreground: oklch(0.97 0.014 254.604);
+  --secondary: oklch(0.274 0.006 286.033);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.623 0.214 259.815);
+  --sidebar-primary-foreground: oklch(0.97 0.014 254.604);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
 
-  --canvas: oklch(14.1% 0.005 285.823); /* zinc-950 */
-  --module-bg: oklch(21% 0.006 285.885); /* zinc-900 */
-  --edge-stroke: oklch(44.2% 0.017 285.786); /* zinc-600 */
-  --code-bg: rgb(255 255 255 / 7%);
-  --edge-highlight: rgb(255 255 255 / 8%);
+  --info: oklch(0.707 0.165 254.624); /* blue-400 */
+  --success: oklch(0.792 0.209 151.711); /* green-400 */
+  --warning: oklch(0.828 0.189 84.429); /* amber-400 */
 
-  --shadow-tint: rgb(0 0 0 / 40%);
-  --shadow-tint-strong: rgb(0 0 0 / 55%);
-
-  --layer-indigo: oklch(67.3% 0.182 276.935); /* indigo-400 */
-  --layer-sky: oklch(74.6% 0.16 232.661); /* sky-400 */
-  --layer-blue: oklch(70.7% 0.165 254.624); /* blue-400 */
-  --layer-green: oklch(79.2% 0.209 151.711); /* green-400 */
-  --layer-amber: oklch(82.8% 0.189 84.429); /* amber-400 */
-  --layer-red: oklch(70.4% 0.191 22.216); /* red-400 */
-  --layer-neutral: oklch(70.5% 0.015 286.067); /* zinc-400 */
-
-  --tag-target: oklch(71.4% 0.203 305.504); /* purple-400 */
-  --tag-durable: oklch(79.2% 0.209 151.711); /* green-400 */
-  --tag-live: oklch(70.7% 0.165 254.624); /* blue-400 */
-  --tag-ui: oklch(70.4% 0.191 22.216); /* red-400 */
-  --tag-terminalBacked: #d6a35c;
-  --tag-structured: oklch(77.7% 0.152 181.912); /* teal-400 */
+  --layer-indigo: oklch(0.714 0.203 305.504); /* purple-400 */
+  --layer-sky: oklch(0.777 0.152 181.912); /* teal-400 */
+  --layer-blue: oklch(0.718 0.202 349.761); /* pink-400 */
+  --layer-green: oklch(0.792 0.209 151.711); /* green-400 */
+  --layer-amber: oklch(0.828 0.189 84.429); /* amber-400 */
+  --layer-red: oklch(0.704 0.191 22.216); /* red-400, the stock --destructive */
 }
 
 /* static: the plain CSS files (canvas/prose/source) consume var(--text-*)/var(--font-*) outside
    the Tailwind pipeline, so every step must be emitted even when no utility uses it */
 @theme static {
-  /* dense IDE-like type ramp (px, deliberately finer-grained than Tailwind's default —
-     10–13.5px steps carry canvas/chip text); sizes only, line-height inherits the root 1.55 */
-  --text-*: initial;
-  --text-3xs: 10px;
-  --text-2xs: 11.5px;
-  --text-xs: 12px;
-  --text-detail: 12.5px;
-  --text-sm: 13px;
-  --text-node: 13.5px;
-  --text-base: 15px;
-  --text-lg: 17px;
-  --text-xl: 22px;
-  --text-2xl: 28px;
-  /* the Home hero headline only */
-  --text-3xl: 38px;
+  /* the Tailwind default steps; each keeps its default line height */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
 
-  --font-sans: 'Inter Variable', -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-sans: 'Inter Variable', sans-serif;
+  /* the editor font of the IDE, for the code in the IDE colors of shikiThemes.ts */
   --font-mono: 'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   /* the wide-viewport threshold where doc pages gain the TOC aside column (toc: variant) */
   --breakpoint-toc: 1150px;
+  /* the width that holds the three columns of a reading page: the 240px section tree, the 786px document of 70ch and
+     the 220px table of contents, with the gaps and a classic scrollbar (section-nav: variant) */
+  --breakpoint-section-nav: 1300px;
 }
 
 @theme inline {
-  /* shadcn semantic vocabulary — tokens defined in the :root/.dark blocks above */
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-card: var(--card);
-  --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary-tint: var(--primary-tint);
-  --color-primary-hover: var(--primary-hover);
-  --color-primary-pressed: var(--primary-pressed);
-  --color-primary-disabled: var(--primary-disabled);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-destructive: var(--destructive);
-  --color-warning: var(--warning);
-  --color-success: var(--success);
-  --color-border: var(--border);
-  --color-input: var(--input);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
   --color-ring: var(--ring);
-
-  /* shadcn radius formula, driven by --radius: 10px above
-     (sm 6px / md 8px / lg 10px / xl 14px — the site's dense radii) */
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-foreground: var(--foreground);
+  --color-background: var(--background);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -219,16 +221,23 @@
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
 
-  /* vendored Nova components use font-heading; the site has a single family */
-  --font-heading: var(--font-sans);
-
   /* domain tokens */
-  --color-canvas: var(--canvas);
-  --color-module: var(--module-bg);
-  --color-code: var(--code-bg);
-  --color-edge-highlight: var(--edge-highlight);
-  --shadow-card: var(--shadow-1);
-  --shadow-pop: var(--shadow-2);
+  --color-info: var(--info);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  /* the host contract of the GenUI catalog */
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-pressed: var(--primary-pressed);
+  --color-primary-disabled: var(--primary-disabled);
+  --color-info-surface: var(--info-surface);
+  --color-info-border: var(--info-border);
+  --color-success-surface: var(--success-surface);
+  --color-success-border: var(--success-border);
+  --color-warning-surface: var(--warning-surface);
+  --color-warning-border: var(--warning-border);
+  --color-destructive-surface: var(--destructive-surface);
+  --color-destructive-border: var(--destructive-border);
 }
 
 @layer base {

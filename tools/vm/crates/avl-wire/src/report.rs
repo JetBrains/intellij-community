@@ -190,12 +190,9 @@ pub struct SkippedContainer {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ActiveTest {
-    pub id: String,
-    pub display_name: String,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub class_name: Option<String>,
-    #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
-    pub method_name: Option<String>,
+    /// The test, with the fields of the record that started it.
+    #[serde(flatten)]
+    pub execution: ExecutionIdentity,
     #[serde(default, deserialize_with = "crate::json::non_null", skip_serializing_if = "Option::is_none")]
     pub started_at: Option<String>,
 }
@@ -656,6 +653,40 @@ pub(crate) fn check_run_report_vocabulary(report: &Map<String, Value>) -> Result
         })?;
     }
     Ok(())
+}
+
+/// The report of a run that told nothing: an infrastructure error with no identity, no case and no evidence. It has
+/// the current schema version and [`ORDERING`], so it validates.
+impl Default for RunReport {
+    fn default() -> Self {
+        Self {
+            report_schema_version: RUN_REPORT_SCHEMA_VERSION,
+            iteration_id: String::new(),
+            daemon_run_id: String::new(),
+            daemon_boot_stamp: String::new(),
+            selection: String::new(),
+            status: Status::InfrastructureError,
+            started_at: String::new(),
+            completed_at: String::new(),
+            duration_ms: 0.0,
+            ordering: ORDERING.to_owned(),
+            execution: ExecutionCounts::default(),
+            cases: Vec::new(),
+            failures: Vec::new(),
+            skipped_containers: Vec::new(),
+            active_tests: Vec::new(),
+            unreported_classes: Vec::new(),
+            watchdog: Watchdog::default(),
+            evidence: Vec::new(),
+            trace_archives: Vec::new(),
+            traces_error: None,
+            tree: None,
+            tree_error: None,
+            notes: Vec::new(),
+            protocol_diagnostic: None,
+            verdict_diagnostic: None,
+        }
+    }
 }
 
 impl RunReport {

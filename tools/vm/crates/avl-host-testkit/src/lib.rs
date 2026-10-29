@@ -18,7 +18,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use avl_base::config::{HostFacts, HostOs, MacosHost, WORKSPACE_DIR};
-use avl_base::report::{Buffer, Mode, Terminal};
+use avl_base::report::Buffer;
 use avl_base::{Backend, Config, Environment, GuestOs, Outcome, Refusal, Reporter, Selection};
 use avl_host_sys::{Interrupts, Runner};
 
@@ -60,12 +60,9 @@ pub fn quiet() -> Reporter {
     Reporter::in_memory("vm-test").0
 }
 
-/// A reporter in human mode over a buffer, so a test can read what was said. Human mode and not `--stream`,
-/// because prose is the rendering a person reads.
+/// [`Reporter::in_memory_prose`] of `vm`, so a test can read what was said.
 pub fn prose() -> (Reporter, Buffer) {
-    let (reporter, _, stderr) = Reporter::in_memory("vm");
-    reporter.set_mode(Mode::Human(Terminal::default()));
-    (reporter, stderr)
+    Reporter::in_memory_prose("vm")
 }
 
 /// Settings over an environment, with the skill directory under `root`.

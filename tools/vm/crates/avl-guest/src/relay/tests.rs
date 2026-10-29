@@ -6,6 +6,7 @@ use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
 use std::thread;
 use std::time::Duration;
 
+use avl_testkit::ClosedPipe;
 use nix::libc;
 use pretty_assertions::assert_eq;
 
@@ -120,7 +121,7 @@ fn relay_copies_bytes_both_ways() {
 
     assert_eq!(relayed.exit, 0, "{}", String::from_utf8_lossy(&relayed.stderr));
     assert!(relayed.stdout == reply, "the reply arrived changed");
-    assert!(relayed.stderr.is_empty());
+    assert_eq!(relayed.stderr, Vec::<u8>::new());
     feeder.join().unwrap();
     assert!(daemon.join().unwrap() == request, "the request arrived changed");
 }
@@ -165,15 +166,6 @@ fn relay_half_closes_on_input_eof() {
 /// A host that went away ends the relay at once, while the daemon keeps its connection open.
 #[test]
 fn relay_ends_when_the_output_is_gone() {
-    struct Gone;
-    impl Write for Gone {
-        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
-            Err(io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> io::Result<()> {
-            Ok(())
-        }
-    }
     let (listener, port) = daemon();
     let (input, _feed) = io::pipe().unwrap();
     let relay = thread::spawn(move || {
@@ -183,7 +175,7 @@ fn relay_ends_when_the_output_is_gone() {
             input,
             &mut Streams {
                 stdin: &mut io::empty(),
-                stdout: &mut Gone,
+                stdout: &mut ClosedPipe,
                 stderr: &mut stderr,
             },
         );
@@ -194,7 +186,7 @@ fn relay_ends_when_the_output_is_gone() {
 
     let (exit, stderr) = relay.join().unwrap();
     assert_eq!(exit, 0, "{}", String::from_utf8_lossy(&stderr));
-    assert!(stderr.is_empty());
+    assert_eq!(stderr, Vec::<u8>::new());
     drop(socket);
 }
 

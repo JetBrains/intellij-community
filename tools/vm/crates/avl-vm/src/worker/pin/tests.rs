@@ -96,15 +96,21 @@ async fn resolve_as_a_new_process(pool: &HostPool, bazel: &Arc<PinnedBazel>) -> 
     (paths, bazel.asked()[before..].to_vec())
 }
 
-// A process records what it resolved, so the next one asks Bazel nothing. On 2026-10-10 each `cquery` of a pinned tool
-// started with a deletion of about 510,000 Skyframe nodes, and the next lane build analyzed the whole graph again.
-#[tokio::test]
-async fn a_recorded_path_answers_the_next_process_without_a_query() {
+/// A Docker pool without `DOCKER_BIN` whose Docker pin is written, and the Bazel that resolves the pinned tools.
+fn pinned_docker_pool() -> (HostPool, Arc<PinnedBazel>) {
     let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
         .without_docker_bin()
         .build();
     write_docker_pin(&pool, "docker pin\n");
     let bazel = Arc::new(pool.pinned_bazel());
+    (pool, bazel)
+}
+
+// A process records what it resolved, so the next one asks Bazel nothing. On 2026-10-10 each `cquery` of a pinned tool
+// started with a deletion of about 510,000 Skyframe nodes, and the next lane build analyzed the whole graph again.
+#[tokio::test]
+async fn a_recorded_path_answers_the_next_process_without_a_query() {
+    let (pool, bazel) = pinned_docker_pool();
 
     let (first, asked) = resolve_as_a_new_process(&pool, &bazel).await;
     assert_eq!(asked, ["cquery", "info"]);
@@ -116,11 +122,7 @@ async fn a_recorded_path_answers_the_next_process_without_a_query() {
 // A bump of a pin changes the digest of its `.MODULE.bazel` file, so the tool is resolved again.
 #[tokio::test]
 async fn a_changed_pin_resolves_again() {
-    let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .without_docker_bin()
-        .build();
-    write_docker_pin(&pool, "docker pin\n");
-    let bazel = Arc::new(pool.pinned_bazel());
+    let (pool, bazel) = pinned_docker_pool();
     resolve_as_a_new_process(&pool, &bazel).await;
 
     write_docker_pin(&pool, "docker pin, bumped\n");
@@ -131,11 +133,7 @@ async fn a_changed_pin_resolves_again() {
 // A recorded file that is gone, such as one of a removed output base, is no answer.
 #[tokio::test]
 async fn a_recorded_file_that_is_gone_resolves_again() {
-    let pool = HostPool::builder(Backend::Docker, GuestOs::Linux, MINIMUM_VERSION)
-        .without_docker_bin()
-        .build();
-    write_docker_pin(&pool, "docker pin\n");
-    let bazel = Arc::new(pool.pinned_bazel());
+    let (pool, bazel) = pinned_docker_pool();
     resolve_as_a_new_process(&pool, &bazel).await;
     let record = pool.settings.runtime_root.join(PINNED_TOOLS_RECORD);
     let text = std::fs::read_to_string(&record).unwrap();

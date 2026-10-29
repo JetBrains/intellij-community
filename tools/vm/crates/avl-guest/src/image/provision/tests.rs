@@ -16,7 +16,7 @@ use super::*;
 use crate::image::WorkerScript;
 use crate::reply::verb_refusal_code;
 use crate::step::tests_support::Transcript;
-use crate::testing::run_agent;
+use crate::testing::{assert_verb_usage_refused, run_agent};
 
 fn pins() -> ImagePins {
     ImagePins {
@@ -190,13 +190,7 @@ fn an_argv_that_could_mean_two_things_is_refused() {
             &["--macos-version", "26.6.2", "--node-major", "0", "--junie-version", "2777.8"],
         ),
     ];
-    for (name, argv) in cases {
-        let args: Vec<&str> = std::iter::once(AgentVerb::ProvisionImage.as_str())
-            .chain(argv.iter().copied())
-            .collect();
-        let answered = run_agent(&args, b"");
-        assert_eq!((answered.exit, answered.code()), (64, "usage".to_owned()), "{name}");
-    }
+    assert_verb_usage_refused(AgentVerb::ProvisionImage, &cases);
 }
 
 // --- the pinned Node major ------------------------------------------------------------------------------------

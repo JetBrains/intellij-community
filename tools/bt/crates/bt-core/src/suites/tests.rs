@@ -2,7 +2,7 @@ use pretty_assertions::assert_eq;
 
 use super::*;
 use crate::exit;
-use crate::fake::{FakeRuntime, area, areas, flow_catalog_tree, lanes, reaching, refusal};
+use crate::fake::{FakeRuntime, area, areas, classes_of, flow_catalog_tree, lanes, reaching, refusal};
 use crate::lanes::{RunPlan, build_bazel_args, default_shards};
 use crate::scan::ResolutionInputs;
 use crate::selector::resolve_selector;
@@ -74,7 +74,7 @@ fn a_flow_selector_runs_its_lane_narrowed_to_its_suites_classes() {
     }
     // A class filter selects the suites, so no --test_filter may narrow the run a second time.
     assert!(!argv.iter().any(|argument| argument.starts_with("--test_filter")), "{argv:?}");
-    assert!(fake.spawned().is_empty());
+    assert_eq!(fake.spawned(), Vec::<Vec<String>>::new());
 }
 
 /// Two lanes are one refusal, the same one `run --changed` gives, and `--lane` beside the selector settles it. The
@@ -163,15 +163,6 @@ fn no_flow_or_suite_id_reaches_a_suite_of_an_explicit_only_lane() {
         "the suite long-session-performance belongs to the explicit-only lane ui-perf, which no suite id, flow or changed \
          path reaches; run it with --lane ui-perf"
     );
-}
-
-fn classes_of(affected: &Affected) -> String {
-    affected
-        .suites
-        .iter()
-        .map(|suite| format!("{}/{}", suite.lane, suite.class))
-        .collect::<Vec<_>>()
-        .join(",")
 }
 
 /// A `@flow` tag and a flow selector answer through one relation, so an implementation flow reaches the suites of

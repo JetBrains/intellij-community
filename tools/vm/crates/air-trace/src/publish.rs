@@ -1,18 +1,18 @@
 //! `air-trace teamcity-publish`: the trace bundles of a Bazel test run as one TeamCity archive artifact,
-//! `air-traces.zip`. It holds the trace viewer, a listing and one zip for each bundle, and each test links to its
-//! trace.
+//! `air-traces.zip`. It holds a listing and one zip for each bundle, and each test links to its trace on the hosted
+//! site.
 //!
 //! It runs as a build step after `bazel test`. A Bazel test reports through its JUnit XML, and a service message of a
 //! test does not reach TeamCity. The step reads every `test.xml` under the testlogs, and the bundles of the
 //! `test.outputs` beside it. These are the directory `air-traces/` and the zip `outputs.zip`, an inner zip included.
 //! Each bundle becomes the zip `<lane>/<runId>/<TestClass>/<scenario>.zip` of the archive, with the media stored. The
-//! step prints the `testMetadata` of its test: the trace and the viewer page of the trace. For a failed scenario they
+//! step prints the `testMetadata` of its test: the trace and the trace page of the site. For a failed scenario they
 //! also name the video and the failure picture. The test name is the one TeamCity took from the XML, `<classname>.<name>`.
 //!
 //! TeamCity redirects a loose artifact to a signed address where a sibling file is refused. An entry of an archive
-//! artifact is served by TeamCity itself, with byte ranges and beside its siblings. So the archive holds the viewer
-//! page `index.html`, the listing `runs.json` and the zips, and the step publishes it as one file. Only the video and
-//! the failure picture of a failed scenario are loose files in `air-traces-failed/`, so the Tests tab shows them.
+//! artifact is served by TeamCity itself, with byte ranges and beside its siblings. So the archive holds the listing
+//! `runs.json` and the zips, and the step publishes it as one file. Only the video and the failure picture of a failed
+//! scenario are loose files in `air-traces-failed/`, so the Tests tab shows them.
 //!
 //! The lane is the directory of the `test.xml`: the Bazel target's name, such as `ui_lane_test`. A shard or run
 //! directory below it keeps its target's name in front, such as `ui_lane_test/shard_1_of_2`.
@@ -20,38 +20,46 @@
 //! The listing `runs.json` lists the published bundles as `GET /__air/runs` of `air-trace serve` lists bundles, with
 //! the server's own types. Each scenario carries its `zip`, relative to the listing, and is a zip at that path in its
 //! `source` and its id. On TeamCity, each run names the build as its `origin`, from the agent's property files
-//! ([teamcity]). The viewer page is the one of `--viewer`, or one that the step builds in the checkout ([viewer]).
-//! Each test links to `air-traces.zip!/index.html#/trace?zip=<zip>`. The link needs both the viewer and the build.
+//! ([teamcity]). Each test links to the CI trace page of the site, `<site>/ci/<buildId>/trace?zip=<zip>`
+//! ([ci_trace_url]), and the build log names the CI page of the build. The portal of the site reads
+//! `air-traces.zip!/runs.json` and the zips of the build from TeamCity. The links need the build.
 //!
 //! A testlogs tree without bundles prints nothing and writes nothing. Each problem is a line on the standard error and
 //! a warning `message` on the standard output. A problem is no testlogs, a missing testlogs directory, or an output
-//! that does not read. A bundle that cannot be packed, a missing viewer, and build properties that do not read are
-//! problems too. The rest still publishes, and the step answers 0, so it never turns a build red. Only a usage error
-//! of the command line answers 2.
+//! that does not read. A bundle that cannot be packed and build properties that do not read are problems too. The rest
+//! still publishes, and the step answers 0, so it never turns a build red. Only a usage error of the command line
+//! answers 2.
 //!
 //! On TeamCity the step publishes only the tests of this build ([teamcity::Build::start]). It also empties its output
 //! first. So a test or a zip of an earlier build on the agent does not publish again.
+//!
+//! On TeamCity the archive also holds `affected.json` after `runs.json` ([affected]). For each commit of the build it
+//! names the changed files, the suites that they reach and the files that reach no suite. A build without changed files
+//! has no such entry. A build that does not name its changed files, a file that does not read and a refusal of the
+//! join are problems. The rest still publishes.
 
-use std::collections::{BTreeSet, HashSet};
+use std::collections::HashSet;
 use std::fs;
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 
-use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, warning};
+use avl_report::teamcity::{Messages, PublishedTrace, TRACES_ARTIFACT_DIR, is_build_step, log_message, warning};
 use avl_trace::bundle::{PARTIAL_SUFFIX, ROOT_DIR_NAME, VIDEO_FILE, bundle_path};
+use avl_trace_tools::artifacts::{Stems, failed_target, failure_picture, testlogs_lane};
 use avl_trace_tools::discover::{
     Bundle, Location, Options, Origin, Root, RootKind, RootState, Scanner, Source, SourceKind, Status, Summary, bundle_id,
 };
 use avl_trace_tools::pack::{PackOptions, Skipped, archive, pack, pack_zip_bundle};
+use avl_trace_tools::viewer::{CI_SITE, ci_build_url, ci_trace_url};
 
 use crate::serve::{Runs, Scenario, group_runs, listed};
 use crate::{Exit, Refusal, report, usage};
+use affected::{AFFECTED_FILE, AffectedDocument};
 use teamcity::Build;
-use viewer::{Tools, VIEWER_PAGE, ViewerSource, copy_page, viewer_dir, viewer_source};
 
+mod affected;
 mod teamcity;
-mod viewer;
 
 /// `air-trace teamcity-publish`'s command line.
 #[derive(clap::Args, Clone, Debug, PartialEq, Eq)]
@@ -63,26 +71,21 @@ pub(crate) struct PublishArgs {
     /// Where air-traces.zip, its parts and the loose files are written (default <workspace>/out/air-traces-publish).
     #[arg(long, value_name = "DIR")]
     pub out: Option<PathBuf>,
-    /// The built trace viewer, a directory with the one file index.html, which goes into air-traces.zip. Without it, the
-    /// step builds the viewer in the checkout with `pnpm run build:viewer`, within 10 minutes. Without a viewer, the
-    /// archive holds the bundles and runs.json alone, and the tests get no viewer link.
-    #[arg(long, value_name = "DIR")]
-    pub viewer: Option<PathBuf>,
-    /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. On
-    /// TeamCity the default is the start of the build.
+    /// The hosted site whose CI pages the links of the tests open, such as a staging portal.
+    #[arg(long, value_name = "URL", env = SITE_VARIABLE, default_value = CI_SITE)]
+    pub site: String,
+    /// Publish only the tests whose test.xml was written at this time or later, such as 2026-10-21T08:00:00Z. The
+    /// default is the variable AIR_TRACE_SINCE, which the first step of a TeamCity build sets.
     #[arg(long, value_name = "TIME", value_parser = parse_since)]
     pub since: Option<jiff::Timestamp>,
-    /// The node that builds the viewer, with --pnpm; `none` builds no viewer. Without the two, the step asks Bazel for
-    /// them, except on TeamCity, where it starts no Bazel and builds no viewer.
-    #[arg(long, value_name = "FILE", env = "AIR_TRACE_NODE")]
-    pub node: Option<PathBuf>,
-    /// The pnpm that builds the viewer, with --node; `none` builds no viewer.
-    #[arg(long, value_name = "FILE", env = "AIR_TRACE_PNPM")]
-    pub pnpm: Option<PathBuf>,
     /// Once air-traces.zip is published, remove the bundle directories that it holds from the testlogs. On TeamCity
     /// the step does so always, so the artifact bazel.logs.zip does not hold them a second time.
     #[arg(long)]
     pub remove_packed: bool,
+    /// The checkout that the changed files of the TeamCity build are joined on, for affected.json. The default is
+    /// teamcity.build.checkoutDir of the build, then BUILD_WORKSPACE_DIRECTORY.
+    #[arg(long, value_name = "DIR")]
+    pub repo: Option<PathBuf>,
 }
 
 /// Reads `--since`: a time of RFC 3339, such as `2026-10-21T08:00:00Z`.
@@ -90,6 +93,40 @@ fn parse_since(value: &str) -> Result<jiff::Timestamp, String> {
     value
         .parse()
         .map_err(|error| format!("{value} is not a time such as 2026-10-21T08:00:00Z: {error}"))
+}
+
+/// The variable that names the site when `--site` does not.
+const SITE_VARIABLE: &str = "AIR_TRACE_SITE";
+
+/// The variable that names the start of the build when `--since` does not. The first step of a TeamCity build sets it
+/// to the time of the agent, such as with `date -u +%Y-%m-%dT%H:%M:%SZ`. The test.xml files have the times of the
+/// same clock.
+const SINCE_VARIABLE: &str = "AIR_TRACE_SINCE";
+
+/// The time from which a `test.xml` counts, and what names it: `--since`, else [SINCE_VARIABLE]. A value of the
+/// variable that does not read is a warning, and so is a step on TeamCity with neither. Then every test publishes.
+fn since_of(
+    given: Option<jiff::Timestamp>,
+    variable: &dyn Fn(&str) -> Option<String>,
+    on_team_city: bool,
+) -> Result<Option<(SystemTime, &'static str)>, String> {
+    if let Some(since) = given {
+        return Ok(Some((SystemTime::from(since), "--since")));
+    }
+    let Some(value) = variable(SINCE_VARIABLE).filter(|value| !value.trim().is_empty()) else {
+        return if on_team_city {
+            Err(format!(
+                "neither --since nor {SINCE_VARIABLE} names the start of the build, so the tests of earlier builds \
+                 publish too"
+            ))
+        } else {
+            Ok(None)
+        };
+    };
+    match parse_since(value.trim()) {
+        Ok(since) => Ok(Some((SystemTime::from(since), SINCE_VARIABLE))),
+        Err(reason) => Err(format!("{SINCE_VARIABLE}: {reason}; so the tests of earlier builds publish too")),
+    }
 }
 
 /// The name of a test's JUnit XML in the testlogs.
@@ -106,16 +143,13 @@ const LISTING_GENERATION: u64 = 1;
 const OUT_MARKER: &str = ".air-traces-publish";
 /// The one archive artifact of the traces, at the top of the artifacts and of the output.
 pub(crate) const ARCHIVE: &str = "air-traces.zip";
-/// The artifact directory of the loose files of the failed scenarios, which the Tests tab of TeamCity shows inline.
-const FAILED_DIR: &str = "air-traces-failed";
-/// The name of the failure picture of a failed scenario in [FAILED_DIR], before its extension.
-const FAILURE_STEM: &str = "failure";
 
 /// What one publish reads and where it writes.
 pub(crate) struct Publish<'a> {
     pub testlogs: &'a [PathBuf],
     pub out: &'a Path,
-    pub viewer: &'a ViewerSource,
+    /// The hosted site of the links, such as [CI_SITE].
+    pub site: &'a str,
     /// The TeamCity build that the step runs in, or `None` off TeamCity.
     pub build: Option<&'a Build>,
     /// The time from which a `test.xml` counts, or `None` for all. An older one is a test of an earlier build.
@@ -124,6 +158,8 @@ pub(crate) struct Publish<'a> {
     pub out_owned: bool,
     /// Whether the step removes the bundle directories that the published archive holds from the testlogs.
     pub remove_packed: bool,
+    /// What the changed files of the build reach, or `None` for no `affected.json`.
+    pub affected: Option<&'a AffectedDocument>,
 }
 
 /// Runs `air-trace teamcity-publish`: the service messages on stdout, a summary line and each problem on stderr. It
@@ -159,55 +195,49 @@ pub(crate) fn run_publish(args: &PublishArgs, stdout: &mut dyn Write, stderr: &m
         Ok(out) => out,
         Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--out: {error}"))),
     };
-    let viewer_dir = match args.viewer.as_deref().map(given).transpose() {
-        Ok(viewer) => viewer,
-        Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--viewer: {error}"))),
+    let repo = match args.repo.as_deref().map(given).transpose() {
+        Ok(repo) => repo,
+        Err(error) => return report(stderr, "teamcity-publish", &usage(format!("--repo: {error}"))),
     };
     let variable = |name: &str| std::env::var(name).ok();
     let build = Build::of_step(&variable).unwrap_or_else(|reason| {
         let _ = warn(
             stdout,
             stderr,
-            &format!("{reason}; so the runs name no build and the tests get no viewer link"),
+            &format!("{reason}; so the runs name no build and the tests get no trace link"),
         );
         None
     });
     if let Some(fallback) = build.as_ref().and_then(|build| build.server_fallback(&variable)) {
         let _ = warn(stdout, stderr, &fallback);
     }
-    let since = match (args.since, &build) {
-        (Some(since), _) => Some(SystemTime::from(since)),
-        (None, Some(build)) => match build.start(&variable) {
-            Ok(start) => {
-                let _ = say(stderr, &start.note);
-                Some(start.since)
-            }
-            Err(reason) => {
-                let _ = warn(
-                    stdout,
-                    stderr,
-                    &format!("the start of the build does not read: {reason}; so the tests of earlier builds publish too"),
-                );
-                None
-            }
-        },
-        (None, None) => None,
-    };
+    let affected = build.as_ref().and_then(|build| {
+        affected::of_build(build, repo.as_deref(), workspace.as_deref()).unwrap_or_else(|reason| {
+            let _ = warn(stdout, stderr, &reason);
+            None
+        })
+    });
     let on_team_city = is_build_step(variable);
-    let tools = Tools {
-        node: args.node.clone().filter(|node| !node.as_os_str().is_empty()),
-        pnpm: args.pnpm.clone().filter(|pnpm| !pnpm.as_os_str().is_empty()),
-        on_team_city,
+    let since = match since_of(args.since, &variable, on_team_city) {
+        Ok(Some((since, source))) => {
+            let _ = say(stderr, &format!("a test.xml from {} on counts, as {source} says", instant(since)));
+            Some(since)
+        }
+        Ok(None) => None,
+        Err(warning) => {
+            let _ = warn(stdout, stderr, &warning);
+            None
+        }
     };
-    let viewer = viewer_source(viewer_dir, workspace, tools);
     let job = Publish {
         testlogs: &testlogs,
         out: &out,
-        viewer: &viewer,
+        site: &args.site,
         build: build.as_ref(),
         since,
         out_owned: args.out.is_none(),
         remove_packed: args.remove_packed || on_team_city,
+        affected: affected.as_ref(),
     };
     if let Err(refused) = publish(&job, stdout, stderr) {
         report(stderr, "teamcity-publish", &refused);
@@ -261,7 +291,7 @@ struct Beside {
     bundles: Vec<Bundle>,
 }
 
-/// Publishes the bundles under each testlogs directory into out, with runs.json and the viewer beside them.
+/// Publishes the bundles under each testlogs directory into out, with runs.json beside them.
 pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dyn Write) -> Result<(), Refusal> {
     let write_failed = |error: io::Error| Refusal::new("output_failed", Exit::Broken, error.to_string());
     let out = job.out;
@@ -317,7 +347,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 state.problems.push(problem);
             }
             if !bundles.is_empty() {
-                let lane = lane_of(dir.strip_prefix(root).unwrap_or(dir));
+                let lane = testlogs_lane(dir.strip_prefix(root).unwrap_or(dir));
                 tests.push(Beside {
                     root: index,
                     xml,
@@ -332,7 +362,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         let warning = if tests.is_empty() {
             format!(
                 "{skipped} test(s) skipped, because their test.xml is older than {}, and no other test has a trace, so \
-                 nothing is published; check the clock of the agent, or pass --since",
+                 nothing is published; check {SINCE_VARIABLE} or --since",
                 instant(since)
             )
         } else {
@@ -354,24 +384,9 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
 
     // The archive is assembled in `<out>/air-traces/`, which holds its entries as they lie in it.
     let staging = out.join(TRACES_ARTIFACT_DIR);
-    let page = match viewer_dir(job.viewer, stderr)
-        .map_err(write_failed)?
-        .and_then(|dir| copy_page(&dir, &staging))
-    {
-        Ok(page) => Some(page),
-        Err(reason) => {
-            warn(
-                stdout,
-                stderr,
-                &format!("no viewer: {reason}; so {ARCHIVE} holds the bundles and {RUNS_FILE} only"),
-            )
-            .map_err(write_failed)?;
-            None
-        }
-    };
 
     let mut messages = Messages::default();
-    let mut written = BTreeSet::new();
+    let mut stems = Stems::default();
     let mut scenarios = Vec::new();
     let mut zips = Vec::new();
     let mut packed_dirs = Vec::new();
@@ -409,14 +424,9 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 .chain(class_dir.split('/'))
                 .fold(staging.clone(), |path, segment| path.join(segment));
             // Two names can sanitize to one file name; the later bundle takes the next free `<scenario>.<n>.zip`.
-            let mut stem = scenario.to_owned();
-            let mut attempt = 1;
-            while written.contains(&dir.join(format!("{stem}.zip"))) {
-                attempt += 1;
-                stem = format!("{scenario}.{attempt}");
-            }
+            let stem = stems.take(lane, class_dir, scenario);
             let zip = dir.join(format!("{stem}.zip"));
-            if attempt > 1 {
+            if stem != scenario {
                 say(
                     stderr,
                     &format!(
@@ -426,7 +436,6 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 )
                 .map_err(write_failed)?;
             }
-            written.insert(zip.clone());
             let packed = match &bundle.location {
                 Location::Dir(dir) => pack(dir, &zip, &PackOptions::default()),
                 Location::Zip { path, prefix } => pack_zip_bundle(path, prefix, &zip),
@@ -444,15 +453,13 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
             let relative = format!("{lane}/{class_dir}/{stem}.zip");
             let mut lines = Vec::new();
             let failure = if matches!(bundle.status, Status::Failed | Status::Aborted) {
+                let target = failed_target(lane, class_dir, &stem);
                 let loose = Loose {
-                    dir: out.join(FAILED_DIR).join(format!("{lane}/{class_dir}/{stem}")),
-                    target: format!("{FAILED_DIR}/{lane}/{class_dir}/{stem}"),
+                    dir: out.join(&target),
+                    target,
                 };
                 let video = bundle.has_video.then_some((VIDEO_FILE, VIDEO_FILE.to_owned()));
-                let still = bundle.thumbnail.as_deref().map(|still| {
-                    let extension = still.rsplit_once('.').map_or("webp", |(_, extension)| extension);
-                    (still, format!("{FAILURE_STEM}.{extension}"))
-                });
+                let still = bundle.thumbnail.as_deref().map(|still| (still, failure_picture(still)));
                 let mut published = |entry: Option<(&str, String)>| -> io::Result<Option<String>> {
                     let Some((entry, name)) = entry else {
                         return Ok(None);
@@ -475,7 +482,7 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
                 (None, None)
             };
             let trace = format!("{ARCHIVE}!/{relative}");
-            let link = job.build.filter(|_| page.is_some()).map(|build| build.viewer_link(&relative));
+            let link = job.build.map(|build| ci_trace_url(job.site, &build.id, &relative));
             lines.extend(messages.published(&PublishedTrace {
                 trace: &trace,
                 test_class: &bundle.test_class,
@@ -514,13 +521,20 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         .iter()
         .map(|root| root.problems.len() + usize::from(root.error.is_some()))
         .sum::<usize>();
-    // The page first, then the listing, then each bundle zip in the order it was published.
-    let mut entries: Vec<(String, PathBuf)> = page.into_iter().map(|page| (VIEWER_PAGE.to_owned(), page)).collect();
-    match write_listing(&listing, &staging) {
-        Ok(file) => entries.push((RUNS_FILE.to_owned(), file)),
-        Err(reason) => {
-            problems += 1;
-            warn(stdout, stderr, &reason).map_err(write_failed)?;
+    // The listing first, then what the changed files reach, then each bundle zip in the order it was published.
+    let mut entries: Vec<(String, PathBuf)> = Vec::new();
+    let written = [
+        Some((RUNS_FILE, write_json(&listing, &staging, RUNS_FILE))),
+        job.affected
+            .map(|affected| (AFFECTED_FILE, write_json(affected, &staging, AFFECTED_FILE))),
+    ];
+    for (name, file) in written.into_iter().flatten() {
+        match file {
+            Ok(file) => entries.push((name.to_owned(), file)),
+            Err(reason) => {
+                problems += 1;
+                warn(stdout, stderr, &reason).map_err(write_failed)?;
+            }
         }
     }
     entries.extend(zips);
@@ -529,6 +543,10 @@ pub(crate) fn publish(job: &Publish<'_>, stdout: &mut dyn Write, stderr: &mut dy
         Ok(bytes) => {
             for line in messages.artifact_file(&archived.to_string_lossy()) {
                 writeln!(stdout, "{line}").map_err(write_failed)?;
+            }
+            if let Some(build) = job.build {
+                let page = ci_build_url(job.site, &build.id);
+                writeln!(stdout, "{}", log_message(&format!("The traces of this build: {page}"))).map_err(write_failed)?;
             }
             say(stderr, &format!("{ARCHIVE} holds {} entries in {bytes} bytes", entries.len())).map_err(write_failed)?;
             if job.remove_packed {
@@ -775,10 +793,11 @@ fn published_scenario(bundle: &Bundle, relative: String, origin: Option<&Origin>
     }
 }
 
-/// Writes the listing as `<out>/runs.json`. Answers the file, or why it could not be written.
-fn write_listing(listing: &Runs<'_>, out: &Path) -> Result<PathBuf, String> {
-    let file = out.join(RUNS_FILE);
-    let mut json = serde_json::to_vec_pretty(listing).map_err(|error| format!("{}: {error}", file.display()))?;
+/// Writes a document of the archive, such as the listing, as `<out>/<name>`. Answers the file, or why it could not be
+/// written.
+fn write_json(document: &impl serde::Serialize, out: &Path, name: &str) -> Result<PathBuf, String> {
+    let file = out.join(name);
+    let mut json = serde_json::to_vec_pretty(document).map_err(|error| format!("{}: {error}", file.display()))?;
     json.push(b'\n');
     fs::create_dir_all(out)
         .and_then(|()| fs::write(&file, json))
@@ -823,20 +842,6 @@ fn bundles_beside(scanner: &Scanner, dir: &Path) -> (Vec<Bundle>, Vec<String>) {
         })
         .collect();
     (bundles, unread)
-}
-
-/// The lane of a `test.xml` directory, relative to its testlogs: the Bazel target's name, and a shard or run
-/// directory below it with the target's name in front.
-fn lane_of(relative: &Path) -> String {
-    let segments: Vec<String> = relative
-        .components()
-        .map(|component| component.as_os_str().to_string_lossy().into_owned())
-        .collect();
-    match segments.as_slice() {
-        [] => "tests".to_owned(),
-        [.., target, last] if last.starts_with("shard_") || last.starts_with("run_") => format!("{target}/{last}"),
-        [.., last] => last.clone(),
-    }
 }
 
 #[cfg(test)]

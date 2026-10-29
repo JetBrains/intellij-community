@@ -3,7 +3,9 @@
 //! The emulated account is one user. The login approves at once: the authorization answers a redirect to the IDE's
 //! callback with a fixed code. The id token is unsigned and names this server as its issuer, so a login survives an
 //! IDE restart. The JCP routes answer the AI access discovery and the provisioning that Air reads before it offers a
-//! cloud run, and [spawner] serves the Agent Spawner below them. A request to any other path answers 501, and the
+//! cloud run, the repository access check of `repo-connections` that Air makes before it launches one, and the
+//! mobile control grant that a signed-in IDE asks the Agent Spawner for. [spawner]
+//! serves the Agent Spawner below them. A request to any other path answers 501, and the
 //! emulator records it.
 
 use std::sync::{Mutex, MutexGuard};
@@ -48,6 +50,8 @@ const GATEWAYS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/gat
 const AGENTS_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/agents";
 const ACP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/acp";
 const MCP_PROVISIONING_PATH: &str = "/ai-management/api/provisioning/v1/mcp";
+const REPOSITORY_ACCESS_PATH: &str = "/repo-connections/tokens/state/meta";
+const MOBILE_CONTROL_GRANT_PATH: &str = "/agent-spawner/hosts/v0/remote-control/availability";
 
 /// The largest `count` of the control route `spawner/fail`.
 const MAX_FAILED_DIALS: usize = 100;
@@ -57,10 +61,18 @@ const CLOUD_WORKSPACE_BODY: &str = concat!(
     r#"{"aiAccessOptions":[{"type":"workspace","workspaceId":"air-lane-workspace","workspaceName":"Air Lane Workspace","#,
     r#""orgId":"air-lane-org","orgName":"Air Lane Organization","aiAccessEnabled":true}]}"#
 );
-const ORG_FEATURE_FLAGS_BODY: &str = r#"{"flags":{"agentic-core/cloud-tasks":true,"ai-seats":true}}"#;
+const ORG_FEATURE_FLAGS_BODY: &str = concat!(
+    r#"{"flags":{"agentic-core/cloud-tasks":true,"agentic-core/cloud-tasks-personal":true,"#,
+    r#""ai-seats":true,"ai-seats-personal":true}}"#
+);
 const TOOLS_PROVISIONING_BODY: &str = r#"{"air":{"status":"allowed","allowCloudAgentsRun":true},"aiAssistant":{"status":"disallowed"}}"#;
 const GATEWAYS_PROVISIONING_BODY: &str = r#"{"gateways":[]}"#;
 const AGENTS_PROVISIONING_BODY: &str = r#"{"items":[]}"#;
+/// The JetBrains VCS App of the emulated user can read every repository, so no launch stops at the access check.
+const REPOSITORY_ACCESS_BODY: &str =
+    r#"{"type":"VALID","provider":"github","username":"air-lane","repositoryPermissions":{"read":true,"write":true}}"#;
+/// No grant, so a lane IDE keeps mobile control off: the emulator serves no host registration of the spawner.
+const MOBILE_CONTROL_GRANT_BODY: &str = r#"{"available":false}"#;
 
 /// What the emulated account belongs to, as the AI access discovery states it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -85,7 +97,6 @@ pub(crate) struct Record {
 /// The handler of the cloud service.
 pub(crate) struct Cloud {
     base_url: String,
-    token: String,
     organization: Organization,
     record: Mutex<Record>,
     spawner: Spawner,
@@ -102,9 +113,8 @@ struct FailDials {
 
 /// Starts the emulator on `127.0.0.1:<port>`. The AI access discovery answers `organization`.
 pub(crate) fn start(port: u16, token: &str, organization: Organization) -> Result<Service<Cloud>, AgentRefusal> {
-    Service::start(NAME, port, |address| Cloud {
+    Service::start(NAME, port, token, |address| Cloud {
         base_url: format!("http://{address}"),
-        token: token.to_owned(),
         organization,
         record: Mutex::new(Record::default()),
         spawner: Spawner::default(),
@@ -112,10 +122,20 @@ pub(crate) fn start(port: u16, token: &str, organization: Organization) -> Resul
 }
 
 impl Handler for Cloud {
-    fn handle(&self, request: &Request) -> Response {
-        if let Some(route) = control::route(request, NAME, &self.token) {
-            return route.map_or_else(|refusal| refusal, |route| self.control(request, route));
+    fn control(&self, request: &Request, route: &str) -> Response {
+        match (route, request.method.as_str()) {
+            ("record", "GET") => control::answer(&*self.lock()),
+            ("record", "DELETE") => control::answer(&self.clear_record()),
+            ("spawner", "GET") => control::answer(&self.spawner.record()),
+            ("spawner", "DELETE") => control::answer(&self.spawner.clear()),
+            ("record" | "spawner", _) => control::method_not_allowed(request, "GET or DELETE"),
+            ("spawner/fail", "POST") => self.fail_dials(request),
+            ("spawner/fail", _) => control::method_not_allowed(request, "POST"),
+            _ => control::unknown_route(request),
         }
+    }
+
+    fn handle(&self, request: &Request) -> Response {
         let path = if request.path.len() > 1 {
             request.path.trim_end_matches('/')
         } else {
@@ -261,6 +281,8 @@ impl Cloud {
             TOOLS_PROVISIONING_PATH => Some(TOOLS_PROVISIONING_BODY),
             GATEWAYS_PROVISIONING_PATH => Some(GATEWAYS_PROVISIONING_BODY),
             AGENTS_PROVISIONING_PATH => Some(AGENTS_PROVISIONING_BODY),
+            REPOSITORY_ACCESS_PATH => Some(REPOSITORY_ACCESS_BODY),
+            MOBILE_CONTROL_GRANT_PATH => Some(MOBILE_CONTROL_GRANT_BODY),
             // The organization has no ACP registry and provisions no MCP server. Air reads 404 as "not configured".
             ACP_PROVISIONING_PATH | MCP_PROVISIONING_PATH => None,
             _ => return None,
@@ -271,19 +293,6 @@ impl Cloud {
         }
         record.served.push(format!("{} {}", request.method, request.target()));
         Some(body.map_or_else(|| Response::empty(404), |body| Response::with_body(200, JSON, body)))
-    }
-
-    fn control(&self, request: &Request, route: &str) -> Response {
-        match (route, request.method.as_str()) {
-            ("record", "GET") => control::answer(&*self.lock()),
-            ("record", "DELETE") => control::answer(&self.clear_record()),
-            ("spawner", "GET") => control::answer(&self.spawner.record()),
-            ("spawner", "DELETE") => control::answer(&self.spawner.clear()),
-            ("record" | "spawner", _) => control::method_not_allowed(request, "GET or DELETE"),
-            ("spawner/fail", "POST") => self.fail_dials(request),
-            ("spawner/fail", _) => control::method_not_allowed(request, "POST"),
-            _ => control::unknown_route(request),
-        }
     }
 
     /// The route `spawner/fail`: the next dials answer a status instead of the upgrade.

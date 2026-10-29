@@ -2,7 +2,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use avl_wire::ide::{self, IdePrepared};
+use avl_wire::ide::{self, ARG_FILE, IdePrepared};
 use avl_wire::supervisor::{AgentExit, EnvironmentPolicy, Outcome, Phase, Spec};
 use pretty_assertions::assert_eq;
 

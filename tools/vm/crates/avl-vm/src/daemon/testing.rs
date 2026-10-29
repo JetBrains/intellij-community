@@ -20,13 +20,14 @@ use std::sync::{Arc, Mutex, MutexGuard};
 use std::time::Duration;
 
 use crate::worker::tart::MINIMUM_VERSION;
+use crate::worker::testing::write_lease_file;
 use crate::worker::worker::{Dependencies, Lease, Manager, Timings, builds_nothing};
 use async_trait::async_trait;
 use avl_base::report::{Buffer, Mode, SinkGuard};
 use avl_base::sync::lock;
 use avl_base::{Backend, FakeClock, GuestOs, Refusal, Reporter, SCHEMA_VERSION};
 use avl_host_sys::lock::LockManager;
-use avl_host_sys::{Ctx, GuestStream, Interrupts, ProcessTable, Runner};
+use avl_host_sys::{Ctx, GuestStream, Interrupts, ProcessTable, Runner, Signal};
 use avl_host_testkit::agent::{active_reply, agent_reply, argv_value, run_state};
 use avl_host_testkit::answer::base_name;
 use avl_host_testkit::{
@@ -34,14 +35,12 @@ use avl_host_testkit::{
     serve_on_connect,
 };
 use avl_wire::daemon::{self as wire, Route};
-use avl_wire::progress::{Kind, Record, Verdict};
+use avl_wire::progress::{Kind, Phase, PhaseChange, Record, Verdict};
 use axum::body::Body;
 use axum::extract::{Request, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use hyper::body::Bytes;
-use hyper_util::rt::TokioIo;
-use hyper_util::service::TowerToHyperService;
 use serde_json::{Value, json};
 use tokio::io::DuplexStream;
 use tokio_util::sync::CancellationToken;
@@ -49,6 +48,7 @@ use tokio_util::sync::CancellationToken;
 use crate::daemon::build::{BuildScope, PreparedBuild};
 use crate::daemon::host::Host;
 use crate::daemon::http::TOKEN_HEADER;
+use crate::daemon::http::served_by;
 use crate::daemon::state::HostState;
 use crate::lane::secrets::ScriptedStdin;
 use avl_base::RefusalExt;
@@ -208,15 +208,7 @@ impl FakeDaemon {
     /// The server end of one relay: an HTTP/1.1 connection over the stream, served by the same router as the loopback
     /// listener. The connection runs on its own task until either end closes.
     pub(crate) fn server_side(&self) -> impl Fn(DuplexStream) + Send + Sync + 'static {
-        let app = self.app.clone();
-        move |server_end| {
-            let service = TowerToHyperService::new(app.clone());
-            tokio::spawn(async move {
-                let _ = hyper::server::conn::http1::Builder::new()
-                    .serve_connection(TokioIo::new(server_end), service)
-                    .await;
-            });
-        }
+        served_by(self.app.clone())
     }
 
     /// The script, locked. Hold it only as long as a statement.
@@ -947,6 +939,13 @@ impl DaemonFixture {
         self.manager.prepare_runtime_dirs().expect("the runtime directories are created");
     }
 
+    /// Checks that the first worker got one `ide-gc`, and that `retention` ends it, such as `--stop-all`.
+    pub(crate) fn assert_one_ide_gc(&self, retention: &str) {
+        let gcs = self.channel().calls_containing("vm-guest-agent ide-gc");
+        assert_eq!(gcs.len(), 1, "{gcs:?}");
+        assert!(gcs[0].ends_with(&format!("ide-gc --root /vm/data/ide {retention}")), "{}", gcs[0]);
+    }
+
     /// The scripted channel into the first worker.
     pub(crate) fn channel(&self) -> Arc<FakeChannel> {
         self.channel_of(&self.worker)
@@ -1064,6 +1063,19 @@ impl DaemonFixture {
             .expect("the fake process can be identified");
     }
 
+    /// Delivers an interrupt once `daemon` saw `request`, as a person who presses Ctrl-C while the command waits. The
+    /// caller awaits the handle after the command answered.
+    pub(crate) fn interrupt_after(&self, daemon: &Arc<FakeDaemon>, request: &'static str) -> tokio::task::JoinHandle<()> {
+        let daemon = Arc::clone(daemon);
+        let interrupts = self.interrupts.clone();
+        tokio::spawn(async move {
+            while !daemon.saw_request(request) {
+                tokio::time::sleep(Duration::from_millis(10)).await;
+            }
+            interrupts.deliver(Signal::Interrupt);
+        })
+    }
+
     /// Puts the first worker into the state the readiness gate accepts without booting anything: it reads as
     /// running, and has an init receipt for the fixture's paths.
     pub(crate) async fn mark_ready(&self) {
@@ -1092,9 +1104,7 @@ impl DaemonFixture {
             holder: holder.to_owned(),
             acquired_at: "2026-08-23T00:00:00.000Z".to_owned(),
         };
-        let mut encoded = serde_json::to_vec(&lease).expect("a lease encodes");
-        encoded.push(b'\n');
-        std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
+        write_lease_file(&self.settings, &lease);
         lease
     }
 
@@ -1186,6 +1196,14 @@ impl Recorded {
             .filter(|record| record.event == kind)
             .map(|record| record.message.clone())
             .collect()
+    }
+
+    /// The last change of `phase` that was published.
+    pub(crate) fn last_phase(&self, phase: Phase) -> PhaseChange {
+        self.data_of::<PhaseChange>(Kind::Phase)
+            .into_iter()
+            .rfind(|change| change.phase == phase)
+            .unwrap_or_else(|| panic!("no change of the phase {phase:?} was published"))
     }
 
     /// The last verdict published, if one was.

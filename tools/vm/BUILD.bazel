@@ -93,6 +93,7 @@ windows_clippy_tests(
 # `provision/versions.env`. `avl-base` also embeds `provision/versions.env` (`include_str!`).
 exports_files(
     [
+        "avl.MODULE.bazel",
         "container.MODULE.bazel",
         "docker.MODULE.bazel",
         "provision/versions.env",

@@ -15,39 +15,125 @@
 //! real exit and a real zombie.
 
 use std::ops::Deref;
+use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-#[cfg(unix)]
-use avl_base::Reporter;
-#[cfg(unix)]
-use avl_base::config::MacosHost;
-#[cfg(unix)]
-use avl_base::report::SinkGuard;
-use avl_base::{Backend, Config, GuestArch, GuestOs, SCHEMA_VERSION};
+use avl_base::{Backend, Config, GuestArch, GuestOs, Outcome, Refusal, SCHEMA_VERSION};
+use avl_host_sys::Ctx;
 use avl_host_sys::Runner;
 use avl_host_sys::guest::BazelHost;
-#[cfg(unix)]
-use avl_host_sys::interrupt::Interrupts;
 use avl_host_sys::lock::LockManager;
-#[cfg(unix)]
-use avl_host_sys::{Ctx, ProcessIdentity, ProcessTable};
 use avl_host_testkit::{ChannelFactory, FakeGuests, HostPool, HostPoolBuilder, quiet};
-#[cfg(unix)]
-use avl_host_testkit::{FakeProcesses, PinnedBazel};
-#[cfg(unix)]
-use avl_testkit::tartfake::Answer;
-#[cfg(unix)]
-use avl_wire::progress::{Kind, Record};
-#[cfg(unix)]
-use nix::sys::signal::{Signal, killpg};
-#[cfg(unix)]
-use nix::unistd::Pid;
+use avl_testkit::tartfake::{Answer, Fake};
+
+use crate::worker::docker::Docker;
 
 #[cfg(unix)]
-use crate::worker::run_marker::{RunMarker, write_marker_by_hand};
+use {
+    crate::worker::run_marker::{RunMarker, write_marker_by_hand},
+    crate::worker::tart::{MINIMUM_VERSION, PidReceipt},
+    avl_base::Reporter,
+    avl_base::config::MacosHost,
+    avl_base::phase::Timeline,
+    avl_base::report::SinkGuard,
+    avl_host_sys::interrupt::Interrupts,
+    avl_host_sys::{ProcessIdentity, ProcessTable},
+    avl_host_testkit::{FakeProcesses, PinnedBazel},
+    avl_wire::progress::{Kind, Record},
+    nix::sys::signal::{Signal, killpg},
+    nix::unistd::Pid,
+    std::time::Duration,
+};
+
+use crate::worker::worker::{
+    Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, PoolCommand, PoolTarget, StartState, Timings, builds_nothing,
+};
+
+/// The context of a suite step: the background one, which nothing cancels.
+pub(crate) fn ctx() -> Ctx {
+    Ctx::background()
+}
+
+/// The Docker backend of a Docker pool.
+pub(crate) fn docker(fixture: &Fixture) -> &Docker {
+    fixture.manager.machine().docker().expect("a Docker pool")
+}
+
+/// Spawns `guest_line` and a `git rev-parse` in one phase of `ctx`, and asserts that `timeline`, the timeline of
+/// `ctx`, counts one guest call and one host call. The guest line was built with `ctx`, so its head is declared.
 #[cfg(unix)]
-use crate::worker::tart::{MINIMUM_VERSION, PidReceipt};
-use crate::worker::worker::{Dependencies, GuestBootBuilder, IdleStopRequest, Lease, Manager, Timings, builds_nothing};
+pub(crate) fn assert_counts_one_guest_call(ctx: &Ctx, timeline: &Timeline, guest_line: &[String]) {
+    let (inner, phase) = ctx.begin("probe");
+    inner.phase().record_subprocess(guest_line, Duration::from_secs(1));
+    inner.phase().record_subprocess(&["git", "rev-parse"], Duration::from_secs(1));
+    drop(phase);
+    let timing = &timeline.take()[0];
+    assert_eq!((timing.guest_calls, timing.host_calls), (1, 1), "{timing:?}");
+}
+
+/// Asserts that `pool init` of `fixture` refuses a golden as `usage`: only a Tart pool clones its workers from one.
+pub(crate) async fn assert_init_refuses_a_golden(fixture: &Fixture) {
+    let golden = Some("air-macos-golden".to_owned());
+    let refusal = fixture.run_pool(PoolCommand::Init { golden }).await.unwrap_err();
+    assert_eq!(refusal.code, "usage");
+}
+
+/// Starts the first worker of `fixture`, writes a stale receipt into its directory, and runs `pool recycle` of the
+/// worker. Answers the worker, the receipt and the hypervisor calls of the recycle.
+pub(crate) async fn recycle_with_a_stale_receipt(fixture: &Fixture) -> (String, PathBuf, Vec<String>) {
+    let worker = fixture.worker(0).to_owned();
+    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
+    let receipt = fixture.settings.worker_dir(&worker).join("stale-receipt.json");
+    std::fs::write(&receipt, "{}").unwrap();
+    fixture.fake.forget_calls();
+    fixture
+        .run_pool(PoolCommand::Recycle(PoolTarget::Worker(worker.clone())))
+        .await
+        .unwrap();
+    (worker, receipt, fixture.fake.calls())
+}
+
+/// Asserts that `probe` refuses `probe_unanswered` with the exit status while `fake` answers `verb` as a process that a
+/// signal ended, and then as one that exited 0 and printed nothing. Neither of them is an answer.
+pub(crate) async fn assert_probe_unanswered<T: std::fmt::Debug>(fake: &Fake, verb: &str, probe: impl AsyncFn() -> Result<T, Refusal>) {
+    for (answer, code) in [(Answer::KilledVerb, 137), (Answer::SilentVerb, 0)] {
+        fake.answer(answer, verb);
+        let refusal = probe().await.unwrap_err();
+        assert_eq!(refusal.code, "probe_unanswered", "{verb} answered as {answer:?}: {refusal:?}");
+        assert!(refusal.message.contains(&format!("exited with {code}")), "{}", refusal.message);
+        fake.forget(answer);
+    }
+}
+
+/// The index of the first of the hypervisor `calls` that starts with `prefix`. The test fails with the calls when none
+/// does.
+pub(crate) fn position(calls: &[String], prefix: &str) -> usize {
+    calls
+        .iter()
+        .position(|call| call.starts_with(prefix))
+        .unwrap_or_else(|| panic!("no {prefix:?} call in {calls:#?}"))
+}
+
+/// Starts the first worker of `fixture`, asserts that the start started it, and answers the worker.
+pub(crate) async fn start_first(fixture: &Fixture) -> &str {
+    let worker = fixture.worker(0);
+    assert_eq!(
+        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
+        StartState::Started
+    );
+    worker
+}
+
+/// Starts `worker` of `fixture` again, asserts that it was already running, and answers the hypervisor calls of this
+/// second start.
+pub(crate) async fn start_again(fixture: &Fixture, worker: &str) -> Vec<String> {
+    let before = fixture.fake.calls().len();
+    assert_eq!(
+        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
+        StartState::AlreadyRunning
+    );
+    fixture.fake.calls()[before..].to_vec()
+}
 
 /// The version the fake `tart` answers. A Windows host has no fake `tart`, and its fake `docker` reads no version.
 #[cfg(unix)]
@@ -138,6 +224,11 @@ impl Fixture {
         &self.settings.workers[index]
     }
 
+    /// Runs the pool `command` of `vm pool` without a lease file.
+    pub(crate) async fn run_pool(&self, command: PoolCommand) -> Result<Outcome, Refusal> {
+        self.manager.pool(&ctx(), command, None).await
+    }
+
     /// A lease of this pool for one worker, the way an acquisition would build it.
     pub(crate) fn new_lease(&self, worker: &str, token: &str, holder: &str) -> Lease {
         Lease {
@@ -154,11 +245,16 @@ impl Fixture {
     /// Places a lease on a worker as a plain file, so the guards can be exercised without the lease policy.
     pub(crate) fn write_lease(&self, worker: &str, token: &str) -> Lease {
         let lease = self.new_lease(worker, token, "suite");
-        let mut encoded = serde_json::to_vec(&lease).expect("a lease encodes");
-        encoded.push(b'\n');
-        std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
+        write_lease_file(&self.settings, &lease);
         lease
     }
+}
+
+/// Writes `lease` as the plain lease file of its worker, with no lease policy and no atomic move.
+pub(crate) fn write_lease_file(settings: &Config, lease: &Lease) {
+    let mut encoded = serde_json::to_vec(lease).expect("a lease encodes");
+    encoded.push(b'\n');
+    std::fs::write(settings.lease_path(&lease.worker), encoded).expect("the lease is written");
 }
 
 /// The Tart pool and the run process of a Tart worker.

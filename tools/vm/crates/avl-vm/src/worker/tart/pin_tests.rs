@@ -14,6 +14,7 @@ use pretty_assertions::assert_eq;
 use regex::Regex;
 
 use super::*;
+use crate::worker::hypervisor::Machine;
 use crate::worker::pin::PinnedTools;
 
 /// A Tart backend over `settings` whose pinned tools resolve through `bazel`.
@@ -92,7 +93,7 @@ async fn a_named_tart_asks_bazel_nothing() {
     let bazel = Arc::new(PinnedBazel::tart(fixture.fake.executable()));
     let backend = backend_over(&fixture.settings, Some(bazel.clone()));
     backend.require_available(&Ctx::background(), "").await.unwrap();
-    assert!(bazel.asked().is_empty());
+    assert_eq!(bazel.asked(), Vec::<String>::new());
     assert_eq!(PathBuf::from(backend.program()), fixture.fake.executable());
 }
 
@@ -101,10 +102,11 @@ async fn a_named_tart_asks_bazel_nothing() {
 #[tokio::test]
 async fn the_guest_line_resolves_the_pinned_tart_without_the_gate() {
     let (backend, bazel, fixture) = unpinned_backend(true);
+    let machine = Machine::Tart(backend);
     let ctx = Ctx::background();
     let real = real_path(fixture.fake.executable()).unwrap();
     for _ in 0..2 {
-        let line = backend
+        let line = machine
             .guest_argv(&ctx, "air-macos-1", &[String::from("/usr/bin/true")], false)
             .await
             .unwrap();
@@ -128,7 +130,7 @@ async fn the_guest_line_resolves_the_pinned_tart_without_the_gate() {
 #[tokio::test]
 async fn a_guest_line_with_no_resolvable_tart_is_tart_missing() {
     let (backend, _bazel, fixture) = unpinned_backend(false);
-    let refusal = backend
+    let refusal = Machine::Tart(backend)
         .guest_argv(&Ctx::background(), "air-macos-1", &[String::from("/usr/bin/true")], false)
         .await
         .unwrap_err();

@@ -1,0 +1,10 @@
+load("//tools/vm:avl.bzl", "avl_crate")
+
+# Bazel builds libaom with `//tools/vm/aom:aom.BUILD.bazel` and runs no `build.rs`.
+avl_crate(
+    compile_data = [
+        "build.rs",
+        "//tools/vm:avl.MODULE.bazel",
+    ],
+    native_deps = ["@avl_aom//:aom"],
+)

@@ -26,3 +26,10 @@ rust_test(
     },
     deps = ["@rules_rust//tools/runfiles"],
 )
+
+# The Rust files of this package, for `//build/rust-tools:duplicate-code_test`.
+filegroup(
+    name = "e2e_sources",
+    srcs = glob(["*.rs"]),
+    visibility = ["//build/rust-tools:__pkg__"],
+)

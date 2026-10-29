@@ -215,6 +215,19 @@ pub struct RunStarted {
     pub process_started_at: Option<String>,
 }
 
+impl RunStarted {
+    /// A run of `command` with `args`, and no checkout or process start.
+    pub fn new(run_id: impl Into<String>, command: impl Into<String>, args: impl IntoIterator<Item = impl Into<String>>) -> Self {
+        Self {
+            run_id: run_id.into(),
+            command: command.into(),
+            args: args.into_iter().map(Into::into).collect(),
+            checkout: None,
+            process_started_at: None,
+        }
+    }
+}
+
 /// One iteration a run will execute. `lane` is absent for a class, an FQN or a whole lane.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlannedIteration {
@@ -443,6 +456,27 @@ pub struct Verdict {
 }
 
 impl Verdict {
+    /// A verdict with its status and its summary, and no count, code, failure, lane, lease or trace yet.
+    pub fn new(status: Status, summary: impl Into<String>) -> Self {
+        Self {
+            status,
+            code: None,
+            summary: summary.into(),
+            counts: VerdictCounts::default(),
+            failures: Vec::new(),
+            rerun: Vec::new(),
+            skipped: Vec::new(),
+            unreported: Vec::new(),
+            lanes: Vec::new(),
+            shards: None,
+            lease: None,
+            checkout: None,
+            traces: None,
+            timing: None,
+            report: None,
+        }
+    }
+
     pub fn passed(&self) -> bool {
         self.status == Status::Passed
     }

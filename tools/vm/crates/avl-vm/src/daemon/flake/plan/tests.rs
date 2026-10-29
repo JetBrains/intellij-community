@@ -405,7 +405,8 @@ struct Probe {
     args: FlakeArgs,
 }
 
-fn flake_args(argv: &[&str]) -> FlakeArgs {
+/// The options of `vm flake`, parsed from `argv`.
+pub(crate) fn flake_args(argv: &[&str]) -> FlakeArgs {
     <Probe as clap::Parser>::try_parse_from(std::iter::once("flake").chain(argv.iter().copied()))
         .unwrap_or_else(|error| panic!("{argv:?} did not parse: {error}"))
         .args

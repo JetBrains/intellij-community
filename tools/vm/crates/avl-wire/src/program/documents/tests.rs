@@ -1,6 +1,6 @@
 use std::fs;
 use std::io::Write;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use pretty_assertions::assert_eq;
 use zip::CompressionMethod;
@@ -55,13 +55,19 @@ fn expected(names: &[&str]) -> BTreeMap<String, Vec<u8>> {
         .collect()
 }
 
+/// Writes `files` as the directory `resources` and as the zip `jar` in `temp`, and answers both paths.
+fn directory_and_zip(temp: &Path, files: &[(&str, &str)], jar: &str) -> (PathBuf, PathBuf) {
+    let directory = temp.join("resources");
+    write_tree(&directory, files);
+    let jar = temp.join(jar);
+    write_zip(&jar, files);
+    (directory, jar)
+}
+
 #[test]
 fn a_directory_and_a_zip_of_one_root_give_the_same_documents() {
     let temp = tempfile::tempdir().unwrap();
-    let directory = temp.path().join("resources");
-    write_tree(&directory, &ROOT);
-    let jar = temp.path().join("flow-profiles.jar");
-    write_zip(&jar, &ROOT);
+    let (directory, jar) = directory_and_zip(temp.path(), &ROOT, "flow-profiles.jar");
 
     let suites = expected(&["new-session.json", "rename-session.json"]);
     assert_eq!(read_suite_documents(&directory).unwrap(), suites);
@@ -89,10 +95,7 @@ fn a_document_that_is_a_link_is_read_through_it() {
 #[test]
 fn a_source_that_holds_no_document_is_refused_by_name() {
     let temp = tempfile::tempdir().unwrap();
-    let directory = temp.path().join("resources");
-    write_tree(&directory, &[("lanes/ui.json", "{}")]);
-    let jar = temp.path().join("lanes-only.jar");
-    write_zip(&jar, &[("lanes/ui.json", "{}")]);
+    let (directory, jar) = directory_and_zip(temp.path(), &[("lanes/ui.json", "{}")], "lanes-only.jar");
     let empty = temp.path().join("empty");
     fs::create_dir_all(empty.join("flow-profiles")).unwrap();
 
@@ -140,10 +143,7 @@ fn a_document_name_that_is_a_directory_is_refused() {
 #[test]
 fn a_directory_and_a_zip_of_one_root_give_the_digest_of_the_flow_vocabulary_file() {
     let temp = tempfile::tempdir().unwrap();
-    let directory = temp.path().join("resources");
-    write_tree(&directory, &ROOT);
-    let jar = temp.path().join("flow-profiles.jar");
-    write_zip(&jar, &ROOT);
+    let (directory, jar) = directory_and_zip(temp.path(), &ROOT, "flow-profiles.jar");
 
     assert_eq!(read_vocabulary_digest(&directory).unwrap(), ROOT_VOCABULARY_DIGEST);
     assert_eq!(read_vocabulary_digest(&jar).unwrap(), ROOT_VOCABULARY_DIGEST);
@@ -152,10 +152,11 @@ fn a_directory_and_a_zip_of_one_root_give_the_digest_of_the_flow_vocabulary_file
 #[test]
 fn a_source_without_the_flow_vocabulary_file_is_refused_by_name() {
     let temp = tempfile::tempdir().unwrap();
-    let directory = temp.path().join("resources");
-    write_tree(&directory, &[("lanes/ui.json", "{}"), ("lanes/flow-vocabulary.json", "{}")]);
-    let jar = temp.path().join("lanes-only.jar");
-    write_zip(&jar, &[("lanes/ui.json", "{}"), ("lanes/flow-vocabulary.json", "{}")]);
+    let (directory, jar) = directory_and_zip(
+        temp.path(),
+        &[("lanes/ui.json", "{}"), ("lanes/flow-vocabulary.json", "{}")],
+        "lanes-only.jar",
+    );
 
     assert_eq!(
         read_vocabulary_digest(&directory).unwrap_err(),

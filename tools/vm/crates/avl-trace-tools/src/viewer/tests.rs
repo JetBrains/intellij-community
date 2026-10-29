@@ -27,16 +27,22 @@ fn the_viewer_urls_are_the_site_routes() {
     }
 }
 
-/// The trace link of the static viewer keeps each slash of its zip path. It writes the rest as `URLSearchParams` does,
-/// as `traceHash` of the site writes it.
+/// A CI page names its build by the build id, and a trace page keeps each slash of its zip path. The rest is written
+/// as `URLSearchParams` writes it. A slash at the end of the site is dropped. The test "the test link of the publish
+/// step parses to its CI trace page, and the site builds the same link" in `plugins/air/docs/src/routeTable.test.ts`
+/// pins the last literal on the site side, so a change on one side fails the test on the other.
 #[test]
-fn the_static_trace_hash_is_the_one_the_viewer_writes() {
+fn the_ci_urls_name_the_build_and_the_zip() {
     assert_eq!(
-        static_trace_hash("ui_lane_test/iter-1/T/s.zip"),
-        "#/trace?zip=ui_lane_test/iter-1/T/s.zip"
+        ci_build_url(CI_SITE, "1100310296"),
+        "https://ij-void-docs.labs.jb.gg/air/ci/1100310296"
     );
     assert_eq!(
-        static_trace_hash("ui_lane_test/shard_1_of_2/iter-1/T/a b+c~d&e=\u{e9}.zip"),
-        "#/trace?zip=ui_lane_test/shard_1_of_2/iter-1/T/a+b%2Bc%7Ed%26e%3D%C3%A9.zip"
+        ci_trace_url("https://staging.example/air/", "1100310296", "ui_lane_test/iter-1/T/s.zip"),
+        "https://staging.example/air/ci/1100310296/trace?zip=ui_lane_test/iter-1/T/s.zip"
+    );
+    assert_eq!(
+        ci_trace_url(CI_SITE, "1100310296", "ui_lane_test/shard_1_of_2/iter-1/T/a b+c~d&e=\u{e9}.zip"),
+        "https://ij-void-docs.labs.jb.gg/air/ci/1100310296/trace?zip=ui_lane_test/shard_1_of_2/iter-1/T/a+b%2Bc%7Ed%26e%3D%C3%A9.zip"
     );
 }

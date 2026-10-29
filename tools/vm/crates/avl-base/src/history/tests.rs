@@ -53,13 +53,7 @@ impl JournalWriter {
 }
 
 fn run_started(run_id: &str, args: &[&str]) -> Event {
-    Event::RunStarted(RunStarted {
-        run_id: run_id.to_owned(),
-        command: "run".to_owned(),
-        args: args.iter().map(|arg| (*arg).to_owned()).collect(),
-        checkout: None,
-        process_started_at: None,
-    })
+    Event::RunStarted(RunStarted::new(run_id, "run", args.iter().copied()))
 }
 
 fn write_journal(root: &Path, run_id: &str, modified: Timestamp, writer: &JournalWriter) {

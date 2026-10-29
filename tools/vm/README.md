@@ -47,7 +47,7 @@ checkout at its start. In a community checkout no `bt.json` names the Air area, 
 Every one of these labels is an `avl_binary` at the workspace root: one file, and always `compilation_mode=opt`,
 whatever the command line says. The wrapper, `$(rlocationpath)` and the controller's `cquery ... [0]` for the agent each
 need one output file. Optimized, because fastbuild Rust is `-Copt-level=0` for every
-dependency, and the WebP stills, the X11 frame copies and the zip deflate would run ten times slower or worse
+dependency, and the still encoders, the X11 frame copies and the zip deflate would run ten times slower or worse
 inside a lane that measures time. The rule is `optimized_binary` of `community/build/rust-tools/defs.bzl`, which
 `avl.bzl` binds as `avl_binary`. On a Unix host, what `bazel test` runs for Windows is
 `:clippy-windows-x86_64` and `:clippy-windows-arm64`. On a Windows host `vm.cmd` and `trace.cmd` build and run `:vm`
@@ -62,6 +62,15 @@ builds the image; nobody builds it by hand. The base is `DOCKER_BASE_IMAGE` in `
 `container.MODULE.bazel` pins Apple `container`, the engine of a Mac on macOS 26 or newer ([Apple container is a second engine of the Docker backend](docs/decisions/2026-10-09-apple-container-is-a-second-engine-of-the-docker-backend.md), ADR 0224).
 `docker.MODULE.bazel` pins the Docker CLI and its `docker-buildx` plugin, which a Mac runs against the engine of its
 host environment.
+
+## libaom
+
+The recorder encodes a lossy still with libaom 3.15.2, the AV1 encoder. The source is the release tarball on the Space
+file mirror. The crate `avl-aom-sys` holds the bindings of the encoder. Under cargo, its `build.rs` downloads the
+release, checks its SHA-256 and builds it with cmake, which needs nasm on an x86_64 host. Bazel builds the same
+release with `aom/aom.BUILD.bazel` and runs no build script. The repository is `@avl_aom` of `avl.MODULE.bazel`, and
+its x86_64 assembly takes nasm of the Bazel Central Registry. `aom/config/` holds the config headers of cmake for arm64
+and x86_64, and `aom/sources.bzl` the source lists. `avl.MODULE.bazel` states the steps of a version change.
 
 ## Crates
 
@@ -81,7 +90,7 @@ controller holds the modules `bench`, `console`, `daemon`, `lane`, `report` and 
 `build/docs/decisions/0043-the-crate-boundaries-follow-the-re-key-domains.md` states the same rule for the dev-dist tools.
 The crates form a DAG with the contracts at the bottom. `avl-wire`,
 `avl-trace` and `avl-testkit` depend on no sibling, and `avl-trace-tools` and `avl-bridge` stand on `avl-trace` alone.
-`avl-junit` stands on `avl-wire` alone, so the guest agent can write the JUnit XML.
+`avl-junit` stands on `avl-wire` and on `serde`, `serde_json` and `jiff`, which the guest agent links already. So the guest agent can write the JUnit XML and the IJ Perf file.
 `avl-record` links `avl-trace` and `avl-bridge` and no other sibling, so the recorder links no packer, no discovery and
 no URL code. `avl-base` stands on `avl-wire`, and on `avl-trace-tools` for the viewer links its renderer prints. Of the
 siblings, `avl-guest` depends on `avl-wire`, `avl-junit`, `avl-trace`, `avl-trace-tools` and `avl-bridge` alone and
@@ -144,15 +153,15 @@ and copy `<bin>_closure.txt` from `out/bazel-bin` over `closure.txt`.
 | guest | `avl-guest` | the guest half and the agent binary: the run supervisor, the Linux boot and macOS image verbs, the lane IDE contexts (the preparation checks its document and lays out the directories of one context, the launch checks its document, writes the argument file and the launch record, and starts the IDE run in the closed environment of its context, `ide-gc` stops IDE runs and removes old logs, and `cancel --thread-dump` writes a thread dump before the kill), `trace-pack-ready`, the `relay` verb that bridges its stdin and stdout to a loopback port inside the guest, the `runfiles-tree` verb that builds the runfiles tree of the host's MANIFEST with the copies of the staged runfiles, the `read-file` verb that writes one file on stdout unchanged for a pull, and the `lane-daemon` verb (`src/lane`): the control channel of the lane daemon, the owner of the lane IDE and its readiness, the lane services with the fake agent package, and the context files |
 | host system | `avl-host-sys` | subprocesses, each with its timeout, and the byte stream of an exec channel child, the one wait loop with its budget and backoff (`Poll`), the batched lookup of the pinned files (`external_files`), the process-wide interrupt service and the operation context, locks and the one host-process identity that the Tart pid receipt, the lock record and the run marker share (`ProcessIdentity`), private files, the one mapping of host paths to guest paths (`GuestPaths`), the choice of a runfiles tree or a MANIFEST and the plan of the guest tree with its staged runfiles (`HostRunfiles`); what a guest must be to run host-built outputs (the read-only share set and its mount, the parity layout, TCC admission, the agent install, the run supervisor, the Linux guest's packages); the detached trace viewer: its probe and the one start of a detached server, which `air-trace serve --detach` and the controller share (`viewer`) |
 | workers | `avl-vm` (`worker`) | the four backends, Tart, Parallels, Docker and `container-linux`, of which a Windows host has Docker and `container-linux` (the binaries, the share grammars, the sealed golden, worker provenance, the Docker image and its containers), the Apple `container` engine and its CLI dialect, one dispatch for each lifecycle operation, the one resolver of the pinned tools (`PinnedTools`), readiness gates and the `pool` commands, lease ownership, receipts, the run marker that names the run in flight on each worker (`run.json`) and the `lease` commands |
-| reports | `avl-report` | the content digests that decide whether a warm iteration reuses the lane daemon, its IDE and its shares, report assembly, the TeamCity service messages and the IJ Perf file of a scenario from the run stream, the shard merge ladder and the flake arithmetic |
-| | `avl-junit` | the JUnit XML of a run from its run stream, and the fold of the stream into cases that the report and the TeamCity messages read too. The controller and the guest agent both write the XML, so the crate stands on `avl-wire` alone and does no file I/O. The recorded stream and the golden of its XML are its `testdata` |
+| reports | `avl-report` | the content digests that decide whether a warm iteration reuses the lane daemon, its IDE and its shares, report assembly, the TeamCity service messages from the run stream, the shard merge ladder and the flake arithmetic |
+| | `avl-junit` | the JUnit XML of a run from its run stream, the fold of the stream into cases that the report and the TeamCity messages read too, one TeamCity service message, and the IJ Perf file of a scenario with its plan. The controller and the guest agent both write the XML and the IJ Perf file, so the crate links no controller code and does no file I/O. The recorded stream, the golden of its XML and the golden of the IJ Perf file are its `testdata` |
 | lanes | `avl-vm` (`lane`) | lane and selector resolution for the controller, the `suites` command, the host Bazel build, the guest launch environment, the lane IDEs that the controller stops or keeps and the check that no IDE runs from the shares (`ide`), and `exec`, `peekaboo`, `pull`, `ls`, `vnc`, `status` |
 | runs | `avl-vm` (`daemon`) | `run`, `shard`, `flake` and `daemon`: the HTTP client that reaches the guest daemon through the relay, the daemon start, the push of the files of the build, iterations, the verdict, the pull of each iteration's traces beside its report, the shard split and the flake trial chains, and the leased-run driver the three share: build first, lease, one body per worker, release, and the interrupt policy |
 | run time | `avl-vm` (`report`) | `report time`: where the time of a run went, from its journal, its iteration reports and the spans of its trace bundles, with no worker; `--baseline` adds the ratio of each test class |
 | bench | `avl-vm` (`bench`) | `vm bench`, the start-up measurement of the IDE on this host: the generation of a dev distribution, the Starter-shaped IDE launch and its supervision, the session, the readers of the files the IDE writes (the start-up report, the trace, the FUS log, the class log, the CPU profile), the gate, the summary and the digest |
 | | `avl-vm` | the `vm` binary: the clap command tree, which renders the help, the global arguments and the dispatch, the output form and renderer the descriptors allow, the live terminal dashboard of `run`, `shard` and `flake` (`console`), `image validate\|build`, and the viewer a prose run starts (`ensure_viewer`, through `avl_host_sys::viewer`) |
-| suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, `AirArchitectureModelTest` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
-| traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the lossless WebP stills, the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
+| suites | `avl-affected` | which suites a changed path reaches (the suite's own files, the lane harness, the flow tags, the specs' `[@test]` links, the JPS modules), the UI lanes a VM worker runs with their test labels (`lanes`, which the controller and the planner share), and the bridge: the Air area that `bt.json` of the checkout names, read at the start of each program (`plugins/air/tests/integration/lanes.json`, with each UI lane's test label, which `AirIntegrationTagTest`, `AirTestTargetDeclarationTest`, the architecture gate test `air-architecture-model_test` and the flow generator `docs/scripts/flowCatalog.ts` read too), and a BT refusal as the controller's |
+| traces | `avl-record` | the recorder that the lane daemon starts, the `air-trace-record` binary: the protocol's state machine, the bundle writer, the Allure result of each bundle when a run asks for it, the snapshots, the `idea.log` slice; where the pixels come from (X11 over MIT-SHM, else the IDE's paint route), the stills, lossless WebP or, when the scenario has a video, lossy AVIF from libaom (`aom/`), the H.264 video the recorder encodes itself, its fragmented MP4 and frame index; ffmpeg only for a Mac's screen |
 | | `air-trace` | the `air-trace` binary: dispatch to `pack`, which is `avl-trace-tools`', and the modules `serve` and `plan`. `air-trace serve`: the bundles discovery finds, by byte range and live, the planner route, the bundles of a TeamCity build (`--teamcity`), and the docs site; `air-trace teamcity-publish`: after a Bazel test on TeamCity, the one archive artifact `air-traces.zip` with the viewer page, `runs.json` in the listing form of `serve` and one zip for each bundle, the messages that publish it and link each test to its trace, which `avl-report` writes, the viewer, which it builds as `serve` builds the site when `--viewer` is absent, and the build from the agent's property files; `air-trace plan`: from a bundle, a flow text, a profile, a `test.xml`, a report, a path or a name to the scenarios, the bundles the input names, the bundles of those scenarios on disk, and the commands |
 | tests | `avl-testkit` | test helpers: repository files under cargo and under Bazel, the paths of the scenario-trace goldens (`traces`), fake executables, the Tart fake with its fake `docker` and fake Apple `container`, and the loopback HTTP server that stands in for the IDE's bridge (`src/http.rs`). On Windows, which runs no shell script, the fake `docker` and the fake `git` are the Rust program `avl-fake` (`src/fakebin.rs`), linked under the tool's name and found through `AVL_FAKE`. A test compares it with the script, call by call, on Unix. The fakes are hard links to one file each, which all test processes share and which is named by its content (`src/shared.rs`), so only the first process after a change of a fake writes a new executable that macOS scans at its first exec |
 | | `avl-host-testkit` | the host-side fixtures the controller crates' suites share, a dev-dependency only: the fake guest channels and their answers, the pool environment over the Tart fake, the fake host `git`, the Bazel that resolves the pinned Tart, Docker CLI and `docker-buildx` to the fakes, the parked-daemon probe, the fake process table of the `ps` probe. It stands below `avl-vm`, so each module's suite assembles its own `Manager` over it; `avl-host-sys`'s own suite keeps a fake channel of its own |
@@ -169,8 +178,11 @@ the welcome screen measures. `session.json` names this measurement model, and
 records it. A metric of a welcome span or of a modal span is the sum of the spans of its name, as the perf test sums them, and a name that
 repeats is a note of the run. The digest shows these sums in the groups `welcome spans` and `modal spans`. The group
 `span ends (ms from the process start)` holds the end of the first span of each start-up step, on the clock of the
-anchors such as `welcomeBecameVisible`. The report's `jvm.loadingTime`, the time of the JVM before that clock starts,
-is a metric of the first group. A modal run opens no project, so the IDE writes its start-up report at the exit, and
+anchors such as `welcomeBecameVisible`. That clock starts at the load of `com.intellij.idea.Main` in `class-load.log`,
+the metric `jvm.processStart`. The report's `jvm.loadingTime` starts it about 100 ms too early, and only a log without
+the main class uses it. The record
+[The bench clock starts at the load of the main class](docs/decisions/2026-10-22-the-bench-clock-starts-at-the-load-of-the-main-class.md)
+states why. A modal run opens no project, so the IDE writes its start-up report at the exit, and
 the record reads it after the quit. Its `totalDuration` is negative or missing, so it is a note of the run and no
 metric.
 
@@ -200,7 +212,7 @@ and no stack, so the tables print `-` and say so. The decision record
 [The bench names the trigger of each plugin loader](docs/decisions/2026-10-19-the-bench-names-the-trigger-of-each-plugin-loader.md)
 states the rule.
 
-`--profile` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
+`--profile` of `welcome` and `project` samples the CPU with async-profiler from the JVM start to the gate of each run. When the gate passes, the
 run reads the PID of the IDE from `idea.log` and stops the profiler with `jcmd` of the generation, which writes
 `cpu-gate.collapsed`. `--profile-event wall` samples the wall clock in place of the CPU. A run that cannot stop the
 profiler keeps the whole-run profile `cpu.collapsed`, with a note that names why. The digest says which profile it read.
@@ -215,11 +227,12 @@ that the JVM loads, and the digest notes how many samples it left out.
 | --- | --- | --- |
 | `welcome` | How long does the IDE take to show the welcome screen, in the modal and the non-modal arm? | A session directory with its `summary.json`, and a text digest. |
 | `open-project <project>` | How long does a running IDE take to open a project and paint its editor? | A session with the open-project arm. |
-| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, or both. |
+| `project <project>` | How long does the IDE take from its start on a project to the highlighted editor, or, with `--arm empty-editor`, to the built Air composer of an empty editor area? With `--arm cargo-sync` and `--target //build:rustrover_dist`, to the first Cargo sync, as the RustRover perf test measures it. `--cold` starts each empty-editor run with empty caches. | A session with the project arm, the empty-editor arm, both, or the cargo-sync arm. |
 | `replay <session>` | What does a finished session give when the controller parses it again? | A new `summary.json` and the digest, without an IDE. |
 | `trace <session>` | What runs between the frame and the welcome paint? | The anchors of one run, and one line per span in the window. |
 | `activities <session>` | Which post-startup activities run while the welcome panel paints? | One table by class and one table by plugin for one run. |
 | `classes <session>` | Which classes did the JVM load before an anchor, and which plugin and module own them? | The class totals of one arm, one table by plugin with its modules and its EDT and BG ms, and one table by module. `--plugin` adds the rank of a plugin. |
+| `classes <session> --span <name>` | Which classes did the EDT load inside a span? | The window of each run, the loads by plugin, by module and by package, and with `--timeline` the loads of each bucket. |
 | `triggers <session>` | Which code pulled each module of a plugin? | One row per trigger frame of one run, with its modules, their classes, their EDT ms and the first load, then the modules of each trigger. |
 | `compare <session> <session>...` | Did the change move the medians by more than the noise of the host? | The medians per arm with the delta to A, and one noise check per session. |
 | `ls` | Which sessions does this host have? | One line per session, newest first, with a name that the other verbs accept. |
@@ -269,7 +282,7 @@ What a session cannot measure yet:
 ## Verification
 
 ```bash
-(cd community && ./bazel.cmd test //tools/vm/... //tools/bt/...)
+(cd community && ./bazel.cmd test //tools/vm/... //tools/bt/... //build/rust-tools:duplicate-code_test)
 ./bazel.cmd test @community//tools/vm/... //plugins/air/tests/integration/vm-contract/...
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-arm64 @community//tools/vm:air-trace-record-linux-arm64
 ./bazel.cmd build @community//tools/vm:vm-guest-agent-linux-x86_64 @community//tools/vm:air-trace-record-linux-x86_64

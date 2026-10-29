@@ -10,7 +10,7 @@ use avl_host_sys::guest::user_argv;
 use avl_host_sys::{Ctx, SpawnOptions};
 use serde::Serialize;
 
-use super::{observe_leased_worker, split_lines};
+use super::{LeaseUse, on_leased_worker, split_lines};
 
 /// The timeout of the guest `find` of `ls`. A deep listing of the IDE output walks many thousands of entries.
 const LS_TIMEOUT: Duration = Duration::from_mins(10);
@@ -83,7 +83,7 @@ struct LsData {
 pub(crate) async fn command_ls(ctx: &Ctx, manager: &Manager, args: LsArgs, lease_file: Option<&Path>) -> Result<Outcome, Refusal> {
     let LsArgs { directory, depth } = args;
     let settings = manager.settings();
-    let data = observe_leased_worker(ctx, manager, lease_file, "ls", async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "ls", LeaseUse::LockedReread, async |current| {
         require_ready_for_read(ctx, manager, &current, "ls").await?;
         let find = [
             "/usr/bin/find".to_owned(),

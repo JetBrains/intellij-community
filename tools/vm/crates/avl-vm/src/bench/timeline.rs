@@ -12,8 +12,8 @@ use super::digest::number;
 use super::files;
 use super::options::Window;
 use super::record::{
-    EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, RunId, RunRecord, WELCOME_BECAME_VISIBLE,
-    WELCOME_SCREEN_PAINTED,
+    CARGO_SYNC_STARTED, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, FRAME_BECAME_INTERACTIVE, FRAME_BECAME_VISIBLE, RunId, RunRecord,
+    WELCOME_BECAME_VISIBLE, WELCOME_SCREEN_PAINTED,
 };
 use super::session::{self, RESULT_FILE, SelectedRun, TRACE_FILE};
 use super::trace::{self, micros_to_ms, tenth};
@@ -32,11 +32,12 @@ pub(crate) const RUN_INIT_ACTIVITY_PREFIX: &str = "run init activity ";
 
 /// The metrics that are anchors, in the order of the start-up. Each one is in milliseconds from the process start. A
 /// metric that the run does not have is left out, as in the modal arm, which has only the welcome event.
-const ANCHORS: [&str; 6] = [
+const ANCHORS: [&str; 7] = [
     FRAME_BECAME_VISIBLE,
     FRAME_BECAME_INTERACTIVE,
     WELCOME_BECAME_VISIBLE,
     WELCOME_SCREEN_PAINTED,
+    CARGO_SYNC_STARTED,
     EDITOR_HIGHLIGHTED,
     EMPTY_STATE_BUILT,
 ];

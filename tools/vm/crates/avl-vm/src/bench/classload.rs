@@ -10,14 +10,16 @@
 //! reader keeps those names, and a thread dump of the running IDE names the other Java threads, see [`Threads`].
 //!
 //! The uptime is on the JVM clock, which starts at the JVM start. The items, the trace and the timeline use the
-//! process clock, which starts later. [`super::stats::StartupStats::jvm_loading_ms`] is the offset. A caller adds it
-//! to a bound on the process clock before it asks the log.
+//! process clock, which starts later: the first statement of `main` of [`MAIN_CLASS`] reads it. [`process_start`]
+//! is the start of the process clock on the JVM clock. A caller adds it to a bound on the process clock before it asks
+//! the log.
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use anyhow::{Context, bail};
 
 use super::pluginlog::{Owner, PluginLog, Tally, Thread};
+use super::trace::as_f64;
 
 /// The marker of a hidden class in the class name, such as `java.lang.invoke.LambdaForm$MH/0x0000000801001000`.
 const HIDDEN_MARKER: &str = "/0x";
@@ -27,6 +29,55 @@ const THREAD_TAGS: &str = "os,thread";
 
 /// The prefix of the name of the EDT, such as `AWT-EventQueue-0`.
 const EDT_PREFIX: &str = "AWT-EventQueue";
+
+/// The main class of the IDE. The first statement of its `main` starts the process clock, so the load of the class is
+/// that start on the JVM clock, to the millisecond of the log.
+pub(crate) const MAIN_CLASS: &str = "com.intellij.idea.Main";
+
+/// The start of the process clock on the JVM clock of a class-load log.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub(crate) struct ProcessStart {
+    /// Milliseconds on the JVM clock.
+    pub(crate) uptime_ms: f64,
+    pub(crate) anchor: ClockAnchor,
+}
+
+/// What gives the start of the process clock on the JVM clock.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum ClockAnchor {
+    /// The load of [`MAIN_CLASS`] in the class-load log.
+    MainClass,
+    /// `jvm.loadingTime` of the report: the process clock minus the start time of `RuntimeMXBean`. The JVM clock of
+    /// the log starts before that start time, so this anchor puts the process start 75 to 100 ms too early. Only a log
+    /// without [`MAIN_CLASS`] uses it.
+    LoadingTime,
+}
+
+impl ClockAnchor {
+    /// The words of a report.
+    pub(crate) const fn text(self) -> &'static str {
+        match self {
+            Self::MainClass => "the load of com.intellij.idea.Main",
+            Self::LoadingTime => "jvm.loadingTime, about 100 ms too early",
+        }
+    }
+}
+
+/// The start of the process clock on the JVM clock of `log`: the load of [`MAIN_CLASS`], else `loading_ms`, the
+/// `jvm.loadingTime` of the report. A log without the class and without a report has none.
+pub(crate) fn process_start(log: &ClassLoadLog, loading_ms: Option<i64>) -> Option<ProcessStart> {
+    let main = log.classes.iter().find(|class| class.name == MAIN_CLASS).map(|class| ProcessStart {
+        uptime_ms: class.uptime_ms,
+        anchor: ClockAnchor::MainClass,
+    });
+    main.or_else(|| {
+        loading_ms.map(|loading_ms| ProcessStart {
+            uptime_ms: as_f64(loading_ms),
+            anchor: ClockAnchor::LoadingTime,
+        })
+    })
+}
 
 /// One class of the class-load log.
 #[derive(Clone, Debug, PartialEq)]

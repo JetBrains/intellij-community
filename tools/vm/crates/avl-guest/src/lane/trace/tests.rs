@@ -40,6 +40,16 @@ fn hello() -> HelloCommand {
     Trace::hello(Path::new("/vm/iterations/iter-1"), "iter-1", &TraceInputs::default(), None)
 }
 
+/// A trace of the iteration `iter-1` under `root` whose recorder is the returned recording.
+fn recorded(root: &Path) -> (Trace, Recording) {
+    let recording = Recording::default();
+    let trace = Trace::open(
+        Box::new(recording.clone()),
+        Trace::hello(root, "iter-1", &TraceInputs::default(), None),
+    );
+    (trace, recording)
+}
+
 fn scenario(name: &str) -> ScenarioCommand {
     ScenarioCommand {
         name: name.to_owned(),
@@ -186,11 +196,7 @@ fn only_a_recorder_that_did_not_start_is_a_failure_of_a_quiet_session() {
 #[test]
 fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
     let root = tempfile::TempDir::new().unwrap();
-    let recording = Recording::default();
-    let mut trace = Trace::open(
-        Box::new(recording.clone()),
-        Trace::hello(root.path(), "iter-1", &TraceInputs::default(), None),
-    );
+    let (mut trace, recording) = recorded(root.path());
     trace.open_scenario(scenario("attaches"));
     let span = trace.open_span(SpanKind::Action, "dump", "[action] dump", Some((None, Side::Host, 1_000)));
     assert!(trace.attach("IDE dump", "text/plain", b"threads", "txt"));
@@ -212,12 +218,8 @@ fn an_attachment_is_a_file_under_the_attach_directory_of_the_run() {
 fn an_attachment_outside_a_recorded_scenario_goes_to_the_loose_directory() {
     let root = tempfile::TempDir::new().unwrap();
     let loose = root.path().join("outputs/lane/attachments");
-    let recording = Recording::default();
-    let mut trace = Trace::open(
-        Box::new(recording.clone()),
-        Trace::hello(root.path(), "iter-1", &TraceInputs::default(), None),
-    )
-    .keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
+    let (trace, recording) = recorded(root.path());
+    let mut trace = trace.keep_loose_attachments_in(Some(loose.clone()), MAX_LOOSE_BYTES);
 
     assert!(!trace.attach("IDE dump of the slow step lane launch", "text/plain", b"threads", "txt"));
     trace.open_scenario(scenario("attaches"));
@@ -316,4 +318,23 @@ fn the_hello_asks_for_the_allure_results_only_when_the_inputs_do() {
     assert_eq!((hello.screen, hello.allure), (false, true));
     let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(hello)).unwrap()).unwrap();
     assert!(line.contains(r#""allure":true"#), "{line}");
+}
+
+// The hello keeps every video unless the trace inputs keep the video of a scenario that did not pass only. The line of a
+// hello that keeps every video names no retention.
+#[test]
+fn the_hello_keeps_the_videos_that_the_inputs_keep() {
+    let iteration = Path::new("/state/iterations/iter-1");
+    let plain = Trace::hello(iteration, "iter-1", &TraceInputs::default(), None);
+    assert_eq!(plain.keep_video, protocol::VideoRetention::Always);
+    let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(plain)).unwrap()).unwrap();
+    assert!(!line.contains("keepVideo"), "{line}");
+    let failed = TraceInputs {
+        keep_video: protocol::VideoRetention::Failed,
+        ..TraceInputs::default()
+    };
+    let hello = Trace::hello(iteration, "iter-1", &failed, None);
+    assert_eq!(hello.keep_video, protocol::VideoRetention::Failed);
+    let line = String::from_utf8(protocol::encode_command(&protocol::Command::Hello(hello)).unwrap()).unwrap();
+    assert!(line.contains(r#""keepVideo":"failed""#), "{line}");
 }

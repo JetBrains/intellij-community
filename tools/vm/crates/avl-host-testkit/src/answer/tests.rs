@@ -42,7 +42,7 @@ fn the_effective_argv_skips_every_wrapper_production_code_builds() {
     ] {
         assert_eq!(effective_argv(&wrapped), words([agent, "read-file", "/x"]), "{wrapped:?}");
     }
-    assert!(effective_argv(&words(["/usr/bin/sudo", "-H"])).is_empty());
+    assert_eq!(effective_argv(&words(["/usr/bin/sudo", "-H"])), Vec::<String>::new());
 }
 
 // The agent routes by its subcommand and every other program by its basename; the handler sees the stripped argv.

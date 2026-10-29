@@ -140,7 +140,7 @@ fn a_lane_class_without_a_suite_document_is_planned_and_narrowed_like_a_document
         &lane_classes,
     )
     .unwrap();
-    assert!(excluded.undocumented.is_empty());
+    assert_eq!(excluded.undocumented, []);
     assert_eq!(
         classes(&excluded),
         ["AirAddToAgentContextGeneratedFlowUiTest", "AirRenameSessionGeneratedFlowUiTest"]

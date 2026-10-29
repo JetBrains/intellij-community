@@ -28,9 +28,11 @@
 //! - [`shard`], [`flake`]: the two commands that fan a lane out over several workers;
 //! - `leased`: the journaled run and the leased-run driver `run`, `shard` and `flake` share;
 //! - `results`: the JUnit XML and the TeamCity service messages, written from the run stream.
+//! - `export`: the copy of a run into the export directory of the checkout, which a run on another host brings back.
 
 pub(crate) mod build;
 pub(crate) mod command;
+mod export;
 pub(crate) mod flake;
 pub(crate) mod host;
 pub(crate) mod http;

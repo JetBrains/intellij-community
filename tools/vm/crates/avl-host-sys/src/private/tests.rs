@@ -150,31 +150,16 @@ fn a_missing_file_is_missing() {
     assert!(matches!(open_no_follow(&root.path().join("absent")), Err(NoFollowError::Missing)));
 }
 
-#[cfg(unix)]
 #[test]
 fn a_link_is_refused_and_not_followed() {
     let root = tempfile::tempdir().unwrap();
     let target = root.path().join("target");
     open_private_file(&target, PrivateOpen::CreateNew).unwrap();
     let link = root.path().join("link");
+    #[cfg(unix)]
     std::os::unix::fs::symlink(&target, &link).unwrap();
-    assert!(matches!(open_no_follow(&link), Err(NoFollowError::Link)));
-
-    let directory = root.path().join("directory");
-    create_private_directory(&directory).unwrap();
-    let directory_link = root.path().join("directory-link");
-    std::os::unix::fs::symlink(&directory, &directory_link).unwrap();
-    assert_eq!(directory_protection(&directory_link).unwrap(), None);
-}
-
-// A symlink needs developer mode or a privilege on Windows, so the test passes without one.
-#[cfg(windows)]
-#[test]
-fn a_link_is_refused_and_not_followed() {
-    let root = tempfile::tempdir().unwrap();
-    let target = root.path().join("target");
-    open_private_file(&target, PrivateOpen::CreateNew).unwrap();
-    let link = root.path().join("link");
+    // A symlink needs developer mode or a privilege on Windows, so the test passes without one.
+    #[cfg(windows)]
     if std::os::windows::fs::symlink_file(&target, &link).is_err() {
         return;
     }
@@ -183,6 +168,9 @@ fn a_link_is_refused_and_not_followed() {
     let directory = root.path().join("directory");
     create_private_directory(&directory).unwrap();
     let directory_link = root.path().join("directory-link");
+    #[cfg(unix)]
+    std::os::unix::fs::symlink(&directory, &directory_link).unwrap();
+    #[cfg(windows)]
     std::os::windows::fs::symlink_dir(&directory, &directory_link).unwrap();
     assert_eq!(directory_protection(&directory_link).unwrap(), None);
 }

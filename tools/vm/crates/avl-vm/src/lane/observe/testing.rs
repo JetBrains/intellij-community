@@ -16,6 +16,7 @@ use crate::worker::docker::CreateRecord;
 use crate::worker::hypervisor::Machine;
 use crate::worker::lease::write_lease_receipt;
 use crate::worker::run_marker::write_marker_by_hand;
+use crate::worker::secure::write_json_line;
 use crate::worker::tart::MINIMUM_VERSION;
 use crate::worker::worker::{Dependencies, Lease, Manager, builds_nothing, read_lease};
 use avl_base::{Backend, GuestOs, SCHEMA_VERSION};
@@ -72,6 +73,14 @@ impl Fixture {
     /// The Linux pool: one Docker slot over the fake `docker`, on the host engine.
     pub(crate) fn docker() -> Self {
         Self::new(Backend::Docker, GuestOs::Linux)
+    }
+
+    /// The Linux pool with its worker `air-docker-1` ready and leased by the suite, and the receipt of the lease.
+    pub(crate) async fn leased_ready_docker() -> (Self, PathBuf) {
+        let fixture = Self::docker();
+        fixture.mark_ready("air-docker-1").await;
+        let receipt = fixture.lease_receipt("air-docker-1");
+        (fixture, receipt)
     }
 
     /// The one-worker container-linux pool over the fake `container.cmd`, whose container is stopped until
@@ -164,9 +173,7 @@ impl Fixture {
             };
             let path = self.settings.docker_create_record_path(worker);
             std::fs::create_dir_all(path.parent().expect("a worker directory")).expect("the worker directory is created");
-            let mut encoded = serde_json::to_vec(&record).expect("the record encodes");
-            encoded.push(b'\n');
-            std::fs::write(path, encoded).expect("the create record is written");
+            write_json_line(&path, &record, "the create record").expect("the create record is written");
             write_init_receipt(&self.settings, worker).expect("the init receipt is written");
             return;
         }
@@ -189,9 +196,7 @@ impl Fixture {
             holder: "suite".to_owned(),
             acquired_at: "2026-08-23T00:00:00.000Z".to_owned(),
         };
-        let mut encoded = serde_json::to_vec(&lease).expect("a lease encodes");
-        encoded.push(b'\n');
-        std::fs::write(self.settings.lease_path(worker), encoded).expect("the lease is written");
+        write_json_line(&self.settings.lease_path(worker), &lease, "the lease").expect("the lease is written");
         write_lease_receipt(&self.settings, &lease).expect("the receipt is written")
     }
 

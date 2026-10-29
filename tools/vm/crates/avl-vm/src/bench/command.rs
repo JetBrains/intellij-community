@@ -33,6 +33,7 @@ use super::session::{
     self, BENCH_DIR, GenerationRef, GitInfo, MARKDOWN_PROJECT, MeasureModel, Project, ProjectSource, RESULT_FILE, SESSION_FILE,
     SUMMARY_FILE, Sandbox, SessionInfo, TEMPLATE_DIR,
 };
+use super::spanclasses;
 use super::spans;
 use super::stage::{self, Generation};
 use super::summary::Summary;
@@ -105,11 +106,11 @@ impl Bench<'_> {
                     command: "welcome",
                     arms: args.arms(),
                     runs: args.runs,
-                    cold: args.cold,
-                    profile: args.profile,
-                    profile_event: args.profile_event,
+                    cold: args.measure.cold,
+                    profile: args.measure.profile,
+                    profile_event: args.measure.profile_event,
                     project: None,
-                    suppressed_plugin: args.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.suppress.plugin.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -135,11 +136,11 @@ impl Bench<'_> {
                     command: "project",
                     arms: args.arms().map_err(Refusal::usage)?,
                     runs: args.runs,
-                    cold: args.cold,
-                    profile: false,
-                    profile_event: ProfileEvent::Cpu,
+                    cold: args.cold(),
+                    profile: args.measure.profile,
+                    profile_event: args.measure.profile_event,
                     project: Some(PlannedProject::Start(project_source(&args.project, &working_dir()?)?)),
-                    suppressed_plugin: args.suppress.plugin.clone(),
+                    suppressed_plugin: args.measure.suppress.plugin.clone(),
                 };
                 self.session(ctx, &plan, &args.launch).await
             }
@@ -150,6 +151,10 @@ impl Bench<'_> {
             }
             BenchVerb::Activities(args) => {
                 let report = activities::report(&self.locate(&args.selection.session)?, &args)?;
+                Outcome::new(&report, report.text())
+            }
+            BenchVerb::Classes(args) if args.span.is_some() => {
+                let report = spanclasses::report(&self.locate(&args.session)?, &args)?;
                 Outcome::new(&report, report.text())
             }
             BenchVerb::Classes(args) => {
@@ -299,7 +304,8 @@ impl Bench<'_> {
         let launcher = Launcher::of(&generation, self.runner.clone(), repo, profiler, args.hold)?;
 
         let template = Sandbox::new(session.join(TEMPLATE_DIR));
-        session::write_template(&template, license).map_err(|error| session_failed(format!("{error:#}")))?;
+        session::write_template(&template, license, generation.config.platform_prefix.as_deref())
+            .map_err(|error| session_failed(format!("{error:#}")))?;
         let project = match &plan.project {
             Some(PlannedProject::Start(source)) => {
                 Some(session::write_project(&template, source).map_err(|error| session_failed(format!("{error:#}")))?)
@@ -404,7 +410,7 @@ impl Bench<'_> {
             let _ = std::fs::remove_dir_all(sandbox.root.join(stale));
         }
         session::own_welcome_project(&sandbox).map_err(failed)?;
-        if id.arm.kind == ArmKind::EmptyEditor {
+        if matches!(id.arm.kind, ArmKind::EmptyEditor | ArmKind::CargoSync) {
             session::open_no_readme(&sandbox).map_err(failed)?;
         }
         let name = match id.kind {

@@ -33,7 +33,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use avl_bridge::lifecycle::Reader;
 use avl_bridge::{Client, url};
-use avl_wire::daemon::{IdeExited, IdeLaunched as IdeLaunchedRecord, Output, RunEventKind};
+use avl_wire::daemon::{IdeExited, IdeLaunched as IdeLaunchedRecord, IdeReady, Output, RunEventKind};
 use avl_wire::ide::{self as wire_ide, IdeContext, IdeLaunch, IdePrepared, LaunchRecord, ProjectSource};
 use avl_wire::program::lane::{Delivery, LaneDocument, LaunchHost};
 use avl_wire::progress::{Decision, Subject};
@@ -44,7 +44,7 @@ use super::context::{LaneContext, ServicePorts};
 use super::identity::{BRIDGE_PORT, BRIDGE_TOKEN_PURPOSE, LANE_SERVICES_PURPOSE, LaneIdentity};
 use super::inputs::LaunchInputs;
 use super::package::Packages;
-use super::readiness::{self, Bridge};
+use super::readiness::{self, Bridge, Ready};
 use super::reload::{self, PluginChange};
 use super::services::Service;
 use super::services::cloud::{self, Cloud, Organization};
@@ -52,12 +52,14 @@ use super::services::codex::{self, Codex};
 use super::services::feedback::{self, Feedback};
 use super::services::registry::{self, Registry, RegistryAgent};
 use crate::cli::{CancelArgs, IdeGcArgs, RootArgs, RunArgs};
+use crate::clock::now_stamp;
 use crate::reply::{AgentRefusal, AgentRefusalExt};
 use crate::supervisor::{self, Launcher, LiveSystem};
 
 mod restart;
 
-pub(crate) use restart::{KillTarget, Relaunch};
+pub(crate) use restart::{KillTarget, Relaunch, RelaunchPart, RelaunchParts};
+use restart::{NoParts, timed};
 #[cfg(test)]
 mod tests;
 
@@ -486,10 +488,24 @@ impl IdeOwner {
             "waiting up to {} s for the IDE of '{key}' to get ready",
             readiness::READY_TIMEOUT.as_secs()
         ));
-        readiness::await_ready(&bridge, &key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
+        let ready = readiness::await_lifecycle_ready(&bridge, &key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
             records.note(text);
         })?;
+        self.emit_ready(ready, records);
+        readiness::ping(&bridge)?;
         Ok(decision)
+    }
+
+    /// The `ideReady` record of the held IDE, which got `ready`.
+    pub(super) fn emit_ready(&self, ready: Ready, records: &mut Records<'_>) {
+        let Some(held) = &self.held else { return };
+        records.emit(RunEventKind::IdeReady(IdeReady {
+            timestamp: now_stamp(),
+            pid: ready.pid,
+            launch_name: held.launch_name.clone(),
+            launch_key: held.key.clone(),
+            ready_after_ms: i64::try_from(ready.after.as_millis()).unwrap_or(i64::MAX),
+        }));
     }
 
     /// Reloads the bridge plugin of the held IDE from the context plugins of `launch`, and waits until the new copy is
@@ -504,10 +520,13 @@ impl IdeOwner {
             .map_err(|error| error.to_string())
             .and_then(|client| reload::reload(&client, key, held.context(), launch.plugins, &mut |text| records.note(text)))
             .and_then(|()| {
-                readiness::await_ready(bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
+                let not_ready = |refusal: AgentRefusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message);
+                let ready = readiness::await_lifecycle_ready(bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
                     records.note(text);
                 })
-                .map_err(|refusal| format!("the reloaded bridge plugin did not get ready: {}", refusal.message))
+                .map_err(not_ready)?;
+                self.emit_ready(ready, records);
+                readiness::ping(bridge).map_err(not_ready)
             });
         match &reloaded {
             Ok(()) => records.note(format!(
@@ -665,14 +684,26 @@ impl IdeOwner {
         Ok(())
     }
 
-    /// Quits the held IDE and launches it again on its context as `<cause>-<n>-<millis>`. The count `n` counts every
-    /// relaunch of the context. Between the two, [`before_relaunch`] removes the restored editor tabs of a recycle.
+    /// Quits the held IDE and launches it again on its context. Between the two, [`before_relaunch`] removes the restored
+    /// editor tabs of a recycle.
     fn relaunch(&mut self, launch: &LaneLaunch<'_>, cause: Relaunch, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
         let Some(previous) = self.held.clone() else {
             return Err(AgentRefusal::internal("a relaunch was decided without an IDE"));
         };
         self.quit(records)?;
         before_relaunch(cause, Path::new(&previous.paths.config_dir), records)?;
+        self.launch_again(previous, launch, cause, records)
+    }
+
+    /// Launches the IDE of the run `previous`, which ended, again on its context as `<cause>-<n>-<millis>`. The count `n`
+    /// counts every relaunch of the context.
+    fn launch_again(
+        &mut self,
+        previous: HeldIde,
+        launch: &LaneLaunch<'_>,
+        cause: Relaunch,
+        records: &mut Records<'_>,
+    ) -> Result<(), AgentRefusal> {
         let relaunches = previous.relaunches + 1;
         let held = HeldIde {
             launch_name: launch_name(&format!("{}-{relaunches}", cause.as_str())),
@@ -710,6 +741,7 @@ impl IdeOwner {
         )?;
         held.pid = launched.run.pid;
         records.emit(RunEventKind::IdeLaunched(IdeLaunchedRecord {
+            timestamp: Some(now_stamp()),
             pid: i64::from(held.pid.unwrap_or_default()),
             launch_name: held.launch_name.clone(),
             launch_key: held.key.clone(),
@@ -815,9 +847,11 @@ impl IdeOwner {
             readiness::READY_TIMEOUT.as_secs()
         ));
         let bridge = Bridge::new(BRIDGE_PORT, &token)?;
-        readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
+        let ready = readiness::await_lifecycle_ready(&bridge, key, launch.vocabulary_digest, &mut self.run_end(), &mut |text| {
             records.note(text);
-        })
+        })?;
+        self.emit_ready(ready, records);
+        Ok(())
     }
 
     /// The check of a readiness wait on the held IDE run: how the run ended, once it did. A run that the owner does not
@@ -852,11 +886,16 @@ impl IdeOwner {
     ///
     /// `/ide/stop` asks for it, so the next run makes a fresh context.
     pub(crate) fn quit(&mut self, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+        self.quit_in_parts(records, &mut NoParts)
+    }
+
+    /// [`IdeOwner::quit`], and `parts` gets the begin and the end of the quit request, the wait for the exit, and a kill.
+    fn quit_in_parts(&mut self, records: &mut Records<'_>, parts: &mut dyn RelaunchParts) -> Result<(), AgentRefusal> {
         let Some(mut held) = self.held.take() else {
             self.publish_target();
             return Ok(());
         };
-        let result = self.end_run(&mut held, records);
+        let result = self.end_run(&mut held, records, parts);
         if result.is_err() {
             self.held = Some(held);
         }
@@ -864,39 +903,49 @@ impl IdeOwner {
         result
     }
 
-    fn end_run(&self, held: &mut HeldIde, records: &mut Records<'_>) -> Result<(), AgentRefusal> {
+    /// Ends the run of `held`. A refused quit request and a run that does not end after it fail no part, because the
+    /// kill comes next. A run that survives the kill fails the kill.
+    fn end_run(&self, held: &mut HeldIde, records: &mut Records<'_>, parts: &mut dyn RelaunchParts) -> Result<(), AgentRefusal> {
         if live_state(held).is_some() {
             let pid = held.pid.map_or_else(|| "unknown".to_owned(), |pid| pid.to_string());
             records.note(format!("quitting the IDE pid {pid} of '{}'", held.key));
-            match Bridge::new(BRIDGE_PORT, &held.token).and_then(|bridge| readiness::quit(&bridge)) {
-                Ok(()) => {}
-                Err(refusal) => records.note(format!("the IDE pid {pid} did not quit through its bridge: {}", refusal.message)),
+            parts.begin(RelaunchPart::QuitRequest);
+            let asked = Bridge::new(BRIDGE_PORT, &held.token).and_then(|bridge| readiness::quit(&bridge));
+            parts.end(RelaunchPart::QuitRequest, None);
+            if let Err(refusal) = asked {
+                records.note(format!("the IDE pid {pid} did not quit through its bridge: {}", refusal.message));
             }
-            if await_end(held, QUIT_EXIT_WAIT).is_none() {
+            parts.begin(RelaunchPart::QuitExit);
+            let ended = await_end(held, QUIT_EXIT_WAIT);
+            parts.end(RelaunchPart::QuitExit, None);
+            if ended.is_none() {
                 records.note(format!(
                     "the IDE pid {pid} is still alive {}s after the quit; killing it",
                     QUIT_EXIT_WAIT.as_secs()
                 ));
-                supervisor::cancel(
-                    &LiveSystem,
-                    &CancelArgs {
-                        run: RunArgs {
-                            root: RootArgs {
-                                root: held.context().to_path_buf(),
+                timed(parts, RelaunchPart::QuitKill, || {
+                    supervisor::cancel(
+                        &LiveSystem,
+                        &CancelArgs {
+                            run: RunArgs {
+                                root: RootArgs {
+                                    root: held.context().to_path_buf(),
+                                },
+                                run_id: held.run_id(),
                             },
-                            run_id: held.run_id(),
+                            grace_ms: 0,
+                            thread_dump: self.inputs.jcmd(),
                         },
-                        grace_ms: 0,
-                        thread_dump: self.inputs.jcmd(),
-                    },
-                )?;
-                if await_end(held, KILL_EXIT_WAIT).is_none() {
-                    return Err(refused(format!(
-                        "the IDE pid {pid} of '{}' survived a quit and a kill; a launch beside it would contend for the \
-                         fixed bridge port",
-                        held.key
-                    )));
-                }
+                    )?;
+                    match await_end(held, KILL_EXIT_WAIT) {
+                        Some(_) => Ok(()),
+                        None => Err(refused(format!(
+                            "the IDE pid {pid} of '{}' survived a quit and a kill; a launch beside it would contend for \
+                             the fixed bridge port",
+                            held.key
+                        ))),
+                    }
+                })?;
             }
         }
         if !held.exit_reported {
@@ -970,9 +1019,11 @@ fn before_relaunch(cause: Relaunch, config: &Path, records: &mut Records<'_>) ->
     Ok(())
 }
 
-/// The `ideLaunched` record of an adopted IDE, which keeps the pid that an earlier record named.
+/// The `ideLaunched` record of an adopted IDE, which keeps the pid that an earlier record named. An earlier daemon
+/// launched it, so the record has no time.
 fn emit_launched(held: &HeldIde, records: &mut Records<'_>) {
     records.emit(RunEventKind::IdeLaunched(IdeLaunchedRecord {
+        timestamp: None,
         pid: i64::from(held.pid.unwrap_or_default()),
         launch_name: held.launch_name.clone(),
         launch_key: held.key.clone(),
@@ -987,6 +1038,7 @@ fn emit_launched(held: &HeldIde, records: &mut Records<'_>) {
 /// The `ideExited` record of the ended run `state`.
 fn exited(held: &HeldIde, state: &RunState) -> RunEventKind {
     RunEventKind::IdeExited(IdeExited {
+        timestamp: Some(now_stamp()),
         pid: i64::from(state.pid.or(held.pid).unwrap_or_default()),
         exit_code: state.exit_code.unwrap_or(-1),
         signal: state.signal.clone().flatten(),

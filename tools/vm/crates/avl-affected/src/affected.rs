@@ -22,6 +22,8 @@
 //! - The `targets` and the `[@test]` links of the specs.
 //! - The `.iml` files above a path, for its JPS module, and the lane-wide modules and lane-wide paths of the Air
 //!   lane table, for the harness.
+//! - For a harness module that the lane table joins by declaration, its Kotlin sources and the text of a named file at
+//!   the [`Baseline`], which the declaration relation of `declarations.rs` reads.
 //!
 //! # The order the relations answer in
 //!
@@ -29,7 +31,9 @@
 //!
 //! 1. The suite's own files: its document or its test class source, as `suite:<id>`.
 //! 2. The harness: a path in a lane-wide module, or at or under a lane-wide path, reaches every suite of its lanes,
-//!    as `lane-wide:<module>` or `lane-wide:<path>`.
+//!    as `lane-wide:<module>` or `lane-wide:<path>`. A Kotlin source of a module that the lane table joins by
+//!    declaration reaches only the suites whose requests reach a changed declaration, as `declaration:<declaration>`,
+//!    unless every suite reaches one.
 //! 3. The tags: a `[suite: <id>]` attribute as `suite:<id>`, and a `@flow` tag as `flow:<id>`.
 //! 4. With no tag answered, two coarse relations answer together. The owning specs give `spec:<path>`, and for a
 //!    path with no tag at all the module relation gives `module:<endpoint>`. They reach different suites: an
@@ -52,7 +56,8 @@
 //! decision about what the module holds:
 //!
 //! - `…bridge` and `…bridge.plugin` are the test bridge every lane installs into the IDE under test. The bridge also
-//!   holds the state reset and the authored bodies of the suites.
+//!   holds the state reset and the authored bodies of the suites. The lane table joins the Kotlin sources of `…bridge`
+//!   by declaration, so only a declaration that every suite reaches keeps the lane-wide answer there.
 //! - `…testSupport` is the fake agents and the fake registry the flow harness links for every lane.
 //!
 //! Left out on purpose: `…contract` runs in the fast lane and in no UI lane, `…flowProfiles` holds suite documents
@@ -66,7 +71,8 @@
 //! module answers first, so a lane-wide path only holds a path that no harness module holds.
 //!
 //! The harness answers after the suite's own files and before the tag relation. The harness declares no flow, so a
-//! tag that matches in it is a test fixture or a comment.
+//! tag that matches in it is a test fixture or a comment. A harness path that the checkout no longer holds reaches the
+//! lanes of its harness too, because nothing tells which suites used it.
 //!
 //! # An implementation flow reaches the suites of the story flows it implements
 //!
@@ -88,7 +94,7 @@
 //! it ([`Runtime::list_files`]), and each file is joined as if the caller had named it.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex, OnceLock};
 
 use bt_core::areas::Area;
 use bt_core::catalog::{SuiteDocument, read_suite_documents};
@@ -97,6 +103,7 @@ use bt_core::scan::source_simple_name;
 use bt_core::suites::{Affected, UnmappedPath, VIA_MODULE, Via, affected_answer, note_via, suites_by_flow, suites_by_id};
 use bt_core::{Refusal, fail_usage, paths};
 
+use crate::declarations::{Baseline, BaselineText, DeclarationIndex, Reach, SuiteRequests};
 use crate::regex;
 use crate::specs::{SpecLink, VIA_SPEC, read_spec_links};
 
@@ -120,19 +127,23 @@ pub mod reason {
     pub const PATH_UNREADABLE: &str = "path_unreadable";
     /// A named directory that holds no file the checkout tracks or would track, so it has nothing to join.
     pub const EMPTY_DIRECTORY: &str = "empty_directory";
+    /// A file of a harness module that the lane table joins by declaration, whose changed declarations no suite
+    /// reaches: a unit test of the module, or a new function that no suite calls yet. The module is reported.
+    pub const DECLARATION_NOT_REACHED: &str = "declaration_not_reached";
 }
 
 /// Which suites the named paths reach, generated or authored.
 ///
 /// A refusal is answered only for a repository this join cannot be performed against at all: an unreadable suite
 /// directory, a malformed document, a lane the controller does not know. A path the caller got wrong is data, in
-/// [`Affected::unmapped`].
-pub fn affected_suites(runtime: &dyn Runtime, area: &Area, paths: &[String]) -> Result<Affected, Refusal> {
+/// [`Affected::unmapped`]. The `baseline` is what a file of a harness module that the lane table joins by
+/// declaration is compared with.
+pub fn affected_suites(runtime: &dyn Runtime, area: &Area, paths: &[String], baseline: Baseline<'_>) -> Result<Affected, Refusal> {
     if paths.is_empty() {
         return Err(fail_usage("Name at least one changed path"));
     }
     let documents = read_suite_documents(runtime, area)?;
-    let join = SuiteJoin::new(runtime, area, &documents);
+    let join = SuiteJoin::new(runtime, area, &documents, baseline);
     let (files, mut unmapped) = expand_directories(runtime, &normalize_paths(runtime, paths));
     // `via` accumulates every reason a suite is in the answer, so two paths reaching one suite produce one entry
     // carrying both. The paths are joined concurrently and merged in the order they were named.
@@ -160,6 +171,13 @@ struct SuiteJoin<'a> {
     by_module: BTreeMap<&'a str, Vec<usize>>,
     modules: ModuleCache<'a>,
     specs: Vec<SpecLink>,
+    baseline: Baseline<'a>,
+    /// The commit of [`Baseline::Upstream`], read once, or `None` for a checkout without one.
+    upstream: OnceLock<Option<String>>,
+    /// The requests of each suite, read once for the first declaration index.
+    requests: OnceLock<Vec<Option<SuiteRequests>>>,
+    /// The declaration index of each harness module, built once, or `None` for a module whose sources cannot be read.
+    indexes: Mutex<HashMap<String, Arc<Option<DeclarationIndex>>>>,
 }
 
 /// What one path reached, or why it reached nothing.
@@ -179,7 +197,7 @@ impl PathJoin {
 }
 
 impl<'a> SuiteJoin<'a> {
-    fn new(runtime: &'a dyn Runtime, area: &'a Area, documents: &'a [SuiteDocument]) -> Self {
+    fn new(runtime: &'a dyn Runtime, area: &'a Area, documents: &'a [SuiteDocument], baseline: Baseline<'a>) -> Self {
         let mut join = SuiteJoin {
             runtime,
             area,
@@ -194,6 +212,10 @@ impl<'a> SuiteJoin<'a> {
                 by_directory: Mutex::new(HashMap::new()),
             },
             specs: Vec::new(),
+            baseline,
+            upstream: OnceLock::new(),
+            requests: OnceLock::new(),
+            indexes: Mutex::new(HashMap::new()),
         };
         for (index, document) in documents.iter().enumerate() {
             if !document.path.is_empty() {
@@ -231,9 +253,7 @@ impl<'a> SuiteJoin<'a> {
             }
             return answer;
         }
-        let Ok(text) = self.runtime.read_text_file(&resolve_against_repo(self.runtime, path)) else {
-            return PathJoin::unmapped(UnmappedPath::new(path, reason::PATH_UNREADABLE));
-        };
+        let text = self.runtime.read_text_file(&resolve_against_repo(self.runtime, path)).ok();
         let modules = self.modules.owning(self.runtime.platform(), path);
         let lanes = self.area.lanes();
         if let Some((harness, served)) = modules
@@ -241,16 +261,37 @@ impl<'a> SuiteJoin<'a> {
             .find_map(|module| Some((module.as_str(), lanes.lane_wide_lanes(module)?)))
             .or_else(|| lanes.lane_wide_path_lanes(path))
         {
+            let serves = |index: usize| {
+                let lane = self.documents[index].lane_name(lanes);
+                served.is_empty() || lane.is_some_and(|lane| served.iter().any(|served| served == lane))
+            };
+            // A deleted harness file reaches the whole lane set: nothing tells which suites used it.
+            if let Some(Reach::Suites(reached)) = text.as_deref().and_then(|text| self.declaration_reach(harness, path, text)) {
+                for (index, via) in reached {
+                    if serves(index) {
+                        answer.reached.extend(via.into_iter().map(|via| (index, via)));
+                    }
+                }
+                if answer.reached.is_empty() {
+                    return PathJoin::unmapped(UnmappedPath {
+                        module: Some(harness.to_owned()),
+                        ..UnmappedPath::new(path, reason::DECLARATION_NOT_REACHED)
+                    });
+                }
+                return answer;
+            }
             // The harness declares no flow, so a tag that matches here matched a fixture or a comment. That is
             // why this answers before the tag relation does.
-            for (index, document) in self.documents.iter().enumerate() {
-                let lane = document.lane_name(lanes);
-                if served.is_empty() || lane.is_some_and(|lane| served.iter().any(|served| served == lane)) {
+            for index in 0..self.documents.len() {
+                if serves(index) {
                     answer.reached.push((index, format!("{VIA_LANE_WIDE}{harness}")));
                 }
             }
             return answer;
         }
+        let Some(text) = text else {
+            return PathJoin::unmapped(UnmappedPath::new(path, reason::PATH_UNREADABLE));
+        };
 
         // A profile names its suite in an attribute the generator requires ("@flowTest requires '[suite: <id>]'"),
         // an exact link from the declaring file to one suite rather than an inference from the flow.
@@ -307,6 +348,64 @@ impl<'a> SuiteJoin<'a> {
                 ..UnmappedPath::new(path, reason::MODULE_NOT_WALKED)
             }),
         }
+    }
+
+    /// What a path of the harness module `module` reaches by declaration, or `None` when the lane table joins no path
+    /// of the module so, the path is no Kotlin source and no vocabulary file of it, or the sources cannot be read. The
+    /// caller answers lane-wide for `None`.
+    fn declaration_reach(&self, module: &str, path: &str, text: &str) -> Option<Reach> {
+        let reach = self.area.lanes().declaration_reach(module)?;
+        let is_vocabulary = reach.vocabulary.as_deref() == Some(path);
+        let in_sources = path.ends_with(".kt")
+            && reach
+                .sources
+                .iter()
+                .any(|source| path.strip_prefix(source.as_str()).is_some_and(|rest| rest.starts_with('/')));
+        if !is_vocabulary && !in_sources {
+            return None;
+        }
+        let index = self.declaration_index(module)?;
+        let index = index.as_ref().as_ref()?;
+        let read = self.baseline_text(path);
+        let baseline = match &read {
+            Ok(Some(text)) => BaselineText::Text(text),
+            Ok(None) => BaselineText::Absent,
+            // The whole file counts as changed then, so the error itself changes no answer.
+            Err(_) => BaselineText::Unreadable,
+        };
+        if is_vocabulary {
+            return Some(index.vocabulary_reach(text, baseline));
+        }
+        Some(index.reach(index.file(path)?, text, baseline))
+    }
+
+    /// The declaration index of `module`, built on its first use.
+    fn declaration_index(&self, module: &str) -> Option<Arc<Option<DeclarationIndex>>> {
+        let reach = self.area.lanes().declaration_reach(module)?;
+        let mut indexes = avl_base::sync::lock(&self.indexes);
+        if let Some(index) = indexes.get(module) {
+            return Some(Arc::clone(index));
+        }
+        let requests = self
+            .requests
+            .get_or_init(|| par_map(self.documents, |document| SuiteRequests::read(self.runtime, document)));
+        let index = Arc::new(DeclarationIndex::build(self.runtime, reach, self.documents, requests).ok());
+        indexes.insert(module.to_owned(), Arc::clone(&index));
+        Some(index)
+    }
+
+    /// The text of `path` at the baseline: `None` for a file that the baseline does not hold, an error for a baseline
+    /// that the checkout cannot read.
+    fn baseline_text(&self, path: &str) -> std::io::Result<Option<String>> {
+        let revision = match self.baseline {
+            Baseline::Upstream => self
+                .upstream
+                .get_or_init(|| self.runtime.upstream_base().ok())
+                .as_deref()
+                .ok_or_else(|| std::io::Error::other("the checkout has no upstream"))?,
+            Baseline::Revision(revision) => revision,
+        };
+        self.runtime.revision_text(revision, path)
     }
 
     /// Every module endpoint that covers one of `modules`, sorted.

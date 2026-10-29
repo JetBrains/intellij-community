@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use avl_testkit::environment_lookup;
 use avl_wire::daemon::{ExecutionIdentity, PlanStarted, RunEvent, RunEventKind, TestStarted};
 use pretty_assertions::assert_eq;
 
@@ -79,6 +78,38 @@ fn a_cut_off_run_fails_its_unfinished_scenario_and_the_suite_it_never_reached() 
             ("Dropped".to_owned(), "Dropped".to_owned(), Some(TYPE_UNREPORTED.to_owned())),
         ]
     );
+    let messages: Vec<String> = failed_cases(&events).into_iter().map(|case| case.failure.message).collect();
+    assert_eq!(
+        messages,
+        [
+            UNFINISHED_MESSAGE,
+            "the run never reached the suite Dropped: the run stream ended before its first record"
+        ]
+    );
+}
+
+#[test]
+fn the_failed_cases_are_those_that_fail_the_xml_with_its_failure() {
+    let failed = failed_cases(&run_stream());
+    let named: Vec<(&str, &str, Option<&str>)> = failed
+        .iter()
+        .map(|case| (case.class_name.as_str(), case.name.as_str(), case.failure.r#type.as_deref()))
+        .collect();
+    assert_eq!(
+        named,
+        [
+            (
+                "AirComposerGeneratedFlowUiTest",
+                "attach-file",
+                Some("com.intellij.air.integration.AirFlowAssertionError")
+            ),
+            ("AirRegistryGeneratedFlowUiTest", "registry", Some("prologue_failed")),
+        ]
+    );
+    assert_eq!(
+        failed[0].failure.headline(),
+        "instruction 4 assert-chip-visible: the chip <a.txt> is not visible"
+    );
 }
 
 #[test]
@@ -91,16 +122,10 @@ fn two_iterations_of_one_class_share_its_suite() {
 
 #[test]
 fn the_named_file_wins_over_the_bazel_file_and_a_blank_name_is_none() {
-    let environment = |pairs: &[(&str, &str)]| -> HashMap<String, String> {
-        pairs
-            .iter()
-            .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
-            .collect()
-    };
-    let both = environment(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, "/jb/test.xml")]);
-    assert_eq!(destination(|name| both.get(name).cloned()).as_deref(), Some("/jb/test.xml"));
-    let blank = environment(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, " ")]);
-    assert_eq!(destination(|name| blank.get(name).cloned()).as_deref(), Some("/bazel/test.xml"));
+    let both = environment_lookup(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, "/jb/test.xml")]);
+    assert_eq!(destination(both).as_deref(), Some("/jb/test.xml"));
+    let blank = environment_lookup(&[(XML_OUTPUT_FILE, "/bazel/test.xml"), (JB_XML_OUTPUT_FILE, " ")]);
+    assert_eq!(destination(blank).as_deref(), Some("/bazel/test.xml"));
     assert_eq!(destination(|_| None), None);
 }
 

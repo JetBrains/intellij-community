@@ -698,38 +698,25 @@ fn a_count_is_a_strict_base_ten_positive_integer() {
     assert_eq!(load(docker(), &env(&[("AIR_VM_CPU", "  12  ")])).vm_cpu, 12);
 }
 
-// The two axes are not independent, and the pair is refused once here.
+// The two axes are not independent, and the pair is refused once here. Parallels needs an Aqua session, and Tart runs
+// the macOS golden only, so each refuses a Linux guest, and the message says why.
 #[test]
-fn parallels_refuses_a_non_macos_guest() {
-    let refusal = refuse(
-        Selection {
-            backend: Backend::Parallels,
-            guest_os: GuestOs::Linux,
-        },
-        &env(&[]),
-    );
-    assert_eq!(
-        (refusal.code.as_ref(), refusal.exit),
-        ("unsupported_backend_operation", Exit::USAGE)
-    );
-    assert!(refusal.message.contains("Aqua session"), "{}", refusal.message);
-}
-
-// The Tart backend runs the macOS golden only. A Linux guest on Tart is refused by name.
-#[test]
-fn tart_refuses_a_linux_guest() {
-    let refusal = refuse(
-        Selection {
-            backend: Backend::Tart,
-            guest_os: GuestOs::Linux,
-        },
-        &env(&[]),
-    );
-    assert_eq!(
-        (refusal.code.as_ref(), refusal.exit),
-        ("unsupported_backend_operation", Exit::USAGE)
-    );
-    assert!(refusal.message.contains("--backend docker"), "{}", refusal.message);
+fn parallels_and_tart_refuse_a_linux_guest() {
+    for (backend, reason) in [(Backend::Parallels, "Aqua session"), (Backend::Tart, "--backend docker")] {
+        let refusal = refuse(
+            Selection {
+                backend,
+                guest_os: GuestOs::Linux,
+            },
+            &env(&[]),
+        );
+        assert_eq!(
+            (refusal.code.as_ref(), refusal.exit),
+            ("unsupported_backend_operation", Exit::USAGE),
+            "{backend:?}"
+        );
+        assert!(refusal.message.contains(reason), "{backend:?}: {}", refusal.message);
+    }
 }
 
 #[test]
@@ -940,6 +927,20 @@ fn the_idle_stop_is_the_container_engines_alone() {
         assert_eq!(refusal.code, "invalid_environment", "{malformed}");
         assert!(refusal.message.contains("AIR_VM_IDLE_STOP"), "{}", refusal.message);
     }
+}
+
+// A run exports nothing by default. `failed` and `all` name what it exports, always into the export directory of the
+// checkout, and any other value is refused.
+#[test]
+fn the_export_is_off_unless_the_environment_names_it() {
+    let settings = load(docker(), &env(&[]));
+    assert_eq!(settings.export, Export::Off);
+    assert_eq!(settings.export_root, Path::new("/repo/out/air/vm-export"));
+    assert_eq!(load(docker(), &env(&[("AIR_VM_EXPORT", "failed")])).export, Export::Failed);
+    assert_eq!(load(docker(), &env(&[("AIR_VM_EXPORT", "all")])).export, Export::All);
+    let refusal = refuse(docker(), &env(&[("AIR_VM_EXPORT", "yes")]));
+    assert_eq!(refusal.code, "invalid_environment");
+    assert!(refusal.message.contains("AIR_VM_EXPORT"), "{}", refusal.message);
 }
 
 #[test]

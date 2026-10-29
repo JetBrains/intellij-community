@@ -5,6 +5,7 @@
 
 pub mod affected;
 pub mod bridge;
+mod declarations;
 pub mod lanes;
 mod specs;
 
@@ -24,4 +25,5 @@ pub(crate) use regex;
 
 pub use affected::{VIA_LANE_WIDE, affected_suites, reason};
 pub use bridge::{air_area, air_areas, refusal};
+pub use declarations::{Baseline, DeclarationReport, VIA_DECLARATION, VIA_VOCABULARY};
 pub use lanes::{UiLane, explicit_only_lane_names, ui_lane, ui_lane_names, ui_lane_of_label, ui_lanes};

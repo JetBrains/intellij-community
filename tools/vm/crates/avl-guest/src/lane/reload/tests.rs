@@ -9,29 +9,18 @@ use serde_json::{Value, json};
 use tempfile::TempDir;
 
 use super::*;
-use crate::lane::package::sha256_hex;
+use crate::lane::testing::{context_plugin, token_refusal};
 
 const RESIDENT: &str = REQUIRED_CONTEXT_PLUGINS[1];
 const TOKEN: &str = "bridge-token";
 const LAUNCH: &str = "air-ui-0123456789abcdef";
 
-/// A context plugin file `destination` whose bytes are `content`, written into `sources`.
-fn plugin(sources: &Path, destination: &str, content: &str) -> ContextPlugin {
-    let source = sources.join(destination.replace('/', "_"));
-    fs::write(&source, content).unwrap();
-    ContextPlugin {
-        destination: destination.to_owned(),
-        sha256: sha256_hex(content.as_bytes()),
-        source,
-    }
-}
-
 /// The context plugins of a run: the bridge with `bridge` as its jar, and the resident part with `resident`.
 fn plugins(sources: &Path, bridge: &str, resident: &str) -> Vec<ContextPlugin> {
     vec![
-        plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/bridge.jar"), bridge),
-        plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/modules/frontend.jar"), "frontend"),
-        plugin(sources, &format!("{RESIDENT}/lib/resident.jar"), resident),
+        context_plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/bridge.jar"), bridge),
+        context_plugin(sources, &format!("{BRIDGE_DIRECTORY}/lib/modules/frontend.jar"), "frontend"),
+        context_plugin(sources, &format!("{RESIDENT}/lib/resident.jar"), resident),
     ]
 }
 
@@ -191,8 +180,8 @@ impl FakeResident {
         let seen = Arc::clone(&requests);
         let polls = AtomicUsize::new(0);
         let server = FakeHttp::start(move |request: &Request| {
-            if request.header("X-Air-Ui-Test-Token") != Some(TOKEN) {
-                return Response::json(401, r#"{"failure":{"type":"java.lang.SecurityException","message":"bad token"}}"#);
+            if let Some(refusal) = token_refusal(request, TOKEN) {
+                return refusal;
             }
             if request.path.starts_with("/api/air/ui-test-events") {
                 let poll = polls.fetch_add(1, Ordering::SeqCst);
@@ -219,6 +208,28 @@ impl FakeResident {
     }
 }
 
+/// The reload of the bridge jar `b2`: the sources of the context plugins, the context, the plugins and the digest of
+/// the bridge plugin.
+struct Reload {
+    sources: TempDir,
+    context: TempDir,
+    files: Vec<ContextPlugin>,
+    digest: String,
+}
+
+impl Reload {
+    fn new() -> Self {
+        let sources = TempDir::new().unwrap();
+        let files = plugins(sources.path(), "b2", "r1");
+        Self {
+            context: TempDir::new().unwrap(),
+            digest: bridge_digest(&files),
+            files,
+            sources,
+        }
+    }
+}
+
 fn clean_answer(digest: &str) -> Value {
     json!({ "unloaded": true, "oldLoaders": 0, "loaded": true, "digest": digest, "reason": null })
 }
@@ -227,10 +238,12 @@ fn clean_answer(digest: &str) -> Value {
 // new digest. Each step writes one timed line.
 #[test]
 fn a_clean_reload_waits_for_the_new_digest_in_the_lifecycle() {
-    let sources = TempDir::new().unwrap();
-    let context = TempDir::new().unwrap();
-    let files = plugins(sources.path(), "b2", "r1");
-    let digest = bridge_digest(&files);
+    let Reload {
+        sources,
+        context,
+        files,
+        digest,
+    } = Reload::new();
     let old = bridge_digest(&plugins(sources.path(), "b1", "r1"));
     let resident = FakeResident::start(200, clean_answer(&digest), Some(old), Some(digest.clone()), 2);
     let (result, notes) = resident.reload(context.path(), &files);
@@ -259,10 +272,12 @@ fn a_clean_reload_waits_for_the_new_digest_in_the_lifecycle() {
 // and none of them waits for the lifecycle.
 #[test]
 fn a_refusal_a_leak_and_a_driver_failure_are_each_a_relaunch() {
-    let sources = TempDir::new().unwrap();
-    let context = TempDir::new().unwrap();
-    let files = plugins(sources.path(), "b2", "r1");
-    let digest = bridge_digest(&files);
+    let Reload {
+        sources: _sources,
+        context,
+        files,
+        digest,
+    } = Reload::new();
     let refused = json!({ "unloaded": false, "oldLoaders": -1, "loaded": false, "digest": null, "reason": "a reload runs" });
     let leaked = json!({ "unloaded": true, "oldLoaders": 1, "loaded": true, "digest": digest, "reason": "1 old class loader" });
     for (status, answer, expected) in [

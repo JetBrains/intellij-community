@@ -350,6 +350,53 @@ crate.from_cargo(
 )
 use_repo(crate, "bt")
 
+# The crates of //tools/yonder, resolved from its `Cargo.lock`. The client runs on every host that runs BT, because
+# `bt --host` links it. The agent runs on macOS and Linux.
+crate.from_cargo(
+    name = "yonder",
+    cargo_config = "//tools/yonder:.cargo/config.toml",
+    cargo_lock = "//tools/yonder:Cargo.lock",
+    cargo_toml = "//tools/yonder:Cargo.toml",
+    # Renders `[workspace.lints]` as `@yonder//:workspace_cargo_lints`, the lint policy of every crate.
+    generate_lint_config = True,
+    platform_triples = [
+        "aarch64-apple-darwin",
+        "x86_64-apple-darwin",
+        "aarch64-pc-windows-msvc",
+        "x86_64-pc-windows-msvc",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-unknown-linux-gnu",
+    ],
+)
+use_repo(crate, "yonder")
+
+# ring on the Windows triples, where the C toolchain is clang-cl with -Werror. ring adds /Wall, and its own C does not
+# pass -Werror there, so the build script of ring gets -Wno-error for these two triples only.
+crate.annotation_select(
+    build_script_env = {
+        "CFLAGS_aarch64_pc_windows_msvc": "-Wno-error",
+        "CFLAGS_x86_64_pc_windows_msvc": "-Wno-error",
+    },
+    crate = "ring",
+    repositories = ["yonder"],
+    triples = [
+        "aarch64-pc-windows-msvc",
+        "x86_64-pc-windows-msvc",
+    ],
+    version = "0.17.14",
+)
+
+# On Windows AArch64, ring calls `clang` in place of every compiler that is not clang, and clang-cl is not "clang" for
+# cc-rs. clang then gets the clang-cl flags of the toolchain. The patch keeps clang-cl.
+crate.annotation(
+    crate = "ring",
+    patch_args = ["-p1"],
+    patches = ["//tools/yonder:ring-windows-clang-cl.patch"],
+    repositories = ["yonder"],
+    # The patch is for this version only: a new ring needs a new look at its build script.
+    version = "0.17.14",
+)
+
 # The Air UI-lane controller, `tools/vm`: the pinned Apple container, Docker CLI and Tart, and the crate hub `@avl`.
 include("//tools/vm:container.MODULE.bazel")
 include("//tools/vm:docker.MODULE.bazel")

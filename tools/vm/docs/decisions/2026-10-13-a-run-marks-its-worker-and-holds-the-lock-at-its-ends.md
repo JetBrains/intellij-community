@@ -48,6 +48,9 @@ Three shapes in `crates/avl-vm/src/worker/lease.rs` act on a leased worker, and 
 - `with_run_marker` holds the lock only at the two ends of a run. A run under a receipt and the fan-out of `run`,
   `shard` and `flake` take it.
 
+Since 2026-10-24: `with_lease(.., LeaseUse::LockedAction, ..)` replaces `with_lease_operation`, and
+`with_lease(.., LeaseUse::LockedReread, ..)` replaces `with_lease_read`.
+
 The rules of the marker:
 
 1. **The marker is a file of the worker.** It is `<runtime root>/workers/<key>/run.json` (`Config::run_marker_path`),

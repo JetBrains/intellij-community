@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use avl_testkit::traces::{copy_tree, example_bundle, example_file};
-use avl_trace::bundle::{ROOT_DIR_NAME, bundle_file, bundle_path};
+use avl_trace::bundle::{ROOT_DIR_NAME, SNAP_DIR, bundle_file, bundle_path};
 use pretty_assertions::assert_eq;
 use zip::ZipArchive;
 
@@ -15,6 +15,35 @@ use crate::testdata::example_manifest;
 
 fn real_path(path: &Path) -> PathBuf {
     fscopy::resolve_links(path).unwrap()
+}
+
+/// The scan options that extract an inner zip into `nested`.
+fn nested_options(nested: &Path) -> Options {
+    Options {
+        nested_dir: Some(nested.to_path_buf()),
+        ..Options::default()
+    }
+}
+
+/// A summary names the bundles of a root or its absence, and the error of the root after them.
+#[test]
+fn a_root_summary_names_the_bundles_or_the_absence_and_then_the_error() {
+    let state = |exists, bundles, error: Option<&str>| RootState {
+        kind: RootKind::Flag,
+        path: PathBuf::from("/traces"),
+        origin: None,
+        exists,
+        bundles,
+        error: error.map(str::to_owned),
+        problems: Vec::new(),
+    };
+    for (state, want) in [
+        (state(true, 2, None), "2 bundles"),
+        (state(true, 0, Some("permission denied")), "0 bundles: permission denied"),
+        (state(false, 0, None), "absent"),
+    ] {
+        assert_eq!(state.summary(), want, "{state:?}");
+    }
 }
 
 /// The golden bundle's directory inside a packed `outputs.zip`.
@@ -223,10 +252,7 @@ fn a_zip_inside_a_zip_is_extracted_once_and_read_as_a_zip() {
         &outer_dir,
     );
     let nested = tempfile::tempdir().unwrap();
-    let options = || Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    };
+    let options = || nested_options(nested.path());
 
     let scanner = Scanner::new(options());
     let found = scanner.scan(&[Root::new(RootKind::Flag, &outer)]);
@@ -315,11 +341,7 @@ fn a_zip_inside_a_bundle_is_not_opened() {
     let zip = packed.path().join("traces.zip");
     pack(root.path(), &zip, &PackOptions::default()).unwrap();
     let nested = tempfile::tempdir().unwrap();
-    let found = Scanner::new(Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    })
-    .scan(&[Root::new(RootKind::Flag, &zip)]);
+    let found = Scanner::new(nested_options(nested.path())).scan(&[Root::new(RootKind::Flag, &zip)]);
     assert_eq!(found.bundles.len(), 1);
     assert_eq!(fs::read_dir(nested.path()).unwrap().count(), 0);
 }
@@ -343,10 +365,7 @@ fn concurrent_reads_share_an_extraction_that_opens_no_second_level() {
     let outer = zip_of_zips(&[("a/outputs.zip", &inner)], &outer_dir);
     let outer = real_path(&outer);
     let nested = tempfile::tempdir().unwrap();
-    let scanner = Scanner::new(Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    });
+    let scanner = Scanner::new(nested_options(nested.path()));
 
     let counts: Vec<usize> = std::thread::scope(|scope| {
         let readers: Vec<_> = (0..8)
@@ -375,12 +394,8 @@ fn an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing() {
     let outer_dir = tempfile::tempdir().unwrap();
     let outer = zip_of_zips(&[("a/test.outputs/outputs.zip", &bogus)], &outer_dir);
     let nested = tempfile::tempdir().unwrap();
-    let found = Scanner::new(Options {
-        nested_dir: Some(nested.path().to_path_buf()),
-        ..Options::default()
-    })
-    .scan(&[Root::new(RootKind::Flag, &outer)]);
-    assert!(found.bundles.is_empty());
+    let found = Scanner::new(nested_options(nested.path())).scan(&[Root::new(RootKind::Flag, &outer)]);
+    assert_eq!(found.bundles, []);
     let problems = &found.roots[0].problems;
     assert_eq!(problems.len(), 1, "{problems:?}");
     assert!(
@@ -391,7 +406,7 @@ fn an_inner_zip_that_does_not_read_is_reported_and_leaves_nothing() {
 
     let mut archive = ZipArchive::new(Cursor::new(fs::read(&outer).unwrap())).unwrap();
     let (bundles, errors) = read_zip_reporting(&mut archive, "bazel.logs.zip");
-    assert!(bundles.is_empty());
+    assert_eq!(bundles, []);
     assert_eq!(errors.len(), 1, "{errors:?}");
     assert!(errors[0].starts_with("a/test.outputs/outputs.zip: "), "{errors:?}");
 }
@@ -425,6 +440,33 @@ fn a_bundle_without_a_manifest_is_named_by_its_logs_and_its_path() {
     assert_eq!(stale.bundles[0].status, Status::Truncated);
 }
 
+/// The thumbnail is the last picture of `snap/` by name in either format, in a directory and in a zip. A lossy bundle
+/// holds AVIF stills, which a tree file of the same ordinal does not hide.
+#[test]
+fn the_thumbnail_of_a_lossy_bundle_is_its_last_avif_still() {
+    let manifest = example_manifest();
+    let outputs = tempfile::tempdir().unwrap();
+    let bundle = bundle_file(outputs.path(), &example_entry(&manifest));
+    copy_tree(&example_bundle(), &bundle);
+    let snap = bundle.join(SNAP_DIR);
+    for entry in fs::read_dir(&snap).unwrap() {
+        let path = entry.unwrap().path();
+        if path.extension().is_some_and(|extension| extension == "webp") {
+            fs::rename(&path, path.with_extension("avif")).unwrap();
+        }
+    }
+    let keep = tempfile::tempdir().unwrap();
+    let zip = keep.path().join("outputs.zip");
+    pack(outputs.path(), &zip, &PackOptions::default()).unwrap();
+
+    let found = Scanner::new(Options::default()).scan(&[
+        Root::new(RootKind::Flag, outputs.path()),
+        Root::new(RootKind::BazelTestlogs, keep.path()),
+    ]);
+    let thumbnails: Vec<Option<&str>> = found.bundles.iter().map(|bundle| bundle.summary.thumbnail.as_deref()).collect();
+    assert_eq!(thumbnails, [Some("snap/0012.avif"); 2]);
+}
+
 /// A walk never enters `.git` or `node_modules`, and one with a bound stops at it, keeps what it found, and says so.
 /// The bound is for a directory named without knowing whether it is a trace root, such as the checkout.
 #[test]
@@ -454,7 +496,7 @@ fn a_walk_skips_git_and_node_modules_and_stops_at_its_bound() {
         ..Options::default()
     })
     .scan(&[Root::new(RootKind::Flag, root.path())]);
-    assert!(bounded.bundles.is_empty());
+    assert_eq!(bounded.bundles, []);
     assert_eq!(bounded.roots[0].problems.len(), 1);
     assert!(
         bounded.roots[0].problems[0].contains("holds more than 4 entries"),
@@ -519,11 +561,31 @@ fn the_default_roots_find_the_controllers_zips() {
     let unresolved = default_roots(Some(Path::new("/repo")), Err("AIR_VM_RUNTIME_ROOT is not absolute"));
     assert_eq!(
         unresolved.iter().map(|root| root.kind).collect::<Vec<_>>(),
-        [RootKind::BazelTestlogs, RootKind::VmReports, RootKind::VmRuns]
+        [RootKind::BazelTestlogs, RootKind::VmExport, RootKind::VmReports, RootKind::VmRuns]
     );
     let states = Scanner::new(Options::default()).scan(&unresolved).roots;
-    assert_eq!(states[1].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
+    assert_eq!(states[1].error, None, "the export of the checkout needs no runtime root");
     assert_eq!(states[2].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
+    assert_eq!(states[3].error.as_deref(), Some("AIR_VM_RUNTIME_ROOT is not absolute"));
+}
+
+/// A run that another host exported into the checkout is found by the glob of the runs, under the export directory.
+#[test]
+fn the_default_roots_find_the_exported_zips_of_the_checkout() {
+    let manifest = example_manifest();
+    let repo = tempfile::tempdir().unwrap();
+    let traces = repo.path().join(VM_EXPORT_DIR).join("runs/develar-run-1/traces/iter-1");
+    fs::create_dir_all(&traces).unwrap();
+    let keep = tempfile::tempdir().unwrap();
+    fs::copy(packed_example(&manifest, &keep), traces.join("001.zip")).unwrap();
+    fs::write(traces.join("../../events.ndjson"), "{}\n").unwrap();
+
+    let runtime = tempfile::tempdir().unwrap();
+    let roots = default_roots(Some(repo.path()), Ok(runtime.path()));
+    assert_eq!(roots[1].kind, RootKind::VmExport);
+    let found = Scanner::new(Options::default()).scan(&roots);
+    assert_eq!(found.bundles.len(), 1, "{:?}", found.roots);
+    assert_eq!(found.roots[1].bundles, 1, "{:?}", found.roots);
 }
 
 #[test]

@@ -1,18 +1,13 @@
 use std::fs;
-use std::path::PathBuf;
 
 use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
 use super::*;
+use crate::lane::testing::lane_context_testdata;
 
 /// The id of the product workspace file of the fixture project.
 const WORKSPACE_ID: &str = "2xNGZqRjrRwMqQUkwz4zEXmCQ9S";
-
-fn testdata(name: &str) -> PathBuf {
-    let path = avl_testkit::crate_path!(&format!("testdata/lane-context/{name}"));
-    std::path::absolute(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
-}
 
 /// A config directory whose product workspace directory holds `files`, each a name and its text.
 fn config(files: &[(&str, &str)]) -> TempDir {
@@ -30,7 +25,7 @@ fn config(files: &[(&str, &str)]) -> TempDir {
 // other component, and keeps the layout of the file.
 #[test]
 fn the_clear_removes_the_restored_tabs_and_keeps_every_other_component() {
-    let fixture = fs::read_to_string(testdata("product-workspace.xml")).unwrap();
+    let fixture = fs::read_to_string(lane_context_testdata("product-workspace.xml")).unwrap();
     let name = format!("{WORKSPACE_ID}.xml");
     let config = config(&[(&name, &fixture)]);
     let file = config.path().join(PRODUCT_WORKSPACE_DIR).join(&name);
@@ -38,7 +33,7 @@ fn the_clear_removes_the_restored_tabs_and_keeps_every_other_component() {
     assert_eq!(clear_restored_editors(config.path()).unwrap(), [Cleared::Components(file.clone())]);
 
     let cleared = fs::read_to_string(&file).unwrap();
-    expect_test::expect_file![testdata("product-workspace-cleared.xml")].assert_eq(&cleared);
+    expect_test::expect_file![lane_context_testdata("product-workspace-cleared.xml")].assert_eq(&cleared);
     assert!(!cleared.contains("agent-thread-view://"), "{cleared}");
     assert_eq!(clear_restored_editors(config.path()).unwrap(), []);
 }

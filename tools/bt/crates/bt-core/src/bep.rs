@@ -42,6 +42,9 @@ pub struct BepSummary {
     pub attempts: Vec<BepAttempt>,
     pub targets: BTreeMap<String, String>,
     pub failed_to_build: Vec<String>,
+    /// How many top-level targets bazel completed, built or not. Zero after a successful build means that the
+    /// patterns named no target: bazel exits 0 for a pattern under an ignored directory, and only warns.
+    pub completed_targets: usize,
     pub aborted: Vec<String>,
     pub action_stderr: Vec<String>,
     /// Bazel's own verdict, and `None` when the build never finished, which is exactly the case where a false
@@ -263,10 +266,11 @@ pub fn parse_bep(lines: impl IntoIterator<Item = String>, platform: Platform) ->
         }
 
         // proto3 omits a false bool, so failure is "not explicitly true", never `success == false`.
-        if let (Some(identity), Some(completed)) = (object::<Labelled>(id, "targetCompleted"), object::<Success>(&event, "completed"))
-            && !completed.success
-        {
-            summary.failed_to_build.push(identity.label.unwrap_or_default());
+        if let (Some(identity), Some(completed)) = (object::<Labelled>(id, "targetCompleted"), object::<Success>(&event, "completed")) {
+            summary.completed_targets += 1;
+            if !completed.success {
+                summary.failed_to_build.push(identity.label.unwrap_or_default());
+            }
             continue;
         }
 

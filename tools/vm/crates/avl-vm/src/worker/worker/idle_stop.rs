@@ -6,7 +6,6 @@
 //! record of its nonce and exits. A process that died before its deadline stops nothing, so each release also stops
 //! the other workers whose deadline passed without their process.
 
-use std::io::Write;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -14,12 +13,13 @@ use avl_base::clock::stamp;
 use avl_base::fs::write_atomically;
 use avl_base::{Config, Exit, Outcome, Refusal, RefusalExt, SCHEMA_VERSION, new_id};
 use avl_host_sys::Ctx;
-use avl_host_sys::private::{PrivateOpen, open_private_file};
+use avl_host_sys::private::open_session_log;
 use jiff::{SignedDuration, Timestamp};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 use super::{Manager, StopState, read_lease};
+use crate::worker::docker::remove_if_present;
 use crate::worker::secure::read_json_record;
 
 /// How often a waiting `pool idle-stop` process reads the record again. A record that a later operation removed or
@@ -60,16 +60,7 @@ pub(crate) fn read_idle_stop_record(settings: &Config, worker: &str) -> Option<I
 
 /// Removes the record of the worker, so a waiting process stops nothing. A missing record is no error.
 pub(crate) fn remove_idle_stop_record(settings: &Config, worker: &str) -> Result<(), Refusal> {
-    let path = settings.idle_stop_record_path(worker);
-    match std::fs::remove_file(&path) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(Refusal::new(
-            "state_write_failed",
-            Exit::FAILURE,
-            format!("cannot remove {}: {error}", path.display()),
-        )),
-    }
+    remove_if_present(&settings.idle_stop_record_path(worker))
 }
 
 /// What one decision of an idle stop did.
@@ -281,11 +272,9 @@ pub(crate) fn spawn_detached_idle_stop(manager: &Manager, request: &IdleStopRequ
     let failed = |what: String| Refusal::new("idle_stop_start_failed", Exit::CANT_CREATE, what);
     let program = std::env::current_exe().map_err(|error| failed(format!("cannot name the controller executable: {error}")))?;
     let log_path = settings.idle_stop_log_path(&request.worker);
-    let unusable = |error: std::io::Error| failed(format!("cannot open {}: {error}", log_path.display()));
-    let mut log = open_private_file(&log_path, PrivateOpen::Append).map_err(unusable)?;
-    let log_err = log.try_clone().map_err(unusable)?;
-    // A header the log cannot take costs only the header.
-    let _ = writeln!(log, "\n--- {}: the idle stop of {} waits", stamp(Timestamp::now()), request.worker);
+    let header = format!("{}: the idle stop of {} waits", stamp(Timestamp::now()), request.worker);
+    let (log, log_err) =
+        open_session_log(&log_path, &header).map_err(|error| failed(format!("cannot open {}: {error}", log_path.display())))?;
     let argv = [
         program.into_os_string(),
         "--backend".into(),

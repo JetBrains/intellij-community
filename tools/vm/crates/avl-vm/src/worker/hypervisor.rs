@@ -80,6 +80,34 @@ pub(crate) fn is_unsupported(refusal: &Refusal) -> bool {
     refusal.code == UNSUPPORTED_CODE
 }
 
+/// The argv of a host command of a backend: its `program`, then the `arguments`.
+pub(crate) fn host_argv(program: String, arguments: &[&str]) -> Vec<String> {
+    std::iter::once(program)
+        .chain(arguments.iter().map(|argument| (*argument).to_owned()))
+        .collect()
+}
+
+/// `<head> exec [-i] <worker> <argv…>`, the guest command line of Tart and of Docker.
+///
+/// The one spelling of that line, and the one place its head is declared to phase timing, so a spawn that did not
+/// come through here is a host call by construction. `-i` keeps stdin open and is passed exactly when the caller has
+/// stdin. Never `-t`: a tty would rewrite the relay's bytes and the file writes that `tee` carries. `docker exec`
+/// lands as root, so the `sudo -H -u admin` prefix every guest step already has applies unchanged.
+///
+/// The head is the `resolved_program` of the backend, not the program of the gate: `daemon stop` and `daemon log`
+/// reach the guest without the gate, and an empty head would reach the spawn. The head is not read from the
+/// settings either, because the pinned executable that the gate resolved lives in the backend.
+fn exec_argv(ctx: &Ctx, head: String, worker: &str, argv: &[String], interactive: bool) -> Vec<String> {
+    ctx.timeline().declare_guest_head(&head);
+    let mut line = vec![head, "exec".to_owned()];
+    if interactive {
+        line.push("-i".to_owned());
+    }
+    line.push(worker.to_owned());
+    line.extend_from_slice(argv);
+    line
+}
+
 // --- the machine ---------------------------------------------------------------------------------------------
 
 /// The configured backend's concrete implementation. Exactly one, so a branch cannot reach for the wrong one.
@@ -155,10 +183,10 @@ impl Machine {
     pub(crate) async fn guest_argv(&self, ctx: &Ctx, worker: &str, argv: &[String], interactive: bool) -> Result<Vec<String>, Refusal> {
         match self {
             #[cfg(unix)]
-            Self::Tart(tart) => tart.guest_argv(ctx, worker, argv, interactive).await,
+            Self::Tart(tart) => Ok(exec_argv(ctx, tart.resolved_program(ctx).await?, worker, argv, interactive)),
             #[cfg(unix)]
             Self::Parallels(parallels) => Ok(parallels.guest_argv(ctx, worker, argv)),
-            Self::Docker(docker) => docker.guest_argv(ctx, worker, argv, interactive).await,
+            Self::Docker(docker) => Ok(exec_argv(ctx, docker.resolved_program(ctx).await?, worker, argv, interactive)),
             Self::ContainerLinux(container_linux) => Ok(container_linux.guest_argv(ctx, worker, argv, interactive)),
         }
     }

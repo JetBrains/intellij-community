@@ -1,11 +1,15 @@
 //! The helpers that the suites of `bench` share: the fixture session of `testdata/bench` and its goldens.
 
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
+
+use avl_base::Reporter;
 
 use super::arm::Arm;
 use super::files;
-use super::record::{self, LaunchFacts, RunId};
-use super::session::{self, SUMMARY_FILE};
+use super::profile::ProfileEvent;
+use super::record::{self, LaunchFacts, RunId, RunKind, RunRecord};
+use super::session::{self, GenerationRef, GitInfo, SUMMARY_FILE, SessionInfo};
 use super::summary::Summary;
 
 /// The `testdata/bench` directory of this crate, under cargo and under Bazel.
@@ -19,6 +23,54 @@ pub(crate) fn fixture_session() -> (tempfile::TempDir, PathBuf) {
     let session = dir.path().join("session");
     avl_testkit::traces::copy_tree(&testdata_dir().join("session"), &session);
     (dir, session)
+}
+
+/// A copy of the fixture session after its replay, so it has its `summary.json`.
+pub(crate) fn replayed_session() -> (tempfile::TempDir, PathBuf) {
+    let (dir, session) = fixture_session();
+    replay(&session);
+    (dir, session)
+}
+
+/// Replays `session` into its `summary.json`, and answers the summary.
+pub(crate) fn replay(session: &Path) -> Summary {
+    let (reporter, _, _) = Reporter::in_memory("vm");
+    super::command::replay(session, &reporter).expect("a summary")
+}
+
+/// The inputs of a welcome session with `arms` and `runs` runs of each arm, without a generation, a project and a load
+/// limit.
+pub(crate) fn session_info(arms: Vec<Arm>, runs: u32) -> SessionInfo {
+    SessionInfo {
+        command: "welcome".to_owned(),
+        target: "//build:idea_dist".to_owned(),
+        git: GitInfo::default(),
+        generation: GenerationRef::default(),
+        measure_model: None,
+        arms,
+        runs,
+        cold: false,
+        hold_ms: 0,
+        profile: false,
+        profile_event: ProfileEvent::Cpu,
+        project: None,
+        project_file: None,
+        suppressed_plugin: None,
+        additional_modules: Vec::new(),
+        max_load: None,
+        warnings: Vec::new(),
+    }
+}
+
+/// The record of the run `index` of `arm`, without a profile. A run with a `value` is valid and has it as its metric
+/// `metric`. A run without a value is invalid, because it saw no event.
+pub(crate) fn run_record(arm: Arm, kind: RunKind, index: u32, metric: &str, value: Option<f64>) -> RunRecord {
+    RunRecord {
+        valid: value.is_some(),
+        reason: value.is_none().then(|| "no event".to_owned()),
+        metrics: value.map(|value| BTreeMap::from([(metric.to_owned(), value)])).unwrap_or_default(),
+        ..RunRecord::new(&RunId { arm, kind, index }, LaunchFacts::default())
+    }
 }
 
 /// Collects the run directories `runs` of `session` into their `result.json`, and writes a `summary.json` whose arms

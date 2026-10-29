@@ -143,11 +143,11 @@ pub(crate) fn encode_frame(opcode: u8, payload: &[u8], mask: Option<[u8; 4]>) ->
     match u16::try_from(payload.len()) {
         Ok(length @ 0..=125) => frame.push(mask_bit | u8::try_from(length).unwrap_or_default()),
         Ok(length) => {
-            frame.push(mask_bit | 126);
+            frame.push(mask_bit | 0x7e);
             frame.extend_from_slice(&length.to_be_bytes());
         }
         Err(_) => {
-            frame.push(mask_bit | 127);
+            frame.push(mask_bit | 0x7f);
             frame.extend_from_slice(&u64::try_from(payload.len()).unwrap_or_default().to_be_bytes());
         }
     }
@@ -283,7 +283,7 @@ impl Receiver {
 }
 
 /// The code of a close frame with `payload`, when it has one.
-fn close_code(payload: &[u8]) -> Option<u16> {
+const fn close_code(payload: &[u8]) -> Option<u16> {
     match payload {
         [high, low, ..] => Some(u16::from_be_bytes([*high, *low])),
         _ => None,

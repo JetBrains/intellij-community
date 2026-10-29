@@ -28,6 +28,11 @@ pub fn message(name: &str, attributes: &[(&str, &str)], value: Option<&str>) -> 
     line
 }
 
+/// The `publishArtifacts` message that publishes the host file `file` into the artifact directory `target`.
+pub fn publish_artifacts(file: &str, target: &str) -> String {
+    message("publishArtifacts", &[], Some(&format!("{file} => {target}")))
+}
+
 /// The `buildProblem` message of `description`. TeamCity fails the build for it, also when each failed case is muted,
 /// and it keeps one problem per `identity`.
 pub fn build_problem(description: &str, identity: &str) -> String {

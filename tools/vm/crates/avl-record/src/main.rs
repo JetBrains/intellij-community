@@ -35,6 +35,8 @@ macro_rules! say {
 
 mod allure;
 mod attach;
+#[cfg(unix)]
+mod avif;
 mod bundle;
 mod capture;
 mod dumps;
@@ -157,7 +159,7 @@ pub(crate) fn from_unix_ms(ms: i64) -> SystemTime {
 }
 
 /// The diagnostics stream: standard error in the real process, a buffer in a test. Lines come from the command
-/// loop, the frame loop and the still encoder, hence the lock.
+/// loop, the frame loop and the still encoders, hence the lock.
 #[derive(Clone)]
 pub(crate) struct Diagnostics(Arc<Mutex<dyn Write + Send>>);
 

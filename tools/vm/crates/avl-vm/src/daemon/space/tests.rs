@@ -47,8 +47,8 @@ async fn above_the_floor_the_check_costs_one_df_and_deletes_nothing() {
         require(&fixture).await.unwrap();
         let channel = fixture.channel();
         assert_eq!(channel.calls_containing("/bin/df").len(), 1);
-        assert!(channel.calls_containing("/bin/ls").is_empty());
-        assert!(channel.calls_containing("/bin/rm").is_empty());
+        assert_eq!(channel.calls_containing("/bin/ls"), Vec::<String>::new());
+        assert_eq!(channel.calls_containing("/bin/rm"), Vec::<String>::new());
     }
 }
 
@@ -67,7 +67,7 @@ async fn below_the_floor_the_run_is_refused_with_the_command_that_finds_the_culp
         "the refusal hands the reader a command, said {:?}",
         failure.message
     );
-    assert!(fixture.channel().calls_containing("/bin/rm").is_empty());
+    assert_eq!(fixture.channel().calls_containing("/bin/rm"), Vec::<String>::new());
 }
 
 // An unparsable df never blocks the run: `None` means "do not know".
@@ -76,7 +76,7 @@ async fn an_unparsable_df_never_blocks_the_run() {
     let fixture = Fixture::new().await;
     fixture.on("df", answer_text("garbage"));
     require(&fixture).await.unwrap();
-    assert!(fixture.channel().calls_containing("/bin/rm").is_empty());
+    assert_eq!(fixture.channel().calls_containing("/bin/rm"), Vec::<String>::new());
 }
 
 // The removal of the retired roots is one `rm -rf` of `daemon-runtime`, `out` and `build-download` under `<vmData>`, as

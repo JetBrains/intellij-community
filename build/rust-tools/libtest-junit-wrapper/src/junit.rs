@@ -32,8 +32,14 @@ struct Problem {
     body: Option<String>,
 }
 
-/// Writes the report of one run. `seconds` is how long the whole run took.
-pub(crate) fn write_report(report: &Report, seconds: f64, out: &mut impl Write) -> io::Result<()> {
+/// Writes the report of one run. `seconds` is how long the whole run took. A `class` is the class name of every test
+/// case, which is then named by the last segment of its test name.
+pub(crate) fn write_report(
+    report: &Report,
+    seconds: f64,
+    class: Option<&str>,
+    out: &mut impl Write,
+) -> io::Result<()> {
     let counts = report.counts();
     let totals = format!(
         r#"tests="{}" failures="{}" errors="{}" skipped="{}" time="{}""#,
@@ -52,14 +58,21 @@ pub(crate) fn write_report(report: &Report, seconds: f64, out: &mut impl Write) 
         escape(report.suite())
     )?;
     for result in report.results() {
-        write_test_case(result, out)?;
+        write_test_case(result, class, out)?;
     }
     writeln!(out, "  </testsuite>")?;
     writeln!(out, "</testsuites>")
 }
 
-fn write_test_case(result: &TestResult, out: &mut impl Write) -> io::Result<()> {
-    let (class_name, name) = split_name(&result.name);
+fn write_test_case(
+    result: &TestResult,
+    class: Option<&str>,
+    out: &mut impl Write,
+) -> io::Result<()> {
+    let (class_name, name) = match class {
+        Some(class) => (class, case_name(&result.name)),
+        None => split_name(&result.name),
+    };
     let case = format!(
         r#"    <testcase classname="{}" name="{}" time="{}""#,
         escape(class_name),
@@ -166,6 +179,11 @@ fn split_name(name: &str) -> (&str, &str) {
         Some(position) => (&name[..position], &name[position + 2..]),
         None => (ROOT_CLASS_NAME, name),
     }
+}
+
+/// The name of a test without its module path: the name of its case when the report has one class.
+pub(crate) fn case_name(name: &str) -> &str {
+    split_name(name).1
 }
 
 /// A duration as JUnit writes it.

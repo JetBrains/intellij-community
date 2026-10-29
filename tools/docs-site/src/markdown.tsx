@@ -73,6 +73,22 @@ function titleForPath(path: string): string | null {
   return site().index.docsByPath.get(path)?.title || null
 }
 
+/** A page of the site: its route and its title, null when the target has no known title. */
+export interface SitePage {
+  href: string
+  title: string | null
+}
+
+/** The page of the site for a repo-root-relative path, or null when the site bundles no page of it. */
+export function pageOfRepoPath(repoPath: string): SitePage | null {
+  const contentPath = contentPathOf(site().config.contentRoot, repoPath)
+  if (contentPath === null) {
+    return null
+  }
+  const href = routeForPath(contentPath)
+  return href === null ? null : { href, title: titleForPath(contentPath) }
+}
+
 /** Appends an in-page anchor to a site route as an extra route segment. */
 function routeWithAnchor(route: string, fragment: string | undefined): string {
   return fragment ? `${route}/${encodeURIComponent(fragment)}` : route
@@ -175,12 +191,10 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
       continue
     }
     const [pathPart, fragment] = href.split('#')
-    const { contentRoot } = site().config
-    const repoPath = resolveRepoPath(contentRoot, baseDir, decodeURIComponent(pathPart))
-    const contentPath = contentPathOf(contentRoot, repoPath)
-    const route = contentPath ? routeForPath(contentPath) : null
-    if (route) {
-      anchor.setAttribute('href', routeWithAnchor(route, fragment))
+    const repoPath = resolveRepoPath(site().config.contentRoot, baseDir, decodeURIComponent(pathPart))
+    const page = pageOfRepoPath(repoPath)
+    if (page !== null) {
+      anchor.setAttribute('href', routeWithAnchor(page.href, fragment))
       continue
     }
     // not a bundled doc: bundled source files open in the in-site viewer, everything else on
@@ -207,18 +221,17 @@ function transformRendered(html: string, baseDir: string, anchorHref?: AnchorHre
         // the span names no file of the repository, for example a path inside a jar
         continue
       }
-      const { repoPath, contentPath, fragment, label } = target
+      const { repoPath, fragment, label } = target
       const pathPart = text.split('#')[0]
-      const route = contentPath ? routeForPath(contentPath) : null
-      if (route) {
+      const page = pageOfRepoPath(repoPath)
+      if (page !== null) {
         const link = doc.createElement('a')
-        link.href = routeWithAnchor(route, fragment)
+        link.href = routeWithAnchor(page.href, fragment)
         link.title = repoPath
         // bundled targets with a known title (specs, docs) read as prose links; the resolved
         // path replaces the authored `../…` form when no title exists
-        const title = contentPath ? titleForPath(contentPath) : null
-        if (title) {
-          link.textContent = title
+        if (page.title) {
+          link.textContent = page.title
         }
         else {
           link.className = 'code-link'
@@ -324,14 +337,13 @@ export function renderMarkdown(source: string, baseDir: string, anchorHref?: Anc
 const proseClassName = [
   'markdown-body prose max-w-none',
   // tinted always-on underline that saturates on hover (Syntax-template treatment)
-  'prose-a:font-normal prose-a:underline prose-a:decoration-primary/30 prose-a:underline-offset-2 hover:prose-a:decoration-primary',
+  'prose-a:font-normal prose-a:underline prose-a:underline-offset-4',
   // inline code renders as chips (base layer), not prose's bold backtick-quoted style
   'prose-code:font-normal prose-code:before:content-none prose-code:after:content-none',
   // plain dim citation blocks, not prose's italic quoted style
   'prose-blockquote:font-normal prose-blockquote:not-italic',
-  // bordered section headings and code blocks
-  'prose-h1:border-b prose-h1:border-border prose-h1:pb-1.5',
-  'prose-h2:border-b prose-h2:border-border prose-h2:pb-1.5',
+  // section headings without a rule, balanced like the record title; bordered code blocks
+  'prose-h1:text-balance prose-h2:text-balance prose-h2:tracking-[-0.014em]',
   'prose-pre:rounded-lg prose-pre:border prose-pre:border-border',
   // full-grid tables instead of prose's horizontal-rules-only style
   'prose-table:border-collapse',
@@ -411,7 +423,7 @@ function renderDocSegments(source: string, baseDir: string, anchorHref?: AnchorH
 
 /** The inline error of a fence that does not parse. A site fence renderer shows its errors with it too. */
 export function fenceError(className: string, label: string, errors: string[]): ReactNode {
-  return <pre className={`${className} rounded-md border border-(--tag-ui) px-3.5 py-2 text-sm whitespace-pre-wrap text-(--tag-ui)`}>{label}: {errors.join('; ')}</pre>
+  return <pre className={`${className} rounded-md border border-destructive px-3.5 py-2 text-sm whitespace-pre-wrap text-destructive`}>{label}: {errors.join('; ')}</pre>
 }
 
 /** A ```diagram fence: the hand-laid figure from the lazy React Flow chunk. The harvest already checked that the id exists. */
@@ -422,7 +434,7 @@ function DiagramSegment({ body }: { body: string }) {
     return fenceError('air-diagram-error', 'air-diagram block error', spec === null ? errors : [`no diagram '${spec.id}'`])
   }
   return (
-    <Suspense fallback={<div className="mini-graph my-5.5 overflow-hidden rounded-lg border border-border bg-canvas" style={{ height: spec.height ?? 360 }} aria-hidden="true" />}>
+    <Suspense fallback={<div className="mini-graph my-5.5 overflow-hidden rounded-lg border border-border bg-muted" style={{ height: spec.height ?? 360 }} aria-hidden="true" />}>
       <HandLaidFigure diagram={diagram} initialStep={spec.step} height={spec.height} title={spec.title} />
     </Suspense>
   )

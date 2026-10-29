@@ -1,5 +1,4 @@
-use std::collections::HashMap;
-
+use avl_testkit::environment_lookup;
 use avl_wire::daemon::{ExecutionIdentity, RunEvent, RunEventKind, TestStarted};
 use avl_wire::progress::TraceReady;
 use pretty_assertions::assert_eq;
@@ -39,10 +38,10 @@ fn started(id: &str, class: &str) -> RunEvent {
 fn the_recorded_stream_renders_its_golden() {
     let mut messages = Messages::default();
     let mut lines = Vec::new();
-    for (index, event) in run_stream().iter().enumerate() {
+    for event in &run_stream() {
         lines.extend(messages.record(WORKER, event));
         // The trace of the failed scenario arrives while the next record streams.
-        if index == 5 {
+        if matches!(&event.kind, RunEventKind::TestFinished(finished) if finished.execution.display_name == "attach-file") {
             lines.extend(messages.trace(
                 WORKER,
                 &trace("attach-file", "/runs/run-1/traces/it-boot1-1/001.zip", true),
@@ -81,18 +80,12 @@ fn each_worker_is_its_own_flow() {
 
 #[test]
 fn the_build_step_is_a_teamcity_agent_outside_a_bazel_test() {
-    let environment = |pairs: &[(&str, &str)]| -> HashMap<String, String> {
-        pairs
-            .iter()
-            .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
-            .collect()
-    };
-    let step = environment(&[(TEAMCITY_VERSION, "2026.1")]);
-    assert!(is_build_step(|name| step.get(name).cloned()));
-    let bazel = environment(&[(TEAMCITY_VERSION, "2026.1"), (XML_OUTPUT_FILE, "/x/test.xml")]);
-    assert!(!is_build_step(|name| bazel.get(name).cloned()));
-    let blank = environment(&[(TEAMCITY_VERSION, "")]);
-    assert!(!is_build_step(|name| blank.get(name).cloned()));
+    assert!(is_build_step(environment_lookup(&[(TEAMCITY_VERSION, "2026.1")])));
+    assert!(!is_build_step(environment_lookup(&[
+        (TEAMCITY_VERSION, "2026.1"),
+        (XML_OUTPUT_FILE, "/x/test.xml")
+    ])));
+    assert!(!is_build_step(environment_lookup(&[(TEAMCITY_VERSION, "")])));
 }
 
 /// A plan of simple names and records of FQNs name one class, so the end of the iteration fails no class of the plan.
@@ -194,5 +187,14 @@ fn a_warning_is_a_message_with_the_warning_status() {
     assert_eq!(
         warning("no viewer: 'x' [y] | z"),
         "##teamcity[message text='no viewer: |'x|' |[y|] || z' status='WARNING']"
+    );
+}
+
+/// A log message has the normal status, so TeamCity shows it as a plain line of the build log.
+#[test]
+fn a_log_message_has_the_normal_status() {
+    assert_eq!(
+        log_message("see https://example.test/a?b=c [1]"),
+        "##teamcity[message text='see https://example.test/a?b=c |[1|]']"
     );
 }

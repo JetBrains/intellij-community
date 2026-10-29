@@ -1,8 +1,13 @@
-//! The controller's runs, as their journals say: `<runtime root>/runs/<runId>/events.ndjson`.
+//! The controller's runs, as their journals say: `<runs directory>/<runId>/events.ndjson`.
 //!
 //! A journal grows while its run goes on. The listing gives one summary of each run, and `GET /__air/run/<id>`
 //! gives the records of one run from a byte offset. `run-appended` tells the viewer that a journal grew, so a run
 //! page reads only the new records.
+//!
+//! The runs directories are the one of the runtime root and the one of the VM export of the checkout. The first
+//! directory that holds a run directory owns the run, so a local run wins over an exported run with the same id. An
+//! exported run comes from another host, and its records name the paths of that host. The run route maps the trace
+//! zips and the reports of such a run to their copies in the export, see [localize].
 
 use std::collections::{BTreeSet, HashMap};
 use std::fs::{self, File};
@@ -12,6 +17,7 @@ use std::sync::Mutex;
 use std::time::{Duration, SystemTime};
 
 use avl_base::journal::FILE_NAME as JOURNAL_FILE;
+use avl_trace_tools::discover::{SourceKind, VM_RUN_REPORTS_DIR, VM_RUN_TRACES_DIR, bundle_id};
 use avl_wire::daemon::Event as DaemonEvent;
 use avl_wire::progress::{Kind, RunFinished};
 use serde::{Deserialize, Serialize};
@@ -77,6 +83,9 @@ pub(crate) struct ControllerRun {
     /// Why the journal could not be read.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<String>,
+    /// Whether the run comes from the VM export of the checkout, so it ran on another host.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    pub exported: bool,
 }
 
 /// The part of a progress record a summary reads.
@@ -130,9 +139,24 @@ struct JournalsState {
     without_journal: BTreeSet<String>,
 }
 
-/// The journals under one directory, each read again only when its file changed.
+/// One directory of controller runs: one directory for each run, with its journal.
+#[derive(Clone, Debug)]
+pub(crate) struct RunsDir {
+    pub path: PathBuf,
+    /// Whether the runs are the VM export of the checkout, copied from another host.
+    pub exported: bool,
+}
+
+/// The journal of one run, as the run route reads it.
+pub(crate) struct RunJournal {
+    /// The real path of the journal.
+    pub path: PathBuf,
+    pub exported: bool,
+}
+
+/// The journals under the runs directories, each read again only when its file changed.
 pub(crate) struct Journals {
-    dir: Option<PathBuf>,
+    dirs: Vec<RunsDir>,
     state: Mutex<JournalsState>,
 }
 
@@ -143,24 +167,30 @@ pub(crate) fn valid_run_id(run_id: &str) -> bool {
 }
 
 impl Journals {
-    pub(crate) fn new(dir: Option<PathBuf>) -> Self {
+    pub(crate) fn new(dirs: Vec<RunsDir>) -> Self {
         Self {
-            dir,
+            dirs,
             state: Mutex::default(),
         }
     }
 
-    pub(crate) fn dir(&self) -> Option<&Path> {
-        self.dir.as_deref()
+    /// Whether the server reads no controller runs.
+    pub(crate) const fn is_empty(&self) -> bool {
+        self.dirs.is_empty()
     }
 
     fn lock(&self) -> std::sync::MutexGuard<'_, JournalsState> {
         avl_base::sync::lock(&self.state)
     }
 
+    /// The runs directory that owns a run: the first one that holds its run directory.
+    fn home(&self, run_id: &str) -> Option<&RunsDir> {
+        self.dirs.iter().find(|dir| dir.path.join(run_id).is_dir())
+    }
+
     /// The journal of a run.
     pub(crate) fn journal_path(&self, run_id: &str) -> Option<PathBuf> {
-        Some(self.dir.as_ref()?.join(run_id).join(JOURNAL_FILE))
+        Some(self.home(run_id)?.path.join(run_id).join(JOURNAL_FILE))
     }
 
     /// A run's journal and its metadata, or `None` when the run has no journal file.
@@ -174,17 +204,26 @@ impl Journals {
     /// directory of each run still running, for its journal's writes, and each run directory without a journal, for
     /// the journal's creation.
     pub(crate) fn list(&self, now: SystemTime) -> (Vec<ControllerRun>, Vec<PathBuf>) {
-        let Some(dir) = &self.dir else {
-            return (Vec::new(), Vec::new());
-        };
-        let names = run_dirs(dir);
-        // The runs directory itself, so a new run is seen when its directory appears.
-        let mut watch = if names.is_some() { vec![dir.clone()] } else { Vec::new() };
-        let listed = names.unwrap_or_default();
+        let mut watch = Vec::new();
+        // The run directories, each in the runs directory that owns it.
+        let mut homes: Vec<(String, &Path)> = Vec::new();
+        let mut listed = BTreeSet::new();
+        for dir in &self.dirs {
+            let Some(names) = run_dirs(&dir.path) else {
+                continue;
+            };
+            // The runs directory itself, so a new run is seen when its directory appears.
+            watch.push(dir.path.clone());
+            for name in names {
+                if listed.insert(name.clone()) {
+                    homes.push((name, &dir.path));
+                }
+            }
+        }
         let mut state = self.lock();
         let mut runs = Vec::new();
         let mut without_journal = BTreeSet::new();
-        for name in &listed {
+        for (name, dir) in &homes {
             let Some(run) = self.summary_locked(&mut state, name, now) else {
                 // A run creates its directory before its journal.
                 watch.push(dir.join(name));
@@ -209,10 +248,10 @@ impl Journals {
     /// run directory that had no journal has one now. A file event can come late or not at all, and this check reads
     /// the directory itself.
     pub(crate) fn listing_is_stale(&self) -> bool {
-        let Some(dir) = &self.dir else {
+        if self.dirs.is_empty() {
             return false;
-        };
-        let names = run_dirs(dir).unwrap_or_default();
+        }
+        let names: BTreeSet<String> = self.dirs.iter().filter_map(|dir| run_dirs(&dir.path)).flatten().collect();
         let state = self.lock();
         names != state.listed || state.without_journal.iter().any(|run_id| self.journal(run_id).is_some())
     }
@@ -224,6 +263,7 @@ impl Journals {
     }
 
     fn summary_locked(&self, state: &mut JournalsState, run_id: &str, now: SystemTime) -> Option<ControllerRun> {
+        let exported = self.home(run_id)?.exported;
         let (path, info) = self.journal(run_id)?;
         let modified = info.modified().unwrap_or(SystemTime::UNIX_EPOCH);
         let current = state
@@ -241,6 +281,7 @@ impl Journals {
             );
         }
         let mut run = state.facts[run_id].run.clone();
+        run.exported = exported;
         let silent = now.duration_since(modified).unwrap_or_default();
         if run.status == RunStatus::Running && run.error.is_none() && silent > STOPPED_AFTER {
             run.status = RunStatus::Stopped;
@@ -265,15 +306,18 @@ impl Journals {
             .collect()
     }
 
-    /// A run's journal as a real path under the runs directory's real path, or why it cannot be: a missing journal
-    /// (an error), or a link out of the runs directory (`Ok(None)`).
-    pub(crate) fn real_journal(&self, run_id: &str) -> io::Result<Option<PathBuf>> {
-        let (Some(dir), Some(path)) = (&self.dir, self.journal_path(run_id)) else {
+    /// A run's journal as a real path under the real path of its runs directory, or why it cannot be: a missing
+    /// journal (an error), or a link out of the runs directory (`Ok(None)`).
+    pub(crate) fn real_journal(&self, run_id: &str) -> io::Result<Option<RunJournal>> {
+        let Some(dir) = self.home(run_id) else {
             return Err(io::ErrorKind::NotFound.into());
         };
-        let real_dir = fscopy::resolve_links(dir)?;
-        let real = fscopy::resolve_links(&path)?;
-        Ok(real.starts_with(&real_dir).then_some(real))
+        let real_dir = fscopy::resolve_links(&dir.path)?;
+        let real = fscopy::resolve_links(&dir.path.join(run_id).join(JOURNAL_FILE))?;
+        Ok(real.starts_with(&real_dir).then_some(RunJournal {
+            path: real,
+            exported: dir.exported,
+        }))
     }
 }
 
@@ -309,6 +353,7 @@ fn read_summary(run_id: &str, path: &Path) -> ControllerRun {
         traces: 0,
         url: format!("{RUN_ROUTE}{run_id}"),
         error: None,
+        exported: false,
     };
     let file = match File::open(path) {
         Ok(file) => file,
@@ -433,4 +478,77 @@ pub(crate) fn read_records(path: &Path, from: u64) -> io::Result<RunRecords> {
         .filter_map(|line| RawValue::from_string(line.trim().to_owned()).ok())
         .collect();
     Ok(answer)
+}
+
+/// Maps the paths of another host in the records of an exported run to the copies in the export, whose run directory
+/// is `run_dir`. A `traceReady` names the copy of its zip, and the bundle id that the scan of the export gives that
+/// copy. An `iterationReported` names the copy of its report. A record whose copy is missing stays as it is, and so
+/// does every other record.
+pub(crate) fn localize(records: &mut [Box<RawValue>], run_dir: &Path) {
+    for record in records {
+        let Ok(head) = serde_json::from_str::<JournalRecord<'_>>(record.get()) else {
+            continue;
+        };
+        let kind = head.event.parse::<Kind>().ok();
+        if !matches!(kind, Some(Kind::TraceReady | Kind::IterationReported)) {
+            continue;
+        }
+        let Ok(mut value) = serde_json::from_str::<serde_json::Value>(record.get()) else {
+            continue;
+        };
+        let Some(data) = value.get_mut("data").and_then(serde_json::Value::as_object_mut) else {
+            continue;
+        };
+        let changed = if kind == Some(Kind::TraceReady) {
+            localize_trace(data, run_dir)
+        } else {
+            localize_report(data, run_dir)
+        };
+        if changed && let Ok(local) = serde_json::value::to_raw_value(&value) {
+            *record = local;
+        }
+    }
+}
+
+type Fields = serde_json::Map<String, serde_json::Value>;
+
+/// The file name of the path in a string field, when it is one valid path component.
+fn file_name_of<'a>(data: &'a Fields, field: &str) -> Option<&'a str> {
+    let path = data.get(field)?.as_str()?;
+    let name = path.rsplit(['/', '\\']).next()?;
+    valid_run_id(name).then_some(name)
+}
+
+fn localize_trace(data: &mut Fields, run_dir: &Path) -> bool {
+    let (Some(iteration_id), Some(name), Some(entry)) = (
+        data.get("iterationId").and_then(serde_json::Value::as_str),
+        file_name_of(data, "zip"),
+        data.get("entry").and_then(serde_json::Value::as_str),
+    ) else {
+        return false;
+    };
+    if !valid_run_id(iteration_id) {
+        return false;
+    }
+    let copy = run_dir.join(VM_RUN_TRACES_DIR).join(iteration_id).join(name);
+    let Ok(real) = fscopy::resolve_links(&copy) else {
+        return false;
+    };
+    let zip = real.to_string_lossy().into_owned();
+    let id = bundle_id(SourceKind::Zip, &zip, entry);
+    data.insert("bundleId".to_owned(), id.into());
+    data.insert("zip".to_owned(), zip.into());
+    true
+}
+
+fn localize_report(data: &mut Fields, run_dir: &Path) -> bool {
+    let Some(name) = file_name_of(data, "reportPath") else {
+        return false;
+    };
+    let copy = run_dir.join(VM_RUN_REPORTS_DIR).join(name);
+    if !copy.is_file() {
+        return false;
+    }
+    data.insert("reportPath".to_owned(), copy.to_string_lossy().into_owned().into());
+    true
 }

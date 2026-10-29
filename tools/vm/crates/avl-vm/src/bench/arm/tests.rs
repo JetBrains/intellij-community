@@ -1,7 +1,10 @@
 use pretty_assertions::assert_eq;
 
 use super::{Arm, ArmKind, Gate, check_plugin_id, parse_arm};
-use crate::bench::record::{EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPAN, OPEN_HIGHLIGHTED, WELCOME_BECAME_VISIBLE};
+use crate::bench::record::{
+    CARGO_SYNC_LOG_LINE, CARGO_SYNC_LOG_MS, CARGO_SYNC_STARTED, EDITOR_HIGHLIGHTED, EMPTY_STATE_BUILT, EMPTY_STATE_SPAN, OPEN_HIGHLIGHTED,
+    WELCOME_BECAME_VISIBLE,
+};
 
 #[test]
 fn the_main_metric_of_a_welcome_arm_is_the_welcome_event() {
@@ -10,6 +13,7 @@ fn the_main_metric_of_a_welcome_arm_is_the_welcome_event() {
     assert_eq!(Arm::OPEN_PROJECT.main_metric(), OPEN_HIGHLIGHTED);
     assert_eq!(Arm::PROJECT.main_metric(), EDITOR_HIGHLIGHTED);
     assert_eq!(Arm::EMPTY_EDITOR.main_metric(), EMPTY_STATE_BUILT);
+    assert_eq!(Arm::CARGO_SYNC.main_metric(), CARGO_SYNC_STARTED);
 }
 
 #[test]
@@ -23,14 +27,35 @@ fn only_the_project_arms_skip_the_welcome_screen() {
     };
     assert_eq!(name, EMPTY_STATE_SPAN);
     assert!(missing.contains("air.inline.empty.state.prompt"), "{missing}");
+    let Gate::LogLine {
+        line, metric, log_metric, ..
+    } = Arm::CARGO_SYNC.gate()
+    else {
+        panic!("the cargo-sync arm waits for a line of idea.log");
+    };
+    assert_eq!(
+        (line, metric, log_metric),
+        (CARGO_SYNC_LOG_LINE, CARGO_SYNC_STARTED, CARGO_SYNC_LOG_MS)
+    );
 }
 
-/// The empty-editor arm is the last one of the digest, and its label is its value on the command line.
+/// The cargo-sync arm is the last one of the digest, and the label of an arm is its value on the command line.
 #[test]
-fn the_empty_editor_arm_comes_last_with_its_key_and_its_label() {
+fn the_cargo_sync_arm_comes_last_and_each_arm_has_its_key_and_its_label() {
     assert_eq!(
         Arm::ALL,
-        [Arm::MODAL, Arm::NON_MODAL, Arm::OPEN_PROJECT, Arm::PROJECT, Arm::EMPTY_EDITOR]
+        [
+            Arm::MODAL,
+            Arm::NON_MODAL,
+            Arm::OPEN_PROJECT,
+            Arm::PROJECT,
+            Arm::EMPTY_EDITOR,
+            Arm::CARGO_SYNC
+        ]
+    );
+    assert_eq!(
+        (Arm::CARGO_SYNC.key(), Arm::CARGO_SYNC.label()),
+        ("cargoSync".to_owned(), "cargo-sync".to_owned())
     );
     assert_eq!(
         (Arm::EMPTY_EDITOR.key(), Arm::EMPTY_EDITOR.label()),

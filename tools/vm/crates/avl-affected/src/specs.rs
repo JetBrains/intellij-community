@@ -12,7 +12,7 @@
 use bt_core::areas::Area;
 
 use bt_core::runtime::{Runtime, par_map};
-use bt_core::scan::{read_dir_or_none, read_text_or_none};
+use bt_core::scan::{read_text_or_none, walk_dirs};
 use regex::Regex;
 
 use crate::regex;
@@ -58,22 +58,17 @@ impl SpecLink {
 /// parses and resolves.
 pub(crate) fn read_spec_links(runtime: &dyn Runtime, area: &Area, own_suites: &(dyn Fn(&str) -> Vec<usize> + Sync)) -> Vec<SpecLink> {
     let mut specs = Vec::new();
-    let mut frontier: Vec<String> = area.lanes().spec_dir().map(str::to_owned).into_iter().collect();
-    while !frontier.is_empty() {
-        let listings = par_map(&frontier, |dir| read_dir_or_none(runtime, dir));
-        let mut next = Vec::new();
-        for (dir, entries) in frontier.iter().zip(listings) {
-            for entry in entries.into_iter().flatten() {
-                let child = format!("{dir}/{}", entry.name);
-                if entry.is_dir {
-                    next.push(child);
-                } else if entry.name.ends_with(".spec.md") {
-                    specs.push(child);
-                }
+    let roots = area.lanes().spec_dir().map(str::to_owned).into_iter().collect();
+    walk_dirs(runtime, roots, |dir, entries, next| {
+        for entry in entries {
+            let child = format!("{dir}/{}", entry.name);
+            if entry.is_dir {
+                next.push(child);
+            } else if entry.name.ends_with(".spec.md") {
+                specs.push(child);
             }
         }
-        frontier = next;
-    }
+    });
     par_map(&specs, |spec| {
         read_text_or_none(runtime, spec).and_then(|text| parse_spec_link(spec, &text, own_suites))
     })

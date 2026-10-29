@@ -107,7 +107,7 @@ export function DiagramStepBar({ steps, active, onGo, className, baseDir, stepRe
               Overview
             </Button>
           </div>
-          <div className="diagram-step-caption min-h-5 text-detail leading-snug" aria-live="polite">
+          <div className="diagram-step-caption min-h-5 text-xs leading-snug" aria-live="polite">
             {step === null
               ? <span className="text-muted-foreground">{hint ?? 'Pick a step, or press → to walk through.'}</span>
               : (

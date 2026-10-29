@@ -113,23 +113,8 @@ mod lifecycle {
     use super::*;
     use crate::worker::docker::{Docker, ImageSource};
     use crate::worker::pin::PinnedTools;
-    use crate::worker::testing::Fixture;
-    use crate::worker::worker::{PoolCommand, PoolTarget, StartState};
-
-    fn ctx() -> Ctx {
-        Ctx::background()
-    }
-
-    fn docker(fixture: &Fixture) -> &Docker {
-        fixture.manager.machine().docker().expect("a Docker pool")
-    }
-
-    fn position(calls: &[String], prefix: &str) -> usize {
-        calls
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {calls:#?}"))
-    }
+    use crate::worker::testing::{Fixture, ctx, docker, position, start_again, start_first};
+    use crate::worker::worker::{PoolCommand, PoolTarget};
 
     const START: &str = "system start --enable-kernel-install";
 
@@ -154,7 +139,8 @@ mod lifecycle {
             .build();
         let backend = docker(&fixture);
         let tag = "air-ui-worker:3d61c9831be6";
-        let url = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/air-ui-worker/3d61c9831be6-linux-arm64.tar";
+        let url =
+            "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/air-ui-worker/3d61c9831be6-linux-arm64.tar";
         assert_eq!(backend.mirror_url(tag).as_deref(), Some(url));
         let curl = fixture.settings.host_curl.as_str();
         let archive = Path::new("/runtime/docker-context/3d61c9831be6/3d61c9831be6-linux-arm64.tar");
@@ -214,16 +200,29 @@ mod lifecycle {
         assert_eq!(docker(&off).mirror_url(tag), None);
     }
 
+    /// A Docker pool on the Apple `container` engine whose engine is available.
+    async fn available_container() -> Fixture {
+        let fixture = Fixture::docker_container();
+        docker(&fixture).require_available(&ctx(), "").await.unwrap();
+        fixture
+    }
+
+    /// An available `container` pool whose mirror holds an archive of the image tag of the pool. The image of the
+    /// archive carries the revision label that `revision` gives for the tag. Answers the fixture and the tag.
+    async fn mirror_with_archive(revision: impl FnOnce(&str) -> String) -> (Fixture, String) {
+        let fixture = available_container().await;
+        let tag = docker(&fixture).image_tag();
+        fixture.fake.answer(Answer::MirrorArchive, format!("{tag}\n"));
+        fixture.fake.answer(Answer::ImageRevision, revision(&tag));
+        (fixture, tag)
+    }
+
     /// An archive on the mirror serves the worker: it is downloaded, loaded under the tag, checked against the tag
     /// digest through its revision label, and recorded as pulled. Nothing is built, and the archive is removed.
     #[tokio::test]
     async fn an_archive_on_the_mirror_is_loaded_and_not_built() {
-        let fixture = Fixture::docker_container();
+        let (fixture, tag) = mirror_with_archive(|tag| digest(tag).to_owned()).await;
         let backend = docker(&fixture);
-        backend.require_available(&ctx(), "").await.unwrap();
-        let tag = backend.image_tag();
-        fixture.fake.answer(Answer::MirrorArchive, format!("{tag}\n"));
-        fixture.fake.answer(Answer::ImageRevision, digest(&tag));
         fixture.fake.forget_calls();
         assert_eq!(backend.ensure_image(&ctx()).await.unwrap(), tag);
         let calls = fixture.fake.calls();
@@ -249,20 +248,15 @@ mod lifecycle {
     /// archive that holds no image of the tag is built too.
     #[tokio::test]
     async fn an_archive_of_other_bytes_is_not_trusted_and_the_image_is_built() {
-        let fixture = Fixture::docker_container();
+        let (fixture, tag) = mirror_with_archive(|_| "deadbeefcafe".to_owned()).await;
         let backend = docker(&fixture);
-        backend.require_available(&ctx(), "").await.unwrap();
-        let tag = backend.image_tag();
-        fixture.fake.answer(Answer::MirrorArchive, format!("{tag}\n"));
-        fixture.fake.answer(Answer::ImageRevision, "deadbeefcafe");
         assert_eq!(backend.ensure_image(&ctx()).await.unwrap(), tag);
         let calls = fixture.fake.calls();
         assert!(position(&calls, &format!("image delete {tag}")) < position(&calls, "build "));
         assert_eq!(backend.read_image_record().unwrap().source, ImageSource::Built);
 
-        let fixture = Fixture::docker_container();
+        let fixture = available_container().await;
         let backend = docker(&fixture);
-        backend.require_available(&ctx(), "").await.unwrap();
         fixture.fake.answer(Answer::MirrorArchive, "air-ui-worker:000000000000\n");
         assert_eq!(backend.ensure_image(&ctx()).await.unwrap(), tag);
         let calls = fixture.fake.calls();
@@ -480,11 +474,7 @@ mod lifecycle {
     #[tokio::test]
     async fn a_start_speaks_the_apple_dialect() {
         let fixture = Fixture::docker_container();
-        let worker = fixture.worker(0);
-        assert_eq!(
-            fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-            StartState::Started
-        );
+        let worker = start_first(&fixture).await;
         let calls = fixture.fake.calls();
         let cpus = fixture.settings.vm_cpu;
         assert!(position(&calls, DOWNLOAD) < position(&calls, "build "));
@@ -514,12 +504,7 @@ mod lifecycle {
         assert_eq!(record.container_id, worker);
         assert!(docker(&fixture).container_is_current(&ctx(), worker).await.unwrap());
 
-        let before = fixture.fake.calls().len();
-        assert_eq!(
-            fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-            StartState::AlreadyRunning
-        );
-        let after = &fixture.fake.calls()[before..];
+        let after = start_again(&fixture, worker).await;
         assert!(
             !after
                 .iter()
@@ -555,19 +540,22 @@ mod lifecycle {
         position(&calls, &format!("logs --boot -n 40 {worker}"));
     }
 
+    /// Starts the worker of a `container` pool and runs `command`. Answers the fixture and the engine calls of the
+    /// command.
+    async fn pool_after_a_start(command: PoolCommand) -> (Fixture, Vec<String>) {
+        let fixture = Fixture::docker_container();
+        start_first(&fixture).await;
+        fixture.fake.forget_calls();
+        fixture.run_pool(command).await.unwrap();
+        let calls = fixture.fake.calls();
+        (fixture, calls)
+    }
+
     /// `pool stop` stops the container with `stop -t 10` and leaves the server and the builder alone.
     #[tokio::test]
     async fn a_pool_stop_stops_the_containers_only() {
-        let fixture = Fixture::docker_container();
+        let (fixture, calls) = pool_after_a_start(PoolCommand::Stop(PoolTarget::All)).await;
         let worker = fixture.worker(0);
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap();
-        fixture.fake.forget_calls();
-        fixture
-            .manager
-            .pool(&ctx(), PoolCommand::Stop(PoolTarget::All), None)
-            .await
-            .unwrap();
-        let calls = fixture.fake.calls();
         position(&calls, &format!("stop -t 10 {worker}"));
         assert!(
             !calls
@@ -581,7 +569,7 @@ mod lifecycle {
     #[tokio::test]
     async fn a_pool_gc_on_a_stopped_server_starts_nothing() {
         let fixture = Fixture::docker_container();
-        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+        let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
         assert_eq!(outcome.data["kept"][fixture.worker(0)], "engine-stopped");
         assert_eq!(outcome.text, "removed=(none)");
         let calls = fixture.fake.calls();
@@ -592,16 +580,8 @@ mod lifecycle {
     /// and never stops the server.
     #[tokio::test]
     async fn a_pool_recycle_of_all_deletes_the_builder_and_keeps_the_server() {
-        let fixture = Fixture::docker_container();
+        let (fixture, calls) = pool_after_a_start(PoolCommand::Recycle(PoolTarget::All)).await;
         let worker = fixture.worker(0);
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap();
-        fixture.fake.forget_calls();
-        fixture
-            .manager
-            .pool(&ctx(), PoolCommand::Recycle(PoolTarget::All), None)
-            .await
-            .unwrap();
-        let calls = fixture.fake.calls();
         assert!(position(&calls, "builder stop") < position(&calls, "builder delete"));
         assert!(position(&calls, "builder delete") < position(&calls, &format!("delete --force {worker}")));
         position(&calls, &format!("volume inspect air-{worker}-data"));

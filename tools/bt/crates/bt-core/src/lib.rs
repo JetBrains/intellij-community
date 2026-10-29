@@ -25,6 +25,7 @@ pub mod areas;
 pub mod bep;
 pub mod catalog;
 pub mod details;
+pub mod evidence;
 pub mod exit;
 pub mod fake;
 pub mod lanes;
@@ -35,6 +36,7 @@ pub mod result;
 pub mod runtime;
 pub mod scan;
 pub mod selector;
+pub mod shard_plan;
 pub mod suites;
 
 /// A `&'static Regex` compiled once, on first use.

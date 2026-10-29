@@ -11,12 +11,12 @@ use std::ffi::OsString;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Command, ExitStatus, Stdio};
 use std::sync::mpsc;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
-use crate::runtime::{DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
+use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, STOPPED_IDLE, SpawnResult};
 
 /// How much of a child's output is kept.
 ///
@@ -131,6 +131,28 @@ impl OsRuntimeBuilder {
     }
 }
 
+impl OsRuntime {
+    /// The stdout of one git command in the checkout, or an error with what git said.
+    ///
+    /// Not through the injected spawn, for the reason of [`Runtime::list_files`]: a read of the checkout is not a
+    /// subprocess that the controller must keep out of a held lease.
+    fn git(&self, args: &[&str]) -> io::Result<String> {
+        let ran = Command::new("git")
+            .arg("-C")
+            .arg(&self.repo_root)
+            .args(args)
+            .stdin(Stdio::null())
+            .output();
+        let refused = |said: String| io::Error::other(format!("git {} failed in {}: {said}", args.join(" "), self.repo_root.display()));
+        let ran = ran.map_err(|error| refused(error.to_string()))?;
+        if !ran.status.success() {
+            let stderr = String::from_utf8_lossy(&ran.stderr).trim().to_owned();
+            return Err(refused(if stderr.is_empty() { ran.status.to_string() } else { stderr }));
+        }
+        Ok(String::from_utf8_lossy(&ran.stdout).into_owned())
+    }
+}
+
 /// Writes one line, appending the newline the runtime's callers leave to the sink.
 ///
 /// A failed write to stdout leaves nowhere to report it, the descriptor a report would go to being the one that just
@@ -147,11 +169,12 @@ pub(crate) fn write_line(out: &mut dyn Write, text: &str) {
 pub fn refuse_spawn(command: &[OsString]) -> SpawnResult {
     SpawnResult {
         exit_code: 127,
-        output: format!("selector resolution must not spawn subprocesses: {}", joined(command)),
+        output: format!("selector resolution must not spawn subprocesses: {}", command_line(command)),
     }
 }
 
-fn joined(command: &[OsString]) -> String {
+/// The argv as one line, each part separated by a space.
+pub fn command_line(command: &[OsString]) -> String {
     command.iter().map(|part| part.to_string_lossy()).collect::<Vec<_>>().join(" ")
 }
 
@@ -161,13 +184,173 @@ fn joined(command: &[OsString]) -> String {
 /// than an error every caller would have to re-classify. A child killed by a signal has no code and answers -1,
 /// which classifies as infrastructure too.
 pub fn spawn_child(dir: Option<&Path>, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
-    match command_for(dir, command) {
-        Some(child) => run_to_end(child, HEARTBEAT_INTERVAL, heartbeat),
-        None => SpawnResult {
+    command_for(dir, command).map_or_else(nothing_to_spawn, |child| run_to_end(child, HEARTBEAT_INTERVAL, heartbeat))
+}
+
+/// Runs a child to completion, in `dir` when one is given, with the stdin and the streams of
+/// [`Runtime::spawn_streaming`]: each stderr line goes to `error_line` as it comes, and the output is the whole stdout.
+///
+/// Never fails, as [`spawn_child`].
+pub fn spawn_streaming_child(dir: Option<&Path>, command: &[OsString], error_line: &(dyn Fn(&str) + Sync)) -> SpawnResult {
+    command_for(dir, command).map_or_else(nothing_to_spawn, |child| stream_to_end(child, error_line))
+}
+
+/// Runs a prepared command to completion, with the stdin and the streams of [`spawn_streaming_child`].
+fn stream_to_end(mut child: Command, error_line: &(dyn Fn(&str) + Sync)) -> SpawnResult {
+    let mut process = match spawn_piped(&mut child) {
+        Ok(process) => process,
+        Err(refusal) => return refusal,
+    };
+    // Held, never written, and dropped only after the child is reaped: the end of the stdin is the signal that this
+    // process is gone.
+    let stdin = process.stdin.take();
+    let (Some(mut stdout), Some(stderr)) = (process.stdout.take(), process.stderr.take()) else {
+        return SpawnResult {
             exit_code: 127,
-            output: "nothing to spawn: the command line is empty".to_owned(),
+            output: format!("{}: the pipes of the child are missing", child.get_program().to_string_lossy()),
+        };
+    };
+    let output = thread::scope(|scope| {
+        scope.spawn(move || {
+            let mut reader = BufReader::new(stderr);
+            let mut line = Vec::new();
+            while matches!(reader.read_until(b'\n', &mut line), Ok(read) if read > 0) {
+                let text = String::from_utf8_lossy(&line);
+                error_line(text.trim_end_matches(['\n', '\r']));
+                line.clear();
+            }
+        });
+        let mut bytes = Vec::new();
+        // What arrived before a broken pipe is what the child said; waiting for it is still the right answer.
+        let _ = stdout.read_to_end(&mut bytes);
+        String::from_utf8_lossy(&bytes).into_owned()
+    });
+    let waited = process.wait();
+    drop(stdin);
+    reaped(waited, output)
+}
+
+/// Runs a child to completion, in `dir` when one is given, with `input` on its stdin; see
+/// [`Runtime::spawn_with_input`]. Never fails, as [`spawn_child`].
+pub fn spawn_child_with_input(dir: Option<&Path>, command: &[OsString], input: &str) -> SpawnResult {
+    let Some(mut child) = command_for(dir, command) else {
+        return nothing_to_spawn();
+    };
+    let mut process = match spawn_piped(&mut child) {
+        Ok(process) => process,
+        Err(refusal) => return refusal,
+    };
+    let stdin = process.stdin.take();
+    // From a thread, so a child that writes before it reads to the end cannot block on a full pipe.
+    let finished = thread::scope(|scope| {
+        scope.spawn(move || {
+            if let Some(mut stdin) = stdin {
+                // A child that exits before it reads everything closes the pipe; its exit code tells the rest.
+                let _ = stdin.write_all(input.as_bytes());
+            }
+        });
+        process.wait_with_output()
+    });
+    match finished {
+        Ok(finished) => SpawnResult {
+            exit_code: finished.status.code().unwrap_or(-1),
+            output: format!(
+                "{}{}",
+                String::from_utf8_lossy(&finished.stdout),
+                String::from_utf8_lossy(&finished.stderr)
+            ),
+        },
+        Err(error) => SpawnResult {
+            exit_code: 127,
+            output: error.to_string(),
         },
     }
+}
+
+/// Runs a child to completion, in `dir` when one is given, and stops it with its process group when it writes nothing
+/// for `idle`; see [`Runtime::spawn_watched`]. Never fails, as [`spawn_child`].
+pub fn spawn_child_watched(dir: Option<&Path>, command: &[OsString], idle: Duration) -> SpawnResult {
+    command_for(dir, command).map_or_else(nothing_to_spawn, |child| watch_to_end(child, idle))
+}
+
+/// Runs a prepared command to completion, as [`run_to_end`] does, and stops it when it writes nothing for `idle`.
+///
+/// The child gets a process group of its own on Unix, because the stall is often in a grandchild: git waits for the
+/// ssh it started, and the ssh holds the pipe. Stopping the group closes the pipe, so the read ends too.
+fn watch_to_end(child: Command, idle: Duration) -> SpawnResult {
+    #[cfg(unix)]
+    let child = {
+        use std::os::unix::process::CommandExt;
+        let mut child = child;
+        child.process_group(0);
+        child
+    };
+    let (mut process, mut reader, program) = match spawn_on_pipe(child) {
+        Ok(spawned) => spawned,
+        Err(refusal) => return refusal,
+    };
+    let last_output = std::sync::Mutex::new(Instant::now());
+    let tail = std::sync::Mutex::new(Tail::new(MAX_RETAINED_OUTPUT));
+    let (waited, stopped) = thread::scope(|scope| {
+        scope.spawn(|| {
+            let mut chunk = vec![0u8; 64 * 1024];
+            loop {
+                match reader.read(&mut chunk) {
+                    Ok(0) => break,
+                    Ok(read) => {
+                        tail.lock().unwrap_or_else(std::sync::PoisonError::into_inner).push(&chunk[..read]);
+                        *last_output.lock().unwrap_or_else(std::sync::PoisonError::into_inner) = Instant::now();
+                    }
+                    Err(error) if error.kind() == io::ErrorKind::Interrupted => {}
+                    Err(_) => break,
+                }
+            }
+        });
+        let mut stopped = false;
+        let waited = loop {
+            match process.try_wait() {
+                Ok(Some(status)) => break Ok(status),
+                Ok(None) => {}
+                Err(error) => break Err(error),
+            }
+            let quiet = last_output.lock().unwrap_or_else(std::sync::PoisonError::into_inner).elapsed();
+            if quiet >= idle {
+                stop_group(&mut process);
+                stopped = true;
+                break process.wait();
+            }
+            thread::sleep(Duration::from_millis(100).min(idle));
+        };
+        // The scope joins the reader here: the child and its group are gone, so the pipe is closed.
+        (waited, stopped)
+    });
+    let output = tail.into_inner().unwrap_or_else(std::sync::PoisonError::into_inner).text();
+    if stopped {
+        return SpawnResult {
+            exit_code: STOPPED_IDLE,
+            output: format!(
+                "{output}\n{} wrote nothing for {} s, so it was stopped",
+                program.to_string_lossy(),
+                idle.as_secs()
+            ),
+        };
+    }
+    reaped(waited, output)
+}
+
+/// Stops a child and, on Unix, every process of its group.
+fn stop_group(process: &mut std::process::Child) {
+    #[cfg(unix)]
+    {
+        // `kill` of the group, not of the child alone: a grandchild that holds the pipe would keep the read open.
+        let _ = Command::new("kill")
+            .args(["-KILL", "--", &format!("-{}", process.id())])
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status();
+    }
+    let _ = process.kill();
 }
 
 fn command_for(dir: Option<&Path>, command: &[OsString]) -> Option<Command> {
@@ -178,6 +361,60 @@ fn command_for(dir: Option<&Path>, command: &[OsString]) -> Option<Command> {
         child.current_dir(dir);
     }
     Some(child)
+}
+
+fn nothing_to_spawn() -> SpawnResult {
+    SpawnResult {
+        exit_code: 127,
+        output: "nothing to spawn: the command line is empty".to_owned(),
+    }
+}
+
+/// Starts a prepared command with a pipe on each of its three descriptors.
+fn spawn_piped(child: &mut Command) -> Result<std::process::Child, SpawnResult> {
+    child.stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    child.spawn().map_err(|error| could_not_start(child, &error))
+}
+
+/// Starts a prepared command with stdout and stderr on one pipe, and answers the child, the read end and the program.
+fn spawn_on_pipe(mut child: Command) -> Result<(std::process::Child, io::PipeReader, OsString), SpawnResult> {
+    let pipe = io::pipe().and_then(|(reader, writer)| Ok((reader, writer.try_clone()?, writer)));
+    let (reader, stdout, stderr) = match pipe {
+        Ok(pipe) => pipe,
+        Err(error) => return Err(could_not_start(&child, &error)),
+    };
+    child.stdout(stdout).stderr(stderr);
+    let spawned = child.spawn();
+    // The command holds the pipe's write ends; until it is gone the read never sees the end of the stream.
+    let program = child.get_program().to_owned();
+    drop(child);
+    match spawned {
+        Ok(process) => Ok((process, reader, program)),
+        Err(error) => Err(SpawnResult {
+            exit_code: 127,
+            output: format!("{}: {error}", program.to_string_lossy()),
+        }),
+    }
+}
+
+/// The result of a reaped child with the output it wrote.
+fn reaped(waited: io::Result<ExitStatus>, output: String) -> SpawnResult {
+    match waited {
+        Ok(status) => SpawnResult {
+            exit_code: status.code().unwrap_or(-1),
+            output,
+        },
+        // The child started but could not be reaped, so there is no exit status to report. Reading it as green
+        // would report a run nobody observed the end of.
+        Err(error) => SpawnResult {
+            exit_code: 127,
+            output: if output.is_empty() {
+                error.to_string()
+            } else {
+                format!("{output}\n{error}")
+            },
+        },
+    }
 }
 
 fn could_not_start(child: &Command, error: &io::Error) -> SpawnResult {
@@ -192,25 +429,10 @@ fn could_not_start(child: &Command, error: &io::Error) -> SpawnResult {
 /// One pipe for both descriptors, so the tail keeps the order the child wrote in: bazel puts its progress on stderr
 /// and its results on stdout, and a tail that has lost which came first is the one a human reads when a run went
 /// wrong.
-fn run_to_end(mut child: Command, interval: Duration, heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
-    let pipe = io::pipe().and_then(|(reader, writer)| Ok((reader, writer.try_clone()?, writer)));
-    let (mut reader, stdout, stderr) = match pipe {
-        Ok(pipe) => pipe,
-        Err(error) => return could_not_start(&child, &error),
-    };
-    child.stdout(stdout).stderr(stderr);
-    let spawned = child.spawn();
-    // The command holds the pipe's write ends; until it is gone the read below never sees the end of the stream.
-    let program = child.get_program().to_owned();
-    drop(child);
-    let mut process = match spawned {
-        Ok(process) => process,
-        Err(error) => {
-            return SpawnResult {
-                exit_code: 127,
-                output: format!("{}: {error}", program.to_string_lossy()),
-            };
-        }
+fn run_to_end(child: Command, interval: Duration, heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
+    let (mut process, mut reader, _) = match spawn_on_pipe(child) {
+        Ok(spawned) => spawned,
+        Err(refusal) => return refusal,
     };
 
     let started = Instant::now();
@@ -241,22 +463,7 @@ fn run_to_end(mut child: Command, interval: Duration, heartbeat: Option<Heartbea
         let output = tail.text();
         let waited = process.wait();
         drop(stop);
-        match waited {
-            Ok(status) => SpawnResult {
-                exit_code: status.code().unwrap_or(-1),
-                output,
-            },
-            // The child started but could not be reaped, so there is no exit status to report. Reading it as green
-            // would report a run nobody observed the end of.
-            Err(error) => SpawnResult {
-                exit_code: 127,
-                output: if output.is_empty() {
-                    error.to_string()
-                } else {
-                    format!("{output}\n{error}")
-                },
-            },
-        }
+        reaped(waited, output)
     })
 }
 
@@ -307,6 +514,57 @@ impl Tail {
     }
 }
 
+/// The environment and the stdin of one [`git`] command.
+#[derive(Clone, Copy, Default)]
+struct Git<'a> {
+    /// The index file the command reads and writes, in place of the index of the checkout.
+    index: Option<&'a Path>,
+    input: Option<&'a [u8]>,
+}
+
+/// Runs one git command in `root`, and answers its stdout. An error names the command and gives its stderr.
+///
+/// `GIT_OPTIONAL_LOCKS=0` keeps `git status` from a refresh of the index, which would take `index.lock` from a commit
+/// that runs at the same time.
+fn git(root: &Path, args: &[&str], with: &Git<'_>) -> io::Result<Vec<u8>> {
+    let mut command = Command::new("git");
+    command
+        .arg("-C")
+        .arg(root)
+        .args(args)
+        .env("GIT_OPTIONAL_LOCKS", "0")
+        .stdin(if with.input.is_some() { Stdio::piped() } else { Stdio::null() })
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+    if let Some(index) = with.index {
+        command.env("GIT_INDEX_FILE", index);
+    }
+    let refused = |said: String| io::Error::other(format!("git {} in {}: {said}", args.join(" "), root.display()));
+    let mut child = command.spawn().map_err(|error| refused(error.to_string()))?;
+    let stdin = child.stdin.take();
+    // From a thread, so a child that writes before it reads to the end cannot block on a full pipe.
+    let finished = thread::scope(|scope| {
+        if let (Some(mut stdin), Some(input)) = (stdin, with.input) {
+            scope.spawn(move || {
+                // A child that exits before it reads everything closes the pipe; its exit code tells the rest.
+                let _ = stdin.write_all(input);
+            });
+        }
+        child.wait_with_output()
+    });
+    let finished = finished.map_err(|error| refused(error.to_string()))?;
+    if !finished.status.success() {
+        let stderr = String::from_utf8_lossy(&finished.stderr).trim().to_owned();
+        return Err(refused(if stderr.is_empty() { finished.status.to_string() } else { stderr }));
+    }
+    Ok(finished.stdout)
+}
+
+/// [`git`] for a command that answers one line of text.
+fn git_text(root: &Path, args: &[&str], with: &Git<'_>) -> io::Result<String> {
+    Ok(String::from_utf8_lossy(&git(root, args, with)?).trim_end().to_owned())
+}
+
 /// The lines of a file, streaming: the file it exists for is bazel's BEP, which is tens of MB on a lane run and holds
 /// single JSON lines of any length.
 ///
@@ -348,6 +606,18 @@ impl Runtime for OsRuntime {
 
     fn read_text_file(&self, path: &Path) -> io::Result<String> {
         std::fs::read_to_string(path)
+    }
+
+    /// A temporary file beside the target, renamed over it: a rename within one directory replaces the file at once.
+    fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()> {
+        let dir = path.parent().unwrap_or_else(|| Path::new("."));
+        std::fs::create_dir_all(dir)?;
+        let mut file = tempfile::NamedTempFile::new_in(dir)?;
+        file.write_all(text.as_bytes())?;
+        let mut temp = file.into_temp_path();
+        std::fs::rename(&temp, path)?;
+        temp.disable_cleanup(true);
+        Ok(())
     }
 
     /// Nothing for a file that is not there, which is the runtime's contract rather than a swallowed failure: bazel
@@ -407,8 +677,115 @@ impl Runtime for OsRuntime {
         Ok(files)
     }
 
+    /// A blob that git cannot read is a file that the revision does not hold, when the revision itself resolves.
+    fn revision_text(&self, revision: &str, path: &str) -> io::Result<Option<String>> {
+        if let Ok(blob) = self.git(&["cat-file", "blob", &format!("{revision}:{path}")]) {
+            return Ok(Some(blob));
+        }
+        self.git(&["rev-parse", "--verify", "--quiet", &format!("{revision}^{{commit}}")])?;
+        Ok(None)
+    }
+
+    fn upstream_base(&self) -> io::Result<String> {
+        let tracked = self
+            .git(&["symbolic-ref", "--quiet", "HEAD"])
+            .ok()
+            .and_then(|branch| self.git(&["for-each-ref", "--format=%(upstream)", branch.trim()]).ok())
+            .map(|upstream| upstream.trim().to_owned())
+            .filter(|upstream| !upstream.is_empty());
+        let upstream = match tracked {
+            Some(upstream) => upstream,
+            None => self
+                .git(&["rev-parse", "--verify", "--quiet", "refs/remotes/origin/HEAD"])?
+                .trim()
+                .to_owned(),
+        };
+        Ok(self.git(&["merge-base", "HEAD", &upstream])?.trim().to_owned())
+    }
+
     fn exists(&self, path: &Path) -> bool {
         path.exists()
+    }
+
+    /// Asks git, not through the injected spawn, for the reason of [`OsRuntime::list_files`].
+    ///
+    /// A checkout whose `.git` is no file is not a linked work tree, and it costs one stat. A clean linked work tree
+    /// costs one `git status`. With local changes, a copy of the index takes the changed paths that the status names,
+    /// and `git write-tree` writes the tree of the copy. The index of the checkout stays as it was.
+    ///
+    /// Two cases differ from `git add -A`. An untracked nested checkout (`?? dir/`) is left out, where `add -A` would
+    /// add a gitlink. A directory replaced by a symbolic link makes `update-index` fail, so the answer is an error.
+    fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
+        let root = &self.repo_root;
+        if !root.join(".git").is_file() {
+            return Ok(None);
+        }
+        // `HEAD:` is the root tree of HEAD.
+        let named = git_text(root, &["rev-parse", "HEAD", "HEAD:", "--git-path", "index"], &Git::default())?;
+        let mut lines = named.lines();
+        let (Some(head), Some(head_tree), Some(index)) = (lines.next(), lines.next(), lines.next()) else {
+            return Err(io::Error::other(format!(
+                "git rev-parse named no HEAD, tree and index in {}",
+                root.display()
+            )));
+        };
+        let status = git(
+            root,
+            &["status", "--porcelain=v1", "-z", "--untracked-files=all", "--no-renames"],
+            &Git::default(),
+        )?;
+        // Each entry is `XY <path>`. A path that ends with `/` is a nested checkout, which `update-index` refuses.
+        let mut input = Vec::new();
+        let mut changed = Vec::new();
+        for entry in status.split(|byte| *byte == 0) {
+            if let Some(path) = entry.get(3..).filter(|path| !path.is_empty() && !path.ends_with(b"/")) {
+                input.extend_from_slice(path);
+                input.push(0);
+                changed.push(String::from_utf8_lossy(path).into_owned());
+            }
+        }
+        if changed.is_empty() {
+            return Ok(Some(CheckoutTree {
+                head: head.to_owned(),
+                tree: head_tree.to_owned(),
+                changed,
+            }));
+        }
+        // Git replaces its index by a rename, so the copy is the index before a concurrent commit or after it.
+        let copy = tempfile::Builder::new().prefix("bt-check-index-").tempfile()?;
+        std::fs::copy(root.join(index), copy.path())?;
+        let with_copy = Git {
+            index: Some(copy.path()),
+            input: None,
+        };
+        git(
+            root,
+            &["update-index", "--add", "--remove", "-z", "--stdin"],
+            &Git {
+                input: Some(&input),
+                ..with_copy
+            },
+        )?;
+        let tree = git_text(root, &["write-tree"], &with_copy)?;
+        Ok(Some(CheckoutTree {
+            head: head.to_owned(),
+            tree,
+            changed,
+        }))
+    }
+
+    fn commit_tree(&self, commit: &str) -> io::Result<String> {
+        git_text(
+            &self.repo_root,
+            &["rev-parse", "--verify", &format!("{commit}^{{tree}}")],
+            &Git::default(),
+        )
+    }
+
+    fn git_path(&self, name: &str) -> io::Result<PathBuf> {
+        let path = git_text(&self.repo_root, &["rev-parse", "--git-path", name], &Git::default())?;
+        // Relative to the checkout root in a main checkout, absolute in a linked work tree.
+        Ok(self.repo_root.join(path))
     }
 
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
@@ -416,6 +793,31 @@ impl Runtime for OsRuntime {
             Spawner::Refuse => refuse_spawn(command),
             Spawner::Child => spawn_child(None, command, heartbeat),
             Spawner::ChildIn(dir) => spawn_child(Some(dir), command, heartbeat),
+        }
+    }
+
+    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
+        match &self.spawner {
+            Spawner::Refuse => refuse_spawn(command),
+            Spawner::Child => spawn_child_with_input(None, command, input),
+            Spawner::ChildIn(dir) => spawn_child_with_input(Some(dir), command, input),
+        }
+    }
+
+    fn spawn_watched(&self, command: &[OsString], idle: Duration) -> SpawnResult {
+        match &self.spawner {
+            Spawner::Refuse => refuse_spawn(command),
+            Spawner::Child => spawn_child_watched(None, command, idle),
+            Spawner::ChildIn(dir) => spawn_child_watched(Some(dir), command, idle),
+        }
+    }
+
+    fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
+        let error_line = |line: &str| (self.write_error)(line);
+        match &self.spawner {
+            Spawner::Refuse => refuse_spawn(command),
+            Spawner::Child => spawn_streaming_child(None, command, &error_line),
+            Spawner::ChildIn(dir) => spawn_streaming_child(Some(dir), command, &error_line),
         }
     }
 
@@ -439,6 +841,43 @@ impl Runtime for OsRuntime {
             Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error),
             _ => Ok(()),
         }
+    }
+
+    fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()> {
+        if let Some(parent) = to.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        // A new file rather than `std::fs::copy`: bazel's outputs are read-only, and a read-only copy is one that
+        // Windows refuses to delete when the retention removes an old run.
+        io::copy(&mut File::open(from)?, &mut File::create(to)?).map(|_| ())
+    }
+
+    fn create_dir_all(&self, path: &Path) -> io::Result<()> {
+        std::fs::create_dir_all(path)
+    }
+
+    fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
+        match std::fs::remove_dir_all(path) {
+            Err(error) if error.kind() != io::ErrorKind::NotFound => Err(error),
+            _ => Ok(()),
+        }
+    }
+
+    fn home_dir(&self) -> Option<PathBuf> {
+        std::env::home_dir()
+    }
+
+    fn confirm(&self, question: &str) -> Option<bool> {
+        use std::io::IsTerminal;
+        if !io::stdin().is_terminal() {
+            return None;
+        }
+        let mut stderr = io::stderr();
+        let _ = write!(stderr, "{question} [y/N] ");
+        let _ = stderr.flush();
+        let mut answer = String::new();
+        io::stdin().read_line(&mut answer).ok()?;
+        Some(matches!(answer.trim(), "y" | "Y" | "yes" | "Yes"))
     }
 
     fn now_ms(&self) -> u64 {

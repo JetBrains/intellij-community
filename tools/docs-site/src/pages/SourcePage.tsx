@@ -292,7 +292,7 @@ export default function SourcePage({ path, selection }: { path: string, selectio
       </PageIntro>
       {/* the pre/code chrome rides on descendant variants: the <pre> is shiki/PlainSource output,
           but this wrapper is ours; per-line DOM (.line-no, .line) stays in source.css */}
-      <div className="source-view mt-6 [&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-border [&_pre]:bg-(--code-canvas) [&_pre]:px-0 [&_pre]:py-3 [&_pre]:font-mono [&_pre]:text-detail [&_pre]:leading-[1.6] [&_pre]:text-(--code-fg) [&_pre_code]:rounded-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-[length:inherit]" onClick={selectLine}>
+      <div className="source-view mt-6 [&_pre]:m-0 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:border [&_pre]:border-border [&_pre]:bg-(--code-canvas) [&_pre]:px-0 [&_pre]:py-3 [&_pre]:font-mono [&_pre]:text-xs [&_pre]:leading-[1.6] [&_pre]:text-(--code-fg) [&_pre_code]:rounded-none [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-[length:inherit]" onClick={selectLine}>
         {text === null
           ? <p className="text-muted-foreground">Loading source…</p>
           : <SourceCode path={path} text={text} selection={effectiveSelection} highlighter={highlighter} />}

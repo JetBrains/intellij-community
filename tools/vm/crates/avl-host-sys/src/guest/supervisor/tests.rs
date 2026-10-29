@@ -31,6 +31,28 @@ fn slot(active: Option<RunState>) -> String {
     envelope("active", ActiveReply { active })
 }
 
+/// The arguments of an `ide-gc` that stops every IDE under the IDE root.
+fn ide_gc_args() -> Vec<String> {
+    words(["--root", "/vm/data/ide", "--stop-all"])
+}
+
+/// Invokes `verb` with `args` as `account` in the guest behind `channel`, within one minute.
+async fn invoke(host: &Host, channel: &FakeChannel, account: AgentAccount, verb: AgentVerb, args: &[String]) -> Result<String, Refusal> {
+    host.guest(channel)
+        .invoke_agent(account, verb, args, &SpawnOptions::within(Duration::from_mins(1)))
+        .await
+}
+
+/// The refusal of an `ide-gc` that the agent of air-docker-1 refuses with `guest_ide_gc_failed`, the message `spoken`
+/// and the exit 70.
+async fn ide_gc_refusal(host: &Host, spoken: &str) -> Refusal {
+    let answer = refused("ide-gc", "guest_ide_gc_failed", spoken);
+    let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
+    invoke(host, &channel, AgentAccount::Worker, AgentVerb::IdeGc, &ide_gc_args())
+        .await
+        .unwrap_err()
+}
+
 // --- the argv --------------------------------------------------------------------------------------------------
 
 // "aqua" means "where the IDE can open a window", and the two guests have nothing in common about it: macOS has a
@@ -212,14 +234,7 @@ async fn supervisor_failure_carries_the_agents_own_code() {
 async fn invoke_agent_keeps_the_argv_and_answers_the_verbs_own_document() {
     let host = Host::new(GuestOs::Linux);
     let channel = FakeChannel::spoke("air-docker-1", r#"{"stopped":[],"kept":[],"removed":[]}"#);
-    let stdout = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::IdeGc,
-            &words(["--root", "/vm/data/ide", "--stop-all"]),
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    let stdout = invoke(&host, &channel, AgentAccount::Worker, AgentVerb::IdeGc, &ide_gc_args())
         .await
         .unwrap();
     assert_eq!(stdout, r#"{"stopped":[],"kept":[],"removed":[]}"#);
@@ -238,13 +253,7 @@ async fn invoke_agent_keeps_the_argv_and_answers_the_verbs_own_document() {
 async fn invoke_agent_runs_a_verb_under_the_account_its_caller_named() {
     let host = Host::new(GuestOs::Linux);
     let channel = FakeChannel::spoke("air-docker-1", r#"{"ok":true}"#);
-    host.guest(&channel)
-        .invoke_agent(
-            AgentAccount::Root,
-            AgentVerb::ValidateGuest,
-            &words([":88"]),
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    invoke(&host, &channel, AgentAccount::Root, AgentVerb::ValidateGuest, &words([":88"]))
         .await
         .unwrap();
     assert_eq!(
@@ -263,14 +272,7 @@ async fn invoke_agent_reports_the_agents_own_refusal() {
         "no prefix of the path table holds /x/a",
     );
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
-    let refusal = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::RunfilesTree,
-            &[],
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    let refusal = invoke(&host, &channel, AgentAccount::Worker, AgentVerb::RunfilesTree, &[])
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "runfiles_target_unmapped");
@@ -290,14 +292,7 @@ async fn invoke_agent_reports_a_usage_refusal_with_its_first_line() {
     let host = Host::new(GuestOs::Linux);
     let usage = "usage: vm-guest-agent <start|status|log|cancel> --root <dir>\n";
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(64, usage)));
-    let refusal = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::RunfilesTree,
-            &[],
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    let refusal = invoke(&host, &channel, AgentAccount::Worker, AgentVerb::RunfilesTree, &[])
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "guest_agent_failed");
@@ -323,14 +318,7 @@ async fn a_usage_envelope_from_the_rust_agent_keeps_its_code() {
     let host = Host::new(GuestOs::Linux);
     let answer = refused("ide-gc", "usage", "usage: vm-guest-agent ide-gc --root <DIR>");
     let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(64, &answer)));
-    let refusal = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::IdeGc,
-            &[],
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    let refusal = invoke(&host, &channel, AgentAccount::Worker, AgentVerb::IdeGc, &[])
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "usage");
@@ -349,18 +337,7 @@ async fn a_usage_envelope_from_the_rust_agent_keeps_its_code() {
 async fn a_verb_envelope_carries_its_message_and_keeps_the_attribution() {
     let host = Host::new(GuestOs::Linux);
     let spoken = "cannot read /vm/data/ide: Permission denied (os error 13)";
-    let answer = refused("ide-gc", "guest_ide_gc_failed", spoken);
-    let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
-    let refusal = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::IdeGc,
-            &words(["--root", "/vm/data/ide", "--stop-all"]),
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
-        .await
-        .unwrap_err();
+    let refusal = ide_gc_refusal(&host, spoken).await;
     assert_eq!(refusal.code, "guest_ide_gc_failed");
     for fragment in [spoken, "ide-gc", "air-docker-1"] {
         assert!(refusal.message.contains(fragment), "no {fragment:?}: {}", refusal.message);
@@ -369,14 +346,7 @@ async fn a_verb_envelope_carries_its_message_and_keeps_the_attribution() {
     // An envelope that names a code and no message still says where it happened.
     let silent = r#"{"schemaVersion":1,"ok":false,"command":"runfiles-tree","error":{"code":"guest_runfiles_tree_failed"}}"#;
     let quiet = FakeChannel::answering("air-docker-2", move |_| Ok(failed(70, silent)));
-    let refusal = host
-        .guest(&quiet)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::RunfilesTree,
-            &[],
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    let refusal = invoke(&host, &quiet, AgentAccount::Worker, AgentVerb::RunfilesTree, &[])
         .await
         .unwrap_err();
     assert_eq!(refusal.code, "guest_runfiles_tree_failed");
@@ -392,18 +362,7 @@ async fn an_envelope_message_is_bounded_on_a_rune_boundary() {
     let host = Host::new(GuestOs::Linux);
     // `é` is two bytes and the prefix is odd-length, so the bound falls inside a character.
     let spoken = format!("cannot read x{}", "é".repeat(GUEST_AGENT_MESSAGE_BYTES));
-    let answer = refused("ide-gc", "guest_ide_gc_failed", &spoken);
-    let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(70, &answer)));
-    let refusal = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::IdeGc,
-            &words(["--root", "/vm/data/ide", "--stop-all"]),
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
-        .await
-        .unwrap_err();
+    let refusal = ide_gc_refusal(&host, &spoken).await;
     let message = &refusal.message;
     assert!(message.len() <= GUEST_AGENT_MESSAGE_BYTES + 128, "{} bytes", message.len());
     assert!(!message.contains('\u{FFFD}'));
@@ -452,14 +411,7 @@ async fn invoke_agent_quotes_a_usage_line_and_withholds_every_other_stderr() {
                 ..Captured::default()
             })
         });
-        let refusal = host
-            .guest(&channel)
-            .invoke_agent(
-                AgentAccount::Worker,
-                AgentVerb::IdeGc,
-                &words(["--root", "/vm/data/ide", "--stop-all"]),
-                &SpawnOptions::within(Duration::from_mins(1)),
-            )
+        let refusal = invoke(&host, &channel, AgentAccount::Worker, AgentVerb::IdeGc, &ide_gc_args())
             .await
             .unwrap_err();
         assert_eq!(refusal.code, "guest_agent_failed", "{name}");
@@ -503,16 +455,15 @@ async fn invoke_agent_names_a_sudo_refusal_rather_than_blaming_the_agent() {
     ];
     for (name, stderr, code) in cases {
         let channel = FakeChannel::answering("air-docker-1", move |_| Ok(failed(1, stderr)));
-        let refusal = host
-            .guest(&channel)
-            .invoke_agent(
-                AgentAccount::Root,
-                AgentVerb::ValidateGuest,
-                &words([":88", "/vm/data"]),
-                &SpawnOptions::within(Duration::from_mins(1)),
-            )
-            .await
-            .unwrap_err();
+        let refusal = invoke(
+            &host,
+            &channel,
+            AgentAccount::Root,
+            AgentVerb::ValidateGuest,
+            &words([":88", "/vm/data"]),
+        )
+        .await
+        .unwrap_err();
         assert_eq!(refusal.code, code, "{name}: {}", refusal.message);
         if code != "guest_sudo_refused" {
             continue;
@@ -530,14 +481,7 @@ async fn invoke_agent_names_a_sudo_refusal_rather_than_blaming_the_agent() {
 async fn invoke_agent_does_not_blame_the_agents_age_for_a_plain_failure() {
     let host = Host::new(GuestOs::Linux);
     let channel = FakeChannel::answering("air-docker-1", |_| Ok(failed(1, "ide-gc refused\n")));
-    let refusal = host
-        .guest(&channel)
-        .invoke_agent(
-            AgentAccount::Worker,
-            AgentVerb::IdeGc,
-            &words(["--root", "/vm/data/ide", "--stop-all"]),
-            &SpawnOptions::within(Duration::from_mins(1)),
-        )
+    let refusal = invoke(&host, &channel, AgentAccount::Worker, AgentVerb::IdeGc, &ide_gc_args())
         .await
         .unwrap_err();
     assert!(!refusal.message.contains("older than this controller"), "{}", refusal.message);

@@ -557,6 +557,19 @@ pub mod attr {
     pub const SNAPSHOT_SOURCE: &str = "air.snapshot.source";
     /// Why the picture or the tree is missing.
     pub const SNAPSHOT_ERROR: &str = "air.snapshot.error";
+    /// The milliseconds from the arrival of the `snap` line to the record, which the ack follows. So it is the part of the
+    /// lane's wait for the ack that the recorder spent, a wait behind an earlier line included.
+    pub const SNAPSHOT_DURATION_MS: &str = "air.snapshot.duration_ms";
+    /// The milliseconds of the grab of the picture. Absent when there is no capture source.
+    pub const SNAPSHOT_GRAB_MS: &str = "air.snapshot.grab_ms";
+    /// The milliseconds of the read of the tree from the bridge and the write of its file. Absent without a bridge.
+    pub const SNAPSHOT_TREE_MS: &str = "air.snapshot.tree_ms";
+    /// The milliseconds of the read of the IDE's spans. Absent without a bridge.
+    pub const SNAPSHOT_SPANS_MS: &str = "air.snapshot.spans_ms";
+    /// The milliseconds of the change check of the picture and its hand-over to the still writer. When the encoders are
+    /// behind, the hand-over waits for a free place in their queue, so this time holds that wait too. Absent without a
+    /// picture.
+    pub const SNAPSHOT_STILL_MS: &str = "air.snapshot.still_ms";
 
     // [super::event::INPUT].
     /// The input's name in the bridge protocol, such as `click` or `replaceText`.
@@ -594,8 +607,8 @@ pub mod attr {
 
     // [super::event::TRACE_ERROR].
     /// What failed: `x11`, `ide-paint`, `bridge.facts`, `bridge.tree`, `bridge.spans`, `video` (the video encoder or
-    /// the screen recording), `webp` (a still the encoder could not write), `idea.log`, `attach` (an attachment the recorder could not move into the
-    /// bundle) or `protocol`.
+    /// the screen recording), `still` (a picture that the recorder could not write, or a lossy picture that it wrote
+    /// lossless), `idea.log`, `attach` (an attachment the recorder could not move into the bundle) or `protocol`.
     pub const TRACE_ERROR_SOURCE: &str = "air.trace.error.source";
     pub const TRACE_ERROR_MESSAGE: &str = "air.trace.error.message";
 }

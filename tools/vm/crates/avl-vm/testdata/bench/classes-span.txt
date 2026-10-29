@@ -1,0 +1,19 @@
+vm bench classes session empty-editor arm, the loads of the EDT in the window of air.emptyState.createContent, 1 run with the span
+the process clock starts at the load of com.intellij.idea.Main; the class-load log has a resolution of 1 ms
+BG: the loads of the other threads; find ms: the findClass ms of the plugin classes
+window (ms from the process start)                             start      ms   loads  hidden find ms      BG   BG ms
+  empty-editor-run-01                                           2000    1000       6       2     0.3       1       0
+by plugin, 1 of 1 plugins:
+                                                               loads  hidden modules find ms
+  org.intellij.plugins.markdown                                    4       1       2     0.3
+by module, 2 of 2 modules:
+                                                               loads  hidden find ms  plugin
+  org.intellij.plugins.markdown (main)                             3       1     0.2  org.intellij.plugins.markdown
+  intellij.markdown.core                                           1       0     0.1  org.intellij.plugins.markdown
+by package of the classes without a plugin, 2 of 2 packages:
+                                                               loads  hidden
+  com.intellij.openapi.fileEditor                                  1       0
+  java.lang.invoke (JDK)                                           1       1
+timeline of empty-editor-run-01, 500 ms buckets from the span start: loads, the first classes
+  +    0 ms     4  MarkdownFileType, MarkdownLanguage, EditorsSplitters
+  +  500 ms     2  MarkdownParserAdapter

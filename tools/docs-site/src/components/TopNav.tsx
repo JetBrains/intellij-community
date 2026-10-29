@@ -20,7 +20,7 @@ import type { AnyRoute as Route } from '../routeTable.ts'
 /* prose.css themes bare <a> in --primary; nav links must stay neutral */
 const topLevelLink = cn(
   navigationMenuTriggerStyle(),
-  'text-muted-foreground hover:text-foreground hover:no-underline data-active:bg-muted/50 data-active:text-foreground',
+  'text-muted-foreground hover:text-foreground no-underline data-active:bg-muted/50 data-active:text-foreground',
 )
 
 function NavGroupMenu({ group, route }: { group: NavGroup, route: Route }) {
@@ -41,7 +41,7 @@ function NavGroupMenu({ group, route }: { group: NavGroup, route: Route }) {
                 href={hrefForRoute(item.route)}
                 active={isNavItemActive(item, route)}
                 closeOnClick
-                className="text-foreground hover:no-underline"
+                className="text-foreground no-underline"
               >
                 <item.icon className="text-muted-foreground" />
                 {item.label}

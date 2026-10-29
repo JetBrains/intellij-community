@@ -16,10 +16,11 @@ use std::path::Path;
 use std::thread;
 use std::time::{Duration, Instant};
 
+use avl_testkit::ClosedPipe;
 use avl_testkit::traces::{self, EXAMPLE_BUNDLE, TRANSCRIPT, TRUNCATED_EXAMPLE_BUNDLE, TRUNCATED_TRANSCRIPT};
 use avl_trace::bundle::{
-    ALLURE_RESULT_SUFFIX, BundleStatus, IDEA_LOG_FILE, SNAP_DIR, allure_result_file, allure_results_dir, bundle_file, decode_allure_result,
-    snap_image_path,
+    ALLURE_RESULT_SUFFIX, BundleStatus, IDEA_LOG_FILE, SNAP_DIR, StillEncoding, allure_result_file, allure_results_dir, bundle_file,
+    decode_allure_result, picture_mime, snap_image_path,
 };
 use avl_trace::otlp::{attr, event, lookup_str, span_id};
 use avl_trace::protocol::{CaptureSource, Status, VideoCodec, decode_command, decode_hello_ack};
@@ -53,7 +54,7 @@ fn assert_golden_files(produced: &BTreeMap<String, Vec<u8>>, golden: &Path, what
 
 /// Whether a bundle path names a still, the one binary file of a golden bundle.
 fn is_still(name: &str) -> bool {
-    name.starts_with(&format!("{SNAP_DIR}/")) && name.ends_with(".webp")
+    name.starts_with(&format!("{SNAP_DIR}/")) && picture_mime(name).is_some()
 }
 
 /// Holds a produced file to its golden one, byte for byte: a still, which `expect-test` cannot hold, or a snapshot of
@@ -116,7 +117,7 @@ fn the_golden_transcript_writes_the_golden_allure_result() {
     for source in result.sources() {
         assert!(results.join(source).is_file(), "the result names {source}, which is not there");
     }
-    let still = |ordinal| fs::read(bundle_file(&h.bundle(), &snap_image_path(ordinal))).unwrap();
+    let still = |ordinal| fs::read(bundle_file(&h.bundle(), &snap_image_path(ordinal, StillEncoding::Lossless))).unwrap();
     // The reset before the setup takes no snapshot, so the setup's Before is the first picture.
     let setup = &result.steps[1];
     assert_eq!(
@@ -299,15 +300,6 @@ fn a_cancelled_run_finishes_the_bundle_too() {
 /// the end and finishes the bundle.
 #[test]
 fn acks_to_a_closed_pipe_do_not_stop_the_session() {
-    struct ClosedPipe;
-    impl Write for ClosedPipe {
-        fn write(&mut self, _: &[u8]) -> io::Result<usize> {
-            Err(io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> io::Result<()> {
-            Err(io::ErrorKind::BrokenPipe.into())
-        }
-    }
     let h = Harness::new();
     let mut lines = traces::file_lines(TRANSCRIPT);
     lines[0] = h.rooted(&lines[0]);

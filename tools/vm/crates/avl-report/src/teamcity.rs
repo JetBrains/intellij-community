@@ -25,7 +25,7 @@ use avl_junit::cases::{
     simple_class_name,
 };
 pub use avl_junit::teamcity::TEAMCITY_VERSION;
-use avl_junit::teamcity::{is_team_city, message};
+use avl_junit::teamcity::{is_team_city, message, publish_artifacts};
 use avl_junit::{TYPE_UNFINISHED, XML_OUTPUT_FILE};
 
 #[cfg(test)]
@@ -38,6 +38,11 @@ pub const TRACES_ARTIFACT_DIR: &str = "air-traces";
 /// [`XML_OUTPUT_FILE`] is unset. A Bazel test reports through its XML, so the controller inside one writes no message.
 pub fn is_build_step(variable: impl Fn(&str) -> Option<String>) -> bool {
     variable(XML_OUTPUT_FILE).is_none() && is_team_city(variable)
+}
+
+/// A `message` of the build log with the normal status. TeamCity shows a URL in it as a link.
+pub fn log_message(text: &str) -> String {
+    message("message", &[("text", text)], None)
 }
 
 /// A `message` of the build log with the status `WARNING`. TeamCity shows it as a warning, and the build stays green.
@@ -201,7 +206,7 @@ impl Messages {
     /// Publishes the host file `file` into the artifact directory `target`, once for each file.
     pub fn artifact(&mut self, file: &str, target: &str) -> Vec<String> {
         if self.published.insert(file.to_owned()) {
-            vec![message("publishArtifacts", &[], Some(&format!("{file} => {target}")))]
+            vec![publish_artifacts(file, target)]
         } else {
             Vec::new()
         }

@@ -474,7 +474,7 @@ impl<'r> Planner<'r> {
             return Ok(());
         }
         let loaded = self.catalog()?;
-        let affected = avl_affected::affected_suites(self.runtime, air_area(), &self.paths)?;
+        let affected = avl_affected::affected_suites(self.runtime, air_area(), &self.paths, avl_affected::Baseline::Upstream)?;
         let mut unmapped_paths = BTreeSet::new();
         for entry in &affected.unmapped {
             unmapped_paths.insert(entry.path.clone());

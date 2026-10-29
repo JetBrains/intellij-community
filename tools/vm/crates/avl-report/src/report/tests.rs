@@ -5,7 +5,6 @@
 
 use std::path::Path;
 
-use avl_base::{Environment, Selection};
 use avl_wire::daemon::{
     ContainerFailed, ExecutionIdentity, PlanStarted, Skipped, TestFinished, TestStarted, TypedFailure, WatchdogExpired,
 };
@@ -13,6 +12,7 @@ use avl_wire::report::{ScenarioReport, decode_run_report};
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::testing::settings;
 
 // --- fixtures -------------------------------------------------------------------------------------------------
 
@@ -450,7 +450,7 @@ fn the_stream_names_the_test_a_killed_run_died_on() {
             started("3", "third", None, "t3"),
         ],
     ));
-    let ids: Vec<&str> = document.active_tests.iter().map(|test| test.id.as_str()).collect();
+    let ids: Vec<&str> = document.active_tests.iter().map(|test| test.execution.id.as_str()).collect();
     assert_eq!(ids, ["2", "3"]);
     assert_eq!(document.active_tests[0].started_at.as_deref(), Some("t2"));
     let cases: Vec<&str> = document.cases.iter().map(|case| case.name.as_str()).collect();
@@ -491,7 +491,7 @@ fn a_whole_plan_that_ran_names_no_unreported_class() {
     let mut events = vec![plan(&[CLASS])];
     events.extend(scenario("1", "SUCCESSFUL", None));
     let document = built(input(Some(summary(1, 0, 0, 0, 0)), events));
-    assert!(document.unreported_classes.is_empty());
+    assert_eq!(document.unreported_classes, Vec::<String>::new());
     assert_eq!(document.status, Status::Passed, "{}", diagnostic(&document));
 }
 
@@ -510,7 +510,7 @@ fn a_plan_of_simple_names_is_covered_by_records_of_fqns() {
 #[test]
 fn a_stream_with_no_plan_record_names_nothing() {
     let document = built(input(Some(summary(1, 0, 0, 0, 0)), scenario("1", "SUCCESSFUL", None)));
-    assert!(document.unreported_classes.is_empty());
+    assert_eq!(document.unreported_classes, Vec::<String>::new());
 }
 
 #[test]
@@ -549,7 +549,10 @@ fn the_active_set_keeps_insertion_order() {
         started("b", "b1", None, "t2"),
         started("a", "a2", None, "t3"),
     ]);
-    let shown: Vec<(&str, &str)> = active.iter().map(|test| (test.id.as_str(), test.display_name.as_str())).collect();
+    let shown: Vec<(&str, &str)> = active
+        .iter()
+        .map(|test| (test.execution.id.as_str(), test.execution.display_name.as_str()))
+        .collect();
     assert_eq!(shown, [("a", "a2"), ("b", "b1")]);
 
     let restarted = active_tests(&[
@@ -558,7 +561,7 @@ fn the_active_set_keeps_insertion_order() {
         finished("a", "a1", "SUCCESSFUL", None, None),
         started("a", "a3", None, "t4"),
     ]);
-    let ids: Vec<&str> = restarted.iter().map(|test| test.id.as_str()).collect();
+    let ids: Vec<&str> = restarted.iter().map(|test| test.execution.id.as_str()).collect();
     assert_eq!(ids, ["b", "a"]);
 }
 
@@ -721,23 +724,6 @@ fn durations_are_measured_by_instant_and_not_by_text() {
 
 // --- persistence ----------------------------------------------------------------------------------------------
 
-fn settings(root: &Path) -> Config {
-    let home = root.join("home");
-    let runtime = root.join("runtime");
-    let environment = Environment::from_pairs([
-        ("HOME", home.to_str().unwrap()),
-        ("TART_BIN", "tart"),
-        ("AIR_VM_RUNTIME_ROOT", runtime.to_str().unwrap()),
-    ]);
-    Config::load(
-        avl_base::HostFacts::without_memory(),
-        Selection::DEFAULT,
-        &environment,
-        Path::new("/repo/scripts"),
-    )
-    .unwrap_or_else(|refusal| panic!("the environment was refused: {refusal:?}"))
-}
-
 #[cfg(unix)]
 fn mode(path: &Path) -> u32 {
     use std::os::unix::fs::PermissionsExt;
@@ -825,7 +811,7 @@ fn traces_are_carried_and_never_decide_the_verdict() {
         (baseline.status, &baseline.verdict_diagnostic)
     );
     assert_eq!(with_error.traces_error, Some(reason));
-    assert!(with_error.trace_archives.is_empty());
+    assert_eq!(with_error.trace_archives, []);
 
     let traces = archive(vec![bundle(CLASS, "smoke", "failed")]);
     let mut failing = input(Some(summary(1, 1, 0, 0, 0)), scenario("1", "FAILED", Some("boom")));

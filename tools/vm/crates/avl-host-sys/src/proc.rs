@@ -383,32 +383,7 @@ impl Runner {
 
     /// Runs a **host** command and fails with what it actually said.
     pub async fn checked(&self, ctx: &Ctx, argv: &[String], options: &SpawnOptions) -> Result<Captured, ProcError> {
-        let captured = self.capture(ctx, argv, options).await?;
-        if captured.exit_code == 0 {
-            return Ok(captured);
-        }
-        let mut said = output_tail(&captured.stderr);
-        if said.is_empty() {
-            // Some of these tools report on the wrong stream.
-            said = output_tail(&captured.stdout);
-        }
-        let mut message = format!("{} {} exited with {}", base_name(&argv[0]), argv[1..].join(" "), captured.exit_code);
-        if said.is_empty() {
-            message.push_str("; it printed nothing");
-        } else {
-            message.push_str(": ");
-            message.push_str(&said);
-        }
-        let refusal =
-            Refusal::new("subprocess_failed", Exit::from_status(captured.exit_code, Exit::FAILURE), message).with_details(json!({
-                "exitCode": captured.exit_code,
-                "command": argv,
-                "output": said,
-            }));
-        Err(ProcError::Exited {
-            exit_code: captured.exit_code,
-            refusal,
-        })
+        self.capture_succeeded(ctx, argv, options, said_failure).await
     }
 
     /// Runs a command whose output must not travel in the refusal.
@@ -417,11 +392,25 @@ impl Runner {
     /// the UI-test bridge token and the refusal ends up in an envelope an agent reads and may log. The caller still
     /// has the output on success; what it may not do is put it in the error.
     pub async fn checked_quietly(&self, ctx: &Ctx, argv: &[String], options: &SpawnOptions) -> Result<Captured, ProcError> {
+        self.capture_succeeded(ctx, argv, options, |argv, captured| withheld_failure(argv, captured.exit_code))
+            .await
+    }
+
+    /// Runs a command and answers its capture when it exits with 0. Any other exit is the error that `failure` makes of
+    /// the argv and the capture.
+    async fn capture_succeeded(
+        &self,
+        ctx: &Ctx,
+        argv: &[String],
+        options: &SpawnOptions,
+        failure: impl FnOnce(&[String], &Captured) -> ProcError,
+    ) -> Result<Captured, ProcError> {
         let captured = self.capture(ctx, argv, options).await?;
         if captured.exit_code == 0 {
-            return Ok(captured);
+            Ok(captured)
+        } else {
+            Err(failure(argv, &captured))
         }
-        Err(withheld_failure(argv, captured.exit_code))
     }
 
     /// Runs a command with its stdout going straight to a new file, and answers what it said on stderr.
@@ -747,6 +736,31 @@ fn check_argv(argv: &[String]) -> Result<(), Refusal> {
             ),
         )),
         Some(_) => Ok(()),
+    }
+}
+
+/// The failure of [`Runner::checked`]: the refusal quotes the tail of what the command printed.
+fn said_failure(argv: &[String], captured: &Captured) -> ProcError {
+    let mut said = output_tail(&captured.stderr);
+    if said.is_empty() {
+        // Some of these tools report on the wrong stream.
+        said = output_tail(&captured.stdout);
+    }
+    let mut message = format!("{} {} exited with {}", base_name(&argv[0]), argv[1..].join(" "), captured.exit_code);
+    if said.is_empty() {
+        message.push_str("; it printed nothing");
+    } else {
+        message.push_str(": ");
+        message.push_str(&said);
+    }
+    let refusal = Refusal::new("subprocess_failed", Exit::from_status(captured.exit_code, Exit::FAILURE), message).with_details(json!({
+        "exitCode": captured.exit_code,
+        "command": argv,
+        "output": said,
+    }));
+    ProcError::Exited {
+        exit_code: captured.exit_code,
+        refusal,
     }
 }
 

@@ -1,3 +1,4 @@
+use expect_test::expect;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
@@ -17,28 +18,27 @@ fn the_configuration_names_this_emulator_for_every_url() {
         (answer.status, answer.header("Content-Type")),
         (200, Some("application/xml; charset=UTF-8"))
     );
-    let want = [
-        "<config>".to_owned(),
-        format!("  <url type=\"auth\" value=\"{base}/lservice/service-auth\" enabled=\"true\"/>"),
-        format!("  <url type=\"license\" value=\"{base}/lservice\" enabled=\"true\"/>"),
-        format!("  <url type=\"reset_password\" value=\"{base}/forgot-password\" enabled=\"true\"/>"),
-        format!("  <url type=\"oauth2\" value=\"{base}/oauth2\" enabled=\"true\"/>"),
-        format!("  <url type=\"account_info\" value=\"{base}/lservice/account/info\" enabled=\"true\"/>"),
-        format!("  <url type=\"signup\" value=\"{base}/signup\" enabled=\"true\"/>"),
-        format!("  <url type=\"manage_account\" value=\"{base}/\" enabled=\"true\"/>"),
-        format!("  <url type=\"account_payment_methods\" value=\"{base}/licenses/tokens\" enabled=\"true\"/>"),
-        format!("  <url type=\"jcp\" value=\"{base}/jcp\" enabled=\"true\"/>"),
-        "  <oauth>".to_owned(),
-        "    <clientId>ide</clientId>".to_owned(),
-        "    <scope>offline_access</scope>".to_owned(),
-        format!("    <authEndpoint>{base}/oauth2/auth</authEndpoint>"),
-        format!("    <tokenEndpoint>{base}/oauth2/token</tokenEndpoint>"),
-        format!("    <orgsUserInfoJwtEndpoint>{base}/oauth2/orgs-user-info</orgsUserInfoJwtEndpoint>"),
-        "    <providers/>".to_owned(),
-        "  </oauth>".to_owned(),
-        "</config>".to_owned(),
-    ];
-    assert_eq!(answer.text(), want.join("\n"));
+    expect![[r#"
+        <config>
+          <url type="auth" value="<base>/lservice/service-auth" enabled="true"/>
+          <url type="license" value="<base>/lservice" enabled="true"/>
+          <url type="reset_password" value="<base>/forgot-password" enabled="true"/>
+          <url type="oauth2" value="<base>/oauth2" enabled="true"/>
+          <url type="account_info" value="<base>/lservice/account/info" enabled="true"/>
+          <url type="signup" value="<base>/signup" enabled="true"/>
+          <url type="manage_account" value="<base>/" enabled="true"/>
+          <url type="account_payment_methods" value="<base>/licenses/tokens" enabled="true"/>
+          <url type="jcp" value="<base>/jcp" enabled="true"/>
+          <oauth>
+            <clientId>ide</clientId>
+            <scope>offline_access</scope>
+            <authEndpoint><base>/oauth2/auth</authEndpoint>
+            <tokenEndpoint><base>/oauth2/token</tokenEndpoint>
+            <orgsUserInfoJwtEndpoint><base>/oauth2/orgs-user-info</orgsUserInfoJwtEndpoint>
+            <providers/>
+          </oauth>
+        </config>"#]]
+    .assert_eq(&answer.text().replace(&base, "<base>"));
     let mapping = testing::get(service.address(), "/config/JetBrainsResourceMapping.json");
     assert_eq!((mapping.status, mapping.text()), (200, "[]".to_owned()));
     assert_eq!(
@@ -120,7 +120,11 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
     );
     assert_eq!(options.json()["aiAccessOptions"][0]["workspaceId"], "air-lane-workspace");
     let flags = testing::get(address, "/jcp/user-management/api/org-feature-flags?flags=ai-seats");
-    assert_eq!(flags.text(), r#"{"flags":{"agentic-core/cloud-tasks":true,"ai-seats":true}}"#);
+    let expected_flags = concat!(
+        r#"{"flags":{"agentic-core/cloud-tasks":true,"agentic-core/cloud-tasks-personal":true,"#,
+        r#""ai-seats":true,"ai-seats-personal":true}}"#
+    );
+    assert_eq!(flags.text(), expected_flags);
     for (path, body) in [
         (
             "tools",
@@ -138,12 +142,31 @@ fn the_jcp_routes_answer_the_organization_and_the_record_counts_the_discoveries(
         let answer = testing::get(address, &format!("/jcp/ai-management/api/provisioning/v1/{path}"));
         assert_eq!((answer.status, answer.raw_body.len()), (404, 0), "{path}");
     }
+    let access = testing::get(
+        address,
+        "/jcp/repo-connections/tokens/state/meta?repositoryUrl=https%3A%2F%2Fgithub.com%2Fo%2Fr.git",
+    );
+    assert_eq!(
+        (access.status, access.text()),
+        (
+            200,
+            r#"{"type":"VALID","provider":"github","username":"air-lane","repositoryPermissions":{"read":true,"write":true}}"#.to_owned()
+        )
+    );
+
+    let grant = testing::get(address, "/jcp/agent-spawner/hosts/v0/remote-control/availability");
+    assert_eq!((grant.status, grant.text()), (200, r#"{"available":false}"#.to_owned()));
 
     let record = testing::control(address, "GET", "/_lane/cloud/record", "").json();
     assert_eq!(record["discoveries"], 1);
     assert_eq!(record["served"][1], "GET /jcp/user-management/api/org-feature-flags?flags=ai-seats");
-    assert_eq!(record["served"].as_array().unwrap().len(), 7);
+    assert_eq!(record["served"].as_array().unwrap().len(), 9);
+    assert_eq!(record["served"][8], "GET /jcp/agent-spawner/hosts/v0/remote-control/availability");
     assert_eq!(record["served"][6], "GET /jcp/ai-management/api/provisioning/v1/mcp");
+    assert_eq!(
+        record["served"][7],
+        "GET /jcp/repo-connections/tokens/state/meta?repositoryUrl=https%3A%2F%2Fgithub.com%2Fo%2Fr.git"
+    );
     assert_eq!(record["unexpected"], json!([]));
 
     let none = start_cloud(Organization::None);

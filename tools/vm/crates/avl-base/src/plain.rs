@@ -374,7 +374,9 @@ impl State {
             | RunEventKind::Summary(_)
             | RunEventKind::Output(_)
             | RunEventKind::IdeLaunched(_)
-            | RunEventKind::IdeExited(_) => {}
+            | RunEventKind::IdeExited(_)
+            | RunEventKind::IdeReady(_)
+            | RunEventKind::Timing(_) => {}
         }
     }
 

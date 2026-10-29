@@ -1,14 +1,14 @@
-// The app shell of a docs site: the brand, the top nav, the mobile nav, the palette button, the theme toggle, the
-// in-page crumb, and the route outlet. The kernel renders its own pages; a site gives its home page and the renderers
-// of its own pages. Every routed page is a lazy chunk: only the shell (nav, palette, furniture, data) loads eagerly,
-// so the entry stays small and shared modules split into common chunks.
+// The app shell of a docs site: the top bar (the brand, the top nav, the mobile nav, the palette button, the theme
+// toggle), and the route outlet with the columns of the page layout (pageLayout.tsx). The kernel renders its
+// own pages; a site gives its home page and the renderers of its own pages. Every routed page is a lazy chunk: only
+// the shell (nav, palette, furniture, data) loads eagerly, so the entry stays small and shared modules split into
+// common chunks.
 
 import { SearchIcon } from 'lucide-react'
 import { lazy, Suspense, useLayoutEffect, useRef, useState, type ComponentType, type MouseEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import type { SiteConfig } from '../scripts/siteConfig.ts'
 import { MobileNav } from './components/MobileNav'
-import { PageBreadcrumb } from './components/PageBreadcrumb'
 import { ThemeToggle } from './components/ThemeToggle'
 import { TopNav } from './components/TopNav'
 import { Button } from './components/ui/button'
@@ -17,17 +17,20 @@ import { TooltipProvider } from './components/ui/tooltip'
 import { crumbsForRoute } from './crumbs'
 import { DocPage as DocPageShell } from './furniture'
 import type { NavEntry } from './nav'
+import { PageChromeProvider, ReadingLayout, ToolLayout, type PageChrome } from './pageLayout'
 import { CommandPalette, usePalette } from './palette/CommandPalette'
 import {
   homeRoute,
   hrefForRoute,
   isAppHref,
+  layoutOf,
   legacyHashHref,
   navigate,
   parseRoute,
   ROUTE_CHANGE_EVENT,
 } from './router'
 import type { AnyRoute, KernelRoute, LaunchRoute } from './routeTable.ts'
+import { KERNEL_SECTION_TREES, sectionTreeOf, type SectionTreeSource } from './sectionTree'
 
 /** The component a page module exports under `name`, as a lazy chunk. */
 export function lazyPage<Module extends Record<Name, ComponentType<any>>, Name extends keyof Module & string>(
@@ -56,13 +59,13 @@ export interface ShellParts {
   home: ComponentType
   /** The nav table: the items one click away and the dropdown groups. */
   nav: readonly NavEntry[]
-  /** The renderers of the site pages, by route page. */
+  /** The renderers of the site pages, by route page. The layout of a page comes from its entry in the route table. */
   pages: Readonly<Record<string, PageRenderer>>
   /**
-   * The pages that own their trail and fill the outlet: the shell shows no crumb and does not scroll the outlet.
-   * The explainer page is always one.
+   * The section trees of the site sections, by route page: the left column of a reading page. They come before the
+   * kernel trees of the guides and the decisions. A reading page without a tree keeps an empty column.
    */
-  canvasPages?: readonly string[]
+  sectionTrees?: Readonly<Record<string, SectionTreeSource>>
   /**
    * The part of a route that names the page; a change of it cross-fades, a step or a selection does not. Return
    * undefined for the default: the explainer slug, else the path of the route URL.
@@ -170,8 +173,17 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
   const route = useBrowserRoute(identity)
   const [paletteOpen, setPaletteOpen] = usePalette()
   const Home = parts.home
-  const canvas = route.page === 'explainer' || (parts.canvasPages ?? []).includes(route.page)
-  const crumbs = canvas ? [] : crumbsForRoute(route)
+  const entryLayout = layoutOf(route)
+  // a catalog page is a reading page with the wide measure
+  const layout = entryLayout === 'catalog' ? 'reading' : entryLayout
+  const treeSource = layout === 'reading' ? parts.sectionTrees?.[route.page] ?? KERNEL_SECTION_TREES[route.page] : undefined
+  const chrome: PageChrome = {
+    layout,
+    measure: entryLayout === 'catalog' ? 'wide' : 'prose',
+    crumbs: layout === 'canvas' ? [] : crumbsForRoute(route),
+    tree: treeSource === undefined ? null : sectionTreeOf(treeSource),
+    href: hrefForRoute(route),
+  }
   const renderPage = (): ReactNode => {
     if (route.page === 'home') {
       return <Home />
@@ -182,54 +194,56 @@ export function Shell({ config, parts }: { config: SiteConfig, parts: ShellParts
     }
     return page(route)
   }
+  // the fallback must not carry marker classes (.doc-page etc.): the e2e readiness helpers select on them and would
+  // take the fallback for the routed page
+  const routed = (
+    <Suspense fallback={<div className="route-loading p-10 text-muted-foreground">Loading…</div>}>
+      {renderPage()}
+    </Suspense>
+  )
 
   return (
     <TooltipProvider delay={600}>
-      <div className="app-shell flex h-svh min-h-svh min-w-0 flex-col overflow-hidden" onClick={handleAppClick}>
-        <header className="topbar flex h-14 flex-none items-center gap-2 border-b border-border bg-card px-3 md:px-4">
+      <div className="app-shell flex h-svh min-h-svh min-w-0 flex-col overflow-hidden bg-background [--topbar-height:56px]" onClick={handleAppClick}>
+        <header className="topbar flex h-(--topbar-height) flex-none items-center gap-2 border-b border-border bg-background px-3 md:px-4">
           <MobileNav nav={parts.nav} route={route} />
           <a
-            className="brand flex flex-none items-center gap-2 rounded-md p-1 font-semibold text-foreground hover:no-underline"
+            className="brand flex flex-none items-center gap-2 rounded-md p-1 font-semibold text-foreground no-underline"
             href={homeRoute()}
           >
             <span
-              className="product-mark inline-grid h-6 min-w-6 flex-none place-items-center rounded-md px-0.5 bg-(image:--brand-gradient) text-3xs font-bold tracking-[0.04em] text-white shadow-sm"
+              className="product-mark inline-grid h-6 min-w-6 flex-none place-items-center rounded-md px-0.5 bg-(image:--brand-gradient) text-xs font-bold tracking-[0.04em] text-white shadow-sm"
               aria-hidden="true"
             >
               {config.brandMark}
             </span>
-            <span className="brand-title text-sm max-md:hidden">{config.brandMark} Docs</span>
+            <span className="brand-title text-base font-[650] tracking-[-0.01em] max-md:hidden">{config.brandMark} Docs</span>
           </a>
           <TopNav nav={parts.nav} route={route} />
           <div className="topbar-actions ml-auto flex flex-none items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="palette-button text-muted-foreground font-normal"
+              className="palette-button font-normal text-muted-foreground"
               onClick={() => setPaletteOpen(true)}
             >
               <SearchIcon data-icon="inline-start" />
-              <span>Search…</span>
+              <span className="max-sm:sr-only">Search the docs</span>
               <Kbd className="max-md:hidden">{navigator.platform.startsWith('Mac') ? '⌘K' : 'Ctrl K'}</Kbd>
             </Button>
             <ThemeToggle />
           </div>
         </header>
 
-        <div className={`route-outlet flex-1 min-h-0 ${canvas ? 'route-outlet-canvas overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
-          {/* the bar mirrors the .doc-page horizontal geometry (furniture.tsx) so the crumb aligns
-              with the content column; the negative margin folds it into the page's own top padding */}
-          {crumbs.length > 0 && (
-            <div className="page-breadcrumb-bar mx-auto w-full max-w-[900px] px-10 pt-6 -mb-5 max-md:px-4 max-md:pt-4 max-md:-mb-2.5 toc:max-w-[1160px] toc:pr-[296px]">
-              <PageBreadcrumb crumbs={crumbs} />
-            </div>
-          )}
-          {/* the fallback must not carry marker classes (.doc-page etc.) — the e2e readiness
-              helpers select on them and would take the fallback for the routed page */}
-          <Suspense fallback={<div className="route-loading p-10 text-muted-foreground">Loading…</div>}>
-            {renderPage()}
-          </Suspense>
-        </div>
+        <PageChromeProvider value={chrome}>
+          {layout === 'canvas'
+            ? <div className="route-outlet route-outlet-canvas flex min-h-0 flex-1 flex-col overflow-hidden text-sm">{routed}</div>
+            : (
+                <div className="route-outlet min-h-0 flex-1 overflow-y-auto">
+                  {layout === 'reading' ? <ReadingLayout>{routed}</ReadingLayout> : <ToolLayout>{routed}</ToolLayout>}
+                </div>
+              )}
+        </PageChromeProvider>
 
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       </div>

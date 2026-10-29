@@ -84,15 +84,37 @@ fn an_ide_launching_lane_pins_one_shard() {
 }
 
 #[test]
-fn a_lane_without_its_own_count_keeps_the_throughput_default() {
+fn a_lane_without_its_own_count_forces_the_planned_count() {
     let fast = lane("fast");
     assert_eq!(fast.shards, None);
     let broad = Resolution {
         multi_target: true,
         ..labelled(&fast.targets[0])
     };
-    assert_eq!(default_shards(&broad, Some(fast)), 2);
+    assert_eq!(default_shards(&broad, Some(fast)), PLANNED_SHARDS);
+    assert!(uses_shard_plan(&broad, Some(fast)));
     assert_eq!(default_shards(&labelled("//p:t"), None), 6);
+    assert!(!uses_shard_plan(&labelled("//p:t"), None));
+    assert!(!uses_shard_plan(&broad, Some(lane("ui"))));
+}
+
+#[test]
+fn a_planned_run_names_the_plan_file_and_the_profile() {
+    let planned = build_bazel_args(&RunPlan {
+        shard_plan: Some("out/bt/shard-plan.tsv".to_owned()),
+        profile: Some("/repo/out/bt/profile.json.gz".to_owned()),
+        ..base_plan(labelled("//p/..."))
+    });
+    assert!(has(&planned, "--test_env=JB_TEST_SHARD_PLAN=out/bt/shard-plan.tsv"), "{planned:?}");
+    assert!(has(&planned, "--profile=/repo/out/bt/profile.json.gz"), "{planned:?}");
+
+    let plain = build_bazel_args(&base_plan(labelled("//p:t")));
+    assert!(
+        !plain
+            .iter()
+            .any(|argument| argument.contains(SHARD_PLAN_ENV) || argument.starts_with("--profile")),
+        "{plain:?}"
+    );
 }
 
 #[test]
@@ -300,13 +322,17 @@ fn the_property_lane_selects_its_tag_across_the_whole_subtree() {
 
 /// The `ci` categories must stay excluded, because `testTagFilters` on the CI configurations is that same list and
 /// lives outside this repository. The `dedicated-suite` categories are excluded for the other reason: a suite of its
-/// own runs those targets. A category without a reason is what the lane runs.
+/// own runs those targets. The `fast-lane` categories are excluded for their cost. A category without a reason is
+/// what the lane runs.
 #[test]
-fn the_fast_lane_excludes_the_ci_and_the_dedicated_suite_categories() {
+fn the_fast_lane_excludes_the_ci_the_dedicated_suite_and_the_fast_lane_categories() {
     let fast = lane("fast");
     let joined = fast.extra.join(" ");
     let excluded: Vec<&str> = lanes().broad_run_excluded_tags().map(String::as_str).collect();
-    assert_eq!(excluded, ["air-integration-ui", "air-integration-headless", "air-property"]);
+    assert_eq!(
+        excluded,
+        ["air-integration-ui", "air-integration-headless", "air-property", "air-slow"]
+    );
     for tag in excluded {
         assert!(joined.contains(&format!("-{tag}")), "the fast lane does not exclude {tag}");
     }
@@ -484,6 +510,7 @@ fn the_parser_refuses_a_table_whose_lanes_and_tags_disagree() {
             "air-integration-ui",
             "air-integration-headless",
             "air-property",
+            "air-slow",
             "air-integration-ui-flow",
             "air-integration-gui-chat",
             "air-integration-ui-real",
@@ -528,8 +555,8 @@ fn the_shebangless_wrapper_goes_through_a_shell() {
 fn wildcard_guards_keep_a_broad_run_safe() {
     let labels = |values: &[&str]| values.iter().map(ToString::to_string).collect::<Vec<_>>();
     // The hazard this closes: `//plugins/air/...` without the lane's flags builds every non-test target and
-    // launches real IDEs through IDE Starter. The value is the one `--lane fast` carries: a hand-spelled subtree
-    // is a broad local run too.
+    // launches real IDEs through IDE Starter. The value is the one `--lane fast` carries without its `fast-lane`
+    // categories: a hand-spelled subtree is a broad local run too.
     assert_eq!(
         wildcard_guards(areas(), &labels(&["//plugins/air/shared/core/..."])),
         [
@@ -537,7 +564,6 @@ fn wildcard_guards_keep_a_broad_run_safe() {
             "--test_tag_filters=-air-integration-ui,-air-integration-headless,-air-property"
         ]
     );
-    assert!(has(&lane("fast").extra, &lanes().broad_run_exclusions()));
     // A pattern rooted inside the integration tree is asking for exactly those tests.
     for label in [
         "//plugins/air/tests/integration/headless/acp/...",
@@ -551,7 +577,28 @@ fn wildcard_guards_keep_a_broad_run_safe() {
     );
     assert!(has(&mixed, "--build_tests_only"), "{mixed:?}");
     // An empty list is not "all integration": guarding it is the safe reading.
-    assert!(!wildcard_guards(areas(), &[]).is_empty());
+    assert_ne!(wildcard_guards(areas(), &[]), Vec::<String>::new());
+}
+
+/// A `fast-lane` category leaves only the fast lane: a directory run is how a caller runs what the default loop leaves out.
+#[test]
+fn a_directory_run_keeps_the_fast_lane_categories() {
+    let fast_lane: Vec<&str> = lanes()
+        .category_tags()
+        .filter(|tag| tag.excluded_from_broad_runs == Some(BroadRunExclusion::FastLane))
+        .map(|tag| tag.name.as_str())
+        .collect();
+    assert_eq!(fast_lane, ["air-slow"]);
+    let guards = wildcard_guards(areas(), &["//plugins/air/backend/workflows/...".to_owned()]).join(" ");
+    let all = lane("all").extra.join(" ");
+    for tag in fast_lane {
+        assert!(
+            lane("fast").extra.join(" ").contains(&format!("-{tag}")),
+            "the fast lane runs {tag}"
+        );
+        assert!(!guards.contains(tag), "a directory run excludes {tag}: {guards}");
+        assert!(!all.contains(tag), "the all lane excludes {tag}");
+    }
 }
 
 /// The guards are the areas' own tags, so a checkout without an area adds none.
@@ -632,5 +679,46 @@ fn the_fixture_names_the_controller_workspace_as_a_lane_wide_path() {
     assert_eq!(
         lanes().lane_wide_path_lanes("community/tools/vm/crates/avl-affected/src/affected.rs"),
         Some(("community/tools/vm", &[] as &[String]))
+    );
+}
+
+/// A harness module that the controller joins by declaration must be a harness module: the reach narrows a lane-wide
+/// answer and adds no harness of its own.
+#[test]
+fn a_declaration_reach_narrows_a_lane_wide_module() {
+    let table = |modules: &str| {
+        Lanes::parse(&format!(
+            r#"{{
+              "laneWideModules": {{ {modules} }},
+              "declarationReach": {{
+                "bridge": {{ "sources": ["bridge/tests"], "descriptors": ["bridge/plugin.xml"], "requestType": "Request" }}
+              }},
+              "lanes": [ {{ "name": "ui", "target": "//ui:ui_test", "extra": [] }} ]
+            }}"#
+        ))
+    };
+    let parsed = table(r#""bridge": []"#).expect("the table parses");
+    let reach = parsed.declaration_reach("bridge").expect("the module is joined by declaration");
+    assert_eq!(
+        (reach.sources.clone(), reach.request_type.as_str(), reach.vocabulary.clone()),
+        (vec!["bridge/tests".to_owned()], "Request", None)
+    );
+    assert_eq!(parsed.declaration_reach("other"), None);
+    assert_eq!(
+        table("").unwrap_err(),
+        "declarationReach names bridge, which laneWideModules does not name: the reach narrows a harness module"
+    );
+}
+
+/// The fixture table joins the sources of the bridge by declaration, as the Air table does.
+#[test]
+fn the_fixture_joins_the_bridge_sources_by_declaration() {
+    let reach = lanes()
+        .declaration_reach("intellij.air.integrationTests.bridge")
+        .expect("the bridge is joined by declaration");
+    assert_eq!(reach.request_type, "AirUiTestRequest");
+    assert_eq!(
+        reach.vocabulary.as_deref(),
+        Some("plugins/air/tests/integration/bridge/resources/flow-vocabulary.json")
     );
 }

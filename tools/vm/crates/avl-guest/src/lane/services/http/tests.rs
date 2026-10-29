@@ -1,23 +1,28 @@
 use std::io::{Read, Write};
 use std::net::{TcpListener, TcpStream};
-use std::thread;
+use std::thread::{self, JoinHandle};
 
 use pretty_assertions::assert_eq;
 
 use super::*;
 
-/// Reads one request from a real connection whose client sends `bytes`.
-fn read_from(bytes: &'static [u8]) -> Result<Request, RequestError> {
+/// A real loopback connection: the server end, and the thread of the client that runs `client` on its end.
+fn connected<T: Send + 'static>(client: impl FnOnce(TcpStream) -> T + Send + 'static) -> (TcpStream, JoinHandle<T>) {
     let listener = TcpListener::bind("127.0.0.1:0").unwrap();
     let address = listener.local_addr().unwrap();
-    let client = thread::spawn(move || {
-        let mut stream = TcpStream::connect(address).unwrap();
+    let client = thread::spawn(move || client(TcpStream::connect(address).unwrap()));
+    let (stream, _) = listener.accept().unwrap();
+    (stream, client)
+}
+
+/// Reads one request from a real connection whose client sends `bytes`.
+fn read_from(bytes: &'static [u8]) -> Result<Request, RequestError> {
+    let (stream, client) = connected(move |mut stream| {
         stream.write_all(bytes).unwrap();
         stream.shutdown(std::net::Shutdown::Write).unwrap();
         let mut rest = Vec::new();
         let _ = stream.read_to_end(&mut rest);
     });
-    let (stream, _) = listener.accept().unwrap();
     let request = read_request(&stream, MAX_BODY_BYTES);
     drop(stream);
     client.join().unwrap();
@@ -46,10 +51,7 @@ fn a_chunked_request_body_is_decoded_with_its_extensions_and_trailer() {
 
 #[test]
 fn an_expect_continue_gets_the_interim_answer_before_the_body() {
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let address = listener.local_addr().unwrap();
-    let client = thread::spawn(move || {
-        let mut stream = TcpStream::connect(address).unwrap();
+    let (stream, client) = connected(|mut stream| {
         stream
             .write_all(b"POST /feedback HTTP/1.1\r\nExpect: 100-continue\r\nContent-Length: 2\r\n\r\n")
             .unwrap();
@@ -58,7 +60,6 @@ fn an_expect_continue_gets_the_interim_answer_before_the_body() {
         stream.write_all(b"ok").unwrap();
         interim
     });
-    let (stream, _) = listener.accept().unwrap();
     let request = read_request(&stream, MAX_BODY_BYTES).unwrap();
     assert_eq!(&client.join().unwrap(), b"HTTP/1.1 100 Continue\r\n\r\n");
     assert_eq!(request.body, b"ok");
@@ -150,13 +151,9 @@ fn a_streamed_answer_sends_one_chunk_per_write_and_skips_an_empty_one() {
 
 #[test]
 fn a_body_past_the_bound_of_the_server_is_too_large() {
-    let listener = TcpListener::bind("127.0.0.1:0").unwrap();
-    let address = listener.local_addr().unwrap();
-    let client = thread::spawn(move || {
-        let mut stream = TcpStream::connect(address).unwrap();
+    let (stream, client) = connected(|mut stream| {
         stream.write_all(b"PUT /jars/x HTTP/1.1\r\nContent-Length: 5\r\n\r\nhello").unwrap();
     });
-    let (stream, _) = listener.accept().unwrap();
     assert!(matches!(read_request(&stream, 4), Err(RequestError::TooLarge)));
     client.join().unwrap();
 }

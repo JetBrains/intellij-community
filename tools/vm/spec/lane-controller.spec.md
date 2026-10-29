@@ -36,6 +36,7 @@ targets:
   - ../crates/avl-guest/src/lane/recycle.rs
   - ../crates/avl-guest/src/lane/watchdog.rs
   - ../crates/avl-guest/src/lane/stream.rs
+  - ../crates/avl-guest/src/lane/build_log.rs
   - ../crates/avl-guest/src/lane/ide/restart.rs
   - ../crates/avl-guest/src/lane/context/options/*.xml
   - ../crates/avl-guest/src/supervisor/thread_dump.rs
@@ -71,7 +72,9 @@ targets:
   - ../crates/avl-junit/src/lib.rs
   - ../crates/avl-junit/src/cases.rs
   - ../crates/avl-report/src/teamcity.rs
-  - ../crates/avl-report/src/performance.rs
+  - ../crates/avl-junit/src/performance.rs
+  - ../crates/avl-guest/src/lane/performance.rs
+  - ../crates/avl-guest/src/lane/run_result.rs
   - ../crates/avl-vm/src/daemon/performance.rs
   - ../crates/avl-vm/src/daemon/results.rs
   - ../crates/avl-vm/src/report.rs
@@ -259,7 +262,9 @@ The generator publishes the suite facts that the controller reads, as
   [@test] ../crates/avl-affected/src/affected/tests.rs
 
 - `run --changed` runs the suites those paths reach. Every bare argument after `--changed` is a changed
-  path. For each lane, the selection is the lane and one class filter for each suite.
+  path. For each lane, the selection is the lane and one class filter for each suite. `--base <rev>` compares a
+  Kotlin file of the test bridge with that revision, as `suites --base` does, and the next command of `suites`
+  repeats it.
   [@test] ../crates/avl-vm/src/daemon/run/tests.rs
   [@test] ../crates/avl-vm/src/lane/affected/tests.rs
 
@@ -794,8 +799,26 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-vm/src/daemon/iterate/tests.rs
 
 - The run journal holds the life of the lane IDE. An `ideLaunched` record names the pid, the launch name, the
-  launch key and the log directory. An `ideExited` record names the pid, the exit code and the signal.
+  launch key and the log directory. An `ideExited` record names the pid, the exit code and the signal. Each record
+  names its time. The one exception is the `ideLaunched` record of an IDE that outlived the previous daemon.
   [@test] ../crates/avl-wire/src/daemon/tests.rs
+
+- An `ideReady` record follows each wait for `READY` that holds: after a launch, on a reused IDE, and after a reload of
+  the bridge plugin. It names the launch, the pid that the bridge answers with, and `readyAfterMs`, the time of the
+  wait.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`the_ide_life_records_carry_their_time_and_the_ready_record_its_wait`)
+  [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`the_ready_record_names_the_launch_the_pid_and_the_wait`)
+
+- A `timing` record holds the time of a step that no trace bundle holds: its `step`, its `durationMs` and its end.
+  The steps are `bare-launch` and `bare-program` of a suite of a bare IDE, the `services-reset` of each reset, and
+  the `recorder-close` of each recorded scenario. Its `subject` names the suite or the scenario. After the summary
+  of its iteration, `lane-run` writes `lane-run-xml`, `lane-run-quit`, `lane-run-end` and, for a run that is not
+  green, `lane-run-evidence`. The JUnit XML and the TeamCity messages ignore every `timing` and `ideReady` record.
+  [@test] ../crates/avl-wire/src/daemon/tests.rs (`a_timing_record_names_its_step_its_duration_and_its_subject`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_green_scenario_runs_between_two_resets_and_writes_the_golden_transcript`)
+  [@test] ../crates/avl-guest/src/lane/program/tests.rs (`a_bare_suite_runs_last_on_its_own_ide_and_its_one_request_is_its_instruction`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_steps_after_the_iteration_are_timing_records_after_the_summary`)
+  [@test] ../crates/avl-report/src/teamcity/tests.rs (`the_recorded_stream_renders_its_golden`)
 
 - The run journal holds each line that the daemon writes to its error stream during a run. Each line is an `output`
   record. An example is the line that names a recycle of the lane IDE. The text has no stamp of the daemon, and the
@@ -893,28 +916,32 @@ The daemon's half and the IDE's half of supervision are in
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_zip_is_published_once_for_its_bundles`)
 
 - For a run on the lane daemon, the controller writes the IJ Perf file `metrics.performance.json` of each scenario
-  that reported metrics. The lane document names the series of each such scenario. A series holds the test class, the
-  scenario, the dashboard project and method, and an artifact path. The file goes to
-  `<iterationId>.performance/<artifactPath>` beside the report of the iteration. Its build is the `build.txt` of the
-  IDE distribution without the product code. A TeamCity build step publishes the file once under its artifact path.
-  [@test] ../crates/avl-report/src/performance/tests.rs (`the_recorded_stream_renders_its_golden`)
-  [@test] ../crates/avl-report/src/performance/tests.rs (`the_build_drops_the_product_code_and_keeps_every_other_form`)
+  that reported metrics. `lane-run` writes the same file after its run. The lane document names the series of each
+  such scenario. A series holds the test class, the scenario, the dashboard project and method, and an artifact path.
+  The controller writes the file to `<iterationId>.performance/<artifactPath>` beside the report of the iteration. Its
+  build is the `build.txt` of the IDE distribution without the product code. A TeamCity build step publishes the file
+  once under its artifact path.
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_recorded_stream_renders_its_golden`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_build_drops_the_product_code_and_keeps_every_other_form`)
   [@test] ../crates/avl-report/src/teamcity/tests.rs (`a_file_is_published_once_into_its_directory`)
-  [@test] ../crates/avl-vm/src/daemon/performance/tests.rs (`a_lane_that_names_series_plans_them_with_the_build_and_another_lane_plans_nothing`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_lane_that_names_series_plans_them_with_the_build_and_another_lane_plans_nothing`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`the_ide_build_of_a_build_file_drops_the_product_code_and_names_a_read_failure_and_an_empty_file`)
+  [@test] ../crates/avl-junit/src/teamcity/tests.rs (`a_file_is_published_into_its_directory_with_its_path_escaped`)
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario`)
 
 - A metric whose name ends with `Ms` is a duration. A metric whose name starts with `growth.` is the counter
   `<name>.x100` of its value times 100. Every other metric is a counter. The file keeps whole numbers, so each value
   is rounded, and a half goes up.
-  [@test] ../crates/avl-report/src/performance/tests.rs (`a_duration_a_growth_and_a_counter_keep_whole_numbers`)
-  [@test] ../crates/avl-report/src/performance/tests.rs (`a_value_out_of_the_range_of_an_int_is_held_to_it`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_duration_a_growth_and_a_counter_keep_whole_numbers`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_value_out_of_the_range_of_an_int_is_held_to_it`)
 
 - A scenario that reported metrics and has no series, such as a warm-up, gets no file and no note. Its metrics still
-  reach TeamCity as `testMetadata`. A plan that the controller cannot read is a note. A lane document whose series
-  collide or leave their directory is refused.
+  reach TeamCity as `testMetadata`. A plan that the controller or `lane-run` cannot read is a note. A lane document
+  whose series collide or leave their directory is refused.
   [@test] ../crates/avl-vm/src/daemon/results/tests.rs (`a_scenario_with_metrics_and_no_series_gets_no_file_and_no_note`)
-  [@test] ../crates/avl-report/src/performance/tests.rs (`a_case_with_metrics_and_no_series_writes_no_file`)
-  [@test] ../crates/avl-vm/src/daemon/performance/tests.rs (`a_plan_that_cannot_be_made_says_why`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_case_with_metrics_and_no_series_writes_no_file`)
+  [@test] ../crates/avl-junit/src/performance/tests.rs (`a_plan_that_cannot_be_made_says_why`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`a_plan_that_cannot_be_made_is_a_note`)
   [@test] ../crates/avl-wire/src/program/lane/tests.rs (`a_performance_series_that_would_collide_or_leave_its_directory_is_refused`)
 
 - The run report is of schema 3. It holds one case for each scenario, each failed container and each skipped
@@ -1645,6 +1672,32 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_smaller_screen_is_a_note_and_not_a_refusal`)
   [@test] ../crates/avl-guest/src/linux/validate/tests.rs (`a_distribution_without_a_shared_object_sweeps_nothing_and_the_probe_notes_it`)
 
+- On a TeamCity build on Linux that lets the recorder read the screen, `lane-run` starts an X display of its own before
+  the probe. The display of the build is the desktop of the agent, and the recorder would show it around the IDE frame.
+  Xvfb picks a free display at 1920x1080x24. `lane-run` sets `DISPLAY` to that display, so the probe, the lane IDE and
+  the recorder use it. A note in the run stream names the display. Only a host without Xvfb keeps the display of the
+  build. A warning in the run stream and a TeamCity message of the status `WARNING` then name Xvfb and IJAI-4779. An
+  Xvfb that names no display is refused with `lane_run_display`. `lane-run` stops Xvfb at its end. On Linux Xvfb also
+  ends with the process.
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`the_run_owns_its_display_only_with_xvfb`)
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`the_displayfd_line_names_the_display`)
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`the_display_starts_xvfb_on_a_free_display_and_its_drop_stops_it`)
+  [@test] ../crates/avl-guest/src/lane/own_display/tests.rs (`an_xvfb_that_names_no_display_is_refused`)
+
+- The display of `lane-run` has a window manager of `lane-run`, `air-lane-wm`, so the host needs no window manager
+  program. It does what the probe and the driver need. It selects the substructure redirect of the root and paints the
+  root `#2b2d30`. It maps each window that asks and applies each configure request, so `toFront()` raises a window. It
+  gives the input focus to a window that it maps or that `_NET_ACTIVE_WINDOW` names, by `XSetInputFocus` and by
+  `WM_TAKE_FOCUS`. A window whose hints refuse the input does not get it. A closed window gives the focus to the
+  topmost window that takes it. The window manager sets `_NET_SUPPORTING_WM_CHECK` with its name, `_NET_SUPPORTED`,
+  `_NET_ACTIVE_WINDOW`, `_NET_CLIENT_LIST`, and a zero `_NET_FRAME_EXTENTS`. It does not reparent and draws no
+  decoration, so the lane IDE gets `_JAVA_AWT_WM_NONREPARENTING=1`.
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`a_map_request_maps_raises_and_focuses_a_window_that_takes_the_focus`)
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`an_active_window_message_raises_and_focuses_a_managed_window`)
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`a_gone_window_with_the_focus_gives_it_to_the_topmost_window_that_takes_it`)
+  [@test] ../crates/avl-guest/src/lane/window_manager/tests.rs (`a_raise_moves_the_window_to_the_top_of_the_stack`)
+  [@test] ../crates/avl-guest/src/supervisor/tests.rs (`the_context_environment_is_the_layout_and_the_allowlist`)
+
 - The budget of a `lane-run` is the smaller of `--run-budget-sec` and `$TEST_TIMEOUT` of a Bazel test, less a
   teardown reserve of 180 s. A run that names neither has no budget. A `$TEST_TIMEOUT` that is no whole number is
   refused with `lane_run_budget`, and so is a budget that the reserve leaves nothing of. The rule `air_lane_test` passes
@@ -1687,6 +1740,49 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/evidence/tests.rs (`the_process_output_is_kept_when_the_log_directory_is_gone`)
   [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_keeps_the_evidence_of_the_ide_run_that_it_canceled`)
 
+- After each run, green or not, `lane-run` writes the IJ Perf file of each case that reported a metric and has a
+  series. The file goes to `$TEST_UNDECLARED_OUTPUTS_DIR/performance/<artifactPath>`, or to
+  `<runDirectory>/performance/<artifactPath>` outside a Bazel test. A failed case keeps its metrics in the file.
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`off_teamcity_the_files_are_written_and_not_published`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`without_bazel_outputs_the_files_go_to_the_run_directory`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`a_failed_part_keeps_its_metrics_in_the_file`)
+
+- Beside the IJ Perf file, `lane-run` copies the result files of the authored parts of the case. These are
+  `summary.txt`, `air-performance.json`, `watchdog.ndjson`, `trace.ndjson` and `report.json`, each when a part wrote
+  it. The parts are copied in the order of the program. When two parts wrote the same file, the later part wins, and
+  a log line names the file.
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`the_part_files_are_copied_beside_the_file_and_the_later_part_wins`)
+
+- On a TeamCity agent, `lane-run` writes one `publishArtifacts` line on standard output for each file that it wrote.
+  The line publishes the file into the artifact path of its series. Off TeamCity, it writes one log line with the
+  directory. A file that cannot be written is a log line, and it never changes the verdict.
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`the_files_are_written_and_published_on_teamcity`)
+  [@test] ../crates/avl-guest/src/lane/performance/tests.rs (`off_teamcity_the_files_are_written_and_not_published`)
+
+- After each run that is not `--plan-only`, green or not, `lane-run` writes the result of the run. The file is
+  `$TEST_UNDECLARED_OUTPUTS_DIR/lane/run-result.json`, or `<runDirectory>/run-result.json` outside a Bazel test. A
+  TeamCity step reads it and posts it as the failure event of the build, so its field names are a contract. The
+  result holds `lane`, `green`, `failedTests`, `summaries` and `performance`. Each failed test is `test`, the class
+  and the case name, and `failure`, the text of the failure in the JUnit XML. A summary is the `summary.txt` of a part,
+  by `<scenario>/<part>`. A failure and a summary keep at most 4000 bytes, cut at a character boundary. `performance`
+  names each file of the IJ Perf bullets above with its artifact path.
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`the_run_result_names_the_failed_tests_and_the_summaries`)
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`a_green_run_has_no_failed_test`)
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`the_run_result_goes_to_the_lane_outputs_or_to_the_run_directory`)
+  [@test] ../crates/avl-junit/src/tests.rs (`the_failed_cases_are_those_that_fail_the_xml_with_its_failure`)
+
+- Under a Bazel test, a run that `lane-run` refuses before its end writes a result also. A host probe that finds no
+  window manager is such a refusal. Then `green` is false, no test fails, and `refusal` holds the `code` and the
+  `message` of the refusal, capped as a failure is. The result that the end of a run writes has no `refusal`, and it stays
+  when a later step refuses. A `--plan-only` run writes no result.
+  [@test] ../crates/avl-guest/src/lane/run_result/tests.rs (`a_refused_run_names_its_refusal`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_refused_run_under_a_bazel_test_writes_its_refusal_as_the_run_result`)
+
+- The hard stop of the monitor writes the IJ Perf files and the result of the run too, from the records so far. Then
+  `green` is false, and the open scenario is a failed test. A metric of a scenario that ended before the hard stop
+  keeps its IJ Perf file.
+  [@test] ../crates/avl-guest/src/lane/monitor/tests.rs (`the_hard_stop_writes_the_ij_perf_files_and_the_result_of_the_run`)
+
 - A launch is affected when it ran during a scenario that did not pass. A launch that runs at a watchdog expiry, a
   failed class, a failed run or the hard stop is affected too. A failure when no launch runs affects the newest
   launch. A run that is not green and has no affected launch keeps every launch.
@@ -1715,6 +1811,42 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   locks standard output for each write, not for the whole run. So no thread of the run waits for a lock of the main
   thread.
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output`)
+
+- On a TeamCity build, `lane-run` appends service messages to the file that `AIR_LANE_LIVE_LOG` names. The build
+  streams that file into its build log, so the messages show while the test runs. At the start of each scenario
+  `lane-run` writes `progressMessage '<lane> <n>/<total>: <scenario>'`. At its end the message also names the
+  status and the duration. Each message is one line in one write, and its values are escaped as TeamCity reads them.
+  The file carries no test event, because the results come from the JUnit XML.
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_run_with_a_passed_and_a_failed_scenario_writes_the_golden_lines`)
+
+- For a failed or aborted scenario, `lane-run` publishes the video and the last picture of the bundle with
+  `publishArtifacts`. A scan of the trace root after each scenario and at the summary of the run finds the bundle.
+  The paths are the ones of `air-trace teamcity-publish`: `video.mp4` and `failure.<ext>` in
+  `air-traces-failed/<lane>/<runId>/<TestClass>/<stem>/`. The lane is the directory of the `test.xml`. A later bundle
+  of the same path takes the stem `<scenario>.<n>`. So the publish after the test replaces the same files. Both files
+  are staged under their artifact names beside the file of the variable, because Bazel can remove `test.outputs`
+  after the test.
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_run_with_a_passed_and_a_failed_scenario_writes_the_golden_lines`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_second_failed_attempt_publishes_under_the_next_stem`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`the_summary_publishes_a_bundle_that_the_recorder_finished_late`)
+  [@test] ../crates/avl-trace-tools/src/artifacts/tests.rs
+
+- The channel is off without `TEAMCITY_VERSION`, without the variable, and when the file does not open. Inside a
+  Bazel test the channel is on, although Bazel sets `XML_OUTPUT_FILE` there. A failed write is one line of the log,
+  and the channel stays off for the rest of the run. A write that takes a part of a line ends that line first. The
+  run keeps its verdict and its run file. The lane daemon of a worker opens no channel.
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`the_channel_is_on_only_on_teamcity_with_the_variable`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`the_channel_is_on_in_a_bazel_test_of_a_teamcity_build`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_failed_write_to_the_build_log_keeps_the_run_file_whole_and_green`)
+  [@test] ../crates/avl-guest/src/lane/build_log/tests.rs (`a_short_write_ends_its_line_and_turns_the_channel_off`)
+
+- `lane-run` takes which scenarios keep their video from `AIR_LANE_VIDEO`. The value `failed` keeps the video of a
+  scenario that did not pass only, and the hello says `keepVideo` `failed`. Unset, empty or `always`, every scenario
+  keeps its video. Another value is refused with `lane_run_video`, and the refusal names the value. A TeamCity build
+  passes the variable with `--test_env`. It sets `failed` on a branch other than `master` and in a personal build. So a
+  passed scenario keeps its video only in a build of `master`. The lane daemon of a worker keeps every video.
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`air_lane_video_keeps_every_video_unless_it_says_failed`)
+  [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_keeps_the_videos_that_the_inputs_keep`)
 
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
   standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,

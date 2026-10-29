@@ -1,6 +1,6 @@
 [package]
 name = "avl-junit"
-description = "The JUnit XML of a run, written from its run stream: the case fold and the render, for the controller and the guest agent."
+description = "The files of a run that the controller and the guest agent both write from its run stream: the JUnit XML, the TeamCity messages and the IJ Perf file."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -11,6 +11,9 @@ workspace = true
 
 [dependencies]
 avl-wire.workspace = true
+jiff.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 
 [dev-dependencies]
 avl-testkit.workspace = true

@@ -22,6 +22,7 @@ use std::fs;
 use std::os::unix::fs::DirBuilderExt;
 use std::path::Path;
 
+use avl_wire::ide::{self as wire_ide, ARG_FILE, CONFIG_DIR, LAUNCH_RECORD_FILE, PLUGINS_DIR, SYSTEM_DIR};
 use avl_wire::supervisor::{Phase, RunState};
 
 use crate::cli::RootArgs;
@@ -36,6 +37,37 @@ pub(crate) const CODE_PREPARE_FAILED: &str = "guest_ide_prepare_failed";
 
 /// The refusal of a launch that cannot start its IDE.
 pub(crate) const CODE_LAUNCH_FAILED: &str = "guest_ide_launch_failed";
+
+/// The paths of one context that a preparation and a launch both name, as guest path text.
+struct ContextPaths {
+    dir: String,
+    config: String,
+    system: String,
+    plugins: String,
+    arg_file: String,
+    launch_record: String,
+}
+
+impl ContextPaths {
+    /// The paths of the context `launch_key` under the IDE root `ide_root`.
+    fn new(ide_root: &str, launch_key: &str) -> Self {
+        let dir = wire_ide::context_dir(ide_root, launch_key);
+        let child = |name: &str| format!("{dir}/{name}");
+        Self {
+            config: child(CONFIG_DIR),
+            system: child(SYSTEM_DIR),
+            plugins: child(PLUGINS_DIR),
+            arg_file: child(ARG_FILE),
+            launch_record: child(LAUNCH_RECORD_FILE),
+            dir,
+        }
+    }
+
+    /// The path of the entry `name` of the context.
+    fn child(&self, name: &str) -> String {
+        format!("{}/{name}", self.dir)
+    }
+}
 
 /// The live run of the run slot `context`, or `None` when the slot is free or the context does not exist.
 ///

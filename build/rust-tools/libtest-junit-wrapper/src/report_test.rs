@@ -80,7 +80,7 @@ fn holds_no_test_which_reported_a_result() {
     });
     report.record(result("a", Outcome::Failed));
 
-    assert!(report.running().is_empty());
+    assert_eq!(report.running(), Vec::<&str>::new());
 }
 
 /// The warning of a slow test must not count as a result, because the test still runs.
@@ -95,7 +95,7 @@ fn keeps_a_slow_test_among_the_tests_which_reported_no_result() {
     });
 
     assert_eq!(report.running(), vec!["a"]);
-    assert!(report.results().is_empty());
+    assert_eq!(report.results(), []);
 }
 
 #[test]

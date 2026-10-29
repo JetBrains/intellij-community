@@ -1,11 +1,9 @@
-use avl_base::Reporter;
 use pretty_assertions::assert_eq;
 
 use super::report;
 use crate::bench::arm::Arm;
-use crate::bench::command::replay;
 use crate::bench::options::{RunSelection, TraceArgs, Window};
-use crate::bench::testing::{assert_golden, fixture_session};
+use crate::bench::testing::{assert_golden, fixture_session, replayed_session};
 
 fn args(run: Option<&str>, from: Option<f64>, to: Option<f64>, min: f64, all: bool) -> TraceArgs {
     TraceArgs {
@@ -28,18 +26,10 @@ fn of_arm(arm: Arm) -> TraceArgs {
     args
 }
 
-/// A replayed copy of the fixture session, which has its `summary.json`.
-fn replayed() -> (tempfile::TempDir, std::path::PathBuf) {
-    let (dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
-    (dir, session)
-}
-
 /// The text of the default report of the fixture equals `testdata/bench/trace.txt`.
 #[test]
 fn the_default_trace_matches_the_golden() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let report = report(&session, &args(None, None, None, 10.0, false)).expect("a report");
     assert_eq!(report.run, "non-modal-run-01");
     assert_eq!(report.median_by, Some("welcomeBecameVisible"));
@@ -49,7 +39,7 @@ fn the_default_trace_matches_the_golden() {
 
 #[test]
 fn the_helper_twins_stay_with_all_and_the_window_and_the_minimum_narrow_the_spans() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let default = report(&session, &args(None, None, None, 10.0, false)).expect("a report");
     assert!(default.spans.iter().all(|line| !line.span.helper && line.span.duration_ms >= 10.0));
     let all = report(&session, &args(None, None, None, 10.0, true)).expect("a report");
@@ -83,7 +73,7 @@ fn the_helper_twins_stay_with_all_and_the_window_and_the_minimum_narrow_the_span
 /// the window from the process start to the main anchor of its arm. A named run has no median.
 #[test]
 fn a_run_without_the_frame_has_the_window_from_the_process_start_to_the_main_anchor_of_its_arm() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let modal = report(&session, &of_arm(Arm::MODAL)).expect("a report");
     assert_eq!(
         (modal.run.as_str(), modal.median_by),
@@ -113,7 +103,7 @@ fn a_run_without_the_frame_has_the_window_from_the_process_start_to_the_main_anc
 /// A missing end widens the window to the end of the run.
 #[test]
 fn a_missing_end_widens_the_window_to_the_end_of_the_run() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let path = session.join("non-modal-run-01/result.json");
     let mut result: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&path).expect("a result")).expect("a result");
     result["metrics"]
@@ -128,7 +118,7 @@ fn a_missing_end_widens_the_window_to_the_end_of_the_run() {
 /// `--arm` refuses an arm that the session lacks, and a named run of another arm.
 #[test]
 fn an_arm_that_the_session_lacks_or_a_run_of_another_arm_is_refused() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let refusal = report(&session, &of_arm(Arm::PROJECT)).expect_err("no project arm");
     assert!(
         refusal.message.ends_with("has no project arm; its arms are modal, non-modal"),
@@ -148,7 +138,7 @@ fn an_arm_that_the_session_lacks_or_a_run_of_another_arm_is_refused() {
 /// The end of a span comes from its microseconds.
 #[test]
 fn the_overlap_keeps_the_spans_that_run_into_the_window() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let names = |overlap: bool| {
         let args = TraceArgs {
             overlap,
@@ -177,7 +167,7 @@ fn the_overlap_keeps_the_spans_that_run_into_the_window() {
         text.contains("\nwindow 2200..2300 ms, spans that run in it, >= 0 ms, 7 of 36 spans\n"),
         "{text}"
     );
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let report = report(&session, &args(None, None, None, 10.0, false)).expect("a report");
     let toolwindow = report
         .spans
@@ -197,7 +187,7 @@ fn a_bad_run_an_empty_window_and_a_session_without_a_summary_are_refused() {
     let refusal = report(&session, &args(None, None, None, 10.0, false)).expect_err("no summary");
     assert_eq!(refusal.code, "no_summary");
 
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let refusal = report(&session, &args(Some("non-modal-run-09"), None, None, 10.0, false)).expect_err("no such run");
     assert_eq!(refusal.code, "usage");
     assert!(
@@ -221,7 +211,7 @@ fn a_bad_run_an_empty_window_and_a_session_without_a_summary_are_refused() {
 
 #[test]
 fn a_truncated_trace_is_a_note_of_the_text() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let trace = session.join("non-modal-run-01/opentelemetry.json");
     let text = std::fs::read_to_string(&trace).expect("a trace");
     let cut = text.find(r#""operationName":"toolwindow creating""#).expect("a span");

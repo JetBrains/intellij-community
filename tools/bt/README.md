@@ -1,6 +1,7 @@
 # bt: the Bazel test wrapper
 
-This Cargo workspace holds BT, the agent-facing wrapper over `bazel test` that `community/tools/bt.cmd` runs. Bazel
+This Cargo workspace holds BT, the agent-facing wrapper over `bazel test` and `bazel build` that `community/tools/bt.cmd`
+runs. Bazel
 builds every crate through `rules_rs` (repository `@bt`, declared in `community/MODULE.bazel`), from the community
 root and from the ultimate root. `cargo` serves the edit-test loop and rust-analyzer.
 
@@ -10,15 +11,16 @@ Run a test target from the ultimate root. From `community/`, drop the `@communit
 
 | Crate | Content | Bazel test target |
 |---|---|---|
-| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
+| `crates/bt-core` | The areas of `bt.json` and their lane tables, selector resolution, the suite catalog, the bazel command line, the shard plan, BEP and `test.xml` reading, and the exit codes of `bt`. `fake` is the in-memory runtime the tests share. | `@community//tools/bt/crates/bt-core:bt-core_test` |
 | `crates/bt-junit` | The JUnit XML reader: a scanner that keeps the cases of a truncated `test.xml`, and the simple-name class pattern. | `@community//tools/bt/crates/bt-junit:bt-junit_test` |
 | `crates/refusal` | The refusal of a person- or agent-facing CLI: a stable code, a message, the exit code, and the details as JSON text. It has no dependency, and each tool keeps its own exit codes. | `@community//tools/bt/crates/refusal:refusal_test` |
 | `bins/bt` | The binary: the command line and the help, one invocation end to end, the text digest, the `--json` payload, and the process boundary. | `@community//tools/bt/bins/bt:bt_test` |
 
 `bt_rust_crate` in `defs.bzl` declares each crate: its library or binary, its `<crate>_test` and its `<crate>-clippy`.
 It binds `rust_tool_crate`, the shared macro core in `community/build/rust-tools/defs.bzl`, to the `@bt` hub. bt-core
-takes the slash-path rules from `distpath` of the dev-dist tools, through a path dependency. `_CROSS_MODULE_CRATES` in
-`defs.bzl` maps it to its target in this module, so Bazel builds it once.
+takes the slash-path rules from `distpath` of the dev-dist tools, and `bt` takes `yonder-client` and `yonder-link` of
+yonder, through path dependencies. `_CROSS_MODULE_CRATES` in `defs.bzl` maps each to its target in this module, so
+Bazel builds it once.
 `optimized_binary` of the core declares a shipped binary: one file, and always optimized. `defs.bzl` re-exports it for
 the Air UI-lane workspace. The spec of a Rust tool workspace is `community/build/rust-tools/README.md`.
 
@@ -36,6 +38,13 @@ of that directory. `crates/bt-core/src/areas.rs` and `crates/bt-core/src/lanes.r
 without `bt.json` has no area: a label and a pattern resolve, and a name, a package, a flow or a suite selector
 refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins/air/tests/integration/lanes.json`.
 
+## Shards
+
+A run over many targets forces two shards on each target and passes the shard plan `out/bt/shard-plan.tsv` to the
+tests. The JUnit runner gives each target its planned count and splits the classes of the target by their recorded
+seconds. bt records the class times of each run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules. The
+same run writes the Bazel profile to `out/bt/profile.json.gz`.
+
 ## Modules
 
 `--module <jps module>` runs the `jps_test` target of a JPS module. `crates/bt-core/src/modules.rs` resolves it:
@@ -52,6 +61,109 @@ checkout. `tests.cmd` reads the same list. bt refuses every other module with ex
 `module_not_migrated`. The message gives the `./tests.cmd --module <module> --test <FQN>` command, and it gives the
 label for an explicit run. A module without a target of its own gets the code `module_without_test_target` and the same
 `tests.cmd` command. `--filter` takes an FQN, `FQN#method` or a package, as for a label.
+
+## Builds
+
+`bt build <pattern>...` runs `bazel build -k` over target patterns that start with `//` or `@`, with the UI of bazel
+silenced. The digest is `BUILD OK`, or `BUILD FAILED` with the compile errors and the targets that did not build.
+`bins/bt/src/build.rs` holds it. The exit code is 0, 5 for a build failure, or 6 for any other exit of bazel.
+
+Bazel exits 0 for a pattern under an ignored directory: it only warns, and it builds nothing for that pattern. So a
+green build is `BUILD OK` only when the BEP names a completed target and bazel dropped no pattern. Otherwise the digest
+is `BUILD EMPTY`, the exit code is 4, and the build records nothing. In the ultimate root, the root `.bazelignore`
+lists `community`, so `//community/<rest>` runs as `@community//<rest>`, as a directory selector does. A test run maps
+its label the same way. bt runs every pattern in the checkout root, whatever the working directory. A `//` pattern
+whose directory is not in the checkout is refused with exit 2, and the message names the `@community` spelling when
+the directory is under `community/`.
+`--json`, `--dry-run`, `--verbose` and `--host` work as for a test run.
+
+## The check record
+
+A green run records the tree of the checkout that it saw, for `bd lease pick` of Branch Deck. A repository whose
+`.branchdeck.toml` sets `pick_requires_check` in `[lease]` lands a lease only when a record names the tree of its HEAD.
+bt is the only writer. `bins/bt/src/check.rs` holds the rules:
+
+1. Only a linked work tree records, such as a lease of Branch Deck: its `.git` is a file. The main checkout pays one
+   stat and records nothing, because no pick lands it.
+2. The tree is `HEAD^{tree}` of a clean work tree. With local changes, it is the tree that `git add -A` would give,
+   which `Runtime::checkout_tree` writes from a copy of the index. The index of the work tree stays as it was. An
+   untracked nested checkout is left out, and a directory replaced by a symbolic link gives a warning and no record.
+3. A local run reads the tree before its first bazel spawn and again after a green result. It records only when both
+   are the same tree. A red run, a dry run and a run during which the files changed record nothing.
+4. A record of a tree with local changes names those paths on the stderr. The pick finds the record only for a commit
+   of the same files, so commit or delete scratch files before the last check.
+5. A `--host` run records the tree of the commit that yonder names as the one that ran.
+6. The file is `bd-checks.jsonl` in the git directory (`git rev-parse --git-path bd-checks.jsonl`), so each linked work
+   tree has its own. Each write replaces the file in one step. It keeps the last 100 records, one JSON object a line:
+
+```json
+{"schema":1,"tree":"<tree>","head":"<commit>","tool":"bt","command":"test","patterns":["//plugins/air/..."],"exit":0,"at":1793112160851}
+```
+
+`command` is `test` or `build`. `patterns` holds the target patterns of bazel, then `--filter <value>` for a test run
+that took only some classes. For a `--host` run it holds the arguments of bt on the host, and that record also has
+`"host":"<alias>"`. `at` is in milliseconds since the epoch. A raw
+`./bazel.cmd` run records nothing, because `bazel.cmd` gives the process to bazelisk.
+
+## Runs on another machine
+
+`--host <alias>` runs the same command on another machine, such as `bt --host studio --lane fast`. The flag can stand
+before or after the selector. `bins/bt/src/remote.rs` calls the client of yonder (`community/tools/yonder`), and the
+agent `yonderd` on the host does the rest. No step of a run uses ssh.
+
+1. bt refuses a checkout with local changes, untracked files included, because only the commit reaches the host.
+2. The client sends the git objects that the host lacks, as a thin pack, to the main repository of the host.
+   `--host-repo` or `BT_HOST_REPO` names that repository. Without them, the host file of `--prepare` names it.
+3. The agent checks out the commit in the Branch Deck lease of this checkout, and runs `./community/tools/bt.cmd`
+   there with the same arguments, less `--host`. Its stderr streams here as it comes. Its stdout is the digest or the
+   `--json` payload. Its exit code is the exit code here. A refusal of yonder is 6, with the code `host_<code>`, and
+   local changes are 2.
+4. The new run directories of `out/bt-runs` come back to `out/bt-runs` here, and the digest names each local copy.
+5. The run lives on the agent, not on the connection. A connection that is quiet for 60 s is lost, and the client
+   follows the run again for up to 10 min. Ctrl+C cancels the run on the host and shows its output to the end. A
+   second Ctrl+C leaves at once with 6, and with `--json` it writes the payload of an infrastructure outcome.
+6. A host that has none of the commits near HEAD would need the whole history. bt refuses that with `host_behind`,
+   and `--prepare` moves the master of the host.
+
+### The host slots
+
+The host lends each run a host slot of Branch Deck for that run only (`bd lease host`, the yonder README): the slot
+that this checkout (`bt-remote-<hash of the checkout path>`) used last, else the one used longest ago, else the run
+waits in a queue, one line a minute. The host keeps a fixed set of warm slots, so two checkouts never make it clone
+and nothing returns a slot by hand.
+
+### Prepare a host
+
+`bt --host <alias> --prepare` makes a machine of the user ready for `--host` runs. The user runs it in a terminal.
+Each step is idempotent and prints `ok`, `done` or `missing`. An optional tool prints `absent`. `--dry-run` changes
+nothing. `bins/bt/src/prepare.rs` holds the steps, and `bins/bt/src/ssh.rs` bounds each ssh call:
+
+1. ssh: the alias answers in batch mode. Otherwise the step names the `~/.ssh/config` settings to check
+   (`AddressFamily inet`, and `IdentitiesOnly yes` only with an `IdentityFile`), and the other steps do not run.
+2. The repository (`--host-repo`): a missing one is created with `feature.manyFiles`, `core.untrackedCache` and
+   `core.fsmonitor=true`. Then the local master goes to `refs/heads/sync` there, and `checkout -B master sync` makes
+   it the master. The step warns about the size first, because the whole history crosses the network. An existing
+   master moves to the local master only when it is clean and an ancestor. An existing repository without
+   `core.fsmonitor=true` gets it, and the step says what the value was. The give-back of a host slot runs one
+   `status` after each run, and without fsmonitor it reads every file: 18-19 s on the Studio, against 2.5 s.
+3. `bd`: the local `~/.local/bin/bd` replaces another build on a host of the same platform. The SHA-256 of the binary
+   tells the build, so a new build with the same version also goes over. `~/.local/bin` goes on the PATH in `~/.zshenv`.
+4. Tools: git, Xcode, rustup, docker and tmux. The step only reports them, and it never installs one.
+5. The agent: bt builds `@community//tools/yonder:yonderd` with Bazel, and `yonder prepare` copies it to
+   `~/.local/bin/yonderd` on the host when its SHA-256 differs. `yonderd setup` adds this client to the allow list of
+   the agent and starts it as a LaunchAgent. The host file `~/.config/yonder/hosts/<alias>.json` here pins the agent.
+   With `--dry-run`, the step only asks the agent for its hello.
+6. Credentials: the host must have the `~/.netrc` entries of the Bazel remote services (the hosts that `.bazelrc` and
+   its imports name), the `~/.m2/settings.xml` servers of the `.idea/jarRepositories.xml` repositories on the Space
+   package host, and the expiry marker of the token of each such server. `IJPrivatePackagesAuthorizer` names that
+   marker by the hash of the token and keeps the expiry as its modification time, so the copy keeps that time. A local
+   marker that is missing or in the past means that the local token must be renewed first. The step prints host names
+   and server ids only, never a value. It copies a missing entry only after a yes at the terminal, or with `--yes`.
+   Without a terminal it refuses, so an agent cannot start the copy. `credentials.rs` merges each entry into the host
+   file and writes the file through the stdin of ssh, atomically and with mode 600. Then the remote cache must answer
+   404, not 401.
+
+A run without `--prepare` copies no credential.
 
 ## Links into the Air UI-lane workspace
 
@@ -71,6 +183,7 @@ and takes no `regex::Regex` and no `serde_json::Value` from its caller.
 
 ```sh
 cd community && ./bazel.cmd test //tools/bt/...
+cd community && ./bazel.cmd test //build/rust-tools:duplicate-code_test   # no copy-paste clone in the Rust tools
 cd community/tools/bt && cargo test && cargo clippy --all-targets
 ./bazel.cmd test @community//tools/bt/... @community//tools/vm/...    # from the ultimate root
 ```

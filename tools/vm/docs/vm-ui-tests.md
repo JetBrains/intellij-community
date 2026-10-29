@@ -34,7 +34,11 @@ The host-side provider, layout-plan, fragment and composition flow is documented
 in [Dev-build architecture](../../../../build/docs/guides/dev-build-architecture.md). The guest consumes a
 self-contained Bazel distribution, and it needs no checkout of its own. Nothing caches a guest run,
 so an iteration runs every suite it selects again. On 2026-09-30 the `ui` lane was 71 tests in 40
-classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`. To
+classes, and it took 750 s of test time on a Tart Linux worker with a cold daemon. Ask `vm.cmd suites <paths>` what your change reaches, then run `run --changed <paths>`.
+A Kotlin file of the test bridge reaches only the suites whose requests reach the declarations that the change
+changed, against the commit where `HEAD` meets its upstream. `suites --base <rev>` and `run --changed --base <rev>` compare with another revision.
+Only a bridge declaration that every suite reaches, such as the state reset or the HTTP service, reaches the whole lane
+set. On 2026-10-27 one changed bridge function selected 86 suites in three lanes before, and 4 suites after. To
 test one flow, run `vm.cmd run flow-rename-session`: it selects every generated suite that tells or
 walks the flow. `vm.cmd run rename-session` selects one suite by its id. A suite is the smallest unit,
 because its scenarios share one managed-agent chain
@@ -845,7 +849,7 @@ never test control. The skill's `references/macos-pool.md` says which to open an
 ## Traces
 
 Every UI scenario leaves a **trace bundle**, whichever launcher ran it, in the manner of the Playwright
-trace viewer. A bundle holds a video and a lossless picture at every instruction boundary and held check.
+trace viewer. A bundle holds a video and a picture at every instruction boundary and held check.
 It also holds the Swing tree at each of those moments, the gestures, the bridge calls, the scenario's slice
 of `idea.log`, and the generated program, so the instructions a failure never reached are visible. The
 contract is [`community/tools/vm/spec/scenario-trace.spec.md`](../spec/scenario-trace.spec.md). The lane's side is
@@ -861,6 +865,7 @@ that could not be pulled leaves a green run green.
 | launcher | where the bundles land | who cleans up |
 | --- | --- | --- |
 | the lane daemon on a worker | `$AIR_VM_DATA/daemon/iterations/<iterationId>/air-traces` in the guest, then pulled after each test to `<runtime root>/runs/<runId>/traces/<iterationId>/<NNN>.zip` | the guest's iteration retention; the run directory on the host |
+| a `vm.cmd` run with `AIR_VM_EXPORT`, such as a run on the Mac Studio through yonder | a copy of the run's journal, its reports and the zips of the scenarios that did not pass (`all`: every zip) in `out/air/vm-export/runs/<runId>/` of the checkout. `.yonder.toml` sets the variable and names the directory in its `outputs`, so yonder copies it back. Under `failed`, a run that failed nothing exports nothing | the next yonder run with an export, which replaces the directory |
 | a Bazel test, host `bt.cmd` included | `air-traces/` in the target's `bazel-testlogs/.../test.outputs/`, with `lane/` beside it for a run that is not green. A local Bazel packs them into `outputs.zip` there, and the TeamCity build keeps them as files in `bazel.logs.zip` | Bazel |
 
 A bundle is `<root>/<runId>/<TestClass>/<scenario>/`. A second attempt of the same scenario in one run is
@@ -903,12 +908,20 @@ site:
 ./community/tools/trace.cmd serve --detach  # one server for this machine, in the background
 ```
 
-It looks in the Air lanes' `bazel-testlogs`, in every pulled zip, and in the journal of
-each run under `<runtime root>/runs`. It serves zips by byte range without unpacking them, and it tells the page
+It looks in the Air lanes' `bazel-testlogs`, in the export of the checkout, in every pulled zip, and in the
+journal of each run under `<runtime root>/runs`. It serves zips by byte range without unpacking them, and it tells the page
 when a run appears or a run's journal grows. It listens on 127.0.0.1 only. `--root DIR` adds a place to look.
 `pnpm dev` in `plugins/air/docs` proxies `/__air` to it, so the viewer under development reads the same runs.
 A root can be a zip that holds zips: discovery extracts an inner zip once into `out/air-traces-cache`. So
 `--root bazel.logs.zip` works for a TeamCity artifact, and so does a local `outputs.zip`.
+
+**Where the time went.** Each relaunch of the IDE in a scenario is a `restart` span, and the flame chart shows its
+parts below it: the quit, the work while the IDE is down, the launch, the wait for `READY`, and the robot and ping
+chain. `vm.cmd report time` sums those parts over a run. The header of a picture names the time that the recorder spent
+on its snapshot, part by part. A step that no bundle holds is a `timing` record of the run stream. Examples are the
+launch of a bare IDE and the end of `lane-run`. The Notes of the run page list these records, and the launch, the
+readiness and the exit of the lane IDE. The steps that each scenario runs are one sum there, and the notes after the
+first 20 fold under one line.
 
 **A CI run.** `--teamcity` opens the traces of a TeamCity build:
 
@@ -925,36 +938,44 @@ uses the login of `teamcity auth login`. A server is `https`, or `http` on a loo
 with `--detach`, so pick a free `--port` when a detached server runs.
 
 **On TeamCity.** `bazel run @community//tools/vm:air-trace -- teamcity-publish` is the step after `bazel test`. It
-writes one archive and publishes it as the artifact `air-traces.zip`. The archive holds `index.html`, the trace viewer
-in one file, then `runs.json`, then one zip for each bundle at `<lane>/<runId>/<TestClass>/<scenario>.zip`. TeamCity
-serves an entry of an archive artifact itself, with byte ranges, so `air-traces.zip!/index.html` in the artifacts of the
-build opens its traces with no server. A loose artifact would not work: TeamCity redirects it to a signed address, where
-its siblings are refused. Each test of the Tests tab gets its trace and a `trace viewer` link into that page. A failed
-scenario also gets its last picture and its video as loose files in `air-traces-failed/`, which the Tests tab shows.
+writes one archive and publishes it as the artifact `air-traces.zip`. The archive holds `runs.json`, then one zip for
+each bundle at `<lane>/<runId>/<TestClass>/<scenario>.zip`. TeamCity serves an entry of an archive artifact itself, with
+byte ranges. A loose artifact would not work: TeamCity redirects it to a signed address, where its siblings are refused.
+Each test of the Tests tab gets its trace and a `trace viewer` link to the CI page of the hosted site,
+`https://ij-void-docs.labs.jb.gg/air/ci/<buildId>/trace?zip=<zip>`. A portal proxy of the site reads `runs.json` and the
+zip of that build from TeamCity. The build log names the CI page of the build, `…/air/ci/<buildId>`, with all its runs.
+`--site URL` or `AIR_TRACE_SITE` names another site, such as a staging portal. A failed scenario also gets its last
+picture and its video as loose files in `air-traces-failed/`, which the Tests tab shows.
 
-`--viewer DIR` names a built viewer, a directory with `index.html`. Without it, the step builds the viewer in the
-checkout: `pnpm install --frozen-lockfile` in the kernel and in `plugins/air/docs`, then `pnpm run build:viewer` there,
-which writes `out/air-trace-viewer/index.html`. The node and the pnpm are `--node` and `--pnpm`, or `AIR_TRACE_NODE` and
-`AIR_TRACE_PNPM`, which a step before the publish sets on TeamCity. A tool `none` builds no viewer. Without them, a
-local step asks Bazel for the pinned ones, as `serve` does. On TeamCity the step never starts a Bazel, because a nested
-one would start a server without the startup options of the build. There it builds no viewer and warns. A viewer that is
-newer than its sources is not built again: the site's sources, the Vite and site configuration, the lockfiles, and the
-UI primitives of the genui catalog. The build has 10 minutes, and stderr says how long it took. A build that does not
-end in time is stopped with every process that it started.
+**While the test runs.** TeamCity takes the results of a Bazel test from its JUnit XML at the end of the test. So a
+step before the Bazel step streams one file into the build log and gives its path to the test as `AIR_LANE_LIVE_LOG`.
+`lane-run` appends a `progressMessage` at the start and at the end of each scenario, such as
+`ui 12/46: <scenario> failed (3.2 s)`. For a failed or aborted scenario it also publishes the video and the last
+picture into `air-traces-failed/` as soon as the bundle is there. The paths are the ones of `teamcity-publish`, which
+publishes the same files again after the test. Off TeamCity, or without the variable, `lane-run` writes no such file.
+
+The step builds no viewer and never starts a Bazel, so it needs no node and no pnpm.
 
 The step reads the build from the agent's property files, `TEAMCITY_BUILD_PROPERTIES_FILE` and the configuration file
 that it names. `bazel run` passes the environment of the step to the program. The listing then names the build of each
-run, and the server of the link is the root of `BUILD_URL`. Without the files or without a viewer, the zips and the
-listing still publish with no link, and stderr says why.
+run, with the page of the build on the root of `BUILD_URL`. Without the files, the zips and the listing still publish
+with no link, and stderr says why.
+
+The archive of a TeamCity build also holds `affected.json`. For each commit of the build, it names the changed files,
+the suites that they reach, and the files that reach no suite. The step reads the changed files from
+`teamcity.build.changedFiles.file` and joins each commit as `vm.cmd suites` does, on the checkout of the build.
+`--repo DIR` names another checkout. A build without changes has no `affected.json`. To try it locally, set
+`TEAMCITY_VERSION` and point `TEAMCITY_BUILD_PROPERTIES_FILE` to a file with `build.vcs.number`,
+`teamcity.build.changedFiles.file` and `teamcity.build.checkoutDir`.
 
 An agent keeps its checkout and its Bazel output base across builds, so the testlogs can hold the tests of an earlier
-build. The step publishes only a test whose `test.xml` is from the start of the build or later. The REST API of the
-build gives the start and the time of the server, so the step corrects for the skew of the clocks and allows two minutes
-more. `--since` sets the start. A warning counts the skipped tests. The step also empties its output first. Once the
-archive is published, it removes the bundle directories that the archive holds from the testlogs, so `bazel.logs.zip`
-does not carry them twice. Off TeamCity, only `--remove-packed` asks for that. It never turns a build red: each problem
-is a warning in the build log, and the exit is 0. Only a usage error of the command line exits 2. No Air build
-configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
+build. The step publishes only a test whose `test.xml` is from the start of the build or later. The first step of the
+build sets `AIR_TRACE_SINCE` to the start, with `date -u +%Y-%m-%dT%H:%M:%SZ` on the agent. `--since` overrides it. On
+TeamCity without either, a warning says so and every test publishes. A warning counts the skipped tests. The step also
+empties its output first. Once the archive is published, it removes the bundle directories that the archive holds from
+the testlogs, so `bazel.logs.zip` does not carry them twice. Off TeamCity, only `--remove-packed` asks for that. It
+never turns a build red: each problem is a warning in the build log, and the exit is 0. Only a usage error of the
+command line exits 2. No Air build configuration runs this step yet; it is one more step in `ultimate-teamcity-config`.
 
 When the site in `out/air-site` is missing, or older than `plugins/air/docs/src` or the `src`, `scripts` and
 `styles` of the kernel `community/tools/docs-site`, the server builds it once in the background:
@@ -1012,11 +1033,18 @@ stills from the IDE's own paint route. A direct lane on your own machine never r
 everything else you have open and macOS would ask for Screen Recording permission in the middle of a scenario. It
 takes the paint stills and records no video, and `lane-run` refuses `-Dair.flow.trace.screen=on` as a JVM flag. A
 TeamCity build on Linux is the exception: no person works on the display of a TeamCity agent, so `lane-run` lets the
-recorder read it when `TEAMCITY_VERSION` and `DISPLAY` are set. The recorder reads a display of depth 24, whose pixels
-are BGRX, up to 3840x2160. The Air UI builds start `Xvfb :0 -screen 0 1024x768x24`. On a Linux UI agent, another X
-server can already hold `:0`. That `Xvfb` then exits, and the IDE draws on the other server, with a frame of
-1920x1200. At 1920x1080 a video costs about 3 MB per scenario minute. Every bundle's manifest names its capture source
+recorder read it when `TEAMCITY_VERSION` and `DISPLAY` are set. The display of the build is the GNOME desktop of the
+agent, so `lane-run` starts an Xvfb of 1920x1080 on a free display, with a window manager of its own, and the IDE and
+the recorder use it. The run stream names that display in a note. A host without Xvfb keeps the display of the build,
+and a warning in the run stream and in the build log says so. The recorder reads a display of depth 24, whose pixels are BGRX, up to
+3840x2160. At 1920x1080 a video costs about 3 MB per scenario minute. Every bundle's manifest names its capture source
 and, when a better one was missing, why.
+
+**Which videos a TeamCity build keeps.** A failed, an aborted or a truncated scenario always keeps its video. A passed
+scenario keeps its video only in a build of `master`, because that build is the baseline that a failure is compared
+with. A Safe Push check, a personal build and a build of another branch set `AIR_LANE_VIDEO=failed`. The recorder
+then deletes the video of each passed scenario at its end. Its manifest names the codec `none` and says why. Every
+other run keeps each video that it records. Pass `--test_env=AIR_LANE_VIDEO=failed` to `bazel test` to keep fewer.
 
 **What the IDE did.** A bundle also holds the OpenTelemetry spans that the IDE ended in the scenario, such as
 each `air.session.log.read`. The viewer shows each one as an `ide` row under the step it started in. The spans are
@@ -1026,7 +1054,11 @@ evidence only: a check that counts them reads the IDE through the bridge, not th
 decoder:
 
 - Spans and events are OTLP JSON Lines, so generic OpenTelemetry tools read a bundle as it is.
-- Stills are lossless WebP, pixel-exact UI evidence with crisp text, from the WebP encoder that the recorder carries.
+- A scenario with a video takes lossy AVIF stills from libaom, because a lossless still of the CI desktop is about
+  900 KB. An AVIF still is less than half the size of the lossy WebP still before it, at a better quality. A
+  scenario without a video takes lossless WebP stills, pixel-exact UI evidence with crisp text. The manifest names
+  lossy stills ([A scenario with a video takes lossy stills](decisions/2026-10-21-a-scenario-with-a-video-takes-lossy-stills.md),
+  [A lossy still is AVIF from libaom](decisions/2026-10-23-a-lossy-still-is-avif-from-libaom.md)).
 - Video is H.264 in fragmented MP4, the one codec with hardware decode in both browsers on every Mac. The
   fragmented container survives a killed encoder, and `video.index.json` makes every seek exact.
 - A zip stores its media uncompressed, so a server answers byte ranges straight out of it.

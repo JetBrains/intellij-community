@@ -32,11 +32,21 @@ impl Scenario {
     /// What a snapshot cannot have on this machine is not a failure: with no capture source there is no picture, and
     /// with no bridge no tree. The record still says why, and the ack stays positive, so a lane on a guest without
     /// X11 does not log a failed snapshot at every instruction.
+    ///
+    /// The record holds the time of each part on the recorder's clock, see [attr::SNAPSHOT_DURATION_MS]. A part that
+    /// did not run has no time.
     pub(crate) fn snap(&mut self, command: &SnapCommand, at: SystemTime, client: Option<&Client>, budget: Duration) -> String {
         self.ordinal += 1;
         let ordinal = self.ordinal;
         let deadline = Instant::now() + budget;
         let (mut failures, mut missing) = (Vec::new(), Vec::new());
+        let mut times = Vec::new();
+        let clock = self.clock.clone();
+        let since = move |start: SystemTime| {
+            clock()
+                .duration_since(start)
+                .map_or(0, |taken| i64::try_from(taken.as_millis()).unwrap_or(i64::MAX))
+        };
 
         let mut taken_ms = unix_ms(at);
         let frame = match &self.source {
@@ -46,7 +56,10 @@ impl Scenario {
             }
             Some(source) => {
                 let mut frame = Frame::default();
-                match source.grab(deadline, &mut frame) {
+                let started = (self.clock)();
+                let grabbed = source.grab(deadline, &mut frame);
+                times.push(KeyValue::int(attr::SNAPSHOT_GRAB_MS, since(started)));
+                match grabbed {
                     Ok(()) => {
                         taken_ms = unix_ms(frame.at);
                         Some(frame)
@@ -63,30 +76,41 @@ impl Scenario {
         let mut tree_written = false;
         match client {
             None => missing.push("no tree: the lane named no bridge".to_owned()),
-            Some(client) => match client.tree(deadline) {
-                Err(error) => failures.push(format!("no tree: {error:#}")),
-                Ok((document, tree)) => {
-                    inputs = tree.inputs;
-                    let mut content = document.trim_ascii().to_vec();
-                    content.push(b'\n');
-                    let path = bundle_file(&self.dir, &snap_tree_path(ordinal));
-                    match write_file_atomically(&path, &content) {
-                        Ok(()) => tree_written = true,
-                        Err(error) => failures.push(format!("no tree: {error}")),
+            Some(client) => {
+                let started = (self.clock)();
+                match client.tree(deadline) {
+                    Err(error) => failures.push(format!("no tree: {error:#}")),
+                    Ok((document, tree)) => {
+                        inputs = tree.inputs;
+                        let mut content = document.trim_ascii().to_vec();
+                        content.push(b'\n');
+                        let path = bundle_file(&self.dir, &snap_tree_path(ordinal));
+                        match write_file_atomically(&path, &content) {
+                            Ok(()) => tree_written = true,
+                            Err(error) => failures.push(format!("no tree: {error}")),
+                        }
                     }
                 }
-            },
+                times.push(KeyValue::int(attr::SNAPSHOT_TREE_MS, since(started)));
+            }
         }
 
         // The IDE's spans cost the snapshot nothing it waits for: the read takes what the IDE already exported, and a
         // failure is recorded once in the scenario rather than in this snapshot.
-        self.read_ide_spans(client, false, deadline, unix_ms(at));
+        if client.is_some() {
+            let started = (self.clock)();
+            self.read_ide_spans(client, false, deadline, unix_ms(at));
+            times.push(KeyValue::int(attr::SNAPSHOT_SPANS_MS, since(started)));
+        }
 
         let mut image = None;
         if let (Some(frame), Some(stills)) = (frame, &self.stills) {
-            let name = snap_image_path(ordinal);
+            let name = snap_image_path(ordinal, self.still_encoding);
             lock(&self.still_spans).insert(name.clone(), command.span);
-            match stills.submit(deadline, name, frame) {
+            let started = (self.clock)();
+            let submitted = stills.submit(deadline, name, frame);
+            times.push(KeyValue::int(attr::SNAPSHOT_STILL_MS, since(started)));
+            match submitted {
                 Ok(named) => image = Some(named),
                 Err(error) => failures.push(format!("no picture: {error:#}")),
             }
@@ -115,6 +139,8 @@ impl Scenario {
         if !problems.is_empty() {
             attributes.push(KeyValue::string(attr::SNAPSHOT_ERROR, problems.join("; ")));
         }
+        attributes.push(KeyValue::int(attr::SNAPSHOT_DURATION_MS, since(at)));
+        attributes.extend(times);
         self.emit(event::SNAPSHOT, command.span, taken_ms, attributes);
         failures.join("; ")
     }

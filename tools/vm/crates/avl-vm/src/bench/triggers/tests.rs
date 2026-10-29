@@ -1,14 +1,12 @@
-use avl_base::Reporter;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::{NO_OTHER_OWNER, NO_STACK, report, strip_frame_prefix, trigger_frame};
 use crate::bench::arm::Arm;
-use crate::bench::command::replay;
 use crate::bench::options::{DEFAULT_TOP, RunSelection, TriggersArgs};
 use crate::bench::pluginlog::{self, Owner};
 use crate::bench::record::EDITOR_HIGHLIGHTED;
-use crate::bench::testing::{assert_golden, fixture_session, project_session};
+use crate::bench::testing::{assert_golden, fixture_session, project_session, replayed_session};
 
 fn args() -> TriggersArgs {
     TriggersArgs {
@@ -186,9 +184,7 @@ fn report_of(session: &std::path::Path, args: &TriggersArgs) -> super::TriggerRe
 /// says why.
 #[test]
 fn a_plugin_log_of_the_old_shape_puts_every_loader_in_one_row() {
-    let (_dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
+    let (_dir, session) = replayed_session();
     let report = report_of(&session, &args());
     assert_eq!(report.run, "non-modal-run-01");
     assert_eq!(report.triggers.len(), 1);

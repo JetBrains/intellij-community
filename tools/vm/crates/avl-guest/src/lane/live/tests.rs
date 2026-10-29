@@ -156,6 +156,24 @@ impl Fixture {
         LiveRun::start(&context(&self.root), declared, &|name| self.variable(name), true)
     }
 
+    /// Starts the live run of the declared runtimes with a fake sweep. Answers the run and what the sweep was asked to
+    /// end.
+    fn start_swept(&self) -> (LiveRun, Arc<Mutex<Vec<String>>>) {
+        let sweeps = Arc::new(Mutex::new(Vec::new()));
+        let live = self
+            .start(&self.declared)
+            .unwrap()
+            .with_agent_processes(Box::new(Sweeps(Arc::clone(&sweeps))));
+        (live, sweeps)
+    }
+
+    /// Writes the login of the Central account into its input file, and answers the path of the file.
+    fn write_login(&self) -> PathBuf {
+        let login = self.secrets.join("AIR_LIVE_CENTRAL_LOGIN");
+        fs::write(&login, format!("{{\n  \"session\": \"{LOGIN_TOKEN}\"\n}}\n")).unwrap();
+        login
+    }
+
     fn prepared(&self) -> IdePrepared {
         let context = self.root.join("ide/air-ui-live-1");
         let child = |name: &str| context.join(name).display().to_string();
@@ -245,14 +263,9 @@ fn a_descriptor_without_the_live_runtimes_is_refused_naming_the_live_descriptor(
 #[test]
 fn a_rejected_login_fails_at_the_import_with_the_literal_prefix_and_the_end_still_clears_the_account() {
     let fixture = Fixture::new();
-    let login = fixture.secrets.join("AIR_LIVE_CENTRAL_LOGIN");
-    fs::write(&login, format!("{{\n  \"session\": \"{LOGIN_TOKEN}\"\n}}\n")).unwrap();
+    let login = fixture.write_login();
     fs::write(fixture.root.join("fail-import"), "").unwrap();
-    let sweeps = Arc::new(Mutex::new(Vec::new()));
-    let live = fixture
-        .start(&fixture.declared)
-        .unwrap()
-        .with_agent_processes(Box::new(Sweeps(sweeps.clone())));
+    let (live, sweeps) = fixture.start_swept();
 
     let refusal = live.provision().unwrap_err();
     let mut notes = live.take_notes();
@@ -291,13 +304,8 @@ fn a_rejected_login_fails_at_the_import_with_the_literal_prefix_and_the_end_stil
 #[test]
 fn one_live_iteration_provisions_seeds_and_tears_down_with_fake_clis() {
     let fixture = Fixture::new();
-    let login = fixture.secrets.join("AIR_LIVE_CENTRAL_LOGIN");
-    fs::write(&login, format!("{{\n  \"session\": \"{LOGIN_TOKEN}\"\n}}\n")).unwrap();
-    let sweeps = Arc::new(Mutex::new(Vec::new()));
-    let live = fixture
-        .start(&fixture.declared)
-        .unwrap()
-        .with_agent_processes(Box::new(Sweeps(sweeps.clone())));
+    let login = fixture.write_login();
+    let (live, sweeps) = fixture.start_swept();
 
     live.provision().unwrap();
     assert!(!login.exists(), "the login input is used once");

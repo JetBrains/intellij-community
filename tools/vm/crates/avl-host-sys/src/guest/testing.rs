@@ -11,7 +11,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use avl_base::config::WORKSPACE_DIR;
-use avl_base::report::{Buffer, Mode, Terminal};
+use avl_base::report::Buffer;
 use avl_base::{Backend, Config, Environment, GuestOs, Refusal, Reporter, Selection};
 use avl_wire::verb::AgentVerb;
 
@@ -300,14 +300,12 @@ impl Host {
     }
 }
 
-/// A reporter in human mode over a buffer, so a test can read what was said. Human mode and not `--stream`,
-/// because prose is the rendering a person reads.
+/// [`Reporter::in_memory_prose`] of `vm`, so a test can read what was said.
 pub(crate) fn prose() -> (Reporter, Buffer) {
-    let (reporter, _, stderr) = Reporter::in_memory("vm");
-    reporter.set_mode(Mode::Human(Terminal::default()));
-    (reporter, stderr)
+    Reporter::in_memory_prose("vm")
 }
 
+// jscpd:ignore-start the unit tests of this crate cannot use avl_host_testkit::FakeProbe, because that crate links this one
 /// [`ParkedDaemonProbe`] with both of its answers seeded: what makes a holder idle is the daemon's own account of
 /// itself, and these suites have no daemon. The default proves nothing, so every holder is executing.
 #[derive(Default)]
@@ -330,3 +328,4 @@ impl ParkedDaemonProbe for FakeProbe {
         self.recorded.clone()
     }
 }
+// jscpd:ignore-end

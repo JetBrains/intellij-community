@@ -5,21 +5,16 @@
 //! file with the configuration parameters, such as `teamcity.build.id` and `teamcity.serverUrl`. Both files are Java
 //! properties files.
 //!
-//! No parameter names the start of a build. So [Build::start] asks the REST API of the server, with the credentials
-//! that TeamCity gives each build.
+//! The build's file also names the revision of the build, `build.vcs.number`, and the file of its changed files,
+//! `teamcity.build.changedFiles.file`. The paths in that file are relative to `teamcity.build.checkoutDir`. A build of
+//! one VCS root has all three. TeamCity leaves out the file of the changed files for a build without changes.
 
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::Path;
-use std::time::{Duration, SystemTime};
-
-use super::ARCHIVE;
-use super::viewer::VIEWER_PAGE;
-use crate::serve::{Rest, agent_client};
+use std::path::{Path, PathBuf};
 
 use avl_report::teamcity::is_build_step;
 use avl_trace_tools::discover::Origin;
-use avl_trace_tools::viewer::static_trace_hash;
 
 /// The variable of the agent that names the file of the build's properties.
 const BUILD_PROPERTIES_FILE: &str = "TEAMCITY_BUILD_PROPERTIES_FILE";
@@ -27,6 +22,8 @@ const BUILD_PROPERTIES_FILE: &str = "TEAMCITY_BUILD_PROPERTIES_FILE";
 const BUILD_URL: &str = "BUILD_URL";
 /// The property of the build's file that names the file of the configuration parameters.
 const CONFIGURATION_FILE: &str = "teamcity.configuration.properties.file";
+/// The property of the build's file that names the file of the changed files of the build.
+pub(crate) const CHANGED_FILES: &str = "teamcity.build.changedFiles.file";
 
 /// The build that the step runs in.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -37,6 +34,13 @@ pub(crate) struct Build {
     pub id: String,
     /// The name of the build configuration, such as `Air Plugin UI Tests / 1`.
     pub name: String,
+    /// The revision of the build, `build.vcs.number`.
+    pub revision: Option<String>,
+    /// The file of the changed files of the build, [CHANGED_FILES].
+    pub changed_files: Option<PathBuf>,
+    /// The checkout directory of the build, `teamcity.build.checkoutDir`. The paths of the changed files are relative
+    /// to it.
+    pub checkout_dir: Option<PathBuf>,
 }
 
 impl Build {
@@ -59,19 +63,10 @@ impl Build {
             build_type_id: property("teamcity.buildType.id")?,
             name: property("teamcity.buildConfName")?,
             id,
+            revision: properties.optional("build.vcs.number"),
+            changed_files: properties.optional(CHANGED_FILES).map(PathBuf::from),
+            checkout_dir: properties.optional("teamcity.build.checkoutDir").map(PathBuf::from),
         }))
-    }
-
-    /// When the build started, in the clock of this machine. The REST API of `teamcity.serverUrl`, the server that the
-    /// agent talks to, says it, asked with `teamcity.auth.userId` and `teamcity.auth.password` of the build.
-    pub(crate) fn start(&self, variable: &dyn Fn(&str) -> Option<String>) -> Result<BuildStart, String> {
-        let properties = StepProperties::read(variable)?;
-        let rest = agent_client(
-            &properties.get("teamcity.serverUrl")?,
-            &properties.get("teamcity.auth.userId")?,
-            &properties.get("teamcity.auth.password")?,
-        );
-        start_from(rest.as_ref(), &self.id, &SystemTime::now)
     }
 
     /// Why the server of the build is not the root of `BUILD_URL`, when it is not. Then it is `teamcity.serverUrl`, which
@@ -79,7 +74,7 @@ impl Build {
     pub(crate) fn server_fallback(&self, variable: &dyn Fn(&str) -> Option<String>) -> Option<String> {
         build_url_root(variable, &self.id).is_none().then(|| {
             format!(
-                "{BUILD_URL} does not name the page of build {}, so the links and the origin use teamcity.serverUrl {}",
+                "{BUILD_URL} does not name the page of build {}, so the origin uses teamcity.serverUrl {}",
                 self.id, self.server
             )
         })
@@ -92,18 +87,6 @@ impl Build {
             id: self.id.clone(),
             url: Some(format!("{}/buildConfiguration/{}/{}", self.server, self.build_type_id, self.id)),
         }
-    }
-
-    /// The page of the published viewer that opens the zip `zip`: `index.html` with the [static_trace_hash] of the zip.
-    /// The zip is a path relative to the artifact directory of the traces.
-    pub(crate) fn viewer_link(&self, zip: &str) -> String {
-        format!(
-            "{}/repository/download/{}/{}:id/{ARCHIVE}!/{VIEWER_PAGE}{}",
-            self.server,
-            self.build_type_id,
-            self.id,
-            static_trace_hash(zip)
-        )
     }
 }
 
@@ -136,58 +119,11 @@ impl StepProperties {
             .cloned()
             .ok_or_else(|| format!("the build properties of {} name no {key}", self.file))
     }
-}
 
-/// How much earlier than the start of the build a `test.xml` may be and still count. The clocks are compared to the
-/// second, and the margin also covers the time of the requests.
-pub(crate) const START_MARGIN: Duration = Duration::from_mins(2);
-
-/// The start of a build in the clock of this machine.
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub(crate) struct BuildStart {
-    /// The time from which a `test.xml` counts: the start, moved by the skew of the clocks, less [START_MARGIN].
-    pub since: SystemTime,
-    /// The line that says the start, the skew and the time from which a test counts.
-    pub note: String,
-}
-
-/// The start of the build `id`, from the `startDate` of its REST answer, such as `20261020T173742+0000`. The server
-/// also says its own time, `currentTime`. Its difference from `now`, the clock of this machine, is the skew of the two
-/// clocks. The skew moves the start into the clock of this machine.
-fn start_from(rest: &dyn Rest, id: &str, now: &dyn Fn() -> SystemTime) -> Result<BuildStart, String> {
-    let start = rest_time(rest, &format!("/app/rest/builds/id:{id}?fields=startDate"), "startDate")?;
-    let server = rest_time(rest, "/app/rest/server?fields=currentTime", "currentTime")?;
-    let here = jiff::Timestamp::try_from(now()).map_err(|error| format!("the clock of this machine does not read: {error}"))?;
-    // Positive when the clock of the server is ahead of this one.
-    let skew = server.duration_since(here);
-    let margin = jiff::SignedDuration::try_from(START_MARGIN).map_err(|error| error.to_string())?;
-    let since = start
-        .checked_sub(skew)
-        .and_then(|moved| moved.checked_sub(margin))
-        .map_err(|error| format!("the start of build {id} does not move by the skew {skew:#}: {error}"))?;
-    Ok(BuildStart {
-        since: SystemTime::from(since),
-        note: format!(
-            "build {id} started at {start} by the clock of its server, which is {} s {} this one; a test.xml from \
-             {since} on counts",
-            skew.as_secs().abs(),
-            if skew.is_negative() { "behind" } else { "ahead of" }
-        ),
-    })
-}
-
-/// The time that the field `field` of the REST answer of `path` holds, such as `20261020T173742+0000`.
-fn rest_time(rest: &dyn Rest, path: &str, field: &str) -> Result<jiff::Timestamp, String> {
-    let body = rest.get(path).map_err(|refused| refused.message)?;
-    let answer: serde_json::Value =
-        serde_json::from_slice(&body).map_err(|error| format!("the REST answer of {path} does not read: {error}"))?;
-    let value = answer
-        .get(field)
-        .and_then(serde_json::Value::as_str)
-        .ok_or_else(|| format!("the REST answer of {path} names no {field}"))?;
-    jiff::fmt::strtime::parse("%Y%m%dT%H%M%S%z", value)
-        .and_then(|parsed| parsed.to_timestamp())
-        .map_err(|error| format!("the {field} {value:?} of {path} does not read: {error}"))
+    /// The value of `key`, or `None` when the files name none.
+    fn optional(&self, key: &str) -> Option<String> {
+        self.get(key).ok()
+    }
 }
 
 /// The entries of a properties file, or why it does not read.

@@ -19,3 +19,15 @@ fn only_a_set_and_not_blank_version_is_teamcity() {
     assert!(!is_team_city(|name| (name == TEAMCITY_VERSION).then(|| " ".to_owned())));
     assert!(!is_team_city(|_| None));
 }
+
+#[test]
+fn a_file_is_published_into_its_directory_with_its_path_escaped() {
+    assert_eq!(
+        publish_artifacts("/out/performance/air-long-session/M/metrics.performance.json", "air-long-session/M"),
+        "##teamcity[publishArtifacts '/out/performance/air-long-session/M/metrics.performance.json => air-long-session/M']"
+    );
+    assert_eq!(
+        publish_artifacts("/out/it's [1]/summary.txt", "air-many-agents"),
+        "##teamcity[publishArtifacts '/out/it|'s |[1|]/summary.txt => air-many-agents']"
+    );
+}

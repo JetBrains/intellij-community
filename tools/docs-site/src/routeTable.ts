@@ -67,12 +67,23 @@ export interface RouteParent {
   route?: AnyRoute
 }
 
+/**
+ * How the shell lays out a page (Air ADR "The docs site lays out each page by its route").
+ * - `reading`: the section tree, the document, and the table of contents, each a column. The document has the measure
+ *   of prose, 70ch. The outlet scrolls.
+ * - `catalog`: the reading layout with a wide document, about 960px, for a page of cards, tiles and chip rows.
+ * - `tool`: one column across the page, at text-sm. The outlet scrolls.
+ * - `canvas`: the page fills the outlet with its own panes, and the outlet does not scroll. The page owns its trail.
+ */
+export type PageLayout = 'reading' | 'catalog' | 'tool' | 'canvas'
+
 /** The canonical entry that builds a route. */
 export interface RouteEntryInfo {
   /** The URL pattern, for example `/concept/:id/:anchor?`. */
   pattern: string
   section: string | null
   parent: RouteParent | null
+  layout: PageLayout
 }
 
 /**
@@ -111,12 +122,21 @@ export function decisionPaths(dirs: readonly string[]): DecisionPaths {
 export interface QueryCodec<T> {
   /** The URL key, when it is not the route field name. */
   readonly key?: string
+  /** True for a value that is a path: the build keeps each `/` of it, so the link reads as the path it names. */
+  readonly path?: boolean
   parse(raw: string | null): T | null
   /** Null drops the key from the URL. */
   format(value: T | null): string | null
 }
 
 export const text: QueryCodec<string> = {
+  parse: raw => raw,
+  format: value => value,
+}
+
+/** A text value that is a path, such as `a/b/c.zip`: its `/` stays a `/` in the URL. */
+export const pathText: QueryCodec<string> = {
+  path: true,
   parse: raw => raw,
   format: value => value,
 }
@@ -216,12 +236,17 @@ interface EntryOptions<R extends AnyRoute, P extends R['page'], Path extends str
   section?: S | null
   /** The head crumb. */
   parent?: RouteParent
+  /** The layout of the page. A canonical entry must give it, a legacy entry has none. */
+  layout?: PageLayout
 }
 
 /** A mapping that is not the default one needs a `to`, and a `from` unless the entry is legacy. */
 type Mapping<R extends AnyRoute, P extends R['page'], Path extends string, Q extends QuerySpec> = DefaultMapping<R, P, Path, Q> extends true
   ? unknown
   : { to: ToRoute<R, Path, Q> } & ({ legacy: true } | { from: FromRoute<R, P, Path, Q> })
+
+/** A canonical entry builds a page, so it must name the layout of the page. A legacy entry only parses. */
+type LayoutRequirement = { legacy: true, layout?: never } | { legacy?: false, layout: PageLayout }
 
 type Values = Record<string, unknown>
 
@@ -234,6 +259,8 @@ export interface RouteEntry {
   readonly legacy: boolean
   readonly section: string | null
   readonly parent: RouteParent | null
+  /** Null on a legacy entry. */
+  readonly layout: PageLayout | null
   readonly aliases: Readonly<Record<string, Readonly<Record<string, string>>>>
   readonly when: ((values: Values) => boolean) | null
   readonly to: (values: Values) => AnyRoute
@@ -275,8 +302,11 @@ export function routeBuilder<R extends AnyRoute, S extends string = string>() {
   return function route<P extends R['page'], Path extends string, Q extends QuerySpec = Record<never, never>>(
     page: P,
     path: Path,
-    options: EntryOptions<R, P, Path, Q, S> & Mapping<R, P, Path, Q>,
+    options: EntryOptions<R, P, Path, Q, S> & Mapping<R, P, Path, Q> & LayoutRequirement,
   ): RouteEntry {
+    if (options.legacy !== true && options.layout === undefined) {
+      throw new Error(`Route ${page} ${path}: a canonical entry needs a layout`)
+    }
     const pattern = parsePattern(path)
     const query = Object.entries(options.query ?? {})
     const names = [...pattern.flatMap(part => part.kind === 'literal' ? [] : [part.name]), ...query.map(([field]) => field)]
@@ -289,6 +319,7 @@ export function routeBuilder<R extends AnyRoute, S extends string = string>() {
       legacy: options.legacy === true,
       section: options.section ?? null,
       parent: options.parent ?? null,
+      layout: options.layout ?? null,
       aliases: (options.aliases ?? {}) as RouteEntry['aliases'],
       when: (options.when ?? null) as RouteEntry['when'],
       to: (options.to ?? (values => ({ page, ...values }))) as RouteEntry['to'],
@@ -351,15 +382,16 @@ function fillPattern(pattern: readonly PatternPart[], values: Values): string | 
   return path === '' ? '/' : path
 }
 
-function withQuery(path: string, params: Record<string, string | null>): string {
-  const search = new URLSearchParams()
+/** The path with its query. A key in `paths` keeps each `/` of its value; a `/` needs no escape in a query. */
+function withQuery(path: string, params: Record<string, string | null>, paths: ReadonlySet<string>): string {
+  const pairs: string[] = []
   for (const [key, value] of Object.entries(params)) {
     if (value !== null) {
-      search.set(key, value)
+      const pair = new URLSearchParams({ [key]: value }).toString()
+      pairs.push(paths.has(key) ? pair.replaceAll('%2F', '/') : pair)
     }
   }
-  const query = search.toString()
-  return `${path}${query ? `?${query}` : ''}`
+  return `${path}${pairs.length > 0 ? `?${pairs.join('&')}` : ''}`
 }
 
 // --- the kernel routes ---------------------------------------------------------------------------
@@ -377,24 +409,26 @@ export function kernelRouteEntries(config: Pick<SiteConfig, 'docs' | 'launchPick
   const route = routeBuilder<KernelRoute | LaunchRoute, KernelNavSection | LaunchNavSection>()
   const { isDecisionPath, decisionSlug } = decisionPaths(config.docs.decisions)
   return [
-    route('home', '/', { section: null }),
-    route('guides', '/guides/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'guides' }),
-    route('guide', '/guides/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'guides', parent: GUIDES }),
-    route('explainers', '/explain/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'explainers' }),
+    route('home', '/', { section: null, layout: 'tool' }),
+    route('guides', '/guides/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'guides', layout: 'catalog' }),
+    route('guide', '/guides/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'guides', parent: GUIDES, layout: 'reading' }),
+    route('explainers', '/explain/:anchor?', { when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor), section: 'explainers', layout: 'catalog' }),
     route('explainer', '/explain/:slug/:chapter?', {
       query: { step: int, node: text },
       when: ({ slug }) => !isCatalogAnchor(slug),
       section: 'explainers',
       parent: EXPLAINERS,
+      layout: 'canvas',
     }),
     route('decisions', '/decisions/:anchor?', {
       query: { status: oneOf<DecisionStatusFilter>('accepted', 'proposed', 'partly-superseded', 'superseded'), topic: text },
       when: ({ anchor }) => anchor === null || isCatalogAnchor(anchor),
       section: 'decisions',
+      layout: 'catalog',
     }),
-    route('decision', '/decisions/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'decisions', parent: DECISIONS }),
-    route('source', '/source/*path', { query: { selection: lineRange('line') }, section: null, parent: { label: 'Source' } }),
-    ...config.launchPicker ? [route('launch', '/launch', { query: { q: text }, section: 'launch' })] : [],
+    route('decision', '/decisions/:slug/:anchor?', { when: ({ slug }) => !isCatalogAnchor(slug), section: 'decisions', parent: DECISIONS, layout: 'reading' }),
+    route('source', '/source/*path', { query: { selection: lineRange('line') }, section: null, parent: { label: 'Source' }, layout: 'tool' }),
+    ...config.launchPicker ? [route('launch', '/launch', { query: { q: text }, section: 'launch', layout: 'tool' })] : [],
     // a decision record had a doc URL before it had its own page
     route('decision', '/doc/:path/:anchor?', {
       legacy: true,
@@ -407,6 +441,7 @@ export function kernelRouteEntries(config: Pick<SiteConfig, 'docs' | 'launchPick
       normalize: target => isDecisionPath(target.path) ? { page: 'decision', slug: decisionSlug(target.path), anchor: target.anchor } : target,
       section: 'guides',
       parent: GUIDES,
+      layout: 'reading',
     }),
     // an older link spelled the doc path as plain segments
     route('doc', '/doc/:path', { legacy: true, to: ({ path }) => ({ page: 'doc', path, anchor: null }) }),
@@ -458,7 +493,7 @@ export interface RouteTable {
   /** The first literal segment of every entry: the heads that an app path can start with. */
   heads(): string[]
   /** Every entry in table order, for a unit test. */
-  rows(): readonly { page: string, pattern: string, legacy: boolean, section: string | null }[]
+  rows(): readonly { page: string, pattern: string, legacy: boolean, section: string | null, layout: PageLayout | null }[]
 }
 
 /** The table of `entries`, in their order. */
@@ -530,18 +565,20 @@ export function createRouteTable(entries: readonly RouteEntry[]): RouteTable {
     build(route, basePrefix = '') {
       const { entry, path, values } = buildEntry(route)
       const query = Object.fromEntries(entry.query.map(([field, codec]) => [codec.key ?? field, codec.format(values[field] ?? null)]))
-      return `${basePrefix}${withQuery(path, query)}`
+      const paths = new Set(entry.query.flatMap(([field, codec]) => codec.path === true ? [codec.key ?? field] : []))
+      return `${basePrefix}${withQuery(path, query, paths)}`
     },
     entryFor(route) {
       const { entry } = buildEntry(route)
-      return { pattern: entry.path, section: entry.section, parent: entry.parent }
+      // buildEntry picks only canonical entries, and a canonical entry has a layout
+      return { pattern: entry.path, section: entry.section, parent: entry.parent, layout: entry.layout! }
     },
     heads() {
       const heads = entries.flatMap(entry => entry.pattern[0]?.kind === 'literal' ? [entry.pattern[0].text] : [])
       return [...new Set(heads)]
     },
     rows() {
-      return entries.map(entry => ({ page: entry.page, pattern: entry.path, legacy: entry.legacy, section: entry.section }))
+      return entries.map(entry => ({ page: entry.page, pattern: entry.path, legacy: entry.legacy, section: entry.section, layout: entry.layout }))
     },
   }
 }

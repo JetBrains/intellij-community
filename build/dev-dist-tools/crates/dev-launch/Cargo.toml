@@ -6,7 +6,7 @@
 name = "dev-launch"
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.93"
+rust-version = "1.99"
 publish = false
 license = "Apache-2.0"
 
@@ -22,3 +22,4 @@ serde_json = "1.0.151"
 
 [dev-dependencies]
 tempfile.workspace = true
+testkit.workspace = true

@@ -13,12 +13,13 @@ use avl_wire::progress::{
 };
 use notify::event::{DataChange, Flag, ModifyKind};
 
-use super::super::journals::STOPPED_AFTER;
+use super::super::journals::{RunsDir, STOPPED_AFTER};
 use super::super::service::{
-    KERNEL_SOURCES_DIRS, PATH_PNPM, SITE_BUILD, SITE_SOURCES_DIR, SiteTools, site_installs, site_needs_build, site_source_dirs, site_steps,
+    KERNEL_SOURCES_DIRS, PATH_PNPM, SITE_SOURCES_DIR, SiteTools, site_installs, site_needs_build, site_source_dirs, site_steps,
 };
 #[cfg(unix)]
 use super::super::service::{build_site_with, detach};
+use super::super::state::BuildOutput;
 use super::*;
 use crate::{Exit, Refusal, code};
 use pretty_assertions::assert_eq;
@@ -152,9 +153,7 @@ async fn controller_runs_are_listed_from_their_journals() {
     write_file(&runs_dir.join("stray.txt"), b"");
     fs::create_dir_all(runs_dir.join("run-empty")).expect("create a directory");
 
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir);
-    let served = start_server(settings).await;
+    let served = start_server(runs_settings(&scratch, &runs_dir)).await;
     let runs = served.list_runs().await;
     let controller_runs = runs["controllerRuns"].as_array().expect("controllerRuns is a list");
     assert_eq!(controller_runs.len(), 3, "the three with a journal: {runs}");
@@ -196,9 +195,7 @@ async fn the_run_route_answers_the_journal_from_an_offset() {
         "run-1",
         &[run_started("run-1", "run", &[]), Progress::Note("leasing".to_owned())],
     );
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir.clone());
-    let served = start_server(settings).await;
+    let served = start_server(runs_settings(&scratch, &runs_dir)).await;
 
     let answer = served.get("/__air/run/run-1", &[]).await;
     assert_eq!(answer.status, StatusCode::OK, "{}", answer.text());
@@ -246,6 +243,103 @@ async fn the_run_route_answers_the_journal_from_an_offset() {
         let answer = served.get(route, &[]).await;
         assert_eq!(answer.status, want, "{route} answered {}", answer.text());
     }
+}
+
+/// A run of the VM export comes from another host. The listing shows it, and the run route answers the copies of its
+/// trace zip and its report in the export, with the bundle id that the scan of the export gives the zip. A local run
+/// wins over an exported run with the same id.
+#[tokio::test(flavor = "multi_thread")]
+async fn an_exported_run_answers_the_copies_in_the_export() {
+    let scratch = Scratch::default();
+    let local = scratch.dir();
+    let export = scratch.dir();
+    let manifest = example_manifest();
+    let run_dir = export.join("run-studio");
+    let zip = run_dir.join("traces").join("iter-1").join("1.zip");
+    fs::create_dir_all(zip.parent().expect("a traces directory")).expect("create the traces directory");
+    pack_golden_bundle(&scratch, &manifest, &zip);
+    let report = run_dir.join("reports").join("iter-1.json");
+    write_file(&report, b"{}");
+    let entry = format!(
+        "{ROOT_DIR_NAME}/{}/",
+        bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)
+    );
+    let studio = "/Users/studio/.air/runtime/runs/run-studio";
+    write_journal(
+        &export,
+        "run-studio",
+        &[
+            run_started("run-studio", "run", &[]),
+            Progress::TraceReady(TraceReady {
+                zip: format!("{studio}/traces/iter-1/1.zip"),
+                entry,
+                ..match trace_ready("iter-1", &manifest.scenario) {
+                    Progress::TraceReady(trace) => trace,
+                    _ => unreachable!("trace_ready makes a traceReady"),
+                }
+            }),
+            Progress::IterationReported(IterationReported {
+                iteration_id: "iter-1".to_owned(),
+                daemon_run_id: "run-ui-daemon-1".to_owned(),
+                selection: "lane ui".to_owned(),
+                status: avl_wire::report::Status::Failed,
+                report_path: format!("{studio}/reports/iter-1.json"),
+                tests_failed: 1,
+                tests_started: 1,
+            }),
+            Progress::Note("done".to_owned()),
+        ],
+    );
+    write_journal(&local, "run-both", &[run_started("run-both", "local", &[])]);
+    write_journal(&export, "run-both", &[run_started("run-both", "exported", &[])]);
+
+    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::VmExport, &export)]);
+    settings.runs_dirs = vec![
+        local_runs(&local),
+        RunsDir {
+            path: export.clone(),
+            exported: true,
+        },
+    ];
+    let served = start_server(settings).await;
+    let runs = served.list_runs().await;
+    let controller_runs = runs["controllerRuns"].as_array().expect("controllerRuns is a list");
+    let by_id = |run_id: &str| {
+        controller_runs
+            .iter()
+            .find(|run| run["runId"] == run_id)
+            .cloned()
+            .unwrap_or_else(|| panic!("no run {run_id}: {runs}"))
+    };
+    assert_eq!(controller_runs.len(), 2, "{runs}");
+    assert_eq!(by_id("run-studio")["exported"], true);
+    let both = by_id("run-both");
+    assert_eq!((&both["command"], &both["exported"]), (&json!("local"), &Value::Null));
+
+    let listed = scenario_by(&runs, is_zip);
+    let answer = served.get("/__air/run/run-studio", &[]).await;
+    assert_eq!(answer.status, StatusCode::OK, "{}", answer.text());
+    let records = answer.json()["records"].clone();
+    let record = |event: &str| {
+        records
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|record| record["event"] == event)
+            .cloned()
+            .unwrap_or_else(|| panic!("no {event}: {records}"))
+    };
+    let trace = record("traceReady");
+    assert_eq!(trace["data"]["bundleId"], listed["id"], "the id of the listed copy: {trace}");
+    assert_eq!(trace["data"]["zip"], json!(real(&zip).to_string_lossy()));
+    assert_eq!(
+        record("iterationReported")["data"]["reportPath"],
+        json!(real(&report).to_string_lossy())
+    );
+    assert_eq!(record("progress")["message"], "done", "another record stays as it is");
+
+    let local_run = served.get("/__air/run/run-both", &[]).await.json();
+    assert_eq!(local_run["records"][0]["data"]["command"], "local");
 }
 
 /// The watcher alone announces a record appended to a running run's journal, and a run that appears under the runs
@@ -296,9 +390,32 @@ async fn run_appended_is_sent_when_a_journal_grows() {
 
 /// The settings of a server over one runs directory whose watcher the test drives, with no poll and no periodic
 /// scan: only an event that the test sends can make the server read the runs directory again.
-fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> Settings {
+/// The settings of a server that reads the runs of `runs_dir`, with the scratch as its one root.
+fn runs_settings(scratch: &Scratch, runs_dir: &Path) -> Settings {
     let mut settings = test_settings(scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir.to_path_buf());
+    settings.runs_dirs = vec![local_runs(runs_dir)];
+    settings
+}
+
+fn local_runs(path: &Path) -> RunsDir {
+    RunsDir {
+        path: path.to_path_buf(),
+        exported: false,
+    }
+}
+
+/// A server over the runs directory of a new scratch, which a driven watch observes, and a subscription to its events.
+async fn driven_runs() -> (Scratch, PathBuf, DrivenWatch, TestServer, Events) {
+    let scratch = Scratch::default();
+    let runs_dir = scratch.dir();
+    let driven = DrivenWatch::default();
+    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
+    let events = served.subscribe().await;
+    (scratch, runs_dir, driven, served, events)
+}
+
+fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> Settings {
+    let mut settings = runs_settings(scratch, runs_dir);
     settings.watch = driven.watch();
     settings.tail_interval = Duration::from_hours(1);
     settings
@@ -308,11 +425,7 @@ fn driven_settings(scratch: &Scratch, runs_dir: &Path, driven: &DrivenWatch) -> 
 /// is then watched: the creation of the journal raises an event, and the run is announced.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_run_directory_seen_before_its_journal_is_watched() {
-    let scratch = Scratch::default();
-    let runs_dir = scratch.dir();
-    let driven = DrivenWatch::default();
-    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
-    let mut events = served.subscribe().await;
+    let (_scratch, runs_dir, driven, served, mut events) = driven_runs().await;
 
     fs::create_dir_all(runs_dir.join("run-2")).expect("create the run's directory");
     served.scan().await;
@@ -329,11 +442,7 @@ async fn a_run_directory_seen_before_its_journal_is_watched() {
 /// announces a run whose own event was lost.
 #[tokio::test(flavor = "multi_thread")]
 async fn a_rescan_notice_of_the_watcher_starts_a_scan() {
-    let scratch = Scratch::default();
-    let runs_dir = scratch.dir();
-    let driven = DrivenWatch::default();
-    let served = start_server(driven_settings(&scratch, &runs_dir, &driven)).await;
-    let mut events = served.subscribe().await;
+    let (_scratch, runs_dir, driven, _served, mut events) = driven_runs().await;
 
     write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
     assert!(driven.send(notify::Event::new(EventKind::Other).set_flag(Flag::Rescan)));
@@ -346,9 +455,7 @@ async fn a_rescan_notice_of_the_watcher_starts_a_scan() {
 async fn a_new_run_is_announced_without_a_file_event() {
     let scratch = Scratch::default();
     let runs_dir = scratch.dir();
-    let mut settings = test_settings(&scratch, vec![Root::new(RootKind::Flag, scratch.dir())]);
-    settings.runs_dir = Some(runs_dir.clone());
-    let served = start_server(settings).await;
+    let served = start_server(runs_settings(&scratch, &runs_dir)).await;
     let mut events = served.subscribe().await;
 
     write_journal(&runs_dir, "run-2", &[run_started("run-2", "run", &[])]);
@@ -879,7 +986,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
     };
     let project = Path::new("/repo/plugins/air/docs");
 
-    let steps = site_steps(&tools, &[project], project, &SITE_BUILD);
+    let steps = site_steps(&tools, &[project], project);
     assert_eq!(
         steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         [
@@ -900,7 +1007,7 @@ fn the_site_is_installed_before_it_is_built_when_its_dependencies_are_missing() 
         ["--dir", "/repo/plugins/air/docs", "install", "--frozen-lockfile"].map(OsString::from)
     );
 
-    let built_only = site_steps(&tools, &[], project, &SITE_BUILD);
+    let built_only = site_steps(&tools, &[], project);
     assert_eq!(
         built_only.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         ["pnpm --dir /repo/plugins/air/docs build"],
@@ -917,23 +1024,20 @@ fn the_kernel_is_installed_before_the_project_that_links_it() {
     let kernel = Path::new("/repo/community/tools/docs-site");
     let project = Path::new("/repo/plugins/air/docs");
 
-    let steps = site_steps(&tools, &[kernel, project], project, &["run", "build:viewer"]);
+    let steps = site_steps(&tools, &[kernel, project], project);
     assert_eq!(
         steps.iter().map(|step| step.label.as_str()).collect::<Vec<_>>(),
         [
             "pnpm --dir /repo/community/tools/docs-site install --frozen-lockfile",
             "pnpm --dir /repo/plugins/air/docs install --frozen-lockfile",
-            "pnpm --dir /repo/plugins/air/docs run build:viewer",
+            "pnpm --dir /repo/plugins/air/docs build",
         ]
     );
     assert_eq!(
         steps[0].args,
         ["--dir", "/repo/community/tools/docs-site", "install", "--frozen-lockfile"].map(OsString::from)
     );
-    assert_eq!(
-        steps[2].args,
-        ["--dir", "/repo/plugins/air/docs", "run", "build:viewer"].map(OsString::from)
-    );
+    assert_eq!(steps[2].args, ["--dir", "/repo/plugins/air/docs", "build"].map(OsString::from));
 }
 
 #[test]
@@ -1019,7 +1123,7 @@ fn a_kernel_edit_makes_the_site_stale() {
 
 #[test]
 fn outside_a_checkout_the_site_is_built_with_the_pnpm_on_the_path() {
-    let steps = site_steps(&SiteTools::Path, &[], Path::new("/docs"), &SITE_BUILD);
+    let steps = site_steps(&SiteTools::Path, &[], Path::new("/docs"));
     assert_eq!(steps.len(), 1);
     assert_eq!(steps[0].program, PathBuf::from(PATH_PNPM));
     assert_eq!(steps[0].path_prefix, None, "the PATH is left as it is");
@@ -1062,7 +1166,7 @@ async fn the_pinned_pnpm_runs_each_step_with_the_pinned_node_first_on_the_path()
     let (output, lines) = kept_output();
 
     let tools = SiteTools::Pinned { node: node.clone(), pnpm };
-    build_site_with(&tools, &[&project], &project, &SITE_BUILD, &output, &CancellationToken::new())
+    build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect("both steps pass");
 
@@ -1106,7 +1210,7 @@ async fn a_failing_install_stops_the_build_and_names_the_step() {
     let (output, _lines) = kept_output();
 
     let tools = SiteTools::Pinned { node, pnpm };
-    let failed = build_site_with(&tools, &[&project], &project, &SITE_BUILD, &output, &CancellationToken::new())
+    let failed = build_site_with(&tools, &[&project], &project, &output, &CancellationToken::new())
         .await
         .expect_err("the install fails");
 
@@ -1218,23 +1322,13 @@ async fn the_routes_answer_what_the_site_reads() {
         &[run_started("run-1", "run", &["flow-x"]), Progress::Note("leasing".to_owned())],
     );
     let mut settings = test_settings(&fixture.scratch, fixture_roots(&fixture));
-    settings.runs_dir = Some(runs_dir);
+    settings.runs_dirs = vec![local_runs(&runs_dir)];
     let manifest = fixture.manifest.clone();
     settings.resolve = Arc::new(move |_: &Path, input: crate::plan::Input| {
         if input.text == "nothing" {
             anyhow::bail!("nothing maps nothing");
         }
-        Ok(PlanResult {
-            lanes: vec!["UI".to_owned()],
-            classes: vec![manifest.test_class.clone()],
-            scenarios: vec![ScenarioRef {
-                test_class: manifest.test_class.clone(),
-                scenario: manifest.scenario.clone(),
-                flow: manifest.flow.clone(),
-                lane: "UI".to_owned(),
-            }],
-            ..PlanResult::default()
-        })
+        Ok(plan_of(&manifest))
     });
     let served = start_server(settings).await;
     let runs = served.list_runs().await;
@@ -1272,9 +1366,15 @@ async fn the_routes_answer_what_the_site_reads() {
         ),
         transcribed(&format!("GET {BUNDLE_ROUTE}<zip id>/"), &served.get(&zipped, &[]).await),
         transcribed(
-            &format!("GET {BUNDLE_ROUTE}<zip id>/{} Range: bytes=0-3", snap_image_path(1)),
+            &format!(
+                "GET {BUNDLE_ROUTE}<zip id>/{} Range: bytes=0-3",
+                snap_image_path(1, StillEncoding::Lossless)
+            ),
             &served
-                .get(&format!("{zipped}{}", snap_image_path(1)), &[("range", "bytes=0-3")])
+                .get(
+                    &format!("{zipped}{}", snap_image_path(1, StillEncoding::Lossless)),
+                    &[("range", "bytes=0-3")],
+                )
                 .await,
         ),
         transcribed(

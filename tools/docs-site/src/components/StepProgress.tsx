@@ -14,7 +14,7 @@ export function StepProgress({ total, active, onGo }: { total: number, active: n
         const step = index + 1
         const fill = active === null || step > active
           ? 'bg-border'
-          : step === active ? 'bg-primary' : 'bg-primary/40'
+          : step === active ? 'bg-sidebar-primary' : 'bg-sidebar-primary/40'
         return dots
           ? (
               <button
@@ -25,7 +25,7 @@ export function StepProgress({ total, active, onGo }: { total: number, active: n
                 className="group flex flex-1 min-w-2 max-w-4 items-center justify-center h-4 p-0 border-none bg-transparent cursor-pointer"
                 onClick={() => onGo(step)}
               >
-                <i className={`w-2 h-2 rounded-full transition-colors group-hover:bg-primary ${fill}`} />
+                <i className={`w-2 h-2 rounded-full transition-colors group-hover:bg-sidebar-primary ${fill}`} />
               </button>
             )
           : (
@@ -34,7 +34,7 @@ export function StepProgress({ total, active, onGo }: { total: number, active: n
                 type="button"
                 aria-label={`Go to step ${step}`}
                 aria-current={step === active ? 'step' : undefined}
-                className={`flex-1 min-w-0 h-1.5 p-0 border-none cursor-pointer hover:bg-primary first:rounded-l-full last:rounded-r-full ${fill}`}
+                className={`flex-1 min-w-0 h-1.5 p-0 border-none cursor-pointer hover:bg-sidebar-primary first:rounded-l-full last:rounded-r-full ${fill}`}
                 onClick={() => onGo(step)}
               />
             )

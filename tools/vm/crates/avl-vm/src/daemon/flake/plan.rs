@@ -12,7 +12,7 @@ use crate::daemon::RunAttempt;
 
 #[cfg(test)]
 #[cfg(unix)]
-mod tests;
+pub(crate) mod tests;
 
 /// What a run's order suspects can mean, published beside them.
 ///

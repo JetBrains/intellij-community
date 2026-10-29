@@ -5,13 +5,19 @@ use pretty_assertions::assert_eq;
 use super::*;
 use crate::daemon::fixture::Fixture;
 
+/// A fixture, and the record of the daemon double as this controller launched it.
+async fn launched() -> (Fixture, HostState) {
+    let fixture = Fixture::new().await;
+    let state = fixture.daemon.host_state("run-1", "launch-1");
+    (fixture, state)
+}
+
 // The daemon's account is used only when it is the daemon this controller launched; every other answer
 // is "start a fresh one" - except a protocol this controller cannot read, which refuses by name.
 #[tokio::test]
 async fn daemon_status_answers_only_the_daemon_this_controller_launched() {
-    let fixture = Fixture::new().await;
+    let (fixture, state) = launched().await;
     let ctx = Ctx::background();
-    let state = fixture.daemon.host_state("run-1", "launch-1");
     let daemon = fixture.host.daemon();
     let status = daemon.status(&ctx, &state).await.unwrap().expect("a healthy daemon");
     assert_eq!(status.controller_launch_digest, "launch-1");
@@ -44,9 +50,8 @@ async fn daemon_status_answers_only_the_daemon_this_controller_launched() {
 // route, the worker and the port.
 #[tokio::test]
 async fn daemon_http_answers_the_status_and_refuses_a_dead_port() {
-    let fixture = Fixture::new().await;
+    let (fixture, state) = launched().await;
     let ctx = Ctx::background();
-    let state = fixture.daemon.host_state("run-1", "launch-1");
     let daemon = fixture.host.daemon();
     fixture.daemon.script().results_xml = b"<testsuites/>".to_vec();
     let (status, body) = daemon.http(&ctx, &state, &wire::iteration_result("it-1"), None).await.unwrap();
@@ -86,9 +91,8 @@ async fn daemon_http_answers_the_status_and_refuses_a_dead_port() {
 // never opened is the path's.
 #[tokio::test]
 async fn probe_status_names_what_it_saw() {
-    let fixture = Fixture::new().await;
+    let (fixture, state) = launched().await;
     let ctx = Ctx::background();
-    let state = fixture.daemon.host_state("run-1", "launch-1");
     let daemon = fixture.host.daemon();
     let probe = async |state: &HostState| daemon.probe_status(&ctx, state).await.unwrap();
 
@@ -138,9 +142,8 @@ async fn probe_status_names_what_it_saw() {
 // starts no JVM daemon, so that daemon is another daemon to retire, never a protocol refusal.
 #[tokio::test]
 async fn a_leftover_jvm_daemon_is_another_daemon() {
-    let fixture = Fixture::new().await;
+    let (fixture, state) = launched().await;
     let ctx = Ctx::background();
-    let state = fixture.daemon.host_state("run-1", "launch-1");
     let daemon = fixture.host.daemon();
     fixture.daemon.script().protocol_version = RETIRED_JVM_PROTOCOL_VERSION;
     let seen = daemon.probe_status(&ctx, &state).await.unwrap();

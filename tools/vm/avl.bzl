@@ -61,6 +61,7 @@ def avl_crate(
         portable = False,
         closure = False,
         compile_data = [],
+        native_deps = [],
         test_data = [],
         test_env = {},
         test_size = "small",
@@ -93,6 +94,8 @@ def avl_crate(
         closure is the one for x86_64 Linux on every host.
       compile_data: files the crate reads at compile time (`include_str!`); its test finds them at run time
         too, so a file the test also reads is listed here once.
+      native_deps: the C libraries that the crate links. Its `build.rs` builds them under cargo, and Bazel runs no
+        build script of this workspace.
       test_data: files the test reads at run time, found through `avl_testkit`.
       test_env: environment of the test, e.g. an `$(rlocationpath ...)`.
       test_size: the Bazel size of the test.
@@ -109,6 +112,7 @@ def avl_crate(
         lints = _LINTS,
         cross_module_crates = _CROSS_MODULE_CRATES,
         compile_data = compile_data,
+        native_deps = native_deps,
         test_data = test_data,
         closure = closure,
         closure_platform = _CLOSURE_PLATFORM,

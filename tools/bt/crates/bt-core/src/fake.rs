@@ -7,7 +7,7 @@
 //! of MB. To capture a real BEP for manual inspection instead, add `--build_event_json_file=/tmp/bep.json` to any
 //! bazel test run.
 
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
@@ -17,9 +17,12 @@ use refusal::Refusal;
 
 use crate::areas::{AREAS_FILE, Area, Areas};
 use crate::lanes::Lanes;
-use crate::runtime::{DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
+use crate::runtime::{CheckoutTree, DirEntry, Heartbeat, Platform, Runtime, SpawnResult};
 
 pub const REPO_ROOT: &str = "/repo";
+
+/// The home directory of the fake user.
+pub const HOME_DIR: &str = "/home/user";
 
 /// The directory of the fixture area, the one [`air_tree`] fills.
 pub const AREA_DIR: &str = "plugins/air";
@@ -74,6 +77,20 @@ pub struct State {
     pub stdout: Vec<String>,
     pub stderr: Vec<String>,
     pub spawn_result: SpawnResult,
+    /// The answers of the next spawns, in order. A spawn takes the first one, and answers [`State::spawn_result`]
+    /// when none is left.
+    pub spawn_results: VecDeque<SpawnResult>,
+    /// The stdin of each [`Runtime::spawn_with_input`], in order.
+    pub inputs: Vec<String>,
+    /// The idle limit of each [`Runtime::spawn_watched`], in order.
+    pub idle_limits: Vec<std::time::Duration>,
+    /// Answers by command: a spawn whose argv, joined by spaces, holds the text of a rule answers the result of the
+    /// first such rule, before the queue of [`State::spawn_results`] is asked.
+    pub spawn_rules: Vec<(String, SpawnResult)>,
+    /// The answer of [`Runtime::confirm`]: `None` stands for a stdin that is not a terminal.
+    pub confirm_answer: Option<bool>,
+    /// The questions that [`Runtime::confirm`] was asked, in order.
+    pub questions: Vec<String>,
     pub clock: u64,
     /// Makes every read fail loudly on top of being recorded. Both matter: the production helpers swallow a
     /// missing file, so a failure alone could be absorbed into an empty scan and read as success, while the
@@ -81,6 +98,15 @@ pub struct State {
     pub forbidden: bool,
     /// The files of the tree the checkout ignores; see [`FakeRuntime::ignore`].
     pub ignored: BTreeSet<String>,
+    /// The files of each revision the checkout holds, by repo-relative path; see [`FakeRuntime::put_revision`].
+    pub revisions: BTreeMap<String, BTreeMap<String, String>>,
+    /// The answer of [`Runtime::upstream_base`]: `None` stands for a checkout without an upstream.
+    pub upstream_base: Option<String>,
+    /// The answers of the next [`Runtime::checkout_tree`] calls, in order. A call takes the first one, and answers
+    /// `None`, a checkout that is no linked work tree, when none is left.
+    pub checkout_trees: VecDeque<CheckoutTree>,
+    /// The tree of each commit, for [`Runtime::commit_tree`].
+    pub commit_trees: BTreeMap<String, String>,
 }
 
 pub struct FakeRuntime {
@@ -154,8 +180,46 @@ impl FakeRuntime {
         self.state().reads.clone()
     }
 
+    /// Makes the checkout hold `revision`, with the repo-relative file `relative` at `text`. A revision with no file
+    /// at all is [`FakeRuntime::add_revision`].
+    pub fn put_revision(&self, revision: &str, relative: &str, text: &str) {
+        self.state()
+            .revisions
+            .entry(revision.to_owned())
+            .or_default()
+            .insert(relative.to_owned(), text.to_owned());
+    }
+
+    /// Makes the checkout hold `revision`, with no file that [`FakeRuntime::put_revision`] did not put.
+    pub fn add_revision(&self, revision: &str) {
+        self.state().revisions.entry(revision.to_owned()).or_default();
+    }
+
+    /// Makes `revision` the answer of [`Runtime::upstream_base`], and a revision that the checkout holds.
+    pub fn set_upstream_base(&self, revision: &str) {
+        self.add_revision(revision);
+        self.state().upstream_base = Some(revision.to_owned());
+    }
+
     pub fn spawned(&self) -> Vec<Vec<String>> {
         self.state().spawned.clone()
+    }
+
+    /// Records the argv, advances the clock by 5 s, and answers the next scripted result.
+    fn scripted_spawn(&self, command: &[OsString]) -> SpawnResult {
+        let mut state = self.state();
+        state
+            .spawned
+            .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
+        state.clock += 5000;
+        let joined = crate::os_runtime::command_line(command);
+        if let Some((_, result)) = state.spawn_rules.iter().find(|(text, _)| joined.contains(text.as_str())) {
+            return result.clone();
+        }
+        match state.spawn_results.pop_front() {
+            Some(result) => result,
+            None => state.spawn_result.clone(),
+        }
     }
 
     fn note(&self, what: &str, path: &str) -> io::Result<()> {
@@ -185,6 +249,11 @@ impl Runtime for FakeRuntime {
         let path = key(path);
         self.note("read", &path)?;
         self.state().files.get(&path).cloned().ok_or_else(|| not_found(&path))
+    }
+
+    fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()> {
+        self.state().files.insert(key(path), text.to_owned());
+        Ok(())
     }
 
     fn read_lines(&self, path: &Path) -> Box<dyn Iterator<Item = String> + '_> {
@@ -234,6 +303,22 @@ impl Runtime for FakeRuntime {
             .collect())
     }
 
+    /// A revision that [`FakeRuntime::put_revision`] or [`FakeRuntime::add_revision`] did not name is one the checkout
+    /// does not hold.
+    fn revision_text(&self, revision: &str, path: &str) -> io::Result<Option<String>> {
+        self.note("revision", &format!("{revision}:{path}"))?;
+        let state = self.state();
+        let files = state.revisions.get(revision).ok_or_else(|| not_found(revision))?;
+        Ok(files.get(path).cloned())
+    }
+
+    fn upstream_base(&self) -> io::Result<String> {
+        self.state()
+            .upstream_base
+            .clone()
+            .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "the checkout has no upstream"))
+    }
+
     fn exists(&self, path: &Path) -> bool {
         let path = key(path);
         let prefix = format!("{path}/");
@@ -241,21 +326,48 @@ impl Runtime for FakeRuntime {
         state.files.contains_key(&path) || state.files.keys().any(|held| held.starts_with(&prefix))
     }
 
+    fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>> {
+        Ok(self.state().checkout_trees.pop_front())
+    }
+
+    fn commit_tree(&self, commit: &str) -> io::Result<String> {
+        self.state()
+            .commit_trees
+            .get(commit)
+            .cloned()
+            .ok_or_else(|| io::Error::other(format!("fatal: Needed a single revision: {commit}^{{tree}}")))
+    }
+
+    /// The spelling of a main checkout: the git directory is `.git` of the root.
+    fn git_path(&self, name: &str) -> io::Result<PathBuf> {
+        Ok(self.root.join(".git").join(name))
+    }
+
     /// Records the argv, beats once as a 30 s run would, and answers the scripted result.
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult {
-        let result = {
-            let mut state = self.state();
-            state
-                .spawned
-                .push(command.iter().map(|part| part.to_string_lossy().into_owned()).collect());
-            state.clock += 5000;
-            state.spawn_result.clone()
-        };
+        let result = self.scripted_spawn(command);
         // Outside the lock: the heartbeat writes a progress line through this same runtime.
         if let Some(beat) = heartbeat {
             beat(30_000);
         }
         result
+    }
+
+    /// Records the argv and answers the scripted result, whose output stands for the stdout of the child.
+    fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult {
+        self.scripted_spawn(command)
+    }
+
+    /// Records the argv and the idle limit, and answers the scripted result.
+    fn spawn_watched(&self, command: &[OsString], idle: std::time::Duration) -> SpawnResult {
+        self.state().idle_limits.push(idle);
+        self.scripted_spawn(command)
+    }
+
+    /// Records the argv and the input, and answers the scripted result.
+    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult {
+        self.state().inputs.push(input.to_owned());
+        self.scripted_spawn(command)
     }
 
     fn temp_file(&self, prefix: &str) -> PathBuf {
@@ -265,6 +377,40 @@ impl Runtime for FakeRuntime {
     fn remove(&self, path: &Path) -> io::Result<()> {
         self.state().removed.push(key(path));
         Ok(())
+    }
+
+    /// Copies the text of a held file. Directories need no creation, because the fake holds files only.
+    fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()> {
+        let from = key(from);
+        let mut state = self.state();
+        let text = state.files.get(&from).cloned().ok_or_else(|| not_found(&from))?;
+        state.files.insert(key(to), text);
+        Ok(())
+    }
+
+    /// Nothing to create: the fake holds files only.
+    fn create_dir_all(&self, _: &Path) -> io::Result<()> {
+        Ok(())
+    }
+
+    /// Drops every held file under the directory, and records the directory as removed.
+    fn remove_dir_all(&self, path: &Path) -> io::Result<()> {
+        let path = key(path);
+        let prefix = format!("{path}/");
+        let mut state = self.state();
+        state.files.retain(|held, _| !held.starts_with(&prefix));
+        state.removed.push(path);
+        Ok(())
+    }
+
+    fn home_dir(&self) -> Option<PathBuf> {
+        Some(PathBuf::from(HOME_DIR))
+    }
+
+    fn confirm(&self, question: &str) -> Option<bool> {
+        let mut state = self.state();
+        state.questions.push(question.to_owned());
+        state.confirm_answer
     }
 
     fn now_ms(&self) -> u64 {
@@ -431,6 +577,16 @@ pub fn refusal<T: std::fmt::Debug>(result: Result<T, Refusal>) -> Refusal {
         Ok(value) => panic!("expected a refusal, got {value:?}"),
         Err(refusal) => refusal,
     }
+}
+
+/// The `lane/class` of each affected suite, joined by commas.
+pub fn classes_of(affected: &crate::suites::Affected) -> String {
+    affected
+        .suites
+        .iter()
+        .map(|suite| format!("{}/{}", suite.lane, suite.class))
+        .collect::<Vec<_>>()
+        .join(",")
 }
 
 // --- the suite catalog -----------------------------------------------------------------------------------------
