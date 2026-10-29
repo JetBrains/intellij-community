@@ -178,6 +178,8 @@ internal object DefaultJavaSyntaxResources {
     "jdk.26.preview.language.level.description" to "26 (Preview) - Primitive types in patterns, instanceof, and switch (4th preview)",
     "jdk.27.language.level.description" to "27 - No new language features",
     "jdk.27.preview.language.level.description" to "27 (Preview) - Primitive types in patterns, instanceof, and switch (5th preview)",
+    "jdk.28.language.level.description" to "28 - No new language features",
+    "jdk.28.preview.language.level.description" to "28 (Preview) - Value classes",
     "jdk.X.language.level.description" to "X - Experimental features",
     "jdk.unsupported.preview.language.level.description" to "{0} (Preview) - Unsupported",
     "unexpected.identifier" to "Unexpected identifier",

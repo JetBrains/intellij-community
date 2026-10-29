@@ -33,9 +33,10 @@ public enum LanguageLevel {
   JDK_25(25), JDK_25_PREVIEW(25),
   JDK_26(26), JDK_26_PREVIEW(26),
   JDK_27(27), JDK_27_PREVIEW(27),
-  JDK_X(28);
+  JDK_28(28), JDK_28_PREVIEW(28),
+  JDK_X(29);
 
-  public static final LanguageLevel HIGHEST = JDK_27;
+  public static final LanguageLevel HIGHEST = JDK_28;
 
   private final JavaVersion myVersion;
 
