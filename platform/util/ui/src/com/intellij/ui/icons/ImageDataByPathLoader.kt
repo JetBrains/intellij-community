@@ -195,7 +195,8 @@ fun getReflectiveIcon(path: String, classLoader: ClassLoader): Icon? {
   }
 }
 
-internal fun getClassNameByIconPath(path: String): String {
+@Internal
+fun getClassNameByIconPath(path: String): String {
   var dotIndex = path.lastIndexOf('.')
   val builder = StringBuilder(path.length + 20)
   builder.append(path, 0, dotIndex)

@@ -128,7 +128,6 @@ a:com.intellij.openapi.actionSystem.AnAction
 - *:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
 f:com.intellij.openapi.actionSystem.Presentation
 - java.lang.Cloneable
-- *sf:NO_ICON_DESCRIPTOR:com.intellij.platform.icons.IconDescriptor
 - *sf:PROP_ICON_DESCRIPTOR:java.lang.String
 - *:getIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - *:getIconDescriptorSupplier():java.util.function.Supplier

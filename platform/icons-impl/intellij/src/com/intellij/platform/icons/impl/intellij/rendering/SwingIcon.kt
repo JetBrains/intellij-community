@@ -114,4 +114,14 @@ class SwingIcon(
   override fun getIconHeight(): Int {
     return dimensions.height
   }
+
+  /**
+   * Exposes the wrapped [iconDescriptor] so tools that print a Swing [Icon] - the UI Inspector's icon cell
+   * ([com.intellij.internal.inspector.components.ValueCellRenderer], the debugger, logs - reveal the descriptor's
+   * insides: its layers and, for image layers, the resource paths they load. Without this the inspector would only
+   * show the default `SwingIcon@hash`.
+   */
+  override fun toString(): String {
+    return if (scale == null) "SwingIcon($iconDescriptor)" else "SwingIcon($iconDescriptor, scale=$scale)"
+  }
 }
