@@ -1,0 +1,153 @@
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.find
+
+import com.intellij.find.FindInProjectSearchEngine.Coverage
+import com.intellij.find.FindInProjectSearchEngine.FindInProjectSearcher
+import com.intellij.find.impl.FindInProjectDirectoriesProvider
+import com.intellij.find.impl.FindInProjectUtil
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
+import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.junit5.RegistryKey
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.testFramework.junit5.TestDisposable
+import com.intellij.testFramework.rules.ProjectModelExtension
+import com.intellij.usageView.UsageInfo
+import com.intellij.util.CommonProcessors.CollectProcessor
+import com.intellij.util.Processor
+import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
+import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
+import com.intellij.workspaceModel.ide.NonPersistentEntitySource
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.Collections.synchronizedList
+import java.util.concurrent.atomic.AtomicInteger
+
+/**
+ * Pins the contract of [FindInProjectDirectoriesProvider]: a project search walks the directories of the provider
+ * instead of the platform traversal, and they stand for the whole project (see `FindInProjectTask` and `ScopeWalker`).
+ * The roots are non-indexable, so no index searcher finds their files, and the walk alone decides.
+ */
+@TestApplication
+@RegistryKey("find.in.files.in.non.indexable.enable", "true")
+class FindInProjectDirectoriesProviderTest {
+  @RegisterExtension
+  private val projectModel: ProjectModelExtension = ProjectModelExtension()
+  private val baseDir get() = projectModel.baseProjectDir
+  private val project get() = projectModel.project
+
+  @TestDisposable
+  private lateinit var disposable: Disposable
+
+  private lateinit var firstRoot: VirtualFile
+  private lateinit var secondRoot: VirtualFile
+
+  @BeforeEach
+  fun setup(): Unit = runBlocking {
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
+
+    firstRoot = baseDir.newVirtualDirectory("first")
+    secondRoot = baseDir.newVirtualDirectory("second")
+    baseDir.newVirtualFile("first/first.txt", "first file with zq data".toByteArray())
+    baseDir.newVirtualFile("second/second.txt", "second file with zq data".toByteArray())
+
+    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+    project.workspaceModel.update("add non-indexable roots") { storage ->
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(firstRoot.url), NonPersistentEntitySource))
+      storage.addEntity(NonIndexableTestEntity(urlManager.storeAndGet(secondRoot.url), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+    waitUntilIndexesAreReady(project)
+  }
+
+  @Test
+  fun `without a provider the project search takes the platform traversal`(): Unit = runBlocking {
+    assertThat(findFileNames(projectModel())).containsExactlyInAnyOrder("first.txt", "second.txt")
+  }
+
+  @Test
+  fun `the project search walks the directories of the provider`(): Unit = runBlocking {
+    registerProvider(listOf(firstRoot))
+
+    assertThat(findFileNames(projectModel())).containsExactlyInAnyOrder("first.txt")
+  }
+
+  @Test
+  fun `a provider without a directory leaves the project search to the platform`(): Unit = runBlocking {
+    registerProvider(emptyList())
+
+    assertThat(findFileNames(projectModel())).containsExactlyInAnyOrder("first.txt", "second.txt")
+  }
+
+  @Test
+  fun `a directory search does not ask the provider`(): Unit = runBlocking {
+    val calls = registerProvider(listOf(firstRoot))
+
+    val model = projectModel().apply {
+      isProjectScope = false
+      directoryName = secondRoot.path
+    }
+    assertThat(findFileNames(model)).containsExactlyInAnyOrder("second.txt")
+    assertThat(calls.get()).isZero()
+  }
+
+  @Test
+  fun `the directories of the provider stand for the project, so a searcher that covers all candidates skips their walk`(): Unit = runBlocking {
+    registerProvider(listOf(firstRoot, secondRoot))
+    val occurrence = checkNotNull(secondRoot.findChild("second.txt"))
+    registerSearcherCoveringAllCandidates(listOf(occurrence))
+
+    assertThat(findFileNames(projectModel())).containsExactlyInAnyOrder("second.txt")
+  }
+
+  /** Registers a provider that answers [directories], and gives the number of its calls. */
+  private fun registerProvider(directories: List<VirtualFile>): AtomicInteger {
+    val calls = AtomicInteger()
+    val provider = object : FindInProjectDirectoriesProvider {
+      override fun getProjectDirectories(project: Project): List<VirtualFile> {
+        calls.incrementAndGet()
+        return directories
+      }
+    }
+    FindInProjectDirectoriesProvider.EP_NAME.point.registerExtension(provider, disposable)
+    return calls
+  }
+
+  /** Registers a reliable searcher that feeds [occurrences] and reports [Coverage.ALL_CANDIDATES]. It covers no file. */
+  private fun registerSearcherCoveringAllCandidates(occurrences: Collection<VirtualFile>) {
+    val engine = FindInProjectSearchEngine { _, _ ->
+      object : FindInProjectSearcher {
+        override fun searchForOccurrences(): Collection<VirtualFile> = occurrences
+        override fun processOccurrences(processor: Processor<in VirtualFile>): Coverage =
+          if (super.processOccurrences(processor) == Coverage.STOPPED) Coverage.STOPPED else Coverage.ALL_CANDIDATES
+        override fun isReliable(): Boolean = true
+        override fun isCovered(file: VirtualFile): Boolean = false
+      }
+    }
+    FindInProjectSearchEngine.EP_NAME.point.registerExtension(engine, disposable)
+  }
+
+  /** A search over the project for the word every test file holds. */
+  private fun projectModel(): FindModel = FindModel().apply {
+    stringToFind = "data"
+    isGlobal = true
+    isMultipleFiles = true
+    isProjectScope = true
+    isWithSubdirectories = true
+  }
+
+  private fun findFileNames(model: FindModel): List<String> {
+    val usages = synchronizedList<UsageInfo?>(ArrayList())
+    val consumer: Processor<UsageInfo?> = CollectProcessor(usages)
+    val presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model))
+    FindInProjectUtil.findUsages(model, project, consumer, presentation)
+    return usages.map { it!!.virtualFile!!.name }.distinct()
+  }
+}

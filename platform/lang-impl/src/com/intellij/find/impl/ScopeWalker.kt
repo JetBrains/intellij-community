@@ -44,10 +44,10 @@ internal class ScopeWalker(
   private val project: Project,
   private val candidateFilter: CandidateFilter,
   private val moduleToSearchIn: Module?,
-  /** The directories of the model: one named directory, or in JetBrains Light the base directories that stand for the project. */
+  /** The directories of the model: one named directory, or the directories a [FindInProjectDirectoriesProvider] gives for the project. */
   private val directoriesToSearchIn: List<VirtualFile>,
   private val withSubdirectories: Boolean,
-  /** True when [directoriesToSearchIn] stand for the whole project, as in JetBrains Light, where every file is non-indexable. */
+  /** True when [directoriesToSearchIn] stand for the whole project, whose files are then all non-indexable, as in JetBrains Light. */
   private val directoryStandsForProject: Boolean,
   private val customScope: GlobalSearchScope?,
 ) {

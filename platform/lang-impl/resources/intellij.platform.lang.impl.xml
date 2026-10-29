@@ -254,6 +254,7 @@
     <extensionPoint qualifiedName="com.intellij.saveFileAsTemplateHandler" interface="com.intellij.ide.actions.SaveFileAsTemplateHandler" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.printOption" interface="com.intellij.codeEditor.printing.PrintOption" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.findInProjectExtension" interface="com.intellij.find.impl.FindInProjectExtension" dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.findInProjectDirectoriesProvider" interface="com.intellij.find.impl.FindInProjectDirectoriesProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.patterns.patternClass" beanClass="com.intellij.patterns.compiler.PatternClassBean" dynamic="true">
       <with attribute="className" implements="java.lang.Object"/>
     </extensionPoint>

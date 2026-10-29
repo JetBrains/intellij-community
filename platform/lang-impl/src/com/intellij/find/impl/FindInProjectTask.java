@@ -16,14 +16,12 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
-import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.platform.ide.productMode.IdeProductMode;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
@@ -37,6 +35,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
@@ -100,14 +99,12 @@ final class FindInProjectTask {
     boolean withSubdirectories;
     boolean directoryStandsForProject = false;
     var directoryCandidate = FindInProjectUtil.getDirectory(findModel);
-    if (directoryCandidate == null && IdeProductMode.isLight()) {
-      // Make sure that in ijLight we always do a directory search. Directory search requests are easier to optimize by delegating
-      // iteration and pre-filtering to backend (ijent), thus minimizing amount of round trips over the network.
-      // What we configure here is a set of files which should be searched. It may contain more files than requested scope,
-      // but not less than requested. All the discovered files will be filtered by actually provided scope later.
-      // In ijLight the workspace model holds one ProjectRootEntity per project of the workspace and no module, so the project
-      // is its base directories: the roots of these entities, with a nested root folded into its parent.
-      directoriesToSearchIn = lightProjectDirectories(project);
+    List<VirtualFile> projectDirectories = directoryCandidate == null ? projectDirectories(project) : null;
+    if (projectDirectories != null) {
+      // A directory search is a set of files that holds every file of the requested scope, and maybe more: the scope filters
+      // each discovered file later. A DirectorySearchEngine can delegate the walk and the pre-filtering of a directory to a
+      // backend, so a product whose project is a set of directories searches the project this way.
+      directoriesToSearchIn = projectDirectories;
       if (directoriesToSearchIn.isEmpty()) {
         LOG.warn("No project directory found for search in " + project);
       }
@@ -118,7 +115,8 @@ final class FindInProjectTask {
         directoryStandsForProject = true;
       }
       withSubdirectories = true;
-    } else {
+    }
+    else {
       directoriesToSearchIn = ContainerUtil.createMaybeSingletonList(directoryCandidate);
       withSubdirectories = findModel.isWithSubdirectories();
     }
@@ -167,12 +165,13 @@ final class FindInProjectTask {
   }
 
   /**
-   * The directories a Light project search walks: the valid base directories of the project.
-   * Every project of a Light workspace is a base directory, so a search over the project reaches every project of the workspace.
+   * The valid directories that stand for the project, from the {@link FindInProjectDirectoriesProvider} that defines it.
+   * Null when no provider does, so the project search takes the platform path.
    */
-  private static @NotNull List<VirtualFile> lightProjectDirectories(@NotNull Project project) {
-    if (project.isDefault()) return List.of();
-    return ContainerUtil.filter(BaseProjectDirectories.getBaseDirectories(project), VirtualFile::isValid);
+  private static @Nullable List<VirtualFile> projectDirectories(@NotNull Project project) {
+    if (project.isDefault()) return null;
+    List<VirtualFile> directories = FindInProjectDirectoriesProvider.findProjectDirectories(project);
+    return directories == null ? null : ContainerUtil.filter(directories, VirtualFile::isValid);
   }
 
   /**
