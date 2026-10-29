@@ -33,8 +33,8 @@ object PersistentMarkerPolicy : MarkerPolicy {
       return DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
     }
     val translated = translate(entry, patch, beforeText, afterText)
-    return if (translated != null) {
-      MarkerTransformResult(translated)
+    return if (translated.isValid) {
+      translated
     }
     else {
       DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
@@ -46,7 +46,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
       patch: DocumentPatch,
       beforeText: DocumentText,
       afterText: DocumentText,
-  ): MarkerEntry? {
+  ): MarkerTransformResult {
     val startLine = beforeText.lineNumber(entry.nodeStart)
     val endLine = beforeText.lineNumber(entry.nodeEnd)
     val startColumn = entry.nodeStart - beforeText.lineStartOffset(startLine)
@@ -62,19 +62,19 @@ object PersistentMarkerPolicy : MarkerPolicy {
       translatedEndLine = lineDiff.translateLineStrict(endLine, changeStartLine, afterChars)
     }
     catch (_: FilesTooBigForDiffException) {
-      return null
+      return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
-    if (translatedStartLine !in 0..<afterText.lineCount()) return null
-    if (translatedEndLine !in 0..<afterText.lineCount()) return null
+    if (translatedStartLine !in 0..<afterText.lineCount()) return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
+    if (translatedEndLine !in 0..<afterText.lineCount()) return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
 
     val startOffset = afterText.lineStartOffset(translatedStartLine) + startColumn
-    if (startOffset >= afterText.length()) return null
+    if (startOffset >= afterText.length()) return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     val endOffset = afterText.lineStartOffset(translatedEndLine) + endColumn
-    if (endOffset > afterText.length() || endOffset < startOffset) return null
-    if (translatedEndLine < translatedStartLine) return null
-    if (translatedStartLine == translatedEndLine && endColumn < startColumn) return null
+    if (endOffset > afterText.length() || endOffset < startOffset) return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
+    if (translatedEndLine < translatedStartLine) return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
+    if (translatedStartLine == translatedEndLine && endColumn < startColumn) return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
 
-    return entry.copy(nodeStart = startOffset, nodeEnd = endOffset)
+    return MarkerTransformResult(startOffset, endOffset)
   }
 
   private fun MarkerEntry.shouldTranslateViaDiff(

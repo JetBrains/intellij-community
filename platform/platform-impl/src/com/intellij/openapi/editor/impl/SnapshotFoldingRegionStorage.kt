@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
+import com.intellij.openapi.editor.impl.marker.MarkerTransformError
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
@@ -528,30 +529,26 @@ private class FoldRegionMarkerPolicy(
     afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
-    return if (transformed.errorReason != null) {
+    return if (!transformed.isValid) {
       transformed
     }
     else {
-      alignAndValidate(transformed.entry, afterText)
+      alignAndValidate(transformed, afterText)
     }
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return alignAndValidate(entry, text)
+    return alignAndValidate(MarkerTransformResult(entry), text)
   }
 
-  private fun alignAndValidate(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    val alignedEntry = alignToCharacterBoundaries(entry, text)
-    if (alignedEntry != entry) onRangeAligned()
-    return validateRange(alignedEntry)
-  }
-
-  private fun validateRange(entry: PMarkerRoot.MarkerEntry): MarkerTransformResult {
-    return if (entry.nodeStart < entry.nodeEnd) {
-      MarkerTransformResult(entry)
+  private fun alignAndValidate(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
+    val alignedRange = alignToCharacterBoundaries(range, text)
+    if (alignedRange != range) onRangeAligned()
+    return if (alignedRange.startOffset < alignedRange.endOffset) {
+      alignedRange
     }
     else {
-      MarkerTransformResult(entry, "The fold region became empty")
+      MarkerTransformResult(MarkerTransformError.EMPTY_FOLD_REGION)
     }
   }
 }
@@ -564,42 +561,37 @@ private object CustomFoldRegionMarkerPolicy : MarkerPolicy {
     afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
-    return if (transformed.errorReason != null) {
+    return if (!transformed.isValid) {
       transformed
     }
     else {
-      validateLineBoundaries(transformed.entry, afterText)
+      validateLineBoundaries(transformed, afterText)
     }
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return validateLineBoundaries(entry, text)
+    return validateLineBoundaries(MarkerTransformResult(entry), text)
   }
 
-  private fun validateLineBoundaries(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    if (entry.nodeStart >= entry.nodeEnd) {
-      return MarkerTransformResult(entry, "The custom fold region became empty")
+  private fun validateLineBoundaries(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
+    if (range.startOffset >= range.endOffset) {
+      return MarkerTransformResult(MarkerTransformError.EMPTY_CUSTOM_FOLD_REGION)
     }
-    val startLine = text.lineNumber(entry.nodeStart)
-    val endLine = text.lineNumber(entry.nodeEnd)
-    return if (entry.nodeStart == text.lineStartOffset(startLine) && entry.nodeEnd == text.lineEndOffset(endLine)) {
-      MarkerTransformResult(entry)
+    val startLine = text.lineNumber(range.startOffset)
+    val endLine = text.lineNumber(range.endOffset)
+    return if (range.startOffset == text.lineStartOffset(startLine) && range.endOffset == text.lineEndOffset(endLine)) {
+      range
     }
     else {
-      MarkerTransformResult(entry, "The custom fold region left its line boundaries")
+      MarkerTransformResult(MarkerTransformError.CUSTOM_FOLD_REGION_OUTSIDE_LINE_BOUNDARIES)
     }
   }
 }
 
-private fun alignToCharacterBoundaries(entry: PMarkerRoot.MarkerEntry, text: DocumentText): PMarkerRoot.MarkerEntry {
-  val startOffset = if (isInsideCharacterPair(entry.nodeStart, text)) entry.nodeStart - 1 else entry.nodeStart
-  val endOffset = if (isInsideCharacterPair(entry.nodeEnd, text)) entry.nodeEnd - 1 else entry.nodeEnd
-  return if (startOffset == entry.nodeStart && endOffset == entry.nodeEnd) {
-    entry
-  }
-  else {
-    entry.copy(nodeStart = startOffset, nodeEnd = endOffset)
-  }
+private fun alignToCharacterBoundaries(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
+  val startOffset = if (isInsideCharacterPair(range.startOffset, text)) range.startOffset - 1 else range.startOffset
+  val endOffset = if (isInsideCharacterPair(range.endOffset, text)) range.endOffset - 1 else range.endOffset
+  return MarkerTransformResult(startOffset, endOffset)
 }
 
 private fun isInsideCharacterPair(offset: Int, text: DocumentText): Boolean {

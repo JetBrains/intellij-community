@@ -96,13 +96,13 @@ class SnapshotCustomWrapModelTest {
     assertThat(state.wrap).isInstanceOf(SnapshotRangeMarkerImpl::class.java)
     assertThat(state.initialRange).isEqualTo(5 to 5)
     assertThat(state.shiftedRange).isEqualTo(6 to 6)
-    assertThat(state.invalidRange).isEqualTo(4 to 4)
+    assertThat(state.invalidRange).isEqualTo(state.initialRange)
     assertThat(state.invalidBranchIsValid).isFalse()
     assertThat(state.initialBranchIsValid).isTrue()
   }
 
   @Test
-  fun `document edit removes an invalid custom wrap once`(): Unit = timeoutRunBlocking {
+  fun `invalid custom wrap keeps its input offset and reports removal once`(): Unit = timeoutRunBlocking {
     val state = withEditor("abc\ndef") { editor ->
       val model = editor.customWrapModel
       val removedOffsets = ArrayList<Int>()
@@ -129,9 +129,9 @@ class SnapshotCustomWrapModelTest {
       }
     }
 
-    assertThat(state.wrapOffset).isEqualTo(4)
+    assertThat(state.wrapOffset).isEqualTo(5)
     assertThat(state.remainingWraps).isEmpty()
-    assertThat(state.removedOffsets).containsExactly(4)
+    assertThat(state.removedOffsets).containsExactly(5)
     assertThat(state.secondRemoval).isFalse()
   }
 

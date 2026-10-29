@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
+import com.intellij.openapi.editor.impl.marker.MarkerTransformError
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
@@ -126,27 +127,24 @@ private object CustomWrapMarkerPolicy : MarkerPolicy {
     afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
-    return if (transformed.errorReason != null) {
+    return if (!transformed.isValid) {
       transformed
     }
     else {
-      validateOffset(transformed.entry, afterText)
+      validateOffset(transformed, afterText)
     }
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return validateOffset(entry, text)
+    return validateOffset(MarkerTransformResult(entry), text)
   }
 
-  private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return if (isValidCustomWrapOffset(entry.nodeStart, text)) {
-      MarkerTransformResult(entry)
+  private fun validateOffset(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
+    return if (isValidCustomWrapOffset(range.startOffset, text)) {
+      range
     }
     else {
-      MarkerTransformResult(
-        entry,
-        "The custom wrap reached an invalid offset",
-      )
+      MarkerTransformResult(MarkerTransformError.INVALID_CUSTOM_WRAP_OFFSET)
     }
   }
 }

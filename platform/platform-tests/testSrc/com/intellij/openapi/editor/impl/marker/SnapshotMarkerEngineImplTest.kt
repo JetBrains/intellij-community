@@ -178,8 +178,8 @@ class SnapshotMarkerEngineImplTest {
     var transformed = false
     val policy = MarkerPolicy { entry, _, _, _ ->
       transformed = true
-      if (invalidate) MarkerTransformResult(entry, "Invalidated by test marker policy")
-      else MarkerTransformResult(entry.copy(nodeEnd = 5))
+      if (invalidate) MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
+      else MarkerTransformResult(entry.nodeStart, 5)
     }
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document, 2, 4, nonGreedySpec(), policy = policy,
@@ -1362,9 +1362,9 @@ class SnapshotMarkerEngineImplTest {
   fun `marker entry delegates transformation to its policy`() {
     var receivedPatch: DocumentPatch? = null
     val invalidatedMarkerIds = ArrayList<Long>()
-    val policy = MarkerPolicy { entry, patch, _, _ ->
+    val policy = MarkerPolicy { _, patch, _, _ ->
       receivedPatch = patch
-      MarkerTransformResult(entry, "Invalidated by test marker policy")
+      MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
     val root = PMarkerRootImpl.empty().insert(
       handle = handle(1),
@@ -1390,7 +1390,7 @@ class SnapshotMarkerEngineImplTest {
 
     val invalid = edited.resolve(handle(1))
     assertFalse(PMarkerResolution.isValid(invalid))
-    assertEquals("Invalidated by test marker policy", edited.invalidationReason(handle(1)))
+    assertEquals(MarkerTransformError.INVALIDATED_BY_EDIT.message, edited.invalidationReason(handle(1)))
     assertEquals(listOf(1L), invalidatedMarkerIds)
     assertSame(patch, receivedPatch)
   }
@@ -1399,8 +1399,8 @@ class SnapshotMarkerEngineImplTest {
   fun `root reports only affected valid markers`() {
     val invalidatedMarkerIds = ArrayList<Long>()
     val affectedMarkerIds = ArrayList<Long>()
-    val invalidatingPolicy = MarkerPolicy { entry, _, _, _ ->
-      MarkerTransformResult(entry, "Invalidated by test marker policy")
+    val invalidatingPolicy = MarkerPolicy { _, _, _, _ ->
+      MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
     val root = PMarkerRootImpl.empty()
       .insert(handle(1), 0, 1, nonGreedySpec(), flavorFlags = 0)

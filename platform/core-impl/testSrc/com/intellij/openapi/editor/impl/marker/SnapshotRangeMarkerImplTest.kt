@@ -149,7 +149,7 @@ internal class SnapshotRangeMarkerImplTest {
   fun `policy survives changes to marker flags`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
-      val policy = MarkerPolicy { entry, _, _, _ -> MarkerTransformResult(entry.copy(nodeEnd = 6)) }
+      val policy = MarkerPolicy { entry, _, _, _ -> MarkerTransformResult(entry.nodeStart, 6) }
       val marker = SnapshotMarkerEngineImpl.createRangeMarker(
         document, 2, 4, MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = policy,
       ) as SnapshotRangeMarkerImpl

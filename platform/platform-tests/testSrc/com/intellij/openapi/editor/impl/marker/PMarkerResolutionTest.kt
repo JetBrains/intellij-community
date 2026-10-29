@@ -66,7 +66,7 @@ internal class PMarkerResolutionTest {
 
   @Test
   fun `invalid offsets are rejected`() {
-    for ((start, end) in listOf(-1 to 0, 2 to 1)) {
+    for ([start, end] in listOf(-1 to 0, 2 to 1)) {
       assertThrows(IllegalArgumentException::class.java) { PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(start, end)) }
       assertThrows(IllegalArgumentException::class.java) { PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(start, end)) }
     }
@@ -90,10 +90,10 @@ internal class PMarkerResolutionTest {
   @Test
   fun `invalidation reasons remain in their roots`() {
     val document = DocumentImpl("abcdef", true)
-    val reason = "Invalidated by test marker policy"
+    val reason = MarkerTransformError.INVALIDATED_BY_EDIT.message
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-    val policy = MarkerPolicy { entry, _, _, _ ->
-      MarkerTransformResult(entry, reason)
+    val policy = MarkerPolicy { _, _, _, _ ->
+      MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
     val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0, policy = policy)
     val before = document.core.snapshot().text()

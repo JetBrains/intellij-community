@@ -295,12 +295,12 @@ open class PMarkerRootImpl private constructor(
 
     val transformedMiddle = ArrayList<MarkerEntry>(middleEntries.size)
     for (entry in middleEntries) {
-      val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
-      if (update.errorReason == null) {
-        transformedMiddle.add(update.entry)
+      val result = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+      if (result.isValid) {
+        transformedMiddle.add(result.applyTo(entry))
       }
       else {
-        editor.putInvalid(update.entry, update.errorReason)
+        editor.putInvalid(entry, result.errorReason!!)
       }
     }
 
@@ -343,12 +343,12 @@ open class PMarkerRootImpl private constructor(
 
     val transformedEntries = ArrayList<MarkerEntry>(entries.size)
     for (entry in entries) {
-      val update = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
-      if (update.errorReason == null) {
-        transformedEntries.add(update.entry)
+      val result = transform(editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
+      if (result.isValid) {
+        transformedEntries.add(result.applyTo(entry))
       }
       else {
-        editor.putInvalid(update.entry, update.errorReason)
+        editor.putInvalid(entry, result.errorReason!!)
       }
     }
     if (!isSortedByPosition(transformedEntries)) transformedEntries.sortWith(ENTRY_COMPARATOR)
@@ -716,7 +716,7 @@ open class PMarkerRootImpl private constructor(
 
     /** Updates [firstChangedEnd] from a policy result in absolute document coordinates. */
     fun recordTransform(entry: MarkerEntry, result: MarkerTransformResult) {
-      if (result.errorReason != null || result.entry.nodeStart != entry.nodeStart || result.entry.nodeEnd != entry.nodeEnd) {
+      if (!result.isValid || result.startOffset != entry.nodeStart || result.endOffset != entry.nodeEnd) {
         firstChangedEnd = minOf(firstChangedEnd, entry.nodeEnd)
       }
     }
@@ -786,14 +786,6 @@ open class PMarkerRootImpl private constructor(
 
     fun remove(markerId: Long) {
       builder.remove(markerId)
-    }
-
-    fun replacePolicy(oldPolicy: MarkerPolicy, newPolicy: MarkerPolicy) {
-      if (oldPolicy === newPolicy) return
-      persistentMarkerCount = incrementPersistentMarkerCount(
-        decrementPersistentMarkerCount(persistentMarkerCount, oldPolicy),
-        newPolicy,
-      )
     }
 
     fun addPolicy(policy: MarkerPolicy) {
@@ -1207,18 +1199,18 @@ open class PMarkerRootImpl private constructor(
       val update = transform(
         editor, entry, patch, beforeText, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer
       )
-      return if (update.errorReason == null) {
-        check(update.entry.nodeStart == entry.nodeStart) {
+      return if (update.isValid) {
+        check(update.startOffset == entry.nodeStart) {
           "An edit changed the start of a marker that starts before the edit"
         }
         val leaf = editor.valid(rootId)
-        rewrite(editor, rootId, leaf, NULL_NODE, NULL_NODE, NULL_NODE, update.entry)
+        rewrite(editor, rootId, leaf, NULL_NODE, NULL_NODE, NULL_NODE, update.applyTo(entry))
         val result = joinPrepared(editor, newLeft, rootId, newRight)
         editor.setParent(result, NULL_NODE)
         result
       }
       else {
-        editor.putInvalid(update.entry, update.errorReason)
+        editor.putInvalid(entry, update.errorReason!!)
         val result = joinDisjoint(editor, newLeft, newRight)
         editor.setParent(result, NULL_NODE)
         result
@@ -1260,8 +1252,8 @@ open class PMarkerRootImpl private constructor(
           nodeEnd = entry.nodeEnd + offsetDelta,
         )
         val update = afterRetarget(editor, retargeted, afterText, invalidatedMarkerConsumer, affectedMarkerConsumer)
-        if (update.errorReason == null) {
-          val updatedEntry = update.entry
+        if (update.isValid) {
+          val updatedEntry = update.applyTo(retargeted)
           editor.putValid(
             entry.handle.order,
             ValidNode(
@@ -1279,7 +1271,7 @@ open class PMarkerRootImpl private constructor(
           result = insertAvl(editor, result, entry.handle.order)
         }
         else {
-          editor.putInvalid(update.entry, update.errorReason)
+          editor.putInvalid(retargeted, update.errorReason!!)
         }
         editor.setParent(result, NULL_NODE)
       }
@@ -1311,12 +1303,8 @@ open class PMarkerRootImpl private constructor(
       invalidatedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>>,
       affectedMarkerConsumer: Consumer<in SnapshotMarkerReference<*>>,
     ) {
-      check(result.entry.handle === entry.handle) {
-        "The marker policy changed the handle"
-      }
       editor.recordTransform(entry, result)
-      if (result.errorReason == null) {
-        editor.replacePolicy(entry.policy, result.entry.policy)
+      if (result.isValid) {
         affectedMarkerConsumer.accept(entry.handle)
       }
       else {

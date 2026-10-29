@@ -32,36 +32,35 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
         val changeStartLine = afterText.lineNumber(lineDiff.changeStartOffset)
         val translatedLine = lineDiff.translateLineStrict(startLine, changeStartLine, afterText.chars())
         if (translatedLine !in 0..<afterText.lineCount()) {
-          return MarkerTransformResult(entry, INVALIDATED_BY_EDIT)
+          return MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
         }
-        return MarkerTransformResult(normalizeLine(entry, afterText, translatedLine))
+        return normalizeLine(afterText, translatedLine)
       }
       catch (_: FilesTooBigForDiffException) {
       }
     }
 
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
-    if (transformed.errorReason != null) return transformed
+    if (!transformed.isValid) return transformed
 
-    val transformedEntry = transformed.entry
-    val startLine = afterText.lineNumber(transformedEntry.nodeStart)
-    val endLine = afterText.lineNumber(transformedEntry.nodeEnd)
+    val startLine = afterText.lineNumber(transformed.startOffset)
+    val endLine = afterText.lineNumber(transformed.endOffset)
     return if (wholeLineRange) {
-      MarkerTransformResult(normalizeLine(transformedEntry, afterText, startLine))
+      normalizeLine(afterText, startLine)
     }
     else if (endLine != startLine) {
-      MarkerTransformResult(transformedEntry.copy(nodeEnd = afterText.lineEndOffset(startLine)))
+      MarkerTransformResult(transformed.startOffset, afterText.lineEndOffset(startLine))
     }
     else {
       transformed
     }
   }
 
-  private fun normalizeLine(entry: MarkerEntry, text: DocumentText, line: Int): MarkerEntry {
+  private fun normalizeLine(text: DocumentText, line: Int): MarkerTransformResult {
     val lineStart = text.lineStartOffset(line)
     val lineEnd = text.lineEndOffset(line)
     val startOffset = if (wholeLineRange) firstNonSpaceOffset(text.luckyChars(), lineStart, lineEnd) else lineStart
-    return entry.copy(nodeStart = startOffset, nodeEnd = lineEnd)
+    return MarkerTransformResult(startOffset, lineEnd)
   }
 
   private fun MarkerEntry.shouldTranslateViaDiff(
@@ -80,9 +79,5 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
       if (character != ' ' && character != '\t') return offset
     }
     return lineStart
-  }
-
-  private companion object {
-    private const val INVALIDATED_BY_EDIT: String = "Marker was invalidated by a document edit"
   }
 }

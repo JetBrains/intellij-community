@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.impl.InlayKeys.ORDER_BEFORE_DISPOSAL
 import com.intellij.openapi.editor.impl.marker.DefaultMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerPolicy
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
+import com.intellij.openapi.editor.impl.marker.MarkerTransformError
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
@@ -417,27 +418,27 @@ private object InlineInlayMarkerPolicy : MarkerPolicy {
     afterText: DocumentText,
   ): MarkerTransformResult {
     val transformed = DefaultMarkerPolicy.transform(entry, patch, beforeText, afterText)
-    return if (transformed.errorReason != null) {
+    return if (!transformed.isValid) {
       transformed
     }
     else {
-      validateOffset(transformed.entry, afterText)
+      validateOffset(transformed, afterText)
     }
   }
 
   override fun afterRetarget(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    return validateOffset(entry, text)
+    return validateOffset(MarkerTransformResult(entry), text)
   }
 
-  private fun validateOffset(entry: PMarkerRoot.MarkerEntry, text: DocumentText): MarkerTransformResult {
-    val offset = entry.nodeStart
-    if (offset <= 0 || offset >= text.length()) return MarkerTransformResult(entry)
+  private fun validateOffset(range: MarkerTransformResult, text: DocumentText): MarkerTransformResult {
+    val offset = range.startOffset
+    if (offset <= 0 || offset >= text.length()) return range
     val chars = text.luckyChars()
     return if (Character.isHighSurrogate(chars[offset - 1]) && Character.isLowSurrogate(chars[offset])) {
-      MarkerTransformResult(entry, "The inline inlay reached a surrogate pair")
+      MarkerTransformResult(MarkerTransformError.INLINE_INLAY_INSIDE_SURROGATE_PAIR)
     }
     else {
-      MarkerTransformResult(entry)
+      range
     }
   }
 }
