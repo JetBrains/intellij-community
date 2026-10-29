@@ -16,6 +16,7 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.ConsoleViewWithDelegate
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.ClientEditorManager.Companion.getClientEditor
@@ -142,7 +143,7 @@ internal class BuildConsoleViewImplV2(
 
     val result = StringBuilder()
 
-    state.access {
+    state.accessFlushed {
       for (outputMarker in sortedOutputMarkers(nodeId)) {
         result.append(editor.document.getText(outputMarker.textRange))
       }
@@ -354,16 +355,31 @@ internal class BuildConsoleViewImplV2(
       isDrainScheduled = true
       consoleView.performWhenNoDeferredOutput {
         isDrainScheduled = false
-        val editor = consoleView.editor
-        if (editor == null) {
-          pendingStateActions.clear()
-          return@performWhenNoDeferredOutput
+        runPendingActions()
+      }
+    }
+
+    @TestOnly
+    fun accessFlushed(action: ConsoleViewStateAccessor.() -> Unit) {
+      invokeAndWaitIfNeeded {
+        WriteIntentReadAction.run {
+          consoleView.flushDeferredText()
+          pendingStateActions.addLast(action)
+          runPendingActions()
         }
-        val targetEditor = getClientEditor(editor, ClientId.currentOrNull)
-        while (pendingStateActions.isNotEmpty()) {
-          val action = pendingStateActions.removeFirst()
-          action(ConsoleViewStateAccessor(targetEditor))
-        }
+      }
+    }
+
+    private fun runPendingActions() {
+      val editor = consoleView.editor
+      if (editor == null) {
+        pendingStateActions.clear()
+        return
+      }
+      val targetEditor = getClientEditor(editor, ClientId.currentOrNull)
+      while (pendingStateActions.isNotEmpty()) {
+        val action = pendingStateActions.removeFirst()
+        action(ConsoleViewStateAccessor(targetEditor))
       }
     }
 
