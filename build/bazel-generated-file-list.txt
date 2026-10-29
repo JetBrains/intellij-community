@@ -398,6 +398,7 @@ json/backend/regexp
 json/backend/tests
 json/networknt.wrapper
 json/networknt.wrapper/tests
+json/plugin
 json/spellchecker
 json/structureView
 json/syntax

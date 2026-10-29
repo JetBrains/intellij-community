@@ -29,8 +29,8 @@ dev_dist_plugin_descriptor(
         "intellij.libraries.joni",
         "intellij.libraries.jsonSchemaValidator",
     ],
-    descriptor = "//json:resources/META-INF/plugin.xml",
-    main_module = "intellij.json",
+    descriptor = "//json/plugin:resources/META-INF/plugin.xml",
+    main_module = "intellij.json.plugin",
     mode_refused_content_modules = {
         "frontend": [
             "intellij.json.backend",
@@ -45,7 +45,7 @@ dev_dist_plugin_descriptor(
 )
 
 dev_plugin(
-    name = "intellij.json_dev_plugin",
+    name = "intellij.json.plugin_dev_plugin",
     content_module_jars = [
         "//json/backend/regexp:regexp_content_module_jar",
         "//json/backend:backend_content_module_jar",
@@ -53,12 +53,10 @@ dev_plugin(
         "//json/spellchecker:spellchecker_content_module_jar",
         "//json/structureView:structureView_content_module_jar",
         "//json/syntax:syntax_content_module_jar",
+        "//json:json_content_module_jar",
     ],
-    descriptor = "//build/dev-dist-descriptors/intellij.json:intellij.json_dev_descriptor",
+    descriptor = "//build/dev-dist-descriptors/intellij.json.plugin:intellij.json.plugin_dev_descriptor",
     jars = {
-        "lib/intellij.json.jar": [
-            "intellij.json",
-        ],
         "lib/intellij.libraries.jsonSchemaValidator.jar": [
             "intellij.libraries.jsonSchemaValidator",
             "@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains",
@@ -67,17 +65,21 @@ dev_plugin(
             "intellij.libraries.joni",
             "@lib//:libraries-joni-joni",
         ],
+        "lib/json-plugin.jar": [
+            "intellij.json.plugin",
+        ],
     },
     libraries = [
         "@lib//:libraries-joni-joni",
         "@lib//:libraries-json_schema_validator-json-schema-validator-jetbrains",
     ],
-    main_module = "intellij.json",
+    main_module = "intellij.json.plugin",
     module_jar_paths = {
+        "intellij.json": "lib/intellij.json.jar",
         "intellij.json.syntax": "lib/intellij.json.syntax.jar",
     },
     modules = {
-        "//json": "intellij.json",
+        "//json/plugin": "intellij.json.plugin",
         "//libraries/joni": "intellij.libraries.joni",
         "//libraries/json-schema-validator": "intellij.libraries.jsonSchemaValidator",
     },
