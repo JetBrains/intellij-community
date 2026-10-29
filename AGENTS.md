@@ -84,6 +84,8 @@ The harness can list skill *names* only, without a description. When a task look
 
 - Skill index: [`.agents/skills/INDEX.md`](./.agents/skills/INDEX.md)
 
+Before a plan that adds a responsibility, run the owner check of the `duplicate-and-dead-code` skill.
+
 ## Individual Preferences
 
 **Local Preferences:** @./.ai/local.md

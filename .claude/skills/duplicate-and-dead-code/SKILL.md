@@ -23,9 +23,10 @@ code, and dead code. Each tool gives candidates, not a proof. Read each candidat
 | `accio unused --scope <dir>/` | declarations, bundle keys and image variants used nowhere | dead code |
 
 Without `accio` on the `PATH`, run `./community/tools/accio.cmd`. Run jscpd only through
-`./community/tools/jscpd.cmd -c <config>`. `<config>` is the `.jscpd.json` of the area, for
-example `plugins/air/.jscpd.json`. Write each JSON report to a temporary directory of your session. The `jscpd_test`
-target of the area runs the gate too, for example `//plugins/air:air-duplicate-code_test`.
+`./community/tools/jscpd.cmd -c <config>`. `<config>` is the `.jscpd.json` of the area, for example
+`plugins/air/.jscpd.json`. An area without a `.jscpd.json` runs the commands without `-c` and has no exact gate. Write
+each JSON report to a temporary directory of your session. The `jscpd_test` target of the area runs the gate too, for
+example `//plugins/air:air-duplicate-code_test`.
 
 ## Before a plan: the owner check
 
@@ -46,8 +47,8 @@ code with the reason why the owner does not fit. When the check finds nothing, t
 
 ## Before a review: the copy lint
 
-The copy lint is a report, not a gate. Run it after the exact gate passes. Give the touched directories and the
-directories of their owners: the scan compares only the files under the paths it gets.
+The copy lint is a report, not a gate. Run it after the exact gate of the area passes, when the area has one. Give
+the touched directories and the directories of their owners: the scan compares only the files under the paths it gets.
 
 ```bash
 ./community/tools/jscpd.cmd -c <config> --similarity 0.9 --kind ast --absolute \
