@@ -10,6 +10,7 @@ import com.intellij.platform.eel.provider.EelDescriptorOwner
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.FileStore
@@ -19,6 +20,17 @@ import java.nio.file.PathMatcher
 import java.nio.file.WatchService
 import java.nio.file.attribute.UserPrincipalLookupService
 
+@VisibleToClasses(
+    "com.intellij.docker.ijent.DockerMountsAwareFileSystemProvider",
+    "com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend",
+    "com.intellij.platform.ijent.community.ui.actions.AbstractIjentVerificationAction",
+    "com.intellij.platform.ijent.functional.fs.IjentEphemeralRootAwareFsTestUtilKt",
+    "com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend",
+    "com.intellij.platform.ijent.testFramework.EelServicesConsistencyTest",
+    "com.intellij.platform.ijent.testFramework.functional.fixture.EelFixtureOverridingService",
+    "com.intellij.platform.ijent.testFramework.functional.fixture.EelFixtureOverridingServiceKt",
+    "com.intellij.platform.ijent.testFramework.functional.fs.IjentFileSystemTestUtilKt",
+)
 class IjentNioFileSystem internal constructor(
   private val fsProvider: IjentNioFileSystemProvider,
   internal val uri: URI,

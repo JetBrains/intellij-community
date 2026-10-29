@@ -9,6 +9,7 @@ import com.intellij.platform.eel.path.platform
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.IjentMachine
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.net.URI
 import java.nio.file.InvalidPathException
@@ -37,7 +38,11 @@ sealed class IjentNioPath protected constructor(
   cachedAttributes: BasicFileAttributes?,
 ) : Path, BasicFileAttributesHolder2.Impl(cachedAttributes) {
 
-  protected fun IjentNioPath.createRelativePath(segment: String): IjentNioPath {
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath",
+    "com.intellij.platform.ijent.community.impl.nio.RelativeIjentNioPath",
+  )
+  internal fun IjentNioPath.createRelativePath(segment: String): IjentNioPath {
     return RelativeIjentNioPath(listOf(segment), nioFs)
   }
 

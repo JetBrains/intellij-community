@@ -18,12 +18,11 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @VisibleToClasses(
   "com.intellij.platform.eel.CharMappingTest",
+  "com.intellij.platform.eel.impl.local.DestroyAwareOutput",
   "com.intellij.platform.eel.provider.EelPathConversionsKt",
   "com.intellij.platform.eel.provider.utils.impl.CharMappersKt",
-  "com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystem",
-  "com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioFileSystemProvider",
-  "com.intellij.platform.ide.impl.wsl.ijent.nio.IjentWslNioPath",
   "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystem",
   "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwarePath",
 )
+// TODO Do we need this annotation when there is VisibleToClasses?
 annotation class EelInternalApi

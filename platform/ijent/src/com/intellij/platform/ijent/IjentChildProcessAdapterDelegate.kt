@@ -10,6 +10,7 @@ import com.intellij.platform.eel.provider.utils.asOutputStream
 import com.intellij.platform.eel.provider.utils.consumeAsInputStream
 import com.intellij.platform.eel.terminate
 import com.intellij.platform.ijent.spi.IjentThreadPool
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
@@ -21,6 +22,10 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration.Companion.milliseconds
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.IjentChildProcessAdapter",
+  "com.intellij.platform.ijent.IjentChildPtyProcessAdapter",
+)
 internal class IjentChildProcessAdapterDelegate(
   val coroutineScope: CoroutineScope,
   val ijentChildProcess: EelProcess,

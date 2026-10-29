@@ -8,6 +8,7 @@ import com.intellij.platform.eel.EelProcessManagementApi
 import com.intellij.platform.eel.EelProcessManagementPosixApi
 import com.intellij.platform.eel.EelProcessManagementWindowsApi
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.platform.eel.terminate
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
@@ -31,8 +32,11 @@ import kotlin.time.Duration.Companion.milliseconds
  *
  * Instances are returned from [java.lang.Process.toHandle] on the adapters [IjentChildProcessAdapter] / [IjentChildPtyProcessAdapter].
  */
-@ApiStatus.Internal
-class IjentChildProcessHandlerAdapter internal constructor(
+@VisibleToClasses(
+  "com.intellij.platform.ijent.IjentChildProcessAdapter",
+  "com.intellij.platform.ijent.IjentChildPtyProcessAdapter",
+)
+internal class IjentChildProcessHandlerAdapter internal constructor(
   private val processManagement: EelProcessManagementApi,
   private val coroutineScope: CoroutineScope,
   private val pidValue: Long,

@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.job
@@ -18,6 +19,16 @@ import java.util.UUID
  *
  * [Deployed] means that the machine has a cached session. Use [IjentSession.isRunning] to check if the session is running.
  */
+@VisibleToClasses(
+  "com.intellij.docker.ijent.DockerEelMachine",
+  "com.intellij.execution.wsl.WSLDistributionTest",
+  "com.intellij.execution.wsl.WslIjentManager",
+  "com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager",
+  "com.intellij.platform.ide.impl.wsl.WslEelMachine",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogKt",
+  "com.intellij.platform.ijent.testFramework.functional.fixture.EelFixtureWslIjentManager",
+)
 sealed interface IjentSessionState {
   data object NotDeployed : IjentSessionState
   data object Deploying : IjentSessionState
@@ -25,6 +36,10 @@ sealed interface IjentSessionState {
   data class Failed(val cause: Throwable) : IjentSessionState
 }
 
+@get:VisibleToClasses(
+  "com.intellij.docker.ijent.DockerEelMachine",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+)
 val IjentSessionState.runningIjentSessionOrNull: IjentSession? get() {
   return (this as? IjentSessionState.Deployed)?.session?.takeIf { it.isRunning }
 }
@@ -35,6 +50,9 @@ interface IjentMachine : EelMachine {
   suspend fun getIjentSession(sessionScope: ParentOfIjentScopes): IjentSession
 
   /** `false` when the backend is known-gone and callers should skip remote operations that would otherwise spin up a session. */
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath",
+  )
   fun isBackendAvailable(): Boolean = true
 }
 
@@ -56,8 +74,18 @@ interface IjentSession {
    * A scope for the process. Use very cautiously, it's not a supervisor scope, it can destroy the whole communication.
    */
   @DelicateCoroutinesApi
+  @get:VisibleToClasses(
+    "com.intellij.docker.ijent.DockerEelMachine",
+    "com.intellij.platform.ide.impl.wsl.WslIjentUtil",
+    "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+    "com.intellij.platform.ijent.ssh.AbstractIjentSshManagerTest",
+    "com.intellij.platform.ijent.ssh.impl.AbstractIjentSshManager",
+  )
   val sessionCoroutineScope: IjentScope
 
+  @VisibleToClasses(
+    "com.intellij.diagnostic.logs.ijent.IjentLogLevelListener",
+  )
   suspend fun updateLogLevel()
 
   /**
@@ -65,14 +93,31 @@ interface IjentSession {
    * dies, IJent loses the right to outlive its disconnects and exits with its last client. Calling again replaces
    * the watch and restores the privilege, which is how a relaunched owner takes the session back.
    */
+  @VisibleToClasses(
+      "com.intellij.rd.eel.frontend.IjentBackendWatchArmer",
+  )
   suspend fun setParentProcessToWatch(pid: Long)
 
+  @VisibleToClasses(
+    "com.intellij.docker.ijent.DockerEelMachine",
+    "com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager",
+    "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentApiPosix",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentApiWindows",
+    "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+    "com.intellij.platform.ijent.ssh.AbstractIjentSshManagerTest",
+    "com.intellij.platform.ijent.ssh.daemon.IjentOverJetBrainsDaemonManager",
+    "com.intellij.platform.ijent.ssh.impl.AbstractIjentSshManager",
+  )
   fun close()
 
   fun getIjentInstance(descriptor: EelDescriptor): IjentApi
 
   val eventBus: IjentEventBus
 
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.impl.base.GrpcIjentSessionProviderKt",
+  )
   enum class LogLevel {
     INFO, DEBUG, TRACE
   }
@@ -93,6 +138,10 @@ interface IjentSession {
  */
 @ApiStatus.Internal
 @OptIn(DelicateCoroutinesApi::class)
+@VisibleToClasses(
+  "com.intellij.platform.frontend.split.baseline.light.LightModeConnectionStatusService",
+  "com.intellij.platform.ijent.IjentSessionExitReasonTest",
+)
 suspend fun IjentSession.awaitEnd(): EelUnavailableException? {
   val ijentScope = sessionCoroutineScope
   ijentScope.s.coroutineContext.job.join()

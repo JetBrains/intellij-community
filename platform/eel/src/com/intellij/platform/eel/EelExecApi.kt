@@ -166,10 +166,10 @@ sealed interface EelExecApi {
     val stdErr: RedirectStdErrTo get() = RedirectStdErrTo.Pipe
   }
 
+  // TODO VisibleForClasses can't restrict usage of this method.
   @Suppress("FunctionName")
   @ApiStatus.Internal
   @ApiStatus.Obsolete
-  @VisibleToClasses("com.intellij.platform.ijent.impl.base.GrpcIjentExecPosixApi")
   suspend fun `_private useEnvironmentVariableDefaultInFetchLoginShellEnvVariables`(): EnvironmentVariablesOptions.Mode? = null
 
   /**
@@ -738,10 +738,15 @@ interface LocalEelExecApi
  * * `true` if the cache corresponds to a success record, false otherwise.
  */
 @ApiStatus.Internal
-@VisibleToClasses("com.intellij.platform.ijent.functional.processes.EelExecApiTest")
+@VisibleToClasses(
+  "com.intellij.platform.ijent.functional.processes.EelExecApiTest",
+)
 val cacheForObsoleteEnvVarExpireAt: MutableMap<EelDescriptor, Pair<Long, Boolean>> = Collections.synchronizedMap(WeakHashMap())
 
 // The previous implementation used the same timeout, and in the previous implementation it was chosen as a wild guess.
 @ApiStatus.Internal
-@VisibleToClasses("com.intellij.platform.ijent.functional.processes.EelExecApiTest")
+@VisibleToClasses(
+  "com.intellij.platform.ijent.LoginShellEnvVarMode",
+  "com.intellij.platform.ijent.functional.processes.EelExecApiTest",
+)
 var fetchLoginShellEnvVariablesCacheExpirationTime: Duration = 10.seconds

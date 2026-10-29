@@ -4,6 +4,7 @@ package com.intellij.platform.ijent
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -14,6 +15,17 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 @Suppress("HardCodedStringLiteral") // Internal diagnostic message, not user-facing UI text.
+@VisibleToClasses(
+  "com.intellij.platform.frontend.split.baseline.light.LightIjentRedeploymentTest",
+  "com.intellij.platform.ijent.IjentSessionExitReasonTest",
+  "com.intellij.platform.ijent.functional.IjentRestartTest",
+  "com.intellij.platform.ijent.functional.IjentWslShutdownTest",
+  "com.intellij.platform.ijent.functional.SharedIjents",
+  "com.intellij.platform.ijent.functional.TcpLocalBootstrapTest",
+  "com.intellij.platform.ijent.impl.GrpcIjentUtilTest",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentHealthCheckInterceptorTest",
+  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+)
 class IjentProcessExited(
   message: String,
   cause: Throwable?,

@@ -12,6 +12,7 @@ import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.fs.EelWindowsFileInfo
 import com.intellij.platform.eel.nioFs.impl.utils.getCaseSensitivity
 import com.intellij.platform.eel.provider.utils.EelPathUtils
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.DosFileAttributes
 import java.nio.file.attribute.FileTime
@@ -32,6 +33,10 @@ import java.nio.file.attribute.UserPrincipal
 import java.time.Instant
 import java.util.EnumSet
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes",
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioWindowsFileAttributes",
+)
 internal class IjentNioBasicFileAttributes(private val fileInfo: EelFileInfo) : BasicFileAttributes {
   override fun lastModifiedTime(): FileTime =
     FileTime.from(fileInfo.lastModifiedTime?.toInstant() ?: Instant.MIN)
@@ -83,11 +88,20 @@ internal class IjentNioBasicFileAttributes(private val fileInfo: EelFileInfo) : 
 }
 
 /** Similar to `sun.nio.fs.UnixFileKey` */
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioBasicFileAttributes",
+)
 internal data class EelUnixFileKey(val dev: Long, val ino: Long)
 
 /** Similar to `sun.nio.fs.WindowsFileKey` */
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioBasicFileAttributes",
+)
 internal data class EelWindowsFileKey(val volumeSerialNumber: Int, val fileIndexHigh: Int, val fileIndexLow: Int)
 
+@VisibleToClasses(
+  "com.intellij.execution.wsl.ijent.nio.IjentNioPosixFileAttributesWithDosAdapterTest",
+)
 class IjentNioPosixFileAttributes(
   internal val fileInfo: EelPosixFileInfo,
 ) : CaseSensitivityAttribute, PosixFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
@@ -120,7 +134,11 @@ class IjentNioPosixFileAttributes(
   }
 }
 
-class IjentNioWindowsFileAttributes(
+@VisibleToClasses(
+    "com.intellij.platform.ijent.community.impl.nio.IjentNioBasicFileAttributes",
+    "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider",
+)
+internal class IjentNioWindowsFileAttributes(
   internal val fileInfo: EelWindowsFileInfo,
 ) : CaseSensitivityAttribute, DosFileAttributes, BasicFileAttributes by IjentNioBasicFileAttributes(fileInfo) {
   override fun isReadOnly(): Boolean = fileInfo.permissions.isReadOnly
@@ -134,6 +152,7 @@ class IjentNioWindowsFileAttributes(
   }
 }
 
+// TODO Feels like this API should be published.
 class EelPosixUserPrincipal(val uid: Int) : UserPrincipal {
   override fun getName(): String {
     // TODO Here should be returned a user name
@@ -147,6 +166,7 @@ class EelPosixUserPrincipal(val uid: Int) : UserPrincipal {
   override fun hashCode(): Int = uid.hashCode()
 }
 
+// TODO Feels like this API should be published.
 class EelPosixGroupPrincipal(val gid: Int) : GroupPrincipal {
   override fun getName(): String {
     // TODO Here should be returned a user name

@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.nioFs.impl
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.platform.util.annotations.paths.NioPath
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.FileStore
@@ -14,6 +15,17 @@ import java.nio.file.FileSystem
  * Otherwise, a deadlock in the classloader is `com.intellij.util.lang.UrlClassLoader` is possible.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.docker.ijent.mrfs.EelDockerMrfsBackend",
+  "com.intellij.platform.eel.tcp.TcpEelMrfsBackend",
+  "com.intellij.platform.ide.bootstrap.AppServicePreloadingKt",
+  "com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend",
+  "com.intellij.platform.ijent.benchmarks.MultiRoutingFileSystemBackendBenchmark",
+  "com.intellij.platform.ijent.community.ui.actions.IjentVerificationActionsKt",
+  "com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend",
+  "com.intellij.platform.ijent.testFramework.functional.fixture.LocalWslFixture",
+  "com.intellij.platform.testFramework.junit5.eel.impl.UtilKt",
+)
 interface MultiRoutingFileSystemBackend {
   companion object {
     @JvmField

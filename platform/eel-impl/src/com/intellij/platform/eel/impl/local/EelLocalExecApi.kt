@@ -37,6 +37,7 @@ import com.intellij.platform.eel.provider.utils.awaitProcessResult
 import com.intellij.platform.eel.provider.utils.stdoutString
 import com.intellij.platform.eel.spawnProcess
 import com.intellij.platform.eel.toSafeDeferred
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.EnvironmentUtil
 import com.intellij.util.ShellEnvironmentReader
 import com.intellij.util.fastutil.skip
@@ -51,7 +52,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -65,6 +65,9 @@ import kotlin.time.Duration.Companion.nanoseconds
 
 @OptIn(EelDelicateApi::class)
 @ApiStatus.Internal
+@VisibleToClasses(
+    "com.intellij.platform.ijent.functional.processes.EelExecApiTest",
+)
 class EelLocalExecPosixApi(
   private val platform: EelPlatform.Posix,
   private val userInfo: EelUserPosixInfo,
@@ -252,6 +255,9 @@ class EelLocalExecPosixApi(
 }
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestWindowsApi",
+)
 class EelLocalExecWindowsApi : EelExecWindowsApi, LocalEelExecApi {
   override suspend fun spawnProcess(
     generatedBuilder: EelExecApi.ExecuteProcessOptions,
@@ -574,7 +580,9 @@ private fun toPath(pathStr: String, log: Logger): Path? =
     null
   }
 
-@VisibleForTesting
+@VisibleToClasses(
+  "com.intellij.execution.eel.EelLocalExecApiTest",
+)
 fun getShellFromPasswdRecords(records: Iterable<String>, uid: Int): String? {
   val uid = uid.toString()
   return records.firstNotNullOfOrNull mapper@{ line ->

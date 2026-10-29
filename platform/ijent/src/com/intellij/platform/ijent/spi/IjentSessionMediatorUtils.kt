@@ -14,6 +14,7 @@ import com.intellij.platform.ijent.IjentLog
 import com.intellij.platform.ijent.IjentLogger
 import com.intellij.platform.ijent.IjentProcessExited
 import com.intellij.platform.ijent.IjentScope
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.causeChain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -39,6 +40,9 @@ import kotlin.time.toKotlinDuration
 
 @ApiStatus.Internal
 object IjentSessionMediatorUtils {
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
+  )
   suspend fun ijentProcessStderrLogger(
     errorStream: EelReceiveChannel,
     ijentLabel: String,
@@ -66,7 +70,7 @@ object IjentSessionMediatorUtils {
     }
   }
 
-  fun createIjentStderrLineConsumer(
+  private fun createIjentStderrLineConsumer(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
     foreignStderrLog: IjentForeignStderrLog = IjentForeignStderrLog.Default,
@@ -77,7 +81,7 @@ object IjentSessionMediatorUtils {
     }
   }
 
-  class IjentStderrLineConsumer internal constructor(
+  private class IjentStderrLineConsumer(
     private val lastStderrMessages: MutableSharedFlow<String?>,
     private val lineLogger: (String) -> Unit,
   ) {
@@ -200,6 +204,9 @@ object IjentSessionMediatorUtils {
       }
   }
 
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.IjentProcessUtilTest",
+  )
   suspend fun ijentProcessExitCodeHandler(
     ijentLabel: String,
     lastStderrMessages: MutableSharedFlow<String?>,
@@ -256,7 +263,10 @@ object IjentSessionMediatorUtils {
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  suspend fun ijentProcessFinalizer(
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.spi.IjentSessionProcessMediator",
+  )
+  internal suspend fun ijentProcessFinalizer(
     ijentLabel: String,
     mediatorFinalizer: suspend () -> Unit,
   ): Nothing {
@@ -289,7 +299,14 @@ object IjentSessionMediatorUtils {
     }
   }
 
-  suspend fun PeekableEelReceiveChannel.readLineOrThrow(charset: Charset, msg: String = "Communication terminated unexpectedly"): String {
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.spi.IjentShellBootstrapKt",
+    "com.intellij.platform.ijent.spi.ShellProcessWrapper",
+  )
+  internal suspend fun PeekableEelReceiveChannel.readLineOrThrow(
+    charset: Charset,
+    msg: String = "Communication terminated unexpectedly",
+  ): String {
     var cause: Throwable? = null
     var result: String? = null
     try {
@@ -305,6 +322,9 @@ object IjentSessionMediatorUtils {
     throw error
   }
 
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.impl.base.GrpcIjentSessionProviderKt",
+  )
   suspend fun PeekableEelReceiveChannel.readLineUntilPipeOrThrow(msg: String = "Communication terminated unexpectedly"): String {
     val line = StringBuilder()
     try {

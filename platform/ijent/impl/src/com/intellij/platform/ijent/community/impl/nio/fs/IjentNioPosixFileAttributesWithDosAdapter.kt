@@ -8,6 +8,7 @@ import com.intellij.platform.ijent.community.impl.nio.EelPosixGroupPrincipal
 import com.intellij.platform.ijent.community.impl.nio.EelPosixUserPrincipal
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPath
 import com.intellij.platform.ijent.community.impl.nio.IjentNioPosixFileAttributes
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import org.jetbrains.annotations.ApiStatus
@@ -30,8 +31,7 @@ import java.nio.file.attribute.PosixFilePermission.OWNER_WRITE
 import java.nio.file.spi.FileSystemProvider
 import kotlin.io.path.name
 
-@ApiStatus.Internal
-fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNioPosixFileAttributesWithDosAdapter? {
+private fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNioPosixFileAttributesWithDosAdapter? {
   val cachedAttrs = get() as IjentNioPosixFileAttributes?
 
   return if (cachedAttrs != null) {
@@ -47,12 +47,17 @@ fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapter(): IjentNi
 }
 
 @OptIn(LowLevelLocalMachineAccess::class)
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwarePath",
+)
 internal fun IjentNioPath.getCachedFileAttributesAndWrapToDosAttributesAdapterIfNeeded(): BasicFileAttributes? =
   if (OS.CURRENT == OS.Windows) getCachedFileAttributesAndWrapToDosAttributesAdapter()
   else get()
 
-@ApiStatus.Internal
-fun <A : BasicFileAttributes> FileSystemProvider.readAttributesUsingDosAttributesAdapter(
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider",
+)
+internal fun <A : BasicFileAttributes> FileSystemProvider.readAttributesUsingDosAttributesAdapter(
   path: Path,
   ijentPath: IjentNioPath,
   type: Class<A>,
@@ -80,6 +85,10 @@ fun <A : BasicFileAttributes> FileSystemProvider.readAttributesUsingDosAttribute
 }
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.execution.wsl.ijent.nio.IjentNioPosixFileAttributesWithDosAdapterTest",
+  "com.intellij.platform.ijent.functional.fs.IjentEphemeralRootAwareDosAdapterTest",
+)
 class IjentNioPosixFileAttributesWithDosAdapter(
   private val userInfo: EelUserPosixInfo,
   private val fileInfo: PosixFileAttributes,
@@ -119,8 +128,10 @@ class IjentNioPosixFileAttributesWithDosAdapter(
     else FileAttributes.CaseSensitivity.UNKNOWN
 }
 
-@ApiStatus.Internal
-class IjentNioPosixFileAttributeViewWithDosAdapter(
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.fs.IjentNioPosixFileAttributesWithDosAdapterKt",
+)
+internal class IjentNioPosixFileAttributeViewWithDosAdapter(
   private val userInfo: EelUserPosixInfo,
   private val posixView: PosixFileAttributeView,
   private val nameStartsWithDot: Boolean,
@@ -176,8 +187,10 @@ class IjentNioPosixFileAttributeViewWithDosAdapter(
   }
 }
 
-@ApiStatus.Internal
-fun <V : FileAttributeView> FileSystemProvider.getFileAttributeViewUsingDosAttributesAdapter(
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystemProvider",
+)
+internal fun <V : FileAttributeView> FileSystemProvider.getFileAttributeViewUsingDosAttributesAdapter(
   ijentPath: IjentNioPath,
   type: Class<V>,
   vararg options: LinkOption,

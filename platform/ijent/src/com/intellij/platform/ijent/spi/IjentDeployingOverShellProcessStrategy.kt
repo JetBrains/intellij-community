@@ -21,6 +21,7 @@ import com.intellij.platform.ijent.getIjentGrpcArgv
 import com.intellij.platform.ijent.spi.IjentSessionMediatorUtils.readLineOrThrow
 import com.intellij.platform.ijent.tcp.MutualTlsCertificates
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.causeChain
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -35,7 +36,6 @@ import kotlinx.coroutines.job
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.channels.ByteChannel
@@ -657,7 +657,12 @@ private fun deploymentFailureOf(error: Throwable, message: String): IjentDeploym
     else -> null
   }
 
-@VisibleForTesting
+@VisibleToClasses(
+  "com.intellij.platform.ijent.spi.IjentBinaryCache",
+  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyKt",
+  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+  "com.intellij.platform.ijent.spi.PosixShellSession",
+)
 internal data class DeployingContext(
   val chmod: String,
   val cp: String,
@@ -699,7 +704,9 @@ private suspend fun createDeployingContext(
     shellIo.executeCommand(whichCmd)
   }
 
-@VisibleForTesting
+@VisibleToClasses(
+  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+)
 internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend (commands: Collection<String>) -> Collection<String>): DeployingContext {
   // This strange at first glance code helps reduce copy-paste errors.
   val requiredCommands: Set<String> = setOf(

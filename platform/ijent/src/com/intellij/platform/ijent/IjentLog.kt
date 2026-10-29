@@ -99,6 +99,12 @@ class IjentLog internal constructor(private val backend: Backend) {
   }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.IjentLog",
+  "com.intellij.platform.ijent.IjentLogKt",
+  "com.intellij.platform.ijent.JulBackend",
+  "com.intellij.platform.ijent.PlatformBackend",
+)
 internal abstract class Backend {
   abstract val name: String
   abstract val isDebugEnabled: Boolean
@@ -118,6 +124,10 @@ internal abstract class Backend {
  */
 private val PLATFORM_OPS: PlatformLoggerOps? = runCatching { PlatformLoggerOps() }.getOrNull()
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.IjentLog",
+  "com.intellij.platform.ijent.IjentLogger",
+)
 internal fun createBackend(name: String): Backend =
   PLATFORM_OPS?.let { PlatformBackend(name, it) } ?: JulBackend(name)
 

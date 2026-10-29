@@ -23,6 +23,7 @@ import com.intellij.platform.ijent.coroutineNameAppended
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.CHECK_CODE
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.NORMAL
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator.ProcessExitPolicy.TRANSPORT_CLOSED_BY_IJENT
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.io.blockingDispatcher
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -114,7 +115,12 @@ class IjentSessionProcessMediator private constructor(
   }
 
   @OptIn(DelicateCoroutinesApi::class)
-  class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.spi.IjentBinaryCacheTest",
+    "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy",
+    "com.intellij.platform.ijent.spi.IjentShellBootstrapTest",
+  )
+  internal class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
     init {
       require(process is IjentChildProcessAdapter || process.javaClass.name == "java.lang.ProcessImpl") {
         "This code performs black magic with internals of java.lang.ProcessImpl, this class is not supported: ${process.javaClass.name}"
@@ -177,7 +183,7 @@ class IjentSessionProcessMediator private constructor(
    * Defines how process exits should be handled in terms of error reporting.
    * Used to determine whether a process termination should be treated as an error.
    */
-  enum class ProcessExitPolicy {
+  internal enum class ProcessExitPolicy {
     /**
      * Check exit code to determine if it's an error.
      * Normal termination with expected exit codes is allowed.
@@ -285,7 +291,7 @@ class IjentSessionProcessMediator private constructor(
      * Nothing happens with [parentScope] if IJent exits expectedly, f.i., after [com.intellij.platform.ijent.IjentApi.close].
      */
     @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-    fun create(
+    internal fun create(
       parentScope: ParentOfIjentScopes,
       ijentProcessScope: IjentScope,
       process: ProcessFacade,

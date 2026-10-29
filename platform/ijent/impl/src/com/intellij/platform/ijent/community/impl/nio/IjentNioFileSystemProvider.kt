@@ -32,6 +32,7 @@ import com.intellij.platform.eel.provider.utils.throwFileSystemException
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.io.PosixFilePermissionsUtil
 import com.intellij.util.text.nullize
 import com.sun.nio.file.ExtendedCopyOption
@@ -716,7 +717,9 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     return path
   }
 
-  @TestOnly
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.testFramework.functional.fixture.EelFixtureOverridingServiceKt",
+  )
   fun maskFileSystems(lifetime: CoroutineScope) {
     criticalSection {
       val oldAuthority = authorityRegistry.toMutableMap()
@@ -730,6 +733,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 }
 
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioBasicFileAttributeView",
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider",
+)
 internal fun EelFileSystemApiHelpers.ChangeAttributes.updateTime(
   selector: EelFileSystemApiHelpers.ChangeAttributes.(EelFileSystemApi.TimeSinceEpoch) -> Unit,
   obj: Any,

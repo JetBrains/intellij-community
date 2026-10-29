@@ -18,14 +18,18 @@ import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
 import com.intellij.platform.ijent.IjentCallerContextElement
 import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.allowCancellableNio
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.IntelliJCoroutinesFacade
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Duration.Companion.milliseconds
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.AbsoluteIjentNioPath",
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioWatchService",
+)
 internal fun Path.toEelPath(): EelPath =
   when {
     this is AbsoluteIjentNioPath -> eelPath
@@ -33,6 +37,9 @@ internal fun Path.toEelPath(): EelPath =
   }
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.IjentFsBlockingFailFastSimulationTest",
+)
 fun <F : EelFileSystemApi, T> F.fsBlocking(body: suspend F.() -> T): T {
   return descriptor.fsBlocking {
     body()
@@ -40,6 +47,9 @@ fun <F : EelFileSystemApi, T> F.fsBlocking(body: suspend F.() -> T): T {
 }
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil",
+)
 fun <T> EelPath.fsBlocking(body: suspend () -> T): T {
   return descriptor.fsBlocking {
     body()
@@ -47,8 +57,11 @@ fun <T> EelPath.fsBlocking(body: suspend () -> T): T {
 }
 
 
-@ApiStatus.Internal
-fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSystemExceptionBlocking(): T {
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioFileChannel",
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider",
+)
+internal fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSystemExceptionBlocking(): T {
   return eelDescriptor.fsBlocking { getOrThrowFileSystemException() }
 }
 
@@ -79,6 +92,12 @@ fun <T, E : EelFsError, O : EelOwnedBuilder<EelResult<T, E>>> O.getOrThrowFileSy
  * body() should never dispatch to [Dispatchers.Default] or await coroutines from there.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.openapi.vfs.impl.local.LocalFileSystemEelUtil",
+  "com.intellij.platform.ijent.community.ui.actions.dashboard.EmulateIjentFreezeAction",
+  "com.intellij.platform.ijent.functional.IjentRestartTest",
+  "com.intellij.platform.ijent.functional.fs.IjentNioCancellableReadTest",
+)
 fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
   // Block the calling thread directly; intentionally do NOT pump the event queue while waiting for Eel.
   //
@@ -100,6 +119,9 @@ fun <T> EelDescriptor.fsBlocking(body: suspend () -> T): T {
   }
 }
 
+@VisibleToClasses(
+    "com.intellij.platform.ijent.functional.IjentRestartTest",
+)
 fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
   val application = ApplicationManager.getApplication()
   return IjentCallerContext(
@@ -111,8 +133,11 @@ fun IjentCallerContext.Companion.computeCallerContext(): IjentCallerContext {
 }
 
 @Suppress("RAW_RUN_BLOCKING")
-@VisibleForTesting
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.IjentFsBlockingFailFastSimulationTest",
+  "com.intellij.platform.ijent.functional.IjentRestartTest",
+)
 fun <T> fsBlockingWithoutParallelismCompensation(callerContext: IjentCallerContext, body: suspend (IjentCallerContext) -> T): T {
   if (callerContext.allowCancellableNio()) {
     try {

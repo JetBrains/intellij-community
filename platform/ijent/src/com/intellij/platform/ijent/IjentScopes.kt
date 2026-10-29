@@ -12,6 +12,7 @@ import com.intellij.platform.eel.EelUnavailableException
 import com.intellij.platform.eel.SafeDeferred
 import com.intellij.platform.eel.toSafeDeferred
 import com.intellij.platform.ijent.spi.IjentThreadPool
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.causeChain
 import kotlinx.coroutines.CancellationException
@@ -213,6 +214,71 @@ class ParentOfIjentScopes(val s: CoroutineScope) {
  */
 @Suppress("WHEN_SUBJECT_CAN_BE_NULL_IN_JAVA")
 @Internal
+@VisibleToClasses(
+    "com.intellij.diagnostic.logs.ijent.IjentLogLevelListener",
+    "com.intellij.docker.ijent.DockerEelMachine",
+    "com.intellij.docker.ijent.DockerIjentDeployingStrategy",
+    "com.intellij.platform.frontend.split.baseline.light.LightIjentRedeploymentTest",
+    "com.intellij.platform.ide.impl.wsl.WslIjentUtil",
+    "com.intellij.platform.ijent.IjentProcessUtilTest",
+    "com.intellij.platform.ijent.IjentScopeTest",
+    "com.intellij.platform.ijent.IjentSessionExitReasonTest",
+    "com.intellij.platform.ijent.functional.IjentRestartTest",
+    "com.intellij.platform.ijent.functional.TcpLocalBootstrapTest",
+    "com.intellij.platform.ijent.impl.GrpcIjentUtilTest",
+    "com.intellij.platform.ijent.impl.base.ExternalCliCacheDecorator",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentApiDelegate",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentApiPosix",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentApiWindows",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessDelegate",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessKt",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentExecApiDelegate",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentExecPosixApi",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentExecWindowsApi",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemApiDelegate",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemApiDelegateKt",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApi",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemWindowsApi",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentHealthCheckInterceptor",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentHealthCheckInterceptorTest",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentLostTcpConnectionInterceptor",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentOpenedFile",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentProcessManagementApiDelegate",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentReconnectingInterceptor",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentReconnectingInterceptorSessionEndTest",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentSessionProviderKt",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentTunnelsApi",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentTunnelsApiTest",
+    "com.intellij.platform.ijent.impl.base.GrpcIjentUtilKt",
+    "com.intellij.platform.ijent.impl.base.GrpcStreamingMonitoredClientCall",
+    "com.intellij.platform.ijent.impl.base.GrpcStreamingMonitoredClientCallTest",
+    "com.intellij.platform.ijent.impl.base.IjentExternalCliScope",
+    "com.intellij.platform.ijent.impl.base.IjentNativeArchiveApi",
+    "com.intellij.platform.ijent.impl.base.IjentSessionImpl",
+    "com.intellij.platform.ijent.impl.base.LegacyIjentSpecialRequestProcessor",
+    "com.intellij.platform.ijent.impl.base.MultiTransportIjentSpecialRequestProcessor",
+    "com.intellij.platform.ijent.impl.base.TcpTunnelsKt",
+    "com.intellij.platform.ijent.impl.base.TcpTunnelsTest",
+    "com.intellij.platform.ijent.impl.base.transport.IjentTransportCoordinator",
+    "com.intellij.platform.ijent.spi.IjentBinaryCacheTest",
+    "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+    "com.intellij.platform.ijent.spi.IjentSessionMediatorUtilsTest",
+    "com.intellij.platform.ijent.spi.IjentSessionProcessMediatorTest",
+    "com.intellij.platform.ijent.spi.IjentShellBootstrapTest",
+    "com.intellij.platform.ijent.spi.TestShellCommandStrategy",
+    "com.intellij.platform.ijent.spi.TestShellProcessFacade",
+    "com.intellij.platform.ijent.spi.TestShellStrategy",
+    "com.intellij.platform.ijent.ssh.AbstractIjentSshManagerTest",
+    "com.intellij.platform.ijent.ssh.DaemonSshTransportSupervisorTest",
+    "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
+    "com.intellij.platform.ijent.ssh.daemon.SshDeployingStrategy",
+    "com.intellij.platform.ijent.ssh.daemon.SupervisedTunnelFacade",
+    "com.intellij.platform.ijent.ssh.impl.AbstractIjentSshManager",
+    "com.intellij.platform.ijent.ssh.impl.ijentOverSshJ.SshChannelProcessFacade",
+    "com.intellij.platform.ijent.ssh.impl.ijentOverSshJ.SshOverShellDeployKt",
+    "com.intellij.rd.eel.backend.IjentDeployRemoteApiImpl",
+    "com.intellij.rd.eel.frontend.RdIjentDeployingStrategy",
+)
 class IjentScope internal constructor(
   val parent: ParentOfIjentScopes,
   private val sessionBoundaryScope: CoroutineScope,
@@ -611,6 +677,13 @@ class IjentScope internal constructor(
  * The IJent scope is cancelled when IJent dies. So the coroutines of the scope are cancelled too,
  * and they must use this function to deliver the exit reason of IJent to their users.
  */
+@VisibleToClasses(
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessKt",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentTunnelsApi",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentUtilKt",
+  "com.intellij.platform.ijent.impl.base.TcpTunnelsKt",
+  "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
+)
 suspend fun IjentScope.resolveExitReasonNonCancellable(
   timeout: Duration = IjentScope.DEAD_SESSION_RESOLVE_TIMEOUT,
 ): Exception? {
@@ -633,6 +706,13 @@ suspend fun IjentScope.resolveExitReasonNonCancellable(
  * Unlike [IjentScope], cancelling [s] directly is allowed.
  */
 @Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildPosixProcess",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessDelegate",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessKt",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildWindowsProcess",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentExecApiDelegate",
+)
 class IjentChildProcessScope(val ijentScope: IjentScope) {
   /** Intended for usage in coroutine names, toString(), etc. */
   val label: String = "IjentChildProcess #${childProcessCounter.getAndIncrement()}"

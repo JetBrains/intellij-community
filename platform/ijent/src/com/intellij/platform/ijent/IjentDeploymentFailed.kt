@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelUnavailableException
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -12,6 +13,12 @@ import org.jetbrains.annotations.ApiStatus.Internal
  */
 @Internal
 @Suppress("HardCodedStringLiteral") // Internal diagnostic message, not user-facing UI text.
+@VisibleToClasses(
+  "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategyUnitTest",
+  "com.intellij.platform.ijent.ssh.DaemonSshTransportSupervisorTest",
+  "com.intellij.platform.ijent.ssh.daemon.DaemonSshErrorsKt",
+  "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
+)
 class IjentDeploymentFailed(message: String, cause: Throwable?) : EelUnavailableException.Conclusive(message, cause) {
   override fun copyForCaller(): EelUnavailableException = IjentDeploymentFailed(message, this)
 }
