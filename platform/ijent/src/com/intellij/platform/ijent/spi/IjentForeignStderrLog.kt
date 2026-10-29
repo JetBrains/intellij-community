@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.platform.ijent.IjentLogger
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -12,6 +13,11 @@ import org.jetbrains.annotations.ApiStatus
  * The level of a line comes from its OpenSSH level tag: `debug1` is debug, `debug2` and `debug3` are trace.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.ssh.daemon.DaemonSshTransportSupervisor",
+  "com.intellij.platform.ijent.ssh.daemon.OpenSshStderrLog",
+  "com.intellij.platform.ijent.ssh.daemon.SshDeployingStrategy",
+)
 interface IjentForeignStderrLog {
   fun trace(message: String)
   fun debug(message: String)
