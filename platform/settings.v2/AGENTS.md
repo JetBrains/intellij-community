@@ -122,6 +122,9 @@ decision with its reason. A merge only reorganizes what the ADRs already say. It
 
      The decision and its consequences. Why it changed, and which later decision replaced it.
      ```
+
+     A folded ADR can be a merged ADR itself. Then its fold entries move into the new merged ADR. Every entry, moved
+     or new, stays in time order. `SettingsDocsTest` fails on a fold entry that the merge lost.
 3. Compare each folded ADR with the merged ADR. Every reason, consequence, example, rejected alternative and name
    of a person who agreed must be in the merged ADR. Then delete the files of the folded ADRs.
 4. Re-point the references in `adr/`, `spec/`, the sources of all the settings v2 modules, and the `AGENTS.md`
