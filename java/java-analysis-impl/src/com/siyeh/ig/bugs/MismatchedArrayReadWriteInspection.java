@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2025 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2026 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,6 @@ import com.intellij.psi.PsiVariable;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -71,12 +70,10 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
   public @NotNull String buildErrorString(Object... infos) {
     final boolean written = ((Boolean)infos[0]).booleanValue();
     if (written) {
-      return InspectionGadgetsBundle.message(
-        "mismatched.read.write.array.problem.descriptor.write.not.read");
+      return InspectionGadgetsBundle.message("mismatched.read.write.array.problem.descriptor.write.not.read");
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "mismatched.read.write.array.problem.descriptor.read.not.write");
+      return InspectionGadgetsBundle.message("mismatched.read.write.array.problem.descriptor.read.not.write");
     }
   }
 
@@ -249,9 +246,8 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
         PsiElement parent = getParent(expression);
         if (parent instanceof PsiArrayAccessExpression arrayAccessExpression) {
           parent = getParent(parent);
-          while (parent instanceof PsiArrayAccessExpression &&
-                 ((PsiArrayAccessExpression)parent).getArrayExpression() == arrayAccessExpression) {
-            arrayAccessExpression = (PsiArrayAccessExpression)parent;
+          while (parent instanceof PsiArrayAccessExpression access && access.getArrayExpression() == arrayAccessExpression) {
+            arrayAccessExpression = access;
             parent = getParent(parent);
           }
           final PsiType type = arrayAccessExpression.getType();
@@ -265,9 +261,9 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
             myWritten = true;
           }
           if (PsiUtil.isAccessedForReading(arrayAccessExpression) && !goesToSameArray(arrayAccessExpression) &&
-              // compound writes like += are not considered as reads, because result result goes to the same array as well
-              (!PsiUtil.isAccessedForWriting(arrayAccessExpression) || 
-               parent instanceof PsiExpression && !ExpressionUtils.isVoidContext((PsiExpression)parent))) {
+              // compound writes like += are not considered reads, because the result goes to the same array as well
+              (!PsiUtil.isAccessedForWriting(arrayAccessExpression) ||
+               parent instanceof PsiExpression e && !ExpressionUtils.isVoidContext(e))) {
             myRead = true;
           }
         }
@@ -292,7 +288,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
               if (aClass != null) {
                 final String methodName = method.getName();
                 final String qualifiedName = aClass.getQualifiedName();
-                if ("java.lang.System".equals(qualifiedName)) {
+                if (CommonClassNames.JAVA_LANG_SYSTEM.equals(qualifiedName)) {
                   if ("arraycopy".equals(methodName)) {
                     final PsiExpression[] expressions = expressionList.getExpressions();
                     if (expressions.length == 5) {
@@ -331,18 +327,16 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
       }
 
       private boolean goesToSameArray(PsiExpression expression) {
-        PsiExpression parent = ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiExpression.class);
-        if (parent == null) return false;
-        if (parent instanceof PsiPolyadicExpression || parent instanceof PsiUnaryExpression || 
+        if (!(PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiExpression parent)) return false;
+        if (parent instanceof PsiPolyadicExpression || parent instanceof PsiUnaryExpression ||
             parent instanceof PsiInstanceOfExpression || parent instanceof PsiConditionalExpression) {
           return goesToSameArray(parent);
         }
-        if (parent instanceof PsiAssignmentExpression) {
-          PsiExpression left = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getLExpression());
-          if (left instanceof PsiArrayAccessExpression && !PsiTreeUtil.isAncestor(left, expression, false)) {
-            PsiExpression arrayExpression = ((PsiArrayAccessExpression)left).getArrayExpression();
-            return ExpressionUtils.isReferenceTo(arrayExpression, myVariable);
-          }
+        if (parent instanceof PsiAssignmentExpression assignment
+            && PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()) instanceof PsiArrayAccessExpression access
+            && !PsiTreeUtil.isAncestor(access, expression, false)
+            && ExpressionUtils.isReferenceTo(access.getArrayExpression(), myVariable)) {
+          return true;
         }
         return false;
       }
