@@ -18,7 +18,7 @@ import java.lang.ref.ReferenceQueue
  * The inherited, snapshot-less IntelliJ `RangeMarker` operations resolve against the current [DocumentSnapshot]
  * returned by the document captured by each marker handle.
  *
- * Marker creation and removal replace only the root associated with the selected snapshot in its document's store.
+ * Marker creation and removal update the root for the document's current snapshot.
  * Existing descendant snapshots are not changed.
  *
  * Creating a child snapshot derives its marker root from the parent's current root. Marker creation, marker removal,
@@ -27,27 +27,9 @@ import java.lang.ref.ReferenceQueue
 object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   internal val markerQueue: ReferenceQueue<SnapshotRangeMarkerImpl> = ReferenceQueue()
 
-  /**
-   * Adds a marker only to [snapshot]'s current root.
-   */
-  override fun createRangeMarker(
-    document: Document,
-    snapshot: DocumentSnapshot,
-    startOffset: Int,
-    endOffset: Int,
-    spec: Byte,
-    retainStrong: Boolean,
-    policy: MarkerPolicy,
-  ): SnapshotMarker {
-    return createRangeMarker(document, snapshot, startOffset, endOffset, spec, policy) { fileRoot ->
-      val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
-      SnapshotRangeMarkerImpl(document as DocumentImpl, fileRoot, spec, initialRange, retainStrong)
-    }
-  }
-
   /** Creates a marker in the current snapshot and retries if a text change publishes another snapshot. */
   @ApiStatus.Internal
-  fun createRangeMarker(
+  override fun createRangeMarker(
     document: Document,
     startOffset: Int,
     endOffset: Int,
@@ -55,21 +37,20 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     retainStrong: Boolean,
     policy: MarkerPolicy,
   ): SnapshotMarker {
-    return createRangeMarker(document, null, startOffset, endOffset, spec, policy) { fileRoot ->
+    return createRangeMarker(document, startOffset, endOffset, spec, policy) { fileRoot ->
       val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
       SnapshotRangeMarkerImpl(document as DocumentImpl, fileRoot, spec, initialRange, retainStrong)
     }
   }
 
   /**
-   * @param snapshot the target snapshot, or `null` to use the current snapshot.
-   * If `null`, retries insertion when a text change publishes another snapshot.
+   * Creates a marker in the current snapshot and retries when a text change publishes another snapshot.
+   *
    * @param markerFactory receives the file root.
    * The file root is `null` when the document has no associated file or [FileDocumentManager] is unavailable.
    */
   internal fun <T : SnapshotRangeMarkerImpl> createRangeMarker(
     document: Document,
-    snapshot: DocumentSnapshot?,
     startOffset: Int,
     endOffset: Int,
     spec: Byte,
@@ -79,22 +60,15 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     processQueue()
     val documentImpl = document as DocumentImpl
     val rootStore = documentImpl.rangeMarkers.rootStore()
-    val rootReference = snapshot?.let { rootStore.rootReference(it) }
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
 
     val fileRoot = VirtualFileMarkerRoot.getOrCreate(documentImpl)
 
     val marker = markerFactory(fileRoot)
-    val update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot = { currentSnapshot, root ->
+    val insertedRoot = checkNotNull(rootStore.updateCurrentRootAtomically { currentSnapshot, root ->
       require(endOffset <= currentSnapshot.text().length()) { "Marker range exceeds snapshot length" }
       root.insert(marker.markerHandle, startOffset, endOffset, spec, marker.flavorFlags, policy = policy)
-    }
-    val insertedRoot = checkNotNull(if (snapshot == null) {
-      rootStore.updateCurrentRootAtomically(update)
-    }
-    else {
-      (fileRoot ?: rootStore).updateRootAtomically(rootReference) { update(snapshot, it) }
     })
     marker.cacheResolution(insertedRoot, PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(startOffset, endOffset)))
     return marker

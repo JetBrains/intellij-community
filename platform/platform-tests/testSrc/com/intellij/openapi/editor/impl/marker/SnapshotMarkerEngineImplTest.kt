@@ -2,10 +2,12 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.editor.ex.DocumentCore
 import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeMarkerEx
+import com.intellij.openapi.editor.ex.experimental.DocumentBranch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
@@ -153,7 +155,7 @@ class SnapshotMarkerEngineImplTest {
       else MarkerTransformResult(entry.copy(nodeEnd = 5))
     }
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
-      document, document.core.snapshot(), 2, 4, nonGreedySpec(), policy = policy,
+      document, 2, 4, nonGreedySpec(), policy = policy,
     ) as SnapshotRangeMarkerImpl
     val containing = document.createRangeMarker(6, 20)
     val beforeRange = before.textRange
@@ -271,7 +273,7 @@ class SnapshotMarkerEngineImplTest {
       assertSame(reference, fixture.rootStore.rootReference(snapshot))
       return WeakReference(snapshot) to WeakReference(reference)
     }
-    val (snapshot, reference) = cacheDetachedRoot()
+    val [snapshot, reference] = cacheDetachedRoot()
 
     GCUtil.tryGcSoftlyReachableObjects {
       fixture.rootStore.processQueue()
@@ -284,26 +286,24 @@ class SnapshotMarkerEngineImplTest {
 
   @Test
   fun `clean snapshot merge keeps markers created in both branches`() {
-    val fixture = Fixture("abcdef")
-    val initialSnapshot = fixture.initialSnapshot
-    val primary = fixture.applyOp(initialSnapshot, DocumentOp.modStampOp(1, true))
-    val metadata = fixture.applyOp(initialSnapshot, DocumentOp.modStampOp(2, true))
-    val primaryMarker = SnapshotMarkerEngineImpl.createRangeMarker(
-      document = fixture.document,
-      snapshot = primary,
-      startOffset = 1,
-      endOffset = 4,
-      spec = nonGreedySpec(),
-    )
-    val metadataMarker = SnapshotMarkerEngineImpl.createRangeMarker(
-      document = fixture.document,
-      snapshot = metadata,
-      startOffset = 5,
-      endOffset = 5,
-      spec = nonGreedySpec(),
-    )
+    val core = DocumentImpl("abcdef", true).core
+    val initialSnapshot = core.snapshot()
+    var current = initialSnapshot
+    val document = DocumentImpl(object : DocumentCore by core {
+      override fun snapshot(): DocumentBranch = current
+    }, null)
+    val markerStores = document.snapshotMarkerStores
+    val primary = initialSnapshot.applyOp(DocumentOp.modStampOp(1, true))
+    val metadata = initialSnapshot.applyOp(DocumentOp.modStampOp(2, true))
+    markerStores.applyPatch(initialSnapshot, primary, null)
+    markerStores.applyPatch(initialSnapshot, metadata, null)
 
-    val merged = fixture.mergeMarkerRoots(primary, metadata)
+    current = primary
+    val primaryMarker = document.createRangeMarker(1, 4) as SnapshotMarker
+    current = metadata
+    val metadataMarker = document.createRangeMarker(5, 5) as SnapshotMarker
+
+    val merged = markerStores.mergeMarkerRoots(primary, metadata)
 
     assertSame(metadata.text(), merged.text())
     assertEquals(metadata.modState().stamp(), merged.modState().stamp())
@@ -317,7 +317,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -337,7 +336,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -367,7 +365,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -384,7 +381,6 @@ class SnapshotMarkerEngineImplTest {
 
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -403,7 +399,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -428,14 +423,12 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val greedy = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = MarkerSpec.create(isGreedyToLeft = true, isGreedyToRight = false)
     )
     val nonGreedy = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
@@ -455,14 +448,12 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val greedy = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = true)
     )
     val nonGreedy = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
@@ -480,21 +471,18 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val nonSticking = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 2,
       spec = nonGreedySpec()
     )
     val sticking = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 2,
       spec = nonGreedySpec()
     ) as SnapshotRangeMarkerImpl
     val greedy = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 2,
       spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = true)
@@ -518,7 +506,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 6,
       spec = nonGreedySpec()
@@ -535,11 +522,9 @@ class SnapshotMarkerEngineImplTest {
     val oldText = "alpha\ntarget\nomega"
     val newText = "prefix\nalpha\ntarget\nomega\nsuffix"
     val document = DocumentImpl(oldText, true)
-    val initialSnapshot = document.core.snapshot()
     val markerStart = oldText.indexOf("target") + 1
     val persistentMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document,
-      initialSnapshot,
       markerStart,
       markerStart + 3,
       nonGreedySpec(),
@@ -547,7 +532,6 @@ class SnapshotMarkerEngineImplTest {
     )
     val ordinaryMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document,
-      initialSnapshot,
       markerStart,
       markerStart + 3,
       nonGreedySpec(),
@@ -568,11 +552,9 @@ class SnapshotMarkerEngineImplTest {
     val oldText = "x\nold-a\ntarget\nold-b\ny"
     val replacement = "new-a\nextra\npadding\ntarget\nnew-b\n"
     val document = DocumentImpl(oldText, true)
-    val initialSnapshot = document.core.snapshot()
     val markerStart = oldText.indexOf("target") + 1
     val persistentMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document,
-      initialSnapshot,
       markerStart,
       markerStart + 3,
       nonGreedySpec(),
@@ -580,7 +562,6 @@ class SnapshotMarkerEngineImplTest {
     )
     val ordinaryMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document,
-      initialSnapshot,
       markerStart,
       markerStart + 3,
       nonGreedySpec(),
@@ -603,11 +584,9 @@ class SnapshotMarkerEngineImplTest {
     val oldText = "stable0\nstable1\nold-a\ntarget\nold-b\nstable2\nstable3\nstable4"
     val replacement = "new-a\ntarget\nnew-b\n"
     val document = DocumentImpl(oldText, true)
-    val initialSnapshot = document.core.snapshot()
     val markerStart = oldText.indexOf("target") + 1
     val persistentMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document,
-      initialSnapshot,
       markerStart,
       markerStart + 3,
       nonGreedySpec(),
@@ -630,7 +609,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 4,
       endOffset = 6,
       spec = nonGreedySpec()
@@ -645,17 +623,14 @@ class SnapshotMarkerEngineImplTest {
   @Test
   fun `moving text to the beginning retargets contained markers`() {
     val fixture = Fixture("01234567890")
-    val initialSnapshot = fixture.initialSnapshot
     val pointMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 5,
       endOffset = 5,
       spec = nonGreedySpec()
     )
     val rangeMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 5,
       endOffset = 7,
       spec = nonGreedySpec()
@@ -672,17 +647,14 @@ class SnapshotMarkerEngineImplTest {
   @Test
   fun `moving text to the end retargets contained markers`() {
     val fixture = Fixture("01234567890")
-    val initialSnapshot = fixture.initialSnapshot
     val firstMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 1,
       endOffset = 3,
       spec = nonGreedySpec()
     )
     val secondMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -702,7 +674,6 @@ class SnapshotMarkerEngineImplTest {
     val initialSnapshot = fixture.initialSnapshot
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -723,7 +694,6 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -754,7 +724,6 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -851,7 +820,6 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec(),
@@ -882,7 +850,6 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec(),
@@ -967,8 +934,8 @@ class SnapshotMarkerEngineImplTest {
     val entries = ArrayList<Pair<Long, TextRange>>()
     var hasLazyShift = false
 
-    assertTrue(root.processAllRangeMarkers { entry, ancestorDelta ->
-      entries.add(label(entry.handle) to TextRange(entry.nodeStart + ancestorDelta, entry.nodeEnd + ancestorDelta))
+    assertTrue(root.processAllRangeMarkers { (val handle, val nodeStart, val nodeEnd), ancestorDelta ->
+      entries.add(label(handle) to TextRange(nodeStart + ancestorDelta, nodeEnd + ancestorDelta))
       if (ancestorDelta != 0) hasLazyShift = true
       true
     })
@@ -1061,7 +1028,7 @@ class SnapshotMarkerEngineImplTest {
       assertEquals(1, batches.size)
       assertEquals(markers.single().map { it.markerHandle }.toSet(), batches.single().toSet())
     }
-    for ((index, document) in documents.withIndex()) {
+    for ([index, document] in documents.withIndex()) {
       val root = document.rangeMarkers.rootStore().rootReference(document.core.snapshot()).get()
       for (marker in markers[index]) {
         assertFalse(root.containsMarker(marker.markerHandle))
@@ -1513,7 +1480,6 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec(),
@@ -1544,14 +1510,12 @@ class SnapshotMarkerEngineImplTest {
     // This marker receives the smaller ID but initially has the larger start offset.
     val firstMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 3,
       endOffset = 6,
       spec = nonGreedySpec()
     )
     val secondMarker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = initialSnapshot,
       startOffset = 2,
       endOffset = 5,
       spec = nonGreedySpec()
@@ -1571,7 +1535,6 @@ class SnapshotMarkerEngineImplTest {
       val startOffset = index * 6
       SnapshotMarkerEngineImpl.createRangeMarker(
         document = fixture.document,
-        snapshot = initialSnapshot,
         startOffset = startOffset,
         endOffset = startOffset + 2,
         spec = nonGreedySpec()
@@ -1592,7 +1555,6 @@ class SnapshotMarkerEngineImplTest {
     val fixture = Fixture("abcdef")
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.initialSnapshot,
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec()
@@ -1716,7 +1678,6 @@ class SnapshotMarkerEngineImplTest {
   private fun createWeakMarker(fixture: Fixture, startOffset: Int, endOffset: Int): WeakMarker {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.document.core.snapshot(),
       startOffset = startOffset,
       endOffset = endOffset,
       spec = nonGreedySpec(),
@@ -1727,7 +1688,6 @@ class SnapshotMarkerEngineImplTest {
   private fun createStrongMarker(document: DocumentImpl, startOffset: Int, endOffset: Int): WeakReference<SnapshotRangeMarkerImpl> {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = document,
-      snapshot = document.core.snapshot(),
       startOffset = startOffset,
       endOffset = endOffset,
       spec = nonGreedySpec(),
@@ -1739,7 +1699,6 @@ class SnapshotMarkerEngineImplTest {
   private fun createInvalidStrongMarker(document: DocumentImpl, startOffset: Int, endOffset: Int): WeakReference<SnapshotRangeMarkerImpl> {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = document,
-      snapshot = document.core.snapshot(),
       startOffset = startOffset,
       endOffset = endOffset,
       spec = nonGreedySpec(),
@@ -1758,7 +1717,6 @@ class SnapshotMarkerEngineImplTest {
   private fun createWeakInvalidMarker(fixture: Fixture, startOffset: Int, endOffset: Int): WeakMarker {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document = fixture.document,
-      snapshot = fixture.document.core.snapshot(),
       startOffset = startOffset,
       endOffset = endOffset,
       spec = nonGreedySpec(),
@@ -1778,7 +1736,6 @@ class SnapshotMarkerEngineImplTest {
     val document = DocumentImpl("abcdef", true)
     SnapshotMarkerEngineImpl.createRangeMarker(
       document = document,
-      snapshot = document.core.snapshot(),
       startOffset = 2,
       endOffset = 4,
       spec = nonGreedySpec(),
@@ -1825,15 +1782,6 @@ class SnapshotMarkerEngineImplTest {
 
     private var nextModSequence: Int = initialSnapshot.modState().sequence() + 1
     private var nextModStamp: Long = initialSnapshot.modState().stamp() + 1
-
-    fun applyOp(parent: DocumentSnapshot, op: DocumentOp): DocumentSnapshot {
-      val child = parent.applyOp(op)
-      markerStores.applyPatch(parent, child, null)
-      return child
-    }
-
-    fun mergeMarkerRoots(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot): DocumentSnapshot =
-      markerStores.mergeMarkerRoots(markerSnapshot, metadataSnapshot)
 
     fun editWithNaturalModSequence(
       parent: DocumentSnapshot,

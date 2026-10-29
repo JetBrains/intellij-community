@@ -63,7 +63,6 @@ public class SnapshotMarkerEngineBenchmark {
       int startOffset = markerStart(index);
       SnapshotMarker marker = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
         state.document,
-        state.snapshot,
         startOffset,
         startOffset + MARKER_LENGTH,
         NON_GREEDY_SPEC,
@@ -154,14 +153,12 @@ public class SnapshotMarkerEngineBenchmark {
   @State(Scope.Thread)
   public static class CreateState {
     DocumentImpl document;
-    DocumentSnapshot snapshot;
     SnapshotMarker[] createdMarkers;
 
     /** A new mutable engine is required for every measured creation batch. */
     @Setup(Level.Invocation)
     public void setUp() {
       document = new DocumentImpl(BENCHMARK_TEXT);
-      snapshot = document.getCore().snapshot();
       createdMarkers = new SnapshotMarker[MARKER_COUNT];
     }
   }
@@ -169,7 +166,6 @@ public class SnapshotMarkerEngineBenchmark {
   @State(Scope.Thread)
   public static class ResolveState {
     DocumentImpl document;
-    DocumentSnapshot snapshot;
     SnapshotMarker[] markers;
     int[] resolveOrder;
 
@@ -177,14 +173,12 @@ public class SnapshotMarkerEngineBenchmark {
     @Setup(Level.Trial)
     public void setUp() {
       document = new DocumentImpl(BENCHMARK_TEXT);
-      snapshot = document.getCore().snapshot();
       markers = new SnapshotMarker[MARKER_COUNT];
 
       for (int index = 0; index < MARKER_COUNT; index++) {
         int startOffset = markerStart(index);
         markers[index] = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
           document,
-          snapshot,
           startOffset,
           startOffset + MARKER_LENGTH,
           NON_GREEDY_SPEC,
@@ -255,7 +249,6 @@ public class SnapshotMarkerEngineBenchmark {
         int startOffset = markerStart(index);
         markers[index] = SnapshotMarkerEngineImpl.INSTANCE.createRangeMarker(
           document,
-          snapshot,
           startOffset,
           startOffset + MARKER_LENGTH,
           NON_GREEDY_SPEC,

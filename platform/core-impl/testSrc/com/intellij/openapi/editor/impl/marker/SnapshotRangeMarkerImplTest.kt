@@ -151,7 +151,7 @@ internal class SnapshotRangeMarkerImplTest {
       val document = DocumentImpl("abcdefgh", true)
       val policy = MarkerPolicy { entry, _, _, _ -> MarkerTransformResult(entry.copy(nodeEnd = 6)) }
       val marker = SnapshotMarkerEngineImpl.createRangeMarker(
-        document, document.core.snapshot(), 2, 4, MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = policy,
+        document, 2, 4, MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = policy,
       ) as SnapshotRangeMarkerImpl
 
       marker.isGreedyToLeft = true

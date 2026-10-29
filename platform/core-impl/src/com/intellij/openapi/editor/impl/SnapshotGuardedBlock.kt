@@ -24,7 +24,6 @@ internal class SnapshotGuardedBlock private constructor(
       val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
       return SnapshotMarkerEngineImpl.createRangeMarker(
         document,
-        null,
         startOffset,
         endOffset,
         spec,

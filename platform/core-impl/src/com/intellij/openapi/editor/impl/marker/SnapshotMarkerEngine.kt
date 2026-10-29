@@ -15,26 +15,24 @@ import com.intellij.util.Processor
  * [SnapshotMarkerEngine] is mutable, while every [PMarkerRoot] is an immutable,
  * persistent value.
  *
- * Marker insertion or removal changes only the root currently associated with
- * the selected snapshot. Existing descendant snapshots are not updated.
+ * Marker insertion and removal update the root for the document's current snapshot.
+ * Existing descendant snapshots are not updated.
  *
  * A future child snapshot derives its marker root from the current marker root
  * of its parent.
  */
 interface SnapshotMarkerEngine {
   /**
-   * Creates an engine-global marker ID and inserts the marker into the
-   * current root associated with [snapshot].
+   * Creates a marker in the document's current snapshot.
+   * Retries if a text change publishes another snapshot before insertion.
    *
-   * Existing descendants of [snapshot] are not modified. Future children
-   * created from [snapshot] inherit the marker.
+   * Existing descendant snapshots are not modified. Future children inherit the marker.
    *
    * The following range precondition must hold:
    *
-   *     0 <= startOffset <= endOffset <= snapshot.textLength
+   *     0 <= startOffset <= endOffset <= document.textLength
    *
    * @param document document exposed by the returned marker handle
-   * @param snapshot snapshot in whose current root the marker is inserted
    * @param startOffset inclusive range start
    * @param endOffset exclusive range end
    * @param spec immutable marker configuration. see [MarkerSpec]
@@ -44,7 +42,6 @@ interface SnapshotMarkerEngine {
    */
   fun createRangeMarker(
     document: Document,
-    snapshot: DocumentSnapshot,
     startOffset: Int,
     endOffset: Int,
     spec: Byte,

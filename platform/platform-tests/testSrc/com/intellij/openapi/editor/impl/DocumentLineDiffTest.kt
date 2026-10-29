@@ -65,7 +65,6 @@ internal class DocumentLineDiffTest {
     val markerStart = OLD_TEXT.indexOf("target") + 1
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(
       document,
-      initialSnapshot,
       markerStart,
       markerStart + 3,
       MarkerSpec.create(
@@ -113,7 +112,6 @@ internal class DocumentLineDiffTest {
       val markerStart = oldText.indexOf("target") + 1
       val marker = SnapshotMarkerEngineImpl.createRangeMarker(
         document,
-        initialSnapshot,
         markerStart,
         markerStart + 3,
         MarkerSpec.create(
