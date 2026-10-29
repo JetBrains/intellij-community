@@ -116,6 +116,8 @@
                         serviceImplementation="com.intellij.platform.lsp.impl.lsWidget.LspWidgetInternalServiceImpl"/>
     <applicationService serviceInterface="com.intellij.platform.lsp.util.Lsp4jService"
                         serviceImplementation="com.intellij.platform.lsp.impl.util.Lsp4jServiceImpl"/>
+    <applicationService serviceInterface="com.intellij.platform.lsp.api.customization.LspCodeActionInternalService"
+                        serviceImplementation="com.intellij.platform.lsp.impl.features.intention.LspCodeActionInternalServiceImpl"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.platform.lsp.impl.features.highlighting.LspHighlightUsagesHandlerFactory"
                                    order="last"/>
     <registryKey key="lsp.communication.standard.log.file" defaultValue="false"

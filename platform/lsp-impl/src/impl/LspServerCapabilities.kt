@@ -50,6 +50,11 @@ internal fun LspClientImpl.supportsCodeActions(file: VirtualFile, codeActionKind
     .any { it.codeActionKinds?.let(codeActionKindsFilter) != false }
 }
 
+/** A `CodeAction` has no document URI. So every dynamic registration counts, whatever its document selector. */
+internal fun LspClientImpl.hasCodeActionResolveProvider(): Boolean =
+  serverCapabilities?.codeActionProvider?.right?.resolveProvider == true ||
+  dynamicCapabilities.getCapabilityRegistrationOptions(LspDynamicCapabilities.codeAction).any { it.resolveProvider == true }
+
 internal fun LspClientImpl.supportsGotoDefinition(): Boolean = serverCapabilities?.definitionProvider?.let { it.left ?: true } == true
 
 internal fun LspClientImpl.supportsGotoTypeDefinition(): Boolean = serverCapabilities?.typeDefinitionProvider?.let { it.left ?: true } == true

@@ -5,6 +5,7 @@ import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -62,11 +63,10 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
   protected val lspServer: LspServer
     get() = lspClient as LspServer
 
-  // 1. If the `initialCodeAction` contains the `edit` property, it means that it is already resolved.
-  // 2. If the server doesn't support code actions resolve, it also means that the `initialCodeAction` is already resolved.
+  // If the `initialCodeAction` contains the `edit` property, it means that it is already resolved.
+  // `resolveCodeAction()` checks if the server supports codeActionsResolve.
   private var resolvedCodeAction: CodeAction? =
-    if (initialCodeAction.edit != null ||
-        lspClient.initializeResult?.capabilities?.codeActionProvider?.right?.resolveProvider != true) {
+    if (initialCodeAction.edit != null) {
       initialCodeAction
     }
     else null
@@ -113,7 +113,7 @@ open class LspIntentionAction(protected val lspClient: LspClient, private val in
   private fun resolveCodeAction() {
     if (resolvedCodeAction != null) return
 
-    val resolved = lspClient.sendRequestSync { it.textDocumentService.resolveCodeAction(codeAction) }
+    val resolved = service<LspCodeActionInternalService>().resolveCodeAction(lspClient, codeAction)
     resolvedCodeAction = resolved ?: initialCodeAction
   }
 

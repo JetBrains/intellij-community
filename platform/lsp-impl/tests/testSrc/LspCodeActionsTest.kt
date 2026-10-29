@@ -17,6 +17,7 @@ import org.eclipse.lsp4j.CodeAction
 import org.eclipse.lsp4j.CodeActionKind
 import org.eclipse.lsp4j.CodeActionOptions
 import org.eclipse.lsp4j.CodeActionRegistrationOptions
+import org.eclipse.lsp4j.Command
 import org.eclipse.lsp4j.Diagnostic
 import org.eclipse.lsp4j.DiagnosticSeverity
 import org.eclipse.lsp4j.Position
@@ -178,6 +179,68 @@ class LspCodeActionsTest {
       }
       serverSession.awaitExpected()
       codeInsightFixture.checkResult("bye world")
+    }
+
+    @Test
+    fun `code action resolve uses the resolve provider of the dynamic registration`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      awaitFileOpenedByLspServer(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("code-actions", "textDocument/codeAction", CodeActionRegistrationOptions().apply {
+          resolveProvider = true
+        })))
+      }
+
+      serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
+        listOf(Either.forRight(CodeAction().apply {
+          title = "Replace hello"
+          data = "resolve-token"
+        }))
+      }
+      serverSession.expectRequest(serverSession.CODE_ACTION_RESOLVE, { it.data?.toString() == "\"resolve-token\"" }) {
+        CodeAction().apply {
+          title = "Replace hello"
+          edit = WorkspaceEdit(mapOf(fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 5)), "bye"))))
+        }
+      }
+
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.launchAction("Replace hello")
+      }
+      serverSession.awaitExpected()
+      codeInsightFixture.checkResult("bye world")
+    }
+
+    @Suppress("AssertBetweenInconvertibleTypes") // Qodana bug
+    @Test
+    fun `code action resolve is not sent when the dynamic registration has no resolve provider`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      awaitFileOpenedByLspServer(project, virtualFile)
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("code-actions", "textDocument/codeAction", CodeActionRegistrationOptions())))
+      }
+
+      // The action has no edit, so the client needs a resolve. The command keeps the action available without the resolve.
+      val codeAction = CodeAction().apply {
+        title = "Run the command"
+        data = "resolve-token"
+        command = Command("Run the command", "run")
+      }
+      val codeActionRequest = serverSession.expectRequest(serverSession.CODE_ACTION, { it.textDocument.uri == fileUri }) {
+        listOf(Either.forRight(codeAction))
+      }
+
+      // `isAvailable()` decides about the resolve and sends it synchronously, before the list is ready.
+      val intentions = withContext(Dispatchers.EDT) { codeInsightFixture.availableIntentions }
+      codeActionRequest.await()
+
+      assertTrue(intentions.any { it.text == "Run the command" }, "Expected the action in the intentions list")
+      assertEquals(emptyList<Any>(), serverSession.receivedRequests(serverSession.CODE_ACTION_RESOLVE),
+                   "Expected no codeAction/resolve when the server does not support it")
     }
   }
 }
