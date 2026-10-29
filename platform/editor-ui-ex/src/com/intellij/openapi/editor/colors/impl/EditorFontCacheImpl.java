@@ -12,7 +12,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JdkConstants;
+import com.intellij.util.ui.JdkConstants.FontStyle;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,90 +20,89 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.Font;
 import java.awt.font.TextAttribute;
-import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 @ApiStatus.Internal
 public class EditorFontCacheImpl extends EditorFontCache {
   private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
   private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
+  private static final AtomicReferenceFieldUpdater<EditorFontCacheImpl, Font[]> FONTS_UPDATER =
+    AtomicReferenceFieldUpdater.newUpdater(EditorFontCacheImpl.class, Font[].class, "fonts");
 
   public static @NotNull Font deriveFontWithLigatures(@NotNull Font font, boolean enableLigatures) {
     return enableLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
   }
 
-  private final @NotNull Map<EditorFontType, Font> fonts = new EnumMap<>(EditorFontType.class);
+  /**
+   * Holds an empty array before the first build and after each reset. Each reset writes a new empty array.
+   * A build publishes its fonts only if the field still holds the array that the build read.
+   */
+  private volatile Font @NotNull [] fonts = new Font[0];
 
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
-    synchronized (fonts) {
-      if (fonts.isEmpty()) {
-        initFonts();
-      }
-      EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
-      Font font = fonts.get(fontType);
-      assert font != null : "Font " + fontType + " not found.";
-      UISettings uiSettings = UISettings.getInstance();
-      if (uiSettings.getPresentationMode()) {
-        return font.deriveFont(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
-      }
-      return font;
+    Font[] fonts = this.fonts;
+    if (fonts.length == 0) {
+      Font[] newFonts = initFonts();
+      FONTS_UPDATER.compareAndSet(this, fonts, newFonts);
+      fonts = newFonts;
     }
+    EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
+    Font font = fonts[fontType.ordinal()];
+    assert font != null : "Font " + fontType + " not found.";
+    UISettings uiSettings = UISettings.getInstance();
+    if (uiSettings.getPresentationMode()) {
+      return font.deriveFont(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
+    }
+    return font;
   }
 
   @Override
   public void reset() {
-    synchronized (fonts) {
-      fonts.clear();
-    }
+    FONTS_UPDATER.set(this, new Font[0]);
   }
 
   protected EditorColorsScheme getFontCacheScheme() {
     return EditorColorsManager.getInstance().getGlobalScheme();
   }
 
-  private void initFonts() {
+  /**
+   * Builds the fonts from two snapshots, so the editor fonts come from one version of their preferences.
+   * The console fonts also come from one version of their preferences.
+   */
+  private Font @NotNull [] initFonts() {
     EditorColorsScheme scheme = getFontCacheScheme();
-    FontPreferences preferences = scheme.getFontPreferences();
-    String editorFontName = preferences.getFontFamily();
-    float editorFontSize = scheme.getEditorFontSize2D();
-    String fallbackName = getFallbackName(editorFontName);
-    if (fallbackName != null) {
-      editorFontName = fallbackName;
-    }
+    FontPreferences schemePreferences = scheme.getFontPreferences();
+    FontPreferences preferences = schemePreferences.getSnapshot();
+    FontPreferences consolePreferences = scheme.getConsoleFontPreferences().getSnapshot();
+    String editorFontName = getEditorFontName(preferences);
+    String consoleFontName = consolePreferences.getFontFamily();
+    float editorFontSize = preferences.getSize2D(preferences.getFontFamily());
+    float consoleFontSize = getConsoleFontSize(consolePreferences, consoleFontName, editorFontSize);
+
     if (LOG.isDebugEnabled()) {
-      String schemeName;
-      try {
-        schemeName = scheme.getName();
-      } catch (Throwable th) {
-        LOG.warn(th);
-        schemeName = "unknown(th)";
-      }
-      LOG.debug(String.format(
-        "Initializing fonts: scheme=%s, delegating=%b, fontName=%s, fontSize=%.2f",
-        schemeName, preferences instanceof DelegatingFontPreferences, editorFontName, editorFontSize));
+      logDebug(scheme, schemePreferences instanceof DelegatingFontPreferences, editorFontName, editorFontSize);
     }
 
-    setFont(EditorFontType.PLAIN, editorFontName, Font.PLAIN, editorFontSize, preferences);
-    setFont(EditorFontType.BOLD, editorFontName, Font.BOLD, editorFontSize, preferences);
-    setFont(EditorFontType.ITALIC, editorFontName, Font.ITALIC, editorFontSize, preferences);
-    setFont(EditorFontType.BOLD_ITALIC, editorFontName, Font.BOLD | Font.ITALIC, editorFontSize, preferences);
+    assert EditorFontType.values().length == 8;
 
-    FontPreferences consolePreferences = scheme.getConsoleFontPreferences();
-    String consoleFontName = scheme.getConsoleFontName();
-    float consoleFontSize = scheme.getConsoleFontSize2D();
-
-    setFont(EditorFontType.CONSOLE_PLAIN, consoleFontName, Font.PLAIN, consoleFontSize, consolePreferences);
-    setFont(EditorFontType.CONSOLE_BOLD, consoleFontName, Font.BOLD, consoleFontSize, consolePreferences);
-    setFont(EditorFontType.CONSOLE_ITALIC, consoleFontName, Font.ITALIC, consoleFontSize, consolePreferences);
-    setFont(EditorFontType.CONSOLE_BOLD_ITALIC, consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize, consolePreferences);
+    return new Font[] {
+      getFont(editorFontName, Font.PLAIN, editorFontSize, preferences), // EditorFontType.PLAIN
+      getFont(editorFontName, Font.BOLD, editorFontSize, preferences), // EditorFontType.BOLD
+      getFont(editorFontName, Font.ITALIC, editorFontSize, preferences), // EditorFontType.ITALIC
+      getFont(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize, preferences), // EditorFontType.BOLD_ITALIC
+      getFont(consoleFontName, Font.PLAIN, consoleFontSize, consolePreferences), // EditorFontType.CONSOLE_PLAIN
+      getFont(consoleFontName, Font.BOLD, consoleFontSize, consolePreferences), // EditorFontType.CONSOLE_BOLD
+      getFont(consoleFontName, Font.ITALIC, consoleFontSize, consolePreferences), // EditorFontType.CONSOLE_ITALIC
+      getFont(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize, consolePreferences) // EditorFontType.CONSOLE_BOLD_ITALIC
+    };
   }
 
-  private void setFont(
-    @NotNull EditorFontType fontType,
+  private static Font getFont(
     @NotNull String familyName,
-    @JdkConstants.FontStyle int style,
+    @FontStyle int style,
     float fontSize,
     @NotNull FontPreferences fontPreferences
   ) {
@@ -121,15 +120,50 @@ public class EditorFontCacheImpl extends EditorFontCache {
         ArrayUtil.toStringArray(fontPreferences.getCharacterVariants())
       );
     }
-    fonts.put(fontType, editorFont);
+    return editorFont;
+  }
+
+  private static @NotNull String getEditorFontName(@NotNull FontPreferences preferences) {
+    String editorFontName = preferences.getFontFamily();
+    String fallbackName = getFallbackName(editorFontName);
+    if (fallbackName != null) {
+      return fallbackName;
+    }
+    return editorFontName;
+  }
+
+  /**
+   * Returns the console font size like {@link AbstractColorsScheme#getConsoleFontSize2D()} outside presentation mode.
+   * The build ignores presentation mode, because {@link #getFont(EditorFontType)} sets the presentation size in that mode.
+   */
+  private static float getConsoleFontSize(@NotNull FontPreferences consolePreferences, @NotNull String consoleFontName, float editorFontSize) {
+    if (consolePreferences.hasSize(consoleFontName)) {
+      return consolePreferences.getSize2D(consoleFontName);
+    }
+    return editorFontSize;
   }
 
   private static @Nullable String getFallbackName(@NotNull String fontName) {
     Font plainFont = new Font(fontName, Font.PLAIN, 12);
     boolean isDialogFont = plainFont.getFamily().equals("Dialog");
     if (isDialogFont && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
-      return AppEditorFontOptions.getInstance().getFontPreferences().getFontFamily();
+      FontPreferences preferences = AppEditorFontOptions.getInstance().getFontPreferences();
+      return preferences.getFontFamily();
     }
     return null;
+  }
+
+  private static void logDebug(EditorColorsScheme scheme, boolean delegating, String editorFontName, float editorFontSize) {
+    String schemeName;
+    try {
+      schemeName = scheme.getName();
+    } catch (Throwable th) {
+      LOG.warn(th);
+      schemeName = "unknown(th)";
+    }
+    LOG.debug(String.format(
+      "Initializing fonts: scheme=%s, delegating=%b, fontName=%s, fontSize=%.2f",
+      schemeName, delegating, editorFontName, editorFontSize
+    ));
   }
 }
