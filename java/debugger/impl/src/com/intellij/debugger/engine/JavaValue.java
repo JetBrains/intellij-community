@@ -142,7 +142,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         return JavaValueUtilsKt.getJavaValueXDescriptor(this);
       });
     myPinToTopDataFuture = myValueDescriptor.getInitFuture()
-      .thenApply(_ -> new XPinToTopData(canBePinned(), getTag(), null, null, null));
+      .thenCompose(_ -> JavaValueUtilsKt.getJavaValuePinToTopData(this));
   }
 
   @Override

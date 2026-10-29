@@ -15,6 +15,7 @@ import com.intellij.java.debugger.impl.shared.engine.NodeRendererId
 import com.intellij.openapi.application.readAction
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.XDescriptor
+import com.intellij.xdebugger.frame.XPinToTopData
 import com.sun.jdi.ObjectReference
 import fleet.rpc.core.toRpc
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -71,6 +72,15 @@ internal fun getJavaValueXDescriptor(javaValue: JavaValue): CompletableFuture<XD
       valueDescriptor.lastRendererFlow.map { it?.toRpc() }.toRpc(),
       renderersUpdatedFlow.map { fetchApplicableNodeRenderers(javaValue).map { it.toRpc() } }.toRpc()
     )
+  }
+}
+
+internal fun getJavaValuePinToTopData(javaValue: JavaValue): CompletableFuture<XPinToTopData> {
+  val suspendContext = javaValue.evaluationContext.suspendContext
+  return suspendContext.coroutineScope.future {
+    withDebugContext(suspendContext) {
+      XPinToTopData(javaValue.canBePinned(), javaValue.tag, null, null, null)
+    }
   }
 }
 
