@@ -48,6 +48,8 @@
     ["./build/jpsModelToBazel.cmd"],
     ["bun", "build/jps-module.mjs"],
     ["bun", "community/.ai/skill-profile.mjs"],
+    ["node", "plugins/air/scripts/air-mutes.mjs", "list"],
+    ["node", "plugins/air/scripts/air-mutes.mjs", "history"],
     ["{{TOOLS_DIR}}/rg.cmd"],
     ["{{TOOLS_DIR}}/fd.cmd"],
     ["{{TOOLS_DIR}}/accio.cmd"],
