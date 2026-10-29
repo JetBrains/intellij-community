@@ -3,9 +3,16 @@ package com.intellij.platform.eel.tcp
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.Path
 import kotlin.io.path.pathString
 
+@VisibleToClasses(
+    "com.intellij.platform.frontend.split.baseline.eel.RdEelPathTest",
+    "com.intellij.platform.frontend.split.baseline.eel.RdTcpEelPathParser",
+    "com.intellij.platform.ijent.functional.RdEelHostMachineTest",
+    "com.intellij.platform.ijent.functional.RdEelVfsRefreshTest",
+)
 interface TcpEelPathParser {
   companion object {
     val EP_NAME: ExtensionPointName<TcpEelPathParser> = ExtensionPointName("com.intellij.eelTcpPathParser")

@@ -4,10 +4,22 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.ijent.tcp.TcpDeployInfo
+import com.intellij.platform.util.annotations.VisibleToClasses
 
 /**
  * If [selfDeleteOnExit] is true, IJent tries to delete itself AND its parent directory during/after it has exited.
  */
+@VisibleToClasses(
+  "com.intellij.platform.eel.tcp.LocalhostTcpEelMachine",
+  "com.intellij.platform.ijent.community.ui.actions.IjentLocalVerificationAction",
+  "com.intellij.platform.ijent.functional.GrpcCachingWireContractTest",
+  "com.intellij.platform.ijent.functional.IjentParentWatchTest",
+  "com.intellij.platform.ijent.functional.TcpLocalBootstrapTest",
+  "com.intellij.platform.ijent.testFramework.functional.fixture.IjentLocalFixture",
+  "com.intellij.platform.ijent.testFramework.functional.fixture.IjentPosixTcpLocalFixture",
+  "com.intellij.platform.ijent.testFramework.functional.fixture.IjentWindowsTcpLocalFixture",
+  "com.intellij.rd.eel.backend.IjentDeployRemoteApiImpl",
+)
 fun getIjentGrpcArgv(
   remotePathToIjent: String,
   selfDeleteOnExit: Boolean = false,

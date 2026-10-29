@@ -5,8 +5,21 @@ import com.intellij.platform.eel.EelDescriptorWithIsolatedWorkspace
 import com.intellij.platform.eel.EelDescriptorWithoutNativeFileChooserSupport
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.Path
 
+@VisibleToClasses(
+  "com.intellij.platform.frontend.split.baseline.eel.RdEelDescriptor",
+  "com.intellij.platform.frontend.split.baseline.eel.RdEelFileChooserContributor",
+  "com.intellij.platform.frontend.split.baseline.eel.RdEelPathTest",
+  "com.intellij.platform.frontend.split.baseline.eel.RdTcpEelPathParser",
+  "com.intellij.platform.frontend.split.baseline.light.LightIjentRedeploymentKt",
+  "com.intellij.platform.ijent.functional.RdEelHostMachineTest",
+  "com.intellij.platform.ijent.functional.RdEelVfsRefreshTest",
+  "com.intellij.platform.ijent.functional.fs.AutoExcludeOverIjentTest",
+  "com.intellij.platform.ijent.functional.fs.GotoFileOverIjentTest",
+  "com.intellij.rd.eel.frontend.VerifyRdEelAction",
+)
 abstract class TcpEelDescriptor(
   override val osFamily: EelOsFamily,
   internal val internalName: String,
