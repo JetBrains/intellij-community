@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.view.CaretData;
 import com.intellij.openapi.editor.impl.view.IterationState;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -379,6 +380,41 @@ public class IterationStateTest {
       };
       verifySplitting(false, expected);
     });
+  }
+
+  @Test
+  public void testMergedAttributesTakeFontFamiliesOfTheUpperHighlighter() {
+    myFixture.runTest(() -> {
+      init("abc");
+      FontFamilies serif = FontFamilies.of("Noto Serif");
+      addRangeHighlighterOverText(0, Color.red, FontFamilies.of("JetBrains Mono"));
+      addRangeHighlighterOverText(1, Color.blue, serif);
+      IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 3, null, false, false, false, false);
+      assertFalse(it.atEnd());
+      assertEquals(Color.blue, it.getMergedAttributes().getBackgroundColor());
+      assertEquals(serif, it.getMergedAttributes().getFontFamilies());
+    });
+  }
+
+  @Test
+  public void testMergedAttributesKeepFontFamiliesOfTheLowerHighlighter() {
+    myFixture.runTest(() -> {
+      init("abc");
+      FontFamilies mono = FontFamilies.of("JetBrains Mono");
+      addRangeHighlighterOverText(0, Color.red, mono);
+      addRangeHighlighterOverText(1, Color.blue, null);
+      IterationState it = new IterationState((EditorEx)myFixture.getEditor(), 0, 3, null, false, false, false, false);
+      assertFalse(it.atEnd());
+      assertEquals(Color.blue, it.getMergedAttributes().getBackgroundColor());
+      assertEquals(mono, it.getMergedAttributes().getFontFamilies());
+    });
+  }
+
+  private void addRangeHighlighterOverText(int layer, Color bgColor, FontFamilies fontFamilies) {
+    TextAttributes attributes = new TextAttributes(null, bgColor, null, null, Font.PLAIN);
+    attributes.setFontFamilies(fontFamilies);
+    int textLength = myFixture.getEditor().getDocument().getTextLength();
+    myFixture.getEditor().getMarkupModel().addRangeHighlighter(0, textLength, layer, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
   private void addRangeHighlighter(int startOffset, int endOffset, int layer, Color bgColor) {

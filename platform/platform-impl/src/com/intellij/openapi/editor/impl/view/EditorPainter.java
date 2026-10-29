@@ -46,6 +46,7 @@ import com.intellij.openapi.editor.impl.view.animation.EditorAnimationCacheKey;
 import com.intellij.openapi.editor.impl.view.animation.EditorPainterCache;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.LineSeparatorRenderer;
@@ -1799,6 +1800,8 @@ public final class EditorPainter implements TextDrawingCallback {
                            primary.getBackgroundColor() == null ? secondary.getBackgroundColor() : primary.getBackgroundColor(),
                            null, null,
                            primary.getFontType() == Font.PLAIN ? secondary.getFontType() : primary.getFontType());
+      FontFamilies fontFamilies = primary.getFontFamilies();
+      result.setFontFamilies(fontFamilies != null ? fontFamilies : secondary.getFontFamilies());
 
       return TextAttributesEffectsBuilder.create(secondary).coverWith(primary).applyTo(result);
     }

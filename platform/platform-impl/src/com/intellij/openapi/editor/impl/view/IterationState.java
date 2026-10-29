@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -626,6 +627,7 @@ public final class IterationState {
     Color fore = null;
     Color back = isInGuardedBlock ? myReadOnlyColor : null;
     @FontStyle int fontType = Font.PLAIN;
+    FontFamilies fontFamilies = null;
 
     TextAttributesEffectsBuilder effectsBuilder = null;
     for (int i = 0; i < cachedAttributes.size(); i++) {
@@ -643,6 +645,10 @@ public final class IterationState {
         fontType = attrs.getFontType();
       }
 
+      if (fontFamilies == null) {
+        fontFamilies = attrs.getFontFamilies();
+      }
+
       if (attrs.hasEffects()) {
         if (effectsBuilder == null) {
           effectsBuilder = TextAttributesEffectsBuilder.create();
@@ -655,7 +661,7 @@ public final class IterationState {
     if (back == null) back = myDefaultBackground;
     if (fontType == Font.PLAIN) fontType = myDefaultFontType;
 
-    attributes.setAttributesNoCache(fore, back, null, null, null, fontType);
+    attributes.setAttributesNoCache(fore, back, null, null, null, fontType, fontFamilies);
     if (effectsBuilder != null) {
       effectsBuilder.applyTo(attributes);
     }

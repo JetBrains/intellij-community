@@ -149,6 +149,9 @@ public class TextAttributes implements Cloneable {
     ));
   }
 
+  /**
+   * Replaces all fields, and bypasses the flyweight cache. The additional effects become empty.
+   */
   @ApiStatus.Internal
   public void setAttributesNoCache(
     Color foregroundColor,
@@ -156,7 +159,8 @@ public class TextAttributes implements Cloneable {
     Color effectColor,
     Color errorStripeColor,
     EffectType effectType,
-    @FontStyle int fontType
+    @FontStyle int fontType,
+    @Nullable FontFamilies fontFamilies
   ) {
     setFlyweight(AttributesFlyweight.createNoCache(
       foregroundColor,
@@ -165,7 +169,7 @@ public class TextAttributes implements Cloneable {
       effectColor,
       effectType,
       Collections.emptyMap(),
-      null,
+      fontFamilies,
       errorStripeColor
     ));
   }

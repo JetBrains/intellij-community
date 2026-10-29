@@ -30,11 +30,7 @@ public final class LayeredTextAttributes extends TextAttributes {
   private final TextAttributesKey[] myKeys;
 
   private LayeredTextAttributes(TextAttributesKey @NotNull [] keys, @NotNull TextAttributes attributes) {
-    super(attributes.getForegroundColor(),
-          attributes.getBackgroundColor(),
-          attributes.getEffectColor(),
-          attributes.getEffectType(),
-          attributes.getFontType());
+    copyFrom(attributes);
     myKeys = keys;
   }
 
