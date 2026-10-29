@@ -683,7 +683,7 @@
                     serviceImplementation="com.intellij.openapi.vfs.impl.ProjectBulkFileListenerRegistryImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.FileTypeManager" open="true"
                         serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl"/>
-    <vfs.asyncListener order="first" implementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl$MyAsyncVfsListener"/>
+    <vfs.asyncListenerBackgroundable order="first" implementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl$MyAsyncVfsListener"/>
     <persistentFsConnectionListener implementation="com.intellij.openapi.fileTypes.impl.IgnoredFileCacheCleaner"/>
     <applicationInitializedListener order="first" implementation="com.intellij.util.net.OverrideDefaultJdkProxy"/>
     <applicationService serviceInterface="com.intellij.util.net.ProxySettings"
