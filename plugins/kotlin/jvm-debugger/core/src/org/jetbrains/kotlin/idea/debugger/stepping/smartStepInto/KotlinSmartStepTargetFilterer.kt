@@ -6,7 +6,6 @@ import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiPrimitiveType
@@ -134,7 +133,7 @@ class KotlinSmartStepTargetFilterer(
                 }
             }
             // Do not match by name, as it was already checked
-            val lightMethodMatch = runReadAction { lightMethod?.matches(owner, signature, debugProcess) }
+            val lightMethodMatch = lightMethod?.matches(owner, signature, debugProcess)
             // Light method match still can fail in some Kotlin-specific cases (e.g., setter/getter signature)
             if (lightMethodMatch == true) {
                 return true

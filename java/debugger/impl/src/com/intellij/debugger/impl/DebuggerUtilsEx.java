@@ -12,6 +12,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMName;
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.JavaValue;
 import com.intellij.debugger.engine.PositionManagerImpl;
@@ -1108,12 +1109,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
                                       @Nullable String name,
                                       String signature,
                                       DebugProcessImpl process) {
-    PsiClass containingClass = psiMethod.getContainingClass();
+    record MethodInfo(PsiClass containingClass, String className, JVMName signature) { }
+    var methodInfo = ReadAction.computeBlocking(() -> {
+      var containingClass = psiMethod.getContainingClass();
+      if (containingClass == null || name != null && !JVMNameUtil.getJVMMethodName(psiMethod).equals(name)) {
+        return null;
+      }
+      return new MethodInfo(containingClass, JVMNameUtil.getClassVMName(containingClass), JVMNameUtil.getJVMSignature(psiMethod));
+    });
+    if (methodInfo == null) {
+      return false;
+    }
     try {
-      if (containingClass != null &&
-          (name == null || JVMNameUtil.getJVMMethodName(psiMethod).equals(name)) &&
-          JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature)) {
-        String methodClassName = JVMNameUtil.getClassVMName(containingClass);
+      if (methodInfo.signature().getName(process).equals(signature)) {
+        String methodClassName = methodInfo.className();
         if (Objects.equals(methodClassName, className)) {
           return true;
         }
@@ -1121,8 +1130,14 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
           if (ContainerUtil.exists(VirtualMachineProxy.getCurrent().classesByName(className), t -> instanceOf(t, methodClassName))) {
             return true;
           }
-          PsiClass aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);
-          return aClass != null && aClass.isInheritor(containingClass, true);
+          return ReadAction.computeBlocking(() -> {
+            var containingClass = methodInfo.containingClass();
+            if (!containingClass.isValid()) {
+              return false;
+            }
+            var aClass = PositionManagerImpl.findClass(process.getProject(), className, process.getSearchScope(), true);
+            return aClass != null && aClass.isInheritor(containingClass, true);
+          });
         }
       }
     }
