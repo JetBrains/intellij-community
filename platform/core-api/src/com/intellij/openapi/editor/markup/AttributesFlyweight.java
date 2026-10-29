@@ -29,6 +29,13 @@ import static com.intellij.util.io.DataInputOutputUtil.readINT;
 import static com.intellij.util.io.DataInputOutputUtil.writeINT;
 
 public final class AttributesFlyweight {
+  /**
+   * A lossy cache in front of {@link #ENTRIES}, indexed by the hash code. A lookup that finds its flyweight here allocates nothing.
+   * A miss fills only an empty slot, so after a warm-up the threads only read the array and do not contend.
+   * A racy read is safe, because all fields of a flyweight are final.
+   */
+  private static final AttributesFlyweight[] FRONT = new AttributesFlyweight[1024];
+
   private static final ConcurrentMap<AttributesFlyweight, AttributesFlyweight> ENTRIES = new ConcurrentHashMap<>();
 
   public static @NotNull AttributesFlyweight create(
@@ -52,14 +59,25 @@ public final class AttributesFlyweight {
     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
     Color errorStripeColor
   ) {
-    AttributesFlyweight candidate =
-      createNoCache(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
-    AttributesFlyweight flyweight = ENTRIES.get(candidate);
-    if (flyweight != null) {
-      return flyweight;
+    int hashCode = computeHashCode(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
+    int slot = (hashCode ^ (hashCode >>> 16)) & (FRONT.length - 1);
+    AttributesFlyweight cached = FRONT[slot];
+    if (cached != null &&
+        cached.matches(hashCode, foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor)) {
+      return cached;
     }
-    flyweight = ENTRIES.putIfAbsent(candidate, candidate);
-    return flyweight != null ? flyweight : candidate;
+    AttributesFlyweight candidate = new AttributesFlyweight(
+      hashCode, foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor
+    );
+    AttributesFlyweight flyweight = ENTRIES.get(candidate);
+    if (flyweight == null) {
+      AttributesFlyweight existing = ENTRIES.putIfAbsent(candidate, candidate);
+      flyweight = existing != null ? existing : candidate;
+    }
+    if (cached == null) {
+      FRONT[slot] = flyweight;
+    }
+    return flyweight;
   }
 
   @ApiStatus.Internal
@@ -72,9 +90,10 @@ public final class AttributesFlyweight {
     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
     Color errorStripeColor
   ) {
-    Map<@NotNull EffectType, ? extends @NotNull Color> effects =
-      additionalEffects.isEmpty() ? Collections.emptyMap() : new EnumMap<>(additionalEffects);
-    return new AttributesFlyweight(foreground, background, fontType, effectColor, effectType, effects, errorStripeColor);
+    int hashCode = computeHashCode(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
+    return new AttributesFlyweight(
+      hashCode, foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor
+    );
   }
 
   static @NotNull AttributesFlyweight create(@NotNull Element element) throws InvalidDataException {
@@ -127,6 +146,7 @@ public final class AttributesFlyweight {
   private final Color myErrorStripeColor;
 
   private AttributesFlyweight(
+    int hashCode,
     @Nullable Color foreground,
     @Nullable Color background,
     @FontStyle int fontType,
@@ -142,18 +162,7 @@ public final class AttributesFlyweight {
     myEffectType = effectType;
     myErrorStripeColor = errorStripeColor;
     myAdditionalEffects = additionalEffects;
-    myHashCode = computeHashCode();
-  }
-
-  private int computeHashCode() {
-    int result = ComparableColor.colorHashCode(myForeground);
-    result = 31 * result + ComparableColor.colorHashCode(myBackground);
-    result = 31 * result + myFontType;
-    result = 31 * result + ComparableColor.colorHashCode(myEffectColor);
-    result = 31 * result + (myEffectType != null ? myEffectType.hashCode() : 0);
-    result = 31 * result + ComparableColor.colorHashCode(myErrorStripeColor);
-    result = 31 * result + myAdditionalEffects.hashCode();
-    return result;
+    myHashCode = hashCode;
   }
 
   public Color getForeground() {
@@ -292,14 +301,45 @@ public final class AttributesFlyweight {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     AttributesFlyweight that = (AttributesFlyweight)o;
-    if (myFontType != that.myFontType) return false;
-    if (!ComparableColor.equalColors(myBackground, that.myBackground)) return false;
-    if (!ComparableColor.equalColors(myEffectColor, that.myEffectColor)) return false;
-    if (myEffectType != that.myEffectType) return false;
-    if (!ComparableColor.equalColors(myErrorStripeColor, that.myErrorStripeColor)) return false;
-    if (!ComparableColor.equalColors(myForeground, that.myForeground)) return false;
-    if (!myAdditionalEffects.equals(that.myAdditionalEffects)) return false;
-    return true;
+    return hasFields(
+      that.myForeground, that.myBackground, that.myFontType, that.myEffectColor, that.myEffectType, that.myAdditionalEffects,
+      that.myErrorStripeColor
+    );
+  }
+
+  /**
+   * Whether this flyweight has the given hash code and fields. It compares the fields as {@link #equals} does.
+   */
+  private boolean matches(
+    int hashCode,
+    @Nullable Color foreground,
+    @Nullable Color background,
+    @FontStyle int fontType,
+    @Nullable Color effectColor,
+    @Nullable EffectType effectType,
+    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+    @Nullable Color errorStripeColor
+  ) {
+    return myHashCode == hashCode &&
+           hasFields(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
+  }
+
+  private boolean hasFields(
+    @Nullable Color foreground,
+    @Nullable Color background,
+    @FontStyle int fontType,
+    @Nullable Color effectColor,
+    @Nullable EffectType effectType,
+    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+    @Nullable Color errorStripeColor
+  ) {
+    return myFontType == fontType &&
+           ComparableColor.equalColors(myBackground, background) &&
+           ComparableColor.equalColors(myEffectColor, effectColor) &&
+           myEffectType == effectType &&
+           ComparableColor.equalColors(myErrorStripeColor, errorStripeColor) &&
+           ComparableColor.equalColors(myForeground, foreground) &&
+           myAdditionalEffects.equals(additionalEffects);
   }
 
   @Override
@@ -311,6 +351,31 @@ public final class AttributesFlyweight {
   public @NonNls String toString() {
     return "AttributesFlyweight{myForeground=" + myForeground + ", myBackground=" + myBackground + ", myFontType=" + myFontType +
            ", myEffectColor=" + myEffectColor + ", myEffectType=" + myEffectType + ", myErrorStripeColor=" + myErrorStripeColor + '}';
+  }
+
+  private static int computeHashCode(
+    @Nullable Color foreground,
+    @Nullable Color background,
+    @FontStyle int fontType,
+    @Nullable Color effectColor,
+    @Nullable EffectType effectType,
+    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
+    @Nullable Color errorStripeColor
+  ) {
+    int result = ComparableColor.colorHashCode(foreground);
+    result = 31 * result + ComparableColor.colorHashCode(background);
+    result = 31 * result + fontType;
+    result = 31 * result + ComparableColor.colorHashCode(effectColor);
+    result = 31 * result + (effectType != null ? effectType.hashCode() : 0);
+    result = 31 * result + ComparableColor.colorHashCode(errorStripeColor);
+    result = 31 * result + additionalEffects.hashCode();
+    return result;
+  }
+
+  private static @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> copyOf(
+    @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> effects
+  ) {
+    return effects.isEmpty() ? Collections.emptyMap() : new EnumMap<>(effects);
   }
 
   private static int readInt(@NotNull Element element, @NotNull @NonNls String fieldName) throws InvalidDataException {
