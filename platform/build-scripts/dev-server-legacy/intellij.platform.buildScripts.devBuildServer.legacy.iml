@@ -56,5 +56,6 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.protobuf" />
     <orderEntry type="module" module-name="intellij.platform.buildData" />
     <orderEntry type="module" module-name="intellij.platform.devIdeConfig" />
+    <orderEntry type="module" module-name="intellij.libraries.teamcity.service.messages" />
   </component>
 </module>
