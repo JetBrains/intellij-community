@@ -60,6 +60,33 @@ internal class PyModuleDetailsModelTest {
     assertFalse(model.isSdkChanged(null))
   }
 
+  /**
+   * Mirrors the exact call sequence in `PyModuleDetailsPane.applyAsync`:
+   * `isSdkChanged(chosen) → applySdkChange(chosen) → markSdkApplied(chosen) → isSdkChanged(chosen) == false`.
+   * The pane relies on this to skip a redundant SDK write on the next apply.
+   */
+  @Test
+  fun `apply pipeline round-trip clears the dirty flag for the just-applied SDK`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    val chosen = "Python 3.11"
+
+    assertTrue(model.isSdkChanged(chosen))
+    // Pane would call applySdkChange(chosen) here.
+    model.markSdkApplied(chosen)
+
+    assertFalse(model.isSdkChanged(chosen))
+    // The previously-initial SDK is now the "other" option and reads as dirty if re-selected.
+    assertTrue(model.isSdkChanged("Python 3.12"))
+  }
+
+  @Test
+  fun `markSdkApplied is idempotent when the chosen name already matches the baseline`() {
+    val model = PyModuleDetailsModel(initialSdkName = "Python 3.12")
+    model.markSdkApplied("Python 3.12")
+    assertEquals("Python 3.12", model.initialSdkName)
+    assertFalse(model.isSdkChanged("Python 3.12"))
+  }
+
   //endregion
 
   //region buildComboContents

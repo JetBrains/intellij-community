@@ -1,6 +1,9 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.configurationStore.StoreUtil
+import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -66,5 +69,15 @@ class PyModuleDetailsModel(initialSdkName: String?) {
       orderedSdkNames = ordered,
       includeNoInterpreter = ordered.isEmpty(),
     )
+  }
+
+  /**
+   * Flush project settings so `.iml` files reflect in-memory root-model mutations on disk right
+   * after Apply, not after the next unrelated auto-save. Without this, a user inspecting the
+   * `.iml` immediately after Apply still sees the pre-Apply file. Caller gates on dirtiness.
+   */
+  @RequiresEdt
+  internal fun flushSettings(project: Project) {
+    StoreUtil.saveDocumentsAndProjectSettings(project)
   }
 }

@@ -54,6 +54,7 @@ import com.intellij.util.ui.JBUI.insets
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyInterpreterEditDialogLauncher
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.configuration.PyInterpreterPathsDialogLauncher
 import com.jetbrains.python.packaging.toolwindow.PyPackagingToolWindowPanel
 import com.jetbrains.python.packaging.utils.PyPackageCoroutine
@@ -62,7 +63,6 @@ import com.jetbrains.python.sdk.asModuleOrProject
 import com.jetbrains.python.sdk.associatedModuleNioPath
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
-import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
@@ -656,7 +656,7 @@ internal fun filterBySearchQuery(interpreters: List<PythonInterpreter>, query: S
 }
 
 internal class PyAllInterpretersConfigurableProvider(private val project: Project) : ConfigurableProvider() {
-  override fun canCreateConfigurable(): Boolean = PyInterpreterRedesignFlags.isEnabled()
+  override fun canCreateConfigurable(): Boolean = PyInterpreterSettingsFlags.areNewInterpreterPagesEnabled()
 
   override fun createConfigurable(): Configurable = PyAllInterpretersConfigurable(project)
 }

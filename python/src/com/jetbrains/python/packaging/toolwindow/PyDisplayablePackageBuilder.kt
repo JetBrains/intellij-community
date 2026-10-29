@@ -1,14 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.packaging.toolwindow
 
-import com.intellij.openapi.application.readAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.python.pyproject.PyDependencyGroup
+import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.python.pyproject.model.evolution.findModuleFor
 import com.intellij.python.requirements.PyPackageVersionNormalizer
 import com.jetbrains.python.packaging.PyPackageName
@@ -26,7 +25,6 @@ import com.jetbrains.python.packaging.packageRequirements.WorkspaceMemberPackage
 import com.jetbrains.python.packaging.packageRequirements.collectAllNames
 import com.jetbrains.python.packaging.packageRequirements.newNodeSet
 import com.jetbrains.python.packaging.repository.PyPackageRepository
-import com.jetbrains.python.packaging.repository.PyPiPackageRepository
 import com.jetbrains.python.packaging.toolwindow.model.DependencyGroupNode
 import com.jetbrains.python.packaging.toolwindow.model.DisplayablePackage
 import com.jetbrains.python.packaging.toolwindow.model.InstallablePackage
@@ -83,14 +81,21 @@ data class PyDisplayablePackagesResult(
 suspend fun buildDisplayablePackages(
   moduleOrProject: ModuleOrProject,
   manager: PythonPackageManager,
-  memberFilter: String? = null,
+  memberFilter: WorkspaceMemberName? = null,
 ): PyDisplayablePackagesResult {
-  val packageTree = manager.getPackageTree()
-  return when (packageTree) {
-    is PackagesUnavailableNode -> PyDisplayablePackagesResult(emptyList(), emptySet(), emptyList(), packageTree)
+  val rawTree = manager.getPackageTree()
+  return when (rawTree) {
+    is PackagesUnavailableNode -> PyDisplayablePackagesResult(emptyList(), emptySet(), emptyList(), rawTree)
+    is FlatPackageStructureNode -> buildAvailable(moduleOrProject, manager, rawTree, memberFilter)
     is WorkspaceMemberPackageStructureNode,
-    is PackageCollectionPackageStructureNode,
-    is FlatPackageStructureNode, -> buildAvailable(moduleOrProject, manager, packageTree, memberFilter)
+    is PackageCollectionPackageStructureNode, -> {
+      // Flatten workspace view when toml toggle off (uv/poetry still parse toml → hierarchy would drift).
+      val tomlOn = moduleOrProject.project.usePyprojectToml
+      val packageTree = if (tomlOn) rawTree else FlatPackageStructureNode
+      // Flat path has no member nodes; null filter preserves "Undeclared" split.
+      val effectiveFilter = if (tomlOn) memberFilter else null
+      buildAvailable(moduleOrProject, manager, packageTree, effectiveFilter)
+    }
   }
 }
 
@@ -98,7 +103,7 @@ private suspend fun buildAvailable(
   moduleOrProject: ModuleOrProject,
   manager: PythonPackageManager,
   packageTree: PackageStructureNode,
-  memberFilter: String?,
+  memberFilter: WorkspaceMemberName?,
 ): PyDisplayablePackagesResult {
   val project = moduleOrProject.project
   val packageIndex = PyBuilderPackageIndex(manager)
@@ -163,7 +168,7 @@ internal suspend fun buildPackages(
   declaredPackageNames: Set<String>,
   projectPackageNames: Set<String>,
   path: MutableSet<PackageTreeNode>,
-  memberFilter: String? = null,
+  memberFilter: WorkspaceMemberName? = null,
 ): List<DisplayablePackage> = when (node) {
   is WorkspaceMemberPackageStructureNode -> {
     val workspaceMembers = buildWorkspaceMembers(context, node, packageIndex, declaredPackageNames, projectPackageNames, memberFilter)
@@ -217,14 +222,14 @@ internal suspend fun buildWorkspaceMembers(
   packageIndex: PyBuilderPackageIndex,
   declaredPackageNames: Set<String>,
   projectPackageNames: Set<String>,
-  memberFilter: String? = null,
+  memberFilter: WorkspaceMemberName? = null,
 ): List<WorkspaceMember> {
   val members = mutableListOf<WorkspaceMemberPackageStructureNode>()
   root.packageTree?.let { members.add(root) }
   for (subMember in root.subMembers) {
     if (subMember.packageTree != null) members.add(subMember)
   }
-  val selected = if (memberFilter == null) members else members.filter { it.name == memberFilter }
+  val selected = if (memberFilter == null) members else members.filter { it.name == memberFilter.value }
   return selected.mapNotNull { member ->
     member.packageTree?.let { packageTree ->
       buildWorkspaceMember(context, member.name, packageTree, packageIndex, declaredPackageNames, projectPackageNames,

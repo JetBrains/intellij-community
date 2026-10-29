@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
-import com.intellij.configurationStore.StoreUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.icons.icon
@@ -19,11 +18,17 @@ import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.python.pyproject.model.api.getPythonDependencies
+import com.intellij.python.pyproject.model.evolution.getInterpreter
+import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
+import com.intellij.python.sdk.backend.PythonInterpreter
+import com.intellij.python.sdk.backend.getPythonInfo
+import com.intellij.python.sdk.backend.getSdkAPI
+import com.intellij.python.sdk.backend.pythonInterpreterAsync
 import com.intellij.python.sdk.common.PyInterpreterItem
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTabbedPane
@@ -31,17 +36,16 @@ import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.Popup.Selection.LEFT_RIGHT_INSET
 import com.jetbrains.python.PyBundle
-import com.intellij.python.pyproject.model.evolution.setPythonInterpreter
-import com.intellij.python.sdk.backend.pythonInterpreterAsync
-import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.PyProject.Companion.getPyProjects
+import com.jetbrains.python.project.project
 import com.jetbrains.python.sdk.runWithSdkConfigurationLock
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.collectAddInterpreterActions
 import com.jetbrains.python.sdk.filter.filterAssignablePythonSdks
-import com.jetbrains.python.sdk.findPythonSdk
 import com.jetbrains.python.sdk.interpreterItemsUnderProgress
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -70,18 +74,20 @@ internal sealed interface SdkComboItem {
  * Per-module editor: SDK combo + tabs (Sources / Dependencies / Packages).
  *
  * `apply()` order is deliberate: the Sources editor commits its long-lived cached
- * `ModifiableRootModel` first, then SDK and dependencies open fresh models via
- * `ModuleRootModificationUtil.updateModel { }` — otherwise the sources cache would overwrite the
- * SDK / dep updates.
+ * `ModifiableRootModel` first, then SDK and dependencies open fresh models — otherwise the sources
+ * cache would overwrite the SDK / dep updates.
  */
 internal class PyModuleDetailsPane(
-  private val moduleOrProject: ModuleOrProject.ModuleAndProject,
+  private val pyProject: PyProject,
   private val projectSdksModel: ProjectSdksModel,
-  isMultiModuleProvider: () -> Boolean,
+  private val isMultiModuleProvider: () -> Boolean,
   parentDisposable: Disposable,
 ) {
-  private val project = moduleOrProject.project
-  private val module = moduleOrProject.module
+  private val project = pyProject.project
+  private val moduleOrProject: ModuleOrProject.ModuleAndProject = ModuleOrProject.ModuleAndProject(pyProject)
+
+  /** Scope dies with the module → every launch here no-ops silently on dispose. */
+  private val moduleScope = PyModuleEditorScopes.of(pyProject)
 
   /**
    * Combo model that narrows the Swing `Any?` selection to [SdkComboItem]? and hands the routing
@@ -90,12 +96,9 @@ internal class PyModuleDetailsPane(
    * side effects (hide popup, navigate, propagate).
    */
   private inner class SdkComboModel : CollectionComboBoxModel<SdkComboItem>() {
+    // Combo is non-editable and holds only `SdkComboItem`, so any non-null selection is one of ours.
     override fun setSelectedItem(item: Any?) {
-      if (item != null && item !is SdkComboItem) {
-        super.setSelectedItem(item)
-        return
-      }
-      comboPresenter.onSelectionChanged(item)
+      comboPresenter.onSelectionChanged(item as SdkComboItem?)
     }
 
     /** Bypass path for [comboPresenter]'s `propagate` callback — writes straight to the base model. */
@@ -185,10 +188,16 @@ internal class PyModuleDetailsPane(
     }
   }
 
-  private val packagesTree: PyPackagesTreePane = PyPackagesTreePane(moduleOrProject, parentDisposable)
-  private val sourcesConfigurable: PySourcesConfigurable = PySourcesConfigurable(module)
+  private val packagesTree: PyPackagesTreePane = PyPackagesTreePane(moduleOrProject, parentDisposable, isMultiModuleProvider)
+  private val sourcesConfigurable: PySourcesConfigurable = PySourcesConfigurable(pyProject)
   private val sourcesHolder: JPanel = JPanel(BorderLayout())
-  private var sourcesBuilt: Boolean = false
+
+  /**
+   * `null` until [ensureDependenciesBuilt] resolves the candidate PyProjects off the EDT and
+   * attaches the pane. Accessors null-check instead of keeping a separate "built" flag.
+   */
+  private var dependenciesPane: PyModuleDependenciesPane? = null
+  private val dependenciesHolder: JPanel = JPanel(BorderLayout())
 
   /**
    * Snapshot of the module's Python SDK, populated by the init coroutine through the suspending
@@ -198,16 +207,14 @@ internal class PyModuleDetailsPane(
   private var moduleSdkSnapshot: Sdk? = null
 
   private val model: PyModuleDetailsModel = PyModuleDetailsModel(initialSdkName = null)
-  private var initialInherited: Boolean =
-    isMultiModuleProvider() && ModuleRootManager.getInstance(module).isSdkInherited
 
   val component: JComponent
 
   init {
     sdkCombo.addActionListener { refreshPackages() }
     component = buildLayout()
-    PyPackageCoroutine.launch(project) {
-      val sdk = module.findPythonSdk()
+    moduleScope.launch {
+      val sdk = findModuleSdk(pyProject)
       withContext(Dispatchers.EDT) {
         moduleSdkSnapshot = sdk
         model.markSdkApplied(sdk?.name)
@@ -220,17 +227,19 @@ internal class PyModuleDetailsPane(
 
   fun isModified(): Boolean {
     if (model.isSdkChanged(selectedExistingSdk()?.name)) return true
-    return sourcesBuilt && sourcesConfigurable.isModified
+    if (sourcesConfigurable.isModified()) return true
+    return dependenciesPane?.isModified() == true
   }
 
   fun reset() {
-    PyPackageCoroutine.launch(project) {
-      val sdk = module.findPythonSdk()
+    moduleScope.launch {
+      val sdk = findModuleSdk(pyProject)
       withContext(Dispatchers.EDT) {
         moduleSdkSnapshot = sdk
         reloadSdkComboItems()
         resetSdkComboSelection()
-        if (sourcesBuilt) sourcesConfigurable.reset()
+        sourcesConfigurable.reset()
+        dependenciesPane?.reset()
         refreshPackages()
       }
     }
@@ -245,51 +254,81 @@ internal class PyModuleDetailsPane(
     else resetSdkComboSelection()
   }
 
+  /** Sync. Sources: modal progress. Deps: runWriteAction. SDK: runWithSdkConfigurationLock → modal. */
   @Throws(ConfigurationException::class)
   fun apply() {
-    val sourcesDirty = sourcesBuilt && sourcesConfigurable.isModified
+    val sourcesDirty = sourcesConfigurable.isModified()
     if (sourcesDirty) sourcesConfigurable.apply()
+
+    val depsPane = dependenciesPane
+    val depsDirty = depsPane?.isModified() == true
+    if (depsDirty) depsPane.apply()
 
     val chosenSdk = selectedExistingSdk()
     val sdkChanged = model.isSdkChanged(chosenSdk?.name)
     if (sdkChanged) {
-      applySdkChange(inherited = false, chosen = chosenSdk)
-      initialInherited = false
+      val interpreter = resolveInterpreter(chosenSdk)
+      applyInterpreterChange(interpreter)
       model.markSdkApplied(chosenSdk?.name)
     }
 
-    if (sourcesBuilt && sdkChanged) sourcesConfigurable.reset()
+    if (sdkChanged) sourcesConfigurable.reset()
+    if (sdkChanged) dependenciesPane?.reset()
 
-    // Force-save project settings so `.iml` reflects the mutation on disk right after Apply, not after
-    // the next unrelated auto-save. Without this, a user inspecting the `.iml` immediately after Apply
-    // still sees the pre-Apply file (the model commit is in memory only until a save trigger fires).
-    if (sourcesDirty || sdkChanged) {
-      StoreUtil.saveDocumentsAndProjectSettings(project)
-    }
+    if (sourcesDirty || depsDirty || sdkChanged) model.flushSettings(project)
   }
 
   fun dispose() {
-    if (sourcesBuilt) sourcesConfigurable.disposeUIResources()
+    sourcesConfigurable.disposeUIResources()
   }
 
-  private fun ensureSourcesBuilt() {
-    if (sourcesBuilt) return
-    sourcesBuilt = true
-    val sourcesComponent = sourcesConfigurable.createComponent()
-    sourcesHolder.add(sourcesComponent, BorderLayout.CENTER)
-    sourcesHolder.revalidate()
-    sourcesHolder.repaint()
+  /** Teardown from any dispatcher. */
+  suspend fun disposeAsync() {
+    sourcesConfigurable.disposeAsync()
   }
 
-  private fun applySdkChange(inherited: Boolean, chosen: Sdk?) {
-    if (inherited) {
-      ModuleRootModificationUtil.updateModel(module) { it.inheritSdk() }
-    }
-    else {
-      // Settings applies on the EDT and does not read the snapshot back.
-      runWithSdkConfigurationLock(project) {
-        module.asPyProject()?.setPythonInterpreter(chosen?.pythonInterpreterAsync(), waitForSnapshot = false)
+  /** Candidate filter via baseDir (PyProject discourages residesOnModule). */
+  private fun ensureDependenciesBuilt() {
+    if (dependenciesPane != null) return
+    moduleScope.launch {
+      val candidates = project.getPyProjects().filter { it.baseDir != pyProject.baseDir }
+      val initialDeps = pyProject.getPythonDependencies()
+      withContext(Dispatchers.EDT) {
+        if (dependenciesPane != null) return@withContext
+        val pane = PyModuleDependenciesPane(pyProject, candidates, initialDeps)
+        dependenciesPane = pane
+        dependenciesHolder.add(pane.component, BorderLayout.CENTER)
+        dependenciesHolder.revalidate()
+        dependenciesHolder.repaint()
       }
+    }
+  }
+
+  /**
+   * Flips the Dependencies tab between editable and the "Managed by pyproject.toml" banner.
+   * Called from [PyWorkspaceStructureConfigurable.apply] after the page-level auto-configure
+   * checkbox is committed, so the per-module tab reflects the new mode without reopening Settings.
+   */
+  fun refreshDependenciesEnabled() {
+    dependenciesPane?.refreshEnabled()
+  }
+
+  /** Resolve the combo's Sdk to a `PythonInterpreter`. Null `chosen` → null interpreter (clears SDK). */
+  @Throws(ConfigurationException::class)
+  private fun resolveInterpreter(chosen: Sdk?): PythonInterpreter? {
+    if (chosen == null) return null
+    val interpreter = runWithModalProgressBlocking(project, PyBundle.message("configurable.PyWorkspaceStructureConfigurable.sdk.resolving")) {
+      chosen.pythonInterpreterAsync()
+    }
+    interpreter.getPythonInfo().getOr { err -> throw ConfigurationException(err.error.message) }
+    return interpreter
+  }
+
+  @Throws(ConfigurationException::class)
+  private fun applyInterpreterChange(interpreter: PythonInterpreter?) {
+    // Settings applies on the EDT and does not read the snapshot back.
+    runWithSdkConfigurationLock(project) {
+      pyProject.setPythonInterpreter(interpreter, waitForSnapshot = false)
     }
   }
 
@@ -424,12 +463,16 @@ internal class PyModuleDetailsPane(
       putClientProperty("JTabbedPane.hideContentBorder", true)
       tabComponentInsets = null
     }
+    sourcesHolder.add(sourcesConfigurable.createComponent(), BorderLayout.CENTER)
     tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.sources"), sourcesHolder)
-    // "Packages" is labelled "Dependencies" — the packages tree already surfaces uv workspace
-    // members and JPS module deps as pseudo-rows, so the standalone module-to-module Dependencies
-    // tab is redundant. Keeping the module-dep list around for future reuse but out of the tab strip.
-    tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.dependencies"), packagesTree.component)
-    ensureSourcesBuilt()
+    // Module → module dependencies make sense only when the project has more than one module;
+    // a single-module project (the shape after the user turns off `pyproject.toml` auto-config)
+    // has no sibling modules to depend on, so hide the tab entirely.
+    if (isMultiModuleProvider()) {
+      tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.dependencies"), dependenciesHolder)
+    }
+    tabs.addTab(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.packages"), packagesTree.component)
+    if (isMultiModuleProvider()) ensureDependenciesBuilt()
 
     val header = JPanel(GridBagLayout()).apply {
       border = JBUI.Borders.emptyBottom(LEFT_RIGHT_INSET.get())
@@ -460,3 +503,7 @@ internal class PyModuleDetailsPane(
     settings.select(target)
   }
 }
+
+/** The SDK of the interpreter of [pyProject], for the combo that lists SDKs. */
+private suspend fun findModuleSdk(pyProject: PyProject): Sdk? = pyProject.getInterpreter()?.getSdkAPI()
+
