@@ -17,6 +17,7 @@ import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
 import com.intellij.platform.ijent.spi.IjentSessionProcessMediator
 import com.intellij.platform.ijent.spi.IjentSessionProvider
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -29,7 +30,10 @@ object LocalhostTcpEelDescriptor : TcpEelDescriptor(LocalEelDescriptor.osFamily,
   override val name: @NonNls String = "Localhost EEL"
 }
 
-class LocalhostTcpEelMachine(
+@VisibleToClasses(
+  "com.intellij.platform.eel.tcp.LocalhostTcpEelMachineResolver",
+)
+internal class LocalhostTcpEelMachine(
   private val parentScope: ParentOfIjentScopes,
 ) : TcpEelMachine(LOCALHOST_TCP_EEL_INTERNAL_NAME) {
   override suspend fun createStrategy(): IjentDeployingStrategy {
@@ -55,7 +59,10 @@ class LocalhostTcpEelMachine(
   }
 }
 
-class LocalhostTcpEelMachineResolver(coroutineScope: CoroutineScope) : EelMachineResolver {
+@VisibleToClasses(
+    "com.intellij.platform.eel.tcp.LocalhostTcpEelMachine",
+)
+internal class LocalhostTcpEelMachineResolver(coroutineScope: CoroutineScope) : EelMachineResolver {
   private val machine = LocalhostTcpEelMachine(ParentOfIjentScopes(coroutineScope))
 
   override fun getResolvedEelMachine(eelDescriptor: EelDescriptor): EelMachine? =
@@ -68,7 +75,7 @@ class LocalhostTcpEelMachineResolver(coroutineScope: CoroutineScope) : EelMachin
     machine.takeIf { it.internalName == internalName }
 }
 
-class LocalhostTcpEelPathParser : TcpEelPathParser {
+internal class LocalhostTcpEelPathParser : TcpEelPathParser {
   override fun isInternalNameCompatible(internalName: String): Boolean =
     internalName == LOCALHOST_TCP_EEL_INTERNAL_NAME
 
