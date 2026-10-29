@@ -76,7 +76,7 @@ fn write_cli_fixture(local_launch: bool) {
         format!(
             concat!(
                 r#"{{"version":1,"expectedFragments":["platform_core","plugins"],"#,
-                r#""additionalModules":["intellij.packed","intellij.bundled"],"components":["#,
+                r#""additionalModules":["intellij.packed","intellij.bundled"],"bundledModules":["plugins"],"components":["#,
                 r#"{{"manifest":"fragments/core.json","pluginClasspathPart":null}},"#,
                 r#"{{"manifest":"fragments/plugins.json","pluginClasspathPart":"fragments/plugins.part"}}],"#,
                 r#""pluginClasspathPrefix":"fragments/prefix.bin","sourceRunfiles":{},"sourceDirectoryRunfiles":{{}},"sourceBindings":{}}}"#
@@ -111,7 +111,7 @@ fn compose_cli_writes_the_distribution_and_its_launch_files() {
         ("out/dist/core-classpath.txt", "lib/util.jar\nlib/app.jar"),
         (
             "out/dist.ide.config",
-            "home.path=dist\nmain.class.name=com.intellij.idea.Main\nplatform.prefix=idea\nadditional.modules=intellij.packed,intellij.bundled\n",
+            "home.path=dist\nmain.class.name=com.intellij.idea.Main\nplatform.prefix=idea\nadditional.modules=intellij.packed,intellij.bundled\nbundled.modules=plugins\n",
         ),
         ("out/dist/fingerprint.txt", fingerprint.as_str()),
     ] {
@@ -200,7 +200,7 @@ fn compose_cli_writes_the_distribution_below_the_home_prefix() {
         ("out/dist/Contents/fingerprint.txt", flat_fingerprint.as_str()),
         (
             "out/dist.ide.config",
-            "home.path=dist/Contents\nmain.class.name=com.intellij.idea.Main\nplatform.prefix=idea\nadditional.modules=intellij.packed,intellij.bundled\n",
+            "home.path=dist/Contents\nmain.class.name=com.intellij.idea.Main\nplatform.prefix=idea\nadditional.modules=intellij.packed,intellij.bundled\nbundled.modules=plugins\n",
         ),
     ] {
         assert_eq!(read_text(name), content, "{name}");

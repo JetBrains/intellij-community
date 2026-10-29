@@ -43,7 +43,12 @@ class DevIdeConfigTest {
     tempDir.resolve("dist").createDirectories()
     Files.writeString(
       configFile,
-      composedConfig(homePath = "dist", platformPrefix = "GoLand", additionalModules = "intellij.devkit,intellij.air.plugin"),
+      composedConfig(
+        homePath = "dist",
+        platformPrefix = "GoLand",
+        additionalModules = "intellij.devkit,intellij.air.plugin",
+        bundledModules = "intellij.go.plugin, intellij.java.plugin,,",
+      ),
     )
 
     val content = DevIdeConfig.read(configFile)
@@ -51,6 +56,18 @@ class DevIdeConfigTest {
     assertThat(content.platformPrefix()).isEqualTo("GoLand")
     // order is the writer's, so a consumer comparing sets and a human reading the file see the same thing
     assertThat(content.additionalModules()).containsExactly("intellij.devkit", "intellij.air.plugin")
+    assertThat(content.bundledModules()).containsExactly("intellij.go.plugin", "intellij.java.plugin")
+  }
+
+  @Test
+  fun aConfigFileWrittenBeforeTheBundledModulesKeyReadsAsNoBundledModules() {
+    val configFile = tempDir.resolve("dist.ide.config")
+    tempDir.resolve("dist").createDirectories()
+    Files.writeString(configFile, composedConfig(homePath = "dist", additionalModules = "intellij.devkit", bundledModules = null))
+
+    val content = DevIdeConfig.read(configFile)
+    assertThat(content.additionalModules()).containsExactly("intellij.devkit")
+    assertThat(content.bundledModules()).isEmpty()
   }
 
   @Test
@@ -74,6 +91,7 @@ class DevIdeConfigTest {
     // absent is not "anything goes": a consumer asking for plugin modules must fail against this, not assume
     assertThat(content.platformPrefix()).isNull()
     assertThat(content.additionalModules()).isEmpty()
+    assertThat(content.bundledModules()).isEmpty()
   }
 
   @Test
@@ -101,11 +119,20 @@ class DevIdeConfigTest {
       .hasMessageContaining("RUNFILES_MANIFEST_FILE")
   }
 
-  /** A config file as `write_dev_ide_config` of the composer writes it: four keys, each on its own line. */
-  private fun composedConfig(homePath: String, platformPrefix: String = "idea", additionalModules: String): String {
+  /**
+   * A config file as `write_dev_ide_config` of the composer writes it: five keys, each on its own line. A `null`
+   * [bundledModules] leaves out its key, as a composer before that key did.
+   */
+  private fun composedConfig(
+    homePath: String,
+    platformPrefix: String = "idea",
+    additionalModules: String,
+    bundledModules: String? = "",
+  ): String {
     return "home.path=$homePath\n" +
            "main.class.name=com.intellij.idea.Main\n" +
            "platform.prefix=$platformPrefix\n" +
-           "additional.modules=$additionalModules\n"
+           "additional.modules=$additionalModules\n" +
+           (if (bundledModules == null) "" else "bundled.modules=$bundledModules\n")
   }
 }

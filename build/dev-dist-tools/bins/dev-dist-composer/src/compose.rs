@@ -49,6 +49,8 @@ pub(crate) struct ComposeOptions {
     pub(crate) plugin_classpath_prefix: Option<PathBuf>,
     pub(crate) expected_fragments: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
+    /// The main modules of the bundled plugin components. [`compose_with_merge`] checks each one against the components.
+    pub(crate) bundled_modules: Vec<String>,
     pub(crate) source_runfiles: Option<BTreeMap<PathBuf, String>>,
     pub(crate) source_directory_runfiles: Option<BTreeMap<PathBuf, String>>,
 }
@@ -59,6 +61,8 @@ pub(crate) struct ComposedBuild {
     pub(crate) platform_prefix: String,
     pub(crate) main_class: String,
     pub(crate) additional_modules: Vec<String>,
+    /// The bundled plugin modules, distinct and sorted.
+    pub(crate) bundled_modules: Vec<String>,
     pub(crate) core_class_path: Vec<String>,
     pub(crate) fingerprint: String,
 }
@@ -205,6 +209,7 @@ where
     validate_components(components, &options.expected_fragments)?;
     let manifests: Vec<&ComponentManifest> = components.iter().map(|component| &component.manifest).collect();
     validate_destinations(&manifests)?;
+    let bundled_modules = bundled_modules(&manifests, &options.bundled_modules)?;
     let first = manifests[0];
     let main_class = manifests
         .iter()
@@ -249,9 +254,29 @@ where
         platform_prefix: first.platform_prefix.clone(),
         main_class,
         additional_modules,
+        bundled_modules,
         core_class_path,
         fingerprint,
     })
+}
+
+/// The bundled plugin modules of the spec, distinct and sorted. Each one must be the kind of a plugin component, so the
+/// IDE config states no plugin that the distribution does not hold.
+fn bundled_modules(manifests: &[&ComponentManifest], modules: &[String]) -> Result<Vec<String>> {
+    let plugins: HashSet<&str> = manifests
+        .iter()
+        .filter(|manifest| manifest.plugin)
+        .map(|manifest| manifest.kind.as_str())
+        .collect();
+    let modules: BTreeSet<&str> = modules.iter().map(String::as_str).collect();
+    let missing: Vec<&str> = modules.iter().copied().filter(|module| !plugins.contains(module)).collect();
+    if !missing.is_empty() {
+        bail!(
+            "Bundled plugin modules name no plugin component of the distribution: {}",
+            missing.join(", ")
+        );
+    }
+    Ok(modules.into_iter().map(str::to_owned).collect())
 }
 
 /// The places of `product-info.json` in a distribution: the root, and `Resources/` of a macOS app.

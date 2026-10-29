@@ -739,6 +739,7 @@ def _declare_fragments_dist(
             product_info = _product_info_label(tables, product),
             expect_fragments = expect_fragments,
             additional_modules = additional_modules,
+            bundled_modules = bundled_components.modules,
             local_launch = local_launch,
             home_prefix = prefix,
             **({} if local_launch else export_attrs)

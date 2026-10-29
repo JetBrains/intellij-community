@@ -13,6 +13,7 @@ fn write_spec(directory: &TempDir, content: &str) -> PathBuf {
 /// The shape of `json.encode` in `intellij_dev_dist.bzl`: every key, with `null` for an absent file or map.
 const STARLARK_SPEC: &str = concat!(
     r#"{"version":1,"expectedFragments":["platform_core","intellij.java.plugin"],"additionalModules":["intellij.air.plugin"],"#,
+    r#""bundledModules":["intellij.java.plugin"],"#,
     r#""components":[{"manifest":"core.json","pluginClasspathPart":null},{"manifest":"plugins.json","pluginClasspathPart":"plugins.part"}],"#,
     r#""pluginClasspathPrefix":"prefix.bin","sourceRunfiles":null,"sourceDirectoryRunfiles":{},"sourceBindings":null}"#
 );
@@ -23,6 +24,7 @@ fn composition_spec_decodes_the_starlark_shape() {
     let spec = read_composition_spec(&write_spec(&directory, STARLARK_SPEC)).unwrap();
     assert_eq!(spec.expected_fragments, ["platform_core", "intellij.java.plugin"]);
     assert_eq!(spec.additional_modules, ["intellij.air.plugin"]);
+    assert_eq!(spec.bundled_modules, ["intellij.java.plugin"]);
     assert_eq!(spec.plugin_classpath_prefix.as_deref(), Some("prefix.bin"));
     assert_eq!(spec.source_runfiles, None);
     assert!(spec.source_directory_runfiles.is_empty());
@@ -63,6 +65,11 @@ fn composition_spec_rejects_invalid_content() {
             "",
             "missing field `additionalModules`",
         ),
+        (
+            r#""bundledModules":["intellij.java.plugin"],"#,
+            "",
+            "missing field `bundledModules`",
+        ),
         (r#","sourceDirectoryRunfiles":{}"#, "", "missing field `sourceDirectoryRunfiles`"),
         (
             r#""sourceBindings":null"#,
@@ -84,6 +91,11 @@ fn composition_spec_rejects_invalid_content() {
         (
             r#""additionalModules":["intellij.air.plugin"]"#,
             r#""additionalModules":null"#,
+            "invalid type: null",
+        ),
+        (
+            r#""bundledModules":["intellij.java.plugin"]"#,
+            r#""bundledModules":null"#,
             "invalid type: null",
         ),
         (

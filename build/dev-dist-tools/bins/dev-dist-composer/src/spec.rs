@@ -33,6 +33,8 @@ pub(crate) struct CompositionSpec {
     pub(crate) version: i32,
     pub(crate) expected_fragments: Vec<String>,
     pub(crate) additional_modules: Vec<String>,
+    /// The main modules of the bundled plugin components. The IDE config states them as `bundled.modules`.
+    pub(crate) bundled_modules: Vec<String>,
     pub(crate) components: Vec<CompositionComponent>,
     pub(crate) plugin_classpath_prefix: Option<String>,
     pub(crate) source_runfiles: Option<BTreeMap<String, String>>,

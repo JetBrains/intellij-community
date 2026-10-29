@@ -959,6 +959,7 @@ def _compose(ctx, fragment_targets):
             "version": 1,
             "expectedFragments": ctx.attr.expect_fragments,
             "additionalModules": ctx.attr.additional_modules,
+            "bundledModules": ctx.attr.bundled_modules,
             "components": [
                 {
                     # The manifest names each file where it already is, and the composer copies from there.
@@ -1075,6 +1076,11 @@ per plugin serves every product that bundles the plugin.""",
                   "distribution was configured with, not what any one component assembled. A shared plugin component " +
                   "packs a module that the product bundles, so only this attribute tells a consumer that the " +
                   "distribution contains it.",
+        ),
+        "bundled_modules": attr.string_list(
+            doc = "The main modules of the bundled plugin components of `plugin_components`, for `DevIdeConfig`. The " +
+                  "composer writes them as `bundled.modules`, so a consumer that requests a bundled plugin finds it " +
+                  "without an `additional_modules` entry. Each one must be the name of a plugin component.",
         ),
         "home_prefix": attr.string(
             doc = "The directory below the output that holds the home of the IDE: `Contents` for a macOS app, or empty " +

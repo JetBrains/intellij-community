@@ -83,15 +83,18 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
 
     val requested = ideInfo.additionalModules.toSet()
     val declared = config.additionalModules.toSet()
-    check(declared.containsAll(requested)) {
+    // a plugin that the product bundles is in the distribution, also when no `additional_modules` entry names it
+    val available = declared + config.bundledModules
+    check(available.containsAll(requested)) {
       "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' does not contain " +
-      "${(requested - declared).sorted()}, which $ideInfo asks for.\n" +
+      "${(requested - available).sorted()}, which $ideInfo asks for.\n" +
       "  requested: ${requested.sorted()}\n" +
-      "  in the distribution: ${declared.sorted()}\n" +
+      "  declared in the distribution: ${declared.sorted()}\n" +
+      "  bundled in the distribution: ${config.bundledModules.size} modules (see '${DevIdeConfig.BUNDLED_MODULES_KEY}')\n" +
       "  config file: $configFile\n" +
-      "The list comes from the `additional_modules` of the distribution target this test declares - a module packed by " +
-      "a shared plugin fragment is declared there too - so add the missing ones to it, or point the test at a " +
-      "distribution that has them."
+      "A module is in the distribution when it is declared or bundled. The declared list comes from the " +
+      "`additional_modules` of the distribution target this test declares, so add the missing ones to it, or point the " +
+      "test at a distribution that has them."
     }
 
     val extra = declared - requested

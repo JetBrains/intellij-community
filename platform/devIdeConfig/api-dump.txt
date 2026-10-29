@@ -1,5 +1,6 @@
 f:com.intellij.platform.devIdeConfig.DevIdeConfig
 - sf:ADDITIONAL_MODULES_KEY:java.lang.String
+- sf:BUNDLED_MODULES_KEY:java.lang.String
 - sf:CONFIG_PATH_PROPERTY:java.lang.String
 - sf:HOME_PATH_KEY:java.lang.String
 - sf:MAIN_CLASS_NAME_KEY:java.lang.String
@@ -9,8 +10,9 @@ f:com.intellij.platform.devIdeConfig.DevIdeConfig
 - s:resolveConfigFile(java.lang.String):java.nio.file.Path
 f:com.intellij.platform.devIdeConfig.DevIdeConfig$Content
 - java.lang.Record
-- <init>(java.nio.file.Path,java.lang.String,java.lang.String,java.util.List):V
+- <init>(java.nio.file.Path,java.lang.String,java.lang.String,java.util.List,java.util.List):V
 - additionalModules():java.util.List
+- bundledModules():java.util.List
 - f:equals(java.lang.Object):Z
 - f:hashCode():I
 - homePath():java.nio.file.Path

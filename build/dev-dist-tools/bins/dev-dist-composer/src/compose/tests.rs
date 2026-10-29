@@ -303,6 +303,43 @@ fn composer_declares_the_modules_of_the_spec() {
     );
 }
 
+// A test that requests a bundled plugin reads the bundled modules, so each one must be a plugin of the distribution.
+#[test]
+fn composer_states_the_bundled_plugin_modules() {
+    let directory = TempDir::new();
+    let prefix = directory.join("prefix.bin");
+    write_file(&prefix, [3, 0, 0, 0, 0]);
+    let plugin = |kind: &str| {
+        let mut manifest = test_manifest(kind);
+        manifest.plugin = true;
+        let part = directory.join(&format!("{kind}.part"));
+        write_file(&part, [1]);
+        with_part(DevBuildComponent::new(manifest), &part)
+    };
+    let components = [
+        DevBuildComponent::new(test_manifest("platform")),
+        plugin("intellij.lombok.plugin"),
+        plugin("intellij.java.plugin"),
+    ];
+    let modules = |modules: &[&str]| ComposeOptions {
+        plugin_classpath_prefix: Some(PathBuf::from(&prefix)),
+        bundled_modules: modules.iter().map(|module| (*module).to_owned()).collect(),
+        ..ComposeOptions::default()
+    };
+    let options = modules(&["intellij.lombok.plugin", "intellij.java.plugin", "intellij.lombok.plugin"]);
+    let result = compose_with_merge(&components, &directory.path().join("target"), &options, skip_merge).unwrap();
+    assert_eq!(result.bundled_modules, ["intellij.java.plugin", "intellij.lombok.plugin"]);
+
+    for (module, target) in [("intellij.absent.plugin", "absent"), ("platform", "not-a-plugin")] {
+        let options = modules(&["intellij.java.plugin", module]);
+        require_error(
+            compose_with_merge(&components, &directory.path().join(target), &options, skip_merge),
+            &format!("Bundled plugin modules name no plugin component of the distribution: {module}"),
+        );
+        require_absent(directory.path().join(target));
+    }
+}
+
 #[test]
 fn composer_checks_every_destination_before_the_merge_step() {
     let directory = TempDir::new();

@@ -148,6 +148,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
         },
         expected_fragments: spec.expected_fragments,
         additional_modules: spec.additional_modules,
+        bundled_modules: spec.bundled_modules,
         source_runfiles: match &spec.source_runfiles {
             Some(runfiles) => Some(compose::absolute_keys(runfiles)?),
             None => None,
@@ -181,6 +182,7 @@ fn compose_dev_distribution(mut options: cli::Options, root: &trace::Span) -> Re
         &result.main_class,
         &result.platform_prefix,
         &result.additional_modules,
+        &result.bundled_modules,
     )
 }
 

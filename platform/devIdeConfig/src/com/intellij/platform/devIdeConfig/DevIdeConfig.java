@@ -42,6 +42,12 @@ public final class DevIdeConfig {
    * business.
    */
   public static final String ADDITIONAL_MODULES_KEY = "additional.modules";
+  /**
+   * The main modules of the plugins that the product bundles, comma-separated and sorted. A consumer that asks for a
+   * plugin module finds it here when the product bundles it, so the module needs no entry in
+   * {@link #ADDITIONAL_MODULES_KEY}. A module can occur in both keys.
+   */
+  public static final String BUNDLED_MODULES_KEY = "bundled.modules";
 
   private DevIdeConfig() {
   }
@@ -52,8 +58,10 @@ public final class DevIdeConfig {
    * @param additionalModules empty when the distribution declares none - which is not the same as "unknown", and is
    *                          why a consumer asking for modules must fail against it rather than assume. See
    *                          {@link #ADDITIONAL_MODULES_KEY} for what a distribution puts in it
+   * @param bundledModules    empty for a config file written before {@link #BUNDLED_MODULES_KEY} existed, or by hand
    */
-  public record Content(Path homePath, String mainClassName, String platformPrefix, List<String> additionalModules) {
+  public record Content(Path homePath, String mainClassName, String platformPrefix, List<String> additionalModules,
+                        List<String> bundledModules) {
   }
 
   public static Content read(Path configFile) throws IOException {
@@ -72,7 +80,8 @@ public final class DevIdeConfig {
     }
 
     return new Content(homePath.normalize(), properties.getProperty(MAIN_CLASS_NAME_KEY), properties.getProperty(PLATFORM_PREFIX_KEY),
-                       splitModules(properties.getProperty(ADDITIONAL_MODULES_KEY)));
+                       splitModules(properties.getProperty(ADDITIONAL_MODULES_KEY)),
+                       splitModules(properties.getProperty(BUNDLED_MODULES_KEY)));
   }
 
   /**
