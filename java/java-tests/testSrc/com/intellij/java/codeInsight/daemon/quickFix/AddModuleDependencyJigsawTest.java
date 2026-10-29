@@ -2,14 +2,21 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -61,6 +68,30 @@ public class AddModuleDependencyJigsawTest extends JavaCodeInsightFixtureTestCas
     PlatformTestUtil.waitWithEventsDispatching("The fix did not import p.A", () -> myFixture.getFile().getText().contains("import p.A;"), 10);
 
     assertTrue(moduleInfo.getText(), moduleInfo.getText().contains("requires dep;"));
+  }
+
+  public void testUndoRevertsTheRequiresDirectiveTogetherWithTheImport() throws IOException {
+    addJigsawModule();
+    PsiFile moduleInfo = myFixture.addFileToProject("module-info.java", "module main {\n}");
+    myFixture.configureByText("C.java", "package q;\n\nclass C {\n  <caret>A a;\n}");
+
+    IntentionAction intention = myFixture.findSingleIntention("Add dependency on module 'dep'");
+    myFixture.launchAction(intention);
+    PlatformTestUtil.waitWithEventsDispatching("The fix did not import p.A", () -> myFixture.getFile().getText().contains("import p.A;"), 10);
+    assertEquals("module main {\n    requires dep;\n}", moduleInfo.getText());
+
+    TestDialogManager.setTestDialog(_ -> Messages.YES);
+    try {
+      FileEditor editor = FileEditorManager.getInstance(getProject()).getSelectedEditor();
+      UndoManager.getInstance(getProject()).undo(editor);
+    }
+    finally {
+      TestDialogManager.setTestDialog(TestDialog.DEFAULT);
+    }
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+
+    assertFalse(myFixture.getFile().getText(), myFixture.getFile().getText().contains("import p.A;"));
+    assertEquals("module main {\n}", moduleInfo.getText());
   }
 
   private Module addJigsawModule() throws IOException {

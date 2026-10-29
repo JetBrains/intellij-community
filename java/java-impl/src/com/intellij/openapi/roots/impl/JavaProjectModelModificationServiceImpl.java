@@ -1,11 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -40,8 +40,6 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
-
-import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 
 public final class JavaProjectModelModificationServiceImpl extends JavaProjectModelModificationService {
   private final Project myProject;
@@ -163,17 +161,14 @@ public final class JavaProjectModelModificationServiceImpl extends JavaProjectMo
       .finishOnUiThread(modality, modules -> {
         try {
           if (modules != null) {
-            CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-              WriteAction.run(() -> {
-                JavaModuleGraphUtil.addDependency(modules.first, modules.second, scope);
-              });
-            });
+            WriteCommandAction.writeCommandAction(from.getProject(), modules.first.getContainingFile())
+              .withName(QuickFixBundle.message("module.info.add.requires.command", modules.second.getName()))
+              .run(() -> JavaModuleGraphUtil.addDependency(modules.first, modules.second, scope));
           }
           result.setResult(null);
         }
         catch (Throwable e) {
           result.setError(e);
-          rethrowControlFlowException(e);
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService())
