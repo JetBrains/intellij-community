@@ -153,7 +153,7 @@ class DevDistSimplePackagingTest {
   private fun classify(
     entry: DevDistPluginPlanEntry,
     contentModuleNames: List<String> = emptyList(),
-    baseline: Boolean = true,
+    decidesSection: Boolean = true,
     refusedContentModules: Set<String> = emptySet(),
   ): DevDistSimplePackaging? {
     return classifySimplePluginPackaging(
@@ -163,7 +163,7 @@ class DevDistSimplePackagingTest {
       ownDescriptorDeclared = true,
       contentModuleJarModules = emptySet(),
       index = index,
-      baseline = baseline,
+      decidesSection = decidesSection,
       refusedContentModules = refusedContentModules,
     )
   }
@@ -239,22 +239,22 @@ class DevDistSimplePackagingTest {
   }
 
   @Test
-  fun `a baseline product that reuses fewer jars than the section names keeps the plan tier`() {
+  fun `the deciding product that reuses fewer jars than the section names keeps the plan tier`() {
     val packaging: DevDistSimplePackaging? = classify(
       entry = planEntry(assets = listOf(mainJar()), inputs = emptyList()),
       contentModuleNames = listOf("intellij.x.backend"),
-      baseline = true,
+      decidesSection = true,
     )
 
     assertThat(packaging).isNull()
   }
 
   @Test
-  fun `a divergent product that reuses fewer jars than the section names is simple and cross-half`() {
+  fun `another product that reuses fewer jars than the section names is simple and cross-half`() {
     val packaging: DevDistSimplePackaging? = classify(
       entry = planEntry(assets = listOf(mainJar()), inputs = emptyList()),
       contentModuleNames = listOf("intellij.x.backend"),
-      baseline = false,
+      decidesSection = false,
     )
 
     assertThat(packaging).isNotNull
@@ -263,11 +263,11 @@ class DevDistSimplePackagingTest {
   }
 
   @Test
-  fun `a baseline product that refuses a content module stays simple`() {
+  fun `the deciding product that refuses a content module stays simple`() {
     val packaging: DevDistSimplePackaging? = classify(
       entry = planEntry(assets = listOf(mainJar()), inputs = emptyList()),
       contentModuleNames = listOf("intellij.x.trial"),
-      baseline = true,
+      decidesSection = true,
       refusedContentModules = setOf("intellij.x.trial"),
     )
 
@@ -514,7 +514,7 @@ class DevDistSimplePackagingTest {
         ownDescriptorDeclared = true,
         contentModuleJarModules = setOf(communityContentModule),
         index = index,
-        baseline = true,
+        decidesSection = true,
         relocatedModules = relocatedModules,
         contentModuleJarLabel = { if (it in relocatedModules) relocatedLabel else index.contentModuleJarLabel(it, dependentIsCommunity = false) },
       ))

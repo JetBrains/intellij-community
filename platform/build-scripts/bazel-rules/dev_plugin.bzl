@@ -168,11 +168,11 @@ def is_library_token(token):
 def dev_dist_plugin_directory(main_module, directory_name = ""):
     """The plugin's directory in the distribution - `("intellij.json", "")` gives `"plugins/json"`.
 
-    The derived name is `convertModuleNameToFileName` of `PluginLayout.kt`: the main module with the `intellij.` prefix
-    removed and every dot replaced by a dash. A layout that states `directory_name` takes it instead. Both plugin tiers
+    The derived name is `convertModuleNameToPluginDirectoryName` of `PluginLayout.kt`: the main module with the
+    `intellij.` prefix and the `.plugin` suffix removed, and every dot replaced by a dash. A layout that states `directory_name` takes it instead. Both plugin tiers
     derive their directory here, so a plugin is placed the same way whichever tier packs it.
     """
-    return "plugins/" + (directory_name if directory_name else main_module.removeprefix("intellij.").replace(".", "-"))
+    return "plugins/" + (directory_name if directory_name else main_module.removeprefix("intellij.").removesuffix(".plugin").replace(".", "-"))
 
 def _check_destination(destination, attr = "jars", jar = True):
     if jar and not destination.endswith(".jar"):

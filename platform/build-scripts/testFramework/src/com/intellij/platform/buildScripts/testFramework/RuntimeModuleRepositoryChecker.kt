@@ -296,7 +296,7 @@ class RuntimeModuleRepositoryChecker private constructor(
 
   private fun isBundledPluginSkipped(mainModuleId: RuntimeModuleId): Boolean {
     //this doesn't support custom plugin directory names, but it's enough for tests
-    val pluginDirectoryName = mainModuleId.name.removePrefix("intellij.").replace('.', '-')
+    val pluginDirectoryName = mainModuleId.name.removePrefix("intellij.").removeSuffix(".plugin").replace('.', '-')
     return pluginDirectoryName in bundledPluginDirectoriesToSkip
   }
 

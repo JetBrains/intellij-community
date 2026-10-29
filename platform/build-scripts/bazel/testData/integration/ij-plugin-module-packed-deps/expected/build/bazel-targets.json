@@ -77,7 +77,7 @@
   "pluginDistributionTargets": {
     "intellij.example.plugin": {
       "target": "@community//plugin:plugin_plugin",
-      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/example-plugin"
+      "distributionDirectory": "out/bazel-out/jvm-fastbuild/bin/plugin/example"
     }
   }
 }

@@ -19,7 +19,7 @@ import org.jetbrains.intellij.build.impl.LIB_DIRECTORY
 import org.jetbrains.intellij.build.impl.PLUGINS_DIRECTORY
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
-import org.jetbrains.intellij.build.impl.convertModuleNameToFileName
+import org.jetbrains.intellij.build.impl.convertModuleNameToPluginDirectoryName
 
 /**
  * The main module of the bundled plugin that owns the JNA copy.
@@ -68,23 +68,23 @@ val COMPOSE_PLUGIN_CONTENT_MODULES: List<String> = listOf(
 )
 
 /**
- * The JNA native tree relative to the IDE home: `plugins/jna-plugin/lib/jna`. It holds one directory per architecture.
+ * The JNA native tree relative to the IDE home: `plugins/jna/lib/jna`. It holds one directory per architecture.
  * The tree is in the `lib/` directory of the plugin [JNA_PLUGIN_MODULE], next to the jar that owns it.
  */
 val JNA_NATIVE_DIR: String = pluginNativeDir(JNA_PLUGIN_MODULE, "jna")
 
-/** The pty4j native tree relative to the IDE home: `plugins/pty4j-plugin/lib/pty4j`, in the plugin [PTY4J_PLUGIN_MODULE]. */
+/** The pty4j native tree relative to the IDE home: `plugins/pty4j/lib/pty4j`, in the plugin [PTY4J_PLUGIN_MODULE]. */
 val PTY4J_NATIVE_DIR: String = pluginNativeDir(PTY4J_PLUGIN_MODULE, "pty4j")
 
 /**
- * The Skiko native tree relative to the IDE home: `plugins/platform-compose-plugin/lib/skiko-awt-runtime-all`, in the
+ * The Skiko native tree relative to the IDE home: `plugins/platform-compose/lib/skiko-awt-runtime-all`, in the
  * plugin [COMPOSE_PLUGIN_MODULE].
  */
 val SKIKO_NATIVE_DIR: String = pluginNativeDir(COMPOSE_PLUGIN_MODULE, "skiko-awt-runtime-all")
 
 /** The native tree of the presigned library [library] in the `lib/` directory of the plugin [pluginModule]. */
 private fun pluginNativeDir(pluginModule: String, library: String): String {
-  return "$PLUGINS_DIRECTORY/${convertModuleNameToFileName(pluginModule)}/$LIB_DIRECTORY/${PRESIGNED_NATIVE_LIBS.getValue(library)}"
+  return "$PLUGINS_DIRECTORY/${convertModuleNameToPluginDirectoryName(pluginModule)}/$LIB_DIRECTORY/${PRESIGNED_NATIVE_LIBS.getValue(library)}"
 }
 
 /**

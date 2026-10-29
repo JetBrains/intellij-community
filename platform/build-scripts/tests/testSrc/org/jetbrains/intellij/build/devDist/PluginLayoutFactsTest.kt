@@ -17,7 +17,7 @@ class PluginLayoutFactsTest {
   fun `no layout gives the convention and no member`() {
     val facts = pluginLayoutFacts(mainModule = "intellij.demo.plugin", layouts = emptyList())
 
-    assertThat(facts.directoryName).isEqualTo("demo-plugin")
+    assertThat(facts.directoryName).isEqualTo("demo")
     assertThat(facts.mainJarName).isEqualTo("demo-plugin.jar")
     assertThat(facts.memberJars).isEmpty()
     // The build gives a plugin with no layout an `auto` one.
@@ -46,8 +46,17 @@ class PluginLayoutFactsTest {
 
   @Test
   fun `the convention drops the intellij prefix and joins the rest with dashes`() {
-    assertThat(pluginJarPlacementConvention("intellij.demo.plugin").directory).isEqualTo("demo-plugin")
+    assertThat(pluginJarPlacementConvention("intellij.demo.tool").directory).isEqualTo("demo-tool")
     assertThat(pluginJarPlacementConvention("fleet.demo").mainJarName).isEqualTo("fleet-demo.jar")
+  }
+
+  @Test
+  fun `the convention drops the plugin suffix from the directory but not from the main jar`() {
+    val placement = pluginJarPlacementConvention("intellij.demo.plugin")
+    assertThat(placement.directory).isEqualTo("demo")
+    assertThat(placement.mainJarName).isEqualTo("demo-plugin.jar")
+    assertThat(PluginLayout.pluginAuto("intellij.demo.plugin") {}.directoryName).isEqualTo("demo")
+    assertThat(PluginLayout.pluginAuto("intellij.demo.plugin") {}.getMainJarName()).isEqualTo("demo-plugin.jar")
   }
 
   @Test

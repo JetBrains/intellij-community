@@ -43,7 +43,7 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
   @JvmField
   internal val excludedModuleLibraries: MutableMap<String, MutableList<String>> = HashMap()
 
-  var directoryName: String = mainJarNameWithoutExtension
+  var directoryName: String = convertModuleNameToPluginDirectoryName(mainModule)
     private set
 
   var versionEvaluator: PluginVersionEvaluator = DEFAULT_PLUGIN_VERSION
@@ -538,10 +538,10 @@ class PluginLayout(val mainModule: String, @Internal @JvmField val auto: Boolean
 
   // as a builder for PluginLayout, that ideally should be immutable
   class PluginLayoutSpec(layout: PluginLayout) : PluginLayoutBuilder(layout) {
-    var directoryName: String = convertModuleNameToFileName(layout.mainModule)
+    var directoryName: String = convertModuleNameToPluginDirectoryName(layout.mainModule)
       /**
        * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default, the main module name is used
-       * (with stripped `intellij` prefix and dots replaced by dashes).
+       * (with stripped `intellij` prefix and `plugin` suffix, and dots replaced by dashes).
        * **Don't set this property for new plugins**; it is temporarily added to keep the layout of old plugins unchanged.
        */
       @Deprecated("A new plugin takes the directory name of its main module.")
@@ -808,3 +808,8 @@ class SuffixedPluginVersion(
 }
 
 internal fun convertModuleNameToFileName(moduleName: String): String = moduleName.removePrefix("intellij.").replace('.', '-')
+
+/** The default plugin directory under `plugins/`. Unlike [convertModuleNameToFileName], it also removes the `.plugin` suffix. */
+internal fun convertModuleNameToPluginDirectoryName(moduleName: String): String {
+  return moduleName.removePrefix("intellij.").removeSuffix(".plugin").replace('.', '-')
+}

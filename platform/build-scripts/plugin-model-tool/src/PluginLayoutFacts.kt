@@ -80,8 +80,9 @@ class PluginJarPlacement(
  */
 @ApiStatus.Internal
 fun pluginJarPlacementConvention(mainModule: String): PluginJarPlacement {
-  val directory = mainModule.removePrefix("intellij.").replace('.', '-')
-  return PluginJarPlacement(directory = directory, mainJarName = "$directory.jar")
+  val directory = mainModule.removePrefix("intellij.").removeSuffix(".plugin").replace('.', '-')
+  val mainJarNameWithoutExtension = mainModule.removePrefix("intellij.").replace('.', '-')
+  return PluginJarPlacement(directory = directory, mainJarName = "$mainJarNameWithoutExtension.jar")
 }
 
 /**

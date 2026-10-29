@@ -163,6 +163,8 @@ def _computeUntilBuild(until_build, since_build, ide_build_number, ide_stability
 def _module_name_to_directory_name(module_name):
     if module_name.startswith("intellij."):
         module_name = module_name[len("intellij."):]
+    if module_name.endswith(".plugin"):
+        module_name = module_name[:-len(".plugin")]
     return module_name.replace(".", "-")
 
 ij_plugin = rule(

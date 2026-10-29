@@ -96,7 +96,9 @@ internal class DevDistSimplePackaging(
 internal fun isLabelToken(token: String): Boolean = "//" in token
 
 /** The plugin directory the descriptor rule derives when the layout states none. */
-internal fun derivedPluginDirectoryName(mainModule: String): String = mainModule.removePrefix("intellij.").replace('.', '-')
+internal fun derivedPluginDirectoryName(mainModule: String): String {
+  return mainModule.removePrefix("intellij.").removeSuffix(".plugin").replace('.', '-')
+}
 
 /** The writer every dev-distribution jar takes: entities merged, and a library manifest kept only for one meaningful source. */
 private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
@@ -114,9 +116,10 @@ private val DEFAULT_WRITER = JarWriterRecipe(mergeEntities = true)
  * A jar can merge a test-only module of the catalogue. The index must name the test jar of that module. A plugin with
  * such a module is cross-half.
  *
- * [baseline] says whether the product is in the baseline residue class of the plugin. A divergent product states its
- * packaging in its product package, which lists every reused jar, so its reuse set may cover fewer content modules than
- * the section names: a frontend product packs no backend content module.
+ * [decidesSection] says whether the product is the first product of the baseline residue class of the plugin. The
+ * plugin's own section states the packaging of that product. Another product states a different packaging in its product
+ * package, which lists every reused jar, so its reuse set may cover fewer content modules than the section names: a
+ * frontend product packs no backend content module.
  *
  * [refusedContentModules] are content modules the baseline descriptor refuses. They stay in the section list, and the
  * packer does not ship them. They are not part of the reuse set the section must cover.
@@ -133,7 +136,7 @@ internal fun classifySimplePluginPackaging(
   ownDescriptorDeclared: Boolean,
   contentModuleJarModules: Set<String>,
   index: DevDistBazelIndex,
-  baseline: Boolean,
+  decidesSection: Boolean,
   refusedContentModules: Set<String> = emptySet(),
   relocatedModules: Set<String> = emptySet(),
   contentModuleJarLabel: (String) -> String? = { index.contentModuleJarLabel(it, dependentIsCommunity = index.planPackageIsCommunity) },
@@ -223,7 +226,7 @@ internal fun classifySimplePluginPackaging(
   val sectionReuse = contentModuleNames.filterTo(HashSet()) { it !in moduleTokens && it !in refusedContentModules }
   val reusedSet = reused.toSet()
   if (reused.size != reusedSet.size) return null
-  if (baseline && !reusedSet.containsAll(sectionReuse)) return null
+  if (decidesSection && !reusedSet.containsAll(sectionReuse)) return null
   val sectionIsCommunity = index.isCommunity(mainModule) ?: return null
   val labelTokens = jars.values.flatten().filter(::isLabelToken)
   val relocatedReuse = reused.filter { it in relocatedModules }.sorted()

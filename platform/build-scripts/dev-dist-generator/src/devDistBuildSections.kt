@@ -237,51 +237,54 @@ internal class DevDistBuildSections private constructor(
   /**
    * Binds the folded entries, classifies each plugin's packaging, and renders every dev section.
    *
-   * A plugin is simple in every product or in none, and the products of the baseline residue class decide. They share
-   * the packaging the plugin's own section states, so two of them that plan the plugin differently stop the run. A
-   * product outside the baseline class states its own packaging in its product package, see [DescriptorResidueClasses]:
-   * the frontend filter of a product without an embedded frontend packs a content module into the main jar that another
-   * product packs into a jar of its own. Such a product keeps the plan file when the baseline class does, and stops the
-   * run when only the baseline class packs the plugin as a simple plugin. The product mode changes no packaging: a
-   * frontend product packs the plugin as its monolith does, and `dev_plugin` places no jar of a module the mode refuses.
+   * A plugin is simple in every product or in none, and the first product of the baseline residue class decides. The
+   * plugin's own section states the packaging of that product. Another product that packs the plugin differently states
+   * its own packaging in its product package, see [DescriptorResidueClasses]. This applies inside the baseline class too:
+   * a frontend product can read the baseline leaf and reuse no backend content module. The frontend filter of a product
+   * without an embedded frontend packs a content module into the main jar that another product packs into a jar of its
+   * own. Such a product keeps the plan file when the deciding product does, and stops the run when only the deciding
+   * product packs the plugin as a simple plugin. The product mode changes no packaging: a frontend product packs the
+   * plugin as its monolith does, and `dev_plugin` places no jar of a module the mode refuses.
    */
   fun bindPluginPlanEntries(entries: List<DevDistPluginPlanEntry>) {
     check(boundPluginPlanEntries == null) { "The plugin plan entries are already bound" }
     val expectedKeys = entries.flatMapTo(HashSet()) { entry -> entry.records.keys.map(entry::key) }
     check(expectedKeys == completedPluginPlans.keys) { "The folded entries do not cover the registered plans" }
     boundPluginPlanEntries = java.util.List.copyOf(entries)
-    val classified = entries.map { entry ->
+    // The first product of the baseline class, in product order, decides whether the plugin is simple. Every other
+    // product follows that tier. A product that packs the simple plugin differently states its own `dev_plugin` in a
+    // product package, and products that pack alike share it, see `devPluginPackageProduct`. A plugin that keeps the
+    // plan file gets a chain class for each differing plan text instead, see `renderGeneratedDevDistPluginExecutions`.
+    val rank = half.splitProducts.withIndex().associate { (index, product) -> product to index }
+    val ordered = entries.sortedBy { rank.get(it.product) ?: Int.MAX_VALUE }
+    val decidedPlugins = HashSet<String>()
+    val classified = ordered.map { entry ->
       val draft = pendingSections.get(entry.mainModule)
       // A plugin without a neutral descriptor entry has no residue classes. Treat every product as baseline so the
       // first pass still decides packaging; non-neutral plans stay on the plan file.
       val baseline = residueClasses.get(entry.mainModule)?.isBaseline(entry.product) ?: true
+      val decidesSection = baseline && decidedPlugins.add(entry.mainModule)
       val packaging = classifySimplePluginPackaging(
         entry = entry,
         descriptorInput = devDistDescriptorInputId(entry.mainModule),
         contentModuleNames = draft?.contentModuleNames.orEmpty(),
         ownDescriptorDeclared = verdicts.ownDescriptorTarget(entry.mainModule, "") != null,
         contentModuleJarModules = verdicts.contentModuleJarLabels.keys,
-        baseline = baseline,
+        decidesSection = decidesSection,
         refusedContentModules = draft?.refusedContentModules.orEmpty(),
         index = index,
         relocatedModules = relocatedContentModuleJarCalls.keys,
         contentModuleJarLabel = ::contentModuleJarLabel,
       )
-      ClassifiedPluginPlanEntry(entry = entry, baseline = baseline, packaging = packaging)
+      ClassifiedPluginPlanEntry(entry = entry, decidesSection = decidesSection, packaging = packaging)
     }
-    // The first product of the baseline class, in product order, decides whether the plugin is simple. Every other
-    // product follows that tier. A product that packs the simple plugin differently states its own `dev_plugin` in a
-    // product package, and products that pack alike share it, see `devPluginPackageProduct`. A plugin that keeps the
-    // plan file gets a chain class for each differing plan text instead, see `renderGeneratedDevDistPluginExecutions`.
-    val rank = half.splitProducts.withIndex().associate { (index, product) -> product to index }
-    val ordered = classified.sortedBy { rank.get(it.entry.product) ?: Int.MAX_VALUE }
     val byPlugin = TreeMap<String, DevDistSimplePackaging?>()
-    for ((entry, baseline, packaging) in ordered) {
-      if (baseline && entry.mainModule !in byPlugin) {
+    for ((entry, decidesSection, packaging) in classified) {
+      if (decidesSection) {
         byPlugin.put(entry.mainModule, packaging)
       }
     }
-    for ((entry, _, packaging) in ordered) {
+    for ((entry, _, packaging) in classified) {
       check(entry.mainModule in byPlugin) { "Plugin '${entry.mainModule}' has no entry of a baseline product" }
       val first = byPlugin.get(entry.mainModule) ?: continue
       checkNotNull(packaging) {
@@ -1060,10 +1063,13 @@ private class DevSectionWarnings : (String) -> Unit {
 /** The key of a product's own packaging: the plugin and the product, which together name its product package. */
 private fun divergentPackagingKey(mainModule: String, product: String): String = "$mainModule/$product"
 
-/** One folded entry with its classification. [baseline] says whether [entry]'s product is in the baseline residue class. */
+/**
+ * One folded entry with its classification. [decidesSection] says whether [entry]'s product is the first product of the
+ * baseline residue class, whose packaging the plugin's own section states.
+ */
 private data class ClassifiedPluginPlanEntry(
   @JvmField val entry: DevDistPluginPlanEntry,
-  @JvmField val baseline: Boolean,
+  @JvmField val decidesSection: Boolean,
   @JvmField val packaging: DevDistSimplePackaging?,
 )
 
