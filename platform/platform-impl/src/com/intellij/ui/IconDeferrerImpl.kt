@@ -56,8 +56,7 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
   // we restrict max cache size for cases when a user reads code only.
   @Volatile
   private var maxCacheSize: Int = preConfiguredCacheSize
-  // Due to a critical bug (https://youtrack.jetbrains.com/issue/IDEA-320644/Improve-Smart-PSI-pointer-equals-implementation),
-  // we are not using "caffeine".
+  // We do not use "caffeine" because of https://youtrack.jetbrains.com/issue/IJPL-1310 (Smart PSI pointer "equals").
   private val iconCache: ConcurrentMap<Any, Icon> = ConcurrentHashMap(min(1000, preConfiguredCacheSize))
   @Volatile
   private var mightBePopulated: Boolean = false // used to avoid multiple calls CHM#clear() which might be expensive, no need to be atomic or something else
