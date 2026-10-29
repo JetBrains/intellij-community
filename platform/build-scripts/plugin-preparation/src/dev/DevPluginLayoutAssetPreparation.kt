@@ -69,8 +69,8 @@ sealed interface DevPluginLayoutAssetSource {
    * One CIDR dependency archive, as a `<name>-dependencies.json` file under `CIDR/` declares it for one platform and architecture.
    * [name] is the `name` of that configuration, such as `cmake` or `LLDBFrontend`. [platform] is a CIDR platform
    * token: `any`, `cygwin`, `linux`, `mac`, `win`, or `wsl`. [arch] is a CIDR architecture token: `any`, `aarch64`,
-   * `x64`, or `x86`. The generator binds the source to the `dev_launch_cidr_<name>_<platform>_<arch>` repository
-   * that `build/dev_launch_dependencies.bzl` declares from the same configuration. The archive is a `.zip` for `win`
+   * `x64`, or `x86`. The generator binds the source to the `cidr_<name>_<platform>_<arch>` repository
+   * that `CIDR/cidr-build/downloads.bzl` declares from the same configuration. The archive is a `.zip` for `win`
    * and a `.tar.gz` otherwise. An asset extracts it with an `archive-tree` transform, whose `includes` carry the
    * `filePatterns` and whose `executables` carry the `executablePatterns` of the configuration entry.
    */

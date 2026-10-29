@@ -35,7 +35,7 @@ object TerminalLibGhosttyVtDownloader {
   @JvmStatic
   fun getOrDownloadLibRoot(communityRoot: Path): Path = getOrDownloadLibRoot(BuildDependenciesCommunityRoot(communityRoot))
 
-  /** Keep in sync with `lib_ghostty_vt_url` in `community/build/dev_launch_dependencies.bzl`. */
+  /** Keep in sync with `lib_ghostty_vt_url` in `community/plugins/terminal/downloads.bzl`. */
   private fun downloadUrl(version: String): String =
     "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/$LIB_GHOSTTY_VT/$LIB_GHOSTTY_VT-$version.zip.zst"
 }

@@ -316,8 +316,7 @@ fun getContribRepositoryPlugins(): List<PluginLayout> = java.util.List.of(
     // jSerialComm java JAR - Remember to update the binary dependency when updating to a new version!
     spec.withProjectLibrary("jetbrains.intellij.deps.jSerialComm", LibraryPackMode.STANDALONE_SEPARATE)
 
-    // jSerialComm native library. Keep the content hash in lockstep with `jserialcomm_url` in
-    // `community/build/dev_launch_dependencies.bzl`.
+    // jSerialComm native library. `contrib/serial-monitor/downloads.bzl` reads `JSERIALCOMM_NATIVE_HASH`.
     spec.withGeneratedResources(jSerialCommLayoutAssetSpec()) { targetDir, context ->
       val uri = URI.create(jSerialCommDownloadUrl())
       val downloaded = BuildDependenciesDownloader.downloadFileToCacheLocation(context.paths.communityHomeDirRoot, uri, context.httpSession)
