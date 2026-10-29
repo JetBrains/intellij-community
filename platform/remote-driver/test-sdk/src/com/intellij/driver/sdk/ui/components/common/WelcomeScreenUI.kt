@@ -14,11 +14,17 @@ import com.intellij.driver.sdk.ui.components.elements.accessibleTree
 import com.intellij.driver.sdk.ui.components.elements.popup
 import com.intellij.driver.sdk.ui.components.elements.tree
 import com.intellij.driver.sdk.ui.ui
+import com.intellij.driver.sdk.waitFor
 import java.awt.Window
 import javax.swing.JTree
+import kotlin.time.Duration.Companion.minutes
 
 fun Finder.welcomeScreen(action: WelcomeScreenUI.() -> Unit = {}): WelcomeScreenUI {
   val nonModalWelcomeScreenEnabled = driver.withContext {
+    val componentsLoaded = utility(LoadingStateRef::class, rdTarget = RdTarget.BACKEND).valueOf("COMPONENTS_LOADED")
+    waitFor("Backend components are loaded", timeout = 1.minutes) {
+      componentsLoaded.isOccurred()
+    }
     new(
       WelcomeAccessPointEpRef::class,
       "com.intellij.platform.ide.welcomeScreenAccessPoint",
@@ -121,6 +127,12 @@ class NonModalWelcomeScreenUI(data: ComponentData) : WelcomeScreenUI(data) {
   }
 
   private fun disclosureButton(accessibleName: String): UiComponent = x { and(byType("com.intellij.ui.components.DisclosureButton"), byAccessibleName(accessibleName)) }
+}
+
+@Remote("com.intellij.diagnostic.LoadingState")
+private interface LoadingStateRef {
+  fun valueOf(name: String): LoadingStateRef
+  fun isOccurred(): Boolean
 }
 
 @Remote("com.intellij.openapi.extensions.ExtensionPointName")
