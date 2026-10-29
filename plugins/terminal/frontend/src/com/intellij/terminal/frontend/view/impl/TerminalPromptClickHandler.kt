@@ -78,7 +78,7 @@ data class TerminalCursorMove(val direction: Direction, val keyCount: Int) {
  * Returns null if the cursor is already there, or if the command, the cursor or the click is out of reach.
  *
  * The move stays in the line where the command starts, because the continuation lines start with an unknown prompt.
- * A click in the prompt moves the cursor to the command start.
+ * A click in the prompt does not move the cursor.
  * One key press moves the cursor over one character and the zero-width code points after it, as readline and zle do.
  */
 @ApiStatus.Internal
@@ -89,13 +89,14 @@ fun calculateCursorMoveToClick(model: TerminalOutputModel, block: TerminalComman
   if (block.outputStartOffset != null) return null
   val cursor = model.cursorOffset
   if (commandStart < model.startOffset || commandStart > cursor) return null
+  if (clickOffset < commandStart) return null
   val line = model.getLineByOffset(commandStart)
   if (model.getLineByOffset(cursor) != line || model.getLineByOffset(clickOffset) != line) return null
 
   // The indexes below are relative to the command start.
   val commandText = model.getText(commandStart, model.getEndOfLine(line)).toString()
   val cursorIndex = (cursor - commandStart).toInt()
-  val targetIndex = (clickOffset - commandStart).coerceAtLeast(0L).toInt()
+  val targetIndex = (clickOffset - commandStart).toInt()
   return when {
     targetIndex < cursorIndex -> {
       TerminalCursorMove(TerminalCursorMove.Direction.LEFT, commandText.keyCount(targetIndex, cursorIndex))
