@@ -926,6 +926,10 @@
                  description="Maximum number of recent commits shown for Amend and completion of fixup, squash, and amend commit messages"
                  restartRequired="true"/>
 
+    <registryKey key="git.commit.recent.commits.repository.git.limit" defaultValue="3"
+                 description="Maximum number of repositories for which recent commits for amend, fixup and squash completion are retrieved using running git commands directly"
+                 restartRequired="false"/>
+
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
                  description="Use Log to collect Rebase Entries"/>
 
