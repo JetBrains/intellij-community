@@ -26,6 +26,8 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationProvider
+import com.intellij.ui.JBColor
+import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.util.ui.JBUI
@@ -72,7 +74,8 @@ private fun createScriptEditorToolbar(fileEditor: FileEditor, left: ActionGroup,
         targetComponent = target
         isReservePlaceAutoPopupIcon = false
     }
-    return SplitEditorToolbar(toolbar(left), toolbar(right))
+    val separator = JBColor.namedColor("EditorTabs.underTabsBorderColor", JBUI.CurrentTheme.EditorTabs.borderColor())
+    return SplitEditorToolbar(toolbar(left), toolbar(right)).apply { border = CustomLineBorder(separator, 0, 0, 1, 0) }
 }
 
 private class ShownToolbar(val provider: ScriptEditorToolbarProvider, val component: JComponent?, val lifetime: Disposable)
