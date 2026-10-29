@@ -24,7 +24,9 @@ class DefaultIconRenderer(val iconInstance: DefaultLayeredIconDescriptor, privat
     }
 
     override fun render(paintingContext: LayerPaintingContext) {
-        if (lastThemeDigest != context.theme.digest()) {
+        val themeDigest = context.theme.digest()
+        if (lastThemeDigest != themeDigest) {
+          lastThemeDigest = themeDigest
           layerRenderers = createRenderers()
         }
         val usedDimensions = calculateUsedDimensions(paintingContext.scaling)

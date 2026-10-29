@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.icons.impl.intellij.rendering
 
-import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.CoroutineScope
 import com.intellij.platform.icons.impl.intellij.rendering.images.IntelliJImageResourceProvider
 import com.intellij.platform.icons.rendering.ImageModifiers
@@ -40,17 +39,6 @@ class IntelliJIconRendererManager: DefaultIconRendererManager() {
     updateFlow: MutableIconUpdateFlow,
     defaultImageModifiers: ImageModifiers?,
   ): RenderingContext {
-    val knownModifiers = defaultImageModifiers as? DefaultImageModifiers
-    return DefaultRenderingContext(
-      updateFlow,
-      DefaultImageModifiers(
-        knownModifiers?.colorFilter,
-        knownModifiers?.svgPatcher,
-        StartupUiUtil.isDarkTheme,
-        knownModifiers?.stroke
-      ),
-      themeContext,
-      imageProvider
-    )
+    return DefaultRenderingContext(updateFlow, defaultImageModifiers as? DefaultImageModifiers, themeContext, imageProvider)
   }
 }
