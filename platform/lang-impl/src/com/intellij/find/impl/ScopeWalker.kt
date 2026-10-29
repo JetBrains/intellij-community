@@ -115,23 +115,23 @@ internal class ScopeWalker(
       }
     }
     else if (directoryToSearchIn != null) {
-      //Directory could be anywhere outside the project, hence it is worth wrapping it into a cache-avoiding wrapper,
-      // so walking through its children won't trash VFS cache with new entries from some rarely used file-tree:
-      val cacheAvoidingDirectory = NewVirtualFile.asCacheAvoiding(directoryToSearchIn)
+      // The directory can lie outside the project. Wrap a persistent VFS directory so the walk does not fill the VFS cache
+      // with entries from a rarely used file tree. An LSP virtual file is not persistent and is walked as is.
+      val directory = (directoryToSearchIn as? NewVirtualFile)?.asCacheAvoiding() ?: directoryToSearchIn
       if (withSubdirectories) {
         // the directory that stands for the project holds only non-indexable files, so a reliable searcher covers its walk too
         if (directoryStandsForProject && skipNonIndexableRoots) {
           nonIndexableWalked = false
         }
         else {
-          items.add(WorkItem.Walk.File(cacheAvoidingDirectory))
+          items.add(WorkItem.Walk.File(directory))
         }
 
         // DirectorySearchEngine is not obliged to add unsaved documents to the search queue - do it now.
         getUnsavedDocumentsUnderDirectory(directoryToSearchIn).mapTo(items) { WorkItem.Walk.File(it) }
       }
       else {
-        cacheAvoidingDirectory.children.mapTo(items) { WorkItem.Walk.File(it) }
+        directory.children.mapTo(items) { WorkItem.Walk.File(it) }
       }
       //MAYBE RC: should we return early here? Should FindModelExtension be added if user explicitly
       //          request a search in a specific directory _only_?
