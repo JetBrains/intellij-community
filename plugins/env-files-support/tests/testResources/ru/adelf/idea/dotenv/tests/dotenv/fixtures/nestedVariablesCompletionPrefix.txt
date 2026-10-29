@@ -1,1 +1,0 @@
-PROPERTY_1="${<caret>}value"

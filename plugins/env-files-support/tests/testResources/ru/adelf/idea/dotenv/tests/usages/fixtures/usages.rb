@@ -1,1 +1,0 @@
-ENV['RUBY_TEST']

@@ -1,7 +1,0 @@
-DotEnvTokenType.KEY_CHARS ('VAR_1')
-DotEnvTokenType.SEPARATOR ('=')
-DotEnvTokenType.QUOTE ('"')
-DotEnvTokenType.NESTED_VARIABLE_START ('${')
-DotEnvTokenType.KEY_CHARS ('AWIntellijIdeaRulezzz')
-DotEnvTokenType.NESTED_VARIABLE_END (' }')
-DotEnvTokenType.QUOTE ('"')

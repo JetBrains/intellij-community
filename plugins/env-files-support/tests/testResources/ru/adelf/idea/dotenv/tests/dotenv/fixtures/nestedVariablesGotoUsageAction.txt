@@ -1,2 +1,0 @@
-2|PROPERTY_B|="|Using |${|PROPERTY_A|}"
-3|PROPERTY_C|="|Also using |${|PROPERTY_A|}"

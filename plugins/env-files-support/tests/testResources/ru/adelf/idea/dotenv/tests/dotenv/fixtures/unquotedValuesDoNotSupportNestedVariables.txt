@@ -1,7 +1,0 @@
-.env file
-  DotEnvPropertyImpl(PROPERTY)
-    DotEnvKeyImpl(KEY)
-      PsiElement(DotEnvTokenType.KEY_CHARS)('VAR')
-    PsiElement(DotEnvTokenType.SEPARATOR)('=')
-    DotEnvValueImpl(VALUE)
-      PsiElement(DotEnvTokenType.VALUE_CHARS)('foo${bar}')

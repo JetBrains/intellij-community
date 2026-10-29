@@ -54,15 +54,16 @@
 
     <content namespace="jetbrains">
       <module name="intellij.dotenv.kotlin"/>
+      <module name="intellij.dotenv.php"/>
+      <module name="intellij.dotenv.go"/>
+      <module name="intellij.dotenv.rust"/>
+      <module name="intellij.dotenv.ruby"/>
+      <module name="intellij.dotenv.docker"/>
     </content>
     <content>
       <module name="intellij.dotenv.java"/>
       <module name="intellij.dotenv.python"/>
     </content>
-
-    <xi:include href="/META-INF/dotenv-ultimate.xml">
-        <xi:fallback/>
-    </xi:include>
 
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="ru.adelf.idea.dotenv.DotEnvSettings"/>

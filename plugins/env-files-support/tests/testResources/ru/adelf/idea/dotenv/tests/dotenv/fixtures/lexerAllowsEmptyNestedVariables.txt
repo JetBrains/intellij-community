@@ -1,6 +1,0 @@
-DotEnvTokenType.KEY_CHARS ('KEY')
-DotEnvTokenType.SEPARATOR ('=')
-DotEnvTokenType.QUOTE ('"')
-DotEnvTokenType.NESTED_VARIABLE_START ('${')
-DotEnvTokenType.NESTED_VARIABLE_END ('}')
-DotEnvTokenType.QUOTE ('"')
