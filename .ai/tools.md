@@ -3,14 +3,36 @@
 The repository guide (`AGENTS.md`, section **Tools**) holds the rules. This file holds the recipes and the
 inventories that the rules do not need in every session.
 
-The search wrappers are `./community/tools/fd.cmd` and `./community/tools/rg.cmd` in the monorepo, and
-`./tools/fd.cmd` and `./tools/rg.cmd` in a community checkout.
-
 The code index is `./community/tools/accio.cmd` in the monorepo, and `./tools/accio.cmd` in a community checkout.
 It runs the `accio` on the `PATH` when there is one. Else it runs the pinned build, which it downloads on the
 first run. `accio <command> --help` lists the commands.
 
-## Search wrappers
+The text wrappers are `./community/tools/rg.cmd` and `./community/tools/fd.cmd` in the monorepo, and
+`./tools/rg.cmd` and `./tools/fd.cmd` in a community checkout. Use them only where accio does not look: a log,
+build output, or a path outside the repository.
+
+## accio
+
+Below, `accio` stands for `accio.cmd`. `accio <command> --help` lists the options.
+
+- A task in words, no identifier yet: `accio context '<the question>'`.
+- A behaviour or a concept: `accio locate '<a full question>' --mode semantic`.
+- A known identifier: `accio symbol Name`, `accio references Name`, `accio trace Name --direction callers`,
+  `accio implementations Type`.
+- A known string: `accio locate 'text' --scope <dir>/`. A pattern: add `--mode regex`.
+- A file by name: `accio files '<name or glob>'`.
+- Dead code: `accio unused --scope <dir>/`, with the `duplicate-and-dead-code` skill.
+- Each answer carries `quality` (`exact`, `structural`, `heuristic`) and `completeness`. Trust an `exact` and
+  `complete` answer as it is.
+- accio indexes the files that git tracks, dot-directories such as `.agents/` included.
+- A `--scope` that names a git-ignored file or a directory under it is read from the working tree, for example
+  `--scope out/air/`. Two cases still miss: a directory outside the repository answers 0 hits
+  ([accio#26](https://github.com/JetBrains/accio/issues/26)), and `--scope out/` searches the tracked `**/out/**`
+  directories instead of the root `out/` ([accio#27](https://github.com/JetBrains/accio/issues/27)). Use `rg.cmd`
+  there.
+- `--mode regex` has no look-around. Use `rg.cmd --pcre2` for it.
+
+## Text wrappers
 
 - `fd.cmd` and `rg.cmd` skip a dot-directory by default. Agent assets live in `.agents/`, `.claude/`,
   and `.codex/`. Pass `-H` (`--hidden`) to find a skill, a guideline, or a hook. Without it you

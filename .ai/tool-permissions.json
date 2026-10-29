@@ -164,7 +164,7 @@
 
   "$comment_denyTools": [
     "Whole tools, denied by name. Claude Code drops these from the model's context entirely, so no",
-    "call is attempted; the guide's Tooling rules point at the ijproxy and rg.cmd/fd.cmd equivalents.",
+    "call is attempted; the guide's Tooling rules point at the accio and rg.cmd equivalents.",
     "Codex has no such tools, so its rules file omits this section."
   ],
   "denyTools": ["Grep", "Glob"],

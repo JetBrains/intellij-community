@@ -53,21 +53,19 @@ Branch Deck is optional. First check for the `branch-deck` skill: the skill list
 
 ## Tools
 
-Never use the `code-search` skill. The search tools below replace it. Recipes, the Windows rules, and the full tool inventory: [Tools Reference](./.ai/tools.md).
+Never use the `code-search` skill. The search tools below replace it. The accio commands, recipes, the Windows rules, and the full tool inventory: [Tools Reference](./.ai/tools.md).
 
-### Search & navigation (ijproxy preferred)
+### Search & navigation (accio)
 
-Use `search_symbol` for a class, a method, or a field. Use `search_file` to find a file by glob. Use `search_text` and `search_regex` for a string, a comment, or another match that is not a symbol.
-
-These are `mcp__ijproxy__<name>`. Look them up in the harness deferred-tool catalog before you use a shell or a non-ijproxy fallback.
+Search the source with `./tools/accio.cmd`. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. For a log, build output, or a path outside the repository, use `./tools/rg.cmd` or `./tools/fd.cmd`.
 
 ### IDE-backed semantic tools
 
-Available through ijproxy or JetBrains MCP: `lint_files`, `get_symbol_info`, `rename`, `reformat_file`, the threading and lock checks, and the project, VCS and run-configuration tools. Prefer a real refactoring over a manual search and replace.
+Available through ijproxy or JetBrains MCP: `lint_files`, `get_symbol_info`, `rename`, `reformat_file`, the threading and lock checks, and the project, VCS and run-configuration tools. Prefer a real refactoring over a manual search and replace. An IDE answers from the project that it has open, not from a lease.
 
 ### Tooling rules
 
-- Prefer ijproxy for a content or symbol **search** and for a semantic operation. Fall back to JetBrains MCP, then to `./tools/fd.cmd` (files) and `./tools/rg.cmd` (text and regex), only when ijproxy is unavailable. Pass `-H` to see a dot-directory such as `.agents/`.
+- Search with accio, not with the ijproxy `search_*` tools or `./tools/fd.cmd`.
 - Do not shell out for a file **search**, inside the repo or outside it. This is enforced: the `Glob` and `Grep` tools are denied, and so are the `grep` and `find` commands in every pipeline position.
 - Prefer a spelling the allowlist knows, because a novel one asks for a prompt. Add a new entry to `.ai/tool-permissions.json`, never to a harness allowlist.
 - Shell is allowed where this guide documents it, and for git, build, and test. Prefer `git_status` when that tool is available. Outside the working copy it is task-scoped: read what this repo's tooling produced, or what the user or a skill named, and never survey the machine.

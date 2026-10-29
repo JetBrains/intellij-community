@@ -188,7 +188,7 @@ internal notes only
 ## Required placeholders
 
 - `{{TOOLS_DIR}}` is filled from the target's resolved edition: `./community/tools` for
-  `ULTIMATE`, `./tools` for `COMMUNITY`. Use it for every `fd.cmd`/`rg.cmd` reference instead
+  `ULTIMATE`, `./tools` for `COMMUNITY`. Use it for every `accio.cmd`/`rg.cmd` reference instead
   of a pair of `IF_EDITION` blocks, so a search rule is written once and cannot drift between
   editions.
 
