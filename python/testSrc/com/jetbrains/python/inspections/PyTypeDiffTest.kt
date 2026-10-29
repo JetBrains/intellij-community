@@ -251,6 +251,23 @@ class PyTypeDiffTest : PyCodeInsightTestCase() {
     assertTrue(codeLineTexts(tooltip).none { "list[int]" in it || "set[int]" in it }, tooltip)
   }
 
+  // With the registry flag off, the report lists only the overloads that take this number of arguments.
+  @Test
+  @TestFor(issues = ["PY-90882"])
+  fun `registry flag limits the overload-call report to the overloads that take the arguments`() {
+    Registry.get("python.type.checker.overload.report.all.candidates").setValue(false, testDisposable)
+    val warning = warnings<PyTypeCheckerInspection>("""
+      from typing import overload
+      @overload
+      def f(node: object): ...
+      @overload
+      def f(node: str, action: None): ...
+      def f(node, action=None): ...
+      f("s", 1)
+    """).single()
+    assertEquals("Expected type 'None', got 'Literal[1]' instead", warning.description)
+  }
+
   // A type variable with a bound accepts only a type within the bound. Here `int` is not a `State`, so the parameter
   // type stands out, although an unsolved type variable on its own would accept any type.
   @Test
