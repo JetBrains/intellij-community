@@ -2,11 +2,17 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.util.InvalidDataException;
 import junit.framework.TestCase;
 import org.jdom.Element;
 
 import java.awt.Color;
 import java.awt.Font;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -90,6 +96,38 @@ public class TextAttributeTest extends TestCase {
   public void testFontFamiliesMakeAttributesNotEmpty() {
     assertTrue(new TextAttributes().isEmpty());
     assertFalse(withFontFamilies(FontFamilies.of("JetBrains Mono")).isEmpty());
+  }
+
+  public void testWriteAndReadFontFamiliesInElement() {
+    TextAttributes attributes = withFontFamilies(FontFamilies.of("JetBrains Mono", "Noto Sans CJK JP"));
+    assertEquals("JetBrains Mono,Noto Sans CJK JP", writeAndReadField(attributes, "FONT_FAMILIES"));
+
+    Element element = new Element("value");
+    attributes.writeExternal(element);
+
+    assertEquals(attributes, new TextAttributes(element));
+  }
+
+  public void testReadWrongFontFamiliesFromElementFails() {
+    Element element = new Element("value");
+    addField(element, "FONT_FAMILIES", "JetBrains Mono,,Noto Serif");
+    try {
+      TextAttributes attributes = new TextAttributes(element);
+      fail("an empty font family name must be rejected, but the result is " + attributes);
+    }
+    catch (InvalidDataException ignored) {
+    }
+  }
+
+  public void testWriteAndReadFontFamiliesInBinaryData() throws IOException {
+    TextAttributes attributes = new TextAttributes(new Color(0x112233), null, null, null, Font.BOLD);
+    attributes.setFontFamilies(FontFamilies.of("JetBrains Mono", "Noto Sans CJK JP"));
+
+    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    attributes.writeExternal(new DataOutputStream(bytes));
+    TextAttributes restored = new TextAttributes(new DataInputStream(new ByteArrayInputStream(bytes.toByteArray())));
+
+    assertEquals(attributes, restored);
   }
 
   public void testSetAttributesResetsFontFamilies() {

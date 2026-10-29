@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -118,6 +119,19 @@ public final class TextAttributesReaderTest extends LightPlatformTestCase {
 
   private int readFontType(Object value) throws Exception {
     return read(value("FONT_TYPE", value)).getFontType();
+  }
+
+  public void testFontFamilies() throws Exception {
+    assertNull(readFontFamilies(null));
+    assertNull(readFontFamilies(""));
+    assertNull(readFontFamilies("JetBrains Mono,,Noto Serif"));
+    assertEquals(FontFamilies.of("JetBrains Mono"), readFontFamilies("JetBrains Mono"));
+    assertEquals(FontFamilies.of("JetBrains Mono", "Noto Serif"), readFontFamilies("JetBrains Mono, Noto Serif"));
+    compare(value("FONT_FAMILIES", "JetBrains Mono,Noto Serif"));
+  }
+
+  private FontFamilies readFontFamilies(Object value) throws Exception {
+    return read(value("FONT_FAMILIES", value)).getFontFamilies();
   }
 
   public void testTextAttributesCompatibility() throws Exception {

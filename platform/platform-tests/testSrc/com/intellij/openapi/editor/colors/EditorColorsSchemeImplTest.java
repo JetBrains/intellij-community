@@ -353,6 +353,17 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testTextAttributesFontFamiliesSurviveWriteRead() {
+    TextAttributesKey key = TextAttributesKey.createTextAttributesKey("TEST_FONT_FAMILIES_ROUND_TRIP");
+    TextAttributes attributes = new TextAttributes(new Color(0x112233), null, null, EffectType.BOXED, Font.PLAIN);
+    attributes.setFontFamilies(FontFamilies.of("JetBrains Mono", "Noto Sans CJK JP"));
+
+    Pair<EditorColorsScheme, TextAttributes> result = doTestWriteRead(key, attributes);
+
+    assertEquals(attributes, result.second);
+  }
+
+  @Test
   public void testLayeredTextAttributesKeepFontFamilies() {
     EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
     EditorColorsScheme scheme = (EditorColorsScheme)defaultScheme.clone();

@@ -1,12 +1,15 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.openapi.editor.markup.AttributesFlyweightSerDe;
 import com.intellij.openapi.editor.markup.EffectType;
+import com.intellij.openapi.editor.markup.FontFamilies;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.util.ui.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
@@ -28,6 +31,7 @@ public final class TextAttributesReader extends ValueElementReader {
   private static final @NonNls String EFFECT_COLOR = "EFFECT_COLOR";
   private static final @NonNls String EFFECT_TYPE = "EFFECT_TYPE";
   private static final @NonNls String FONT_TYPE = "FONT_TYPE";
+  private static final @NonNls String FONT_FAMILIES = "FONT_FAMILIES";
 
   /**
    * Reads a value of the specified type from the given element.
@@ -48,6 +52,15 @@ public final class TextAttributesReader extends ValueElementReader {
     return super.read(type, element);
   }
 
+  @Override
+  protected <T> T convert(@NotNull Class<T> type, @NotNull String value) {
+    if (FontFamilies.class.equals(type)) {
+      //noinspection unchecked
+      return (T)AttributesFlyweightSerDe.parseFontFamilies(value);
+    }
+    return super.convert(type, value);
+  }
+
   public TextAttributes readAttributes(@Nullable Element element, @Nullable String keyName) {
     TextAttributes attributes = new TextAttributes();
     if (element != null) {
@@ -57,6 +70,7 @@ public final class TextAttributesReader extends ValueElementReader {
       Color errorStripeColor = readChild(Color.class, element, ERROR_STRIPE);
       EffectType effectType = Effect.read(this, element);
       int fontType = FontStyle.read(this, element);
+      FontFamilies fontFamilies = readChild(FontFamilies.class, element, FONT_FAMILIES);
 
       if (keyName != null) {
         if (foregroundColor != null) {
@@ -74,6 +88,7 @@ public final class TextAttributesReader extends ValueElementReader {
       }
 
       attributes.setAttributes(foregroundColor, backgroundColor, effectColor, errorStripeColor, effectType, fontType);
+      attributes.setFontFamilies(fontFamilies);
     }
     return attributes;
   }

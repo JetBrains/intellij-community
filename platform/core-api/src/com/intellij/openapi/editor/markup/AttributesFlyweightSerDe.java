@@ -17,7 +17,9 @@ import java.awt.Font;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.util.io.DataInputOutputUtil.readINT;
 import static com.intellij.util.io.DataInputOutputUtil.writeINT;
@@ -37,9 +39,10 @@ public final class AttributesFlyweightSerDe {
     Color ERROR_STRIPE_COLOR = readColor(element, "ERROR_STRIPE_COLOR");
     int FONT_TYPE = toFontType(readInt(element, "FONT_TYPE"));
     int EFFECT_TYPE = readInt(element, "EFFECT_TYPE");
+    FontFamilies FONT_FAMILIES = readFontFamilies(element);
     // todo additionalEffects are not serialized yet, we have no user-controlled additional effects
     return AttributesFlyweight.create(
-      FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR
+      FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), FONT_FAMILIES, ERROR_STRIPE_COLOR
     );
   }
 
@@ -50,8 +53,9 @@ public final class AttributesFlyweightSerDe {
     Color EFFECT_COLOR = readColor(in);
     Color ERROR_STRIPE_COLOR = readColor(in);
     int EFFECT_TYPE = readINT(in);
+    FontFamilies FONT_FAMILIES = readFontFamilies(in);
     return AttributesFlyweight.create(
-      FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), ERROR_STRIPE_COLOR
+      FOREGROUND, BACKGROUND, FONT_TYPE, EFFECT_COLOR, toEffectType(EFFECT_TYPE), Collections.emptyMap(), FONT_FAMILIES, ERROR_STRIPE_COLOR
     );
   }
 
@@ -69,6 +73,10 @@ public final class AttributesFlyweightSerDe {
     if (effectType != 0) {
       JDOMExternalizerUtil.writeField(element, "EFFECT_TYPE", String.valueOf(effectType));
     }
+    FontFamilies fontFamilies = flyweight.getFontFamilies();
+    if (fontFamilies != null) {
+      JDOMExternalizerUtil.writeField(element, "FONT_FAMILIES", String.join(",", fontFamilies.names()));
+    }
     // todo additionalEffects are not serialized yet, we have no user-controlled additional effects
   }
 
@@ -79,6 +87,21 @@ public final class AttributesFlyweightSerDe {
     writeColor(out, flyweight.getEffectColor());
     writeColor(out, flyweight.getErrorStripeColor());
     writeINT(out, fromEffectType(flyweight.getEffectType()));
+    writeFontFamilies(out, flyweight.getFontFamilies());
+  }
+
+  /**
+   * Parses the value of the {@code FONT_FAMILIES} option: family names separated by commas.
+   *
+   * @throws IllegalArgumentException if a name is not valid for {@link FontFamilies#of(List)}
+   */
+  public static @NotNull FontFamilies parseFontFamilies(@NotNull String value) {
+    String[] names = value.split(",", -1);
+    List<String> trimmedNames = new ArrayList<>(names.length);
+    for (String name : names) {
+      trimmedNames.add(name.trim());
+    }
+    return FontFamilies.of(trimmedNames);
   }
 
   /**
@@ -129,6 +152,45 @@ public final class AttributesFlyweightSerDe {
       return new Color(Integer.parseInt(value, 16));
     } catch (NumberFormatException e) {
       throw new InvalidDataException("Wrong color value: " + value, e);
+    }
+  }
+
+  private static @Nullable FontFamilies readFontFamilies(@NotNull Element element) throws InvalidDataException {
+    String value = JDOMExternalizerUtil.readField(element, "FONT_FAMILIES");
+    if (value == null) {
+      return null;
+    }
+    try {
+      return parseFontFamilies(value);
+    } catch (IllegalArgumentException e) {
+      throw new InvalidDataException("Wrong font families: " + value, e);
+    }
+  }
+
+  /**
+   * Reads the number of names, where zero means no font families, and then the names.
+   */
+  private static @Nullable FontFamilies readFontFamilies(@NotNull DataInput in) throws IOException {
+    int count = readINT(in);
+    if (count == 0) {
+      return null;
+    }
+    List<String> names = new ArrayList<>(count);
+    for (int index = 0; index < count; index++) {
+      names.add(in.readUTF());
+    }
+    return FontFamilies.of(names);
+  }
+
+  private static void writeFontFamilies(@NotNull DataOutput out, @Nullable FontFamilies fontFamilies) throws IOException {
+    if (fontFamilies == null) {
+      writeINT(out, 0);
+      return;
+    }
+    List<String> names = fontFamilies.names();
+    writeINT(out, names.size());
+    for (String name : names) {
+      out.writeUTF(name);
     }
   }
 
