@@ -572,7 +572,9 @@ public final class ModulesConfigurator implements ModulesProvider, ModuleEditor.
           ContainerUtil.addIfNotNull(modifiableRootModels, modifiableRootModel);
         }
 
-        ModuleDeleteProvider.removeModule(moduleToRemove, modifiableRootModels, myModuleModel);
+        if (moduleToRemove != null) {
+          ModuleDeleteProvider.removeModule(moduleToRemove, modifiableRootModels, myModuleModel);
+        }
         Disposer.dispose(editor);
       }
     });

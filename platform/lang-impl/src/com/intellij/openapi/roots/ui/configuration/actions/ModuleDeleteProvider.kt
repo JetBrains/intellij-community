@@ -25,10 +25,15 @@ import com.intellij.openapi.roots.impl.ModifiableModelCommitter
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ModuleAttachListener.Companion.TOPIC
+import com.intellij.platform.backend.workspace.WorkspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.project.stateStore
 import com.intellij.projectImport.ProjectAttachProcessor.Companion.canAttachToProject
-import com.intellij.projectImport.ProjectAttachProcessor.Companion.getProcessor
 import com.intellij.util.Function
+import com.intellij.workspaceModel.ide.ProjectRootEntity
+import com.intellij.workspaceModel.ide.legacyBridge.findModuleEntity
+import com.intellij.workspaceModel.ide.unregisterProjectRootBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
@@ -45,7 +50,7 @@ open class ModuleDeleteProvider : DeleteProvider, TitledHandler {
 
   override fun deleteElement(dataContext: DataContext) {
     val project: Project = checkNotNull(CommonDataKeys.PROJECT.getData(dataContext))
-    val modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext) ?: return
+    val modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext)
     val unloadedModules = ProjectView.UNLOADED_MODULES_CONTEXT_KEY.getData(dataContext)
 
     val moduleNamesToDelete = getModuleNamesToDelete(modules, unloadedModules)
@@ -67,7 +72,7 @@ open class ModuleDeleteProvider : DeleteProvider, TitledHandler {
 
   protected open fun doDetachModules(
     project: Project,
-    modules: Array<Module>,
+    modules: Array<Module>?,
     unloadedModules: List<UnloadedModuleDescription>?,
   ) {
     val moduleManager = ModuleManager.getInstance(project)
@@ -81,9 +86,9 @@ open class ModuleDeleteProvider : DeleteProvider, TitledHandler {
       }
     }
     removeDependenciesOnModules(moduleNamesToDelete, otherModuleRootModels.values)
-    val attachProcessor = getProcessor(null, null, null)
-    for (module in modules) {
-      attachProcessor?.beforeDetach(module)
+    for (module in modules.orEmpty()) {
+      project.getMessageBus().syncPublisher(TOPIC).beforeDetach(module)
+      removeAttachedProjectRoots(module)
       modifiableModuleModel.disposeModule(module)
     }
     val modifiableRootModels = otherModuleRootModels.values.toTypedArray<ModifiableRootModel>()
@@ -138,9 +143,9 @@ open class ModuleDeleteProvider : DeleteProvider, TitledHandler {
       return true //Either not all modules are selected, or all of them are outside .idea dir -> deletable
     }
 
-    private fun getModuleNamesToDelete(modules: Array<Module>, unloadedModules: List<UnloadedModuleDescription>?): Set<String> {
+    private fun getModuleNamesToDelete(modules: Array<Module>?, unloadedModules: List<UnloadedModuleDescription>?): Set<String> {
       val moduleNamesToDelete: MutableSet<String> = mutableSetOf()
-      for (module in modules) {
+      for (module in modules.orEmpty()) {
         moduleNamesToDelete.add(module.getName())
       }
       if (unloadedModules != null) {
@@ -149,6 +154,19 @@ open class ModuleDeleteProvider : DeleteProvider, TitledHandler {
         }
       }
       return moduleNamesToDelete
+    }
+
+    private fun removeAttachedProjectRoots(module: Module) {
+      val project = module.getProject()
+      val snapshot: EntityStorage = WorkspaceModel.getInstance(project).currentSnapshot
+      val moduleEntity = module.findModuleEntity(snapshot) ?: return
+      for (contentRoot in moduleEntity.contentRoots) {
+        val projectRoot =
+          snapshot.getVirtualFileUrlIndex().findEntitiesByUrl(contentRoot.url).filterIsInstance<ProjectRootEntity>().firstOrNull()
+        if (projectRoot != null) {
+          unregisterProjectRootBlocking(project, projectRoot.root)
+        }
+      }
     }
 
     @VisibleForTesting

@@ -3,9 +3,15 @@ package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -28,6 +34,9 @@ import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
+import java.nio.file.Path
+import kotlin.io.path.invariantSeparatorsPathString
+import kotlin.io.path.name
 
 internal class WorkspaceModelCacheAttachProcessorTest {
   companion object {
@@ -90,6 +99,25 @@ internal class WorkspaceModelCacheAttachProcessorTest {
   }
 
   @Test
+  fun `test detach removes attached project root`(): Unit = runBlocking {
+    registerAttachProcessors()
+    val attachedProjectPath = createProjectWithModule("attached_project")
+
+    val newProjectPath = tempDirManager.newPath("new_project", refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(newProjectPath, OpenProjectTask { projectRootDir = newProjectPath })!!.useProjectAsync { newProject ->
+      addModule(newProject, newProjectPath)
+      assertThat(attachToProjectAsync(newProject, attachedProjectPath)).isTrue()
+      assertThat(projectRoots(newProject)).hasSize(2)
+
+      val attachedModule = ModuleManager.getInstance(newProject).findModuleByName(attachedProjectPath.name)!!
+      writeAction {
+        ModuleDeleteProvider.detachModules(newProject, arrayOf(attachedModule))
+      }
+      assertThat(projectRoots(newProject)).containsExactly(VfsUtilCore.pathToUrl(newProjectPath.invariantSeparatorsPathString))
+    }
+  }
+
+  @Test
   fun `test do not duplicate global entities`(): Unit = runBlocking {
     ProjectAttachProcessor.EP_NAME.point.registerExtension(WorkspaceModelCacheAttachProcessor(), disposableRule.disposable)
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
@@ -107,5 +135,36 @@ internal class WorkspaceModelCacheAttachProcessorTest {
         assertThat(attachToProjectAsync(newProject, attachedProjectPath)).isTrue()
         assertThat(newProject.workspaceModel.currentSnapshot.entities(SdkEntity::class.java).toList()).hasSize(1)
       }
+  }
+
+  private fun registerAttachProcessors() {
+    ProjectAttachProcessor.EP_NAME.point.registerExtension(WorkspaceModelCacheAttachProcessor(), disposableRule.disposable)
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
+  }
+
+  /**
+   * Creates a project with one `.iml` module that has the project directory as a content root,
+   * then closes the project to save its workspace model cache.
+   */
+  private suspend fun createProjectWithModule(name: String): Path {
+    val projectPath = tempDirManager.newPath(name, refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(projectPath, OpenProjectTask { projectRootDir = projectPath })!!.useProjectAsync(true) { project ->
+      addModule(project, projectPath)
+    }
+    return projectPath
+  }
+
+  private suspend fun addModule(project: Project, projectPath: Path): Module {
+    return writeAction {
+      val module = ModuleManager.getInstance(project).newModule(projectPath.resolve(Project.DIRECTORY_STORE_FOLDER).resolve("${projectPath.name}.iml"), "")
+      val model = ModuleRootManager.getInstance(module).modifiableModel
+      model.addContentEntry(VfsUtilCore.pathToUrl(projectPath.invariantSeparatorsPathString))
+      model.commit()
+      module
+    }
+  }
+
+  private fun projectRoots(project: Project): List<String> {
+    return project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).map { it.root.url }.toList()
   }
 }

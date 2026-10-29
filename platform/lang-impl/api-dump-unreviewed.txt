@@ -6237,7 +6237,6 @@ f:com.intellij.patterns.compiler.PatternClassBean
 - getDescription():java.lang.String
 f:com.intellij.platform.ModuleAttachProcessor
 - <init>():V
-- beforeDetach(com.intellij.openapi.module.Module):V
 com.intellij.platform.backend.documentation.InlineDocumentationProvider
 - a:findInlineDocumentation(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange):com.intellij.platform.backend.documentation.InlineDocumentation
 com.intellij.platform.backend.documentation.LinkResolveResult$Async
