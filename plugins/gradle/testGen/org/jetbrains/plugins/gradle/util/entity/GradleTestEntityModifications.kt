@@ -15,6 +15,8 @@ import org.jetbrains.plugins.gradle.util.entity.impl.GradleTestEntityImpl
 interface GradleTestEntityBuilder : WorkspaceEntityBuilder<GradleTestEntity> {
   override var entitySource: EntitySource
   var phase: GradleSyncPhase
+  val symbolicId: GradleTestEntityId
+    get() = GradleTestEntityId(phase)
 }
 
 internal object GradleTestEntityType : EntityType<GradleTestEntity, GradleTestEntityBuilder>() {

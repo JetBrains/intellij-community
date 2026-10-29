@@ -950,38 +950,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "externalProjectId",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                fqName = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId",
-                                                                                                                                properties = listOf(
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "codeCache",
-                                                                                                                                    valueType = primitiveTypeIntNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "externalProjectPath",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "presentableName",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false)),
-                                                                                                                                supertypes = listOf(
-                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
                                                                           name = "name",
                                                                           valueType = primitiveTypeStringNotNullable,
                                                                           withDefault = false),
@@ -1277,75 +1245,6 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
                                                       OwnPropertyMetadata(isComputable = false,
                                                                           isKey = false,
                                                                           isOpen = false,
-                                                                          name = "buildId",
-                                                                          valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false,
-                                                                                                                              typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                fqName = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId",
-                                                                                                                                properties = listOf(
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "codeCache",
-                                                                                                                                    valueType = primitiveTypeIntNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "externalProjectId",
-                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                                      isNullable = false,
-                                                                                                                                      typeMetadata = FinalClassMetadata.ClassMetadata(
-                                                                                                                                        fqName = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId",
-                                                                                                                                        properties = listOf(
-                                                                                                                                          OwnPropertyMetadata(
-                                                                                                                                            isComputable = false,
-                                                                                                                                            isKey = false,
-                                                                                                                                            isOpen = false,
-                                                                                                                                            name = "codeCache",
-                                                                                                                                            valueType = primitiveTypeIntNotNullable,
-                                                                                                                                            withDefault = false),
-                                                                                                                                          OwnPropertyMetadata(
-                                                                                                                                            isComputable = false,
-                                                                                                                                            isKey = false,
-                                                                                                                                            isOpen = false,
-                                                                                                                                            name = "externalProjectPath",
-                                                                                                                                            valueType = primitiveTypeStringNotNullable,
-                                                                                                                                            withDefault = false),
-                                                                                                                                          OwnPropertyMetadata(
-                                                                                                                                            isComputable = false,
-                                                                                                                                            isKey = false,
-                                                                                                                                            isOpen = false,
-                                                                                                                                            name = "presentableName",
-                                                                                                                                            valueType = primitiveTypeStringNotNullable,
-                                                                                                                                            withDefault = false)),
-                                                                                                                                        supertypes = listOf(
-                                                                                                                                          "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "presentableName",
-                                                                                                                                    valueType = primitiveTypeStringNotNullable,
-                                                                                                                                    withDefault = false),
-                                                                                                                                  OwnPropertyMetadata(
-                                                                                                                                    isComputable = false,
-                                                                                                                                    isKey = false,
-                                                                                                                                    isOpen = false,
-                                                                                                                                    name = "url",
-                                                                                                                                    valueType = ValueTypeMetadata.SimpleType.CustomType(
-                                                                                                                                      isNullable = false,
-                                                                                                                                      typeMetadata = FinalClassMetadata.KnownClass(
-                                                                                                                                        fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")),
-                                                                                                                                    withDefault = false)),
-                                                                                                                                supertypes = listOf(
-                                                                                                                                  "com.intellij.platform.workspace.storage.SymbolicEntityId"))),
-                                                                          withDefault = false),
-                                                      OwnPropertyMetadata(isComputable = false,
-                                                                          isKey = false,
-                                                                          isOpen = false,
                                                                           name = "name",
                                                                           valueType = primitiveTypeStringNotNullable,
                                                                           withDefault = false),
@@ -1529,14 +1428,14 @@ internal object MetadataStorageImpl : MetadataStorageBase() {
   }
 
   override fun initializeMetadataHash() {
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = 1853164449)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity", metadataHash = -1114550879)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId", metadataHash = 843983143)
     addMetadataHash(typeFqn = "com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId",
                     metadataHash = -1650256201)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntityId", metadataHash = 843983143)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleExternalProjectEntity", metadataHash = -2026182677)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleModuleEntity", metadataHash = 418255750)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntityId", metadataHash = -443877510)
-    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = 650134225)
+    addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.projectModel.GradleProjectEntity", metadataHash = -1014778943)
     addMetadataHash(typeFqn = "org.jetbrains.plugins.gradle.model.versionCatalogs.GradleVersionCatalogEntity", metadataHash = -1616609179)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = -1894859879)
     addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = 1637225356)

@@ -65,9 +65,6 @@ internal fun assertGradleProjectEntity(
   assertEquals(buildId, projectEntity.build.symbolicId) {
     "GradleProjectEntity with `url` = $projectUrl should be attached to a GradleBuildEntity with expected symbolic ID"
   }
-  assertEquals(buildId, projectEntity.buildId) {
-    "GradleProjectEntity with `url` = $projectUrl should have expected `buildId` of the build it belongs to."
-  }
   assertEquals(linkedProjectId, projectEntity.linkedProjectId) {
     "GradleProjectEntity with `url` = $projectUrl should have expected `linkedProjectId`."
   }

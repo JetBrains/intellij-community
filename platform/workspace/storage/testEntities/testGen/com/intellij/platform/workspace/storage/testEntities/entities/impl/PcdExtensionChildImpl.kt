@@ -112,16 +112,13 @@ internal class PcdExtensionChildImpl(private val dataSource: PcdExtensionChildDa
       set(value) {
         changeParentOfMany(value, PARENT_CONNECTION_ID)
         changedProperty.add("parent")
-        updateSymbolicId(value, PARENT_CONNECTION_ID)
       }
 
     override fun getEntityClass(): Class<PcdExtensionChild> = PcdExtensionChild::class.java
-    override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {
-      if (connectionId == PARENT_CONNECTION_ID) {
-        parent as PcdParent1EntityBuilder
-        getEntityData(true).parentSymbolicId_Synthetic = PCDId1(parent.name)
-        changedProperty.add("parentSymbolicId_Synthetic")
-      }
+    override fun calculateSymbolicId() {
+      val _parentAsBase = parent as ModifiableWorkspaceEntityBase<*, *>
+      _parentAsBase.calculateSymbolicId()
+      getEntityData(true).parentSymbolicId_Synthetic = parent.symbolicId
     }
   }
 }

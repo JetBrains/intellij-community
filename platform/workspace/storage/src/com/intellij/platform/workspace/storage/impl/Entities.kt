@@ -210,12 +210,23 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     thisDiff.instrumentation.addChild(connectionId, value, this)
   }
 
+  @Deprecated("see calculateSymbolicId")
   protected open fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {}
+
+  /**
+   * Entity's `SymbolicId` can depend on its parent's `SymbolicId`. Entity can be created without a parent, and attached to a parent 
+   * later. Parent's `SymbolicId` can depend on its (grand)parent's `SymbolicId`. `val symbolicId` has to be initialized when an entity is 
+   * being added to a `MutableEntityStorage`. So, before adding an entity to the storage, in `applyToBuilder`, `calculateSymbolicId` has to 
+   * be called to guarantee that all entities have their `symbolicId` initialized, or throw an error. 
+   * 
+   * Note: previous approach used `updateSymbolicId` to update `symbolicId` when links were changed, but did not support cases when parent's
+   * `symbolicId` depends on its (grand)parent's `symbolicId`.
+   */
+  public open fun calculateSymbolicId() {}
 
   protected fun changeChild(child: WorkspaceEntityBuilder<*>?, connectionId: ConnectionId) {
     checkModificationAllowed()
     child as ModifiableWorkspaceEntityBase<*, *>?
-    child?.updateSymbolicId(this, connectionId)
     val thisDiff = diff
     if (thisDiff == null || child?.diff == null) {
       child?.entityLinks[EntityLink(false, connectionId)] = this
@@ -235,7 +246,6 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     children as List<ModifiableWorkspaceEntityBase<*, *>>
     val thisDiff = this.diff
     for (child in children) {
-      child.updateSymbolicId(this, connectionId)
       if (thisDiff == null || child.diff == null) {
         child.entityLinks[EntityLink(false, connectionId)] = this
         thisDiff?.addEntity(child)
@@ -301,7 +311,6 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
     }
     else {
       val parent = entities.single()
-      parent?.let { updateSymbolicId(it, foundConnectionId) }
       // Branch for case `this` entity is a child
       if (foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_MANY || foundConnectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
         // One-to-many connection
@@ -490,6 +499,7 @@ public abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: Work
         error("Entity ${getEntityClass().simpleName} is already created in a different builder")
       }
     }
+    calculateSymbolicId()
     this.diff = builder
     addToBuilder()
     this.id = getEntityData().createEntityId()

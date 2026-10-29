@@ -16,6 +16,8 @@ interface WithReferenceTestEntityBuilder : WorkspaceEntityBuilder<WithReferenceT
   override var entitySource: EntitySource
   var name: String
   var references: MutableList<DependencyItem>
+  val symbolicId: WithReferenceTestEntityId
+    get() = WithReferenceTestEntityId(name)
 }
 
 internal object WithReferenceTestEntityType : EntityType<WithReferenceTestEntity, WithReferenceTestEntityBuilder>() {

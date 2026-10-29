@@ -134,28 +134,22 @@ internal class PcdChildEntityImpl(private val dataSource: PcdChildEntityData) : 
       set(value) {
         changeParent(value, PARENT1_CONNECTION_ID)
         changedProperty.add("parent1")
-        updateSymbolicId(value, PARENT1_CONNECTION_ID)
       }
     override var parent2: PcdParent2EntityBuilder
       get() = getParent(PARENT2_CONNECTION_ID) as? PcdParent2EntityBuilder ?: error("parent2 is null for PcdChildEntity")
       set(value) {
         changeParentOfMany(value, PARENT2_CONNECTION_ID)
         changedProperty.add("parent2")
-        updateSymbolicId(value, PARENT2_CONNECTION_ID)
       }
 
     override fun getEntityClass(): Class<PcdChildEntity> = PcdChildEntity::class.java
-    override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {
-      if (connectionId == PARENT1_CONNECTION_ID) {
-        parent as PcdParent1EntityBuilder
-        getEntityData(true).parent1SymbolicId_Synthetic = PCDId1(parent.name)
-        changedProperty.add("parent1SymbolicId_Synthetic")
-      }
-      if (connectionId == PARENT2_CONNECTION_ID) {
-        parent as PcdParent2EntityBuilder
-        getEntityData(true).parent2SymbolicId_Synthetic = PCDId2(parent.version)
-        changedProperty.add("parent2SymbolicId_Synthetic")
-      }
+    override fun calculateSymbolicId() {
+      val _parent1AsBase = parent1 as ModifiableWorkspaceEntityBase<*, *>
+      _parent1AsBase.calculateSymbolicId()
+      getEntityData(true).parent1SymbolicId_Synthetic = parent1.symbolicId
+      val _parent2AsBase = parent2 as ModifiableWorkspaceEntityBase<*, *>
+      _parent2AsBase.calculateSymbolicId()
+      getEntityData(true).parent2SymbolicId_Synthetic = parent2.symbolicId
     }
   }
 }

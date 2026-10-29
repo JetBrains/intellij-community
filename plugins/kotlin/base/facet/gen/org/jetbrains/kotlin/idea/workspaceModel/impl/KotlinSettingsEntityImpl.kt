@@ -309,7 +309,6 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             set(value) {
                 changeParentOfMany(value, MODULE_CONNECTION_ID)
                 changedProperty.add("module")
-                updateSymbolicId(value, MODULE_CONNECTION_ID)
             }
         override var name: String
             get() = getEntityData().name
@@ -556,12 +555,10 @@ internal class KotlinSettingsEntityImpl(private val dataSource: KotlinSettingsEn
             }
 
         override fun getEntityClass(): Class<KotlinSettingsEntity> = KotlinSettingsEntity::class.java
-        override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {
-            if (connectionId == MODULE_CONNECTION_ID) {
-                parent as ModuleEntityBuilder
-                getEntityData(true).moduleSymbolicId_Synthetic = ModuleId(parent.name)
-                changedProperty.add("moduleSymbolicId_Synthetic")
-            }
+        override fun calculateSymbolicId() {
+            val _moduleAsBase = module as ModifiableWorkspaceEntityBase<*, *>
+            _moduleAsBase.calculateSymbolicId()
+            getEntityData(true).moduleSymbolicId_Synthetic = module.symbolicId
         }
     }
 }

@@ -21,6 +21,8 @@ interface LibraryEntityBuilder : WorkspaceEntityBuilder<LibraryEntity> {
   var typeId: LibraryTypeId?
   var roots: MutableList<LibraryRoot>
   var excludedRoots: List<ExcludeUrlEntityBuilder>
+  val symbolicId: LibraryId
+    get() = LibraryId(name, tableId)
 }
 
 internal object LibraryEntityType : EntityType<LibraryEntity, LibraryEntityBuilder>() {

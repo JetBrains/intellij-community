@@ -15,6 +15,8 @@ interface ScriptCompilationConfigurationEntityBuilder : WorkspaceEntityBuilder<S
     override var entitySource: EntitySource
     var data: ByteArray
     var identity: ScriptCompilationConfigurationId
+    val symbolicId: ScriptCompilationConfigurationId
+        get() = identity
 }
 
 internal object ScriptCompilationConfigurationEntityType :

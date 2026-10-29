@@ -19,6 +19,8 @@ interface FacetEntityBuilder : WorkspaceEntityBuilder<FacetEntity>, ModuleSettin
   var typeId: FacetEntityTypeId
   var configurationXmlTag: String?
   var underlyingFacet: FacetEntityBuilder?
+  val symbolicId: FacetId
+    get() = FacetId(name, typeId, module.symbolicId)
 }
 
 internal object FacetEntityType : EntityType<FacetEntity, FacetEntityBuilder>() {

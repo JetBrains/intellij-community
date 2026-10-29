@@ -138,7 +138,6 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
       set(value) {
         changeParentOfMany(value, MODULE_CONNECTION_ID)
         changedProperty.add("module")
-        updateSymbolicId(value, MODULE_CONNECTION_ID)
       }
     override var typeId: FacetEntityTypeId
       get() = getEntityData().typeId
@@ -162,12 +161,10 @@ internal class FacetEntityImpl(private val dataSource: FacetEntityData) : FacetE
       }
 
     override fun getEntityClass(): Class<FacetEntity> = FacetEntity::class.java
-    override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId) {
-      if (connectionId == MODULE_CONNECTION_ID) {
-        parent as ModuleEntityBuilder
-        getEntityData(true).moduleSymbolicId_Synthetic = ModuleId(parent.name)
-        changedProperty.add("moduleSymbolicId_Synthetic")
-      }
+    override fun calculateSymbolicId() {
+      val _moduleAsBase = module as ModifiableWorkspaceEntityBase<*, *>
+      _moduleAsBase.calculateSymbolicId()
+      getEntityData(true).moduleSymbolicId_Synthetic = module.symbolicId
     }
   }
 }

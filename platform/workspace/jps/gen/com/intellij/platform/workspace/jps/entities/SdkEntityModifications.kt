@@ -21,6 +21,8 @@ interface SdkEntityBuilder : WorkspaceEntityBuilder<SdkEntity> {
   var homePath: VirtualFileUrl?
   var roots: MutableList<SdkRoot>
   var additionalData: String
+  val symbolicId: SdkId
+    get() = SdkId(name, type)
 }
 
 internal object SdkEntityType : EntityType<SdkEntity, SdkEntityBuilder>() {

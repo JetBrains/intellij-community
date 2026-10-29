@@ -15,19 +15,19 @@ import org.jetbrains.plugins.gradle.model.projectModel.impl.GradleProjectEntityI
 interface GradleProjectEntityBuilder : WorkspaceEntityBuilder<GradleProjectEntity> {
   override var entitySource: EntitySource
   var build: GradleBuildEntityBuilder
-  var buildId: GradleBuildEntityId
   var name: String
   var path: String
   var identityPath: String
   var url: VirtualFileUrl
   var linkedProjectId: String
+  val symbolicId: GradleProjectEntityId
+    get() = GradleProjectEntityId(build.symbolicId, identityPath)
 }
 
 internal object GradleProjectEntityType : EntityType<GradleProjectEntity, GradleProjectEntityBuilder>() {
   override val entityImplClass: Class<*> get() = GradleProjectEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleProjectEntityImpl.Builder::class.java
   operator fun invoke(
-    buildId: GradleBuildEntityId,
     name: String,
     path: String,
     identityPath: String,
@@ -37,7 +37,6 @@ internal object GradleProjectEntityType : EntityType<GradleProjectEntity, Gradle
     init: (GradleProjectEntityBuilder.() -> Unit)? = null,
   ): GradleProjectEntityBuilder {
     val builder = builder()
-    builder.buildId = buildId
     builder.name = name
     builder.path = path
     builder.identityPath = identityPath
@@ -57,7 +56,6 @@ fun MutableEntityStorage.modifyGradleProjectEntity(
 @JvmOverloads
 @JvmName("createGradleProjectEntity")
 fun GradleProjectEntity(
-  buildId: GradleBuildEntityId,
   name: String,
   path: String,
   identityPath: String,
@@ -65,4 +63,4 @@ fun GradleProjectEntity(
   linkedProjectId: String,
   entitySource: EntitySource,
   init: (GradleProjectEntityBuilder.() -> Unit)? = null,
-): GradleProjectEntityBuilder = GradleProjectEntityType(buildId, name, path, identityPath, url, linkedProjectId, entitySource, init)
+): GradleProjectEntityBuilder = GradleProjectEntityType(name, path, identityPath, url, linkedProjectId, entitySource, init)

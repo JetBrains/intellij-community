@@ -21,6 +21,8 @@ interface ModuleEntityBuilder : WorkspaceEntityBuilder<ModuleEntity> {
   var dependencies: MutableList<ModuleDependencyItem>
   var contentRoots: List<ContentRootEntityBuilder>
   var moduleSettings: List<ModuleSettingsFacetBridgeEntityBuilder<out ModuleSettingsFacetBridgeEntity>>
+  val symbolicId: ModuleId
+    get() = ModuleId(name)
 }
 
 internal object ModuleEntityType : EntityType<ModuleEntity, ModuleEntityBuilder>() {

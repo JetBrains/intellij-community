@@ -4,7 +4,6 @@
 package org.jetbrains.plugins.gradle.model.projectModel
 
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityBuilder
-import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -18,24 +17,23 @@ import org.jetbrains.plugins.gradle.model.projectModel.impl.GradleBuildEntityImp
 interface GradleBuildEntityBuilder : WorkspaceEntityBuilder<GradleBuildEntity> {
   override var entitySource: EntitySource
   var externalProject: ExternalProjectEntityBuilder
-  var externalProjectId: ExternalProjectEntityId
   var name: String
   var url: VirtualFileUrl
   var projects: List<GradleProjectEntityBuilder>
+  val symbolicId: GradleBuildEntityId
+    get() = GradleBuildEntityId(externalProject.symbolicId, url)
 }
 
 internal object GradleBuildEntityType : EntityType<GradleBuildEntity, GradleBuildEntityBuilder>() {
   override val entityImplClass: Class<*> get() = GradleBuildEntityImpl::class.java
   override val entityImplBuilderClass: Class<*> get() = GradleBuildEntityImpl.Builder::class.java
   operator fun invoke(
-    externalProjectId: ExternalProjectEntityId,
     name: String,
     url: VirtualFileUrl,
     entitySource: EntitySource,
     init: (GradleBuildEntityBuilder.() -> Unit)? = null,
   ): GradleBuildEntityBuilder {
     val builder = builder()
-    builder.externalProjectId = externalProjectId
     builder.name = name
     builder.url = url
     builder.entitySource = entitySource
@@ -55,9 +53,8 @@ var ExternalProjectEntityBuilder.gradleBuilds: List<GradleBuildEntityBuilder>
 @JvmOverloads
 @JvmName("createGradleBuildEntity")
 fun GradleBuildEntity(
-  externalProjectId: ExternalProjectEntityId,
   name: String,
   url: VirtualFileUrl,
   entitySource: EntitySource,
   init: (GradleBuildEntityBuilder.() -> Unit)? = null,
-): GradleBuildEntityBuilder = GradleBuildEntityType(externalProjectId, name, url, entitySource, init)
+): GradleBuildEntityBuilder = GradleBuildEntityType(name, url, entitySource, init)

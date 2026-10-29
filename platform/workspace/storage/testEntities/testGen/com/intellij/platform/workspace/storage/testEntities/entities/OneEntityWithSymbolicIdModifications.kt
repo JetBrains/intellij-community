@@ -14,6 +14,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.impl.OneEnt
 interface OneEntityWithSymbolicIdBuilder : WorkspaceEntityBuilder<OneEntityWithSymbolicId> {
   override var entitySource: EntitySource
   var myName: String
+  val symbolicId: OneSymbolicId
+    get() = OneSymbolicId(myName)
 }
 
 internal object OneEntityWithSymbolicIdType : EntityType<OneEntityWithSymbolicId, OneEntityWithSymbolicIdBuilder>() {

@@ -15,6 +15,8 @@ interface ComposedIdSoftRefEntityBuilder : WorkspaceEntityBuilder<ComposedIdSoft
   override var entitySource: EntitySource
   var myName: String
   var link: NameId
+  val symbolicId: ComposedId
+    get() = ComposedId(myName, link)
 }
 
 internal object ComposedIdSoftRefEntityType : EntityType<ComposedIdSoftRefEntity, ComposedIdSoftRefEntityBuilder>() {

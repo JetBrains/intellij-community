@@ -9,6 +9,8 @@ import com.intellij.workspaceModel.test.api.impl.SimpleEntityImpl
 interface SimpleEntityBuilder: WorkspaceEntityBuilder<SimpleEntity>{
 override var entitySource: EntitySource
 var name: String
+val symbolicId: SimpleId
+get() = SimpleId(name)
 }
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>(){
 override val entityImplClass: Class<*> get() = SimpleEntityImpl::class.java

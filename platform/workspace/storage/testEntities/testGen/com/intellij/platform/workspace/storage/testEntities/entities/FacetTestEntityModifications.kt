@@ -16,6 +16,8 @@ interface FacetTestEntityBuilder : WorkspaceEntityBuilder<FacetTestEntity> {
   var data: String
   var moreData: String
   var module: ModuleTestEntityBuilder
+  val symbolicId: FacetTestEntitySymbolicId
+    get() = FacetTestEntitySymbolicId(data)
 }
 
 internal object FacetTestEntityType : EntityType<FacetTestEntity, FacetTestEntityBuilder>() {

@@ -21,6 +21,8 @@ interface ArtifactEntityBuilder : WorkspaceEntityBuilder<ArtifactEntity> {
   var rootElement: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
   var customProperties: List<ArtifactPropertiesEntityBuilder>
   var artifactOutputPackagingElement: ArtifactOutputPackagingElementEntityBuilder?
+  val symbolicId: ArtifactId
+    get() = ArtifactId(name)
 }
 
 internal object ArtifactEntityType : EntityType<ArtifactEntity, ArtifactEntityBuilder>() {

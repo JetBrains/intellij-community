@@ -16,6 +16,8 @@ interface WithListSoftLinksEntityBuilder : WorkspaceEntityBuilder<WithListSoftLi
   override var entitySource: EntitySource
   var myName: String
   var links: MutableList<NameId>
+  val symbolicId: AnotherNameId
+    get() = AnotherNameId(myName)
 }
 
 internal object WithListSoftLinksEntityType : EntityType<WithListSoftLinksEntity, WithListSoftLinksEntityBuilder>() {

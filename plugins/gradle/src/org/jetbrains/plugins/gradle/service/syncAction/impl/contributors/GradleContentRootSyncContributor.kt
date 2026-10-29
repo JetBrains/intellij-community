@@ -158,23 +158,20 @@ internal class GradleContentRootSyncContributor : GradleSyncContributor {
     context: ProjectResolverContext,
     entitySource: GradleProjectModelEntitySource,
   ): GradleBuildEntityBuilder = GradleBuildEntity(
-    externalProjectId = context.externalProjectEntityId,
     name = buildModel.name,
     url = buildModel.buildUrl(context),
     entitySource = entitySource
   ) {
     projects = buildModel.projects.map { projectModel ->
-      createGradleProjectEntity(projectModel, buildModel, context, entitySource)
+      createGradleProjectEntity(projectModel, context, entitySource)
     }
   }
 
   private fun createGradleProjectEntity(
     projectModel: GradleLightProject,
-    buildModel: GradleLightBuild,
     context: ProjectResolverContext,
     entitySource: GradleProjectModelEntitySource,
   ): GradleProjectEntityBuilder = GradleProjectEntity(
-    buildId = buildModel.buildEntityId(context),
     name = projectModel.name,
     path = projectModel.path,
     identityPath = projectModel.identityPath,

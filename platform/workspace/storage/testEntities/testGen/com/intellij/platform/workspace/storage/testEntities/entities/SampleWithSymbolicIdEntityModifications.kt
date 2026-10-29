@@ -22,6 +22,8 @@ interface SampleWithSymbolicIdEntityBuilder : WorkspaceEntityBuilder<SampleWithS
   var fileProperty: VirtualFileUrl
   var children: List<ChildWpidSampleEntityBuilder>
   var nullableData: String?
+  val symbolicId: SampleSymbolicId
+    get() = SampleSymbolicId(stringProperty)
 }
 
 internal object SampleWithSymbolicIdEntityType : EntityType<SampleWithSymbolicIdEntity, SampleWithSymbolicIdEntityBuilder>() {

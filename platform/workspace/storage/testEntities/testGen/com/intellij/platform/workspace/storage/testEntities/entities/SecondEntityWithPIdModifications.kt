@@ -14,6 +14,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.impl.Second
 interface SecondEntityWithPIdBuilder : WorkspaceEntityBuilder<SecondEntityWithPId> {
   override var entitySource: EntitySource
   var data: String
+  val symbolicId: SecondPId
+    get() = SecondPId(data)
 }
 
 internal object SecondEntityWithPIdType : EntityType<SecondEntityWithPId, SecondEntityWithPIdBuilder>() {

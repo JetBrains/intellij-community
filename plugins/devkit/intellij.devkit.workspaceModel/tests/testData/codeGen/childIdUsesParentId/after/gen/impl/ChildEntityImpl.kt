@@ -105,15 +105,12 @@ get() = getParent(PARENTENTITY_CONNECTION_ID) as? ParentEntityBuilder ?: error("
 set(value){
 changeParent(value, PARENTENTITY_CONNECTION_ID)
 changedProperty.add("parentEntity")
-updateSymbolicId(value, PARENTENTITY_CONNECTION_ID)
 }
 override fun getEntityClass(): Class<ChildEntity> = ChildEntity::class.java
-override fun updateSymbolicId(parent: WorkspaceEntityBuilder<*>, connectionId: ConnectionId){
-if (connectionId == PARENTENTITY_CONNECTION_ID){
-parent as ParentEntityBuilder
-getEntityData(true).parentEntitySymbolicId_Synthetic = ParentId(parent.name)
-changedProperty.add("parentEntitySymbolicId_Synthetic")
-}
+override fun calculateSymbolicId(){
+val _parentEntityAsBase = parentEntity as ModifiableWorkspaceEntityBase<*,*>
+_parentEntityAsBase.calculateSymbolicId()
+getEntityData(true).parentEntitySymbolicId_Synthetic = parentEntity.symbolicId
 }
 }
 }

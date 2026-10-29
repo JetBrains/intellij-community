@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.model.projectModel
 
 import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntity
-import com.intellij.platform.externalSystem.impl.workspaceModel.ExternalProjectEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.annotations.IndexVfu
@@ -14,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
 interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
   @Parent
   val externalProject: ExternalProjectEntity
-  val externalProjectId: ExternalProjectEntityId
 
   val name: String
   // URL of the directory containing the settings.gradle(.kts)
@@ -23,7 +21,7 @@ interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
   val projects: List<GradleProjectEntity>
 
   override val symbolicId: GradleBuildEntityId
-    get() = GradleBuildEntityId(externalProjectId, url)
+    get() = GradleBuildEntityId(externalProject.symbolicId, url)
 }
 
 val ExternalProjectEntity.gradleBuilds: List<GradleBuildEntity>

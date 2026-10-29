@@ -16,6 +16,8 @@ interface ReferredTestEntityBuilder : WorkspaceEntityBuilder<ReferredTestEntity>
   override var entitySource: EntitySource
   var name: String
   var file: VirtualFileUrl
+  val symbolicId: ReferredTestEntityId
+    get() = ReferredTestEntityId(name)
 }
 
 internal object ReferredTestEntityType : EntityType<ReferredTestEntity, ReferredTestEntityBuilder>() {

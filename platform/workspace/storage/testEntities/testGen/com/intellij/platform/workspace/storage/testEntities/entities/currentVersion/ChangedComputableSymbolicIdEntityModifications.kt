@@ -14,6 +14,10 @@ import com.intellij.platform.workspace.storage.testEntities.entities.currentVers
 interface ChangedComputableSymbolicIdEntityBuilder : WorkspaceEntityBuilder<ChangedComputableSymbolicIdEntity> {
   override var entitySource: EntitySource
   var text: String
+  val symbolicId: ChangedComputableSymbolicId
+    get() = com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputableSymbolicId(listOf(text,
+                                                                                                                            "more text",
+                                                                                                                            text))
 }
 
 internal object ChangedComputableSymbolicIdEntityType :

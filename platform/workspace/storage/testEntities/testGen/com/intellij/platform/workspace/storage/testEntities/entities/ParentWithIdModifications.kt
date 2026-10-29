@@ -16,6 +16,8 @@ interface ParentWithIdBuilder : WorkspaceEntityBuilder<ParentWithId> {
   var myId: String
   var parent: GrandParentWithIdBuilder
   var children: List<ChildWithIdBuilder>
+  val symbolicId: ParentWithId.ParentId
+    get() = ParentWithId.ParentId(myId)
 }
 
 internal object ParentWithIdType : EntityType<ParentWithId, ParentWithIdBuilder>() {

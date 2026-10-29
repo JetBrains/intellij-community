@@ -43,6 +43,8 @@ interface KotlinSettingsEntityBuilder : WorkspaceEntityBuilder<KotlinSettingsEnt
     var externalSystemRunTasks: MutableList<String>
     var version: Int
     var flushNeeded: Boolean
+    val symbolicId: KotlinSettingsId
+        get() = KotlinSettingsId(name, module.symbolicId)
 }
 
 internal object KotlinSettingsEntityType : EntityType<KotlinSettingsEntity, KotlinSettingsEntityBuilder>() {

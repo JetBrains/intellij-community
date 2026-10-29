@@ -20,6 +20,8 @@ interface KotlinScriptLibraryEntityBuilder : WorkspaceEntityBuilder<KotlinScript
     var classes: MutableList<VirtualFileUrl>
     var usedInScripts: MutableSet<VirtualFileUrl>
     var sources: MutableSet<VirtualFileUrl>
+    val symbolicId: KotlinScriptLibraryEntityId
+        get() = KotlinScriptLibraryEntityId(scope, classes)
 }
 
 internal object KotlinScriptLibraryEntityType : EntityType<KotlinScriptLibraryEntity, KotlinScriptLibraryEntityBuilder>() {

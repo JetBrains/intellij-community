@@ -16,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface ExternalProjectEntityBuilder : WorkspaceEntityBuilder<ExternalProjectEntity> {
   override var entitySource: EntitySource
   var externalProjectPath: String
+  val symbolicId: ExternalProjectEntityId
+    get() = ExternalProjectEntityId(externalProjectPath)
 }
 
 internal object ExternalProjectEntityType : EntityType<ExternalProjectEntity, ExternalProjectEntityBuilder>() {

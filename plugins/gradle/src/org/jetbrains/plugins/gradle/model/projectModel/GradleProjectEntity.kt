@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 interface GradleProjectEntity : WorkspaceEntityWithSymbolicId {
   @Parent
   val build: GradleBuildEntity
-  val buildId: GradleBuildEntityId
 
   val name: String
   // Project path with ':' separators, relatively to the build
@@ -27,5 +26,5 @@ interface GradleProjectEntity : WorkspaceEntityWithSymbolicId {
   val linkedProjectId: String
 
   override val symbolicId: GradleProjectEntityId
-    get() = GradleProjectEntityId(buildId, identityPath)
+    get() = GradleProjectEntityId(build.symbolicId, identityPath)
 }

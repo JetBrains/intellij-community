@@ -15,6 +15,8 @@ interface OoChildWithPidEntityBuilder : WorkspaceEntityBuilder<OoChildWithPidEnt
   override var entitySource: EntitySource
   var childProperty: String
   var parentEntity: OoParentWithoutPidEntityBuilder
+  val symbolicId: OoChildEntityId
+    get() = OoChildEntityId(childProperty)
 }
 
 internal object OoChildWithPidEntityType : EntityType<OoChildWithPidEntity, OoChildWithPidEntityBuilder>() {

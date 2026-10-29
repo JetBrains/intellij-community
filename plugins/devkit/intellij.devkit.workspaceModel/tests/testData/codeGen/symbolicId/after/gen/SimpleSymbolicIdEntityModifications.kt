@@ -17,6 +17,8 @@ var version: Int
 var name: String
 var related: SimpleId
 var sealedClassWithLinks: SealedClassWithLinks
+val symbolicId: SimpleId
+get() = SimpleId(name)
 }
 internal object SimpleSymbolicIdEntityType : EntityType<SimpleSymbolicIdEntity, SimpleSymbolicIdEntityBuilder>(){
 override val entityImplClass: Class<*> get() = SimpleSymbolicIdEntityImpl::class.java

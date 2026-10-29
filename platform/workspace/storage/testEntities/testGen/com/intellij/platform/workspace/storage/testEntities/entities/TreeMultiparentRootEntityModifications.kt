@@ -15,6 +15,8 @@ interface TreeMultiparentRootEntityBuilder : WorkspaceEntityBuilder<TreeMultipar
   override var entitySource: EntitySource
   var data: String
   var children: List<TreeMultiparentLeafEntityBuilder>
+  val symbolicId: TreeMultiparentSymbolicId
+    get() = TreeMultiparentSymbolicId(data)
 }
 
 internal object TreeMultiparentRootEntityType : EntityType<TreeMultiparentRootEntity, TreeMultiparentRootEntityBuilder>() {

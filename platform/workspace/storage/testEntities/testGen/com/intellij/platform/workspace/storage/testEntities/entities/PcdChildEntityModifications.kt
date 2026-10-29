@@ -16,6 +16,8 @@ interface PcdChildEntityBuilder : WorkspaceEntityBuilder<PcdChildEntity> {
   var data: Boolean
   var parent1: PcdParent1EntityBuilder
   var parent2: PcdParent2EntityBuilder
+  val symbolicId: PCDIdChild
+    get() = PCDIdChild(data, parent1.symbolicId, parent2.symbolicId)
 }
 
 internal object PcdChildEntityType : EntityType<PcdChildEntity, PcdChildEntityBuilder>() {

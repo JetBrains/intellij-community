@@ -14,6 +14,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.impl.Symbol
 interface SymbolicIdEntityBuilder : WorkspaceEntityBuilder<SymbolicIdEntity> {
   override var entitySource: EntitySource
   var data: String
+  val symbolicId: LinkedListEntityId
+    get() = LinkedListEntityId(data)
 }
 
 internal object SymbolicIdEntityType : EntityType<SymbolicIdEntity, SymbolicIdEntityBuilder>() {

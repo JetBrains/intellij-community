@@ -63,6 +63,7 @@ com.intellij.java.workspace.entities.ArtifactEntityBuilder
 - a:getName():java.lang.String
 - a:getOutputUrl():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getRootElement():com.intellij.java.workspace.entities.CompositePackagingElementEntityBuilder
+- getSymbolicId():com.intellij.java.workspace.entities.ArtifactId
 - a:setArtifactOutputPackagingElement(com.intellij.java.workspace.entities.ArtifactOutputPackagingElementEntityBuilder):V
 - a:setArtifactType(java.lang.String):V
 - a:setCustomProperties(java.util.List):V
@@ -970,6 +971,7 @@ com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
 - a:getModule():com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 - a:getName():java.lang.String
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.FacetId
 - a:getTypeId():com.intellij.platform.workspace.jps.entities.FacetEntityTypeId
 - a:getUnderlyingFacet():com.intellij.platform.workspace.jps.entities.FacetEntityBuilder
 - a:setConfigurationXmlTag(java.lang.String):V
@@ -1055,6 +1057,7 @@ com.intellij.platform.workspace.jps.entities.LibraryEntityBuilder
 - a:getExcludedRoots():java.util.List
 - a:getName():java.lang.String
 - a:getRoots():java.util.List
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.LibraryId
 - a:getTableId():com.intellij.platform.workspace.jps.entities.LibraryTableId
 - a:getTypeId():com.intellij.platform.workspace.jps.entities.LibraryTypeId
 - a:setEntitySource(com.intellij.platform.workspace.storage.EntitySource):V
@@ -1197,6 +1200,7 @@ com.intellij.platform.workspace.jps.entities.ModuleEntityBuilder
 - a:getEntitySource():com.intellij.platform.workspace.storage.EntitySource
 - a:getModuleSettings():java.util.List
 - a:getName():java.lang.String
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.ModuleId
 - a:getType():com.intellij.platform.workspace.jps.entities.ModuleTypeId
 - a:setContentRoots(java.util.List):V
 - a:setDependencies(java.util.List):V
@@ -1309,6 +1313,7 @@ com.intellij.platform.workspace.jps.entities.SdkEntityBuilder
 - a:getHomePath():com.intellij.platform.workspace.storage.url.VirtualFileUrl
 - a:getName():java.lang.String
 - a:getRoots():java.util.List
+- getSymbolicId():com.intellij.platform.workspace.jps.entities.SdkId
 - a:getType():java.lang.String
 - a:getVersion():java.lang.String
 - a:setAdditionalData(java.lang.String):V

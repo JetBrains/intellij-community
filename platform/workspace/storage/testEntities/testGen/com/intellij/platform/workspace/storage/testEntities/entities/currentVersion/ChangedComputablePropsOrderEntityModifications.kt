@@ -17,6 +17,8 @@ interface ChangedComputablePropsOrderEntityBuilder : WorkspaceEntityBuilder<Chan
   var someKey: Int
   var names: MutableList<String>
   var value: Int
+  val symbolicId: ChangedComputablePropsOrderEntityId
+    get() = com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.ChangedComputablePropsOrderEntityId(names)
 }
 
 internal object ChangedComputablePropsOrderEntityType :

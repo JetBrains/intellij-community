@@ -16,6 +16,8 @@ interface NamedEntityBuilder : WorkspaceEntityBuilder<NamedEntity> {
   var myName: String
   var additionalProperty: String?
   var children: List<NamedChildEntityBuilder>
+  val symbolicId: NameId
+    get() = NameId(myName)
 }
 
 internal object NamedEntityType : EntityType<NamedEntity, NamedEntityBuilder>() {

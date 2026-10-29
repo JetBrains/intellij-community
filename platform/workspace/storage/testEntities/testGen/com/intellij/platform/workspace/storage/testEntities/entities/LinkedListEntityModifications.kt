@@ -15,6 +15,8 @@ interface LinkedListEntityBuilder : WorkspaceEntityBuilder<LinkedListEntity> {
   override var entitySource: EntitySource
   var myName: String
   var next: LinkedListEntityId
+  val symbolicId: LinkedListEntityId
+    get() = LinkedListEntityId(myName)
 }
 
 internal object LinkedListEntityType : EntityType<LinkedListEntity, LinkedListEntityBuilder>() {

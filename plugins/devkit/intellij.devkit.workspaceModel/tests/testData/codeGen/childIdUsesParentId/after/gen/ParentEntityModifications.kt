@@ -16,6 +16,8 @@ import com.intellij.workspaceModel.test.api.impl.ParentEntityImpl
 interface ParentEntityBuilder: WorkspaceEntityBuilder<ParentEntity>{
 override var entitySource: EntitySource
 var name: String
+val symbolicId: ParentId
+get() = ParentId(name)
 }
 internal object ParentEntityType : EntityType<ParentEntity, ParentEntityBuilder>(){
 override val entityImplClass: Class<*> get() = ParentEntityImpl::class.java

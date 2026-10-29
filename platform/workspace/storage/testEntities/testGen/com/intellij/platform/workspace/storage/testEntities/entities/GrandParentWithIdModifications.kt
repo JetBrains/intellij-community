@@ -15,6 +15,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.impl.GrandP
 interface GrandParentWithIdBuilder : WorkspaceEntityBuilder<GrandParentWithId> {
   override var entitySource: EntitySource
   var myId: String
+  val symbolicId: GrandParentWithId.GrandParentId
+    get() = GrandParentWithId.GrandParentId(myId)
 }
 
 internal object GrandParentWithIdType : EntityType<GrandParentWithId, GrandParentWithIdBuilder>() {

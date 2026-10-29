@@ -15,6 +15,8 @@ interface ChildWithIdBuilder : WorkspaceEntityBuilder<ChildWithId> {
   override var entitySource: EntitySource
   var myId: String
   var parent: ParentWithIdBuilder
+  val symbolicId: ChildWithId.ChildId
+    get() = ChildWithId.ChildId(myId)
 }
 
 internal object ChildWithIdType : EntityType<ChildWithId, ChildWithIdBuilder>() {

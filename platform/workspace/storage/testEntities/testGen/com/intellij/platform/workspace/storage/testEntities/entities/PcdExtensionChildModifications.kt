@@ -15,6 +15,8 @@ interface PcdExtensionChildBuilder : WorkspaceEntityBuilder<PcdExtensionChild> {
   override var entitySource: EntitySource
   var data: Float
   var parent: PcdParent1EntityBuilder
+  val symbolicId: PCDIdExtension
+    get() = PCDIdExtension(data, parent.symbolicId)
 }
 
 internal object PcdExtensionChildType : EntityType<PcdExtensionChild, PcdExtensionChildBuilder>() {

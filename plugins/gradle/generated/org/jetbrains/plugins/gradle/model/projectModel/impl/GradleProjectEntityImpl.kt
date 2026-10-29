@@ -39,16 +39,11 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
     private val connections = listOf<ConnectionId>(BUILD_CONNECTION_ID)
   }
 
-  override val symbolicId: GradleProjectEntityId = super.symbolicId
+  override val symbolicId: GradleProjectEntityId = GradleProjectEntityId(dataSource.buildSymbolicId_Synthetic, dataSource.identityPath)
 
   override val build: GradleBuildEntity
     get() = snapshot.instrumentation.getParent(BUILD_CONNECTION_ID, this) as? GradleBuildEntity
             ?: error("Parent build not found for GradleProjectEntity")
-  override val buildId: GradleBuildEntityId
-    get() {
-      readField("buildId")
-      return dataSource.buildId
-    }
   override val name: String
     get() {
       readField("name")
@@ -103,9 +98,6 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
           error("Field GradleProjectEntity#build should be initialized")
         }
       }
-      if (!getEntityData().isBuildIdInitialized()) {
-        error("Field GradleProjectEntity#buildId should be initialized")
-      }
       if (!getEntityData().isNameInitialized()) {
         error("Field GradleProjectEntity#name should be initialized")
       }
@@ -121,6 +113,9 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
       if (!getEntityData().isLinkedProjectIdInitialized()) {
         error("Field GradleProjectEntity#linkedProjectId should be initialized")
       }
+      if (!getEntityData().isBuildSymbolicId_SyntheticInitialized()) {
+        error("Field GradleProjectEntity#build should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -131,7 +126,6 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
     override fun relabel(dataSource: WorkspaceEntity, parents: Set<WorkspaceEntity>?) {
       dataSource as GradleProjectEntity
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
-      if (this.buildId != dataSource.buildId) this.buildId = dataSource.buildId
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.path != dataSource.path) this.path = dataSource.path
       if (this.identityPath != dataSource.identityPath) this.identityPath = dataSource.identityPath
@@ -156,13 +150,6 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
       set(value) {
         changeParentOfMany(value, BUILD_CONNECTION_ID)
         changedProperty.add("build")
-      }
-    override var buildId: GradleBuildEntityId
-      get() = getEntityData().buildId
-      set(value) {
-        checkModificationAllowed()
-        getEntityData(true).buildId = value
-        changedProperty.add("buildId")
       }
     override var name: String
       get() = getEntityData().name
@@ -205,38 +192,43 @@ internal class GradleProjectEntityImpl(private val dataSource: GradleProjectEnti
       }
 
     override fun getEntityClass(): Class<GradleProjectEntity> = GradleProjectEntity::class.java
+    override fun calculateSymbolicId() {
+      val _buildAsBase = build as ModifiableWorkspaceEntityBase<*, *>
+      _buildAsBase.calculateSymbolicId()
+      getEntityData(true).buildSymbolicId_Synthetic = build.symbolicId
+    }
   }
 }
 
 @OptIn(WorkspaceEntityInternalApi::class)
 internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity>(), SoftLinkable {
-  lateinit var buildId: GradleBuildEntityId
   lateinit var name: String
   lateinit var path: String
   lateinit var identityPath: String
   lateinit var url: VirtualFileUrl
   lateinit var linkedProjectId: String
-  internal fun isBuildIdInitialized(): Boolean = ::buildId.isInitialized
+  lateinit var buildSymbolicId_Synthetic: GradleBuildEntityId
   internal fun isNameInitialized(): Boolean = ::name.isInitialized
   internal fun isPathInitialized(): Boolean = ::path.isInitialized
   internal fun isIdentityPathInitialized(): Boolean = ::identityPath.isInitialized
   internal fun isUrlInitialized(): Boolean = ::url.isInitialized
   internal fun isLinkedProjectIdInitialized(): Boolean = ::linkedProjectId.isInitialized
+  internal fun isBuildSymbolicId_SyntheticInitialized(): Boolean = ::buildSymbolicId_Synthetic.isInitialized
   override fun getLinks(): Set<SymbolicEntityId<*>> {
     val result = HashSet<SymbolicEntityId<*>>()
-    result.add(buildId)
+    result.add(buildSymbolicId_Synthetic)
     return result
   }
 
   override fun index(index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
-    index.index(this, buildId)
+    index.index(this, buildSymbolicId_Synthetic)
   }
 
   override fun updateLinksIndex(prev: Set<SymbolicEntityId<*>>, index: WorkspaceMutableIndex<SymbolicEntityId<*>>) {
     val mutablePreviousSet = HashSet(prev)
-    val removedItem_buildId = mutablePreviousSet.remove(buildId)
-    if (!removedItem_buildId) {
-      index.index(this, buildId)
+    val removedItem_buildSymbolicId_Synthetic = mutablePreviousSet.remove(buildSymbolicId_Synthetic)
+    if (!removedItem_buildSymbolicId_Synthetic) {
+      index.index(this, buildSymbolicId_Synthetic)
     }
     for (removed in mutablePreviousSet) {
       index.remove(this, removed)
@@ -245,15 +237,15 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
 
   override fun updateLink(oldLink: SymbolicEntityId<*>, newLink: SymbolicEntityId<*>): Boolean {
     var changed = false
-    val buildId_data = if (buildId == oldLink) {
+    val buildSymbolicId_Synthetic_data = if (buildSymbolicId_Synthetic == oldLink) {
       changed = true
       newLink as GradleBuildEntityId
     }
     else {
       null
     }
-    if (buildId_data != null) {
-      buildId = buildId_data
+    if (buildSymbolicId_Synthetic_data != null) {
+      buildSymbolicId_Synthetic = buildSymbolicId_Synthetic_data
     }
     return changed
   }
@@ -269,7 +261,7 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntityBuilder<*>>): WorkspaceEntityBuilder<*> {
-    return GradleProjectEntity(buildId, name, path, identityPath, url, linkedProjectId, entitySource) {
+    return GradleProjectEntity(name, path, identityPath, url, linkedProjectId, entitySource) {
       parents.filterIsInstance<GradleBuildEntityBuilder>().singleOrNull()?.let { this.build = it }
     }
   }
@@ -285,7 +277,6 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
     if (this.javaClass != other.javaClass) return false
     other as GradleProjectEntityData
     if (this.entitySource != other.entitySource) return false
-    if (this.buildId != other.buildId) return false
     if (this.name != other.name) return false
     if (this.path != other.path) return false
     if (this.identityPath != other.identityPath) return false
@@ -298,7 +289,6 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
     if (other == null) return false
     if (this.javaClass != other.javaClass) return false
     other as GradleProjectEntityData
-    if (this.buildId != other.buildId) return false
     if (this.name != other.name) return false
     if (this.path != other.path) return false
     if (this.identityPath != other.identityPath) return false
@@ -309,7 +299,6 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
 
   override fun hashCode(): Int {
     var result = entitySource.hashCode()
-    result = 31 * result + buildId.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + path.hashCode()
     result = 31 * result + identityPath.hashCode()
@@ -320,7 +309,6 @@ internal class GradleProjectEntityData : WorkspaceEntityData<GradleProjectEntity
 
   override fun hashCodeIgnoringEntitySource(): Int {
     var result = javaClass.hashCode()
-    result = 31 * result + buildId.hashCode()
     result = 31 * result + name.hashCode()
     result = 31 * result + path.hashCode()
     result = 31 * result + identityPath.hashCode()

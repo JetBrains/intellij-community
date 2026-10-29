@@ -20,6 +20,8 @@ interface GradleScriptDefinitionEntityBuilder : WorkspaceEntityBuilder<GradleScr
     var compilationConfigurationData: ScriptCompilationConfigurationData
     var hostConfiguration: ScriptingHostConfigurationEntity
     var evaluationConfiguration: ScriptEvaluationConfigurationEntity?
+    val symbolicId: GradleScriptDefinitionEntityId
+        get() = GradleScriptDefinitionEntityId(definitionId)
 }
 
 internal object GradleScriptDefinitionEntityType : EntityType<GradleScriptDefinitionEntity, GradleScriptDefinitionEntityBuilder>() {

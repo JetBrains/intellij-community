@@ -16,6 +16,8 @@ interface ModuleTestEntityBuilder : WorkspaceEntityBuilder<ModuleTestEntity> {
   var name: String
   var contentRoots: List<ContentRootTestEntityBuilder>
   var facets: List<FacetTestEntityBuilder>
+  val symbolicId: ModuleTestEntitySymbolicId
+    get() = ModuleTestEntitySymbolicId(name)
 }
 
 internal object ModuleTestEntityType : EntityType<ModuleTestEntity, ModuleTestEntityBuilder>() {

@@ -14,6 +14,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.impl.FirstE
 interface FirstEntityWithPIdBuilder : WorkspaceEntityBuilder<FirstEntityWithPId> {
   override var entitySource: EntitySource
   var data: String
+  val symbolicId: FirstPId
+    get() = FirstPId(data)
 }
 
 internal object FirstEntityWithPIdType : EntityType<FirstEntityWithPId, FirstEntityWithPIdBuilder>() {

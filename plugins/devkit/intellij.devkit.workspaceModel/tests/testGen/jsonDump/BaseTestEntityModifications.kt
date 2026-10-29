@@ -22,6 +22,8 @@ interface BaseTestEntityBuilder : WorkspaceEntityBuilder<BaseTestEntity> {
   var listOfAbstract: MutableList<AbstractClass>
   var stringList: MutableList<String>
   var stringSet: MutableSet<String>
+  val symbolicId: TestSymbolicId
+    get() = TestSymbolicId(name)
 }
 
 internal object BaseTestEntityType : EntityType<BaseTestEntity, BaseTestEntityBuilder>() {

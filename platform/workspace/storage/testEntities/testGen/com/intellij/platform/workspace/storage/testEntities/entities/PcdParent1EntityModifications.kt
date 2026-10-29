@@ -17,6 +17,8 @@ interface PcdParent1EntityBuilder : WorkspaceEntityBuilder<PcdParent1Entity> {
   var name: String
   var version: Int
   var child: PcdChildEntityBuilder?
+  val symbolicId: PCDId1
+    get() = PCDId1(name)
 }
 
 internal object PcdParent1EntityType : EntityType<PcdParent1Entity, PcdParent1EntityBuilder>() {

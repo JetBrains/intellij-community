@@ -15,6 +15,8 @@ interface HeadAbstractionEntityBuilder : WorkspaceEntityBuilder<HeadAbstractionE
   override var entitySource: EntitySource
   var data: String
   var child: CompositeBaseEntityBuilder<out CompositeBaseEntity>?
+  val symbolicId: HeadAbstractionSymbolicId
+    get() = HeadAbstractionSymbolicId(data)
 }
 
 internal object HeadAbstractionEntityType : EntityType<HeadAbstractionEntity, HeadAbstractionEntityBuilder>() {

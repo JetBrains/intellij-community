@@ -17,6 +17,8 @@ interface SimpleEntityBuilder: WorkspaceEntityBuilder<SimpleEntity>{
 override var entitySource: EntitySource
 var name: String
 var relatedId: SimpleSymbolicId?
+val symbolicId: SimpleSymbolicId
+get() = SimpleSymbolicId(name)
 }
 internal object SimpleEntityType : EntityType<SimpleEntity, SimpleEntityBuilder>(){
 override val entityImplClass: Class<*> get() = SimpleEntityImpl::class.java
