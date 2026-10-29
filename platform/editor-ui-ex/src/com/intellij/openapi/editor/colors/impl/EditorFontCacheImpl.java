@@ -23,9 +23,10 @@ import java.awt.font.TextAttribute;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
+import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public class EditorFontCacheImpl extends EditorFontCache {
+public final class EditorFontCacheImpl extends EditorFontCache {
   private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
   private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
   private static final AtomicReferenceFieldUpdater<EditorFontCacheImpl, Font[]> FONTS_UPDATER =
@@ -35,11 +36,21 @@ public class EditorFontCacheImpl extends EditorFontCache {
     return enableLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
   }
 
-  /**
-   * Holds an empty array before the first build and after each reset. Each reset writes a new empty array.
-   * A build publishes its fonts only if the field still holds the array that the build read.
-   */
+  private final @NotNull Supplier<? extends EditorColorsScheme> schemeSupplier;
   private volatile Font @NotNull [] fonts = new Font[0];
+
+  /**
+   * Creates the application cache, which reads the global scheme.
+   * The service container calls this constructor.
+   */
+  @SuppressWarnings("unused")
+  public EditorFontCacheImpl() {
+    this(() -> EditorColorsManager.getInstance().getGlobalScheme());
+  }
+
+  public EditorFontCacheImpl(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
+    this.schemeSupplier = schemeSupplier;
+  }
 
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
@@ -64,16 +75,12 @@ public class EditorFontCacheImpl extends EditorFontCache {
     FONTS_UPDATER.set(this, new Font[0]);
   }
 
-  protected EditorColorsScheme getFontCacheScheme() {
-    return EditorColorsManager.getInstance().getGlobalScheme();
-  }
-
   /**
    * Builds the fonts from two snapshots, so the editor fonts come from one version of their preferences.
    * The console fonts also come from one version of their preferences.
    */
   private Font @NotNull [] initFonts() {
-    EditorColorsScheme scheme = getFontCacheScheme();
+    EditorColorsScheme scheme = schemeSupplier.get();
     FontPreferences schemePreferences = scheme.getFontPreferences();
     FontPreferences preferences = schemePreferences.getSnapshot();
     FontPreferences consolePreferences = scheme.getConsoleFontPreferences().getSnapshot();

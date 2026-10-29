@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
@@ -54,7 +55,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("UseJBColor")
-public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
+public abstract class AbstractColorsScheme extends EditorFontCache implements EditorColorsScheme, SerializableScheme {
   private static final Logger LOG = Logger.getInstance(AbstractColorsScheme.class);
 
   public static final int CURR_VERSION = 142;
@@ -117,6 +118,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private final boolean myMarkColorIds = SystemProperties.getBooleanProperty(ENABLE_RUNTIME_SCHEME_COLOR_WRAPPER_OPTION, false);
   private final TextAttributesReader myValueReader = new TextAttributesReader();
   private final Properties metaInfo = new Properties();
+  private final EditorFontCache fontCache = new EditorFontCacheImpl(this::getFontCacheScheme);
   protected EditorColorsScheme parentScheme;
   Map<ColorKey, Color> colorMap = new HashMap<>();
   Map<@NonNls String, TextAttributes> attributesMap = new HashMap<>();
@@ -205,7 +207,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (isEditorDelegating()) {
       return getInstance().getFont(key);
     }
-    return super.getFont(key);
+    return fontCache.getFont(key);
+  }
+
+  @Override
+  public void reset() {
+    fontCache.reset();
   }
 
   @Override
@@ -763,7 +770,14 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     reset();
   }
 
-  @Override
+  /**
+   * Returns the scheme whose font preferences the font cache of this scheme reads.
+   *
+   * @deprecated The method stays for compatibility.
+   * To change the fonts of a scheme, override {@link #getFontPreferences()} and {@link #getConsoleFontPreferences()}.
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
   protected EditorColorsScheme getFontCacheScheme() {
     return this;
   }

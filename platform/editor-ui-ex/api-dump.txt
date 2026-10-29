@@ -61,9 +61,9 @@ c:com.intellij.injected.editor.MarkupModelWindow
 - removeHighlighter(com.intellij.openapi.editor.markup.RangeHighlighter):V
 - setRangeHighlighterAttributes(com.intellij.openapi.editor.markup.RangeHighlighter,com.intellij.openapi.editor.markup.TextAttributes):V
 a:com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
+- com.intellij.openapi.editor.colors.EditorFontCache
 - com.intellij.configurationStore.SerializableScheme
 - com.intellij.openapi.editor.colors.EditorColorsScheme
-- com.intellij.openapi.editor.colors.EditorFontCache
 - sf:CURR_VERSION:I
 - sf:INHERITED_ATTRS_MARKER:com.intellij.openapi.editor.markup.TextAttributes
 - sf:INHERITED_COLOR_MARKER:java.awt.Color
@@ -122,6 +122,7 @@ a:com.intellij.openapi.editor.colors.impl.AbstractColorsScheme
 - readAttributes(org.jdom.Element):V
 - readColors(org.jdom.Element):V
 - readExternal(org.jdom.Element):V
+- reset():V
 - setCanBeDeleted(Z):V
 - setConsoleFontName(java.lang.String):V
 - setConsoleFontPreferences(com.intellij.openapi.editor.colors.FontPreferences):V

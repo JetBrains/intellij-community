@@ -2,29 +2,40 @@
 package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.util.function.Supplier
 
 @TestApplication
 internal class EditorFontCacheImplTest {
   @Test
   fun `the cache builds the fonts once without a reset`() {
-    val cache = CountingFontCache()
-    cache.getFont(EditorFontType.PLAIN)
-    cache.getFont(EditorFontType.BOLD)
-    assertThat(cache.builds).isEqualTo(1)
+    val counter = BuildCounter()
+    counter.cache.getFont(EditorFontType.PLAIN)
+    counter.cache.getFont(EditorFontType.BOLD)
+    assertThat(counter.builds).isEqualTo(1)
   }
 
   @Test
   fun `a reset during a build makes the next call build again`() {
-    val cache = CountingFontCache()
-    cache.resetDuringNextBuild = true
-    cache.getFont(EditorFontType.PLAIN)
-    cache.getFont(EditorFontType.PLAIN)
-    assertThat(cache.builds).isEqualTo(2)
+    val counter = BuildCounter()
+    counter.resetDuringNextBuild = true
+    counter.cache.getFont(EditorFontType.PLAIN)
+    counter.cache.getFont(EditorFontType.PLAIN)
+    assertThat(counter.builds).isEqualTo(2)
+  }
+
+  @Test
+  fun `a font change of a scheme resets the font cache of the scheme`() {
+    val scheme = EditorColorsSchemeImpl(null)
+    scheme.setEditorFontSize(13f)
+    scheme.getFont(EditorFontType.PLAIN)
+    scheme.setEditorFontSize(15f)
+    assertThat(scheme.getFont(EditorFontType.PLAIN).size2D).isEqualTo(15f)
   }
 
   @Test
@@ -45,20 +56,21 @@ internal class EditorFontCacheImplTest {
   }
 
   /**
-   * Counts the font builds, because each build starts with [getFontCacheScheme].
+   * Counts the font builds of [cache], because each build starts with a call of this supplier.
    * A reset in this call acts like a font change on another thread during the build.
    */
-  private class CountingFontCache : EditorFontCacheImpl() {
+  private class BuildCounter : Supplier<EditorColorsScheme> {
+    val cache = EditorFontCacheImpl(this)
     var builds = 0
     var resetDuringNextBuild = false
 
-    override fun getFontCacheScheme(): EditorColorsScheme {
+    override fun get(): EditorColorsScheme {
       builds++
       if (resetDuringNextBuild) {
         resetDuringNextBuild = false
-        reset()
+        cache.reset()
       }
-      return super.getFontCacheScheme()
+      return EditorColorsManager.getInstance().globalScheme
     }
   }
 }
