@@ -57,6 +57,16 @@ abstract class DefaultVcsRootPolicy protected constructor(protected val myProjec
       StringUtil.escapeXmlEntities(ProjectBundle.message("project.roots.project.display.name") + ": " + it.replace('\n', ' '))
     }
 
+  /**
+   * Tells the detector that [getDefaultVcsRoots] changed: [removed] roots are gone, [added] roots are new.
+   * A removed root that is still a default root keeps its mapping, because another source still supplies it.
+   */
+  protected fun defaultRootsChanged(removed: Collection<VirtualFile>, added: Collection<VirtualFile>) {
+    scheduleMappedRootsUpdate()
+    val goneRoots = if (removed.isEmpty()) removed else removed - getDefaultVcsRoots().toSet()
+    scheduleRootsChangeProcessing(goneRoots, added)
+  }
+
   protected fun scheduleMappedRootsUpdate() {
     val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(myProject)
     if (!vcsManager.haveDefaultMapping().isNullOrEmpty()) {

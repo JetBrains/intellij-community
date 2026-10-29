@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.openapi.application.runReadActionBlocking
@@ -11,6 +11,10 @@ import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.project.stateStore
 
+/**
+ * The default VCS roots of a project: the base directory, the `.idea` directory, and every module content root.
+ * A root that more than one source supplies stays a default root until every source drops it.
+ */
 internal class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPolicy(project) {
   init {
     project.messageBus.connect().subscribe(WorkspaceModelTopics.CHANGED, MyModulesListener())
@@ -44,8 +48,7 @@ internal class ModuleDefaultVcsRootPolicy(project: Project) : DefaultVcsRootPoli
 
   private inner class MyModulesListener : ContentRootChangeListener(skipFileChanges = true) {
     override fun contentRootsChanged(removed: List<VirtualFile>, added: List<VirtualFile>) {
-      scheduleMappedRootsUpdate()
-      scheduleRootsChangeProcessing(removed, added)
+      defaultRootsChanged(removed, added)
     }
   }
 }
