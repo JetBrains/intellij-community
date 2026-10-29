@@ -60,8 +60,8 @@
     <postStartupActivity implementation="com.intellij.platform.lsp.impl.platformListeners.LspStartupActivity"/>
     <editorFactoryDocumentListener id="LspDocumentListener"
                                    implementation="com.intellij.platform.lsp.impl.platformListeners.LspDocumentListener"/>
-    <vfs.asyncListener id="LspFileListener"
-                       implementation="com.intellij.platform.lsp.impl.platformListeners.LspFileListener"/>
+    <vfs.asyncListenerBackgroundable id="LspFileListener"
+                                     implementation="com.intellij.platform.lsp.impl.platformListeners.LspFileListener"/>
 
     <highlightingPassFactory implementation="com.intellij.platform.lsp.impl.features.highlighting.LspHighlightingPassFactory"/>
     <problemFileHighlightFilter implementation="com.intellij.platform.lsp.impl.features.highlighting.LspProblemFileHighlightFilter"/>
