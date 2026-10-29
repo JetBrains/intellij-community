@@ -117,10 +117,11 @@ internal class IconDeferrerImpl(coroutineScope: CoroutineScope) : IconDeferrer()
       while (true) {
         delay(deferrerCacheClearingCheckPeriod)
         val currentCacheSize = iconCache.size
-        recomputeMaxCacheSize(currentCacheSize)
         if (currentCacheSize > maxCacheSize) {
           log.trace { "Clearing icon deferrer cache because it's too big: $currentCacheSize > $maxCacheSize" }
           clearCache()
+          // a big VFS batch raised the limit; the clear removed the icons of that batch
+          maxCacheSize = preConfiguredCacheSize
         }
         else {
           log.trace { "icon cache size $currentCacheSize" }
