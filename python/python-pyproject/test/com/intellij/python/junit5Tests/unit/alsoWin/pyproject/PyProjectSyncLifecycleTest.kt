@@ -41,9 +41,11 @@ import com.jetbrains.python.allure.Layers
 import com.jetbrains.python.allure.Subsystems
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
@@ -68,6 +70,8 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlin.io.path.createDirectories
 import kotlin.io.path.writeText
 import kotlin.time.Duration.Companion.milliseconds
@@ -84,7 +88,7 @@ internal class PyProjectSyncLifecycleTest {
   fun testCancellationDuringStartupDoesNotSubscribe(@TestDisposable disposable: Disposable): Unit = timeoutRunBlocking {
     val workspace = gateWorkspace(disposable)
     val listeners = vfsListeners()
-    val service = PyProjectModelSyncService(projectFixture.get(), this)
+    val service = PyProjectModelSyncService(projectFixture.get(), serviceScope())
     try {
       service.start()
       workspace.waitStarted.await()
@@ -111,7 +115,7 @@ internal class PyProjectSyncLifecycleTest {
     project.messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener {
       rebuilt.complete(workspace.subscriptions.value to vfsListeners())
     })
-    val service = PyProjectModelSyncService(project, this)
+    val service = PyProjectModelSyncService(project, serviceScope())
     try {
       service.start()
       workspace.waitStarted.await()
@@ -121,9 +125,10 @@ internal class PyProjectSyncLifecycleTest {
       workspace.ready.complete(Unit)
       val (activeSubscriptions, activeListeners) = rebuilt.await()
       assertEquals(listOf("nested"), project.modules.filter { it.isPyProjectTomlBased }.map { it.name })
+      assertEquals(1, activeSubscriptions)
       service.stop()
       coroutineContext.job.children.toList().joinAll()
-      assertEquals(activeSubscriptions - 1, workspace.subscriptions.value)
+      assertEquals(0, workspace.subscriptions.value)
       assertEquals(1, (activeListeners - vfsListeners().toSet()).size)
     }
     finally {
@@ -145,7 +150,7 @@ internal class PyProjectSyncLifecycleTest {
     project.messageBus.connect(disposable).subscribe(MODEL_REBUILD, ModelRebuiltListener {
       rebuilt.trySend(project.modules.filter { it.isPyProjectTomlBased }.map { it.name }.sorted())
     })
-    val service = PyProjectModelSyncService(project, this)
+    val service = PyProjectModelSyncService(project, serviceScope())
     try {
       workspace.ready.complete(Unit)
       service.start()
@@ -187,7 +192,7 @@ internal class PyProjectSyncLifecycleTest {
     val workspace = gateWorkspace(disposable)
     val requests = projectFixture.get().workspaceModel.eventLog.mapNotNull { it.toRebuildRequest(pathFixture.get()) }
     assertEquals(0, workspace.subscriptions.value)
-    val tracker = launch(start = CoroutineStart.UNDISPATCHED) {
+    val tracker = launch(SyncServiceCollector(), start = CoroutineStart.UNDISPATCHED) {
       requests.collect()
     }
     try {
@@ -243,7 +248,7 @@ internal class PyProjectSyncLifecycleTest {
       while (rebuilt.receive() != expected) { }
       assertEquals(expected, project.modules.filter { it.isPyProjectTomlBased }.map { it.name }.sorted())
     }
-    val service = PyProjectModelSyncService(project, this)
+    val service = PyProjectModelSyncService(project, serviceScope())
     LoggedErrorProcessor.executeWith(processor).use {
       try {
         workspace.ready.complete(Unit)
@@ -264,11 +269,11 @@ internal class PyProjectSyncLifecycleTest {
         VirtualFileManager.getInstance().refreshAndFindFileByNioPath(root)!!.refresh(false, false)
         awaitModules(name, "second")
         assertEquals(1, reports.get())
-        val activeSubscriptions = workspace.subscriptions.value
+        assertEquals(1, workspace.subscriptions.value)
         val activeListeners = vfsListeners()
         service.stop()
         coroutineContext.job.children.toList().joinAll()
-        assertEquals(activeSubscriptions - 1, workspace.subscriptions.value)
+        assertEquals(0, workspace.subscriptions.value)
         assertEquals(1, (activeListeners - vfsListeners().toSet()).size)
       }
       finally {
@@ -329,18 +334,33 @@ internal class PyProjectSyncLifecycleTest {
     return workspace
   }
 
+  /**
+   * The scope for the service under test. The job stays the test job, so the test can join the service coroutines.
+   * The [SyncServiceCollector] element lets [GatedWorkspace] count only the collectors of this service.
+   */
+  private fun CoroutineScope.serviceScope(): CoroutineScope = CoroutineScope(coroutineContext + SyncServiceCollector())
+
   private fun vfsListeners(): List<AsyncFileListener> {
     val manager = VirtualFileManager.getInstance() as VirtualFileManagerImpl
     return manager.withAsyncFileListenersBackgroundable(emptyList())
   }
 
+  /** Marks the coroutines of the service under test. A project service that collects the event log has no such element. */
+  private class SyncServiceCollector : AbstractCoroutineContextElement(SyncServiceCollector) {
+    companion object Key : CoroutineContext.Key<SyncServiceCollector>
+  }
+
   private class GatedWorkspace(delegate: WorkspaceModelInternal) : WorkspaceModelInternal by delegate {
     val waitStarted = CompletableDeferred<Unit>()
     val ready = CompletableDeferred<Unit>()
+
+    /** The active collectors of [eventLog] that run under [SyncServiceCollector]. */
     val subscriptions = MutableStateFlow(0)
     override val eventLog = delegate.eventLog
-      .onStart { subscriptions.update { it + 1 } }
-      .onCompletion { subscriptions.update { it - 1 } }
+      .onStart { if (isServiceCollector()) subscriptions.update { it + 1 } }
+      .onCompletion { if (isServiceCollector()) subscriptions.update { it - 1 } }
+
+    private suspend fun isServiceCollector(): Boolean = currentCoroutineContext()[SyncServiceCollector] != null
 
     override suspend fun awaitSynchronizationWithJpsModel() {
       waitStarted.complete(Unit)
