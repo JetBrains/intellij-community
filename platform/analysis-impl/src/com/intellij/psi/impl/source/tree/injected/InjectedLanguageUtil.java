@@ -13,6 +13,8 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -36,6 +38,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.BooleanRunnable;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -367,12 +370,24 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
   public static void processTokens(@NotNull PsiFile injectedPsi,
                                    @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
                                    @NotNull BiConsumer<? super @NotNull TextRange, ? super @NotNull TextAttributesKey @NotNull []> consumer) {
-    List<? extends InjectedLanguageUtilBase.TokenInfo> tokens = InjectedLanguageUtil.getHighlightTokens(injectedPsi);
-    if (tokens == null) return;
+    processTokens(injectedPsi, places, EditorColorsManager.getInstance().getGlobalScheme(), consumer);
+  }
+
+  /**
+   * Passes each lexer token of {@code injectedPsi}, as a range in the host file, with its text attributes keys to {@code consumer}.
+   * The tokens are lexed on demand with a highlighter for {@code scheme}.
+   */
+  @ApiStatus.Internal
+  @RequiresReadLock
+  public static void processTokens(@NotNull PsiFile injectedPsi,
+                                   @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
+                                   @NotNull EditorColorsScheme scheme,
+                                   @NotNull BiConsumer<? super @NotNull TextRange, ? super @NotNull TextAttributesKey @NotNull []> consumer) {
+    List<InjectedSyntaxTokens.TokenInfo> tokens = InjectedSyntaxTokens.get(injectedPsi, scheme);
 
     int shredIndex = -1;
     int injectionHostTextRangeStart = -1;
-    for (InjectedLanguageUtil.TokenInfo token : tokens) {
+    for (InjectedSyntaxTokens.TokenInfo token : tokens) {
       ProgressManager.checkCanceled();
       TextRange range = token.rangeInsideInjectionHost();
       if (range.getLength() == 0) continue;

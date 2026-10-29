@@ -13,18 +13,9 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
-import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase;
-import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -34,7 +25,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.AbstractFileViewProvider;
@@ -77,7 +67,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.Reference;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -355,7 +344,6 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
     assert place.isValid();
     assert injectedViewProvider.isValid();
 
-    List<? extends InjectedLanguageUtilBase.TokenInfo> newTokens = InjectedLanguageUtilBase.getHighlightTokens(injectedPsiFile);
     PsiFile newFile = registerDocument(documentWindow, injectedPsiFile, place, hostPsiFile, documentManager);
     boolean mergeHappened = newFile != injectedPsiFile;
     Place mergedPlace = place;
@@ -369,7 +357,6 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
         place.dispose();
         mergedPlace = documentWindow.getShreds();
       }
-      InjectedLanguageUtilBase.setHighlightTokens(injectedPsiFile, newTokens);
     }
 
     assert injectedPsiFile.isValid();
@@ -822,23 +809,6 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
                            hostDocument, placeInfos,
                            documentManager), e);
       }
-
-      try {
-        // a headless analyzer has no color scheme
-        List<InjectedLanguageUtilBase.TokenInfo> tokens =
-          EditorColorsManager.getInstance() == null
-          ? List.of()
-          : obtainHighlightTokensFromLexer(decodedChars, virtualFile, finalLanguage, project, placeInfos);
-        InjectedLanguageUtilBase.setHighlightTokens(psiFile, tokens);
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (RuntimeException e) {
-        throw new RuntimeException(
-          exceptionContext("Obtaining tokens error", language, hostPsiFile, hostVirtualFile, hostDocument, placeInfos,
-                           documentManager), e);
-      }
       parsedNodes[i++] = parsedNode;
     }
 
@@ -902,74 +872,6 @@ public final class InjectionRegistrarImpl implements MultiHostRegistrar {
       }
     }
     return false;
-  }
-
-  // returns lexer element types with corresponding ranges in encoded (injection host based) PSI
-  private static @NotNull List<InjectedLanguageUtilBase.TokenInfo>
-  obtainHighlightTokensFromLexer(@NotNull CharSequence outChars,
-                                 @NotNull VirtualFileWindow virtualFile,
-                                 @NotNull Language language,
-                                 @NotNull Project project,
-                                 @NotNull List<? extends PlaceInfo> placeInfos) {
-    VirtualFile file = (VirtualFile)virtualFile;
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    LanguageFileType fileType = language.getAssociatedFileType();
-    var provider = fileType != null && fileType.getLanguage() == language
-                   ? FileTypeEditorHighlighterProviders.getInstance().forFileType(fileType) : null;
-    EditorHighlighter highlighter =
-      provider != null
-      ? provider.getEditorHighlighter(project, fileType, file, scheme)
-      : new LexerEditorHighlighter(SyntaxHighlighterFactory.getSyntaxHighlighter(language, project, file), scheme);
-    highlighter.setText(outChars);
-    HighlighterIterator iterator = highlighter.createIterator(0);
-    int hostNum = -1;
-    int prevHostEndOffset = 0;
-    LiteralTextEscaper<?> escaper = null;
-    int prefixLength = 0;
-    int suffixLength = 0;
-    TextRange rangeInsideHost = null;
-    int shredEndOffset = -1;
-    List<InjectedLanguageUtilBase.TokenInfo> tokens = new ArrayList<>(outChars.length() / 5); // avg. token per 5 chars
-    while (!iterator.atEnd()) {
-      IElementType tokenType = iterator.getTokenType();
-      TextRange range = new ProperTextRange(iterator.getStart(), iterator.getEnd());
-      while (range != null && !range.isEmpty()) {
-        if (range.getStartOffset() >= shredEndOffset) {
-          hostNum++;
-          PlaceInfo info = placeInfos.get(hostNum);
-          shredEndOffset = info.rangeInDecodedPSI.getEndOffset();
-          prevHostEndOffset = range.getStartOffset();
-          escaper = info.myEscaper;
-          rangeInsideHost = info.rangeInHostElement;
-          prefixLength = info.prefix.length();
-          suffixLength = info.suffix.length();
-        }
-        //in prefix/suffix or spills over to next fragment
-        if (range.getStartOffset() < prevHostEndOffset + prefixLength) {
-          range = new UnfairTextRange(prevHostEndOffset + prefixLength, range.getEndOffset());
-        }
-        TextRange spilled = null;
-        if (range.getEndOffset() > shredEndOffset - suffixLength) {
-          spilled = new UnfairTextRange(shredEndOffset, range.getEndOffset());
-          range = new UnfairTextRange(range.getStartOffset(), shredEndOffset - suffixLength);
-        }
-        if (!range.isEmpty()) {
-          int start = escaper.getOffsetInHost(range.getStartOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
-          if (start == -1) start = rangeInsideHost.getStartOffset();
-          int end = escaper.getOffsetInHost(range.getEndOffset() - prevHostEndOffset - prefixLength, rangeInsideHost);
-          if (end == -1) {
-            end = rangeInsideHost.getEndOffset();
-            prevHostEndOffset = shredEndOffset;
-          }
-          ProperTextRange rangeInHost = new ProperTextRange(start, end);
-          tokens.add(new InjectedLanguageUtilBase.TokenInfo(tokenType, rangeInHost, hostNum,
-                                                            iterator.getTextAttributesKeys()));
-        }
-        range = spilled;
-      }
-      iterator.advance();
-    }
-    return tokens;
   }
 
   @Override

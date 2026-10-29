@@ -322,7 +322,7 @@ final class InjectedGeneralHighlightingPass extends ProgressableTextEditorHighli
                                        @NotNull List<? extends PsiLanguageInjectionHost.Shred> places,
                                        @NotNull ResultSink resultSink) {
     List<HighlightInfo> result = new ArrayList<>(places.size()*2);
-    InjectedLanguageUtil.processTokens(injectedPsi, places, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) -> {
+    InjectedLanguageUtil.processTokens(injectedPsi, places, myGlobalScheme, (@NotNull TextRange hostRange, TextAttributesKey @NotNull [] keys) -> {
       List<HighlightInfo> infos = InjectedLanguageFragmentSyntaxUtil.addSyntaxInjectedFragmentInfo(myGlobalScheme, hostRange, keys, InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID);
       result.addAll(infos);
     });

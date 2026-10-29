@@ -9,12 +9,14 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -83,5 +85,30 @@ public class RegExpInjectionHighlightingTest extends LightQuickFixTestCase {
   public void testImproperRegexp() {
     configureByFile(getFilePath());
     assertEmpty(doHighlighting(HighlightSeverity.ERROR));
+  }
+
+  public void testInjectedSyntaxFollowsTypingInsideFragment() {
+    configureFromFileText("a.java", "class S {void f(String str) { str.replaceAll(\"a<caret>+b\", \"\");} }");
+    assertNotEmpty(injectedSyntaxRanges());
+    type("cd");
+    List<String> afterTyping = injectedSyntaxRanges();
+
+    configureFromFileText("a.java", "class S {void f(String str) { str.replaceAll(\"acd+b\", \"\");} }");
+    List<String> fresh = injectedSyntaxRanges();
+    assertTrue(fresh.toString(), fresh.stream().anyMatch(range -> range.endsWith(":d")));
+    assertEquals(fresh, afterTyping);
+  }
+
+  /** Lexer token ranges of the injected fragments as {@code "start..end:text"}, sorted by offset. */
+  private @NotNull List<String> injectedSyntaxRanges() {
+    String text = InjectedLanguageEditorUtil.getTopLevelEditor(getEditor()).getDocument().getText();
+    return doHighlighting().stream()
+      .filter(info -> info.type == HighlightInfoType.INJECTED_LANGUAGE_FRAGMENT &&
+                      info.getToolId() == InjectedLanguageManagerImpl.INJECTION_SYNTAX_TOOL_ID)
+      .map(info -> TextRange.create(info.getStartOffset(), info.getEndOffset()))
+      .distinct()
+      .sorted(Comparator.comparingInt(TextRange::getStartOffset).thenComparingInt(TextRange::getEndOffset))
+      .map(range -> range.getStartOffset() + ".." + range.getEndOffset() + ":" + range.substring(text))
+      .toList();
   }
 }

@@ -8,13 +8,11 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -86,14 +84,6 @@ public class InjectedLanguageUtilBase {
     return host;
   }
 
-  private static final Key<List<? extends TokenInfo>> HIGHLIGHT_TOKENS = Key.create("HIGHLIGHT_TOKENS");
-  static List<? extends TokenInfo> getHighlightTokens(@NotNull PsiFile file) {
-    return file.getUserData(HIGHLIGHT_TOKENS);
-  }
-  static void setHighlightTokens(@NotNull PsiFile file, @NotNull List<? extends TokenInfo> tokens) {
-    file.putUserData(HIGHLIGHT_TOKENS, tokens);
-  }
-
   public static String getUnescapedText(@NotNull PsiFile file, @Nullable PsiElement startElement, @Nullable PsiElement endElement) {
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(file.getProject());
     if (manager.getInjectionHost(file) == null) {
@@ -119,12 +109,6 @@ public class InjectedLanguageUtilBase {
       }
     });
     return sb.toString();
-  }
-
-  record TokenInfo(@NotNull IElementType type,
-                   @NotNull ProperTextRange rangeInsideInjectionHost,
-                   int shredIndex,
-                   @NotNull TextAttributesKey @NotNull [] textAttributesKeys) {
   }
 
   public static Place getShreds(@NotNull PsiFile injectedFile) {
