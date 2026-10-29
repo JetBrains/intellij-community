@@ -5520,9 +5520,9 @@ jvm_import(
 )
 
 copy_file(
-    name = "ai.grazie/grazie-rule-engine-0.4.31.jar_copy",
-    src = "@ai_grazie-grazie-rule-engine-0_4_31_http//file",
-    out = "ai.grazie/grazie-rule-engine-0.4.31.jar",
+    name = "ai.grazie/grazie-rule-engine-0.4.70.jar_copy",
+    src = "@ai_grazie-grazie-rule-engine-0_4_70_http//file",
+    out = "ai.grazie/grazie-rule-engine-0.4.70.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
@@ -5540,15 +5540,15 @@ java_library(
     visibility = ["//visibility:public"],
     exports = [
         # do not sort,
-        ":ai_grazie-grazie-rule-engine-0_4_31_http_import",
+        ":ai_grazie-grazie-rule-engine-0_4_70_http_import",
         ":net_fellbaum-jemoji-1_3_1_http_import",
     ],
 )
 
 jvm_import(
-    name = "ai_grazie-grazie-rule-engine-0_4_31_http_import",
-    jar = "@ai_grazie-grazie-rule-engine-0_4_31_http//file",
-    source_jar = "@ai_grazie-grazie-rule-engine-0_4_31-sources_http//file",
+    name = "ai_grazie-grazie-rule-engine-0_4_70_http_import",
+    jar = "@ai_grazie-grazie-rule-engine-0_4_70_http//file",
+    source_jar = "@ai_grazie-grazie-rule-engine-0_4_70-sources_http//file",
 )
 
 jvm_import(

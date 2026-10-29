@@ -9,10 +9,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="ai.grazie.rule.engine" type="repository">
-        <properties maven-id="ai.grazie:grazie-rule-engine:0.4.31">
+        <properties maven-id="ai.grazie:grazie-rule-engine:0.4.70">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.4.31/grazie-rule-engine-0.4.31.jar">
-              <sha256sum>8f3ff88e57befc867ba9bfd130148a73fad7563dd85f5bf074af044c961dd6b4</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.4.70/grazie-rule-engine-0.4.70.jar">
+              <sha256sum>9b6fd34eda6bb9d6090b478f6e72a6112aebf51b2924df82030a2c672bbf40f6</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar">
               <sha256sum>80a2f8918240a07d3a6fc7cdcc543d278013f6943c080835e43a22fc90462a9f</sha256sum>
@@ -78,15 +78,86 @@
             <dependency maven-id="io.github.oshai:kotlin-logging-jvm" />
             <dependency maven-id="cloud.jetbrains.sdk:jcp-sdk-json-jvm" />
             <dependency maven-id="org.jetbrains.kotlinx:kotlinx-io-bytestring-jvm" />
+            <dependency maven-id="com.carrotsearch:hppc" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-annotations" />
+            <dependency maven-id="com.fasterxml.jackson.core:jackson-core" />
+            <dependency maven-id="com.google.guava:guava" />
+            <dependency maven-id="com.google.guava:failureaccess" />
+            <dependency maven-id="com.google.guava:listenablefuture" />
+            <dependency maven-id="com.google.errorprone:error_prone_annotations" />
+            <dependency maven-id="com.google.j2objc:j2objc-annotations" />
+            <dependency maven-id="com.google.protobuf:protobuf-java" />
+            <dependency maven-id="com.hankcs:aho-corasick-double-array-trie" />
+            <dependency maven-id="com.optimaize.languagedetector:language-detector" />
+            <dependency maven-id="net.arnx:jsonic" />
+            <dependency maven-id="com.intellij:annotations" />
+            <dependency maven-id="commons-logging:commons-logging" />
+            <dependency maven-id="commons-validator:commons-validator" />
+            <dependency maven-id="commons-digester:commons-digester" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-circuitbreaker" />
+            <dependency maven-id="io.vavr:vavr" />
+            <dependency maven-id="io.vavr:vavr-match" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-core" />
+            <dependency maven-id="io.github.resilience4j:resilience4j-micrometer" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-api" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-context" />
+            <dependency maven-id="io.opentelemetry:opentelemetry-semconv" />
+            <dependency maven-id="io.micrometer:micrometer-registry-prometheus" />
+            <dependency maven-id="io.micrometer:micrometer-core" />
+            <dependency maven-id="org.hdrhistogram:HdrHistogram" />
+            <dependency maven-id="org.latencyutils:LatencyUtils" />
+            <dependency maven-id="io.prometheus:simpleclient_common" />
+            <dependency maven-id="io.prometheus:simpleclient" />
+            <dependency maven-id="io.prometheus:simpleclient_tracer_otel" />
+            <dependency maven-id="io.prometheus:simpleclient_tracer_common" />
+            <dependency maven-id="io.prometheus:simpleclient_tracer_otel_agent" />
+            <dependency maven-id="io.prometheus:simpleclient_guava" />
+            <dependency maven-id="javax.activation:javax.activation-api" />
+            <dependency maven-id="javax.annotation:javax.annotation-api" />
+            <dependency maven-id="javax.measure:unit-api" />
+            <dependency maven-id="javax.xml.bind:jaxb-api" />
+            <dependency maven-id="net.loomchild:segment" />
+            <dependency maven-id="com.sun.xml.bind:jaxb-core" />
+            <dependency maven-id="com.sun.xml.bind:jaxb-impl" />
+            <dependency maven-id="jakarta.xml.bind:jakarta.xml.bind-api" />
+            <dependency maven-id="com.sun.activation:jakarta.activation" />
+            <dependency maven-id="org.apache.commons:commons-lang3" />
+            <dependency maven-id="org.apache.commons:commons-pool2" />
+            <dependency maven-id="org.apache.commons:commons-text" />
+            <dependency maven-id="org.apache.lucene:lucene-backward-codecs" />
+            <dependency maven-id="org.carrot2:morfologik-fsa" />
+            <dependency maven-id="org.carrot2:morfologik-fsa-builders" />
+            <dependency maven-id="org.carrot2:morfologik-speller" />
+            <dependency maven-id="org.carrot2:morfologik-stemming" />
+            <dependency maven-id="org.glassfish.jaxb:jaxb-runtime" />
+            <dependency maven-id="org.glassfish.jaxb:jaxb-core" />
+            <dependency maven-id="jakarta.activation:jakarta.activation-api" />
+            <dependency maven-id="org.eclipse.angus:angus-activation" />
+            <dependency maven-id="org.glassfish.jaxb:txw2" />
+            <dependency maven-id="com.sun.istack:istack-commons-runtime" />
+            <dependency maven-id="org.json:json" />
+            <dependency maven-id="tech.units:indriya" />
+            <dependency maven-id="tech.uom.lib:uom-lib-common" />
+            <dependency maven-id="edu.washington.cs.knowitall:openregex" />
+            <dependency maven-id="io.github.java-diff-utils:java-diff-utils" />
+            <dependency maven-id="edu.washington.cs.knowitall:opennlp-chunk-models" />
+            <dependency maven-id="edu.washington.cs.knowitall:opennlp-postag-models" />
+            <dependency maven-id="edu.washington.cs.knowitall:opennlp-tokenize-models" />
+            <dependency maven-id="org.apache.opennlp:opennlp-tools" />
+            <dependency maven-id="org.languagetool:english-pos-dict" />
+            <dependency maven-id="ai.grazie.model:model-common-jvm" />
+            <dependency maven-id="ai.grazie.model:swagger-annotations-jvm" />
+            <dependency maven-id="ai.grazie.utils:utils-multiplatform-jvm" />
+            <dependency maven-id="ai.grazie.nlp:nlp-detect-jvm" />
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.4.31/grazie-rule-engine-0.4.31.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.4.70/grazie-rule-engine-0.4.70.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.4.31/grazie-rule-engine-0.4.31-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/grazie-rule-engine/0.4.70/grazie-rule-engine-0.4.70-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/net/fellbaum/jemoji/1.3.1/jemoji-1.3.1-sources.jar!/" />
         </SOURCES>
       </library>
