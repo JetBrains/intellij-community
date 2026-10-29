@@ -33,7 +33,7 @@ private class IdeaCompositeExtrasSerializationExtension(
     private val extensions: List<IdeaKotlinExtrasSerializationExtension>
 ) : IdeaKotlinExtrasSerializationExtension {
 
-    override fun <T : Any> serializer(key: Extras.Key<T>): IdeaKotlinExtrasSerializer<T>? {
+    override fun <T> serializer(key: Extras.Key<T>): IdeaKotlinExtrasSerializer<T>? {
         val serializers = extensions.mapNotNull { it.serializer(key) }
         if (serializers.isEmpty()) return null
         if (serializers.size == 1) return serializers.single()

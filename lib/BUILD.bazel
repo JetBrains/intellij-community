@@ -10890,32 +10890,32 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
-    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
+    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-2.5.20-dev-2623.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-2_5_20-dev-2623_http//file",
+    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-2.5.20-dev-2623.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlin-gradle-plugin-idea-kotlin-gradle-plugin-idea",
-    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-2_5_20-dev-2623_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-2_5_20-dev-2623-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http//file",
-    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar",
+    name = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-2_5_20-dev-2623_http//file",
+    out = "org.jetbrains.kotlin/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlin-gradle-plugin-idea-proto-kotlin-gradle-plugin-idea-proto",
-    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-2_5_20-dev-2623_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-2_5_20-dev-2623-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
@@ -10980,17 +10980,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.kotlin/kotlin-tooling-core-1.9.20-dev-8162.jar_copy",
-    src = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
-    out = "org.jetbrains.kotlin/kotlin-tooling-core-1.9.20-dev-8162.jar",
+    name = "org.jetbrains.kotlin/kotlin-tooling-core-2.5.20-dev-2623.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-tooling-core-2_5_20-dev-2623_http//file",
+    out = "org.jetbrains.kotlin/kotlin-tooling-core-2.5.20-dev-2623.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "libraries-kotlin-tooling-core-kotlin-tooling-core",
-    jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http//file",
-    source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http//file",
+    jar = "@org_jetbrains_kotlin-kotlin-tooling-core-2_5_20-dev-2623_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-tooling-core-2_5_20-dev-2623-sources_http//file",
     visibility = ["//visibility:public"],
 )
 

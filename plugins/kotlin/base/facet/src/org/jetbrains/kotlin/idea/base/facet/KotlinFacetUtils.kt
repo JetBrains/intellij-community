@@ -14,7 +14,6 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
@@ -45,7 +44,6 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.KotlinFacetType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
 
 fun Module.hasKotlinFacet(): Boolean {
     return FacetManager.getInstance(this).getFacetByType(KotlinFacetType.TYPE_ID) != null
@@ -72,14 +70,8 @@ val Module.isNewMultiPlatformModule: Boolean
 val Project.isMultiPlatformProject: Boolean
     get() = ModuleManager.getInstance(this).modules.any { it.isMultiPlatformModule || it.isNewMultiPlatformModule }
 
-var Module.isKpmModule: Boolean
-        by NotNullableUserDataProperty(Key.create("IS_KPM_MODULE"), false)
-
 val Module.isHMPPEnabled: Boolean
     get() = KotlinFacetSettingsProvider.getInstance(project)?.getInitializedSettings(this)?.mppVersion?.isHmpp ?: false
-
-var Module.refinesFragmentIds: Collection<String>
-        by NotNullableUserDataProperty(Key.create("REFINES_FRAGMENT_IDS"), emptyList())
 
 val Module.isTestModule: Boolean
     get() = facetSettings?.isTestModule ?: false
@@ -193,28 +185,24 @@ val Module.implementedModules: List<Module>
             }
         }
 
-        val modulesByLinkedKey = project.service<ModulesByLinkedKeyCache>()
-        if (isKpmModule) {
-            refinesFragmentIds.mapNotNull { modulesByLinkedKey[it] }
-        } else {
-            val facetSettings = facetSettings
-            when (facetSettings?.mppVersion) {
-                null -> emptyList()
+        val facetSettings = facetSettings
+        when (facetSettings?.mppVersion) {
+            null -> emptyList()
 
-                KotlinMultiplatformVersion.M3 -> {
-                    facetSettings.dependsOnModuleNames
-                        .mapNotNull { modulesByLinkedKey[it] }
-                        .distinct()
-                }
+            KotlinMultiplatformVersion.M3 -> {
+                val modulesByLinkedKey = project.service<ModulesByLinkedKeyCache>()
+                facetSettings.dependsOnModuleNames
+                    .mapNotNull { modulesByLinkedKey[it] }
+                    .distinct()
+            }
 
-                KotlinMultiplatformVersion.M2 -> {
-                    implementedModulesM2()
-                }
+            KotlinMultiplatformVersion.M2 -> {
+                implementedModulesM2()
+            }
 
-                KotlinMultiplatformVersion.M1 -> {
-                    val modelsProvider = IdeModelsProviderImpl(project)
-                    findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
-                }
+            KotlinMultiplatformVersion.M1 -> {
+                val modelsProvider = IdeModelsProviderImpl(project)
+                findOldFashionedImplementedModuleNames().mapNotNull { modelsProvider.findIdeModule(it) }
             }
         }
     }
@@ -230,9 +218,7 @@ val Module.implementingModules: List<Module>
         val moduleManager = ModuleManager.getInstance(project)
         val stableNameProvider = StableModuleNameProvider.getInstance(project)
 
-        if (isKpmModule) {
-            moduleManager.modules.filter { stableNameProvider.getStableModuleName(this) in it.refinesFragmentIds }
-        } else when (facetSettings?.mppVersion) {
+        when (facetSettings?.mppVersion) {
             null -> emptyList()
 
             KotlinMultiplatformVersion.M3 -> {

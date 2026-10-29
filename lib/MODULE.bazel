@@ -8814,31 +8814,31 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162_http",
-    downloaded_file_path = "kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
-    sha256 = "8d1af87632d95148f122a9fa0ae2903c19ee6fab7d01e017f76e0d2c9a022c20",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.9.20-dev-8162/kotlin-gradle-plugin-idea-1.9.20-dev-8162.jar",
+    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-2_5_20-dev-2623_http",
+    downloaded_file_path = "kotlin-gradle-plugin-idea-2.5.20-dev-2623.jar",
+    sha256 = "e771882a77c4eb63fd613cb551b5a904dfbe874fc7f12b07de1162bc54030dca",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/2.5.20-dev-2623/kotlin-gradle-plugin-idea-2.5.20-dev-2623.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-1_9_20-dev-8162-sources_http",
-    downloaded_file_path = "kotlin-gradle-plugin-idea-1.9.20-dev-8162-sources.jar",
-    sha256 = "34995ef329b089595cc65f760f4aad0ce012730bc40666072af72695b24fe5cf",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/1.9.20-dev-8162/kotlin-gradle-plugin-idea-1.9.20-dev-8162-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-2_5_20-dev-2623-sources_http",
+    downloaded_file_path = "kotlin-gradle-plugin-idea-2.5.20-dev-2623-sources.jar",
+    sha256 = "59d8a65869e20f663164dedb50d34580e10c6127eb1345e229ebff21a637fe92",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea/2.5.20-dev-2623/kotlin-gradle-plugin-idea-2.5.20-dev-2623-sources.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162_http",
-    downloaded_file_path = "kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar",
-    sha256 = "3841d6ad1fdd4bf90143ac6012146d291409b431e837f143c023135bd24b79a6",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar",
+    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-2_5_20-dev-2623_http",
+    downloaded_file_path = "kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623.jar",
+    sha256 = "24a0a39ae6ddefa6e612d0e9027ca636d34658e579995d574a3a383fae61f70a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/2.5.20-dev-2623/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-1_9_20-dev-8162-sources_http",
-    downloaded_file_path = "kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
-    sha256 = "17cfd9ffb163ab974875820368673a42edf8cd6c8f3a0d9750ccb0cb21f6d21d",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-gradle-plugin-idea-proto-2_5_20-dev-2623-sources_http",
+    downloaded_file_path = "kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623-sources.jar",
+    sha256 = "65673fb356b7d7ad49d3404ceb038d1810b552ec4b988261bfc2f90c0146997f",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/2.5.20-dev-2623/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623-sources.jar",
 )
 
 http_file(
@@ -8898,17 +8898,17 @@ http_file(
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162_http",
-    downloaded_file_path = "kotlin-tooling-core-1.9.20-dev-8162.jar",
-    sha256 = "8938eb97e36320daa3e6fb2a60fd2a05b232ff4a557173c5019f045b8832d9f4",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-8162/kotlin-tooling-core-1.9.20-dev-8162.jar",
+    name = "org_jetbrains_kotlin-kotlin-tooling-core-2_5_20-dev-2623_http",
+    downloaded_file_path = "kotlin-tooling-core-2.5.20-dev-2623.jar",
+    sha256 = "4dc5ec54a924c0d66d6f918e67aa28a569275a64cdfdaab11061c9eb9bb16b67",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-tooling-core/2.5.20-dev-2623/kotlin-tooling-core-2.5.20-dev-2623.jar",
 )
 
 http_file(
-    name = "org_jetbrains_kotlin-kotlin-tooling-core-1_9_20-dev-8162-sources_http",
-    downloaded_file_path = "kotlin-tooling-core-1.9.20-dev-8162-sources.jar",
-    sha256 = "1b13cee4e9b562f5cd553370840c9b91d283235a61ffe87ca1efb069ede88294",
-    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-tooling-core/1.9.20-dev-8162/kotlin-tooling-core-1.9.20-dev-8162-sources.jar",
+    name = "org_jetbrains_kotlin-kotlin-tooling-core-2_5_20-dev-2623-sources_http",
+    downloaded_file_path = "kotlin-tooling-core-2.5.20-dev-2623-sources.jar",
+    sha256 = "2d41ea328ee90b09bb0b917bcab82399158ab7046aeadeccb6e357d445aadac8",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-tooling-core/2.5.20-dev-2623/kotlin-tooling-core-2.5.20-dev-2623-sources.jar",
 )
 
 http_file(

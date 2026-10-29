@@ -4,7 +4,6 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.kotlin.tooling.core.KotlinToolingVersionOrNull
 import java.io.Serializable
 
 /**
@@ -19,13 +18,9 @@ sealed interface KotlinGradlePluginVersion : Serializable {
 
     companion object {
         fun parse(version: String): KotlinGradlePluginVersion? {
-            /*
-            TODO Sellmair: Remove catch workaround after 1.8.0 release
-            https://youtrack.jetbrains.com/issue/KT-54301/KotlinToolingVersionOrNull-IllegalArgumentException
-             */
             return try {
-                KotlinGradlePluginVersionImpl(KotlinToolingVersionOrNull(version) ?: return null)
-            } catch (t: IllegalArgumentException) {
+                KotlinGradlePluginVersionImpl(KotlinToolingVersion(version))
+            } catch (e: IllegalArgumentException) {
                 null
             }
         }

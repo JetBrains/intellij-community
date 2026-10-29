@@ -52,14 +52,6 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.gradleModelFacade"
                     interface="org.jetbrains.kotlin.idea.gradle.inspections.KotlinGradleModelFacade"
                     dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kpm.moduleInitialize"
-            interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ModuleDataInitializer"
-            dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.kpm.createRoots"
-            interface="org.jetbrains.kotlin.idea.gradle.configuration.kpm.ContentRootsCreator"
-            dynamic="true"/>
 
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.idea.extrasSerialization"

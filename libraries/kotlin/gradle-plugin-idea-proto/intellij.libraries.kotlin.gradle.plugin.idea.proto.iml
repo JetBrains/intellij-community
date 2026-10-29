@@ -10,19 +10,19 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="kotlin-gradle-plugin-idea-proto" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:1.9.20-dev-8162">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin-idea-proto:2.5.20-dev-2623">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar">
-              <sha256sum>3841d6ad1fdd4bf90143ac6012146d291409b431e837f143c023135bd24b79a6</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/2.5.20-dev-2623/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623.jar">
+              <sha256sum>24a0a39ae6ddefa6e612d0e9027ca636d34658e579995d574a3a383fae61f70a</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/2.5.20-dev-2623/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/1.9.20-dev-8162/kotlin-gradle-plugin-idea-proto-1.9.20-dev-8162-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-idea-proto/2.5.20-dev-2623/kotlin-gradle-plugin-idea-proto-2.5.20-dev-2623-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
