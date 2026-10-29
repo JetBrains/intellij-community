@@ -217,6 +217,7 @@ class SnapshotMarkerEngineImplTest {
     val random = Random(seed)
     val document = DocumentImpl("abc\n".repeat(32), true)
     val markers = ArrayList<SnapshotRangeMarkerImpl>()
+    val disposedRanges = HashMap<SnapshotRangeMarkerImpl, TextRange>()
     fun addMarker() {
       val start = random.nextInt(document.textLength + 1)
       val end = random.nextInt(start, document.textLength + 1)
@@ -247,14 +248,18 @@ class SnapshotMarkerEngineImplTest {
         marker.isGreedyToRight = !marker.isGreedyToRight
       }
       if (iteration % 31 == 0) document.replaceString(0, document.textLength, "abc\n".repeat(32))
-      if (iteration % 37 == 0) markers.random(random).dispose()
+      if (iteration % 37 == 0) {
+        val marker = markers.random(random)
+        disposedRanges.putIfAbsent(marker, marker.textRange)
+        marker.dispose()
+      }
       for (marker in markers) {
         if (iteration % 13 == 0 || random.nextBoolean()) {
-          assertCurrentResolution(marker, "Seed $seed, iteration $iteration, marker ${marker.id}")
+          assertCurrentResolution(marker, "Seed $seed, iteration $iteration, marker ${marker.id}", disposedRanges[marker])
         }
       }
     }
-    markers.forEach { assertCurrentResolution(it) }
+    markers.forEach { assertCurrentResolution(it, disposedRange = disposedRanges[it]) }
   }
 
   @Test
@@ -410,9 +415,11 @@ class SnapshotMarkerEngineImplTest {
 
     val futureChild = fixture.edit(initialSnapshot, startOffset = 0, endOffset = 0, newFragment = "YY")
 
-    assertDisposed(marker, initialSnapshot, startOffset = 2, endOffset = 4)
+    assertAbsent(marker, initialSnapshot)
     assertDisposed(marker, existingChild, startOffset = 3, endOffset = 5)
-    assertDisposed(marker, futureChild, startOffset = 2, endOffset = 4)
+    assertAbsent(marker, futureChild)
+    assertFalse(marker.isValid)
+    assertEquals(TextRange(2, 4), marker.textRange)
   }
 
   @Test
@@ -731,7 +738,7 @@ class SnapshotMarkerEngineImplTest {
     val root = rootFor(marker, currentSnapshot)
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, root)
     assertEquals("Marker is disposed", SnapshotMarkerEngineImpl.invalidationReason(marker, root))
-    assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(4, 6)), resolution)
+    assertEquals(PMarkerResolution.ABSENT, resolution)
     assertFalse(marker.isValid)
     assertEquals(TextRange(4, 6), marker.textRange)
     assertEquals(0, countOverlappingMarkers(fixture.rootStore, currentSnapshot, startOffset = 0, endOffset = 8))
@@ -758,7 +765,7 @@ class SnapshotMarkerEngineImplTest {
     val currentSnapshot = fixture.document.core.snapshot()
     val root = rootFor(marker, currentSnapshot)
     val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, root)
-    assertFalse(PMarkerResolution.isValid(resolution))
+    assertEquals(PMarkerResolution.ABSENT, resolution)
     assertEquals("Marker is disposed", SnapshotMarkerEngineImpl.invalidationReason(marker, root))
     assertFalse(marker.isValid)
     assertEquals(0, countOverlappingMarkers(fixture.rootStore, currentSnapshot, startOffset = 0, endOffset = 8))
@@ -1603,14 +1610,15 @@ class SnapshotMarkerEngineImplTest {
     assertEquals(6, PMarkerResolution.endOffset(childResolution))
   }
 
-  private fun assertCurrentResolution(marker: SnapshotRangeMarkerImpl, message: String = "") {
-    val expected = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, marker.currentRootReference().get())
+  private fun assertCurrentResolution(marker: SnapshotRangeMarkerImpl, message: String = "", disposedRange: TextRange? = null) {
+    val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, marker.currentRootReference().get())
+    val expected = if (PMarkerResolution.isAbsent(resolution)) checkNotNull(disposedRange) { message }
+    else PMarkerResolution.toTextRange(resolution)
     val actual = marker.textRange
-    assertFalse(PMarkerResolution.isAbsent(expected), message)
-    assertEquals(PMarkerResolution.toTextRange(expected), actual, message)
-    assertEquals(PMarkerResolution.isValid(expected), marker.isValid, message)
-    assertEquals(PMarkerResolution.startOffset(expected), marker.startOffset, message)
-    assertEquals(PMarkerResolution.endOffset(expected), marker.endOffset, message)
+    assertEquals(expected, actual, message)
+    assertEquals(PMarkerResolution.isValid(resolution), marker.isValid, message)
+    assertEquals(expected.startOffset, marker.startOffset, message)
+    assertEquals(expected.endOffset, marker.endOffset, message)
   }
 
   private fun assertRange(marker: SnapshotMarker, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
