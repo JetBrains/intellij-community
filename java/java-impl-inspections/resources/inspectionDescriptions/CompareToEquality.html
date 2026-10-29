@@ -1,8 +1,11 @@
 <html>
 <body>
-Reports <code>String.compareTo()</code> calls whose result is compared with <code>0</code> using
-<code>==</code> or <code>!=</code> to check string equality. A direct <code>equals()</code> call expresses
+Reports <code>.compareTo()</code> calls whose result is compared with <code>0</code> using
+<code>==</code> or <code>!=</code> to check for equality. A direct <code>equals()</code> call expresses
 the intent more clearly.
+Not all classes have a <code>compareTo()</code> implementation that is consistent with <code>equals()</code>,
+so currently only calls on <code>String</code>, <code>Enum</code> and <code>Number</code> 
+but not <code>java.math.BigDecimal</code> expressions are reported.
 <p><b>Example:</b></p>
 <pre><code>
   boolean isSame(String name) {

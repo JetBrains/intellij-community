@@ -1,19 +1,19 @@
-public class StringCompareToEquality {
+public class CompareToEquality {
 
   boolean eq(String a, String b) {
-    return <warning descr="'compareTo()' used for equality check; 'equals()' is clearer">a.compareTo(b) == 0</warning>;
+    return a.<warning descr="'compareTo()' used for equality check">compareTo</warning>(b) == 0;
   }
 
   boolean ne(String a, String b) {
-    return <warning descr="'compareTo()' used for equality check; 'equals()' is clearer">a.compareTo(b) != 0</warning>;
+    return a.<warning descr="'compareTo()' used for equality check">compareTo</warning>(b) != 0;
   }
 
   boolean zeroOnLeft(String a, String b) {
-    return <warning descr="'compareTo()' used for equality check; 'equals()' is clearer">0 == a.compareTo(b)</warning>;
+    return 0 == a.<warning descr="'compareTo()' used for equality check">compareTo</warning>(b);
   }
 
   boolean literalArgument(String name) {
-    return <warning descr="'compareTo()' used for equality check; 'equals()' is clearer">name.compareTo("value") == 0</warning>;
+    return name.<warning descr="'compareTo()' used for equality check">compareTo</warning>("value") == 0;
   }
 
   // No warning: an ordering comparison, not an equality check.
