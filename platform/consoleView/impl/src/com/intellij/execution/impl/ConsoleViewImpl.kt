@@ -374,7 +374,7 @@ open class ConsoleViewImpl protected constructor(
 
   override fun hasDeferredOutput(): Boolean {
     synchronized(LOCK) {
-      return myDeferredBuffer.length() > 0
+      return !myDeferredBuffer.isEmpty()
     }
   }
 

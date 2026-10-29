@@ -31,7 +31,7 @@ public final class TokenBuffer {
   public static final TokenInfo CR_TOKEN = new TokenInfo(ConsoleViewContentType.SYSTEM_OUTPUT, "\r", null);
   private final int maxCapacity;  // if size becomes > maxCapacity we should trim tokens from the beginning
   private final Deque<TokenInfo> tokens = new ArrayDeque<>(10); // each call to print() is stored here
-  private int size; // total lengths of all tokens
+  private int size; // total lengths of all tokens except CR_TOKEN
   private int startIndex; // index of text start in the first TokeInfo. This TokenInfo can become sliced after total size overflows maxCapacity
 
   @ApiStatus.Internal
@@ -108,8 +108,8 @@ public final class TokenBuffer {
     }
     if (tokens.isEmpty()) {
       // \r at the very beginning. return CR_TOKEN to signal this
+      // because CR_TOKEN does not add a character, it does not change the size
       tokens.addLast(CR_TOKEN);
-      size ++;
     }
   }
 
@@ -118,7 +118,7 @@ public final class TokenBuffer {
     int excess = size - maxCapacity;
     while (excess > startIndex) {
       TokenInfo info = tokens.getFirst();
-      int length = info.length();
+      int length = info == CR_TOKEN ? 0 : info.length();
       if (length > excess) {
         // slice a part of this info
         startIndex = excess;
@@ -126,7 +126,7 @@ public final class TokenBuffer {
       }
       startIndex = 0;
       tokens.removeFirst();
-      size -= info.length();
+      size -= length;
       excess = size - maxCapacity;
     }
     assert startIndex >= 0 && size >= 0 && maxCapacity >= 0: "startIndex="+startIndex+"; size="+size+"; maxCapacity="+maxCapacity;
@@ -136,6 +136,13 @@ public final class TokenBuffer {
   @ApiStatus.Internal
   public int length() {
     return size - startIndex;
+  }
+
+  @ApiStatus.Internal
+  public boolean isEmpty() {
+    // actual size and amount of tokens in the buffer could be different, because the carriage return symbol could be presented
+    // in the buffer, but it has no effect on the actual value of the buffer
+    return tokens.isEmpty();
   }
 
   @ApiStatus.Internal

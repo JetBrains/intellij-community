@@ -233,6 +233,18 @@ class ConsoleViewImplTest : LightPlatformTestCase() {
     assertEquals("Smith", console.text)
   }
 
+  fun testContentSizeWhenCRReplacesDeferredLine() {
+    console.print("Hello\n", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.flushDeferredText()
+    console.print("Progress 1", ConsoleViewContentType.NORMAL_OUTPUT)
+    console.print("\rProgress 2", ConsoleViewContentType.NORMAL_OUTPUT)
+    val contentSize = console.contentSize
+    console.flushDeferredText()
+    assertEquals("Hello\nProgress 2", console.text)
+    assertEquals(console.text.length, contentSize)
+    assertEquals(console.text.length, console.contentSize)
+  }
+
   fun testCaretAfterMultilineOutput() {
     assertCaretAt(0, 0)
     console.print("Hi", ConsoleViewContentType.NORMAL_OUTPUT)
