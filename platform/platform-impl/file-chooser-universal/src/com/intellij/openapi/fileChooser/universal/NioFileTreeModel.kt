@@ -208,6 +208,8 @@ class NioFileTreeModel(
           val name = entry.path.fileName?.toString() ?: return false
           if (!extFilter.second.any { StringUtil.endsWithIgnoreCase(name, ".$it") }) return false
         }
+        val pathFilter = descriptor.pathFilter
+        if (pathFilter != null && !pathFilter.test(entry.path)) return false
       }
       return true
     }

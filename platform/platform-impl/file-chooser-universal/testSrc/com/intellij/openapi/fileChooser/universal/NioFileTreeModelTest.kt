@@ -49,6 +49,32 @@ class NioFileTreeModelTest {
     }
   }
 
+  /**
+   * The path filter from [FileChooserDescriptor.withPathFilter] hides the files
+   * that do not match, like the extension filter. Directories stay visible.
+   */
+  @Test
+  fun `path filter hides files that do not match and keeps directories`() {
+    Files.createFile(root.resolve("match.txt"))
+    Files.createFile(root.resolve("skip.log"))
+    Files.createDirectories(root.resolve("dir"))
+    val descriptor = descriptor()
+      .withPathRoots(root)
+      .withPathFilter { path -> path.fileName?.toString()?.endsWith(".txt") == true }
+    val model = NioFileTreeModel(descriptor, contributor = contributor { true })
+    try {
+      val names = model.onInvoker {
+        (0 until model.getChildCount(model.root)).map { index ->
+          (model.getChild(model.root, index) as NioFileNode).path?.fileName?.toString()
+        }
+      }
+      assertThat(names).containsExactlyInAnyOrder("match.txt", "dir")
+    }
+    finally {
+      Disposer.dispose(model)
+    }
+  }
+
   @Test
   fun `descriptor roots of another contributor are filtered out`() {
     val one = root.resolve("one")

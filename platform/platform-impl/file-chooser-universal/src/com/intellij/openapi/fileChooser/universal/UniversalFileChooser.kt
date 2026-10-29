@@ -118,6 +118,7 @@ import java.awt.event.MouseEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.Predicate
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -935,6 +936,7 @@ object UniversalFileChooser {
       val roots: MutableList<String> = mutableListOf()
       private val environmentRestricted: Boolean = restrictRootsToProjectEnvironment
       private val extensionFilter: List<String>? = descriptor.extensionFilter?.second
+      private val pathFilter: Predicate<in Path>? = descriptor.pathFilter
       private val chooseFiles: Boolean = descriptor.isChooseFiles || descriptor.isChooseJarContents
       private val chooseFolders: Boolean = descriptor.isChooseFolders
 
@@ -1329,13 +1331,15 @@ object UniversalFileChooser {
 
       /**
        * Whether the user can choose [file]. A directory is selectable when the descriptor allows
-       * folders. The extension filter applies to files only, like the legacy
-       * [FileChooserDescriptor.isFileSelectable] (see IJPL-255793).
+       * folders. The extension filter and the path filter apply to files only, like the legacy
+       * [FileChooserDescriptor.isFileSelectable] (see IJPL-255793). Call it on a background
+       * thread: the path filter can touch the file system.
        */
       private fun isSelectable(file: Path, isDirectory: Boolean): Boolean {
         if (file.parent == null) return false
         if (isDirectory) return chooseFolders
         if (!chooseFiles) return false
+        if (pathFilter?.test(file) == false) return false
         val extensions = extensionFilter ?: return true
         val name = file.fileName?.toString() ?: return false
         return extensions.any { Strings.endsWithIgnoreCase(name, ".$it") }

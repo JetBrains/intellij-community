@@ -67,6 +67,7 @@ public class FileChooserDescriptor {
   private @Nullable Pair<@Nls String, List<String>> myExtensionFilter = null;
   private @Nullable List<FileType> myFileTypeFilter = null;
   private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
+  private @Nullable Predicate<? super Path> myPathFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
   private boolean myEnvironmentRestricted = false;
   private boolean myLocalFileSystem = false;
@@ -119,6 +120,7 @@ public class FileChooserDescriptor {
     myExtensionFilter = d.myExtensionFilter;
     myFileTypeFilter = d.myFileTypeFilter;
     myFileFilter = d.myFileFilter;
+    myPathFilter = d.myPathFilter;
     myForcedToUseIdeaFileChooser = false;
     myEnvironmentRestricted = d.myEnvironmentRestricted;
     myLocalFileSystem = d.myLocalFileSystem;
@@ -275,6 +277,21 @@ public class FileChooserDescriptor {
    */
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
     myFileFilter = filter;
+    return this;
+  }
+
+  /**
+   * Sets a condition for files, like {@link #withFileFilter}, but for an NIO path.
+   * The condition applies to the file visibility and to the selection check.
+   * Not applicable to directories.
+   * <p/>
+   * Only the IDE file chooser applies this condition; the native choosers ignore it
+   * (use {@link #withExtensionFilter} for them). The condition can touch the file system,
+   * so the chooser calls it on a background thread.
+   */
+  @ApiStatus.Experimental
+  public FileChooserDescriptor withPathFilter(@Nullable Condition<? super Path> filter) {
+    myPathFilter = filter;
     return this;
   }
 
@@ -516,6 +533,14 @@ public class FileChooserDescriptor {
   @ApiStatus.Internal
   public @Nullable Pair<@Nls String, List<@NlsSafe String>> getExtensionFilter() {
     return myExtensionFilter;
+  }
+
+  /**
+   * @see #withPathFilter(Condition)
+   */
+  @ApiStatus.Internal
+  public @Nullable Predicate<? super Path> getPathFilter() {
+    return myPathFilter;
   }
 
   public @Nullable Object getUserData(@NotNull String dataId) {
