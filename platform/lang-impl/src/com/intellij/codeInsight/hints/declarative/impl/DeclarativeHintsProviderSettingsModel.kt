@@ -70,7 +70,7 @@ class DeclarativeHintsProviderSettingsModel(
                                        option.isEnabled
                                      },
                                      onUserChanged = { newValue ->
-                                       option.isOptionEnabled = newValue
+                                       option.isEnabled = newValue
                                      },
                                      extendedDescription = option.description.getDescription(providerDescription))
         }
@@ -88,7 +88,7 @@ class DeclarativeHintsProviderSettingsModel(
           checkBox(opt.description.getName(providerDescription))
             .selected(opt.isEnabled)
             .onChanged {
-              opt.isOptionEnabled = it.isSelected
+              opt.isEnabled = it.isSelected
               onChangeListener!!.settingsChanged()
             }
             .component.toolTipText = opt.description.getDescription(providerDescription)
@@ -219,7 +219,7 @@ class DeclarativeHintsProviderSettingsModel(
 
   override fun reset() {
     for (option in options) {
-      option.isOptionEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
+      option.isEnabled = (settings.isOptionEnabled(option.description.requireOptionId(), id) ?: option.description.enabledByDefault)
     }
     isEnabled = isProviderEnabledInSettings()
     customSettingsProvider.persistSettings(project, savedSettings, language)
@@ -248,17 +248,7 @@ class DeclarativeHintsProviderSettingsModel(
   }
 }
 
-private class MutableOption(
-  val description: InlayProviderOption, var isOptionEnabled: Boolean = false,
-) {
-  var isEnabled: Boolean
-    get() {
-      return isOptionEnabled
-    }
-    set(value) {
-      isOptionEnabled = value
-    }
-}
+private class MutableOption(val description: InlayProviderOption, var isEnabled: Boolean)
 
 private class PreviewInlayTreeSink(
   val providerBean: InlayHintsProviderExtensionBean,
