@@ -265,21 +265,21 @@ public class TextAttributes implements Cloneable {
   }
 
   public void readExternal(@NotNull Element element) {
-    attrs = AttributesFlyweight.create(element);
+    attrs = AttributesFlyweightSerDe.create(element);
   }
 
   @ApiStatus.Internal
   public void readExternal(@NotNull DataInput in) throws IOException {
-    attrs = AttributesFlyweight.create(in);
+    attrs = AttributesFlyweightSerDe.create(in);
   }
 
   public void writeExternal(Element element) {
-    attrs.writeExternal(element);
+    AttributesFlyweightSerDe.writeExternal(attrs, element);
   }
 
   @ApiStatus.Internal
   public void writeExternal(@NotNull DataOutput out) throws IOException {
-    attrs.writeExternal(out);
+    AttributesFlyweightSerDe.writeExternal(attrs, out);
   }
 
   @Override
