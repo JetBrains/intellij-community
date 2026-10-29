@@ -45,6 +45,7 @@ class MavenArtifactsBuilderTest {
     checkCoordinates("intellij.platform.testFramework.teamCity", "com.jetbrains.intellij.platform", "test-framework-team-city")
     checkCoordinates("intellij.platform.testFramework", "com.jetbrains.intellij.platform", "test-framework")
     checkCoordinates("intellij.platform.testFramework.structureView", "com.jetbrains.intellij.platform", "test-framework-structure-view")
+    checkCoordinates("intellij.platform.testFramework.buildView", "com.jetbrains.intellij.platform", "test-framework-build-view")
     checkCoordinates("intellij.java.compiler.antTasks", "com.jetbrains.intellij.java", "java-compiler-ant-tasks")
     checkCoordinates("intellij.platform.vcs.log", "com.jetbrains.intellij.platform", "vcs-log")
     checkCoordinates("intellij.spring", "com.jetbrains.intellij.spring", "spring")

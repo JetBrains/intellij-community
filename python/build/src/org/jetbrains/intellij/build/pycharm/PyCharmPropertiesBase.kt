@@ -30,6 +30,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
       "intellij.platform.testFramework.teamCity",
       "intellij.platform.testFramework",
       "intellij.platform.testFramework.structureView",
+      "intellij.platform.testFramework.buildView",
     ))
 
     productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.addingAll(
