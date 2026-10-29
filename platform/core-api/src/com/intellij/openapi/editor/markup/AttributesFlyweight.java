@@ -56,11 +56,11 @@ public final class AttributesFlyweight {
     int slot = (hashCode ^ (hashCode >>> 16)) & (FRONT.length - 1);
     AttributesFlyweight cached = FRONT[slot];
     if (cached != null &&
-        cached.matches(hashCode, foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor)) {
+        cached.matches(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor, hashCode)) {
       return cached;
     }
     AttributesFlyweight flyweight = intern(new AttributesFlyweight(
-      hashCode, foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor
+      foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor, hashCode
     ));
     if (cached == null) {
       FRONT[slot] = flyweight;
@@ -80,57 +80,57 @@ public final class AttributesFlyweight {
   ) {
     int hashCode = computeHashCode(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
     return new AttributesFlyweight(
-      hashCode, foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor
+      foreground, background, fontType, effectColor, effectType, copyOf(additionalEffects), errorStripeColor, hashCode
     );
   }
 
-  private final int myHashCode;
-  private final Color myForeground;
-  private final Color myBackground;
-  private final @FontStyle int myFontType;
-  private final Color myEffectColor;
-  private final EffectType myEffectType;
-  private final @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> myAdditionalEffects; // unmodifiable map
-  private final Color myErrorStripeColor;
+  private final Color foreground;
+  private final Color background;
+  private final @FontStyle int fontType;
+  private final Color effectColor;
+  private final EffectType effectType;
+  private final @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects; // unmodifiable map
+  private final Color errorStripeColor;
+  private final int hashCode;
 
   private AttributesFlyweight(
-    int hashCode,
     @Nullable Color foreground,
     @Nullable Color background,
     @FontStyle int fontType,
     @Nullable Color effectColor,
     @Nullable EffectType effectType,
     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
-    @Nullable Color errorStripeColor
+    @Nullable Color errorStripeColor,
+    int hashCode
   ) {
-    myForeground = foreground;
-    myBackground = background;
-    myFontType = fontType;
-    myEffectColor = effectColor;
-    myEffectType = effectType;
-    myErrorStripeColor = errorStripeColor;
-    myAdditionalEffects = additionalEffects;
-    myHashCode = hashCode;
+    this.foreground = foreground;
+    this.background = background;
+    this.fontType = fontType;
+    this.effectColor = effectColor;
+    this.effectType = effectType;
+    this.additionalEffects = additionalEffects;
+    this.errorStripeColor = errorStripeColor;
+    this.hashCode = hashCode;
   }
 
   public Color getForeground() {
-    return myForeground;
+    return foreground;
   }
 
   public Color getBackground() {
-    return myBackground;
+    return background;
   }
 
   public @FontStyle int getFontType() {
-    return myFontType;
+    return fontType;
   }
 
   public Color getEffectColor() {
-    return myEffectColor;
+    return effectColor;
   }
 
   public EffectType getEffectType() {
-    return myEffectType;
+    return effectType;
   }
 
   /**
@@ -138,73 +138,73 @@ public final class AttributesFlyweight {
    */
   @ApiStatus.Experimental
   public boolean hasEffects() {
-    return myEffectColor != null && myEffectType != null || !myAdditionalEffects.isEmpty();
+    return effectColor != null && effectType != null || !additionalEffects.isEmpty();
   }
 
   /**
    * @return all attributes effects, main and additional ones
    */
   public @NotNull Map<EffectType, Color> getAllEffects() {
-    if (myAdditionalEffects.isEmpty()) {
-      if (myEffectType == null || myEffectColor == null) {
+    if (additionalEffects.isEmpty()) {
+      if (effectType == null || effectColor == null) {
         return Collections.emptyMap();
       }
-      return Collections.singletonMap(myEffectType, myEffectColor);
+      return Collections.singletonMap(effectType, effectColor);
     }
     TextAttributesEffectsBuilder builder = TextAttributesEffectsBuilder.create();
-    myAdditionalEffects.forEach(builder::coverWith);
-    builder.coverWith(myEffectType, myEffectColor);
+    additionalEffects.forEach(builder::coverWith);
+    builder.coverWith(effectType, effectColor);
     return builder.getEffectsMap();
   }
 
   @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> getAdditionalEffects() {
-    return myAdditionalEffects;
+    return additionalEffects;
   }
 
   Color getErrorStripeColor() {
-    return myErrorStripeColor;
+    return errorStripeColor;
   }
 
   public @NotNull AttributesFlyweight withForeground(Color foreground) {
-    if (ComparableColor.equalColors(foreground, myForeground)) {
+    if (ComparableColor.equalColors(foreground, this.foreground)) {
       return this;
     }
-    return create(foreground, myBackground, myFontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withBackground(Color background) {
-    if (ComparableColor.equalColors(background, myBackground)) {
+    if (ComparableColor.equalColors(background, this.background)) {
       return this;
     }
-    return create(myForeground, background, myFontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withFontType(@FontStyle int fontType) {
-    if (fontType == myFontType) {
+    if (fontType == this.fontType) {
       return this;
     }
-    return create(myForeground, myBackground, fontType, myEffectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withEffectColor(Color effectColor) {
-    if (ComparableColor.equalColors(effectColor, myEffectColor)) {
+    if (ComparableColor.equalColors(effectColor, this.effectColor)) {
       return this;
     }
-    return create(myForeground, myBackground, myFontType, effectColor, myEffectType, myAdditionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withEffectType(EffectType effectType) {
-    if (Comparing.equal(effectType, myEffectType)) {
+    if (Comparing.equal(effectType, this.effectType)) {
       return this;
     }
-    return create(myForeground, myBackground, myFontType, myEffectColor, effectType, myAdditionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   public @NotNull AttributesFlyweight withErrorStripeColor(Color stripeColor) {
-    if (ComparableColor.equalColors(stripeColor, myErrorStripeColor)) {
+    if (ComparableColor.equalColors(stripeColor, errorStripeColor)) {
       return this;
     }
-    return create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, myAdditionalEffects, stripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, stripeColor);
   }
 
   /**
@@ -212,10 +212,10 @@ public final class AttributesFlyweight {
    */
   @ApiStatus.Experimental
   public @NotNull AttributesFlyweight withAdditionalEffects(@NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects) {
-    if (Comparing.equal(additionalEffects, myAdditionalEffects)) {
+    if (Comparing.equal(additionalEffects, this.additionalEffects)) {
       return this;
     }
-    return create(myForeground, myBackground, myFontType, myEffectColor, myEffectType, additionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   /**
@@ -230,10 +230,10 @@ public final class AttributesFlyweight {
     @Nullable EffectType effectType,
     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects
   ) {
-    if (hasFields(foreground, background, fontType, effectColor, effectType, additionalEffects, myErrorStripeColor)) {
+    if (hasFields(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor)) {
       return this;
     }
-    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, myErrorStripeColor);
+    return create(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
   @Override
@@ -242,25 +242,24 @@ public final class AttributesFlyweight {
     if (o == null || getClass() != o.getClass()) return false;
     AttributesFlyweight that = (AttributesFlyweight)o;
     return hasFields(
-      that.myForeground, that.myBackground, that.myFontType, that.myEffectColor, that.myEffectType, that.myAdditionalEffects,
-      that.myErrorStripeColor
+      that.foreground, that.background, that.fontType, that.effectColor, that.effectType, that.additionalEffects, that.errorStripeColor
     );
   }
 
   /**
-   * Whether this flyweight has the given hash code and fields. It compares the fields as {@link #equals} does.
+   * Whether this flyweight has the given fields and hash code. It compares the fields as {@link #equals} does.
    */
   private boolean matches(
-    int hashCode,
     @Nullable Color foreground,
     @Nullable Color background,
     @FontStyle int fontType,
     @Nullable Color effectColor,
     @Nullable EffectType effectType,
     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
-    @Nullable Color errorStripeColor
+    @Nullable Color errorStripeColor,
+    int hashCode
   ) {
-    return myHashCode == hashCode &&
+    return this.hashCode == hashCode &&
            hasFields(foreground, background, fontType, effectColor, effectType, additionalEffects, errorStripeColor);
   }
 
@@ -273,24 +272,24 @@ public final class AttributesFlyweight {
     @NotNull Map<@NotNull EffectType, ? extends @NotNull Color> additionalEffects,
     @Nullable Color errorStripeColor
   ) {
-    return myFontType == fontType &&
-           ComparableColor.equalColors(myBackground, background) &&
-           ComparableColor.equalColors(myEffectColor, effectColor) &&
-           myEffectType == effectType &&
-           ComparableColor.equalColors(myErrorStripeColor, errorStripeColor) &&
-           ComparableColor.equalColors(myForeground, foreground) &&
-           myAdditionalEffects.equals(additionalEffects);
+    return this.fontType == fontType &&
+           ComparableColor.equalColors(this.background, background) &&
+           ComparableColor.equalColors(this.effectColor, effectColor) &&
+           this.effectType == effectType &&
+           ComparableColor.equalColors(this.errorStripeColor, errorStripeColor) &&
+           ComparableColor.equalColors(this.foreground, foreground) &&
+           this.additionalEffects.equals(additionalEffects);
   }
 
   @Override
   public int hashCode() {
-    return myHashCode;
+    return hashCode;
   }
 
   @Override
   public @NonNls String toString() {
-    return "AttributesFlyweight{myForeground=" + myForeground + ", myBackground=" + myBackground + ", myFontType=" + myFontType +
-           ", myEffectColor=" + myEffectColor + ", myEffectType=" + myEffectType + ", myErrorStripeColor=" + myErrorStripeColor + '}';
+    return "AttributesFlyweight{foreground=" + foreground + ", background=" + background + ", fontType=" + fontType +
+           ", effectColor=" + effectColor + ", effectType=" + effectType + ", errorStripeColor=" + errorStripeColor + '}';
   }
 
   /**
