@@ -1,4 +1,4 @@
-@file:Suppress("ReplaceGetOrSet")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.platform.buildScripts.devDistGenerator
 
