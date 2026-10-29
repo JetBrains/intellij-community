@@ -327,6 +327,7 @@ object CommunityModuleSets {
     module("intellij.platform.testFramework.core")
     module("intellij.platform.testFramework.impl")
     module("intellij.platform.testFramework.teamCity")
+    module("intellij.platform.testFramework.structureView")
     module("intellij.codeowners")
     module("intellij.codeowners.monorepo.resolver")
     module("intellij.codeowners.runtime.resolver")
