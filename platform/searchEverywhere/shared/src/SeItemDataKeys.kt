@@ -14,4 +14,7 @@ object SeItemDataKeys {
 
   /** The diagnostic text of a [SeItemWithDiagnostics]. */
   const val DIAGNOSTICS: String = "SeItemDataKeys.Diagnostics"
+
+  /** The position of a target item in the order of its goto model. The diagnostics of the result list show it. */
+  const val TARGET_INDEX: String = "SeItemDataKeys.TargetIndex"
 }

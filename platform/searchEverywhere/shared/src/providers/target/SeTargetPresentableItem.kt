@@ -27,6 +27,8 @@ class SeTargetRawItemImpl(
   override val rawItem: Any,
   override val composedWeight: SeComposedWeight,
   override val matchers: ItemMatchers?,
+  /** The position of the item in the order of the goto model. */
+  val index: Int,
 ) : SeTargetRawItem, SeComposedWeightItem {
   override val weight: Int get() = composedWeight.first
 }
@@ -48,7 +50,9 @@ class SeTargetPresentableItemImpl(rawItem: Any,
                                   private val presentation: TargetPresentation,
                                   override val extendedInfo: SeExtendedInfo,
                                   override val isMultiSelectionSupported: Boolean,
-                                  override val isExactMatch: Boolean): SeTargetPresentableItem, SeComposedWeightItem {
+                                  override val isExactMatch: Boolean,
+                                  /** The position of the item in the order of the goto model, or null when it is not known. */
+                                  val index: Int? = null): SeTargetPresentableItem, SeComposedWeightItem {
 
   override val rawObject: Any = PSIPresentationBgRendererWrapper.ItemWithPresentation(rawItem, presentation)
   override fun weight(): Int = composedWeight.first

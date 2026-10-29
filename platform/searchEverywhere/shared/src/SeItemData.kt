@@ -10,6 +10,7 @@ import com.intellij.platform.searchEverywhere.presentations.SeItemPresentation
 import com.intellij.platform.searchEverywhere.providers.computeCatchingOrNull
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetItem
 import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItem
+import com.intellij.platform.searchEverywhere.providers.target.SeTargetPresentableItemImpl
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -77,6 +78,8 @@ class SeItemDataFactory {
 
     (item as? SeItemWithDiagnostics)?.diagnostics?.let { additionalInfo[SeItemDataKeys.DIAGNOSTICS] = it }
 
+    (item as? SeTargetPresentableItemImpl)?.index?.let { additionalInfo[SeItemDataKeys.TARGET_INDEX] = it.toString() }
+
     return SeItemDataImpl(uuid, providerId, SeComposedWeight.from(item), item.presentation(), emptyList(), additionalInfo, itemId)
   }
 }
@@ -97,6 +100,7 @@ class SeItemDataImpl internal constructor(
   val isSemantic: Boolean get() = additionalInfo[SeItemDataKeys.IS_SEMANTIC]?.toBoolean() == true
   val isExactMatch: Boolean get() = additionalInfo[SeItemDataKeys.IS_EXACT_MATCH]?.toBoolean() == true
   val diagnostics: @NonNls String? get() = additionalInfo[SeItemDataKeys.DIAGNOSTICS]
+  val targetIndex: Int? get() = additionalInfo[SeItemDataKeys.TARGET_INDEX]?.toIntOrNull()
 
   override fun fetchItemIfExists(): SeItem? = SeItemRegistry.getInstance().find(itemId)
 
@@ -141,6 +145,10 @@ val SeItemData.isExactMatch: Boolean get() = (this as SeItemDataImpl).isExactMat
 /** The diagnostic text of a [SeItemWithDiagnostics], or `null` when the item has none. */
 @get:ApiStatus.Internal
 val SeItemData.diagnostics: @NonNls String? get() = (this as SeItemDataImpl).diagnostics
+
+/** The position of a target item in the order of its goto model, or `null` for another item. See [SeItemDataKeys.TARGET_INDEX]. */
+@get:ApiStatus.Internal
+val SeItemData.targetIndex: Int? get() = (this as SeItemDataImpl).targetIndex
 
 @ApiStatus.Internal
 fun SeItemData.contentEquals(other: Any?): Boolean = (this as SeItemDataImpl).contentEquals(other)

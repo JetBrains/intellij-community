@@ -73,20 +73,24 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiAwareObject
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.text.matching.MatchingMode
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.buffer
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flatMapMerge
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.TestOnly
 import java.awt.event.InputEvent
 import java.util.IdentityHashMap
 import java.util.UUID
@@ -94,6 +98,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
+import kotlin.time.toKotlinDuration
 
 @ApiStatus.Experimental
 class SeTargetItemsProvider<T> private constructor(
@@ -123,10 +132,12 @@ class SeTargetItemsProvider<T> private constructor(
     val inputQueryHasNoExtension = !inputQuery.contains('.')
 
     val runs = GotoLimitedRuns(FIRST_RUN_LIMIT)
+    // The runs share one index, so an item of a later run goes after the items of the earlier runs.
+    val nextIndex = AtomicInteger(0)
     runs.collect { limit ->
       LOG.debug { "$label: run ${runs.runNumber}, limit=$limit" }
       var accepted = true
-      getItemsFlow(rawItemsFlow(params, runs), presentationProvider = { fetchPresentation(it, inputQuery, inputQueryHasNoExtension) })
+      getItemsFlow(rawItemsFlow(params, runs, nextIndex), presentationProvider = { fetchPresentation(it, inputQuery, inputQueryHasNoExtension) })
         .buffer(capacity = 0, onBufferOverflow = BufferOverflow.SUSPEND)
         .takeWhile {
           collector.put(it).also { accepted = it }
@@ -159,15 +170,15 @@ class SeTargetItemsProvider<T> private constructor(
         isFile = isFileProvider,
         inputQueryHasNoExtension = inputQueryHasNoExtension,
         isDirectory = PSIPresentationBgRendererWrapper.toPsi(item.rawItem) is PsiDirectory,
-      )
+      ),
+      index = item.index,
     )
   }
 
   /** Runs the search of [params] without a result limit and computes the presentation of every result. */
   fun getItemsFlow(params: SeParams, presentationProvider: suspend (SeTargetRawItem) -> SeTargetPresentableItem): Flow<SeTargetPresentableItem> =
-    getItemsFlow(rawItemsFlow(params, runs = null), presentationProvider)
+    getItemsFlow(rawItemsFlow(params, runs = null, nextIndex = AtomicInteger(0)), presentationProvider)
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private fun getItemsFlow(
     rawItems: Flow<SeTargetRawItemImpl>,
     presentationProvider: suspend (SeTargetRawItemImpl) -> SeTargetPresentableItem,
@@ -179,12 +190,10 @@ class SeTargetItemsProvider<T> private constructor(
 
     return rawItems
       .buffer(capacity = RAW_ITEMS_BUFFER)              // let the search run ahead
-      .flatMapMerge(concurrency = PRESENTATION_CONCURRENCY) { rawItem ->
-        flow {
-          val item = stats.measure(presentationNanos) { presentationProvider(rawItem) }
-          presentedCount.incrementAndGet()
-          emit(item)
-        }
+      .mapConcurrentlyInOrder(PRESENTATION_CONCURRENCY, presentationOrderTimeout) { rawItem ->
+        val item = stats.measure(presentationNanos) { presentationProvider(rawItem) }
+        presentedCount.incrementAndGet()
+        item
       }
       .onCompletion {
         LOG.debug {
@@ -196,15 +205,85 @@ class SeTargetItemsProvider<T> private constructor(
       }
   }
 
+  /**
+   * Runs [transform] for up to [concurrency] items at once, and emits the results in the order of the items.
+   *
+   * The goto model sends the items with an equal weight in its own order, such as the nearer file first.
+   * The result list keeps the order of such items, so this flow must keep it too. See IJPL-259830.
+   *
+   * A slow transform does not hold back the next results for longer than [orderTimeout] after its start.
+   * After that time, its result comes as soon as it is ready, out of the order of the items.
+   *
+   * A transform that throws a [CancellationException] drops only its own result. Another exception fails the flow.
+   */
+  private fun <T, R> Flow<T>.mapConcurrentlyInOrder(
+    concurrency: Int,
+    orderTimeout: Duration,
+    transform: suspend (T) -> R,
+  ): Flow<R> {
+    require(concurrency >= 1) { "The concurrency must be positive: $concurrency" }
+    val upstream = this
+    return channelFlow {
+      // A transform keeps its permit until it ends, also after it went out of the order.
+      val permits = Semaphore(concurrency)
+      val startedTransforms = Channel<StartedTransform<R>>(capacity = concurrency)
+      launch {
+        try {
+          upstream.collect { value ->
+            permits.acquire()
+            val deadline = TimeSource.Monotonic.markNow() + orderTimeout
+            val result = this@channelFlow.async {
+              try {
+                transform(value)
+              }
+              finally {
+                permits.release()
+              }
+            }
+            startedTransforms.send(StartedTransform(result, deadline))
+          }
+        }
+        finally {
+          startedTransforms.close()
+        }
+      }
+
+      // `join` does not throw the exception of the transform. A failed `async` cancels this flow before `join` returns.
+      suspend fun sendResult(result: Deferred<R>) {
+        result.join()
+        if (result.isCancelled) {
+          LOG.debug { "$label: a presentation was cancelled, so its item is dropped" }
+        }
+        else {
+          send(result.await())
+        }
+      }
+
+      for (started in startedTransforms) {
+        val result = started.result
+        val isInOrder = result.isCompleted || withTimeoutOrNull(-started.deadline.elapsedNow()) { result.join() } != null
+        if (isInOrder) {
+          sendResult(result)
+        }
+        else {
+          LOG.debug { "$label: a presentation takes longer than $orderTimeout, so it goes out of the order" }
+          launch { sendResult(result) }
+        }
+      }
+    }.buffer(Channel.RENDEZVOUS)
+  }
+
   /** Runs the search of [params] without a result limit. */
-  fun getItemsFlow(params: SeParams): Flow<SeTargetRawItem> = rawItemsFlow(params, runs = null)
+  fun getItemsFlow(params: SeParams): Flow<SeTargetRawItem> = rawItemsFlow(params, runs = null, nextIndex = AtomicInteger(0))
 
   /**
    * Runs the search of [params]. With [runs], the search asks for [GotoLimitedRuns.limit] items and skips the items that
    * were sent already: by an earlier run, an earlier attempt of this run, or another contributor. Without it, the search
    * has no limit.
+   *
+   * [nextIndex] numbers the sent items in the order of the model. See [SeTargetRawItemImpl.index].
    */
-  private fun rawItemsFlow(params: SeParams, runs: GotoLimitedRuns?): Flow<SeTargetRawItemImpl> = channelFlow {
+  private fun rawItemsFlow(params: SeParams, runs: GotoLimitedRuns?, nextIndex: AtomicInteger): Flow<SeTargetRawItemImpl> = channelFlow {
     // The counters live outside the read action, because `readAction` restarts the block after a write action.
     val attemptCount = AtomicInteger(0)
     val stats = SeFetchStats(LOG.isDebugEnabled)
@@ -284,20 +363,20 @@ class SeTargetItemsProvider<T> private constructor(
                 provider.filterElementsWithWeights(viewModel, parameters, progressIndicator
                 ) { item: FoundItemDescriptor<*> ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, item.item, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
+                  processElement(progressIndicator, model, item.item, item.composedWeight, defaultMatchers, runs, nextIndex, stats, startedAtNano)
                 }
               }
               is ChooseByNameWeightedItemProvider -> {
                 provider.filterElementsWithWeights(viewModel, pattern, isEverywhere, progressIndicator
                 ) { item: FoundItemDescriptor<*> ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, item.item, item.composedWeight, defaultMatchers, runs, stats, startedAtNano)
+                  processElement(progressIndicator, model, item.item, item.composedWeight, defaultMatchers, runs, nextIndex, stats, startedAtNano)
                 }
               }
               else -> {
                 provider.filterElements(viewModel, pattern, isEverywhere, progressIndicator) { element: Any ->
                   fromModelCount.incrementAndGet()
-                  processElement(progressIndicator, model, element, SeComposedWeight(0), defaultMatchers, runs, stats, startedAtNano)
+                  processElement(progressIndicator, model, element, SeComposedWeight(0), defaultMatchers, runs, nextIndex, stats, startedAtNano)
                 }
               }
             }
@@ -325,6 +404,7 @@ class SeTargetItemsProvider<T> private constructor(
     weight: SeComposedWeight,
     defaultMatchers: ItemMatchers,
     runs: GotoLimitedRuns?,
+    nextIndex: AtomicInteger,
     stats: SeFetchStats,
     startedAtNano: Long,
   ): Boolean {
@@ -342,6 +422,8 @@ class SeTargetItemsProvider<T> private constructor(
     val sentWeight = weight.first
     if (runs != null && !runs.accept(element, sentWeight)) return true
 
+    val index = nextIndex.getAndIncrement()
+
     // A write action cancels a `send` that waits for the consumer, and the read action restarts: that attempt must send the item.
     var delivered = false
     try {
@@ -351,7 +433,7 @@ class SeTargetItemsProvider<T> private constructor(
         }
         // `send` waits for the consumer while the read lock is held, so the wait goes into the log.
         stats.measure(stats.blockedInSendNanos) {
-          send(SeTargetRawItemImpl(element, weight, itemMatchers(defaultMatchers, model, element)))
+          send(SeTargetRawItemImpl(element, weight, itemMatchers(defaultMatchers, model, element), index))
         }
         delivered = true
       }
@@ -628,10 +710,30 @@ class SeTargetItemsProvider<T> private constructor(
     /** How many presentations compute at once. */
     private const val PRESENTATION_CONCURRENCY = 10
 
+    /**
+     * How long a slow presentation can hold back the next items. After that time, the item comes out of the order.
+     * A test changes it with [setPresentationOrderTimeoutForTests].
+     */
+    @Volatile
+    private var presentationOrderTimeout: Duration = 100.milliseconds
+
     /** The limit of the first run of [collectItems]: the frontend asks for 50 items at a time. */
     private const val FIRST_RUN_LIMIT = 50
 
     suspend fun isCoroutineBasedGotoEnabled(): Boolean = RegistryManager.getInstanceAsync().`is`(COROUTINE_BASED_GOTO_KEY)
+
+    /**
+     * Sets how long a slow presentation can hold back the next items. The previous timeout comes back when
+     * [parentDisposable] goes away.
+     */
+    @TestOnly
+    @ApiStatus.Internal
+    @JvmStatic
+    fun setPresentationOrderTimeoutForTests(timeout: java.time.Duration, parentDisposable: Disposable) {
+      val previous = presentationOrderTimeout
+      presentationOrderTimeout = timeout.toKotlinDuration()
+      Disposer.register(parentDisposable) { presentationOrderTimeout = previous }
+    }
 
     /**
      * Builds the preview of [rawItem], or returns null when the item shows none.
@@ -742,6 +844,9 @@ class SeTargetItemsProvider<T> private constructor(
     }
   }
 }
+
+/** A started transform of `mapConcurrentlyInOrder`. After [deadline], it does not hold back the next results. */
+private class StartedTransform<R>(val result: Deferred<R>, val deadline: TimeMark)
 
 /**
  * The counters and the timings of one search, for the performance log.
