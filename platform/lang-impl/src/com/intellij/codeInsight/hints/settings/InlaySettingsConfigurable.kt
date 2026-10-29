@@ -3,12 +3,14 @@ package com.intellij.codeInsight.hints.settings
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.lang.Language
+import com.intellij.openapi.extensions.BaseExtensionPointName
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Unmodifiable
 import java.util.function.Predicate
 import javax.swing.JComponent
 
@@ -61,14 +63,17 @@ interface InlaySettingsConfigurableApi : Configurable {
 }
 
 @ApiStatus.Internal
-class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {
+class InlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider(), Configurable.WithEpDependencies {
   override fun createConfigurable(): Configurable {
-    return InlaySettingsConfigurable(project)
+    return InlaySettingsConfigurableFactory.EP_NAME.extensionList.firstOrNull()?.create(project) ?: InlaySettingsConfigurable(project)
   }
 
   override fun getConfigurableType(): Class<*> {
-    return InlaySettingsConfigurable::class.java
+    return InlaySettingsConfigurableApi::class.java
   }
+
+  override fun getDependencies(): @Unmodifiable Collection<BaseExtensionPointName<*>?> =
+    listOf(InlaySettingsConfigurableFactory.EP_NAME)
 }
 
 fun showInlaySettings(project: Project, language: Language, selector: Predicate<InlayProviderSettingsModel>?): Boolean {

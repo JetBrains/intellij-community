@@ -303,6 +303,8 @@
                     interface="com.intellij.codeInsight.hints.InlayContextMenuContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeVision.codeVisionEntryExtraActionContributor"
                     interface="com.intellij.codeInsight.codeVision.ui.CodeVisionEntryExtraActionContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.inlaySettingsConfigurableFactory"
+                    interface="com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableFactory" dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
     <extensionPoint qualifiedName="com.intellij.defaultLiveTemplatesProvider" interface="com.intellij.codeInsight.template.impl.DefaultLiveTemplatesProvider"/>

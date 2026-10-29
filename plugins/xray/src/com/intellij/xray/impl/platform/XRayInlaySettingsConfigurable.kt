@@ -7,7 +7,6 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsConfigurableApi
 import com.intellij.lang.Language
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import java.util.function.Predicate
@@ -52,10 +51,4 @@ internal class XRayInlaySettingsConfigurable(val project: Project) : Configurabl
   override fun getHelpTopic(): String = "settings.inlays"
 
   override fun isProjectLevel(): Boolean = false
-}
-
-internal class XRayInlaySettingsConfigurableProvider(val project: Project): ConfigurableProvider() {
-  override fun createConfigurable(): Configurable {
-    return XRayInlaySettingsConfigurable(project)
-  }
 }

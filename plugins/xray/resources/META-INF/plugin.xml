@@ -20,17 +20,8 @@
     <!-- Platform EPs -->
     <codeInsight.inlayHintSettingsOverrider implementation="com.intellij.xray.impl.platform.XRayInlayHintSettingsOverrider"/>
     <codeInsight.inlayContextMenuContributor implementation="com.intellij.xray.impl.platform.XRayInlayContextMenuContributor"/>
+    <codeInsight.inlaySettingsConfigurableFactory implementation="com.intellij.xray.impl.platform.XRayInlaySettingsConfigurableFactory"/>
     <codeVision.codeVisionEntryExtraActionContributor implementation="com.intellij.xray.impl.platform.XRayCodeVisionEntryExtraActionContributor"/>
-
-    <configurablesPatcher implementation="com.intellij.xray.impl.platform.XRayConfigurablesPatcher"/>
-
-    <projectConfigurable provider="com.intellij.xray.impl.platform.XRayInlaySettingsConfigurableProvider"
-                         id="inlay.hints"
-                         parentId="editor"
-                         key="settings.hints"
-                         bundle="messages.ApplicationBundle"
-                         dynamic="true"
-                         groupWeight="1"/>
   </extensions>
 
   <projectListeners>
