@@ -16,29 +16,29 @@
 # shared value reads like an inline one.
 _PLATFORM_ASSETS = {
     "darwin_aarch64": [
-        struct(source = "@dev_launch_restarter_extracted//:macOS-AArch64/restarter", path = "bin/restarter", executable = True),
+        struct(source = "@restarter_extracted//:macOS-AArch64/restarter", path = "bin/restarter", executable = True),
         struct(source = "//bin:mac/fsnotifier", path = "bin/fsnotifier", executable = True),
         struct(source = "//bin:mac/libmacscreenmenu64.dylib", path = "bin/libmacscreenmenu64.dylib", executable = True),
         struct(source = "//bin:mac/libnst64.dylib", path = "bin/libnst64.dylib", executable = True),
         struct(source = "//bin:mac/printenv", path = "bin/printenv", executable = True),
     ],
     "darwin_x64": [
-        struct(source = "@dev_launch_restarter_extracted//:macOS-X86_64/restarter", path = "bin/restarter", executable = True),
+        struct(source = "@restarter_extracted//:macOS-X86_64/restarter", path = "bin/restarter", executable = True),
         struct(source = "//bin:mac/fsnotifier", path = "bin/fsnotifier", executable = True),
         struct(source = "//bin:mac/libmacscreenmenu64.dylib", path = "bin/libmacscreenmenu64.dylib", executable = True),
         struct(source = "//bin:mac/libnst64.dylib", path = "bin/libnst64.dylib", executable = True),
         struct(source = "//bin:mac/printenv", path = "bin/printenv", executable = True),
     ],
     "linux_aarch64": [
-        struct(source = "@dev_launch_restarter_extracted//:Linux-AArch64/restarter", path = "bin/restarter", executable = True),
+        struct(source = "@restarter_extracted//:Linux-AArch64/restarter", path = "bin/restarter", executable = True),
         struct(source = "//bin:linux/aarch64/fsnotifier", path = "bin/fsnotifier", executable = True),
     ],
     "linux_x64": [
-        struct(source = "@dev_launch_restarter_extracted//:Linux-X86_64/restarter", path = "bin/restarter", executable = True),
+        struct(source = "@restarter_extracted//:Linux-X86_64/restarter", path = "bin/restarter", executable = True),
         struct(source = "//bin:linux/amd64/fsnotifier", path = "bin/fsnotifier", executable = True),
     ],
     "windows_aarch64": [
-        struct(source = "@dev_launch_restarter_extracted//:Windows-AArch64/restarter.exe", path = "bin/restarter.exe", executable = True),
+        struct(source = "@restarter_extracted//:Windows-AArch64/restarter.exe", path = "bin/restarter.exe", executable = True),
         struct(source = "//bin:win/aarch64/WinProcessListHelper.exe", path = "bin/WinProcessListHelper.exe", executable = True),
         struct(source = "//bin:win/aarch64/WinShellIntegrationBridge.dll", path = "bin/WinShellIntegrationBridge.dll", executable = True),
         struct(source = "//bin:win/aarch64/elevator.exe", path = "bin/elevator.exe", executable = True),
@@ -50,7 +50,7 @@ _PLATFORM_ASSETS = {
         struct(source = "//bin:win/defender-exclusions.ps1", path = "bin/defender-exclusions.ps1", executable = True),
     ],
     "windows_x64": [
-        struct(source = "@dev_launch_restarter_extracted//:Windows-X86_64/restarter.exe", path = "bin/restarter.exe", executable = True),
+        struct(source = "@restarter_extracted//:Windows-X86_64/restarter.exe", path = "bin/restarter.exe", executable = True),
         struct(source = "//bin:win/amd64/WinProcessListHelper.exe", path = "bin/WinProcessListHelper.exe", executable = True),
         struct(source = "//bin:win/amd64/WinShellIntegrationBridge.dll", path = "bin/WinShellIntegrationBridge.dll", executable = True),
         struct(source = "//bin:win/amd64/elevator.exe", path = "bin/elevator.exe", executable = True),

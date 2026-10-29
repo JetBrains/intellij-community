@@ -58,7 +58,7 @@ assembles on this macOS arm64 host and is a genuine Linux build: its `product-in
 `Linux`/`aarch64` with launcher `bin/idea`, and `lib/native/linux-aarch64` where the macOS distribution
 has `mac-aarch64`. `//plugins/air/tests/integration/ui:ui_daemon` builds under
 `--define=air_lane_guest_os=linux` with its stub naming `idea_air_lane_dist_linux` and
-`dev_launch_linux_aarch64_jbr`. This is piece 1 below, and it is done.
+`jbr_linux_aarch64`. This is piece 1 below, and it is done.
 
 **A Linux worker is a cheap worker.** Measured on 2026-08-12 with `air-linux-1`, an
 `ghcr.io/cirruslabs/ubuntu:24.04` clone sized 8 vCPU / 16 GiB / 80 GB:
@@ -81,7 +81,7 @@ symlinks onto the mount and `out` diverted to guest-local storage, and the host'
 cross-built distribution included — resolve through them. `Xvfb :88` plus `fluxbox` come up from
 `apt-get`, and fluxbox registers itself through EWMH `_NET_SUPPORTING_WM_CHECK`, which is exactly what
 `XorgWindowManagerHandler.isWmRunning` looks for. The linux-aarch64 JBR out of
-`@dev_launch_linux_aarch64_jbr` runs in the guest and reports itself as JBR 25.0.4 with JCEF.
+`@jbr_linux_aarch64` runs in the guest and reports itself as JBR 25.0.4 with JCEF.
 
 ## What it would cost
 

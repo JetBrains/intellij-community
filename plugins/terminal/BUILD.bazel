@@ -1,6 +1,7 @@
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.terminal` start
 filegroup(
@@ -100,7 +101,7 @@ dev_dist_complex_plugin(
         "shell-integrations",
     ],
     resource_inputs = {
-        "@dev_launch_libghostty//:files": "layout-source:platform-resource-generator:0:0",
+        "@libghostty_vt//:files": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:0:source": "plugins/terminal/resources/shell-integrations",
@@ -128,6 +129,8 @@ exports_files(
     ],
     visibility = ["//visibility:public"],
 )
+
+downloads_test_suite(name = "downloads_test")
 
 ### auto-generated section `build intellij.terminal` start
 jvm_provided_library(

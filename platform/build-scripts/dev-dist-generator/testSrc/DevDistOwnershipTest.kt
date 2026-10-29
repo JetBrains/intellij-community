@@ -116,7 +116,7 @@ class DevDistOwnershipTest {
 
   @Test
   fun `the ultimate half keeps a complex plugin whose equal texts name a label outside the community call labels`() {
-    val call = "dev_dist_complex_plugin(libraries = {\"@dev_launch_{platform}_jcef//:files\": \"x\"})\n"
+    val call = "dev_dist_complex_plugin(libraries = {\"@jcef_{platform}//:files\": \"x\"})\n"
     val planText = "{\"input\": \"@ultimate_lib//:profiler\"}\n"
     val plans = communityPlans(planText = planText, call = call)
 

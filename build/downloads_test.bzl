@@ -1,4 +1,4 @@
-"""Unit tests for the URL builders in dev_launch_dependencies.bzl.
+"""Unit tests for the download rules, the download helpers and the URL builders of the platform downloads.
 
 What is at risk here is the *shape* of each URL, not the version in it: versions are read from the files
 that pin them and so cannot drift, while a shape mirrors a build-side Kotlin function that this file
@@ -9,19 +9,10 @@ undeclared URL - and only on the platform that has it wrong.
 """
 
 load("@bazel_skylib//lib:unittest.bzl", "asserts", "unittest")
-load(
-    ":dev_launch_dependencies.bzl",
-    "jbr_runtime_archive_root",
-    "jbr_runtime_url",
-    "jbr_url",
-    "jcef_url",
-    "lib_ghostty_vt_url",
-    "pyrefly_platform_directory",
-    "pyrefly_url",
-)
 load(":download_helpers.bzl", "maven_coordinates_urls", "maven_url")
 load(":download_rules.bzl", "all_downloads_pinned", "find_download_conflict", "manifest_content", "text_repo_files")
 load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
+load(":platform_downloads.bzl", "jbr_runtime_archive_root", "jbr_runtime_url", "jbr_url")
 
 _JBR = "https://cache-redirector.jetbrains.com/intellij-jbr"
 _MAVEN = "https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2"
@@ -47,43 +38,10 @@ _JBR_RUNTIME_URLS = {
     "windows_x64": _JBR + "/jbr-25.0.4.1-windows-x64-b635.70.tar.gz",
 }
 
-# CommunityRepositoryModules.jcefDownloadUrl, for `jcefBuild=263-b10`
-_JCEF_URLS = {
-    "darwin_aarch64": _JBR + "/jcef-osx-aarch64-263-b10.tar.gz",
-    "darwin_x64": _JBR + "/jcef-osx-x64-263-b10.tar.gz",
-    "linux_aarch64": _JBR + "/jcef-linux-aarch64-263-b10.tar.gz",
-    "linux_x64": _JBR + "/jcef-linux-x64-263-b10.tar.gz",
-    "windows_aarch64": _JBR + "/jcef-windows-aarch64-263-b10.tar.gz",
-    "windows_x64": _JBR + "/jcef-windows-x64-263-b10.tar.gz",
-}
-
-# downloadPyrefly, for `pyreflyBuild=263.6545`. The artifact is the lowercase `pyreflyPlatformDirName`.
-_PYREFLY_URLS = {
-    "darwin_aarch64": _DEPS + "/org/jetbrains/intellij/deps/pyrefly-macos-aarch64/263.6545/pyrefly-macos-aarch64-263.6545.tar.gz",
-    "darwin_x64": _DEPS + "/org/jetbrains/intellij/deps/pyrefly-macos-x86_64/263.6545/pyrefly-macos-x86_64-263.6545.tar.gz",
-    "linux_aarch64": _DEPS + "/org/jetbrains/intellij/deps/pyrefly-linux-aarch64/263.6545/pyrefly-linux-aarch64-263.6545.tar.gz",
-    "linux_x64": _DEPS + "/org/jetbrains/intellij/deps/pyrefly-linux-x86_64/263.6545/pyrefly-linux-x86_64-263.6545.tar.gz",
-    "windows_aarch64": _DEPS + "/org/jetbrains/intellij/deps/pyrefly-windows-aarch64/263.6545/pyrefly-windows-aarch64-263.6545.tar.gz",
-    "windows_x64": _DEPS + "/org/jetbrains/intellij/deps/pyrefly-windows-x86_64/263.6545/pyrefly-windows-x86_64-263.6545.tar.gz",
-}
-
-# pyreflyPlatformDirName - the directory of the binary in the archive and in the plugin
-_PYREFLY_DIRECTORIES = {
-    "darwin_aarch64": "macOS-AArch64",
-    "darwin_x64": "macOS-X86_64",
-    "linux_aarch64": "Linux-AArch64",
-    "linux_x64": "Linux-X86_64",
-    "windows_aarch64": "Windows-AArch64",
-    "windows_x64": "Windows-X86_64",
-}
-
 def _every_platform_is_covered_test_impl(ctx):
     env = unittest.begin(ctx)
     asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_JBR_URLS))
     asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_JBR_RUNTIME_URLS))
-    asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_JCEF_URLS))
-    asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_PYREFLY_URLS))
-    asserts.equals(env, sorted(HOST_PLATFORMS), sorted(_PYREFLY_DIRECTORIES))
     for platform in HOST_PLATFORMS:
         parts = platform_parts(platform)
         asserts.equals(env, platform, "%s_%s" % (parts.os, parts.arch))
@@ -113,39 +71,6 @@ def _jbr_runtime_url_test_impl(ctx):
     return unittest.end(env)
 
 jbr_runtime_url_test = unittest.make(_jbr_runtime_url_test_impl)
-
-def _jcef_url_test_impl(ctx):
-    env = unittest.begin(ctx)
-    for platform, expected in _JCEF_URLS.items():
-        asserts.equals(env, expected, jcef_url(platform, "263-b10"), platform)
-    return unittest.end(env)
-
-jcef_url_test = unittest.make(_jcef_url_test_impl)
-
-def _pyrefly_url_test_impl(ctx):
-    env = unittest.begin(ctx)
-    for platform, expected in _PYREFLY_URLS.items():
-        asserts.equals(env, expected, pyrefly_url(platform, "263.6545"), platform)
-        asserts.equals(env, _PYREFLY_DIRECTORIES[platform], pyrefly_platform_directory(platform), platform)
-    asserts.equals(
-        env,
-        _DEPS + "/org/jetbrains/intellij/deps/pyrefly-license/263.6545/pyrefly-license-263.6545.tar.gz",
-        pyrefly_url(None, "263.6545"),
-    )
-    return unittest.end(env)
-
-pyrefly_url_test = unittest.make(_pyrefly_url_test_impl)
-
-def _lib_ghostty_vt_url_test_impl(ctx):
-    env = unittest.begin(ctx)
-    asserts.equals(
-        env,
-        "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies/libghostty-vt/libghostty-vt-abc123.zip.zst",
-        lib_ghostty_vt_url("abc123"),
-    )
-    return unittest.end(env)
-
-lib_ghostty_vt_url_test = unittest.make(_lib_ghostty_vt_url_test_impl)
 
 # BuildDependenciesDownloader.getUriForMavenArtifact
 def _maven_url_test_impl(ctx):
@@ -254,16 +179,13 @@ def _text_repo_files_test_impl(ctx):
 
 text_repo_files_test = unittest.make(_text_repo_files_test_impl)
 
-def dev_launch_dependencies_test_suite(name):
-    """Test suite for the URL builders in dev_launch_dependencies.bzl."""
+def downloads_test_suite(name):
+    """Test suite for the download rules, the download helpers and the platform downloads."""
     unittest.suite(
         name,
         every_platform_is_covered_test,
         jbr_url_test,
         jbr_runtime_url_test,
-        jcef_url_test,
-        lib_ghostty_vt_url_test,
-        pyrefly_url_test,
         maven_url_test,
         maven_coordinates_urls_test,
         manifest_content_test,

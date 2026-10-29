@@ -103,7 +103,7 @@ dev_dist_complex_plugin(
         "lib/intellij.maven.server4",
     ],
     resource_inputs = {
-        "@dev_launch_maven//:files": "layout-source:resource-generator:0:0",
+        "@bundled_maven//:files": "layout-source:resource-generator:0:0",
     },
     source_tree_prefixes = {
         "layout-source:resource-generator:1:0": "",
@@ -111,9 +111,9 @@ dev_dist_complex_plugin(
         "layout-source:resource-generator:2:0": "",
     },
     source_tree_targets = {
-        "layout-source:resource-generator:1:0": "@dev_launch_maven3_libraries//:files",
-        "layout-source:resource-generator:1:1": "@dev_launch_maven_telemetry_libraries//:files",
-        "layout-source:resource-generator:2:0": "@dev_launch_maven_telemetry_libraries//:files",
+        "layout-source:resource-generator:1:0": "@bundled_maven3_libraries//:files",
+        "layout-source:resource-generator:1:1": "@bundled_maven_telemetry_libraries//:files",
+        "layout-source:resource-generator:2:0": "@bundled_maven_telemetry_libraries//:files",
     },
 )
 ### auto-generated section `dev intellij.maven.plugin` end

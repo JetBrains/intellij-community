@@ -41,7 +41,7 @@ private const val PYREFLY_BINARY_NAME: String = "pyrefly"
  */
 private val PYREFLY_LICENSE_DEV_SPEC: DevPluginLayoutAssetSpec = DevPluginLayoutAssetSpec(
   sources = listOf(DevPluginLayoutAssetSource.BazelTarget(
-    label = "@dev_launch_pyrefly_license_extracted//:files",
+    label = "@pyrefly_license_extracted//:files",
     kind = "directory",
     fileName = "license",
     prefix = "license",
@@ -56,7 +56,7 @@ private fun pyreflyBinaryDevSpec(os: OsFamily, arch: JvmArchitecture): DevPlugin
   val hostPlatform = "${if (os == OsFamily.MACOS) "darwin" else os.osId}_${arch.name}"
   return DevPluginLayoutAssetSpec(
     sources = listOf(DevPluginLayoutAssetSource.BazelTarget(
-      label = "@dev_launch_${hostPlatform}_pyrefly_extracted//:$platformDirName/$binaryName",
+      label = "@pyrefly_${hostPlatform}_extracted//:$platformDirName/$binaryName",
       kind = "file",
       fileName = binaryName,
     )),

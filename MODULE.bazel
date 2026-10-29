@@ -189,47 +189,19 @@ REMOTE_JBR25_REPOS = ["remotejbr25_" + platform for platform in [
 
 [register_toolchains("@" + repo + "_toolchain_config_repo//:all") for repo in REMOTE_JBR25_REPOS]
 
-# The build dependencies a dev-mode assembly - and IDE Starter - downloads at launch time are Bazel
-# inputs, so a sandboxed or read-only-checkout run never downloads. The extension derives their URLs
-# from the pinned versions the checkout already owns; one repository per version key, and per platform
-# only where the artifact is, so a bump refetches only what it changed. MODULE files cannot load(), so
-# the platform list is repeated here - Bazel reports any drift from HOST_PLATFORMS.
-DEV_LAUNCH_HOST_PLATFORMS = [
-    "darwin_aarch64",
-    "darwin_x64",
-    "linux_aarch64",
-    "linux_x64",
-    "windows_aarch64",
-    "windows_x64",
-]
-
-dev_launch_deps_community = use_extension("@community//build:dev_launch_dependencies.bzl", "dev_launch_deps_community")
-use_repo(
-    dev_launch_deps_community,
-    "dev_launch_jserialcomm",
-    "dev_launch_launcher_extracted",
-    "dev_launch_libghostty",
-    "dev_launch_libwebp",
-    "dev_launch_maven",
-    "dev_launch_maven3_libraries",
-    "dev_launch_maven_telemetry_libraries",
-    "dev_launch_pyrefly_license_extracted",
-    "dev_launch_restarter",
-    "dev_launch_restarter_extracted",
-)
+# The build dependencies that a dev-mode assembly, IDE Starter and a plugin layout read are Bazel inputs, so a
+# sandboxed or read-only-checkout run never downloads. The extension of each owner derives the URLs from the versions
+# the checkout pins, with one repository per version key, and per platform only where the artifact is. The ultimate
+# `private.MODULE.bazel` includes the same segments.
+include("//build:platform_downloads.MODULE.bazel")
+include("//plugins/jcef/plugin:downloads.MODULE.bazel")
+include("//plugins/maven:downloads.MODULE.bazel")
+include("//plugins/terminal:downloads.MODULE.bazel")
+include("//plugins/webp:downloads.MODULE.bazel")
+include("//python/pluginCore:downloads.MODULE.bazel")
 
 dev_launch_paths = use_extension("@community//build:dev_launch_paths.bzl", "dev_launch_paths")
 use_repo(dev_launch_paths, "dev_launch_paths")
-
-[use_repo(
-    dev_launch_deps_community,
-    "dev_launch_%s_%s" % (platform, group),
-) for platform in DEV_LAUNCH_HOST_PLATFORMS for group in [
-    "jbr",
-    "jbr_runtime_extracted",
-    "jcef",
-    "pyrefly_extracted",
-]]
 
 # Use custom remote_java_tools_windows with vc_redist .dll files due to https://github.com/bazelbuild/rules_java/issues/316
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")

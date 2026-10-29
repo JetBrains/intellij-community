@@ -1,0 +1,3 @@
+# The libghostty-vt archive. Both `community/MODULE.bazel` and the ultimate `private.MODULE.bazel` include this file.
+terminal_downloads = use_extension("@community//plugins/terminal:downloads.bzl", "terminal_downloads")
+use_repo(terminal_downloads, "libghostty_vt")

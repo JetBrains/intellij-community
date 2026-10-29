@@ -417,7 +417,7 @@ class DevDistPluginPlanFilesTest {
   @Test
   fun `the ultimate half reuses an equal plan file and call that name a download repository of the community calls`() {
     val call = "dev_dist_complex_plugin(libraries = {\"@dev_launch_z//:z\": \"@dev_launch_z//:z\"}, " +
-               "resource_inputs = {\"@dev_launch_{platform}_jcef//:files\": \"r\"})\n"
+               "resource_inputs = {\"@jcef_{platform}//:files\": \"r\"})\n"
     val records = neutralRecords(communityPlugin, library = "@dev_launch_z//:z")
     val (_, plans) = communityHalfPlans(records, sectionCall = call)
 
@@ -425,9 +425,9 @@ class DevDistPluginPlanFilesTest {
 
     assertThat(plans.acceptsUpstreamPlans(communityPlugin, planTexts, call)).isTrue()
     // The reused call is rendered per platform, so the home keeps the token and a chain resolves it for its platform.
-    assertThat(plans.upstreamHome(communityPlugin).callRepositories).containsExactly("dev_launch_z", "dev_launch_{platform}_jcef")
-    assertThat(isCommunityCallLabel("@dev_launch_linux_x64_jcef//:files", callRepositories = setOf("dev_launch_linux_x64_jcef"))).isTrue()
-    assertThat(isCommunityCallLabel("@dev_launch_linux_x64_jcef//:files")).isFalse()
+    assertThat(plans.upstreamHome(communityPlugin).callRepositories).containsExactly("dev_launch_z", "jcef_{platform}")
+    assertThat(isCommunityCallLabel("@jcef_linux_x64//:files", callRepositories = setOf("jcef_linux_x64"))).isTrue()
+    assertThat(isCommunityCallLabel("@jcef_linux_x64//:files")).isFalse()
     assertThat(isCommunityCallLabel("//plugins/c:d", callRepositories = setOf("dev_launch_z"))).isFalse()
   }
 

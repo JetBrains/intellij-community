@@ -1,0 +1,25 @@
+# The downloads of the platform layout. Both `community/MODULE.bazel` and the ultimate `private.MODULE.bazel` include
+# this file, so the two modules import the same repositories of one extension.
+platform_downloads = use_extension("@community//build:platform_downloads.bzl", "platform_downloads")
+use_repo(
+    platform_downloads,
+    "jbr_darwin_aarch64",
+    "jbr_darwin_x64",
+    "jbr_linux_aarch64",
+    "jbr_linux_x64",
+    "jbr_runtime_darwin_aarch64_extracted",
+    "jbr_runtime_darwin_x64_extracted",
+    "jbr_runtime_linux_aarch64_extracted",
+    "jbr_runtime_linux_x64_extracted",
+    "jbr_runtime_windows_aarch64_extracted",
+    "jbr_runtime_windows_x64_extracted",
+    "jbr_windows_aarch64",
+    "jbr_windows_x64",
+    # The native launcher: the `platform_assets` component of a split distribution places its files from the unpacked
+    # archive.
+    "launcher_extracted",
+    # The restart helper: the platform layout declares `bin/restarter` out of the unpacked archive, and the plan names
+    # both the archive and the unpacked repository.
+    "restarter",
+    "restarter_extracted",
+)

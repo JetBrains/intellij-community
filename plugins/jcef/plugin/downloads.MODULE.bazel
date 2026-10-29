@@ -1,0 +1,11 @@
+# The JCEF archive of each platform. Both `community/MODULE.bazel` and the ultimate `private.MODULE.bazel` include this file.
+jcef_downloads = use_extension("@community//plugins/jcef/plugin:downloads.bzl", "jcef_downloads")
+use_repo(
+    jcef_downloads,
+    "jcef_darwin_aarch64",
+    "jcef_darwin_x64",
+    "jcef_linux_aarch64",
+    "jcef_linux_x64",
+    "jcef_windows_aarch64",
+    "jcef_windows_x64",
+)

@@ -58,7 +58,7 @@ dev_dist_complex_plugin(
     },
     remainder_trees = ["{platform:destination}"],
     resource_inputs = {
-        "@dev_launch_libwebp//:files": "layout-source:platform-resource-generator:0:0",
+        "@libwebp_natives//:files": "layout-source:platform-resource-generator:0:0",
     },
 )
 ### auto-generated section `dev intellij.webp` end

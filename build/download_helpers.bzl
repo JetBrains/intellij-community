@@ -13,6 +13,13 @@ JETBRAINS_FILES_URL = "https://cache-redirector.jetbrains.com/files/p/ij/intelli
 JETBRAINS_MAVEN_URL = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies"
 INTELLIJ_BUILD_DEPENDENCIES_URL = "https://cache-redirector.jetbrains.com/files/p/ij/intellij-build-dependencies"
 
+# OsFamily.jbrArchiveSuffix
+JBR_OS_SUFFIX = {
+    "darwin": "osx",
+    "linux": "linux",
+    "windows": "windows",
+}
+
 def read_properties(module_ctx, label):
     """The `key=value` lines of the properties file [label]. The extension watches the file."""
     result = {}
@@ -34,10 +41,12 @@ def pinned(properties, label, key):
     return value
 
 def kotlin_const(module_ctx, label, name):
-    """The value of a `const val <name> = "..."` in the Kotlin source file [label]."""
-    marker = "const val %s = \"" % name
+    """The value of a `const val <name> = "..."` or `const val <name>: String = "..."` in the Kotlin source file [label]."""
     source = module_ctx.read(label, watch = "yes")
-    start = source.find(marker)
+    for marker in ["const val %s = \"" % name, "const val %s: String = \"" % name]:
+        start = source.find(marker)
+        if start >= 0:
+            break
     if start < 0:
         fail("cannot find 'const val %s' in %s" % (name, label))
     start += len(marker)

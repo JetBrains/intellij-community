@@ -1,0 +1,9 @@
+# The bundled Maven distribution and its libraries. Both `community/MODULE.bazel` and the ultimate `private.MODULE.bazel`
+# include this file.
+maven_downloads = use_extension("@community//plugins/maven:downloads.bzl", "maven_downloads")
+use_repo(
+    maven_downloads,
+    "bundled_maven",
+    "bundled_maven3_libraries",
+    "bundled_maven_telemetry_libraries",
+)

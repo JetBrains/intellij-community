@@ -1,6 +1,7 @@
 load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.jcef.plugin` start
 dev_dist_plugin(
@@ -53,10 +54,12 @@ dev_dist_complex_plugin(
     },
     remainder_trees = ["jcef"],
     resource_inputs = {
-        "@dev_launch_{platform}_jcef//:files": "layout-source:resource-generator:0:0",
+        "@jcef_{platform}//:files": "layout-source:resource-generator:0:0",
     },
 )
 ### auto-generated section `dev intellij.jcef.plugin` end
+
+downloads_test_suite(name = "downloads_test")
 
 ### auto-generated section `build intellij.jcef.plugin` start
 jvm_library(

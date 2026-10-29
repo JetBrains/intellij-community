@@ -2,6 +2,7 @@ load("@jps_dynamic_deps_community//:targets.bzl", "dev_dist_plugin")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
 load("//platform/build-scripts/bazel-rules:dev_plugin_remainder.bzl", "dev_dist_complex_plugin")
+load(":downloads_test.bzl", "downloads_test_suite")
 
 ### auto-generated section `dev intellij.python.community.plugin` start
 dev_dist_plugin(
@@ -324,7 +325,7 @@ dev_dist_complex_plugin(
         "pyrefly/license",
     ],
     resource_inputs = {
-        "@dev_launch_windows_x64_pyrefly_extracted//:Windows-X86_64/pyrefly.exe": "layout-source:platform-resource-generator:0:0",
+        "@pyrefly_windows_x64_extracted//:Windows-X86_64/pyrefly.exe": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
@@ -334,7 +335,7 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
-        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
 )
 
@@ -476,7 +477,7 @@ dev_dist_complex_plugin(
         "pyrefly/license",
     ],
     resource_inputs = {
-        "@dev_launch_windows_aarch64_pyrefly_extracted//:Windows-AArch64/pyrefly.exe": "layout-source:platform-resource-generator:0:0",
+        "@pyrefly_windows_aarch64_extracted//:Windows-AArch64/pyrefly.exe": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
@@ -486,7 +487,7 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
-        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
 )
 
@@ -628,7 +629,7 @@ dev_dist_complex_plugin(
         "pyrefly/license",
     ],
     resource_inputs = {
-        "@dev_launch_darwin_x64_pyrefly_extracted//:macOS-X86_64/pyrefly": "layout-source:platform-resource-generator:0:0",
+        "@pyrefly_darwin_x64_extracted//:macOS-X86_64/pyrefly": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
@@ -638,7 +639,7 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
-        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
 )
 
@@ -780,7 +781,7 @@ dev_dist_complex_plugin(
         "pyrefly/license",
     ],
     resource_inputs = {
-        "@dev_launch_darwin_aarch64_pyrefly_extracted//:macOS-AArch64/pyrefly": "layout-source:platform-resource-generator:0:0",
+        "@pyrefly_darwin_aarch64_extracted//:macOS-AArch64/pyrefly": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
@@ -790,7 +791,7 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
-        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
 )
 
@@ -932,7 +933,7 @@ dev_dist_complex_plugin(
         "pyrefly/license",
     ],
     resource_inputs = {
-        "@dev_launch_linux_x64_pyrefly_extracted//:Linux-X86_64/pyrefly": "layout-source:platform-resource-generator:0:0",
+        "@pyrefly_linux_x64_extracted//:Linux-X86_64/pyrefly": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
@@ -942,7 +943,7 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
-        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
 )
 
@@ -1084,7 +1085,7 @@ dev_dist_complex_plugin(
         "pyrefly/license",
     ],
     resource_inputs = {
-        "@dev_launch_linux_aarch64_pyrefly_extracted//:Linux-AArch64/pyrefly": "layout-source:platform-resource-generator:0:0",
+        "@pyrefly_linux_aarch64_extracted//:Linux-AArch64/pyrefly": "layout-source:platform-resource-generator:0:0",
     },
     source_tree_prefixes = {
         "module-resource:resource-generator:0:0:source": "python/helpers",
@@ -1094,10 +1095,12 @@ dev_dist_complex_plugin(
     source_tree_targets = {
         "module-resource:resource-generator:0:0:source": "//python:dev_dist_resources_helpers",
         "module-resource:resource-generator:1:0:source": "//python:dev_dist_resources",
-        "layout-source:resource-generator:2:0": "@dev_launch_pyrefly_license_extracted//:files",
+        "layout-source:resource-generator:2:0": "@pyrefly_license_extracted//:files",
     },
 )
 ### auto-generated section `dev intellij.python.community.plugin` end
+
+downloads_test_suite(name = "downloads_test")
 
 ### auto-generated section `build intellij.python.community.plugin` start
 create_kotlinc_options(

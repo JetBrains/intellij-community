@@ -1,0 +1,12 @@
+# The pyrefly archives. Both `community/MODULE.bazel` and the ultimate `private.MODULE.bazel` include this file.
+python_downloads = use_extension("@community//python/pluginCore:downloads.bzl", "python_downloads")
+use_repo(
+    python_downloads,
+    "pyrefly_darwin_aarch64_extracted",
+    "pyrefly_darwin_x64_extracted",
+    "pyrefly_license_extracted",
+    "pyrefly_linux_aarch64_extracted",
+    "pyrefly_linux_x64_extracted",
+    "pyrefly_windows_aarch64_extracted",
+    "pyrefly_windows_x64_extracted",
+)

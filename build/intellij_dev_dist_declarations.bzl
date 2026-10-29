@@ -15,7 +15,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plat
 load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
-load(":dev_launch_dependencies.bzl", "jbr_runtime_executable_list_label", "jbr_runtime_repository_label")
+load(":download_rules.bzl", "EXECUTABLE_LIST_NAME")
 load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_dist_config", "intellij_dev_java_launcher_binary")
 
@@ -226,8 +226,22 @@ PACKED_JARS_COMPONENT = "platform_packed_content_modules"
 # and the files of the bundled runtime below `jbr/`.
 PLATFORM_ASSETS_COMPONENT = "platform_assets"
 
+def jbr_runtime_repository_label(platform):
+    """The `files` filegroup of the unpacked production runtime of one [HOST_PLATFORMS] entry."""
+    platform_parts(platform)
+    return Label("@jbr_runtime_%s_extracted//:files" % platform)
+
+def jbr_runtime_executable_list_label(platform):
+    """The executable list of the repository of [jbr_runtime_repository_label], or `None` for a Windows platform.
+
+    A Windows target gives a file no executable bit, so the collector does not read the list of a Windows runtime.
+    """
+    if platform_parts(platform).os == "windows":
+        return None
+    return Label("@jbr_runtime_%s_extracted//:%s" % (platform, EXECUTABLE_LIST_NAME))
+
 # The unpacked launcher archive, and its spelling of the `platform_parts` tokens in `<OS>-<Arch>/`.
-_LAUNCHER_REPOSITORY = "@dev_launch_launcher_extracted//:"
+_LAUNCHER_REPOSITORY = "@launcher_extracted//:"
 _LAUNCHER_ARCHIVE_OS = {"darwin": "macOS", "linux": "Linux", "windows": "Windows"}
 _LAUNCHER_ARCHIVE_ARCH = {"aarch64": "AArch64", "x64": "X86_64"}
 
