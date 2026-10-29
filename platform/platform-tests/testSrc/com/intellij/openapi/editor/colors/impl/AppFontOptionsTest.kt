@@ -61,6 +61,23 @@ internal class AppFontOptionsTest {
   }
 
   @Test
+  fun `the modification count is stable without a state load`() {
+    val options = AppEditorFontOptions()
+    options.noStateLoaded()
+    val count = options.stateModificationCount
+    assertThat(options.stateModificationCount).isEqualTo(count)
+  }
+
+  @Test
+  fun `the console modification count is stable after a load with the editor font`() {
+    val state = AppConsoleFontOptions().state
+    val options = AppConsoleFontOptions()
+    options.loadState(state)
+    val count = options.stateModificationCount
+    assertThat(options.stateModificationCount).isEqualTo(count)
+  }
+
+  @Test
   fun `a custom console font stays after a save and a load`() {
     val options = AppConsoleFontOptions()
     options.isUseEditorFont = false

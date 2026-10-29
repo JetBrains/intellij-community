@@ -46,6 +46,7 @@ public final class AppConsoleFontOptions extends AppFontOptions<AppConsoleFontOp
   public void loadState(@NotNull ConsoleFontState state) {
     if (state.useEditorFont()) {
       setUseEditorFont(true);
+      loadVersion(state);
     }
     else {
       setUseEditorFont(false);

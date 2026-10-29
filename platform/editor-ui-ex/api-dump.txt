@@ -178,6 +178,7 @@ a:com.intellij.openapi.editor.colors.impl.AppFontOptions
 - p:incModificationCount():V
 - s:initDefaults(com.intellij.openapi.editor.colors.ModifiableFontPreferences):V
 - loadState(com.intellij.openapi.editor.colors.impl.AppEditorFontOptions$PersistentFontPreferences):V
+- noStateLoaded():V
 - update(com.intellij.openapi.editor.colors.FontPreferences):V
 c:com.intellij.openapi.editor.colors.impl.DefaultColorsScheme
 - com.intellij.openapi.editor.colors.impl.AbstractColorsScheme

@@ -77,6 +77,22 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   @Override
   public void loadState(@NotNull F state) {
     copyState(state, myFontPreferences);
+    loadVersion(state);
+  }
+
+  /**
+   * Marks the preferences as current, because a profile without a state has nothing to migrate.
+   */
+  @Override
+  public void noStateLoaded() {
+    myFontPrefVersion = CURR_FONT_PREF_VERSION;
+  }
+
+  /**
+   * Records the version of the loaded state.
+   * An older version makes {@link #getStateModificationCount()} report a change, so the store saves the migrated state.
+   */
+  void loadVersion(@NotNull F state) {
     myFontPrefVersion = state.VERSION;
   }
 
