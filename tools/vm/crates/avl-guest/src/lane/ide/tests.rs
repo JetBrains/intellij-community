@@ -7,8 +7,8 @@ use tempfile::TempDir;
 use super::*;
 use crate::lane::testing::{context_plugin, guest_launch_inputs, launch_inputs};
 
-const BRIDGE: &str = "air-integrationTests-bridge-plugin";
-const RESIDENT: &str = "air-integrationTests-bridge-resident-plugin";
+const BRIDGE: &str = "air-integrationTests-bridge";
+const RESIDENT: &str = "air-integrationTests-bridge-resident";
 
 fn sha256(content: &str) -> String {
     super::super::package::sha256_hex(content.as_bytes())
@@ -32,12 +32,12 @@ fn tree(root: &Path) -> Vec<String> {
 fn the_manifest_lists_each_file_in_destination_order() {
     let sources = TempDir::new().unwrap();
     let files = [
-        context_plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
         context_plugin(sources.path(), &format!("{BRIDGE}/lib/b.jar"), "b"),
+        context_plugin(sources.path(), &format!("{RESIDENT}/lib/r.jar"), "r"),
     ];
     assert_eq!(
         manifest(&files),
-        format!("{} {BRIDGE}/lib/b.jar\n{} {RESIDENT}/lib/r.jar\n", sha256("b"), sha256("r"))
+        format!("{} {RESIDENT}/lib/r.jar\n{} {BRIDGE}/lib/b.jar\n", sha256("r"), sha256("b"))
     );
     assert_eq!(manifest(&[]), "");
 }
@@ -59,8 +59,8 @@ fn an_install_replaces_the_plugin_directories_and_writes_the_manifest_last() {
         [
             MANIFEST_FILE.to_owned(),
             "air-extra-plugin/lib/x.jar".to_owned(),
-            format!("{BRIDGE}/lib/b.jar"),
             format!("{RESIDENT}/lib/r.jar"),
+            format!("{BRIDGE}/lib/b.jar"),
         ]
     );
     assert_eq!(installed_manifest(plugins.path()), manifest(&first));
@@ -73,8 +73,8 @@ fn an_install_replaces_the_plugin_directories_and_writes_the_manifest_last() {
         tree(plugins.path()),
         [
             MANIFEST_FILE.to_owned(),
-            format!("{BRIDGE}/lib/b.jar"),
-            format!("{RESIDENT}/lib/r.jar")
+            format!("{RESIDENT}/lib/r.jar"),
+            format!("{BRIDGE}/lib/b.jar")
         ]
     );
     assert_eq!(fs::read_to_string(plugins.path().join(BRIDGE).join("lib/b.jar")).unwrap(), "b2");

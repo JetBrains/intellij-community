@@ -50,9 +50,9 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
                    ?.toUri()?.toPath()
 
       //Fixme Newest version of hack for split mode.
-      // Frontend files "jupyter-web", is now not under lib folder, but directly under jupyter-plugin.
-      if (path != null && path.toCanonicalPath().contains("plugins/jupyter-plugin/lib/jupyter-web/")) {
-        path = Path(path.toCanonicalPath().replace("plugins/jupyter-plugin/lib/jupyter-web/", "plugins/jupyter-plugin/jupyter-web/"))
+      // Frontend files "jupyter-web", is now not under lib folder, but directly under jupyter.
+      if (path != null && path.toCanonicalPath().contains("plugins/jupyter/lib/jupyter-web/")) {
+        path = Path(path.toCanonicalPath().replace("plugins/jupyter/lib/jupyter-web/", "plugins/jupyter/jupyter-web/"))
       }
 
       // In debug when we running remote-front via 'split (dev-build)' run config from IDE, we have:
@@ -62,7 +62,7 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Set<Stri
       // But our resources located not in out/classes but in out/dev-run
       else if (path != null && path.toCanonicalPath().contains("out/classes/production/intellij.jupyter.plugin")) {
         path = Path(path.toCanonicalPath()
-                      .replace("out/classes/production/intellij.jupyter.plugin", "out/dev-run/Python/plugins/jupyter-plugin"))
+                      .replace("out/classes/production/intellij.jupyter.plugin", "out/dev-run/Python/plugins/jupyter"))
       }
 
       if (path?.exists() == true) {

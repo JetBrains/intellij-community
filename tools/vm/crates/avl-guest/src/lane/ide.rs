@@ -69,7 +69,7 @@ pub(crate) const CODE: &str = "lane_ide";
 /// The plugin directories that every lane IDE context must hold: the bridge and its resident part, which no lane
 /// distribution carries. The lane drives the IDE through them.
 pub(crate) const REQUIRED_CONTEXT_PLUGINS: [&str; 2] =
-    ["air-integrationTests-bridge-plugin", "air-integrationTests-bridge-resident-plugin"];
+    ["air-integrationTests-bridge", "air-integrationTests-bridge-resident"];
 
 /// The manifest of the context plugins in the plugin directory of a context: one `<sha256> <destination>` line per
 /// file, in destination order. The resident plugin reads it for the digest of the loaded bridge. A leading dot, so the

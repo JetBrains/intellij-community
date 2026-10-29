@@ -48,8 +48,8 @@ fn valid_descriptor() -> Value {
             // One jar holds both kinds of document.
             "laneDocuments": documents_jar(),
             "plugins": [
-                plugin("air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"),
-                plugin("air-integrationTests-bridge-plugin/lib/modules/intellij.air.integrationTests.bridge.jar"),
+                plugin("air-integrationTests-bridge/lib/air-integrationTests-bridge-plugin.jar"),
+                plugin("air-integrationTests-bridge/lib/modules/intellij.air.integrationTests.bridge.jar"),
             ],
             "projectArchive": file("_main/external/air_integration_test_deps/simpleJavaProject.zip", "@air_integration_test_deps//:simpleJavaProject.zip"),
             "projectRoot": "BookmarksTestProject",
@@ -135,8 +135,8 @@ fn a_well_formed_descriptor_parses_into_the_launch_contract() {
     assert_eq!(
         destinations,
         [
-            "air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar",
-            "air-integrationTests-bridge-plugin/lib/modules/intellij.air.integrationTests.bridge.jar",
+            "air-integrationTests-bridge/lib/air-integrationTests-bridge-plugin.jar",
+            "air-integrationTests-bridge/lib/modules/intellij.air.integrationTests.bridge.jar",
         ]
     );
     assert_eq!(
@@ -392,10 +392,10 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             bytes(set(
                 valid(),
                 "/ide/plugins/0/destination",
-                json!("air-integrationTests-bridge-plugin/../../config/x.jar"),
+                json!("air-integrationTests-bridge/../../config/x.jar"),
             )),
             code::PLUGIN_DESTINATION_INVALID,
-            &["ide.plugins[0].destination air-integrationTests-bridge-plugin/../../config/x.jar is not a file inside a plugin directory"],
+            &["ide.plugins[0].destination air-integrationTests-bridge/../../config/x.jar is not a file inside a plugin directory"],
         ),
         (
             "an IDE plugin file at the top of the plugin directory",
@@ -414,10 +414,10 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
             bytes(set(
                 valid(),
                 "/ide/plugins/1/destination",
-                json!("air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"),
+                json!("air-integrationTests-bridge/lib/air-integrationTests-bridge-plugin.jar"),
             )),
             code::PLUGIN_DESTINATION_INVALID,
-            &["ide.plugins[1].destination air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar is claimed twice"],
+            &["ide.plugins[1].destination air-integrationTests-bridge/lib/air-integrationTests-bridge-plugin.jar is claimed twice"],
         ),
         (
             "an IDE plugin file outside the runfiles tree",
@@ -432,7 +432,7 @@ fn corpus() -> Vec<(&'static str, Vec<u8>, &'static str, &'static [&'static str]
                 valid(),
                 "/data/0/logicalPath",
                 json!(
-                    "_main/plugins/air/tests/integration/bridge_plugin_dir/air-integrationTests-bridge-plugin/lib/air-integrationTests-bridge-plugin.jar"
+                    "_main/plugins/air/tests/integration/bridge_plugin_dir/air-integrationTests-bridge/lib/air-integrationTests-bridge-plugin.jar"
                 ),
             )),
             code::DUPLICATE_LOGICAL_PATH,

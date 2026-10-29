@@ -9,10 +9,10 @@ internal const val STDIO_MCP_RUNNER_COMMAND: String = "stdioMcpServer"
 
 /** The jars the stdio MCP runner adds to the boot class path of the IDE. */
 internal val STDIO_MCP_RUNNER_BOOT_CLASS_PATH_JAR_NAMES: List<String> = listOf(
-  "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar",
-  "../plugins/mcpserver-plugin/lib/intellij.libraries.kotlin.logging.jar",
-  "../plugins/mcpserver-plugin/lib/intellij.libraries.ktor.server.sse.jar",
-  "../plugins/mcpserver-plugin/lib/intellij.libraries.mcp.kotlin.sdk.jar",
+  "../plugins/mcpserver/lib/intellij.mcpserver.stdio.jar",
+  "../plugins/mcpserver/lib/intellij.libraries.kotlin.logging.jar",
+  "../plugins/mcpserver/lib/intellij.libraries.ktor.server.sse.jar",
+  "../plugins/mcpserver/lib/intellij.libraries.mcp.kotlin.sdk.jar",
 )
 
 internal const val STDIO_MCP_RUNNER_MAIN_CLASS: String = "com.intellij.mcpserver.stdio.McpStdioRunnerKt"

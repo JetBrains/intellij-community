@@ -664,7 +664,7 @@ private fun createPathBasedProductModuleJarResolver(mainClassLoader: ClassLoader
 
 /**
  * 'isDeprecatedLoader' does not handle the case when the 'Core' plugin references a module that is located outside the 'lib' directory.
- * These modules are located in the 'plugins/gateway-plugin/lib' directory and need to be specified explicitly.
+ * These modules are located in the 'plugins/gateway/lib' directory and need to be specified explicitly.
  *
  * If not used, the default of 'Core' plugin will be used, that may cause the same class being loaded twice.
  */

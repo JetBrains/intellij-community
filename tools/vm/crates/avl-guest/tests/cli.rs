@@ -280,8 +280,8 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
         "selectors": [], "junit5Filters": [], "productStamp": "product-1", "launchDigest": "launch-1",
         "activeExecutionTimeoutSec": 1800, "progressGapTimeoutSec": 300,
         "idePlugins": [
-            {"destination": "air-integrationTests-bridge-plugin/lib/b.jar", "sha256": sha256(&bridge)},
-            {"destination": "air-integrationTests-bridge-resident-plugin/lib/r.jar", "sha256": sha256(&resident)},
+            {"destination": "air-integrationTests-bridge/lib/b.jar", "sha256": sha256(&bridge)},
+            {"destination": "air-integrationTests-bridge-resident/lib/r.jar", "sha256": sha256(&resident)},
         ],
         "lane": "ui",
         "laneInputs": {"fakeAgentJar": sha256(&agent_jar), "laneDocuments": sha256(&documents), "suiteDocuments": sha256(&documents)},
@@ -451,8 +451,8 @@ fn lane_run_writes_the_record_of_its_watchdog_thread_on_standard_output() {
         |logical: &str| serde_json::json!({"execPath": format!("bazel-out/bin/{logical}"), "logicalPath": logical, "owner": "//test"});
     let mut document: serde_json::Value = serde_json::from_slice(&std::fs::read(&descriptor).unwrap()).unwrap();
     document["ide"]["plugins"] = serde_json::json!([
-        {"destination": "air-integrationTests-bridge-plugin/lib/b.jar", "file": file("_main/bridge.jar")},
-        {"destination": "air-integrationTests-bridge-resident-plugin/lib/r.jar", "file": file("_main/resident.jar")},
+        {"destination": "air-integrationTests-bridge/lib/b.jar", "file": file("_main/bridge.jar")},
+        {"destination": "air-integrationTests-bridge-resident/lib/r.jar", "file": file("_main/resident.jar")},
     ]);
     document["ide"]["projectArchive"] = file("_main/project.zip");
     put(&descriptor, document.to_string().as_bytes(), false);

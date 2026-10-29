@@ -34,7 +34,7 @@ object LambdaTestPluginHolder {
 
   private val defaultLambdaPlugin: AdditionalLambdaPlugin = AdditionalLambdaPlugin(
     devBuildModuleId = "intellij.lambda.test.plugin",
-    pluginDirName = "lambda-test-plugin",
+    pluginDirName = "lambda-test",
     splitMode = LoadingInSplitMode.All,
   )
 
@@ -108,8 +108,8 @@ object LambdaTestPluginHolder {
    * backend-split). Use this when the same content modules are needed regardless of mode.
    *
    * Derives the dev-build plugin module and directory name from [mainTestModuleId] using the same naming
-   * convention as the wrapper generator: `<base>.plugin` for the module, and the module with `intellij.`
-   * stripped and dots replaced by dashes for the Bazel target.
+   * convention as the wrapper generator: `<base>.plugin` for the module, and the module with `intellij.` and `.plugin`
+   * stripped and dots replaced by dashes for the plugin directory.
    *
    * Public because a product with generated test classes cannot be listed in [setupFor] and builds its setup
    * itself; [additionalPlugins] is where its own plugin goes, in the same list as the lambda test plugins
@@ -117,7 +117,7 @@ object LambdaTestPluginHolder {
    */
   fun allModesPlugin(
     mainTestModuleId: String,
-    pluginDirName: String = "$mainTestModuleId.plugin".removePrefix("intellij.").replace('.', '-'),
+    pluginDirName: String = mainTestModuleId.removePrefix("intellij.").replace('.', '-'),
     additionalPlugins: List<AdditionalLambdaPlugin> = emptyList(),
   ): LambdaTestSetup {
     return LambdaTestSetup(
@@ -138,7 +138,7 @@ object LambdaTestPluginHolder {
    * three [AdditionalLambdaPlugin] entries — monolith, backend-split, frontend-split — from the
    * naming convention used by the generated wrappers:
    * - module name: `<wrapperModuleBaseName>.<modeSuffix>`
-   * - Bazel target name: module name with `intellij.` stripped and dots replaced by dashes
+   * - plugin directory: module name with `intellij.` and `.plugin` stripped and dots replaced by dashes
    */
   private fun modeSplitPlugins(
     mainTestModuleId: String,
@@ -150,7 +150,7 @@ object LambdaTestPluginHolder {
       additionalLambdaPlugins = listOf(defaultLambdaPlugin) + MODE_SPLIT_SUFFIXES.map { (suffix, loadingMode) ->
         AdditionalLambdaPlugin(
           devBuildModuleId = "$wrapperModuleBaseName.$suffix",
-          pluginDirName = "$pluginDirNameBase-${suffix.replace('.', '-')}",
+          pluginDirName = "$pluginDirNameBase-${suffix.removeSuffix(".plugin").replace('.', '-')}",
           splitMode = loadingMode,
         )
       },

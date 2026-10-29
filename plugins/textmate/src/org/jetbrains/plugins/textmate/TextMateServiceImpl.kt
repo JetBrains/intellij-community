@@ -3,7 +3,6 @@
 package org.jetbrains.plugins.textmate
 
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
@@ -726,7 +725,7 @@ private fun TextMateGrammar.listsExtension(extension: String): Boolean {
 }
 
 private val bundledBundlePath: Path
-  get() = PluginPathManager.getPluginHome(if (PluginManagerCore.isRunningFromSources()) "textmate" else "textmate-plugin")
+  get() = PluginPathManager.getPluginHome("textmate")
     .toPath().resolve("lib/bundles").normalize()
 
 private fun readBuiltinBundlesIndex(bundlesPath: Path): TextMateBundlesIndex {
