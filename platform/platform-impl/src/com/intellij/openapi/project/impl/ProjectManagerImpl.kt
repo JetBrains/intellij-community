@@ -29,6 +29,7 @@ import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.cancelAndJoinBlocking
 import com.intellij.ide.cancelAndTryJoin
+import com.intellij.ide.frameInfo
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
@@ -37,6 +38,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.recentProjectMetaInfo
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.trustedProjects.TrustedProjects
 import com.intellij.ide.trustedProjects.TrustedProjectsDialog.confirmOpeningOrLinkingUntrustedProject
@@ -1241,7 +1243,8 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   private suspend fun attachToExistingOrOpenInTheSameFrame(projectToClose: Project, options: OpenProjectTask, projectDir: Path): Boolean {
     if (options.forceReuseFrame || reusesWelcomeFrameWithoutConfirmation(projectToClose)) {
       confirmTrustedStateOrCancel(projectDir, options)
-      return !closeAndDisposeKeepingFrame(projectToClose, options.forceReuseFrame)
+      val enableReuse = options.forceReuseFrame || !hasStoredFrameInfo(projectDir, options)
+      return !closeAndDisposeKeepingFrame(projectToClose, enableReuse)
     }
 
     val processor = ProjectAttachProcessor.getProcessor(projectToClose, projectDir, options.project)
@@ -1303,6 +1306,17 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     return !ProjectLifecycleUiCustomization.getInstance().alwaysOpenProjectInNewWindow &&
            WelcomeUtils.noCheckOpenConfirmation(projectToClose) &&
            !needsConfirmationToClose(projectToClose)
+  }
+
+  /**
+   * Returns `true` when [options] or the recent projects hold a frame info for [projectDir].
+   * The frame allocator restores the frame of the project from this info.
+   * A project without the info, such as a new project, takes the frame of the project to close.
+   */
+  private suspend fun hasStoredFrameInfo(projectDir: Path, options: OpenProjectTask): Boolean {
+    return options.frameInfo != null ||
+           options.recentProjectMetaInfo?.frame != null ||
+           (serviceAsync<RecentProjectsManager>() as? RecentProjectsManagerBase)?.getProjectMetaInfo(projectDir)?.frame != null
   }
 
   private suspend fun closeAndDisposeKeepingFrame(project: Project, enableReuse: Boolean = true): Boolean {
