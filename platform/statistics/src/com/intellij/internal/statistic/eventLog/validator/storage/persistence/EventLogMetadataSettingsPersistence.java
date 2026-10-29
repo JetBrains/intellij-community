@@ -13,11 +13,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * EventLogAllowedList storage is stored locally, not shared via Settings Sync, not exportable via Export Settings,
@@ -43,108 +42,106 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
   private static final String BUILD = "build";
   private static final String BUILD_NUMBER = "build-number";
 
-  private final Object optionsLock = new Object();
-
-  private boolean internal = false;
-  private final Map<String, EventsSchemePathSettings> recorderToPathSettings = new HashMap<>();
-  private final Map<String, EventLogExternalOptions> options = new HashMap<>();
-  private final Map<String, String> recorderToBuildNumber = new HashMap<>();
+  /**
+   * Every write replaces the whole snapshot, so {@link #getState()} serializes one consistent state without a lock.
+   */
+  private final AtomicReference<EventLogOptionsSnapshot> snapshot = new AtomicReference<>(EventLogOptionsSnapshot.EMPTY);
 
   public static EventLogMetadataSettingsPersistence getInstance() {
     return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
   }
 
   public boolean isInternal() {
-    return internal;
+    return snapshot.get().internal();
   }
 
   public void setInternal(boolean internal) {
-    this.internal = internal;
+    snapshot.updateAndGet(current -> current.withInternal(internal));
   }
 
-  public @NotNull Map<String, String> getOptions(@NotNull String recorderId) {
-    synchronized (optionsLock) {
-      EventLogExternalOptions options = this.options.get(recorderId);
-      if (options == null) return Collections.emptyMap();
-      return options.getOptions();
-    }
+  public @NotNull @Unmodifiable Map<String, String> getOptions(@NotNull String recorderId) {
+    return snapshot.get().options().getOrDefault(recorderId, Collections.emptyMap());
   }
 
   public void setOptions(@NotNull String recorderId, Map<String, String> options) {
-    synchronized (optionsLock) {
-      if (!this.options.containsKey(recorderId)) {
-        this.options.put(recorderId, new EventLogExternalOptions());
-      }
-      this.options.get(recorderId).putOptions(options);
-    }
+    snapshot.updateAndGet(current -> current.withOptions(recorderId, merge(current.options().get(recorderId), options)));
   }
 
   public @NotNull Map<String, String> updateOptions(@NotNull String recorderId, @NotNull @Unmodifiable Map<String, String> newOptions) {
-    synchronized (optionsLock) {
-      Map<String, String> persistedOptions = getOptions(recorderId);
+    while (true) {
+      EventLogOptionsSnapshot current = snapshot.get();
+      Map<String, String> persistedOptions = current.options().get(recorderId);
       Map<String, String> changedOptions = new HashMap<>();
       for (Map.Entry<String, String> newOption : newOptions.entrySet()) {
-        String value = persistedOptions.get(newOption.getKey());
+        String value = persistedOptions == null ? null : persistedOptions.get(newOption.getKey());
         String newValue = newOption.getValue();
         if (newValue != null && !StringUtil.equals(value, newValue)) {
           changedOptions.put(newOption.getKey(), newValue);
         }
       }
-      setOptions(recorderId, changedOptions);
-      return changedOptions;
+      if (persistedOptions != null && changedOptions.isEmpty()) {
+        return changedOptions;
+      }
+      EventLogOptionsSnapshot updated = current.withOptions(recorderId, merge(persistedOptions, changedOptions));
+      if (snapshot.compareAndSet(current, updated)) {
+        return changedOptions;
+      }
     }
   }
 
   public @Nullable EventsSchemePathSettings getPathSettings(@NotNull String recorderId) {
-    return recorderToPathSettings.get(recorderId);
+    return snapshot.get().recorderToPathSettings().get(recorderId);
   }
 
   public void setPathSettings(@NotNull String recorderId, @NotNull EventsSchemePathSettings settings) {
-    recorderToPathSettings.put(recorderId, settings);
+    snapshot.updateAndGet(current -> current.withPathSettings(recorderId, settings));
   }
 
   public @Nullable String getBuildNumber(@NotNull String recorderId) {
-    return recorderToBuildNumber.get(recorderId);
+    return snapshot.get().recorderToBuildNumber().get(recorderId);
   }
 
   public void setBuildNumber(@NotNull String recorderId, @NotNull String buildNumber) {
-    recorderToBuildNumber.put(recorderId, buildNumber);
+    snapshot.updateAndGet(current -> current.withBuildNumber(recorderId, buildNumber));
   }
 
   @Override
   public void loadState(final @NotNull Element element) {
-      Element internalElement = element.getChild(INTERNAL);
-      internal = internalElement != null && Boolean.parseBoolean(internalElement.getValue());
+    Element internalElement = element.getChild(INTERNAL);
+    boolean internal = internalElement != null && Boolean.parseBoolean(internalElement.getValue());
 
-      recorderToBuildNumber.clear();
-      for (Element build : element.getChildren(BUILD)) {
-        final String recorder = build.getAttributeValue(RECORDER_ID);
-        if (StringUtil.isNotEmpty(recorder)) {
-          final String buildNumber = build.getAttributeValue(BUILD_NUMBER);
-          recorderToBuildNumber.put(recorder, buildNumber);
-        }
+    Map<String, String> recorderToBuildNumber = new HashMap<>();
+    for (Element build : element.getChildren(BUILD)) {
+      final String recorder = build.getAttributeValue(RECORDER_ID);
+      if (StringUtil.isNotEmpty(recorder)) {
+        final String buildNumber = build.getAttributeValue(BUILD_NUMBER);
+        recorderToBuildNumber.put(recorder, buildNumber);
       }
+    }
 
-      recorderToPathSettings.clear();
-      for (Element path : element.getChildren(PATH)) {
-        final String recorder = path.getAttributeValue(RECORDER_ID);
-        if (StringUtil.isNotEmpty(recorder)) {
-          String customPath = path.getAttributeValue(CUSTOM_PATH);
-          if (customPath == null) continue;
-          boolean useCustomPath = parseUseCustomPath(path);
-          recorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
-        }
+    Map<String, EventsSchemePathSettings> recorderToPathSettings = new HashMap<>();
+    for (Element path : element.getChildren(PATH)) {
+      final String recorder = path.getAttributeValue(RECORDER_ID);
+      if (StringUtil.isNotEmpty(recorder)) {
+        String customPath = path.getAttributeValue(CUSTOM_PATH);
+        if (customPath == null) continue;
+        boolean useCustomPath = parseUseCustomPath(path);
+        recorderToPathSettings.put(recorder, new EventsSchemePathSettings(customPath, useCustomPath));
       }
+    }
 
-      synchronized (optionsLock) {
-        options.clear();
-        for (Element options : element.getChildren(OPTIONS)) {
-          String recorderId = options.getAttributeValue(RECORDER_ID);
-          if (recorderId != null) {
-            this.options.put(recorderId, new EventLogExternalOptions().deserialize(options));
-          }
-        }
+    Map<String, Map<String, String>> options = new HashMap<>();
+    for (Element recorderOptions : element.getChildren(OPTIONS)) {
+      String recorderId = recorderOptions.getAttributeValue(RECORDER_ID);
+      if (recorderId != null) {
+        options.put(recorderId, deserializeOptions(recorderOptions));
       }
+    }
+
+    snapshot.set(new EventLogOptionsSnapshot(internal,
+                                             Collections.unmodifiableMap(recorderToPathSettings),
+                                             Collections.unmodifiableMap(options),
+                                             Collections.unmodifiableMap(recorderToBuildNumber)));
   }
 
   private static boolean parseUseCustomPath(@NotNull Element update) {
@@ -158,23 +155,24 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
 
   @Override
   public Element getState() {
+    final EventLogOptionsSnapshot current = snapshot.get();
     final Element element = new Element("state");
 
     // store only 'true' values
-    if (internal) {
+    if (current.internal()) {
       Element internalElement = new Element(INTERNAL);
-      internalElement.setText(Boolean.toString(internal));
+      internalElement.setText(Boolean.toString(true));
       element.addContent(internalElement);
     }
 
-    for (Map.Entry<String, String> entry : recorderToBuildNumber.entrySet()) {
+    for (Map.Entry<String, String> entry : current.recorderToBuildNumber().entrySet()) {
       final Element build = new Element(BUILD);
       build.setAttribute(RECORDER_ID, entry.getKey());
       build.setAttribute(BUILD_NUMBER, entry.getValue());
       element.addContent(build);
     }
 
-    for (Map.Entry<String, EventsSchemePathSettings> entry : recorderToPathSettings.entrySet()) {
+    for (Map.Entry<String, EventsSchemePathSettings> entry : current.recorderToPathSettings().entrySet()) {
       final Element path = new Element(PATH);
       path.setAttribute(RECORDER_ID, entry.getKey());
       EventsSchemePathSettings value = entry.getValue();
@@ -183,11 +181,14 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
       element.addContent(path);
     }
 
-    for (Map.Entry<String, EventLogExternalOptions> entry : options.entrySet()) {
+    for (Map.Entry<String, Map<String, String>> entry : current.options().entrySet()) {
       Element options = new Element(OPTIONS);
       options.setAttribute(RECORDER_ID, entry.getKey());
-      for (Element option : entry.getValue().serialize()) {
-        options.addContent(option);
+      for (Map.Entry<String, String> option : entry.getValue().entrySet()) {
+        Element optionElement = new Element(OPTION);
+        optionElement.setAttribute(OPTION_NAME, option.getKey());
+        optionElement.setAttribute(OPTION_VALUE, option.getValue());
+        options.addContent(optionElement);
       }
       element.addContent(options);
     }
@@ -195,38 +196,56 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
     return element;
   }
 
-  private static class EventLogExternalOptions {
-    private final Map<String, String> myOptions = new HashMap<>();
-
-    public @NotNull Map<String, String> getOptions() {
-      return new HashMap<>(myOptions);
-    }
-
-    public void putOptions(@NotNull Map<String, String> options) {
-      myOptions.putAll(options);
-    }
-
-    public @NotNull List<Element> serialize() {
-      List<Element> result = new ArrayList<>();
-      for (Map.Entry<String, String> entry : myOptions.entrySet()) {
-        Element option = new Element(OPTION);
-        option.setAttribute(OPTION_NAME, entry.getKey());
-        option.setAttribute(OPTION_VALUE, entry.getValue());
-        result.add(option);
+  private static @NotNull @Unmodifiable Map<String, String> deserializeOptions(@NotNull Element root) {
+    Map<String, String> options = new HashMap<>();
+    for (Element option : root.getChildren(OPTION)) {
+      String name = option.getAttributeValue(OPTION_NAME);
+      String value = option.getAttributeValue(OPTION_VALUE);
+      if (name != null && value != null) {
+        options.put(name, value);
       }
-      return result;
+    }
+    return Collections.unmodifiableMap(options);
+  }
+
+  private static @NotNull @Unmodifiable Map<String, String> merge(@Nullable Map<String, String> persisted,
+                                                                  @NotNull Map<String, String> options) {
+    Map<String, String> merged = persisted == null ? new HashMap<>() : new HashMap<>(persisted);
+    merged.putAll(options);
+    return Collections.unmodifiableMap(merged);
+  }
+
+  private static <V> @NotNull @Unmodifiable Map<String, V> with(@NotNull Map<String, V> map, @NotNull String key, V value) {
+    Map<String, V> copy = new HashMap<>(map);
+    copy.put(key, value);
+    return Collections.unmodifiableMap(copy);
+  }
+
+  /**
+   * An immutable state of the component. The maps are unmodifiable, and so are the option maps in {@code options}.
+   */
+  private record EventLogOptionsSnapshot(
+    boolean internal,
+    @NotNull @Unmodifiable Map<String, EventsSchemePathSettings> recorderToPathSettings,
+    @NotNull @Unmodifiable Map<String, @Unmodifiable Map<String, String>> options,
+    @NotNull @Unmodifiable Map<String, String> recorderToBuildNumber
+  ) {
+    static final EventLogOptionsSnapshot EMPTY = new EventLogOptionsSnapshot(false, Map.of(), Map.of(), Map.of());
+
+    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withInternal(boolean internal) {
+      return new EventLogOptionsSnapshot(internal, recorderToPathSettings, options, recorderToBuildNumber);
     }
 
-    public @NotNull EventLogExternalOptions deserialize(@NotNull Element root) {
-      myOptions.clear();
-      for (Element option : root.getChildren(OPTION)) {
-        String name = option.getAttributeValue(OPTION_NAME);
-        String value = option.getAttributeValue(OPTION_VALUE);
-        if (name != null && value != null) {
-          myOptions.put(name, value);
-        }
-      }
-      return this;
+    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withPathSettings(@NotNull String recorderId, @NotNull EventsSchemePathSettings settings) {
+      return new EventLogOptionsSnapshot(internal, with(recorderToPathSettings, recorderId, settings), options, recorderToBuildNumber);
+    }
+
+    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withOptions(@NotNull String recorderId, @NotNull @Unmodifiable Map<String, String> recorderOptions) {
+      return new EventLogOptionsSnapshot(internal, recorderToPathSettings, with(options, recorderId, recorderOptions), recorderToBuildNumber);
+    }
+
+    @NotNull EventLogMetadataSettingsPersistence.EventLogOptionsSnapshot withBuildNumber(@NotNull String recorderId, @NotNull String buildNumber) {
+      return new EventLogOptionsSnapshot(internal, recorderToPathSettings, options, with(recorderToBuildNumber, recorderId, buildNumber));
     }
   }
 }
