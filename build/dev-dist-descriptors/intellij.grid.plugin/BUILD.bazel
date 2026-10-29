@@ -64,5 +64,5 @@ dev_plugin(
     modules = {
         "//grid/plugin": "intellij.grid.plugin",
     },
-    plugin_directory = "plugins/grid-plugin",
+    plugin_directory = "plugins/grid",
 )

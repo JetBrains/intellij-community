@@ -64,5 +64,5 @@ dev_plugin(
         "//libraries/ec4j/core": "intellij.libraries.ec4j.core",
         "//plugins/editorconfig:editorconfig-plugin": "intellij.editorconfig.plugin",
     },
-    plugin_directory = "plugins/editorconfig-plugin",
+    plugin_directory = "plugins/editorconfig",
 )

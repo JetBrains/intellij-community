@@ -125,5 +125,5 @@ dev_plugin(
         "//libraries/maven-resolver-transport": "intellij.libraries.maven.resolver.transport",
         "//libraries/plexus-utils": "intellij.libraries.plexus.utils",
     },
-    plugin_directory = "plugins/java-aetherDependencyResolver-plugin",
+    plugin_directory = "plugins/java-aetherDependencyResolver",
 )

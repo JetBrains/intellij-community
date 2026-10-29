@@ -70,5 +70,5 @@ dev_plugin(
     modules = {
         "//plugins/sh/plugin": "intellij.sh.plugin",
     },
-    plugin_directory = "plugins/sh-plugin",
+    plugin_directory = "plugins/sh",
 )

@@ -235,5 +235,5 @@ dev_plugin(
         "//plugins/gradle/tooling-proxy": "intellij.gradle.toolingProxy",
         "//plugins/gradle:gradle-common": "intellij.gradle.common",
     },
-    plugin_directory = "plugins/gradle-plugin",
+    plugin_directory = "plugins/gradle",
 )

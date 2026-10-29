@@ -7,9 +7,9 @@
   "launch": {
     "mainClass": "com.intellij.idea.Main",
     "jvmArguments": {
-      "jnaNativeDir": "plugins/jna-plugin/lib/jna",
-      "pty4jNativeDir": "plugins/pty4j-plugin/lib/pty4j",
-      "skikoNativeDir": "plugins/platform-compose-plugin/lib/skiko-awt-runtime-all",
+      "jnaNativeDir": "plugins/jna/lib/jna",
+      "pty4jNativeDir": "plugins/pty4j/lib/pty4j",
+      "skikoNativeDir": "plugins/platform-compose/lib/skiko-awt-runtime-all",
       "platformPrefix": "AndroidStudio",
       "splash": true
     }
@@ -59,10 +59,10 @@
         "Linux": "bin/mcp-server.vmoptions"
       },
       "additionalBootClassPathJarNames": [
-        "../plugins/mcpserver-plugin/lib/intellij.mcpserver.stdio.jar",
-        "../plugins/mcpserver-plugin/lib/intellij.libraries.kotlin.logging.jar",
-        "../plugins/mcpserver-plugin/lib/intellij.libraries.ktor.server.sse.jar",
-        "../plugins/mcpserver-plugin/lib/intellij.libraries.mcp.kotlin.sdk.jar"
+        "../plugins/mcpserver/lib/intellij.mcpserver.stdio.jar",
+        "../plugins/mcpserver/lib/intellij.libraries.kotlin.logging.jar",
+        "../plugins/mcpserver/lib/intellij.libraries.ktor.server.sse.jar",
+        "../plugins/mcpserver/lib/intellij.libraries.mcp.kotlin.sdk.jar"
       ],
       "mainClass": "com.intellij.mcpserver.stdio.McpStdioRunnerKt"
     }

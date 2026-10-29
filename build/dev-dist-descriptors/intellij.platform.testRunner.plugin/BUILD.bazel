@@ -53,5 +53,5 @@ dev_plugin(
     modules = {
         "//platform/testRunner/plugin": "intellij.platform.testRunner.plugin",
     },
-    plugin_directory = "plugins/platform-testRunner-plugin",
+    plugin_directory = "plugins/platform-testRunner",
 )

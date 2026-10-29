@@ -60,5 +60,5 @@ dev_plugin(
         "//idea/customization/plugin": "intellij.idea.customization.plugin",
         "//platform/non-modal-welcome-screen": "intellij.platform.ide.nonModalWelcomeScreen",
     },
-    plugin_directory = "plugins/idea-customization-plugin",
+    plugin_directory = "plugins/idea-customization",
 )

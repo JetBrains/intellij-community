@@ -66,5 +66,5 @@ dev_plugin(
         "//libraries/joni": "intellij.libraries.joni",
         "//plugins/textmate/plugin": "intellij.textmate.plugin",
     },
-    plugin_directory = "plugins/textmate-plugin",
+    plugin_directory = "plugins/textmate",
 )

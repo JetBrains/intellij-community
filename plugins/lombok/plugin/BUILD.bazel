@@ -10,7 +10,6 @@ dev_dist_plugin(
         "intellij.lombok.compiler",
     ],
     descriptor = "resources/META-INF/plugin.xml",
-    directory_name = "lombok",
     jars = {
         "lib/lombok-plugin.jar": ["intellij.lombok.plugin"],
     },

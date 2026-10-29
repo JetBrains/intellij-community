@@ -88,5 +88,5 @@ dev_plugin(
         "//plugins/gradle/java/plugin": "intellij.gradle.java.plugin",
         "//plugins/gradle/jps-plugin:jps": "intellij.gradle.jps",
     },
-    plugin_directory = "plugins/gradle-java-plugin",
+    plugin_directory = "plugins/gradle-java",
 )
