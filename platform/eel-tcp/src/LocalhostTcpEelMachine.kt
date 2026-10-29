@@ -36,6 +36,8 @@ object LocalhostTcpEelDescriptor : TcpEelDescriptor(LocalEelDescriptor.osFamily,
 internal class LocalhostTcpEelMachine(
   private val parentScope: ParentOfIjentScopes,
 ) : TcpEelMachine(LOCALHOST_TCP_EEL_INTERNAL_NAME) {
+  override val name: @NonNls String = "Localhost EEL"
+
   override suspend fun createStrategy(): IjentDeployingStrategy {
     return object : IjentDeployingStrategy {
       override suspend fun createIjentSession(provider: IjentSessionProvider): IjentSession {

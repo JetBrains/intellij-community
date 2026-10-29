@@ -4,6 +4,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.path.EelPath.OS
 import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 /**
@@ -108,6 +109,13 @@ interface EelMachine {
   val internalName: String
 
   /**
+   * It is recommended but not obliged to return the same info as in [EelDescriptor.name].
+   */
+  @Suppress("HardCodedStringLiteral")
+  @get:ApiStatus.Experimental
+  val name: @Nls String get() = "TODO OVERRIDE ME"
+
+  /**
    * Converts this machine into a [EelApi] — starts or reuses a running environment.
    * The machine selects the connection. [descriptor] defines the path namespace of the API and all paths it returns.
    * The caller must ensure that [descriptor] addresses this environment, including when another resolver owns that descriptor.
@@ -182,6 +190,8 @@ interface EelDescriptor {
   /**
    * Describes descriptor in a user-readable manner, i.e: "Docker: <container_name>" or "Wsl: <distro name>".
    * Format is *not* specified but guaranteed to be user-readable.
+   *
+   * See also [EelMachine.name].
    */
   @get:ApiStatus.Experimental
   val name: @NonNls String

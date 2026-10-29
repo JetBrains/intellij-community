@@ -56,6 +56,8 @@ class WslEelMachine internal constructor(val distribution: WSLDistribution) : Ee
 
   override val internalName: String = "WSL-" + distribution.id
 
+  override val name: String = "WSL: ${distribution.msId}"
+
   override suspend fun toEelApi(descriptor: EelDescriptor): EelApi {
     check(descriptor is WslEelDescriptor && descriptor.distribution == distribution) {
       "Wrong descriptor: $descriptor for machine: $this"

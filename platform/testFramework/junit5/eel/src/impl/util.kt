@@ -105,6 +105,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   val machine: EelMachine = object : EelMachine {
     override val isConnected: Boolean = true
     override val internalName: String = "mock-$id"
+    override val name: String = "mock-$id"
     override suspend fun toEelApi(descriptor: EelDescriptor): EelApi = apiRef.get()
     override fun ownsDescriptor(descriptor: EelDescriptor): Boolean {
       return descriptor == eelDescriptor
