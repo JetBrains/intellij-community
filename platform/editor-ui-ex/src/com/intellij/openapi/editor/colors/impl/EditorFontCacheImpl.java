@@ -9,17 +9,14 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
+import com.intellij.openapi.editor.impl.EditorFontFeatures;
 import com.intellij.openapi.editor.impl.FontFamilyService;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JdkConstants.FontStyle;
-import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.Font;
-import java.awt.font.TextAttribute;
-import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
@@ -31,13 +28,8 @@ import java.util.function.Supplier;
 @ApiStatus.Internal
 public final class EditorFontCacheImpl extends EditorFontCache {
   private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
-  private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES = Map.of(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
   private static final AtomicReferenceFieldUpdater<EditorFontCacheImpl, Font[]> FONTS_UPDATER =
     AtomicReferenceFieldUpdater.newUpdater(EditorFontCacheImpl.class, Font[].class, "fonts");
-
-  public static @NotNull Font deriveFontWithLigatures(@NotNull Font font, boolean enableLigatures) {
-    return enableLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
-  }
 
   private final @NotNull Supplier<? extends EditorColorsScheme> schemeSupplier;
   private volatile Font @NotNull [] fonts = new Font[0];
@@ -114,14 +106,7 @@ public final class EditorFontCacheImpl extends EditorFontCache {
       style,
       fontSize
     );
-    editorFont = deriveFontWithLigatures(editorFont, fontPreferences.useLigatures());
-    if (!fontPreferences.getCharacterVariants().isEmpty()) {
-      editorFont = JBR.getFontExtensions().deriveFontWithFeatures(
-        editorFont,
-        ArrayUtil.toStringArray(fontPreferences.getCharacterVariants())
-      );
-    }
-    return editorFont;
+    return EditorFontFeatures.withFeatures(editorFont, fontPreferences.useLigatures(), fontPreferences.getCharacterVariants());
   }
 
   private static @NotNull String getEditorFontName(@NotNull FontPreferences preferences) {

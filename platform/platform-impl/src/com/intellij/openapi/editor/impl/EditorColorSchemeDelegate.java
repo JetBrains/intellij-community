@@ -12,12 +12,9 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JdkConstants;
-import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -404,19 +401,8 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       style,
       fontSize
     );
-    Font fontWithLigatures = EditorFontCacheImpl.deriveFontWithLigatures(
-      baseFont,
-      myUseLigatures != null
-      ? myUseLigatures
-      : fontPreferences.useLigatures()
-    );
-    if (!fontPreferences.getCharacterVariants().isEmpty()) {
-      fontWithLigatures = JBR.getFontExtensions().deriveFontWithFeatures(
-        fontWithLigatures,
-        ArrayUtil.toStringArray(fontPreferences.getCharacterVariants())
-      );
-    }
-    myFontsMap.put(fontType, fontWithLigatures);
+    boolean useLigatures = myUseLigatures != null ? myUseLigatures : fontPreferences.useLigatures();
+    myFontsMap.put(fontType, EditorFontFeatures.withFeatures(baseFont, useLigatures, fontPreferences.getCharacterVariants()));
   }
 
   private void updateDelegate() {

@@ -1,10 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
-import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ArrayUtil;
 import com.jetbrains.FontMetricsAccessor;
 import com.jetbrains.JBR;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -76,13 +74,7 @@ public final class FontInfo {
     @Nullable FontRenderContext fontRenderContext
   ) {
     mySize = size;
-    Font f = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont(size), useLigatures);
-    if (variants.isEmpty()) {
-      myFont = f;
-    } else {
-      String[] features = ArrayUtil.toStringArray(variants);
-      myFont = JBR.getFontExtensions().deriveFontWithFeatures(f, features);
-    }
+    myFont = EditorFontFeatures.withFeatures(font.deriveFont(size), useLigatures, variants);
     myContext = fontRenderContext;
   }
 
