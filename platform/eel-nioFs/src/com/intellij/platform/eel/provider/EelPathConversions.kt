@@ -364,13 +364,13 @@ fun Path.asEelPath(): EelPath {
     return EelPath.parse(toString(), descriptor)
   }
 
-  if (descriptor !is EelPathBoundDescriptor) {
-    throw NoSuchElementException("Cannot find a root for $this")
-  }
-
   if (EelNioFsBackend.instance?.isRoutingAware(this) != true) {
     // Path is not managed by a routing-aware filesystem provider — parse as-is.
     return EelPath.parse(toString(), descriptor)
+  }
+
+  if (descriptor !is EelPathBoundDescriptor) {
+    throw NoSuchElementException("Cannot find a root for $this")
   }
 
   val relative = descriptor.rootPath.relativize(this)
