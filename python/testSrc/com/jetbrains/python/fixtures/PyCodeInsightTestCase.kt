@@ -32,6 +32,7 @@ import com.intellij.python.sdk.backend.getSdkAPI
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.TempDirTestFixture
@@ -524,9 +525,7 @@ abstract class PyCodeInsightTestCase {
     for (copyDirectory in myTestCaseOptions.copyDirectoryToProject) {
       myFixture.copyDirectoryToProject(copyDirectory.source, copyDirectory.destination)
     }
-    for ((filename, content) in otherFiles) {
-      myFixture.createFile(filename, content.trimIndent())
-    }
+    createOtherFiles(otherFiles)
     val originalText = fileContent.trimIndent()
     val expectedAssertions = parseAssertions(originalText)
     val assertions = PyTestAssertionParser.maskAssertions(originalText, expectedAssertions)
@@ -543,6 +542,14 @@ abstract class PyCodeInsightTestCase {
     }
   }
 
+  /** Creates or overwrites each of [otherFiles] in the source root. A file name can include folders, such as `pkg/mod.py`. */
+  private fun createOtherFiles(otherFiles: Array<out Pair<String, String>>) {
+    val sourceRoot = myFixture.tempDirFixture.getFile(".") ?: error("No source root")
+    for ((filename, content) in otherFiles) {
+      VfsTestUtil.createFile(sourceRoot, filename, content.trimIndent())
+    }
+  }
+
   private fun withQuickFixes(
     fileContent: String,
     otherFiles: Array<out Pair<String, String>>,
@@ -551,9 +558,7 @@ abstract class PyCodeInsightTestCase {
     for (copyDirectory in myTestCaseOptions.copyDirectoryToProject) {
       myFixture.copyDirectoryToProject(copyDirectory.source, copyDirectory.destination)
     }
-    for ((filename, content) in otherFiles) {
-      myFixture.createFile(filename, content.trimIndent())
-    }
+    createOtherFiles(otherFiles)
     myFixture.configureByText(myTestCaseOptions.testFileName, fileContent.trimIndent())
 
     withInspections {

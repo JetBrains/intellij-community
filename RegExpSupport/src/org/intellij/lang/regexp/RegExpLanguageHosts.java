@@ -158,7 +158,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
 
   public boolean isValidCategory(@NotNull RegExpElement element, @NotNull String category) {
     final RegExpLanguageHost host = findRegExpHost(element);
-    return host != null ? host.isValidCategory(category) : myDefaultProvider.isValidCategory(category);
+    return host != null ? host.isValidCategory(category, element) : myDefaultProvider.isValidCategory(category);
   }
 
   public boolean isValidPropertyName(@NotNull PsiElement element, @NotNull String type) {

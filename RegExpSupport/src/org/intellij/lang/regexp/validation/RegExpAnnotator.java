@@ -371,8 +371,10 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
     final RegExpAtom condition = conditional.getCondition();
     if (!myLanguageHosts.supportConditionalCondition(condition)) {
       if (condition instanceof RegExpGroup) {
-        myHolder.newAnnotation(HighlightSeverity.ERROR,
-                               RegExpBundle.message("error.lookaround.conditions.in.conditionals.not.supported.in.this.regex.dialect"))
+        final String message = RegExpGroupImpl.isPcreConditionalGroup(condition.getNode())
+                               ? RegExpBundle.message("error.this.condition.is.not.supported.in.this.regex.dialect")
+                               : RegExpBundle.message("error.lookaround.conditions.in.conditionals.not.supported.in.this.regex.dialect");
+        myHolder.newAnnotation(HighlightSeverity.ERROR, message)
           .range(condition)
           .create();
       }

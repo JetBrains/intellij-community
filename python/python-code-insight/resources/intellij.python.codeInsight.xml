@@ -192,6 +192,14 @@
                            implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition"/>
     <lang.syntaxHighlighterFactory language="PythonVerboseRegExp"
                                    implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
+    <lang.parserDefinition language="PythonMrabRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonMrabRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonMrabRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonMrabRegexpSyntaxHighlighterFactory"/>
+    <lang.parserDefinition language="PythonMrabVerboseRegExp"
+                           implementationClass="com.jetbrains.python.codeInsight.regexp.PythonMrabVerboseRegexpParserDefinition"/>
+    <lang.syntaxHighlighterFactory language="PythonMrabVerboseRegExp"
+                                   implementationClass="com.jetbrains.python.codeInsight.regexp.PythonMrabVerboseRegexpSyntaxHighlighterFactory"/>
     <regExpLanguageHost forClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl"
                         implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
     <!-- typing -->

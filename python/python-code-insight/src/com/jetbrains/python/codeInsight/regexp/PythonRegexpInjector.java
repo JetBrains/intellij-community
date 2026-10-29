@@ -5,7 +5,9 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -15,7 +17,8 @@ import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyKeywordArgument;
+import com.jetbrains.python.psi.PyNamedParameter;
+import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.PyParenthesizedExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -41,6 +44,10 @@ public final class PythonRegexpInjector implements MultiHostInjector {
       this.argIndex = argIndex;
     }
   }
+
+  private enum RegexpModule {RE, MRAB_REGEX}
+
+  private static final String FLAGS = "flags";
 
   private final List<RegexpMethodDescriptor> myDescriptors = new ArrayList<>();
 
@@ -69,10 +76,11 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     final PyArgumentList argumentList = PyUtil.as(context.getParent(), PyArgumentList.class);
     if (PyInjectionUtil.getLargestStringLiteral(context) == context && argumentList != null) {
       final PyCallExpression call = PsiTreeUtil.getParentOfType(context, PyCallExpression.class);
-      if (call != null) {
-        final RegexpMethodDescriptor methodDescriptor = findRegexpMethodDescriptor(resolvePossibleRegexpCall(call));
+      if (call != null && resolvePossibleRegexpCall(call) instanceof PyFunction function) {
+        final RegexpModule module = findRegexpModule(function);
+        final RegexpMethodDescriptor methodDescriptor = module != null ? findRegexpMethodDescriptor(function) : null;
         if (methodDescriptor != null && methodDescriptor.argIndex == ArrayUtil.indexOf(argumentList.getArguments(), context)) {
-          injectRegexpLanguage(registrar, context, isVerbose(call));
+          injectRegexpLanguage(registrar, context, module, isVerbose(call, function));
         }
       }
     }
@@ -89,8 +97,14 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     return null;
   }
 
-  private static void injectRegexpLanguage(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context, boolean verbose) {
-    final Language language = verbose ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
+  private static void injectRegexpLanguage(@NotNull MultiHostRegistrar registrar,
+                                           @NotNull PsiElement context,
+                                           @NotNull RegexpModule module,
+                                           boolean verbose) {
+    final Language language = switch (module) {
+      case RE -> verbose ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
+      case MRAB_REGEX -> verbose ? PythonMrabVerboseRegexpLanguage.INSTANCE : PythonMrabRegexpLanguage.INSTANCE;
+    };
     PyInjectionUtil.registerStringLiteralInjection(context, registrar, language);
   }
 
@@ -100,15 +114,19 @@ public final class PythonRegexpInjector implements MultiHostInjector {
                          PyCallExpression.class);
   }
 
-  private static boolean isVerbose(@NotNull PyCallExpression call) {
+  private static boolean isVerbose(@NotNull PyCallExpression call, @NotNull PyFunction function) {
+    final PyExpression keywordFlags = call.getKeywordArgument(FLAGS);
+    if (keywordFlags != null) {
+      return isVerbose(keywordFlags);
+    }
+    final PyParameterList parameterList = function.getParameterList();
+    final PyNamedParameter flagsParameter = parameterList.findParameterByName(FLAGS);
+    final int position = flagsParameter != null ? ArrayUtil.indexOf(parameterList.getParameters(), flagsParameter) : -1;
     final PyExpression[] arguments = call.getArguments();
-    return arguments.length > 1 && isVerbose(arguments[arguments.length - 1]);
+    return position >= 0 && position < arguments.length && isVerbose(arguments[position]);
   }
 
   private static boolean isVerbose(@Nullable PyExpression expression) {
-    if (expression instanceof PyKeywordArgument keywordArgument) {
-      return "flags".equals(keywordArgument.getName()) && isVerbose(keywordArgument.getValueExpression());
-    }
     if (expression instanceof PyReferenceExpression) {
       final String flagName = ((PyReferenceExpression)expression).getReferencedName();
       return "VERBOSE".equals(flagName) || "X".equals(flagName);
@@ -119,24 +137,27 @@ public final class PythonRegexpInjector implements MultiHostInjector {
     return false;
   }
 
-  private @Nullable RegexpMethodDescriptor findRegexpMethodDescriptor(@Nullable PsiElement element) {
-    if (element == null ||
-        !(ScopeUtil.getScopeOwner(element) instanceof PyFile) ||
-        !(element instanceof PyFunction)) {
+  /**
+   * The {@code regex} module keeps its functions in {@code regex._main} from release 2025.10.23.
+   * Earlier releases keep them in {@code regex.regex}.
+   */
+  private static @Nullable RegexpModule findRegexpModule(@NotNull PyFunction function) {
+    if (!(ScopeUtil.getScopeOwner(function) instanceof PyFile)) {
       return null;
     }
-
-    final var containingFile = element.getContainingFile();
-    final String fileName = containingFile.getName();
-    if (!ArrayUtil.contains(fileName, "re.py", "re.pyi")) {
-      final var qName = QualifiedNameFinder.findCanonicalImportPath(containingFile, null);
-      final String moduleName = qName != null ? qName.toString() : null;
-      if (!"regex._main".equals(moduleName)) {
-        return null;
-      }
+    final PsiFile containingFile = function.getContainingFile();
+    if (ArrayUtil.contains(containingFile.getName(), "re.py", "re.pyi")) {
+      return RegexpModule.RE;
     }
+    final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(containingFile, null);
+    if (qName != null && ArrayUtil.contains(qName.toString(), "regex._main", "regex.regex")) {
+      return RegexpModule.MRAB_REGEX;
+    }
+    return null;
+  }
 
-    final String functionName = ((PyFunction)element).getName();
+  private @Nullable RegexpMethodDescriptor findRegexpMethodDescriptor(@NotNull PyFunction function) {
+    final String functionName = function.getName();
     return myDescriptors
       .stream()
       .filter(descriptor -> descriptor.methodName.equals(functionName))

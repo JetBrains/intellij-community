@@ -258,7 +258,7 @@ public class PyRegexpTest extends PyTestCase {
       doTestInjectedText("""
                            import re
 
-                           re.search(""\"
+                           re.compile(""\"
                            .* # <caret>comment
                            ""\", re.I | re.M | re.X)""",
                          "\n.* # comment\n");

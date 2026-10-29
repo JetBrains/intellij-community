@@ -121,7 +121,17 @@ public interface RegExpLanguageHost {
     return true;
   }
 
-  boolean isValidCategory(@NotNull String category);
+  default boolean isValidCategory(@NotNull String category) {
+    return DefaultRegExpPropertiesProvider.getInstance().isValidCategory(category);
+  }
+
+  /**
+   * Returns whether {@code category} is a valid property category in the dialect of {@code context}.
+   * Override this method, not {@link #isValidCategory(String)}, for a host that serves more than one dialect.
+   */
+  default boolean isValidCategory(@NotNull String category, @NotNull PsiElement context) {
+    return isValidCategory(category);
+  }
 
   default boolean isValidPropertyName(@NotNull String name) {
     return true;
