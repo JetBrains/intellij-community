@@ -25,6 +25,7 @@ import com.intellij.platform.backend.documentation.InlineDocumentation;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +123,8 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
     return startLine < endLine || document.getLineStartOffset(startLine) < document.getLineEndOffset(endLine);
   }
 
-  static @NotNull @Nls String calcText(@Nullable InlineDocumentation documentation) {
+  @ApiStatus.Internal
+  public static @NotNull @Nls String calcText(@Nullable InlineDocumentation documentation) {
     try {
       String text = documentation == null ? null : documentation.renderText();
       return text == null ? CodeInsightBundle.message("doc.render.not.available.text") : preProcess(text);
