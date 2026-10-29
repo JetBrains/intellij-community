@@ -43,8 +43,11 @@ public class TestNGTreeHierarchyTest {
     doTest(suite, """
       ##teamcity[enteredTheMatrix]
       ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
-      ##teamcity[testStarted name='ATest.test1|[0|]' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
-      ##teamcity[testFinished name='ATest.test1|[0|]' nodeId='a.ATest/test1']
+      ##teamcity[testSuiteStarted name='test1' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
+      ##teamcity[testStarted name='|[0|]' nodeId='a.ATest/test1|[0|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[0|]']
+      ##teamcity[testFinished name='|[0|]' nodeId='a.ATest/test1|[0|]']
+      ##teamcity[testSuiteFinished name='test1' nodeId='a.ATest/test1']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
       """);
   }
 
@@ -173,13 +176,165 @@ public class TestNGTreeHierarchyTest {
     doTest(suite, """
       ##teamcity[enteredTheMatrix]
       ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
-      ##teamcity[testStarted name='ATest.test1|[0|]' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
-      ##teamcity[testFinished name='ATest.test1|[0|]' nodeId='a.ATest/test1']
-      ##teamcity[testStarted name='ATest.test1|[1|] (1)' nodeId='a.ATest/test1|[1|]' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1|[1|]']
-      ##teamcity[testFinished name='ATest.test1|[1|] (1)' nodeId='a.ATest/test1|[1|]']
-      ##teamcity[testStarted name='ATest.test1|[2|] (2)' nodeId='a.ATest/test1|[2|]' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1|[2|]']
-      ##teamcity[testFinished name='ATest.test1|[2|] (2)' nodeId='a.ATest/test1|[2|]']
+      ##teamcity[testSuiteStarted name='test1' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
+      ##teamcity[testStarted name='|[0|]' nodeId='a.ATest/test1|[0|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[0|]']
+      ##teamcity[testFinished name='|[0|]' nodeId='a.ATest/test1|[0|]']
+      ##teamcity[testStarted name='|[1|] (1)' nodeId='a.ATest/test1|[1|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[1|]']
+      ##teamcity[testFinished name='|[1|] (1)' nodeId='a.ATest/test1|[1|]']
+      ##teamcity[testStarted name='|[2|] (2)' nodeId='a.ATest/test1|[2|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[2|]']
+      ##teamcity[testFinished name='|[2|] (2)' nodeId='a.ATest/test1|[2|]']
+      ##teamcity[testSuiteFinished name='test1' nodeId='a.ATest/test1']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
       """);
+  }
+
+  @Test
+  public void testDataProviderRowsNestUnderTheMethod() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    listener.onSuiteStart(className, true);
+    for (Object[] row : new Object[][]{{2, true}, {6, false}}) {
+      final MockTestNGResult setUp = new MockTestNGResult(className, "setUp");
+      listener.onConfigurationStart(setUp);
+      listener.onConfigurationSuccess(setUp);
+      final MockTestNGResult result = new MockTestNGResult(className, "test1", null, row);
+      listener.onTestStart(result);
+      listener.onTestFinished(result);
+      final MockTestNGResult tearDown = new MockTestNGResult(className, "tearDown");
+      listener.onConfigurationStart(tearDown);
+      listener.onConfigurationSuccess(tearDown);
+    }
+    listener.onSuiteFinish(className);
+
+    Assert.assertEquals("output: " + buf, """
+      ##teamcity[enteredTheMatrix]
+      ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
+      ##teamcity[testStarted name='ATest.setUp' nodeId='a.ATest/setUp' parentNodeId='a.ATest' locationHint='java:test://a.ATest/setUp' config='true']
+      ##teamcity[testFinished name='ATest.setUp' nodeId='a.ATest/setUp']
+      ##teamcity[testSuiteStarted name='test1' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
+      ##teamcity[testStarted name='|[2, true|]' nodeId='a.ATest/test1|[0|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[0|]']
+      ##teamcity[testFinished name='|[2, true|]' nodeId='a.ATest/test1|[0|]']
+      ##teamcity[testStarted name='ATest.tearDown' nodeId='a.ATest/tearDown' parentNodeId='a.ATest' locationHint='java:test://a.ATest/tearDown' config='true']
+      ##teamcity[testFinished name='ATest.tearDown' nodeId='a.ATest/tearDown']
+      ##teamcity[testStarted name='ATest.setUp (1)' nodeId='a.ATest/setUp|[1|]' parentNodeId='a.ATest' locationHint='java:test://a.ATest/setUp|[1|]' config='true']
+      ##teamcity[testFinished name='ATest.setUp (1)' nodeId='a.ATest/setUp|[1|]']
+      ##teamcity[testStarted name='|[6, false|] (1)' nodeId='a.ATest/test1|[1|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[1|]']
+      ##teamcity[testFinished name='|[6, false|] (1)' nodeId='a.ATest/test1|[1|]']
+      ##teamcity[testStarted name='ATest.tearDown (1)' nodeId='a.ATest/tearDown|[1|]' parentNodeId='a.ATest' locationHint='java:test://a.ATest/tearDown|[1|]' config='true']
+      ##teamcity[testFinished name='ATest.tearDown (1)' nodeId='a.ATest/tearDown|[1|]']
+      ##teamcity[testSuiteFinished name='test1' nodeId='a.ATest/test1']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
+      """, prepare(buf.toString()));
+  }
+
+  @Test
+  public void testNextParameterizedMethodClosesTheNodeOfThePreviousOne() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    listener.onSuiteStart(className, true);
+    for (String methodName : new String[]{"test1", "test2"}) {
+      final MockTestNGResult result = new MockTestNGResult(className, methodName, null, new Object[]{0});
+      listener.onTestStart(result);
+      listener.onTestFinished(result);
+    }
+    listener.onSuiteFinish(className);
+
+    Assert.assertEquals("output: " + buf, """
+      ##teamcity[enteredTheMatrix]
+      ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
+      ##teamcity[testSuiteStarted name='test1' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
+      ##teamcity[testStarted name='|[0|]' nodeId='a.ATest/test1|[0|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[0|]']
+      ##teamcity[testFinished name='|[0|]' nodeId='a.ATest/test1|[0|]']
+      ##teamcity[testSuiteFinished name='test1' nodeId='a.ATest/test1']
+      ##teamcity[testSuiteStarted name='test2' nodeId='a.ATest/test2' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test2']
+      ##teamcity[testStarted name='|[0|]' nodeId='a.ATest/test2|[0|]' parentNodeId='a.ATest/test2' locationHint='java:test://a.ATest/test2|[0|]']
+      ##teamcity[testFinished name='|[0|]' nodeId='a.ATest/test2|[0|]']
+      ##teamcity[testSuiteFinished name='test2' nodeId='a.ATest/test2']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
+      """, prepare(buf.toString()));
+  }
+
+  @Test
+  public void testPlainMethodAfterParameterizedOneStaysUnderTheClass() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    listener.onSuiteStart(className, true);
+    final MockTestNGResult parameterized = new MockTestNGResult(className, "test1", null, new Object[]{0});
+    listener.onTestStart(parameterized);
+    listener.onTestFinished(parameterized);
+    final MockTestNGResult plain = new MockTestNGResult(className, "test2");
+    listener.onTestStart(plain);
+    listener.onTestFinished(plain);
+    listener.onSuiteFinish(className);
+
+    Assert.assertEquals("output: " + buf, """
+      ##teamcity[enteredTheMatrix]
+      ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
+      ##teamcity[testSuiteStarted name='test1' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
+      ##teamcity[testStarted name='|[0|]' nodeId='a.ATest/test1|[0|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[0|]']
+      ##teamcity[testFinished name='|[0|]' nodeId='a.ATest/test1|[0|]']
+      ##teamcity[testSuiteFinished name='test1' nodeId='a.ATest/test1']
+      ##teamcity[testStarted name='ATest.test2' nodeId='a.ATest/test2' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test2']
+      ##teamcity[testFinished name='ATest.test2' nodeId='a.ATest/test2']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
+      """, prepare(buf.toString()));
+  }
+
+  @Test
+  public void testDataProviderRowKeepsTheNameTheTestGivesIt() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    final String className = "a.ATest";
+    listener.onSuiteStart(className, true);
+    final MockTestNGResult result = new MockTestNGResult(className, "test1", null, new Object[]{2, true}) {
+      @Override
+      public String getDisplayMethodName() {
+        return "prime check";
+      }
+    };
+    listener.onTestStart(result);
+    listener.onTestFinished(result);
+    listener.onSuiteFinish(className);
+
+    Assert.assertEquals("output: " + buf, """
+      ##teamcity[enteredTheMatrix]
+      ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
+      ##teamcity[testSuiteStarted name='test1' nodeId='a.ATest/test1' parentNodeId='a.ATest' locationHint='java:test://a.ATest/test1']
+      ##teamcity[testStarted name='prime check|[2, true|]' nodeId='a.ATest/test1|[0|]' parentNodeId='a.ATest/test1' locationHint='java:test://a.ATest/test1|[0|]']
+      ##teamcity[testFinished name='prime check|[2, true|]' nodeId='a.ATest/test1|[0|]']
+      ##teamcity[testSuiteFinished name='test1' nodeId='a.ATest/test1']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
+      """, prepare(buf.toString()));
+  }
+
+  @Test
+  public void testInvocationCountNestsUnderTheMethod() {
+    final StringBuffer buf = new StringBuffer();
+    final IDEATestNGRemoteListener listener = createListener(buf);
+    listener.onStart((ISuite)null);
+    final MockTestNGResult result = new MockTestNGResult("ATest", "testName", null, ArrayUtilRt.EMPTY_OBJECT_ARRAY, 3);
+    for (int i = 0; i < 3; i++) {
+      listener.onTestStart(result);
+      listener.onTestFinished(result);
+    }
+    listener.onFinish((ISuite)null);
+
+    Assert.assertEquals("output: " + buf, """
+      ##teamcity[enteredTheMatrix]
+      ##teamcity[testSuiteStarted name ='ATest' nodeId='ATest' parentNodeId='0' locationHint = 'java:suite://ATest']
+      ##teamcity[testSuiteStarted name='testName' nodeId='ATest/testName' parentNodeId='ATest' locationHint='java:test://ATest/testName']
+      ##teamcity[testStarted name='|[0|]' nodeId='ATest/testName|[0|]' parentNodeId='ATest/testName' locationHint='java:test://ATest/testName|[0|]']
+      ##teamcity[testFinished name='|[0|]' nodeId='ATest/testName|[0|]']
+      ##teamcity[testStarted name='|[1|]' nodeId='ATest/testName|[1|]' parentNodeId='ATest/testName' locationHint='java:test://ATest/testName|[1|]']
+      ##teamcity[testFinished name='|[1|]' nodeId='ATest/testName|[1|]']
+      ##teamcity[testStarted name='|[2|]' nodeId='ATest/testName|[2|]' parentNodeId='ATest/testName' locationHint='java:test://ATest/testName|[2|]']
+      ##teamcity[testFinished name='|[2|]' nodeId='ATest/testName|[2|]']
+      ##teamcity[testSuiteFinished name='testName' nodeId='ATest/testName']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='ATest']
+      """, prepare(buf.toString()));
   }
 
   @Test
@@ -307,8 +462,10 @@ public class TestNGTreeHierarchyTest {
       ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
       ##teamcity[testSuiteFinished name='ATest' nodeId='a.ATest']
       ##teamcity[testSuiteStarted name ='ATest' nodeId='ATest' parentNodeId='0' locationHint = 'java:suite://ATest']
-      ##teamcity[testStarted name='ATest.testMe|[null, null|]' nodeId='ATest/testMe' parentNodeId='ATest' locationHint='java:test://ATest/testMe']
-      ##teamcity[testFinished name='ATest.testMe|[null, null|]' nodeId='ATest/testMe']
+      ##teamcity[testSuiteStarted name='testMe' nodeId='ATest/testMe' parentNodeId='ATest' locationHint='java:test://ATest/testMe']
+      ##teamcity[testStarted name='|[null, null|]' nodeId='ATest/testMe|[0|]' parentNodeId='ATest/testMe' locationHint='java:test://ATest/testMe|[0|]']
+      ##teamcity[testFinished name='|[null, null|]' nodeId='ATest/testMe|[0|]']
+      ##teamcity[testSuiteFinished name='testMe' nodeId='ATest/testMe']
       ##teamcity[testSuiteFinished name='ATest' nodeId='ATest']
       ##teamcity[testSuiteStarted name ='ATest' nodeId='a.ATest' parentNodeId='0' locationHint = 'java:suite://a.ATest']
       ##teamcity[testStarted name='ATest.tearDown|[testName|]' nodeId='a.ATest/tearDown' parentNodeId='a.ATest' locationHint='java:test://a.ATest/tearDown' config='true']
@@ -324,11 +481,15 @@ public class TestNGTreeHierarchyTest {
     final MockTestNGResult result = new MockTestNGResult("ATest", "testMe", null, new Object[]{null, null});
     listener.onTestStart(result);
     listener.onTestFinished(result);
+    listener.onFinish((ISuite)null);
     Assert.assertEquals("output: " + buf, """
       ##teamcity[enteredTheMatrix]
       ##teamcity[testSuiteStarted name ='ATest' nodeId='ATest' parentNodeId='0' locationHint = 'java:suite://ATest']
-      ##teamcity[testStarted name='ATest.testMe|[null, null|]' nodeId='ATest/testMe' parentNodeId='ATest' locationHint='java:test://ATest/testMe']
-      ##teamcity[testFinished name='ATest.testMe|[null, null|]' nodeId='ATest/testMe']
+      ##teamcity[testSuiteStarted name='testMe' nodeId='ATest/testMe' parentNodeId='ATest' locationHint='java:test://ATest/testMe']
+      ##teamcity[testStarted name='|[null, null|]' nodeId='ATest/testMe|[0|]' parentNodeId='ATest/testMe' locationHint='java:test://ATest/testMe|[0|]']
+      ##teamcity[testFinished name='|[null, null|]' nodeId='ATest/testMe|[0|]']
+      ##teamcity[testSuiteFinished name='testMe' nodeId='ATest/testMe']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='ATest']
       """, prepare(buf.toString()));
   }
 
@@ -346,15 +507,19 @@ public class TestNGTreeHierarchyTest {
       listener.onTestStart(result);
       listener.onTestFinished(result);
     }
+    listener.onFinish((ISuite)null);
     Assert.assertEquals("output: " + buf, """
       ##teamcity[enteredTheMatrix]
       ##teamcity[testSuiteStarted name ='ATest' nodeId='ATest' parentNodeId='0' locationHint = 'java:suite://ATest']
-      ##teamcity[testStarted name='ATest.testMe|[null, null|] (1)' nodeId='ATest/testMe|[1|]' parentNodeId='ATest' locationHint='java:test://ATest/testMe|[1|]']
-      ##teamcity[testFinished name='ATest.testMe|[null, null|] (1)' nodeId='ATest/testMe|[1|]']
-      ##teamcity[testStarted name='ATest.testMe|[null, null|] (3)' nodeId='ATest/testMe|[3|]' parentNodeId='ATest' locationHint='java:test://ATest/testMe|[3|]']
-      ##teamcity[testFinished name='ATest.testMe|[null, null|] (3)' nodeId='ATest/testMe|[3|]']
-      ##teamcity[testStarted name='ATest.testMe|[null, null|] (5)' nodeId='ATest/testMe|[5|]' parentNodeId='ATest' locationHint='java:test://ATest/testMe|[5|]']
-      ##teamcity[testFinished name='ATest.testMe|[null, null|] (5)' nodeId='ATest/testMe|[5|]']
+      ##teamcity[testSuiteStarted name='testMe' nodeId='ATest/testMe' parentNodeId='ATest' locationHint='java:test://ATest/testMe']
+      ##teamcity[testStarted name='|[null, null|] (1)' nodeId='ATest/testMe|[1|]' parentNodeId='ATest/testMe' locationHint='java:test://ATest/testMe|[1|]']
+      ##teamcity[testFinished name='|[null, null|] (1)' nodeId='ATest/testMe|[1|]']
+      ##teamcity[testStarted name='|[null, null|] (3)' nodeId='ATest/testMe|[3|]' parentNodeId='ATest/testMe' locationHint='java:test://ATest/testMe|[3|]']
+      ##teamcity[testFinished name='|[null, null|] (3)' nodeId='ATest/testMe|[3|]']
+      ##teamcity[testStarted name='|[null, null|] (5)' nodeId='ATest/testMe|[5|]' parentNodeId='ATest/testMe' locationHint='java:test://ATest/testMe|[5|]']
+      ##teamcity[testFinished name='|[null, null|] (5)' nodeId='ATest/testMe|[5|]']
+      ##teamcity[testSuiteFinished name='testMe' nodeId='ATest/testMe']
+      ##teamcity[testSuiteFinished name='ATest' nodeId='ATest']
       """, prepare(buf.toString()));
   }
 
@@ -379,6 +544,7 @@ public class TestNGTreeHierarchyTest {
         }
       }
     }
+    listener.onFinish((ISuite)null);
 
     Assert.assertEquals("output: " + buf, expected, prepare(buf.toString()));
   }
@@ -415,12 +581,18 @@ public class TestNGTreeHierarchyTest {
     private final String myMethodName;
     private final Throwable myThrowable;
     private final Object[] myParams;
+    private final int myInvocationCount;
 
     MockTestNGResult(String className, String methodName, Throwable throwable, Object[] params) {
+      this(className, methodName, throwable, params, 1);
+    }
+
+    MockTestNGResult(String className, String methodName, Throwable throwable, Object[] params, int invocationCount) {
       myClassName = className;
       myMethodName = methodName;
       myThrowable = throwable;
       myParams = params;
+      myInvocationCount = invocationCount;
     }
 
     private MockTestNGResult(String className, String methodName) {
@@ -475,6 +647,11 @@ public class TestNGTreeHierarchyTest {
     @Override
     public List<Integer> getIncludeMethods() {
       return null;
+    }
+
+    @Override
+    public int getInvocationCount() {
+      return myInvocationCount;
     }
 
     @Override

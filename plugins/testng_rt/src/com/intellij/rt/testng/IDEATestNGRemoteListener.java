@@ -40,10 +40,11 @@ public class IDEATestNGRemoteListener {
   private final List<String> myCurrentSuites = new ArrayList<>();
   private final Map<String, Long> mySuiteStartNanos = new ConcurrentHashMap<>();
   private final Map<String, Integer> myInvocationCounts = new HashMap<>();
-  private final Map<ExposedTestResult, String> myParamsMap = new HashMap<>();
+  private final Map<ExposedTestResult, String> myTestNames = new HashMap<>();
   private final Map<ExposedTestResult, String> myNodeIds = new HashMap<>();
   private final Map<ExposedTestResult, DelegatedResult> myResults = new HashMap<>();
   private int mySkipped = 0;
+  private String myMethodNodeId;
 
   public IDEATestNGRemoteListener() {
     this(System.out);
@@ -235,6 +236,7 @@ public class IDEATestNGRemoteListener {
   }
 
   public void onSuiteFinish(String suiteName) {
+    finishMethodNode();
     String durationAttr = "";
     if (myUseSuiteDuration) {
       Long start = mySuiteStartNanos.remove(suiteName);
@@ -248,21 +250,43 @@ public class IDEATestNGRemoteListener {
   }
 
   private void onTestStart(ExposedTestResult result, String paramString, Integer invocationCount, boolean config) {
-    myParamsMap.put(result, paramString);
     onSuiteStart(result.getTestHierarchy(), result, true);
     final String className = result.getClassName();
     final String methodName = result.getDisplayMethodName();
-    final String location = className + "/" + result.getMethodName() + (invocationCount > 0 ? "[" + invocationCount + "]" : "");
+    final String methodNodeId = className + "/" + result.getMethodName();
+    final boolean nested = !config && (result.getParameters().length > 0 || result.getInvocationCount() > 1);
+    if (!config && myMethodNodeId != null && !myMethodNodeId.equals(methodNodeId)) {
+      finishMethodNode();
+    }
+    if (nested && myMethodNodeId == null) {
+      myPrintStream.println("##teamcity[testSuiteStarted name='" + escapeName(result.getMethodName()) +
+                            "' nodeId='" + escapeName(methodNodeId) + "' parentNodeId='" + escapeName(className) +
+                            "' locationHint='java:test://" + escapeName(methodNodeId) + "']");
+      myMethodNodeId = methodNodeId;
+    }
+    final String name = nested
+                        ? (methodName.equals(result.getMethodName()) ? "" : methodName) +
+                          (result.getParameters().length > 0 ? paramString : "[" + invocationCount + "]")
+                        : getShortName(className) + "." + methodName + (paramString != null ? paramString : "");
+    myTestNames.put(result, name);
+    final String location = methodNodeId + (nested || invocationCount > 0 ? "[" + invocationCount + "]" : "");
     myNodeIds.put(result, location);
     myPrintStream.println(
-      "##teamcity[testStarted name='" + escapeName(getShortName(className) + "." + methodName + (paramString != null ? paramString : "")) +
-      "' nodeId='" + escapeName(location) + "' parentNodeId='" + escapeName(className) +
+      "##teamcity[testStarted name='" + escapeName(name) +
+      "' nodeId='" + escapeName(location) + "' parentNodeId='" + escapeName(nested ? methodNodeId : className) +
       "' locationHint='java:test://" + escapeName(location) + (config ? "' config='true" : "") +
       "']");
   }
 
+  private void finishMethodNode() {
+    if (myMethodNodeId == null) return;
+    myPrintStream.println("##teamcity[testSuiteFinished name='" + escapeName(myMethodNodeId.substring(myMethodNodeId.indexOf('/') + 1)) +
+                          "' nodeId='" + escapeName(myMethodNodeId) + "']");
+    myMethodNodeId = null;
+  }
+
   public void onTestFailure(ExposedTestResult result) {
-    if (!myParamsMap.containsKey(result)) {
+    if (!myTestNames.containsKey(result)) {
       onTestStart(result);
     }
     Throwable ex = result.getThrowable();
@@ -303,7 +327,7 @@ public class IDEATestNGRemoteListener {
   }
 
   public void onTestSkipped(ExposedTestResult result) {
-    if (!myParamsMap.containsKey(result)) {
+    if (!myTestNames.containsKey(result)) {
       onTestStart(result);
       mySkipped++;
     }
@@ -327,12 +351,8 @@ public class IDEATestNGRemoteListener {
   }
 
   private synchronized String getTestMethodNameWithParams(ExposedTestResult result) {
-    String methodName = getShortName(result.getClassName()) + "." + result.getDisplayMethodName();
-    String paramString = myParamsMap.get(result);
-    if (paramString != null) {
-      methodName += paramString;
-    }
-    return methodName;
+    final String name = myTestNames.get(result);
+    return name != null ? name : getShortName(result.getClassName()) + "." + result.getDisplayMethodName();
   }
 
   private static String getParamsString(Object[] parameters, boolean config, int invocationCount) {
@@ -396,6 +416,7 @@ public class IDEATestNGRemoteListener {
     String getXmlTestName();
     Throwable getThrowable();
     List<Integer> getIncludeMethods();
+    int getInvocationCount();
   }
 
   protected DelegatedResult createDelegated(ITestResult result) {
@@ -508,6 +529,11 @@ public class IDEATestNGRemoteListener {
       List<XmlInclude> includedMethods = xmlClass.getIncludedMethods();
       if (includedMethods.isEmpty()) return null;
       return includedMethods.get(0).getInvocationNumbers();
+    }
+
+    @Override
+    public int getInvocationCount() {
+      return myResult.getMethod().getInvocationCount();
     }
 
     @Override
