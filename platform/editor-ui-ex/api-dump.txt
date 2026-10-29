@@ -169,7 +169,6 @@ c:com.intellij.openapi.editor.colors.impl.AppEditorFontOptions$PersistentFontPre
 a:com.intellij.openapi.editor.colors.impl.AppFontOptions
 - com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 - psf:CURR_FONT_PREF_VERSION:I
-- pf:myTracker:com.intellij.openapi.util.SimpleModificationTracker
 - <init>():V
 - pa:createFontState(com.intellij.openapi.editor.colors.FontPreferences):com.intellij.openapi.editor.colors.impl.AppEditorFontOptions$PersistentFontPreferences
 - getFontPreferences():com.intellij.openapi.editor.colors.FontPreferences

@@ -28,11 +28,7 @@ public abstract class AppFontOptions<F extends PersistentFontPreferences>
   }
 
   private final FontPreferencesImpl myFontPreferences;
-  /**
-   * @deprecated Use {@link #incModificationCount()} to report a change.
-   */
-  @Deprecated
-  protected final SimpleModificationTracker myTracker;
+  private final SimpleModificationTracker myTracker;
   private int myFontPrefVersion;
 
   public AppFontOptions() {
