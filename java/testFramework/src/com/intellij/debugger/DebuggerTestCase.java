@@ -376,6 +376,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
         .suspend(true)
         .create(javaParameters);
 
+    if (remoteConnection.isUseSockets() && !serverMode) {
+      // JDWP with address=<port> listens on 127.0.0.1.
+      // Use the same address for the debugger, because Bazel tests can otherwise select ::1.
+      remoteConnection.setDebuggerHostName("127.0.0.1");
+    }
+
     GeneralCommandLine commandLine = javaParameters.toCommandLine();
 
     DebuggerSession debuggerSession;

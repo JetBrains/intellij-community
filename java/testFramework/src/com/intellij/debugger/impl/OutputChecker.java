@@ -18,7 +18,6 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
-import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.PathUtil;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -226,8 +225,7 @@ public class OutputChecker {
         result = replacePath(result, DebuggerUtilsImpl.getIdeaRtPath(), "!RT_JAR!");
       }
 
-      var junit4JarPaths = StringUtil.join(IntelliJProjectConfiguration.getModuleLibrary("intellij.libraries.junit4", "JUnit4").getClassesPaths(), java.io.File.pathSeparator);
-      result = replacePath(result, junit4JarPaths, "!JUNIT4_JARS!");
+      result = replacePath(result, PathUtil.getJarPathForClass(org.junit.Test.class), "!JUNIT4_JARS!");
 
       @SuppressWarnings("removal") var homeDirectory = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomeDirectory();
       assertNotNull(homeDirectory);

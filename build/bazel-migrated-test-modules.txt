@@ -81,6 +81,7 @@ intellij.java.byteCodeViewer.tests
 intellij.java.coverage.tests
 intellij.java.debugger.impl.tests
 intellij.java.debugger.streams.tests
+intellij.java.debugger.tests
 intellij.java.decompiler.engine.tests
 intellij.java.decompiler.tests
 intellij.java.featuresTrainer.tests
