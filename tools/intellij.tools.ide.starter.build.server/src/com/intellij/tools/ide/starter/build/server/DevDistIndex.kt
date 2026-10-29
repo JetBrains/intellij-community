@@ -71,7 +71,7 @@ internal fun devDistProductKey(platformPrefix: String, baseIdePlatformPrefixForF
   (baseIdePlatformPrefixForFrontend ?: "") + platformPrefix
 
 /**
- * Returns the host platform of [osName] and [osArch], in the form of `HOST_PLATFORMS` of `dev_launch_dependencies.bzl`,
+ * Returns the host platform of [osName] and [osArch], in the form of `HOST_PLATFORMS` of `host_platforms.bzl`,
  * or `null` for an unknown OS or architecture.
  *
  * The values are those of the `os.name` and `os.arch` system properties. A JVM in WSL reports Linux.

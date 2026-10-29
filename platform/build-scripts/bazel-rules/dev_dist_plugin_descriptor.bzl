@@ -14,7 +14,7 @@ that both caches keep is the property ADR 0006 asks for.
 """
 
 load("@rules_java//java:defs.bzl", "JavaInfo")
-load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
+load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "library_entries")
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 

@@ -5,7 +5,7 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 
 /**
- * How the `HOST_PLATFORMS` list of `build/dev_launch_dependencies.bzl` spells [os]: `darwin`, `linux`, or `windows`.
+ * How the `HOST_PLATFORMS` list of `community/build/host_platforms.bzl` spells [os]: `darwin`, `linux`, or `windows`.
  * The one owner of that spelling on the Kotlin side.
  */
 fun devDistHostPlatformOs(os: OsFamily): String = when (os) {

@@ -15,7 +15,8 @@ load("//platform/build-scripts/bazel-rules:dev_dist_content.bzl", "dev_dist_plat
 load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dist_product_files", "home_prefix", "product_info_destination")
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
-load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_executable_list_label", "jbr_runtime_repository_label", "platform_parts")
+load(":dev_launch_dependencies.bzl", "jbr_runtime_executable_list_label", "jbr_runtime_repository_label")
+load(":host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_dist_config", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):

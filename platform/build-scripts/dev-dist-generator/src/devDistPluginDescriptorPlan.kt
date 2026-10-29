@@ -63,7 +63,7 @@ internal class PluginDescriptorPlan(
 )
 
 /**
- * The platforms a dev distribution is ever assembled for, as `dev_launch_dependencies.bzl`'s `HOST_PLATFORMS` spells
+ * The platforms a dev distribution is ever assembled for, as `host_platforms.bzl`'s `HOST_PLATFORMS` spells
  * them.
  *
  * A plugin whose descriptor differs by OS or architecture gets one plan entry per layout variant, and every entry
@@ -120,7 +120,7 @@ private val MARKETPLACE_NAMES: Map<String, String> = buildMap {
   }
 }
 
-/** How `HOST_PLATFORMS` spells an [OsFamily] - `platform_parts` of `dev_launch_dependencies.bzl` splits it back. */
+/** How `HOST_PLATFORMS` spells an [OsFamily] - `platform_parts` of `host_platforms.bzl` splits it back. */
 private fun hostPlatformOs(os: OsFamily): String = devDistHostPlatformOs(os)
 
 /** How `HOST_PLATFORMS` spells a [JvmArchitecture]. */

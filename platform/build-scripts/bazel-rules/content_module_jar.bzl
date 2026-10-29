@@ -38,7 +38,7 @@ rule expands each to its jars, in the order the library declares them, and drops
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS")
+load("//build:host_platforms.bzl", "HOST_PLATFORMS")
 
 ContentModuleJarInfo = provider(
     doc = """A packed `lib/<module>.jar` of the platform distribution, and what went into it.

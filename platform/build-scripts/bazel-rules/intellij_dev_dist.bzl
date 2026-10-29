@@ -10,7 +10,7 @@ scrambling require both component layouts in one process.
 
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@community//build:project_model_manifest.bzl", "write_project_model_manifest")
-load("//build:dev_launch_dependencies.bzl", "platform_parts")
+load("//build:host_platforms.bzl", "platform_parts")
 load(":dev_dist_build_date.bzl", "DEV_DIST_PINNED_BUILD_DATE_IN_SECONDS")
 load(":dev_dist_content.bzl", "DevDistContentInfo", "DevDistPlatformPayloadInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistProductInfo", "dev_dist_product_info_transition")

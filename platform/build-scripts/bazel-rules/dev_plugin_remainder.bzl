@@ -3,7 +3,7 @@
 load("@bazel_skylib//rules:common_settings.bzl", "BuildSettingInfo")
 load("@rules_java//java:defs.bzl", "JavaInfo")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS", "platform_parts")
+load("//build:host_platforms.bzl", "HOST_PLATFORMS", "platform_parts")
 load(":content_module_jar.bzl", "ContentModuleJarInfo", "library_entries", "module_output_jar")
 load(":dev_dist_content.bzl", "DevDistContentInfo")
 load(":dev_dist_plugin_descriptor.bzl", "DevDistPluginDescriptorInfo", "DevDistProductInfo", "dev_dist_neutral_product_transition")

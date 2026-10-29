@@ -3,7 +3,7 @@
 load("@bazel_skylib//lib:unittest.bzl", "analysistest", "asserts")
 load("@rules_java//java:defs.bzl", "JavaInfo", "java_common")
 load("@rules_kotlin//kotlin/internal:defs.bzl", _KtJvmInfo = "KtJvmInfo")
-load("//build:dev_launch_dependencies.bzl", "HOST_PLATFORMS")
+load("//build:host_platforms.bzl", "HOST_PLATFORMS")
 load(
     ":content_module_jar.bzl",
     "ContentModuleJarInfo",
