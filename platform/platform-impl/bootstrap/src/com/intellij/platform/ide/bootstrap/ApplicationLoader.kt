@@ -140,7 +140,7 @@ internal suspend fun loadApp(
       StartupUiGate.arm()
       StartUpMeasurer.addInstantEvent("startup UI gate armed")
       asyncScope.launch(CoroutineName("startup UI class preloading")) {
-        preloadStartupUiClasses()
+        preloadStartupUiClasses { pluginSetDeferred.await().await() }
       }
     }
     val initServiceContainerJob = launch {
