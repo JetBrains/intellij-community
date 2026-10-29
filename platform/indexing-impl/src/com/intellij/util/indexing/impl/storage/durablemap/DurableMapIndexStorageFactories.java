@@ -38,9 +38,10 @@ public final class DurableMapIndexStorageFactories {
       }
 
       @Override
-      public void cleanData(@NotNull Path storagePath) {
+      public void cleanData(@NotNull Path storagePath) throws IOException {
         FileUtil.deleteWithRenaming(storagePath);
         FileUtil.deleteWithRenaming(storagePath.resolveSibling(storagePath.getFileName() + DurableMapFactory.MAP_FILE_SUFFIX));
+        FileChannelKeyHashLogAccessor.cleanData(FileChannelKeyHashLogAccessor.baseFileFor(storagePath));
       }
     };
   }

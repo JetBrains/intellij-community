@@ -2,8 +2,12 @@
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.platform.util.io.storages.CommonKeyDescriptors
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.IdFilter
+import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage
+import com.intellij.util.indexing.impl.storage.durablemap.FileChannelKeyHashLogAccessor
 import com.intellij.util.io.ChannelsAccessor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation
@@ -265,6 +269,31 @@ class FileChannelKeyHashLogStorageTest {
         assertFalse(hashes.contains("initial".hashCode()))
         assertTrue(hashes.contains("later".hashCode()))
       }
+    }
+  }
+
+  @Test
+  fun `index storage includes the journal tail in cached project queries`() {
+    val project = ProjectManager.getInstance().defaultProject
+    val scope = GlobalSearchScope.allScope(project)
+    val filter = object : IdFilter() {
+      override fun containsFileId(id: Int): Boolean = id == 1
+      override fun getFilteringScopeType(): FilterScopeType = FilterScopeType.PROJECT_AND_LIBRARIES
+    }
+    val file = directory.resolve("index")
+    val keyDescriptor = CommonKeyDescriptors.stringAsUTF8()
+    DurableMapIndexStorage(
+      file, keyDescriptor, EnumeratorStringDescriptor.INSTANCE, 16, false, true,
+      FileChannelKeyHashLogAccessor(FileChannelKeyHashLogAccessor.baseFileFor(DurableMapIndexStorage.getIndexStorageFile(file)), keyDescriptor)
+    ).use { storage ->
+      storage.addValue("initial", 1, "first")
+      val keys = mutableSetOf<String>()
+      storage.processKeys({ keys.add(it); true }, scope, filter)
+      assertEquals(setOf("initial"), keys)
+      storage.addValue("tail", 1, "second")
+      keys.clear()
+      storage.processKeys({ keys.add(it); true }, scope, filter)
+      assertEquals(setOf("initial", "tail"), keys, "A cached query must include new journal events")
     }
   }
 

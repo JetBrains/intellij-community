@@ -7,7 +7,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.util.io.storages.database.DurableMapImplementation;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,7 +37,6 @@ import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Fork;
@@ -59,14 +57,11 @@ import org.openjdk.jmh.runner.options.CommandLineOptions;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
-import java.util.function.IntPredicate;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -357,12 +352,11 @@ public class IndexStorageLayoutBenchmark {
     @Setup(Level.Iteration)
     public void setupIteration_fillStorageWithData(InputContext inputContext,
                                                    StorageContext storageContext) throws Exception {
-      fillStorageWithData(inputContext, storageContext, /* keyHashLog: */ null);
+      fillStorageWithData(inputContext, storageContext);
     }
 
     private void fillStorageWithData(InputContext inputContext,
-                                     StorageContext storageContext,
-                                     @Nullable KeyHashLog<Integer> keyHashLog) throws Exception {
+                                     StorageContext storageContext) throws Exception {
       InputDataGenerator<Integer, Integer> dataGenerator = inputContext.inputDataGenerator;
       IndexStorage<Integer, Integer> indexStorage = storageContext.indexStorage;
       IntOpenHashSet keys = new IntOpenHashSet();
@@ -371,9 +365,6 @@ public class IndexStorageLayoutBenchmark {
         int inputId = input.inputId();
         for (Map.Entry<Integer, Integer> e : input.inputData().entrySet()) {
           indexStorage.addValue(e.getKey(), inputId, e.getValue());
-          if (keyHashLog != null) {
-            keyHashLog.addKeyHashToVirtualFileMapping(e.getKey(), inputId);
-          }
           keys.add(e.getKey().intValue());
         }
       }
@@ -391,13 +382,22 @@ public class IndexStorageLayoutBenchmark {
     }
   }
 
-  public enum KeyFilterMode { KEYS_ONLY, EXACT, HASH_LOG, FORWARD_INDEX }
+  public enum KeyFilterMode {
+    /// Iterate all keys, ignoring IdFilter (use ACCEPT_ALL instead)
+    ALL_KEYS_UNFILTERED,
+    /// Iterate keys with IdFilter, with filtering approach chosen by the storage
+    STORAGE_FILTER,
+    /// Iterate all keys, with filtering applied externally, by matching fileIds in ValueContainer with IdFilter
+    VALUE_CONTAINERS,
+    /// Iterate keys with IdFilter applied via ForwardIndex
+    FORWARD_INDEX
+  }
 
   /// Keeps the project filter ready so repeated queries measure the scan rather than cache construction
   @SuppressWarnings("unused") // JMH calls the setup and teardown methods
   @State(Scope.Benchmark)
   public static class ProjectFilterContext {
-    @Param({"KEYS_ONLY", "EXACT", "HASH_LOG", "FORWARD_INDEX"})
+    @Param({"ALL_KEYS_UNFILTERED", "STORAGE_FILTER", "VALUE_CONTAINERS", "FORWARD_INDEX"})
     public KeyFilterMode keyFilterMode;
 
     @Param("1/4")
@@ -419,10 +419,7 @@ public class IndexStorageLayoutBenchmark {
     };
 
     private Disposable disposable;
-    private MockProject project;
     private GlobalSearchScope scope;
-    private Path logDirectory;
-    private KeyHashLog<Integer> keyHashLog;
 
     @Setup
     public void setupBenchmark() {
@@ -439,7 +436,7 @@ public class IndexStorageLayoutBenchmark {
         throw new IllegalStateException("The benchmark requires idea.index.cashed.hashids=true");
       }
       disposable = Disposer.newDisposable();
-      project = new MockProject(null, disposable);
+      var project = new MockProject(null, disposable);
       scope = new GlobalSearchScope(project) {
         @Override
         public boolean isSearchInModuleContent(@NotNull Module module) {
@@ -466,10 +463,8 @@ public class IndexStorageLayoutBenchmark {
           !(context.mapReduceIndex.getForwardIndexAccessor() instanceof AbstractMapForwardIndexAccessor<Integer, Integer, ?> accessor)) {
         throw new IllegalStateException("The benchmark requires an iterable forward index and a map accessor");
       }
-      logDirectory = Files.createTempDirectory("index-key-hash-log");
-      keyHashLog = new KeyHashLog<>(storageContext.extension.getKeyDescriptor(), logDirectory.resolve("keys"));
       var readContext = new ReadContext();
-      readContext.fillStorageWithData(inputContext, storageContext, keyHashLog);
+      readContext.fillStorageWithData(inputContext, storageContext);
       for (long substrate : inputContext.inputsSubstrate) {
         var input = inputContext.inputDataGenerator.unpackSubstrate(substrate);
         forwardIndex.put(input.inputId(), accessor.serializeIndexedData(new InputData<>(input.inputData())));
@@ -477,22 +472,14 @@ public class IndexStorageLayoutBenchmark {
       context.mapReduceIndex.flush();
 
       // Build the cache and check the filters before measuring repeated queries
-      IntPredicate suitableHashes = keyHashLog.getSuitableKeyHashes(idFilter, project);
-      int hashFilteredCount = 0;
-      for (int key : readContext.allKeys) {
-        if (suitableHashes.test(storageContext.extension.getKeyDescriptor().getHashCode(key))) hashFilteredCount++;
-      }
-      int[] exactCount = {0};
-      var exactKeys = new IntOpenHashSet();
+      int[] storageCount = {0};
+      var storageKeys = new IntOpenHashSet();
       var storage = (VfsAwareIndexStorage<Integer, Integer>)storageContext.indexStorage;
       storage.processKeys(key -> {
-        exactCount[0]++;
-        exactKeys.add(key.intValue());
+        storageCount[0]++;
+        storageKeys.add(key.intValue());
         return true;
       }, scope, idFilter);
-      if (exactKeys.size() != hashFilteredCount) {
-        throw new IllegalStateException("The exact filter and the hash filter disagree: " + exactKeys.size() + " != " + hashFilteredCount);
-      }
       var forwardKeys = new IntOpenHashSet();
       context.mapReduceIndex.processAllKeys(key -> {
         if (!forwardKeys.add(key.intValue())) {
@@ -500,22 +487,23 @@ public class IndexStorageLayoutBenchmark {
         }
         return true;
       }, scope, idFilter);
-      if (!forwardKeys.equals(exactKeys)) {
-        throw new IllegalStateException("The forward index and the exact filter returned different keys");
+      if (!forwardKeys.equals(storageKeys)) {
+        throw new IllegalStateException("The forward index and the storage filter returned different keys");
       }
-      System.out.println("Project key filter: all=" + readContext.allKeys.length + ", matched=" + exactKeys.size() +
-                         ", exactProcessorCalls=" + exactCount[0] + ", forwardProcessorCalls=" + forwardKeys.size());
+      var containerKeys = new IntOpenHashSet();
+      boolean containerScanCompleted = processKeysByValueContainers(storage, scope, idFilter, key -> {
+        if (!containerKeys.add(key.intValue())) {
+          throw new IllegalStateException("The container scan returned a duplicate key: " + key);
+        }
+        return true;
+      });
+      if (!containerScanCompleted || !containerKeys.equals(storageKeys)) {
+        throw new IllegalStateException("The container scan and the storage filter returned different keys");
+      }
+      System.out.println("Project key filter: all=" + readContext.allKeys.length + ", matched=" + storageKeys.size() +
+                         ", storageProcessorCalls=" + storageCount[0] + ", forwardProcessorCalls=" + forwardKeys.size() +
+                         ", containerProcessorCalls=" + containerKeys.size());
       storageContext.resetIoLatencyStatistics();
-    }
-
-    @TearDown(Level.Iteration)
-    public void closeIteration() throws Exception {
-      try {
-        if (keyHashLog != null) keyHashLog.close();
-      }
-      finally {
-        if (logDirectory != null) NioFiles.deleteRecursively(logDirectory);
-      }
     }
 
     @TearDown
@@ -598,21 +586,38 @@ public class IndexStorageLayoutBenchmark {
       return true;
     };
     switch (filterContext.keyFilterMode) {
-      case KEYS_ONLY -> storage.processKeys(processor, filterContext.scope, IdFilter.ACCEPT_ALL);
-      case EXACT -> storage.processKeys(processor, filterContext.scope, filterContext.idFilter);
+      case ALL_KEYS_UNFILTERED -> storage.processKeys(processor, filterContext.scope, IdFilter.ACCEPT_ALL);
+      case STORAGE_FILTER -> storage.processKeys(processor, filterContext.scope, filterContext.idFilter);
+      case VALUE_CONTAINERS -> processKeysByValueContainers(storage, filterContext.scope, filterContext.idFilter, processor);
       case FORWARD_INDEX -> {
         StorageContext context = storageContext;
         context.mapReduceIndex.processAllKeys(processor, filterContext.scope, filterContext.idFilter);
       }
-      case HASH_LOG -> {
-        IntPredicate suitableHashes = filterContext.keyHashLog.getSuitableKeyHashes(filterContext.idFilter, filterContext.project);
-        storage.processKeys(key -> {
-          if (!suitableHashes.test(storageContext.extension.getKeyDescriptor().getHashCode(key))) return true;
-          return processor.process(key);
-        }, filterContext.scope, IdFilter.ACCEPT_ALL);
-      }
     }
     return count[0];
+  }
+
+  /// Checks every container without a cached filter of key hashes
+  private static boolean processKeysByValueContainers(VfsAwareIndexStorage<Integer, Integer> storage,
+                                                     GlobalSearchScope scope,
+                                                     IdFilter idFilter,
+                                                     Processor<? super Integer> processor) throws StorageException {
+    StorageException[] failure = {null};
+    var visitedKeys = new IntOpenHashSet();
+    boolean completed = storage.processKeys(key -> {
+      // The same key can occur in several shards; read() checks those shards together
+      if (!visitedKeys.add(key.intValue())) return true;
+      try {
+        boolean accepted = !storage.read(key, container -> container.forEach((fileId, _) -> !idFilter.containsFileId(fileId)));
+        return !accepted || processor.process(key);
+      }
+      catch (StorageException e) {
+        failure[0] = e;
+        return false;
+      }
+    }, scope, IdFilter.ACCEPT_ALL);
+    if (failure[0] != null) throw failure[0];
+    return completed;
   }
 
 

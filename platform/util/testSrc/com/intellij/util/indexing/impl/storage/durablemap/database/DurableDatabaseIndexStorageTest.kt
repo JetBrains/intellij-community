@@ -22,6 +22,7 @@ import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.SingleEntry
 import com.intellij.util.indexing.VfsAwareIndexStorage
 import com.intellij.util.indexing.impl.ValueContainerProcessor
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage
+import com.intellij.util.indexing.impl.storage.durablemap.FileChannelKeyHashLogAccessor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -49,15 +50,19 @@ class DurableDatabaseIndexStorageTest {
   lateinit var directory: Path
 
   private lateinit var database: DurableDatabase
+  private lateinit var keyHashLogs: FileChannelKeyHashLogAccessor.Registry
 
   @BeforeEach
   fun openDatabase() {
     database = DurableDatabaseFactory.withDefaults().open(directory.resolve("database"))
+    keyHashLogs = FileChannelKeyHashLogAccessor.Registry(directory.resolve("logs"))
   }
 
   @AfterEach
   fun closeDatabase() {
-    database.close()
+    database.use {
+      keyHashLogs.close()
+    }
   }
 
   @ParameterizedTest
@@ -115,7 +120,7 @@ class DurableDatabaseIndexStorageTest {
     database.dropMap(mapName)
     database.openMap(mapName, 2, forwardMapImplementation, integer(), integer()).close()
 
-    val failedLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
+    val failedLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs)
     failedLayout.openIndexStorage().use {
       assertThrows(IOException::class.java) { failedLayout.openForwardIndex() }
     }
@@ -124,7 +129,7 @@ class DurableDatabaseIndexStorageTest {
     failedLayout.clearIndexData()
     assertTrue(database.mapNames().isEmpty(), "Cleanup must remove data after a partial open failure")
 
-    val recoveredLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
+    val recoveredLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs)
     recoveredLayout.openIndexStorage().use { }
     recoveredLayout.openForwardIndex().use { }
   }
@@ -213,7 +218,7 @@ class DurableDatabaseIndexStorageTest {
     forwardMapImplementation: DurableMapImplementation,
   ) {
     val extension = ManyKeysIntegerToIntegerIndexExtension()
-    val selectedLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
+    val selectedLayout = DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs)
     selectedLayout.openIndexStorage().use { storage ->
       storage.addValue(1, 1, 42)
     }
@@ -224,6 +229,7 @@ class DurableDatabaseIndexStorageTest {
       extension,
       otherImplementation(invertedMapImplementation),
       forwardMapImplementation,
+      keyHashLogs,
     )
     assertThrows(UnsupportedFormatException::class.java) {
       otherInvertedLayout.openIndexStorage()
@@ -235,6 +241,7 @@ class DurableDatabaseIndexStorageTest {
       extension,
       invertedMapImplementation,
       otherImplementation(forwardMapImplementation),
+      keyHashLogs,
     )
     otherForwardLayout.openIndexStorage().use { }
     assertThrows(UnsupportedFormatException::class.java) {
@@ -248,33 +255,39 @@ class DurableDatabaseIndexStorageTest {
     invertedMapImplementation: DurableMapImplementation,
     forwardMapImplementation: DurableMapImplementation,
   ) {
-    val extension = ShardableManyKeysIntegerToIntegerIndexExtension()
-    val selectedLayout = DurableDatabaseShardedStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
-    selectedLayout.openIndexStorage().use { storage ->
-      storage.addValue(1, 1, 42)
-    }
-    selectedLayout.openForwardIndex().use { }
+    FileChannelKeyHashLogAccessor.Registry(directory.resolve("logs")).use { keyHashLogs ->
+      val extension = ShardableManyKeysIntegerToIntegerIndexExtension()
+      val selectedLayout = DurableDatabaseShardedStorageLayout(
+        database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs,
+      )
+      selectedLayout.openIndexStorage().use { storage ->
+        storage.addValue(1, 1, 42)
+      }
+      selectedLayout.openForwardIndex().use { }
 
-    val otherInvertedLayout = DurableDatabaseShardedStorageLayout(
-      database,
-      extension,
-      otherImplementation(invertedMapImplementation),
-      forwardMapImplementation,
-    )
-    assertThrows(UnsupportedFormatException::class.java) {
-      otherInvertedLayout.openIndexStorage()
-    }
-    otherInvertedLayout.openForwardIndex().use { }
+      val otherInvertedLayout = DurableDatabaseShardedStorageLayout(
+        database,
+        extension,
+        otherImplementation(invertedMapImplementation),
+        forwardMapImplementation,
+        keyHashLogs,
+      )
+      assertThrows(UnsupportedFormatException::class.java) {
+        otherInvertedLayout.openIndexStorage()
+      }
+      otherInvertedLayout.openForwardIndex().use { }
 
-    val otherForwardLayout = DurableDatabaseShardedStorageLayout(
-      database,
-      extension,
-      invertedMapImplementation,
-      otherImplementation(forwardMapImplementation),
-    )
-    otherForwardLayout.openIndexStorage().use { }
-    assertThrows(UnsupportedFormatException::class.java) {
-      otherForwardLayout.openForwardIndex()
+      val otherForwardLayout = DurableDatabaseShardedStorageLayout(
+        database,
+        extension,
+        invertedMapImplementation,
+        otherImplementation(forwardMapImplementation),
+        keyHashLogs,
+      )
+      otherForwardLayout.openIndexStorage().use { }
+      assertThrows(UnsupportedFormatException::class.java) {
+        otherForwardLayout.openForwardIndex()
+      }
     }
   }
 
@@ -301,10 +314,11 @@ class DurableDatabaseIndexStorageTest {
     val singleEntryExtension = object : SingleEntryIntegerValueIndexExtension() {
       override fun traceKeyHashToVirtualFileMapping(): Boolean = traceKeyHashToVirtualFileMapping
     }
+    val registry = FileChannelKeyHashLogAccessor.Registry(directory.resolve("logs"))
     val layouts = listOf(
-      DurableDatabaseStorageLayout(database, regularExtension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY),
-      DurableDatabaseShardedStorageLayout(database, shardedExtension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY),
-      DurableDatabaseSingleEntryStorageLayout(database, singleEntryExtension, KEY_VALUE_SEPARATELY),
+      DurableDatabaseStorageLayout(database, regularExtension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY, registry),
+      DurableDatabaseShardedStorageLayout(database, shardedExtension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY, registry),
+      DurableDatabaseSingleEntryStorageLayout(database, singleEntryExtension, KEY_VALUE_SEPARATELY, registry),
     )
     val filter = object : IdFilter() {
       override fun containsFileId(id: Int): Boolean {
@@ -331,6 +345,49 @@ class DurableDatabaseIndexStorageTest {
           "The processor must still be able to stop the key scan",
         )
       }
+      layout.clearIndexData()
+    }
+    registry.close()
+    if (Files.exists(directory.resolve("logs"))) {
+      Files.walk(directory.resolve("logs")).use { paths ->
+        assertFalse(paths.anyMatch { Files.isRegularFile(it) }, "Clearing layouts must remove their journal files")
+      }
+    }
+  }
+
+  @Test
+  fun layoutsInvalidateJournalsWhileTracingIsDisabled() {
+    var trace = true
+    val regularExtension = object : ManyKeysIntegerToIntegerIndexExtension() {
+      override fun traceKeyHashToVirtualFileMapping(): Boolean = trace
+    }
+    val shardedExtension = object : ShardableManyKeysIntegerToIntegerIndexExtension() {
+      override fun traceKeyHashToVirtualFileMapping(): Boolean = trace
+    }
+    val singleEntryExtension = object : SingleEntryIntegerValueIndexExtension() {
+      override fun traceKeyHashToVirtualFileMapping(): Boolean = trace
+    }
+    FileChannelKeyHashLogAccessor.Registry(directory.resolve("logs")).use { registry ->
+      val layouts = listOf(
+        DurableDatabaseStorageLayout(database, regularExtension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY, registry),
+        DurableDatabaseShardedStorageLayout(database, shardedExtension, KEY_VALUE_SEPARATELY, KEY_VALUE_SEPARATELY, registry),
+        DurableDatabaseSingleEntryStorageLayout(database, singleEntryExtension, KEY_VALUE_SEPARATELY, registry),
+      )
+      for (layout in layouts) {
+        trace = true
+        layout.openIndexStorage().use { it.addValue(1, 1, 42) }
+        trace = false
+        layout.openIndexStorage().use { it.addValue(2, 2, 43) }
+        trace = true
+        (layout.openIndexStorage() as VfsAwareIndexStorage<Int, Int>).use { storage ->
+          val keys = mutableSetOf<Int>()
+          val filter = object : IdFilter() {
+            override fun containsFileId(id: Int): Boolean = id == 2
+          }
+          storage.processKeys({ keys.add(it); true }, GlobalSearchScope.EMPTY_SCOPE, filter)
+          assertEquals(setOf(2), keys, "${layout.javaClass.simpleName} must invalidate a journal when tracing is disabled")
+        }
+      }
     }
   }
 
@@ -348,6 +405,7 @@ class DurableDatabaseIndexStorageTest {
       /* cacheSize = */ 16,
       /* keyIsUniqueForIndexedFile = */ false,
       /* traceKeyHashToVirtualFileMapping = */ false,
+      keyHashLogs.accessor(indexId, keyDescriptor),
     )
   }
 

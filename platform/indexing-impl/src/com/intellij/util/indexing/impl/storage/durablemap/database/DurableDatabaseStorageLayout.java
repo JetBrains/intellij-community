@@ -20,6 +20,7 @@ import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider
 import com.intellij.util.indexing.impl.storage.StorageRef;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage;
+import com.intellij.util.indexing.impl.storage.durablemap.FileChannelKeyHashLogAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,8 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
 
   private final @NotNull DurableDatabase database;
 
+  private final @NotNull FileChannelKeyHashLogAccessor.Registry keyHashLogs;
+
   private final @NotNull MapForwardIndexAccessor<Key, Value> forwardIndexAccessor;
 
   private final @NotNull StorageAccessor<PatchableDurableMap<Key, UpdatableValueContainer<Value>, ChangeTrackingValueContainer<Value>>> valueMapAccessor;
@@ -45,9 +48,12 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
   DurableDatabaseStorageLayout(@NotNull DurableDatabase database,
                                @NotNull FileBasedIndexExtension<Key, Value> extension,
                                @NotNull DurableMapImplementation invertedMapImplementation,
-                               @NotNull DurableMapImplementation forwardMapImplementation) {
+                               @NotNull DurableMapImplementation forwardMapImplementation,
+                               @NotNull FileChannelKeyHashLogAccessor.Registry keyHashLogs) {
     this.database = database;
+    this.keyHashLogs = keyHashLogs;
     indexId = extension.getName();
+
     DataExternalizer<Map<Key, Value>> inputMapExternalizer = DefaultIndexStorageLayoutProviderKt.defaultMapExternalizerFor(extension);
     forwardIndexAccessor = new MapForwardIndexAccessor<>(inputMapExternalizer);
 
@@ -69,7 +75,9 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
         valueExternalizer,
         extension.getCacheSize(),
         extension.keyIsUniqueForIndexedFile(),
-        extension.traceKeyHashToVirtualFileMapping()
+        extension.traceKeyHashToVirtualFileMapping(),
+        // KeyHashLogAccessor is needed even with !traceKeyHashToVirtualFileMapping to _remove_ (possible) old key-hash-log file
+        keyHashLogs.accessor(extension.getName(), keyDescriptor)
       ),
       IndexStorage::isClosed,
       /* failIfNotClosed: */ !WARN_IF_CLEANING_UNCLOSED_STORAGE
@@ -108,7 +116,10 @@ final class DurableDatabaseStorageLayout<Key, Value> implements VfsAwareIndexSto
       // is abandoned
       indexStorageRef.ensureClosedAndRun(() ->
         forwardIndexRef.ensureClosedAndRun(
-          () -> DurableDatabaseMapAccessors.cleanIndexData(database, indexId)
+          () -> {
+            DurableDatabaseMapAccessors.cleanIndexData(database, indexId);
+            keyHashLogs.cleanIndexData(indexId);
+          }
         )
       );
     }

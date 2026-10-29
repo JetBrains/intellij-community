@@ -19,6 +19,7 @@ import com.intellij.util.ExceptionUtil.runAllAndRethrowAllExceptions
 import com.intellij.util.indexing.FileBasedIndexExtension
 import com.intellij.util.indexing.SingleEntryFileBasedIndexExtension
 import com.intellij.util.indexing.impl.storage.IndexMaintenance
+import com.intellij.util.indexing.impl.storage.durablemap.FileChannelKeyHashLogAccessor
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension
@@ -70,6 +71,7 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
 
   private val lazyExecutorHolder: Lazy<ScheduledExecutorService> = newExecutorHolder()
   private val lazyDatabaseHolder: Lazy<DurableDatabase> = newDatabaseHolder()
+  private val keyHashLogs = FileChannelKeyHashLogAccessor.Registry(databasePath.resolve("key-hash-logs"))
 
   //@GuardedBy(this)
   private var closed = false
@@ -152,17 +154,17 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
     val layout: VfsAwareIndexStorageLayout<K, V> = when (extension) {
       is SingleEntryFileBasedIndexExtension<V> -> {
         @Suppress("UNCHECKED_CAST")
-        DurableDatabaseSingleEntryStorageLayout(database, extension, invertedMapImplementation) as VfsAwareIndexStorageLayout<K, V>
+        DurableDatabaseSingleEntryStorageLayout(database, extension, invertedMapImplementation, keyHashLogs) as VfsAwareIndexStorageLayout<K, V>
       }
       is ShardableIndexExtension -> {
         if (extension.shardsCount() > 1) {
-          DurableDatabaseShardedStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
+          DurableDatabaseShardedStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs)
         }
         else {
-          DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
+          DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs)
         }
       }
-      else -> DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation)
+      else -> DurableDatabaseStorageLayout(database, extension, invertedMapImplementation, forwardMapImplementation, keyHashLogs)
     }
 
     if (maintenanceRegistration == null) {
@@ -204,6 +206,8 @@ class DurableDatabaseIndexLayoutProvider @JvmOverloads constructor(
           OTelReporterHolder.reporter.detachDatabase(lazyDatabaseHolder.value)
         }
       },
+
+      { keyHashLogs.close() },
 
       {
         if (lazyDatabaseHolder.isInitialized()) {

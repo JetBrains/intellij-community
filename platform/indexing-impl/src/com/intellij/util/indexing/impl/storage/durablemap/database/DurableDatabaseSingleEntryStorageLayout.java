@@ -16,6 +16,7 @@ import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.SingleEntryIndexForwardIndexAccessor;
 import com.intellij.util.indexing.impl.storage.StorageRef;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage;
+import com.intellij.util.indexing.impl.storage.durablemap.FileChannelKeyHashLogAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.DataExternalizer;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,8 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
   private final @NotNull DurableDatabase database;
   private final @NotNull SingleEntryFileBasedIndexExtension<Value> extension;
 
+  private final @NotNull FileChannelKeyHashLogAccessor.Registry keyHashLogs;
+
   private final @NotNull SingleEntryIndexForwardIndexAccessor<Value> forwardIndexAccessor;
 
   private final @NotNull StorageAccessor<PatchableDurableMap<Integer, UpdatableValueContainer<Value>, ChangeTrackingValueContainer<Value>>> valueMapAccessor;
@@ -36,9 +39,13 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
 
   DurableDatabaseSingleEntryStorageLayout(@NotNull DurableDatabase database,
                                           @NotNull SingleEntryFileBasedIndexExtension<Value> extension,
-                                          @NotNull DurableMapImplementation invertedMapImplementation) {
+                                          @NotNull DurableMapImplementation invertedMapImplementation,
+                                          @NotNull FileChannelKeyHashLogAccessor.Registry keyHashLogs) {
     this.database = database;
     this.extension = extension;
+
+    this.keyHashLogs = keyHashLogs;
+
     forwardIndexAccessor = new SingleEntryIndexForwardIndexAccessor<>(extension);
 
     KeyDescriptorEx<Integer> keyDescriptor = KeyDescriptorEx.adapt(extension.getKeyDescriptor());
@@ -58,7 +65,9 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
         valueExternalizer,
         extension.getCacheSize(),
         extension.keyIsUniqueForIndexedFile(),
-        extension.traceKeyHashToVirtualFileMapping()
+        extension.traceKeyHashToVirtualFileMapping(),
+        // KeyHashLogAccessor is needed even with !traceKeyHashToVirtualFileMapping to _remove_ (possible) old key-hash-log file
+        keyHashLogs.accessor(extension.getName(), keyDescriptor)
       ),
       IndexStorage::isClosed,
       /* failIfNotClosed: */ !WARN_IF_CLEANING_UNCLOSED_STORAGE
@@ -84,7 +93,10 @@ final class DurableDatabaseSingleEntryStorageLayout<Value> implements VfsAwareIn
   public synchronized void clearIndexData() {
     try {
       indexStorageRef.ensureClosedAndRun(
-        () -> DurableDatabaseMapAccessors.cleanIndexData(database, extension.getName())
+        () -> {
+          DurableDatabaseMapAccessors.cleanIndexData(database, extension.getName());
+          keyHashLogs.cleanIndexData(extension.getName());
+        }
       );
     }
     catch (IOException e) {

@@ -21,6 +21,7 @@ import com.intellij.util.indexing.impl.UpdatableValueContainer;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.indexing.impl.ValueContainerInputRemapping;
 import com.intellij.util.indexing.impl.ValueContainerProcessor;
+import com.intellij.util.indexing.impl.storage.KeyHashLog;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.MeasurableIndexStore;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +32,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.function.IntPredicate;
+
+import static java.util.Objects.requireNonNull;
 
 @ApiStatus.Internal
 public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
@@ -40,8 +44,16 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   private ValueContainerDurableMap<Key, Value> durableMap;
 
   private MapIndexStorageCache<Key, Value> cache;
-
   private final int cacheSize;
+
+  private final @Nullable KeyHashLogAccessor<Key> keyHashLogAccessor;
+  private @Nullable KeyHashLog<Key> keyHashLog;
+  /// True if the log's data is consistent with main storage.
+  /// Set false on any error, and then [#processKeys] fallbacks to full-scan.
+  /// Also, the false value is used in [#close] to clean the invalid data.
+  private volatile boolean keyHashLogValid;
+  /// Supports [#isDirty]
+  private volatile boolean keyHashLogDirty;
 
   private final KeyDescriptorEx<Key> keyDescriptor;
   //RC: can't move to DataExternalizerEx, because the serializer not used directly, but wrapped into
@@ -69,7 +81,8 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 @NotNull DataExternalizer<Value> valueExternalizer,
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile,
-                                boolean traceKeyHashToVirtualFileMapping) throws IOException {
+                                boolean traceKeyHashToVirtualFileMapping,
+                                @NotNull KeyHashLogAccessor<Key> keyHashLogAccessor) throws IOException {
     this(
       fileMapOpener(
         storageFile,
@@ -79,7 +92,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
       valueExternalizer,
       cacheSize,
       keyIsUniqueForIndexedFile,
-      traceKeyHashToVirtualFileMapping,
+      traceKeyHashToVirtualFileMapping, keyHashLogAccessor,
       /* initialize: */ true,
       /* readOnly:   */ false,
       null
@@ -92,9 +105,15 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile,
                                 boolean traceKeyHashToVirtualFileMapping,
-                                @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory) throws IOException {
-    this(fileMapOpener(storageFile, durableMapFactory), keyDescriptor, valueExternalizer, cacheSize,
-         keyIsUniqueForIndexedFile, traceKeyHashToVirtualFileMapping, true, false, null);
+                                @NotNull KeyHashLogAccessor<Key> keyHashLogAccessor,
+                                @NotNull StorageFactory<? extends DurableMap<Key, UpdatableValueContainer<Value>>> durableMapFactory
+  ) throws IOException {
+    this(
+      fileMapOpener(storageFile, durableMapFactory), keyDescriptor, valueExternalizer, cacheSize,
+      keyIsUniqueForIndexedFile,
+      traceKeyHashToVirtualFileMapping, keyHashLogAccessor,
+      /*initialize: */ true, /*readOnly: */ false, /*inputRemapping: */ null
+    );
   }
 
   public DurableMapIndexStorage(
@@ -103,10 +122,18 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     @NotNull DataExternalizer<Value> valueExternalizer,
     int cacheSize,
     boolean keyIsUniqueForIndexedFile,
-    boolean traceKeyHashToVirtualFileMapping
+    boolean traceKeyHashToVirtualFileMapping,
+    @NotNull KeyHashLogAccessor<Key> keyHashLogAccessor
   ) throws IOException {
-    this(durableMapOpener, keyDescriptor, valueExternalizer, cacheSize,
-         keyIsUniqueForIndexedFile, traceKeyHashToVirtualFileMapping, true, false, null);
+    this(
+      durableMapOpener,
+      keyDescriptor,
+      valueExternalizer,
+      cacheSize,
+      keyIsUniqueForIndexedFile,
+      traceKeyHashToVirtualFileMapping, keyHashLogAccessor,
+      /*initialize: */ true, /*readOnly: */ false, /*inputRemapping: */ null
+    );
   }
 
   public DurableMapIndexStorage(@NotNull Path storageFile,
@@ -115,6 +142,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
                                 int cacheSize,
                                 boolean keyIsUniqueForIndexedFile,
                                 boolean traceKeyHashToVirtualFileMapping,
+                                @Nullable("Null for read-only storages") KeyHashLogAccessor<Key> keyHashLogAccessor,
                                 boolean initialize,
                                 boolean readOnly,
                                 @Nullable ValueContainerInputRemapping inputRemapping) throws IOException {
@@ -127,7 +155,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
       valueExternalizer,
       cacheSize,
       keyIsUniqueForIndexedFile,
-      traceKeyHashToVirtualFileMapping,
+      traceKeyHashToVirtualFileMapping, keyHashLogAccessor,
       initialize,
       readOnly,
       inputRemapping
@@ -141,6 +169,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     int cacheSize,
     boolean keyIsUniqueForIndexedFile,
     boolean traceKeyHashToVirtualFileMapping,
+    @Nullable("Null for read-only storages") KeyHashLogAccessor<Key> keyHashLogAccessor,
     boolean initialize,
     boolean readOnly,
     @Nullable ValueContainerInputRemapping inputRemapping
@@ -150,8 +179,12 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
 
     this.cacheSize = cacheSize;
     this.keyIsUniqueForIndexedFile = keyIsUniqueForIndexedFile;
-    this.traceKeyHashToVirtualFileMapping = traceKeyHashToVirtualFileMapping;
     this.readOnly = readOnly;
+
+    this.traceKeyHashToVirtualFileMapping = traceKeyHashToVirtualFileMapping;
+    // keyHashLogAccessor is needed even with !traceKeyHashToVirtualFileMapping to ensure (possible) key-hash-log from previous
+    // session (with traceKeyHashToVirtualFileMapping=true) is cleaned:
+    this.keyHashLogAccessor = readOnly ? null : requireNonNull(keyHashLogAccessor);
 
     if (inputRemapping != null) {
       LOG.assertTrue(this.readOnly, "input remapping allowed only for read-only storage");
@@ -174,10 +207,32 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
           cacheSize
         );
         durableMap = map;
+
+        keyHashLogValid = false;
+        if (keyHashLogAccessor != null) {
+          if (traceKeyHashToVirtualFileMapping) {
+            var log = keyHashLogAccessor.open();
+            keyHashLog = log;
+            if (keyHashLogAccessor.requiresRebuild()) {
+              rebuildKeyHashLog(map, log);
+            }
+            keyHashLogValid = true;
+          }
+          else {
+            // Later sessions must rebuild the journal after writes without tracing.
+            keyHashLogAccessor.cleanData();
+          }
+          keyHashLogDirty = false;
+        }
+
       }
-      catch (RuntimeException | Error e) {
+      catch (IOException | RuntimeException | Error e) {
         try {
-          map.close();
+          ExceptionUtil.runAllAndRethrowAllExceptions(
+            IOException.class, IOException::new,
+            map::close,
+            () -> { if (keyHashLogAccessor != null) keyHashLogAccessor.close(/*clean: */false); }
+          );
         }
         catch (IOException closeError) {
           e.addSuppressed(closeError);
@@ -215,7 +270,12 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
       }
       durableMap.merge(key, valueContainer);
     }
+    catch (RuntimeException | Error e) {
+      keyHashLogValid = false;
+      throw e;
+    }
     catch (IOException e) {
+      keyHashLogValid = false;
       throw new UncheckedIOException(e);
     }
   }
@@ -236,6 +296,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
       try {
         if (keyIsUniqueForIndexedFile) {
           assertKeyInputIdConsistency(key, inputId);
+          recordKeyHash(key, inputId);
           updateSingleValueDirectly(key, inputId, newValue);
         }
         else {
@@ -243,7 +304,16 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
           addValue(key, inputId, newValue);
         }
       }
+      catch (StorageException e) {
+        keyHashLogValid = false;
+        throw e;
+      }
+      catch (RuntimeException e) {
+        keyHashLogValid = false;
+        throw unwrapCauseAndRethrow(e);
+      }
       catch (IOException e) {
+        keyHashLogValid = false;
         throw new StorageException(e);
       }
     });
@@ -258,6 +328,7 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     }
     withWriteLock(() -> {
       try {
+        recordKeyHash(key, inputId);
         if (keyIsUniqueForIndexedFile) {
           assertKeyInputIdConsistency(key, inputId);
           putSingleValueDirectly(key, inputId, value);
@@ -268,9 +339,11 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
         }
       }
       catch (RuntimeException e) {
+        keyHashLogValid = false;
         throw unwrapCauseAndRethrow(e);
       }
       catch (IOException e) {
+        keyHashLogValid = false;
         throw new StorageException(e);
       }
     });
@@ -293,11 +366,14 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
           ChangeTrackingValueContainer<Value> container = cache.read(key);
           container.removeAssociatedValue(inputId);
         }
+        recordKeyHash(key, -inputId);
       }
       catch (RuntimeException e) {
+        keyHashLogValid = false;
         throw unwrapCauseAndRethrow(e);
       }
       catch (IOException e) {
+        keyHashLogValid = false;
         throw new StorageException(e);
       }
     });
@@ -306,16 +382,24 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   @Override
   public void flush() throws IOException {
     withWriteLock(() -> {
-      if (!durableMap.isClosed()) {
-        invalidateCachedMappings();
-        if (durableMap.isDirty()) durableMap.force();
+      try {
+        if (!durableMap.isClosed()) {
+          invalidateCachedMappings();
+          if (durableMap.isDirty()) durableMap.force();
+          if (keyHashLog != null) keyHashLog.flush();
+          keyHashLogDirty = false;
+        }
+      }
+      catch (IOException | RuntimeException | Error e) {
+        keyHashLogValid = false;
+        throw e;
       }
     });
   }
 
   @Override
   public boolean isDirty() {
-    if (durableMap.isDirty()) {
+    if (keyHashLogDirty || durableMap.isDirty()) {
       return true;
     }
 
@@ -336,11 +420,29 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
 
   @Override
   public void close() throws IOException {
+    // The caller must ensure that no other storage operations run concurrently with close()
+    boolean[] clean = {keyHashLogValid};
     ExceptionUtil.runAllAndRethrowAllExceptions(
       IOException.class, IOException::new,
-
-      this::flush,
-      durableMap::close
+      () -> {
+        try {
+          flush();
+        }
+        catch (IOException | RuntimeException | Error e) {
+          clean[0] = false;
+          throw e;
+        }
+      },
+      () -> {
+        try {
+          durableMap.close();
+        }
+        catch (IOException | RuntimeException | Error e) {
+          clean[0] = false;
+          throw e;
+        }
+      },
+      () -> { if (keyHashLogAccessor != null) keyHashLogAccessor.close(clean[0]); }
     );
   }
 
@@ -352,6 +454,17 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
   @Override
   public void clear() throws StorageException {
     withWriteLock(() -> {
+      keyHashLogValid = false;
+      try {
+        if (keyHashLogAccessor != null) {
+          keyHashLogAccessor.close(false);
+          keyHashLogAccessor.cleanData();
+          keyHashLog = null;
+        }
+      }
+      catch (IOException e) {
+        throw new StorageException(e);
+      }
       try {
         durableMap.closeAndClean();
       }
@@ -470,22 +583,46 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
     return withReadLock(() -> {
       try {
         invalidateCachedMappings(); // this will ensure that all new keys are made into the map
-        return durableMap.processEntries((key, container) -> {
-          //TODO RC: very ineffective way to apply IdFilter, but functionally correct:
-          boolean[] idFilterAccepted = new boolean[]{false};
-          container.forEach((fileId, _) -> {
-            if (idFilter.containsFileId(fileId)) {
-              idFilterAccepted[0] = true;
-              return false;//stop
-            }
-            return true;//continue
-          });
 
-          if (idFilterAccepted[0]) {
-            return processor.process(key);
+        if (keyHashLogValid && keyHashLog != null) {
+          var project = scope.getProject();
+          IntPredicate hashes;
+          try {
+            hashes = project == null ? keyHashLog.getSuitableKeyHashes(idFilter)::contains
+                                     : keyHashLog.getSuitableKeyHashes(idFilter, project);
           }
-          return true;
-        });
+          catch (StorageException e) {
+            // A failed scan must not let close mark an incomplete journal as clean.
+            keyHashLogValid = false;
+            throw e;
+          }
+          return durableMap.processKeys(key -> {
+            //TODO RC: would be even better check keyHash even before key deserialization, to skip deserializing unmatched keys
+            if (!hashes.test(keyDescriptor.getHashCode(key))) {
+              return true;
+            }
+            return processor.process(key);
+          });
+        }
+        else {
+          //No keyHashLog, or it is invalid (not trustworthy)
+          // => fallback to very ineffective but functionally correct way to apply IdFilter:
+          return durableMap.processEntries((key, container) -> {
+            boolean[] idFilterAccepted = new boolean[]{false};
+            container.forEach((fileId, _) -> {
+              if (idFilter.containsFileId(fileId)) {
+                idFilterAccepted[0] = true;
+                return false;//stop
+              }
+              return true;//continue
+            });
+
+            if (idFilterAccepted[0]) {
+              return processor.process(key);
+            }
+            return true;
+          });
+        }
       }
       catch (IOException e) {
         throw new StorageException(e);
@@ -509,6 +646,41 @@ public class DurableMapIndexStorage<Key, Value> extends IndexStorageLockingBase
         throw unwrapCauseAndRethrow(e);
       }
     });
+  }
+
+  private void recordKeyHash(Key key, int signedInputId) throws IOException {
+    if (!keyHashLogValid || keyHashLog == null) return;
+    try {
+      keyHashLog.addKeyHashToVirtualFileMapping(key, signedInputId);
+      keyHashLogDirty = true;
+    }
+    catch (StorageException e) {
+      keyHashLogValid = false;
+      throw new IOException(e);
+    }
+  }
+
+  /// Reconstructs the journal before any query can use it to reject keys
+  private void rebuildKeyHashLog(ValueContainerDurableMap<Key, Value> map, KeyHashLog<Key> log) throws IOException {
+    try {
+      boolean completed = map.processEntries((key, container) -> {
+        container.forEach((inputId, _) -> {
+          try {
+            log.addKeyHashToVirtualFileMapping(key, inputId);
+          }
+          catch (StorageException e) {
+            throw new UncheckedIOException(new IOException(e));
+          }
+          return true;
+        });
+        return true;
+      });
+      if (!completed) throw new IOException("The key hash log rebuild did not complete");
+      log.flush();
+    }
+    catch (UncheckedIOException e) {
+      throw e.getCause();
+    }
   }
 
   public static @NotNull Path getIndexStorageFile(@NotNull Path baseFile) {

@@ -21,6 +21,7 @@ import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider
 import com.intellij.util.indexing.impl.storage.StorageRef;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapBasedForwardIndex;
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage;
+import com.intellij.util.indexing.impl.storage.durablemap.FileChannelKeyHashLogAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import com.intellij.util.indexing.storage.sharding.ShardedForwardIndex;
@@ -37,10 +38,15 @@ import java.util.Map;
 final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareIndexStorageLayout<Key, Value> {
   private final @NotNull DurableDatabase database;
   private final @NotNull FileBasedIndexExtension<Key, Value> extension;
+
+  private final @NotNull FileChannelKeyHashLogAccessor.Registry keyHashLogs;
+
   private final @NotNull KeyDescriptorEx<Key> keyDescriptor;
   private final @NotNull DataExternalizer<Value> valueExternalizer;
+
   private final @NotNull DurableMapImplementation invertedMapImplementation;
   private final @NotNull DurableMapImplementation forwardMapImplementation;
+
   private final @NotNull MapForwardIndexAccessor<Key, Value> forwardIndexAccessor;
   private final @NotNull StorageRef<ShardedIndexStorage<Key, Value>, IOException> indexStorageRef;
   private final @NotNull StorageRef<ShardedForwardIndex, IOException> forwardIndexRef;
@@ -48,14 +54,19 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
   DurableDatabaseShardedStorageLayout(@NotNull DurableDatabase database,
                                       @NotNull FileBasedIndexExtension<Key, Value> extension,
                                       @NotNull DurableMapImplementation invertedMapImplementation,
-                                      @NotNull DurableMapImplementation forwardMapImplementation) {
+                                      @NotNull DurableMapImplementation forwardMapImplementation,
+                                      @NotNull FileChannelKeyHashLogAccessor.Registry keyHashLogs) {
     if (!(extension instanceof ShardableIndexExtension)) {
       throw new IllegalArgumentException("Extension(" + extension + ") must be ShardableIndexExtension");
     }
     this.database = database;
     this.extension = extension;
+
     this.invertedMapImplementation = invertedMapImplementation;
     this.forwardMapImplementation = forwardMapImplementation;
+
+    this.keyHashLogs = keyHashLogs;
+
     keyDescriptor = KeyDescriptorEx.adapt(extension.getKeyDescriptor());
     valueExternalizer = extension.getValueExternalizer();
 
@@ -70,7 +81,9 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
         valueExternalizer,
         extension.getCacheSize(),
         extension.keyIsUniqueForIndexedFile(),
-        extension.traceKeyHashToVirtualFileMapping()
+        extension.traceKeyHashToVirtualFileMapping(),
+        // KeyHashLogAccessor is needed even with !traceKeyHashToVirtualFileMapping to _remove_ (possible) old key-hash-log file
+        keyHashLogs.accessor(extension.getName(), shardNo, keyDescriptor)
       );
     };
     ThrowableNotNullFunction<Integer, IterableForwardIndex, IOException> forwardFactory = shardNo ->
@@ -111,6 +124,7 @@ final class DurableDatabaseShardedStorageLayout<Key, Value> implements VfsAwareI
       indexStorageRef.ensureClosedAndRun(() ->
         forwardIndexRef.ensureClosedAndRun(() -> {
           DurableDatabaseMapAccessors.cleanIndexData(database, extension.getName());
+          keyHashLogs.cleanIndexData(extension.getName());
         })
       );
     }
