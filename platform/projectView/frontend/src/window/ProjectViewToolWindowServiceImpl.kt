@@ -60,7 +60,6 @@ import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.AwaitCancellationAndInvoke
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.ui.launchOnShow
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
@@ -113,13 +112,30 @@ internal class ProjectViewToolWindowServiceImpl(
   val panes: Map<ProjectViewPaneId, FrontendProjectViewPane>
     field = ConcurrentHashMap<ProjectViewPaneId, FrontendProjectViewPane>()
   private val activePanes = ConcurrentHashMap.newKeySet<ProjectViewPaneId>()
-  private val currentPaneListener: ContentManagerListener = object : ContentManagerListener {
+  /**
+   * Restores the state of a pane when it becomes selected and saves it when it becomes unselected.
+   *
+   * The content manager also unselects the selected content before it removes it, so a removed pane saves its state too.
+   * Both happen in the same EDT event as the selection change, even if the tool window is hidden.
+   */
+  private val paneSelectionListener: ContentManagerListener = object : ContentManagerListener {
     override fun selectionChanged(event: ContentManagerEvent) {
-      if (event.operation == ContentManagerEvent.ContentOperation.add) {
-        val newPane = event.content.getUserData(PANE_KEY)
-        val oldPane = currentPaneMutableFlow.value
-        currentPaneMutableFlow.value = newPane
-        currentPaneChanged(oldPane, newPane)
+      val pane = event.content.getUserData(PANE_KEY)
+      when (event.operation) {
+        ContentManagerEvent.ContentOperation.add -> {
+          if (pane != null) {
+            loadPaneState(pane)
+          }
+          val oldPane = currentPaneMutableFlow.value
+          currentPaneMutableFlow.value = pane
+          currentPaneChanged(oldPane, pane)
+        }
+        ContentManagerEvent.ContentOperation.remove -> {
+          if (pane != null) {
+            savePaneStateIfActive(pane)
+          }
+        }
+        ContentManagerEvent.ContentOperation.undefined, null -> { }
       }
     }
   }
@@ -391,7 +407,7 @@ internal class ProjectViewToolWindowServiceImpl(
     // Not sure if this thing can be invoked under a modal state, but it better run fast regardless.
     withContext(Dispatchers.UI + ModalityState.any().asContextElement()) {
       // Only save the current pane, because other panes either:
-      // 1. already saved their state when they were hidden the last time or,
+      // 1. already saved their state when they were unselected the last time or,
       // 2. even worse, may have never been loaded, which means they have empty states,
       // and we don't want to overwrite whatever was loaded from the persistent storage.
       val currentPane = currentPaneFlow.value
@@ -464,15 +480,6 @@ internal class ProjectViewToolWindowServiceImpl(
         }
         LOG.debug { "The saved state has been loaded for ${pane.id}" }
         launch(Dispatchers.UI + CoroutineName("Manage TW content for PV pane ${pane.id}")) {
-          pane.component.launchOnShow("Pane ${pane.id} service state saving/restoring") {
-            try {
-              loadPaneState(pane)
-              awaitCancellation()
-            }
-            finally {
-              savePaneStateIfActive(pane)
-            }
-          }
           val selectedPaneId = initialSelection.value ?: defaultSelection
           val mustSelectThisPane = selectedPaneId == pane.id
           // The wait lets the selected pane be added first, so the content manager selects it.
@@ -632,13 +639,17 @@ internal class ProjectViewToolWindowServiceImpl(
     private val contentManager = toolWindow.contentManager
     // Written only in createAndAddContent on the EDT, read from any thread.
     @Volatile private var firstContentAddedAt: TimeMark? = null
-    
+
+    init {
+      // Added at once, so the listener can't miss the selection of the first pane.
+      contentManager.addContentManagerListener(paneSelectionListener)
+    }
+
     suspend fun manageContent() {
       coroutineScope {
-        launch(Dispatchers.UI + CoroutineName("Current pane listener")) {
-          contentManager.addContentManagerListener(currentPaneListener)
+        launch(Dispatchers.UI + CoroutineName("Pane selection listener")) {
           awaitCancellationAndInvoke {
-            contentManager.removeContentManagerListener(currentPaneListener)
+            contentManager.removeContentManagerListener(paneSelectionListener)
           }
         }
         launch(Dispatchers.UI + CoroutineName("Content ordering")) {
