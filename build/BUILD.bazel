@@ -57,6 +57,12 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 
+# The distribution index, for the tests of the IDE Starter build server.
+exports_files(
+    ["dev-dist-distributions.json"],
+    visibility = ["//tools/intellij.tools.ide.starter.build.server:__pkg__"],
+)
+
 jps_library_derivation_pipeline_test_suite(name = "jps_library_derivation_pipeline_test")
 
 # The IDEA Community branding images, read from the checkout while a distribution is laid out (`imagesDirectoryPath`

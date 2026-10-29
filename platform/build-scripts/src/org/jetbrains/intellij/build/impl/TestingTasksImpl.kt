@@ -808,6 +808,7 @@ internal class TestingTasksImpl(context: CompilationContext, private val options
       "sun.io.useCanonCaches" to "false",
       "user.home" to System.getProperty("user.home"),
       TestingOptions.USE_ARCHIVED_COMPILED_CLASSES to "${options.useArchivedCompiledClasses}",
+      TestingOptions.TEST_JVM_OF_BUILD_SCRIPTS_PROPERTY to "true",
     )) {
       if (v != null) {
         systemProperties.putIfAbsent(k, v)

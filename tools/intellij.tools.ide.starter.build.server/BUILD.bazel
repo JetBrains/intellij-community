@@ -1,5 +1,14 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 load("//build:compiler-options.bzl", "create_kotlinc_options")
+
+jps_test(
+    name = "ide-starter-build-server-tests_test",
+    data = ["//build:dev-dist-distributions.json"],
+    tags = ["community-aggregator"],
+    runtime_deps = [":ide-starter-build-server-tests_test_lib"],
+)
+### skip generation section `test intellij.tools.ide.starter.build.server.tests`
 
 ### auto-generated section `build intellij.tools.ide.starter.build.server` start
 create_kotlinc_options(
@@ -39,6 +48,9 @@ jvm_library(
         "//libraries/junit6",
         "//libraries/junit6-launcher",
         "//libraries/opentelemetry",
+        "//platform/bazel-runfiles",
+        "//libraries/kotlinx/serialization/json",
+        "//libraries/kotlinx/serialization/core",
     ],
 )
 
@@ -67,6 +79,9 @@ jvm_library(
         "//libraries/junit6:junit6_test_lib",
         "//libraries/junit6-launcher:junit6-launcher_test_lib",
         "//libraries/opentelemetry:opentelemetry_test_lib",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+        "//libraries/kotlinx/serialization/json:json_test_lib",
+        "//libraries/kotlinx/serialization/core:core_test_lib",
     ],
 )
 ### auto-generated section `build intellij.tools.ide.starter.build.server` end
@@ -79,3 +94,57 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.tools.ide.starter.build.server` end
+
+### auto-generated section `build intellij.tools.ide.starter.build.server.tests` start
+create_kotlinc_options(
+    name = "custom_ide-starter-build-server-tests",
+    opt_in = ["kotlin.time.ExperimentalTime"],
+)
+
+jvm_library(
+    name = "ide-starter-build-server-tests",
+    srcs = glob(
+        [],
+        allow_empty = True,
+    ),
+    module_name = "intellij.tools.ide.starter.build.server.tests",
+    visibility = ["//visibility:public"],
+)
+
+jvm_library(
+    name = "ide-starter-build-server-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = [
+        "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server",
+        "//tools/intellij.tools.ide.starter.build.server:ide-starter-build-server_test_lib",
+    ],
+    kotlinc_opts = ":custom_ide-starter-build-server-tests",
+    visibility = ["//visibility:public"],
+    runtime_deps = [":ide-starter-build-server-tests"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit6",
+        "//libraries/junit6:junit6_test_lib",
+        "//platform/bazel-runfiles",
+        "//platform/bazel-runfiles:bazel-runfiles_test_lib",
+    ],
+)
+### auto-generated section `build intellij.tools.ide.starter.build.server.tests` end
+
+### auto-generated section `iml intellij.tools.ide.starter.build.server.tests` start
+exports_files(
+    [
+        "intellij.tools.ide.starter.build.server.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.tools.ide.starter.build.server.tests` end

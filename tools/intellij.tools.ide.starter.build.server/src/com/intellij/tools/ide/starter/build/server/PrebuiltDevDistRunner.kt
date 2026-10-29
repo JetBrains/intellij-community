@@ -25,8 +25,14 @@ import kotlin.io.path.isDirectory
  * modules the assembly did not build in would otherwise run against an IDE quietly missing them, and a distribution
  * reused past its EAP expiration would come up showing a modal instead of a frame. Both are decidable here, from bytes
  * already on disk, so both fail the run with a named reason rather than the assertions - or, worse, a timeout.
+ *
+ * [origin] says where the distribution comes from, for example "declared by 'idea.ide.config.path'". Each error
+ * message names it.
  */
-internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildServerRunner {
+internal class PrebuiltDevDistRunner(
+  private val configFile: Path,
+  private val origin: String = "declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}'",
+) : DevBuildServerRunner {
   private val config by lazy { DevIdeConfig.read(configFile) }
 
   override fun isDevBuildSupported(): Boolean = true
@@ -44,7 +50,7 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
   override fun startDevBuild(ideInfo: IdeInfo): Path {
     val home = config.homePath
     check(home.isDirectory()) {
-      "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' is missing: $configFile names $home, which is not a directory"
+      "The dev distribution $origin is missing: $configFile names $home, which is not a directory"
     }
     checkDistributionSatisfies(ideInfo)
     checkDistributionIsNotExpired(home)
@@ -67,7 +73,7 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
   private fun checkDistributionIsNotExpired(home: Path) {
     val problem = distributionExpirationProblem(home) ?: return
     error(
-      "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' would not start: $problem.\n" +
+      "The dev distribution $origin would not start: $problem.\n" +
       "  distribution: $home\n" +
       "  config file: $configFile\n" +
       "The IDE would show the 'EAP build expired' dialog and shut down. Reassemble the distribution: a dev build must " +
@@ -77,17 +83,16 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
 
   private fun checkDistributionSatisfies(ideInfo: IdeInfo) {
     check(ideInfo.platformPrefix == config.platformPrefix) {
-      "$ideInfo needs the '${ideInfo.platformPrefix}' product, but the dev distribution declared by " +
-      "'${DevIdeConfig.CONFIG_PATH_PROPERTY}' was assembled as '${config.platformPrefix}' ($configFile)"
+      "$ideInfo needs the '${ideInfo.platformPrefix}' product, but the dev distribution $origin " +
+      "was assembled as '${config.platformPrefix}' ($configFile)"
     }
 
     val requested = ideInfo.additionalModules.toSet()
     val declared = config.additionalModules.toSet()
-    // a plugin that the product bundles is in the distribution, also when no `additional_modules` entry names it
-    val available = declared + config.bundledModules
-    check(available.containsAll(requested)) {
-      "The dev distribution declared by '${DevIdeConfig.CONFIG_PATH_PROPERTY}' does not contain " +
-      "${(requested - available).sorted()}, which $ideInfo asks for.\n" +
+    val missing = missingDevDistModules(requested, declared, config.bundledModules)
+    check(missing.isEmpty()) {
+      "The dev distribution $origin does not contain " +
+      "$missing, which $ideInfo asks for.\n" +
       "  requested: ${requested.sorted()}\n" +
       "  declared in the distribution: ${declared.sorted()}\n" +
       "  bundled in the distribution: ${config.bundledModules.size} modules (see '${DevIdeConfig.BUNDLED_MODULES_KEY}')\n" +
@@ -103,4 +108,16 @@ internal class PrebuiltDevDistRunner(private val configFile: Path) : DevBuildSer
       logOutput("The dev distribution also contains ${extra.sorted()}, which $ideInfo did not ask for")
     }
   }
+}
+
+/**
+ * Returns the [requested] modules that a dev distribution does not contain, sorted.
+ *
+ * A distribution contains a module when it is [declared] or [bundled]. A plugin that the product bundles is in the
+ * distribution, also when no `additional_modules` entry names it.
+ */
+internal fun missingDevDistModules(requested: Collection<String>, declared: Collection<String>, bundled: Collection<String>): List<String> {
+  val available = HashSet<String>(declared)
+  available.addAll(bundled)
+  return requested.filterNot { it in available }.distinct().sorted()
 }

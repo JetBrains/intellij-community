@@ -263,6 +263,7 @@ intellij.tools.cmd.tests
 intellij.tools.ide.metrics.benchmark.tests
 intellij.tools.ide.metrics.collector.tests
 intellij.tools.ide.metrics.statistics.tests
+intellij.tools.ide.starter.build.server.tests
 intellij.tools.ide.starter.bus.tests
 intellij.turboComplete.tests
 intellij.vcs.git.featuresTrainer.tests

@@ -19,6 +19,15 @@ open class TestingOptions {
     const val TEST_JRE_PROPERTY: String = "intellij.build.test.jre"
     const val REDIRECT_STDOUT_TO_FILE: String = "intellij.build.test.redirectStdoutToFile"
     const val USE_ARCHIVED_COMPILED_CLASSES: String = "intellij.build.test.use.compiled.classes.archives"
+
+    /**
+     * The system property that marks a test JVM that the build scripts start, for example from `tests.cmd`.
+     *
+     * The value is `true`. The JVM has the outputs of every module, so the IDE Starter build server keeps the legacy
+     * engine there. A nested `bazel build` can also delete the temporary directory, which holds the config, the system
+     * and the log directories of the test.
+     */
+    const val TEST_JVM_OF_BUILD_SCRIPTS_PROPERTY: String = "intellij.build.test.jvm.of.build.scripts"
   }
 
   /**
