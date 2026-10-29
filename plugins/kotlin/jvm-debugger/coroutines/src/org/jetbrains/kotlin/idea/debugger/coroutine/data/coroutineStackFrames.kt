@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.debugger.coroutine.data
 
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JavaValue
+import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.debugger.ui.impl.watch.LocalVariableDescriptorImpl
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ReadAction
@@ -14,6 +16,8 @@ import com.intellij.xdebugger.frame.XValueChildrenList
 import com.intellij.xdebugger.impl.frame.XStackFrameWithSeparatorAbove
 import com.sun.jdi.Location
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
+import org.jetbrains.kotlin.idea.debugger.base.util.dropInlineSuffix
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
@@ -139,8 +143,23 @@ open class CoroutineStackFrame(
         val names = mutableSetOf<String>()
         for (i in 0 until size()) {
             names.add(getName(i))
+            getLocalVariableKotlinName(i)?.let(names::add)
         }
         return names
+    }
+
+    /**
+     * Returns the JVM name of a local variable without the inline scope number and the inline suffix.
+     * The continuation uses this name for the same variable. The frame can show the local as `a\1` or `this (@A)`.
+     */
+    private fun XValueChildrenList.getLocalVariableKotlinName(index: Int): String? {
+        val localVariable = ((getValue(index) as? JavaValue)?.descriptor as? LocalVariableDescriptorImpl)?.localVariable ?: return null
+        val name = try {
+            localVariable.variable.name()
+        } catch (_: EvaluateException) {
+            return null
+        }
+        return dropInlineSuffix(name.dropInlineScopeInfo())
     }
 
     private fun findVisibleVariableNames(debugProcess: DebugProcessImpl): List<String> {
