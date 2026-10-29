@@ -977,12 +977,6 @@ public class ChooseByNameTest extends LightJavaCodeInsightFixtureTestCase {
     return res;
   }
 
-  public static SearchEverywhereContributor<Object> createFileContributor(Project project,
-                                                                          Disposable parentDisposable,
-                                                                          PsiElement context) {
-    return ChooseByNameTest.createFileContributor(project, parentDisposable, context, false);
-  }
-
   public static SearchEverywhereContributor<Object> createFileContributor(Project project, Disposable parentDisposable) {
     return ChooseByNameTest.createFileContributor(project, parentDisposable, null, false);
   }

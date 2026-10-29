@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.navigation;
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -12,13 +11,17 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile;
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils;
+import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixture;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -29,19 +32,28 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
+  /** Tells which goto providers the test checks: the coroutine based ones, or the legacy based ones. */
+  protected boolean isCoroutineBasedGoto() {
+    return true;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    setRegistryPropertyForTest(SeProvidersTestFixture.COROUTINE_BASED_GOTO_KEY, String.valueOf(isCoroutineBasedGoto()));
+  }
+
   public void test_go_to_file_by_full_path() {
     PsiFile psiFile = myFixture.addFileToProject("foo/index.html", "foo");
     VirtualFile vFile = psiFile.getVirtualFile();
     String path = vFile.getPath();
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, path), Arrays.asList(psiFile));
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, FileUtil.toSystemDependentName(path)),
-                        Arrays.asList(psiFile));
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, vFile.getParent().getPath()),
-                        Arrays.asList(psiFile.getContainingDirectory()));
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, path + ":0"), new ArrayList<>(Arrays.asList(psiFile)));
+    assertOrderedEquals(findFiles(fixture, path), Arrays.asList(psiFile));
+    assertOrderedEquals(findFiles(fixture, FileUtil.toSystemDependentName(path)), Arrays.asList(psiFile));
+    assertOrderedEquals(findFiles(fixture, vFile.getParent().getPath()), Arrays.asList(psiFile.getContainingDirectory()));
+    assertOrderedEquals(findFiles(fixture, path + ":0"), new ArrayList<>(Arrays.asList(psiFile)));
   }
 
   public void test_prefer_same_named_classes_visible_in_current_module() throws IOException {
@@ -59,9 +71,9 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     }
 
     PsiFile place = myFixture.addClass("class A {}").getContainingFile();
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable(), place);
+    SeProvidersTestFixture fixture = createFixture(place);
 
-    List<String> resultModules = ContainerUtil.map(ChooseByNameTest.calcContributorElements(contributor, "Foo"),
+    List<String> resultModules = ContainerUtil.map(findFiles(fixture, "Foo"),
                                                    e -> ModuleUtilCore.findModuleForPsiElement((PsiElement)e).getName());
 
     assertEquals("mod2", resultModules.get(0));
@@ -72,11 +84,11 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     PsiTestUtil.addModule(getProject(), JavaModuleType.getModuleType(), "m2", myFixture.getTempDirFixture().findOrCreateDir("foo/bar"));
 
     PsiFile file = myFixture.addFileToProject("foo/bar/goo/doo.txt", "");
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable(), file);
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, "doo"), Arrays.asList(file));
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, "goo/doo"), Arrays.asList(file));
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, "bar/goo/doo"), Arrays.asList(file));
-    assertOrderedEquals(ChooseByNameTest.calcContributorElements(contributor, "foo/bar/goo/doo"), Arrays.asList(file));
+    SeProvidersTestFixture fixture = createFixture(file);
+    assertOrderedEquals(findFiles(fixture, "doo"), Arrays.asList(file));
+    assertOrderedEquals(findFiles(fixture, "goo/doo"), Arrays.asList(file));
+    assertOrderedEquals(findFiles(fixture, "bar/goo/doo"), Arrays.asList(file));
+    assertOrderedEquals(findFiles(fixture, "foo/bar/goo/doo"), Arrays.asList(file));
   }
 
   public void test_source_test_resources_priority() throws IOException {
@@ -110,13 +122,12 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
   public void test_go_to_file_by_absolute_path_outside_project() throws IOException {
     File outsideFile = createFileOutsideProject();
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
     String path = FileUtil.toSystemIndependentName(outsideFile.getPath());
-    assertSameFile(outsideFile, assertOneElement(ChooseByNameTest.calcContributorElements(contributor, path)));
-    assertSameFile(outsideFile, assertOneElement(
-      ChooseByNameTest.calcContributorElements(contributor, FileUtil.toSystemDependentName(path))));
-    assertSameFile(outsideFile, assertOneElement(ChooseByNameTest.calcContributorElements(contributor, path + ":12")));
+    assertSameFile(outsideFile, assertOneElement(findFiles(fixture, path)));
+    assertSameFile(outsideFile, assertOneElement(findFiles(fixture, FileUtil.toSystemDependentName(path))));
+    assertSameFile(outsideFile, assertOneElement(findFiles(fixture, path + ":12")));
   }
 
   public void test_searching_by_absolute_path_does_not_cache_the_file_in_vfs() throws IOException {
@@ -124,9 +135,8 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     String path = FileUtil.toSystemIndependentName(outsideFile.getPath());
     assertNull("precondition: the file must not be in VFS yet", LocalFileSystem.getInstance().findFileByPathIfCached(path));
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
-    VirtualFile found = assertInstanceOf(assertOneElement(ChooseByNameTest.calcContributorElements(contributor, path)),
-                                         PsiFileSystemItem.class).getVirtualFile();
+    SeProvidersTestFixture fixture = createFixture(null);
+    VirtualFile found = assertInstanceOf(assertOneElement(findFiles(fixture, path)), PsiFileSystemItem.class).getVirtualFile();
 
     CacheAvoidingVirtualFile cacheAvoiding = assertInstanceOf(found, CacheAvoidingVirtualFile.class);
     assertFalse(cacheAvoiding.isCached());
@@ -141,9 +151,9 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     File outsideFile = createFileOutsideProject();
     String path = FileUtil.toSystemIndependentName(outsideFile.getPath());
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
-    Object first = assertOneElement(ChooseByNameTest.calcContributorElements(contributor, path));
-    Object second = assertOneElement(ChooseByNameTest.calcContributorElements(contributor, path));
+    SeProvidersTestFixture fixture = createFixture(null);
+    Object first = assertOneElement(findFiles(fixture, path));
+    Object second = assertOneElement(findFiles(fixture, path));
 
     // cache-avoiding files for the same path are equal, so PSI for them is reused instead of being recreated per keystroke
     assertEquals(((PsiFileSystemItem)first).getVirtualFile(), ((PsiFileSystemItem)second).getVirtualFile());
@@ -157,12 +167,10 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     String oldUserHome = System.getProperty("user.home");
     System.setProperty("user.home", outsideFile.getParent());
     try {
-      SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+      SeProvidersTestFixture fixture = createFixture(null);
 
-      assertSameFile(outsideFile, assertOneElement(
-        ChooseByNameTest.calcContributorElements(contributor, "~/" + outsideFile.getName())));
-      assertSameFile(outsideFile.getParentFile(), assertOneElement(
-        ChooseByNameTest.calcContributorElements(contributor, "~/")));
+      assertSameFile(outsideFile, assertOneElement(findFiles(fixture, "~/" + outsideFile.getName())));
+      assertSameFile(outsideFile.getParentFile(), assertOneElement(findFiles(fixture, "~/")));
     }
     finally {
       System.setProperty("user.home", oldUserHome);
@@ -173,10 +181,9 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     File outsideFile = createFileOutsideProject();
     File outsideDir = outsideFile.getParentFile();
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
-    Object item = assertOneElement(
-      ChooseByNameTest.calcContributorElements(contributor, FileUtil.toSystemIndependentName(outsideDir.getPath())));
+    Object item = assertOneElement(findFiles(fixture, FileUtil.toSystemIndependentName(outsideDir.getPath())));
     assertInstanceOf(item, PsiDirectory.class);
     assertSameFile(outsideDir, item);
   }
@@ -186,33 +193,33 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     PsiFile excludedFile = myFixture.addFileToProject("excluded/hidden.txt", "");
     PsiTestUtil.addExcludedRoot(getModule(), excludedDir);
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
     String path = excludedFile.getVirtualFile().getPath();
-    assertSameFile(new File(path), assertOneElement(ChooseByNameTest.calcContributorElements(contributor, path)));
+    assertSameFile(new File(path), assertOneElement(findFiles(fixture, path)));
   }
 
   public void test_no_results_for_non_existent_absolute_path() {
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
-    assertEmpty(ChooseByNameTest.calcContributorElements(contributor, "/definitely/not/an/existing/path.txt"));
+    assertEmpty(findFiles(fixture, "/definitely/not/an/existing/path.txt"));
   }
 
   public void test_no_results_for_the_filesystem_root() {
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
     // the root is not a meaningful exact match, and as one it would outrank every real candidate
-    assertEmpty(ChooseByNameTest.calcContributorElements(contributor, "/"));
-    assertEmpty(ChooseByNameTest.calcContributorElements(contributor, "//"));
+    assertEmpty(findFiles(fixture, "/"));
+    assertEmpty(findFiles(fixture, "//"));
   }
 
   public void test_absolute_paths_outside_project_can_be_disabled() throws IOException {
     Registry.get("search.everywhere.absolute.path.outside.project").setValue(false, getTestRootDisposable());
     File outsideFile = createFileOutsideProject();
 
-    SearchEverywhereContributor<Object> contributor = ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = createFixture(null);
 
-    assertEmpty(ChooseByNameTest.calcContributorElements(contributor, FileUtil.toSystemIndependentName(outsideFile.getPath())));
+    assertEmpty(findFiles(fixture, FileUtil.toSystemIndependentName(outsideFile.getPath())));
   }
 
   private File createFileOutsideProject() throws IOException {
@@ -228,9 +235,18 @@ public class ChooseByNameHddTest extends JavaCodeInsightFixtureTestCase {
     assertEquals(expected.getCanonicalFile(), new File(actual.getPath()).getCanonicalFile());
   }
 
+  /** Opens a new Search Everywhere session. Its providers go away with the test. */
+  private SeProvidersTestFixture createFixture(@Nullable PsiElement context) {
+    return SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable(), ObjectUtils.tryCast(context, PsiFile.class));
+  }
+
+  private static List<?> findFiles(SeProvidersTestFixture fixture, String text) {
+    return fixture.findElementsBlocking(SeProviderIdUtils.FILES_ID, text);
+  }
+
   @SuppressWarnings("unchecked")
   private List<PsiFile> gotoFile(String text, boolean checkboxState, PsiElement context) {
-    return (List<PsiFile>)ChooseByNameTest.calcContributorElements(
-      ChooseByNameTest.createFileContributor(getProject(), getTestRootDisposable(), context, checkboxState), text);
+    List<?> files = createFixture(context).findElementsBlocking(SeProviderIdUtils.FILES_ID, text, checkboxState);
+    return (List<PsiFile>)files;
   }
 }
