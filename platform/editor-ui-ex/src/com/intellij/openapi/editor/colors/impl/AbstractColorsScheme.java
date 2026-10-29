@@ -122,8 +122,8 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
   protected EditorColorsScheme parentScheme;
   Map<ColorKey, Color> colorMap = new HashMap<>();
   Map<@NonNls String, TextAttributes> attributesMap = new HashMap<>();
-  private @NotNull FontPreferences fontPreferences = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
-  private @NotNull FontPreferences consoleFontPreferences = new DelegatingFontPreferences(() -> fontPreferences);
+  private volatile @NotNull FontPreferences fontPreferences = new DelegatingFontPreferences(() -> AppEditorFontOptions.getInstance().getFontPreferences());
+  private volatile @NotNull FontPreferences consoleFontPreferences = new DelegatingFontPreferences(() -> fontPreferences);
   private String schemeName;
   private boolean canBeDeleted = true;
   private int version = CURR_VERSION; // version influences an XML format and triggers migration
