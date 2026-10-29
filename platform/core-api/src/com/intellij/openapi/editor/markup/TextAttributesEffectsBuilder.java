@@ -149,7 +149,9 @@ public final class TextAttributesEffectsBuilder {
   public @NotNull TextAttributes applyTo(final @NotNull TextAttributes targetAttributes) {
     if (targetAttributes.getClass() == TextAttributes.class) {
       AttributesFlyweight flyweight = targetAttributes.getFlyweight();
-      targetAttributes.setFlyweight(applyTo(flyweight, flyweight.getForeground(), flyweight.getBackground(), flyweight.getFontType()));
+      targetAttributes.setFlyweight(applyTo(
+        flyweight, flyweight.getForeground(), flyweight.getBackground(), flyweight.getFontType(), flyweight.getFontFamilies()
+      ));
       return targetAttributes;
     }
 
@@ -170,23 +172,24 @@ public final class TextAttributesEffectsBuilder {
   }
 
   /**
-   * Returns {@code flyweight} with the given colors and font type and the effects of this builder.
+   * Returns {@code flyweight} with the given colors, font type, and font families, and the effects of this builder.
    * It looks up the cache at most once.
    */
   @NotNull AttributesFlyweight applyTo(
     @NotNull AttributesFlyweight flyweight,
     @Nullable Color foreground,
     @Nullable Color background,
-    @JdkConstants.FontStyle int fontType
+    @JdkConstants.FontStyle int fontType,
+    @Nullable FontFamilies fontFamilies
   ) {
     Iterator<EffectDescriptor> effectsIterator = myEffectsMap.values().iterator();
     if (!effectsIterator.hasNext()) {
-      return flyweight.with(foreground, background, fontType, null, BOXED, Collections.emptyMap());
+      return flyweight.with(foreground, background, fontType, null, BOXED, Collections.emptyMap(), fontFamilies);
     }
     EffectDescriptor mainEffectDescriptor = effectsIterator.next();
     return flyweight.with(
       foreground, background, fontType, mainEffectDescriptor.effectColor, mainEffectDescriptor.effectType,
-      additionalEffects(effectsIterator)
+      additionalEffects(effectsIterator), fontFamilies
     );
   }
 

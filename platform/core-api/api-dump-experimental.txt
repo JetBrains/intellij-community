@@ -183,9 +183,12 @@ com.intellij.openapi.editor.RangeMarker
 - com.intellij.openapi.util.UserDataHolder
 - *:setStickingToRight(Z):V
 f:com.intellij.openapi.editor.markup.AttributesFlyweight
+- *s:create(java.awt.Color,java.awt.Color,I,java.awt.Color,com.intellij.openapi.editor.markup.EffectType,java.util.Map,com.intellij.openapi.editor.markup.FontFamilies,java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
 - *s:create(java.awt.Color,java.awt.Color,I,java.awt.Color,com.intellij.openapi.editor.markup.EffectType,java.util.Map,java.awt.Color):com.intellij.openapi.editor.markup.AttributesFlyweight
+- *:getFontFamilies():com.intellij.openapi.editor.markup.FontFamilies
 - *:hasEffects():Z
 - *:withAdditionalEffects(java.util.Map):com.intellij.openapi.editor.markup.AttributesFlyweight
+- *:withFontFamilies(com.intellij.openapi.editor.markup.FontFamilies):com.intellij.openapi.editor.markup.AttributesFlyweight
 e:com.intellij.openapi.editor.markup.EffectType
 - java.lang.Enum
 - *sf:FADED:com.intellij.openapi.editor.markup.EffectType
@@ -202,9 +205,14 @@ c:com.intellij.openapi.editor.markup.TextAttributes
 - java.lang.Cloneable
 - *:forEachAdditionalEffect(java.util.function.BiConsumer):V
 - *:forEachEffect(java.util.function.BiConsumer):V
+- *:getFontFamilies():com.intellij.openapi.editor.markup.FontFamilies
 - *:hasEffects():Z
 - *:setAdditionalEffects(java.util.Map):V
+- *:setFontFamilies(com.intellij.openapi.editor.markup.FontFamilies):V
 - *:withAdditionalEffect(com.intellij.openapi.editor.markup.EffectType,java.awt.Color):V
+c:com.intellij.openapi.editor.markup.UnmodifiableTextAttributes
+- com.intellij.openapi.editor.markup.TextAttributes
+- *:setFontFamilies(com.intellij.openapi.editor.markup.FontFamilies):V
 a:com.intellij.openapi.fileEditor.FileDocumentManager
 - com.intellij.openapi.vfs.SavingRequestor
 - *:overrideConflictResolution(com.intellij.openapi.fileEditor.FileDocumentManager$ConflictResolution,com.intellij.openapi.Disposable):V

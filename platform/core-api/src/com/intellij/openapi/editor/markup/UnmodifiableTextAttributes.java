@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.markup;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.Color;
 import java.io.DataInput;
@@ -53,6 +54,12 @@ public class UnmodifiableTextAttributes extends TextAttributes {
 
   @Override
   public void setEffectType(EffectType effectType) {
+    throw new UnsupportedOperationException();
+  }
+
+  @ApiStatus.Experimental
+  @Override
+  public void setFontFamilies(@Nullable FontFamilies fontFamilies) {
     throw new UnsupportedOperationException();
   }
 

@@ -61,6 +61,9 @@ public class TextAttributes implements Cloneable {
       if (above.getForegroundColor() != null) {
         merged.setForegroundColor(above.getForegroundColor());
       }
+      if (above.getFontFamilies() != null) {
+        merged.setFontFamilies(above.getFontFamilies());
+      }
       merged.setFontType(above.getFontType() | under.getFontType());
       TextAttributesEffectsBuilder.create(under).coverWith(above).applyTo(merged);
       return merged;
@@ -68,6 +71,7 @@ public class TextAttributes implements Cloneable {
     AttributesFlyweight flyweight = merged.flyweight;
     Color background = above.getBackgroundColor();
     Color foreground = above.getForegroundColor();
+    FontFamilies fontFamilies = above.getFontFamilies();
     int fontType = validFontType(above.getFontType() | under.getFontType());
     AttributesFlyweight mergedFlyweight = TextAttributesEffectsBuilder.create(under)
       .coverWith(above)
@@ -75,7 +79,8 @@ public class TextAttributes implements Cloneable {
         flyweight,
         foreground != null ? foreground : flyweight.getForeground(),
         background != null ? background : flyweight.getBackground(),
-        fontType
+        fontType,
+        fontFamilies != null ? fontFamilies : flyweight.getFontFamilies()
       );
     merged.setFlyweight(mergedFlyweight);
     return merged;
@@ -122,6 +127,9 @@ public class TextAttributes implements Cloneable {
     this.flyweight = flyweight;
   }
 
+  /**
+   * Replaces all fields. The additional effects become empty, and the font families become {@code null}.
+   */
   public void setAttributes(
     Color foregroundColor,
     Color backgroundColor,
@@ -157,6 +165,7 @@ public class TextAttributes implements Cloneable {
       effectColor,
       effectType,
       Collections.emptyMap(),
+      null,
       errorStripeColor
     ));
   }
@@ -177,7 +186,8 @@ public class TextAttributes implements Cloneable {
     return getForegroundColor() == null &&
            getBackgroundColor() == null &&
            getEffectColor() == null &&
-           getFontType() == Font.PLAIN;
+           getFontType() == Font.PLAIN &&
+           getFontFamilies() == null;
   }
 
   public Color getForegroundColor() {
@@ -273,6 +283,16 @@ public class TextAttributes implements Cloneable {
       .applyTo(this);
   }
 
+  @ApiStatus.Experimental
+  public @Nullable FontFamilies getFontFamilies() {
+    return flyweight.getFontFamilies();
+  }
+
+  @ApiStatus.Experimental
+  public void setFontFamilies(@Nullable FontFamilies fontFamilies) {
+    setFlyweight(flyweight.withFontFamilies(fontFamilies));
+  }
+
   public void readExternal(@NotNull Element element) {
     setFlyweight(AttributesFlyweightSerDe.create(element));
   }
@@ -317,6 +337,7 @@ public class TextAttributes implements Cloneable {
            + (getEffectType() == null ? "" : ", effect=" + getEffectType())
            + (getEffectColor() == null ? "" : ", effect color=" + getEffectColor())
            + (flyweight.getAdditionalEffects().isEmpty() ? "" : ", additional=" + flyweight.getAdditionalEffects())
+           + (getFontFamilies() == null ? "" : ", families=" + getFontFamilies())
            + (getErrorStripeColor() == null ? "" : ", stripe=" + getErrorStripeColor())
            + "]";
   }

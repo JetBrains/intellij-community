@@ -70,6 +70,55 @@ public class TextAttributeTest extends TestCase {
     }
   }
 
+  public void testMergeTakesFontFamiliesOfAboveOverThoseOfUnder() {
+    FontFamilies mono = FontFamilies.of("JetBrains Mono");
+    FontFamilies serif = FontFamilies.of("Noto Serif");
+
+    assertEquals(mono, TextAttributes.merge(withFontFamilies(mono), new TextAttributes()).getFontFamilies());
+    assertEquals(serif, TextAttributes.merge(new TextAttributes(), withFontFamilies(serif)).getFontFamilies());
+    assertEquals(serif, TextAttributes.merge(withFontFamilies(mono), withFontFamilies(serif)).getFontFamilies());
+  }
+
+  public void testApplyToKeepsFontFamilies() {
+    TextAttributes attributes = withFontFamilies(FontFamilies.of("JetBrains Mono"));
+
+    TextAttributesEffectsBuilder.create().coverWith(EffectType.WAVE_UNDERSCORE, new Color(0xFF0000)).applyTo(attributes);
+
+    assertEquals(FontFamilies.of("JetBrains Mono"), attributes.getFontFamilies());
+  }
+
+  public void testFontFamiliesMakeAttributesNotEmpty() {
+    assertTrue(new TextAttributes().isEmpty());
+    assertFalse(withFontFamilies(FontFamilies.of("JetBrains Mono")).isEmpty());
+  }
+
+  public void testSetAttributesResetsFontFamilies() {
+    TextAttributes attributes = withFontFamilies(FontFamilies.of("JetBrains Mono"));
+
+    attributes.setAttributes(new Color(0x112233), null, null, null, null, Font.PLAIN);
+
+    assertNull(attributes.getFontFamilies());
+  }
+
+  public void testCopyFromAndCloneKeepFontFamilies() {
+    TextAttributes attributes = withFontFamilies(FontFamilies.of("JetBrains Mono"));
+    TextAttributes copy = new TextAttributes();
+
+    copy.copyFrom(attributes);
+
+    assertEquals(attributes.getFontFamilies(), copy.getFontFamilies());
+    assertEquals(attributes.getFontFamilies(), attributes.clone().getFontFamilies());
+  }
+
+  public void testUnmodifiableTextAttributesRejectFontFamilies() {
+    try {
+      new UnmodifiableTextAttributes().setFontFamilies(FontFamilies.of("JetBrains Mono"));
+      fail("UnmodifiableTextAttributes must reject font families");
+    }
+    catch (UnsupportedOperationException ignored) {
+    }
+  }
+
   public void testWriteOpaqueColorsToElement() {
     TextAttributes attributes = new TextAttributes(new Color(0xAF, 0x1D, 0x1D), new Color(0x00, 0x00, 0xFF),
                                                    null, EffectType.BOXED, Font.PLAIN);
@@ -105,6 +154,12 @@ public class TextAttributeTest extends TestCase {
     TextAttributes attributes = new TextAttributes(element);
     assertEquals(new Color(0xAF, 0x1D, 0x1D), attributes.getForegroundColor());
     assertEquals(new Color(0x00, 0x00, 0xFF), attributes.getBackgroundColor());
+  }
+
+  private static TextAttributes withFontFamilies(FontFamilies fontFamilies) {
+    TextAttributes attributes = new TextAttributes();
+    attributes.setFontFamilies(fontFamilies);
+    return attributes;
   }
 
   private static Map<EffectType, Color> allEffects(TextAttributes attributes) {
