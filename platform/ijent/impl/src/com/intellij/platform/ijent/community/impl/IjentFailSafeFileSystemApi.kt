@@ -34,6 +34,7 @@ import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 import com.intellij.platform.ijent.throwIfInsideIjentFsBlocking
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -74,6 +75,16 @@ import kotlin.coroutines.EmptyCoroutineContext
  *  twice if a networking issue happens during the first attempt of writing.
  *  In order to solve this problem, IjentFileSystemApi MUST guarantee idempotency of every call.
  */
+@VisibleToClasses(
+  "com.intellij.docker.ijent.mrfs.EelDockerMrfsBackend",
+  "com.intellij.platform.eel.tcp.TcpEelMrfsBackend",
+  "com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemApiTest",
+  "com.intellij.platform.ijent.community.impl.IjentFsBlockingFailFastSimulationTest",
+  "com.intellij.platform.ijent.community.impl.nio.IjentEphemeralRootAwarePathTest",
+  "com.intellij.platform.ijent.functional.fs.IjentWindowsFileSystemTest",
+  "com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend",
+)
 fun ijentFailSafeFileSystemApi(
   coroutineScope: CoroutineScope,
   descriptor: EelDescriptor,

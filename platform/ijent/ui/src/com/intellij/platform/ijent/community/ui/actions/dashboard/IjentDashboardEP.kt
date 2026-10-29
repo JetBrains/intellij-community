@@ -6,10 +6,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.ijent.IjentApi
 import com.intellij.platform.ijent.IjentSession
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.clouds.docker.gateway.ui.dashboard.DevcontainerDashboardActionKt",
+  "com.intellij.clouds.docker.gateway.ui.dashboard.IjentDashboardTabPorts",
+)
 interface IjentDashboardTab {
   @get:NlsContexts.TabTitle
   val name: String

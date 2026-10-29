@@ -11,6 +11,7 @@ import com.intellij.platform.ijent.IjentCallerContext
 import com.intellij.platform.ijent.IjentRegistry
 import com.intellij.platform.ijent.ReconnectUiDialog
 import com.intellij.platform.ijent.ReconnectUiHandle
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
@@ -34,8 +35,16 @@ import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
 
 /** Signals the user's final decision to stop waiting for IJent. */
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.EdtOnceTask",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
+)
 class IjentUnavailableUserDecisionException(message: String) : IOException(message)
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+)
 interface IjentUnavailableHandler {
   suspend fun showModalDialog(eelDescriptor: EelDescriptor, uiHandle: ReconnectUiHandleImpl): Nothing
   companion object {
@@ -43,6 +52,10 @@ interface IjentUnavailableHandler {
   }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
+)
 class ReconnectUiHandleImpl : ReconnectUiHandle {
   private val requested = CompletableDeferred<Unit>()
   // interpreted as a plain flow of state, Pending -> Showing -> Pending -> Showing
@@ -81,6 +94,12 @@ class ReconnectUiHandleImpl : ReconnectUiHandle {
   }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.EdtOnceTask",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogHandler",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.IjentUnavailableDialogKt",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogService",
+)
 class ReconnectUiDialogImpl(val modalityState: ModalityState, override val component: Component) : ReconnectUiDialog {
   // positive if somebody is using the dialog, negative if the dialog is disposed
   val leaseCount: MutableStateFlow<Int> = MutableStateFlow(0)
@@ -89,6 +108,9 @@ class ReconnectUiDialogImpl(val modalityState: ModalityState, override val compo
     get() = Dispatchers.EDT + modalityState.asContextElement()
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemUtil",
+)
 internal suspend fun <T> showModalDialogOnTimeout(eelDescriptor: EelDescriptor, callerContext: IjentCallerContext, body: suspend () -> T): T {
   // TODO behavior should depend on caller context:
   //  for EDT - basic events could be dispatched even before showing dialog.

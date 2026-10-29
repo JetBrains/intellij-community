@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
@@ -9,6 +10,18 @@ import java.awt.Component
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+@VisibleToClasses(
+    "com.intellij.platform.ijent.IjentCoroutinesUtilTest",
+    "com.intellij.platform.ijent.community.impl.DelegateHolder",
+    "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemApiKt",
+    "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemApiTest",
+    "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemUtil",
+    "com.intellij.platform.ijent.community.impl.nio.IjentUnavailableHandlerKt",
+    "com.intellij.platform.ijent.community.ui.actions.dashboard.EmulateIjentFreezeAction",
+    "com.intellij.platform.ijent.community.ui.actions.unavailable.EdtOnceTask",
+    "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
+    "com.intellij.platform.ijent.functional.IjentRestartTest",
+)
 class IjentCallerContext(
   val isRead: Boolean,
   val isWrite: Boolean,
@@ -26,6 +39,9 @@ class IjentCallerContext(
   }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemUtil",
+)
 fun IjentCallerContext.allowCancellableNio(): Boolean {
   return when {
     isRead && !isWrite -> IjentRegistry.getInstance().isEnabled("ijent.nio.cancellable.read", true)
@@ -33,6 +49,14 @@ fun IjentCallerContext.allowCancellableNio(): Boolean {
   }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.IjentCoroutinesUtilTest",
+  "com.intellij.platform.ijent.community.impl.DelegateHolder",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemApiKt",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemApiTest",
+  "com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemUtil",
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
+)
 class IjentCallerContextElement(val callerContext: IjentCallerContext) : AbstractCoroutineContextElement(Key) {
   object Key : CoroutineContext.Key<IjentCallerContextElement>
 }
@@ -57,6 +81,13 @@ class IjentCallerContextElement(val callerContext: IjentCallerContext) : Abstrac
  * in `intellij.platform.ijent.community.impl`.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.frontend.split.baseline.eel.RdEelTransportRegistry",
+  "com.intellij.platform.ijent.IjentCoroutinesUtilTest",
+  "com.intellij.platform.ijent.community.impl.DelegateHolder",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemApiKt",
+  "com.intellij.platform.ijent.ssh.impl.AbstractIjentSshManager",
+)
 suspend fun throwIfInsideIjentFsBlocking() {
   if (currentCoroutineContext()[IjentCallerContextElement.Key] != null) {
     throw IllegalStateException(

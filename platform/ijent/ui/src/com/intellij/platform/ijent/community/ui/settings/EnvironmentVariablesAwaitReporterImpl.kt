@@ -23,6 +23,7 @@ import com.intellij.platform.ijent.LoginShellEnvVarMode
 import com.intellij.platform.ijent.LoginShellEnvVarModeProvider
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.loginShellEnvVarMode
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +47,9 @@ private const val NOTIFICATION_GROUP_ID: String = "IJent.EnvironmentVariables"
  *  4. Probing the user-selected mode (per [LoginShellEnvVarModeProvider]) does NOT return a
  *     successful response shortly.
  */
+@VisibleToClasses(
+    "com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitNotifier",
+)
 internal class EnvironmentVariablesAwaitReporterImpl(
   private val cs: CoroutineScope,
 ) : EnvironmentVariablesAwaitReporter {
@@ -96,6 +100,9 @@ internal class EnvironmentVariablesAwaitReporterImpl(
 }
 
 @Service(Service.Level.APP)
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl",
+)
 internal class EnvironmentVariablesAwaitNotifier {
   private data class Key(val descriptor: EelDescriptor, val mode: Mode)
 

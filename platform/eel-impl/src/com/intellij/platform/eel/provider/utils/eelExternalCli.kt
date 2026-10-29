@@ -1,9 +1,10 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import externalApp.ExternalAppEntry
 import externalApp.ExternalCli
 import kotlinx.coroutines.CoroutineScope
@@ -32,6 +33,10 @@ private class EelExternalAppEntry(val process: EelExecApi.ExternalCliProcess) : 
 private fun EelExecApi.ExternalCliProcess.toExternalAppEntry(): ExternalAppEntry = EelExternalAppEntry(this)
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.externalProcessAuthHelper.ExternalProcessHandlerService",
+  "git4idea.commit.signing.PinentryService",
+)
 suspend fun EelExecApi.serveExternalCli(coroutineScope: CoroutineScope, scriptBody: ExternalCli, options: EelExecApi.ExternalCliOptions): EelPath {
   val script = createExternalCli(options)
   @OptIn(DelicateCoroutinesApi::class)

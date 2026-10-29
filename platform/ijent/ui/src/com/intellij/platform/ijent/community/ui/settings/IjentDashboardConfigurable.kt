@@ -29,6 +29,7 @@ import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard
 import com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard.FetchEnvVarsMode
 import com.intellij.platform.ijent.community.ui.actions.dashboard.TerminalDashboard
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.builder.panel
@@ -54,6 +55,15 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.dashboard.EnvironmentVariablesDashboard",
+  "com.intellij.platform.ijent.community.ui.actions.dashboard.TerminalDashboard",
+  "com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitNotifier",
+  "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurableProvider",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeSettings",
+  "com.intellij.platform.ijent.community.ui.settings.PerMachineSettingsBase",
+)
 internal class IjentDashboardConfigurable(val project: Project) : SearchableConfigurable, Configurable.NoScroll {
   override fun getId(): String = "ijent.settings.dashboard"
   override fun getDisplayName(): String = IjentImplBundle.message("configurable.ijent.dashboard.display.name")

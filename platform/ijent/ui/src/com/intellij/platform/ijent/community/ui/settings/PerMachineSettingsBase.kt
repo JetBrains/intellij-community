@@ -2,7 +2,13 @@ package com.intellij.platform.ijent.community.ui.settings
 
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.util.annotations.VisibleToClasses
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeSettings",
+)
 internal abstract class PerMachineSettingsBase<T, STATE> : PersistentStateComponent<STATE> where STATE : PerMachineSettingsBase.PerMachineState<T> {
 
   interface PerMachineState<T> {

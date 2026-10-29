@@ -3,6 +3,7 @@ package com.intellij.platform.eel.impl.base
 
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelProcess
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -15,6 +16,11 @@ import kotlin.coroutines.cancellation.CancellationException
  * Used by implementors to support [scope]
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.impl.local.EelLocalExecPosixApi",
+  "com.intellij.platform.eel.impl.local.EelLocalExecWindowsApi",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentExecApiDelegate",
+)
 fun EelExecApi.ExecuteProcessOptions.bindProcessToScopeIfSet(
   process: EelProcess,
   killExecutionScope: CoroutineScope? = null,

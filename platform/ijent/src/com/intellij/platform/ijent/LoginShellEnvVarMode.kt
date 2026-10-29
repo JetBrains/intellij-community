@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent
 
 import com.intellij.platform.eel.EelMachine
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.util.ServiceLoader
 
@@ -26,6 +27,11 @@ enum class LoginShellEnvVarMode {
  * `intellij.platform.ijent.community.ui` reads it from the ui setting.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.LoginShellEnvVarModeProviderSpiForwarder",
+  "com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl",
+)
 fun interface LoginShellEnvVarModeProvider {
   fun get(eelMachine: EelMachine): LoginShellEnvVarMode
 }
@@ -39,5 +45,9 @@ private val provider: LoginShellEnvVarModeProvider? by lazy {
  * provider is registered.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.settings.EnvironmentVariablesAwaitReporterImpl",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentExecPosixApi",
+)
 fun loginShellEnvVarMode(eelMachine: EelMachine): LoginShellEnvVarMode =
   provider?.get(eelMachine) ?: LoginShellEnvVarMode.LOGIN_INTERACTIVE

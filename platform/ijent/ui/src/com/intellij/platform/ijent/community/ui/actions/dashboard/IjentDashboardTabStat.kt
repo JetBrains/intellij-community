@@ -7,6 +7,7 @@ import com.intellij.platform.ijent.IjentMethodStat
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.IjentStatCounter
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.dsl.builder.Align
@@ -80,6 +81,9 @@ private fun Duration.toShortString(): String {
   return this.toString(DurationUnit.NANOSECONDS, 0)
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard",
+)
 internal fun createReadOnlyMonoViewer(rows: Int, cols: Int): JBTextArea =
   JBTextArea(rows, cols).apply {
     isEditable = false

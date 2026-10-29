@@ -35,6 +35,7 @@ import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
 import com.intellij.platform.ijent.community.ui.actions.dashboard.IjentStatDashboard
 import com.intellij.platform.ijent.community.ui.actions.dashboard.printTable
 import com.intellij.platform.ijent.runningIjentSessionOrNull
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
@@ -98,6 +99,9 @@ private class EdtOnceTask : OnceTask<Nothing, ReconnectUiDialogImpl>(
 @Service
 @ApiStatus.Internal
 @VisibleForTesting
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
+)
 class NotRespondingFilesystemDialogService {
   private val pendingRequests = ConcurrentHashMap<EelDescriptor, Pair<List<Project>, EdtOnceTask>>()
   suspend fun doOnceOrWait(dialogParams: IjentUnavailableDialogHandler.DialogParams, onComputing: (Deferred<ReconnectUiDialogImpl>) -> Unit, f: suspend (CompletableDeferred<ReconnectUiDialogImpl>) -> Nothing): Nothing {
@@ -128,6 +132,9 @@ class NotRespondingFilesystemDialogService {
   }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.NotRespondingFilesystemDialogServiceTest",
+)
 @ApiStatus.Internal
 @VisibleForTesting
 class IjentUnavailableDialogHandler : IjentUnavailableHandler {

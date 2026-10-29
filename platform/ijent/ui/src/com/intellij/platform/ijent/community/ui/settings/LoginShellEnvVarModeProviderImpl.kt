@@ -11,7 +11,13 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.ijent.LoginShellEnvVarMode
 import com.intellij.platform.ijent.LoginShellEnvVarModeProvider
 import com.intellij.platform.ijent.community.ui.actions.IjentImplBundle
+import com.intellij.platform.util.annotations.VisibleToClasses
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeSettings",
+  "com.intellij.platform.ijent.community.ui.settings.PerMachineSettingsBase",
+)
 internal class LoginShellEnvVarModeProviderImpl : LoginShellEnvVarModeProvider {
   /**
    * The advanced-setting-side enum, kept nested so its localized [toString] (which depends on
@@ -20,6 +26,10 @@ internal class LoginShellEnvVarModeProviderImpl : LoginShellEnvVarModeProvider {
    * by its binary name.
    */
   @Suppress("unused") // Referenced by FQN from intellij.platform.ijent.community.ui.xml
+  @VisibleToClasses(
+      "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+      "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeSettings",
+  )
   enum class EnvVarShellMode {
     LOGIN_INTERACTIVE {
       override fun toString(): String =
@@ -49,10 +59,16 @@ internal class LoginShellEnvVarModeProviderImpl : LoginShellEnvVarModeProvider {
   storages = [Storage("nonLocalTargets.xml", roamingType = RoamingType.LOCAL)]
 )
 @Service(Service.Level.APP)
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+  "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl",
+  "com.intellij.platform.ijent.community.ui.settings.PerMachineSettingsBase",
+)
 internal class LoginShellEnvVarModeSettings : PerMachineSettingsBase<LoginShellEnvVarModeSettings.TargetSettings, LoginShellEnvVarModeSettings.State>() {
   data class TargetSettings(
     var envVarShellMode: LoginShellEnvVarModeProviderImpl.EnvVarShellMode = LoginShellEnvVarModeProviderImpl.EnvVarShellMode.LOGIN_INTERACTIVE
   )
+
   class State : PerMachineState<TargetSettings> {
     override var data: MutableMap<String, TargetSettings> = mutableMapOf()
   }
@@ -61,6 +77,10 @@ internal class LoginShellEnvVarModeSettings : PerMachineSettingsBase<LoginShellE
     return TargetSettings(envVarShellMode = AdvancedSettings.getEnum("container.environments.env.var.shell.mode", LoginShellEnvVarModeProviderImpl.EnvVarShellMode::class.java))
   }
   companion object {
+    @VisibleToClasses(
+      "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+      "com.intellij.platform.ijent.community.ui.settings.LoginShellEnvVarModeProviderImpl",
+    )
     fun getInstance(): LoginShellEnvVarModeSettings = service()
   }
 }

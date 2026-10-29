@@ -2,6 +2,7 @@
 
 package com.intellij.platform.ijent.community.ui.actions.unavailable
 
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,6 +12,9 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 /** Caches a value or a failure selected by [shouldCacheFailure]. Other failures permit another attempt. */
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.unavailable.OnceTaskTest",
+)
 @ApiStatus.Internal
 @VisibleForTesting
 abstract class OnceTask<T, C>(private val shouldCacheFailure: (Throwable) -> Boolean) {

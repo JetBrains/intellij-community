@@ -4,6 +4,7 @@ package com.intellij.platform.ijent.community.ui.actions.dashboard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.terminal.JBTerminalWidget
 import com.intellij.terminal.pty.PtyProcessTtyConnector
@@ -11,11 +12,12 @@ import com.intellij.terminal.ui.TerminalWidget
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.StandardCharsets
 
-@ApiStatus.Internal
-class TerminalDashboard(
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+)
+internal class TerminalDashboard(
   private val project: Project,
   private val parentDisposable: Disposable,
 ) {

@@ -7,6 +7,7 @@ import com.intellij.execution.util.EnvironmentVariable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.platform.eel.EelExecApi.EnvironmentVariablesException
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.ui.AnActionButtonRunnable
 import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.panel
@@ -17,8 +18,11 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
-class EnvironmentVariablesDashboard(private val modeProperty: Flow<FetchEnvVarsMode>) {
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.ui.actions.dashboard.IjentDashboardTabEnvVars",
+  "com.intellij.platform.ijent.community.ui.settings.IjentDashboardConfigurable",
+)
+internal class EnvironmentVariablesDashboard(private val modeProperty: Flow<FetchEnvVarsMode>) {
 
   class FetchEnvVarsMode(val doFetch: suspend () -> Map<String, String>)
 

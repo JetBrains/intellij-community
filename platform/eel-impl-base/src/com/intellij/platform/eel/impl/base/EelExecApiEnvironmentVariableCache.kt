@@ -3,6 +3,7 @@ package com.intellij.platform.eel.impl.base
 
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.SafeDeferred
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CompletableDeferred
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
@@ -11,6 +12,10 @@ import java.util.concurrent.ConcurrentHashMap
  * [makeEnvironmentVariablesDeferred] MUST return deferreds with `CoroutineStart.LAZY`.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.impl.local.EelLocalExecPosixApi",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentExecApiDelegate",
+)
 class EelExecApiEnvironmentVariableCache(
   private val makeEnvironmentVariablesDeferred: (EelExecApi.EnvironmentVariablesOptions.Mode) -> SafeDeferred<Map<String, String>>,
 ) {
