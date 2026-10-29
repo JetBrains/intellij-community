@@ -6,125 +6,112 @@ description: Migrate IntelliJ JPS module tests to Bazel; debug Bazel-only failur
 
 # Bazel Test Migration
 
-Use this skill when switching an IntelliJ JPS test module to Bazel, fixing a Bazel-only test failure, or reviewing migration wiring.
+Use this skill to migrate a JPS test module, fix a Bazel-only failure, or review a migration.
+Migrate the complete module. Keep existing test behavior unless a failure proves that the test depends on an invalid environment assumption.
 
-## Core Workflow
+## Establish the Baseline
 
-1. Identify the real test module and Bazel label.
-   - From the Ultimate root, community packages usually need `@community//...`.
-   - From a standalone community checkout, use `//...`.
-   - Do not assume the unqualified label is equivalent in both repositories.
+- Inspect the current branch, test framework, `.iml`, and generated target. Use earlier migration commits as references, not patches to apply unchanged.
+- Identify the module that contains the tests. From Ultimate, use `@community//...` for Community targets. From standalone Community, use `//...`.
+- Record known failures and the user's exclusions from the task. Do not fix unrelated failures or silently remove them from the run.
+- Use existing CI results or an initial target run to establish the failures. During debugging, use a class or method filter.
 
-2. Treat `.iml` as the source of truth.
-   - Add module dependencies to the test module `.iml` first.
-   - Prefer `scope="TEST"` for new test-only dependencies.
-   - Use `RUNTIME` only when the dependency must be present as a runtime plugin/resource/classpath entry and `TEST` is not enough.
-   - Do not hand-maintain generated `BUILD.bazel` sections except for intentionally custom `jps_test` sections protected by `### skip generation section`.
+For normal test commands, read the [testing skill](../testing/SKILL.md).
+During migration, run the Bazel target directly if `bt` refuses a module that is not yet marked as migrated.
 
-3. Regenerate after every `.iml` or `BUILD.bazel` metadata change.
+## Configure the Target
 
-```bash
-community/tools/bun.cmd build/jps-module.mjs register path/to/module.iml --fix-iml-eof
-./build/jpsModelToBazel.cmd
-```
+Keep `.iml` as the dependency source. Follow the [module dependencies skill](../module-dependencies/SKILL.md) for registration and generation.
 
-4. Verify with the Bazel target the user will run.
+- Use `scope="RUNTIME"` for plugins needed only for runtime loading, descriptors, extensions, or resources. Do not add them as `TEST` merely because tests need them.
+- Keep APIs required to compile test sources in the appropriate compile or `TEST` scope.
+- Load the owning plugin or wrapper when its descriptor is required. Do not manually register production extensions in test setup.
+- Fix a production descriptor only if its dependency is also wrong in production. An incomplete test product usually needs a test module dependency.
+- Keep custom `jps_test` declarations outside generated sections. Preserve the existing `runtime_deps`, `tags`, `timeout`, `env`, `jvm_flags`, and `data`.
 
-```bash
-./bazel.cmd test --cache_test_results=no @community//path/to/package:target_test
-```
-
-For a community-only module in a standalone community checkout, run the same package as `//path/to/package:target_test`.
-
-## BUILD.bazel Rules
-
-- Keep custom `jps_test` sections at the top when a module already needs custom test options.
-- Protect a custom test section with:
+Protect a custom test section with the exact module name:
 
 ```starlark
 ### skip generation section `test module.name`
 ```
 
-- Preserve required test attributes such as `tags`, `timeout`, `env`, `jvm_flags`, and `data`.
-- Add a module to `community/build/bazel-migrated-test-modules.txt` only after the target is fully migrated and verified. The community JPS aggregator then skips the module, and `tests.cmd` refuses it. The file documents its format.
-- Do not use `copy_file` to patch missing jars or descriptors into runfiles. Prefer normal `.iml` dependencies, target runtime/data dependencies, or the existing shared mechanism for that class of test.
+Register changed modules and regenerate from the Ultimate root:
 
-## Dependency Decisions
+```bash
+./community/tools/bun.cmd build/jps-module.mjs register path/to/module.iml --fix-iml-eof
+./build/jpsModelToBazel.cmd
+```
 
-Use the smallest dependency that matches what failed:
+In standalone Community, follow its registration instructions and run `./build/jpsModelToBazelCommunityOnly.cmd`.
+Do not patch missing jars or descriptors into runfiles with `copy_file`.
 
-- Compile error: add a normal module dependency to `.iml`.
-- Test code compiles but class/resource is absent at runtime: add a TEST-scope dependency if generated Bazel runtime wiring is enough; otherwise use runtime/data wiring in the custom `jps_test`.
-- Plugin descriptor extension/action/inspection is missing: load the owning plugin or content module, not the implementation class by hand.
-- Product plugin wrapper is required: add the wrapper plugin/module dependency to the test module rather than depending only on its internal content module.
-- Testdata is missing: add the testdata as `data` or ensure the existing generator includes it; do not rely on source-tree paths under Bazel.
+## Resolve Test Inputs
 
-Before changing tests, verify whether the failure is really a test assertion issue or just missing runtime/plugin/testdata wiring.
+Use all three parts of the test data contract:
 
-## Common Bazel-Only Failures
+1. Declare the required files in a `filegroup`, or reuse an existing one.
+2. Add that target to the test's `data`.
+3. Resolve the runtime path through an existing helper or `BazelTestUtil.getFileFromBazelRuntime(BazelLabel)`.
 
-### No tests found
+Prefer a helper such as `JavaTestUtil.getJavaTestDataPath()` when it already supports Bazel.
+Keep the existing non-Bazel behavior. Check static fields, companion properties, and serialization inputs as well as fixture path overrides.
 
-Check that test classes are in the generated `*_test_lib`, the Bazel target points to that test library, and the class names match the runner convention. If the module truly has no tests, there may be nothing to migrate.
+- Keep the path returned by the runfiles resolver, including manifest-based results. Do not use `toRealPath()` to redirect test data back to the checkout.
+- Do not construct paths from `PathManager.getHomePath()`, `community+`, or `_main` under Bazel. The resolver handles repository mapping.
+- Preserve relative-path API contracts. When a fixture joins a base path to the repository root, override its absolute `getTestDataPath()` instead.
+- A filegroup declares files; it does not rename them. Check that the requested label path exists among the runtime inputs.
+- Treat test data and downloaded archives as read-only. Copy projects or unpack archives into a unique temporary directory before modifying them.
 
-### Missing extension, inspection, action, keymap action, or file type
+Read [test data and writable files](references/recipes.md#test-data-and-writable-files) for examples and VFS access handling.
+For downloads or child builds, read [external inputs](references/recipes.md#external-inputs) and [nested builds](references/recipes.md#nested-builds).
 
-Search for the extension/action/inspection id and identify the descriptor that registers it. Add the owning plugin/module dependency. Do not manually register production extensions in test setup unless the test is explicitly about a local fake extension.
+## Debug Focused Failures
 
-Example: an action registered into `EditorGutterVcsPopupMenu` needs the VCS implementation descriptor that owns that group, not just VCS API classes.
+Run the failing class with fresh test results:
 
-### Plugin action group is not registered
+```bash
+./bazel.cmd test --cache_test_results=no \
+  --test_filter='com.example.ExampleTest' \
+  @community//path/to/package:target_test
+```
 
-If plugin A registers an action into a group contributed by plugin/module B, plugin A must depend on B or move the action registration into a B-aware optional/content descriptor. Fix the descriptor dependency when production loading is also inconsistent; fix the test dependency only when the test product intentionally omits an otherwise valid product plugin.
+Use `com.example.ExampleTest#testMethod` for one method.
+Avoid repeated full-module runs while diagnosing a focused failure.
 
-### JPS compile-server classpath failure
+- Read `test.log`, `idea.log`, and JUnit XML. Inspect the actual command, environment, and declared inputs before changing assertions.
+- Distinguish missing input or plugin wiring from behavior failures. Use [failure diagnosis](references/recipes.md#failure-diagnosis) for common cases.
+- If a test passes alone, check shared state and project reuse. Restore settings and include relevant configuration in fixture cache identity.
+- Fix a shared helper when it owns the defect. Avoid repeated test-local patches for the same helper bug.
+- Keep broad platform or JDK fixes separate when they need independent review. A temporary test-local workaround must preserve the test's purpose and identify the follow-up.
+- Keep existing assertions and coverage. Do not add exclusions, assumptions, or disabled tests merely to make the migration green.
+- Use assumptions only for genuine environment restrictions. Declare required environment variables in the target instead of relying on the developer's shell.
 
-When integration tests invoke JPS compilation, failures like missing JPS jars or compile-server plugin classpaths usually mean Bazel runfiles cannot resolve a plugin/module path the same way JPS does.
+## Verify the Complete Target
 
-- Prefer the common Bazel target mapping/runfiles mechanism.
-- Ensure Bazel repo mapping from the parent process is propagated when nested Bazel/JPS logic needs to resolve labels.
-- Do not compare file contents to guess class roots.
-- Do not copy individual plugin jars into runfiles as one-off fixes.
+Remove diagnostic selectors and run the exact target without a test filter:
 
-### Missing required Bazel properties
+```bash
+./bazel.cmd test --cache_test_results=no @community//path/to/package:target_test
+```
 
-If code expects Bazel-only properties such as target mappings or runfiles metadata, pass them through the `jps_test` target using the established option (`jvm_flags`, `env`, or `data`) and add the backing file to runfiles.
+- Confirm that tests actually ran. A selected method can pass even when normal discovery misses its class.
+- Check the test library and discovery roots before changing placement. Adding a dependency does not guarantee that its tests are discovered.
+- Separate framework tests into a dedicated module or Bazel package when their current placement mixes framework code and executable tests.
+- Do not use a growing class whitelist to compensate for incorrect placement. Keep the new module with its natural owner.
+- Prefer `sandbox = True` once inputs and writable locations are declared. Preserve an existing sandbox; document any remaining exception.
+- Check affected JPS or IDE runs when changing shared helpers. Check relevant CI platforms because local success does not prove portable path handling.
 
-### Standalone community differs from Ultimate
+See [discovery and sandbox checks](references/recipes.md#discovery-and-sandbox-checks) for details.
 
-Re-check labels, repo mappings, and generated runfiles. A target can pass as `@community//...` from Ultimate and fail as `//...` in standalone community if the test relies on parent-repo runfiles or missing repo mapping.
+## Complete the Switch
 
-### TeamCity-only slowdown or timeout
+- Select complete modules through the target tags and CI configuration. Do not migrate only the convenient classes in a module.
+- For a CI rollout, compare actual test coverage before removing the JPS run. Follow [CI coverage comparison](references/recipes.md#ci-coverage-comparison).
+- Check CI and Safe-Push selection separately. Update their target lists or selectors within the requested scope; keep JPS coverage for modules not yet migrated.
+- Add the module to [the migrated-module list](../../../build/bazel-migrated-test-modules.txt) only after verification and replacement coverage are established.
+- The list makes `tests.cmd` refuse migrated modules. Do not assume it configures every CI build or automatically removes every JPS invocation.
+- Verify generated metadata, run the required format checks, and run `git diff --check`.
+- Report the focused and complete runs, known failures, and any unverified CI coverage. Do not describe a run as green when known failures remain.
 
-Look for the first expensive operation under Bazel: indexing, plugin loading, coroutine dispatch, first service initialization, or filesystem/runfiles traversal. Prefer moving one-time initialization to setup or making the test wait for the actual condition. Avoid raising timeouts as the first fix.
-
-## Test Changes
-
-Keep test edits minimal.
-
-- Prefer dependency/plugin/testdata wiring over changing assertions.
-- Do not add filters or exclusions to hide failures during migration.
-- Use assumptions only for genuine environment-gated tests, and pass required environment variables through Bazel so developers can still run the tests without editing `BUILD.bazel`.
-- Avoid moving test classes between modules to satisfy Bazel discovery; fix dependencies or target roots instead.
-- Avoid broad helper abstractions unless the same migration problem repeats across modules and there is already an established local pattern.
-
-## Debugging Checklist
-
-1. Read the failing `idea.log`, `test.log`, and JUnit XML if present.
-2. Search for the missing id/class/resource in descriptors and `.iml` files.
-3. Inspect the test target's generated `runtime_deps`, `deps`, `data`, `env`, and `jvm_flags`.
-4. Compare JPS and Bazel classpaths only to identify missing ownership; fix ownership in `.iml` or plugin descriptors.
-5. Run the smallest failing class or method with `--cache_test_results=no`.
-6. Run the whole migrated target after the focused failure passes.
-7. Run `git diff --check` before finishing.
-
-## Migration Completion
-
-A module is migrated only when:
-
-- the correct Bazel target runs with `--cache_test_results=no`;
-- required plugin/runtime/testdata dependencies are declared normally;
-- generated `BUILD.bazel` matches `.iml`;
-- no migration-only test exclusions were added;
-- aggregator lists are updated when required;
-- known unrelated broken tests are documented explicitly in the final report.
+Keep test data resolution changes separate from configuration changes when that makes review easier.
+Put independently reviewed framework fixes in separate commits when requested.
