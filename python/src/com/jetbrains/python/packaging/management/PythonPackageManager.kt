@@ -271,7 +271,7 @@ abstract class PythonPackageManager @ApiStatus.Internal constructor(
 
     // Outside the mutex: in a headless run the SDK update is synchronous, and the update it queues reloads the packages.
     if (!isInit) {
-      withContext(NonCancellable) {
+      withContext(NonCancellable + ModalityState.nonModal().asContextElement()) {
         refreshPaths(project, interpreter)
       }
     }

@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.isModalAwareContext
 import com.intellij.openapi.application.readAndBackgroundWriteAction
 import com.intellij.openapi.application.useBackgroundWriteAction
 import com.intellij.openapi.diagnostic.FrequentEventDetector
@@ -206,6 +207,7 @@ class RefreshQueueImpl(coroutineScope: CoroutineScope) : RefreshQueue(), Disposa
   }
 
   private suspend fun processEventsSuspending(session: RefreshSessionImpl, events: Collection<VFileEvent>) {
+    LOG.assertTrue(isModalAwareContext(), "Write lock is taken here, so the context modality must not be ModalityState.any()")
     val evQueuedAt = System.nanoTime()
     val evTimeInQueue = AtomicLong(-1)
     val evListenerTime = AtomicLong(-1)
