@@ -10,8 +10,8 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeText
 
 /**
- * Runs [DocLinkChecker] and [AdrChainChecker] on small feature folders, so each kind of problem is found and each
- * correct link passes.
+ * Runs [DocLinkChecker], [AdrChainChecker] and [AdrNumberChecker] on small feature folders, so each kind of problem
+ * is found and each correct link passes.
  */
 class DocCheckersTest {
   @TempDir
@@ -34,19 +34,26 @@ class DocCheckersTest {
   private fun chainProblems(maxChainLength: Int = 2): List<String> =
     AdrChainChecker(feature.resolve("adr"), maxChainLength).findProblems().map { it.message }
 
-  private fun adr(number: String, status: String) {
-    write("adr/$number-decision-$number.md", """
-      # $number. Decision $number
+  private fun numberProblems(): List<String> =
+    AdrNumberChecker(feature.resolve("adr")).findProblems().map { it.message }
 
-      ## Status
-
-      $status
-
-      ## Context
-
-      Text.
-    """)
+  private fun adr(number: String, status: String, slug: String = "decision-$number", earlierDecisions: String = "") {
+    write("adr/$number-$slug.md", """
+      |# $number. Decision $number
+      |
+      |## Status
+      |
+      |$status
+      |
+      |## Context
+      |
+      |Text.
+      |$earlierDecisions
+    """.trimMargin())
   }
+
+  private fun foldEntries(vararg numbers: String): String =
+    "\n## Earlier decisions\n" + numbers.joinToString("") { "\n### $it, 2026-01-01: the decision $it\n\nText.\n" }
 
   @Test
   fun `correct links pass`() {
@@ -233,6 +240,97 @@ class DocCheckersTest {
     write("AGENTS.md", "Cite a decision as ADR 0001. See [ADR 0002](adr/0001-decision-0001.md).")
     assertEquals(listOf("the link [ADR 0002] points to 0001-decision-0001.md, not to ADR 0002"),
                  linkProblems(extraMarkdown = listOf(feature.resolve("AGENTS.md"))))
+  }
+
+  @Test
+  fun `numbers that each belong to one file or one fold entry pass`() {
+    adr("0001", "Accepted.")
+    adr("0004", "Accepted.", earlierDecisions = foldEntries("0002", "0003"))
+    assertEquals(emptyList<String>(), numberProblems())
+  }
+
+  @Test
+  fun `two files with the same number are found`() {
+    adr("0001", "Accepted.", slug = "first-branch")
+    adr("0001", "Accepted.", slug = "second-branch")
+    assertEquals(listOf("the number 0001 is used 2 times: the file 0001-first-branch.md, the file 0001-second-branch.md"),
+                 numberProblems())
+  }
+
+  @Test
+  fun `a file that reuses a folded number is found`() {
+    adr("0001", "Accepted.")
+    adr("0002", "Accepted.", earlierDecisions = foldEntries("0001"))
+    assertEquals(listOf("the number 0001 is used 2 times: the file 0001-decision-0001.md, " +
+                        "the fold entry in 0002-decision-0002.md:13"), numberProblems())
+  }
+
+  @Test
+  fun `two merged ADRs that fold the same number are found`() {
+    adr("0002", "Accepted.", earlierDecisions = foldEntries("0001"))
+    adr("0003", "Accepted.", earlierDecisions = foldEntries("0001"))
+    assertEquals(listOf("the number 0001 is used 2 times: the fold entry in 0002-decision-0002.md:13, " +
+                        "the fold entry in 0003-decision-0003.md:13"), numberProblems())
+  }
+
+  @Test
+  fun `a number that no file and no fold entry uses is found`() {
+    adr("0001", "Accepted.")
+    adr("0004", "Accepted.", earlierDecisions = foldEntries("0003"))
+    assertEquals(listOf("no ADR file and no fold entry uses the number 0002"), numberProblems())
+  }
+
+  @Test
+  fun `a second merge must keep the fold entries of the merged ADR it folds`() {
+    adr("0003", "Accepted.", earlierDecisions = foldEntries("0001", "0002"))
+    assertEquals(emptyList<String>(), numberProblems())
+    adr("0003", "Accepted.", earlierDecisions = foldEntries("0002"))
+    assertEquals(listOf("no ADR file and no fold entry uses the number 0001"), numberProblems())
+  }
+
+  @Test
+  fun `a numbered heading outside the earlier decisions is not a fold entry`() {
+    adr("0001", "Accepted.")
+    adr("0003", "Accepted.", earlierDecisions = """
+      |
+      |## Rejected alternatives
+      |
+      |### 0001, the old way
+      |
+      |## Earlier decisions
+      |
+      |### 0002, 2026-01-01: the decision 0002
+      |
+      |## Notes
+      |
+      |### 0001, a later section
+    """.trimMargin())
+    assertEquals(emptyList<String>(), numberProblems())
+  }
+
+  @Test
+  fun `a numbered heading in a code block of the earlier decisions is not a fold entry`() {
+    adr("0001", "Accepted.")
+    adr("0003", "Accepted.", earlierDecisions = """
+      |
+      |## Earlier decisions
+      |
+      |```markdown
+      |## Earlier decisions
+      |
+      |### 0001, 2026-01-01: an example entry
+      |```
+      |
+      |### 0002, 2026-01-01: the decision 0002
+    """.trimMargin())
+    assertEquals(emptyList<String>(), numberProblems())
+  }
+
+  @Test
+  fun `an empty or missing ADR folder has no number problems`() {
+    assertEquals(emptyList<String>(), numberProblems())
+    feature.resolve("adr").createDirectories()
+    assertEquals(emptyList<String>(), numberProblems())
   }
 
   @Test
