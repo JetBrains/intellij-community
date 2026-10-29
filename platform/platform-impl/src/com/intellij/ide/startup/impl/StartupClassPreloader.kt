@@ -21,7 +21,7 @@ suspend fun preloadStartupUiClasses() {
     reader.readLines().filter { it.isNotBlank() && !it.startsWith('#') }
   } ?: return
   withContext(Dispatchers.Default) {
-    names.forEachConcurrent(concurrency = 4) { name ->
+    names.forEachConcurrent(concurrency = 8) { name ->
       try {
         Class.forName(name, false, loader).declaredConstructors
       }
