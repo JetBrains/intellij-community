@@ -60,9 +60,7 @@ class SettingsReloadSweepTest {
 
   @Test
   fun `reload installs supplied layers and sweeps the ones a vanished config no longer supplies`(): Unit = runBlocking {
-    val fileService = FileLayerService.getInstance(project)
-    fileService.setWatcherEnabled(false)  // isolate: only reload drives loading, so eviction is the sweep, not a push
-    try {
+    withFileWatcherDisabled(project) {
       // Two configs with different keys: dirA (keyA) and its child dirA/dirB (keyB).
       VfsTestUtil.createFile(sourceRoot, "dirA/${FileLayerService.CONFIG_FILE}", CONFIG_A)
       VfsTestUtil.createFile(sourceRoot, "dirA/dirB/${FileLayerService.CONFIG_FILE}", CONFIG_B)
@@ -99,9 +97,6 @@ class SettingsReloadSweepTest {
       assertEquals("defA", keyA[ctxA])
       assertEquals("defA", keyA[ctxB])
       assertEquals("defB", keyB[ctxB])
-    }
-    finally {
-      fileService.setWatcherEnabled(true)
     }
   }
 

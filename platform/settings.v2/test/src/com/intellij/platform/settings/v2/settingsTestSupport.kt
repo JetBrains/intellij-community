@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.settings.v2
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.settings.v2.impl.providers.FileLayerService
@@ -107,6 +108,23 @@ internal suspend fun assertConfigMatchesSnapshot(dir: VirtualFile, snapshotResou
     while (readConfigOrNull(dir)?.trim() != expected) delay(10.milliseconds)
   }
   UsefulTestCase.assertSameLinesWithFile(expectedPath, readConfig(dir))
+}
+
+/**
+ * Runs [block] while the VFS watcher of the file layer of [project] is off. So only a vault reload loads a directory
+ * config, and only the reload sweep removes the layer of a deleted config. Turns the watcher on again after [block].
+ *
+ * @return the result of [block]
+ */
+internal inline fun <T> withFileWatcherDisabled(project: Project, block: () -> T): T {
+  val fileService = FileLayerService.getInstance(project)
+  fileService.setWatcherEnabled(false)
+  try {
+    return block()
+  }
+  finally {
+    fileService.setWatcherEnabled(true)
+  }
 }
 
 /**

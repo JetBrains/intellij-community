@@ -109,9 +109,7 @@ class FileLayerIndexLookupTest {
    * watcher is off, so only the reload loads the config.
    */
   private fun assertDirectoryConfigWaitsForSmartMode(dirName: String, scopeContext: SettingsContext): Unit = runBlocking {
-    val fileService = FileLayerService.getInstance(project)
-    fileService.setWatcherEnabled(false)
-    try {
+    withFileWatcherDisabled(project) {
       val projectContext = SettingsContext.project(project)
       // The reload of the project open waits for the index too. A reload queues behind it, so the config below stays unloaded.
       vault.reload(projectContext)
@@ -133,9 +131,6 @@ class FileLayerIndexLookupTest {
       withTimeout(30.seconds) { reload.join() }
       assertTrue(dirContext.isReady())
       assertEquals("dir value", key[dirContext])
-    }
-    finally {
-      fileService.setWatcherEnabled(true)
     }
   }
 
