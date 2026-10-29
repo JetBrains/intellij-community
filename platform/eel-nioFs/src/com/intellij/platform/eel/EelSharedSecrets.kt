@@ -4,6 +4,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.fs.EelOpenOption
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
@@ -17,6 +18,14 @@ import java.nio.file.StandardOpenOption
 import java.util.ServiceLoader
 
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.air.acp.runtime.registry.AcpPackageInstallerTest",
+  "com.intellij.platform.eel.nioFs.impl.EelFilesAccessorImpl",
+  "com.intellij.platform.eel.nioFs.impl.EelPlatformUtilAccessorImpl",
+  "com.intellij.platform.eel.provider.nioHelpers.EelFileUtilsTest",
+  "com.intellij.platform.eel.provider.nioHelpers.EelFilesTest",
+  "com.intellij.platform.util.impl.EelPlatformUtilFallbackAccessor",
+)
 object EelSharedSecrets {
   val filesImpl: EelFilesAccessor =
     ServiceLoader.load(EelFilesAccessor::class.java, EelSharedSecrets::class.java.classLoader).firstOrNull()

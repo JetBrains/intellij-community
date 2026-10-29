@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.fs
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,6 +15,16 @@ import org.jetbrains.annotations.ApiStatus
  * A consumer checks: `if (eelApi.fs is EelPrefetchApi) { ... }`.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.provider.PrefetchCache",
+  "com.intellij.platform.eel.provider.PrefetchCacheKt",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApiImpl",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemWindowsApiImpl",
+  "com.intellij.platform.ijent.fs.IjentFileSystemApi",
+  "com.intellij.platform.ijent.functional.IjentApiErrorsTest",
+  "com.intellij.platform.ijent.functional.TcpLocalBootstrapTest",
+  "com.intellij.platform.ijent.functional.fs.IjentFileSystemTest",
+)
 interface EelPrefetchApi {
   /**
    * Walks each root with its metadata in one streaming RPC and emits `(path, info)` pairs.
@@ -30,6 +41,16 @@ interface EelPrefetchApi {
 
 /** The result of a stat cached on its own. It says nothing about a sibling of the path. */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.provider.PrefetchCache",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApiImpl",
+  "com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemWindowsApiImpl",
+  "com.intellij.platform.ijent.functional.fs.IjentFileSystemTest",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemApiDelegate",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApi",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApiPrefetchTest",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemWindowsApi",
+)
 sealed interface PrefetchedStat {
   /**
    * [info] does not follow a symlink, but it carries the link target.

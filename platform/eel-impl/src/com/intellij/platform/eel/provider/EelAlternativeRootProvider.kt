@@ -4,6 +4,7 @@ package com.intellij.platform.eel.provider
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPathBoundDescriptor
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.platform.util.annotations.paths.NioPath
 import org.jetbrains.annotations.ApiStatus
 
@@ -14,6 +15,10 @@ import org.jetbrains.annotations.ApiStatus
  * `\\wsl.localhost\Ubuntu\`, are all kept.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.compiler.server.EelBuildCommandLineBuilder",
+  "com.intellij.platform.ijent.ssh.ui.actions.MySshContributor",
+)
 fun EelDescriptor.routingPrefixes(): List<@NioPath String> {
   val alternativeRoots = EelAlternativeRootProvider.EP_NAME.extensionList.flatMap { it.getAlternativeRoots(this) ?: emptyList() }
   return (alternativeRoots + listOfNotNull((this as? EelPathBoundDescriptor)?.rootPath?.toString())).distinct()

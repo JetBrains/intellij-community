@@ -10,6 +10,7 @@ import com.intellij.platform.eel.fs.openForReading
 import com.intellij.platform.eel.getOr
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -25,6 +26,11 @@ import kotlin.math.max
 
 @OptIn(EelDelicateApi::class)
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.impl.local.NioBasedEelFileSystemApi",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApi",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemWindowsApi",
+)
 suspend fun EelFileSystemApi.readFileImpl(args: EelFileSystemApi.ReadFileArgs): EelResult<EelFileSystemApi.ReadFileResult, EelFileSystemApi.FileReaderError> =
   readFileImpl(
     path = args.path,

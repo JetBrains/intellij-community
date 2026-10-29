@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.ijent.IjentSession
 import com.intellij.platform.ijent.spi.IjentDeployingStrategy
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -30,6 +31,10 @@ import kotlinx.coroutines.sync.withLock
  * - NotStarted → Failed (on creation error, excluding cancellation)
  * - Failed → Started (after backoff period)
  */
+@VisibleToClasses(
+  "com.intellij.rd.eel.frontend.RdProtocolEelMachine",
+  "com.intellij.rd.eel.frontend.RdProtocolEelTransport",
+)
 abstract class TcpEelMachine(override val internalName: String) : EelMachine {
 
   private val sessionMutex = Mutex()

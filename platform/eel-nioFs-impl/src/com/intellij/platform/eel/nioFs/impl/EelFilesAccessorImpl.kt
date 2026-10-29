@@ -15,6 +15,7 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.toEelApi
 import com.intellij.platform.eel.provider.utils.getOrThrowFileSystemException
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.platform.eel.provider.utils.throwFileSystemException
 import com.intellij.util.io.toByteArray
 import kotlinx.coroutines.flow.flow
@@ -31,6 +32,9 @@ import java.nio.file.StandardOpenOption.CREATE_NEW
 import java.nio.file.StandardOpenOption.TRUNCATE_EXISTING
 import java.nio.file.StandardOpenOption.WRITE
 
+@VisibleToClasses(
+    "com.intellij.platform.eel.nioFs.impl.EelPlatformUtilAccessorImpl",
+)
 internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
   private val default = EelSharedSecrets.EelFilesAccessor.Default
 
@@ -93,6 +97,9 @@ internal class EelFilesAccessorImpl : EelSharedSecrets.EelFilesAccessor {
      *
      * The registry flag can be enabled and removed only after thorough performance testing.
      */
+    @VisibleToClasses(
+      "com.intellij.platform.eel.nioFs.impl.EelPlatformUtilAccessorImpl",
+    )
     internal fun shouldInvokeOriginal(path: Path): Boolean =
       path.getEelDescriptor() == LocalEelDescriptor &&
       (

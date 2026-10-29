@@ -1,6 +1,7 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.provider
 
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.io.Decompressor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -26,6 +27,10 @@ import kotlin.io.path.isDirectory
  */
 @ApiStatus.Internal
 @Throws(IOException::class)
+@VisibleToClasses(
+  "com.intellij.ml.llm.agents.acp.runtime.registry.AcpBinaryManager",
+  "com.intellij.ml.llm.agents.acp.runtime.registry.AcpRuntimeManager",
+)
 suspend fun extractArchive(
   archive: Path,
   target: Path,

@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
 import com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.FileStore
@@ -17,10 +18,13 @@ object GlobalEelMrfsBackendProvider {
   private val isComputing = ThreadLocal<Unit>()
 
   init {
-    // Trigger class loading of the necessary extension point interface before this BackendProvider is registered.
+    // Trigger @com.intellij.platform.util.annotations.VisibleToClasses class loading of the necessary extension point @com.intellij.platform.util.annotations.VisibleToClasses interface before this BackendProvider is registered.
     MultiRoutingFileSystemBackend.EP_NAME.extensionList
   }
 
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.benchmarks.MultiRoutingFileSystemBackendBenchmark",
+  )
   fun install(provider: MultiRoutingFileSystemProvider) {
     provider.theOnlyFileSystem.setBackendProvider(::compute, ::getCustomRoots, ::getCustomFileStores)
     if (System.getProperty("nio.mrfs.telemetry.enable", "false").toBoolean()) {
@@ -28,7 +32,7 @@ object GlobalEelMrfsBackendProvider {
     }
   }
 
-  fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem {
+  internal fun compute(localFS: FileSystem, sanitizedPath: String): FileSystem {
     if (isComputing.get() == null) {
       try {
         isComputing.set(Unit)
@@ -62,12 +66,12 @@ object GlobalEelMrfsBackendProvider {
     return localFS
   }
 
-  fun getCustomRoots(localFS: FileSystem): Collection<Path> =
+  internal fun getCustomRoots(localFS: FileSystem): Collection<Path> =
     MultiRoutingFileSystemBackend.EP_NAME.extensionList.flatMap { eelProvider ->
       eelProvider.getCustomRoots().map { localFS.getPath(it) }
     }
 
-  fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> =
+  internal fun getCustomFileStores(localFS: FileSystem): Collection<FileStore> =
     MultiRoutingFileSystemBackend.EP_NAME.extensionList.flatMap { eelProvider ->
       eelProvider.getCustomFileStores(localFS)
     }

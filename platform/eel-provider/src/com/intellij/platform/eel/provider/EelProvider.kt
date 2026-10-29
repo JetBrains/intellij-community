@@ -11,6 +11,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.util.annotations.paths.NioPath
 import com.intellij.platform.eel.channels.EelDelicateApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
@@ -56,6 +57,11 @@ fun Project.getEelMachine(): EelMachine {
  */
 @EelDelicateApi
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.execution.eel.EelProjectPreInit",
+  "com.intellij.ide.lightProducts.LightProjectOpeningKt",
+  "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
+)
 fun Project.setEelMachine(machine: EelMachine) {
   putUserData(EEL_MACHINE_KEY, machine)
 }
@@ -92,6 +98,17 @@ fun Project.getEelDescriptor(): EelDescriptor {
  */
 @EelDelicateApi
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.aiagentextensions.skills.settings.ProjectAgentHomeTest",
+  "com.intellij.air.acp.runtime.registry.AcpExternalCatalogEntryStartConfigTest",
+  "com.intellij.air.acp.runtime.registry.InstallOrUpdateAgentTest",
+  "com.intellij.air.backend.machine.AgentMachineLeaseServiceTest",
+  "com.intellij.air.frontend.llm.AirLlmProxyBackendDescriptorStateTest",
+  "com.intellij.air.shared.core.AirAgentEnvironmentTest",
+  "com.intellij.ide.lightProducts.LightProjectOpeningKt",
+  "com.intellij.rustrover.solana.runconfig.anchor.AnchorTestCommandLineStateTest",
+  "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
+)
 fun Project.setEelDescriptor(descriptor: EelDescriptor) {
   putUserData(EEL_DESCRIPTOR_KEY, descriptor)
 }

@@ -4,6 +4,7 @@ package com.intellij.platform.ijent
 import com.intellij.execution.process.ProcessTreeKiller
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelProcessManagementApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -17,6 +18,12 @@ import java.util.concurrent.TimeUnit
  * See also [IjentChildPtyProcessAdapter].
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.execution.wsl.WslIjentManager",
+  "com.intellij.execution.wsl.WslIjentUtil",
+  "com.intellij.platform.ijent.functional.processes.EelExecuteProcessTest",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessDelegate",
+)
 class IjentChildProcessAdapter(
   private val coroutineScope: CoroutineScope,
   private val ijentChildProcess: EelProcess,

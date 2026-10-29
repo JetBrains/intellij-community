@@ -19,7 +19,7 @@ import java.nio.file.FileSystemAlreadyExistsException
 import java.util.concurrent.ConcurrentHashMap
 
 
-class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSystemBackend {
+internal class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRoutingFileSystemBackend {
   companion object {
     private val LOG = logger<TcpEelMrfsBackend>()
   }

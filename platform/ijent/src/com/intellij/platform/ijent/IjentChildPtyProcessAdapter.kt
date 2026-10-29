@@ -5,6 +5,7 @@ import com.intellij.execution.process.PtyProcessControl
 import com.intellij.execution.process.SelfKiller
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelProcessManagementApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
@@ -18,6 +19,13 @@ import java.util.concurrent.TimeUnit
  * See also [IjentChildProcessAdapter].
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.execution.process.IjentPtyProcessControlTest",
+  "com.intellij.execution.wsl.WslIjentUtil",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentChildProcessDelegate",
+  "org.jetbrains.plugins.terminal.LocalTerminalTtyConnector",
+  "org.jetbrains.plugins.terminal.arrangement.ProcessInfoUtil",
+)
 class IjentChildPtyProcessAdapter(
   private val coroutineScope: CoroutineScope,
   private val ijentChildProcess: EelProcess,

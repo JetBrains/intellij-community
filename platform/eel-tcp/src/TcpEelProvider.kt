@@ -7,11 +7,15 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.provider.EelEnvironmentInitializer
 import com.intellij.platform.eel.provider.resolveEelMachine
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CancellationException
 
 private val LOG = logger<TcpEelEnvironmentInitializer>()
 
-class TcpEelEnvironmentInitializer : EelEnvironmentInitializer {
+@VisibleToClasses(
+  "com.intellij.platform.eel.tcp.TcpEelProviderKt",
+)
+internal class TcpEelEnvironmentInitializer : EelEnvironmentInitializer {
   override suspend fun tryInitialize(eelDescriptor: EelDescriptor): EelMachine? {
     if (!MultiRoutingFileSystemUtils.isMultiRoutingFsEnabled) {
       return null

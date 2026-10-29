@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.impl.base.network
 
 import com.intellij.platform.eel.EelTunnelsApi.ResolvedSocketAddress
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetSocketAddress
@@ -9,7 +10,14 @@ import java.net.SocketAddress
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 
+@VisibleToClasses(
+  "com.intellij.platform.ijent.impl.base.TcpTunnelsKt",
+)
 data class ResolvedV4SocketAddressImpl(override val port: UShort, override val bits: UInt) : ResolvedSocketAddress.V4
+
+@VisibleToClasses(
+  "com.intellij.platform.ijent.impl.base.TcpTunnelsKt",
+)
 data class ResolvedV6SocketAddressImpl(override val port: UShort, override val higherBits: ULong, override val lowerBits: ULong) : ResolvedSocketAddress.V6
 
 

@@ -40,6 +40,7 @@ import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.EelPathTransfer
 import com.intellij.platform.eel.provider.utils.EelPathTransfer.convertPosixPermissionsToMask
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
@@ -87,8 +88,12 @@ import kotlin.io.path.pathString
 import kotlin.streams.asSequence
 import kotlin.use
 
+@VisibleToClasses(
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestFileSystemPosixApi",
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestFileSystemWindowsApi",
+)
 abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) : EelFileSystemApi {
-  protected fun EelPath.toNioPath(): Path =
+  internal fun EelPath.toNioPath(): Path =
     fs.getPath(toString())
 
   override suspend fun getDiskInfo(path: EelPath): EelResult<EelFileSystemApi.DiskInfo, EelFileSystemApi.DiskInfoError> {
@@ -102,7 +107,8 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
   inline fun <T, reified E : EelFsError> wrapIntoEelResult(body: () -> T): EelResult<T, E> =
     wrapIntoEelResult(null, body)
 
-  inline fun <T, reified E : EelFsError> wrapIntoEelResult(isClosed: AtomicReference<Boolean?>?, body: () -> T): EelResult<T, E> =
+  @PublishedApi
+  internal inline fun <T, reified E : EelFsError> wrapIntoEelResult(isClosed: AtomicReference<Boolean?>?, body: () -> T): EelResult<T, E> =
     try {
       val result = EelFsResultImpl.Ok(body())
       isClosed?.updateAndGet { it ?: false }
@@ -319,7 +325,7 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       }
     }
 
-  protected fun createSymbolicLinkImpl(
+  internal fun createSymbolicLinkImpl(
     target: EelFileSystemPosixApi.SymbolicLinkTarget,
     linkPath: EelPath,
   ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
@@ -490,6 +496,10 @@ private fun doClose(
     byteChannel.close()
   }
 
+@VisibleToClasses(
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestFileSystemPosixApi",
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestPosixApi",
+)
 abstract class PosixNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserPosixInfo,
@@ -558,6 +568,10 @@ abstract class PosixNioBasedEelFileSystemApi(
     doWalkDirectory(options, descriptor)
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestFileSystemWindowsApi",
+  "com.intellij.platform.testFramework.junit5.eel.impl.EelTestWindowsApi",
+)
 abstract class WindowsNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserWindowsInfo,
@@ -834,7 +848,7 @@ private fun getFileContentsHash(path: Path): Long {
   return hasher.asLong
 }
 
-fun doWalkDirectory(options: EelFileSystemApi.WalkDirectoryOptions, descriptor: EelDescriptor): Flow<WalkDirectoryEntryResult> = flow {
+private fun doWalkDirectory(options: EelFileSystemApi.WalkDirectoryOptions, descriptor: EelDescriptor): Flow<WalkDirectoryEntryResult> = flow {
   val rootDir = options.path.asNioPath()
 
   // the target path has to be a directory and needs to exist

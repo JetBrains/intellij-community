@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.toNioPathOrNull
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.PlatformUtils
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -24,6 +25,11 @@ private val REMOTE_PROJECT_IDENTITY_PATH_KEY: Key<String> = Key.create("com.inte
  * and treated as an init-order error on a thin client.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.air.shared.core.AirAgentEnvironmentTest",
+  "com.intellij.ide.lightProducts.LightProjectOpeningKt",
+  "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
+)
 fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
   putUserData(REMOTE_PROJECT_BASE_PATH_KEY, rawHostPath)
 }
@@ -38,6 +44,23 @@ fun Project.setRemoteProjectBaseNioPath(rawHostPath: String) {
  */
 @ApiStatus.Experimental
 @Deprecated("Temporary API for integrating remote development with Eel. Use with caution; see the function documentation.")
+@ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.air.acp.frontend.AgentTerminalAuthenticationFrontendService",
+  "com.intellij.air.frontend.core.ProjectBackendBasePathKt",
+  "com.intellij.air.frontend.core.ProjectSessionWorkspaceIdKt",
+  "com.intellij.air.frontend.session.toolwindow.actions.AgentProjectChooserServiceImpl",
+  "com.intellij.air.frontend.worktree.settings.AirWorktreeParentLocationServiceImpl",
+  "com.intellij.air.light.extensions.LightExtensionCatalog",
+  "com.intellij.clion.stm32.wrapper.frontend.CubeTerminalOpenerKt",
+  "com.intellij.code.findings.api.FindingsProjectRoot",
+  "com.intellij.code.findings.simplified.prompt.FindingsPromptSupport",
+  "com.intellij.lsp.ui.frontend.ConfigurableLspClientDescriptor",
+  "com.intellij.lsp.ui.frontend.settings.LspServerConfigurable",
+  "org.jetbrains.plugins.terminal.LocalTerminalDirectRunner",
+  "org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider",
+  "org.jetbrains.plugins.terminal.runner.LocalOptionsConfigurer",
+)
 fun Project.getRemoteProjectBaseNioPath(): Path? {
   // The backend-provided path is a string in the host's path syntax, so it must be parsed
   // through EelPath to be routed via MultiRoutingFileSystem to the correct environment.

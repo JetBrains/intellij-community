@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.utils
 
 import com.intellij.platform.ijent.IjentLogger.CONN_MGR_LOG
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.util.UUID
 
@@ -16,6 +17,11 @@ import java.util.UUID
  * We read the data of these processes and try to find VmId in their argument list. This operation does not require administrator access.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ide.impl.wsl.WslIjentUtil",
+  "com.intellij.platform.ijent.functional.transport.IjentVirtualMachineSocketTest",
+  "com.intellij.platform.ijent.impl.base.GrpcIjentSessionProviderKt",
+)
 fun guessVmIdOfWsl(): UUID? {
   val process =
     ProcessBuilder("powershell", "-Command",

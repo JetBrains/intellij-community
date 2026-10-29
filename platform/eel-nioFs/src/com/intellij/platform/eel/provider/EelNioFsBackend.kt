@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider
 
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.ServiceLoader
@@ -15,6 +16,10 @@ import java.util.ServiceLoader
  * Implementation is loaded via [ServiceLoader] from `eel-nioFs-impl`.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.EelNioFsBackendImpl",
+  "com.jetbrains.performancePlugin.ProjectLoadedKt",
+)
 interface EelNioFsBackend {
   companion object {
     val instance: EelNioFsBackend? by lazy {

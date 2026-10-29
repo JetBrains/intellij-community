@@ -27,6 +27,7 @@ import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.osFamily
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -106,7 +107,9 @@ object EelPathTransfer {
    * Get individual parts of a relative path.
    * Example: "a/b" -> ["a", "b"]
    */
-  @VisibleForTesting
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.functional.fs.IncrementalFileTransferTest",
+  )
   fun getRelativePathParts(path: Path): List<String> {
     val parts = mutableListOf<String>()
     var current: Path? = path
@@ -233,6 +236,9 @@ object EelPathTransfer {
     }
   }
 
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.functional.fs.IncrementalFileTransferTest",
+  )
   sealed class DiffOperation {
     // Always syncs permissions, attributes, and timestamps.
     data class Create(
@@ -269,7 +275,7 @@ object EelPathTransfer {
     ) : DiffOperation()
 
     // Absolute symlinks are left untouched, and it is up to the user-provided lambda to handle it
-    data class AbsoluteSymlink(
+    internal data class AbsoluteSymlink(
       val sourceSymlink: WalkDirectoryEntry,
       val targetSymlink: WalkDirectoryEntry?,
     ) : DiffOperation()
@@ -279,6 +285,9 @@ object EelPathTransfer {
    * Function that creates a flow which combines source and target file information.
    * Flow emits [DiffOperation]s that indicate what has to be done to the target file to make it be in sync with the source file.
    **/
+  @VisibleToClasses(
+    "com.intellij.platform.ijent.functional.fs.IncrementalFileTransferTest",
+  )
   fun mergeHashByPath(
     scope: CoroutineScope,
     sourceEntryPoint: Path,
@@ -531,7 +540,7 @@ object EelPathTransfer {
     return mask
   }
 
-  fun convertMaskToPosixPermissions(mask: Int): Set<PosixFilePermission> {
+  internal fun convertMaskToPosixPermissions(mask: Int): Set<PosixFilePermission> {
     val perms = mutableSetOf<PosixFilePermission>()
     if (mask and 0x1 != 0) perms.add(PosixFilePermission.OTHERS_EXECUTE)
     if (mask and 0x2 != 0) perms.add(PosixFilePermission.OTHERS_WRITE)

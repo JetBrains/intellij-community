@@ -1,3 +1,2 @@
 f:com.intellij.platform.eel.provider.EelProviderProjectUtilKt
-f:com.intellij.platform.eel.provider.RemoteProjectPathProviderKt
 f:com.intellij.platform.eel.provider.utils.EelUtilsKt

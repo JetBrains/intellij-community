@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider.utils
 
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -27,6 +28,12 @@ object WindowsPathUtils {
    *
    * No I/O. Non-existent drives are filtered out lazily by VFS (`findRoot` returns null).
    */
+  @VisibleToClasses(
+    "com.intellij.execution.eel.WindowsPathUtilsTest",
+    "com.intellij.platform.eel.tcp.TcpEelMrfsBackend",
+    "com.intellij.platform.frontend.split.baseline.eel.RdEelFileChooserContributor",
+    "com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend",
+  )
   fun expandPerDriveRoots(mountRoot: String): List<String> {
     val root = mountRoot.replace('\\', '/').trimEnd('/')
     val driveZone = if (root.endsWith("/$DRIVE_PATH_PREPEND")) "" else "/$DRIVE_PATH_PREPEND"
@@ -55,6 +62,11 @@ object WindowsPathUtils {
    * extractUncRoot("/$tcp.ij/abc/@", "/$tcp.ij/abc/@/server")           == null  // missing share segment
    * ```
    */
+  @VisibleToClasses(
+    "com.intellij.execution.eel.WindowsPathUtilsTest",
+    "com.intellij.platform.eel.tcp.TcpEelMrfsBackend",
+    "com.intellij.platform.ijent.ssh.impl.SshEelMrfsBackend",
+  )
   fun extractUncRoot(mountRoot: String, path: String): String? {
     val root = mountRoot.replace('\\', '/').trimEnd('/')
     if (path != root && !path.startsWith("$root/")) return null
@@ -82,6 +94,10 @@ object WindowsPathUtils {
    * `C:\Users` -> `\\some.ij\mount\@\C\Users`
    * `\\server.share\dir\` -> `\\some.ij\mount\server.share\dir\`
    */
+  @VisibleToClasses(
+    "com.intellij.execution.eel.WindowsPathUtilsTest",
+    "com.intellij.platform.ijent.functional.fs.RootAwareFsContext",
+  )
   fun resolveEelPathOntoRoot(root: Path, eelPath: EelPath): Path {
     return root.fileSystem.getPath(getNioPathString(root.toString(), eelPath, root.fileSystem.separator))
   }
@@ -106,6 +122,11 @@ object WindowsPathUtils {
    * `server.share/dir/` -> `//server.share/dir/`
    *
    */
+  @VisibleToClasses(
+    "com.intellij.execution.eel.WindowsPathUtilsTest",
+    "com.intellij.platform.frontend.split.baseline.eel.RdEelFileChooserContributor",
+    "com.intellij.platform.ijent.community.impl.nio.fs.IjentEphemeralRootAwareFileSystem",
+  )
   fun rootRelativeToEelPath(relativePath: String): String {
     return if (relativePath.startsWith("@/")) {
       "${relativePath[2]}:${relativePath.drop(3)}"
@@ -122,6 +143,9 @@ object WindowsPathUtils {
    * `server.share/dir/tmp` -> `\\server.share\dir`, `tmp`
    *
    */
+  @VisibleToClasses(
+    "com.intellij.execution.eel.WindowsPathUtilsTest",
+  )
   fun rootRelativeToEelPath(relativePath: Path): Pair<String, Path> {
     val rest = when (relativePath.nameCount) {
       in 0..1 -> error("windows relative path should contain at least : $relativePath")

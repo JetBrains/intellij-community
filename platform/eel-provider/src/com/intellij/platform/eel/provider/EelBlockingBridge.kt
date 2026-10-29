@@ -2,6 +2,7 @@
 package com.intellij.platform.eel.provider
 
 import com.intellij.platform.eel.EelDescriptor
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.util.ServiceLoader
 
@@ -13,6 +14,9 @@ import java.util.ServiceLoader
  * The implementation is plugged in with [ServiceLoader]. A product without a remote file system has none.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.community.impl.nio.FsBlockingEelBlockingBridge",
+)
 interface EelBlockingBridge {
   fun <T> run(descriptor: EelDescriptor, body: suspend () -> T): T
 

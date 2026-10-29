@@ -1,15 +1,17 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.nioFs.impl.telemetry
 
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-@ApiStatus.Internal
-class FsQueryStatCounter {
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.Measurer",
+)
+internal class FsQueryStatCounter {
 
   private val uniquePaths: ConcurrentMap<FsQuery, Instant> = ConcurrentHashMap<FsQuery, Instant>()
 

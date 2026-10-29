@@ -15,6 +15,7 @@ import com.intellij.platform.eel.fs.EelPosixFileInfo
 import com.intellij.platform.eel.fs.EelPrefetchApi
 import com.intellij.platform.eel.fs.PrefetchedStat
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.ThreadContextElement
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -33,6 +34,9 @@ private val LOG = logger<PrefetchCache>()
  *    which covers DiskQueryRelay, executeOnPooledThread, invokeLater, and the others.
  */
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApiPrefetchTest",
+)
 class PrefetchCache private constructor(
   private val listings: Map<EelPath, Map<String, EelFileInfo>>,
   private val stats: Map<EelPath, PrefetchedStat>,

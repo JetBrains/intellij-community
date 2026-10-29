@@ -9,6 +9,7 @@ import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.util.annotations.VisibleToClasses
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.spi.FileSystemProvider
@@ -20,8 +21,17 @@ import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.nanoseconds
 
-@ApiStatus.Internal
-object Measurer {
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.FsQueryStatCounter",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.MeasurerKt",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingDirectoryStream",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileChannel",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystem",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystemProvider",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingSeekableByteChannel",
+)
+internal object Measurer {
 
   internal val ijentMetricsScope = Scope("ijent", PlatformMetrics, verbose = true)
   internal val ijentTracer by lazy { TelemetryManager.getTracer(ijentMetricsScope) }
@@ -34,7 +44,7 @@ object Measurer {
   internal val extendedFsEventsRepeatIntervalNanos: Map<FsEventKey, AtomicLong> = FsEventKey.VALUES.associateWith { AtomicLong() }
 
   @Suppress("EnumEntryName")
-  enum class DelegateType() {
+  internal enum class DelegateType() {
     local,
     wsl,
     docker,
@@ -67,7 +77,7 @@ object Measurer {
           )
         }.orElse(null)
 
-      fun fromDelegateClass(clazz: Class<FileSystemProvider>): DelegateType {
+      private fun fromDelegateClass(clazz: Class<FileSystemProvider>): DelegateType {
         classToTypeCache.get()[clazz]?.let { return it }
         return classToTypeCache.updateAndGet {
           it.putIfAbsent(clazz, fromDelegateClassInternal(clazz))
@@ -83,7 +93,7 @@ object Measurer {
     }
   }
 
-  data class FsEventKey(
+  internal data class FsEventKey(
     val delegateType: DelegateType,
     val operation: Operation,
     val success: Boolean?,
@@ -136,7 +146,7 @@ object Measurer {
     }
   }
 
-  fun dumpCounters(): List<Pair<String, () -> Long>> {
+  internal fun dumpCounters(): List<Pair<String, () -> Long>> {
     return listOf("ijent.events.count" to {
       eventsCounter.get()
     }) + FsEventKey.VALUES.flatMap { key ->
@@ -154,7 +164,7 @@ object Measurer {
   }
 
   @Suppress("EnumEntryName")
-  enum class Operation {
+  internal enum class Operation {
     directoryStreamClose,
     directoryStreamIteratorNext,
     directoryStreamIteratorRemove,
@@ -201,12 +211,15 @@ object Measurer {
     supportedFileAttributeViews;
   }
 
-  val fsQueryStatCounter: FsQueryStatCounter? = if (FsEventKey.countUniquePathsEnabled) {
+  internal val fsQueryStatCounter: FsQueryStatCounter? = if (FsEventKey.countUniquePathsEnabled) {
       FsQueryStatCounter()
   }
   else null
 
-  fun reportFsEvent(delegate: FileSystemProvider, path1: Path?, path2: Path?, operation: Operation, startTime: Instant, endTime: Instant, success: Boolean) {
+  @VisibleToClasses(
+    "com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener",
+  )
+  internal fun reportFsEvent(delegate: FileSystemProvider, path1: Path?, path2: Path?, operation: Operation, startTime: Instant, endTime: Instant, success: Boolean) {
     val delegateType = DelegateType.fromDelegate(delegate)
     val (repeated, repeatInterval) = if (fsQueryStatCounter != null) {
       val repeatInterval = fsQueryStatCounter.repeatedTime(delegateType, path1, path2, operation, startTime, endTime, success)
@@ -238,6 +251,13 @@ object Measurer {
 
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingDirectoryStream",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileChannel",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystem",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystemProvider",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingSeekableByteChannel",
+)
 internal inline fun <T> Measurer.measure(operation: Measurer.Operation, spanNamePrefix: String = "", body: () -> T): T {
   return ijentTracer.spanBuilder("ijent.${spanNamePrefix.takeIf { it.isEmpty() }?.plus(".")}${operation.name}", TracerLevel.DETAILED).use {
     eventsCounter.incrementAndGet()

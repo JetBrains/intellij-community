@@ -4,6 +4,7 @@ package com.intellij.platform.eel.nioFs.impl.telemetry
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.FileSystemTracingListener
 import com.intellij.platform.diagnostic.telemetry.TracerLevel
+import com.intellij.platform.util.annotations.VisibleToClasses
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
 import java.io.IOException
@@ -21,6 +22,14 @@ import java.nio.file.spi.FileSystemProvider
 import java.time.Instant
 import kotlin.io.path.extension
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.GlobalEelMrfsBackendProvider",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.Measurer",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingDirectoryStream",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileChannel",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingSeekableByteChannel",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingSeekableByteChannelKt",
+)
 internal class MeasuringFileSystemListener : FileSystemTracingListener<MeasuringFileSystemListener.SpanEntry?> {
 
   init {

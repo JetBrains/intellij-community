@@ -19,6 +19,13 @@ import org.jetbrains.annotations.NonNls
  */
 @ApiStatus.OverrideOnly
 @ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.docker.ijent.DockerEelDescriptor",
+  "com.intellij.openapi.fileChooser.impl.LocalFileChooserFactory",
+  "com.intellij.platform.eel.tcp.TcpEelDescriptor",
+  "com.intellij.platform.ide.impl.wsl.WslEelDescriptor",
+  "com.intellij.platform.ijent.ssh.SshEelDescriptor",
+)
 interface EelDescriptorWithoutNativeFileChooserSupport : EelDescriptor
 
 /**
@@ -122,6 +129,7 @@ interface EelMachine {
  * guarantee. A machine that does not implement this interface does not report its state;
  * the absence of the interface is not evidence of a missing connection.
  */
+// TODO VisibleForClasses can't restrict usage of this method.
 @ApiStatus.Experimental
 @ApiStatus.NonExtendable
 @Deprecated("Now every EelMachine has this property. Stop checking for this property")

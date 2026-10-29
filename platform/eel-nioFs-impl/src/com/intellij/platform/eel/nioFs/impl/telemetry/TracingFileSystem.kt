@@ -12,7 +12,7 @@ class TracingFileSystem(
   private val delegate: FileSystem,
   private val spanNamePrefix: String
 ) : DelegatingFileSystem<TracingFileSystemProvider>() {
-  public override fun getDelegate(): FileSystem = delegate
+  override fun getDelegate(): FileSystem = delegate
 
   override fun getDelegate(root: String): FileSystem = delegate
 

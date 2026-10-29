@@ -1,8 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.nioFs.impl.telemetry
 
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.nio.file.DirectoryStream
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystemProvider",
+)
 internal class TracingDirectoryStream<T>(
   private val delegate: DirectoryStream<T>,
   private val spanNamePrefix: String

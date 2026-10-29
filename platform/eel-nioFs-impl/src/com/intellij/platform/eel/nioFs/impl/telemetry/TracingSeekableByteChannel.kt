@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel.nioFs.impl.telemetry
 
+import com.intellij.platform.util.annotations.VisibleToClasses
 import java.lang.reflect.Method
 import java.nio.ByteBuffer
 import java.nio.MappedByteBuffer
@@ -11,6 +12,10 @@ import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.util.concurrent.ConcurrentHashMap
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystemProvider",
+)
 internal fun SeekableByteChannel.traced(spanNamePrefix: String): SeekableByteChannel =
   if (this is FileChannel) {
     TracingFileChannel(delegate = this, spanNamePrefix)
@@ -19,8 +24,15 @@ internal fun SeekableByteChannel.traced(spanNamePrefix: String): SeekableByteCha
     TracingSeekableByteChannel(delegate = this, spanNamePrefix)
   }
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingFileSystemProvider",
+)
 internal fun FileChannel.traced(spanNamePrefix: String): FileChannel = TracingFileChannel(delegate = this, spanNamePrefix)
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingSeekableByteChannelKt",
+)
 internal class TracingSeekableByteChannel(
   private val delegate: SeekableByteChannel,
   private val spanNamePrefix: String,
@@ -68,6 +80,10 @@ internal class TracingSeekableByteChannel(
     }
 }
 
+@VisibleToClasses(
+  "com.intellij.platform.eel.nioFs.impl.telemetry.MeasuringFileSystemListener",
+  "com.intellij.platform.eel.nioFs.impl.telemetry.TracingSeekableByteChannelKt",
+)
 internal class TracingFileChannel(
   private val delegate: FileChannel,
   private val spanNamePrefix: String,
