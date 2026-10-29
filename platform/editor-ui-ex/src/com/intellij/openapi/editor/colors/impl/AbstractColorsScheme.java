@@ -100,7 +100,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private static final @NonNls String META_INFO_MODIFIED_TIME = "modified";
   private static final @NonNls String META_INFO_IDE = "ide";
   private static final @NonNls String META_INFO_IDE_VERSION = "ideVersion";
-  public static final @NonNls String META_INFO_ORIGINAL = "originalScheme";
+  private static final @NonNls String META_INFO_ORIGINAL_SCHEME = "originalScheme";
+  /**
+   * @deprecated Use {@link #getOriginal()} to get the original scheme.
+   */
+  @Deprecated
+  public static final @NonNls String META_INFO_ORIGINAL = META_INFO_ORIGINAL_SCHEME;
   private static final @NonNls String META_INFO_PARTIAL = "partialSave";
 
   @ApiStatus.Internal
@@ -401,7 +406,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (parentScheme != null &&
         parentScheme != EmptyColorScheme.getEmptyScheme() &&
         !parentScheme.getName().startsWith(EDITABLE_COPY_PREFIX)) {
-      metaInfo.setProperty(META_INFO_ORIGINAL, parentScheme.getName());
+      metaInfo.setProperty(META_INFO_ORIGINAL_SCHEME, parentScheme.getName());
       String pluginId = parentScheme.getMetaProperties().getProperty(META_INFO_PLUGIN_ID);
       if (pluginId != null) {
         metaInfo.setProperty(META_INFO_PLUGIN_ID, pluginId);
@@ -649,7 +654,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public abstract boolean isVisible();
 
   public @Nullable AbstractColorsScheme getOriginal() {
-    String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
+    String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL_SCHEME);
     if (originalSchemeName != null) {
       EditorColorsScheme originalScheme = getSchemeById.apply(originalSchemeName);
       if (originalScheme != this && originalScheme instanceof AbstractColorsScheme abs) {
@@ -691,7 +696,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
           propertyName.equals(META_INFO_MODIFIED_TIME) ||
           propertyName.equals(META_INFO_IDE) ||
           propertyName.equals(META_INFO_IDE_VERSION) ||
-          propertyName.equals(META_INFO_ORIGINAL)
+          propertyName.equals(META_INFO_ORIGINAL_SCHEME)
       ) {
         continue;
       }
@@ -723,7 +728,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       parentScheme = newParent;
     }
     else {
-      String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
+      String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL_SCHEME);
       String isPartial = getMetaProperties().getProperty(META_INFO_PARTIAL);
       if (originalSchemeName != null && Boolean.parseBoolean(isPartial)) {
         EditorColorsScheme original = nameResolver.apply(originalSchemeName);
