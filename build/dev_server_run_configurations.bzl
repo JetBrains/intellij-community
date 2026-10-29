@@ -3,12 +3,14 @@
 # The `DevMainKt` run configurations of `.idea/runConfigurations`, one launcher `//build:<name>` each. Only the
 # product, `additional_modules` and `runtime_module_repository` choose a distribution, so rows that state the same
 # three share one; see `intellij_dev_run_configurations` in `intellij_dev_community.bzl`.
+# The `distribution` field of a row names its distribution, and `dev-dist-distributions.json` lists them.
 load("//build:intellij_dev_community.bzl", "intellij_dev_run_configurations")
 
 DEV_RUN_CONFIGURATIONS = {
-    "android_studio_dev_build": struct(product = "AndroidStudio", jvm_flags = ["-Dawt.toolkit.name=auto"]),  # Android_Studio__dev_build__.xml
+    "android_studio_dev_build": struct(product = "AndroidStudio", distribution = "android_studio_dev_build", jvm_flags = ["-Dawt.toolkit.name=auto"]),  # Android_Studio__dev_build__.xml
     "idea_community": struct(
         product = "Idea",  # IDEA_Community.xml
+        distribution = "idea_community",
         jvm_flags = [
             "-Dawt.toolkit.name=auto",
             "-Dide.assert.get.service.in.static.init=true",
@@ -16,6 +18,7 @@ DEV_RUN_CONFIGURATIONS = {
     ),
     "idea_with_compose_dev_build": struct(
         product = "Idea",  # IDEA_With_Compose__dev_build_.xml
+        distribution = "idea_with_compose_dev_build",
         additional_modules = ["intellij.devkit"],
         jvm_flags = [
             "-Dawt.toolkit.name=auto",

@@ -4,6 +4,14 @@
 package com.intellij.platform.buildScripts.devDistGenerator
 
 import com.intellij.openapi.util.JDOMUtil
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
+import kotlinx.serialization.json.putJsonObject
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
@@ -451,8 +459,145 @@ internal fun devDistRuntimeModuleRepositoryProducts(rows: List<DevRunConfigurati
 }
 
 /**
+ * The distribution that one or more rows share, `//build:<name>_dist`.
+ *
+ * Rows with the same [product], [additionalModules] and [runtimeModuleRepository] share one distribution. [name] is the
+ * shortest name of its [rows], and a tie goes to the first name in alphabetical order. Each row states [name] as its
+ * `distribution` field, and `intellij_dev_run_configurations` declares the distribution under that name. [rows] are
+ * the row names, sorted.
+ */
+@ApiStatus.Internal
+class DevRunDistribution(
+  @JvmField val name: String,
+  @JvmField val product: String,
+  @JvmField val additionalModules: List<String>,
+  @JvmField val runtimeModuleRepository: Boolean,
+  @JvmField val rows: List<String>,
+)
+
+/** The distributions that [rows] share, sorted by name, see [DevRunDistribution]. */
+@ApiStatus.Internal
+fun devRunDistributions(rows: List<DevRunConfigurationRow>): List<DevRunDistribution> {
+  val groups = LinkedHashMap<Triple<String, List<String>, Boolean>, MutableList<String>>()
+  for (row in rows) {
+    groups.computeIfAbsent(Triple(row.product, row.additionalModules, row.runtimeModuleRepository)) { ArrayList() }.add(row.name)
+  }
+  return groups
+    .map { (key, names) ->
+      DevRunDistribution(
+        name = names.minWith(compareBy({ it.length }, { it })),
+        product = key.first,
+        additionalModules = key.second,
+        runtimeModuleRepository = key.third,
+        rows = names.sorted(),
+      )
+    }
+    .sortedBy { it.name }
+}
+
+/** The package of `dev_server_run_configurations.bzl` in each half, which declares the launchers and their distributions. */
+private const val RUN_CONFIGURATIONS_PACKAGE = "build"
+
+/**
+ * What the distribution index states of the product of a distribution, see [renderDevDistDistributionIndex].
+ *
+ * [bundledModules] are the main modules of the bundled tier of the component map of the product that every host
+ * platform composes, sorted: a neutral component, or a component with a label for each `HOST_PLATFORMS` entry.
+ * [platformBundledModules] maps the main module of every other bundled component to the host platforms that compose
+ * it, both sorted. For a community product of the ultimate half, the tier is the one of the community map, see
+ * [devDistIndexProducts]. [modularLoader] is whether the product starts through the modular loader. Every
+ * distribution of such a product composes the runtime module repository.
+ */
+@ApiStatus.Internal
+class DevDistIndexProduct(
+  @JvmField val bundledModules: List<String>,
+  @JvmField val platformBundledModules: Map<String, List<String>>,
+  @JvmField val modularLoader: Boolean,
+)
+
+/**
+ * The index facts of the products of one half: [planned] for the products the half plans, and the facts of
+ * [upstream], the community half, for each of [communityProducts]. A community product composes the bundled tier and
+ * the plan of the community half, so its facts come from there. It fails when [upstream] has no facts of a community
+ * product.
+ */
+internal fun devDistIndexProducts(
+  planned: Map<String, DevDistIndexProduct>,
+  communityProducts: Set<String>,
+  upstream: Map<String, DevDistIndexProduct>,
+): Map<String, DevDistIndexProduct> {
+  val result = TreeMap(planned)
+  for (product in communityProducts) {
+    result.put(product, checkNotNull(upstream.get(product)) {
+      "The community half states no distribution index facts of the community product '$product'"
+    })
+  }
+  return result
+}
+
+private val DISTRIBUTION_INDEX_JSON = Json { prettyPrint = true }
+
+/**
+ * The content of `build/dev-dist-distributions.json`: the `products` that the distributions of [rows] name, keyed by
+ * the product and sorted, and one `distributions` entry for each distribution, sorted by name, see [devRunDistributions].
+ *
+ * A reader picks a distribution for a set of modules from this file without a Bazel query. The file holds only the
+ * distributions of the generated rows. A distribution that a `BUILD.bazel` file declares by hand is not in it. `label`
+ * is relative to the repository of the half, so a reader in the monorepo prefixes `@community` for the community file.
+ * `product` is the `build/dev-build.json` key of the rows, and the key of its `products` entry. [products] gives
+ * `bundledModules`, `platformBundledModules` and `modularLoader` of each product, see [DevDistIndexProduct]. A product
+ * entry states them once, because all distributions of the product share them. JSON has no comments, so the first
+ * field `generatedBy` names [generatorCommand].
+ */
+@ApiStatus.Internal
+fun renderDevDistDistributionIndex(
+  rows: List<DevRunConfigurationRow>,
+  products: Map<String, DevDistIndexProduct>,
+  generatorCommand: String,
+): String {
+  val distributions = devRunDistributions(rows)
+  val named = TreeMap<String, DevDistIndexProduct>()
+  for (distribution in distributions) {
+    named.put(distribution.product, checkNotNull(products.get(distribution.product)) {
+      "The distribution '${distribution.name}' has the product '${distribution.product}', which has no generated plan in this half"
+    })
+  }
+  val index = buildJsonObject {
+    put("generatedBy", generatorCommand)
+    putJsonObject("products") {
+      for ((name, product) in named) {
+        putJsonObject(name) {
+          putJsonArray("bundledModules") { product.bundledModules.sorted().forEach(::add) }
+          putJsonObject("platformBundledModules") {
+            for ((mainModule, platforms) in product.platformBundledModules.toSortedMap()) {
+              putJsonArray(mainModule) { platforms.sorted().forEach(::add) }
+            }
+          }
+          put("modularLoader", product.modularLoader)
+        }
+      }
+    }
+    putJsonArray("distributions") {
+      for (distribution in distributions) {
+        addJsonObject {
+          put("name", distribution.name)
+          put("label", "//$RUN_CONFIGURATIONS_PACKAGE:${distribution.name}_dist")
+          put("product", distribution.product)
+          putJsonArray("additionalModules") { distribution.additionalModules.forEach(::add) }
+          put("runtimeModuleRepository", distribution.runtimeModuleRepository)
+        }
+      }
+    }
+  }
+  return DISTRIBUTION_INDEX_JSON.encodeToString(JsonElement.serializer(), index) + "\n"
+}
+
+/**
  * The content of `build/dev_server_run_configurations.bzl`: `DEV_RUN_CONFIGURATIONS`, one entry per row by launcher name,
  * and `dev_server_run_configurations()`, which passes it to `intellij_dev_run_configurations`.
+ *
+ * Each row states the name of its distribution as `distribution`, see [devRunDistributions]. So the Starlark side
+ * applies no naming rule of its own.
  *
  * A row states only what differs from the reader's defaults. A flag list or a program argument list of two or more
  * items that two or more rows state alike is one private `_JVM_FLAGS_<first row>` or `_PROGRAM_ARGS_<first row>` list,
@@ -488,6 +633,10 @@ fun renderDevServerRunConfigurations(
 
   val sharedFlagLists = shareLists(sortedRows, DevRunConfigurationRow::jvmFlags, prefix = "_JVM_FLAGS_")
   val sharedArgumentLists = shareLists(sortedRows, DevRunConfigurationRow::programArgs, prefix = "_PROGRAM_ARGS_")
+  val distributions = HashMap<String, String>()
+  for (distribution in devRunDistributions(sortedRows)) {
+    distribution.rows.associateWithTo(distributions) { distribution.name }
+  }
 
   return buildString {
     append(header)
@@ -495,6 +644,7 @@ fun renderDevServerRunConfigurations(
     append("# The `DevMainKt` run configurations of `.idea/runConfigurations`, one launcher `//build:<name>` each. Only the\n")
     append("# product, `additional_modules` and `runtime_module_repository` choose a distribution, so rows that state the same\n")
     append("# three share one; see `intellij_dev_run_configurations` in `").append(macrosBzl.substringAfterLast(':')).append("`.\n")
+    append("# The `distribution` field of a row names its distribution, and `dev-dist-distributions.json` lists them.\n")
     append("load(\"").append(macrosBzl).append("\", \"intellij_dev_run_configurations\")\n\n")
     for ((shared, what) in listOf(sharedFlagLists to "flag list", sharedArgumentLists to "program argument list")) {
       if (shared.isEmpty()) continue
@@ -509,7 +659,7 @@ fun renderDevServerRunConfigurations(
     }
     append("DEV_RUN_CONFIGURATIONS = {\n")
     for (row in sortedRows) {
-      appendRow(row, sharedFlagLists, sharedArgumentLists)
+      appendRow(row, distributions.getValue(row.name), sharedFlagLists, sharedArgumentLists)
     }
     append("}\n\n")
     append("def dev_server_run_configurations():\n")
@@ -538,11 +688,13 @@ private fun shareLists(sortedRows: List<DevRunConfigurationRow>, items: (DevRunC
 
 private fun StringBuilder.appendRow(
   row: DevRunConfigurationRow,
+  distribution: String,
   sharedFlagLists: Map<List<String>, String>,
   sharedArgumentLists: Map<List<String>, String>,
 ) {
   val fields = ArrayList<RowField>()
   fields.add(RowField("product", starlarkString(row.product)))
+  fields.add(RowField("distribution", starlarkString(distribution)))
   if (row.additionalModules.isNotEmpty()) {
     fields.add(listField("additional_modules", row.additionalModules))
   }

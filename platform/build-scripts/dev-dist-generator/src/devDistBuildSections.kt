@@ -330,10 +330,14 @@ internal class DevDistBuildSections private constructor(
     get() = checkNotNull(resourceStatements) { "The resource statements render after the plugin plan entries are bound" }
 
   /**
-   * What the half that renders second reads of this half, see [DevDistUpstreamHalf]. [productClasses] and
-   * [ownPackagePlans] come from the plan and the plugin executions over these sections.
+   * What the half that renders second reads of this half, see [DevDistUpstreamHalf]. [productClasses],
+   * [ownPackagePlans] and [indexProducts] come from the plan and the plugin executions over these sections.
    */
-  fun upstreamSummary(productClasses: Map<String, String>, ownPackagePlans: DevDistOwnPackagePlans): DevDistUpstreamHalf {
+  fun upstreamSummary(
+    productClasses: Map<String, String>,
+    ownPackagePlans: DevDistOwnPackagePlans,
+    indexProducts: Map<String, DevDistIndexProduct>,
+  ): DevDistUpstreamHalf {
     return DevDistUpstreamHalf(
       halfName = half.name,
       contentModuleJarCalls = contentModuleJarCalls,
@@ -341,6 +345,7 @@ internal class DevDistBuildSections private constructor(
       resourceStatements = renderedResourceStatements,
       productClasses = productClasses,
       ownPackagePlans = ownPackagePlans,
+      indexProducts = indexProducts,
     )
   }
 

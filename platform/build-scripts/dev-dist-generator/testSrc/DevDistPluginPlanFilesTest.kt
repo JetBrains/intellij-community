@@ -345,7 +345,7 @@ class DevDistPluginPlanFilesTest {
       half = CommunityDevDistHalf,
       productOrder = listOf("idea"),
     )
-    val rendering = DevDistPluginExecutionRendering(calls = mapOf(communityPlugin to sectionCalls(sectionCall)), components = "")
+    val rendering = DevDistPluginExecutionRendering(calls = mapOf(communityPlugin to sectionCalls(sectionCall)), components = "", bundledModules = emptyMap())
     return files to DevDistOwnPackagePlans.of(files, rendering, CommunityDevDistHalf)
   }
 

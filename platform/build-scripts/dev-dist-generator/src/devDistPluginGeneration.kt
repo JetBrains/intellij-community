@@ -893,12 +893,42 @@ internal class DevDistPluginCallRendering(
 
 /**
  * The rendered plugin executions of one run: the calls of every complex plugin keyed by main module and sorted, and the
- * `DEV_DIST_PLUGIN_COMPONENTS` map of `dev_dist_content_sets.bzl`.
+ * `DEV_DIST_PLUGIN_COMPONENTS` map of `dev_dist_content_sets.bzl`. [bundledModules] are the main modules of the bundled
+ * tier of each product, for the distribution index, see [devDistBundledModules].
  */
 internal class DevDistPluginExecutionRendering(
   @JvmField val calls: Map<String, DevDistPluginCallRendering>,
   @JvmField val components: String,
+  @JvmField val bundledModules: Map<String, DevDistBundledModules>,
 )
+
+/**
+ * The main modules of the bundled tier of one product. [modules] are the components that every host platform
+ * composes, sorted. [platformModules] maps every other main module to its host platforms, both sorted. See
+ * [DevDistIndexProduct].
+ */
+internal class DevDistBundledModules(
+  @JvmField val modules: List<String>,
+  @JvmField val platformModules: Map<String, List<String>>,
+)
+
+/**
+ * The bundled [components] of one product, split as [DevDistBundledModules] states. A neutral component and a
+ * component with a label for each [HOST_PLATFORMS] entry go into [DevDistBundledModules.modules].
+ */
+internal fun devDistBundledModules(components: List<GeneratedPluginComponent>): DevDistBundledModules {
+  val modules = TreeSet<String>()
+  val platformModules = TreeMap<String, List<String>>()
+  for (component in components) {
+    if (component.label != null || component.labels.keys.containsAll(HOST_PLATFORMS)) {
+      modules.add(component.mainModule)
+    }
+    else {
+      platformModules.put(component.mainModule, component.labels.keys.sorted())
+    }
+  }
+  return DevDistBundledModules(modules = java.util.List.copyOf(modules), platformModules = Collections.unmodifiableMap(platformModules))
+}
 
 /**
  * Renders the `dev_dist_complex_plugin` calls of every complex plugin, one chain per plan file behind them, and the
@@ -989,6 +1019,7 @@ internal fun renderGeneratedDevDistPluginExecutions(
     components = renderPluginComponents(components, planLabel = owner.index::planLabel, communityProducts = communityProducts) { product ->
       owner.half.compositionOrder(product)
     },
+    bundledModules = components.mapValues { (_, tiers) -> devDistBundledModules(tiers.getValue(DevDistPluginTier.BUNDLED)) },
   )
 }
 

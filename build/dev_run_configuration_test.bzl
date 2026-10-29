@@ -18,7 +18,6 @@ load(
     "dev_dist_platform_fragments",
     "dev_run_configuration_check_plan",
     "dev_run_distribution_groups",
-    "dev_run_distribution_name",
 )
 
 # Every product of `DEV_DIST_PRODUCTS` in `dev_dist_products.bzl`.
@@ -76,7 +75,7 @@ def _distribution_name_test_impl(ctx):
     env = unittest.begin(ctx)
 
     # The distributions that the smoke tests and the aliases of `build/BUILD.bazel` name.
-    distributions = [dev_run_distribution_name(names) for names in dev_run_distribution_groups(DEV_RUN_CONFIGURATIONS).values()]
+    distributions = dev_run_distribution_groups(DEV_RUN_CONFIGURATIONS).keys()
     for name in ["idea_community", "android_studio_dev_build", "idea_with_compose_dev_build"]:
         asserts.true(env, name in distributions, "'%s' names its distribution" % name)
     return unittest.end(env)

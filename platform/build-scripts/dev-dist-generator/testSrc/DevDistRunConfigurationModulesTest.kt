@@ -55,6 +55,7 @@ class DevDistRunConfigurationModulesTest {
     additionalModules: List<String> = emptyList(),
     jvmFlags: List<String> = emptyList(),
     env: Map<String, String> = emptyMap(),
+    runtimeModuleRepository: Boolean = false,
   ): DevRunConfigurationRow {
     return DevRunConfigurationRow(
       name = name,
@@ -63,7 +64,7 @@ class DevDistRunConfigurationModulesTest {
       additionalModules = additionalModules,
       jvmFlags = jvmFlags,
       env = env,
-      runtimeModuleRepository = false,
+      runtimeModuleRepository = runtimeModuleRepository,
     )
   }
 
@@ -439,10 +440,11 @@ class DevDistRunConfigurationModulesTest {
       |]
       |
       |DEV_RUN_CONFIGURATIONS = {
-      |    "a": struct(product = "idea", jvm_flags = _JVM_FLAGS_A),  # a.xml
-      |    "b": struct(product = "idea", jvm_flags = _JVM_FLAGS_A, env = {"K": "v"}),  # b.xml
+      |    "a": struct(product = "idea", distribution = "a", jvm_flags = _JVM_FLAGS_A),  # a.xml
+      |    "b": struct(product = "idea", distribution = "a", jvm_flags = _JVM_FLAGS_A, env = {"K": "v"}),  # b.xml
       |    "c": struct(
       |        product = "other",  # c.xml
+      |        distribution = "c",
       |        additional_modules = [
       |            "intellij.m",
       |            "intellij.n",
@@ -525,7 +527,142 @@ class DevDistRunConfigurationModulesTest {
     assertThat(row.booleanFields).containsExactly("x_field")
     assertThat(row.jvmFlags).containsExactly("-Da=1")
     assertThat(renderDevServerRunConfigurations(listOf(row), splitProducts = setOf("idea"), macrosBzl = TEST_MACROS_BZL, header = TEST_HEADER))
-      .contains("\"field\": struct(product = \"idea\", jvm_flags = [\"-Da=1\"], x_field = True),  # Field.xml")
+      .contains("\"field\": struct(product = \"idea\", distribution = \"field\", jvm_flags = [\"-Da=1\"], x_field = True),  # Field.xml")
+  }
+
+  @Test
+  fun `rows of one product, module set and repository share the distribution of the shortest name`() {
+    val rows = listOf(
+      row("idea_free_mode", jvmFlags = listOf("-Da=1")),
+      row("idea_backend"),
+      row("idea_air", additionalModules = listOf("intellij.air")),
+      row("idea_mrs", additionalModules = listOf("intellij.air")),
+      row("idea_rmr", runtimeModuleRepository = true),
+    )
+
+    val distributions = devRunDistributions(rows)
+
+    assertThat(distributions.map { it.name to it.rows }).containsExactly(
+      "idea_air" to listOf("idea_air", "idea_mrs"),
+      "idea_backend" to listOf("idea_backend", "idea_free_mode"),
+      "idea_rmr" to listOf("idea_rmr"),
+    )
+    // The group key keeps the list order, as the old Starlark tuple did. The reader sorts the modules, so two rows never differ only in order.
+    assertThat(devRunDistributions(listOf(row("ab", additionalModules = listOf("a", "b")), row("ba", additionalModules = listOf("b", "a")))).map { it.name })
+      .containsExactly("ab", "ba")
+    assertThat(renderDevServerRunConfigurations(rows, splitProducts = setOf("idea"), macrosBzl = TEST_MACROS_BZL, header = TEST_HEADER))
+      .contains("\"idea_free_mode\": struct(product = \"idea\", distribution = \"idea_backend\", jvm_flags = [\"-Da=1\"]),")
+      .contains("\"idea_mrs\": struct(product = \"idea\", distribution = \"idea_air\", additional_modules = [\"intellij.air\"]),")
+  }
+
+  @Test
+  fun `the distribution index states each named product once and lists each distribution`() {
+    val rows = listOf(
+      row("idea_backend"),
+      row("idea"),
+      row("idea_air", additionalModules = listOf("intellij.air", "intellij.ml")),
+      row("client", product = "ideaJetBrainsClient", runtimeModuleRepository = true),
+    )
+    val products = mapOf(
+      "idea" to DevDistIndexProduct(
+        bundledModules = listOf("intellij.kotlin", "intellij.java"),
+        platformBundledModules = mapOf("intellij.wsl" to listOf("windows_x64", "windows_aarch64"), "intellij.mac" to listOf("darwin_x64")),
+        modularLoader = false,
+      ),
+      "ideaJetBrainsClient" to DevDistIndexProduct(bundledModules = emptyList(), platformBundledModules = emptyMap(), modularLoader = true),
+      "unused" to DevDistIndexProduct(bundledModules = listOf("intellij.x"), platformBundledModules = emptyMap(), modularLoader = false),
+    )
+
+    assertThat(renderDevDistDistributionIndex(rows, products, generatorCommand = "bazel run //tool")).isEqualTo(
+      """
+      |{
+      |    "generatedBy": "bazel run //tool",
+      |    "products": {
+      |        "idea": {
+      |            "bundledModules": [
+      |                "intellij.java",
+      |                "intellij.kotlin"
+      |            ],
+      |            "platformBundledModules": {
+      |                "intellij.mac": [
+      |                    "darwin_x64"
+      |                ],
+      |                "intellij.wsl": [
+      |                    "windows_aarch64",
+      |                    "windows_x64"
+      |                ]
+      |            },
+      |            "modularLoader": false
+      |        },
+      |        "ideaJetBrainsClient": {
+      |            "bundledModules": [],
+      |            "platformBundledModules": {},
+      |            "modularLoader": true
+      |        }
+      |    },
+      |    "distributions": [
+      |        {
+      |            "name": "client",
+      |            "label": "//build:client_dist",
+      |            "product": "ideaJetBrainsClient",
+      |            "additionalModules": [],
+      |            "runtimeModuleRepository": true
+      |        },
+      |        {
+      |            "name": "idea",
+      |            "label": "//build:idea_dist",
+      |            "product": "idea",
+      |            "additionalModules": [],
+      |            "runtimeModuleRepository": false
+      |        },
+      |        {
+      |            "name": "idea_air",
+      |            "label": "//build:idea_air_dist",
+      |            "product": "idea",
+      |            "additionalModules": [
+      |                "intellij.air",
+      |                "intellij.ml"
+      |            ],
+      |            "runtimeModuleRepository": false
+      |        }
+      |    ]
+      |}
+      |""".trimMargin()
+    )
+  }
+
+  @Test
+  fun `a bundled component of some host platforms leaves the modules of every platform`() {
+    val bundled = devDistBundledModules(listOf(
+      GeneratedPluginComponent("intellij.b", label = "//b"),
+      GeneratedPluginComponent("intellij.all", labels = HOST_PLATFORMS.associateWith { "//all_$it" }),
+      GeneratedPluginComponent("intellij.wsl", labels = mapOf("windows_x64" to "//wsl_x64", "windows_aarch64" to "//wsl_aarch64")),
+      GeneratedPluginComponent("intellij.a", label = "//a"),
+    ))
+
+    assertThat(bundled.modules).containsExactly("intellij.a", "intellij.all", "intellij.b")
+    assertThat(bundled.platformModules).containsExactly(entry("intellij.wsl", listOf("windows_aarch64", "windows_x64")))
+  }
+
+  @Test
+  fun `a community product takes the index facts of the community half`() {
+    val planned = DevDistIndexProduct(bundledModules = listOf("intellij.u"), platformBundledModules = emptyMap(), modularLoader = false)
+    val community = DevDistIndexProduct(bundledModules = listOf("intellij.c"), platformBundledModules = emptyMap(), modularLoader = true)
+
+    val products = devDistIndexProducts(mapOf("idea" to planned), communityProducts = setOf("Idea"), upstream = mapOf("Idea" to community, "Other" to planned))
+
+    assertThat(products).containsExactly(entry("Idea", community), entry("idea", planned))
+    assertThatThrownBy { devDistIndexProducts(emptyMap(), communityProducts = setOf("Idea"), upstream = emptyMap()) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("'Idea'")
+  }
+
+  @Test
+  fun `a distribution of a product without index facts fails the index`() {
+    assertThatThrownBy { renderDevDistDistributionIndex(listOf(row("g", product = "Other")), emptyMap(), generatorCommand = "test") }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageContaining("'g'")
+      .hasMessageContaining("'Other'")
   }
 
   @Test

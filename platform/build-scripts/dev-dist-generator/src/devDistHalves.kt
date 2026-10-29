@@ -175,6 +175,8 @@ internal class DevDistBazelComputes(
  * - [productClasses] are the classes of the product properties of the planned products, keyed by the `dev-build.json`
  *   key. They name the community products, see [devDistCommunityProducts].
  * - [ownPackagePlans] are the plan files and the calls of the own packages of community plugins, see R6.
+ * - [indexProducts] are the distribution index facts of the planned products, keyed by the `dev-build.json` key. The
+ *   index of the second half reads them for a community product, see [renderDevDistDistributionIndex].
  *
  * [halfName] is the name of the half, for a failure message.
  */
@@ -185,6 +187,7 @@ internal class DevDistUpstreamHalf(
   @JvmField val resourceStatements: DevDistResourceStatements,
   @JvmField val productClasses: Map<String, String>,
   @JvmField val ownPackagePlans: DevDistOwnPackagePlans,
+  @JvmField val indexProducts: Map<String, DevDistIndexProduct>,
 )
 
 /**
@@ -272,6 +275,7 @@ internal fun computeDevDistBazelFiles(
       targets = index.targets,
       runConfigurationRows = derivation.runConfigurations.rows,
       communityProducts = communityProducts,
+      upstreamIndexProducts = upstream?.indexProducts.orEmpty(),
     )
   }
   return DevDistBazelComputes(
@@ -280,6 +284,7 @@ internal fun computeDevDistBazelFiles(
     upstream = sections.upstreamSummary(
       productClasses = plan.productClasses,
       ownPackagePlans = DevDistOwnPackagePlans.of(executions.files, executions.rendering, half),
+      indexProducts = plan.indexProducts,
     ),
   )
 }

@@ -78,10 +78,7 @@ dev_dist_platform_fragments = _DECLARATIONS.platform_fragments
 # Fails at load time when the generated plan cannot serve a launcher.
 dev_run_configuration_check_plan = _DECLARATIONS.check_plan
 
-# The distribution name of a group of rows.
-dev_run_distribution_name = _DECLARATIONS.distribution_name
-
-# The rows of `DEV_RUN_CONFIGURATIONS` grouped by the distribution they share.
+# The rows of `DEV_RUN_CONFIGURATIONS` grouped by the distribution that their `distribution` field names.
 dev_run_distribution_groups = _DECLARATIONS.distribution_groups
 
 # The launchers of `DEV_RUN_CONFIGURATIONS`, the rows the plan generator writes into `dev_server_run_configurations.bzl`.

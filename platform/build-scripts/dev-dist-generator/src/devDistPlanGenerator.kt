@@ -193,6 +193,8 @@ private const val DEV_DIST_MODULE_SETS_RELATIVE_PATH: String = "build/dev_dist_m
  */
 private const val DEV_DIST_CONTENT_SETS_RELATIVE_PATH: String = "build/dev-dist-content/dev_dist_content_sets.bzl"
 private const val DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH: String = "build/dev_server_run_configurations.bzl"
+/** The distribution index of the rows of [DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH], see [renderDevDistDistributionIndex]. */
+private const val DEV_DIST_DISTRIBUTION_INDEX_RELATIVE_PATH: String = "build/dev-dist-distributions.json"
 
 /**
  * One descriptor file, as the Bazel side needs it: a project-relative path plus the JPS module whose Bazel
@@ -233,6 +235,8 @@ internal class DevDistPlanCompute(
   private val pluginPlans: DevDistPluginPlanUpdates? = null,
   /** The class of the product properties of every planned split product, keyed by the `dev-build.json` key. Empty for the dev sections. */
   @JvmField val productClasses: Map<String, String> = emptyMap(),
+  /** What the distribution index states of every planned split product, keyed by the `dev-build.json` key. Empty for the dev sections. */
+  @JvmField val indexProducts: Map<String, DevDistIndexProduct> = emptyMap(),
 ) {
   /**
    * Writes the rendered files when [commitChanges], and otherwise reports them as diffs.
@@ -371,6 +375,8 @@ internal fun computeDevDistPluginExecutions(
  * [communityProducts] are the community products of this half, see [devDistCommunityProducts]. The half collects no
  * fragment plan of them, so it writes no row of them in the plan, the reference files, the fragment inputs, the module
  * sets, the product info and the product descriptor package, and no launch model. Empty for the community half.
+ * [upstreamIndexProducts] are the index facts of the community half, see [DevDistUpstreamHalf.indexProducts]. The
+ * distribution index of this half reads them for a community product.
  */
 internal fun computeDevDistPlan(
   half: DevDistHalf,
@@ -382,6 +388,7 @@ internal fun computeDevDistPlan(
   targets: BazelTargetsInfo.TargetsFile,
   runConfigurationRows: List<DevRunConfigurationRow>,
   communityProducts: Set<String> = emptySet(),
+  upstreamIndexProducts: Map<String, DevDistIndexProduct> = emptyMap(),
 ): DevDistPlanCompute {
   sections.requireDescriptorDeclarationsUnchanged()
   val pluginPlans = executions.files
@@ -443,6 +450,18 @@ internal fun computeDevDistPlan(
   // [checkSplitDistributionsExtend].
   val productClasses = devDistProductClasses(products)
   val plannedProductClasses = sortedProducts.associateTo(TreeMap()) { it.platformPrefix to productClasses.get(it.platformPrefix).orEmpty() }
+  val plannedIndexProducts = HashMap<String, DevDistIndexProduct>()
+  for (product in sortedProducts) {
+    val bundled = checkNotNull(pluginExecutions.bundledModules.get(product.platformPrefix)) {
+      "The plugin executions state no bundled tier of the planned product '${product.platformPrefix}'"
+    }
+    plannedIndexProducts.put(product.platformPrefix, DevDistIndexProduct(
+      bundledModules = bundled.modules,
+      platformBundledModules = bundled.platformModules,
+      modularLoader = product.modularLoader,
+    ))
+  }
+  val indexProducts = devDistIndexProducts(plannedIndexProducts, communityProducts, upstreamIndexProducts)
   val fileContents = buildSpan("dev-distribution plan: render files") { renderSpan ->
     val contents = buildList {
       add(DEV_DIST_DESCRIPTORS_RELATIVE_PATH to renderDescriptors(collected.files, half))
@@ -462,6 +481,7 @@ internal fun computeDevDistPlan(
       add(DEV_DIST_MODULE_SETS_RELATIVE_PATH to renderModuleSets(collected.moduleSets, half))
       add(DEV_DIST_CONTENT_SETS_RELATIVE_PATH to renderContentSets(pluginExecutions, half))
       add(DEV_SERVER_RUN_CONFIGURATIONS_RELATIVE_PATH to renderDevServerRunConfigurations(runConfigurations, splitProducts, half.macrosBzl, half.refusedRowProperties, half.generatedByHeader))
+      add(DEV_DIST_DISTRIBUTION_INDEX_RELATIVE_PATH to renderDevDistDistributionIndex(runConfigurations, indexProducts, half.generatorCommand))
       addAll(crossHalfDescriptorPackages.files(crossHalfPluginTargets, crossHalfPluginCalls).toList())
       productDescriptorFiles.entries.mapTo(this) { it.key to it.value }
       collected.platformPatches?.renderPackage()?.entries?.mapTo(this) { it.key to it.value }
@@ -517,6 +537,7 @@ internal fun computeDevDistPlan(
     files = files + pluginPlans.updates.results,
     pluginPlans = pluginPlans.updates,
     productClasses = plannedProductClasses,
+    indexProducts = indexProducts,
   )
 }
 
