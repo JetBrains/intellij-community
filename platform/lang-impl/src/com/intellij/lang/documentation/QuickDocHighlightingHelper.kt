@@ -11,8 +11,10 @@ import com.intellij.lang.documentation.DocumentationMarkup.CLASS_TOP
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode
 import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.colors.impl.EmptyColorScheme
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -255,6 +257,26 @@ object QuickDocHighlightingHelper {
       INLINE_CODE_PREFIX + string + INLINE_CODE_SUFFIX
     else
       string
+
+  /**
+   * The global editor color scheme, or the empty scheme in a headless application
+   * that registers no [EditorColorsManager] (a language server).
+   */
+  @Internal
+  @JvmStatic
+  fun getColorScheme(): EditorColorsScheme =
+    EditorColorsManager.getInstance()?.globalScheme
+    ?: EmptyColorScheme.getEmptyScheme()
+
+  /**
+   * The attributes of [key] in [getColorScheme]; throws if the scheme has none (a temp key).
+   */
+  @Internal
+  @JvmStatic
+  fun getAttributes(key: TextAttributesKey): TextAttributes {
+    val scheme = getColorScheme()
+    return checkNotNull(scheme.getAttributes(key)) { "No attributes for ${key.externalName} in scheme ${scheme.name}" }
+  }
 
   /**
    * Tries to guess a registered IDE language based. Useful e.g. for Markdown support

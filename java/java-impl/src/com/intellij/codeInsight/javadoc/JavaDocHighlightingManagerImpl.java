@@ -3,7 +3,7 @@ package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightNamesUtil;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiAnonymousClass;
@@ -23,7 +23,7 @@ public class JavaDocHighlightingManagerImpl implements JavaDocHighlightingManage
   }
 
   private static @NotNull TextAttributes resolveAttributes(@NotNull TextAttributesKey attributesKey) {
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
+    return QuickDocHighlightingHelper.getAttributes(attributesKey);
   }
 
   @Override

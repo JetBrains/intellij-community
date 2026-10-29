@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.colors.CodeInsightColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.DumbService
@@ -153,12 +152,12 @@ object KDocRenderer {
             ?.let { textAttributesKeyForKtElement(it)?.attributesKey }
             ?.let { getTargetLinkElementAttributes(it) }
             ?: TextAttributes().apply {
-                foregroundColor = EditorColorsManager.getInstance().globalScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)
+                foregroundColor = QuickDocHighlightingHelper.getColorScheme().getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK)
             }
     }
 
     private fun getTargetLinkElementAttributes(key: TextAttributesKey): TextAttributes {
-        return tuneAttributesForLink(EditorColorsManager.getInstance().globalScheme.getAttributes(key))
+        return tuneAttributesForLink(QuickDocHighlightingHelper.getAttributes(key))
     }
 
     private fun highlightQualifiedName(qualifiedName: String, lastSegmentAttributes: TextAttributes): String {
@@ -614,7 +613,7 @@ object KDocRenderer {
      * In this case we should change link color to standard hyperlink color which we believe is apriori different.
      */
     private fun tuneAttributesForLink(attributes: TextAttributes): TextAttributes {
-        val globalScheme = EditorColorsManager.getInstance().globalScheme
+        val globalScheme = QuickDocHighlightingHelper.getColorScheme()
         if (attributes.foregroundColor == globalScheme.getAttributes(HighlighterColors.TEXT).foregroundColor
             || attributes.foregroundColor == globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER).foregroundColor
         ) {
@@ -676,7 +675,7 @@ object KDocRenderer {
 
             private fun resolveKey(key: TextAttributesKey): TextAttributesAdapter {
                 return TextAttributesAdapter(
-                    EditorColorsManager.getInstance().globalScheme.getAttributes(key)
+                    QuickDocHighlightingHelper.getAttributes(key)
                 )
             }
 

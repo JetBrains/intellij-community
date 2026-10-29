@@ -13,6 +13,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.lang.documentation.DocumentationSettings.InlineCodeHighlightingMode;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.lang.java.JavaLanguage;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.DumbService;
@@ -2115,7 +2115,7 @@ public class JavaDocInfoGenerator {
               case ITALIC -> orig -> myPrinter.printItalicText(new StringBuilder(), orig).toString();
               case HIGHLIGHTED -> {
                 TextAttributes attributes =
-                  EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
+                  QuickDocHighlightingHelper.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
                 yield orig -> getStyledSpan(true, attributes, orig);
               }
             };
@@ -2924,12 +2924,7 @@ public class JavaDocInfoGenerator {
    * In this case we should change link color to standard hyperlink color which we believe is apriori different.
    */
   private @NotNull TextAttributes tuneAttributesForLink(@NotNull TextAttributes attributes) {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    if (manager == null) {
-      return attributes;
-    }
-
-    EditorColorsScheme globalScheme = manager.getGlobalScheme();
+    EditorColorsScheme globalScheme = QuickDocHighlightingHelper.getColorScheme();
     TextAttributes defaultText = globalScheme.getAttributes(HighlighterColors.TEXT);
     TextAttributes identifier = globalScheme.getAttributes(DefaultLanguageHighlighterColors.IDENTIFIER);
 

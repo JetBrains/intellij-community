@@ -13,7 +13,6 @@ import com.intellij.markdown.utils.MarkdownToHtmlConverter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -328,7 +327,7 @@ public class JavaDocInfoHtmlPrinter implements JavaDocInfoPrinter {
 
   private static String getSpanForUnresolvedItem() {
     TextAttributes attributes =
-      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
+      QuickDocHighlightingHelper.getAttributes(CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES);
     Color color = attributes.getForegroundColor();
     String htmlColor = color == null ? "red" : ColorUtil.toHtmlColor(color);
     return "<span style=\"color:" + htmlColor + "\">";

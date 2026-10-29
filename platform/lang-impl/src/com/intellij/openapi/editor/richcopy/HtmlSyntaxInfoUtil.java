@@ -9,7 +9,6 @@ import com.intellij.lang.documentation.QuickDocSyntaxHighlightingHandlerFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
@@ -37,7 +36,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
 
 
 public final class HtmlSyntaxInfoUtil {
@@ -71,7 +69,7 @@ public final class HtmlSyntaxInfoUtil {
   ) {
     appendStyledSpan(
       buffer,
-      Objects.requireNonNull(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey)),
+      QuickDocHighlightingHelper.getAttributes(attributesKey),
       value,
       saturationFactor);
     return buffer;
@@ -198,7 +196,7 @@ public final class HtmlSyntaxInfoUtil {
 
       PsiFile fakePsiFile = PsiFileFactory.getInstance(project).createFileFromText(language, preprocessedCode);
       EditorColorsScheme scheme =
-        new ColorsSchemeWithChangedSaturation(EditorColorsManager.getInstance().getGlobalScheme(), saturationFactor);
+        new ColorsSchemeWithChangedSaturation(QuickDocHighlightingHelper.getColorScheme(), saturationFactor);
 
       List<QuickDocSyntaxHighlightingHandler.QuickDocHighlightInfo> semanticHighlighting =
         handler != null ? handler.performSemanticHighlighting(fakePsiFile) : Collections.emptyList();

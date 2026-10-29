@@ -6,8 +6,8 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.DocumentationSettings;
+import com.intellij.lang.documentation.QuickDocHighlightingHelper;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -108,10 +108,7 @@ public final class AnnotationDocGenerator {
     @NotNull TextAttributesKey attributesKey,
     @Nullable String value
   ) {
-    var manager = EditorColorsManager.getInstance();
-    TextAttributes attributes = manager != null
-                                ? manager.getGlobalScheme().getAttributes(attributesKey)
-                                : new TextAttributes();
+    TextAttributes attributes = QuickDocHighlightingHelper.getAttributes(attributesKey);
 
     printer.printStylizedText(buffer, doSyntaxHighlighting, attributes, value,
                               DocumentationSettings.getHighlightingSaturation(isForRenderedDoc));
