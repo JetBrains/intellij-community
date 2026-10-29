@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.provider.LocalEelDescriptor
 import com.intellij.platform.eel.provider.utils.EelPathUtils.TransferTarget
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.sanitizeFileName
@@ -17,6 +18,10 @@ import java.nio.file.Path
 
 /** Utilities for deploying server files and directories to an Eel execution host. */
 @ApiStatus.Experimental
+@ApiStatus.Internal
+@VisibleToClasses(
+  "com.intellij.platform.ijent.functional.EelServerDeploymentTest",
+)
 object EelServerDeploymentUtils {
   private const val SERVER_DEPLOYMENTS_DIRECTORY = "server-deployments"
   private val LOG = logger<EelServerDeploymentUtils>()
