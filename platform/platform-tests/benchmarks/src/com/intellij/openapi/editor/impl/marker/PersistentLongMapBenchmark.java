@@ -38,7 +38,7 @@ public class PersistentLongMapBenchmark {
   /// Builds a dense persistent map containing [PersistentLongMapState#entryCount] entries.
   @Benchmark
   public PersistentLongMap<Object> buildDensePersistentMap(PersistentLongMapState state) {
-    PersistentLongMap<Object> map = PersistentLongMap.Companion.empty(state.implementation);
+    PersistentLongMap<Object> map = state.implementation.empty();
     for (int index = 0; index < state.entryCount; index++) {
       map = map.put((long)index + 1L, PRESENT_VALUE);
     }
@@ -102,7 +102,7 @@ public class PersistentLongMapBenchmark {
     /// Builds the selected implementation and deterministic access orders outside the measured region.
     @Setup(Level.Trial)
     public void setUp() {
-      PersistentLongMap<Object> currentMap = PersistentLongMap.Companion.empty(implementation);
+      PersistentLongMap<Object> currentMap = implementation.empty();
       for (int index = 0; index < entryCount; index++) {
         currentMap = currentMap.put((long)index + 1L, PRESENT_VALUE);
       }

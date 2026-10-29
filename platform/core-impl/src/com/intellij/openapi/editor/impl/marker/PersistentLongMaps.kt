@@ -29,24 +29,8 @@ internal interface PersistentLongMap<V : Any> {
   fun forEachEntry(action: (Long, V) -> Unit)
 
   companion object {
-    private val EMPTY_MAP_16: PersistentLongMap16<Any> = PersistentLongMap16()
-    private val EMPTY_VECTOR_32: PersistentVector32<Any> = PersistentVector32()
-    private val EMPTY_VECTOR_64: PersistentVector64<Any> = PersistentVector64()
-    private val EMPTY_PAGED_VECTOR_128: PersistentPagedVector128<Any> = PersistentPagedVector128()
-    private val EMPTY_PAGED_VECTOR_256: PersistentPagedVector256<Any> = PersistentPagedVector256()
-    private val EMPTY_CHAMP: PersistentLongChampMap<Any> = PersistentLongChampMap()
-    private val EMPTY_CHAMP_64: PersistentLongChampMap<Any> = PersistentLongChampMap(bitsPerLevel = 6)
-
-    @Suppress("UNCHECKED_CAST")
-    fun <V : Any> empty(implementation: PersistentLongMapImplementation): PersistentLongMap<V> = when (implementation) {
-      PersistentLongMapImplementation.MAP_16 -> EMPTY_MAP_16
-      PersistentLongMapImplementation.VECTOR_32 -> EMPTY_VECTOR_32
-      PersistentLongMapImplementation.VECTOR_64 -> EMPTY_VECTOR_64
-      PersistentLongMapImplementation.PAGED_VECTOR_128 -> EMPTY_PAGED_VECTOR_128
-      PersistentLongMapImplementation.PAGED_VECTOR_256 -> EMPTY_PAGED_VECTOR_256
-      PersistentLongMapImplementation.CHAMP -> EMPTY_CHAMP
-      PersistentLongMapImplementation.CHAMP_64 -> EMPTY_CHAMP_64
-    } as PersistentLongMap<V>
+    fun <V : Any> empty(implementation: PersistentLongMapImplementation = PersistentLongMapImplementation.VECTOR_64): PersistentLongMap<V> =
+      implementation.empty()
   }
 }
 
@@ -70,14 +54,17 @@ internal interface PersistentLongMapBuilder<V : Any> {
 }
 
 /** Available implementations of [PersistentLongMap]. */
-internal enum class PersistentLongMapImplementation {
-  MAP_16,
-  VECTOR_32,
-  VECTOR_64,
-  PAGED_VECTOR_128,
-  PAGED_VECTOR_256,
-  CHAMP,
-  CHAMP_64,
+internal enum class PersistentLongMapImplementation(private val emptyMap: PersistentLongMap<Any>) {
+  MAP_16(PersistentLongMap16()),
+  VECTOR_32(PersistentVector32()),
+  VECTOR_64(PersistentVector64()),
+  PAGED_VECTOR_128(PersistentPagedVector128()),
+  PAGED_VECTOR_256(PersistentPagedVector256()),
+  CHAMP(PersistentLongChampMap()),
+  CHAMP_64(PersistentLongChampMap(bitsPerLevel = 6));
+
+  @Suppress("UNCHECKED_CAST")
+  fun <V : Any> empty(): PersistentLongMap<V> = emptyMap as PersistentLongMap<V>
 }
 
 private fun requireNonNegativeKey(key: Long) {

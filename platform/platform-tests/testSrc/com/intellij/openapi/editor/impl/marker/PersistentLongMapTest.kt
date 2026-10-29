@@ -18,6 +18,8 @@ internal class PersistentLongMapTest {
     val stringMaps = PersistentLongMapImplementation.entries.associateWith { PersistentLongMap.empty<String>(it) }
     val intMaps = PersistentLongMapImplementation.entries.associateWith { PersistentLongMap.empty<Int>(it) }
 
+    assertSame(stringMaps.getValue(PersistentLongMapImplementation.VECTOR_64), PersistentLongMap.empty<String>())
+
     for (implementation in PersistentLongMapImplementation.entries) {
       @Suppress("AssertBetweenInconvertibleTypes")
       assertSame(stringMaps.getValue(implementation), intMaps.getValue(implementation), implementation.name)
@@ -37,7 +39,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `put supports non-negative keys and preserves previous versions`(implementation: PersistentLongMapImplementation) {
-    var map: PersistentLongMap<String> = PersistentLongMap.empty<String>(implementation)
+    var map: PersistentLongMap<String> = implementation.empty<String>()
     val versions = mutableListOf<PersistentLongMap<String>>(map)
 
     for ((index, key) in KEYS.withIndex()) {
@@ -58,7 +60,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `put replaces a value only in the new version`(implementation: PersistentLongMapImplementation) {
-    val original = PersistentLongMap.empty<String>(implementation)
+    val original = implementation.empty<String>()
       .put(42, "old")
       .put(84, "untouched")
     val updated = original.put(42, "new")
@@ -74,7 +76,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `toString lists entries in key order`(implementation: PersistentLongMapImplementation) {
-    val empty = PersistentLongMap.empty<String>(implementation)
+    val empty = implementation.empty<String>()
     val map = empty
       .put(Long.MAX_VALUE, "max")
       .put(64, "sixty-four")
@@ -92,7 +94,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `operations reject negative keys`(implementation: PersistentLongMapImplementation) {
-    val map = PersistentLongMap.empty<String>(implementation)
+    val map = implementation.empty<String>()
 
     for (key in longArrayOf(-1, Long.MIN_VALUE)) {
       assertThrows(IllegalArgumentException::class.java) { map[key] }
@@ -104,7 +106,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `remove preserves remaining entries and previous versions`(implementation: PersistentLongMapImplementation) {
-    var map = PersistentLongMap.empty<String>(implementation)
+    var map = implementation.empty<String>()
     for ((index, key) in KEYS.withIndex()) {
       map = map.put(key, value(index))
     }
@@ -131,7 +133,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `removing an absent key reuses the current version`(implementation: PersistentLongMapImplementation) {
-    val empty = PersistentLongMap.empty<String>(implementation)
+    val empty = implementation.empty<String>()
     val populated = empty.put(1, "one")
 
     assertSame(empty, empty.remove(1))
@@ -141,7 +143,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `builder batches changes and preserves published versions`(implementation: PersistentLongMapImplementation) {
-    val original = PersistentLongMap.empty<String>(implementation)
+    val original = implementation.empty<String>()
       .put(1, "one")
       .put(128, "one hundred twenty eight")
     val builder = original.builder()
@@ -180,7 +182,7 @@ internal class PersistentLongMapTest {
   @ParameterizedTest
   @EnumSource(PersistentLongMapImplementation::class)
   fun `builder rejects negative keys and cannot be reused after build`(implementation: PersistentLongMapImplementation) {
-    val map = PersistentLongMap.empty<String>(implementation)
+    val map = implementation.empty<String>()
     val builder = map.builder()
 
     for (key in longArrayOf(-1, Long.MIN_VALUE)) {
@@ -203,7 +205,7 @@ internal class PersistentLongMapTest {
     val randomKeys = LongArray(128) { random.nextLong().ushr(1) }
     val keys = KEYS + randomKeys
     val expected = mutableMapOf<Long, Int>()
-    var actual = PersistentLongMap.empty<Int>(implementation)
+    var actual = implementation.empty<Int>()
 
     repeat(100) { batch ->
       val builder = actual.builder()
@@ -237,7 +239,7 @@ internal class PersistentLongMapTest {
   @EnumSource(value = PersistentLongMapImplementation::class, names = ["CHAMP", "CHAMP_64"])
   fun `champ layouts separate shared hash prefixes and compact nodes after removal`(implementation: PersistentLongMapImplementation) {
     val keyCount = 4_096
-    var map = PersistentLongMap.empty<Int>(implementation)
+    var map = implementation.empty<Int>()
 
     // A dense set much larger than the widest root forces repeated entry-to-child promotion at several trie levels.
     repeat(keyCount) { key ->
@@ -268,7 +270,7 @@ internal class PersistentLongMapTest {
     val randomKeys = LongArray(128) { random.nextLong().ushr(1) }
     val keys = KEYS + randomKeys
     val expected = mutableMapOf<Long, Int>()
-    var actual = PersistentLongMap.empty<Int>(implementation)
+    var actual = implementation.empty<Int>()
 
     repeat(1_000) { operation ->
       val key = keys[random.nextInt(keys.size)]
