@@ -194,6 +194,7 @@ internal fun classifyPkgRow(
 internal class PyPackagesTreePane(
   private val moduleOrProject: ModuleOrProject.ModuleAndProject,
   parentDisposable: Disposable,
+  private val isMultiModuleProvider: () -> Boolean,
 ) {
   private val project = moduleOrProject.project
   private val moduleContext = moduleOrProject.module
@@ -433,10 +434,15 @@ internal class PyPackagesTreePane(
    * OOM on large uv workspaces (PY-89840) is structurally impossible here.
    */
   private suspend fun safeLoadPackageTree(manager: PythonPackageManager): PackageTreeUiState = try {
+    // In a single-module project the current module always equals the whole project — filtering by
+    // its name would miss every pyproject workspace member (`cli`, `web`, `lib`, …) because none
+    // of them matches that one module name. Drop the filter so the pane shows the same roll-up
+    // PPTW shows and both panels stay in sync.
+    val filter = if (isMultiModuleProvider()) WorkspaceMemberName(moduleContext.name) else null
     val result = buildDisplayablePackages(
       moduleOrProject = moduleOrProject,
       manager = manager,
-      memberFilter = moduleContext.name,
+      memberFilter = filter,
     )
     if (result.unavailable != null) {
       PackageTreeUiState.loaded(emptyList())

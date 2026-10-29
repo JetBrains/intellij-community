@@ -2,11 +2,13 @@
   <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
   <dependencies>
     <module name="intellij.pycharm.community.ide.impl"/>
+    <module name="intellij.libraries.jetbrains.annotations"/>
     <module name="intellij.libraries.jna"/>
     <module name="intellij.libraries.junit6"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.editor.ui"/>
+    <module name="intellij.platform.eel.provider"/>
     <module name="intellij.platform.execution"/>
     <module name="intellij.platform.ide.core"/>
     <module name="intellij.platform.ide.impl"/>
@@ -16,7 +18,13 @@
     <module name="intellij.platform.projectModel"/>
     <module name="intellij.platform.testFramework.junit5"/>
     <module name="intellij.platform.vcs"/>
+    <module name="intellij.python.community.impl.pipenv"/>
+    <module name="intellij.python.community.junit5Tests.framework"/>
+    <module name="intellij.python.community.services.shared"/>
+    <module name="intellij.python.community.services.systemPython"/>
+    <module name="intellij.python.pyproject"/>
     <module name="intellij.python.sourceRoots"/>
+    <module name="intellij.python.venv"/>
   </dependencies>
   <!-- endregion -->
 </idea-plugin>

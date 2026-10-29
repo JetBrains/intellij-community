@@ -25,6 +25,15 @@
     <orderEntry type="module" module-name="intellij.python.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.systemPython" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.services.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.impl.pipenv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.venv" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.pyproject" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.python.community.junit5Tests.framework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.nonModalWelcomeScreen" scope="TEST" />

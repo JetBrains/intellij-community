@@ -126,6 +126,12 @@
                  key="python.interpreter.settings.redesign"
                  restartRequired="false"/>
 
+    <!-- "Auto-configure project workspace from pyproject.toml" checkbox + cleanup on the Workspace Structure page. -->
+    <registryKey defaultValue="true"
+                 description="Show the 'Auto-configure project workspace from pyproject.toml' checkbox on the Workspace Structure page. When off, the checkbox and the cleanup it triggers are hidden entirely."
+                 key="python.pyproject.toggle.in.settings"
+                 restartRequired="false"/>
+
     <projectConfigurable groupId="python.group.settings"
                          id="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable"
                          bundle="messages.PyBundle"

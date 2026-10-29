@@ -1,40 +1,53 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.ConfigurableProvider
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
-import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.ui.DialogPanel
+import com.intellij.platform.util.coroutines.childScope
+import com.intellij.python.pyproject.model.PyProjectModelSettings
+import com.intellij.python.pyproject.model.usePyprojectToml
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.SimpleColoredComponent
+import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.dsl.builder.Align
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.popup.list.SelectablePanel
+import com.intellij.util.asDisposable
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.module.PyModuleService
-import com.jetbrains.python.sdk.ModuleOrProject
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.util.ui.JBInsets
+import com.jetbrains.python.project.PyProject.Companion.asPyProject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import java.awt.CardLayout
 import java.awt.Dimension
+import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -50,7 +63,15 @@ import javax.swing.SwingConstants
  */
 internal class PyWorkspaceStructureConfigurable(private val project: Project) : SearchableConfigurable {
 
-  private val disposable: Disposable = Disposer.newDisposable(ID)
+  // Cancelled in disposeUIResources. Child of project-level scope → survives dialog close, dies
+  // with project. Primary lifecycle primitive: anything launched here stops silently on dispose.
+  private val sessionScope: CoroutineScope =
+    project.service<PyWorkspaceStructureScope>().scope.childScope("PyWorkspaceStructureConfigurable")
+
+  // Bridge for legacy `parentDisposable` APIs (panes that register listeners via Disposer).
+  // Cancelling [sessionScope] disposes this child via `asDisposable`.
+  private val sessionDisposable: Disposable = sessionScope.asDisposable()
+
   private val projectSdksModel: ProjectSdksModel = ProjectSdksModel()
 
   /** [PyWorkspaceStructureModel]'s view of the editable-SDK pool — a thin adapter over [projectSdksModel]. */
@@ -59,16 +80,19 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
       projectSdksModel.projectSdks.keys.mapTo(HashSet()) { SdkName(it.name) }
 
     override fun syncFromJdkTable() {
-      // Wizard commits new SDKs directly to `ProjectJdkTable`; `reset(project)` re-reads the live
-      // table so the editable pool reflects the new SDK (with its `PythonSdkUpdater`-filled paths)
-      // without the add-time clone that caused PY-92599.
+      // Re-read live JdkTable; add-time clone caused PY-92599.
       projectSdksModel.reset(project)
     }
   }
   private val model: PyWorkspaceStructureModel = PyWorkspaceStructureModel(
     sdksTable = sdksTable,
     onSdksChanged = { refreshAllModuleCombos() },
+    // Platform fires JDK-table events from write actions; hop to EDT before touching the model
+    // state so pool resync + combo refresh land after the write action releases (PY-92598).
+    dispatcher = { task -> sessionScope.launch(Dispatchers.EDT) { task.run() } },
   )
+
+  private val presenter: PyWorkspaceStructurePresenter = PyWorkspaceStructurePresenter()
 
   private val moduleListModel = CollectionListModel<Module>()
   private val moduleList: JBList<Module> = JBList(moduleListModel).apply {
@@ -92,6 +116,18 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 
   private val modulePanes: MutableMap<Module, PyModuleDetailsPane> = LinkedHashMap()
 
+  /** Owns the auto-configure checkbox. */
+  private lateinit var dialogPanel: DialogPanel
+
+  /** Toggle commits on Apply (not on click), so `apply()` can run the follow-up cleanup. */
+  private lateinit var autoConfigCheckBox: JCheckBox
+
+  /** Visible only on pending ON → OFF transition. */
+  private lateinit var autoConfigWarning: JBLabel
+
+  /** Content area wrapper. Swapped by [apply] when toml-off collapses to single-module. */
+  private val contentHolder: JPanel = JPanel(BorderLayout())
+
   override fun getId(): String = ID
 
   override fun getDisplayName(): String =
@@ -102,72 +138,149 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
     projectSdksModel.reset(project)
     reloadModulesModel()
 
-    ApplicationManager.getApplication().messageBus.connect(disposable).subscribe(
+    // Subscription dies with the scope. Model is itself a `ProjectJdkTable.Listener`; its injected
+    // EDT dispatcher defers each handler until the originating write action releases (PY-92598).
+    ApplicationManager.getApplication().messageBus.connect(sessionScope).subscribe(
       ProjectJdkTable.JDK_TABLE_TOPIC,
-      object : ProjectJdkTable.Listener {
-        // JDK-table listeners fire under the write action `ProjectJdkTableImpl.addJdk` holds,
-        // and `refreshAllModuleCombos` walks each pane's `reloadSdkComboItems`, which starts a
-        // modal progress in `interpreterItemsUnderProgress` — forbidden under a write action
-        // (PY-92598). Hop onto `Dispatchers.EDT` through the project's coroutine scope so the
-        // combo refresh runs after the write action releases.
-        override fun jdkAdded(jdk: Sdk) {
-          PyPackageCoroutine.launch(project) {
-            withContext(Dispatchers.EDT) { model.onJdkAdded(SdkName(jdk.name)) }
-          }
-        }
-        override fun jdkRemoved(jdk: Sdk) {
-          PyPackageCoroutine.launch(project) {
-            withContext(Dispatchers.EDT) { model.onJdkRemoved(SdkName(jdk.name)) }
-          }
-        }
-        override fun jdkNameChanged(jdk: Sdk, previousName: String) {
-          PyPackageCoroutine.launch(project) {
-            withContext(Dispatchers.EDT) { model.onJdkRenamed() }
-          }
-        }
-      },
+      model,
     )
 
-    val content = if (isMultiModule()) buildSplitLayout() else buildSingleModuleLayout()
-    return panel {
+    rebuildContentHolder()
+    val toggleVisible = isAutoConfigToggleVisible()
+    dialogPanel = panel {
+      if (toggleVisible) {
+        row {
+          checkBox(PyBundle.message("configurable.PyWorkspaceStructureConfigurable.auto.configure.pyproject.toml"))
+            .applyToComponent {
+              isSelected = project.usePyprojectToml
+              autoConfigCheckBox = this
+              addItemListener { updateAutoConfigWarningVisibility() }
+            }
+        }
+        indent {
+          row {
+            autoConfigWarning = JBLabel(
+              PyBundle.message("configurable.PyWorkspaceStructureConfigurable.auto.configure.pyproject.toml.warning"),
+              AllIcons.General.Warning,
+              SwingConstants.LEFT,
+            ).apply {
+              foreground = UIUtil.getContextHelpForeground()
+              iconTextGap = JBUI.CurrentTheme.ActionsList.elementIconGap()
+              isVisible = false
+            }
+            cell(autoConfigWarning)
+          }.topGap(TopGap.NONE)
+        }
+      }
       row {
-        cell(content).align(Align.FILL).resizableColumn()
+        cell(contentHolder).align(Align.FILL).resizableColumn()
       }.resizableRow()
     }.apply {
       val insets = UIUtil.PANEL_REGULAR_INSETS
       border = JBUI.Borders.empty(insets.top, insets.left, 0, insets.right)
     }
+    updateAutoConfigWarningVisibility()
+    return dialogPanel
   }
 
-  // Add / Remove / Edit mutate `ProjectJdkTable` and real SDKs directly, so nothing in
-  // `projectSdksModel` ever needs an apply or a revert — the model is a lazy re-readable view.
-  override fun isModified(): Boolean = modulePanes.values.any { it.isModified() }
+  /** Show "subprojects will be reset" only on pending ON → OFF. */
+  private fun updateAutoConfigWarningVisibility() {
+    if (!::autoConfigWarning.isInitialized || !::autoConfigCheckBox.isInitialized) return
+    val live = project.usePyprojectToml
+    autoConfigWarning.isVisible = live && !autoConfigCheckBox.isSelected
+  }
+
+  /** Rebuild split-vs-single layout after toml toggle. Tree label stays static (ConfigurableWrapper). */
+  private fun swapContentLayout() {
+    rebuildContentHolder()
+    contentHolder.revalidate()
+    contentHolder.repaint()
+  }
+
+  private fun rebuildContentHolder() {
+    contentHolder.removeAll()
+    contentHolder.add(if (isMultiModule()) buildSplitLayout() else buildSingleModuleLayout(), BorderLayout.CENTER)
+  }
+
+  override fun isModified(): Boolean {
+    // Don't query `projectSdksModel.isModified` — this page doesn't apply/reset it, so flag never clears.
+    if (isAutoConfigToggleVisible() &&
+        ::autoConfigCheckBox.isInitialized &&
+        autoConfigCheckBox.isSelected != project.usePyprojectToml) return true
+    return modulePanes.values.any { it.isModified() }
+  }
+
+  /** Hide checkbox when registry is OFF (setter discards writes → isModified sticks). */
+  private fun isAutoConfigToggleVisible(): Boolean =
+    PyInterpreterSettingsFlags.isAutoConfigureToggleEnabled() &&
+    PyProjectModelSettings.featureStateInRegistry != PyProjectModelSettings.FeatureState.OFF
 
   override fun reset() {
     projectSdksModel.reset(project)
+    if (isAutoConfigToggleVisible() && ::autoConfigCheckBox.isInitialized) {
+      autoConfigCheckBox.isSelected = project.usePyprojectToml
+      updateAutoConfigWarningVisibility()
+    }
     modulePanes.values.forEach { it.reset() }
     reloadModulesModel()
   }
 
   @Throws(ConfigurationException::class)
   override fun apply() {
-    for (pane in modulePanes.values) {
-      pane.apply()
+    val toggleVisible = isAutoConfigToggleVisible()
+    val wasEnabled = project.usePyprojectToml
+    val nowEnabled = when {
+      !toggleVisible -> wasEnabled
+      ::autoConfigCheckBox.isInitialized -> autoConfigCheckBox.isSelected
+      else -> wasEnabled
+    }
+    // Sync — pane.apply() commits via modal progress. Cleanup (if any) runs against settled .iml.
+    for (pane in modulePanes.values) pane.apply()
+    val outcome = presenter.decideToggleOutcome(wasEnabled, nowEnabled)
+    presenter.commitToggle(project, wasEnabled, nowEnabled)
+    updateAutoConfigWarningVisibility()
+    when (outcome) {
+      PyWorkspaceStructurePresenter.ToggleOutcome.ToggledOff -> {
+        // Snapshot before clear — pipeline disposes these on sessionScope.
+        val panesToDispose = modulePanes.values.toList()
+        modulePanes.clear()
+        detailsHolder.removeAll()
+        detailsHolder.add(buildPlaceholder(), CARD_PLACEHOLDER)
+        detailsCards.show(detailsHolder, CARD_PLACEHOLDER)
+        moduleListModel.removeAll()
+        // Null when the Configurable is shown outside Settings (search preview, standalone test
+        // host) — the tree-label refresh is cosmetic there, so a missing host just skips it.
+        val settingsHost = Settings.KEY.getData(DataManager.getInstance().getDataContext(dialogPanel))
+        sessionScope.launch {
+          presenter.runToggledOffPipeline(
+            project = project,
+            disposeUi = { panesToDispose.forEach { it.disposeAsync() } },
+          )
+          withContext(Dispatchers.EDT) {
+            isMultiModuleCached = null
+            swapContentLayout()
+            reloadModulesModel()
+            settingsHost?.revalidate()
+          }
+        }
+      }
+      PyWorkspaceStructurePresenter.ToggleOutcome.ToggledOn -> {
+        modulePanes.values.forEach { it.refreshDependenciesEnabled() }
+      }
+      PyWorkspaceStructurePresenter.ToggleOutcome.NoChange -> Unit
     }
   }
 
   override fun disposeUIResources() {
-    projectSdksModel.disposeUIResources()
+    // Cancel first: subscriptions, cleanup continuations, pane coroutines all stop before we
+    // touch Swing state. `sessionDisposable` is disposed by the scope's `invokeOnCompletion`.
+    sessionScope.cancel()
     modulePanes.values.forEach { it.dispose() }
     modulePanes.clear()
-    Disposer.dispose(disposable)
+    projectSdksModel.disposeUIResources()
   }
 
-  /**
-   * Refresh the SDK dropdown in every already-built [PyModuleDetailsPane] so a JDK-table change made
-   * outside this page (e.g. via the "All Interpreters" sibling page) shows up without a Settings
-   * reopen. The current selection is preserved when the module's effective SDK is still present.
-   */
+  /** Refresh SDK dropdown on JDK-table change from outside this page. */
   private fun refreshAllModuleCombos() {
     modulePanes.values.forEach { it.refreshSdkCombo() }
   }
@@ -234,17 +347,29 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
   private fun showModulePane(module: Module) {
     val cardName = moduleCardKey(module)
     val existing = modulePanes[module]
-    if (existing == null) {
-      val pane = PyModuleDetailsPane(
-        moduleOrProject = ModuleOrProject.ModuleAndProject(module),
-        projectSdksModel = projectSdksModel,
-        isMultiModuleProvider = ::isMultiModule,
-        parentDisposable = disposable,
-      )
-      modulePanes[module] = pane
-      detailsHolder.add(pane.component, cardName)
+    if (existing != null) {
+      detailsCards.show(detailsHolder, cardName)
+      return
     }
-    detailsCards.show(detailsHolder, cardName)
+    // Pane needs a PyProject (not a bare Module); resolve off-EDT, then build + show.
+    sessionScope.launch {
+      val pyProject = module.asPyProject() ?: return@launch
+      withContext(Dispatchers.EDT) {
+        if (modulePanes[module] != null) return@withContext
+        val pane = PyModuleDetailsPane(
+          pyProject = pyProject,
+          projectSdksModel = projectSdksModel,
+          isMultiModuleProvider = ::isMultiModule,
+          parentDisposable = sessionDisposable,
+        )
+        modulePanes[module] = pane
+        detailsHolder.add(pane.component, cardName)
+        if (moduleList.selectedValue == module || !isMultiModule()) {
+          detailsCards.show(detailsHolder, cardName)
+        }
+      }
+    }
+    detailsCards.show(detailsHolder, CARD_PLACEHOLDER)
   }
 
   private fun showPlaceholder() {
@@ -305,7 +430,11 @@ internal class PyWorkspaceStructureConfigurable(private val project: Project) : 
 }
 
 internal class PyWorkspaceStructureConfigurableProvider(private val project: Project) : ConfigurableProvider() {
-  override fun canCreateConfigurable(): Boolean = PyInterpreterRedesignFlags.isEnabled()
+  override fun canCreateConfigurable(): Boolean = PyInterpreterSettingsFlags.areNewInterpreterPagesEnabled()
 
   override fun createConfigurable(): Configurable = PyWorkspaceStructureConfigurable(project)
 }
+
+/** Project-scoped CoroutineScope for the Workspace Structure page. Dies with the project. */
+@Service(Service.Level.PROJECT)
+internal class PyWorkspaceStructureScope(val scope: CoroutineScope)
