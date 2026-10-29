@@ -81,6 +81,7 @@ public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
         }
       }
 
+      /** Writes the fork file first, because it reads PSI. After super.onFound(), a restart would add the suite twice. */
       @Override
       protected void onFound() {
         writeClassesPerModule(myClasses);

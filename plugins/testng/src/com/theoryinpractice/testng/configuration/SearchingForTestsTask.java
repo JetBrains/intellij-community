@@ -69,6 +69,10 @@ public class SearchingForTestsTask extends SearchForTestsTask {
     myClasses = new LinkedHashMap<>();
   }
 
+  /**
+   * Appends to the temp file only after the last read. A restart happens only during a read, so the appends run once.
+   * An override must do its reads before it calls this method.
+   */
   @Override
   protected void onFound() {
     if (!myClasses.isEmpty()) {

@@ -154,6 +154,7 @@ public class TestNGRunnableState extends JavaTestFrameworkRunnableState<TestNGCo
   @Override
   public @Nullable SearchForTestsTask createSearchingForTestsTask(@NotNull TargetEnvironment targetEnvironment) {
     return new SearchingForTestsTask(getServerSocket(), config, myTempFile) {
+      /** Writes the fork file first, because it reads PSI. After super.onFound(), a restart would add the suite twice. */
       @Override
       protected void onFound() {
         writeClassesPerModule(myClasses);

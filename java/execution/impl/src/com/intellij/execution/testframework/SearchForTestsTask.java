@@ -26,6 +26,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.ApiStatus;
@@ -58,7 +59,14 @@ public abstract class SearchForTestsTask extends Task.Backgroundable {
   }
 
 
+  @RequiresReadLock
   protected abstract void search() throws ExecutionException;
+
+  /**
+   * Can run several times, so every step must be safe to repeat.
+   * Do a one-time step, such as an upload, in {@link #onSuccess()}. Do not catch {@link ProcessCanceledException}.
+   */
+  @RequiresReadLock
   protected abstract void onFound() throws ExecutionException;
 
   public void ensureFinished() {
