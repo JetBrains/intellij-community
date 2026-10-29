@@ -83,7 +83,7 @@ public final class DebugReflectionUtil {
         }
         cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[0]);
       }
-      catch (IncompatibleClassChangeError | NoClassDefFoundError | SecurityException e) {
+      catch (IncompatibleClassChangeError | NoClassDefFoundError | ClassFormatError | SecurityException e) {
         // this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
         //I don't see any sane way to fix it until we load all the plugins by the same classloader in tests
         cached = EMPTY_FIELD_ARRAY;
