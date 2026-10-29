@@ -26,11 +26,9 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
@@ -138,11 +136,7 @@ public interface DebuggerMethods extends CompilerMethods {
   }
 
   default SourcePosition getSourcePosition() {
-    return managed(() -> {
-      final EvaluationContextImpl context = evaluationContext();
-      Computable<SourcePosition> a = () -> ContextUtil.getSourcePosition(context);
-      return ApplicationManager.getApplication().runReadAction(a);
-    });
+    return managed(() -> ContextUtil.getSourcePosition(evaluationContext()));
   }
 
   default EvaluationContextImpl evaluationContext() {
