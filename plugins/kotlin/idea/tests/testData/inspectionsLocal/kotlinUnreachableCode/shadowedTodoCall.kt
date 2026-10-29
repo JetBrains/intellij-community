@@ -1,0 +1,8 @@
+
+// FIX: Remove unreachable code
+fun TODO(): Nothing = error("Not implemented")
+
+fun example() {
+    return
+    <caret>TODO()
+}

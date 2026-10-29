@@ -27709,6 +27709,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/afterThrow.kt");
         }
 
+        @TestMetadata("aliasedTodoCallNoWarn.kt")
+        public void testAliasedTodoCallNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/aliasedTodoCallNoWarn.kt");
+        }
+
+        @TestMetadata("qualifiedTodoCallNoWarn.kt")
+        public void testQualifiedTodoCallNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/qualifiedTodoCallNoWarn.kt");
+        }
+
         @TestMetadata("returnReturn.kt")
         public void testReturnReturn() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnReturn.kt");
@@ -27724,9 +27734,44 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/returnTryReturn.kt");
         }
 
+        @TestMetadata("shadowedTodoCall.kt")
+        public void testShadowedTodoCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/shadowedTodoCall.kt");
+        }
+
         @TestMetadata("throwThrowThrow.kt")
         public void testThrowThrowThrow() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/throwThrowThrow.kt");
+        }
+
+        @TestMetadata("todoAsUnreachableArgumentNoWarn.kt")
+        public void testTodoAsUnreachableArgumentNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/todoAsUnreachableArgumentNoWarn.kt");
+        }
+
+        @TestMetadata("todoCallNoWarn.kt")
+        public void testTodoCallNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/todoCallNoWarn.kt");
+        }
+
+        @TestMetadata("todoInPartiallyReachableCallNoWarn.kt")
+        public void testTodoInPartiallyReachableCallNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/todoInPartiallyReachableCallNoWarn.kt");
+        }
+
+        @TestMetadata("todoInUnreachableDeclarationNoWarn.kt")
+        public void testTodoInUnreachableDeclarationNoWarn() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/todoInUnreachableDeclarationNoWarn.kt");
+        }
+
+        @TestMetadata("todoMixedWithUnreachableCode.kt")
+        public void testTodoMixedWithUnreachableCode() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/todoMixedWithUnreachableCode.kt");
+        }
+
+        @TestMetadata("todoWithNestedUnreachableMessage.kt")
+        public void testTodoWithNestedUnreachableMessage() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/kotlinUnreachableCode/todoWithNestedUnreachableMessage.kt");
         }
     }
 

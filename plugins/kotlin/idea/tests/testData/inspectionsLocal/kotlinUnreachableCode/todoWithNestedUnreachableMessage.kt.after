@@ -1,0 +1,11 @@
+
+// FIX: Remove unreachable code
+fun example(flag: Boolean) {
+    TODO(
+        if (flag) {
+            return
+        } else {
+            "Message"
+        }
+    )
+}
