@@ -128,7 +128,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         super.onBreakpoint {
             try {
                 initContexts(it)
-                it.printContext()
+                it.printKotlinContext()
                 it.action()
             } catch (e: AssertionError) {
                 throw e
@@ -263,7 +263,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         return isTestIgnored() || areLogErrorsIgnored(dataFile())
     }
 
-    private fun SuspendContextImpl.printContext() {
+    private fun SuspendContextImpl.printKotlinContext() {
         if (frameProxy == null) {
             println("Context thread is null", ProcessOutputTypes.SYSTEM)
             return

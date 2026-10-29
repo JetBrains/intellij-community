@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger;
 
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessAdapterImpl;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
@@ -14,8 +15,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -63,6 +64,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.intellij.debugger.DebuggerBreakpointTestUtilsKt.USE_XSESSION_PAUSE_LISTENER_KEY;
 
@@ -284,14 +286,30 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     return sourcePosition.getFile().getVirtualFile().getName() + ":" + line;
   }
 
-  protected void printContext(StackFrameContext context) {
+  protected void printContext(DebuggerContextImpl context) {
     printContext("", context);
   }
 
-  /** Prints the location of the given context, in the format "file.ext:12345". */
-  protected void printContext(@NotNull String prefix, StackFrameContext context) {
+  /** Prints the cached location of an initialized debugger context without querying the JVM. */
+  protected void printContext(@NotNull String prefix, DebuggerContextImpl context) {
+    printContext(prefix, context, context::getSourcePosition);
+  }
+
+  @RequiresReadLockAbsence
+  protected void printContext(SuspendContextImpl context) {
+    printContext("", context);
+  }
+
+  /** Prints the frame location. Queries the JVM on the debugger manager thread without a read lock. */
+  @RequiresReadLockAbsence
+  protected void printContext(@NotNull String prefix, SuspendContextImpl context) {
+    DebuggerManagerThreadImpl.assertIsManagerThread();
+    printContext(prefix, context, () -> ContextUtil.getSourcePosition(context));
+  }
+
+  private void printContext(@NotNull String prefix, StackFrameContext context, Supplier<SourcePosition> sourcePosition) {
     if (context.getFrameProxy() != null) {
-      var position = PositionUtil.getSourcePosition(context);
+      var position = sourcePosition.get();
       systemPrintln(prefix + ReadAction.computeBlocking(() -> toDisplayableString(position)));
     }
     else {
@@ -300,10 +318,10 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
   }
 
   @RequiresReadLockAbsence
-  protected void printContextWithText(StackFrameContext context) {
+  protected void printContextWithText(SuspendContextImpl context) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     if (context.getFrameProxy() != null) {
-      SourcePosition sourcePosition = PositionUtil.getSourcePosition(context);
+      SourcePosition sourcePosition = Objects.requireNonNull(ContextUtil.getSourcePosition(context));
       ReadAction.runBlocking(() -> {
         int offset = sourcePosition.getOffset();
         Document document = PsiDocumentManager.getInstance(myProject).getDocument(sourcePosition.getFile());
@@ -317,7 +335,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
         systemPrintln(toDisplayableString(sourcePosition) + positionText);
       });
-      printHighlightingRange((SuspendContextImpl)context);
+      printHighlightingRange(context);
     }
     else {
       systemPrintln("Context thread is null");
