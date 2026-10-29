@@ -368,7 +368,8 @@ object K2SemanticMatcher {
             if (areUnresolvedTypesTextuallyEqual(targetType, patternType, targetTypeReference, patternTypeReference)) return true
 
             fun typeParameterSubstitution(targetType: KaTypeParameterType, patternType: KaType, typeReference: KtTypeReference?): Boolean {
-                val typeParameter = targetType.symbol.psi as KtNamedDeclaration
+                // A type parameter synthesized for an undeclared name in a `where` clause has no declaration
+                val typeParameter = targetType.symbol.psi as? KtNamedDeclaration ?: return false
                 val subst = parameterSubstitution[typeParameter]
                 return when {
                     subst != null -> {
