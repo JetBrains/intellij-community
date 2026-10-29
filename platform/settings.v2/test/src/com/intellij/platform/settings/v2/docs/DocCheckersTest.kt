@@ -10,8 +10,8 @@ import kotlin.io.path.createParentDirectories
 import kotlin.io.path.writeText
 
 /**
- * Runs [DocLinkChecker], [AdrChainChecker] and [AdrNumberChecker] on small feature folders, so each kind of problem
- * is found and each correct link passes.
+ * Runs [DocLinkChecker], [AdrChainChecker], [AdrNumberChecker] and [ProposedAdrChecker] on small feature folders, so
+ * each kind of problem is found and each correct folder passes.
  */
 class DocCheckersTest {
   @TempDir
@@ -36,6 +36,9 @@ class DocCheckersTest {
 
   private fun numberProblems(): List<String> =
     AdrNumberChecker(feature.resolve("adr")).findProblems().map { it.message }
+
+  private fun proposedProblems(): List<String> =
+    ProposedAdrChecker(feature.resolve("adr")).findProblems().map { it.message }
 
   private fun adr(number: String, status: String, slug: String = "decision-$number", earlierDecisions: String = "") {
     write("adr/$number-$slug.md", """
@@ -331,6 +334,20 @@ class DocCheckersTest {
     assertEquals(emptyList<String>(), numberProblems())
     feature.resolve("adr").createDirectories()
     assertEquals(emptyList<String>(), numberProblems())
+  }
+
+  @Test
+  fun `accepted ADRs pass the Proposed check`() {
+    adr("0001", "Accepted. It was Proposed first.")
+    adr("0002", "Accepted ([ISSUE-1](https://example.com/ISSUE-1)).")
+    assertEquals(emptyList<String>(), proposedProblems())
+  }
+
+  @Test
+  fun `a Proposed ADR is found`() {
+    adr("0001", "Accepted.")
+    adr("0002", "Proposed ([ISSUE-1](https://example.com/ISSUE-1)).")
+    assertEquals(listOf("ADR 0002 is Proposed. Accept it before it goes to master"), proposedProblems())
   }
 
   @Test
