@@ -66,6 +66,9 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
 - A stale layer is one under the scope that a returning provider did not supply again.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadSweepTest.kt
+- A reload that drops a stale layer must fire the listeners of the keys that the layer held. A contextual listener
+  fires only when its resolved value changes. A key-only listener fires at the context of the dropped layer.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsReloadListenerTest.kt
 - A reload must not drop a layer that has a pending save.
 - A provider that fails must be logged, and its layers must stay. The vault does not know why the load failed, so
   it does not treat the files as missing.
