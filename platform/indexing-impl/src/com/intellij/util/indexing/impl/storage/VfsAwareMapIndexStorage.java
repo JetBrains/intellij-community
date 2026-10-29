@@ -116,7 +116,11 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
     if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
       FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
       assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
-      myKeyHashToVirtualFileMapping = new KeyHashLog<>(myKeyDescriptor, myBaseStorageFile, storageLockContext());
+      myKeyHashToVirtualFileMapping = new KeyHashLog<>(
+        myKeyDescriptor,
+        new FileKeyHashLogStorage(myBaseStorageFile, storageLockContext()),
+        new FileKeyHashLogCheckpointStore(myBaseStorageFile)
+      );
     }
     else {
       myKeyHashToVirtualFileMapping = null;
@@ -127,7 +131,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   public void flush() throws IOException {
     withWriteLock(() -> {
       super.flush();
-      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.force();
+      if (myKeyHashToVirtualFileMapping != null) myKeyHashToVirtualFileMapping.flush();
     });
   }
 

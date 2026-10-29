@@ -83,9 +83,11 @@ public class KeyHashLogBenchmark {
     @Setup(Level.Trial)
     public void fillUpKeyHashLog() throws Exception {
       tempDir = Files.createTempDirectory("key-hash-log-benchmark");
+      Path baseStorageFile = tempDir.resolve("keys");
       keyHashLog = new KeyHashLog<>(
         EnumeratorIntegerDescriptor.INSTANCE,
-        tempDir.resolve("keys")
+        new FileKeyHashLogStorage(baseStorageFile, null),
+        new FileKeyHashLogCheckpointStore(baseStorageFile)
       );
       for (int inputId = 1; inputId <= recordsCount; inputId++) {
         int key = inputId % UNIQUE_KEY_COUNT;

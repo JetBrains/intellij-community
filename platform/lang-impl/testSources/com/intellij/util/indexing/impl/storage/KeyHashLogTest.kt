@@ -21,6 +21,7 @@ import org.junit.Rule
 import org.junit.Test
 import java.lang.ref.SoftReference
 import java.nio.file.Files
+import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -44,7 +45,7 @@ class KeyHashLogTest {
   @Test
   fun testAdd() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.addKeyHashToVirtualFileMapping("qwe", 2)
       it.addKeyHashToVirtualFileMapping("asd", 2)
@@ -57,8 +58,8 @@ class KeyHashLogTest {
   @Test
   fun testGetSuitableKeyHashesIncludesMappingsFromAppendBuffer() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
-      val mapping = keyHashLog.getFieldValue<AppendableStorageBackedByResizableMappedFile<IntArray>>("myKeyHashToVirtualFileMapping")
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use { keyHashLog ->
+      val mapping = keyHashLog.getFileMapping()
 
       keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
 
@@ -73,7 +74,7 @@ class KeyHashLogTest {
   @Test
   fun testAddRemove() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.removeKeyHashToVirtualFileMapping("qwe", 1)
       it.removeKeyHashToVirtualFileMapping("asd", 2)
@@ -88,7 +89,7 @@ class KeyHashLogTest {
   @Test
   fun testAddRemoveAdd() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.removeKeyHashToVirtualFileMapping("qwe", 1)
       it.addKeyHashToVirtualFileMapping("qwe", 1)
@@ -101,7 +102,7 @@ class KeyHashLogTest {
   @Test
   fun testIdFilterIntersection() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
 
       val hashes = it.getSuitableKeyHashes(setOf(2).toFilter(), project)
@@ -112,7 +113,7 @@ class KeyHashLogTest {
   @Test
   fun testKeyMovedToAnotherFile() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.addKeyHashToVirtualFileMapping("qwe", 2)
       it.addKeyHashToVirtualFileMapping("qwe", -1)
@@ -128,7 +129,7 @@ class KeyHashLogTest {
   @Test
   fun testCompaction() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.removeKeyHashToVirtualFileMapping("qwe", 1)
       it.addKeyHashToVirtualFileMapping("qwe", 1)
@@ -140,7 +141,7 @@ class KeyHashLogTest {
       assertAcceptsExactly(setOf("qwe"), setOf("qwe"), hashes)
     }
 
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       TestCase.assertFalse(it.isRequiresCompaction)
       val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
       assertAcceptsExactly(setOf("qwe"), setOf("qwe"), hashes)
@@ -150,7 +151,7 @@ class KeyHashLogTest {
   @Test
   fun testCompactionSwapsAllFiles() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.removeKeyHashToVirtualFileMapping("qwe", 1)
       it.addKeyHashToVirtualFileMapping("qwe", 1)
@@ -171,7 +172,7 @@ class KeyHashLogTest {
       UsefulTestCase.assertTrue(dirMap.containsKey("keyHashLog.project.require.compaction"))
     }
 
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       TestCase.assertFalse(it.isRequiresCompaction)
       val hashes = it.getSuitableKeyHashes(setOf(1).toFilter(), project)
       assertAcceptsExactly(setOf("qwe"), setOf("qwe"), hashes)
@@ -192,7 +193,7 @@ class KeyHashLogTest {
   @Test
   fun testDoNotCacheResultsForNonProjectFilters() {
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use {
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use {
       it.addKeyHashToVirtualFileMapping("qwe", 1)
       it.addKeyHashToVirtualFileMapping("asd", 2)
 
@@ -215,7 +216,7 @@ class KeyHashLogTest {
     assumeProjectAndLibrariesCacheEnabled()
 
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use { keyHashLog ->
       val filter = setOf(1, 2).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES)
       keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
       keyHashLog.addKeyHashToVirtualFileMapping("asd", 2)
@@ -249,12 +250,12 @@ class KeyHashLogTest {
         removesUnaccountedFor,
       )
 
-      val mapping = keyHashLog.getFieldValue<AppendableStorageBackedByResizableMappedFile<IntArray>>("myKeyHashToVirtualFileMapping")
-      val scannedUpToOffsetExclusive: Long = updatedCache.getFieldValue("scannedUpToOffsetExclusive")
+      val storage = keyHashLog.getFieldValue<KeyHashLogStorage>("myStorage")
+      val scannedUpTo = updatedCache.getFieldValue<KeyHashLogStorage.Position>("scannedUpTo")
       TestCase.assertEquals(
-        "The cache offset must advance to the end of the appended tail",
-        mapping.currentLength.toLong(),
-        scannedUpToOffsetExclusive,
+        "The cache position must advance to the end of the appended tail",
+        storage.endPosition(),
+        scannedUpTo,
       )
     }
   }
@@ -267,7 +268,7 @@ class KeyHashLogTest {
     project.registerOrReplaceServiceInstance(ProjectRootModificationTracker::class.java, rootsTracker, disposableRule.disposable)
 
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use { keyHashLog ->
       keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
       keyHashLog.addKeyHashToVirtualFileMapping("asd", 2)
 
@@ -293,7 +294,7 @@ class KeyHashLogTest {
     assumeProjectAndLibrariesCacheEnabled()
 
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use { keyHashLog ->
       val filter = setOf(1, 2, 3).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES)
       keyHashLog.addKeyHashToVirtualFileMapping("qwe", 1)
       keyHashLog.addKeyHashToVirtualFileMapping("asd", 2)
@@ -339,7 +340,7 @@ class KeyHashLogTest {
     assumeProjectAndLibrariesCacheEnabled()
 
     val dir = temporaryDirectory.createDir()
-    KeyHashLog(EnumeratorStringDescriptor.INSTANCE, dir.resolve("keyHashLog")).use { keyHashLog ->
+    openFileKeyHashLog(dir.resolve("keyHashLog")).use { keyHashLog ->
       val filter = setOf(1).toFilter(FilterScopeType.PROJECT_AND_LIBRARIES)
       keyHashLog.addKeyHashToVirtualFileMapping("initial", 1)
       keyHashLog.getSuitableKeyHashes(filter, project)
@@ -392,7 +393,7 @@ class KeyHashLogTest {
       storageLockContext,
     ).use { storage ->
       val keyHashLog = storage.getFieldValue<KeyHashLog<String>>("myKeyHashToVirtualFileMapping")
-      val mapping = keyHashLog.getFieldValue<AppendableStorageBackedByResizableMappedFile<IntArray>>("myKeyHashToVirtualFileMapping")
+      val mapping = keyHashLog.getFileMapping()
       val mappedFile = mapping.getFieldValue<ResizeableMappedFile>("storage")
 
       TestCase.assertSame(storageLockContext, mappedFile.storageLockContext)
@@ -400,6 +401,14 @@ class KeyHashLogTest {
   }
 
   private val project = ProjectManager.getInstance().defaultProject
+
+  private fun openFileKeyHashLog(baseStorageFile: Path): KeyHashLog<String> {
+    return KeyHashLog(
+      EnumeratorStringDescriptor.INSTANCE,
+      FileKeyHashLogStorage(baseStorageFile, null),
+      FileKeyHashLogCheckpointStore(baseStorageFile),
+    )
+  }
 
   private fun assumeProjectAndLibrariesCacheEnabled() {
     assumeTrue(
@@ -445,6 +454,10 @@ class KeyHashLogTest {
 
   private fun KeyHashLog<*>.getCachedProjectKeyHashes(): Any {
     return requireNotNull(getCachedProjectKeyHashesReference().get()) { "The project key hashes cache must be available" }
+  }
+
+  private fun KeyHashLog<*>.getFileMapping(): AppendableStorageBackedByResizableMappedFile<IntArray> {
+    return getFieldValue<FileKeyHashLogStorage>("myStorage").getFieldValue("mapping")
   }
 
   private fun KeyHashLog<*>.getCachedProjectKeyHashesReference(): SoftReference<*> {
