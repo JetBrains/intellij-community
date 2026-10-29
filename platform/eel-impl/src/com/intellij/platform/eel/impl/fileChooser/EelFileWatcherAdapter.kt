@@ -9,6 +9,7 @@ import com.intellij.platform.eel.fs.UnwatchOptionsBuilder
 import com.intellij.platform.eel.fs.WatchOptionsBuilder
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.toEelApi
+import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import org.jetbrains.annotations.ApiStatus
@@ -17,6 +18,11 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 @ApiStatus.Internal
+@VisibleToClasses(
+    "com.intellij.docker.ui.fileChooser.DockerFileChooserContributor",
+    "com.intellij.platform.frontend.split.baseline.eel.RdEelFileChooserContributor",
+    "com.intellij.platform.ide.impl.wsl.fileChooser.WslFileChooserContributor",
+)
 class EelFileWatcherAdapter : FileWatcherAdapter {
   private val watchedPaths: MutableSet<Path> = ConcurrentHashMap.newKeySet()
 
