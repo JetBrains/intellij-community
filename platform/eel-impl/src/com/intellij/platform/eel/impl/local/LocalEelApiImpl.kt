@@ -33,6 +33,7 @@ import com.intellij.platform.eel.provider.LocalWindowsEelApi
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.utils.toEelArch
+import com.intellij.platform.util.annotations.VisibleToClasses
 import com.intellij.util.system.CpuArch
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.text.nullize
@@ -73,8 +74,10 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
   }
 }
 
-@VisibleForTesting
-class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefault()) : LocalPosixEelApi {
+@VisibleToClasses(
+    "com.intellij.platform.eel.impl.provider.LocalEelApiProviderImpl",
+)
+internal class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.getDefault()) : LocalPosixEelApi {
   init {
     check(SystemInfo.isUnix)
   }
