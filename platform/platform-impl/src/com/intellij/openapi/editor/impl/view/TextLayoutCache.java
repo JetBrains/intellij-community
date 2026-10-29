@@ -4,8 +4,9 @@ package com.intellij.openapi.editor.impl.view;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities;
 import com.intellij.util.text.CharArrayUtil;
@@ -32,10 +33,14 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   private static final LineLayout BIDI_NOT_REQUIRED_MARKER = new SingleChunkLayout(null);
 
   private final EditorView myView;
-  private final Document myDocument;
+  private final DocumentEx myDocument;
   private final ComponentVisibilityTracker myVisibilityTracker;
-  private ArrayList<LineLayout> myLines = new ArrayList<>();
-  private int myDocumentChangeOldEndLine;
+  private ArrayList<LineLayout> myLines;
+
+  /**
+   * The text that {@link #myLines} describes. The list has one element for each line of this text.
+   */
+  private DocumentText myDocumentText;
 
   private final ObjectLinkedOpenHashSet<LineChunk> laidOutChunks = new ObjectLinkedOpenHashSet<>(MAX_CHUNKS_IN_ACTIVE_EDITOR);
   private final Consumer<LineChunk> removeLaidOutChunk = laidOutChunks::remove;
@@ -44,6 +49,8 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myView = view;
     myDocument = view.getDocument();
     myVisibilityTracker = visibilityTracker;
+    myDocumentText = myDocument.getDocumentText();
+    myLines = new ArrayList<>(Collections.nCopies(myDocumentText.lineCount(), null));
     myDocument.addDocumentListener(this, this);
     myVisibilityTracker.runWhenHidden(this, this::trimChunkCache);
   }
@@ -82,14 +89,17 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
 
   void resetToDocumentSize(boolean documentChangedWithoutNotification) {
     checkDisposed();
+    if (documentChangedWithoutNotification) {
+      myDocumentText = myDocument.getDocumentText();
+    }
     invalidateLines(
       0,
       myLines.size() - 1,
-      myDocument.getLineCount() - 1,
+      myDocumentText.lineCount() - 1,
       documentChangedWithoutNotification,
       documentChangedWithoutNotification
     );
-    if (myLines.size() != myDocument.getLineCount()) {
+    if (myLines.size() != myDocumentText.lineCount()) {
       LOG.error(
         "Error resetting text layout cache",
         new Attachment("editorState.txt", myView.getEditor().dumpState())
@@ -103,22 +113,30 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
   }
 
   @Override
-  public void beforeDocumentChange(@NotNull DocumentEvent event) {
-    myDocumentChangeOldEndLine = getAdjustedLineNumber(event.getOffset() + event.getOldLength());
-  }
-
-  @Override
   public void documentChanged(@NotNull DocumentEvent event) {
-    int startLine = myDocument.getLineNumber(event.getOffset());
-    int newEndLine = getAdjustedLineNumber(event.getOffset() + event.getNewLength());
+    DocumentText oldDocument = myDocumentText;
+    DocumentText newDocument = myDocument.getDocumentText();
+    int expectedLength = oldDocument.length() - event.getOldLength() + event.getNewLength();
+    if (expectedLength != newDocument.length()) {
+      LOG.error(
+        "Text layout cache missed a document change before " + event,
+        new Attachment("editorState.txt", myView.getEditor().dumpState())
+      );
+      resetToDocumentSize(true);
+      return;
+    }
+    int oldEndLine = getAdjustedLineNumber(oldDocument, event.getOffset() + event.getOldLength());
+    int newEndLine = getAdjustedLineNumber(newDocument, event.getOffset() + event.getNewLength());
+    int startLine = newDocument.lineNumber(event.getOffset());
+    myDocumentText = newDocument;
     invalidateLines(
       startLine,
-      myDocumentChangeOldEndLine,
+      oldEndLine,
       newEndLine,
       true,
       isBidiLayoutRequired(event.getNewFragment())
     );
-    if (myLines.size() != myDocument.getLineCount()) {
+    if (myLines.size() != newDocument.lineCount()) {
       LOG.error(
         "Error updating text layout cache after " + event,
         new Attachment("editorState.txt", myView.getEditor().dumpState())
@@ -193,8 +211,8 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     }
   }
 
-  private int getAdjustedLineNumber(int offset) {
-    return myDocument.getTextLength() == 0 ? -1 : myDocument.getLineNumber(offset);
+  private static int getAdjustedLineNumber(@NotNull DocumentText document, int offset) {
+    return document.length() == 0 ? -1 : document.lineNumber(offset);
   }
 
   private void checkDisposed() {
