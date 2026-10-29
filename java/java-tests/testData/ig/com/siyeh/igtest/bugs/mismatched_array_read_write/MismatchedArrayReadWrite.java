@@ -115,6 +115,14 @@ public class MismatchedArrayReadWrite {
       for(int i=1; i<arr.length; i++) arr[i] = arr[i-1] + 1;
     }
     
+    void nestedAssignment() {
+      String[] ss = {"a", "b", "c"};
+      for (int i = 1; i < ss.length; i++) {
+        final String s = ss[i-1] = ss[i];
+        System.out.println(s);
+      }
+    }
+    
     void objectType(Object x) {
       if(!(x instanceof int[])) return;
       int[] arr = (int[])x;

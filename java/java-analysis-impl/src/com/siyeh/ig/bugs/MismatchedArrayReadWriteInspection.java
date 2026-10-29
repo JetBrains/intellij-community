@@ -28,6 +28,7 @@ import com.intellij.psi.PsiConditionalExpression;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionList;
+import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiInstanceOfExpression;
@@ -336,7 +337,7 @@ public final class MismatchedArrayReadWriteInspection extends BaseInspection {
             && PsiUtil.skipParenthesizedExprDown(assignment.getLExpression()) instanceof PsiArrayAccessExpression access
             && !PsiTreeUtil.isAncestor(access, expression, false)
             && ExpressionUtils.isReferenceTo(access.getArrayExpression(), myVariable)) {
-          return true;
+          return assignment.getParent() instanceof PsiExpressionStatement || goesToSameArray(assignment);
         }
         return false;
       }
