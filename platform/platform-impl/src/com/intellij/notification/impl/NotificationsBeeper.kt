@@ -2,6 +2,8 @@
 package com.intellij.notification.impl
 
 import com.intellij.accessibility.AccessibilityUsageTrackerCollector
+import com.intellij.ide.soundSignals.IdeSounds
+import com.intellij.ide.soundSignals.PREVIEW_DELAY
 import com.intellij.ide.soundSignals.SoundSignal
 import com.intellij.ide.soundSignals.findSoundSignal
 import com.intellij.ide.soundSignals.isSoundSignalOn
@@ -15,8 +17,11 @@ import com.intellij.openapi.diagnostic.getOrHandleException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ui.playSound
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.awt.Toolkit
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * @author Konstantin Bulenkov
@@ -38,21 +43,33 @@ private fun boundSoundSignal(groupId: String): SoundSignal? =
   if (isSoundSignalsFeatureEnabled()) soundSignalIdOf(groupId)?.let(::findSoundSignal) else null
 
 internal abstract class NotificationSoundPlayer {
+  private val previewJob = AtomicReference<Job?>()
+
   fun play(notification: Notification, displayType: NotificationDisplayType) {
-    val ep = findNotificationSound(notification.groupId)
-    val sound = ep?.sound
-    val path = sound ?: notificationSound(notification.type)
-    playSoundResource(path, if (sound == null) NotificationSoundPlayer::class.java.classLoader else ep.pluginDescriptor?.pluginClassLoader)
+    playOwnSound(notification.groupId)
+    ?: playSoundResources(listOf(notificationSound(notification.type)), NotificationSoundPlayer::class.java.classLoader)
     NotificationCollector.getInstance().logSoundPlayed(notification, displayType)
   }
 
-  protected abstract fun playSoundResource(path: String, loader: ClassLoader?)
+  fun preview(groupId: String) {
+    previewJob.getAndSet(playOwnSound(groupId)
+                         ?: playSoundResources(IdeSounds.NOTIFICATION_SOUNDS, NotificationSoundPlayer::class.java.classLoader))?.cancel()
+  }
+
+  private fun playOwnSound(groupId: String): Job? {
+    val ep = findNotificationSound(groupId)
+    val sound = ep?.sound ?: return null
+    return playSoundResources(listOf(sound), ep.pluginDescriptor?.pluginClassLoader)
+  }
+
+  protected abstract fun playSoundResources(paths: List<String>, loader: ClassLoader?): Job
 }
 
 internal class NotificationSoundPlayerImpl(private val scope: CoroutineScope) : NotificationSoundPlayer() {
-  override fun playSoundResource(path: String, loader: ClassLoader?) {
-    val url = loader?.getResource(path)
-    scope.launch {
+  override fun playSoundResources(paths: List<String>, loader: ClassLoader?): Job = scope.launch {
+    for ((index, path) in paths.withIndex()) {
+      if (index > 0) delay(PREVIEW_DELAY)
+      val url = loader?.getResource(path)
       runCatching {
         playSound { checkNotNull(url) { "Sound resource not found: $path" }.openStream() }
       }.getOrHandleException { e ->

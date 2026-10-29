@@ -9,10 +9,12 @@ import com.intellij.notification.NotificationDisplayType.BALLOON
 import com.intellij.notification.NotificationDisplayType.NONE
 import com.intellij.notification.NotificationDisplayType.STICKY_BALLOON
 import com.intellij.notification.NotificationDisplayType.TOOL_WINDOW
+import com.intellij.notification.impl.NotificationSoundPlayer
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.notification.impl.isNotificationAnnouncerEnabled
 import com.intellij.notification.impl.isSoundEnabled
 import com.intellij.notification.impl.soundSignalIdOf
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
@@ -22,6 +24,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.toNullableProperty
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.soundPreviewButton
 import com.intellij.util.ui.JBUI
 import javax.swing.DefaultComboBoxModel
 import javax.swing.JCheckBox
@@ -65,6 +68,7 @@ internal class NotificationSettingsUi(private var notification: NotificationSett
             if (soundSignals == null || signal == null) notification.isPlaySound = playSound.isSelected
             else soundSignals.choose(mapOf(signal.id to playSound.isSelected))
           }
+          soundPreviewButton { service<NotificationSoundPlayer>().preview(notification.groupId) }
         }
       }
       if (isReadAloudEnabled()) {

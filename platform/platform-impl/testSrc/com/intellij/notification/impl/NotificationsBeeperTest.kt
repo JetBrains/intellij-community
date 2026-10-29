@@ -25,6 +25,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.replaceService
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
+import kotlinx.coroutines.Job
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -136,6 +137,22 @@ class NotificationsBeeperTest {
     assertThat(player.played).containsExactly(pluginLoader to "sounds/signal.wav")
   }
 
+  @Test
+  fun `the preview of a group with its own sound plays that sound`() {
+    player.preview(BOUND_GROUP)
+
+    assertThat(player.played).containsExactly(pluginLoader to "sounds/bound.wav")
+  }
+
+  @Test
+  fun `the preview of any other group plays every notification type in turn, also with Play sound off`() {
+    player.preview(UNBOUND_GROUP)
+
+    val loader = NotificationSoundPlayer::class.java.classLoader
+    val types = listOf(NotificationType.INFORMATION, NotificationType.WARNING, NotificationType.ERROR)
+    assertThat(player.played).containsExactlyElementsOf(types.map { loader to notificationSound(it) })
+  }
+
   private fun signalTest(body: (AccessibilitySettings) -> Unit): Unit = withSoundSignalsSettings { settings ->
     setSupportScreenReaders(false)
     settings.loadSoundSignals(SoundSignalsSettingsState())
@@ -159,8 +176,9 @@ class NotificationsBeeperTest {
   private class RecordingPlayer : NotificationSoundPlayer() {
     val played = ArrayList<Pair<ClassLoader?, String>>()
 
-    override fun playSoundResource(path: String, loader: ClassLoader?) {
-      played += loader to path
+    override fun playSoundResources(paths: List<String>, loader: ClassLoader?): Job {
+      played += paths.map { loader to it }
+      return Job()
     }
   }
 
