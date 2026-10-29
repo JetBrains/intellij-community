@@ -44,12 +44,15 @@ internal class SnapshotHighlighterStorage(
 
   fun add(highlighter: SnapshotRangeHighlighterImpl, startOffset: Int, endOffset: Int, spec: Byte, policy: MarkerPolicy) {
     assertMayChange()
+    require(startOffset >= 0) { "startOffset must be non-negative" }
+    require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
     val handle = highlighter.markerHandle
     val flavorFlags = highlighter.flavorFlags
     highlighter.register()
     var inserted = false
     try {
       inserted = rootStore.updateCurrentRoot {
+        require(endOffset <= document.textLength) { "Highlighter range exceeds document length" }
         it.insert(handle, startOffset, endOffset, spec, flavorFlags, policy = policy)
       }
     }

@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ObjectUtilsRt
 import java.lang.ref.Reference
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
@@ -49,7 +50,15 @@ class VirtualFileMarkerRoot private constructor(
     rootReference: AtomicReference<PMarkerRoot>?, // null means currentRootReference()
     update: (PMarkerRoot) -> PMarkerRoot,
   ): PMarkerRoot? {
-    return super.updateRootAtomically(rootReference, update)
+    val document = if (rootReference == null) document else null
+    if (document == null) return super.updateRootAtomically(rootReference, update)
+    try {
+      return document.rangeMarkers.rootStore().updateRootAtomically(null, update)
+    }
+    finally {
+      this.rootReference = markerRoot(document)
+      ObjectUtilsRt.reachabilityFence(document)
+    }
   }
 
   @Synchronized
