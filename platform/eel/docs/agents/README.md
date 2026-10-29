@@ -11,6 +11,7 @@ Read this page before you edit a file under `community/platform/eel*/` or write 
 5. **Use an exhaustive `when` for a sealed type or an enum.** This includes a `private` or an `internal` type. Do not use `if (x == SomeEnum.SomeCase)`, `if (x is SomeSealed.SomeCase)`, `x as? SomeSealed.SomeCase`, or `else` in a `when`. A helper next to the type, such as `EelOsFamily.isWindows`, is correct. See [Exhaustive `when`](../api/exhaustive-when.md).
 6. **Separate descriptor identity from machine identity.** Read [Descriptor and Machine Identity](../api/eel-descriptor-and-machine.md) before you compare descriptors or convert one into a machine or an API.
 7. **Do not use Kotlin `data class` or default arguments in API.** This rule applies even to declarations marked `@ApiStatus.Internal`. Use regular classes and explicit overloads or `@GeneratedBuilder` instead. See [API Binary Compatibility Rules](../internal/api-compatibility.md).
+8. **Enforce mutable state invariants with the type system.** When a class has three or more mutable fields or collections (especially nullable or `Boolean` fields) with impossible combinations, model the state as a finite state machine with sealed types. See [Mutable State Invariants](../internal/mutable-state-invariants.md).
 
 The [Quick Reference](../api/quick-reference.md) shows the calls for each rule.
 
@@ -22,7 +23,7 @@ The [Quick Reference](../api/quick-reference.md) shows the calls for each rule.
 3. [Two File System APIs](../overview/file-systems.md) and [EelPath and nio Path](../api/eel-path-and-nio-path.md) before you touch a path or a file.
 4. [Exhaustive `when`](../api/exhaustive-when.md) before you check `EelOsFamily`, `EelPlatform`, or another sealed type or enum.
 5. [Eel API Tutorial](../api/EelApi_Tutorial.md) when you need the full explanation.
-6. [Module Layout](../internal/module-layout.md), [API Binary Compatibility Rules](../internal/api-compatibility.md), [Testing](../internal/testing.md), and [NIO Routing Internals](../internal/nio-routing.md) before you change Eel code.
+6. [Module Layout](../internal/module-layout.md), [API Binary Compatibility Rules](../internal/api-compatibility.md), [Mutable State Invariants](../internal/mutable-state-invariants.md), [Testing](../internal/testing.md), and [NIO Routing Internals](../internal/nio-routing.md) before you change Eel code.
 
 ## Where a New Document Goes
 
