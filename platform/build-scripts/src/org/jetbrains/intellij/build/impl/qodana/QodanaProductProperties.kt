@@ -2,6 +2,10 @@
 package org.jetbrains.intellij.build.impl.qodana
 
 import org.jetbrains.intellij.build.BuildContext
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Dqodana.application=true",
@@ -38,9 +42,15 @@ private const val IS_EAP = false
  */
 class QodanaProductProperties(val productCode: String, val productName: String, private val customVmOptions: List<String> = emptyList()) {
   fun getAdditionalVmOptions(context: BuildContext): List<String> {
+    val buildDate = ZonedDateTime.ofInstant(
+      Instant.ofEpochSecond(context.options.buildDateInSeconds),
+      ZoneOffset.UTC
+    ).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+
     val appInfoOptions = listOf(
       "-Dqodana.product.name=$productName",
       "-Dqodana.build.number=$productCode-${context.buildNumber}",
+      "-Dqodana.build.date=$buildDate",
       "-Dqodana.eap=${isEap(productCode)}",
     )
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions
