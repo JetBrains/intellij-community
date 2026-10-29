@@ -2,11 +2,9 @@
 To regenerate, run `bazel run //.ai:render-guides`.
 <!-- /TEMPLATE:COMMENT -->
 
-**Critical:** These guidelines MUST be followed at all times.
-
 ## Project Invariants
 
-- `*.iml` files are the source of truth. They generate the `BUILD.bazel` files.
+- `*.iml` files are the source of truth. They generate the `BUILD.bazel` files. Keep an `*.iml` in the canonical form that the IDE writes: no comment, no reformat or whitespace change, no trailing newline, and no added, removed or reordered element or attribute.
 <!-- IF_EDITION:ULTIMATE -->- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazel.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps both `modules.xml` files in canonical order.<!-- /IF_EDITION:ULTIMATE --><!-- IF_EDITION:COMMUNITY -->- Register a new or edited JPS module `.iml` with `bun build/jps-module.mjs register <path-to-iml> --fix-iml-eof`, then run `./build/jpsModelToBazelCommunityOnly.cmd`. Never edit `.idea/modules.xml` by hand. The command keeps `modules.xml` in canonical order.<!-- /IF_EDITION:COMMUNITY -->
 - User-visible strings belong in `*.properties` for localization.
 
@@ -49,17 +47,6 @@ This repository is too large for an ad hoc Git worktree or clone. Create one onl
 
 - Use `lint_files` to check the files for warnings when ijproxy or JetBrains MCP is available. Fix every warning that belongs to your changes. You can ignore an unrelated warning.
 
-## Repository-wide rules
-
-Keep IDE-serialized `.iml` files in canonical form. Do not:
-
-- add a comment
-- auto-format
-- normalize the structure or the whitespace
-- add a trailing newline at the end of the file
-- remove an empty tag
-- reorder an element or an attribute
-
 ## Tools
 
 Never use the `code-search` skill. The search tools below replace it. Recipes, the Windows rules, and the full tool inventory: [Tools Reference](./tools.md).
@@ -84,7 +71,7 @@ Available through ijproxy or JetBrains MCP: `lint_files`, `get_symbol_info`, `re
 
 ### Skills
 
-The harness can list skill *names* only, without a description. When a task looks like something a skill covers, read the index for what each name does before you improvise:
+Before you improvise a procedure, look for a skill that covers it in the index:
 
 <!-- IF_EDITION:ULTIMATE -->- Skill index: [`.agents/skills/INDEX.md`](../../.agents/skills/INDEX.md)<!-- /IF_EDITION:ULTIMATE -->
 <!-- IF_EDITION:COMMUNITY -->- Skill index: [`.agents/skills/INDEX.md`](../.agents/skills/INDEX.md)<!-- /IF_EDITION:COMMUNITY -->
