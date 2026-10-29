@@ -84,7 +84,11 @@ public final class ApplicationNamesInfo {
 
     String qodanaBuildDate = System.getProperty("qodana.build.date");
     if (qodanaBuildDate == null || qodanaBuildDate.isEmpty()) {
-      throw new RuntimeException("qodana.build.date system property must be set for Qodana");
+      String buildNumber = System.getProperty("qodana.build.number", "QD-SNAPSHOT");
+      if (!buildNumber.contains("SNAPSHOT")) {
+        throw new RuntimeException("qodana.build.date system property must be set for Qodana");
+      }
+      return;  // Dev/SNAPSHOT builds - skip setting date
     }
     buildNode.attributes.put("date", qodanaBuildDate);
 

@@ -338,7 +338,7 @@ fun computeProductLaunchModel(
         additionalBootClassPathJarNames = listOf(PLATFORM_CORE_NIO_FS),
         jvmArguments = JvmArgumentsRef.LAUNCH,
         qodana = true,
-        extraJvmArguments = qodana.getAdditionalVmOptions(BUILD_NUMBER_TOKEN),
+        extraJvmArguments = qodana.getAdditionalVmOptions(BUILD_NUMBER_TOKEN, null),
       ))
     }
     add(ProductLaunchCustomCommand(
