@@ -165,6 +165,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewNode(buildView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |Could not resolve all files for configuration ':testCompileClasspath'.
         |> Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
         |  Required by:
@@ -210,6 +211,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewNode(buildView, "Could Not Resolve junit:junit:4.12 because no repositories are defined") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |Execution failed for task ':compileTestJava'$taskSourceSuffix.
         |> Could not resolve all files for configuration ':testCompileClasspath'.
         |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
@@ -251,6 +253,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |Could not resolve all files for configuration ':testCompileClasspath'.
         |> Could not resolve junit:junit:99.99.
         |  Required by:
@@ -305,6 +308,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |Execution failed for task ':compileTestJava'$taskSourceSuffix.
         |> Could not resolve all files for configuration ':testCompileClasspath'.
         |   > Could not resolve junit:junit:99.99.
@@ -347,6 +351,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |Could not resolve all files for configuration ':testCompileClasspath'.
         |> Could not find junit:junit:99.99.
         |  Searched in the following locations:
@@ -405,6 +410,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     assertBuildViewNode(buildView, "Could Not Resolve junit:junit:99.99") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |Execution failed for task ':compileTestJava'$taskSourceSuffix.
         |> Could not resolve all files for configuration ':testCompileClasspath'.
         |   > Could not find junit:junit:99.99.
