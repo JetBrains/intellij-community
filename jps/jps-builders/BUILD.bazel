@@ -12,7 +12,16 @@ jps_test(
         ":testData",
         "@community//java/java-tests:testData",
         BAZEL_TARGETS_JSON,
-    ],
+    ] + select({
+        # JLinkArtifactBuildTest runs jlink with the jmods of the test JDK. The remote repo contents cache
+        # materializes only the files that are inputs of an action.
+        "@community//build:host_darwin_aarch64": ["@remotejbr25_macos_aarch64//:jdk-jmods"],
+        "@community//build:host_darwin_x64": ["@remotejbr25_macos//:jdk-jmods"],
+        "@community//build:host_linux_aarch64": ["@remotejbr25_linux_aarch64//:jdk-jmods"],
+        "@community//build:host_linux_x64": ["@remotejbr25_linux//:jdk-jmods"],
+        "@community//build:host_windows_aarch64": ["@remotejbr25_win_arm64//:jdk-jmods"],
+        "@community//build:host_windows_x64": ["@remotejbr25_win//:jdk-jmods"],
+    }),
     jvm_flags = [
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
     ],

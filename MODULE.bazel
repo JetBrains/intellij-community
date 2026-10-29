@@ -179,6 +179,7 @@ REMOTE_JBR25_REPOS = ["remotejbr25_" + platform for platform in [
 
 [use_repo(
     jbr_toolchains,
+    repo,
     repo + "_toolchain_config_repo",
 ) for repo in REMOTE_JBR25_REPOS]
 

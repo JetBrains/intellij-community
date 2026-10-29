@@ -19,11 +19,6 @@ common --incompatible_autoload_externally=
 # Do not use the `crate.from_cargo` hub fallback `allow_git = "true"` in the monorepo, this is non-hermetic.
 common --repo_env=RULES_RS_ALLOW_GIT=false
 
-# Cache repository rules like JPS project model reading, http_file downloading, toolbox POMs analysis etc
-# Also see MRI-3683
-# https://github.com/bazelbuild/bazel/discussions/27509
-startup --experimental_remote_repo_contents_cache
-
 # IJI-2767 Bazel: move bazel output root to a standard location
 startup:macos --output_user_root=~/Library/Caches/JetBrains/MonorepoBazel
 startup:linux --output_user_root=~/.cache/JetBrains/MonorepoBazel
