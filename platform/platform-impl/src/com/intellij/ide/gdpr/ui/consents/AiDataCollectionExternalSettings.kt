@@ -47,5 +47,11 @@ interface AiDataCollectionExternalSettings {
 
   fun isForciblyDisabled(): Boolean
 
+  /**
+   * Allows the commercial TRACE consent when license metadata is absent.
+   * Existing license restrictions and all other TRACE checks still apply.
+   */
+  fun supportsTraceConsentWithoutLicense(): Boolean = false
+
   fun getForciblyDisabledDescription(): String?
 }

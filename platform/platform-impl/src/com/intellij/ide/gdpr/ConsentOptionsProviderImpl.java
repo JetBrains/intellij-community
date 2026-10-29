@@ -6,7 +6,7 @@ import com.intellij.ide.gdpr.localConsents.LocalConsentOptions;
 import com.intellij.ide.gdpr.trace.TraceConsentManager;
 import com.intellij.ide.gdpr.ui.consents.AiDataCollectionExternalSettings;
 import com.intellij.ui.LicensingFacade;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -55,24 +55,21 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
   @Override
   public boolean isTraceDataCollectionAllowed() {
     LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade == null) {
-      return false;
-    }
-    String metadata = facade.metadata;
-    if (metadata == null) {
-      return false;
-    }
+    String metadata = facade == null ? null : facade.metadata;
     AiDataCollectionExternalSettings settings = AiDataCollectionExternalSettings.findSettingsImplementedByAiPlugin();
     if (settings == null) {
       return false; // AIA plugin is required for TRACE data collection
+    }
+    if (metadata == null && !settings.supportsTraceConsentWithoutLicense()) {
+      return false;
     }
     boolean isAllowed = isTraceDataCollectionAllowedByMetadata(metadata);
     boolean isDisabled = settings.isForciblyDisabled();
     return isAllowed && !isDisabled;
   }
 
-  private static boolean isTraceDataCollectionAllowedByMetadata(@NotNull String metadata) {
-    if (metadata.length() <= METADATA_LICENSE_TYPE_INDEX) {
+  private static boolean isTraceDataCollectionAllowedByMetadata(@Nullable String metadata) {
+    if (metadata != null && metadata.length() <= METADATA_LICENSE_TYPE_INDEX) {
       return false;
     }
     TraceConsentManager traceConsentManager = TraceConsentManager.getInstance();
@@ -80,7 +77,7 @@ final class ConsentOptionsProviderImpl implements ConsentOptionsProvider {
       return false;
     }
     DataCollectionAgreement dataCollectionAgreement = DataCollectionAgreement.getInstance();
-    ConsentOptions.Permission traceDataCollectionPermission = metadata.charAt(METADATA_LICENSE_TYPE_INDEX) == 'F'
+    ConsentOptions.Permission traceDataCollectionPermission = metadata != null && metadata.charAt(METADATA_LICENSE_TYPE_INDEX) == 'F'
                                                               ? LocalConsentOptions.INSTANCE.getTraceDataCollectionNonComPermission()
                                                               : LocalConsentOptions.INSTANCE.getTraceDataCollectionComPermission();
     return dataCollectionAgreement == DataCollectionAgreement.YES ||
