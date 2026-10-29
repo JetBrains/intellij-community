@@ -59,8 +59,10 @@ internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorAct
       val lineStartOffset = document.getLineStartOffset(line)
       val indentEndOffset = CharArrayUtil.shiftForward(document.charsSequence, lineStartOffset, " \t")
       val indent = document.charsSequence.subSequence(lineStartOffset, indentEndOffset)
+      val newRowStartOffset = lineEndOffset + 1 + indent.length
       document.insertString(lineEndOffset, "\n$indent$emptyRow")
-      currentCaret.moveToOffset(document.getLineEndOffset(line + 1))
+      val firstCellContentOffset = newRowStartOffset + 1 + if (emptyRow.getOrNull(1) == ' ') 1 else 0
+      currentCaret.moveToOffset(firstCellContentOffset)
     }
     return true
   }

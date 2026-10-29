@@ -81,7 +81,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     | none | none |
     |------|------|
     | some | some |
-    |      |      |<caret>
+    | <caret>     |      |
     """.trimIndent()
     doTest(before, after, shift = true)
   }
@@ -91,7 +91,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     // language=Markdown
     val before = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |<caret>"
     // language=Markdown
-    val after = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |\n  |      |      |<caret>"
+    val after = "- item  \n\n  | none | none |\n  |------|------|\n  | some | some |\n  | <caret>     |      |"
     doTest(before, after, shift = true)
   }
 
@@ -107,7 +107,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
       | a | b |
       | --- | --- |
       | some | some |
-      | | |<caret>
+      | <caret>| |
       """.trimIndent()
       doTest(before, after, shift = true)
     }
@@ -125,7 +125,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
       |a|b|
       |---|---|
       |some|some|
-      |||<caret>
+      |<caret>||
       """.trimIndent()
       doTest(before, after, shift = true)
     }
@@ -144,7 +144,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     | 名字 | 年龄 |
     |------|------|
     | 张三 | 25   |
-    |      |      |<caret>
+    | <caret>     |      |
     """.trimIndent()
     doTest(before, after, shift = true)
   }
@@ -161,7 +161,7 @@ class MarkdownTableEnterTest: LightPlatformCodeInsightTestCase() {
     val after = """
     | none | none |
     |------|------|
-    |      |      |<caret>
+    | <caret>     |      |
     | some | some |
     """.trimIndent()
     doTest(before, after, shift = true)
