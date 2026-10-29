@@ -14,6 +14,7 @@ import com.intellij.openapi.project.projectsDataDir
 import com.intellij.openapi.ui.Messages
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.impl.url.toVirtualFileUrl
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectEntitiesAttacher
 import com.intellij.projectImport.ProjectOpenedCallback
@@ -66,6 +67,7 @@ class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
     if (newModules != null) {
       if (newModules.isNotEmpty()) {
         withContext(Dispatchers.EDT) {
+          addPrimaryModuleDependency(project, newModules[0])
           callback?.projectOpened(project, newModules[0])
         }
       }
@@ -75,6 +77,12 @@ class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
     return false
   }
 
+  /**
+   * Imports the entities of the project in [projectDir] from its workspace model cache.
+   *
+   * @return the imported modules, the module with [projectDir] as a content root first,
+   * or `null` if the cache does not exist or cannot be loaded.
+   */
   private suspend fun findMainModuleInSystemDir(project: Project, projectDir: Path): List<Module>? {
     val projectWsmCachePath = getProjectDataPathRoot(projectDir).resolve(WorkspaceModelCacheImpl.DATA_DIR_NAME)
     val cacheFile = projectWsmCachePath.resolve("cache.data")
@@ -89,10 +97,16 @@ class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
       return null
     }
     val toMigrate = ProjectEntitiesAttacher.getAllEntitiesToMigrate(storage)
+    val attachedModuleNames = toMigrate.entities(ModuleEntity::class.java).map { it.name }.toSet()
     project.workspaceModel.update("Importing workspace model from $projectDir to project name=${project.name}, locationHash=${project.locationHash}") {
       it.applyChangesFrom(toMigrate)
     }
     val snapshot = project.workspaceModel.currentSnapshot
-    return snapshot.entities(ModuleEntity::class.java).mapNotNull { it.findModule(snapshot) }.toList()
+    val projectDirUrl = projectDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+    return snapshot.entities(ModuleEntity::class.java)
+      .filter { it.name in attachedModuleNames }
+      .sortedByDescending { module -> module.contentRoots.any { it.url == projectDirUrl } }
+      .mapNotNull { it.findModule(snapshot) }
+      .toList()
   }
 }
