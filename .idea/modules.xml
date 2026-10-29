@@ -606,6 +606,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/json/intellij.grazie.json.iml" filepath="$PROJECT_DIR$/plugins/grazie/json/intellij.grazie.json.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/markdown/intellij.grazie.markdown.iml" filepath="$PROJECT_DIR$/plugins/grazie/markdown/intellij.grazie.markdown.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/markdown/specification/intellij.grazie.markdown.specification.iml" filepath="$PROJECT_DIR$/plugins/grazie/markdown/specification/intellij.grazie.markdown.specification.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/grazie/markdown/specification/test/intellij.grazie.markdown.specification.tests.iml" filepath="$PROJECT_DIR$/plugins/grazie/markdown/specification/test/intellij.grazie.markdown.specification.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/properties/intellij.grazie.properties.iml" filepath="$PROJECT_DIR$/plugins/grazie/properties/intellij.grazie.properties.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/src/test/intellij.grazie.tests.iml" filepath="$PROJECT_DIR$/plugins/grazie/src/test/intellij.grazie.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/grazie/todo/intellij.grazie.todo.iml" filepath="$PROJECT_DIR$/plugins/grazie/todo/intellij.grazie.todo.iml" />

@@ -49,6 +49,7 @@ jvm_library(
         "//plugins/markdown/core/backend",
         "//platform/util:util-ui",
         "//platform/lang-api:lang",
+        "//platform/indexing-api:indexing",
     ],
 )
 
@@ -84,6 +85,7 @@ jvm_library(
         "//plugins/markdown/core/backend:backend_test_lib",
         "//platform/util:util-ui_test_lib",
         "//platform/lang-api:lang_test_lib",
+        "//platform/indexing-api:indexing_test_lib",
     ],
 )
 ### auto-generated section `build intellij.grazie.markdown.specification` end

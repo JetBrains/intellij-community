@@ -22,6 +22,7 @@ import java.util.concurrent.Semaphore
 internal object SpecificationUtils {
   private const val SPECIFICATION_ANALYSIS_PROMOTION_DISMISSED = "grazie.promote.specification.analysis.dismissed"
   private val SPECIFICATION_ANALYSIS_PROMOTION_LOCK = Key.create<Semaphore>("grazie.specification.analysis.promotion.lock")
+  private const val SPECIFICATION_PATTERN_REGISTRY_KEY = "grazie.specification.semantics.specification.pattern"
 
   private val SPECIFICATION_LIKE_PATTERN = Regex(
     "(agents?|ai|architecture|checklist|claude|commands|copilot-instructions|design|" +
@@ -38,9 +39,21 @@ internal object SpecificationUtils {
   internal fun isAnalysisEnabled(): Boolean = isAnalysisAvailable() && GrazieConfig.get().specificationAnalysisEnabled
 
   internal fun isSpecificationLikeFile(file: PsiFile): Boolean {
-    if (SPECIFICATION_LIKE_PATTERN.matches(file.name)) return true
-    val pattern = Regex(Registry.stringValue("grazie.specification.semantics.specification.pattern"))
-    return pattern.matches(file.virtualFile.path)
+    return isSpecificationLikeFile(file.virtualFile)
+  }
+
+  internal fun isSpecificationLikeFile(file: VirtualFile): Boolean {
+    return isSpecificationLikeFile(file, getSpecificationLikePattern())
+  }
+
+  internal fun isSpecificationLikeFile(file: VirtualFile, specificationPattern: Regex?): Boolean {
+    return SPECIFICATION_LIKE_PATTERN.matches(file.name) || specificationPattern?.matches(file.path) == true
+  }
+
+  internal fun getSpecificationLikePattern(): Regex? {
+    return Registry.stringValue(SPECIFICATION_PATTERN_REGISTRY_KEY, "")
+      .takeIf { it.isNotEmpty() }
+      ?.let(::Regex)
   }
 
   /**
@@ -50,7 +63,11 @@ internal object SpecificationUtils {
    */
   internal fun isSkillFile(file: PsiFile): Boolean {
     val virtualFile = file.virtualFile ?: return false
-    return findSkillFile(virtualFile) != null
+    return isSkillFile(virtualFile)
+  }
+
+  internal fun isSkillFile(file: VirtualFile): Boolean {
+    return findSkillFile(file) != null
   }
 
   /**

@@ -185,6 +185,8 @@ jvm_library(
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark_test_lib",
         "//libraries/jetcheck",
         "//libraries/jetcheck:jetcheck_test_lib",
+        "//plugins/grazie/markdown/specification/test:grazie-markdown-specification-tests",
+        "//plugins/grazie/markdown/specification/test:grazie-markdown-specification-tests_test_lib",
         "//platform/ide-core",
         "//libraries/fastutil",
         "//libraries/fastutil:fastutil_test_lib",
