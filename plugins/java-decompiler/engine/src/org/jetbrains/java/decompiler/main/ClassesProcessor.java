@@ -104,9 +104,11 @@ public class ClassesProcessor {
 
     boolean bDecompileInner = DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_INNER);
     boolean verifyAnonymousClasses = DecompilerContext.getOption(IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES);
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     // create class nodes
     for (StructClass cl : context.getClasses().values()) {
+      cancellationManager.checkCanceled();
       if (cl.isOwn() && !mapRootClasses.containsKey(cl.qualifiedName)) {
         if (bDecompileInner) {
           StructInnerClassesAttribute inner = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
@@ -249,6 +251,7 @@ public class ClassesProcessor {
               }
 
               for (StructInnerClassesAttribute.Entry entry : inner.getEntries()) {
+                cancellationManager.checkCanceled();
                 String nestedClass = entry.innerName;
                 if (!setNestedClasses.contains(nestedClass)) {
                   continue;
@@ -358,9 +361,11 @@ public class ClassesProcessor {
 
     StructEnclosingMethodAttribute attribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_ENCLOSING_METHOD);
     String enclosingMethod = attribute != null ? attribute.getMethodName() : null;
+    CancellationManager cancellationManager = DecompilerContext.getCancellationManager();
 
     // checking references in the enclosing class
     for (StructMethod mt : enclosingCl.getMethods()) {
+      cancellationManager.checkCanceled();
       if (enclosingMethod != null && !enclosingMethod.equals(mt.getName())) {
         continue;
       }

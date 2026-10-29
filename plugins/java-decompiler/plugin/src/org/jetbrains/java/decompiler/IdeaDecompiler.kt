@@ -41,6 +41,7 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
 import java.io.IOException
 import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
 import java.util.jar.Manifest
 
@@ -189,9 +190,12 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
   private class MyBytecodeProvider(files: List<VirtualFile>) : IBytecodeProvider {
     private val pathMap = files.associateBy { java.io.File(it.path).absolutePath }
+    private val bytecodeCache = ConcurrentHashMap<String, ByteArray>()
 
-    override fun getBytecode(externalPath: String, internalPath: String?): ByteArray =
-      pathMap[externalPath]?.contentsToByteArray(false) ?: throw AssertionError(externalPath + " not in " + pathMap.keys)
+    override fun getBytecode(externalPath: String, internalPath: String?): ByteArray {
+      val file = pathMap[externalPath] ?: throw AssertionError(externalPath + " not in " + pathMap.keys)
+      return bytecodeCache.getOrPut(externalPath) { file.contentsToByteArray(false) }
+    }
   }
 
   private class MyResultSaver : IResultSaver {
