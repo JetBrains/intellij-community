@@ -232,7 +232,9 @@ fn seconds(millis: i64) -> String {
 
 /// Whether XML 1.0 admits `character` at all. It admits a tab, a newline and a carriage return of the control
 /// characters, and it forbids `U+FFFE` and `U+FFFF`.
-const fn admitted(character: char) -> bool {
+// 263 only: this branch builds with Rust 1.93, which has no const `char::is_control`, so the function is not `const`.
+// See `plugins/air/BRANCH-263-DIVERGENCE.md` section 4.
+fn admitted(character: char) -> bool {
     matches!(character, '\t' | '\n' | '\r') || !(character.is_control() || matches!(character, '\u{fffe}' | '\u{ffff}'))
 }
 
