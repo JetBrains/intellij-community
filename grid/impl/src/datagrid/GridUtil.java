@@ -41,7 +41,6 @@ import com.intellij.database.run.ui.grid.renderers.DefaultNumericRendererFactory
 import com.intellij.database.run.ui.grid.renderers.DefaultTextRendererFactory;
 import com.intellij.database.run.ui.grid.renderers.GridCellRendererFactories;
 import com.intellij.database.run.ui.grid.renderers.GridCellRendererFactory;
-import com.intellij.database.run.ui.treetable.TreeTableResultView;
 import com.intellij.database.settings.DataGridAppearanceSettings;
 import com.intellij.database.settings.DataGridSettings;
 import com.intellij.database.util.Out;
@@ -634,21 +633,10 @@ public class GridUtil extends GridUtilCore {
   }
 
   public static Pair<RelativePoint, Balloon.Position> getBestPositionForBalloon(@NotNull DataGrid grid) {
-    ResultView view = grid.getResultView();
-    RelativePoint point;
-    Balloon.Position position = Balloon.Position.below;
-    if (grid.getPresentationMode() == GridPresentationMode.TABLE) {
-      point = JBPopupFactory.getInstance().guessBestPopupLocation(view.getComponent());
-    }
-    else if (view instanceof TreeTableResultView) {
-      point = JBPopupFactory.getInstance().guessBestPopupLocation(((TreeTableResultView)view).getComponent().getTree());
-    }
-    else {
-      JBLoadingPanel component = grid.getPanel().getComponent();
-      point = new RelativePoint(component, new Point(component.getWidth() / 3, component.getHeight()));
-      position = Balloon.Position.above;
-    }
-    return new Pair<>(point, position);
+    RelativePoint point = grid.getResultView().getBestPopupLocation();
+    if (point != null) return new Pair<>(point, Balloon.Position.below);
+    JBLoadingPanel component = grid.getPanel().getComponent();
+    return new Pair<>(new RelativePoint(component, new Point(component.getWidth() / 3, component.getHeight())), Balloon.Position.above);
   }
 
   public static @NotNull Function<Integer, ObjectFormatterConfig> getConfigProvider(@NotNull DataGrid dataGrid) {

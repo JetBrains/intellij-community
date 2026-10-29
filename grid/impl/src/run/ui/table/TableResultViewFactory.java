@@ -28,6 +28,7 @@ import javax.swing.JComponent;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.table.TableColumnModel;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
@@ -52,6 +53,11 @@ public class TableResultViewFactory implements ResultViewFactory {
       @Override
       GridTable getTable() {
         return table;
+      }
+
+      @Override
+      TableColumnModel getGridColumnModel() {
+        return view.getGridColumnModel();
       }
 
       @Override
@@ -99,7 +105,7 @@ public class TableResultViewFactory implements ResultViewFactory {
         }
       }
     };
-    table.getColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    view.getGridColumnModel().getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(@NotNull ListSelectionEvent e) {
         grid.getHiddenColumnSelectionHolder().setWholeRowSelected(false);
@@ -126,16 +132,19 @@ public class TableResultViewFactory implements ResultViewFactory {
 
     abstract GridTable getTable();
 
+    /** The view's column model, which holds the grid's columns. */
+    abstract TableColumnModel getGridColumnModel();
+
     abstract DataGrid getGrid();
 
     void selectAll() {
       ListSelectionModel rowModel = getTable().getSelectionModel();
       int r0 = rowModel.getMinSelectionIndex();
       int r1 = rowModel.getMaxSelectionIndex();
-      ListSelectionModel columnModel = getTable().getColumnModel().getSelectionModel();
+      ListSelectionModel columnModel = getGridColumnModel().getSelectionModel();
       int c0 = columnModel.getMinSelectionIndex();
       int c1 = columnModel.getMaxSelectionIndex();
-      boolean deselect = r1 - r0 + 1 == getTable().getRowCount() && c1 - c0 + 1 == getTable().getColumnCount();
+      boolean deselect = r1 - r0 + 1 == getTable().getRowCount() && c1 - c0 + 1 == getGridColumnModel().getColumnCount();
       if (deselect) {
         getTable().clearSelection();
       }
@@ -144,7 +153,7 @@ public class TableResultViewFactory implements ResultViewFactory {
           TableSelectionModel model = ObjectUtils.tryCast(getTable().gridSelectionModel(), TableSelectionModel.class);
           if (model != null) {
             model.setRowSelectionInterval(0, getTable().getRowCount());
-            model.setColumnSelectionInterval(0, getTable().getColumnCount());
+            model.setColumnSelectionInterval(0, getGridColumnModel().getColumnCount());
           }
         });
       }

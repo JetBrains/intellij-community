@@ -8,6 +8,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +110,16 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   default @NotNull JComponent getPreferredFocusedComponent() {
     return getComponent();
+  }
+
+  /** Whether the view has the focus; a view that shows its cells in more than one component counts each of them. */
+  default boolean hasFocus() {
+    return getComponent().hasFocus();
+  }
+
+  /** Where a popup or a balloon about the selected cell points, or null when the view has no such place. */
+  default @Nullable RelativePoint getBestPopupLocation() {
+    return null;
   }
 
   default void registerEscapeAction(@NotNull AbstractAction action) {

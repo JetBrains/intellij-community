@@ -16,6 +16,9 @@ import javax.swing.event.TableColumnModelListener
 class MoveColumnListener internal constructor(
   private val grid: DataGrid,
   private val gridTable: GridTable,
+  /** The view's columns, whose column model holds the grid's columns in grid order. */
+  private val columns: GridColumns,
+  private val rowOrder: TableRowOrder,
 ) : MouseListener, TableColumnModelListener {
 
   private var draggingState = DraggingState.NONE
@@ -23,7 +26,7 @@ class MoveColumnListener internal constructor(
 
   override fun mousePressed(e: MouseEvent) {
     draggingState = DraggingState.GRABBED
-    orderBeforeDrag = primaryViewOrder()
+    orderBeforeDrag = gridColumnOrder()
   }
 
   override fun mouseReleased(e: MouseEvent) {
@@ -33,7 +36,7 @@ class MoveColumnListener internal constructor(
     orderBeforeDrag = emptyList()
     if (!moved) return
 
-    val after = primaryViewOrder()
+    val after = gridColumnOrder()
     val column = movedColumn(before, after) ?: return
     val target = targetIndexInData(after, column) ?: return
     if (target == column) return
@@ -56,25 +59,25 @@ class MoveColumnListener internal constructor(
             }
           }
         },
-        AdjustColumnsAfterMoveInData(grid, gridTable, column, target),
+        AdjustColumnsAfterMoveInData(grid, columns, rowOrder, column, target),
       )),
       ModelIndex.forColumn(grid, column),
       ModelIndex.forColumn(grid, target)
     )
   }
 
-  /** Model indices in the primary table's column-model order, including zero-width pinned placeholders. */
-  private fun primaryViewOrder(): List<Int> {
+  /** Model indices in the grid's column order, pinned columns included. */
+  private fun gridColumnOrder(): List<Int> {
     val order = mutableListOf<Int>()
-    gridTable.columnModel.columns.asIterator().forEach { order.add(it.modelIndex) }
+    columns.columnModel.columns.asIterator().forEach { order.add(it.modelIndex) }
     return order
   }
 
-  /** Model indices of the pinned columns, which are shown in the frozen strip and kept at zero width here. */
+  /** Model indices of the pinned columns, which the pinned table shows. */
   private fun pinnedColumns(): Set<Int> {
     val pinned = mutableSetOf<Int>()
-    gridTable.columnModel.columns.asIterator().forEach { column ->
-      if ((column as? TableResultViewColumn)?.isFrozenHidden == true) pinned.add(column.modelIndex)
+    columns.columnModel.columns.asIterator().forEach { column ->
+      if ((column as? TableResultViewColumn)?.isPinned == true) pinned.add(column.modelIndex)
     }
     return pinned
   }

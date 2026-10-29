@@ -3,41 +3,32 @@ package com.intellij.database.run.ui.table
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * Immutable mapping from the two table column orders to the order shown to the user: frozen columns first, followed
- * by the remaining primary-table columns. All returned values are indices in the primary table's column model.
+ * The order in which the user sees the grid's columns. The pinned columns come first, in the pinned table's order, then the other grid
+ * columns in grid order. [Column] identifies a grid column; the pinned-table controller uses the column's `ViewIndex<GridColumn>`.
  */
 @ApiStatus.Internal
-class DisplayedColumnOrder(primaryModelOrder: List<Int>, frozenModelOrder: List<Int>) {
-  private val frozenModelOrder = frozenModelOrder.toList()
-  private val primaryIndexByModel = primaryModelOrder.withIndex().associate { it.value to it.index }
-
-  val primaryViewIndices: List<Int> = buildList(primaryModelOrder.size) {
-    for (modelIndex in frozenModelOrder) {
-      primaryIndexByModel[modelIndex]?.let(::add)
-    }
-    val frozen = frozenModelOrder.toHashSet()
-    for ((primaryIndex, modelIndex) in primaryModelOrder.withIndex()) {
-      if (modelIndex !in frozen) add(primaryIndex)
-    }
+class DisplayedColumnOrder<Column>(gridOrder: List<Column>, pinnedOrder: List<Column>) {
+  val displayedColumns: List<Column> = buildList(gridOrder.size) {
+    val inGrid = gridOrder.toHashSet()
+    pinnedOrder.filterTo(this) { it in inGrid }
+    val pinned = pinnedOrder.toHashSet()
+    gridOrder.filterTo(this) { it !in pinned }
   }
 
-  fun primaryIndexOfFrozen(frozenIndex: Int): Int? =
-    frozenModelOrder.getOrNull(frozenIndex)?.let(primaryIndexByModel::get)
-
-  fun adjacent(primaryIndex: Int, forward: Boolean): Int? {
-    val position = primaryViewIndices.indexOf(primaryIndex)
+  fun adjacent(column: Column, forward: Boolean): Column? {
+    val position = displayedColumns.indexOf(column)
     if (position < 0) return null
-    return primaryViewIndices.getOrNull(position + if (forward) 1 else -1)
+    return displayedColumns.getOrNull(position + if (forward) 1 else -1)
   }
 
-  fun edge(first: Boolean): Int? = if (first) primaryViewIndices.firstOrNull() else primaryViewIndices.lastOrNull()
+  fun edge(first: Boolean): Column? = if (first) displayedColumns.firstOrNull() else displayedColumns.lastOrNull()
 
-  fun range(anchor: Int, target: Int): List<Int>? {
-    val anchorPosition = primaryViewIndices.indexOf(anchor)
-    val targetPosition = primaryViewIndices.indexOf(target)
+  fun range(anchor: Column, target: Column): List<Column>? {
+    val anchorPosition = displayedColumns.indexOf(anchor)
+    val targetPosition = displayedColumns.indexOf(target)
     if (anchorPosition < 0 || targetPosition < 0) return null
-    return primaryViewIndices.subList(minOf(anchorPosition, targetPosition), maxOf(anchorPosition, targetPosition) + 1)
+    return displayedColumns.subList(minOf(anchorPosition, targetPosition), maxOf(anchorPosition, targetPosition) + 1)
   }
 
-  fun contains(primaryIndex: Int): Boolean = primaryIndex in primaryViewIndices
+  fun contains(column: Column): Boolean = column in displayedColumns
 }

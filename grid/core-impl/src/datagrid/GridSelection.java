@@ -21,4 +21,14 @@ public interface GridSelection<Row, Column> {
   default @Nullable ModelIndex<Row> getRangeStartRow() {
     return null;
   }
+
+  /** The column the user is on, or null when the selection carries none. */
+  default @Nullable ModelIndex<Column> getCurrentColumn() {
+    return null;
+  }
+
+  /** The column the selected range started from, or null when the selection carries none. */
+  default @Nullable ModelIndex<Column> getRangeStartColumn() {
+    return null;
+  }
 }

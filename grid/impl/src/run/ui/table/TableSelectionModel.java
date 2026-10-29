@@ -7,6 +7,7 @@ import com.intellij.database.datagrid.GridSelection;
 import com.intellij.database.datagrid.GridSelectionImpl;
 import com.intellij.database.datagrid.ModelIndex;
 import com.intellij.database.datagrid.ModelIndexSet;
+import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.SelectionModelWithViewColumns;
@@ -21,44 +22,82 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.DefaultListSelectionModel;
 import javax.swing.ListSelectionModel;
+import javax.swing.table.TableColumnModel;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.function.IntUnaryOperator;
 
+/** The grid's selection over the rows of a table and the columns of a column model, which may hold more columns than the table shows. */
 class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, SelectionModelWithViewRows, SelectionModelWithViewColumns {
   private final GridTable myTable;
+  private final TableColumnModel myColumns;
+  private final RawIndexConverter myConverter;
   private final DataGrid myGrid;
   private final GridSelectionTrackerImpl myTracker;
 
-  TableSelectionModel(@NotNull GridTable table, @NotNull DataGrid grid) {
+  TableSelectionModel(@NotNull GridTable table,
+                      @NotNull TableColumnModel columns,
+                      @NotNull RawIndexConverter converter,
+                      @NotNull DataGrid grid) {
     myTable = table;
+    myColumns = columns;
+    myConverter = converter;
     myGrid = grid;
     myTracker = new GridSelectionTrackerImpl(myGrid, myTable);
   }
 
-  public static void install(@NotNull GridTable table, @NotNull DataGrid grid) {
-    TableSelectionModel tableSelectionModel = new TableSelectionModel(table, grid);
+  /** Installs a selection over the rows of {@code table} and the columns of {@code columns}, which {@code converter} converts. */
+  static void install(@NotNull GridTable table,
+                      @NotNull TableColumnModel columns,
+                      @NotNull RawIndexConverter converter,
+                      @NotNull DataGrid grid) {
+    TableSelectionModel tableSelectionModel = new TableSelectionModel(table, columns, converter, grid);
     table.putClientProperty(SelectionModelUtil.SELECTION_MODEL_KEY, tableSelectionModel);
   }
 
   @Override
   public @NotNull GridSelectionImpl store() {
     int[] rows = convert(myTable.getRowCount(), myTable::convertRowIndexToModel, myTable.getSelectedRows());
-    int[] columns = convert(myTable.getColumnCount(), myTable::convertColumnIndexToModel, myTable.getSelectedColumns());
+    int[] columns = convert(myColumns.getColumnCount(), this::columnIndexToModel, myColumns.getSelectedColumns());
     if (myTable.isTransposed()) {
       int[] temp = rows;
       rows = columns;
       columns = temp;
     }
     ListSelectionModel rowSelection = rowSelectionModel();
+    ListSelectionModel columnSelection = columnSelectionModel();
     return new GridSelectionImpl(ModelIndexSet.forRows(myGrid, rows), ModelIndexSet.forColumns(myGrid, columns),
                                  toModelRow(rowSelection.getLeadSelectionIndex()),
-                                 toModelRow(rowSelection.getAnchorSelectionIndex()));
+                                 toModelRow(rowSelection.getAnchorSelectionIndex()),
+                                 toModelColumn(columnSelection.getLeadSelectionIndex()),
+                                 toModelColumn(columnSelection.getAnchorSelectionIndex()));
   }
 
   /** The rows of the data are laid out along the column axis in a transposed table. */
   private @NotNull ListSelectionModel rowSelectionModel() {
-    return myTable.isTransposed() ? myTable.getColumnModel().getSelectionModel() : myTable.getSelectionModel();
+    return myTable.isTransposed() ? myColumns.getSelectionModel() : myTable.getSelectionModel();
+  }
+
+  /** The columns of the data are laid out along the row axis in a transposed table. */
+  private @NotNull ListSelectionModel columnSelectionModel() {
+    return myTable.isTransposed() ? myTable.getSelectionModel() : myColumns.getSelectionModel();
+  }
+
+  private int columnIndexToModel(int viewColumn) {
+    return myColumns.getColumn(viewColumn).getModelIndex();
+  }
+
+  /** The first index of a column for {@code modelColumn}, or -1, as {@code JTable.convertColumnIndexToView} finds it. */
+  private int columnIndexToView(int modelColumn) {
+    if (modelColumn < 0) return modelColumn;
+    for (int i = 0; i < myColumns.getColumnCount(); i++) {
+      if (myColumns.getColumn(i).getModelIndex() == modelColumn) return i;
+    }
+    return -1;
+  }
+
+  private boolean isColumnSelected(int column) {
+    return myColumns.getSelectionModel().isSelectedIndex(column);
   }
 
   /**
@@ -66,23 +105,45 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
    * A transposed table holds that index on the column axis, so it needs the column converter.
    */
   private @Nullable ModelIndex<GridRow> toModelRow(int selectionIndex) {
-    if (selectionIndex < 0) return null;
-    if (myTable.isTransposed()) {
-      if (selectionIndex >= myTable.getColumnCount()) return null;
-      return ModelIndex.forRow(myGrid, myTable.convertColumnIndexToModel(selectionIndex));
-    }
-    if (selectionIndex >= myTable.getRowCount()) return null;
-    return ModelIndex.forRow(myGrid, myTable.convertRowIndexToModel(selectionIndex));
+    int modelIndex = myTable.isTransposed() ? columnAxisToModel(selectionIndex) : rowAxisToModel(selectionIndex);
+    return modelIndex < 0 ? null : ModelIndex.forRow(myGrid, modelIndex);
+  }
+
+  /** The grid column at {@code selectionIndex} of {@link #columnSelectionModel()}, or null when the table no longer shows it. */
+  private @Nullable ModelIndex<GridColumn> toModelColumn(int selectionIndex) {
+    int modelIndex = myTable.isTransposed() ? rowAxisToModel(selectionIndex) : columnAxisToModel(selectionIndex);
+    return modelIndex < 0 ? null : ModelIndex.forColumn(myGrid, modelIndex);
   }
 
   /** The view index of {@code row}, or -1 when the table no longer shows it. */
   private int toViewRow(@Nullable ModelIndex<GridRow> row) {
     if (row == null) return -1;
-    // convertColumnIndexToView walks the column model and answers -1 for an index it does not hold, so the
-    // transposed branch needs no range check of its own. convertRowIndexToView asks the sorter and can throw.
-    if (myTable.isTransposed()) return myTable.convertColumnIndexToView(row.value);
-    if (row.value >= myTable.getModel().getRowCount()) return -1;
-    int viewIndex = myTable.convertRowIndexToView(row.value);
+    return myTable.isTransposed() ? columnIndexToView(row.value) : rowAxisToView(row.value);
+  }
+
+  /** The view index of {@code column}, or -1 when the table no longer shows it. */
+  private int toViewColumn(@Nullable ModelIndex<GridColumn> column) {
+    if (column == null) return -1;
+    return myTable.isTransposed() ? rowAxisToView(column.value) : columnIndexToView(column.value);
+  }
+
+  /** The model index at {@code index} of the table's rows, or -1. */
+  private int rowAxisToModel(int index) {
+    return index >= 0 && index < myTable.getRowCount() ? myTable.convertRowIndexToModel(index) : -1;
+  }
+
+  /** The model index at {@code index} of the column model, or -1. */
+  private int columnAxisToModel(int index) {
+    return index >= 0 && index < myColumns.getColumnCount() ? columnIndexToModel(index) : -1;
+  }
+
+  /**
+   * The index in the table's rows of model index {@code modelIndex}, or -1. The range check comes first because
+   * {@code convertRowIndexToView} asks the sorter, which can throw.
+   */
+  private int rowAxisToView(int modelIndex) {
+    if (modelIndex >= myTable.getModel().getRowCount()) return -1;
+    int viewIndex = myTable.convertRowIndexToView(modelIndex);
     return viewIndex < myTable.getRowCount() ? viewIndex : -1;
   }
 
@@ -92,11 +153,11 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
   }
 
   public void setColumnSelectionInterval(int idx0, int idx1) {
-    setSelectionInterval(myTable.getColumnModel().getSelectionModel(), false, myTable.getColumnCount() - 1, idx0, idx1);
+    setSelectionInterval(myColumns.getSelectionModel(), false, myColumns.getColumnCount() - 1, idx0, idx1);
   }
 
   public void addColumnSelectionInterval(int idx0, int idx1) {
-    setSelectionInterval(myTable.getColumnModel().getSelectionModel(), true, myTable.getColumnCount() - 1, idx0, idx1);
+    setSelectionInterval(myColumns.getSelectionModel(), true, myColumns.getColumnCount() - 1, idx0, idx1);
   }
 
   public void setRowSelectionInterval(int idx0, int idx1) {
@@ -114,7 +175,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     if (!selectAtLeastOneCell) return;
     GridSelectionImpl selection = store();
     if (selection.getSelectedRows().size() == 0) {
-      int firstRow = myTable.getRawIndexConverter().row2Model().applyAsInt(0);
+      int firstRow = myConverter.row2Model().applyAsInt(0);
       setRowSelection(ModelIndexSet.forRows(myGrid, firstRow), false);
     }
   }
@@ -127,7 +188,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
   @Override
   public boolean isSelectionEmpty() {
     return myTable.getSelectionModel().isSelectionEmpty() ||
-           myTable.getColumnModel().getSelectionModel().isSelectionEmpty();
+           myColumns.getSelectionModel().isSelectionEmpty();
   }
 
   @Override
@@ -139,21 +200,21 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
   public boolean isSelected(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column) {
     int displayRow = myTable.isTransposed() ? column.asInteger() : row.asInteger();
     int displayColumn = myTable.isTransposed() ? row.asInteger() : column.asInteger();
-    return myTable.isRowSelected(displayRow) && myTable.isColumnSelected(displayColumn);
+    return myTable.isRowSelected(displayRow) && isColumnSelected(displayColumn);
   }
 
   @Override
   public boolean isSelectedColumn(@NotNull ModelIndex<GridColumn> column) {
     ViewIndex<GridColumn> colIdx = column.toView(myGrid);
     int index = colIdx.asInteger();
-    return myTable.isTransposed() ? myTable.isRowSelected(index) : myTable.isColumnSelected(index);
+    return myTable.isTransposed() ? myTable.isRowSelected(index) : isColumnSelected(index);
   }
 
   @Override
   public boolean isSelectedRow(@NotNull ModelIndex<GridRow> row) {
     ViewIndex<GridRow> rowIdx = row.toView(myGrid);
     int index = rowIdx.asInteger();
-    return myTable.isTransposed() ? myTable.isColumnSelected(index) : myTable.isRowSelected(index);
+    return myTable.isTransposed() ? isColumnSelected(index) : myTable.isRowSelected(index);
   }
 
   @Override
@@ -163,7 +224,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     if (!selectAtLeastOneCell) return;
     GridSelection<GridRow, GridColumn> selection = store();
     if (selection.getSelectedColumns().size() == 0) {
-      int firstColumn = myTable.getRawIndexConverter().column2Model().applyAsInt(0);
+      int firstColumn = myConverter.column2Model().applyAsInt(0);
       setColumnSelection(ModelIndexSet.forColumns(myGrid, firstColumn), false);
     }
   }
@@ -193,49 +254,51 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
 
   @Override
   public int getSelectedRowCount() {
-    return myTable.isTransposed() ? myTable.getSelectedColumnCount() : myTable.getSelectedRowCount();
+    return myTable.isTransposed() ? myColumns.getSelectedColumnCount() : myTable.getSelectedRowCount();
   }
 
   @Override
   public int getSelectedColumnCount() {
-    return myTable.isTransposed() ? myTable.getSelectedRowCount() : myTable.getSelectedColumnCount();
+    return myTable.isTransposed() ? myTable.getSelectedRowCount() : myColumns.getSelectedColumnCount();
   }
 
   @Override
   public @NotNull ModelIndex<GridRow> getSelectedRow() {
-    int viewRowIndex = myTable.isTransposed() ? myTable.getSelectedColumn() : myTable.getSelectedRow();
+    int viewRowIndex = myTable.isTransposed() ? myColumns.getSelectionModel().getMinSelectionIndex() : myTable.getSelectedRow();
     return ViewIndex.forRow(myGrid, viewRowIndex >= 0 ? viewRowIndex : -1).toModel(myGrid);
   }
 
   @Override
   public @NotNull ModelIndexSet<GridRow> getSelectedRows() {
-    return ViewIndexSet.forRows(myGrid, myTable.isTransposed() ? myTable.getSelectedColumns() : myTable.getSelectedRows()).toModel(myGrid);
+    return ViewIndexSet.forRows(myGrid, myTable.isTransposed() ? myColumns.getSelectedColumns() : myTable.getSelectedRows())
+      .toModel(myGrid);
   }
 
   @Override
   public @NotNull ModelIndex<GridRow> getLeadSelectionRow() {
     int idx = myTable.isTransposed()
-              ? myTable.getColumnModel().getSelectionModel().getLeadSelectionIndex()
+              ? myColumns.getSelectionModel().getLeadSelectionIndex()
               : myTable.getSelectionModel().getLeadSelectionIndex();
     return ViewIndex.forRow(myGrid, idx).toModel(myGrid);
   }
 
   @Override
   public @NotNull ModelIndex<GridColumn> getSelectedColumn() {
-    return ViewIndex.forColumn(myGrid, myTable.isTransposed() ? myTable.getSelectedRow() : myTable.getSelectedColumn()).toModel(myGrid);
+    int idx = myTable.isTransposed() ? myTable.getSelectedRow() : myColumns.getSelectionModel().getMinSelectionIndex();
+    return ViewIndex.forColumn(myGrid, idx).toModel(myGrid);
   }
 
   @Override
   public @NotNull ModelIndex<GridColumn> getLeadSelectionColumn() {
     int idx = myTable.isTransposed()
               ? myTable.getSelectionModel().getLeadSelectionIndex()
-              : myTable.getColumnModel().getSelectionModel().getLeadSelectionIndex();
+              : myColumns.getSelectionModel().getLeadSelectionIndex();
     return ViewIndex.forColumn(myGrid, idx).toModel(myGrid);
   }
 
   @Override
   public @NotNull ModelIndexSet<GridColumn> getSelectedColumns() {
-    return ViewIndexSet.forColumns(myGrid, myTable.isTransposed() ? myTable.getSelectedRows() : myTable.getSelectedColumns())
+    return ViewIndexSet.forColumns(myGrid, myTable.isTransposed() ? myTable.getSelectedRows() : myColumns.getSelectedColumns())
       .toModel(myGrid);
   }
 
@@ -243,7 +306,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
   public void selectWholeRow() {
     myGrid.getAutoscrollLocker().runWithLock(() -> {
       myGrid.getHiddenColumnSelectionHolder().setWholeRowSelected(!myTable.isTransposed());
-      setColumnSelectionInterval(myTable.getColumnCount() - 1, 0);
+      setColumnSelectionInterval(myColumns.getColumnCount() - 1, 0);
     });
   }
 
@@ -262,7 +325,7 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
       setSelection(myTable.getSelectionModel(), false, myTable.getRowCount() - 1, array);
     }
     else {
-      setSelection(myTable.getColumnModel().getSelectionModel(), false, myTable.getColumnCount() - 1, array);
+      setSelection(myColumns.getSelectionModel(), false, myColumns.getColumnCount() - 1, array);
     }
   }
 
@@ -336,8 +399,8 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
 
   @Override
   public @NotNull GridSelection<GridRow, GridColumn> fit(@NotNull GridSelection<GridRow, GridColumn> selection) {
-    int rowCount = myTable.isTransposed() ? myTable.getColumnCount() : myTable.getRowCount();
-    int columnCount = myTable.isTransposed() ? myTable.getRowCount() : myTable.getColumnCount();
+    int rowCount = myTable.isTransposed() ? myColumns.getColumnCount() : myTable.getRowCount();
+    int columnCount = myTable.isTransposed() ? myTable.getRowCount() : myColumns.getColumnCount();
     ModelIndexSet<GridRow> rows = ModelIndexSet.forRows(myGrid, fit(selection.getSelectedRows().asArray(), rowCount));
     ModelIndexSet<GridColumn> columns = ModelIndexSet.forColumns(myGrid, fit(selection.getSelectedColumns().asArray(), columnCount));
     return GridSelectionImpl.withSelection(selection, rows, columns);
@@ -357,12 +420,16 @@ class TableSelectionModel implements SelectionModel<GridRow, GridColumn>, Select
     SelectionModel<GridRow, GridColumn> selectionModel = myGrid.getSelectionModel();
     selectionModel.setSelection(selection.getSelectedRows(), selection.getSelectedColumns());
 
-    // Re-adding the rows put the lead on the last row of the interval, and anything following the lead jumps there.
-    if (!(rowSelectionModel() instanceof DefaultListSelectionModel rows)) return;
-    int lead = toViewRow(selection.getCurrentRow());
-    if (lead < 0) return;
-    int anchor = toViewRow(selection.getRangeStartRow());
-    if (anchor >= 0) rows.setAnchorSelectionIndex(anchor);
-    rows.moveLeadSelectionIndex(lead); // moves the lead without changing the selection
+    // Re-adding the rows and the columns put each lead on the last index of its interval, and anything following a lead jumps there.
+    restoreLeadAndAnchor(rowSelectionModel(), toViewRow(selection.getCurrentRow()), toViewRow(selection.getRangeStartRow()));
+    restoreLeadAndAnchor(columnSelectionModel(), toViewColumn(selection.getCurrentColumn()),
+                         toViewColumn(selection.getRangeStartColumn()));
+  }
+
+  /** Puts the lead and the anchor back without changing the selection; a lead of -1 leaves both as they are. */
+  static void restoreLeadAndAnchor(@NotNull ListSelectionModel model, int lead, int anchor) {
+    if (!(model instanceof DefaultListSelectionModel selection) || lead < 0) return;
+    if (anchor >= 0) selection.setAnchorSelectionIndex(anchor);
+    selection.moveLeadSelectionIndex(lead); // moves the lead without changing the selection
   }
 }

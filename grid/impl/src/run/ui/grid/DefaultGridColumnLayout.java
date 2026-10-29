@@ -99,7 +99,7 @@ public class DefaultGridColumnLayout implements GridColumnLayout<GridRow, GridCo
     for (ModelIndex<?> columnDataIdx : visibleColumnDataIndices) {
       ResultViewColumn column = myContext.getLayoutColumn(columnDataIdx);
       if (column == null) continue; // will never happen
-      if (columnsToResize.contains(columnDataIdx) && !column.isWidthLockedForLayout() && !column.isFrozenHidden()) {
+      if (columnsToResize.contains(columnDataIdx) && !column.isWidthLockedForLayout()) {
         LayoutInfo layoutInfo = new LayoutInfo();
         layoutInfo.min = Math.max(MIN_COLUMN_WIDTH, computeHeaderWidth(column));
         layoutInfo.full = Math.max(layoutInfo.min, computeColumnWidth(column));

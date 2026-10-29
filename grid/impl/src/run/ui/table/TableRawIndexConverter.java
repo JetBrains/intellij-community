@@ -21,6 +21,8 @@ import java.util.function.Supplier;
 public final class TableRawIndexConverter implements RawIndexConverter {
 
   private final JBTable myTable;
+  /** The columns to convert, or null for the table's own column model, which the table may replace. */
+  private final @Nullable TableColumnModel myColumns;
   private final Supplier<Boolean> myIsTransposed;
 
   /**
@@ -57,17 +59,36 @@ public final class TableRawIndexConverter implements RawIndexConverter {
 
   public TableRawIndexConverter(@NotNull JBTable table, @NotNull Supplier<Boolean> isTransposed) {
     myTable = table;
+    myColumns = null;
     myIsTransposed = isTransposed;
+  }
+
+  /** Converts the rows and the columns of {@code table}, which may replace its column model. */
+  TableRawIndexConverter(@NotNull GridTable table) {
+    myTable = table;
+    myColumns = null;
+    myIsTransposed = table::isTransposed;
+  }
+
+  /** Converts the rows of {@code table} and the columns of {@code columns}, which may hold more columns than the table shows. */
+  TableRawIndexConverter(@NotNull GridTable table, @NotNull TableColumnModel columns) {
+    myTable = table;
+    myColumns = columns;
+    myIsTransposed = table::isTransposed;
+  }
+
+  private @NotNull TableColumnModel columns() {
+    return myColumns != null ? myColumns : myTable.getColumnModel();
   }
 
   @Override
   public boolean isValidViewRowIdx(int viewRowIdx) {
-    return viewRowIdx >= 0 && viewRowIdx < (myIsTransposed.get() ? myTable.getColumnCount() : myTable.getRowCount());
+    return viewRowIdx >= 0 && viewRowIdx < (myIsTransposed.get() ? columns().getColumnCount() : myTable.getRowCount());
   }
 
   @Override
   public boolean isValidViewColumnIdx(int viewColumnIdx) {
-    return viewColumnIdx >= 0 && viewColumnIdx < (myIsTransposed.get() ? myTable.getRowCount() : myTable.getColumnCount());
+    return viewColumnIdx >= 0 && viewColumnIdx < (myIsTransposed.get() ? myTable.getRowCount() : columns().getColumnCount());
   }
 
   @Override
@@ -100,7 +121,7 @@ public final class TableRawIndexConverter implements RawIndexConverter {
   public @NotNull IntUnaryOperator row2Model() {
     return index -> {
       if (!isValidViewRowIdx(index)) return -1;
-      return myIsTransposed.get() ? myTable.convertColumnIndexToModel(index) : myTable.convertRowIndexToModel(index);
+      return myIsTransposed.get() ? columnIndexToModel(index) : myTable.convertRowIndexToModel(index);
     };
   }
 
@@ -108,17 +129,22 @@ public final class TableRawIndexConverter implements RawIndexConverter {
   public @NotNull IntUnaryOperator column2Model() {
     return index -> {
       if (!isValidViewColumnIdx(index)) return -1;
-      return myIsTransposed.get() ? myTable.convertRowIndexToModel(index) : myTable.convertColumnIndexToModel(index);
+      return myIsTransposed.get() ? myTable.convertRowIndexToModel(index) : columnIndexToModel(index);
     };
   }
 
-  private int columnIndexToView(int modelColumnIdx) {
+  private int columnIndexToModel(int viewColumnIdx) {
+    return columns().getColumn(viewColumnIdx).getModelIndex();
+  }
+
+  /** The position of model column {@code modelColumnIdx} in the converted columns, or -1; from a map that only a change drops. */
+  int columnIndexToView(int modelColumnIdx) {
     int[] map = modelToViewColumn();
     return modelColumnIdx >= 0 && modelColumnIdx < map.length ? map[modelColumnIdx] : -1;
   }
 
   private int @NotNull [] modelToViewColumn() {
-    TableColumnModel columnModel = myTable.getColumnModel();
+    TableColumnModel columnModel = columns();
     if (columnModel != myObservedColumnModel) {
       observeColumnModel(columnModel);
     }

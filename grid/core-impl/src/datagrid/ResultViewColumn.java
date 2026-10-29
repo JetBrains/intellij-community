@@ -29,14 +29,6 @@ public interface ResultViewColumn extends UserDataHolder {
   default void clearWidthSetByUser() {
   }
 
-  /** Hidden (width 0) in this view because it is shown in the frozen pinned region instead. Skipped by layout. */
-  default boolean isFrozenHidden() {
-    return false;
-  }
-
-  default void setFrozenHidden(boolean hidden) {
-  }
-
   int getModelIndex();
 
   String getHeaderValue();

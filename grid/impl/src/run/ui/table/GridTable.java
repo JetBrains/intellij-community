@@ -23,15 +23,12 @@ import com.intellij.database.datagrid.ModelIndexSet;
 import com.intellij.database.datagrid.NestedTable;
 import com.intellij.database.datagrid.RawIndexConverter;
 import com.intellij.database.datagrid.ResultView.HoveredRowBgHighlightMode;
-import com.intellij.database.datagrid.ResultViewColumn;
 import com.intellij.database.datagrid.SelectionModel;
 import com.intellij.database.datagrid.SelectionModelUtil;
 import com.intellij.database.datagrid.ViewIndex;
 import com.intellij.database.datagrid.ViewIndexSet;
 import com.intellij.database.remote.jdbc.LobInfo;
 import com.intellij.database.run.actions.ColumnLocalFilterAction;
-import com.intellij.database.run.ui.ColumnMove;
-import com.intellij.database.run.ui.ColumnOrderRestorer;
 import com.intellij.database.run.ui.DataAccessType;
 import com.intellij.database.run.ui.DataGridRequestPlace;
 import com.intellij.database.run.ui.EditMaximizedView;
@@ -44,7 +41,6 @@ import com.intellij.database.run.ui.grid.CellRenderingUtils;
 import com.intellij.database.run.ui.grid.DataGridSearchSession;
 import com.intellij.database.run.ui.grid.DummyGridColumnLayout;
 import com.intellij.database.run.ui.grid.GridColorsScheme;
-import com.intellij.database.run.ui.grid.GridRowHeader;
 import com.intellij.database.run.ui.grid.GridSearchSession;
 import com.intellij.database.run.ui.grid.JBTableWithResizableCells;
 import com.intellij.database.run.ui.grid.ResizableCellEditorsSupport;
@@ -84,7 +80,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,7 +99,6 @@ import com.intellij.ui.TableExpandableItemsHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.Magnificator;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -116,8 +110,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,6 +128,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.ListSelectionModel;
 import javax.swing.RowFilter;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
@@ -176,7 +169,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionAdapter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.EventObject;
@@ -185,7 +177,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalInt;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -230,7 +221,6 @@ class GridTable extends JBTableWithResizableCells
   private GridColumnLayout<GridRow, GridColumn> myColumnLayout = new DummyGridColumnLayout();
   private final List<Consumer<Boolean>> mySelectionListeners = new ArrayList<>();
 
-  private final ModelIndex<GridColumn> myClickedHeaderColumnIdx;
   private Point myClickedHeaderPoint;
   private double myFontSizeIncrement = 0.0d;
   private double myFontSizeScale = 1.0d;
@@ -245,8 +235,6 @@ class GridTable extends JBTableWithResizableCells
   private boolean myAllowMultilineColumnLabel = false;
   private final AtomicInteger editingBlocked = new AtomicInteger(0); // TODO: currently only locks column reordering
   private HoveredRowBgHighlightMode myHoveredRowMode = HoveredRowBgHighlightMode.AUTO;
-  /** False once this table is disposed, after which it stops driving the column order of the grid. */
-  private boolean myDrivesColumnOrder = true;
   /** True once {@link #detachModel} has moved a dropped table off the shared data model; its events are no change of the grid. */
   private boolean myModelDetached;
 
@@ -255,46 +243,34 @@ class GridTable extends JBTableWithResizableCells
   private GridTableHost myHost;
   /** The view's row heights, which this table applies to itself; null until the host is installed. */
   private @Nullable RowHeightModel myRowHeights;
+  /** The view's cell image cache, which every table of the view paints through; null until the view installs the table. */
+  private @Nullable TableCellImageCache myCellImageCache;
+  /** The value of the view's open multi-cell edit, which both tables share; null until the view installs the table. */
+  private @Nullable MultiCellEditValue myEditedValue;
+  /** The view's row sorter, which every table of the view shares; the view's row order gives a new one on a transpose. */
+  private @Nullable RowSorter<? extends TableModel> mySharedRowSorter;
   private ColumnHeaderPainter myColumnHeaderPainter;
-  private Int2ObjectMap<ColumnWidthState> myUntransposedColumnWidths;
-
-  private record ColumnWidthState(int width, boolean setByUser) {
-  }
-
-  /** The grid that owns the column order, or null while this table must arrange its columns itself. */
-  private @Nullable ColumnOrderRestorer columnOrderOwner() {
-    return myDrivesColumnOrder && myResultPanel instanceof ColumnOrderRestorer owner ? owner : null;
-  }
-
-  private boolean applyColumnsDisplayOrder() {
-    return myDrivesColumnOrder && myHost != null && myHost.applyColumnsDisplayOrder();
-  }
 
   /**
-   * Creates one local table without calling external layout extensions.
+   * Creates a table over the view's data model and row selection, which another table of the view may already show. Both are
+   * passed here rather than set later, because a later {@link #setModel} would clear the shared row selection and create another
+   * row sorter. The table takes its columns from the view's cache and shows those of {@code columnModel}.
    */
-  protected GridTable(@NotNull DataGrid resultPanel,
-                      @NotNull ActionGroup columnHeaderPopupActions,
-                      @NotNull ActionGroup rowHeaderPopupActions) {
-    this(resultPanel, new RegularGridTableModel(resultPanel), columnHeaderPopupActions, rowHeaderPopupActions);
-  }
-
-  /**
-   * Creates a table over {@code model}, which another table of the view may already show. The model is passed here rather than
-   * set later, because a later {@link #setModel} would clear the shared row selection and create another row sorter.
-   */
-  protected GridTable(@NotNull DataGrid resultPanel,
-                      @NotNull GridTableModel model,
-                      @NotNull ActionGroup columnHeaderPopupActions,
-                      @NotNull ActionGroup rowHeaderPopupActions) {
-    super(model, new MyTableColumnModel());
+  GridTable(@NotNull DataGrid resultPanel,
+            @NotNull GridTableModel model,
+            @NotNull ListSelectionModel rowSelection,
+            @NotNull TableColumnModel columnModel,
+            @NotNull MyTableColumnCache columnCache,
+            @NotNull ActionGroup columnHeaderPopupActions,
+            @NotNull ActionGroup rowHeaderPopupActions) {
+    super(model, columnModel);
+    setSelectionModel(rowSelection);
     myResultPanel = resultPanel;
     myColumnHeaderPopupActions = columnHeaderPopupActions;
     myRowHeaderPopupActions = rowHeaderPopupActions;
-    myRawIndexConverter = new TableRawIndexConverter(this, () -> isTransposed());
-    myColumnCache = new MyTableColumnCache();
+    myRawIndexConverter = new TableRawIndexConverter(this);
+    myColumnCache = columnCache;
     myRenderers = new Renderers(myResultPanel, this);
-    myClickedHeaderColumnIdx = ModelIndex.forColumn(myResultPanel, -1);
     getTableHeader().setDefaultRenderer(createHeaderRenderer());
     ComponentWithExpandableItems<?> tableHeader = ObjectUtils.tryCast(getTableHeader(), ComponentWithExpandableItems.class);
     if (tableHeader != null) tableHeader.setExpandableItemsEnabled(false);
@@ -325,16 +301,13 @@ class GridTable extends JBTableWithResizableCells
   }
 
   /**
-   * Installs selection, scroll position tracking, and column dragging for the primary table.
+   * Installs scroll position tracking and column dragging for the primary table.
    */
-  final void installGridIntegration() {
-    TableSelectionModel.install(this, myResultPanel);
+  final void installGridIntegration(@NotNull MoveColumnListener moveColumnListener) {
     TableScrollPositionManager.install(this, myResultPanel);
 
-    var moveColumnListener = new MoveColumnListener(myResultPanel, this);
     getTableHeader().addMouseListener(moveColumnListener);
     columnModel.addColumnModelListener(moveColumnListener);
-    ((MyTableColumnModel)getColumnModel()).setMoveTargetAdjuster(myHost::adjustColumnMoveTarget);
   }
 
   private void installNestedTableClickHandler() {
@@ -359,17 +332,14 @@ class GridTable extends JBTableWithResizableCells
     });
   }
 
-  /** Where the hint for an expanded cell may reach. The strip clips it to its own width; the grid's own table does not. */
+  /** Where the hint for an expanded cell may reach; a table that clips its cells narrows it. */
   protected @NotNull Rectangle narrowExpandedCellHint(@NotNull Rectangle visible, @NotNull TableCell key) {
     return visible;
   }
 
-  /** Paints the divider the strip draws on its trailing edge. The grid's own table draws none. */
+  /** Paints a divider on the trailing edge, which a table that borders another one draws. */
   protected void paintTrailingDivider(@NotNull Graphics g, int bottom) {
   }
-
-  /** Unscaled width of the divider the pinned strip paints on its trailing edge. */
-  static final int PIN_DIVIDER_WIDTH = 1;
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
@@ -412,24 +382,24 @@ class GridTable extends JBTableWithResizableCells
     return this;
   }
 
-  /** Row-number header with its width computed now: created after rows are loaded (e.g. gutter restore on unpin) it
-   *  misses the data event that sizes it and would stay 1px wide. */
-  @NotNull GridRowHeader createSizedRowHeader() {
-    return myHost.createRowHeader();
-  }
-
-  /** The host coordinates the selection with the other table before and after the change. */
+  /** The host coordinates the selection with the view's other tables before the change. */
   @Override
   public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
     if (!myHost.stopEditingBeforeSelectionChange(rowIndex, columnIndex)) return;
     if (extend && myHost.handleCellRangeSelection(rowIndex, columnIndex, toggle)) return;
     super.changeSelection(rowIndex, columnIndex, toggle, extend);
-    myHost.afterChangeSelection(columnIndex, toggle, extend);
   }
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
-    myHost.processMouseEvent(e, () -> super.processMouseEvent(e));
+    if (!myHost.beforeMouseEvent(e)) return;
+    processSwingMouseEvent(e);
+    myHost.afterMouseEvent(e);
+  }
+
+  /** Swing's own handling of a mouse event in this table, between the view's checks before and after it. */
+  protected void processSwingMouseEvent(@NotNull MouseEvent e) {
+    super.processMouseEvent(e);
   }
 
   @Override
@@ -456,14 +426,6 @@ class GridTable extends JBTableWithResizableCells
   protected @NotNull ExpandableItemsHandler<TableCell> createExpandableItemsHandler() {
     return new TableExpandableItemsHandler(this) {
       @Override
-      public @Nullable Pair<Component, Rectangle> getCellRendererAndBounds(TableCell key) {
-        // A pinned column stays here as a zero-width placeholder, which always counts as truncated. Expanding it
-        // would draw the pinned value, selected, on top of the columns next to the strip.
-        if (isColumnFrozenHidden(key.column)) return null;
-        return super.getCellRendererAndBounds(key);
-      }
-
-      @Override
       public Rectangle getVisibleRect(TableCell key) {
         return narrowExpandedCellHint(super.getVisibleRect(key), key);
       }
@@ -474,7 +436,6 @@ class GridTable extends JBTableWithResizableCells
           super.handleSelectionChange(null, processIfUnfocused);
           return;
         }
-        SelectionModel<GridRow, GridColumn> selectionModel = gridSelectionModel();
         ViewIndex<GridRow> row = ViewIndex.forRow(myResultPanel, isTransposed() ? selected.column : selected.row);
         ViewIndex<GridColumn> column = ViewIndex.forColumn(myResultPanel, isTransposed() ? selected.row : selected.column);
 
@@ -485,53 +446,12 @@ class GridTable extends JBTableWithResizableCells
           return;
         }
 
-        boolean isSelected = selectionModel.isSelected(row, column);
+        boolean isSelected = isRowSelected(selected.row) && isColumnSelected(selected.column);
         EditMaximizedView view = myResultPanel.getUserData(EDIT_MAXIMIZED_GRID_KEY);
         boolean suppress = isSelected && view != null && view.getCurrentTabInfoProvider() instanceof ValueTabInfoProvider;
         super.handleSelectionChange(suppress ? null : selected, processIfUnfocused);
       }
     };
-  }
-
-  /** Swaps the model and the columns for a transpose; the view drops the pinned table first and refreshes the row numbers after. */
-  void transpose(boolean transposed) {
-    if (isTransposed() == transposed) return;
-    if (transposed) rememberUntransposedColumnWidths();
-    GridUtil.saveAndRestoreSelection(myResultPanel, () -> {
-      doTranspose();
-      createDefaultColumnsFromModel();
-      if (!transposed) {
-        if (myResultPanel instanceof ColumnOrderRestorer grid) grid.refreshColumnLayout();
-        restoreUntransposedColumnWidths();
-      }
-    });
-  }
-
-  private void rememberUntransposedColumnWidths() {
-    myUntransposedColumnWidths = new Int2ObjectOpenHashMap<>();
-    TableColumnModel columns = getColumnModel();
-    for (int i = 0; i < columns.getColumnCount(); i++) {
-      TableResultViewColumn column = (TableResultViewColumn)columns.getColumn(i);
-      int width = Math.max(column.getWidth(), column.getColumnWidth());
-      myUntransposedColumnWidths.put(column.getModelIndex(), new ColumnWidthState(width, column.isWidthSetByUser()));
-    }
-  }
-
-  private void restoreUntransposedColumnWidths() {
-    if (myUntransposedColumnWidths == null) return;
-    for (Int2ObjectMap.Entry<ColumnWidthState> entry : myUntransposedColumnWidths.int2ObjectEntrySet()) {
-      ResultViewColumn resultColumn = getColumnForPersistence(ModelIndex.forColumn(myResultPanel, entry.getIntKey()));
-      if (!(resultColumn instanceof TableResultViewColumn column)) continue;
-      ColumnWidthState state = entry.getValue();
-      if (state.setByUser()) {
-        column.setColumnWidthByUser(state.width());
-      }
-      else {
-        column.setColumnWidth(state.width());
-      }
-      column.setWidth(state.width());
-    }
-    myUntransposedColumnWidths = null;
   }
 
   public boolean isEditingBlocked() {
@@ -563,7 +483,18 @@ class GridTable extends JBTableWithResizableCells
     return scrollPane == null ? null : scrollPane.getHorizontalScrollBar();
   }
 
+  /** Listens to the rows and the columns of this table; the view gives a table its columns after it is built, so this follows them. */
   public void addSelectionChangedListener(@NotNull Consumer<Boolean> listener) {
+    ListSelectionListener l = addSelectionChangedListener(listener, getColumnModel().getSelectionModel());
+    addPropertyChangeListener("columnModel", e -> {
+      ((TableColumnModel)e.getOldValue()).getSelectionModel().removeListSelectionListener(l);
+      ((TableColumnModel)e.getNewValue()).getSelectionModel().addListSelectionListener(l);
+    });
+  }
+
+  /** Listens to the rows of this table and to {@code columnSelection}, which the view gives for the columns of every table. */
+  @NotNull ListSelectionListener addSelectionChangedListener(@NotNull Consumer<Boolean> listener,
+                                                             @NotNull ListSelectionModel columnSelection) {
     ListSelectionListener l = e -> {
       if (!myDisableSelectionListeners) {
         WriteIntentReadAction.run(() -> {
@@ -571,81 +502,16 @@ class GridTable extends JBTableWithResizableCells
         });
       }
     };
-    getColumnModel().getSelectionModel().addListSelectionListener(l);
+    columnSelection.addListSelectionListener(l);
     getSelectionModel().addListSelectionListener(l);
     mySelectionListeners.add(listener);
-  }
-
-  public void restoreColumnsOrder(Map<Integer, ModelIndex<GridColumn>> expectedToModel) {
-    if (isTransposed()) return;
-    IntUnaryOperator column2View = getRawIndexConverter().column2View();
-    int columnsCount = myResultPanel.getVisibleColumnCount();
-    for (int expectedPos = 0; expectedPos < columnsCount; expectedPos++) {
-      ModelIndex<GridColumn> modelIndex = expectedToModel.get(expectedPos);
-      if (modelIndex == null) continue;
-      int actualPos = column2View.applyAsInt(modelIndex.value);
-      if (actualPos != -1 && actualPos != expectedPos) moveColumn(actualPos, expectedPos);
-    }
-  }
-
-  @Override
-  public void columnMoved(TableColumnModelEvent event) {
-    super.columnMoved(event);
-    ColumnOrderRestorer owner = columnOrderOwner();
-    if (owner != null && event.getFromIndex() != event.getToIndex()) {
-      int target = event.getToIndex() + (event.getFromIndex() < event.getToIndex() ? -1 : 1);
-      var column = ModelIndex.forColumn(myResultPanel, getColumnModel().getColumn(event.getToIndex()).getModelIndex());
-      var neighbour = ModelIndex.forColumn(myResultPanel, getColumnModel().getColumn(target).getModelIndex());
-      myHost.columnMoved(new ColumnMove(column, neighbour, event.getFromIndex() > event.getToIndex()));
-    }
-  }
-
-  private void removeViewColumnFromColumnModel(ViewIndex<?> viewColumnIdx) {
-    getTableHeader().setDraggedColumn(null); // a workaround for JDK-6586009
-    myResultPanel.runWithIgnoreSelectionChanges(
-      () -> getColumnModel().removeColumn(getColumnModel().getColumn(viewColumnIdx.asInteger())));
-  }
-
-  private void addColumnAndMoveToTheCorrectPosition(ModelIndex<?> modelColumnIdx, boolean restoreOrder) {
-    addColumn(getColumnCache().getOrCreateColumn(modelColumnIdx.asInteger()));
-
-    if (!restoreOrder || applyColumnsDisplayOrder()) return;
-    int lastColumnIndex = getColumnCount() - 1;
-    myResultPanel.runWithIgnoreSelectionChanges(() -> {
-      for (int viewTargetColumnIdx = 0; viewTargetColumnIdx < lastColumnIndex; viewTargetColumnIdx++) {
-        if (getColumnModel().getColumn(viewTargetColumnIdx).getModelIndex() > modelColumnIdx.asInteger()) {
-          moveColumn(lastColumnIndex, viewTargetColumnIdx);
-          break;
-        }
-      }
-    });
-  }
-
-  public void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible) {
-    setViewColumnVisible(modelColumnIdx, visible, true);
-  }
-
-  private void setViewColumnVisible(ModelIndex<?> modelColumnIdx, boolean visible, boolean restoreOrder) {
-    ViewIndex<?> viewColumnIdx = modelColumnIdx.toView(myResultPanel);
-    if (visible && viewColumnIdx.asInteger() < 0) {
-      boolean firstTimeShown = !getColumnCache().hasCachedColumn(modelColumnIdx.asInteger());
-      addColumnAndMoveToTheCorrectPosition(modelColumnIdx, restoreOrder);
-      if (firstTimeShown) {
-        myColumnLayout.columnsShown(
-          isTransposed() ?
-          ModelIndexSet.forRows(myResultPanel, modelColumnIdx.asInteger()) :
-          ModelIndexSet.forColumns(myResultPanel, modelColumnIdx.asInteger()));
-      }
-    }
-    else if (!visible && viewColumnIdx.asInteger() >= 0) {
-      removeViewColumnFromColumnModel(viewColumnIdx);
-    }
+    return l;
   }
 
   public @NotNull ModelIndex<GridColumn> uiColumn(int uiColumn) {
     int modelIndex = uiColumn < 1 || uiColumn >= myResultPanel.getVisibleColumnCount() + 1
                      ? -1
-                     : getRawIndexConverter().column2Model().applyAsInt(uiColumn - 1);
+                     : myResultPanel.getRawIndexConverter().column2Model().applyAsInt(uiColumn - 1);
     return ModelIndex.forColumn(myResultPanel, modelIndex);
   }
 
@@ -662,50 +528,14 @@ class GridTable extends JBTableWithResizableCells
     return myResultPanel.getColorsScheme();
   }
 
-  public @Nullable JComponent getCellRendererComponent(@NotNull ViewIndex<GridRow> viewRow,
-                                                       @NotNull ViewIndex<GridColumn> viewColumn,
-                                                       boolean forDisplay) {
-    if (!viewRow.isValid(myResultPanel) || !viewColumn.isValid(myResultPanel)) {
-      return null;
-    }
-
-    int row = (isTransposed() ? viewColumn : viewRow).asInteger();
-    int column = (isTransposed() ? viewRow : viewColumn).asInteger();
+  /** Renders the cell at {@code row} and {@code column} of this table. */
+  @Nullable JComponent getCellRendererComponent(int row, int column, boolean forDisplay) {
     TableCellRenderer renderer = getCellRenderer(row, column);
     if (renderer == null) {
       return null;
     }
 
     return (JComponent)prepareRenderer(renderer, row, column, forDisplay);
-  }
-
-  public void setColumnEnabled(@NotNull ModelIndex<GridColumn> columnIdx, boolean state) {
-    if (isTransposed()) {
-      getModel().fireTableDataChanged();
-    }
-    else {
-      setViewColumnVisible(columnIdx, state);
-    }
-  }
-
-  public void setColumnsEnabled(@NotNull List<ModelIndex<GridColumn>> columns, boolean state) {
-    if (columns.isEmpty()) return;
-    if (isTransposed()) {
-      getModel().fireTableDataChanged();
-      return;
-    }
-    boolean deferOrder = state && myHost != null && myHost.isPrimary() && columnOrderOwner() != null;
-    for (var column : columns) setViewColumnVisible(column, state, !deferOrder);
-    if (deferOrder) applyColumnsDisplayOrder();
-  }
-
-  public void setRowEnabled(@NotNull ModelIndex<GridRow> rowIdx, boolean state) {
-    if (isTransposed()) {
-      setViewColumnVisible(rowIdx, state);
-    }
-    else {
-      getModel().fireTableDataChanged();
-    }
   }
 
   private @NotNull MyCellRenderer createHeaderRenderer() {
@@ -721,15 +551,11 @@ class GridTable extends JBTableWithResizableCells
   }
 
   private void dropCaches() {
-    if (myHost != null) myHost.getCellImageCache().reset();
+    if (myCellImageCache != null) myCellImageCache.reset();
   }
 
   public MyTableColumnCache getColumnCache() {
     return myColumnCache;
-  }
-
-  public @NotNull ModelIndex<GridColumn> getContextColumn() {
-    return myHost == null ? myClickedHeaderColumnIdx : myHost.getContextColumn();
   }
 
   /** The keys the view's sorter sorts by locally, or null when the grid doesn't sort locally. */
@@ -779,10 +605,10 @@ class GridTable extends JBTableWithResizableCells
     return new DataGridSearchSession(myResultPanel.getProject(), myResultPanel, newFindModel, previousFilterComponent);
   }
 
-  public void doTranspose() {
-    myColumnCache.retainColumns(emptyList());
+  /** Shows the view's data model for a transpose. The view resets its columns before and rebuilds them after. */
+  void doTranspose(@NotNull GridTableModel model) {
     myColumnLayout.invalidateCache();
-    setModel(isTransposed() ? new RegularGridTableModel(myResultPanel) : new TransposedGridTableModel(myResultPanel));
+    setModel(model);
     myResultPanel.updateSortKeysFromColumnAttributes();
     getModel().fireTableDataChanged();
   }
@@ -827,25 +653,8 @@ class GridTable extends JBTableWithResizableCells
     return lastRow.y + lastRow.height;
   }
 
-  /**
-   * The pinned strip owns the pixel column the divider occupies, so any partial repaint that starts inside the strip
-   * paints the divider again. An overlay in an ancestor is skipped by such repaints and gets erased or ghosted. The
-   * line follows the visible rect, so the hosting viewport must not blit, or a scroll copies it along.
-   */
-  static void paintPinDivider(@NotNull Graphics g, @NotNull JComponent c, int height) {
-    int width = JBUIScale.scale(PIN_DIVIDER_WIDTH);
-    Rectangle visibleRect = c.getVisibleRect();
-    int leadingEdge = Math.max(0, visibleRect.x);
-    int trailingEdge = Math.min(c.getWidth(), visibleRect.x + visibleRect.width);
-    int x = c.getComponentOrientation().isLeftToRight()
-            ? Math.max(leadingEdge, trailingEdge - width)
-            : leadingEdge;
-    g.setColor(JBUI.CurrentTheme.EditorTabs.underlineColor());
-    g.fillRect(x, 0, width, Math.min(height, c.getHeight()));
-  }
-
   private void adjustCacheSize() {
-    if (myHost != null && myHost.getCellImageCache().isCacheEnabled()) myHost.cellImageCacheSizeChanged();
+    if (myHost != null && myCellImageCache != null && myCellImageCache.isCacheEnabled()) myHost.cellImageCacheSizeChanged();
   }
 
   /** How many cell images this table shows at most, which the view's cache must hold for it; 0 while nothing is visible. */
@@ -920,32 +729,6 @@ class GridTable extends JBTableWithResizableCells
       hash = System.identityHashCode(column) + 31 * hash;
     }
     return hash;
-  }
-
-  public boolean isViewModified() {
-    for (int viewColumnIdx = 0; viewColumnIdx < getColumnCount(); viewColumnIdx++) {
-      ViewIndex<?> viewIndex =
-        isTransposed() ? ViewIndex.forRow(myResultPanel, viewColumnIdx) : ViewIndex.forColumn(myResultPanel, viewColumnIdx);
-      ModelIndex<?> modelIndex = viewIndex.toModel(myResultPanel);
-      if (modelIndex.isValid(myResultPanel) && viewIndex.isValid(myResultPanel) && modelIndex.asInteger() != viewIndex.asInteger()) {
-        return true;
-      }
-    }
-
-    for (TableResultViewColumn tableColumn : myColumnCache) {
-      if (!tableColumn.isWidthSetByLayout()) {
-        return true;
-      }
-    }
-
-    int defaultRowHeight = getRowHeight();
-    for (int i = 0; i < getRowCount(); i++) {
-      if (getRowHeight(i) != defaultRowHeight) {
-        return true;
-      }
-    }
-
-    return false;
   }
 
   /** Drops the cached cell images of a column whose content language or display type changed. */
@@ -1042,7 +825,7 @@ class GridTable extends JBTableWithResizableCells
       if (resizingColumn instanceof TableResultViewColumn column) {
         int width = myHost == null
                     ? resizingColumn.getWidth()
-                    : myHost.constrainFrozenColumnResize(column, resizingColumn.getWidth());
+                    : myHost.constrainColumnResize(column, resizingColumn.getWidth());
         if (resizingColumn.getWidth() != width) resizingColumn.setWidth(width);
         column.setColumnWidthByUser(width);
       }
@@ -1119,45 +902,25 @@ class GridTable extends JBTableWithResizableCells
     return new MyTableHeader();
   }
 
+  /** Tells the data model about the new columns; the view has rebuilt its columns for them already. */
   public void columnsAdded(ModelIndexSet<GridColumn> columnIndices) {
-    columnAttributesUpdated();
     getModel().columnsAdded(columnIndices);
     dropCaches();
     myColumnLayout.newColumnsAdded(columnIndices);
   }
 
-  public void columnAttributesUpdated() {
-    List<GridColumn> columns = myResultPanel.getDataModel(DataAccessType.DATABASE_DATA).getColumns();
-    if (!isTransposed()) {
-      getColumnCache().retainColumns(columns);
-      createDefaultColumnsFromModel();
-    }
-  }
-
+  /** Tells the data model about the removed columns; the view rebuilds its columns after. */
   public void columnsRemoved(ModelIndexSet<GridColumn> columns) {
     getModel().columnsRemoved(columns);
-    if (!isTransposed()) createDefaultColumnsFromModel();
-    dropCaches();
   }
 
+  /** Tells the data model about the new rows; a transposed view rebuilds its columns after. */
   public void rowsAdded(ModelIndexSet<GridRow> rows) {
     getModel().rowsAdded(rows);
-    if (isTransposed()) createDefaultColumnsFromModel();
-    myColumnLayout.newRowsAdded(rows);
   }
 
   public void afterLastRowAdded() {
     SingleRowModeHelper.expandRowIfNeeded(myResultPanel);
-
-    JComponent mainResultViewComponent = myResultPanel.getMainResultViewComponent();
-    JViewport header = mainResultViewComponent instanceof JScrollPane ? ((JScrollPane)mainResultViewComponent).getRowHeader() : null;
-    Component rowHeader = header == null ? null : header.getView();
-    if (rowHeader == null) return;
-    if (rowHeader instanceof TableResultRowHeader) {
-      ((TableResultRowHeader)rowHeader).updatePreferredSize();
-    }
-    rowHeader.revalidate();
-    rowHeader.repaint();
   }
 
   public void addSpaceForHorizontalScrollbar(boolean v) {
@@ -1172,9 +935,9 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
+  /** Tells the data model about the removed rows; a transposed view rebuilds its columns after. */
   public void rowsRemoved(ModelIndexSet<GridRow> rows) {
     getModel().rowsRemoved(rows);
-    if (isTransposed()) createDefaultColumnsFromModel();
   }
 
   public void cellsUpdated(ModelIndexSet<GridRow> rows, ModelIndexSet<GridColumn> columns, @Nullable GridRequestSource.RequestPlace place) {
@@ -1184,32 +947,12 @@ class GridTable extends JBTableWithResizableCells
 
   @Override
   public void dispose() {
-    myDrivesColumnOrder = false;
     removeEditor();
-  }
-
-  public void changeSelectedColumnsWidth(int delta) {
-    int[] selectedColumns = getSelectedColumns();
-    int constrainedDelta = myHost == null
-                           ? delta
-                           : myHost.constrainSelectedColumnWidthDelta(selectedColumns, delta);
-    for (int column : selectedColumns) {
-      if (column < 0) continue;
-      ResultViewColumn tableColumn = renderedColumnAt(column);
-      if (tableColumn == null) continue;
-      tableColumn.setColumnWidthByUser(Math.max(0, tableColumn.getColumnWidth() + constrainedDelta));
-    }
-  }
-
-  /** The main table returns the width of the complete view, including the strip. The strip returns its viewport width. */
-  public int getAvailableColumnsWidth() {
-    if (myHost != null && myHost.isPrimary()) return myHost.getAvailableColumnsWidth();
-    return getParent() instanceof JViewport viewport ? viewport.getExtentSize().width : getWidth();
   }
 
   /**
    * Aligns the leftmost requested column with the visible area in an untransposed table.
-   * Skips pinned columns, which are always in view in the pinned table, and keeps the current vertical scroll position.
+   * Skips the columns this table doesn't show, and keeps the current vertical scroll position.
    */
   public void scrollColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> columns) {
     if (isTransposed()) return;
@@ -1217,7 +960,7 @@ class GridTable extends JBTableWithResizableCells
     int target = -1;
     for (ModelIndex<GridColumn> column : columns) {
       int viewColumn = column2View.applyAsInt(column.value);
-      if (viewColumn >= 0 && !isColumnFrozenHidden(viewColumn) && (target < 0 || viewColumn < target)) target = viewColumn;
+      if (viewColumn >= 0 && (target < 0 || viewColumn < target)) target = viewColumn;
     }
     if (target < 0) return;
     Rectangle visible = getParent() instanceof JViewport viewport ? viewport.getViewRect() : getVisibleRect();
@@ -1225,66 +968,6 @@ class GridTable extends JBTableWithResizableCells
     // Use the viewport width to show the start of a column wider than the viewport.
     cell.setBounds(cell.x, visible.y, visible.width, visible.height);
     scrollRectToVisible(cell);
-  }
-
-  /** Returns the unpinned columns that fit in the pinned strip. */
-  public @NotNull IntSet columnsThatCanBePinned(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
-    IntSet pinned = new IntOpenHashSet(pinnedColumns.size());
-    for (ModelIndex<GridColumn> column : pinnedColumns) pinned.add(column.value);
-    var candidates = new ArrayList<TableResultViewColumn>();
-    int pinnedWidth = 0;
-    int unpinnedWidth = 0;
-    TableColumnModel columnModel = getColumnModel();
-    for (int viewColumn = 0; viewColumn < columnModel.getColumnCount(); viewColumn++) {
-      if (!(renderedColumnAt(viewColumn) instanceof TableResultViewColumn column)) continue;
-      int modelIndex = columnModel.getColumn(viewColumn).getModelIndex();
-      int width = column.getFrozenStripWidth();
-      if (pinned.contains(modelIndex)) {
-        pinnedWidth += width;
-      }
-      else {
-        unpinnedWidth += width;
-        candidates.add(column);
-      }
-    }
-    IntSet result = new IntOpenHashSet(candidates.size());
-    int availableWidth = getAvailableColumnsWidth();
-    for (var column : candidates) {
-      int width = column.getFrozenStripWidth();
-      if (availableWidth <= 0 || PinnedColumnsFit.fits(pinnedWidth + width, unpinnedWidth - width, availableWidth)) {
-        result.add(column.getModelIndex());
-      }
-    }
-    return result;
-  }
-
-  /** Checks whether the visible pinned columns leave enough width for the unpinned columns. */
-  public boolean canFitPinnedColumns(@NotNull Set<ModelIndex<GridColumn>> pinnedColumns) {
-    int availableWidth = getAvailableColumnsWidth();
-    if (availableWidth <= 0) return true;
-    IntSet pinned = new IntOpenHashSet(pinnedColumns.size());
-    for (ModelIndex<GridColumn> column : pinnedColumns) pinned.add(column.value);
-    TableColumnModel columnModel = getColumnModel();
-    int pinnedWidth = 0;
-    int unpinnedWidth = 0;
-    for (int viewColumn = 0; viewColumn < columnModel.getColumnCount(); viewColumn++) {
-      if (!(renderedColumnAt(viewColumn) instanceof TableResultViewColumn column)) continue;
-      int width = column.getFrozenStripWidth();
-      if (pinned.contains(columnModel.getColumn(viewColumn).getModelIndex())) pinnedWidth += width;
-      else unpinnedWidth += width;
-    }
-    return PinnedColumnsFit.fits(pinnedWidth, unpinnedWidth, availableWidth);
-  }
-
-  /** The column controlling the rendered width at this view index: its frozen counterpart if pinned, else the main one. */
-  private @Nullable ResultViewColumn renderedColumnAt(int viewColumn) {
-    return myHost == null ? localColumnAt(viewColumn) : myHost.renderedColumnAt(viewColumn);
-  }
-
-  public void resetColumnWidths() {
-    for (TableResultViewColumn column : myColumnCache) {
-      column.clearWidthSetByUser();
-    }
   }
 
   public void disableSelectionListeners(Runnable runnable) {
@@ -1335,24 +1018,7 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  /** Constrains where a column move may land; see {@link FrozenColumnsController#adjustColumnMoveTarget}. */
-  interface MoveTargetAdjuster {
-    int adjust(int targetIndex);
-  }
-
   static class MyTableColumnModel extends DefaultTableColumnModel {
-    private @Nullable MoveTargetAdjuster myMoveTargetAdjuster;
-
-    private void setMoveTargetAdjuster(@NotNull MoveTargetAdjuster adjuster) {
-      myMoveTargetAdjuster = adjuster;
-    }
-
-    @Override
-    public void moveColumn(int columnIndex, int newIndex) {
-      int adjusted = myMoveTargetAdjuster == null ? newIndex : myMoveTargetAdjuster.adjust(newIndex);
-      super.moveColumn(columnIndex, adjusted);
-    }
-
     @Override
     public void addColumn(TableColumn aColumn) {
       if (!(aColumn instanceof TableResultViewColumn)) {
@@ -1406,7 +1072,7 @@ class GridTable extends JBTableWithResizableCells
       var gridColumn = myResultPanel.getDataModel(DATA_WITH_MUTATIONS).getColumn(columnIdx);
       var isHierarchicalColumn = gridColumn instanceof HierarchicalGridColumn;
 
-      // Map to this table's own column index; the grid-level index would overrun the smaller column model of the strip.
+      // Map to this table's own column index; a grid index would overrun its column model, which holds only part of the columns.
       var currentViewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
       if (currentViewIdx < 0 || currentViewIdx >= columnModel.getColumnCount()) return;
       var headerRect = tableHeader.getHeaderRect(currentViewIdx);
@@ -1580,16 +1246,16 @@ class GridTable extends JBTableWithResizableCells
     return rowSorter;
   }
 
-  /** The filter belongs to the view's sorter, so the view filters the rows of every table. */
-  void updateRowFilter() {
-    if (myHost != null) myHost.updateRowFilter();
-  }
-
   /** The tables of a view share its sorter, which only the view tells about data changes; see {@link TableRowOrder}. */
   @Override
   public @Nullable RowSorter<? extends TableModel> getRowSorter() {
-    RowSorter<? extends TableModel> shared = myHost == null || myModelDetached ? null : myHost.getRowSorter();
+    RowSorter<? extends TableModel> shared = myHost == null || myModelDetached ? null : mySharedRowSorter;
     return shared != null ? shared : super.getRowSorter();
+  }
+
+  /** The view's row order gives the table a new sorter on a transpose; the first one comes when the view installs the table. */
+  void setSharedRowSorter(@NotNull RowSorter<? extends TableModel> sorter) {
+    mySharedRowSorter = sorter;
   }
 
   @NotNull RowFilter<TableModel, Integer> createFilter() {
@@ -1617,13 +1283,14 @@ class GridTable extends JBTableWithResizableCells
     if (!forDisplay) return component;
 
     ViewIndex<GridRow> rowIdx = ViewIndex.forRow(myResultPanel, isTransposed() ? column : row);
-    ViewIndex<GridColumn> columnIdx = ViewIndex.forColumn(myResultPanel, isTransposed() ? row : column);
-    boolean selected = gridSelectionModel().isSelected(rowIdx, columnIdx);
-    return ResultViewWithCells.prepareComponent(component, myResultPanel, selected, getCellBackground(rowIdx, columnIdx, selected),
+    ViewIndex<GridColumn> columnIdx = ViewIndex.forColumn(myResultPanel, isTransposed() ? row : toGridViewColumn(column));
+    ModelIndex<GridColumn> modelColumn = toModelColumn(isTransposed() ? row : column);
+    boolean selected = isRowSelected(row) && isColumnSelected(column);
+    return ResultViewWithCells.prepareComponent(component, myResultPanel, selected, getCellBackground(rowIdx, modelColumn, selected),
                                                 getCellForeground(selected), this, rowIdx, columnIdx);
   }
 
-  /** The grid selection as this table reads it, with view indices of this table, which differ from the grid's in the pinned table. */
+  /** The grid's selection model, which the view installs on the main table only. */
   @NotNull SelectionModel<GridRow, GridColumn> gridSelectionModel() {
     return SelectionModelUtil.get(myResultPanel, this, this);
   }
@@ -1635,13 +1302,13 @@ class GridTable extends JBTableWithResizableCells
     getActionMap().put(actionId, action);
   }
 
-  public @Nullable Color getCellBackground(@NotNull ViewIndex<GridRow> row, @NotNull ViewIndex<GridColumn> column, boolean selected) {
+  @Nullable Color getCellBackground(@NotNull ViewIndex<GridRow> row, @NotNull ModelIndex<GridColumn> column, boolean selected) {
     return selected ?
            getSelectionBackground() :
-           myResultPanel.getColorModel().getCellBackground(row.toModel(myResultPanel), toModelColumn(column.asInteger()));
+           myResultPanel.getColorModel().getCellBackground(row.toModel(myResultPanel), column);
   }
 
-  /** The strip shows a subset of the columns, so its indices are not the grid's and must go through the model. */
+  /** Each table shows a share of the grid's columns, so its indices are not the grid's and must go through the model. */
   private @NotNull ModelIndex<GridColumn> toModelColumn(int viewColumn) {
     return ModelIndex.forColumn(myResultPanel, myRawIndexConverter.column2Model().applyAsInt(viewColumn));
   }
@@ -1651,9 +1318,12 @@ class GridTable extends JBTableWithResizableCells
     return myRawIndexConverter.column2View().applyAsInt(modelColumn);
   }
 
-  /** This table's column index in the grid's own space, which is the main table's. */
+  /**
+   * The grid's column index of this table's column {@code viewColumn}: its position in the view's column model when the table shows
+   * a slice of it, or -1 when the slice has no such column; the index itself for a table on a column model of its own.
+   */
   private int toGridViewColumn(int viewColumn) {
-    return myHost == null ? viewColumn : myHost.toGridViewColumn(viewColumn);
+    return getColumnModel() instanceof GridColumnSlice slice ? slice.toMaster(viewColumn) : viewColumn;
   }
 
   public @NotNull Color getCellForeground(boolean selected) {
@@ -1685,7 +1355,7 @@ class GridTable extends JBTableWithResizableCells
 
   @Override
   public boolean editCellAt(int row, int column, EventObject e) {
-    // JTable finishes only its own editor; commit the paired table's editor before opening another.
+    // JTable finishes only its own editor; the host first commits an editor open in another table of the view.
     if (!stopEditingBeforeEdit()) return false;
     ClientProperty.put(this, GridTableCellEditor.EDITING_STARTER_CLIENT_PROPERTY_KEY, e);
     if (shouldDisplayValueEditor(row, column)) {
@@ -1706,8 +1376,7 @@ class GridTable extends JBTableWithResizableCells
   }
 
   private boolean shouldDisplayValueEditor(int row, int column) {
-    var tableModel = getModel();
-    var cellValue = tableModel.getValueAt(row, column);
+    var cellValue = super.getValueAt(row, column);
     if ((cellValue instanceof LobInfo.ClobInfo clob && clob.isFullyReloaded()) ||
         (cellValue instanceof LobInfo.BlobInfo blob && blob.isFullyReloaded()) ||
         isArrayViewCell(row, column)) {
@@ -1737,42 +1406,6 @@ class GridTable extends JBTableWithResizableCells
     AnActionEvent event = AnActionEvent.createEvent(action, dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
     var view = ShowEditMaximizedAction.getView(this.myResultPanel, event);
     view.open(tabInfoProvider -> tabInfoProvider instanceof ValueTabInfoProvider);
-  }
-
-  @Override
-  public void createDefaultColumnsFromModel() {
-    GridTableModel model = getModel();
-    if (model == null) return;
-
-    getTableHeader().setDraggedColumn(null); // EA-59152
-
-    ((MyTableColumnModel)getColumnModel()).removeAllColumns();
-
-    IntList newColumnIndices = new IntArrayList();
-    for (int columnDataIdx = 0; columnDataIdx < model.getColumnCount(); columnDataIdx++) {
-      boolean notShownEarlier = !myColumnCache.hasCachedColumn(columnDataIdx);
-      TableResultViewColumn tableColumn = myColumnCache.getOrCreateColumn(columnDataIdx);
-      HierarchicalColumnsCollapseManager collapseManager = myResultPanel.getHierarchicalColumnsCollapseManager();
-      // prevents myColumnLayout.columnsShown call in setColumnEnabled
-      boolean enabled = isTransposed() ||
-                        myResultPanel.isColumnEnabled(ModelIndex.forColumn(myResultPanel, columnDataIdx)) &&
-                        !(collapseManager != null &&
-                          collapseManager.isColumnHiddenDueToCollapse(ModelIndex.forColumn(myResultPanel, columnDataIdx)));
-      if (enabled) {
-        addColumn(tableColumn);
-        if (notShownEarlier) {
-          newColumnIndices.add(columnDataIdx);
-        }
-      }
-    }
-
-    applyColumnsDisplayOrder();
-    if (!newColumnIndices.isEmpty()) {
-      ModelIndexSet<?> dataIndices = isTransposed() ?
-                                     ModelIndexSet.forRows(myResultPanel, newColumnIndices.toIntArray()) :
-                                     ModelIndexSet.forColumns(myResultPanel, newColumnIndices.toIntArray());
-      myColumnLayout.columnsShown(dataIndices);
-    }
   }
 
   @Override
@@ -1824,7 +1457,7 @@ class GridTable extends JBTableWithResizableCells
     updateFonts(true);
   }
 
-  /** A font change resets the grid's per-row heights, which were set for the old font; setting up a pinned table does not. */
+  /** A font change resets the grid's per-row heights, which were set for the old font; setting up another table of the view does not. */
   private void updateFonts(boolean resetRowHeights) {
     if (resetRowHeights && myRowHeights != null) myRowHeights.clear();
     Font font = getFont();
@@ -1911,25 +1544,6 @@ class GridTable extends JBTableWithResizableCells
            doGetGridColor(getColorsScheme());
   }
 
-  /**
-   * Reveals a pinned placeholder's row without scrolling horizontally to the zero-width column.
-   */
-  @Override
-  public void scrollRectToVisible(@NotNull Rectangle rect) {
-    if (rect.width <= 0 && hasFrozenHiddenColumns()) {
-      Rectangle visible = getVisibleRect();
-      rect = new Rectangle(visible.x, rect.y, visible.width, rect.height);
-    }
-    super.scrollRectToVisible(rect);
-  }
-
-  private boolean hasFrozenHiddenColumns() {
-    for (int column = 0; column < getColumnCount(); column++) {
-      if (isColumnFrozenHidden(column)) return true;
-    }
-    return false;
-  }
-
   @Override
   public void tableChanged(TableModelEvent e) {
     if (myResultPanel == null) {
@@ -1972,12 +1586,12 @@ class GridTable extends JBTableWithResizableCells
       super.removeEditor();
     }
     finally {
-      if (myHost != null) myHost.clearCommonValue();
+      if (myEditedValue != null) myEditedValue.setValue(null);
     }
   }
 
   private @Nullable Ref<Object> getSharedCommonValue() {
-    return myHost == null ? null : myHost.getCommonValue();
+    return myEditedValue == null ? null : myEditedValue.getValue();
   }
 
   public boolean isTransposed() {
@@ -2019,7 +1633,7 @@ class GridTable extends JBTableWithResizableCells
       if (myResultPanel.isHeaderSelecting() && !isTransposed()) {
         int tableViewColumnIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
         // Right-clicking a column already in the selection keeps it; only a click outside collapses to that column.
-        if (!isSelectedColumnInOwner(tableViewColumnIdx)) selectViewColumnInterval(tableViewColumnIdx, e);
+        if (!isColumnSelected(tableViewColumnIdx)) selectViewColumnInterval(tableViewColumnIdx, e);
       }
 
       invokeColumnPopup(columnIdx, e.getComponent(), new Point(e.getX(), e.getY()));
@@ -2032,7 +1646,7 @@ class GridTable extends JBTableWithResizableCells
       handleClickOnHierarchicalColumnHeader(hierarchicalColumn, columnIdx, e);
     }
     else {
-      // Map to this table's own column index; the grid-level index would overrun the smaller column model of the strip.
+      // Map to this table's own column index; a grid index would overrun its column model, which holds only part of the columns.
       var currentViewIdx = myRawIndexConverter.column2View().applyAsInt(columnIdx.value);
       if (currentViewIdx < 0 || currentViewIdx >= columnModel.getColumnCount()) return;
       var headerRect = tableHeader.getHeaderRect(currentViewIdx);
@@ -2215,11 +1829,8 @@ class GridTable extends JBTableWithResizableCells
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
           SwingUtilities.invokeLater(() -> {
-            if (myHost.getContextColumn().equals(columnIdx)) {
-              // if not clicked on another column
-              myHost.setContextColumn(ModelIndex.forColumn(myResultPanel, -1));
-              myClickedHeaderPoint = null;
-            }
+            // if not clicked on another column
+            if (myHost.columnPopupClosed(columnIdx)) myClickedHeaderPoint = null;
           });
         }
       });
@@ -2227,30 +1838,8 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  // Whether the main table selects this column. The host maps a column of the strip first.
-  private boolean isSelectedColumnInOwner(int viewColumn) {
-    return viewColumn >= 0 && myHost.isColumnSelected(viewColumn);
-  }
-
   void selectViewColumnInterval(int viewColumn, @NotNull MouseEvent e) {
     myHost.selectHeaderColumn(viewColumn, e);
-  }
-
-  public @Nullable ResultViewColumn getLayoutColumn(@NotNull ModelIndex<?> column) {
-    return getLayoutColumn(column, column.toView(myResultPanel));
-  }
-
-  public @Nullable ResultViewColumn getColumnForPersistence(@NotNull ModelIndex<?> column) {
-    return myHost == null ? getLayoutColumn(column) : myHost.getColumnForPersistence(column);
-  }
-
-  public @Nullable ResultViewColumn getLayoutColumn(@NotNull ModelIndex<?> column, @NotNull ViewIndex<?> viewColumnIdx) {
-    return viewColumnIdx.asInteger() != -1 ? getColumnCache().getOrCreateColumn(column.asInteger()) : null;
-  }
-
-  public @Nullable ResultViewColumn getLayoutColumnForDataColumn(@NotNull ModelIndex<GridColumn> column) {
-    // Layout columns of a transposed table are backed by rows, so a data column has no layout column of its own.
-    return isTransposed() ? null : getLayoutColumn(column);
   }
 
   public @NotNull ModelIndexSet<GridRow> getVisibleRows() {
@@ -2261,20 +1850,6 @@ class GridTable extends JBTableWithResizableCells
     }
     ModelIndexSet<GridRow> rowIndices = ViewIndexSet.forRows(myResultPanel, viewRowIndices).toModel(myResultPanel);
     return validIndexSet(rowIndices, rowIndices1 -> ModelIndexSet.forRows(myResultPanel, rowIndices1));
-  }
-
-  public @NotNull ModelIndexSet<GridColumn> getVisibleColumns() {
-    int visibleColumns = getViewColumnCount();
-    int[] viewIndices = new int[visibleColumns];
-    for (int i = 0; i < visibleColumns; i++) {
-      viewIndices[i] = i;
-    }
-    ModelIndexSet<GridColumn> columnIndices = ViewIndexSet.forColumns(myResultPanel, viewIndices).toModel(myResultPanel);
-    return validIndexSet(columnIndices, columnIndices1 -> ModelIndexSet.forColumns(myResultPanel, columnIndices1));
-  }
-
-  public int getViewColumnCount() {
-    return isTransposed() ? getRowCount() : getColumnCount();
   }
 
   public int getViewRowCount() {
@@ -2296,19 +1871,19 @@ class GridTable extends JBTableWithResizableCells
     TableCellEditor editor = getCellEditor();
     if (editor == null) return true;
 
-    boolean multiEditingAllowed = isMultiEditingAllowed();
-
-    int[] columnDataIdx = Arrays.stream(
-      !multiEditingAllowed ? new int[]{getEditingColumn()} : myHost.getSelectedColumns()
-    ).map(multiEditingAllowed ? myHost::columnToModel : this::convertColumnIndexToModel).toArray();
-
-
-    int[] rowDataIdx = Arrays.stream(
-      !multiEditingAllowed ? new int[]{getEditingRow()} : myHost.getSelectedRows()
-    ).map(multiEditingAllowed ? myHost::rowToModel : this::convertRowIndexToModel).toArray();
-
-    ModelIndexSet<GridRow> myEditingRowIdx = ModelIndexSet.forRows(myResultPanel, isTransposed() ? columnDataIdx : rowDataIdx);
-    ModelIndexSet<GridColumn> myEditingColumnIdx = ModelIndexSet.forColumns(myResultPanel, isTransposed() ? rowDataIdx : columnDataIdx);
+    ModelIndexSet<GridRow> myEditingRowIdx;
+    ModelIndexSet<GridColumn> myEditingColumnIdx;
+    if (isMultiEditingAllowed()) {
+      // The grid's selection covers both tables of the view, in model indices.
+      myEditingRowIdx = myResultPanel.getSelectionModel().getSelectedRows();
+      myEditingColumnIdx = myResultPanel.getSelectionModel().getSelectedColumns();
+    }
+    else {
+      int columnDataIdx = convertColumnIndexToModel(getEditingColumn());
+      int rowDataIdx = convertRowIndexToModel(getEditingRow());
+      myEditingRowIdx = ModelIndexSet.forRows(myResultPanel, isTransposed() ? columnDataIdx : rowDataIdx);
+      myEditingColumnIdx = ModelIndexSet.forColumns(myResultPanel, isTransposed() ? rowDataIdx : columnDataIdx);
+    }
 
     return myResultPanel.isSafeToUpdate(myEditingRowIdx, myEditingColumnIdx, editor.getCellEditorValue()) && editor.stopCellEditing();
   }
@@ -2320,19 +1895,14 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  boolean isColumnFrozenHidden(int viewColumn) {
-    return viewColumn >= 0 && viewColumn < getColumnModel().getColumnCount() &&
-           getColumnModel().getColumn(viewColumn) instanceof TableResultViewColumn column && column.isFrozenHidden();
-  }
-
   public boolean isMultiEditingAllowed() {
-    int[] selectedColumns = isTransposed() ? myHost.getSelectedRows() : myHost.getSelectedColumns();
-    int[] selectedRows = isTransposed() ? myHost.getSelectedColumns() : myHost.getSelectedRows();
-    ModelIndexSet<GridColumn> indexSet = ViewIndexSet.forColumns(myResultPanel, selectedColumns).toModel(myResultPanel);
+    // The grid's selection covers both tables of the view.
+    ModelIndexSet<GridColumn> indexSet = myResultPanel.getSelectionModel().getSelectedColumns();
+    int selectedRowCount = myResultPanel.getSelectionModel().getSelectedRowCount();
     List<GridColumn> columns = myResultPanel.getDataModel(DataAccessType.DATABASE_DATA).getColumns(indexSet);
     GridColumn uniqueColumn = GridHelper.get(myResultPanel).findUniqueColumn(myResultPanel, columns);
     GridTableCellEditor editor = ObjectUtils.tryCast(getCellEditor(), GridTableCellEditor.class);
-    boolean uniqueOk = uniqueColumn == null || selectedRows.length == 1 || (editor != null && editor.allowsUniqueMultiEdit());
+    boolean uniqueOk = uniqueColumn == null || selectedRowCount == 1 || (editor != null && editor.allowsUniqueMultiEdit());
     return getSharedCommonValue() != null &&
            uniqueOk &&
            GridHelper.get(myResultPanel).canEditTogether(myResultPanel, columns);
@@ -2417,7 +1987,7 @@ class GridTable extends JBTableWithResizableCells
   @Override
   public TableCellRenderer getCellRenderer(int row, int column) {
     TableCellRenderer renderer = myRenderers.getRenderer(row, column);
-    return myHost == null ? renderer : myHost.getCellImageCache().wrapCellRenderer(renderer);
+    return myCellImageCache == null ? renderer : myCellImageCache.wrapCellRenderer(renderer);
   }
 
   /** The value a cell editor of this table commits; the view writes it to the cell, or to every selected cell. */
@@ -2556,9 +2126,9 @@ class GridTable extends JBTableWithResizableCells
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       DataGrid grid = delegate.myGrid;
       ViewIndex<GridRow> rowIdx = ViewIndex.forRow(grid, myTable.isTransposed() ? column : row);
-      // The renderer works in the grid's column space, which is the main table's, not the frozen strip's.
+      // The renderer works in the grid's column space, not this table's. In a transposed table its row is the grid column.
       ViewIndex<GridColumn> columnIdx =
-        ViewIndex.forColumn(grid, myTable.toGridViewColumn(myTable.isTransposed() ? row : column));
+        ViewIndex.forColumn(grid, myTable.isTransposed() ? row : myTable.toGridViewColumn(column));
       return delegate.getComponent(rowIdx, columnIdx, value);
     }
   }
@@ -3150,7 +2720,8 @@ class GridTable extends JBTableWithResizableCells
     }
   }
 
-  public class MyTableColumnCache implements Iterable<TableResultViewColumn> {
+  /** A column for each column of a table model, hidden ones too; the model creates them. */
+  public static class MyTableColumnCache implements Iterable<TableResultViewColumn> {
     private static final class Entry {
       public final @NotNull Object myColumnData;
       public final @NotNull TableResultViewColumn myTableColumn;
@@ -3162,6 +2733,23 @@ class GridTable extends JBTableWithResizableCells
     }
 
     private final Int2ObjectMap<Entry> myColumnDataIndicesToEntries = new Int2ObjectOpenHashMap<>();
+    private final DataGrid myGrid;
+    /** The view's data model, which creates the columns; the view's columns give the cache a new one on a transpose. */
+    private @NotNull GridTableModel myTableModel;
+    /** Where each column asks whether it is pinned. */
+    private final @NotNull ColumnPins myPins;
+
+    MyTableColumnCache(@NotNull DataGrid grid,
+                       @NotNull GridTableModel tableModel,
+                       @NotNull ColumnPins pins) {
+      myGrid = grid;
+      myTableModel = tableModel;
+      myPins = pins;
+    }
+
+    void setTableModel(@NotNull GridTableModel model) {
+      myTableModel = model;
+    }
 
     public boolean hasCachedColumn(int columnDataIdx) {
       boolean isCached = hasValidEntry(columnDataIdx);
@@ -3182,7 +2770,8 @@ class GridTable extends JBTableWithResizableCells
     }
 
     private @NotNull Entry createEntry(int columnDataIdx) {
-      TableResultViewColumn tableColumn = getModel().createColumn(columnDataIdx);
+      TableResultViewColumn tableColumn = myTableModel.createColumn(columnDataIdx);
+      tableColumn.setPins(myPins);
       Object columnData = getColumnData(columnDataIdx);
       return new Entry(Objects.requireNonNull(columnData), tableColumn);
     }
@@ -3221,7 +2810,10 @@ class GridTable extends JBTableWithResizableCells
     }
 
     private Object getColumnData(int columnDataIdx) {
-      return isTransposed() ? getRow(columnDataIdx) : getColumn(columnDataIdx);
+      GridModel<GridRow, GridColumn> model = myGrid.getDataModel(DATA_WITH_MUTATIONS);
+      return myTableModel instanceof TransposedGridTableModel
+             ? model.getRow(ModelIndex.forRow(myGrid, columnDataIdx))
+             : model.getColumn(ModelIndex.forColumn(myGrid, columnDataIdx));
     }
   }
 
@@ -3293,10 +2885,21 @@ class GridTable extends JBTableWithResizableCells
     myHoveredRowMode = mode;
   }
 
-  final void installHost(@NotNull GridTableHost host) {
+  /**
+   * Makes the table part of a view: it reports to {@code host}, and shares the view's row heights, cell image cache, edited value and
+   * row sorter. The sorter comes first, since the row heights are applied through it.
+   */
+  final void installHost(@NotNull GridTableHost host,
+                         @NotNull RowHeightModel rowHeights,
+                         @NotNull TableCellImageCache cellImageCache,
+                         @NotNull MultiCellEditValue editedValue,
+                         @NotNull RowSorter<? extends TableModel> rowSorter) {
+    mySharedRowSorter = rowSorter;
     myHost = host;
+    myCellImageCache = cellImageCache;
+    myEditedValue = editedValue;
     host.installColumnNavigationActions(getActionMap());
-    myRowHeights = host.getRowHeights();
+    myRowHeights = rowHeights;
     myRowHeights.addListener(new RowHeightModel.Listener() {
       @Override
       public void rowHeightChanged(int modelRow) { applyStoredRowHeight(modelRow); }
@@ -3313,10 +2916,6 @@ class GridTable extends JBTableWithResizableCells
 
   final void installColumnLayout(@NotNull GridColumnLayout<GridRow, GridColumn> layout) {
     myColumnLayout = layout;
-  }
-
-  @Nullable ResultViewColumn localColumnAt(int viewColumn) {
-    return viewColumn >= 0 && viewColumn < getColumnCount() ? (ResultViewColumn)getColumnModel().getColumn(viewColumn) : null;
   }
 
   record Appearance(boolean striped, boolean horizontalLines, boolean verticalLines, Boolean transparentHeader,

@@ -725,7 +725,7 @@ public class TableResultPanel extends UserDataHolderBase
     if (ColumnPinning.isEnabled()) myColumnPinModel = updated;
   }
 
-  /** Syncs logical pin state into the current table view, which filters out hidden pinned columns. */
+  /** Syncs logical pin state into the current table view, which shows the pinned table while a pinned column is visible. */
   protected final void updateFrozenColumns() {
     if (!(myResultView instanceof ResultViewWithFrozenColumns view)) return;
     view.setFrozenColumns(ColumnPinning.isEnabled() ? myColumnPinModel.pinnedColumns() : Set.of());
@@ -828,7 +828,7 @@ public class TableResultPanel extends UserDataHolderBase
   }
 
   /**
-   * Reveals newly unpinned columns after restoring the scroll position captured while they had zero width.
+   * Reveals newly unpinned columns after restoring the scroll position captured while the main table didn't show them.
    */
   private void scrollUnpinnedColumnsIntoView(@NotNull List<ModelIndex<GridColumn>> unpinnedColumns) {
     if (unpinnedColumns.isEmpty() || !(myResultView instanceof ResultViewWithFrozenColumns view)) return;
@@ -1285,7 +1285,6 @@ public class TableResultPanel extends UserDataHolderBase
     cancelPendingColumnsOrderRestore();
     myColumnsDisplayOrder.set(order, naturalColumnsOrder());
     applyColumnsDisplayOrder();
-    updateFrozenColumns();
     fireColumnOrderChanged();
   }
 
@@ -1769,13 +1768,6 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public void fireContentChanged(@Nullable GridRequestSource.RequestPlace place) {
-    JViewport header = myMainResultViewComponent instanceof JScrollPane ? ((JScrollPane)myMainResultViewComponent).getRowHeader() : null;
-    Component rowHeader = header == null ? null : header.getView();
-    if (rowHeader instanceof TableResultRowHeader) {
-      ((TableResultRowHeader)rowHeader).updatePreferredSize();
-      rowHeader.revalidate();
-      rowHeader.repaint();
-    }
     myModificationTracker.incModificationCount();
     myEventDispatcher.getMulticaster().onContentChanged(this, place);
   }
@@ -2181,12 +2173,8 @@ public class TableResultPanel extends UserDataHolderBase
 
     if (state && myResultView instanceof ResultViewWithColumns resultView) {
       for (GridColumn affectedColumn : affectedColumns) {
-        ModelIndex<GridColumn> affectedIndex = ModelIndex.forColumn(this, affectedColumn.getColumnNumber());
-        restoreColumnWidth(resultView, affectedIndex, affectedColumn);
+        restoreColumnWidth(resultView, ModelIndex.forColumn(this, affectedColumn.getColumnNumber()), affectedColumn);
       }
-    }
-    if (hasPinnedColumns()) {
-      updateFrozenColumns();
     }
   }
 
@@ -2221,7 +2209,6 @@ public class TableResultPanel extends UserDataHolderBase
         restoreColumnWidth(resultView, entry.getKey(), entry.getValue());
       }
     }
-    if (hasPinnedColumns()) updateFrozenColumns();
     fireContentChanged(null);
   }
 

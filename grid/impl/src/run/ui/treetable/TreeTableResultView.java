@@ -17,8 +17,10 @@ import com.intellij.database.run.ui.grid.DataGridSearchSession;
 import com.intellij.database.run.ui.table.UnparsedValueHoverListener;
 import com.intellij.find.FindModel;
 import com.intellij.lang.Language;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,6 +104,11 @@ public class TreeTableResultView implements ResultView, ResultViewWithCells {
   @Override
   public @NotNull JComponent getPreferredFocusedComponent() {
     return myTreeTable.getTree();
+  }
+
+  @Override
+  public @NotNull RelativePoint getBestPopupLocation() {
+    return JBPopupFactory.getInstance().guessBestPopupLocation(myTreeTable.getTree());
   }
 
   @Override

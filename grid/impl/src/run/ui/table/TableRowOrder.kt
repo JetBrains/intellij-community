@@ -9,22 +9,30 @@ import javax.swing.event.RowSorterEvent
 import javax.swing.event.RowSorterListener
 import javax.swing.event.TableModelEvent
 import javax.swing.event.TableModelListener
+import javax.swing.table.TableColumnModel
 import javax.swing.table.TableModel
 import javax.swing.table.TableRowSorter
 import kotlin.math.max
 
 /**
- * The row order and filter of the view: one sorter for every table, which no table notifies itself. For each change of the data,
- * the sort or the filter, the view updates the sorter, keeps the shared row selection and each open editor on the same records,
- * applies the row heights again and repaints every table. JTable does this for a table with a sorter of its own; with one sorter
- * for two tables, only one party may do it.
+ * The row order and filter of the view: one sorter for every table, which no table notifies itself. For each change of the data, the sort
+ * or the filter, the view updates the sorter. The view keeps the shared row selection and each open editor on the same records, applies the
+ * row heights again and repaints every table. JTable does this for a table with a sorter of its own; with one sorter for two tables, only
+ * one party may do it.
  */
 internal class TableRowOrder(
   private val grid: DataGrid,
-  private val main: GridTable,
+  /** The view's row selection, which every table shares. */
+  private val rows: ListSelectionModel,
+  /** The view's column model, whose selection is the grid's column selection. */
+  private val columnModel: TableColumnModel,
   private val rowHeights: RowHeightModel,
-  private val tables: () -> List<GridTable>,
+  /** The view's tables, which keep their edits through a change of the row order. */
+  private val tables: ViewTableLookup,
 ) {
+  /** The main table, which shows the view's data model; the view gives it a new one on a transpose, which fires `"model"`. */
+  private val main: GridTable = tables.main
+
   private val dataListener = TableModelListener(::dataChanged)
   private val sorterListener = RowSorterListener(::sorterChanged)
 
@@ -42,13 +50,13 @@ internal class TableRowOrder(
     // A transpose gives the main table a new data model, which needs its own sorter and whose rows have no heights yet.
     main.addPropertyChangeListener("model") { event ->
       (event.oldValue as TableModel).removeTableModelListener(dataListener)
-      main.model.addTableModelListener(dataListener)
+      (event.newValue as TableModel).addTableModelListener(dataListener)
       sorter.removeRowSorterListener(sorterListener)
       keptSelection = null
       rowHeights.clear()
       sorter = createSorter()
     }
-    main.selectionModel.addListSelectionListener { if (!restoringSelection) keptSelection = null }
+    rows.addListSelectionListener { if (!restoringSelection) keptSelection = null }
   }
 
   fun updateSortKeys() {
@@ -69,6 +77,7 @@ internal class TableRowOrder(
   private fun createSorter(): TableRowSorter<TableModel> {
     val created = main.createGridRowSorter()
     created.addRowSorterListener(sorterListener)
+    for (table in tables.all()) table.setSharedRowSorter(created)
     // The filter reads the grid, which is set up from the new model only after this event.
     SwingUtilities.invokeLater { if (sorter === created) updateRowFilter() }
     return created
@@ -87,7 +96,7 @@ internal class TableRowOrder(
 
   private fun sorterChanged(event: RowSorterEvent) {
     when (event.type) {
-      RowSorterEvent.Type.SORT_ORDER_CHANGED -> tables().forEach { it.tableHeader?.repaint() }
+      RowSorterEvent.Type.SORT_ORDER_CHANGED -> tables.all().forEach { it.tableHeader?.repaint() }
       RowSorterEvent.Type.SORTED -> if (notifyingSorter) sortedWhileNotifying = true else sorted(event)
       else -> Unit
     }
@@ -104,7 +113,7 @@ internal class TableRowOrder(
     }
     val filtering = sorter.viewRowCount != main.model.rowCount
     if (keptSelection == null && filtering) keptSelection = selectionInModelRows(toModel)
-    val snapshot = if (keptSelection == null) SelectionSnapshot.take(main.selectionModel, toModel) else null
+    val snapshot = if (keptSelection == null) SelectionSnapshot.take(rows, toModel) else null
     val editedRows = editedModelRows(toModel)
     rowsReordered(snapshot, editedRows) { it }
   }
@@ -131,9 +140,9 @@ internal class TableRowOrder(
     when {
       change.allRows -> keptSelection = null
       keptSelection != null -> keptSelection?.let(change::moveRows)
-      else -> snapshot = SelectionSnapshot.take(main.selectionModel, toModel)
+      else -> snapshot = SelectionSnapshot.take(rows, toModel)
     }
-    val editedRows = if (change.allRows) tables().filter { it.isEditing }.associateWith { -1 } else editedModelRows(toModel)
+    val editedRows = if (change.allRows) tables.all().filter { it.isEditing }.associateWith { -1 } else editedModelRows(toModel)
     when {
       change.allRows -> rowHeights.clear()
       change.type == TableModelEvent.INSERT -> rowHeights.rowsInserted(change.first, change.last)
@@ -168,7 +177,7 @@ internal class TableRowOrder(
     restoringSelection = true
     try {
       val kept = keptSelection
-      if (snapshot != null) snapshot.restore(main.selectionModel, toView)
+      if (snapshot != null) snapshot.restore(rows, toView)
       else if (kept != null) restoreKeptSelection(kept)
     }
     finally {
@@ -182,7 +191,7 @@ internal class TableRowOrder(
         table.repaint()
       }
     }
-    for (table in tables()) {
+    for (table in tables.all()) {
       // Without a sorter of its own a table keeps its row heights by view row, so it applies them again.
       table.setRowHeight(table.rowHeight)
       table.revalidate()
@@ -194,7 +203,7 @@ internal class TableRowOrder(
     if (modelRow < 0 || modelRow >= main.model.rowCount) -1 else sorter.convertRowIndexToView(modelRow)
 
   private fun selectionInModelRows(toModel: (Int) -> Int): DefaultListSelectionModel {
-    val view = main.selectionModel
+    val view = rows
     val kept = DefaultListSelectionModel()
     for (row in selectedRows(view)) {
       val modelRow = toModel(row)
@@ -205,7 +214,7 @@ internal class TableRowOrder(
   }
 
   private fun restoreKeptSelection(kept: DefaultListSelectionModel) {
-    val view = main.selectionModel
+    val view = rows
     view.valueIsAdjusting = true
     view.clearSelection()
     for (modelRow in selectedRows(kept)) {
@@ -218,7 +227,7 @@ internal class TableRowOrder(
   }
 
   private fun editedModelRows(toModel: (Int) -> Int): Map<GridTable, Int> =
-    tables().filter { it.isEditing }.associateWith { toModel(it.editingRow) }
+    tables.all().filter { it.isEditing }.associateWith { toModel(it.editingRow) }
 
   private fun cancelEditing(table: GridTable) {
     table.cellEditor?.cancelCellEditing()
@@ -226,7 +235,7 @@ internal class TableRowOrder(
   }
 
   private fun repaintUpdatedRows(change: RowsChange) {
-    for (table in tables()) {
+    for (table in tables.all()) {
       if (change.last - change.first > 10) {
         table.repaint()
         continue
@@ -242,8 +251,7 @@ internal class TableRowOrder(
 
   /** What a table does for a change of every row, done once for the shared row and column selection. */
   private fun clearSelectionAndLeadAnchor() {
-    val rows = main.selectionModel
-    val columns = main.columnModel.selectionModel
+    val columns = columnModel.selectionModel
     rows.valueIsAdjusting = true
     columns.valueIsAdjusting = true
     main.clearSelection()

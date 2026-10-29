@@ -17,10 +17,19 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
   private int myWidthFromLayout;
   private boolean myWidthSetByUser;
   private boolean myWidthLockedForLayout;
-  private boolean myFrozenHidden;
+  private @Nullable ColumnPins myPins;
 
   public TableResultViewColumn(int modelIndex) {
     super(modelIndex);
+  }
+
+  void setPins(@Nullable ColumnPins pins) {
+    myPins = pins;
+  }
+
+  /** The column keeps no pin state of its own: it asks the view's columns, and a column of no view is never pinned. */
+  boolean isPinned() {
+    return myPins != null && myPins.isPinned(this);
   }
 
   public abstract @NlsContexts.Tooltip @Nullable String getTooltipText();
@@ -53,6 +62,8 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
     myWidthSetByUser = true;
     myWidthLockedForLayout = true;
     setPreferredWidth(width);
+    // No table lays a pinned column out, so it takes the width at once.
+    if (isPinned()) setWidth(width);
   }
 
   /** Width this column takes in the pinned strip: a user width wins, otherwise the wider of laid-out and preferred. */
@@ -80,16 +91,6 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
   public void clearWidthSetByUser() {
     myWidthSetByUser = false;
     myWidthLockedForLayout = false;
-  }
-
-  @Override
-  public boolean isFrozenHidden() {
-    return myFrozenHidden;
-  }
-
-  @Override
-  public void setFrozenHidden(boolean hidden) {
-    myFrozenHidden = hidden;
   }
 
   public boolean isWidthSetByLayout() {

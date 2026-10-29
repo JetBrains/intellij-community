@@ -21,12 +21,13 @@ import com.intellij.util.Consumer;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.FocusUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import javax.swing.SwingUtilities;
+import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.CompletableFuture;
 
@@ -42,7 +43,6 @@ public abstract class GridWidget implements StatusBarWidget, CustomStatusBarWidg
   protected final Project myProject;
   private GridWidgetHelper myHelper;
   protected boolean myComponentShown;
-  private FocusListener myFocusListener;
   private final LazyInitializer.LazyValue<TextPanel> myComponent = LazyInitializer.create(() -> {
     var result = new TextPanel();
     installClickListener(result);
@@ -83,7 +83,7 @@ public abstract class GridWidget implements StatusBarWidget, CustomStatusBarWidg
       myStatusBar == null ? null : ObjectUtils.tryCast(myStatusBar.getWidget(AggregatorWidget.ID), GridWidget.class);
     boolean componentShown =
       positionWidget != null && positionWidget.myComponentShown || aggregateWidget != null && aggregateWidget.myComponentShown;
-    if (myHelper == null || !(componentShown || myGrid != null && myGrid.getResultView().getComponent().hasFocus())) {
+    if (myHelper == null || !(componentShown || myGrid != null && myGrid.getResultView().hasFocus())) {
       return "";
     }
     myFuture = myHelper.getText();
@@ -98,11 +98,14 @@ public abstract class GridWidget implements StatusBarWidget, CustomStatusBarWidg
   @Override
   public void install(@NotNull StatusBar statusBar) {
     myStatusBar = statusBar;
-    if (myGrid != null) {
-      myGrid.getResultView().getComponent().removeFocusListener(myFocusListener);
-      myGrid = null;
-      myFocusListener = null;
-    }
+    myGrid = null;
+    // Follows the focus into and out of the current grid's view, a pinned table included.
+    FocusUtil.addFocusOwnerListener(this, e -> {
+      DataGrid grid = myGrid;
+      if (grid == null) return;
+      JComponent gridComponent = grid.getMainResultViewComponent();
+      if (isInside(gridComponent, e.getOldValue()) || isInside(gridComponent, e.getNewValue())) update(statusBar);
+    });
     MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
     connection.subscribe(ACTIVE_GRID_CHANGED_TOPIC, new ActiveGridListener() {
       @Override
@@ -134,30 +137,16 @@ public abstract class GridWidget implements StatusBarWidget, CustomStatusBarWidg
   protected void set(@Nullable DataGrid grid, @NotNull StatusBar statusBar) {
     if (grid != null && !isOurGrid(grid, statusBar)) return;
     if (myGrid != grid) {
-      if (myGrid != null) {
-        myGrid.getResultView().getComponent().removeFocusListener(myFocusListener);
-        myFocusListener = null;
-      }
       myGrid = grid;
-      if (myGrid != null) {
-        myFocusListener = new FocusListener() {
-          @Override
-          public void focusGained(FocusEvent e) {
-            update(statusBar);
-          }
-
-          @Override
-          public void focusLost(FocusEvent e) {
-            update(statusBar);
-          }
-        };
-        myGrid.getResultView().getComponent().addFocusListener(myFocusListener);
-      }
       myHelper = grid == null
                  ? null
                  : ObjectUtils.tryCast(grid.getResultView().getComponent().getClientProperty(getWidgetHelperKey()), GridWidgetHelper.class);
     }
     update(statusBar);
+  }
+
+  private static boolean isInside(@NotNull JComponent component, @Nullable Object focusOwner) {
+    return focusOwner instanceof Component c && SwingUtilities.isDescendingFrom(c, component);
   }
 
   private void update(@NotNull StatusBar statusBar) {

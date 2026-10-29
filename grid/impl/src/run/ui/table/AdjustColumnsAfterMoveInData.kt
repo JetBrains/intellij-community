@@ -11,17 +11,19 @@ import kotlin.math.min
 
 internal class AdjustColumnsAfterMoveInData(
   private val grid: DataGrid,
-  private val tableView: GridTable,
+  /** The view's columns, whose column model's indices are the grid's column indices. */
+  private val columns: GridColumns,
+  /** The view's row order, which filters the rows again once the filter has moved with the columns. */
+  private val rowOrder: TableRowOrder,
   private val from: Int,
   private val to: Int,
 ) : () -> Unit {
 
   private val originallyVisibleColumns = grid.visibleColumns.asIterable().toSet()
 
-  // Read pinned widths from the strip, not their zero-width placeholders.
   private val columnWidths = originallyVisibleColumns
     .mapTo(mutableListOf()) { modelIndex ->
-      val width = tableView.getColumnForPersistence(modelIndex)?.columnWidth ?: 0
+      val width = columns.getLayoutColumn(modelIndex)?.columnWidth ?: 0
       Pair(modelIndex, width)
     }
     .toMap()
@@ -74,7 +76,7 @@ internal class AdjustColumnsAfterMoveInData(
       }
 
       if (argMin != -1 && argMin != i) {
-        tableView.moveColumn(i, argMin)
+        columns.columnModel.moveColumn(i, argMin)
         currentOrder = grid.visibleColumns.asArray()
       }
     }
@@ -88,7 +90,7 @@ internal class AdjustColumnsAfterMoveInData(
     // Restore widths
     grid.visibleColumns.asIterable().forEach { modelIndex ->
       val originalIndex = toOriginalIndex(modelIndex)
-      tableView.getColumnForPersistence(modelIndex)?.columnWidth = columnWidths[originalIndex]!!
+      columns.getLayoutColumn(modelIndex)?.columnWidth = columnWidths[originalIndex]!!
     }
 
     // Restore attributes (sortOrder, filter, displayType)
@@ -99,6 +101,6 @@ internal class AdjustColumnsAfterMoveInData(
     }
     grid.updateSortKeysFromColumnAttributes()
     grid.localFilterState.shiftColumns(columnIndices, this::toOriginalIndex)
-    tableView.updateRowFilter()
+    rowOrder.updateRowFilter()
   }
 }

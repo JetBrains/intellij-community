@@ -7,14 +7,14 @@ import java.util.EventListener
 import java.util.TreeMap
 
 /**
- * The rows of the view that have a height of their own. Every table of the view applies them to itself, so a row has the same height
- * in both tables, also in a pinned table created after the row was resized. Other rows use the uniform row height.
+ * The rows of the view that have a height of their own. Every table of the view applies them to itself, so a row has the same height in
+ * both tables. That holds for a pinned table created after the resize too. Other rows use the uniform row height.
  *
  * A row is a row of the view's data model, as an `int`: a grid row, or a grid column in a transposed view. So neither
  * `ModelIndex<GridRow>` nor `ModelIndex<GridColumn>` would always be right. Heights are in pixels.
  */
 internal class RowHeightModel {
-  /** The height in pixels of each row that has one of its own, by model row; sorted, so an insert or a delete shifts the rows after it. */
+  /** The height in pixels of each row that has one of its own, by model row. Sorted, so an insert or a delete shifts the rows after it. */
   private val heightByModelRow = TreeMap<Int, Int>()
   private val dispatcher = EventDispatcher.create(Listener::class.java)
 
@@ -62,7 +62,7 @@ internal class RowHeightModel {
   private fun shiftHeights(fromModelRow: Int, rowCount: Int) {
     val moved = heightByModelRow.tailMap(fromModelRow, true)
     if (moved.isEmpty()) return
-    val shifted = moved.mapKeys { (modelRow, _) -> modelRow + rowCount }
+    val shifted = moved.mapKeys { it.key + rowCount }
     moved.clear()
     heightByModelRow.putAll(shifted)
   }
