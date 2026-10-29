@@ -24,9 +24,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 
 abstract class DeclarativeInlayHintPassTestBase : LightPlatformCodeInsightFixture4TestCase() {
-  fun getInlineInlays(): List<Inlay<out DeclarativeInlayRenderer>> = myFixture.editor.inlineInlays
+  fun getInlineInlays(): List<Inlay<out DeclarativeInlayRenderer>> = myFixture.editor.inlineDeclarativeHintInlays
 
-  fun getBlockInlays(): List<Inlay<out DeclarativeIndentedBlockInlayRenderer>> = myFixture.editor.blockInlays
+  fun getBlockInlays(): List<Inlay<out DeclarativeIndentedBlockInlayRenderer>> = myFixture.editor.blockDeclarativeHintInlays
 
   fun collectAndApplyPass(pass: DeclarativeInlayHintsPass) {
     pass.collectAndApply()
@@ -78,10 +78,10 @@ fun Inlay<out DeclarativeInlayRendererBase<*>>.toText(): String =
       }
     }
 
-val Editor.inlineInlays: List<Inlay<out DeclarativeInlayRenderer>> get() =
+val Editor.inlineDeclarativeHintInlays: List<Inlay<out DeclarativeInlayRenderer>> get() =
   inlayModel.getInlineElementsInRange(0, document.textLength - 1, DeclarativeInlayRenderer::class.java)
 
-val Editor.blockInlays: List<Inlay<out DeclarativeIndentedBlockInlayRenderer>> get() =
+val Editor.blockDeclarativeHintInlays: List<Inlay<out DeclarativeIndentedBlockInlayRenderer>> get() =
   inlayModel.getBlockElementsInRange(0, document.textLength - 1, DeclarativeIndentedBlockInlayRenderer::class.java)
 
 class StoredHintsProvider(var hintAdder: (InlayTreeSink.() -> Unit)? = null) : InlayHintsProvider {

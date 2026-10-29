@@ -60,7 +60,7 @@ class DumbDeclarativeInlayHintsPassTest {
   }
 }
 
-fun Editor.inlineInlayTexts() = inlineInlays.map { it.toText() }
+fun Editor.inlineInlayTexts() = inlineDeclarativeHintInlays.map { it.toText() }
 
 fun <T : Any> assertEquals(a: List<T>, b: List<T>) {
   assertEquals(a.size, b.size)
