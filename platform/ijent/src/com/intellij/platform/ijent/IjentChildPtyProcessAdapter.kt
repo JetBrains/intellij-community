@@ -57,8 +57,13 @@ class IjentChildPtyProcessAdapter(
       delegate.ijentChildProcess.resizePty(columns = columns, rows = rows)
     }
     catch (err: EelProcess.ResizePtyError) {
-      // The other implementation throw IllegalStateException in such cases.
-      throw IllegalStateException(err.message, err)
+      // The other implementation throw IllegalStateException in such cases,
+      //  but when the process just finished the callers can be not ready to exception.
+      when (err) {
+        is EelProcess.ResizePtyError.ProcessExited -> Unit
+        is EelProcess.ResizePtyError.NoPty,
+        is EelProcess.ResizePtyError.Errno -> throw IllegalStateException(err.message, err)
+      }
     }
   }
 

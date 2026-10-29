@@ -40,9 +40,32 @@ internal class IjentPtyProcessControlTest {
     }
 
   @Test
-  fun `a remote resize failure retains its cause`(): Unit = timeoutRunBlocking(context = IjentThreadPool.coroutineContext) {
+  fun `a remote resize after the process exits is ignored`(): Unit = timeoutRunBlocking(context = IjentThreadPool.coroutineContext) {
     val process = remoteProcess()
-    val failure = EelProcess.ResizePtyError.ProcessExited()
+    coEvery { process.resizePty(any(), any()) } throws EelProcess.ResizePtyError.ProcessExited()
+    val adapter = IjentChildPtyProcessAdapter(this, process)
+
+    adapter.setWindowSize(80, 24)
+
+    coVerify(exactly = 1) { process.resizePty(80, 24) }
+  }
+
+  @Test
+  fun `a remote resize without a PTY retains its cause`(): Unit = timeoutRunBlocking(context = IjentThreadPool.coroutineContext) {
+    val process = remoteProcess()
+    val failure = EelProcess.ResizePtyError.NoPty()
+    coEvery { process.resizePty(any(), any()) } throws failure
+    val adapter = IjentChildPtyProcessAdapter(this, process)
+
+    assertThatThrownBy { adapter.setWindowSize(80, 24) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasCause(failure)
+  }
+
+  @Test
+  fun `a remote resize OS failure retains its cause`(): Unit = timeoutRunBlocking(context = IjentThreadPool.coroutineContext) {
+    val process = remoteProcess()
+    val failure = EelProcess.ResizePtyError.Errno(errno = 5, message = "PTY resize failed")
     coEvery { process.resizePty(any(), any()) } throws failure
     val adapter = IjentChildPtyProcessAdapter(this, process)
 
