@@ -353,6 +353,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     assertBuildViewNode(syncView, "Could Not Resolve junit:junit:99.99") {
       assertTrue(it.isNodeSelected)
       assertEquals("""
+        |FAILURE: Build failed with an exception.
         |A problem occurred configuring root project 'project'.
         |> Could not resolve all $artifacts for configuration '$configurationName'.
         |   > Could not resolve junit:junit:99.99.
@@ -385,7 +386,8 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
     }
     assertBuildViewNode(syncView, "Could Not Resolve junit:junit:99.99") {
       assertTrue(it.isNodeSelected)
-      assertEquals("A problem occurred configuring root project 'project'.\n" +
+      assertEquals("FAILURE: Build failed with an exception.\n"+
+                   "A problem occurred configuring root project 'project'.\n" +
                    "> Could not resolve all $artifacts for configuration '$configurationName'.\n" +
                    "   > Could not find junit:junit:99.99.\n" +
                    "     Searched in the following locations:\n" +
