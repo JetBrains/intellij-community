@@ -2,6 +2,8 @@
 package com.intellij.devkit.uiDsl.sandbox
 
 import com.intellij.devkit.uiDsl.DevkitUiDslBundle
+import com.intellij.devkit.uiDsl.sandbox.components.ActionButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ActionToolbarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.BadgePanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ComboBoxWithWidePopupPanel
@@ -18,11 +20,15 @@ import com.intellij.devkit.uiDsl.sandbox.components.JProgressBarPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JRadioButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JSpinnerPanel
 import com.intellij.devkit.uiDsl.sandbox.components.JTextFieldPanel
+import com.intellij.devkit.uiDsl.sandbox.components.LinkPanel
 import com.intellij.devkit.uiDsl.sandbox.components.OnOffButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.PillButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.components.SearchTextFieldPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ShimmerLabelPanel
 import com.intellij.devkit.uiDsl.sandbox.components.ThreeStateCheckBoxPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ToolbarComboButtonPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ToolbarDecoratorPanel
+import com.intellij.devkit.uiDsl.sandbox.components.ToolbarSplitButtonPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.listCellRenderer.LcrExamplesPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.validation.CrossValidationPanel
 import com.intellij.devkit.uiDsl.sandbox.dsl.validation.ValidationPanel
@@ -89,6 +95,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
@@ -103,6 +110,7 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Placeholder
+import com.intellij.ui.dsl.builder.TopGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale
@@ -143,6 +151,8 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   )
 
   private fun createComponentsNode() = Group("Components", children = listOf(
+    ActionButtonPanel(),
+    ActionToolbarPanel(),
     BadgePanel(),
     ComboBoxPanel(),
     ComboBoxWithWidePopupPanel(),
@@ -159,11 +169,15 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
     JRadioButtonPanel(),
     JSpinnerPanel(),
     JTextFieldPanel(),
+    LinkPanel(),
     OnOffButtonPanel(),
     PillButtonPanel(),
     SearchTextFieldPanel(),
     ShimmerLabelPanel(),
     ThreeStateCheckBoxPanel(),
+    ToolbarComboButtonPanel(),
+    ToolbarDecoratorPanel(),
+    ToolbarSplitButtonPanel(),
   ))
 
   private fun createKotlinUIDSLNode() = Group("Kotlin UI DSL", children = listOf(
@@ -485,7 +499,7 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
         }
       }
       is SandboxTreeLeaf -> {
-        val panel = node.createContent()
+        val panel = createLeafContent(node)
         panel.prepareContent()
         placeholder.component = if (node.sandboxPanel.isScrollbarNeeded) ScrollPaneFactory.createScrollPane(panel, true) else panel
       }
@@ -503,6 +517,36 @@ internal class UISandboxDialog(private val project: Project?) : DialogWrapper(pr
   private fun JComponent.prepareContent() {
     border = JBUI.Borders.empty(6, 16, 16, 16)
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+  }
+
+  private fun createLeafContent(leaf: SandboxTreeLeaf): JComponent {
+    val content = leaf.createContent()
+    val sandboxPanel = leaf.sandboxPanel
+    if (sandboxPanel.description.isEmpty() && sandboxPanel.usageNotes.isEmpty()) {
+      return content
+    }
+
+    content.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
+    return panel {
+      if (sandboxPanel.description.isNotEmpty()) {
+        row {
+          text(sandboxPanel.description)
+        }
+      }
+      if (sandboxPanel.usageNotes.isNotEmpty()) {
+        row {
+          val notes = HtmlChunk.ul()
+            .style("margin-top: 0; margin-bottom: 0")
+            .children(sandboxPanel.usageNotes.map { HtmlChunk.li().addText(it) })
+          comment(notes.toString())
+        }
+      }
+      row {
+        cell(content)
+          .align(Align.FILL)
+      }.resizableRow()
+        .topGap(TopGap.MEDIUM)
+    }
   }
 
   private fun createGroupContent(group: SandboxTreeGroup): JComponent {
