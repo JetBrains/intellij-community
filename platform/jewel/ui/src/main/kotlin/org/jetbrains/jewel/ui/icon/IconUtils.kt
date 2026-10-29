@@ -3,6 +3,7 @@ package org.jetbrains.jewel.ui.icon
 
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeColorFilter
 import androidx.compose.ui.unit.Dp
 import com.intellij.platform.icons.design.Circle
 import com.intellij.platform.icons.design.DisplayPoint
@@ -17,6 +18,7 @@ import com.intellij.platform.icons.design.dp
 import com.intellij.platform.icons.design.rectangle
 import com.intellij.platform.icons.filters.ColorFilter
 import com.intellij.platform.icons.impl.design.DefaultSRGB
+import com.intellij.platform.icons.impl.filters.GrayColorFilter
 import com.intellij.platform.icons.impl.filters.TintColorFilter
 import com.intellij.platform.icons.modifiers.IconModifier
 import com.intellij.platform.icons.modifiers.stroke
@@ -25,8 +27,11 @@ import com.intellij.platform.icons.scale.FillAreaScale
 import com.intellij.platform.icons.scale.FitAreaScale
 import com.intellij.platform.icons.scale.fillArea
 import com.intellij.platform.icons.scale.fitArea
+import kotlin.math.pow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jewel.foundation.ExperimentalJewelApi
+import org.jetbrains.skia.ColorFilter as SkiaColorFilter
+import org.jetbrains.skia.ColorMatrix
 
 /**
  * Applies a tint of [composeColor] with [blendMode] to this [IconModifier], converting to the IntelliJ Platform Icons
@@ -95,8 +100,45 @@ public fun IconDesigner.badge(
 public fun ColorFilter.toCompose(): androidx.compose.ui.graphics.ColorFilter =
     when (this) {
         is TintColorFilter -> androidx.compose.ui.graphics.ColorFilter.tint(color.toCompose(), blendMode.toCompose())
+        is GrayColorFilter -> toSkia().asComposeColorFilter()
         else -> error("Unsupported color filter $this")
     }
+
+/**
+ * Builds a Skia filter with the pixels of `com.intellij.util.ui.GrayFilter`. A matrix computes the luminance and
+ * scales the alpha, and a table applies the brightness and contrast curve. See
+ * [com.intellij.platform.icons.filters.gray] for the steps.
+ *
+ * The result can differ from `GrayFilter` by one level, because `GrayFilter` truncates the luminance and the alpha to
+ * integers and Skia rounds them. A positive contrast can differ more, because its curve has a jump at the gray value
+ * 127. A difference of one level on the two sides of the jump gives two different results.
+ */
+private fun GrayColorFilter.toSkia(): SkiaColorFilter {
+    val luminance = ColorMatrix(
+        0.30f, 0.59f, 0.11f, 0f, 0f,
+        0.30f, 0.59f, 0.11f, 0f, 0f,
+        0.30f, 0.59f, 0.11f, 0f, 0f,
+        0f, 0f, 0f, alpha / 100f, 0f,
+    )
+    val brightness = (brightness.toDouble().pow(3) / (100f * 100f)).toFloat()
+    val contrast = contrast / 100f
+    val curve = ByteArray(256) { value ->
+        val bright =
+            if (brightness >= 0) ((value + brightness * 255) / (1 + brightness)).toInt()
+            else (value / (1 - brightness)).toInt()
+        val result =
+            when {
+                contrast < 0 -> (127 + (bright - 127) * (contrast + 1)).toInt()
+                bright >= 127 -> (bright + (255 - bright) * contrast).toInt()
+                else -> (bright - bright * contrast).toInt()
+            }
+        result.toByte()
+    }
+    return SkiaColorFilter.makeComposed(
+        SkiaColorFilter.makeTableARGB(null, curve, curve, curve),
+        SkiaColorFilter.makeMatrix(luminance),
+    )
+}
 
 @ExperimentalJewelApi
 @ApiStatus.Experimental

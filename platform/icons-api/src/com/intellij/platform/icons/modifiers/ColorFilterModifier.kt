@@ -5,6 +5,7 @@ import com.intellij.platform.icons.IconManager
 import com.intellij.platform.icons.design.BlendMode
 import com.intellij.platform.icons.design.Color
 import com.intellij.platform.icons.filters.ColorFilter
+import com.intellij.platform.icons.filters.gray
 import com.intellij.platform.icons.filters.tintColorFilter
 
 fun IconModifier.colorFilter(colorFilter: ColorFilter): IconModifier =
@@ -12,3 +13,6 @@ fun IconModifier.colorFilter(colorFilter: ColorFilter): IconModifier =
 
 fun IconModifier.tintColor(color: Color, blendMode: BlendMode): IconModifier =
     colorFilter(tintColorFilter(color, blendMode))
+
+fun IconModifier.grayFilter(brightness: Int, contrast: Int, alpha: Int): IconModifier =
+    colorFilter(ColorFilter.gray(brightness, contrast, alpha))

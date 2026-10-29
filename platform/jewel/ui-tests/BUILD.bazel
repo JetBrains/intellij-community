@@ -55,6 +55,8 @@ jvm_library(
         "//platform/jewel/foundation:foundation_test_lib",
         "//platform/jewel/ui",
         "//platform/jewel/ui:ui_test_lib",
+        "//platform/icons-impl",
+        "//platform/icons-impl:icons-impl_test_lib",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone",
         "//platform/jewel/int-ui/int-ui-standalone:jewel-intUi-standalone_test_lib",
         "//libraries/compose-foundation-desktop",
