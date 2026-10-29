@@ -47,7 +47,6 @@ class QodanaProductProperties(val productCode: String, val productName: String, 
       add("-Dqodana.product.name=$productName")
       add("-Dqodana.build.number=$productCode-$buildNumber")
       if (buildDateInSeconds != null) {
-        // Format build date as uuuuMMddHHmm (e.g., "202410281430")
         val buildDate = ZonedDateTime.ofInstant(
           Instant.ofEpochSecond(buildDateInSeconds),
           ZoneOffset.UTC
