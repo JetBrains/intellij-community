@@ -103,3 +103,10 @@ class PyProjectModelSettings(private val project: Project) :
     ASK
   }
 }
+
+/** Shortcut for [PyProjectModelSettings.usePyprojectToml]. */
+var Project.usePyprojectToml: Boolean
+  get() = PyProjectModelSettings.getInstance(this).usePyprojectToml
+  set(value) {
+    PyProjectModelSettings.getInstance(this).usePyprojectToml = value
+  }

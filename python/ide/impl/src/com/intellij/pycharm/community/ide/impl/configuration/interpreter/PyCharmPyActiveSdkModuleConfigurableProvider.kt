@@ -11,7 +11,7 @@ import com.intellij.pycharm.community.ide.impl.PyCharmPyActiveSdkModuleConfigura
  * behind the redesign flag without touching the class itself.
  */
 internal class PyCharmPyActiveSdkModuleConfigurableProvider(private val project: Project) : ConfigurableProvider() {
-  override fun canCreateConfigurable(): Boolean = !PyInterpreterRedesignFlags.isEnabled()
+  override fun canCreateConfigurable(): Boolean = !PyInterpreterSettingsFlags.areNewInterpreterPagesEnabled()
 
   override fun createConfigurable(): Configurable = PyCharmPyActiveSdkModuleConfigurable(project)
 }

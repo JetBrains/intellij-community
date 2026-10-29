@@ -2,16 +2,23 @@ package com.intellij.python.pyproject.model.internal.workspaceBridge
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.javaResourceRoots
 import com.intellij.java.workspace.entities.javaSourceRoots
+import com.intellij.java.workspace.entities.modifyJavaResourceRootPropertiesEntity
 import com.intellij.java.workspace.entities.modifyJavaSourceRootPropertiesEntity
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.customSourceRootProperties
+import com.intellij.platform.workspace.jps.entities.modifyCustomSourceRootPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.modifyFacetEntity
 import com.intellij.platform.workspace.jps.entities.DependencyScope
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntity
 import com.intellij.platform.workspace.jps.entities.ExcludeUrlEntityBuilder
@@ -42,6 +49,7 @@ import com.intellij.python.community.common.tools.ToolId
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pyproject.model.internal.PY_PROJECT_SYSTEM_ID
 import com.intellij.python.pyproject.model.internal.PyProjectTomlBundle
+import com.intellij.python.pyproject.model.internal.notifyModelRebuilt
 import com.intellij.python.pyproject.model.internal.pyProjectToml.FSWalkInfoWithToml
 import com.intellij.python.pyproject.model.internal.pyProjectToml.getDependenciesFromToml
 import com.intellij.python.pyproject.model.spi.ProjectName
@@ -53,6 +61,8 @@ import com.intellij.python.pyproject.model.spi.resolveSrcRoots
 import com.intellij.python.pyproject.safeGet
 import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.toPath
+import com.jetbrains.python.project.PyProject
+import com.jetbrains.python.project.PyProject.Companion.getPyProjects
 import com.jetbrains.python.sdk.internal.PYTHON_MODULE_ID
 import com.jetbrains.python.venvReader.Directory
 import kotlinx.coroutines.Dispatchers
@@ -103,6 +113,152 @@ internal suspend fun rebuildProjectModel(project: Project, files: FSWalkInfoWith
       check(!lastAttempt) { "The last attempt of the model build has to write the model" }
       logger.debug { "The module set changed during the build. Attempt $attempt of $MODEL_UPDATE_ATTEMPTS." }
     }
+  }
+}
+
+/**
+ * Removes every pyproject-generated module, redistributes their source/excluded roots to the
+ * deepest surviving content root. Root module (covering project basePath) is demoted to plain
+ * `.iml`, never deleted — otherwise a toml-only project ends up module-less.
+ *
+ * Shares [changeWorkspaceMutex] with [rebuildProjectModel].
+ */
+internal suspend fun cleanupPyProjectBasedModulesImpl(project: Project) {
+  changeWorkspaceMutex.withLock {
+    // Probe .exists() on IO before the non-suspend `workspaceModel.update` callback (PY-93016).
+    val existingUrls = probeExistingUrlsForPyProjectModules(project)
+
+    project.workspaceModel.update(PyProjectTomlBundle.message("action.PyProjectTomlSyncAction.description")) { projectStorage ->
+      val ourModules = projectStorage.entities<ModuleEntity>().filter { it.entitySource.isPythonEntity }.toList()
+      if (ourModules.isEmpty()) return@update
+
+      val basePath = project.stateStore.projectBasePath
+
+      // Demote the root module instead of deleting it — target for orphan roots must survive.
+      // Match by "covers" (basePath under a content root), not equality.
+      val rootModule = ourModules.firstOrNull { m ->
+        m.contentRoots.any { cr -> basePath.startsWith(cr.url.toPath()) }
+      }
+      if (rootModule != null) {
+        demoteModuleToPlainIml(rootModule, createEntitySourceImpl(project, null), projectStorage)
+      }
+      val toDelete = ourModules.filter { it != rootModule }
+
+      // Index non-ours content roots — includes the just-demoted root.
+      val survivingIndex = ContentRootIndex(
+        projectStorage.entities<ModuleEntity>()
+          .filterNot { it.entitySource.isPythonEntity }
+          .flatMap { it.contentRoots }
+          .toList()
+      )
+
+      // Per-module: pick one target by location, then move all of this module's roots to it.
+      val buckets = RelocationBuckets()
+      for (module in toDelete) {
+        val target = module.contentRoots.firstNotNullOfOrNull { survivingIndex.deepestContaining(it.url.toPath()) } ?: continue
+
+        // Drop sources at the module's own content root path — degenerate artefact.
+        val moduleContentRootUrls = module.contentRoots.mapTo(HashSet()) { it.url.url }
+        for (cr in module.contentRoots) {
+          buckets.sources.collect(cr) { sr ->
+            target.takeIf { sr.url.url !in moduleContentRootUrls && sr.url.url in existingUrls }
+          }
+          // Excludes keep intent even if directory absent (`build`, `.venv`).
+          buckets.excludes.collect(cr) { target }
+        }
+      }
+
+      // Apply merges before deletion so target entities are still live and reachable.
+      projectStorage.addRelocatedRoots(buckets)
+
+      // `removeEntity` doesn't update referrers — strip stale ModuleDependency from survivors
+      // before deletions land, otherwise `saveSettings` writes bogus `<orderEntry>` to .iml.
+      val deletedNames = toDelete.mapTo(HashSet()) { it.name }
+      if (deletedNames.isNotEmpty()) {
+        for (module in projectStorage.entities<ModuleEntity>()) {
+          if (module in toDelete) continue
+          projectStorage.modifyModuleEntity(module) {
+            this.dependencies = this.dependencies.filterNot { it is ModuleDependency && it.module.name in deletedNames }.toMutableList()
+          }
+        }
+      }
+
+      for (module in toDelete) projectStorage.removeEntity(module)
+    }
+    saveSettings(project)
+    // Trigger SDK auto-configuration on survivors (uv pins interpreter on sub-module).
+    notifyModelRebuilt(project)
+  }
+}
+
+/**
+ * Urls of pyproject-module roots whose on-disk path exists. `.exists()` runs on [Dispatchers.IO]
+ * (non-suspend `workspaceModel.update` can't block). Snapshot-race → dropped orphan root; tolerated.
+ */
+private suspend fun probeExistingUrlsForPyProjectModules(project: Project): Set<String> {
+  val urlToPath = HashMap<String, Path>()
+  for (module in project.workspaceModel.currentSnapshot.entities<ModuleEntity>()) {
+    if (!module.entitySource.isPythonEntity) continue
+    for (cr in module.contentRoots) cr.allRootPaths { url, path -> urlToPath.putIfAbsent(url, path) }
+  }
+  if (urlToPath.isEmpty()) return emptySet()
+  return withContext(Dispatchers.IO) {
+    urlToPath.entries.mapNotNullTo(HashSet()) { (url, path) -> url.takeIf { path.exists() } }
+  }
+}
+
+/** Visit every url/path pair of `cr.sourceRoots + cr.excludedUrls` once. */
+private inline fun ContentRootEntity.allRootPaths(block: (url: String, path: Path) -> Unit) {
+  for (sr in sourceRoots) block(sr.url.url, sr.url.toPath())
+  for (eu in excludedUrls) block(eu.url.url, eu.url.toPath())
+}
+
+/**
+ * Convert a pyproject-sourced module back to plain `.iml`. Rewrites entity source on module +
+ * every child the JPS serializer routes by [EntitySource]: facets, content roots, source roots,
+ * excludes, javaSource/Resource roots, customSourceRootProperties.
+ */
+private fun demoteModuleToPlainIml(
+  module: ModuleEntity,
+  plainEntitySource: EntitySource,
+  projectStorage: MutableEntityStorage,
+) {
+  module.pyProjectTomlEntity?.let { projectStorage.removeEntity(it) }
+  module.exModuleOptions?.let { projectStorage.removeEntity(it) }
+
+  for (facet in module.facets.toList()) {
+    projectStorage.modifyFacetEntity(facet) { this.entitySource = plainEntitySource }
+  }
+
+  projectStorage.modifyModuleEntity(module) { this.entitySource = plainEntitySource }
+
+  // Re-fetch — modifyModuleEntity invalidates the old reference.
+  val freshModule = projectStorage.resolve(ModuleId(module.name)) ?: return
+  for (cr in freshModule.contentRoots) {
+    projectStorage.mergeRoots(cr, entitySource = plainEntitySource)
+    for (sr in cr.sourceRoots) {
+      for (resource in sr.javaResourceRoots) {
+        projectStorage.modifyJavaResourceRootPropertiesEntity(resource) { this.entitySource = plainEntitySource }
+      }
+      sr.customSourceRootProperties?.let { custom ->
+        projectStorage.modifyCustomSourceRootPropertiesEntity(custom) { this.entitySource = plainEntitySource }
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of [com.intellij.python.pyproject.model.api.getPythonDependencies]. Reads the
+ * backing module's raw `ModuleRootManager.dependencies` under a `readAction`, then intersects it
+ * with the project's PyProjects — non-python order entries never leave this layer, so the public
+ * API hands callers a [PyProject]-typed set.
+ */
+internal suspend fun PyProject.getPythonDependenciesImpl(): Set<PyProject> {
+  val allProjects = residesOnModule.project.getPyProjects()
+  val subject = residesOnModule
+  return readAction {
+    val depModules = ModuleRootManager.getInstance(subject).dependencies.toHashSet()
+    allProjects.filterTo(HashSet()) { it.residesOnModule in depModules }
   }
 }
 
@@ -295,29 +451,18 @@ private fun deleteModule(
   module: ModuleEntity,
   projectStorage: MutableEntityStorage,
 ) {
-  logger.debug { "Removing orphan Python module: ${module.name}" }
-
   // Preserve source roots and excluded folders by relocating them to the parent module,
   // but only if the underlying directory still physically exists on disk.
   val otherContentRootIndex = ContentRootIndex(projectStorage.entities<ContentRootEntity>().filter { it.module != module }.toList())
 
-  val sourcesByTarget = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
-  val excludesByTarget = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntityBuilder>>()
+  val buckets = RelocationBuckets()
   for (cr in module.contentRoots) {
     val parent = otherContentRootIndex.deepestContaining(cr.url.toPath()) ?: continue
-    for (sr in cr.sourceRoots) {
-      if (sr.url.toPath().exists()) {
-        sourcesByTarget.getOrPut(parent) { mutableListOf() }.add(copyOfSourceRoot(sr, parent.entitySource))
-      }
-    }
-    for (eu in cr.excludedUrls) {
-      if (eu.url.toPath().exists()) {
-        excludesByTarget.getOrPut(parent) { mutableListOf() }.add(ExcludeUrlEntity(eu.url, parent.entitySource))
-      }
-    }
+    buckets.sources.collect(cr) { sr -> parent.takeIf { sr.url.toPath().exists() } }
+    buckets.excludes.collect(cr) { eu -> parent.takeIf { eu.url.toPath().exists() } }
   }
 
-  projectStorage.addRelocatedRoots(sourcesByTarget, excludesByTarget)
+  projectStorage.addRelocatedRoots(buckets)
 
   projectStorage.removeEntity(module)
 }
@@ -490,31 +635,22 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
   }
 
   val pathsToRemove = mutableMapOf<ContentRootEntity, MutableSet<Path>>()
-  val sourcesToAdd = mutableMapOf<ContentRootEntity, MutableList<SourceRootEntityBuilder>>()
-  val excludesToAdd = mutableMapOf<ContentRootEntity, MutableList<ExcludeUrlEntityBuilder>>()
-
+  val buckets = RelocationBuckets()
   val contentRootIndex = ContentRootIndex(allContentRoots)
 
-  /** Find the innermost content root containing [path] that belongs to a different module than [cr]. */
-  fun clashTarget(path: Path, cr: ContentRootEntity): ContentRootEntity? {
-    return contentRootIndex.deepestContaining(path)?.takeIf { it.module != cr.module }?.also {
+  /** Innermost content root containing [path] that belongs to a different module than [cr], or null. */
+  fun clashTarget(cr: ContentRootEntity, path: Path): ContentRootEntity? =
+    contentRootIndex.deepestContaining(path)?.takeIf { it.module != cr.module }?.also {
       pathsToRemove.getOrPut(cr) { mutableSetOf() }.add(path)
     }
-  }
 
   for (cr in allContentRoots) {
-    for (sr in cr.sourceRoots) {
-      val target = clashTarget(sr.url.toPath(), cr) ?: continue
-      sourcesToAdd.getOrPut(target) { mutableListOf() }.add(copyOfSourceRoot(sr, target.entitySource))
-    }
-    for (eu in cr.excludedUrls) {
-      val target = clashTarget(eu.url.toPath(), cr) ?: continue
-      excludesToAdd.getOrPut(target) { mutableListOf() }.add(ExcludeUrlEntity(eu.url, target.entitySource))
-    }
+    buckets.sources.collect(cr) { sr -> clashTarget(cr, sr.url.toPath()) }
+    buckets.excludes.collect(cr) { eu -> clashTarget(cr, eu.url.toPath()) }
   }
 
   // Remove clashing roots from their current content roots and add to targets
-  projectStorage.addRelocatedRoots(sourcesToAdd, excludesToAdd)
+  projectStorage.addRelocatedRoots(buckets)
 
   for ((cr, paths) in pathsToRemove) {
     logger.info("Relocating roots from '${cr.module.name}': $paths")
@@ -526,12 +662,13 @@ private fun ensureNoSrcIntersectsWithOtherRoots(projectStorage: MutableEntitySto
 }
 
 /** Add the collected roots to their target content roots, with one modification for each target. */
-private fun MutableEntityStorage.addRelocatedRoots(
-  sourcesByTarget: Map<ContentRootEntity, List<SourceRootEntityBuilder>>,
-  excludesByTarget: Map<ContentRootEntity, List<ExcludeUrlEntityBuilder>>,
-) {
-  for (target in (sourcesByTarget.keys + excludesByTarget.keys)) {
-    mergeRoots(target, sourcesByTarget[target] ?: emptyList(), excludesByTarget[target] ?: emptyList())
+private fun MutableEntityStorage.addRelocatedRoots(buckets: RelocationBuckets) {
+  for (target in (buckets.sources.byTarget.keys + buckets.excludes.byTarget.keys)) {
+    mergeRoots(
+      target = target,
+      sourcesToAdd = buckets.sources.byTarget[target] ?: emptyList(),
+      excludesToAdd = buckets.excludes.byTarget[target] ?: emptyList(),
+    )
   }
 }
 
@@ -597,6 +734,42 @@ private fun copyOfSourceRoot(sourceRoot: SourceRootEntity, entitySource: EntityS
   SourceRootEntity(sourceRoot.url, sourceRoot.rootTypeId, entitySource) {
     javaSourceRoots = sourceRoot.javaSourceRoots.map { JavaSourceRootPropertiesEntity(it.generated, it.packagePrefix, entitySource) }
   }
+
+/**
+ * Copy [excludeUrl] for another content root, with [entitySource].
+ *
+ * `ExcludeUrlEntity` is flat (no reparentable children) so only `url` is carried over; the shape
+ * mirrors [copyOfSourceRoot] so [RelocationBuckets] can pass both as a `::ref`.
+ */
+private fun copyOfExcludeUrl(excludeUrl: ExcludeUrlEntity, entitySource: EntitySource): ExcludeUrlEntityBuilder =
+  ExcludeUrlEntity(excludeUrl.url, entitySource)
+
+/**
+ * Per-target accumulators for sources + excludes relocated by the cleanup paths.
+ * `SourceRootEntity` has a non-reparentable child (`JavaSourceRootPropertiesEntity`), so needs
+ * `copyOfSourceRoot`. `ExcludeUrlEntity` is flat.
+ */
+private class RelocationBuckets {
+  val sources: Bucket<SourceRootEntity, SourceRootEntityBuilder> =
+    Bucket(ContentRootEntity::sourceRoots, ::copyOfSourceRoot)
+  val excludes: Bucket<ExcludeUrlEntity, ExcludeUrlEntityBuilder> =
+    Bucket(ContentRootEntity::excludedUrls, ::copyOfExcludeUrl)
+
+  class Bucket<E, B>(
+    private val rootsOf: (ContentRootEntity) -> List<E>,
+    private val copy: (E, EntitySource) -> B,
+  ) {
+    val byTarget: MutableMap<ContentRootEntity, MutableList<B>> = mutableMapOf()
+
+    /** Group each root under target chosen by [pickTarget] (null → skip). */
+    fun collect(cr: ContentRootEntity, pickTarget: (E) -> ContentRootEntity?) {
+      for (root in rootsOf(cr)) {
+        val target = pickTarget(root) ?: continue
+        byTarget.getOrPut(target) { mutableListOf() }.add(copy(root, target.entitySource))
+      }
+    }
+  }
+}
 
 /**
  * Content roots indexed by path, for a repeated [deepestContaining] query.

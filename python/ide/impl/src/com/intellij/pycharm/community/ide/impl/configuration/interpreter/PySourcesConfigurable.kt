@@ -2,34 +2,29 @@
 package com.intellij.pycharm.community.ide.impl.configuration.interpreter
 
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.options.Configurable
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.utils.PyPackageCoroutine
+import com.jetbrains.python.project.PyProject
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-/**
- * Sources tab for the redesigned interpreter settings page (PY-89840).
- *
- * Thin binding layer over [PySourcesModel]. All model / editor lifecycle work — reading the
- * `ModifiableRootModel`, committing on apply, recreating on reset — lives in the model and runs
- * inside `readAction` / `writeAction`, off the EDT. The pane hops back to [Dispatchers.EDT] only
- * to attach the editor component to the visible panel.
- */
-internal class PySourcesConfigurable(module: Module) : Configurable {
-  private val model = PySourcesModel(module)
+/** Sources tab (PY-89840). Owns the active [PySourcesModel.Session] + Swing panel. */
+internal class PySourcesConfigurable(pyProject: PyProject) : Configurable {
+  private val model = PySourcesModel(pyProject)
+  private val moduleScope = PyModuleEditorScopes.of(pyProject)
   private val topPanel: JPanel = JPanel(BorderLayout())
 
-  /**
-   * Lazy-built once on the first [createComponent] call: launches the async editor build and
-   * returns the stable [topPanel]. Keeps `createComponent` idempotent — the platform may invoke
-   * it twice per settings open, which previously grew a second content-root panel (PY-92513).
-   */
+  /** Null = "not yet built" or "disposed". Real state. */
+  @Volatile
+  private var session: PySourcesModel.Session? = null
+
+  /** Lazy — platform may call `createComponent` twice per open (PY-92513). */
   private val panel: JPanel by lazy {
     launchEditorAttach()
     topPanel
@@ -40,48 +35,62 @@ internal class PySourcesConfigurable(module: Module) : Configurable {
 
   override fun createComponent(): JComponent = panel
 
-  override fun isModified(): Boolean = model.isModified()
+  override fun isModified(): Boolean = session?.isModified == true
 
+  /** Sync via modal progress — avoids race with OK dispose chain. */
+  @RequiresEdt
   override fun apply() {
-    PyPackageCoroutine.launch(model.moduleProject()) {
-      val committed = model.apply()
-      if (committed) {
-        withContext(Dispatchers.EDT) {
-          detachEditor()
-          launchEditorAttach()
-        }
-      }
+    val active = session ?: return
+    val committed = runWithModalProgressBlocking(model.project(), PyBundle.message("configurable.PyWorkspaceStructureConfigurable.tab.sources")) {
+      active.applyAndCommit()
+    }
+    if (committed) {
+      session = null
+      detachEditor()
+      moduleScope.launch { active.disposeAsync() }
+      launchEditorAttach()
     }
   }
 
   override fun reset() {
-    if (model.currentEditor() == null) return
-    model.disposeModel()
-    detachEditor()
-    launchEditorAttach()
+    val previous = session ?: return
+    session = null
+    moduleScope.launch {
+      withContext(Dispatchers.EDT) { detachEditor() }
+      previous.disposeAsync()
+      launchEditorAttach()
+    }
   }
 
   override fun disposeUIResources() {
-    detachEditor()
-    model.disposeEditor()
-    model.disposeModel()
+    val active = session ?: return
+    session = null
+    topPanel.removeAll()
+    moduleScope.launch { active.disposeAsync() }
   }
 
-  /**
-   * Launches the async editor build. The model resolves the module root through [readAction], then
-   * we come back to the EDT to attach the newly created Swing component to [topPanel]. `createComponent`
-   * of the editor itself must run on the EDT, so the model returns the (Swing-safe) editor instance
-   * and the pane invokes `createComponent()` here.
-   */
+  /** Teardown from any dispatcher. */
+  suspend fun disposeAsync() {
+    val active = session ?: return
+    session = null
+    withContext(Dispatchers.EDT) { topPanel.removeAll() }
+    active.disposeAsync()
+  }
+
   private fun launchEditorAttach() {
-    PyPackageCoroutine.launch(model.moduleProject()) {
-      val editor = model.createEditor()
+    moduleScope.launch {
+      val fresh = model.createSession()
       withContext(Dispatchers.EDT) {
-        // Belt-and-suspenders: another attach may have won the EDT hop first (e.g. reset ran
-        // while this coroutine was suspended in `createEditor`). Skip when `topPanel` already
-        // owns a component so the tree never grows a second content-root panel.
-        if (topPanel.componentCount > 0) return@withContext
-        val component = editor.createComponent() ?: return@withContext
+        if (topPanel.componentCount > 0 || session != null) {
+          fresh.disposeAsync()
+          return@withContext
+        }
+        val component = fresh.createComponent()
+        if (component == null) {
+          fresh.disposeAsync()
+          return@withContext
+        }
+        session = fresh
         topPanel.add(component, BorderLayout.CENTER)
         topPanel.revalidate()
         topPanel.repaint()
@@ -90,8 +99,8 @@ internal class PySourcesConfigurable(module: Module) : Configurable {
   }
 
   private fun detachEditor() {
-    val editor = model.currentEditor() ?: return
-    topPanel.remove(editor.component)
-    model.disposeEditor()
+    topPanel.removeAll()
+    topPanel.revalidate()
+    topPanel.repaint()
   }
 }

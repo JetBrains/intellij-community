@@ -8,7 +8,7 @@ import com.jetbrains.python.sdk.inspections.PythonInterpreterSettingsNavigator
 /**
  * Routes the [com.jetbrains.python.sdk.inspections.InterpreterSettingsQuickFix] and the interpreter
  * status-bar widget's "Interpreter Settings…" action to the redesigned "Workspace Structure" page
- * (PY-89840). Enabled by the [PyInterpreterRedesignFlags] gate — when the flag is off the navigator
+ * (PY-89840). Enabled by the [PyInterpreterSettingsFlags] gate — when the flag is off the navigator
  * opts out and the QuickFix falls back to the legacy configurable.
  *
  * Registered as an `applicationService` so the lower `intellij.python.community.impl` module can
@@ -17,7 +17,7 @@ import com.jetbrains.python.sdk.inspections.PythonInterpreterSettingsNavigator
 internal class PyWorkspaceStructureSettingsNavigator : PythonInterpreterSettingsNavigator {
 
   override fun tryNavigate(target: ModuleOrProject): Boolean {
-    if (!PyInterpreterRedesignFlags.isEnabled()) return false
+    if (!PyInterpreterSettingsFlags.areNewInterpreterPagesEnabled()) return false
     ShowSettingsUtil.getInstance().showSettingsDialog(target.project, PyWorkspaceStructureConfigurable::class.java)
     return true
   }
