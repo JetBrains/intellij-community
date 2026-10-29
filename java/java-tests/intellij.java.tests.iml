@@ -203,5 +203,6 @@
     <orderEntry type="module" module-name="intellij.platform.bazel.runfiles" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.guiForms.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
   </component>
 </module>

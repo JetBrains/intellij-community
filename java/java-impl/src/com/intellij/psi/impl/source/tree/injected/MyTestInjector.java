@@ -139,7 +139,6 @@ public class MyTestInjector {
     final Language ql = Language.findLanguageByID("JPAQL");
     final Language js = Language.findLanguageByID("JavaScript");
     final Language html = Language.findLanguageByID("HTML");
-    if (js == null) return;
 
     InjectedLanguageManager.getInstance(psiManager.getProject()).registerMultiHostInjector(new MultiHostInjector() {
       @Override
@@ -148,7 +147,7 @@ public class MyTestInjector {
         PsiElement parent1 = value.getParent();
         if (parent1 instanceof XmlAttribute) {
           @NonNls String attrName = ((XmlAttribute)parent1).getLocalName();
-          if ("jsInBraces".equals(attrName)) {
+          if ("jsInBraces".equals(attrName) && js != null) {
             registrar.startInjecting(js);
             String text = value.getText();
             int index = 0;
@@ -179,12 +178,12 @@ public class MyTestInjector {
             return;
           }
           if ("js".equals(attrName)) {
-            inject(host, placesToInject, js);
+            if (js != null) inject(host, placesToInject, js);
             return;
           }
 
           if ("jsprefix".equals(attrName)) {
-            inject(host, placesToInject, js, "function foo(doc, window){", "}");
+            if (js != null) inject(host, placesToInject, js, "function foo(doc, window){", "}");
             return;
           }
         }
@@ -198,19 +197,19 @@ public class MyTestInjector {
           return;
         }
         if ("js".equals(tag.getLocalName())) {
-          inject(host, placesToInject, js);
+          if (js != null) inject(host, placesToInject, js);
           return;
         }
         if ("htmlInject".equals(tag.getLocalName())) {
-          inject(host, placesToInject, html);
+          if (html != null) inject(host, placesToInject, html);
           return;
         }
         if ("jsprefix".equals(tag.getLocalName())) {
-          inject(host, placesToInject, js, "function foo(doc, window){", "}");
+          if (js != null) inject(host, placesToInject, js, "function foo(doc, window){", "}");
           return;
         }
 
-        if ("jsInHash".equals(tag.getLocalName())) {
+        if ("jsInHash".equals(tag.getLocalName()) && js != null) {
           String text = xmlText.getText();
           if (text.contains("#")) {
             int start = text.indexOf('#');
@@ -223,7 +222,7 @@ public class MyTestInjector {
         }
       }
 
-      if (host instanceof PsiComment && ((PsiComment)host).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
+      if (js != null && host instanceof PsiComment && ((PsiComment)host).getTokenType() == JavaTokenType.C_STYLE_COMMENT) {
         /* {{{
          *   js code
          *   js code
@@ -272,7 +271,7 @@ public class MyTestInjector {
         if ("xmlWithLongPrefixSuffix".equals(variable.getName())) {
           placesToInject.addPlace(XMLLanguage.INSTANCE, textRangeToInject(host), "<aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa><bbbbbbbbbbbbb><cccccccccccc>", "</cccccccccccc></bbbbbbbbbbbbb></aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa>");
         }
-        if ("js".equals(variable.getName())) { // with prefix/suffix
+        if ("js".equals(variable.getName()) && js != null) { // with prefix/suffix
           placesToInject.addPlace(js, textRangeToInject(host), "function foo(doc,window) {", "}");
         }
 

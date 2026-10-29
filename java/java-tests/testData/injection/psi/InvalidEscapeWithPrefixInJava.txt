@@ -1,0 +1,168 @@
+PsiJavaFile:InvalidEscapeWithPrefixInJava.java
+  PsiImportList
+    PsiImportStatement
+      PsiKeyword:import('import')
+      PsiWhiteSpace(' ')
+      PsiJavaCodeReferenceElement:java.util.regex.Pattern
+        PsiJavaCodeReferenceElement:java.util.regex
+          PsiJavaCodeReferenceElement:java.util
+            PsiJavaCodeReferenceElement:java
+              PsiIdentifier:java('java')
+              PsiReferenceParameterList
+                <empty list>
+            PsiJavaToken:DOT('.')
+            PsiIdentifier:util('util')
+            PsiReferenceParameterList
+              <empty list>
+          PsiJavaToken:DOT('.')
+          PsiIdentifier:regex('regex')
+          PsiReferenceParameterList
+            <empty list>
+        PsiJavaToken:DOT('.')
+        PsiIdentifier:Pattern('Pattern')
+        PsiReferenceParameterList
+          <empty list>
+      PsiJavaToken:SEMICOLON(';')
+  PsiWhiteSpace('\n\n')
+  PsiClass:MyClass
+    PsiModifierList:public
+      PsiKeyword:public('public')
+    PsiWhiteSpace(' ')
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:MyClass('MyClass')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiJavaToken:LBRACE('{')
+    PsiWhiteSpace('\n\n  ')
+    PsiField:BASE64_INDEX
+      PsiModifierList:private final
+        PsiKeyword:private('private')
+        PsiWhiteSpace(' ')
+        PsiKeyword:final('final')
+      PsiWhiteSpace(' ')
+      PsiTypeElement:String
+        PsiJavaCodeReferenceElement:String
+          PsiIdentifier:String('String')
+          PsiReferenceParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:BASE64_INDEX('BASE64_INDEX')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:EQ('=')
+      PsiWhiteSpace(' ')
+      PsiLiteralExpression:"[a-zA-Z0-9[+][/]]"
+        PsiJavaToken:STRING_LITERAL('"[a-zA-Z0-9[+][/]]"')
+        REGEXP_FILE
+          RegExpPatternImpl: <[a-zA-Z0-9[+][/]]>
+            RegExpBranchImpl: <[a-zA-Z0-9[+][/]]>
+              RegExpClassImpl: <[a-zA-Z0-9[+][/]]>
+                PsiElement(CLASS_BEGIN)('[')
+                RegExpCharRangeImpl: <a-z>
+                  RegExpCharImpl: <a>
+                    PsiElement(CHARACTER)('a')
+                  PsiElement(MINUS)('-')
+                  RegExpCharImpl: <z>
+                    PsiElement(CHARACTER)('z')
+                RegExpCharRangeImpl: <A-Z>
+                  RegExpCharImpl: <A>
+                    PsiElement(CHARACTER)('A')
+                  PsiElement(MINUS)('-')
+                  RegExpCharImpl: <Z>
+                    PsiElement(CHARACTER)('Z')
+                RegExpCharRangeImpl: <0-9>
+                  RegExpCharImpl: <0>
+                    PsiElement(CHARACTER)('0')
+                  PsiElement(MINUS)('-')
+                  RegExpCharImpl: <9>
+                    PsiElement(CHARACTER)('9')
+                RegExpClassImpl: <[+]>
+                  PsiElement(CLASS_BEGIN)('[')
+                  RegExpCharImpl: <+>
+                    PsiElement(CHARACTER)('+')
+                  PsiElement(CLASS_END)(']')
+                RegExpClassImpl: <[/]>
+                  PsiElement(CLASS_BEGIN)('[')
+                  RegExpCharImpl: </>
+                    PsiElement(CHARACTER)('/')
+                  PsiElement(CLASS_END)(']')
+                PsiElement(CLASS_END)(']')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n  ')
+    PsiField:MY_PATTERN
+      PsiComment(END_OF_LINE_COMMENT)('//language=RegExp')
+      PsiWhiteSpace('\n  ')
+      PsiModifierList:private final
+        PsiKeyword:private('private')
+        PsiWhiteSpace(' ')
+        PsiKeyword:final('final')
+      PsiWhiteSpace(' ')
+      PsiTypeElement:Pattern
+        PsiJavaCodeReferenceElement:Pattern
+          PsiIdentifier:Pattern('Pattern')
+          PsiReferenceParameterList
+            <empty list>
+      PsiWhiteSpace(' ')
+      PsiIdentifier:MY_PATTERN('MY_PATTERN')
+      PsiWhiteSpace(' ')
+      PsiJavaToken:EQ('=')
+      PsiWhiteSpace(' ')
+      PsiBinaryExpression:BASE64_INDEX + "{14}\Z"
+        PsiReferenceExpression:BASE64_INDEX
+          PsiReferenceParameterList
+            <empty list>
+          PsiIdentifier:BASE64_INDEX('BASE64_INDEX')
+        PsiWhiteSpace(' ')
+        PsiJavaToken:PLUS('+')
+        PsiWhiteSpace(' ')
+        PsiLiteralExpression:"{14}\Z"
+          PsiJavaToken:STRING_LITERAL('"{14}\Z"')
+          REGEXP_FILE
+            RegExpPatternImpl: <[a-zA-Z0-9[+][/]]{14}>
+              RegExpBranchImpl: <[a-zA-Z0-9[+][/]]{14}>
+                RegExpClosureImpl: <[a-zA-Z0-9[+][/]]{14}>
+                  RegExpClassImpl: <[a-zA-Z0-9[+][/]]>
+                    PsiElement(CLASS_BEGIN)('[')
+                    RegExpCharRangeImpl: <a-z>
+                      RegExpCharImpl: <a>
+                        PsiElement(CHARACTER)('a')
+                      PsiElement(MINUS)('-')
+                      RegExpCharImpl: <z>
+                        PsiElement(CHARACTER)('z')
+                    RegExpCharRangeImpl: <A-Z>
+                      RegExpCharImpl: <A>
+                        PsiElement(CHARACTER)('A')
+                      PsiElement(MINUS)('-')
+                      RegExpCharImpl: <Z>
+                        PsiElement(CHARACTER)('Z')
+                    RegExpCharRangeImpl: <0-9>
+                      RegExpCharImpl: <0>
+                        PsiElement(CHARACTER)('0')
+                      PsiElement(MINUS)('-')
+                      RegExpCharImpl: <9>
+                        PsiElement(CHARACTER)('9')
+                    RegExpClassImpl: <[+]>
+                      PsiElement(CLASS_BEGIN)('[')
+                      RegExpCharImpl: <+>
+                        PsiElement(CHARACTER)('+')
+                      PsiElement(CLASS_END)(']')
+                    RegExpClassImpl: <[/]>
+                      PsiElement(CLASS_BEGIN)('[')
+                      RegExpCharImpl: </>
+                        PsiElement(CHARACTER)('/')
+                      PsiElement(CLASS_END)(']')
+                    PsiElement(CLASS_END)(']')
+                  RegExpQuantifierImpl: <{14}>
+                    PsiElement(LBRACE)('{')
+                    RegExpNumberImpl: <14>
+                      PsiElement(NUMBER)('14')
+                    PsiElement(RBRACE)('}')
+      PsiJavaToken:SEMICOLON(';')
+    PsiWhiteSpace('\n')
+    PsiJavaToken:RBRACE('}')
+  PsiWhiteSpace('\n')

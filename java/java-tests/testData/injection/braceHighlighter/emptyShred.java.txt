@@ -1,0 +1,5 @@
+class C {
+  String java = "class I <brace>{</brace>" +
+                "" +
+                "<caret><brace>}</brace>";
+}

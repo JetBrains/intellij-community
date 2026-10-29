@@ -467,6 +467,8 @@ jvm_library(
         "//platform/bazel-runfiles:bazel-runfiles_test_lib",
         "//platform/scratch/plugin",
         "//platform/scratch/plugin:plugin_test_lib",
+        "//plugins/IntelliLang:langInjection",
+        "//plugins/IntelliLang:langInjection_test_lib",
     ],
 )
 ### auto-generated section `build intellij.java.tests` end
