@@ -55,7 +55,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     myVisibilityTracker.runWhenHidden(this, this::trimChunkCache);
   }
 
-  @NotNull LineLayout getLineLayout(int line) {
+  @NotNull LineLayout getLineLayout(@NotNull DocumentText document, int line) {
     checkDisposed();
     if (line >= myLines.size()) {
       LOG.error(
@@ -65,7 +65,7 @@ final class TextLayoutCache implements PrioritizedDocumentListener, Disposable {
     }
     LineLayout result = myLines.get(line);
     if (result == null || result == BIDI_NOT_REQUIRED_MARKER) {
-      result = LineLayout.createForDocumentLine(myView, line, result == BIDI_NOT_REQUIRED_MARKER);
+      result = LineLayout.createForDocumentLine(myView, document, line, result == BIDI_NOT_REQUIRED_MARKER);
       myLines.set(line, result);
     }
     return result;

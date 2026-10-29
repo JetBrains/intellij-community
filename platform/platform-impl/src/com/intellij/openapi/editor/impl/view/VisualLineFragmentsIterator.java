@@ -311,7 +311,7 @@ final class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsI
     int endOffset = myCurrentInlayIndex < myInlays.size() ? myInlays.get(myCurrentInlayIndex).getOffset() : mySegmentEndOffset;
     int lineStartOffset = myDocument.lineStartOffset(myCurrentEndLogicalLine);
     if (myCurrentEndLogicalLine < myDocument.lineCount()) { // handle empty document case
-      LineLayout lineLayout = getTextLayoutCache().getLineLayout(myCurrentEndLogicalLine);
+      LineLayout lineLayout = getTextLayoutCache().getLineLayout(myDocument, myCurrentEndLogicalLine);
       myFragmentIterator = lineLayout.getFragmentsInVisualOrder(
         myView,
         myDocument,

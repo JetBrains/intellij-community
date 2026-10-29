@@ -218,7 +218,7 @@ public final class EditorCaretPainter {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       boolean shouldDrawRtl = myDocument.length() > 0 &&
                               caret != null &&
-                              !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr();
+                              !myView.getTextLayoutCache().getLineLayout(myDocument, caret.getLogicalPosition().line).isLtr();
       float radius = IslandsState.Companion.isEnabled() ? Math.min(w / 2, CARET_DIRECTION_MARK_SIZE) : 0.0f;
       GeneralPath caretShape = new GeneralPath();
       caretShape.moveTo(x, y + radius);

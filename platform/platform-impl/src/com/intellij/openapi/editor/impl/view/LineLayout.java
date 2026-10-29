@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.view;
 
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.DocumentTextUtil;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
@@ -28,10 +27,15 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
   /**
    * Creates a layout for a fragment of text from editor.
    * <p>
-   * Reads a logical line from the editor document, uses editor highlighting/attributes lazily, and can skip bidi analysis
+   * Reads a logical line from {@code document}, uses editor highlighting/attributes lazily, and can skip bidi analysis
    */
-  static @NotNull LineLayout createForDocumentLine(@NotNull EditorView view, int line, boolean skipBidiLayout) {
-    List<LineBidiRun> runs = createRunsForDocumentLine(view, line, skipBidiLayout);
+  static @NotNull LineLayout createForDocumentLine(
+    @NotNull EditorView view,
+    @NotNull DocumentText document,
+    int line,
+    boolean skipBidiLayout
+  ) {
+    List<LineBidiRun> runs = createRunsForDocumentLine(view, document, line, skipBidiLayout);
     return createLayout(view, runs, null, line);
   }
 
@@ -107,18 +111,21 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     return new VisualOrderIterator(view, document, line, startOffset, startVisualColumn, startX, runs);
   }
 
-  private static List<LineBidiRun> createRunsForDocumentLine(@NotNull EditorView view, int line, boolean skipBidiLayout) {
-    Document document = view.getDocument();
-    int lineStartOffset = document.getLineStartOffset(line);
-    int lineEndOffset = document.getLineEndOffset(line);
+  private static List<LineBidiRun> createRunsForDocumentLine(
+    @NotNull EditorView view,
+    @NotNull DocumentText document,
+    int line,
+    boolean skipBidiLayout
+  ) {
+    int lineStartOffset = document.lineStartOffset(line);
+    int lineEndOffset = document.lineEndOffset(line);
     if (lineEndOffset <= lineStartOffset) {
       return Collections.emptyList();
     }
     if (skipBidiLayout) {
       return Collections.singletonList(new LineBidiRun(lineEndOffset - lineStartOffset));
     }
-    CharSequence text = document.getImmutableCharSequence().subSequence(lineStartOffset, lineEndOffset);
-    char[] chars = CharArrayUtil.fromSequence(text);
+    char[] chars = CharArrayUtil.fromSequence(document.chars(), lineStartOffset, lineEndOffset);
     return BidiRunUtil.createRuns(view, chars, lineStartOffset);
   }
 

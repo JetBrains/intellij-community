@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.ex.EditorModel;
 import com.intellij.openapi.editor.ex.InlayModelEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -279,7 +280,8 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
 
   @RequiresEdt
   public boolean isRtlLocation(@NotNull VisualPosition visualPosition) {
-    if (myDocument.getTextLength() == 0) {
+    DocumentText document = myDocument.getDocumentText();
+    if (document.length() == 0) {
       return false;
     }
     LogicalPosition logicalPosition = visualToLogicalPosition(visualPosition);
@@ -301,9 +303,9 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
         return false;
       }
     } 
-    int line = myDocument.getLineNumber(offset);
-    LineLayout layout = myTextLayoutCache.getLineLayout(line);
-    return layout.isRtlLocation(offset - myDocument.getLineStartOffset(line), logicalPosition.leansForward);
+    int line = document.lineNumber(offset);
+    LineLayout layout = myTextLayoutCache.getLineLayout(document, line);
+    return layout.isRtlLocation(offset - document.lineStartOffset(line), logicalPosition.leansForward);
   }
 
   @RequiresEdt
@@ -319,13 +321,14 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    */
   @RequiresEdt
   public int findNearestDirectionBoundary(int offset, boolean lookForward) {
-    int textLength = myDocument.getTextLength();
+    DocumentText document = myDocument.getDocumentText();
+    int textLength = document.length();
     if (textLength == 0 || offset < 0 || offset > textLength) {
       return -1;
     }
-    int line = myDocument.getLineNumber(offset);
-    LineLayout layout = myTextLayoutCache.getLineLayout(line);
-    int lineStartOffset = myDocument.getLineStartOffset(line);
+    int line = document.lineNumber(offset);
+    LineLayout layout = myTextLayoutCache.getLineLayout(document, line);
+    int lineStartOffset = document.lineStartOffset(line);
     int relativeOffset = layout.findNearestDirectionBoundary(offset - lineStartOffset, lookForward);
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
