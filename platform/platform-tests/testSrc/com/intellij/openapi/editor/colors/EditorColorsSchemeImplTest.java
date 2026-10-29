@@ -636,6 +636,16 @@ public class EditorColorsSchemeImplTest {
   }
 
   @Test
+  public void testSettingsEqualIgnoresMetaInfo() {
+    EditorColorsScheme defaultScheme = EditorColorsManager.getInstance().getScheme(EditorColorsScheme.getDefaultSchemeName());
+    AbstractColorsScheme scheme = (AbstractColorsScheme)defaultScheme.clone();
+    AbstractColorsScheme otherScheme = (AbstractColorsScheme)defaultScheme.clone();
+    scheme.getMetaProperties().setProperty(AbstractColorsScheme.META_INFO_PLUGIN_ID, "test.plugin");
+    assertFalse(scheme.settingsEqual(otherScheme, null, false));
+    assertTrue(scheme.settingsEqual(otherScheme, null, true));
+  }
+
+  @Test
   public void testReadFontPreferences() throws Exception {
     String name1 = FontPreferencesTest.getExistingNonDefaultFontName();
     String name2 = FontPreferencesTest.getAnotherExistingNonDefaultFontName();

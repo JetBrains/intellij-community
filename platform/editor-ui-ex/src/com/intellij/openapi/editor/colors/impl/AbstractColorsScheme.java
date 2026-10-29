@@ -684,7 +684,7 @@ public abstract class AbstractColorsScheme extends EditorFontCache implements Ed
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo) {
-    return settingsEqual(other, colorKeyFilter, false, true);
+    return settingsEqual(other, colorKeyFilter, ignoreMetaInfo, true);
   }
 
   public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter, boolean ignoreMetaInfo, boolean useDefaults) {
