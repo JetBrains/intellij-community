@@ -53,10 +53,10 @@ internal val currentOs: EelPlatform
     EelPlatform.Linux(EelPlatform.Arch.Unknown)
   }
 
-internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDescriptor, os: EelPlatform): EelApi {
+internal fun eelApiByOs(fileSystem: EelUnitTestFileSystem, descriptor: EelTestDescriptor, machine: EelMachine, os: EelPlatform): EelApi {
   return when (os) {
-    is EelPlatform.Posix -> EelTestPosixApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
-    is EelPlatform.Windows -> EelTestWindowsApi(descriptor, fileSystem, fileSystem.fakeLocalRoot)
+    is EelPlatform.Posix -> EelTestPosixApi(descriptor, machine, fileSystem, fileSystem.fakeLocalRoot)
+    is EelPlatform.Windows -> EelTestWindowsApi(descriptor, machine, fileSystem, fileSystem.fakeLocalRoot)
   }
 }
 
@@ -133,7 +133,7 @@ internal fun eelInitializer(os: EelPlatform): TestFixtureInitializer<IsolatedFil
   }, disposable)
 
 
-  val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, os)
+  val eelApi = eelApiByOs(fakeLocalFileSystem, descriptor, machine, os)
   apiRef.set(eelApi)
   val root = Path.of(fakeRoot)
 

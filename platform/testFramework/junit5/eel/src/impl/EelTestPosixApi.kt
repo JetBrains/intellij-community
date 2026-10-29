@@ -6,6 +6,7 @@ import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecApi
 import com.intellij.platform.eel.EelExecPosixApi
 import com.intellij.platform.eel.EelHttpApi
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelPosixApi
 import com.intellij.platform.eel.EelProcessManagementPosixApi
@@ -25,7 +26,12 @@ import kotlinx.coroutines.CompletableDeferred
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal class EelTestPosixApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelPosixApi {
+internal class EelTestPosixApi(
+  override val descriptor: EelTestDescriptor,
+  override val machine: EelMachine,
+  fileSystem: EelUnitTestFileSystem,
+  localPrefix: String,
+) : EelPosixApi {
   override val userInfo: EelUserPosixInfo = EelTestPosixUserInfo(descriptor)
 
   override val platform: EelPlatform.Posix = EelPlatform.Linux(CpuArch.CURRENT.toEelArch())

@@ -10,6 +10,7 @@ import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecPosixApi
 import com.intellij.platform.eel.EelHttpApi
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsPosixApi
@@ -28,6 +29,7 @@ import com.intellij.platform.eel.impl.local.tunnels.EelLocalPosixTunnelsApiImpl
 import com.intellij.platform.eel.impl.local.tunnels.EelLocalWindowsTunnelsApiImpl
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.LocalEelDescriptor
+import com.intellij.platform.eel.provider.LocalEelMachine
 import com.intellij.platform.eel.provider.LocalPosixEelApi
 import com.intellij.platform.eel.provider.LocalWindowsEelApi
 import com.intellij.platform.eel.provider.asEelPath
@@ -55,6 +57,7 @@ internal class LocalWindowsEelApiImpl(nioFs: FileSystem = FileSystems.getDefault
 
   override val tunnels: EelTunnelsWindowsApi get() = EelLocalWindowsTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
+  override val machine: EelMachine get() = LocalEelMachine
   override val exec: EelLocalExecWindowsApi = EelLocalExecWindowsApi()
   override val http: EelHttpApi = CurlEelHttpApi(exec)
   override val userInfo: EelUserWindowsInfo = EelUserWindowsInfoImpl(getLocalUserHome())
@@ -91,6 +94,7 @@ internal class LocalPosixEelApiImpl(private val nioFs: FileSystem = FileSystems.
 
   override val tunnels: EelTunnelsPosixApi get() = EelLocalPosixTunnelsApiImpl
   override val descriptor: EelDescriptor get() = LocalEelDescriptor
+  override val machine: EelMachine get() = LocalEelMachine
 
   override val archive: EelArchiveApi = LocalEelArchiveApiImpl
 

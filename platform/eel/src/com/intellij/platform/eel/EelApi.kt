@@ -4,6 +4,7 @@ package com.intellij.platform.eel
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemPosixApi
 import com.intellij.platform.eel.fs.EelFileSystemWindowsApi
+import com.intellij.platform.eel.provider.getResolvedEelMachine
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -42,6 +43,12 @@ interface EelApi {
    */
   @get:ApiStatus.Experimental
   val descriptor: EelDescriptor
+
+  /**
+   * The [EelMachine] this instance connects to.
+   */
+  @get:ApiStatus.Experimental
+  val machine: EelMachine get() = descriptor.getResolvedEelMachine()!!  // TODO
 
   /**
    * OS family and architecture of this environment. Prefer this over host-side `SystemInfo` when choosing environment-specific

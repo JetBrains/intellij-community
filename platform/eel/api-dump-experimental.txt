@@ -1,6 +1,7 @@
 *:com.intellij.platform.eel.EelApi
 - *a:getDescriptor():com.intellij.platform.eel.EelDescriptor
 - *a:getExec():com.intellij.platform.eel.EelExecApi
+- *:getMachine():com.intellij.platform.eel.EelMachine
 - a:getPlatform():com.intellij.platform.eel.EelPlatform
 - *a:getTunnels():com.intellij.platform.eel.EelTunnelsApi
 - *a:getUserInfo():com.intellij.platform.eel.EelUserInfo
@@ -245,7 +246,7 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - s:valueOf(java.lang.String):com.intellij.platform.eel.EelIpPreference
 - s:values():com.intellij.platform.eel.EelIpPreference[]
 *:com.intellij.platform.eel.EelMachine
-- *a:getName():java.lang.String
+- *:getName():java.lang.String
 - a:isConnected():Z
 - a:ownsDescriptor(com.intellij.platform.eel.EelDescriptor):Z
 - *a:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object

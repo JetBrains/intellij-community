@@ -1,19 +1,20 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.junit5.eel.impl
 
 import com.intellij.platform.eel.EelArchiveApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelExecWindowsApi
 import com.intellij.platform.eel.EelHttpApi
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelTunnelsWindowsApi
 import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.eel.fs.EelFileSystemApi
-import com.intellij.platform.eel.impl.local.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.impl.local.EelLocalExecWindowsApi
 import com.intellij.platform.eel.impl.local.LocalEelArchiveApiImpl
+import com.intellij.platform.eel.impl.local.WindowsNioBasedEelFileSystemApi
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.utils.toEelArch
@@ -22,7 +23,12 @@ import com.intellij.util.system.CpuArch
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal class EelTestWindowsApi(override val descriptor: EelTestDescriptor, fileSystem: EelUnitTestFileSystem, localPrefix: String) : EelWindowsApi {
+internal class EelTestWindowsApi(
+  override val descriptor: EelTestDescriptor,
+  override val machine: EelMachine,
+  fileSystem: EelUnitTestFileSystem,
+  localPrefix: String,
+) : EelWindowsApi {
   override val userInfo: EelUserWindowsInfo = EelTestWindowsUserInfo(descriptor)
 
   override val platform: EelPlatform.Windows = EelPlatform.Windows(CpuArch.CURRENT.toEelArch())
