@@ -84,7 +84,7 @@ fn manifest_validation_refuses_what_a_recorder_would_not_write() {
     decode(&truncated).expect("a truncated manifest naming its running span decodes");
 
     type Mutation = fn(&mut Value);
-    let refused: [(&str, Mutation); 17] = [
+    let refused: [(&str, Mutation); 19] = [
         ("another schema", |manifest| {
             manifest["schema"] = json!("air-trace/2");
         }),
@@ -132,6 +132,12 @@ fn manifest_validation_refuses_what_a_recorder_would_not_write() {
         ("an unknown codec", |manifest| {
             manifest["video"]["codec"] = json!("av1");
         }),
+        ("an unknown still encoding", |manifest| {
+            manifest["stills"] = json!({"encoding": "jpeg"});
+        }),
+        ("stills without an encoding", |manifest| {
+            manifest["stills"] = json!({});
+        }),
         ("an unknown field", |manifest| {
             manifest["snapshots"] = json!(17);
         }),
@@ -141,6 +147,28 @@ fn manifest_validation_refuses_what_a_recorder_would_not_write() {
         mutate(&mut manifest);
         assert!(decode(&manifest).is_err(), "a manifest with {label} was accepted");
     }
+}
+
+/// A manifest names lossy pictures and leaves lossless ones unnamed, so the manifest of a bundle without a video reads
+/// as it did before the recorder wrote lossy pictures.
+#[test]
+fn the_manifest_names_lossy_stills_only() {
+    let lossless = decode(&valid_manifest()).unwrap();
+    assert_eq!(lossless.stills.encoding, StillEncoding::Lossless, "a manifest without stills");
+    let mut explicit = valid_manifest();
+    explicit["stills"] = json!({"encoding": "lossless"});
+    assert_eq!(decode(&explicit).unwrap(), lossless);
+
+    let mut lossy = valid_manifest();
+    lossy["stills"] = json!({"encoding": "lossy"});
+    let decoded = decode(&lossy).unwrap();
+    assert_eq!(decoded.stills.encoding, StillEncoding::Lossy);
+    assert_eq!(serde_json::to_value(&decoded).unwrap(), lossy, "the lossy manifest round-trips");
+    assert_eq!(
+        serde_json::to_value(&lossless).unwrap(),
+        valid_manifest(),
+        "a lossless manifest names no stills"
+    );
 }
 
 #[test]
@@ -183,9 +211,25 @@ fn bundle_locations() {
     assert_eq!(dir, Path::new("/traces").join("iter-1").join("AirExampleUiTest").join("a_b"));
     assert_eq!(bundle_path("iter-1", "AirExampleUiTest", "a/b"), "iter-1/AirExampleUiTest/a_b");
     assert_eq!(
-        (snap_image_path(3).as_str(), snap_tree_path(12).as_str()),
+        (snap_image_path(3, StillEncoding::Lossless).as_str(), snap_tree_path(12).as_str()),
         ("snap/0003.webp", "snap/0012.tree.json")
     );
+    assert_eq!(snap_image_path(3, StillEncoding::Lossy), "snap/0003.avif");
+}
+
+/// The extension of a picture names its format, and the media type follows from it. A tree, a PNG attachment and a
+/// name without an extension are no picture of the recorder.
+#[test]
+fn a_picture_names_its_media_type_by_its_extension() {
+    let mimes = [
+        "snap/0003.webp",
+        "attach/0002.avif",
+        "snap/0003.tree.json",
+        "attach/0001.png",
+        "avif",
+    ]
+    .map(picture_mime);
+    assert_eq!(mimes, [Some("image/webp"), Some("image/avif"), None, None, None]);
 }
 
 #[test]
@@ -257,7 +301,7 @@ fn every_snapshot_has_its_picture_and_its_tree() {
         } else {
             assert_eq!(
                 image,
-                snap_image_path(ordinal),
+                snap_image_path(ordinal, StillEncoding::Lossless),
                 "snapshot {ordinal} names neither its own picture nor the previous one"
             );
         }

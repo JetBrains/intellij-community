@@ -5,6 +5,10 @@ use crate::event::{Event, Outcome, TestResult};
 use crate::report::Report;
 
 fn report_of(results: Vec<TestResult>) -> String {
+    report_with_class(results, None)
+}
+
+fn report_with_class(results: Vec<TestResult>, class: Option<&str>) -> String {
     let mut report = Report::new("//a/b:c".to_owned());
     report.record(Event::SuiteStarted {
         test_count: results.len(),
@@ -14,7 +18,7 @@ fn report_of(results: Vec<TestResult>) -> String {
     }
 
     let mut written = Vec::new();
-    write_report(&report, 0.5, &mut written).expect("the report");
+    write_report(&report, 0.5, class, &mut written).expect("the report");
     String::from_utf8(written).expect("valid UTF-8")
 }
 
@@ -42,6 +46,29 @@ fn writes_one_test_case_per_test() {
     assert!(written.contains(r#"<testcase classname="crate" name="fails" time="0.125">"#));
     assert!(written.contains(r#"<failure message="the test failed"/>"#));
     assert!(written.ends_with("</testsuites>\n"));
+}
+
+/// A Rust test that replaces a JUnit test keeps the class and the case names of the JUnit test.
+#[test]
+fn names_every_case_by_the_class_of_the_report() {
+    let written = report_with_class(
+        vec![
+            result("model::authoredModelIsValid", Outcome::Passed),
+            result("rootCase", Outcome::Failed),
+        ],
+        Some("com.example.ModelTest"),
+    );
+
+    assert!(
+        written.contains(
+            r#"<testcase classname="com.example.ModelTest" name="authoredModelIsValid" time="0.125"/>"#
+        ),
+        "{written}"
+    );
+    assert!(
+        written.contains(r#"<testcase classname="com.example.ModelTest" name="rootCase" time="0.125">"#),
+        "{written}"
+    );
 }
 
 #[test]

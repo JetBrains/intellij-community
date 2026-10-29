@@ -199,6 +199,8 @@ fn digest_result(apply: impl FnOnce(&mut RunResult)) -> RunResult {
         flaky: Vec::new(),
         build_errors: Vec::new(),
         degraded: false,
+        timings: Vec::new(),
+        mixed_shard_plans: Vec::new(),
     };
     apply(&mut result);
     result
@@ -655,4 +657,17 @@ fn a_discovery_failure_names_the_method_filter() {
             "wrapper code {wrapper_code}:\n{digest}"
         );
     }
+}
+
+#[test]
+fn a_run_with_mixed_shard_plans_names_the_target_and_the_rerun() {
+    let text = render(&digest_result(|result| {
+        result.status = RunStatus::Infra;
+        result.targets = vec![digest_target(|_| {})];
+        result.mixed_shard_plans = vec!["//p:t".to_owned()];
+    }));
+    assert!(
+        text.contains("the shards of //p:t read different shard plans") && text.contains("--no-cache"),
+        "{text}"
+    );
 }

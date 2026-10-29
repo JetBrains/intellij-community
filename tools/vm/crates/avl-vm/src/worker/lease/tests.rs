@@ -391,6 +391,17 @@ async fn releasing_a_stopped_tart_worker_does_not_start_it() {
     );
 }
 
+/// Releases the lease of `held` while the container of air-docker-1 has exited, and asserts that the release names
+/// the stopped worker.
+async fn release_stopped_container(fixture: &Fixture, held: &Outcome) {
+    fixture.fake.answer(avl_testkit::tartfake::Answer::ContainerState, "exited/1\n");
+    let released = release(fixture, &lease_file(held), &FakeProbe::default()).await.unwrap();
+    assert_eq!(
+        released.data,
+        serde_json::json!({ "worker": "air-docker-1", "released": true, "workerWasStopped": true })
+    );
+}
+
 /// The Docker twin: a container that does not run is released without a start and without a guest call, for the
 /// Tart reason. A container that crashed must not keep its slot held.
 #[tokio::test]
@@ -398,12 +409,7 @@ async fn releasing_a_stopped_docker_worker_does_not_start_it() {
     let fixture = Fixture::docker();
     let worker = "air-docker-1";
     let held = acquire(&fixture, "agent").await.unwrap();
-    fixture.fake.answer(avl_testkit::tartfake::Answer::ContainerState, "exited/1\n");
-    let released = release(&fixture, &lease_file(&held), &FakeProbe::default()).await.unwrap();
-    assert_eq!(
-        released.data,
-        serde_json::json!({ "worker": worker, "released": true, "workerWasStopped": true })
-    );
+    release_stopped_container(&fixture, &held).await;
     assert_eq!(read_lease(&fixture.settings.lease_path(worker)).unwrap(), None);
     assert_eq!(receipt_files(&fixture.settings), Vec::<PathBuf>::new());
     let calls = fixture.fake.calls();
@@ -424,12 +430,7 @@ async fn a_standalone_docker_release_resolves_the_pinned_cli() {
     let held = acquire(&fixture, "agent").await.unwrap();
     let docker = fixture.manager.machine().docker().unwrap();
     assert_eq!(docker.program(), "", "the acquisition resolves no CLI");
-    fixture.fake.answer(avl_testkit::tartfake::Answer::ContainerState, "exited/1\n");
-    let released = release(&fixture, &lease_file(&held), &FakeProbe::default()).await.unwrap();
-    assert_eq!(
-        released.data,
-        serde_json::json!({ "worker": worker, "released": true, "workerWasStopped": true })
-    );
+    release_stopped_container(&fixture, &held).await;
     assert_ne!(docker.program(), "");
     assert!(fixture.fake.saw_call_containing("inspect --type container --format"));
     assert_eq!(read_lease(&fixture.settings.lease_path(worker)).unwrap(), None);
@@ -615,17 +616,24 @@ fn live_guest(fixture: &Fixture, run_id: &'static str) {
     });
 }
 
+/// A Tart pool of one running worker that the holder `agent` leased, and whose guest supervisor names the run
+/// `run-ui-daemon-1` in its slot. Answers the fixture and the outcome of the acquisition.
+#[cfg(unix)]
+async fn held_with_a_warm_daemon() -> (Fixture, Outcome) {
+    let fixture = pool("air-macos-1");
+    let held = acquire(&fixture, "agent").await.unwrap();
+    fixture.run_as_fake_process("air-macos-1").await;
+    live_guest(&fixture, "run-ui-daemon-1");
+    (fixture, held)
+}
+
 /// The contract a warm lane depends on: the daemon holds the supervisor's run slot for its whole life, so a release
 /// that consulted the slot alone could never free a worker with a warm daemon on it. A slot held by this controller's
 /// own idle daemon is not an execution, and the worker goes back.
 #[cfg(unix)]
 #[tokio::test]
 async fn a_release_succeeds_while_a_warm_daemon_holds_the_slot() {
-    let fixture = pool("air-macos-1");
-    let held = acquire(&fixture, "agent").await.unwrap();
-    fixture.run_as_fake_process("air-macos-1").await;
-    live_guest(&fixture, "run-ui-daemon-1");
-
+    let (fixture, held) = held_with_a_warm_daemon().await;
     let probe = FakeProbe::new(Some("run-ui-daemon-1"), Some("run-ui-daemon-1"));
     let released = release(&fixture, &lease_file(&held), &probe).await.unwrap();
     assert_eq!(released.text, "released=air-macos-1");
@@ -654,11 +662,7 @@ async fn a_release_succeeds_while_a_warm_daemon_holds_the_slot() {
 #[cfg(unix)]
 #[tokio::test]
 async fn a_release_is_refused_while_an_iteration_is_in_flight() {
-    let fixture = pool("air-macos-1");
-    let held = acquire(&fixture, "agent").await.unwrap();
-    fixture.run_as_fake_process("air-macos-1").await;
-    live_guest(&fixture, "run-ui-daemon-1");
-
+    let (fixture, held) = held_with_a_warm_daemon().await;
     let probe = FakeProbe::new(None, Some("run-ui-daemon-1"));
     let refusal = release(&fixture, &lease_file(&held), &probe).await.unwrap_err();
     assert_eq!(refusal.code, "run_active", "{refusal:?}");
@@ -777,16 +781,28 @@ async fn a_lease_that_changed_under_the_operation_refuses() {
     let successor = fixture.new_lease(worker, "somebody-elses", "another-holder");
     assert!(try_atomic_lease(&fixture.settings, worker, &successor).unwrap());
 
-    let refusal = with_lease_operation(&ctx(), &fixture.manager, &lease, "suite", async |_| -> Result<(), Refusal> {
-        panic!("the operation must not run against a lease that changed")
-    })
+    let refusal = with_lease(
+        &ctx(),
+        &fixture.manager,
+        &lease,
+        "suite",
+        LeaseUse::LockedAction,
+        async |_| -> Result<(), Refusal> { panic!("the operation must not run against a lease that changed") },
+    )
     .await
     .unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("lease_changed", Exit::NO_PERM));
 
-    let ran = with_lease_operation(&ctx(), &fixture.manager, &successor, "suite", async |current| Ok(current))
-        .await
-        .unwrap();
+    let ran = with_lease(
+        &ctx(),
+        &fixture.manager,
+        &successor,
+        "suite",
+        LeaseUse::LockedAction,
+        async |current| Ok(current),
+    )
+    .await
+    .unwrap();
     assert_eq!(ran, successor);
 }
 

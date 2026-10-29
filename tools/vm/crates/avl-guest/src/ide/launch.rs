@@ -13,15 +13,12 @@ use std::io::{self, Write};
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 
-use avl_wire::ide::{
-    self, ARG_FILE, CONFIG_DIR, IdeLaunch, IdeLaunched, LAUNCH_RECORD_FILE, LOG_DIR, LaunchRecord, OWNED_JVM_OPTIONS, OWNED_PROPERTIES,
-    PLUGINS_DIR, SYSTEM_DIR,
-};
+use avl_wire::ide::{self, IdeLaunch, IdeLaunched, LOG_DIR, LaunchRecord, OWNED_JVM_OPTIONS, OWNED_PROPERTIES};
 use avl_wire::supervisor::EnvironmentPolicy;
 use dev_launch::{Distribution, DistributionFiles};
 use serde::Deserialize;
 
-use super::{CODE_LAUNCH_FAILED, create_private_dirs, reap, require_free_slot};
+use super::{CODE_LAUNCH_FAILED, ContextPaths, create_private_dirs, reap, require_free_slot};
 use crate::clock::stamp;
 use crate::fs::{is_directory, is_file};
 use crate::reply::{AgentRefusal, AgentRefusalExt};
@@ -55,26 +52,15 @@ fn refused(message: impl Into<String>) -> AgentRefusal {
 
 /// The paths of one context for one launch, as guest path text.
 struct LaunchPaths {
-    context: String,
-    config: String,
-    system: String,
-    plugins: String,
+    context: ContextPaths,
     log: String,
-    arg_file: String,
-    launch_record: String,
 }
 
 impl LaunchPaths {
     fn new(document: &IdeLaunch) -> Self {
-        let context = ide::context_dir(&document.ide_root, &document.launch_key);
-        let child = |name: &str| format!("{context}/{name}");
+        let context = ContextPaths::new(&document.ide_root, &document.launch_key);
         Self {
-            config: child(CONFIG_DIR),
-            system: child(SYSTEM_DIR),
-            plugins: child(PLUGINS_DIR),
-            log: format!("{context}/{LOG_DIR}/{}", document.launch_name),
-            arg_file: child(ARG_FILE),
-            launch_record: child(LAUNCH_RECORD_FILE),
+            log: context.child(&format!("{LOG_DIR}/{}", document.launch_name)),
             context,
         }
     }
@@ -86,9 +72,9 @@ pub(crate) fn launch(system: &dyn System, launcher: &Launcher, guest: &Guest, do
     ide::validate_ide_launch(document).map_err(|error| refused(error.message))?;
     require_display(guest)?;
     let paths = LaunchPaths::new(document);
-    let context = Path::new(&paths.context);
+    let context = Path::new(&paths.context.dir);
     require_free_slot(system, context)?;
-    for (directory, what) in [(&paths.config, "context"), (&document.project_dir, "project")] {
+    for (directory, what) in [(&paths.context.config, "context"), (&document.project_dir, "project")] {
         if !is_directory(Path::new(directory)) {
             return Err(refused(format!(
                 "the {what} directory {directory} does not exist; prepare the context first"
@@ -103,28 +89,28 @@ pub(crate) fn launch(system: &dyn System, launcher: &Launcher, guest: &Guest, do
     let arguments = compose_arguments(document, &paths)?;
     let text =
         dev_launch::argument_file_text(&arguments).map_err(|error| refused(format!("cannot write the IDE argument file: {error:#}")))?;
-    publish_privately(Path::new(&paths.arg_file), text.as_bytes())
-        .map_err(|error| refused(format!("cannot publish {}: {error}", paths.arg_file)))?;
+    publish_privately(Path::new(&paths.context.arg_file), text.as_bytes())
+        .map_err(|error| refused(format!("cannot publish {}: {error}", paths.context.arg_file)))?;
     let record = LaunchRecord {
         schema_version: ide::SCHEMA_VERSION,
         launch_key: document.launch_key.clone(),
         launch_name: document.launch_name.clone(),
         product_digest: document.product_digest.clone(),
         java_home: document.java_home.clone(),
-        arg_file: paths.arg_file.clone(),
+        arg_file: paths.context.arg_file.clone(),
         prepared_at: stamp(system.now()),
     };
     let mut encoded = serde_json::to_vec(&record).map_err(AgentRefusal::internal)?;
     encoded.push(b'\n');
-    publish_privately(Path::new(&paths.launch_record), &encoded)
-        .map_err(|error| refused(format!("cannot publish {}: {error}", paths.launch_record)))?;
+    publish_privately(Path::new(&paths.context.launch_record), &encoded)
+        .map_err(|error| refused(format!("cannot publish {}: {error}", paths.context.launch_record)))?;
 
     let Some(run_id) = ide::ide_run_id(&document.launch_name) else {
         return Err(AgentRefusal::internal("the checked launch name gives no run id"));
     };
     let argv = vec![
         format!("{}/bin/java", document.java_home.trim_end_matches('/')),
-        format!("@{}", paths.arg_file),
+        format!("@{}", paths.context.arg_file),
         document.project_dir.clone(),
     ];
     let run = supervisor::launch_run(
@@ -136,12 +122,12 @@ pub(crate) fn launch(system: &dyn System, launcher: &Launcher, guest: &Guest, do
         argv,
         None,
         EnvironmentPolicy::Context {
-            context_dir: paths.context.clone(),
+            context_dir: paths.context.dir.clone(),
         },
     )?;
     Ok(IdeLaunched {
         log_dir: paths.log,
-        arg_file: paths.arg_file,
+        arg_file: paths.context.arg_file,
         run,
     })
 }
@@ -303,9 +289,9 @@ fn owned_option(flag: &str) -> Option<&str> {
 fn data_options(paths: &LaunchPaths) -> Vec<String> {
     let log = &paths.log;
     vec![
-        format!("-Didea.config.path={}", paths.config),
-        format!("-Didea.system.path={}", paths.system),
-        format!("-Didea.plugins.path={}", paths.plugins),
+        format!("-Didea.config.path={}", paths.context.config),
+        format!("-Didea.system.path={}", paths.context.system),
+        format!("-Didea.plugins.path={}", paths.context.plugins),
         format!("-Didea.log.path={log}"),
         format!("-Dsnapshots.path={log}/snapshots"),
         format!("-Didea.diagnostic.opentelemetry.file={log}/opentelemetry.json"),

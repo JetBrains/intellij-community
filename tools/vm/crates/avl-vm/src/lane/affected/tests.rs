@@ -242,9 +242,16 @@ fn a_coarse_two_lane_answer_says_it_came_from_a_module_endpoint() {
 async fn the_suites_command_subtotals_each_lane_and_carries_the_counts_as_data() {
     let checkout = Checkout::new();
 
-    let outcome = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), paths([BOTH]), &quiet())
-        .await
-        .unwrap();
+    let outcome = command_suites(
+        &Ctx::background(),
+        &checkout.settings(),
+        &path_runner(),
+        paths([BOTH]),
+        None,
+        &quiet(),
+    )
+    .await
+    .unwrap();
 
     // The last line is the aggregate: the total, the subtotal of each lane, and the command to run next. A caller
     // reads the sizes off it rather than counting the suite lines above it.
@@ -269,9 +276,16 @@ async fn the_suites_command_subtotals_each_lane_and_carries_the_counts_as_data()
 async fn one_lanes_suites_need_no_lane_in_the_command_to_run_next() {
     let checkout = Checkout::new();
 
-    let outcome = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), paths([PRESET]), &quiet())
-        .await
-        .unwrap();
+    let outcome = command_suites(
+        &Ctx::background(),
+        &checkout.settings(),
+        &path_runner(),
+        paths([PRESET]),
+        None,
+        &quiet(),
+    )
+    .await
+    .unwrap();
 
     // One lane settles itself, so the next command carries no `--lane` for the caller to fill in.
     assert_eq!(
@@ -280,11 +294,34 @@ async fn one_lanes_suites_need_no_lane_in_the_command_to_run_next() {
     );
 }
 
+// A non-bridge path does not read the base, so the answer stays the same. The next command repeats the base, so the
+// run selects what this answer names.
+#[tokio::test]
+async fn the_next_command_repeats_the_base_of_the_answer() {
+    let checkout = Checkout::new();
+
+    let outcome = command_suites(
+        &Ctx::background(),
+        &checkout.settings(),
+        &path_runner(),
+        paths([PRESET]),
+        Some("HEAD~3"),
+        &quiet(),
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(
+        outcome.text.lines().last(),
+        Some("2 suite(s): ui 2; next: run --changed <the same paths> --base HEAD~3")
+    );
+}
+
 #[tokio::test]
 async fn the_suites_command_needs_a_path() {
     let checkout = Checkout::new();
 
-    let refused = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), Vec::new(), &quiet())
+    let refused = command_suites(&Ctx::background(), &checkout.settings(), &path_runner(), Vec::new(), None, &quiet())
         .await
         .unwrap_err();
 
@@ -431,7 +468,7 @@ fn a_flow_refusal_keeps_bts_own_code() {
 fn every_lane_selects_each_reached_lane_in_lane_order() {
     let checkout = Checkout::new();
     let settings = checkout.settings();
-    let reached = resolve_changed_suites(&settings, &paths([BOTH]), &quiet()).unwrap();
+    let reached = resolve_changed_suites(&settings, &paths([BOTH]), None, &quiet()).unwrap();
 
     let planned = reached.every_lane(None).unwrap();
     let planned_lanes: Vec<&str> = planned.iter().map(|one| one.lane.as_str()).collect();
@@ -446,6 +483,6 @@ fn every_lane_selects_each_reached_lane_in_lane_order() {
     assert_eq!(named[0].lane, "gui-chat");
 
     // An answer with no suite keeps its own refusal.
-    let nothing = resolve_changed_suites(&settings, &paths([PLAIN]), &quiet()).unwrap();
+    let nothing = resolve_changed_suites(&settings, &paths([PLAIN]), None, &quiet()).unwrap();
     assert_eq!(refusal(nothing.every_lane(None)).code, "no_affected_suite");
 }

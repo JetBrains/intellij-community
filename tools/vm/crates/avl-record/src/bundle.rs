@@ -23,7 +23,7 @@ use crate::{Clock, Diagnostics, lock, unix_ms};
 /// killed outright therefore leaves every line it had written, whole, and a viewer tailing the bundle while the
 /// scenario runs reads the same lines the finished bundle will hold.
 ///
-/// It is shared by the command loop and the threads that report on their own (the frame loop, the still encoder),
+/// It is shared by the command loop and the threads that report on their own (the frame loop, the still encoders),
 /// hence the lock. A write that fails is reported once on the diagnostics stream and the bundle is otherwise left
 /// alone: evidence that cannot be written must not become a failure of the scenario it watches.
 pub(crate) struct BundleWriter {

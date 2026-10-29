@@ -320,12 +320,10 @@ impl Guest<'_> {
         };
         let captured = self.channel.exec(self.ctx, &argv, &options).await?;
         if captured.exit_code != 0 {
-            return Err(Refusal::new(
-                "guest_write_failed",
-                Exit::from_status(captured.exit_code, Exit::FAILURE),
-                format!("could not write {path}; tee exited with {}", captured.exit_code),
-            )
-            .with_details(json!({ "stderr": clip(&captured.stderr, FAILURE_OUTPUT_TAIL_BYTES) })));
+            let message = format!("could not write {path}; tee exited with {}", captured.exit_code);
+            return Err(
+                write_failed(&captured, message).with_details(json!({ "stderr": clip(&captured.stderr, FAILURE_OUTPUT_TAIL_BYTES) }))
+            );
         }
         self.as_user(&words(["/bin/chmod", mode, path]), &SpawnOptions::within(GUEST_COMMAND_TIMEOUT))
             .await
@@ -349,14 +347,11 @@ impl Guest<'_> {
         };
         let captured = self.channel.exec(self.ctx, &argv, &options).await?;
         if captured.exit_code != 0 {
-            return Err(Refusal::new(
-                "guest_write_failed",
-                Exit::from_status(captured.exit_code, Exit::FAILURE),
-                format!(
-                    "could not write the secret file {path}; sh exited with {}; guest output was withheld",
-                    captured.exit_code
-                ),
-            ));
+            let message = format!(
+                "could not write the secret file {path}; sh exited with {}; guest output was withheld",
+                captured.exit_code
+            );
+            return Err(write_failed(&captured, message));
         }
         Ok(())
     }
@@ -418,6 +413,12 @@ pub fn user_argv(settings: &Config, argv: &[String]) -> Vec<String> {
 /// path is the shell's `$1` and never part of the script, so no quoting of it can break the command.
 fn secret_write_argv(path: &str) -> Vec<String> {
     words(["/bin/sh", "-c", "umask 077 && exec cat > \"$1\"", "sh", path])
+}
+
+/// The refusal of a guest write that exited with a nonzero status. The caller gives the message, so it decides what
+/// guest output the refusal quotes.
+fn write_failed(captured: &Captured, message: String) -> Refusal {
+    Refusal::new("guest_write_failed", Exit::from_status(captured.exit_code, Exit::FAILURE), message)
 }
 
 /// Prefixes `argv` with the sudo invocation that runs it as root. `-H` because the worker prefix has it: two

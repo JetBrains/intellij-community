@@ -539,9 +539,9 @@ fn the_validator_refuses_nothing_it_should_accept() {
         json!("_main/plugins/air/tests/integration/flow-profiles/lanes.zip"),
     ));
     // A build with no context plugin installs nothing.
-    assert!(parse(&set(valid_descriptor(), "/ide/plugins", json!([]))).ide.plugins.is_empty());
+    assert_eq!(parse(&set(valid_descriptor(), "/ide/plugins", json!([]))).ide.plugins, []);
     // An empty data list is a build that mounts nothing.
-    assert!(parse(&set(valid_descriptor(), "/data", json!([]))).data.is_empty());
+    assert_eq!(parse(&set(valid_descriptor(), "/data", json!([]))).data, []);
     // A project root of more than one segment.
     parse(&set(valid_descriptor(), "/ide/projectRoot", json!("projects/BookmarksTestProject")));
     // A jar whose name contains dots but climbs nowhere.

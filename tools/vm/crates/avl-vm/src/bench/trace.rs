@@ -14,7 +14,19 @@ struct Jaeger {
 #[derive(Deserialize)]
 struct JaegerTrace {
     spans: Vec<Span>,
+    /// The process of the IDE, whose `time` tag holds the local time of the start with its UTC offset.
+    #[serde(default)]
+    processes: std::collections::BTreeMap<String, Process>,
 }
+
+#[derive(Deserialize)]
+struct Process {
+    #[serde(default)]
+    tags: Vec<Tag>,
+}
+
+/// The tag of a process with the local time of the IDE, such as `Thu, 22 Oct 2026 16:53:18 +0200`.
+const TIME_TAG: &str = "time";
 
 /// One span. The times are in microseconds. The reader ignores the references.
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
@@ -68,6 +80,9 @@ pub(crate) struct Trace {
     pub(crate) spans: Vec<Span>,
     /// The file ended inside the span array, and the reader closed it.
     pub(crate) truncated: bool,
+    /// The UTC offset in seconds of the local time of the IDE, from the `time` tag of its process. It turns a local
+    /// time of `idea.log` into a time since the epoch. A trace without the tag has none.
+    pub(crate) utc_offset_s: Option<i32>,
 }
 
 /// The most cuts that the repair tries before it gives up.
@@ -119,7 +134,13 @@ pub(crate) const fn as_f64(value: i64) -> f64 {
 /// Parses a trace. A file that ends inside the span array is cut at a `}` and closed.
 pub(crate) fn parse(text: &str) -> anyhow::Result<Trace> {
     let complete_error = match parse_complete(text) {
-        Ok(spans) => return Ok(Trace { spans, truncated: false }),
+        Ok((spans, utc_offset_s)) => {
+            return Ok(Trace {
+                spans,
+                truncated: false,
+                utc_offset_s,
+            });
+        }
         Err(error) => error,
     };
     if !text.trim_start().starts_with("{\"data\":[") {
@@ -131,17 +152,45 @@ pub(crate) fn parse(text: &str) -> anyhow::Result<Trace> {
             break;
         };
         let repaired = format!("{}{CLOSING}", &text[..=cut]);
-        if let Ok(spans) = parse_complete(&repaired) {
-            return Ok(Trace { spans, truncated: true });
+        if let Ok((spans, utc_offset_s)) = parse_complete(&repaired) {
+            return Ok(Trace {
+                spans,
+                truncated: true,
+                utc_offset_s,
+            });
         }
         end = cut;
     }
     bail!("a truncated Jaeger trace that no cut repairs: {complete_error}")
 }
 
-fn parse_complete(text: &str) -> serde_json::Result<Vec<Span>> {
+fn parse_complete(text: &str) -> serde_json::Result<(Vec<Span>, Option<i32>)> {
     let jaeger: Jaeger = serde_json::from_str(text)?;
-    Ok(jaeger.data.into_iter().flat_map(|entry| entry.spans).collect())
+    let utc_offset_s = jaeger
+        .data
+        .iter()
+        .flat_map(|entry| entry.processes.values())
+        .flat_map(|process| &process.tags)
+        .find(|tag| tag.key == TIME_TAG)
+        .and_then(|tag| tag.value.as_str())
+        .and_then(utc_offset);
+    Ok((jaeger.data.into_iter().flat_map(|entry| entry.spans).collect(), utc_offset_s))
+}
+
+/// The UTC offset in seconds at the end of a time such as `Thu, 22 Oct 2026 16:53:18 +0200`.
+fn utc_offset(time: &str) -> Option<i32> {
+    let offset = time.rsplit(' ').next()?;
+    let (sign, digits) = match offset.split_at_checked(1)? {
+        ("+", digits) => (1, digits),
+        ("-", digits) => (-1, digits),
+        _ => return None,
+    };
+    if digits.len() != 4 || !digits.chars().all(|character| character.is_ascii_digit()) {
+        return None;
+    }
+    let hours: i32 = digits[..2].parse().ok()?;
+    let minutes: i32 = digits[2..].parse().ok()?;
+    Some(sign * (hours * 3600 + minutes * 60))
 }
 
 #[cfg(test)]

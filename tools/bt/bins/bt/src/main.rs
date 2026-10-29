@@ -12,10 +12,16 @@
 //! - `<system-out>`/`<system-err>` bodies are never parsed or printed. Only a log path is offered.
 //! - The six exit codes of [`bt_core::exit`] are a stable contract too: a caller automates against them.
 
+mod build;
+mod check;
 mod cli;
+mod credentials;
 mod digest;
 mod execute;
 mod options;
+mod prepare;
+mod remote;
+mod ssh;
 
 use std::path::PathBuf;
 use std::process::ExitCode;

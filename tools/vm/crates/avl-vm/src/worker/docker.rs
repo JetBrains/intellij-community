@@ -63,7 +63,7 @@ use sha2::{Digest as _, Sha256};
 use tokio::sync::OnceCell;
 
 use crate::worker::container::{AppleContainer, BUILDER_MEMORY, container_missing, is_not_found};
-use crate::worker::hypervisor::unsupported;
+use crate::worker::hypervisor::{host_argv, unsupported};
 use crate::worker::pin::{PinnedTool, PinnedTools};
 use crate::worker::secure::{read_json_record, write_json_line};
 
@@ -418,8 +418,8 @@ impl Docker {
     /// CLI: an argv with an empty head is refused rather than spawned.
     ///
     /// Only for host commands that already passed [`Docker::require_available`]. A guest command line resolves the
-    /// head itself ([`Docker::guest_argv`]). The create record leaves the head out, so a record written before the
-    /// gate compares the same.
+    /// head itself ([`Machine::guest_argv`](crate::worker::hypervisor::Machine::guest_argv)). The create record leaves
+    /// the head out, so a record written before the gate compares the same.
     pub(crate) fn program(&self) -> String {
         self.executable
             .get()
@@ -489,9 +489,7 @@ impl Docker {
     }
 
     fn command(&self, arguments: &[&str]) -> Vec<String> {
-        std::iter::once(self.program())
-            .chain(arguments.iter().map(|argument| (*argument).to_owned()))
-            .collect()
+        host_argv(self.program(), arguments)
     }
 
     fn note(&self, worker: Option<&str>, message: String) {
@@ -572,27 +570,6 @@ impl Docker {
              linux/{}, because the guest agent and the trace recorder are built for it",
             arch.oci_arch()
         )))
-    }
-
-    /// `docker exec [-i] <worker> <argv…>`.
-    ///
-    /// `-i` keeps stdin open and is passed exactly when the caller has stdin, as Tart's `-i` is. Never `-t`: a tty
-    /// would rewrite the relay's bytes and the file writes that `tee` carries. `docker exec` lands as root, so the
-    /// `sudo -H -u admin` prefix every guest step already has applies unchanged. The head is declared on the
-    /// timeline, so phase timing counts the spawn as a guest call.
-    ///
-    /// The head comes from [`Docker::resolved_program`], not from the gate: a verb that skipped the gate still spawns
-    /// the pinned CLI.
-    pub(crate) async fn guest_argv(&self, ctx: &Ctx, worker: &str, argv: &[String], interactive: bool) -> Result<Vec<String>, Refusal> {
-        let head = self.resolved_program(ctx).await?;
-        ctx.timeline().declare_guest_head(&head);
-        let mut line = vec![head, "exec".to_owned()];
-        if interactive {
-            line.push("-i".to_owned());
-        }
-        line.push(worker.to_owned());
-        line.extend_from_slice(argv);
-        Ok(line)
     }
 
     /// Whether the engine runs and answers, asked without a start of the engine: the question of a command that must
@@ -1113,26 +1090,30 @@ impl Docker {
         let log = self.settings.docker_pull_log_path();
         remove_if_present(&log)?;
         self.note(None, format!("pulling the Docker image {remote} (log: {})", log.display()));
-        match self
-            .runner
-            .checked_to_file(ctx, &self.pull_argv(remote), &log, &log_options(DOCKER_PULL_TIMEOUT))
-            .await
-        {
-            Ok(_) => {}
-            Err(ProcError::Exited { refusal, .. }) => {
-                self.note(
-                    None,
-                    format!("{}; building the image instead; the pull log is {}", refusal.message, log.display()),
-                );
-                return Ok(false);
-            }
-            Err(other) => return Err(other.into()),
+        if !self.fetch_into_log(ctx, &self.pull_argv(remote), &log).await? {
+            return Ok(false);
         }
         if !self.revision_matches(ctx, tag, remote, remote).await? {
             return Ok(false);
         }
         self.checked(ctx, &["tag", remote, tag], DOCKER_QUERY_TIMEOUT).await?;
         Ok(true)
+    }
+
+    /// Runs the pull or the download `argv` with its output in the pull `log`, and answers whether it succeeded. A
+    /// fetch that exited with an error is a note that names the log, and the caller builds the image instead.
+    async fn fetch_into_log(&self, ctx: &Ctx, argv: &[String], log: &Path) -> Result<bool, Refusal> {
+        match self.runner.checked_to_file(ctx, argv, log, &log_options(DOCKER_PULL_TIMEOUT)).await {
+            Ok(_) => Ok(true),
+            Err(ProcError::Exited { refusal, .. }) => {
+                self.note(
+                    None,
+                    format!("{}; building the image instead; the pull log is {}", refusal.message, log.display()),
+                );
+                Ok(false)
+            }
+            Err(other) => Err(other.into()),
+        }
     }
 
     /// Downloads the image archive of the tag from `url` with the host `curl`, loads it with `image load`, and checks
@@ -1152,20 +1133,8 @@ impl Docker {
         let archive = directory.join(self.archive_name(tag));
         remove_if_present(&archive)?;
         self.note(None, format!("downloading the Docker image archive {url} (log: {})", log.display()));
-        match self
-            .runner
-            .checked_to_file(ctx, &self.download_argv(url, &archive), &log, &log_options(DOCKER_PULL_TIMEOUT))
-            .await
-        {
-            Ok(_) => {}
-            Err(ProcError::Exited { refusal, .. }) => {
-                self.note(
-                    None,
-                    format!("{}; building the image instead; the pull log is {}", refusal.message, log.display()),
-                );
-                return Ok(false);
-            }
-            Err(other) => return Err(other.into()),
+        if !self.fetch_into_log(ctx, &self.download_argv(url, &archive), &log).await? {
+            return Ok(false);
         }
         let loaded = self
             .runner

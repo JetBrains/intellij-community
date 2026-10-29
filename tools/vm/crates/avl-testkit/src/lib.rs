@@ -37,6 +37,46 @@ pub fn free_port_below_ephemeral_floor() -> u16 {
         .unwrap_or_else(|| panic!("no port of {FIXED_TEST_PORTS:?} is free on the loopback"))
 }
 
+/// A loopback port where nothing listens, and the sockets that hold it. While they live, the port refuses a connect,
+/// and no other socket of the host receives it from a `bind` to port 0 or as the source port of a `connect`.
+///
+/// The holder is the client end of a loopback connection, and it binds its port before it connects. A dropped
+/// listener frees its port for any process of the host. A bound socket that does not listen is not a refusal on
+/// macOS, because the kernel drops the SYN. The standard library cannot bind a client socket, so the sockets are
+/// tokio ones.
+pub async fn closed_port() -> (u16, impl Sized) {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let holder = tokio::net::TcpSocket::new_v4().unwrap();
+    holder.bind((std::net::Ipv4Addr::LOCALHOST, 0).into()).unwrap();
+    let holder = holder.connect(listener.local_addr().unwrap()).await.unwrap();
+    let (accepted, _) = listener.accept().await.unwrap();
+    (holder.local_addr().unwrap().port(), (holder, accepted))
+}
+
+/// Runs `command` with no standard input, and answers what [`answer_of`] answers.
+pub fn answer(command: &mut std::process::Command) -> (Option<i32>, String, String) {
+    answer_of(command.stdin(std::process::Stdio::null()).output().unwrap())
+}
+
+/// The exit code, the standard output and the standard error of a process that ended.
+pub fn answer_of(output: std::process::Output) -> (Option<i32>, String, String) {
+    let text = |bytes: Vec<u8>| String::from_utf8(bytes).unwrap();
+    (output.status.code(), text(output.stdout), text(output.stderr))
+}
+
+/// A writer whose reader went away: each write and each flush fails with `BrokenPipe`.
+pub struct ClosedPipe;
+
+impl std::io::Write for ClosedPipe {
+    fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
+        Err(std::io::ErrorKind::BrokenPipe.into())
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Err(std::io::ErrorKind::BrokenPipe.into())
+    }
+}
+
 /// A file of the calling crate, e.g. `crate_path!("testdata/lane-transcript.ndjson")`.
 ///
 /// A macro, because `AVL_PACKAGE` and `CARGO_MANIFEST_DIR` must be the caller's, not this crate's.
@@ -45,6 +85,37 @@ macro_rules! crate_path {
     ($relative:expr) => {
         $crate::resolve_crate_path(option_env!("AVL_PACKAGE"), $relative)
     };
+}
+
+/// The absolute path of `testdata/<name>` of the calling crate. `expect_file!` reads a relative path from the source
+/// file, so a golden needs the absolute one.
+#[macro_export]
+macro_rules! testdata_path {
+    ($name:expr) => {
+        $crate::absolute(&$crate::crate_path!(&format!("testdata/{}", $name)))
+    };
+}
+
+/// The absolute form of `path`.
+pub fn absolute(path: &Path) -> PathBuf {
+    std::path::absolute(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
+}
+
+/// Each line of the fixture file `path`, decoded. A line that does not decode fails the test and names the line.
+pub fn decode_lines<T, E: std::fmt::Display>(path: &Path, decode: impl Fn(&[u8]) -> Result<T, E>) -> Vec<T> {
+    let text = fs::read_to_string(path).unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+    text.lines()
+        .map(|line| decode(line.as_bytes()).unwrap_or_else(|error| panic!("the fixture line {line} reads: {error}")))
+        .collect()
+}
+
+/// A lookup of environment variables that answers the value of each pair, and `None` for every other name.
+pub fn environment_lookup(pairs: &[(&str, &str)]) -> impl Fn(&str) -> Option<String> + use<> {
+    let variables: std::collections::HashMap<String, String> = pairs
+        .iter()
+        .map(|(name, value)| ((*name).to_owned(), (*value).to_owned()))
+        .collect();
+    move |name| variables.get(name).cloned()
 }
 
 #[doc(hidden)]

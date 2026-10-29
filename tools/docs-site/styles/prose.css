@@ -16,12 +16,9 @@
   }
 
   a {
-    color: var(--primary);
-    text-decoration: none;
-  }
-
-  a:hover {
+    color: var(--foreground);
     text-decoration: underline;
+    text-underline-offset: 4px;
   }
 
   /* .code-link: markdown-generated source/symbol links (transformRendered in markdown.tsx)
@@ -30,7 +27,7 @@
   .code-link {
     font-family: var(--font-mono), monospace;
     font-size: 0.86em;
-    background: var(--code-bg);
+    background: var(--muted);
     border-radius: 4px;
     padding: 0.1em 0.35em;
   }
@@ -90,25 +87,87 @@
   --tw-prose-body: var(--foreground);
   --tw-prose-headings: var(--foreground);
   --tw-prose-lead: var(--muted-foreground);
-  --tw-prose-links: var(--primary);
+  --tw-prose-links: var(--foreground);
   --tw-prose-bold: var(--foreground);
   --tw-prose-counters: var(--muted-foreground);
   --tw-prose-bullets: var(--muted-foreground);
-  --tw-prose-hr: var(--input);
+  --tw-prose-hr: var(--border);
   --tw-prose-quotes: var(--muted-foreground);
-  --tw-prose-quote-borders: var(--input);
+  --tw-prose-quote-borders: var(--border);
   --tw-prose-captions: var(--muted-foreground);
   --tw-prose-kbd: var(--foreground);
   --tw-prose-code: var(--foreground);
   --tw-prose-pre-code: var(--foreground);
   --tw-prose-pre-bg: var(--muted);
-  --tw-prose-th-borders: var(--input);
-  --tw-prose-td-borders: var(--input);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
 
   /* keep the site's dense 15px/1.55 rhythm and let embedded contexts (detail panel, flow
      cards) keep their smaller inherited size instead of prose's 1rem/1.75 */
   font-size: inherit;
   line-height: inherit;
+}
+
+/* A quote is a callout: the info surface of a status Alert, its icon, and no rule. The first paragraph of the status
+   section of a decision record is a quote too (decisionBody of DecisionPage.tsx), with the history icon. */
+.markdown-body blockquote {
+  position: relative;
+  margin-block: 0 1rem;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--info-surface);
+  box-shadow: inset 0 0 0 1px var(--info-border);
+  color: var(--foreground);
+  font-size: var(--text-sm);
+  line-height: 1.5;
+}
+
+.markdown-body blockquote::before {
+  content: '';
+  position: absolute;
+  top: 0.875rem;
+  left: 1rem;
+  width: 1.125rem;
+  height: 1.125rem;
+  background: var(--info);
+  /* lucide info */
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cpath d='M12 16v-4'/%3E%3Cpath d='M12 8h.01'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.markdown-body h2#status + blockquote::before {
+  /* lucide history */
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8'/%3E%3Cpath d='M3 3v5h5'/%3E%3Cpath d='M12 7v5l4 2'/%3E%3C/svg%3E");
+}
+
+.markdown-body blockquote p {
+  margin-block: 0;
+}
+
+.markdown-body blockquote p + p {
+  margin-top: 0.5rem;
+}
+
+/* A numbered list of a reading document hangs its numbers, as the numbered decisions of a record. */
+.doc-article .markdown-body > ol {
+  list-style: none;
+  padding-left: 0;
+  counter-reset: item;
+}
+
+.doc-article .markdown-body > ol > li {
+  position: relative;
+  padding-left: 2.25rem;
+  counter-increment: item;
+}
+
+.doc-article .markdown-body > ol > li::before {
+  content: counter(item);
+  position: absolute;
+  left: 0;
+  color: var(--muted-foreground);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
 }
 
 /* prose's quote marks live on nested p pseudo-elements a prose-blockquote: modifier can't reach */
@@ -149,7 +208,7 @@ h4:hover .heading-anchor,
 }
 
 .heading-anchor:hover {
-  color: var(--primary);
+  color: var(--foreground);
   text-decoration: none;
 }
 
@@ -161,8 +220,8 @@ h4:hover .heading-anchor,
 }
 
 a.symbol-link code {
-  color: var(--primary);
-  background: var(--primary-tint);
+  color: var(--foreground);
+  background: color-mix(in oklab, var(--primary) 10%, transparent);
 }
 
 a.symbol-link:hover {
@@ -202,11 +261,11 @@ a.symbol-link:hover code {
 /* a relative picture that harvest did not copy, styled as the .air-view-error block */
 .doc-figure-error {
   display: inline-block;
-  border: 1px solid var(--tag-ui);
+  border: 1px solid var(--destructive);
   border-radius: calc(var(--radius) * 0.8);
   padding: 0.5rem 0.875rem;
   font-size: var(--text-sm);
-  color: var(--tag-ui);
+  color: var(--destructive);
 }
 
 /* Print to PDF from the browser: the content column only, the full page height, and each figure on one
@@ -225,9 +284,19 @@ a.symbol-link:hover code {
     overflow: visible;
   }
 
+  .reading-layout,
+  .reading-column,
+  .tool-layout {
+    display: block;
+    max-width: none;
+    padding: 0;
+  }
+
   .topbar,
   .page-breadcrumb-bar,
+  .section-nav,
   .toc-aside,
+  .toc-column,
   .heading-anchor,
   .doc-figure-open {
     display: none;

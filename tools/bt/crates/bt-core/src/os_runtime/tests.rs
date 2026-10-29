@@ -7,7 +7,7 @@ use std::io::Write;
 use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use pretty_assertions::assert_eq;
 
@@ -110,6 +110,50 @@ fn both_of_a_childs_streams_are_collected_and_its_exit_code_is_answered() {
     assert!(result.output.contains("said on stderr"), "{}", result.output);
 }
 
+/// Apart, not merged: the stdout is the answer of the child, and each stderr line reaches the sink as it comes.
+#[test]
+fn a_streamed_child_answers_its_stdout_and_passes_on_its_stderr_lines() {
+    let lines = Mutex::new(Vec::new());
+    let sink = |line: &str| lines.lock().expect("the sink lock").push(line.to_owned());
+    let result = stream_to_end(child(None, "streams"), &sink);
+    assert_eq!(result.exit_code, 3, "{}", result.output);
+    // The harness of the child writes its own header to the stdout first.
+    assert!(result.output.ends_with("said on stdout\n"), "{}", result.output);
+    assert!(!result.output.contains("said on stderr"), "{}", result.output);
+    assert!(lines.lock().expect("the sink lock").iter().any(|line| line == "said on stderr"));
+}
+
+/// A child that writes nothing for the idle limit is stopped, and a child that ends in time answers as usual.
+#[test]
+fn a_watched_child_that_stays_silent_is_stopped() {
+    let started = Instant::now();
+    let silent = watch_to_end(child(None, "sleep:20000"), Duration::from_millis(300));
+    assert_eq!(silent.exit_code, STOPPED_IDLE, "{}", silent.output);
+    assert!(
+        silent.output.contains("wrote nothing for 0 s, so it was stopped"),
+        "{}",
+        silent.output
+    );
+    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
+
+    let speaking = watch_to_end(child(None, "streams"), Duration::from_secs(20));
+    assert_eq!(speaking.exit_code, 3, "{}", speaking.output);
+    assert!(speaking.output.contains("said on stdout"), "{}", speaking.output);
+}
+
+/// The stall is often in a grandchild that holds the pipe, as the ssh of a git push does. Its group goes with it.
+#[cfg(unix)]
+#[test]
+fn a_watched_child_is_stopped_with_its_grandchildren() {
+    let started = Instant::now();
+    let mut command = Command::new("/bin/sh");
+    command.args(["-c", "sleep 30; echo late"]).stdin(Stdio::null());
+    let stopped = watch_to_end(command, Duration::from_millis(300));
+    assert_eq!(stopped.exit_code, STOPPED_IDLE, "{}", stopped.output);
+    assert!(!stopped.output.contains("late"), "{}", stopped.output);
+    assert!(started.elapsed() < Duration::from_secs(10), "{:?}", started.elapsed());
+}
+
 /// The tail, because a lane run's bazel output is megabytes and only its end says why it failed.
 #[test]
 fn output_is_truncated_to_its_tail() {
@@ -147,7 +191,7 @@ fn a_command_that_cannot_start_is_an_infra_exit() {
     assert!(result.output.contains("not-a-program"), "{result:?}");
     let empty = spawn_child(None, &[], None);
     assert_eq!(empty.exit_code, 127);
-    assert!(!empty.output.is_empty());
+    assert_ne!(empty.output, "");
 }
 
 /// The controller's spawn, which is a refusal: a selector is resolved from inside a held lease.
@@ -265,48 +309,69 @@ fn git_available() -> bool {
         .is_ok_and(|output| output.status.success())
 }
 
+/// The directory of a test repository, or `None` where no git is installed: nothing here can stand in for git.
+fn repository_dir() -> Option<tempfile::TempDir> {
+    if !git_available() {
+        eprintln!("skipped: no git on this host");
+        return None;
+    }
+    Some(tempfile::tempdir().expect("a temporary directory"))
+}
+
+/// Writes a file of the repository, with its directories.
+fn write_in(repo: &Path, path: &str, text: &str) {
+    let full = repo.join(path);
+    std::fs::create_dir_all(full.parent().expect("a nested path")).expect("mkdir");
+    std::fs::write(full, text).expect("write");
+}
+
+/// Runs git in `repo`, and answers its stdout without the line end. It is isolated from the configuration of the
+/// host, which may sign, hook or template a repository.
+fn git_in(repo: &Path, args: &[&str], index: Option<&Path>) -> String {
+    let mut command = Command::new("git");
+    command
+        .arg("-C")
+        .arg(repo)
+        .args(["-c", "user.name=bt", "-c", "user.email=bt@example.com"])
+        .args(args)
+        .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
+        .env("GIT_CONFIG_NOSYSTEM", "1");
+    if let Some(index) = index {
+        command.env("GIT_INDEX_FILE", index);
+    }
+    let output = command.output().expect("git runs");
+    assert!(output.status.success(), "git {args:?}: {output:?}");
+    String::from_utf8(output.stdout).expect("UTF-8").trim_end().to_owned()
+}
+
 /// The listing is git's, so the case needs a real repository: a tracked file, an untracked one, an ignored one, and
 /// a tracked file that is gone from the disk. Skipped where no git is installed, because nothing here can stand in
 /// for it.
 #[test]
 fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
-    if !git_available() {
-        eprintln!("skipped: no git on this host");
+    let Some(dir) = repository_dir() else {
         return;
-    }
-    let dir = tempfile::tempdir().expect("a temporary directory");
+    };
     let repo = dir.path();
-    let write = |path: &str, text: &str| {
-        let full = repo.join(path);
-        std::fs::create_dir_all(full.parent().expect("a nested path")).expect("mkdir");
-        std::fs::write(full, text).expect("write");
-    };
-    let git = |args: &[&str]| {
-        let output = Command::new("git")
-            .arg("-C")
-            .arg(repo)
-            .args(args)
-            // Isolated from the host's own configuration, which may sign, hook or template a repository.
-            .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
-            .env("GIT_CONFIG_NOSYSTEM", "1")
-            .output()
-            .expect("git runs");
-        assert!(output.status.success(), "git {args:?}: {output:?}");
-    };
+    let write = |path: &str, text: &str| write_in(repo, path, text);
     write(".gitignore", "out/\n");
     write("module/src/Tracked.kt", "tracked");
     write("module/src/Gone.kt", "gone");
     write("module/src/with space.kt", "untracked");
     write("module/out/Built.class", "ignored");
     write("other/Outside.kt", "outside the directory");
-    git(&["init", "-q"]);
-    git(&[
-        "add",
-        ".gitignore",
-        "module/src/Tracked.kt",
-        "module/src/Gone.kt",
-        "other/Outside.kt",
-    ]);
+    git_in(repo, &["init", "-q"], None);
+    git_in(
+        repo,
+        &[
+            "add",
+            ".gitignore",
+            "module/src/Tracked.kt",
+            "module/src/Gone.kt",
+            "other/Outside.kt",
+        ],
+        None,
+    );
     std::fs::remove_file(repo.join("module/src/Gone.kt")).expect("remove");
 
     let module = repo.join("module");
@@ -316,6 +381,64 @@ fn the_listing_holds_tracked_and_untracked_files_and_nothing_ignored() {
         files,
         [module.join("src").join("Tracked.kt"), module.join("src").join("with space.kt"),]
     );
+}
+
+/// A revision reads a file as the commit holds it, answers no text for a file that the commit does not hold, and is an
+/// error when the checkout holds no such commit. The upstream base is where `HEAD` meets the upstream of its branch.
+#[test]
+fn a_revision_reads_its_files_and_the_upstream_base_is_the_merge_base() {
+    if !git_available() {
+        eprintln!("skipped: no git on this host");
+        return;
+    }
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let repo = dir.path();
+    let git = |args: &[&str]| -> String {
+        let output = Command::new("git")
+            .arg("-C")
+            .arg(repo)
+            .args([
+                "-c",
+                "user.name=test",
+                "-c",
+                "user.email=test@example.com",
+                "-c",
+                "commit.gpgsign=false",
+            ])
+            .args(args)
+            .env("GIT_CONFIG_GLOBAL", if cfg!(windows) { "NUL" } else { "/dev/null" })
+            .env("GIT_CONFIG_NOSYSTEM", "1")
+            .output()
+            .expect("git runs");
+        assert!(output.status.success(), "git {args:?}: {output:?}");
+        String::from_utf8_lossy(&output.stdout).trim().to_owned()
+    };
+    std::fs::create_dir_all(repo.join("module")).expect("mkdir");
+    std::fs::write(repo.join("module/Driver.kt"), "first\n").expect("write");
+    git(&["init", "-q", "-b", "main"]);
+    git(&["add", "module/Driver.kt"]);
+    git(&["commit", "-q", "-m", "first"]);
+    let base = git(&["rev-parse", "HEAD"]);
+    git(&["branch", "published"]);
+    git(&["branch", "-q", "--set-upstream-to=published"]);
+    std::fs::write(repo.join("module/Driver.kt"), "second\n").expect("write");
+    git(&["commit", "-q", "-am", "second"]);
+
+    let host = OsRuntime::builder(repo).build();
+    assert_eq!(host.upstream_base().expect("the branch has an upstream"), base);
+    assert_eq!(
+        host.revision_text(&base, "module/Driver.kt").expect("git reads"),
+        Some("first\n".to_owned())
+    );
+    assert_eq!(
+        host.revision_text("HEAD", "module/Driver.kt").expect("git reads"),
+        Some("second\n".to_owned())
+    );
+    assert_eq!(host.revision_text(&base, "module/Gone.kt").expect("git reads"), None);
+    host.revision_text("no-such-revision", "module/Driver.kt")
+        .expect_err("the checkout holds no such revision");
+    git(&["checkout", "-q", "--detach"]);
+    host.upstream_base().expect_err("a detached HEAD without origin has no upstream");
 }
 
 /// A directory git cannot list is an error that names it, never an empty listing: an empty one reads as "this
@@ -333,4 +456,111 @@ fn a_directory_git_cannot_list_is_an_error() {
         .list_files(&absent)
         .expect_err("an absent directory is not listable");
     assert!(error.to_string().contains(&absent.display().to_string()), "{error}");
+}
+
+/// Only a linked work tree has a tree: no git and a main checkout answer none. The tree of a clean work tree is the
+/// tree of HEAD. With local changes it is the tree that `git add -A` would stage: a changed file, a new file, a
+/// deleted file, and no ignored file. The index of the work tree stays as it was.
+#[test]
+fn the_tree_of_a_checkout_holds_its_local_changes_and_leaves_its_index_alone() {
+    let Some(dir) = repository_dir() else {
+        return;
+    };
+    let main = dir.path().join("main");
+    let main_runtime = OsRuntime::builder(&main).build();
+    for (path, text) in [
+        (".gitignore", "out/\n"),
+        ("src/Changed.kt", "before"),
+        ("src/Deleted.kt", "deleted"),
+    ] {
+        write_in(&main, path, text);
+    }
+    assert_eq!(main_runtime.checkout_tree().expect("no git is no error"), None);
+
+    git_in(&main, &["init", "-q"], None);
+    git_in(&main, &["add", "-A"], None);
+    git_in(&main, &["commit", "-q", "-m", "first"], None);
+    assert_eq!(main_runtime.checkout_tree().expect("a main checkout is no error"), None);
+    git_in(&main, &["worktree", "add", "-q", "--detach", "../lease"], None);
+    let repo = &dir.path().join("lease");
+    let runtime = OsRuntime::builder(repo).build();
+    let head = git_in(repo, &["rev-parse", "HEAD"], None);
+    let head_tree = git_in(repo, &["rev-parse", "HEAD^{tree}"], None);
+
+    let clean = runtime
+        .checkout_tree()
+        .expect("git reads a clean checkout")
+        .expect("a linked work tree");
+    assert_eq!(
+        clean,
+        CheckoutTree {
+            head: head.clone(),
+            tree: head_tree.clone(),
+            changed: Vec::new(),
+        }
+    );
+    assert_eq!(runtime.commit_tree(&head).expect("the tree of HEAD"), head_tree);
+    let records = runtime.git_path("bd-checks.jsonl").expect("a git path");
+    assert!(records.ends_with(".git/worktrees/lease/bd-checks.jsonl"), "{}", records.display());
+
+    for (path, text) in [
+        ("src/Changed.kt", "after"),
+        ("src/with space.kt", "new"),
+        ("out/Built.class", "ignored"),
+    ] {
+        write_in(repo, path, text);
+    }
+    std::fs::remove_file(repo.join("src/Deleted.kt")).expect("remove");
+    let status = git_in(repo, &["status", "--porcelain"], None);
+
+    let dirty = runtime
+        .checkout_tree()
+        .expect("git reads a changed checkout")
+        .expect("a git checkout");
+
+    // Outside the checkout, so `add -A` does not stage the index file itself.
+    let scratch = tempfile::tempdir().expect("a temporary directory");
+    let expected_index = scratch.path().join("expected-index");
+    git_in(repo, &["read-tree", "HEAD"], Some(&expected_index));
+    git_in(repo, &["add", "-A"], Some(&expected_index));
+    let expected = git_in(repo, &["write-tree"], Some(&expected_index));
+    assert_eq!(
+        dirty,
+        CheckoutTree {
+            head,
+            tree: expected,
+            changed: ["src/Changed.kt", "src/Deleted.kt", "src/with space.kt"]
+                .map(str::to_owned)
+                .to_vec(),
+        }
+    );
+    assert_ne!(dirty.tree, head_tree);
+    assert_eq!(
+        git_in(repo, &["status", "--porcelain"], None),
+        status,
+        "the index of the checkout changed"
+    );
+}
+
+/// The kept evidence of a run: a copy creates its directories, a copy of a read-only bazel output is a file the
+/// retention can delete on every platform, and removing a directory that is gone is no error.
+#[test]
+fn a_kept_copy_is_writable_and_its_run_directory_is_removable() {
+    let dir = tempfile::tempdir().expect("a temporary directory");
+    let source = dir.path().join("test.log");
+    std::fs::write(&source, "the log").expect("the source is written");
+    let mut permissions = std::fs::metadata(&source).expect("the source exists").permissions();
+    permissions.set_readonly(true);
+    std::fs::set_permissions(&source, permissions).expect("the source is read-only");
+    let runtime = OsRuntime::builder(dir.path()).build();
+    let run = dir.path().join("out/bt-runs/0000000001000");
+    let copy = run.join("pkg/target_test/test.log");
+
+    runtime.copy_file(&source, &copy).expect("the copy is made");
+
+    assert_eq!(std::fs::read_to_string(&copy).expect("the copy is readable"), "the log");
+    assert!(!std::fs::metadata(&copy).expect("the copy exists").permissions().readonly());
+    runtime.remove_dir_all(&run).expect("the run directory is removed");
+    assert!(!run.exists());
+    runtime.remove_dir_all(&run).expect("a missing directory is no error");
 }

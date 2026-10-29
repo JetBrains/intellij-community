@@ -6,10 +6,14 @@ use std::time::{Duration, Instant};
 
 use anyhow::bail;
 use avl_trace::bridge::IdeSpan;
-use avl_trace::bundle::{BundleStatus, IDEA_LOG_FILE, SPANS_FILE, Video, bundle_dir, snap_image_path, snap_tree_path};
+use avl_trace::bridge::{SPANS_ROUTE, TREE_ROUTE};
+use avl_trace::bundle::{
+    BundleStatus, IDEA_LOG_FILE, SPANS_FILE, StillEncoding, VIDEO_FILE, VIDEO_INDEX_FILE, Video, bundle_dir, snap_image_path,
+    snap_tree_path,
+};
 use avl_trace::otlp::{
     AnyValue, I64String, IDE_SERVICE_NAME, IDE_SPAN_KIND, LogRecord, SCOPE_NAME, StatusCode, UnixNano, attr, decode_traces_line, event,
-    lookup, lookup_str, span_id,
+    lookup, lookup_int, lookup_str, span_id,
 };
 use avl_trace::protocol::{ScenarioCommand, Status, decode_hello_ack, encode_command};
 use crossbeam_channel::{Receiver, Sender};
@@ -18,6 +22,7 @@ use super::*;
 use crate::capture::Frame;
 use crate::ladder::{VideoPlan, Videographer};
 use crate::system_clock;
+use crate::testing::SharedBuffer;
 use crate::tests::harness::*;
 use crate::video::{FrameSink, Recording, Stopped};
 
@@ -25,18 +30,12 @@ const MINIMAL_SCENARIO: &str = r#"{"op":"scenario","name":"example","testClass":
 const SNAP: &str = r#"{"op":"snap","span":0,"phase":"boundary"}"#;
 const DONE: &str = r#"{"op":"done","status":"passed"}"#;
 
-fn error_records(dir: &Path) -> Vec<String> {
-    records(dir)
-        .iter()
-        .filter(|record| record.event_name == event::TRACE_ERROR)
-        .map(|record| {
-            format!(
-                "{}: {}",
-                lookup_str(&record.attributes, attr::TRACE_ERROR_SOURCE).unwrap_or_default(),
-                lookup_str(&record.attributes, attr::TRACE_ERROR_MESSAGE).unwrap_or_default()
-            )
-        })
-        .collect()
+/// A session with the options of the harness that got the hello with a bridge and then `lines`.
+fn hello_and(h: &Harness, lines: &[&str]) -> Session<SharedBuffer> {
+    let mut session = h.session(h.options());
+    h.feed(&mut session, &[&h.hello(true)]);
+    h.feed(&mut session, lines);
+    session
 }
 
 fn ok_and_line(ack: &serde_json::Value) -> (bool, u64) {
@@ -85,7 +84,7 @@ fn every_refused_line_is_acked_and_recorded() {
     // The first line is answered in the hello's shape, since that is the ack a lane waits for then.
     let text = h.acks.text();
     decode_hello_ack(text.lines().next().unwrap().as_bytes()).expect("the refusal of line 1 is a hello ack");
-    let messages = error_records(&h.example_bundle()).join("\n");
+    let messages = trace_errors(&h.example_bundle()).join("\n");
     for part in [
         "line 5: ",
         "line 6: ",
@@ -126,11 +125,13 @@ fn a_session_without_a_bridge_still_takes_pictures() {
     assert_eq!(acks.len(), 4, "{}", h.acks.text());
     assert_eq!(acks[2]["ok"], true);
     let snapshot = snapshot_of(&h.example_bundle());
-    let image = snap_image_path(1);
+    let image = snap_image_path(1, StillEncoding::Lossless);
     assert_eq!(lookup_str(&snapshot.attributes, attr::SNAPSHOT_IMAGE), Some(image.as_str()));
     assert_eq!(lookup_str(&snapshot.attributes, attr::SNAPSHOT_TREE), None);
     let error = lookup_str(&snapshot.attributes, attr::SNAPSHOT_ERROR).unwrap_or_default();
     assert!(error.contains("no tree: the lane named no bridge"), "{error}");
+    let times = [attr::SNAPSHOT_GRAB_MS, attr::SNAPSHOT_TREE_MS, attr::SNAPSHOT_SPANS_MS].map(|key| lookup_int(&snapshot.attributes, key));
+    assert_eq!(times, [Some(0), None, None], "a part that did not run has no time");
     assert!(avl_trace::bundle::bundle_file(&h.example_bundle(), &image).is_file());
     assert!(
         !h.example_bundle().join(IDEA_LOG_FILE).exists(),
@@ -138,20 +139,37 @@ fn a_session_without_a_bridge_still_takes_pictures() {
     );
 }
 
+/// A snapshot names the time of each part on the recorder's clock, and the time from the arrival of its line to its
+/// record, which the ack follows.
+#[test]
+fn a_snapshot_names_the_time_of_each_of_its_parts() {
+    let h = Harness::new();
+    h.ide.takes(GRAB, 7);
+    h.ide.takes(TREE_ROUTE, 30);
+    h.ide.takes(SPANS_ROUTE, 5);
+    let mut session = h.session(h.options());
+    h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO, SNAP, DONE]);
+    let snapshot = snapshot_of(&h.example_bundle());
+    let keys = [
+        attr::SNAPSHOT_DURATION_MS,
+        attr::SNAPSHOT_GRAB_MS,
+        attr::SNAPSHOT_TREE_MS,
+        attr::SNAPSHOT_SPANS_MS,
+        attr::SNAPSHOT_STILL_MS,
+    ];
+    assert_eq!(
+        keys.map(|key| lookup_int(&snapshot.attributes, key)),
+        [Some(42), Some(7), Some(30), Some(5), Some(0)]
+    );
+}
+
 /// A second attempt at the same scenario in the same run keeps the first one's bundle.
 #[test]
 fn a_rerun_of_a_scenario_gets_a_bundle_of_its_own() {
     let h = Harness::new();
-    let mut session = h.session(h.options());
-    h.feed(
-        &mut session,
-        &[
-            &h.hello(true),
-            MINIMAL_SCENARIO,
-            r#"{"op":"done","status":"failed"}"#,
-            MINIMAL_SCENARIO,
-            DONE,
-        ],
+    hello_and(
+        &h,
+        &[MINIMAL_SCENARIO, r#"{"op":"done","status":"failed"}"#, MINIMAL_SCENARIO, DONE],
     );
     let mut second = h.example_bundle().into_os_string();
     second.push(".2");
@@ -226,11 +244,7 @@ struct FakeVideographer {
 
 impl Videographer for FakeVideographer {
     fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
-        VideoPlan {
-            codec: VideoCodec::H264,
-            reason: String::new(),
-            raw: true,
-        }
+        VideoPlan::h264(true)
     }
 
     fn start(&self, dir: &Path, _: &VideoPlan, first: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
@@ -242,25 +256,36 @@ impl Videographer for FakeVideographer {
     }
 }
 
+/// A session on the system clock that takes a frame every 10 ms into the raw video `recording`. The video puts the
+/// directory it starts in into `dir`.
+fn raw_video_session(h: &Harness, recording: &FakeRecording, dir: Arc<Mutex<Option<PathBuf>>>) -> Session<SharedBuffer> {
+    let mut options = h.options();
+    options.clock = system_clock();
+    options.frame_interval = Duration::from_millis(10);
+    options.video = Box::new(FakeVideographer {
+        recording: recording.clone(),
+        dir,
+    });
+    h.session(options)
+}
+
+/// Waits up to 10 s until the video has `count` frames.
+fn wait_for_frames(recording: &FakeRecording, count: usize) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while recording.frames().len() < count && Instant::now() < deadline {
+        thread::sleep(Duration::from_millis(5));
+    }
+}
+
 /// While a scenario is open the frame loop feeds the video from the capture source, and done stops both.
 #[test]
 fn the_video_is_fed_from_the_screen_while_the_scenario_is_open() {
     let h = Harness::new();
     let recording = FakeRecording::default();
     let dir = Arc::new(Mutex::new(None));
-    let mut options = h.options();
-    options.clock = system_clock();
-    options.frame_interval = Duration::from_millis(10);
-    options.video = Box::new(FakeVideographer {
-        recording: recording.clone(),
-        dir: dir.clone(),
-    });
-    let mut session = h.session(options);
+    let mut session = raw_video_session(&h, &recording, dir.clone());
     h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO]);
-    let deadline = Instant::now() + Duration::from_secs(10);
-    while recording.frames().len() < 6 && Instant::now() < deadline {
-        thread::sleep(Duration::from_millis(5));
-    }
+    wait_for_frames(&recording, 6);
     h.feed(&mut session, &[DONE]);
     let frames = recording.frames();
     assert!(frames.len() >= 6, "the video got {} frames", frames.len());
@@ -275,6 +300,39 @@ fn the_video_is_fed_from_the_screen_while_the_scenario_is_open() {
     assert!(started, "no air.video record dates the video's first frame");
     thread::sleep(Duration::from_millis(50));
     assert_eq!(recording.frames().len(), frames.len(), "the frame loop outlived the scenario");
+}
+
+/// A scenario that starts a video takes lossy pictures, and its manifest says so. A scenario without a video keeps
+/// lossless pictures, as the golden bundle shows.
+#[test]
+fn a_scenario_with_a_video_takes_lossy_pictures() {
+    let h = Harness::new();
+    let recording = FakeRecording::default();
+    let mut session = raw_video_session(&h, &recording, Arc::default());
+    h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO, SNAP]);
+    wait_for_frames(&recording, 1);
+    h.feed(&mut session, &[DONE]);
+    let bundle = h.example_bundle();
+    let manifest = manifest_of(&bundle);
+    assert_eq!((manifest.video, manifest.stills.encoding), (Video::H264, StillEncoding::Lossy));
+    let picture = fs::read(bundle.join(snap_image_path(1, StillEncoding::Lossy))).unwrap();
+    assert_eq!(&picture[4..12], b"ftypavif", "the picture of a scenario with a video is not AVIF");
+}
+
+/// A still encoder that ends with a panic is evidence loss, and the end of the scenario records it on the root.
+#[test]
+fn a_still_encoder_that_ended_with_a_panic_is_recorded_at_the_end() {
+    let h = Harness::new();
+    let mut session = h.session(h.options());
+    h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO]);
+    let scenario = session.scenario.as_mut().expect("the scenario is open");
+    scenario.stills = Some(crate::stills::Writer::panicking(&scenario.dir));
+    h.feed(&mut session, &[SNAP, DONE]);
+    let errors = trace_errors(&h.example_bundle());
+    assert!(
+        errors.contains(&"still: 1 of the still encoders ended with a panic".to_owned()),
+        "the trace errors: {errors:?}"
+    );
 }
 
 /// An encoder that started and never takes its input: every write blocks until the stop ends the input, and the stop
@@ -312,11 +370,7 @@ struct StuckVideographer;
 
 impl Videographer for StuckVideographer {
     fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
-        VideoPlan {
-            codec: VideoCodec::H264,
-            reason: String::new(),
-            raw: true,
-        }
+        VideoPlan::h264(true)
     }
 
     fn start(&self, _: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
@@ -353,37 +407,13 @@ fn an_encoder_that_never_reads_does_not_hold_the_scenario_ack() {
     h.feed(&mut session, &[DONE]);
     let answered: Vec<(bool, u64)> = h.ack_lines().iter().map(ok_and_line).collect();
     assert_eq!(answered, [(true, 1), (true, 2), (true, 3)]);
-    match manifest_of(&h.example_bundle()).video {
+    let manifest = manifest_of(&h.example_bundle());
+    match manifest.video {
         Video::None { reason } => assert!(reason.contains("no frame"), "{reason}"),
         video @ Video::H264 => panic!("the manifest's video is {video:?}"),
     }
-}
-
-/// A screen video run by a shell standing in for ffmpeg, which reports its progress on its output like the real one.
-#[cfg(unix)]
-struct ShellScreenVideographer {
-    script: String,
-    clock: crate::Clock,
-}
-
-#[cfg(unix)]
-impl Videographer for ShellScreenVideographer {
-    fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
-        VideoPlan {
-            codec: VideoCodec::H264,
-            reason: String::new(),
-            raw: false,
-        }
-    }
-
-    fn start(&self, dir: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
-        let argv = ["/bin/sh", "-c", self.script.as_str()].map(str::to_owned);
-        Ok(Box::new(crate::video::ffmpeg::FfmpegRecording::start(
-            &argv,
-            dir,
-            self.clock.clone(),
-        )?))
-    }
+    // The scenario started the video, so its pictures are lossy, and the manifest says so without the video.
+    assert_eq!(manifest.stills.encoding, StillEncoding::Lossy);
 }
 
 /// The recorder never sees a screen video's frames, so its `air.video` record is written at the stop, once the
@@ -391,15 +421,22 @@ impl Videographer for ShellScreenVideographer {
 #[cfg(unix)]
 #[test]
 fn a_screen_video_is_recorded_at_its_stop_from_the_first_progress_report() {
-    use avl_trace::bundle::{VIDEO_FILE, VIDEO_INDEX_FILE, decode_video_index};
+    use avl_trace::bundle::decode_video_index;
     let h = Harness::new();
     let reported_ms = T0_MS + 60_000;
     let reported = std::time::UNIX_EPOCH + Duration::from_millis(u64::try_from(reported_ms).unwrap());
     let mut options = h.options();
-    options.video = Box::new(ShellScreenVideographer {
-        script: format!("read key; printf 'frame=5\\nprogress=end\\n'; printf x > {VIDEO_FILE}"),
-        clock: Arc::new(move || reported),
-    });
+    // A shell stands in for ffmpeg, and reports its progress on its output as the real one does.
+    let argv = [
+        "/bin/sh",
+        "-c",
+        &format!("read key; printf 'frame=5\\nprogress=end\\n'; printf x > {VIDEO_FILE}"),
+    ]
+    .map(str::to_owned);
+    let clock: crate::Clock = Arc::new(move || reported);
+    options.video = Box::new(ScreenVideo(move |dir: &Path| -> anyhow::Result<Box<dyn Recording>> {
+        Ok(Box::new(crate::video::ffmpeg::FfmpegRecording::start(&argv, dir, clock.clone())?))
+    }));
     let mut session = h.session(options);
     h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO, DONE]);
     let bundle = h.example_bundle();
@@ -417,6 +454,66 @@ fn a_screen_video_is_recorded_at_its_stop_from_the_first_progress_report() {
     assert_eq!(video.time_unix_nano, UnixNano::from_ms(first_frame_ms));
     let index = decode_video_index(&fs::read(bundle.join(VIDEO_INDEX_FILE)).unwrap()).unwrap();
     assert_eq!(index.frames_ms, (0..5).map(|i| first_frame_ms + i * 100).collect::<Vec<_>>());
+}
+
+/// Under a hello that keeps the video of a scenario that did not pass only, a passed scenario loses its video and its
+/// index at its end. Its manifest and a last `air.video` record say why, and its stills stay lossy. A failed scenario
+/// keeps its video, and so does a later attempt of it that passes, because that scenario is flaky.
+#[test]
+fn a_passed_scenario_keeps_no_video_when_the_hello_keeps_the_failed_ones_only() {
+    let h = Harness::new();
+    let mut options = h.options();
+    // The video is on disk as soon as it starts, as ffmpeg writes one, and it stops without a problem.
+    options.video = Box::new(ScreenVideo(|dir: &Path| -> anyhow::Result<Box<dyn Recording>> {
+        fs::write(dir.join(VIDEO_FILE), b"video")?;
+        fs::write(dir.join(VIDEO_INDEX_FILE), b"index")?;
+        Ok(Box::new(ScreenRecording {
+            frames: 1,
+            first_frame_ms: T0_MS,
+        }))
+    }));
+    let mut session = h.session(options);
+    let flaky = r#"{"op":"scenario","name":"flaky","testClass":"AirExampleUiTest","lane":"UI"}"#;
+    let failed = r#"{"op":"done","status":"failed"}"#;
+    h.feed(
+        &mut session,
+        &[&h.failed_video_hello(), MINIMAL_SCENARIO, SNAP, DONE, flaky, failed, flaky, DONE],
+    );
+
+    let passed = h.example_bundle();
+    let manifest = manifest_of(&passed);
+    assert_eq!(
+        (manifest.video, manifest.stills.encoding),
+        (
+            Video::None {
+                reason: crate::scenario::PASSED_VIDEO_REASON.to_owned()
+            },
+            StillEncoding::Lossy
+        )
+    );
+    assert!(!passed.join(VIDEO_FILE).exists() && !passed.join(VIDEO_INDEX_FILE).exists());
+    let videos: Vec<(Option<String>, Option<String>)> = records(&passed)
+        .into_iter()
+        .filter(|record| record.event_name == event::VIDEO)
+        .map(|record| {
+            let value = |key: &str| lookup_str(&record.attributes, key).map(str::to_owned);
+            (value(attr::VIDEO_CODEC), value(attr::VIDEO_REASON))
+        })
+        .collect();
+    assert_eq!(
+        videos.last(),
+        Some(&(Some("none".to_owned()), Some(crate::scenario::PASSED_VIDEO_REASON.to_owned())))
+    );
+    assert!(trace_errors(&passed).is_empty(), "{:?}", trace_errors(&passed));
+
+    let first = bundle_dir(&h.root, "run-1", "AirExampleUiTest", "flaky");
+    let mut retry = first.clone().into_os_string();
+    retry.push(".2");
+    for (bundle, status) in [(first, BundleStatus::Failed), (PathBuf::from(retry), BundleStatus::Passed)] {
+        let manifest = manifest_of(&bundle);
+        assert_eq!((manifest.status, manifest.video), (status, Video::H264), "{}", bundle.display());
+        assert!(bundle.join(VIDEO_FILE).exists(), "{}", bundle.display());
+    }
 }
 
 /// A scenario naming the endpoint published as it started.
@@ -494,11 +591,9 @@ fn a_scenario_names_the_bridge_the_hello_did_not_have() {
 #[test]
 fn a_clock_step_backwards_ends_a_span_where_it_started() {
     let h = Harness::new();
-    let mut session = h.session(h.options());
-    h.feed(
-        &mut session,
+    let mut session = hello_and(
+        &h,
         &[
-            &h.hello(true),
             MINIMAL_SCENARIO,
             r#"{"op":"span","id":1,"kind":"step","key":"step:a","title":"[flow] a"}"#,
         ],
@@ -657,7 +752,7 @@ fn the_ide_spans_join_the_bundle_under_the_spans_they_started_in() {
             scope.scope.name
         );
     }
-    let recorded = error_records(&bundle);
+    let recorded = trace_errors(&bundle);
     assert!(recorded.is_empty(), "the merge recorded {recorded:?}");
     assert!(h.ack_lines().iter().all(|ack| ack["ok"] == true), "{}", h.acks.text());
 }
@@ -670,7 +765,7 @@ fn a_missing_spans_route_is_recorded_once_and_changes_no_ack() {
     let mut session = h.session(h.options());
     h.ide.remove_spans_routes();
     h.feed(&mut session, &[&h.hello(true), MINIMAL_SCENARIO, SNAP, SNAP, DONE]);
-    let spans_errors: Vec<String> = error_records(&h.example_bundle())
+    let spans_errors: Vec<String> = trace_errors(&h.example_bundle())
         .into_iter()
         .filter(|message| message.starts_with("bridge.spans: "))
         .collect();
@@ -684,7 +779,7 @@ fn a_missing_spans_route_is_recorded_once_and_changes_no_ack() {
     let mut lossy_session = lossy.session(lossy.options());
     lossy.ide.drop_spans(7);
     lossy.feed(&mut lossy_session, &[&lossy.hello(true), MINIMAL_SCENARIO, SNAP, DONE]);
-    let recorded = error_records(&lossy.example_bundle());
+    let recorded = trace_errors(&lossy.example_bundle());
     assert!(
         recorded.len() == 1 && recorded[0].contains("dropped 7 of its spans"),
         "a ring that lost spans left {recorded:?}"

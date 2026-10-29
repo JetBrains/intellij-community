@@ -48,6 +48,8 @@ use crate::terminal::{Form, Output, TerminalFacts};
 use avl_base::RefusalExt;
 
 #[cfg(test)]
+pub(crate) mod testing;
+#[cfg(test)]
 mod tests;
 
 /// How the help text spells this controller: the wrapper, by its repository-relative path.
@@ -95,7 +97,8 @@ selects every generated suite whose scenarios tell or walk the flow, and a suite
 lane and one class filter per suite. An unknown id names the nearest ids, and a flow no generated suite tests \
 is refused, because an iteration that runs nothing is not a passing run. With --changed, every argument that is not \
 an option is a changed path, so \"--changed A B\" and \"--changed A --changed B\" are the same run, and a change no \
-generated suite covers is refused, naming each path.
+generated suite covers is refused, naming each path. --base REV compares a changed Kotlin file of the test bridge \
+with REV, as suites --base does; it needs --changed.
 
 For a flow, a suite or --changed without --lane: one iteration per reached lane, in the order {lanes}, on one worker \
 of the selected backend, in one reply. More than one lane answers {{worker, lanes: [{{lane, exitCode, code, message, \
@@ -225,6 +228,11 @@ pub(crate) enum Cmd {
     Suites {
         #[arg(value_name = "CHANGED_PATH")]
         paths: Vec<String>,
+        /// The revision that a changed Kotlin file of the test bridge is compared with, to find its changed
+        /// declarations. The default is the commit where HEAD meets its upstream, so every change that is not pushed
+        /// yet counts.
+        #[arg(long, value_name = "REV")]
+        base: Option<String>,
     },
     /// Builds on the host and runs one selection in a worker's warm daemon.
     #[command(long_about = run_long_about())]

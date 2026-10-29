@@ -3,9 +3,7 @@
     reason = "the rates and interval bounds compared are exact by construction, so an epsilon would hide a wrong formula"
 )]
 
-use avl_wire::report::{
-    Case, Failure, FailureKind, RUN_REPORT_SCHEMA_VERSION, SkippedContainer, Watchdog, decode_flake_summary, decode_shard_verdict,
-};
+use avl_wire::report::{Case, Failure, FailureKind, SkippedContainer, decode_flake_summary, decode_shard_verdict};
 use pretty_assertions::assert_eq;
 
 use super::*;
@@ -15,7 +13,6 @@ use super::*;
 /// A healthy single-run report, which every fixture below spoils in exactly one way.
 pub(super) fn document(status: Status) -> RunReport {
     RunReport {
-        report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         iteration_id: "iteration-1".to_owned(),
         daemon_run_id: "run-ui-daemon-0001".to_owned(),
         daemon_boot_stamp: "2026-08-22T09:59:00Z".to_owned(),
@@ -24,22 +21,7 @@ pub(super) fn document(status: Status) -> RunReport {
         started_at: "2026-08-22T10:00:00Z".to_owned(),
         completed_at: "2026-08-22T10:01:00Z".to_owned(),
         duration_ms: 60_000.0,
-        ordering: ORDERING.to_owned(),
-        execution: ExecutionCounts::default(),
-        cases: Vec::new(),
-        failures: Vec::new(),
-        skipped_containers: Vec::new(),
-        active_tests: Vec::new(),
-        unreported_classes: Vec::new(),
-        watchdog: Watchdog::default(),
-        evidence: Vec::new(),
-        trace_archives: Vec::new(),
-        traces_error: None,
-        tree: None,
-        tree_error: None,
-        notes: Vec::new(),
-        protocol_diagnostic: None,
-        verdict_diagnostic: None,
+        ..RunReport::default()
     }
 }
 
@@ -422,7 +404,7 @@ fn a_plain_red_lane_needs_no_diagnostic_code() {
     assert_eq!((verdict.status, verdict.code), (Status::Failed, None));
     let decoded = read_back(&verdict);
     assert_eq!((decoded.status, decoded.code), (Status::Failed, None));
-    assert!(!decoded.failures.is_empty());
+    assert_ne!(decoded.failures, []);
 }
 
 /// Cases are merged by instant and by global position, never by timestamp text.
@@ -450,7 +432,7 @@ fn merged_cases_are_ordered_by_instant_across_shards() {
         None,
         &[passed("com.intellij.air.UntimedB")],
     );
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
+    let verdict = merge_two_shards(first, second);
     let names: Vec<&str> = verdict.cases.iter().map(|case| case.class_name.as_str()).collect();
     // `late` is 10:00:30Z once the offset is read as an offset; the untimed cases keep their position, last.
     assert_eq!(
@@ -464,6 +446,11 @@ fn merged_cases_are_ordered_by_instant_across_shards() {
     );
 }
 
+/// The verdict of two shards on two workers.
+fn merge_two_shards(first: RunReport, second: RunReport) -> ShardVerdict {
+    merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)])
+}
+
 /// The wall clock is what the lane cost and the sum is the machine time it took.
 #[test]
 fn the_merge_reports_both_wall_and_machine_time() {
@@ -472,7 +459,7 @@ fn the_merge_reports_both_wall_and_machine_time() {
     second.started_at = "2026-08-22T10:00:30Z".to_owned();
     second.completed_at = "2026-08-22T10:02:00Z".to_owned();
     second.duration_ms = 90_000.0;
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
+    let verdict = merge_two_shards(first, second);
     assert_eq!(
         (verdict.started_at.as_deref(), verdict.completed_at.as_deref()),
         (Some("2026-08-22T10:00:00Z"), Some("2026-08-22T10:02:00Z"))
@@ -513,7 +500,7 @@ fn the_first_spelling_of_an_equal_instant_is_kept() {
     let mut second = with_suite(document(Status::Passed), "B", None, &[passed("com.intellij.air.B")]);
     second.started_at = "2026-08-22T12:00:00+02:00".to_owned();
     second.completed_at = "2026-08-22T12:02:00+02:00".to_owned();
-    let verdict = merge_shard_verdict(&[shard(1, "air-linux-1", first), shard(2, "air-linux-2", second)]);
+    let verdict = merge_two_shards(first, second);
     assert_eq!(
         (verdict.started_at.as_deref(), verdict.completed_at.as_deref()),
         (Some("2026-08-22T10:00:00Z"), Some("2026-08-22T10:02:00Z"))
@@ -722,7 +709,7 @@ fn a_broken_class_is_not_a_flaky_one() {
         .collect();
     let summary = flake_summary(&trials);
     assert_eq!(class_of(&summary, "com.intellij.air.Broken").bucket, FlakeBucket::Broken);
-    assert!(summary.flake_set.is_empty());
+    assert_eq!(summary.flake_set, Vec::<String>::new());
     assert_eq!(summary.lane_flake_rate, 0.0);
     // One stable class was measured, so the summary is quotable: a red lane is not an unmeasured one.
     assert!(summary.reportable, "{}", text(summary.not_reportable_reason.as_deref()));
@@ -847,7 +834,7 @@ fn the_honesty_guard_withholds_a_run_that_judged_almost_no_classes() {
     );
     // The floor withholds the headline, not the evidence.
     assert_eq!(summary.measured_classes, 1);
-    assert!(!summary.not_measured.is_empty());
+    assert_ne!(summary.not_measured, Vec::<String>::new());
 }
 
 /// The floor is a floor, not a nonzero check: the healthy 2026-08-23 baseline measured 22 of 23 classes.

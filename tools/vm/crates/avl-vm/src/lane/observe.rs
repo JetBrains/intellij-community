@@ -6,9 +6,10 @@
 //! exception that touches the supervisor's run slot, and is refused while a daemon holds it; `ls` and `pull` are
 //! deliberately not - see [`ls::command_ls`].
 //!
-//! Two gates, one for each kind of command. `ls`, `pull` and `vnc` read the worker, so they pass
-//! [`observe_leased_worker`] and answer while a run is in flight. `exec` and `peekaboo` act on the worker, so they pass
-//! [`act_on_leased_worker`] and refuse while a run of another process is in flight.
+//! One gate, [`on_leased_worker`], with one [`LeaseUse`] for each kind of command. `ls`, `pull` and `vnc` read the
+//! worker, so they pass it with [`LeaseUse::LockedReread`] and answer while a run is in flight. `exec` and `peekaboo`
+//! act on the worker, so they pass it with [`LeaseUse::LockedAction`] and refuse while a run of another process is in
+//! flight.
 //!
 //! [`pull::pull_guest_file`] has one consumer beyond `pull` itself: the daemon publishes run artifacts and trace
 //! zips through exactly this primitive.
@@ -23,7 +24,7 @@
 
 use std::path::Path;
 
-use crate::worker::lease::{receipt_for_path, required_receipt, with_lease_operation, with_lease_read};
+use crate::worker::lease::{LeaseUse, receipt_for_path, required_receipt, with_lease};
 use crate::worker::worker::{Lease, Manager};
 use avl_base::Refusal;
 use avl_host_sys::Ctx;
@@ -46,32 +47,18 @@ pub(crate) use pull::{command_pull, pull_guest_file};
 pub(crate) use status::command_status;
 pub(crate) use vnc::command_vnc;
 
-/// The gate every command here that reads a leased worker runs first. It validates the receipt and re-reads the lease
-/// under the worker's lifecycle lock ([`with_lease_read`]). Then it runs `action` without the lock. The sequence - not
-/// the lock - is what makes a stale receipt refuse instead of reading somebody else's worker.
-async fn observe_leased_worker<T>(
+/// The gate every command here that reads or acts on a leased worker runs first. It validates the receipt, then runs
+/// `action` as `lease_use` says.
+async fn on_leased_worker<T>(
     ctx: &Ctx,
     manager: &Manager,
     lease_file: Option<&Path>,
     operation: &str,
+    lease_use: LeaseUse,
     action: impl AsyncFnOnce(Lease) -> Result<T, Refusal>,
 ) -> Result<T, Refusal> {
     let (_, receipt) = receipt_for_path(manager.settings(), required_receipt(lease_file)?)?;
-    with_lease_read(ctx, manager, &receipt, operation, action).await
-}
-
-/// The gate every command here that acts on a leased worker runs first. It validates the receipt, then runs `action`
-/// under the worker's lifecycle lock with the lease re-read ([`with_lease_operation`]). A run of another live process
-/// refuses the command as `lease_busy`.
-async fn act_on_leased_worker<T>(
-    ctx: &Ctx,
-    manager: &Manager,
-    lease_file: Option<&Path>,
-    operation: &str,
-    action: impl AsyncFnOnce(Lease) -> Result<T, Refusal>,
-) -> Result<T, Refusal> {
-    let (_, receipt) = receipt_for_path(manager.settings(), required_receipt(lease_file)?)?;
-    with_lease_operation(ctx, manager, &receipt, operation, action).await
+    with_lease(ctx, manager, &receipt, operation, lease_use, action).await
 }
 
 /// Splits guest output on `\r?\n`. Guest output is split before a pattern is applied to a line rather than matched

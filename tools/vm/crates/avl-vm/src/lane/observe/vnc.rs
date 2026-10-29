@@ -13,7 +13,7 @@ use avl_host_sys::Ctx;
 use regex::Regex;
 use serde::Serialize;
 
-use super::{observe_leased_worker, split_lines};
+use super::{LeaseUse, on_leased_worker, split_lines};
 
 /// How much of the tart runtime log a `vnc` answer carries: enough to hold the endpoint line a recent boot printed,
 /// and little enough that the envelope stays a message rather than a log dump.
@@ -59,7 +59,7 @@ pub(crate) async fn command_vnc(ctx: &Ctx, manager: &Manager, lease_file: Option
              exposes; a run's traces carry its screenshots",
         ));
     }
-    let data = observe_leased_worker(ctx, manager, lease_file, "vnc", async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "vnc", LeaseUse::LockedReread, async |current| {
         let worker = current.worker;
         if !manager.machine().running(ctx, &worker).await? {
             return Err(Refusal::new("worker_stopped", Exit::FAILURE, format!("worker {worker} is stopped")));
@@ -116,7 +116,12 @@ async fn container_linux_vnc(
     lease_file: Option<&Path>,
 ) -> Result<Outcome, Refusal> {
     let worker = match lease_file {
-        Some(_) => observe_leased_worker(ctx, manager, lease_file, "vnc", async |current| Ok(current.worker)).await?,
+        Some(_) => {
+            on_leased_worker(ctx, manager, lease_file, "vnc", LeaseUse::LockedReread, async |current| {
+                Ok(current.worker)
+            })
+            .await?
+        }
         None => manager
             .settings()
             .workers

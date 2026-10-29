@@ -17,7 +17,7 @@ use avl_base::report::{SharedWriter, SinkGuard};
 use avl_base::sync::lock;
 use avl_base::{Environment, Reporter};
 use avl_junit as junit;
-use avl_report::performance::{self, Plan};
+use avl_junit::performance::{self, Plan};
 use avl_report::teamcity::{self, Messages};
 use avl_trace::bundle::VIDEO_FILE;
 use avl_wire::daemon::{RunEvent, RunEventKind, decode_run_event};
@@ -180,7 +180,7 @@ impl Results {
     fn write_performance(&mut self, report: &Path, files: Vec<performance::File>) {
         let directory = report.with_extension("performance");
         for file in files {
-            let path = directory.join(&file.artifact_path).join(performance::FILE_NAME);
+            let path = file.path_below(&directory);
             let written = avl_base::fs::create_private_dir(path.parent().unwrap_or(&directory))
                 .err()
                 .map(|refusal| refusal.message)

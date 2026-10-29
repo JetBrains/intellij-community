@@ -218,6 +218,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "testkit",
 ]
 
 [[package]]

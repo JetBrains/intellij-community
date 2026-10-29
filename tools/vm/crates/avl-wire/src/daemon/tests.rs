@@ -550,9 +550,72 @@ fn the_ide_life_records_decode_and_refuse_a_wrong_field() {
         exited(r#","exitCode":0,"signal":null"#),
         exited(""),
         r#"{"event":"ideLaunched","pid":"4242","launchName":"l","launchKey":"k","logDir":"/d"}"#.to_owned(),
+        r#"{"event":"ideLaunched","timestamp":null,"pid":4242,"launchName":"l","launchKey":"k","logDir":"/d"}"#.to_owned(),
     ] {
         assert_eq!(protocol_code(&line), CODE_FIELD_MISSING, "{line}");
     }
+}
+
+// A daemon stamps the IDE life records with the time it saw each, and a record of an older daemon without a time still
+// reads. The ready record names the launch and the wait for READY.
+#[test]
+fn the_ide_life_records_carry_their_time_and_the_ready_record_its_wait() {
+    let launched = r#"{"event":"ideLaunched","timestamp":"2026-10-21T16:34:02.120Z","pid":4242,"launchName":"restart-1-mvic2833","launchKey":"k","logDir":"/d"}"#;
+    let event = decode(launched);
+    assert_eq!(event.to_raw().get(), launched);
+    let RunEventKind::IdeLaunched(record) = &event.kind else {
+        panic!("read {:?}", event.kind);
+    };
+    assert_eq!(record.timestamp.as_deref(), Some("2026-10-21T16:34:02.120Z"));
+    assert_eq!(
+        serde_json::to_string(&event.kind).unwrap(),
+        launched,
+        "the reading writes the same bytes"
+    );
+    let RunEventKind::IdeExited(record) = decode(r#"{"event":"ideExited","timestamp":"t","pid":4242,"exitCode":0}"#).kind else {
+        panic!("not an ideExited record");
+    };
+    assert_eq!(record.timestamp.as_deref(), Some("t"));
+
+    let ready = r#"{"event":"ideReady","timestamp":"2026-10-21T16:34:09.069Z","pid":4243,"launchName":"restart-1-mvic2833","launchKey":"k","readyAfterMs":6949}"#;
+    let event = decode(ready);
+    assert_eq!(event.event(), Event::IdeReady);
+    assert_eq!(serde_json::to_string(&event.kind).unwrap(), ready);
+    let RunEventKind::IdeReady(record) = event.kind else {
+        panic!("not an ideReady record");
+    };
+    assert_eq!((record.pid, record.ready_after_ms), (4243, 6949));
+    assert_eq!(
+        protocol_code(r#"{"event":"ideReady","timestamp":"t","pid":1,"launchName":"l","launchKey":"k"}"#),
+        CODE_FIELD_MISSING,
+        "a ready record without its wait"
+    );
+}
+
+// A timing record names its step in the vocabulary of the steps, its time, its duration and, for a step of one suite or
+// scenario, its subject.
+#[test]
+fn a_timing_record_names_its_step_its_duration_and_its_subject() {
+    let line = r#"{"event":"timing","timestamp":"2026-10-21T16:40:00.000Z","step":"bare-launch","durationMs":21567,"subject":"startup-class-loading"}"#;
+    let event = decode(line);
+    assert_eq!(event.event(), Event::Timing);
+    assert_eq!(serde_json::to_string(&event.kind).unwrap(), line);
+    let RunEventKind::Timing(record) = event.kind else {
+        panic!("not a timing record");
+    };
+    assert_eq!(record.step.parse::<TimedStep>().ok(), Some(TimedStep::BareLaunch));
+    assert_eq!(
+        (record.duration_ms, record.subject.as_deref()),
+        (21567, Some("startup-class-loading"))
+    );
+    let RunEventKind::Timing(record) = decode(r#"{"event":"timing","timestamp":"t","step":"lane-run-quit","durationMs":1700}"#).kind else {
+        panic!("not a timing record");
+    };
+    assert_eq!(record.subject, None, "a step of the whole run");
+    assert_eq!(
+        protocol_code(r#"{"event":"timing","timestamp":"t","step":"bare-launch","durationMs":"1"}"#),
+        CODE_FIELD_MISSING
+    );
 }
 
 // A decision of the lane daemon about its IDE decodes as the decision of the controller, keeps its bytes, and
@@ -598,25 +661,19 @@ fn a_trace_failure_of_the_lane_daemon_decodes_and_keeps_its_bytes() {
 // the order of the files does not move it, and a file of another directory does not either.
 #[test]
 fn the_digest_of_a_plugin_directory_is_over_its_own_files_in_destination_order() {
-    let by_hand = |files: &[(&str, &str)]| {
-        let mut hash = Sha256::new();
-        for (destination, sha256) in files {
-            hash.update(destination.as_bytes());
-            hash.update([0]);
-            hash.update(sha256.as_bytes());
-            hash.update([0]);
-        }
-        hex::encode(hash.finalize())
-    };
+    // The shell gives the same values: `printf '%s\0' bridge/lib/a.jar 1 bridge/lib/b.jar 2 | shasum -a 256`.
     let digests = plugin_directory_digests([("bridge/lib/b.jar", "2"), ("resident/lib/r.jar", "3"), ("bridge/lib/a.jar", "1")]);
     assert_eq!(
         digests,
         BTreeMap::from([
             (
                 "bridge".to_owned(),
-                by_hand(&[("bridge/lib/a.jar", "1"), ("bridge/lib/b.jar", "2")])
+                "98304173ed18c6e9fc65d9987c2b28cef126c89959d35914fa7862204d2796b2".to_owned()
             ),
-            ("resident".to_owned(), by_hand(&[("resident/lib/r.jar", "3")])),
+            (
+                "resident".to_owned(),
+                "2495ce34ed1483690fb99314c174c7db5d6e52fb0a305c8629ea9a4529f6ebbd".to_owned()
+            ),
         ])
     );
     assert_eq!(

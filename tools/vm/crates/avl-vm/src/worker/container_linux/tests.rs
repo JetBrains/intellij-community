@@ -1,8 +1,6 @@
 //! The container-linux backend's suite. Hermetic: no script runs, so what is asserted is the argv the script would get,
 //! the reading of `list`, and the files the container writes.
 
-use std::time::Duration;
-
 use avl_base::config::WORKSPACE_DIR;
 use avl_base::format::words;
 use avl_base::phase::Timeline;
@@ -12,6 +10,7 @@ use avl_host_sys::Interrupts;
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::worker::testing::assert_counts_one_guest_call;
 
 const WORKER: &str = "container-linux-1";
 
@@ -118,12 +117,7 @@ fn the_exec_head_is_the_script_and_is_declared_to_the_timeline() {
     let ctx = Ctx::background().with_timeline(timeline.clone());
     let line = backend(&settings).guest_argv(&ctx, WORKER, &words(["/usr/bin/true"]), true);
     assert_eq!(line, words([driver(&settings).as_str(), "exec", "/usr/bin/true"]));
-    let (inner, phase) = ctx.begin("probe");
-    inner.phase().record_subprocess(&line, Duration::from_secs(1));
-    inner.phase().record_subprocess(&["git", "rev-parse"], Duration::from_secs(1));
-    drop(phase);
-    let timing = &timeline.take()[0];
-    assert_eq!((timing.guest_calls, timing.host_calls), (1, 1), "{timing:?}");
+    assert_counts_one_guest_call(&ctx, &timeline, &line);
 }
 
 // --- list -----------------------------------------------------------------------------------------------------

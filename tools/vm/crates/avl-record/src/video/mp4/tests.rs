@@ -428,7 +428,7 @@ fn a_fragment_must_start_with_a_keyframe() {
     assert_eq!(error.kind(), io::ErrorKind::InvalidInput);
     mp4.finish().unwrap();
     let mp4 = parse(&std::fs::read(&path).unwrap());
-    assert!(mp4.fragments.is_empty());
+    assert_eq!(mp4.fragments, []);
     assert_eq!(mp4.index, Some(Vec::new()));
 }
 

@@ -125,6 +125,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "330a5ed07fa54e4702c9d6c4174f74427fc0ef6e214bbd677ae50a5099946470"
 
 [[package]]
+name = "arrayvec"
+version = "0.7.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d3fb67a6e08acf24fdeccbac2cb6ac4305825bd1f117462e0e6f2f193345ad56"
+
+[[package]]
 name = "async-trait"
 version = "0.1.92"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -148,6 +154,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f2032f911046de80f0a198e0901378627c33f59ea0ac00e363d481118bd70a53"
 
 [[package]]
+name = "avif-serialize"
+version = "0.8.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7178fe5f7d460b13895ebb9dcb28a3a6216d2df2574a0806cb51b555d297f38"
+dependencies = [
+ "arrayvec",
+]
+
+[[package]]
 name = "avl-affected"
 version = "0.1.0"
 dependencies = [
@@ -159,6 +174,14 @@ dependencies = [
  "refusal",
  "regex",
  "serde_json",
+]
+
+[[package]]
+name = "avl-aom-sys"
+version = "0.1.0"
+dependencies = [
+ "cmake",
+ "sha2",
 ]
 
 [[package]]
@@ -214,6 +237,7 @@ dependencies = [
  "sha2",
  "tempfile",
  "walkdir",
+ "x11rb",
  "zip",
 ]
 
@@ -266,7 +290,10 @@ dependencies = [
  "avl-wire",
  "bt-junit",
  "expect-test",
+ "jiff",
  "pretty_assertions",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
@@ -274,6 +301,8 @@ name = "avl-record"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "avif-serialize",
+ "avl-aom-sys",
  "avl-bridge",
  "avl-testkit",
  "avl-trace",
@@ -316,6 +345,7 @@ name = "avl-testkit"
 version = "0.1.0"
 dependencies = [
  "pretty_assertions",
+ "tokio",
 ]
 
 [[package]]
@@ -622,6 +652,15 @@ name = "clap_lex"
 version = "1.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1c133bc6a41be0d194c306b5506d15e6feeea7b1d6604bd3f8310dfb2ca96486"
+
+[[package]]
+name = "cmake"
+version = "0.1.58"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c0f78a02292a74a88ac736019ab962ece0bc380e3f977bf72e376c5d78ff0678"
+dependencies = [
+ "cc",
+]
 
 [[package]]
 name = "colorchoice"

@@ -99,7 +99,7 @@ fn an_empty_document_is_empty_and_not_malformed() {
     for blank in ["", "   ", "\n\t", "\u{feff}", "\u{feff}\u{feff}"] {
         let report = parse_report(blank);
         assert_eq!(report.integrity.status, IntegrityStatus::Empty, "{blank:?}");
-        assert!(report.suites.is_empty());
+        assert_eq!(report.suites, []);
     }
 }
 
@@ -199,14 +199,25 @@ fn parse_keeps_document_order() {
 }
 
 #[test]
-fn the_bucketing_stub_is_recognized() {
-    let stub = parse_report(r#"<testsuites><testsuite name="Bucketing" tests="0"/></testsuites>"#);
-    assert!(stub.suites[0].bucketing_stub, "the bucketing stub was not recognized");
-    let other = parse_report(r#"<testsuites><testsuite name="Bucketing" tests="1"/></testsuites>"#);
-    assert!(
-        !other.suites[0].bucketing_stub,
-        "a suite that ran something was called a bucketing stub"
+fn the_stub_of_a_shard_without_tests_is_recognized() {
+    for name in ["Bucketing", "Sharding"] {
+        let stub = parse_report(&format!(r#"<testsuites><testsuite name="{name}" tests="0"/></testsuites>"#));
+        assert!(stub.suites[0].empty_stub, "the {name} stub was not recognized");
+        let other = parse_report(&format!(r#"<testsuites><testsuite name="{name}" tests="1"/></testsuites>"#));
+        assert!(!other.suites[0].empty_stub, "a suite that ran something was called a {name} stub");
+    }
+}
+
+#[test]
+fn the_shard_plan_digest_is_read_from_the_root() {
+    let digest = |xml: &str| shard_plan_digest(xml);
+    assert_eq!(
+        digest(r#"<?xml version="1.0"?><testsuites shardPlan="0123abcd"><testsuite name="A" tests="1"/></testsuites>"#).as_deref(),
+        Some("0123abcd")
     );
+    assert_eq!(digest(r#"<testsuites><testsuite name="A" tests="1"/></testsuites>"#), None);
+    assert_eq!(digest(r#"<testsuite name="A" shardPlan="x"/>"#), None);
+    assert_eq!(digest(r#"<testsuites shardPlan="0123"#), None, "an unterminated root");
 }
 
 // A wrapper that reported 0 and no wrapper at all are different facts, and the second is the common one.

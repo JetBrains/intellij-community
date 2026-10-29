@@ -49,7 +49,7 @@ export function ArchEdge({ sourceX, sourceY, sourcePosition, targetX, targetY, t
         ? (
             <EdgeLabelRenderer>
               <div
-                className={`arch-edge-label nodrag nopan absolute rounded-sm bg-background px-1 text-2xs leading-tight text-foreground${options?.state ? ` ${options.state}` : ''}`}
+                className={`arch-edge-label nodrag nopan absolute rounded-sm bg-background px-1 text-xs leading-tight text-foreground${options?.state ? ` ${options.state}` : ''}`}
                 style={{ transform: `translate(-50%, -50%) translate(${labelX}px, ${labelY}px)` }}
               >
                 {label}

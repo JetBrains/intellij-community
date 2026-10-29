@@ -441,10 +441,7 @@ impl Manager {
         // The shares this process declared are mounted by the parity provisioning, and the layout is built over
         // them here. They do *not* attach on their own at guest boot. A macOS worker stages no Node: its Node comes
         // from the sealed golden image.
-        if guest.parity_broken().await? {
-            guest.provision_worker(self.share_mount()).await?;
-        }
-        guest.ensure_ready(self).await?;
+        self.ready_guest(&guest).await?;
         Ok(true)
     }
 
@@ -482,15 +479,12 @@ impl Manager {
     /// went from one it stopped watching. A record removed then leaves a running VM nothing recognises again: the
     /// next stop answers already-stopped and the next start boots a second one beside it.
     fn interrupted(&self, worker: &str, operation: &str) -> Refusal {
-        let cause = self.runner.interrupts().received().map_or("a cancellation", |signal| signal.name());
-        Refusal::new(
-            "worker_interrupted",
-            Exit::SOFTWARE,
+        self.interrupted_by(|cause| {
             format!(
                 "{cause} interrupted the {operation} of {worker}; its run process record is kept, so `pool stop \
                  {worker}` still finds it"
-            ),
-        )
+            )
+        })
     }
 
     // --- the readiness gates ---------------------------------------------------------------------------------
@@ -523,10 +517,7 @@ impl Manager {
             self.stop_without_lifecycle_lock(ctx, worker, Some(lease)).await?;
             return self.start_without_lifecycle_lock(ctx, worker).await.map(drop);
         }
-        if guest.parity_broken().await? {
-            guest.provision_worker(self.share_mount()).await?;
-        }
-        guest.ensure_ready(self).await
+        self.ready_guest(&guest).await
     }
 
     /// Whether the running worker was launched with a share that no longer describes the host.
@@ -547,16 +538,7 @@ impl Manager {
     /// without a start is the whole repair.
     pub(super) async fn require_tart_release_ready(&self, ctx: &Ctx, tart: &Tart, worker: &str) -> Result<(), Refusal> {
         tart.require_available(ctx, worker).await?;
-        if !tart.running(ctx, worker).await? {
-            return Err(Refusal::new(
-                "worker_stopped",
-                Exit::FAILURE,
-                format!("worker {worker} is stopped; run pool start {worker}"),
-            ));
-        }
-        if !self.guest_answers(ctx, worker, GUEST_PROBE_TIMEOUT).await {
-            return Err(self.guest_agent_unavailable(worker));
-        }
+        self.require_running_guest(ctx, worker, tart.running(ctx, worker).await?).await?;
         let channel = self.channel(worker);
         self.guest(ctx, channel.as_ref()).require_console_login().await
     }

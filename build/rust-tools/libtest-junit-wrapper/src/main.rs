@@ -21,7 +21,7 @@ mod junit;
 mod report;
 
 use crate::event::{Event, Outcome, TestResult};
-use crate::junit::write_report;
+use crate::junit::{case_name, write_report};
 use crate::report::Report;
 use runfiles::Runfiles;
 use std::error::Error;
@@ -52,6 +52,10 @@ const SHARD_STATUS_ENV_VAR: &str = "TEST_SHARD_STATUS_FILE";
 
 /// The label of the test target, which names the suite of the report.
 const TARGET_ENV_VAR: &str = "TEST_TARGET";
+
+/// The one class name of every test case of the report. The `junit_class` argument of the `rust_test_junit` rule sets
+/// it, so a Rust test that replaces a JUnit test keeps the names of its cases.
+const CLASS_ENV_VAR: &str = "LIBTEST_JUNIT_CLASS";
 
 /// The name of the suite when Bazel names no target, such as in a local run of this tool.
 const DEFAULT_SUITE: &str = "test";
@@ -93,8 +97,12 @@ fn run() -> Result<i32, Box<dyn Error>> {
     let test = test_binary()?;
     let report_path = env::var_os(REPORT_ENV_VAR).map(PathBuf::from);
     let suite = env::var(TARGET_ENV_VAR).unwrap_or_else(|_| DEFAULT_SUITE.to_owned());
+    let class = env::var(CLASS_ENV_VAR).ok().filter(|class| !class.is_empty());
+    if let Some(class) = &class {
+        check_case_names(&list_tests(&test, &[])?, class)?;
+    }
 
-    let mut selection = filters(&env::var(FILTER_ENV_VAR).unwrap_or_default());
+    let mut selection = filters(&env::var(FILTER_ENV_VAR).unwrap_or_default(), class.as_deref());
     if let Some(shard) = shard() {
         if let Some(status) = env::var_os(SHARD_STATUS_ENV_VAR) {
             File::create(status)?;
@@ -104,7 +112,8 @@ fn run() -> Result<i32, Box<dyn Error>> {
             // More shards than tests: this one has nothing to run, which is a pass with an empty report rather
             // than a test binary that reported nothing.
             if let Some(path) = &report_path {
-                write_report(&Report::new(suite), 0.0, &mut File::create(path)?)?;
+                let mut file = File::create(path)?;
+                write_report(&Report::new(suite), 0.0, class.as_deref(), &mut file)?;
             }
             return Ok(0);
         }
@@ -162,7 +171,7 @@ fn run() -> Result<i32, Box<dyn Error>> {
     print_summary(&mut io::stdout().lock(), &report)?;
     if let Some(path) = &report_path {
         let mut file = File::create(path)?;
-        write_report(&report, seconds, &mut file)?;
+        write_report(&report, seconds, class.as_deref(), &mut file)?;
         file.flush()?;
     }
     Ok(code)
@@ -262,12 +271,42 @@ fn is_jvm_flag(arg: &OsStr) -> bool {
 }
 
 /// The test names Bazel asks for. libtest takes each one as a positional filter.
-fn filters(value: &str) -> Vec<String> {
+///
+/// With a `class` for the report, a filter can name a case as JUnit does: `<class>#<case>` asks for the case, and the
+/// class alone asks for every test.
+fn filters(value: &str, class: Option<&str>) -> Vec<String> {
     value
         .split(',')
         .filter(|filter| !filter.is_empty())
+        .filter_map(|filter| match class {
+            Some(class) if filter == class => None,
+            Some(class) => Some(
+                filter
+                    .strip_prefix(class)
+                    .and_then(|case| case.strip_prefix('#'))
+                    .unwrap_or(filter),
+            ),
+            None => Some(filter),
+        })
         .map(str::to_owned)
         .collect()
+}
+
+/// Refuses two tests whose names end in the same case name. Every case of the report then has the one `class`, so the
+/// report would hold two cases of one name.
+fn check_case_names(names: &[String], class: &str) -> io::Result<()> {
+    let mut seen: Vec<&str> = Vec::new();
+    for name in names {
+        let case = case_name(name);
+        if let Some(first) = seen.iter().find(|first| case_name(first) == case) {
+            return Err(io::Error::other(format!(
+                "The tests {first} and {name} have the one case name {case} under the class {class}. \
+                 Rename one of them."
+            )));
+        }
+        seen.push(name);
+    }
+    Ok(())
 }
 
 /// Reads the output of the test, prints a readable log, and records every event.

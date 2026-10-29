@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::sync::OnceCell;
 
-use crate::worker::hypervisor::unsupported;
+use crate::worker::hypervisor::{host_argv, unsupported};
 use crate::worker::pin::{PinnedTool, PinnedTools, parse_version};
 use crate::worker::secure::{Requirements, SecureReadError, read_json_record, read_private_file, write_json_line};
 use avl_base::RefusalExt;
@@ -100,7 +100,8 @@ impl Tart {
     /// pinned one: an argv with an empty head is refused `hypervisor_unresolved` rather than spawned.
     ///
     /// Only for host commands that already passed [`Tart::require_available`]. A guest command line never uses
-    /// it: [`Tart::guest_argv`] resolves the head itself, so a verb that skipped the gate still reaches the guest.
+    /// it: [`Machine::guest_argv`](crate::worker::hypervisor::Machine::guest_argv) resolves the head itself, so a verb
+    /// that skipped the gate still reaches the guest.
     ///
     /// The gate resolves the pinned Tart once, and [`Config::tart`] stays `None` unless `TART_BIN` named one, so a layer that runs its own Tart command after
     /// `manager.machine().require_available(..)` (the daemon's `tart ip`, `status`'s `tart list`, the image script's
@@ -128,9 +129,7 @@ impl Tart {
     }
 
     fn command(&self, arguments: &[&str]) -> Vec<String> {
-        std::iter::once(self.program())
-            .chain(arguments.iter().map(|argument| (*argument).to_owned()))
-            .collect()
+        host_argv(self.program(), arguments)
     }
 
     // --- the version gate ------------------------------------------------------------------------------------
@@ -516,26 +515,6 @@ impl Tart {
                 ))
             }
         }
-    }
-
-    /// `tart exec [-i] <worker> <argv…>`.
-    ///
-    /// The one spelling of a Tart guest command line, and the one place its head is declared to phase timing, so a
-    /// spawn that did not come through here is a host call by construction. The head is not read from the settings:
-    /// the pinned Tart resolved by the gate lives in this backend, not in the shared settings.
-    ///
-    /// The head comes from [`Tart::resolved_program`], not from the gate: `daemon stop` and `daemon log` reach the
-    /// guest without passing [`Tart::require_available`], and an empty head would reach the spawn.
-    pub(crate) async fn guest_argv(&self, ctx: &Ctx, worker: &str, argv: &[String], interactive: bool) -> Result<Vec<String>, Refusal> {
-        let head = self.resolved_program(ctx).await?;
-        ctx.timeline().declare_guest_head(&head);
-        let mut line = vec![head, "exec".to_owned()];
-        if interactive {
-            line.push("-i".to_owned());
-        }
-        line.push(worker.to_owned());
-        line.extend_from_slice(argv);
-        Ok(line)
     }
 
     /// The controller's own run process, identified by the whole triple.

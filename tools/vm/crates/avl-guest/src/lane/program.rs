@@ -37,7 +37,7 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 use avl_bridge::{BridgeFailure, ErrorKind};
 use avl_trace::bridge::{ATTACHMENTS_ROUTE, AttachmentKind, attachment_route, decode_attachment_list};
 use avl_trace::protocol::{self, Label, ScenarioCommand, Side as TraceSide, SnapshotPhase, SpanKind};
-use avl_wire::daemon::TypedFailure;
+use avl_wire::daemon::{TimedStep, TypedFailure};
 use avl_wire::ide::SYSTEM_DIR;
 use avl_wire::program::lane::{Delivery, LIVE_LANE, LaneAgent, LaneDocument};
 use avl_wire::program::{
@@ -50,7 +50,7 @@ use serde_json::value::RawValue;
 use serde_json::{Map, Value, json};
 
 use super::host_ids::{self, HostId, HostSide, ServiceControl};
-use super::ide::Relaunch;
+use super::ide::{Relaunch, RelaunchPart, RelaunchParts};
 use super::readiness::{READY_TIMEOUT, request};
 use super::recycle::{Isolation, RecycleBudget, ResetPhase, never_ran};
 use super::session_logs::{self, StagedLog};
@@ -84,7 +84,8 @@ pub(crate) mod kind {
     pub(crate) const LAUNCH: &str = "lane_launch";
 }
 
-/// What the transport of an instruction waits past its deadline, before the grace of the bridge client.
+/// What the transport of an instruction waits past its deadline, before the grace of the bridge client. It is longer than
+/// `AIR_UI_TEST_ANSWER_GRACE_MS`, so the IDE answers an overrun before the transport gives up.
 const INSTRUCTION_MARGIN: Duration = Duration::from_secs(10);
 
 /// The deadline of `Reset` and `ResetManagedAgents`, `AIR_UI_TEST_RESET_TIMEOUT_MS`.
@@ -116,7 +117,7 @@ const AUTHORED_HOST_IDS: [HostAction; 3] = [HostAction::RestartIde, HostAction::
 const LIVE_HOST_IDS: [HostAction; 2] = [HostAction::RefreshLiveWiring, HostAction::AdoptLeftoverJunieSessions];
 /// The agent id of Junie, which the session inventory of the IDE names a Junie session by.
 const JUNIE_AGENT_ID: &str = "junie";
-/// How long the IDE may take to hand one session to the reset.
+/// How long the IDE may take to hand one session to the reset, `AIR_UI_TEST_ADOPT_TIMEOUT_MS`.
 const ADOPT_TIMEOUT: Duration = Duration::from_secs(30);
 /// Where an authored part writes its artifacts in the IDE context, `AIR_AUTHORED_ARTIFACTS_DIR`.
 const AUTHORED_ARTIFACTS_DIR: &str = "air-authored-artifacts";
@@ -151,8 +152,13 @@ pub(crate) trait Lane: Probes {
     fn call(&self, request: &Value, within: Duration) -> Result<Value, avl_bridge::Error>;
 
     /// Quits the IDE, performs `while_down` on its context directory, launches it again on the same context, and waits
-    /// for readiness.
-    fn relaunch(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String>;
+    /// for readiness. `parts` gets the begin and the end of each part.
+    fn relaunch(
+        &self,
+        cause: Relaunch,
+        while_down: &mut dyn FnMut(&Path) -> Result<(), String>,
+        parts: &mut dyn RelaunchParts,
+    ) -> Result<(), String>;
 
     fn services(&self) -> &dyn ServiceControl;
 
@@ -692,6 +698,19 @@ impl<'r, 's> Runner<'r, 's> {
         ids
     }
 
+    /// Starts `case`, the case of `profile`, and answers its start. A case that needs a value that the run lacks is
+    /// skipped, and then the answer is `None`.
+    fn start_case(&self, suite: &SuiteProgram, profile: &ScenarioProgram, case: &CaseIdentity) -> Option<Instant> {
+        if let Some(reason) = self.missing_runner_value(suite, profile) {
+            self.stream.skipped(case, never_ran(&profile.name, &reason));
+            return None;
+        }
+        let started = Instant::now();
+        self.stream.started(case);
+        self.watch.execution_started(self.stream, case.execution());
+        Some(started)
+    }
+
     fn scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue, reset: &ScenarioReset<'_>) {
         let case = case_identity(suite, profile);
         if self.isolation.borrow().exhausted() {
@@ -699,13 +718,9 @@ impl<'r, 's> Runner<'r, 's> {
             self.stream.skipped(&case, never_ran(&profile.name, &reason));
             return;
         }
-        if let Some(reason) = self.missing_runner_value(suite, profile) {
-            self.stream.skipped(&case, never_ran(&profile.name, &reason));
+        let Some(started) = self.start_case(suite, profile, &case) else {
             return;
-        }
-        let started = Instant::now();
-        self.stream.started(&case);
-        self.watch.execution_started(self.stream, case.execution());
+        };
         self.trace()
             .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
         let fixture = suite.fixtures.get(&profile.fixture).cloned().unwrap_or_default();
@@ -742,7 +757,12 @@ impl<'r, 's> Runner<'r, 's> {
             aborted: failure.aborted || expired,
             ..failure
         });
+        let recorded = self.trace().recording();
+        let closing = Instant::now();
         self.trace().finish_scenario(failure.as_ref().map(Failure::trace).as_ref());
+        if recorded {
+            self.stream.timing(TimedStep::RecorderClose, closing, Some(&case.name));
+        }
         self.report_trace_failure();
         let status = match &failure {
             None => CaseStatus::Successful,
@@ -768,9 +788,11 @@ impl<'r, 's> Runner<'r, 's> {
         }
         self.bare.set(true);
         self.watch.quiet(|| {
+            let started = Instant::now();
             let launched = self
                 .watch
                 .step(&format!("{} bare launch", program.suite), || self.lane.launch_bare(&launch.key));
+            self.stream.timing(TimedStep::BareLaunch, started, Some(&program.suite));
             if let Err(error) = launched {
                 let failure = Failure::runner(
                     kind::LAUNCH,
@@ -800,14 +822,11 @@ impl<'r, 's> Runner<'r, 's> {
     /// scenario.
     fn bare_scenario(&self, suite: &SuiteProgram, profile: &ScenarioProgram, raw: &RawValue) {
         let case = case_identity(suite, profile);
-        if let Some(reason) = self.missing_runner_value(suite, profile) {
-            self.stream.skipped(&case, never_ran(&profile.name, &reason));
+        let Some(started) = self.start_case(suite, profile, &case) else {
             return;
-        }
-        let started = Instant::now();
-        self.stream.started(&case);
-        self.watch.execution_started(self.stream, case.execution());
+        };
         let verdict = self.body(suite, profile, &SuiteFixture::default());
+        self.stream.timing(TimedStep::BareProgram, started, Some(&profile.name));
         // A bare IDE runs on a fresh context, so its log holds its launch alone. The slice starts at its first byte and
         // holds what the IDE wrote during the program, the start-up included.
         let mut command = scenario_command(suite, profile, raw, self.lane.recorder_bridge());
@@ -881,6 +900,7 @@ impl<'r, 's> Runner<'r, 's> {
             Err(failure) => failures.push(describe(&name, &failure.message)),
         }
         let services = self.lane.services();
+        let started = Instant::now();
         for (what, cleared) in [
             ("resetting the registry distribution fault", services.registry_clear()),
             ("clearing captured feedback", services.feedback_clear()),
@@ -890,6 +910,7 @@ impl<'r, 's> Runner<'r, 's> {
                 failures.push(describe(what, &error));
             }
         }
+        self.stream.timing(TimedStep::ServicesReset, started, Some(scenario));
         if failures.is_empty()
             && let Some(install) = baseline
         {
@@ -904,7 +925,7 @@ impl<'r, 's> Runner<'r, 's> {
     }
 
     /// A relaunch of the IDE as a `restart` span with the key `restart:ide` for `restart-ide` and `restart:recycle` for a
-    /// recycle, as the recorder keys them.
+    /// recycle, as the recorder keys them. Each part of the relaunch is a `relaunch` span inside it, see [`TracedParts`].
     fn relaunch_span(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         let id = match cause {
             Relaunch::Restart => "ide",
@@ -912,8 +933,12 @@ impl<'r, 's> Runner<'r, 's> {
         };
         let span = self.trace().open_span(SpanKind::Restart, id, &format!("[restart] {id}"), None);
         self.trace().restart();
+        let mut parts = TracedParts {
+            trace: &self.trace,
+            open: Vec::new(),
+        };
         let outcome = self.watch.step(&format!("relaunch for {id}"), || {
-            self.watch.relaunching(|| self.lane.relaunch(cause, while_down))
+            self.watch.relaunching(|| self.lane.relaunch(cause, while_down, &mut parts))
         });
         let failure = outcome
             .as_ref()
@@ -1572,6 +1597,28 @@ impl<'r, 's> Runner<'r, 's> {
         let error = answer.as_ref().err().map(ToString::to_string);
         self.trace().call(name, start, duration, error.as_deref());
         answer.map_err(|error| Failure::of_bridge(&error))
+    }
+}
+
+/// The parts of one relaunch as the `relaunch` spans of the trace, each under the innermost open span: the `restart`
+/// span, or the part it runs inside. A part that a refusal ended fails with the code of the refusal as its type.
+struct TracedParts<'t> {
+    trace: &'t RefCell<Trace>,
+    /// The spans of the parts that run now, the innermost last.
+    open: Vec<u32>,
+}
+
+impl RelaunchParts for TracedParts<'_> {
+    fn begin(&mut self, part: RelaunchPart) {
+        let title = format!("[relaunch] {}", part.title());
+        self.open
+            .push(self.trace.borrow_mut().open_span(SpanKind::Relaunch, part.as_str(), &title, None));
+    }
+
+    fn end(&mut self, _part: RelaunchPart, failure: Option<&crate::reply::AgentRefusal>) {
+        let Some(span) = self.open.pop() else { return };
+        let failure = failure.map(|refusal| Failure::runner(&refusal.code, refusal.message.clone()).trace());
+        self.trace.borrow_mut().end_span(span, failure.as_ref());
     }
 }
 

@@ -6,18 +6,12 @@ use avl_testkit::tartfake::Answer;
 use pretty_assertions::assert_eq;
 
 use super::*;
-use crate::worker::testing::{Fixture, find_step};
+use crate::worker::testing::{
+    Fixture, assert_init_refuses_a_golden, ctx, docker, find_step, position, recycle_with_a_stale_receipt, start_again, start_first,
+};
 #[cfg(unix)]
 use crate::worker::worker::{IdleStopRecord, IdleStopRequest, IdleStopVerdict, read_idle_stop_record, remove_idle_stop_record};
 use crate::worker::worker::{PoolCommand, PoolTarget};
-
-fn ctx() -> Ctx {
-    Ctx::background()
-}
-
-fn docker(fixture: &Fixture) -> &Docker {
-    fixture.manager.machine().docker().expect("a Docker pool")
-}
 
 /// The whole Docker start over the fake: the image is built, the container is created and recorded, started, and
 /// the guest runs the Linux boot: the agent install, `validate-guest`, the parity layout and the readiness. The image
@@ -26,22 +20,12 @@ fn docker(fixture: &Fixture) -> &Docker {
 #[tokio::test]
 async fn a_docker_start_builds_creates_starts_and_validates_without_provisioning() {
     let fixture = Fixture::docker();
-    let worker = fixture.worker(0);
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::Started
-    );
+    let worker = start_first(&fixture).await;
     let calls = fixture.fake.calls();
-    let position = |prefix: &str| {
-        calls
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {calls:#?}"))
-    };
-    assert!(position("version ") < position("pull "));
-    assert!(position("pull ") < position("build "));
-    assert!(position("build ") < position("create "));
-    assert!(position("create ") < position(&format!("start {worker}")));
+    assert!(position(&calls, "version ") < position(&calls, "pull "));
+    assert!(position(&calls, "pull ") < position(&calls, "build "));
+    assert!(position(&calls, "build ") < position(&calls, "create "));
+    assert!(position(&calls, "create ") < position(&calls, &format!("start {worker}")));
     assert!(docker(&fixture).create_record_is_current(worker).unwrap());
 
     let argvs = fixture.guest.lines();
@@ -54,12 +38,7 @@ async fn a_docker_start_builds_creates_starts_and_validates_without_provisioning
     }
 
     // A second start over the running container creates nothing and starts nothing.
-    let before = fixture.fake.calls().len();
-    assert_eq!(
-        fixture.manager.start_without_lifecycle_lock(&ctx(), worker).await.unwrap(),
-        StartState::AlreadyRunning
-    );
-    let after = &fixture.fake.calls()[before..];
+    let after = start_again(&fixture, worker).await;
     assert!(
         !after.iter().any(|call| call.starts_with("create ")
             || call.starts_with("start ")
@@ -91,14 +70,8 @@ async fn a_pool_start_recreates_an_unleased_container_of_another_declaration() {
     // The container ran, so the start is `started` again only after it was made again.
     assert_eq!(fixture.manager.start(&ctx(), worker).await.unwrap(), StartState::Started);
     let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
-    let position = |prefix: &str| {
-        after
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {after:#?}"))
-    };
-    assert!(position("stop ") < position(&format!("rm {worker}")));
-    assert!(position(&format!("rm {worker}")) < position("create "));
+    assert!(position(&after, "stop ") < position(&after, &format!("rm {worker}")));
+    assert!(position(&after, &format!("rm {worker}")) < position(&after, "create "));
     assert!(
         !after
             .iter()
@@ -150,11 +123,7 @@ async fn a_pool_start_of_all_starts_the_other_slots_and_names_the_refused_one() 
     declare_stale_container(&fixture, &leased);
     let before = fixture.fake.calls().len();
 
-    let refusal = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Start(PoolTarget::All), None)
-        .await
-        .unwrap_err();
+    let refusal = fixture.run_pool(PoolCommand::Start(PoolTarget::All)).await.unwrap_err();
     assert_eq!(
         (refusal.code.as_ref(), refusal.exit),
         ("start_incomplete", Exit::TEMP_FAIL),
@@ -320,11 +289,7 @@ async fn a_pool_stop_names_its_workers_and_no_engine() {
     let fixture = Fixture::docker();
     let worker = fixture.worker(0).to_owned();
     fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
-    let outcome = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Stop(PoolTarget::All), None)
-        .await
-        .unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Stop(PoolTarget::All)).await.unwrap();
     assert_eq!(outcome.data["workers"][&worker], "stopped");
     assert!(outcome.data.get("engine").is_none(), "{}", outcome.data);
     assert_eq!(outcome.text, format!("{worker}=stopped"));
@@ -350,24 +315,9 @@ async fn the_share_refresh_settles_on_docker() {
 #[tokio::test]
 async fn pool_init_on_docker_builds_the_image_and_creates_every_slot() {
     let fixture = Fixture::docker();
-    let refusal = fixture
-        .manager
-        .pool(
-            &ctx(),
-            PoolCommand::Init {
-                golden: Some("air-macos-golden".to_owned()),
-            },
-            None,
-        )
-        .await
-        .unwrap_err();
-    assert_eq!(refusal.code, "usage");
+    assert_init_refuses_a_golden(&fixture).await;
 
-    let outcome = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
-        .await
-        .unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Init { golden: None }).await.unwrap();
     assert_eq!(outcome.data["created"], serde_json::json!(["air-docker-1"]));
     assert_eq!(outcome.data["image"], docker(&fixture).image_tag());
     // Nothing is started: the first lease operation starts a slot.
@@ -377,11 +327,7 @@ async fn pool_init_on_docker_builds_the_image_and_creates_every_slot() {
         fixture.fake.calls()
     );
     // A second init finds every container current.
-    let outcome = fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Init { golden: None }, None)
-        .await
-        .unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Init { golden: None }).await.unwrap();
     assert_eq!(outcome.data["created"], serde_json::json!([]));
 }
 
@@ -402,7 +348,7 @@ async fn pool_gc_on_docker_removes_stopped_containers_and_keeps_volumes() {
     ] {
         fixture.fake.forget_calls();
         fixture.fake.answer(Answer::ContainerState, state);
-        let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+        let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
         match kept {
             None => {
                 assert_eq!(outcome.data["removed"], serde_json::json!(["air-docker-1"]), "{state}");
@@ -421,7 +367,7 @@ async fn pool_gc_on_docker_removes_stopped_containers_and_keeps_volumes() {
     fixture.fake.forget_calls();
     fixture.fake.answer(Answer::ContainerState, "exited/0\n");
     fixture.write_lease("air-docker-1", "token");
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["kept"], serde_json::json!({ "air-docker-1": "leased" }));
     assert!(!fixture.fake.saw_call_containing("rm "));
 }
@@ -434,7 +380,7 @@ async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
     let worker = fixture.worker(0).to_owned();
     fixture.manager.start(&ctx(), &worker).await.unwrap();
     let before = fixture.fake.calls().len();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["kept"], serde_json::json!({ worker.as_str(): "running" }));
     let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
     assert!(
@@ -455,7 +401,7 @@ async fn pool_gc_on_docker_reads_the_state_under_the_lifecycle_lock() {
         .acquire(&ctx(), &fixture.manager.lifecycle_lock_path(&worker), "pool-start", "busy")
         .await
         .unwrap();
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["kept"], serde_json::json!({ worker.as_str(): "busy" }));
 }
 
@@ -472,7 +418,7 @@ async fn pool_gc_on_docker_keeps_a_busy_slot_and_goes_on() {
         .await
         .unwrap();
     fixture.fake.answer(Answer::ContainerState, "exited/0\n");
-    let outcome = fixture.manager.pool(&ctx(), PoolCommand::Gc, None).await.unwrap();
+    let outcome = fixture.run_pool(PoolCommand::Gc).await.unwrap();
     assert_eq!(outcome.data["removed"], serde_json::json!(["air-docker-2"]));
     assert_eq!(outcome.data["kept"], serde_json::json!({ "air-docker-1": "busy" }));
     assert!(!fixture.fake.saw_call_containing("rm air-docker-1"));
@@ -482,28 +428,12 @@ async fn pool_gc_on_docker_keeps_a_busy_slot_and_goes_on() {
 #[tokio::test]
 async fn pool_recycle_on_docker_drops_the_volume_and_starts_again() {
     let fixture = Fixture::docker();
-    let worker = fixture.worker(0).to_owned();
-    fixture.manager.start_without_lifecycle_lock(&ctx(), &worker).await.unwrap();
-    let receipt = fixture.settings.worker_dir(&worker).join("stale-receipt.json");
-    std::fs::write(&receipt, "{}").unwrap();
-    let before = fixture.fake.calls().len();
-    fixture
-        .manager
-        .pool(&ctx(), PoolCommand::Recycle(PoolTarget::Worker(worker.clone())), None)
-        .await
-        .unwrap();
-    let after: Vec<String> = fixture.fake.calls()[before..].to_vec();
-    let position = |prefix: &str| {
-        after
-            .iter()
-            .position(|call| call.starts_with(prefix))
-            .unwrap_or_else(|| panic!("no {prefix:?} call in {after:#?}"))
-    };
+    let (worker, receipt, after) = recycle_with_a_stale_receipt(&fixture).await;
     // No stop: a recycle removes the container in any state, with `--force`, once the lease guard passed.
     assert!(!after.iter().any(|call| call.starts_with("stop ")), "{after:#?}");
-    assert!(position("rm --force ") < position(&format!("volume rm --force air-{worker}-data")));
-    assert!(position("volume rm ") < position("create "));
-    assert!(position("create ") < position(&format!("start {worker}")));
+    assert!(position(&after, "rm --force ") < position(&after, &format!("volume rm --force air-{worker}-data")));
+    assert!(position(&after, "volume rm ") < position(&after, "create "));
+    assert!(position(&after, "create ") < position(&after, &format!("start {worker}")));
     assert!(!receipt.exists(), "a receipt of the dropped volume survived");
     assert!(fixture.manager.lifecycle_lock_path(&worker).exists());
 }
@@ -651,6 +581,14 @@ fn scheduled_nonce(fixture: &Fixture) -> String {
     requests[0].nonce.clone()
 }
 
+/// Schedules the idle stop of the first worker of `fixture`, and answers the worker and the nonce of its process.
+#[cfg(unix)]
+async fn schedule_first(fixture: &Fixture) -> (&str, String) {
+    let worker = fixture.worker(0);
+    fixture.manager.schedule_idle_stop(&ctx(), worker).await.unwrap();
+    (worker, scheduled_nonce(fixture))
+}
+
 #[cfg(unix)]
 fn stop_calls(fixture: &Fixture) -> Vec<String> {
     fixture.fake.calls().into_iter().filter(|call| call.starts_with("stop ")).collect()
@@ -688,9 +626,7 @@ async fn an_idle_stop_stops_an_unleased_running_worker() {
 #[tokio::test]
 async fn an_idle_stop_keeps_a_worker_that_somebody_took() {
     let fixture = idle_container_pool("60").await;
-    let worker = fixture.worker(0);
-    fixture.manager.schedule_idle_stop(&ctx(), worker).await.unwrap();
-    let nonce = scheduled_nonce(&fixture);
+    let (worker, nonce) = schedule_first(&fixture).await;
     assert_eq!(
         fixture.manager.idle_stop_worker(&ctx(), worker, "another-nonce").await.unwrap(),
         IdleStopVerdict::Superseded
@@ -714,9 +650,7 @@ async fn an_idle_stop_keeps_a_worker_that_somebody_took() {
 #[tokio::test]
 async fn an_idle_stop_on_a_stopped_engine_starts_nothing() {
     let fixture = Fixture::docker_builder().container_engine().env("AIR_VM_IDLE_STOP", "60").build();
-    let worker = fixture.worker(0);
-    fixture.manager.schedule_idle_stop(&ctx(), worker).await.unwrap();
-    let nonce = scheduled_nonce(&fixture);
+    let (worker, nonce) = schedule_first(&fixture).await;
     assert_eq!(
         fixture.manager.idle_stop_worker(&ctx(), worker, &nonce).await.unwrap(),
         IdleStopVerdict::AlreadyStopped
@@ -737,9 +671,7 @@ async fn an_idle_stop_on_a_stopped_engine_starts_nothing() {
 #[tokio::test]
 async fn the_idle_stop_process_waits_for_the_deadline() {
     let fixture = idle_container_pool("1").await;
-    let worker = fixture.worker(0);
-    fixture.manager.schedule_idle_stop(&ctx(), worker).await.unwrap();
-    let nonce = scheduled_nonce(&fixture);
+    let (worker, nonce) = schedule_first(&fixture).await;
     let superseded = fixture.manager.pool_idle_stop(&ctx(), worker, "another-nonce").await.unwrap();
     assert_eq!(superseded.text, format!("{worker}: idle_stop=superseded"));
     let started = std::time::Instant::now();

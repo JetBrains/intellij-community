@@ -53,7 +53,7 @@ pub(crate) const GIT_MISSING_CODE: &str = "lane_host_git_missing";
 const GIT_TOOL: &str = "git";
 
 /// The screen of a lane guest, the default of `AIR_VM_SCREEN`. A host with a smaller screen gets a note.
-const LANE_SCREEN: (u32, u32) = (1920, 1080);
+pub(crate) const LANE_SCREEN: (u32, u32) = (1920, 1080);
 
 /// The start of every refusal of [`GuestValidator::probe_host`], so a TeamCity log names the host and not a worker.
 const HOST_REFUSAL: &str = "this host cannot run the lane IDE";

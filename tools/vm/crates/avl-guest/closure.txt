@@ -31,6 +31,7 @@ flate2
 foldhash
 form_urlencoded
 fscopy
+gethostname
 getrandom
 glob
 hashbrown
@@ -71,6 +72,8 @@ typed_path
 typenum
 utf8parse
 walkdir
+x11rb
+x11rb_protocol
 zip
 zlib_rs
 zmij

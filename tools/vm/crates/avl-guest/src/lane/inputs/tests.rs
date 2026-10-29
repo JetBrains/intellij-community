@@ -6,6 +6,7 @@ use pretty_assertions::assert_eq;
 use tempfile::TempDir;
 
 use super::*;
+use crate::lane::testing::guest_launch_inputs;
 
 fn write(path: &Path, content: &str, executable: bool) {
     fs::create_dir_all(path.parent().unwrap()).unwrap();
@@ -80,17 +81,8 @@ fn a_runtime_flag_names_the_manifest_of_one_cli_runtime() {
         ]
     );
     let inputs = LaunchInputs {
-        ide_root: "/vm/data/ide".into(),
-        home: "/vm/home".into(),
-        dist_home: "/d".into(),
-        ide_config: "/d.properties".into(),
-        java_home: "/d/jbr".into(),
-        flags_file: "/f".into(),
-        project_archive: "/p.zip".into(),
-        project_root: "plain-project".to_owned(),
         runtimes,
-        distribution_plugins: BTreeSet::new(),
-        trace: TraceInputs::default(),
+        ..guest_launch_inputs()
     };
     let named = inputs.runtimes_named(&["codex".to_owned()]).unwrap();
     assert_eq!(named.iter().map(|runtime| runtime.name.as_str()).collect::<Vec<_>>(), ["codex"]);

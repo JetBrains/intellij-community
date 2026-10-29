@@ -10,6 +10,11 @@ const alertVariants = cva(
         default: "bg-card text-card-foreground",
         destructive:
           "bg-card text-destructive *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+        // deviation from upstream: the Air status variants. The tokens come from the MCP Apps status variables.
+        info: "border-info-border bg-info-surface text-foreground *:[svg]:text-info",
+        success: "border-success-border bg-success-surface text-foreground *:[svg]:text-success",
+        warning: "border-warning-border bg-warning-surface text-foreground *:[svg]:text-warning",
+        danger: "border-destructive-border bg-destructive-surface text-foreground *:[svg]:text-destructive",
       },
     },
     defaultVariants: {

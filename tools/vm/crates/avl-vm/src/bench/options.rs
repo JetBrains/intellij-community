@@ -62,6 +62,11 @@ pub(crate) enum BenchVerb {
     /// In the empty-editor arm, every run opens the project directory, and the IDE opens no README. The IDE restores no
     /// editor, so the empty editor area builds the Air composer, and the gate is the end of its
     /// air.emptyState.createComponent span. --cold starts each run of this arm from the unprimed template.
+    ///
+    /// In the cargo-sync arm, every run is a first start: it starts from the unprimed template, with empty caches and
+    /// no prime run, and the IDE opens no README, as RustRoverIndexingTest does. The gate is the first line
+    /// `CargoSyncTask started` of idea.log. Its metric cargoSyncStarted is in ms from the process start, and cargoSyncStarted.ideaLog is
+    /// the ms of the log, the value of rust_duration_from_start_to_cargo_sync of the RustRover perf test.
     Project(ProjectArgs),
     /// Removes the old generations: all except the --keep newest and those a session of the last 24 hours names.
     Gc(GcArgs),
@@ -87,9 +92,14 @@ pub(crate) enum BenchVerb {
     /// source, and the named classes before the anchor. The plugin table holds the classes of each plugin before the
     /// anchor, its modules with a class, and the EDT and BG ms that its loaders spent in findClass. The module table
     /// holds the same for each main module and content module, with its plugin. A main module is `<plugin id> (main)`.
-    /// A plugin-classes.txt of the old shape has no time, so a time is `-`. A run needs class-load.log,
-    /// plugin-classes.txt and startup-stats.json for an anchor. --entries lists the first classes of each plugin of
-    /// the plugin table before the anchor, from the median run of the arm.
+    /// A plugin-classes.txt of the old shape has no time, so a time is `-`. A run needs class-load.log and
+    /// plugin-classes.txt for an anchor. --entries lists the first classes of each plugin of the plugin table before
+    /// the anchor, from the median run of the arm.
+    ///
+    /// The process clock starts at the load of com.intellij.idea.Main in class-load.log. A log without that class takes
+    /// jvm.loadingTime of startup-stats.json, which puts the start about 100 ms too early, with a note.
+    ///
+    /// --span counts the class loads in the window of one span instead of before an anchor, on the EDT by default.
     Classes(ClassesArgs),
     /// Prints the plugin loaders of one run by the frame that triggered each one. No IDE starts.
     ///
@@ -202,10 +212,39 @@ pub(crate) struct ClassesArgs {
     #[arg(long, value_name = "ANCHOR", value_parser = clap::builder::PossibleValuesParser::new(CLASS_ANCHORS))]
     pub(crate) at: Option<String>,
     /// Lists the first N classes of each plugin of the plugin table that the median run of the arm loaded before the
-    /// anchor, with their ms from the process start. The run needs class-load.log, plugin-classes.txt and
-    /// startup-stats.json.
+    /// anchor, with their ms from the process start. The run needs class-load.log and plugin-classes.txt.
     #[arg(long, value_name = "N", value_parser = clap::value_parser!(u32).range(1..))]
     pub(crate) entries: Option<u32>,
+    /// Counts the class loads in the window of the span NAME instead: from the start to the end of the first span NAME
+    /// of each run, such as air.emptyState.createContent. The tables hold the loads by plugin, by module, and by
+    /// package for a class without a plugin, with the findClass ms of the plugin classes. A hidden class counts with
+    /// the class that defines it. A run needs class-load.log, plugin-classes.txt, opentelemetry.json and, for the EDT,
+    /// threads.txt.
+    #[arg(long, value_name = "NAME", conflicts_with_all = ["at", "entries", "plugins"])]
+    pub(crate) span: Option<String>,
+    /// The thread of the loads of --span: `edt`, the EDT, or `all`, every thread. With `edt`, the BG columns give the
+    /// loads of the other threads.
+    #[arg(long, value_name = "THREAD", value_enum, default_value_t = SpanThread::Edt, requires = "span")]
+    pub(crate) thread: SpanThread,
+    /// The run directory of --span, such as `empty-editor-run-05`. The default is every valid run of the arm, and a
+    /// number is the median over the runs with the span.
+    #[arg(long, value_name = "DIR", requires = "span")]
+    pub(crate) run: Option<String>,
+    /// Adds a timeline of the window of --span in buckets of MS: the loads of each bucket and its first classes. The
+    /// run is the run of --run, else the median run of the arm.
+    #[arg(long, value_name = "MS", value_parser = clap::value_parser!(u32).range(1..), requires = "span")]
+    pub(crate) timeline: Option<u32>,
+}
+
+/// The `--thread` value of `bench classes --span`.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, ValueEnum, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) enum SpanThread {
+    /// The EDT, `AWT-EventQueue-0`.
+    #[default]
+    Edt,
+    /// Every thread.
+    All,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
@@ -291,6 +330,24 @@ pub(crate) struct WelcomeArgs {
     /// The arms of the session.
     #[arg(long, value_enum, default_value_t = ArmChoice::Both)]
     pub(crate) arm: ArmChoice,
+    #[command(flatten)]
+    pub(crate) measure: MeasureArgs,
+    #[command(flatten)]
+    pub(crate) launch: LaunchArgs,
+}
+
+impl WelcomeArgs {
+    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
+    /// --suppress-plugin.
+    pub(crate) fn arms(&self) -> Vec<Arm> {
+        self.measure.suppress.with_twins(self.arm.arms())
+    }
+}
+
+/// The options of each measured run of a session of arms: the start from the template, the profile and the suppressed
+/// plugin. A verb can replace the help of an option with its own text, which names its arms.
+#[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
+pub(crate) struct MeasureArgs {
     /// Starts each measured run from a fresh copy of the unprimed template, and skips the prime runs.
     #[arg(long)]
     pub(crate) cold: bool,
@@ -304,17 +361,18 @@ pub(crate) struct WelcomeArgs {
     pub(crate) profile_event: ProfileEvent,
     #[command(flatten)]
     pub(crate) suppress: SuppressArgs,
-    #[command(flatten)]
-    pub(crate) launch: LaunchArgs,
 }
 
-impl WelcomeArgs {
-    /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
-    /// --suppress-plugin.
-    pub(crate) fn arms(&self) -> Vec<Arm> {
-        self.suppress.with_twins(self.arm.arms())
-    }
-}
+/// The help of `--cold` of `bench project`, which names the arms that take it.
+const PROJECT_COLD_HELP: &str = "Starts each measured run from a fresh copy of the unprimed template, with empty caches, and \
+    skips the prime run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run. The \
+    cargo-sync arm is always cold.";
+
+/// The help of `--profile` of `bench project`, which also names the gate of the empty-editor arm.
+const PROJECT_PROFILE_HELP: &str = "Samples with async-profiler from the JVM start to the gate of each run, and reports the top \
+    frames of the EDT. The gate of the empty-editor arm is the end of air.emptyState.createComponent. The profile has no time \
+    of a sample, so it covers the whole start-up to the gate, not one span. A run whose JBR has no jcmd keeps the profile of \
+    the whole run.";
 
 /// The plugin that the twin arms of a session suppress.
 #[derive(Clone, Debug, PartialEq, Eq, clap::Args)]
@@ -360,6 +418,7 @@ pub(crate) struct OpenProjectArgs {
 }
 
 #[derive(Clone, Debug, PartialEq, clap::Args)]
+#[command(mut_arg("cold", |arg| arg.help(PROJECT_COLD_HELP)), mut_arg("profile", |arg| arg.help(PROJECT_PROFILE_HELP)))]
 pub(crate) struct ProjectArgs {
     /// The project: `markdown`, a generated project of Markdown files only, or a directory to copy into the sandbox.
     #[arg(value_name = "PROJECT")]
@@ -367,26 +426,29 @@ pub(crate) struct ProjectArgs {
     /// The measured runs per arm.
     #[arg(long, value_name = "N", default_value_t = DEFAULT_OPEN_PROJECT_RUNS, value_parser = clap::value_parser!(u32).range(1..=50))]
     pub(crate) runs: u32,
-    /// The arms of the session. `both` interleaves the project arm and the empty-editor arm.
+    /// The arms of the session. `both` interleaves the project arm and the empty-editor arm. `cargo-sync` needs an IDE
+    /// with the Rust plugin, such as --target //build:rustrover_dist, and a Cargo project.
     #[arg(long, value_enum, default_value_t = ProjectArmChoice::Project)]
     pub(crate) arm: ProjectArmChoice,
-    /// Starts each measured run from a fresh copy of the unprimed template, with empty caches, and skips the prime
-    /// run. Only the empty-editor arm takes it: the project arm restores the editor of its prime run.
-    #[arg(long)]
-    pub(crate) cold: bool,
     #[command(flatten)]
-    pub(crate) suppress: SuppressArgs,
+    pub(crate) measure: MeasureArgs,
     #[command(flatten)]
     pub(crate) launch: LaunchArgs,
 }
 
 impl ProjectArgs {
+    /// Tells whether each measured run starts from the unprimed template and the session has no prime run: `--cold`,
+    /// or the cargo-sync arm, whose metric in CI is a first start.
+    pub(crate) fn cold(&self) -> bool {
+        self.measure.cold || self.arm == ProjectArmChoice::CargoSync
+    }
+
     /// The arms of the session, in the interleave order: each arm of --arm, and after it its twin of
     /// --suppress-plugin. A cold session of the project arm is refused: without a prime run, no editor state is there
     /// to restore. A twin of the empty-editor arm without Air is refused too: its gate is a span of the Air composer.
     pub(crate) fn arms(&self) -> Result<Vec<Arm>, String> {
-        let arms = self.suppress.with_twins(self.arm.arms());
-        if self.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
+        let arms = self.measure.suppress.with_twins(self.arm.arms());
+        if self.measure.cold && arms.iter().any(|arm| arm.kind == ArmKind::Project) {
             return Err(
                 "--cold needs --arm empty-editor: the project arm restores the editor that its prime run saved, and a cold session has no prime run"
                     .to_owned(),
@@ -445,6 +507,7 @@ pub(crate) enum ProjectArmChoice {
     Project,
     EmptyEditor,
     Both,
+    CargoSync,
 }
 
 impl ProjectArmChoice {
@@ -454,6 +517,7 @@ impl ProjectArmChoice {
             Self::Project => vec![Arm::PROJECT],
             Self::EmptyEditor => vec![Arm::EMPTY_EDITOR],
             Self::Both => vec![Arm::PROJECT, Arm::EMPTY_EDITOR],
+            Self::CargoSync => vec![Arm::CARGO_SYNC],
         }
     }
 }

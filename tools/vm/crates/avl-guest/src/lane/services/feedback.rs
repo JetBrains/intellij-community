@@ -32,16 +32,14 @@ struct State {
 /// The handler of the feedback service.
 pub(crate) struct Feedback {
     base_url: String,
-    token: String,
     state: Mutex<State>,
     submitted: Condvar,
 }
 
 /// Starts the feedback capture on `127.0.0.1:<port>`.
 pub(crate) fn start(port: u16, token: &str) -> Result<Service<Feedback>, AgentRefusal> {
-    Service::start(NAME, port, |address| Feedback {
+    Service::start(NAME, port, token, |address| Feedback {
         base_url: format!("http://{address}"),
-        token: token.to_owned(),
         state: Mutex::new(State {
             submissions: VecDeque::new(),
             stopped: false,
@@ -51,10 +49,24 @@ pub(crate) fn start(port: u16, token: &str) -> Result<Service<Feedback>, AgentRe
 }
 
 impl Handler for Feedback {
-    fn handle(&self, request: &Request) -> Response {
-        if let Some(route) = control::route(request, NAME, &self.token) {
-            return route.map_or_else(|refusal| refusal, |route| self.control(request, route));
+    fn control(&self, request: &Request, route: &str) -> Response {
+        match (route, request.method.as_str()) {
+            ("submissions", "GET") => control::answer(&json!({ "submissions": &self.lock().submissions })),
+            ("submissions", "DELETE") => control::answer(&json!({ "submissions": self.clear() })),
+            ("next", "POST") => match control::body::<NextRequest>(request) {
+                Ok(NextRequest { wait_ms }) if wait_ms <= MAX_WAIT_MS => {
+                    control::answer(&json!({ "submission": self.next(Duration::from_millis(wait_ms)) }))
+                }
+                Ok(NextRequest { wait_ms }) => control::bad_request(&format!("the waitMs {wait_ms} is more than {MAX_WAIT_MS}")),
+                Err(refusal) => refusal,
+            },
+            ("submissions", _) => control::method_not_allowed(request, "GET or DELETE"),
+            ("next", _) => control::method_not_allowed(request, "POST"),
+            _ => control::unknown_route(request),
         }
+    }
+
+    fn handle(&self, request: &Request) -> Response {
         if request.path.starts_with("/feedback") {
             if request.method != "POST" {
                 return Response::with_body(
@@ -118,23 +130,6 @@ impl Feedback {
                 .wait_timeout(state, left)
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .0;
-        }
-    }
-
-    fn control(&self, request: &Request, route: &str) -> Response {
-        match (route, request.method.as_str()) {
-            ("submissions", "GET") => control::answer(&json!({ "submissions": &self.lock().submissions })),
-            ("submissions", "DELETE") => control::answer(&json!({ "submissions": self.clear() })),
-            ("next", "POST") => match control::body::<NextRequest>(request) {
-                Ok(NextRequest { wait_ms }) if wait_ms <= MAX_WAIT_MS => {
-                    control::answer(&json!({ "submission": self.next(Duration::from_millis(wait_ms)) }))
-                }
-                Ok(NextRequest { wait_ms }) => control::bad_request(&format!("the waitMs {wait_ms} is more than {MAX_WAIT_MS}")),
-                Err(refusal) => refusal,
-            },
-            ("submissions", _) => control::method_not_allowed(request, "GET or DELETE"),
-            ("next", _) => control::method_not_allowed(request, "POST"),
-            _ => control::unknown_route(request),
         }
     }
 }

@@ -1,0 +1,20 @@
+# Generated from community/build/rust-tools/clippy.toml by sync.mjs. Edit that file.
+# The clippy configuration of every Rust tool workspace. `sync.mjs` copies this file into each workspace that
+# `README.md` lists, where `cargo clippy` finds it. `community/.bazelrc` gives this file to the Bazel clippy aspect of
+# the community root. Edit here, then run `bun community/build/rust-tools/sync.mjs`.
+#
+# A site that needs a banned call says why with `#[expect(clippy::disallowed_methods, reason = "...")]`.
+
+disallowed-methods = [
+  # On Windows the result carries the `\\?\` prefix, and the tools refuse such a path. `fscopy::resolve_links` removes it.
+  { path = "std::fs::canonicalize", reason = "gives a \\\\?\\ path on Windows; use fscopy::resolve_links" },
+  { path = "std::path::Path::canonicalize", reason = "gives a \\\\?\\ path on Windows; use fscopy::resolve_links" },
+  # tempfile 3.27 gives these calls the path without the `\\?\` prefix, so on Windows they fail past MAX_PATH
+  # (tempfile#444). Rust std adds the prefix. Publish with `fs::rename`, then call `TempPath::disable_cleanup(true)`.
+  { path = "tempfile::NamedTempFile::keep", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
+  { path = "tempfile::NamedTempFile::persist", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
+  { path = "tempfile::NamedTempFile::persist_noclobber", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
+  { path = "tempfile::TempPath::keep", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
+  { path = "tempfile::TempPath::persist", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
+  { path = "tempfile::TempPath::persist_noclobber", reason = "fails past MAX_PATH on Windows (tempfile#444); use fs::rename" },
+]

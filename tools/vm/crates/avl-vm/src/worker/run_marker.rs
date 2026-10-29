@@ -16,6 +16,7 @@ use avl_report::digest::sha256_text;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::worker::docker::remove_if_present;
 use crate::worker::secure::read_json_record;
 use crate::worker::worker::{Lease, Manager};
 
@@ -87,15 +88,7 @@ pub(crate) fn read_run_marker(settings: &Config, worker: &str) -> Result<Option<
 
 /// Removes the run marker of `worker`. A worker without a marker is no error.
 pub(crate) fn remove_run_marker(settings: &Config, worker: &str) -> Result<(), Refusal> {
-    match std::fs::remove_file(settings.run_marker_path(worker)) {
-        Ok(()) => Ok(()),
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
-        Err(error) => Err(Refusal::new(
-            "state_write_failed",
-            Exit::FAILURE,
-            format!("cannot remove the run marker of {worker}: {error}"),
-        )),
-    }
+    remove_if_present(&settings.run_marker_path(worker))
 }
 
 /// What the run marker of a worker says.

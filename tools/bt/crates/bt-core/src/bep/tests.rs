@@ -126,6 +126,30 @@ fn a_successful_target_is_not_failed_to_build() {
     assert!(summary.failed_to_build.is_empty(), "{:?}", summary.failed_to_build);
 }
 
+/// A completed target counts, built or not. Its announcement in the children of another event does not.
+#[test]
+fn every_completed_target_is_counted() {
+    let summary = posix_bep(&[
+        json!({
+            "id": {"pattern": {"pattern": ["//p/..."]}},
+            "children": [{"targetCompleted": {"label": "//p:a"}}],
+            "expanded": {},
+        }),
+        json!({"id": {"targetCompleted": {"label": "//p:a"}}, "completed": {"success": true}}),
+        json!({"id": {"targetCompleted": {"label": "//p:b"}}, "completed": {}}),
+    ]);
+    assert_eq!(summary.completed_targets, 2);
+    assert_eq!(summary.failed_to_build, ["//p:b"]);
+
+    // The BEP of a pattern under an ignored directory: the pattern expands to no target.
+    let ignored = posix_bep(&[
+        json!({"id": {"pattern": {"pattern": ["//community/tools/vm/..."]}}, "expanded": {}}),
+        json!({"id": {"buildFinished": {}}, "finished": {"overallSuccess": true}}),
+    ]);
+    assert_eq!(ignored.completed_targets, 0);
+    assert_eq!(ignored.overall_success, Some(true));
+}
+
 #[test]
 fn an_analysis_abort_is_recorded() {
     let summary = posix_bep(&[json!({
@@ -149,7 +173,7 @@ fn a_truncated_final_line_is_skipped() {
 fn an_empty_file_reports_having_seen_nothing() {
     let summary = parse_bep(lines_of(""), Platform::Darwin);
     assert!(!summary.saw_any_event);
-    assert!(summary.attempts.is_empty());
+    assert_eq!(summary.attempts, []);
 }
 
 /// proto3 JSON encodes an int64 as a quoted string, so a real bazel sends the duration quoted while the int32 ids

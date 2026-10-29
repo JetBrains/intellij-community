@@ -162,5 +162,5 @@ async fn the_baseline_scan_is_blind_to_a_merged_verdict() {
         "the aggregate is deliberately outside every worker's reports tree: {}",
         path.display()
     );
-    assert!(read_shard_baseline(settings).durations.is_empty());
+    assert_eq!(read_shard_baseline(settings).durations, []);
 }

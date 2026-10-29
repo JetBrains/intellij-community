@@ -1,6 +1,7 @@
 //! One iteration as a value: the daemon decision, the push, the run, the evidence and the report.
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::time::Instant;
 
 use crate::worker::worker::Lease;
@@ -8,7 +9,7 @@ use avl_base::clock::stamp;
 use avl_base::format::{clip, seconds};
 use avl_base::fs::create_private_dir;
 use avl_base::{Exit, Refusal, Scope};
-use avl_host_sys::Ctx;
+use avl_host_sys::{Channel, Ctx};
 use avl_report::report::{self as run_report, Input};
 use avl_wire::daemon::{self as wire, RunEvent, RunEventKind};
 use avl_wire::progress::{Decision, Event, IterationReported, Phase, Subject};
@@ -688,70 +689,58 @@ impl Host {
     /// agent path answers, about 0.1 s. A digest that moved is a note of the run stream with both digests, and so is a
     /// guest that does not say: then the daemon stays.
     pub(crate) async fn installed_agent(&self, ctx: &Ctx, state: &HostState, scope: &Scope) -> Option<String> {
-        if state.agent_digest.is_empty() {
-            return None;
-        }
-        let channel = self.channel(&state.worker);
-        let stays = |why: String| format!("the lane daemon stays, because {why}");
-        match self.guest(ctx, channel.as_ref()).installed_agent_digest().await {
-            Ok(Some(installed)) => {
-                if installed != state.agent_digest {
-                    self.reporter.note(
-                        format!(
-                            "the lane daemon runs the guest agent {} of its start, and the guest holds {} now",
-                            short(&state.agent_digest),
-                            short(&installed)
-                        ),
-                        Some(scope),
-                    );
-                }
-                Some(installed)
-            }
-            Ok(None) => {
-                self.reporter
-                    .note(stays("the guest agent names no digest of its own".to_owned()), Some(scope));
-                None
-            }
-            Err(refusal) => {
-                self.reporter.note(
-                    stays(format!("the guest agent did not say which build it is: {}", refusal.message)),
-                    Some(scope),
-                );
-                None
-            }
-        }
+        let channel = self.channel_of_recorded_agent(state)?;
+        let answer = match self.guest(ctx, channel.as_ref()).installed_agent_digest().await {
+            Ok(Some(installed)) => Ok(installed),
+            Ok(None) => Err("the guest agent names no digest of its own".to_owned()),
+            Err(refusal) => Err(format!("the guest agent did not say which build it is: {}", refusal.message)),
+        };
+        self.note_agent_digest(state, answer, |installed| format!("the guest holds {installed} now"), scope)
     }
 
     /// The digest of the guest agent that the build of this checkout made, when the record of the healthy daemon `state`
     /// names the agent of its start. Otherwise the run reads nothing. A digest that
     /// moved is a note of the run stream with both digests, and so is an agent that cannot be read: then the daemon stays.
     pub(crate) async fn built_agent(&self, ctx: &Ctx, state: &HostState, scope: &Scope) -> Option<String> {
-        if state.agent_digest.is_empty() {
-            return None;
-        }
-        let channel = self.channel(&state.worker);
-        match self.guest(ctx, channel.as_ref()).built_agent_digest(self.bazel.as_ref()).await {
-            Ok(built) => {
-                if built != state.agent_digest {
+        let channel = self.channel_of_recorded_agent(state)?;
+        let answer = self
+            .guest(ctx, channel.as_ref())
+            .built_agent_digest(self.bazel.as_ref())
+            .await
+            .map_err(|refusal| format!("the guest agent of the build cannot be read: {}", refusal.message));
+        self.note_agent_digest(state, answer, |built| format!("the build made {built}"), scope)
+    }
+
+    /// The channel into the guest of the healthy daemon `state`, when its record names the agent of its start.
+    fn channel_of_recorded_agent(&self, state: &HostState) -> Option<Arc<dyn Channel>> {
+        (!state.agent_digest.is_empty()).then(|| self.channel(&state.worker))
+    }
+
+    /// The digest of `answer`. A digest other than the one of the start of `state` is a note with both digests, and
+    /// `moved` words the new one. An error is a note that says why the daemon stays.
+    fn note_agent_digest(
+        &self,
+        state: &HostState,
+        answer: Result<String, String>,
+        moved: impl FnOnce(&str) -> String,
+        scope: &Scope,
+    ) -> Option<String> {
+        match answer {
+            Ok(digest) => {
+                if digest != state.agent_digest {
                     self.reporter.note(
                         format!(
-                            "the lane daemon runs the guest agent {} of its start, and the build made {}",
+                            "the lane daemon runs the guest agent {} of its start, and {}",
                             short(&state.agent_digest),
-                            short(&built)
+                            moved(short(&digest))
                         ),
                         Some(scope),
                     );
                 }
-                Some(built)
+                Some(digest)
             }
-            Err(refusal) => {
-                self.reporter.note(
-                    format!(
-                        "the lane daemon stays, because the guest agent of the build cannot be read: {}",
-                        refusal.message
-                    ),
-                    Some(scope),
-                );
+            Err(why) => {
+                self.reporter.note(format!("the lane daemon stays, because {why}"), Some(scope));
                 None
             }
         }

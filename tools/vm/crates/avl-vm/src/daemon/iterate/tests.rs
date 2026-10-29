@@ -243,7 +243,7 @@ async fn the_run_asks_the_guest_for_its_agent_only_for_a_lane_daemon_with_a_reco
     fixture.on("contract", contract(&reinstalled));
     assert_eq!(fixture.host.installed_agent(&ctx, &state, &scope).await, None);
     state.agent_digest = started.clone();
-    assert!(fixture.channel().calls_containing("vm-guest-agent contract").is_empty());
+    assert_eq!(fixture.channel().calls_containing("vm-guest-agent contract"), Vec::<String>::new());
 
     assert_eq!(
         fixture.host.installed_agent(&ctx, &state, &scope).await.as_deref(),
@@ -433,10 +433,10 @@ fn remounts(fixture: &Fixture) -> usize {
     fixture.channel().calls_containing("/bin/sh /vm/data/state/remount-shares.sh").len()
 }
 
-// On Tart a moved mount digest stops the lane IDEs around the remount, without a restart of the daemon.
-#[tokio::test]
-async fn a_mount_digest_mismatch_stops_the_ides_and_remounts() {
-    let (fixture, prep, mut state) = iteration_fixture_over(Fixture::tart_macos().await, "it-11").await;
+/// A warm iteration over `fixture` whose record names another mount digest. It stops the lane IDEs and reports
+/// `ide remount`.
+async fn moved_mount_iteration(fixture: Fixture, iteration_id: &str) -> (Fixture, PreparedBuild) {
+    let (fixture, prep, mut state) = iteration_fixture_over(fixture, iteration_id).await;
     state.last_mount_digest = "something-else".to_owned();
     state.write(&fixture.settings, &fixture.worker).unwrap();
     let attempt = run_warm_iteration(&fixture, false).await;
@@ -444,6 +444,13 @@ async fn a_mount_digest_mismatch_stops_the_ides_and_remounts() {
     assert_eq!(attempt.ide_action, IdeAction::Remount);
     assert!(attempt.timing.contains("  ide remount  "), "{:?}", attempt.timing);
     assert!(fixture.daemon.saw_request("POST /ide/stop"));
+    (fixture, prep)
+}
+
+// On Tart a moved mount digest stops the lane IDEs around the remount, without a restart of the daemon.
+#[tokio::test]
+async fn a_mount_digest_mismatch_stops_the_ides_and_remounts() {
+    let (fixture, prep) = moved_mount_iteration(Fixture::tart_macos().await, "it-11").await;
     assert!(
         !fixture.channel().calls_containing("vm-guest-agent ide-gc").is_empty(),
         "every IDE run of the worker is stopped"
@@ -470,14 +477,7 @@ async fn a_mount_digest_mismatch_stops_the_ides_and_remounts() {
 // guest command lands, and the fake `docker` log shows the backend was Docker and ran no guest command of its own.
 #[tokio::test]
 async fn a_mount_digest_mismatch_on_docker_settles_without_a_remount_script() {
-    let (fixture, prep, mut state) = iteration_fixture_over(Fixture::docker().await, "it-11d").await;
-    state.last_mount_digest = "something-else".to_owned();
-    state.write(&fixture.settings, &fixture.worker).unwrap();
-    let attempt = run_warm_iteration(&fixture, false).await;
-    report_of(&attempt);
-    assert_eq!(attempt.ide_action, IdeAction::Remount);
-    assert!(attempt.timing.contains("  ide remount  "), "{:?}", attempt.timing);
-    assert!(fixture.daemon.saw_request("POST /ide/stop"));
+    let (fixture, prep) = moved_mount_iteration(Fixture::docker().await, "it-11d").await;
     let scripted = fixture.channel().calls_containing("remount-shares.sh");
     assert!(scripted.is_empty(), "{scripted:#?}");
     let said = fixture.stdout.text() + &fixture.stderr.text();
@@ -720,13 +720,7 @@ async fn a_restart_keeps_the_ide_of_the_product_on_docker() {
     report_of(&attempt);
     assert_eq!(attempt.ide_action, IdeAction::Keep);
     assert!(attempt.timing.contains("  ide keep  "), "{:?}", attempt.timing);
-    let gcs = fixture.channel().calls_containing("vm-guest-agent ide-gc");
-    assert_eq!(gcs.len(), 1, "{gcs:?}");
-    assert!(
-        gcs[0].ends_with(&format!("ide-gc --root /vm/data/ide --keep-product {}", prep.product_digest)),
-        "{}",
-        gcs[0]
-    );
+    fixture.assert_one_ide_gc(&format!("--keep-product {}", prep.product_digest));
     let decisions: Vec<serde_json::Value> = recorded.data_of(Kind::Decision);
     assert!(
         decisions.contains(&json!({"subject": "ide", "action": "keep", "reason": "the product did not change"})),
@@ -1025,7 +1019,7 @@ async fn an_iteration_without_traces_reports_neither() {
     let (fixture, _, _) = iteration_fixture("it-31").await;
     let attempt = run_warm_iteration(&fixture, false).await;
     let report = report_of(&attempt);
-    assert!(report.trace_archives.is_empty());
+    assert_eq!(report.trace_archives, []);
     assert_eq!(report.traces_error, None);
     assert!(
         fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty(),
@@ -1051,10 +1045,10 @@ async fn a_trace_failure_of_the_daemon_is_the_traces_error_of_an_iteration_witho
     fixture.script_run(lines);
     let attempt = run_warm_iteration(&fixture, false).await;
     let report = report_of(&attempt);
-    assert!(report.trace_archives.is_empty());
+    assert_eq!(report.trace_archives, []);
     assert_eq!(report.traces_error.as_deref(), Some(reason));
     assert_eq!(report.status, Status::Passed);
-    assert!(fixture.channel().calls_containing(TRACE_PACK_READY_VERB).is_empty());
+    assert_eq!(fixture.channel().calls_containing(TRACE_PACK_READY_VERB), Vec::<String>::new());
 }
 
 // A warm iteration passes the hypervisor's gate before its first guest command, as every worker operation must: the

@@ -39,18 +39,8 @@ fn each_named_log_is_one_zip_of_the_push_and_leaves_the_host_after_it() {
 #[test]
 fn no_variable_packs_nothing_and_a_wrong_entry_is_refused() {
     let root = TempDir::new().unwrap();
-    assert!(
-        pack(&Environment::from_pairs::<&str, &str>([]), root.path())
-            .unwrap()
-            .files
-            .is_empty()
-    );
-    assert!(
-        pack(&Environment::from_pairs([(VARIABLE, " ")]), root.path())
-            .unwrap()
-            .files
-            .is_empty()
-    );
+    assert_eq!(pack(&Environment::from_pairs::<&str, &str>([]), root.path()).unwrap().files, []);
+    assert_eq!(pack(&Environment::from_pairs([(VARIABLE, " ")]), root.path()).unwrap().files, []);
     let refusal = pack(&Environment::from_pairs([(VARIABLE, "/no/such/log.jsonl")]), root.path()).unwrap_err();
     assert_eq!(refusal.code, "session_log_invalid");
     assert!(refusal.message.contains("is not a file"), "{}", refusal.message);

@@ -1,7 +1,7 @@
 //! Result collection: the BEP says which test.xml files to open, the files say what actually ran, and one decision
 //! table turns the whole into a status and an exit code.
 
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::path::Path;
 
 use bt_junit::{self as junit, TestCase};
@@ -69,6 +69,18 @@ pub struct RunResult {
     /// digest says so, and the classifier can turn it into [`RunStatus::Infra`], because a partial reading must
     /// never be reported as a confident green.
     pub degraded: bool,
+    /// The class times of each target whose shards all ran and passed, which the shard plan records.
+    pub timings: Vec<TargetTiming>,
+    /// The labels of the targets whose shards read different versions of the shard plan. Their shards can have split
+    /// the classes differently, so a class can have run in no shard: [`classify_run`] makes such a run INFRA.
+    pub mixed_shard_plans: Vec<String>,
+}
+
+/// The test seconds of each class of one target, by the suite name of test.xml, over all its shards.
+#[derive(Clone, Debug, PartialEq)]
+pub struct TargetTiming {
+    pub label: String,
+    pub class_seconds: BTreeMap<String, f64>,
 }
 
 /// The per-target counters, summed.
@@ -98,6 +110,7 @@ pub struct ClassifyInput<'a> {
     pub targets: &'a [TargetResult],
     pub build_errors: &'a [String],
     pub degraded: bool,
+    pub mixed_shard_plans: &'a [String],
 }
 
 /// The status and exit code of a finished run.
@@ -130,7 +143,7 @@ pub fn classify_run(input: ClassifyInput<'_>) -> (RunStatus, u8) {
     if sum.failed > 0 || input.bazel_exit == 3 {
         return (RunStatus::Fail, exit::TEST_FAILED);
     }
-    if input.bazel_exit != 0 {
+    if input.bazel_exit != 0 || !input.mixed_shard_plans.is_empty() {
         return (RunStatus::Infra, exit::INFRA);
     }
     (RunStatus::Pass, exit::GREEN)
@@ -174,6 +187,11 @@ struct Aggregate {
     duration_ms: u64,
     log_path: Option<String>,
     wrapper_exit_code: Option<i32>,
+    /// Whether every shard ran and passed, and its test.xml was read: only then are the class times whole.
+    timed: bool,
+    class_seconds: BTreeMap<String, f64>,
+    /// The shard plan digest of each shard whose test.xml was read, `None` for a report without one.
+    plan_digests: BTreeSet<Option<String>>,
 }
 
 /// Reads a finished run.
@@ -216,6 +234,9 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
                 duration_ms: 0,
                 log_path: None,
                 wrapper_exit_code: None,
+                timed: true,
+                class_seconds: BTreeMap::new(),
+                plan_digests: BTreeSet::new(),
             });
             targets.len() - 1
         });
@@ -226,6 +247,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         target.cached &= last.cached;
         target.duration_ms = target.duration_ms.max(last.duration_ms);
         let passed = last.status == "PASSED";
+        target.timed &= passed && !last.cached;
         // A failing shard's log is the one worth reading, so it wins over an already-recorded green one.
         if let Some(log) = &last.log_path
             && (!passed || target.log_path.is_none())
@@ -236,25 +258,30 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         let mut suites = Vec::new();
         match &last.xml_path {
             Some(xml) if runtime.exists(Path::new(xml)) => {
-                match runtime.read_text_file(Path::new(xml)) {
-                    // No error path: the reader is a scanner that answers partial suites rather than failing, so a
-                    // truncated document degrades the *counts* and not the run.
-                    Ok(text) => suites = junit::parse(&text),
-                    Err(_) => degraded = true,
+                // No error path: the reader is a scanner that answers partial suites rather than failing, so a
+                // truncated document degrades the *counts* and not the run.
+                if let Ok(text) = runtime.read_text_file(Path::new(xml)) {
+                    suites = junit::parse(&text);
+                    target.plan_digests.insert(junit::shard_plan_digest(&text));
+                } else {
+                    degraded = true;
+                    target.timed = false;
                 }
             }
             _ if !passed => degraded = true,
-            _ => {}
+            _ => target.timed = false,
         }
 
         for suite in suites {
-            if suite.bucketing_stub {
+            if suite.empty_stub {
                 continue;
             }
             if suite.wrapper_exit_code.is_some() {
                 target.wrapper_exit_code = suite.wrapper_exit_code;
+                target.timed = false;
                 continue;
             }
+            *target.class_seconds.entry(suite.name.clone()).or_default() += suite.time_seconds;
             target.tests += suite.tests;
             target.skipped += suite.skipped;
             let before = failures.len();
@@ -298,6 +325,20 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         }
     }
 
+    // A cached shard keeps the test.xml of the run that cached it, so its digest is the plan of that run.
+    let mixed_shard_plans: Vec<String> = targets
+        .iter()
+        .filter(|target| target.plan_digests.len() > 1)
+        .map(|target| target.label.clone())
+        .collect();
+    let timings: Vec<TargetTiming> = targets
+        .iter_mut()
+        .filter(|target| target.timed && target.plan_digests.len() <= 1 && !target.class_seconds.is_empty())
+        .map(|target| TargetTiming {
+            label: target.label.clone(),
+            class_seconds: std::mem::take(&mut target.class_seconds),
+        })
+        .collect();
     let mut targets: Vec<TargetResult> = targets
         .into_iter()
         .map(|target| TargetResult {
@@ -334,6 +375,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         targets: &targets,
         build_errors: &build_errors,
         degraded,
+        mixed_shard_plans: &mixed_shard_plans,
     });
     RunResult {
         status,
@@ -344,6 +386,8 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         flaky,
         build_errors,
         degraded,
+        timings,
+        mixed_shard_plans,
     }
 }
 

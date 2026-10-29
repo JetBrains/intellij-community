@@ -9,6 +9,7 @@ use std::fs;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Component, Path, PathBuf};
 
+use avl_trace::protocol::VideoRetention;
 use avl_wire::runtime::{self, RuntimeDescriptor};
 
 use super::context::CliRuntime;
@@ -76,6 +77,8 @@ pub(crate) struct TraceInputs {
     pub screen: bool,
     /// The recorder writes the Allure result of each scenario, because a person asked for it with [`ALLURE_FLAG`].
     pub allure: bool,
+    /// Which scenarios keep their video. Only `lane-run` keeps less than every video, when `AIR_LANE_VIDEO` says so.
+    pub keep_video: VideoRetention,
     /// The outputs directory of the Bazel test that runs `lane-run`, which Bazel keeps after the test. The bundles then
     /// go to its `air-traces`. `None` keeps them in the directory of each iteration, where the trace pull of the
     /// controller finds them.
@@ -177,6 +180,7 @@ fn trace_inputs(flags: &[String], runfiles_root: &Path) -> TraceInputs {
         recorder,
         screen: flags.iter().any(|flag| flag == SCREEN_FLAG),
         allure: flags.iter().any(|flag| flag == ALLURE_FLAG),
+        keep_video: VideoRetention::Always,
         bazel_outputs: None,
     }
 }

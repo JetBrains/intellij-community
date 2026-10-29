@@ -11,6 +11,7 @@ use avl_testkit::tartfake::{Answer, Binary, Fake};
 use pretty_assertions::assert_eq;
 
 use super::*;
+use crate::worker::testing::{assert_counts_one_guest_call, assert_probe_unanswered};
 
 const WORKER: &str = "macOS";
 
@@ -192,13 +193,7 @@ async fn running_is_what_prlctl_status_says() {
 async fn a_prlctl_without_an_answer_is_refused_and_not_a_state() {
     let ctx = Ctx::background();
     let fixture = Fixture::new();
-    for (answer, code) in [(Answer::KilledVerb, 137), (Answer::SilentVerb, 0)] {
-        fixture.fake.answer(answer, "status");
-        let refusal = fixture.parallels.running(&ctx, WORKER).await.unwrap_err();
-        assert_eq!(refusal.code, "probe_unanswered", "{refusal:?}");
-        assert!(refusal.message.contains(&format!("exited with {code}")), "{}", refusal.message);
-        fixture.fake.forget(answer);
-    }
+    assert_probe_unanswered(&fixture.fake, "status", async || fixture.parallels.running(&ctx, WORKER).await).await;
     assert!(fixture.parallels.running(&ctx, WORKER).await.unwrap());
 
     fixture
@@ -577,12 +572,7 @@ fn building_a_guest_line_declares_its_argv_head() {
     let parallels = Parallels::new(Arc::new(settings_for(Backend::Parallels)), path_runner());
     let line = parallels.guest_argv(&ctx, WORKER, &words(["/bin/sh", "-c", "echo hi"]));
     assert_eq!(line, words(["prlctl", "exec", WORKER, "'/bin/sh' '-c' 'echo hi'"]));
-    let (inner, phase) = ctx.begin("state-prep");
-    inner.phase().record_subprocess(&["prlctl", "exec"], Duration::from_secs(1));
-    inner.phase().record_subprocess(&["git", "rev-parse"], Duration::from_secs(1));
-    drop(phase);
-    let timing = &timeline.take()[0];
-    assert_eq!((timing.guest_calls, timing.host_calls), (1, 1), "{timing:?}");
+    assert_counts_one_guest_call(&ctx, &timeline, &words(["prlctl", "exec"]));
 }
 
 // Both spellings are valid POSIX and they are not interchangeable in practice, so they stay two functions. Each is

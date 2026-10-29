@@ -26,15 +26,15 @@ export function NodeHandles() {
 
 export function GroupNode({ data, selected }: NodeProps & { data: GroupNodeData }) {
   return (
-    <div className={`group-node layer-${data.color ?? 'neutral'}${selected ? ' selected' : ''} size-full rounded-xl border-[1.5px] border-dashed border-[color-mix(in_srgb,var(--layer-color,var(--layer-neutral))_55%,transparent)] bg-[color-mix(in_srgb,var(--layer-color,var(--layer-neutral))_5%,transparent)]`}>
+    <div className={`group-node layer-${data.color ?? 'neutral'}${selected ? ' selected' : ''} size-full rounded-xl border-[1.5px] border-dashed border-[color-mix(in_srgb,var(--layer-color,var(--muted-foreground))_55%,transparent)] bg-[color-mix(in_srgb,var(--layer-color,var(--muted-foreground))_5%,transparent)]`}>
       <NodeHandles />
-      <header className="flex items-center justify-between gap-2 px-4 py-2.5 text-xs font-bold tracking-[0.06em] uppercase text-[color-mix(in_srgb,var(--layer-color,var(--layer-neutral))_80%,var(--foreground))]">
+      <header className="flex items-center justify-between gap-2 px-4 py-2.5 text-xs font-bold tracking-[0.06em] uppercase text-muted-foreground">
         {data.title}
         {typeof data.onCollapse === 'function' && (
           <Button
             variant="ghost"
             size="icon-xs"
-            className="group-collapse nodrag text-inherit hover:text-primary"
+            className="group-collapse nodrag text-inherit hover:text-foreground"
             title="Collapse area"
             onClick={event => {
               event.stopPropagation()

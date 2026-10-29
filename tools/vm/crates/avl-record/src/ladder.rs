@@ -43,7 +43,7 @@ pub(crate) struct VideoPlan {
 }
 
 impl VideoPlan {
-    fn none(reason: impl Into<String>) -> Self {
+    pub(crate) fn none(reason: impl Into<String>) -> Self {
         Self {
             codec: VideoCodec::None,
             reason: reason.into(),
@@ -51,7 +51,7 @@ impl VideoPlan {
         }
     }
 
-    const fn h264(raw: bool) -> Self {
+    pub(crate) const fn h264(raw: bool) -> Self {
         Self {
             codec: VideoCodec::H264,
             reason: String::new(),

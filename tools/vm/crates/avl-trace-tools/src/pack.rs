@@ -28,7 +28,7 @@ use zip::{CompressionMethod, DateTime, System, ZipWriter};
 /// The entries kept uncompressed: media that is compressed already, which deflate would only make slower to
 /// reach, and whose byte ranges the server serves in place. Everything else is deflated: the JSON, the JSON Lines
 /// and the log slice shrink severalfold.
-const STORED_EXTENSIONS: &[&str] = &["webp", "png", "jpg", "jpeg", "mp4", "webm", "zip", "gz"];
+const STORED_EXTENSIONS: &[&str] = &["avif", "webp", "png", "jpg", "jpeg", "mp4", "webm", "zip", "gz"];
 
 /// How one entry is written, by its extension.
 fn method_of(name: &str) -> CompressionMethod {

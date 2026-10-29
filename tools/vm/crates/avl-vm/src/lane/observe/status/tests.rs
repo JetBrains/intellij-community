@@ -65,6 +65,32 @@ fn answer_linux_guest(
 }
 
 /// Every worker of the pool is a healthy running macOS worker with no run in flight and a logged-in console.
+/// Answers `tart list` with the two macOS workers of the pool, both running.
+fn list_two_running_macos_workers(fixture: &Fixture) {
+    fixture.fake.answer(
+        Answer::ListJson,
+        tart_list(&[("air-macos-1", 80.0, true, "running"), ("air-macos-2", 80.0, true, "running")]),
+    );
+}
+
+/// The two running macOS workers of [`answer_running_macos_pool`], over the fixture whose host paths are not declared
+/// for it. `inside_work_tree` says whether the fake `git` calls the checkout a working tree.
+fn running_macos_pool_before_host_paths(inside_work_tree: bool) -> Fixture {
+    let fixture = Fixture::before_host_paths(Backend::Tart, GuestOs::Macos, inside_work_tree);
+    list_two_running_macos_workers(&fixture);
+    answer_running_macos_pool(&fixture);
+    fixture
+}
+
+/// `status` of the Parallels pool whose guest `macOS` has a console login and no active run.
+async fn logged_in_parallels_status(fixture: &Fixture) -> Outcome {
+    fixture.channel("macOS").answer(answer_guest(vec![
+        ("/usr/bin/who", said("test  console  Aug 23 10:00\n")),
+        (" active ", active_reply(None)),
+    ]));
+    status(fixture).await
+}
+
 fn answer_running_macos_pool(fixture: &Fixture) {
     for channel in fixture.channels() {
         channel.answer(answer_guest(vec![
@@ -263,10 +289,7 @@ async fn tri_state_facts_are_null_never_false() {
 #[tokio::test]
 async fn a_parity_refusal_keeps_its_code() {
     let fixture = Fixture::tart_macos();
-    fixture.fake.answer(
-        Answer::ListJson,
-        tart_list(&[("air-macos-1", 80.0, true, "running"), ("air-macos-2", 80.0, true, "running")]),
-    );
+    list_two_running_macos_workers(&fixture);
     provisioned_for_another_bazel_root(&fixture, "air-macos-1", "/another/bazel");
     write_init_receipt(&fixture.settings, "air-macos-2").expect("the init receipt is written");
     answer_running_macos_pool(&fixture);
@@ -297,12 +320,7 @@ async fn a_parity_refusal_keeps_its_code() {
 /// whose paths are not declared for it.
 #[tokio::test]
 async fn status_resolves_the_host_paths_its_parity_verdict_needs() {
-    let fixture = Fixture::before_host_paths(Backend::Tart, GuestOs::Macos, true);
-    fixture.fake.answer(
-        Answer::ListJson,
-        tart_list(&[("air-macos-1", 80.0, true, "running"), ("air-macos-2", 80.0, true, "running")]),
-    );
-    answer_running_macos_pool(&fixture);
+    let fixture = running_macos_pool_before_host_paths(true);
     let outcome = status(&fixture).await;
     assert_eq!(outcome.data["hostPathsError"], Value::Null);
     let host_repo = outcome.data["hostRepo"].as_str().expect("a host repo");
@@ -336,12 +354,7 @@ async fn status_resolves_the_host_paths_its_parity_verdict_needs() {
 /// every row for a check that never ran.
 #[tokio::test]
 async fn a_host_path_refusal_is_not_every_workers_parity_verdict() {
-    let fixture = Fixture::before_host_paths(Backend::Tart, GuestOs::Macos, false);
-    fixture.fake.answer(
-        Answer::ListJson,
-        tart_list(&[("air-macos-1", 80.0, true, "running"), ("air-macos-2", 80.0, true, "running")]),
-    );
-    answer_running_macos_pool(&fixture);
+    let fixture = running_macos_pool_before_host_paths(false);
     let outcome = status(&fixture).await;
     assert_eq!(outcome.data["hostPathsError"], json!("host_repo_required"));
     assert_eq!(outcome.data["hostRepo"], json!(""));
@@ -431,11 +444,7 @@ async fn ssh_host_key_uniqueness_is_decided_over_the_whole_pool() {
 async fn the_parallels_row_keeps_its_parity_refusal() {
     let (fixture, _) = parallels_fixture();
     fixture.fake.answer(Answer::ListJson, parallels_info_with_shares(&fixture));
-    fixture.channel("macOS").answer(answer_guest(vec![
-        ("/usr/bin/who", said("test  console  Aug 23 10:00\n")),
-        (" active ", active_reply(None)),
-    ]));
-    let outcome = status(&fixture).await;
+    let outcome = logged_in_parallels_status(&fixture).await;
     let row = parallels_row(&outcome);
     assert_eq!(
         (&row["sharesConfigured"], &row["initialized"]),
@@ -467,11 +476,7 @@ async fn the_parallels_row_states_a_host_path_refusal_once() {
     let fixture = Fixture::before_host_paths(Backend::Parallels, GuestOs::Macos, false);
     fixture.fake.answer(Answer::ListJson, PARALLELS_INFO_JSON);
     fixture.fake.answer(Answer::Status, "VM macOS exist running\n");
-    fixture.channel("macOS").answer(answer_guest(vec![
-        ("/usr/bin/who", said("test  console  Aug 23 10:00\n")),
-        (" active ", active_reply(None)),
-    ]));
-    let outcome = status(&fixture).await;
+    let outcome = logged_in_parallels_status(&fixture).await;
     let row = parallels_row(&outcome);
     assert_eq!(
         (&row["hostPathsError"], &row["hostRepo"]),

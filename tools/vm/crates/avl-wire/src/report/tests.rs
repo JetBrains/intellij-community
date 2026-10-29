@@ -9,7 +9,6 @@ use crate::daemon::{Skipped, SlowStep, WatchdogExpired};
 /// silently describing the old shape.
 pub(super) fn valid_report() -> RunReport {
     RunReport {
-        report_schema_version: RUN_REPORT_SCHEMA_VERSION,
         iteration_id: "iteration-1".to_owned(),
         daemon_run_id: "run-ui-daemon-015546b8-bd1e-4dec-8b20-f9627a770f68".to_owned(),
         daemon_boot_stamp: "boot-1".to_owned(),
@@ -18,26 +17,12 @@ pub(super) fn valid_report() -> RunReport {
         started_at: "2026-08-23T08:08:56.000200831Z".to_owned(),
         completed_at: "2026-08-23T08:13:05.364Z".to_owned(),
         duration_ms: 249_364.0,
-        ordering: ORDERING.to_owned(),
         execution: ExecutionCounts {
             tests_started: 23,
             containers_skipped: 1,
             ..ExecutionCounts::default()
         },
-        cases: Vec::new(),
-        failures: Vec::new(),
-        skipped_containers: Vec::new(),
-        active_tests: Vec::new(),
-        unreported_classes: Vec::new(),
-        watchdog: Watchdog::default(),
-        evidence: Vec::new(),
-        trace_archives: Vec::new(),
-        traces_error: None,
-        tree: None,
-        tree_error: None,
-        notes: Vec::new(),
-        protocol_diagnostic: None,
-        verdict_diagnostic: None,
+        ..RunReport::default()
     }
 }
 
@@ -69,6 +54,26 @@ fn a_valid_report_round_trips() {
 
 // The arrays this document declares are declared unconditionally: a reader that saw `null` would have to decide
 // for itself whether that meant "none" or "the producer forgot".
+/// An active test is one flat object: the fields of the record that started it, and the start.
+#[test]
+fn an_active_test_is_one_flat_object() {
+    let test = ActiveTest {
+        execution: ExecutionIdentity {
+            id: "[engine:junit-jupiter]/[class:air.RenameTest]".to_owned(),
+            display_name: "renames".to_owned(),
+            class_name: Some("air.RenameTest".to_owned()),
+            method_name: None,
+        },
+        started_at: Some("2026-08-23T08:09:00Z".to_owned()),
+    };
+    let text = String::from_utf8(encode(&test)).unwrap();
+    assert_eq!(
+        text,
+        r#"{"id":"[engine:junit-jupiter]/[class:air.RenameTest]","displayName":"renames","className":"air.RenameTest","startedAt":"2026-08-23T08:09:00Z"}"#
+    );
+    assert_eq!(serde_json::from_str::<ActiveTest>(&text).unwrap(), test);
+}
+
 #[test]
 fn declared_arrays_are_never_null() {
     let document = String::from_utf8(encode(&valid_report())).unwrap();
@@ -181,7 +186,7 @@ fn the_trace_archives_round_trip_beside_an_error() {
         );
     });
     let decoded = decode_run_report(&older).expect("a report of the first pull design did not decode");
-    assert!(decoded.trace_archives.is_empty());
+    assert_eq!(decoded.trace_archives, []);
 }
 
 #[test]

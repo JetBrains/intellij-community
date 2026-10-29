@@ -199,6 +199,82 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
     })
   })
 
+  describe('page layout', () => {
+    const guides = harvest.docs.filter(doc => doc.kind === 'guide')
+    const group = config.guideGroups.find(entry => guides.filter(doc => doc.group === entry.id).length >= 2)
+    const [first, second] = group === undefined ? [] : guides.filter(doc => doc.group === group.id)
+    const guideRoute = (doc: HarvestedDoc) => app(`/guides/${slugOf(doc.path)}`)
+    const currentTreeLink = (page: Page) => page.locator('.section-nav a[aria-current="page"]')
+    const background = (page: Page, selector: string) => page.locator(selector).first().evaluate(element => getComputedStyle(element).backgroundColor)
+
+    test('a guide page lies flat on the page in three columns: the section tree, the document, and the table of contents', async ({ page }) => {
+      assert.ok(first, 'no guide group of the site has two guides')
+      await open(page, guideRoute(first))
+      await expect(page.locator('.section-nav')).toBeVisible()
+      await expect(currentTreeLink(page)).toHaveAttribute('href', guideRoute(first))
+      await expect(page.locator('.doc-article .page-breadcrumb')).toContainText('Guides')
+      // the page has the one --background: the columns have no fill of their own
+      assert.notStrictEqual(await background(page, '.app-shell'), 'rgba(0, 0, 0, 0)')
+      assert.strictEqual(await background(page, '.doc-article'), 'rgba(0, 0, 0, 0)')
+      assert.strictEqual(await background(page, '.section-nav'), 'rgba(0, 0, 0, 0)')
+      // the top bar is a stock site header: the page background and a bottom border
+      assert.strictEqual(await background(page, '.topbar'), await background(page, '.app-shell'))
+      assert.strictEqual(await page.locator('.topbar').evaluate(element => getComputedStyle(element).borderBottomWidth), '1px')
+      const tree = await page.locator('.section-nav').boundingBox()
+      const doc = await page.locator('.doc-article').boundingBox()
+      assert.ok(tree && doc)
+      assert.ok(Math.abs(doc.x - (tree.x + tree.width) - 8) < 1, `the columns are ${doc.x - tree.x - tree.width}px apart, not 8px`)
+    })
+
+    test('the section tree sticks under the top bar and stays mounted within its section', async ({ page }) => {
+      assert.ok(first && second, 'no guide group of the site has two guides')
+      await open(page, guideRoute(first))
+      const tree = page.locator('.section-nav')
+      await tree.evaluate(element => element.setAttribute('data-probe', 'kept'))
+      const top = (await tree.boundingBox())!.y
+      await page.locator('.route-outlet').evaluate(outlet => outlet.scrollTo({ top: outlet.scrollHeight }))
+      await expect.poll(async () => Math.round((await tree.boundingBox())!.y)).toBe(Math.round(top))
+      await tree.locator(`a[href="${guideRoute(second)}"]`).click()
+      await expectUrlContains(page, guideRoute(second))
+      await expect(currentTreeLink(page)).toHaveAttribute('href', guideRoute(second))
+      await expect(page.locator('.section-nav[data-probe="kept"]')).toHaveCount(1)
+    })
+
+    test('a decision page marks its record in the tree of the topics', async ({ page }) => {
+      const record = harvest.docs.find(doc => doc.adr !== undefined)
+      assert.ok(record, 'no decision record is harvested')
+      await open(page, app(`/decisions/${slugOf(record.path)}`))
+      await expect(currentTreeLink(page)).toHaveAttribute('href', app(`/decisions/${slugOf(record.path)}`))
+      const topic = config.decisions.topics.find(entry => entry.id === record.adr!.topic)!
+      await expect(page.locator(`.section-tree-group[data-group="${topic.id}"] button`)).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    test('a doc page has no section tree, and a tool page is one column across the page', async ({ page }) => {
+      const doc = harvest.docs.find(entry => !entry.path.startsWith(`${config.docs.root}/`) && entry.adr === undefined && entry.kind !== 'explainer')
+      if (doc !== undefined) {
+        await open(page, app(`/doc/${encodeURIComponent(doc.path)}`))
+        await expect(page.locator('.doc-article')).toBeVisible()
+        await expect(page.locator('.section-nav, .section-nav-trigger')).toHaveCount(0)
+      }
+      await open(page, app('/'))
+      await expect(page.locator('.tool-layout')).toHaveCount(1)
+      await expect(page.locator('.section-nav, .doc-article')).toHaveCount(0)
+    })
+
+    test('below the section-nav breakpoint the tree opens in a sheet from the crumb row', async ({ page }) => {
+      assert.ok(first && second, 'no guide group of the site has two guides')
+      await page.setViewportSize({ width: 1000, height: 900 })
+      await open(page, guideRoute(first))
+      await expect(page.locator('.section-nav')).toBeHidden()
+      await page.locator('.doc-article .section-nav-trigger').click()
+      const sheet = page.locator('.section-nav-sheet')
+      await expect(sheet.locator('a[aria-current="page"]')).toHaveAttribute('href', guideRoute(first))
+      await sheet.locator(`a[href="${guideRoute(second)}"]`).click()
+      await expectUrlContains(page, guideRoute(second))
+      await expect(sheet).toHaveCount(0)
+    })
+  })
+
   describe('explainers (ADR 0204)', () => {
     const explainer = harvest.docs.find(doc => doc.kind === 'explainer' && (doc.chapters?.length ?? 0) >= 3)
     if (explainer === undefined) {
@@ -372,7 +448,8 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
       await open(page, app('/guides'))
       await page.keyboard.press('ControlOrMeta+k')
       await expect(page.locator('.palette')).toHaveCount(1)
-      assert.strictEqual(await page.evaluate(() => document.activeElement?.tagName), 'INPUT')
+      // the dialog moves the focus after it mounts, as in the test below
+      await expect.poll(() => page.evaluate(() => document.activeElement?.tagName)).toBe('INPUT')
       await page.fill('.palette input', word)
       await expect.poll(() => paletteItems(page).count()).toBeGreaterThan(0)
       assert.ok(await page.locator('.palette-results [cmdk-group-heading]').count() > 0)
@@ -435,6 +512,21 @@ export function defineKernelSuite({ test, expect, config, sitePage }: KernelSuit
     // a dated record has no number (adrFiles.ts of the kernel); the oldest numbered one stands for the numbered records
     const numbered = decisions.filter(doc => doc.adr!.number !== null)
     const lastNumbered = numbered[numbered.length - 1]
+
+    test('a record header shows the title, the status and date chips, and the status as a callout', async ({ page }) => {
+      const record = decisions.find(doc => doc.adr!.date !== null && /^(## Status\n+\S|Status: )/m.test(harvestedMarkdown(doc.path)))
+      assert.ok(record, 'no dated decision record with a status is harvested')
+      await open(page, decisionRouteOf(record.path))
+      await expect(page.locator('.record-header h1')).toHaveText(record.title)
+      // the header replaces the first heading and the Date line of the body
+      await expect(page.locator('.markdown-body h1')).toHaveCount(0)
+      await expect(page.locator('.record-chips time')).toHaveAttribute('datetime', record.adr!.date!)
+      await expect(page.locator('.markdown-body blockquote').first()).toContainText(record.adr!.statusText.replace(/\.$/, ''))
+      const linked = /\]\([^)]*\.md\)/.test(harvestedMarkdown(record.path))
+      if (linked) {
+        await expect(page.locator('.toc-aside .record-links a').first()).toBeVisible()
+      }
+    })
 
     test('an old doc link to a decision record opens the decision page', async ({ page }) => {
       assert.ok(lastNumbered, 'no numbered decision record is harvested')

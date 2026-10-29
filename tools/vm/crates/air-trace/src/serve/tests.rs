@@ -9,8 +9,8 @@ use ::http::{HeaderMap, Method, Request, StatusCode, header};
 use avl_host_sys::viewer::probe_viewer;
 use avl_testkit::traces::{copy_tree, example_bundle, example_file};
 use avl_trace::bundle::{
-    BundleStatus, IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, ROOT_DIR_NAME, SPANS_FILE, bundle_path, decode_manifest,
-    snap_image_path, snap_tree_path,
+    BundleStatus, IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, ROOT_DIR_NAME, SPANS_FILE, StillEncoding, bundle_path,
+    decode_manifest, snap_image_path, snap_tree_path,
 };
 use avl_trace::otlp::{attr, decode_logs_line, event, lookup_str};
 use avl_trace_tools::discover::{Root, RootKind, SourceKind, bundle_id, default_roots};
@@ -135,13 +135,8 @@ fn new_fixture() -> Fixture {
         set_modified(&path, hour_ago);
     }
 
-    let outputs = scratch.dir();
-    let placed = bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)
-        .split('/')
-        .fold(outputs.join(ROOT_DIR_NAME), |path, segment| path.join(segment));
-    copy_tree(&example_bundle(), &placed);
     let zip_path = zip_root.join("outputs.zip");
-    pack(&outputs, &zip_path, &PackOptions::default()).expect("pack the golden bundle");
+    pack_golden_bundle(&scratch, &manifest, &zip_path);
     Fixture {
         scratch,
         dir_root,
@@ -150,6 +145,31 @@ fn new_fixture() -> Fixture {
         failed_dir,
         running_dir,
         manifest,
+    }
+}
+
+/// Packs the golden bundle into `zip`, at the bundle path of `manifest` under the outputs root.
+fn pack_golden_bundle(scratch: &Scratch, manifest: &Manifest, zip: &Path) {
+    let outputs = scratch.dir();
+    let placed = bundle_path(&manifest.run_id, &manifest.test_class, &manifest.scenario)
+        .split('/')
+        .fold(outputs.join(ROOT_DIR_NAME), |path, segment| path.join(segment));
+    copy_tree(&example_bundle(), &placed);
+    pack(&outputs, zip, &PackOptions::default()).expect("pack the golden bundle");
+}
+
+/// The plan of the scenario of `manifest` in the lane `UI`.
+fn plan_of(manifest: &Manifest) -> PlanResult {
+    PlanResult {
+        lanes: vec!["UI".to_owned()],
+        classes: vec![manifest.test_class.clone()],
+        scenarios: vec![ScenarioRef {
+            test_class: manifest.test_class.clone(),
+            scenario: manifest.scenario.clone(),
+            flow: manifest.flow.clone(),
+            lane: "UI".to_owned(),
+        }],
+        ..PlanResult::default()
     }
 }
 
@@ -653,8 +673,8 @@ async fn a_stored_zip_entry_is_served_in_ranges() {
     let fixture = new_fixture();
     let served = start_server(test_settings(&fixture.scratch, fixture_roots(&fixture))).await;
     let zipped = scenario_by(&served.list_runs().await, is_zip);
-    let original = example_file(&snap_image_path(1));
-    let url = format!("{}{}", str_of(&zipped["url"]), snap_image_path(1));
+    let original = example_file(&snap_image_path(1, StillEncoding::Lossless));
+    let url = format!("{}{}", str_of(&zipped["url"]), snap_image_path(1, StillEncoding::Lossless));
 
     let answer = served.get(&url, &[("range", "bytes=0-11")]).await;
     assert_eq!(answer.status, StatusCode::PARTIAL_CONTENT, "{}", answer.text());
@@ -720,9 +740,12 @@ async fn a_zip_inside_a_zip_is_served_from_its_extraction() {
     );
     assert_eq!(fs::read_dir(&cache).map_or(0, Iterator::count), 1, "the extraction is in the cache");
     let base = str_of(&scenario["url"]).to_owned();
-    let original = example_file(&snap_image_path(1));
+    let original = example_file(&snap_image_path(1, StillEncoding::Lossless));
     let image = served
-        .get(&format!("{base}{}", snap_image_path(1)), &[("range", "bytes=0-11")])
+        .get(
+            &format!("{base}{}", snap_image_path(1, StillEncoding::Lossless)),
+            &[("range", "bytes=0-11")],
+        )
         .await;
     assert_eq!(image.status, StatusCode::PARTIAL_CONTENT, "{}", image.text());
     assert_eq!(image.body, original[..12]);
@@ -911,17 +934,7 @@ async fn plan_joins_the_resolved_scenarios_with_the_bundles_on_disk() {
             if broken {
                 anyhow::bail!("nothing maps broken");
             }
-            Ok(PlanResult {
-                lanes: vec!["UI".to_owned()],
-                classes: vec![manifest.test_class.clone()],
-                scenarios: vec![ScenarioRef {
-                    test_class: manifest.test_class.clone(),
-                    scenario: manifest.scenario.clone(),
-                    flow: manifest.flow.clone(),
-                    lane: "UI".to_owned(),
-                }],
-                ..PlanResult::default()
-            })
+            Ok(plan_of(&manifest))
         })
     };
     let served = start_server(settings).await;

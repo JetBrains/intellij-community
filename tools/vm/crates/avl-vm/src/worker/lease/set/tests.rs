@@ -121,6 +121,18 @@ fn leased(fixture: &Fixture, worker: &str, holder: &str) -> Lease {
     lease
 }
 
+/// A pool of two Tart workers whose first worker the holder `agent` leased.
+fn pool_leased_by_agent() -> (Fixture, Lease) {
+    let fixture = pool("air-macos-1,air-macos-2");
+    let lease = leased(&fixture, fixture.worker(0), "agent");
+    (fixture, lease)
+}
+
+/// Acquires one worker of `fixture` for the holder `agent`.
+async fn acquire_for_agent(fixture: &Fixture) -> Result<Vec<HeldWorker>, Refusal> {
+    acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false)).await
+}
+
 /// One busy worker must not refuse the whole pool. The busy worker is not available, and the acquisition leases a
 /// free one. `worker_busy` is the answer only when the busy worker was in the way and no lease could be placed.
 #[tokio::test]
@@ -157,12 +169,9 @@ async fn an_acquisition_skips_a_busy_free_worker() {
 /// acquisition places no second lease for that holder. When the operation ends, the holder recovers its worker.
 #[tokio::test]
 async fn a_busy_worker_of_the_holder_refuses_rather_than_leasing_a_second_one() {
-    let fixture = pool("air-macos-1,air-macos-2");
-    let lease = leased(&fixture, fixture.worker(0), "agent");
+    let (fixture, lease) = pool_leased_by_agent();
     let start = busy(&fixture, fixture.worker(0)).await;
-    let refusal = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
-        .await
-        .unwrap_err();
+    let refusal = acquire_for_agent(&fixture).await.unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("worker_busy", Exit::TEMP_FAIL));
     assert_eq!(read_lease(&fixture.settings.lease_path(fixture.worker(1))).unwrap(), None);
 
@@ -174,9 +183,7 @@ async fn a_busy_worker_of_the_holder_refuses_rather_than_leasing_a_second_one() 
     release_by_hand(&fixture, &held[0].lease);
 
     drop(start);
-    let recovered = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
-        .await
-        .unwrap();
+    let recovered = acquire_for_agent(&fixture).await.unwrap();
     assert_eq!((&recovered[0].lease, recovered[0].slot_reason), (&lease, SlotReason::Recovered));
 }
 
@@ -186,9 +193,7 @@ async fn a_busy_worker_with_an_unreadable_lease_refuses() {
     let fixture = pool("air-macos-1,air-macos-2");
     let _start = busy(&fixture, fixture.worker(0)).await;
     std::fs::write(fixture.settings.lease_path(fixture.worker(0)), "{").unwrap();
-    let refusal = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
-        .await
-        .unwrap_err();
+    let refusal = acquire_for_agent(&fixture).await.unwrap_err();
     assert_eq!(refusal.code, "worker_busy");
     assert_eq!(read_lease(&fixture.settings.lease_path(fixture.worker(1))).unwrap(), None);
 }
@@ -243,12 +248,9 @@ fn release_by_hand(fixture: &Fixture, lease: &Lease) {
 #[cfg(unix)]
 #[tokio::test]
 async fn a_recovery_refuses_while_a_run_of_the_holder_is_in_flight() {
-    let fixture = pool("air-macos-1,air-macos-2");
-    let lease = leased(&fixture, fixture.worker(0), "agent");
+    let (fixture, lease) = pool_leased_by_agent();
     let marker = fixture.write_run_marker(&lease, "suite-user-run-1", fixture.another_process().await);
-    let refusal = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
-        .await
-        .unwrap_err();
+    let refusal = acquire_for_agent(&fixture).await.unwrap_err();
     assert_eq!((refusal.code.as_ref(), refusal.exit), ("worker_busy", Exit::TEMP_FAIL));
     assert!(
         refusal.message.contains(&format!(
@@ -265,12 +267,9 @@ async fn a_recovery_refuses_while_a_run_of_the_holder_is_in_flight() {
 #[cfg(unix)]
 #[tokio::test]
 async fn a_recovery_removes_a_stale_marker_and_recovers() {
-    let fixture = pool("air-macos-1,air-macos-2");
-    let lease = leased(&fixture, fixture.worker(0), "agent");
+    let (fixture, lease) = pool_leased_by_agent();
     fixture.write_run_marker(&lease, "suite-user-run-1", Fixture::gone_process());
-    let recovered = acquire_workers(&ctx(), &fixture.manager, &request("agent", 1, false))
-        .await
-        .unwrap();
+    let recovered = acquire_for_agent(&fixture).await.unwrap();
     assert_eq!((&recovered[0].lease, recovered[0].slot_reason), (&lease, SlotReason::Recovered));
     assert!(!fixture.settings.run_marker_path(fixture.worker(0)).exists());
 }

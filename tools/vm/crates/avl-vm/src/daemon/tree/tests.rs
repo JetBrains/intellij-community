@@ -91,5 +91,5 @@ async fn a_failing_git_is_an_error_text_and_a_checkout_event() {
 #[test]
 fn a_porcelain_record_without_a_path_is_no_path() {
     assert_eq!(porcelain_paths(" M a\0?? b c\0\0XY \0"), ["a", "b c"]);
-    assert!(porcelain_paths("").is_empty());
+    assert_eq!(porcelain_paths(""), Vec::<String>::new());
 }

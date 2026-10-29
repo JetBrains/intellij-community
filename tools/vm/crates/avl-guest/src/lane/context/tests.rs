@@ -13,6 +13,7 @@ use serde_json::Value;
 use super::*;
 use crate::lane::identity::{KeyInputs, LaneIdentity};
 use crate::lane::services::testing::{FIXTURE_JAVA, fixture_jar};
+use crate::lane::testing::lane_context_testdata;
 
 /// The daemon port of the default lane daemon, `AIR_VM_DAEMON_PORT`.
 const DAEMON_PORT: u16 = 27_100;
@@ -24,14 +25,9 @@ const OPTION_FILES_DIGEST: &str = "e1abc8fc017dfeaa535168b652f8624bd88d626773b0c
 /// A controlled agent of the fixture. The IDE serves the control channel of every controlled agent.
 const IDE_OWNED_AGENT: &str = "genui-agent";
 
-fn testdata(name: &str) -> PathBuf {
-    let path = avl_testkit::crate_path!(&format!("testdata/lane-context/{name}"));
-    std::path::absolute(&path).unwrap_or_else(|error| panic!("{}: {error}", path.display()))
-}
-
 /// The bytes of the fixture: the committed lane document of the lane `UI`.
 fn document_bytes() -> Vec<u8> {
-    fs::read(testdata("ui.json")).expect("the fixture lane document")
+    fs::read(lane_context_testdata("ui.json")).expect("the fixture lane document")
 }
 
 fn document() -> LaneDocument {
@@ -227,7 +223,7 @@ fn the_option_templates_have_the_pinned_digest() {
 #[test]
 fn the_context_of_the_ui_lane_is_the_golden() {
     let (prepared, _, _) = written(&document());
-    expect_test::expect_file![testdata("ui-context.txt")].assert_eq(&tree(&prepared.context));
+    expect_test::expect_file![lane_context_testdata("ui-context.txt")].assert_eq(&tree(&prepared.context));
 }
 
 /// `ui-acp-json.dump` holds the `acp.json` lines of the lane `UI` from a recorded launch dump, with its masks:
@@ -250,7 +246,7 @@ fn acp_json_equals_the_recorded_dump_except_the_key_derived_values() {
             }
         }
     }
-    let dump = fs::read_to_string(testdata("ui-acp-json.dump")).unwrap();
+    let dump = fs::read_to_string(lane_context_testdata("ui-acp-json.dump")).unwrap();
     let dump_text: String = dump.lines().map(|line| line.strip_prefix("UI acp.json ").unwrap()).collect();
     assert_eq!(masked, serde_json::from_str::<Value>(&dump_text).unwrap());
     assert_eq!(

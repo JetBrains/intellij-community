@@ -1,18 +1,15 @@
 use std::path::Path;
 
-use super::*;
+use testkit::write_file;
 
-fn write_file(path: &Path, content: &str) {
-    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
-    std::fs::write(path, content).unwrap();
-}
+use super::*;
 
 /// Writes the files of a distribution below `directory` and reads it with the home `/ws/ide_home`.
 fn read_distribution(directory: &Path, runtime_module_repository: bool) -> anyhow::Result<Distribution> {
-    write_file(&directory.join("idea.properties"), "idea.platform.prefix=fromDistribution\n");
-    write_file(&directory.join("vmoptions"), "-Xmx2048m\n-Dsun.io.useCanonCaches=false\n");
-    write_file(&directory.join("product-info.json"), r#"{"launch": [{}]}"#);
-    write_file(&directory.join("core-classpath.txt"), "lib/a.jar\n\n/abs/b.jar\n");
+    write_file(directory.join("idea.properties"), "idea.platform.prefix=fromDistribution\n");
+    write_file(directory.join("vmoptions"), "-Xmx2048m\n-Dsun.io.useCanonCaches=false\n");
+    write_file(directory.join("product-info.json"), r#"{"launch": [{}]}"#);
+    write_file(directory.join("core-classpath.txt"), "lib/a.jar\n\n/abs/b.jar\n");
     let files = DistributionFiles {
         ide_config: &directory.join("idea.ide.config"),
         idea_properties: &directory.join("idea.properties"),
@@ -26,10 +23,7 @@ fn read_distribution(directory: &Path, runtime_module_repository: bool) -> anyho
 #[test]
 fn a_distribution_reads_its_main_class_properties_and_class_path() {
     let directory = tempfile::tempdir().unwrap();
-    write_file(
-        &directory.path().join("idea.ide.config"),
-        "main.class.name=com.intellij.idea.Main\n",
-    );
+    write_file(directory.path().join("idea.ide.config"), "main.class.name=com.intellij.idea.Main\n");
     let distribution = read_distribution(directory.path(), true).unwrap();
     assert_eq!(distribution.home, "/ws/ide_home");
     assert_eq!(distribution.main_class, "com.intellij.idea.Main");

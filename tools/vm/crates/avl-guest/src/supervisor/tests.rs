@@ -161,6 +161,24 @@ fn run_state(run_id: &str, phase: Phase, system: &FakeSystem) -> RunState {
     state
 }
 
+/// The run `run-a` while its child `child` runs, without a supervisor that it records.
+fn child_run(system: &FakeSystem, child: ProcessIdentity) -> RunState {
+    let mut running = run_state("run-a", Phase::Running, system);
+    running.pid = Some(child.pid);
+    running.pgid = Some(child.pgid);
+    running.process_start = Some(child.process_start);
+    running
+}
+
+/// A child with the pid 400 that the fake system does not know: it exited, and its start time names no process.
+fn vanished_child() -> ProcessIdentity {
+    ProcessIdentity {
+        pid: 400,
+        pgid: 400,
+        process_start: "gone".to_owned(),
+    }
+}
+
 /// A root holding `state` as its run and, when `owns_slot`, as the slot's owner.
 fn seeded(state: &RunState, owns_slot: bool) -> tempfile::TempDir {
     let root = tempfile::tempdir().unwrap();
@@ -280,10 +298,7 @@ fn a_starting_run_with_a_live_supervisor_is_kept_and_a_half_identity_is_refused(
 #[test]
 fn a_running_run_with_vanished_identities_is_lost_or_orphaned() {
     let system = FakeSystem::new();
-    let mut running = run_state("run-a", Phase::Running, &system);
-    running.pid = Some(400);
-    running.pgid = Some(400);
-    running.process_start = Some("gone".to_owned());
+    let running = child_run(&system, vanished_child());
     let root = seeded(&running, true);
 
     let before = system.now();
@@ -308,10 +323,7 @@ fn a_running_run_with_vanished_identities_is_lost_or_orphaned() {
 #[test]
 fn a_terminal_state_that_lands_during_the_handoff_wins() {
     let system = FakeSystem::new();
-    let mut running = run_state("run-a", Phase::Running, &system);
-    running.pid = Some(400);
-    running.pgid = Some(400);
-    running.process_start = Some("gone".to_owned());
+    let running = child_run(&system, vanished_child());
     let root = seeded(&running, true);
     let mut finished = running.clone();
     finished.phase = Phase::Finished;
@@ -332,10 +344,7 @@ fn a_terminal_state_that_lands_during_the_handoff_wins() {
 fn a_running_run_with_a_live_child_is_unchanged() {
     let system = FakeSystem::new();
     let child = system.process(500, 500, "Sat Sep 26 10:00:02 2026");
-    let mut running = run_state("run-a", Phase::Running, &system);
-    running.pid = Some(child.pid);
-    running.pgid = Some(child.pgid);
-    running.process_start = Some(child.process_start);
+    let running = child_run(&system, child);
     let root = seeded(&running, true);
     assert_eq!(reconcile(&system, root.path(), running.clone()).unwrap(), running);
 
@@ -425,10 +434,7 @@ fn cancel_args(root: &Path, grace_ms: u64) -> CancelArgs {
 fn an_orphan_cancel_terms_the_group_and_synthesizes_the_exit() {
     let system = FakeSystem::new();
     let child = system.process(600, 600, "Sat Sep 26 10:00:03 2026");
-    let mut running = run_state("run-a", Phase::Running, &system);
-    running.pid = Some(child.pid);
-    running.pgid = Some(child.pgid);
-    running.process_start = Some(child.process_start);
+    let running = child_run(&system, child);
     let root = seeded(&running, true);
 
     let finished = cancel(&system, &cancel_args(root.path(), 5_000)).unwrap();
@@ -452,10 +458,7 @@ fn an_orphan_cancel_kills_a_group_that_ignores_term() {
     let system = FakeSystem::new();
     let child = system.process(700, 700, "Sat Sep 26 10:00:04 2026");
     system.ignores_term.borrow_mut().insert(700);
-    let mut running = run_state("run-a", Phase::Running, &system);
-    running.pid = Some(child.pid);
-    running.pgid = Some(child.pgid);
-    running.process_start = Some(child.process_start);
+    let running = child_run(&system, child);
     let root = seeded(&running, true);
 
     let finished = cancel(&system, &cancel_args(root.path(), 1_000)).unwrap();
@@ -469,13 +472,10 @@ fn an_orphan_cancel_kills_a_group_that_ignores_term() {
 fn stuck_run(system: &FakeSystem) -> (RunState, tempfile::TempDir) {
     let supervisor = system.process(10, 10, "Sat Sep 26 10:00:00 2026");
     let child = system.process(700, 700, "Sat Sep 26 10:00:04 2026");
-    let mut running = run_state("run-a", Phase::Running, system);
+    let mut running = child_run(system, child);
     running.supervisor_pid = Some(supervisor.pid);
     running.supervisor_pgid = Some(supervisor.pgid);
     running.supervisor_start = Some(supervisor.process_start);
-    running.pid = Some(child.pid);
-    running.pgid = Some(child.pgid);
-    running.process_start = Some(child.process_start);
     let root = seeded(&running, true);
     (running, root)
 }
@@ -814,6 +814,7 @@ fn the_context_environment_is_the_layout_and_the_allowlist() {
         ("PATH", "/somewhere"),
         ("DISPLAY", ":88"),
         ("XAUTHORITY", "/tmp/xauth"),
+        ("_JAVA_AWT_WM_NONREPARENTING", "1"),
         ("LANG", "en_US.UTF-8"),
         ("TMPDIR", "/var/folders/x/T/"),
         ("USER", "worker"),
@@ -826,6 +827,7 @@ fn the_context_environment_is_the_layout_and_the_allowlist() {
     let expected: BTreeMap<OsString, OsString> = [
         ("DISPLAY", ":88"),
         ("XAUTHORITY", "/tmp/xauth"),
+        ("_JAVA_AWT_WM_NONREPARENTING", "1"),
         ("LANG", "en_US.UTF-8"),
         ("TMPDIR", "/var/folders/x/T/"),
         ("USER", "worker"),
@@ -990,13 +992,21 @@ fn agent_process() {
     std::process::exit(i32::from(exit));
 }
 
-/// `start` launches a detached supervisor that runs the child in a session of its own; `status` and `log` see it
-/// running; `cancel` TERMs its group through the supervisor, which records the cancellation and frees the slot.
-#[test]
-fn a_real_run_starts_reports_and_cancels() {
-    if !Path::new("/bin/ps").is_file() || !Path::new("/bin/sleep").is_file() {
-        eprintln!("skipped: /bin/ps or /bin/sleep is not on this host");
-        return;
+/// The parts of a test of a real supervisor run: a temporary directory, the slot root `ui-runs` in it, a launcher
+/// that runs this test binary as the agent, and the run.
+struct RealRun {
+    directory: tempfile::TempDir,
+    root: PathBuf,
+    launcher: Launcher,
+    run: RunArgs,
+}
+
+/// The parts of a test of the real run `run_id`, or `None` when the host lacks one of `tools`. The test is then
+/// skipped, and the skip names the tools.
+fn real_run(run_id: &str, tools: &[&str]) -> Option<RealRun> {
+    if !tools.iter().all(|tool| Path::new(tool).is_file()) {
+        eprintln!("skipped: {} is not on this host", tools.join(" or "));
+        return None;
     }
     let directory = tempfile::tempdir().unwrap();
     let root = directory.path().join("ui-runs");
@@ -1006,7 +1016,28 @@ fn a_real_run_starts_reports_and_cancels() {
     };
     let run = RunArgs {
         root: RootArgs { root: root.clone() },
-        run_id: "run-round-trip".to_owned(),
+        run_id: run_id.to_owned(),
+    };
+    Some(RealRun {
+        directory,
+        root,
+        launcher,
+        run,
+    })
+}
+
+/// `start` launches a detached supervisor that runs the child in a session of its own; `status` and `log` see it
+/// running; `cancel` TERMs its group through the supervisor, which records the cancellation and frees the slot.
+#[test]
+fn a_real_run_starts_reports_and_cancels() {
+    let Some(RealRun {
+        directory,
+        root,
+        launcher,
+        run,
+    }) = real_run("run-round-trip", &["/bin/ps", "/bin/sleep"])
+    else {
+        return;
     };
     let args = StartArgs {
         run: run.clone(),
@@ -1080,19 +1111,14 @@ fn a_real_run_starts_reports_and_cancels() {
 /// names it in the supervisor log, and the run finishes with the exit of the child.
 #[test]
 fn a_real_run_whose_child_leaves_a_member_finishes() {
-    if !Path::new("/bin/ps").is_file() || !Path::new("/bin/sleep").is_file() {
-        eprintln!("skipped: /bin/ps or /bin/sleep is not on this host");
+    let Some(RealRun {
+        directory,
+        root,
+        launcher,
+        run,
+    }) = real_run("run-leftover", &["/bin/ps", "/bin/sleep"])
+    else {
         return;
-    }
-    let directory = tempfile::tempdir().unwrap();
-    let root = directory.path().join("ui-runs");
-    let launcher = Launcher {
-        self_exe: agent_launcher(directory.path()),
-        host: LaunchHost::Macos,
-    };
-    let run = RunArgs {
-        root: RootArgs { root: root.clone() },
-        run_id: "run-leftover".to_owned(),
     };
     // The child lives long enough to be identified, and its background sleep stays in its group.
     let args = StartArgs {
@@ -1145,21 +1171,17 @@ fn process_state(pid: i32) -> Option<String> {
 // reap it first, through a quit of the IDE owner, and that is a reap too.
 #[test]
 fn an_ended_supervisor_stays_a_zombie_until_its_parent_reaps_it() {
-    if !Path::new("/bin/ps").is_file() {
-        eprintln!("skipped: /bin/ps is not on this host");
+    let Some(RealRun {
+        directory,
+        root,
+        launcher,
+        run,
+    }) = real_run("run-reaped", &["/bin/ps"])
+    else {
         return;
-    }
-    let directory = tempfile::tempdir().unwrap();
-    let root = directory.path().join("ui-runs");
-    let launcher = Launcher {
-        self_exe: agent_launcher(directory.path()),
-        host: LaunchHost::Macos,
     };
     let args = StartArgs {
-        run: RunArgs {
-            root: RootArgs { root: root.clone() },
-            run_id: "run-reaped".to_owned(),
-        },
+        run,
         cwd: directory.path().to_path_buf(),
         snapshot_id: None,
         argv: vec!["/bin/sh".into(), "-c".into(), "exec /bin/sleep 1".into()],

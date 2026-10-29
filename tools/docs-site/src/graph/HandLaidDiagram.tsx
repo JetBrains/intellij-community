@@ -47,7 +47,7 @@ function Legend({ diagram }: { diagram: HarvestedDiagram }) {
   const planned = diagram.nodes.some(node => node.planned !== null)
   const dashedEdge = diagram.edges.some(edge => edge.dashed)
   return (
-    <dl className="diagram-legend m-0 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border bg-card/90 px-2.5 py-1 text-3xs text-muted-foreground backdrop-blur-sm">
+    <dl className="diagram-legend m-0 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-border bg-card/90 px-2.5 py-1 text-xs text-muted-foreground backdrop-blur-sm">
       <dt className="sr-only">Key</dt>
       {kinds.map(kind => (
         <dd key={kind.id} className="m-0 flex items-center gap-1">
@@ -56,7 +56,7 @@ function Legend({ diagram }: { diagram: HarvestedDiagram }) {
           {kind.label}
         </dd>
       ))}
-      {planned && <dd className="m-0 font-bold tracking-[0.05em] uppercase text-primary">Planned</dd>}
+      {planned && <dd className="m-0 font-bold tracking-[0.05em] uppercase text-muted-foreground">Planned</dd>}
       {dashedEdge && (
         <dd className="m-0 flex items-center gap-1">
           <i className="inline-block w-4 border-t border-dashed border-foreground" aria-hidden="true" />
@@ -146,7 +146,7 @@ export function HandLaidFigure({ diagram, initialStep, height, title }: {
   }
   return (
     <figure className="hand-laid-diagram my-5.5 [&_figcaption]:mt-1.5 [&_figcaption]:text-center [&_figcaption]:text-xs [&_figcaption]:text-muted-foreground">
-      <div className="mini-graph overflow-hidden rounded-t-lg border border-border bg-canvas" style={{ height: canvasHeight }}>
+      <div className="mini-graph overflow-hidden rounded-t-lg border border-border bg-muted" style={{ height: canvasHeight }}>
         <Canvas diagram={diagram} step={step} selected={null} onSelect={id => id !== null && openIn(id)} full={false} resolvedTheme={resolvedTheme} />
       </div>
       {/* the key sits under the canvas here: a compact canvas has no free corner for it */}
@@ -171,7 +171,7 @@ export function HandLaidCanvas({ diagram, step, selected, onStep, onSelect, walk
 }) {
   const resolvedTheme = useResolvedTheme()
   return (
-    <div className="hand-laid-diagram-full relative size-full bg-canvas">
+    <div className="hand-laid-diagram-full relative size-full bg-muted">
       <Canvas diagram={diagram} step={step} selected={selected} onSelect={onSelect} full resolvedTheme={resolvedTheme}>
         <Panel position="bottom-center" className="w-[min(640px,calc(100%-24px))]">
           <DiagramStepBar {...walk} steps={diagram.steps} active={step} onGo={onStep} baseDir={site().config.docs.diagrams} stepRef={site().stepRef} />

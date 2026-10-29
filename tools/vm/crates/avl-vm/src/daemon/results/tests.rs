@@ -83,8 +83,9 @@ fn a_bazel_test_gets_the_xml_of_the_command_and_each_report_gets_its_own() {
     assert!(messages.is_empty(), "a Bazel test reports through its XML: {}", messages.text());
 }
 
-#[test]
-fn a_teamcity_build_step_gets_the_messages_of_the_stream_and_of_each_trace() {
+/// The results of a TeamCity build step while `publish` publishes the run of the report path that it gets: the
+/// directory of that report and the service messages.
+fn teamcity_build_step(publish: impl FnOnce(&Reporter, &str)) -> (tempfile::TempDir, String) {
     let directory = tempfile::tempdir().expect("a temporary directory");
     let report = directory.path().join("it-1.json");
     let (reporter, _stdout, _stderr) = Reporter::in_memory("vm");
@@ -92,6 +93,14 @@ fn a_teamcity_build_step_gets_the_messages_of_the_stream_and_of_each_trace() {
     let messages = Buffer::new();
     {
         let _results = attach_to(&reporter, &environment, SharedWriter::new(messages.clone()));
+        publish(&reporter, &report.to_string_lossy());
+    }
+    (directory, messages.text())
+}
+
+#[test]
+fn a_teamcity_build_step_gets_the_messages_of_the_stream_and_of_each_trace() {
+    let (directory, text) = teamcity_build_step(|reporter, report| {
         reporter.publish(
             Event::TraceReady(TraceReady {
                 iteration_id: "it-1".to_owned(),
@@ -106,9 +115,8 @@ fn a_teamcity_build_step_gets_the_messages_of_the_stream_and_of_each_trace() {
             }),
             Some(&Scope::worker("air-linux-1")),
         );
-        publish_run(&reporter, "air-linux-1", &report.to_string_lossy());
-    }
-    let text = messages.text();
+        publish_run(reporter, "air-linux-1", report);
+    });
     let kinds: Vec<&str> = text
         .lines()
         .map(|line| {
@@ -211,16 +219,10 @@ fn publish_plan(reporter: &Reporter, worker: &str, scenario: &str) {
 
 #[test]
 fn a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_scenario() {
-    let directory = tempfile::tempdir().expect("a temporary directory");
-    let report = directory.path().join("it-1.json");
-    let (reporter, _stdout, _stderr) = Reporter::in_memory("vm");
-    let environment = Environment::from_pairs([("TEAMCITY_VERSION", "2026.1")]);
-    let messages = Buffer::new();
-    {
-        let _results = attach_to(&reporter, &environment, SharedWriter::new(messages.clone()));
-        publish_plan(&reporter, "air-linux-1", "send-prompt");
-        publish_iteration(&reporter, "air-linux-1", &report.to_string_lossy(), stream_with_metrics());
-    }
+    let (directory, text) = teamcity_build_step(|reporter, report| {
+        publish_plan(reporter, "air-linux-1", "send-prompt");
+        publish_iteration(reporter, "air-linux-1", report, stream_with_metrics());
+    });
     let file = directory
         .path()
         .join("it-1.performance/air-composer/send")
@@ -229,7 +231,6 @@ fn a_teamcity_build_step_writes_and_publishes_the_ij_perf_file_of_each_planned_s
     assert_eq!(document["project"], "air/composer");
     assert_eq!(document["build"], "271.SNAPSHOT");
     assert_eq!(document["metrics"], serde_json::json!([{"n": "replyMs", "d": 1840, "v": 1840}]));
-    let text = messages.text();
     let published = format!("##teamcity[publishArtifacts '{} => air-composer/send']", file.display());
     assert_eq!(text.lines().filter(|line| *line == published).count(), 1, "{text}");
 }

@@ -27,7 +27,7 @@ use serde::{Deserialize, Serialize};
 use tokio::sync::broadcast;
 
 use super::files::{content_type, file_etag, json_response, matches_etag, serve_file, set, text_error};
-use super::journals::{read_records, valid_run_id};
+use super::journals::{localize, read_records, valid_run_id};
 use super::service::Activity;
 use super::state::{Scenario, Server, listed, runs_of};
 use super::{EVENTS_ROUTE, PLAN_ROUTE, RUN_ROUTE};
@@ -120,7 +120,7 @@ async fn serve_run(
             "a run id is one path component of letters, digits, '.', '_' and '-'",
         );
     }
-    if server.journals.dir().is_none() {
+    if server.journals.is_empty() {
         return text_error(StatusCode::NOT_FOUND, "this server reads no controller runs");
     }
     let from = match query.get("from").map(|value| value.parse::<u64>()) {
@@ -130,8 +130,8 @@ async fn serve_run(
     };
     server
         .blocking(move |server| {
-            let real = match server.journals.real_journal(&run_id) {
-                Ok(Some(real)) => real,
+            let journal = match server.journals.real_journal(&run_id) {
+                Ok(Some(journal)) => journal,
                 Ok(None) => return text_error(StatusCode::FORBIDDEN, "outside the runs directory"),
                 Err(error) if error.kind() == io::ErrorKind::NotFound => {
                     return text_error(StatusCode::NOT_FOUND, &format!("no run {run_id}"));
@@ -140,8 +140,13 @@ async fn serve_run(
                     return text_error(StatusCode::INTERNAL_SERVER_ERROR, &error.to_string());
                 }
             };
-            match read_records(&real, from) {
+            match read_records(&journal.path, from) {
                 Ok(mut answer) => {
+                    if journal.exported
+                        && let Some(run_dir) = journal.path.parent()
+                    {
+                        localize(&mut answer.records, run_dir);
+                    }
                     answer.run = server.journals.summary(&run_id, SystemTime::now());
                     json_response(StatusCode::OK, &answer)
                 }
@@ -498,20 +503,11 @@ async fn placeholder(server: &Arc<Server>) -> Response {
     let current = server.blocking(|server| server.snapshot_now(Duration::from_secs(1))).await;
     let mut roots = String::new();
     for state in &current.found.roots {
-        let mut note = if state.exists {
-            format!("{} bundles", state.bundles)
-        } else {
-            "absent".to_owned()
-        };
-        if let Some(error) = &state.error {
-            note.push_str(": ");
-            note.push_str(error);
-        }
         roots.push_str(&format!(
             "<li><code>{}</code> ({}): {}</li>\n",
             escape_html(&state.path.to_string_lossy()),
             escape_html(state.kind.as_str()),
-            escape_html(&note)
+            escape_html(&state.summary())
         ));
     }
     let site = server

@@ -5,8 +5,8 @@ avl_crate(
     test_data = [":testdata"],
 )
 
-# The recorded run stream and the golden of its JUnit XML. Public, because the tests of `avl-report` read the same
-# stream for the golden of its TeamCity messages.
+# The recorded run stream, the golden of its JUnit XML and the golden of its IJ Perf file. Public, because the tests of
+# `avl-report` read the same stream for the golden of its TeamCity messages.
 filegroup(
     name = "testdata",
     srcs = glob(["testdata/**"]),

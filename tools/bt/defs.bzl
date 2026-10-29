@@ -10,10 +10,12 @@ load("//build/rust-tools:defs.bzl", "rust_tool_crate", "rust_tool_hub")
 _LINTS = Label("//tools/bt:lints")
 
 # The crates of another workspace that a crate here links through a path dependency, by Cargo package name: `distpath`
-# of the dev-dist tools. `@bt` would build such a crate a second time, without its lint policy, so the crate links the
-# target of this module instead.
+# of the dev-dist tools, and the client of yonder with its link. `@bt` would build such a crate a second time, without
+# its lint policy, so the crate links the target of this module instead.
 _CROSS_MODULE_CRATES = {
     "distpath": "//build/dev-dist-tools/crates/distpath",
+    "yonder-client": "//tools/yonder/crates/yonder-client",
+    "yonder-link": "//tools/yonder/crates/yonder-link",
 }
 
 _HUB = rust_tool_hub(
@@ -31,8 +33,8 @@ def bt_rust_crate(name, compile_data = []):
 
     The targets are the library or the binary, `<name>_test` and `<name>-clippy`. A crate under `bins/` is a binary.
     A crate of another workspace, such as `distpath`, comes from its target in this module (`_CROSS_MODULE_CRATES`).
-    Every crate builds and tests on Windows too, because BT runs there. The Air fast lane runs the unit tests with
-    `--test_sharding_strategy=forced=2`, so the rules_rust wrapper splits the libtest cases across the shards.
+    Every crate builds and tests on Windows too, because BT runs there. The Air fast lane runs the unit tests with a
+    forced shard count, so the rules_rust wrapper splits the libtest cases across the shards.
 
     Args:
       name: the directory name. `@bt` names a local crate by its package label.

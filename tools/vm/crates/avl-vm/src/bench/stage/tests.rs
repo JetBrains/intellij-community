@@ -1,6 +1,6 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
-use avl_base::Reporter;
+use avl_base::{Refusal, Reporter};
 use avl_host_sys::lock::LockManager;
 use avl_host_sys::{Ctx, Interrupts, Runner};
 use pretty_assertions::assert_eq;
@@ -123,24 +123,59 @@ fn fake_sources(root: &Path) -> Sources {
     }
 }
 
-fn collaborators() -> (Runner, LockManager, Reporter) {
-    let runner = Runner::new(std::env::vars(), Interrupts::detached());
-    let locks = LockManager::new(runner.clone());
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    (runner, locks, reporter)
+/// The fake sources of [`fake_sources`] in a temporary directory, the runtime root beside them, and the collaborators of
+/// a stage.
+struct Fixture {
+    _dir: tempfile::TempDir,
+    sources: Sources,
+    runtime: PathBuf,
+    _runner: Runner,
+    locks: LockManager,
+    reporter: Reporter,
+}
+
+impl Fixture {
+    fn new() -> Self {
+        let dir = tempfile::tempdir().expect("a temporary directory");
+        let sources = fake_sources(dir.path());
+        let runtime = dir.path().join("runtime");
+        let runner = Runner::new(std::env::vars(), Interrupts::detached());
+        let locks = LockManager::new(runner.clone());
+        let (reporter, _, _) = Reporter::in_memory("vm");
+        Self {
+            _dir: dir,
+            sources,
+            runtime,
+            _runner: runner,
+            locks,
+            reporter,
+        }
+    }
+
+    /// Stages the sources into the runtime root, as the checkout `git` built them.
+    async fn stage(&self, git: &GitInfo) -> Result<Generation, Refusal> {
+        stage(&Ctx::background(), &self.locks, &self.runtime, &self.sources, git, &self.reporter).await
+    }
+
+    /// The count of the entries of the generations directory, the temporaries of a stage among them.
+    fn generation_entries(&self) -> usize {
+        std::fs::read_dir(self.runtime.join("bench/generations"))
+            .expect("the generations")
+            .count()
+    }
+}
+
+/// Asserts that `refusal` refuses the distribution with a message that contains `part`.
+fn assert_unsupported(refusal: &Refusal, part: &str) {
+    assert_eq!(refusal.code, "bench_dist_unsupported");
+    assert!(refusal.message.contains(part), "{}", refusal.message);
 }
 
 #[tokio::test]
 async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let sources = fake_sources(dir.path());
-    let runtime = dir.path().join("runtime");
-    let (_runner, locks, reporter) = collaborators();
-    let ctx = Ctx::background();
-
-    let generation = stage(&ctx, &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect("a generation");
+    let fixture = Fixture::new();
+    let (sources, runtime) = (&fixture.sources, &fixture.runtime);
+    let generation = fixture.stage(&built()).await.expect("a generation");
     assert!(!generation.reused);
     assert_eq!(generation.root, runtime.join("bench/generations").join(&generation.digest));
     assert_eq!(generation.dist, generation.root.join("idea_dist.dist"));
@@ -156,7 +191,7 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
     #[cfg(unix)]
     assert_eq!(
         std::fs::read_link(generation.dist.join("jbr/Contents/Home/legal/java.rmi/LICENSE")).expect("the link"),
-        std::path::PathBuf::from("../java.base/LICENSE")
+        PathBuf::from("../java.base/LICENSE")
     );
     let leftovers: Vec<String> = std::fs::read_dir(runtime.join("bench/generations"))
         .expect("the generations")
@@ -164,16 +199,12 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
         .collect();
     assert_eq!(leftovers, vec![generation.digest.clone()], "no temporary stays");
 
-    let again = stage(&ctx, &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect("a generation");
+    let again = fixture.stage(&built()).await.expect("a generation");
     assert!(again.reused);
     assert_eq!(again.digest, generation.digest);
 
     std::fs::write(sources.dist.join("lib/a.jar"), "changed").expect("a rebuild");
-    let rebuilt = stage(&ctx, &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect("a generation");
+    let rebuilt = fixture.stage(&built()).await.expect("a generation");
     assert!(!rebuilt.reused);
     assert_ne!(rebuilt.digest, generation.digest);
     assert_eq!(
@@ -187,20 +218,11 @@ async fn a_stage_clones_the_sources_read_only_and_a_second_stage_reuses_them() {
 #[cfg(unix)]
 #[tokio::test]
 async fn a_link_out_of_the_tree_is_refused_and_leaves_no_temporary() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let sources = fake_sources(dir.path());
-    std::os::unix::fs::symlink("/etc/hosts", sources.dist.join("lib/out.jar")).expect("a link");
-    let runtime = dir.path().join("runtime");
-    let (_runner, locks, reporter) = collaborators();
-    let refusal = stage(&Ctx::background(), &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect_err("a refusal");
-    assert_eq!(refusal.code, "bench_dist_unsupported");
-    assert!(refusal.message.contains("links to /etc/hosts"), "{}", refusal.message);
-    let left = std::fs::read_dir(runtime.join("bench/generations"))
-        .expect("the generations")
-        .count();
-    assert_eq!(left, 0);
+    let fixture = Fixture::new();
+    std::os::unix::fs::symlink("/etc/hosts", fixture.sources.dist.join("lib/out.jar")).expect("a link");
+    let refusal = fixture.stage(&built()).await.expect_err("a refusal");
+    assert_unsupported(&refusal, "links to /etc/hosts");
+    assert_eq!(fixture.generation_entries(), 0);
 }
 
 /// Moves the home of the fake distribution of `sources` to `Contents`, as a macOS app has it.
@@ -220,20 +242,9 @@ fn move_home_to_contents(sources: &Sources) {
 // takes the JBR of the home.
 #[tokio::test]
 async fn a_stage_starts_from_the_home_that_the_config_names_below_the_dist_directory() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let sources = fake_sources(dir.path());
-    move_home_to_contents(&sources);
-    let (_runner, locks, reporter) = collaborators();
-    let generation = stage(
-        &Ctx::background(),
-        &locks,
-        &dir.path().join("runtime"),
-        &sources,
-        &built(),
-        &reporter,
-    )
-    .await
-    .expect("a generation");
+    let fixture = Fixture::new();
+    move_home_to_contents(&fixture.sources);
+    let generation = fixture.stage(&built()).await.expect("a generation");
     assert_eq!(generation.dist, generation.root.join("idea_dist.dist"));
     assert_eq!(generation.home, generation.dist.join("Contents"));
     assert_eq!(std::fs::read_to_string(generation.home.join("lib/a.jar")).expect("the clone"), "a");
@@ -248,53 +259,25 @@ async fn a_stage_starts_from_the_home_that_the_config_names_below_the_dist_direc
 /// `core-classpath.txt`. Neither stages a generation.
 #[tokio::test]
 async fn a_distribution_without_its_jbr_or_its_class_path_is_refused() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let sources = fake_sources(dir.path());
-    move_home_to_contents(&sources);
-    let runtime = dir.path().join("runtime");
-    let (_runner, locks, reporter) = collaborators();
-    let java = sources.dist.join("Contents/jbr/Contents/Home/bin").join(java_name());
+    let fixture = Fixture::new();
+    move_home_to_contents(&fixture.sources);
+    let java = fixture.sources.dist.join("Contents/jbr/Contents/Home/bin").join(java_name());
     std::fs::remove_file(&java).expect("no java");
-    let refusal = stage(&Ctx::background(), &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect_err("a refusal");
-    assert_eq!(refusal.code, "bench_dist_unsupported");
-    assert!(
-        refusal.message.contains(&format!("{} is not a file", java.display())),
-        "{}",
-        refusal.message
-    );
+    let refusal = fixture.stage(&built()).await.expect_err("a refusal");
+    assert_unsupported(&refusal, &format!("{} is not a file", java.display()));
 
-    std::fs::remove_file(sources.dist.join("Contents/core-classpath.txt")).expect("no class path");
-    let refusal = stage(&Ctx::background(), &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect_err("a refusal");
-    assert_eq!(refusal.code, "bench_dist_unsupported");
-    assert!(refusal.message.contains("has no core-classpath.txt"), "{}", refusal.message);
-    let left = std::fs::read_dir(runtime.join("bench/generations"))
-        .expect("the generations")
-        .count();
-    assert_eq!(left, 0);
+    std::fs::remove_file(fixture.sources.dist.join("Contents/core-classpath.txt")).expect("no class path");
+    let refusal = fixture.stage(&built()).await.expect_err("a refusal");
+    assert_unsupported(&refusal, "has no core-classpath.txt");
+    assert_eq!(fixture.generation_entries(), 0);
 }
 
 #[tokio::test]
 async fn a_config_that_names_another_home_is_refused() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let sources = fake_sources(dir.path());
-    std::fs::write(&sources.config, "home.path=other.dist\nmain.class.name=M\n").expect("a config");
-    let (_runner, locks, reporter) = collaborators();
-    let refusal = stage(
-        &Ctx::background(),
-        &locks,
-        &dir.path().join("runtime"),
-        &sources,
-        &built(),
-        &reporter,
-    )
-    .await
-    .expect_err("a refusal");
-    assert_eq!(refusal.code, "bench_dist_unsupported");
-    assert!(refusal.message.contains("names the home other.dist"), "{}", refusal.message);
+    let fixture = Fixture::new();
+    std::fs::write(&fixture.sources.config, "home.path=other.dist\nmain.class.name=M\n").expect("a config");
+    let refusal = fixture.stage(&built()).await.expect_err("a refusal");
+    assert_unsupported(&refusal, "names the home other.dist");
 }
 
 /// The record of a stage names the commit of the checkout that built the bytes, and `open` finds the generation by a
@@ -302,15 +285,10 @@ async fn a_config_that_names_another_home_is_refused() {
 /// same.
 #[tokio::test]
 async fn a_generation_names_its_commit_and_opens_by_a_prefix_of_its_digest() {
-    let dir = tempfile::tempdir().expect("a temporary directory");
-    let sources = fake_sources(dir.path());
-    let runtime = dir.path().join("runtime");
-    let (_runner, locks, reporter) = collaborators();
-    let ctx = Ctx::background();
-    let generation = stage(&ctx, &locks, &runtime, &sources, &built(), &reporter)
-        .await
-        .expect("a generation");
-    let staged = open(&runtime, &generation.digest[..8]).expect("the generation");
+    let fixture = Fixture::new();
+    let runtime = &fixture.runtime;
+    let generation = fixture.stage(&built()).await.expect("a generation");
+    let staged = open(runtime, &generation.digest[..8]).expect("the generation");
     assert_eq!(
         staged.generation,
         Generation {
@@ -324,11 +302,9 @@ async fn a_generation_names_its_commit_and_opens_by_a_prefix_of_its_digest() {
         commit: "b0b0b0b0b0b01111111111111111111111111111".to_owned(),
         dirty: false,
     };
-    let again = stage(&ctx, &locks, &runtime, &sources, &later, &reporter)
-        .await
-        .expect("a generation");
+    let again = fixture.stage(&later).await.expect("a generation");
     assert!(again.reused);
-    assert_eq!(open(&runtime, &generation.digest).expect("the generation").git, Some(built()));
+    assert_eq!(open(runtime, &generation.digest).expect("the generation").git, Some(built()));
 }
 
 /// Writes a published generation `digest` under `generations` with the record of a stage from before the commit, the
@@ -405,10 +381,5 @@ fn a_generation_of_the_earlier_layout_is_refused() {
     let java = java_in(&generations.join("ab12/idea_dist.dist"));
     std::fs::remove_file(&java).expect("no java");
     let refusal = open(dir.path(), "ab").expect_err("an earlier layout");
-    assert_eq!(refusal.code, "bench_dist_unsupported");
-    assert!(
-        refusal.message.contains(&format!("has no JBR at {}", java.display())),
-        "{}",
-        refusal.message
-    );
+    assert_unsupported(&refusal, &format!("has no JBR at {}", java.display()));
 }

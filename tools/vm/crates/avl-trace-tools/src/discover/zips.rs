@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex, OnceLock, PoisonError};
 use std::time::SystemTime;
 
-use avl_trace::bundle::{LOGS_FILE, MANIFEST_FILE, SNAP_DIR, SPANS_FILE, VIDEO_FILE, decode_manifest};
+use avl_trace::bundle::{LOGS_FILE, MANIFEST_FILE, SNAP_DIR, SPANS_FILE, VIDEO_FILE, decode_manifest, picture_mime};
 use sha2::{Digest, Sha256};
 use zip::{CompressionMethod, ZipArchive};
 
@@ -501,7 +501,7 @@ fn read_zip_summary<R: Read + Seek>(archive: &mut ZipArchive<R>, names: &[String
     summary.thumbnail = names
         .iter()
         .filter_map(|name| name.strip_prefix(&snap_prefix))
-        .filter(|rest| !rest.contains('/') && rest.ends_with(".webp"))
+        .filter(|rest| !rest.contains('/') && picture_mime(rest).is_some())
         .max()
         .map(|rest| format!("{SNAP_DIR}/{rest}"));
     let video_present = archive

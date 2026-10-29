@@ -17,8 +17,8 @@ use avl_host_sys::{Ctx, SpawnOptions};
 use serde::Serialize;
 use serde_json::json;
 
-use super::act_on_leased_worker;
 use super::pull::pull_guest_file;
+use super::{LeaseUse, on_leased_worker};
 
 /// The timeout of a captured Peekaboo command. It captures the screen or drives the UI of the guest for seconds.
 const PEEKABOO_TIMEOUT: Duration = Duration::from_mins(10);
@@ -222,7 +222,7 @@ pub(crate) async fn command_peekaboo(
         return Err(unsupported("Peekaboo control is currently available only on the Parallels backend"));
     }
     args.validate(output)?;
-    let data = act_on_leased_worker(ctx, manager, lease_file, "peekaboo", async |current| {
+    let data = on_leased_worker(ctx, manager, lease_file, "peekaboo", LeaseUse::LockedAction, async |current| {
         manager.require_ready(ctx, &current).await?;
         let worker = current.worker;
         let mut requests = Vec::new();

@@ -14,7 +14,8 @@
 //! The monitor then ends the run itself. It writes the JUnit XML of the records so far, with the open scenario
 //! unfinished and each planned scenario that never ran skipped. It cancels each IDE run that the stream launched and
 //! did not end, and it kills each recorder. Under a Bazel test it then keeps the evidence of the run, as
-//! [`super::evidence`] states. It writes the hang report and one line, and the process exits 1. Each
+//! [`super::evidence`] states. It writes the IJ Perf files and the result of the run from the records so far, as the end
+//! of the run does ([`super::run_result::RunEnd`]), with the run not green. It writes the hang report and one line, and the process exits 1. Each
 //! write on the standard error waits a bounded time, so a standard error that blocks cannot hold the hard stop.
 
 use std::collections::HashSet;
@@ -24,6 +25,7 @@ use std::sync::mpsc;
 use std::sync::{Condvar, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
+use avl_junit::performance::rfc_1123;
 use avl_junit::teamcity;
 use avl_wire::daemon::{RunEvent, RunEventKind, Skipped, decode_run_event};
 use avl_wire::ide::ide_run_id;
@@ -32,6 +34,7 @@ use nix::unistd::Pid;
 
 use super::channel::Daemon;
 use super::evidence::{self, Evidence, Kept, Limits, Moment};
+use super::run_result::{Ended, RunEnd};
 use super::watchdog::RunSnapshot;
 use crate::cli::{CancelArgs, RootArgs, RunArgs};
 use crate::clock::now_stamp;
@@ -120,6 +123,8 @@ pub(crate) struct Monitor<'a> {
     hard_stop: Option<Instant>,
     /// Whether the run is a build step of TeamCity, so the hard stop also writes a build problem.
     team_city: bool,
+    /// What the hard stop writes in place of the end of the run: the IJ Perf files and the result of the run.
+    run_end: Option<&'a RunEnd>,
     state: Mutex<MonitorState>,
     changed: Condvar,
 }
@@ -147,6 +152,8 @@ pub(crate) struct HardStop {
     pub build_problem: Option<String>,
     /// The evidence that the hard stop kept, when a Bazel test names an outputs directory.
     pub kept: Option<Kept>,
+    /// The IJ Perf files and the result of the run that the hard stop wrote, when the run names what its end writes.
+    pub ended: Option<Ended>,
 }
 
 impl<'a> Monitor<'a> {
@@ -156,6 +163,7 @@ impl<'a> Monitor<'a> {
         budget: Option<Duration>,
         hard_stop: Option<Instant>,
         team_city: bool,
+        run_end: Option<&'a RunEnd>,
     ) -> Self {
         Self {
             daemon,
@@ -163,6 +171,7 @@ impl<'a> Monitor<'a> {
             budget,
             hard_stop,
             team_city,
+            run_end,
             state: Mutex::new(MonitorState::default()),
             changed: Condvar::new(),
         }
@@ -195,8 +204,14 @@ impl<'a> Monitor<'a> {
                 if let Some(file) = &self.paths.report {
                     let _ = fs::write(file, format!("{}\n{}\n", stop.line, report.join("\n")));
                 }
-                if let Some(problem) = stop.build_problem {
-                    say_on(Output::Stdout, problem);
+                if let Some(problem) = &stop.build_problem {
+                    say_on(Output::Stdout, problem.clone());
+                }
+                if let Some(ended) = &stop.ended {
+                    if !ended.messages.is_empty() {
+                        say_on(Output::Stdout, ended.messages.join("\n"));
+                    }
+                    say(ended.lines.join("\n"));
                 }
                 say(format!("{}\n{}", report.join("\n"), stop.line));
                 std::process::exit(1);
@@ -265,6 +280,10 @@ impl<'a> Monitor<'a> {
             .evidence
             .as_ref()
             .map(|evidence| (evidence, evidence::keep(evidence, &events, Moment::HardStop, Limits::LANE)));
+        // The end of the run never came, so the hard stop writes what it writes. The run is not green.
+        let ended = self
+            .run_end
+            .map(|end| end.write(&events, false, &|id| self.daemon.iteration_dir(id), &rfc_1123(&jiff::Zoned::now())));
         let snapshot = self.daemon.watch().map(|watch| watch.snapshot()).unwrap_or_default();
         let written = cases.map_or_else(
             || "the run thread writes the JUnit XML".to_owned(),
@@ -290,6 +309,7 @@ impl<'a> Monitor<'a> {
             line,
             build_problem,
             kept: kept.map(|(_, kept)| kept),
+            ended,
         }
     }
 }

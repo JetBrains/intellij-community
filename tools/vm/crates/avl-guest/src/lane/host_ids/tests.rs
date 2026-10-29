@@ -16,6 +16,17 @@ struct Side<'a> {
     restarts: RefCell<u32>,
 }
 
+impl<'a> Side<'a> {
+    /// A side that has not restarted the IDE yet.
+    fn new(services: &'a FakeServices, context: &'a Path) -> Self {
+        Self {
+            services,
+            context,
+            restarts: RefCell::new(0),
+        }
+    }
+}
+
 impl HostSide for Side<'_> {
     fn services(&self) -> &dyn ServiceControl {
         self.services
@@ -46,11 +57,7 @@ fn perform_id(id: HostId, args: Value, values: &mut Values, side: &mut Side<'_>)
 fn the_registry_ids_arm_hold_release_and_check_the_package_fault() {
     let services = FakeServices::default();
     let context = TempDir::new().unwrap();
-    let mut side = Side {
-        services: &services,
-        context: context.path(),
-        restarts: RefCell::new(0),
-    };
+    let mut side = Side::new(&services, context.path());
     let mut values = Values::default();
     perform_id(HostId::Action(HostAction::ConsentHoldDownload), json!({}), &mut values, &mut side).unwrap();
     assert_eq!(
@@ -93,11 +100,7 @@ fn the_request_count_reads_the_package_requests_after_the_mark() {
     let services = FakeServices::default();
     services.paths.lock().unwrap().push("/packages/old.zip".to_owned());
     let context = TempDir::new().unwrap();
-    let mut side = Side {
-        services: &services,
-        context: context.path(),
-        restarts: RefCell::new(0),
-    };
+    let mut side = Side::new(&services, context.path());
     let mut values = Values::default();
     perform_id(HostId::Action(HostAction::RegistryMarkRequests), json!({}), &mut values, &mut side).unwrap();
     assert_eq!(values.get(REGISTRY_BASELINE), Some(&json!(1)));
@@ -139,11 +142,7 @@ fn a_restart_performs_while_down_and_answers_the_reads() {
     let events = context.path().join("home/.junie/sessions/s/events.jsonl");
     fs::create_dir_all(events.parent().unwrap()).unwrap();
     fs::write(&events, "first\n").unwrap();
-    let mut side = Side {
-        services: &services,
-        context: context.path(),
-        restarts: RefCell::new(0),
-    };
+    let mut side = Side::new(&services, context.path());
     let relative = "home/.junie/sessions/s/events.jsonl";
     let mut values = Values::new([(
         WHILE_DOWN.to_owned(),
@@ -224,11 +223,7 @@ fn the_sign_in_approval_follows_the_redirect_to_a_callback_with_a_query_and_no_p
     let services = FakeServices::default();
     *services.cloud_base_url.lock().unwrap() = base_url.clone();
     let context = TempDir::new().unwrap();
-    let mut side = Side {
-        services: &services,
-        context: context.path(),
-        restarts: RefCell::new(0),
-    };
+    let mut side = Side::new(&services, context.path());
     let mut values = Values::default();
     values.set(SIGN_IN_URL, json!(format!("{base_url}/oauth2/auth?client_id=ide")));
     perform_id(HostId::Action(HostAction::AccountApproveSignIn), json!({}), &mut values, &mut side).unwrap();

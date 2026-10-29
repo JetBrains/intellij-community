@@ -2,10 +2,8 @@
 
 use crate::worker::container_linux::ContainerLinux;
 use crate::worker::worker::Manager;
-use avl_base::format::words;
 use avl_base::{Backend, Outcome, Refusal};
 use avl_host_sys::Ctx;
-use avl_host_sys::guest::{GUEST_COMMAND_TIMEOUT, Guest};
 use serde::Serialize;
 
 use super::{HostPaths, Layout, LeaseSummary, abandoned_fragment, lease_summary, leased_word, pool_report, tri_state_word, verdict_word};
@@ -65,18 +63,7 @@ pub(super) async fn status(ctx: &Ctx, manager: &Manager, container_linux: &Conta
             None
         };
         let (guest_agent, layout) = if running == Some(true) {
-            let channel = manager.channel(worker);
-            let guest = Guest {
-                ctx,
-                settings,
-                channel: channel.as_ref(),
-                reporter: manager.reporter(),
-            };
-            if guest.succeeds(&words(["/usr/bin/true"]), GUEST_COMMAND_TIMEOUT).await {
-                (true, Layout::probe(&guest, &host_paths).await)
-            } else {
-                (false, Layout::default())
-            }
+            Layout::probe_running(ctx, manager, worker, &host_paths).await
         } else {
             (false, Layout::default())
         };

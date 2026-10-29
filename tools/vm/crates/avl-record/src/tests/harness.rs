@@ -15,14 +15,14 @@ use avl_trace::bridge::{
     PAINT_ROUTE, Point, Rect, SPANS_ROUTE, TOKEN_HEADER, TREE_ROUTE, Tree, decode_tree,
 };
 use avl_trace::bundle::{IDEA_LOG_FILE, LOGS_FILE, MANIFEST_FILE, Manifest, SPANS_FILE, bundle_dir, decode_manifest};
-use avl_trace::otlp::{LogRecord, Span, decode_logs_line, decode_traces_line};
-use avl_trace::protocol::{Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoCodec, decode_command, encode_command};
+use avl_trace::otlp::{LogRecord, Span, attr, decode_logs_line, decode_traces_line, event, lookup_str};
+use avl_trace::protocol::{Bridge, CaptureSource, Command, HelloCommand, Launcher, VideoRetention, decode_command, encode_command};
 
 use crate::capture::{Frame, Source};
 use crate::ladder::{CaptureLadder, ScreenAccess, VideoPlan, Videographer};
 use crate::session::Session;
 use crate::testing::{ScriptedClock, SharedBuffer};
-use crate::video::Recording;
+use crate::video::{FrameSink, Recording, Stopped};
 use crate::{Diagnostics, Options, lock};
 
 pub(crate) const GOLDEN_ACKS: &str = "lane-transcript.acks.ndjson";
@@ -85,7 +85,12 @@ struct IdeState {
     dropped: u64,
     /// Makes both spans routes answer 404, as the bridge of an older checkout does.
     no_spans: bool,
+    /// How many milliseconds of the scripted clock each route, or the grab of [GRAB], takes.
+    takes: HashMap<String, i64>,
 }
+
+/// The key of [FakeIde::takes] for the grab of the fake screen.
+pub(crate) const GRAB: &str = "grab";
 
 /// The IDE under test as the recorder sees it: a screen to grab, and a bridge that answers facts, trees, paints and
 /// spans. It keeps an input log that the tree route drains, and a span log that the spans routes drain.
@@ -126,7 +131,7 @@ impl FakeIde {
                 if request.header(TOKEN_HEADER) != Some(state.token.as_str()) {
                     return Response::error(401, "wrong token");
                 }
-                match request.path.as_str() {
+                let response = match request.path.as_str() {
                     FACTS_ROUTE => {
                         let facts = Facts {
                             pid: 4242,
@@ -162,7 +167,12 @@ impl FakeIde {
                         Response::ok("application/json", avl_trace::encode(&answer).unwrap())
                     }
                     _ => Response::error(404, "not found"),
+                };
+                // The answer is built at the start of the route's time, so a tree keeps the moment it was taken.
+                if let Some(ms) = state.takes.get(&request.path) {
+                    clock.set_ms(clock.ms() + ms);
                 }
+                response
             })
         };
         Arc::new(Self {
@@ -209,6 +219,11 @@ impl FakeIde {
         lock(&self.state).no_spans = true;
     }
 
+    /// Makes `route`, or the grab of the screen for [GRAB], move the scripted clock on by `ms` each time.
+    pub(crate) fn takes(&self, route: &str, ms: i64) {
+        lock(&self.state).takes.insert(route.to_owned(), ms);
+    }
+
     fn current_frame(&self) -> Frame {
         self.frames[lock(&self.state).screen].clone()
     }
@@ -234,6 +249,9 @@ impl Source for FakeScreen {
     fn grab(&self, _deadline: Instant, frame: &mut Frame) -> anyhow::Result<()> {
         *frame = self.ide.current_frame();
         frame.at = self.clock.now();
+        if let Some(ms) = lock(&self.ide.state).takes.get(GRAB) {
+            self.clock.set_ms(self.clock.ms() + ms);
+        }
         Ok(())
     }
 }
@@ -254,11 +272,7 @@ pub(crate) struct NoVideo;
 
 impl Videographer for NoVideo {
     fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
-        VideoPlan {
-            codec: VideoCodec::None,
-            reason: GOLDEN_VIDEO_REASON.to_owned(),
-            raw: false,
-        }
+        VideoPlan::none(GOLDEN_VIDEO_REASON)
     }
 
     fn start(&self, _: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
@@ -345,6 +359,15 @@ impl Harness {
         self.hello_line(false, true)
     }
 
+    /// The hello without a bridge that keeps the video of a scenario that did not pass only.
+    pub(crate) fn failed_video_hello(&self) -> String {
+        let Command::Hello(mut hello) = decode_command(self.hello(false).as_bytes()).unwrap() else {
+            panic!("the hello line is not a hello");
+        };
+        hello.keep_video = VideoRetention::Failed;
+        String::from_utf8(encode_command(&Command::Hello(hello)).unwrap()).unwrap()
+    }
+
     fn hello_line(&self, bridge: bool, allure: bool) -> String {
         let hello = HelloCommand {
             root: self.root.to_string_lossy().into_owned(),
@@ -352,6 +375,7 @@ impl Harness {
             launcher: Launcher::Bazel,
             screen: false,
             allure,
+            keep_video: VideoRetention::Always,
             bridge: bridge.then(|| Bridge {
                 port: 1,
                 token: GOLDEN_TOKEN.to_owned(),
@@ -387,8 +411,11 @@ impl Harness {
 
     /// Feeds a golden transcript to a session line by line at the golden receipt times, playing the IDE's part in
     /// between, and closes the session a second after the last line. The IDE's part is fixed by the ordinal of each
-    /// snapshot, so the replay is the same every time.
+    /// snapshot, so the replay is the same every time. A snapshot takes 4 ms: the tree 3 ms and the spans read 1 ms. The
+    /// shortest wait of the golden lane for a snapshot ack is 7 ms.
     pub(crate) fn replay(&self, lines: &[Vec<u8>]) {
+        self.ide.takes(TREE_ROUTE, 3);
+        self.ide.takes(SPANS_ROUTE, 1);
         let mut session = self.session(self.options());
         let idea_log = fs::read(record_testdata(&format!("ide/{IDEA_LOG_FILE}"))).unwrap();
         let mut snaps = 0;
@@ -412,7 +439,7 @@ impl Harness {
                 self.ide.append_log(&idea_log);
             }
         }
-        self.clock.advance_ms(1000);
+        self.clock.set_ms(T0_MS + RECEIPT_MS[lines.len() - 1] + 1000);
         session.close("the transcript ended");
     }
 
@@ -563,6 +590,57 @@ fn golden_rename_read() -> IdeSpan {
             ("air.bytes", "18390"),
         ],
     )
+}
+
+/// A screen video that the closure starts in the bundle directory. The recorder feeds it no frame.
+pub(crate) struct ScreenVideo<F>(pub(crate) F);
+
+impl<F: Fn(&Path) -> anyhow::Result<Box<dyn Recording>> + Send> Videographer for ScreenVideo<F> {
+    fn plan(&self, _: Option<&dyn Source>, _: bool) -> VideoPlan {
+        VideoPlan::h264(false)
+    }
+
+    fn start(&self, dir: &Path, _: &VideoPlan, _: Option<&Frame>) -> anyhow::Result<Box<dyn Recording>> {
+        (self.0)(dir)
+    }
+}
+
+/// A screen video that takes no frame from the recorder and stops with the given numbers.
+pub(crate) struct ScreenRecording {
+    pub(crate) frames: usize,
+    pub(crate) first_frame_ms: i64,
+}
+
+impl Recording for ScreenRecording {
+    fn raw(&self) -> bool {
+        false
+    }
+
+    fn take_sink(&mut self) -> Option<Box<dyn FrameSink>> {
+        None
+    }
+
+    fn stop(&mut self) -> anyhow::Result<Stopped> {
+        Ok(Stopped {
+            frames: self.frames,
+            first_frame_ms: self.first_frame_ms,
+        })
+    }
+}
+
+/// Each `air.trace.error` record of a bundle as `<source>: <message>`.
+pub(crate) fn trace_errors(dir: &Path) -> Vec<String> {
+    records(dir)
+        .iter()
+        .filter(|record| record.event_name == event::TRACE_ERROR)
+        .map(|record| {
+            format!(
+                "{}: {}",
+                lookup_str(&record.attributes, attr::TRACE_ERROR_SOURCE).unwrap_or_default(),
+                lookup_str(&record.attributes, attr::TRACE_ERROR_MESSAGE).unwrap_or_default()
+            )
+        })
+        .collect()
 }
 
 /// Every log record of a bundle, in order, each line checked against the contract.

@@ -19,7 +19,7 @@ use avl_wire::progress::{
 use crate::console::paint::{Hue, Paint};
 
 #[cfg(test)]
-mod tests;
+pub(crate) mod tests;
 
 /// The order a run goes through its phases. Before the first phase starts, the dashboard shows each of them as
 /// pending, so a person sees the whole plan.
@@ -657,6 +657,8 @@ impl State {
             | RunEventKind::Output(_)
             | RunEventKind::IdeLaunched(_)
             | RunEventKind::IdeExited(_)
+            | RunEventKind::IdeReady(_)
+            | RunEventKind::Timing(_)
             | RunEventKind::Decision(_) => {}
         }
     }

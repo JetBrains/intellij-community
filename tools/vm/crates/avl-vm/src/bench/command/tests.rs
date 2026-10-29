@@ -1,10 +1,9 @@
 //! The bench verbs as a caller sees them: one invocation of the controller over in-memory writers, with no Bazel and
 //! no IDE. `replay` of the fixture session is the whole path from the argv to the envelope.
 
-use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-use avl_base::{Environment, Exit, Reporter};
+use avl_base::Exit;
 use avl_host_sys::Interrupts;
 use pretty_assertions::assert_eq;
 use serde_json::Value;
@@ -16,14 +15,7 @@ use crate::bench::options::{
 };
 use crate::bench::testing::fixture_session;
 use crate::cli::PROGRAM;
-use crate::controller::run;
-use crate::terminal::TerminalFacts;
-
-struct Answer {
-    exit: Exit,
-    stdout: String,
-    stderr: String,
-}
+use crate::cli::testing::{Answer, invoke_under};
 
 /// Runs the controller with every path of its environment under `root`.
 async fn invoke(root: &TempDir, argv: &[&str]) -> Answer {
@@ -32,34 +24,7 @@ async fn invoke(root: &TempDir, argv: &[&str]) -> Answer {
 
 /// Runs the controller as [`invoke`] does, with the variables `extra` added to its environment.
 async fn invoke_with(root: &TempDir, argv: &[&str], extra: &[(&str, &str)]) -> Answer {
-    avl_affected::bridge::install_fixture();
-    let path = |relative: &str| root.path().join(relative).to_string_lossy().into_owned();
-    let pairs: Vec<(String, String)> = [
-        ("HOME", path("")),
-        ("BUILD_WORKSPACE_DIRECTORY", path("")),
-        ("AIR_VM_RUNTIME_ROOT", path("runtime")),
-        ("AIR_VM_IMAGE_ROOT", path("image")),
-        ("AIR_VM_HOST_REPO", path("")),
-        ("AIR_VM_BAZEL_USER_ROOT", path("bazel-root")),
-    ]
-    .into_iter()
-    .chain(extra.iter().map(|(name, value)| (*name, (*value).to_owned())))
-    .map(|(name, value)| (name.to_owned(), value))
-    .collect();
-    let (reporter, stdout, stderr) = Reporter::in_memory("vm");
-    let exit = run(
-        argv.iter().map(OsString::from).collect(),
-        Environment::from_pairs(pairs),
-        reporter,
-        TerminalFacts::default(),
-        Interrupts::detached(),
-    )
-    .await;
-    Answer {
-        exit,
-        stdout: stdout.text(),
-        stderr: stderr.text(),
-    }
+    invoke_under(root.path(), argv, extra).await
 }
 
 fn envelope(text: &str) -> Value {
@@ -75,6 +40,26 @@ fn session_in_runs(root: &TempDir, name: &str) -> PathBuf {
     let session = root.path().join("runtime/bench/runs").join(name);
     avl_testkit::traces::copy_tree(&crate::bench::testing::testdata_dir().join("session"), &session);
     session
+}
+
+/// A copy of the fixture session in the runs root, as [`session_in_runs`] makes it. Before the replay, the report verb
+/// `verb` refuses it, because it has no summary. Answers the session after its replay.
+async fn replayed_after_no_summary(root: &TempDir, verb: &str) -> PathBuf {
+    let session = session_in_runs(root, "develar-bench-2104c3b2-bf21");
+    let answer = invoke(root, &["bench", verb, "2104c3b2", "--json"]).await;
+    assert_eq!(answer.exit, Exit::USAGE, "{verb}: a session before its replay has no summary");
+    assert_eq!(envelope(&answer.stderr)["error"]["code"], "no_summary", "{verb}");
+    let answer = invoke(root, &["bench", "replay", "2104c3b2", "--json"]).await;
+    assert_eq!(answer.exit, Exit::OK, "{}", answer.stderr);
+    session
+}
+
+/// Asserts that the envelope `data` of a report names `session` and its default run: the median non-modal run by the
+/// welcome event.
+fn assert_median_non_modal_run(data: &Value, session: &Path) {
+    assert_eq!(data["session"], text(session));
+    assert_eq!(data["run"], "non-modal-run-01");
+    assert_eq!(data["medianBy"], "welcomeBecameVisible");
 }
 
 /// The help that `--help --text` after `bench` and `words` prints.
@@ -146,7 +131,22 @@ async fn the_help_of_bench_names_the_verbs_and_the_exit_codes_and_each_verb_its_
     }
     assert_contains(&welcome, &["--arm <ARM>", &format!("[default: {DEFAULT_WELCOME_RUNS}]")]);
     for text in [&welcome, &project] {
-        assert_contains(text, &["--suppress-plugin <ID>", "idea.suppressed.plugins.id"]);
+        assert_contains(
+            text,
+            &[
+                "--suppress-plugin <ID>",
+                "idea.suppressed.plugins.id",
+                "--profile-event <EVENT>",
+                "async-profiler",
+            ],
+        );
+    }
+    assert_contains(&project, &["air.emptyState.createComponent"]);
+    for project_word in ["air.emptyState.createComponent", "restores"] {
+        assert!(
+            !welcome.contains(project_word),
+            "only the help of project names the arms of project: {project_word} in {welcome}"
+        );
     }
     assert!(!open_project.contains("--suppress-plugin"), "{open_project}");
     assert_contains(&open_project, &["<PROJECT>", &format!("[default: {DEFAULT_OPEN_PROJECT_RUNS}]")]);
@@ -423,19 +423,12 @@ async fn replay_locates_a_session_by_a_part_of_its_name_and_as_the_latest() {
 #[tokio::test]
 async fn trace_answers_the_spans_of_the_median_run_in_prose_and_in_the_envelope() {
     let root = tempfile::tempdir().expect("a temporary root");
-    let session = session_in_runs(&root, "develar-bench-2104c3b2-bf21");
-    let answer = invoke(&root, &["bench", "trace", "2104c3b2", "--json"]).await;
-    assert_eq!(answer.exit, Exit::USAGE, "a session before its replay has no summary");
-    assert_eq!(envelope(&answer.stderr)["error"]["code"], "no_summary");
-    let answer = invoke(&root, &["bench", "replay", "2104c3b2", "--json"]).await;
-    assert_eq!(answer.exit, Exit::OK, "{}", answer.stderr);
+    let session = replayed_after_no_summary(&root, "trace").await;
 
     let answer = invoke(&root, &["bench", "trace", "latest", "--json"]).await;
     assert_eq!(answer.exit, Exit::OK, "{}", answer.stderr);
     let data = &envelope(&answer.stdout)["data"];
-    assert_eq!(data["session"], text(&session));
-    assert_eq!(data["run"], "non-modal-run-01");
-    assert_eq!(data["medianBy"], "welcomeBecameVisible");
+    assert_median_non_modal_run(data, &session);
     assert_eq!(data["window"], serde_json::json!({"fromMs": 1714.0, "toMs": 3224.7}));
     assert_eq!(data["minMs"], 10.0);
     assert_eq!(data["anchors"][0], serde_json::json!({"name": "frameBecameVisible", "ms": 1714.0}));
@@ -464,19 +457,12 @@ async fn trace_answers_the_spans_of_the_median_run_in_prose_and_in_the_envelope(
 #[tokio::test]
 async fn activities_answer_the_tables_of_the_median_run_in_prose_and_in_the_envelope() {
     let root = tempfile::tempdir().expect("a temporary root");
-    let session = session_in_runs(&root, "develar-bench-2104c3b2-bf21");
-    let answer = invoke(&root, &["bench", "activities", "2104c3b2", "--json"]).await;
-    assert_eq!(answer.exit, Exit::USAGE, "a session before its replay has no summary");
-    assert_eq!(envelope(&answer.stderr)["error"]["code"], "no_summary");
-    let answer = invoke(&root, &["bench", "replay", "2104c3b2", "--json"]).await;
-    assert_eq!(answer.exit, Exit::OK, "{}", answer.stderr);
+    let session = replayed_after_no_summary(&root, "activities").await;
 
     let answer = invoke(&root, &["bench", "activities", "latest", "--top", "2", "--json"]).await;
     assert_eq!(answer.exit, Exit::OK, "{}", answer.stderr);
     let data = &envelope(&answer.stdout)["data"];
-    assert_eq!(data["session"], text(&session));
-    assert_eq!(data["run"], "non-modal-run-01");
-    assert_eq!(data["medianBy"], "welcomeBecameVisible");
+    assert_median_non_modal_run(data, &session);
     assert_eq!(data["window"]["fromMs"], 0.0);
     assert_eq!((data["totalActivities"].clone(), data["waiters"].clone()), (5.into(), 1.into()));
     let first = &data["activities"][0];
@@ -509,12 +495,7 @@ async fn activities_answer_the_tables_of_the_median_run_in_prose_and_in_the_enve
 #[tokio::test]
 async fn classes_answer_the_tables_of_one_arm_in_prose_and_in_the_envelope() {
     let root = tempfile::tempdir().expect("a temporary root");
-    let session = session_in_runs(&root, "develar-bench-2104c3b2-bf21");
-    let answer = invoke(&root, &["bench", "classes", "2104c3b2", "--json"]).await;
-    assert_eq!(answer.exit, Exit::USAGE, "a session before its replay has no summary");
-    assert_eq!(envelope(&answer.stderr)["error"]["code"], "no_summary");
-    let answer = invoke(&root, &["bench", "replay", "2104c3b2", "--json"]).await;
-    assert_eq!(answer.exit, Exit::OK, "{}", answer.stderr);
+    let session = replayed_after_no_summary(&root, "classes").await;
 
     let argv = [
         "bench",

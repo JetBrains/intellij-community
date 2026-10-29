@@ -3,6 +3,7 @@
 //! written the way the controller persists them.
 
 use std::ops::Deref;
+use std::path::Path;
 use std::sync::{Arc, Mutex, PoisonError};
 
 use avl_base::Config;
@@ -13,6 +14,7 @@ use avl_wire::report::RunReport;
 use serde_json::{Value, json};
 
 use crate::daemon::PreparedBuild;
+use crate::daemon::shard::command::LeaseData;
 use crate::daemon::testing::{DaemonFixture, FakeDaemon, PLENTIFUL_DF, ndjson_line, run_started_record, summary_record};
 
 /// A [`DaemonFixture`], with the fake `tart` of its pool named `tart`.
@@ -137,6 +139,28 @@ pub(crate) fn passing_run(iteration_id: &str, class_name: &str) -> Vec<String> {
             "status": "SUCCESSFUL", "durationMs": 1000})),
         ndjson_line(&summary_record(iteration_id, 1, 0, 0, 0, 0, false)),
     ]
+}
+
+/// Checks that an interrupted run kept `lease`, and that `message` names the command that frees it.
+pub(crate) fn assert_kept_lease(lease: &LeaseData, message: &str) {
+    assert!(!lease.released, "{lease:?}");
+    assert!(Path::new(&lease.lease_file).is_file(), "{lease:?}");
+    assert!(
+        message.contains(&format!("--lease-file {} lease release", lease.lease_file)),
+        "{message}"
+    );
+}
+
+/// Checks that `id` is `<kind>-<millisecond stamp>-<eight hexadecimal characters>`: the id of an aggregate.
+pub(crate) fn assert_aggregate_id(id: &str, kind: &str) {
+    let shaped = id
+        .strip_prefix(kind)
+        .and_then(|rest| rest.strip_prefix('-'))
+        .and_then(|rest| rest.split_once('-'))
+        .is_some_and(|(stamp, tail)| {
+            stamp.bytes().all(|byte| byte.is_ascii_digit()) && tail.len() == 8 && tail.bytes().all(|byte| byte.is_ascii_hexdigit())
+        });
+    assert!(shaped, "a millisecond stamp and an eight-character tail: {id}");
 }
 
 // --- finished reports ---------------------------------------------------------------------------------------------

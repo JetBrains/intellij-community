@@ -85,10 +85,10 @@ pub(crate) fn sha1(bytes: &[u8]) -> [u8; 20] {
     }
     let bits = u64::try_from(bytes.len()).unwrap_or(u64::MAX).wrapping_mul(8);
     message.extend_from_slice(&bits.to_be_bytes());
-    for block in message.chunks_exact(64) {
+    for block in message.as_chunks::<64>().0 {
         let mut schedule = [0_u32; 80];
-        for (word, quad) in schedule.iter_mut().zip(block.chunks_exact(4)) {
-            *word = u32::from_be_bytes([quad[0], quad[1], quad[2], quad[3]]);
+        for (word, quad) in schedule.iter_mut().zip(block.as_chunks::<4>().0) {
+            *word = u32::from_be_bytes(*quad);
         }
         for index in 16..80 {
             schedule[index] = (schedule[index - 3] ^ schedule[index - 8] ^ schedule[index - 14] ^ schedule[index - 16]).rotate_left(1);
@@ -109,7 +109,7 @@ pub(crate) fn sha1(bytes: &[u8]) -> [u8; 20] {
         }
     }
     let mut digest = [0; 20];
-    for (quad, value) in digest.chunks_exact_mut(4).zip(state) {
+    for (quad, value) in digest.as_chunks_mut::<4>().0.iter_mut().zip(state) {
         quad.copy_from_slice(&value.to_be_bytes());
     }
     digest

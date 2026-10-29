@@ -308,13 +308,10 @@ impl Write for Gate {
     }
 }
 
-/// Probes whose kill counts itself and opens the gate of the stream.
-struct OpensTheGate {
-    shut: Arc<(Mutex<bool>, Condvar)>,
-    kills: Mutex<u32>,
-}
+/// Probes that see no intrusion, dump nothing and hold no log directory. The kill runs the function.
+struct OnKill<F>(F);
 
-impl Probes for OpensTheGate {
+impl<F: Fn() + Sync> Probes for OnKill<F> {
     fn intrusion(&self) -> Option<String> {
         None
     }
@@ -328,10 +325,7 @@ impl Probes for OpensTheGate {
     }
 
     fn kill(&self) -> Result<(), String> {
-        *self.kills.lock().unwrap() += 1;
-        let (lock, opened) = &*self.shut;
-        *lock.lock().unwrap() = false;
-        opened.notify_all();
+        (self.0)();
         Ok(())
     }
 
@@ -355,17 +349,21 @@ fn the_kill_comes_before_the_expiry_record_so_a_blocked_stream_does_not_hold_it(
     let watch = Watch::new(SPENT).with_kill_grace(Duration::from_millis(10));
     watch.execution_started(&stream, identity("first"));
     *shut.0.lock().unwrap() = true;
-    let probes = OpensTheGate {
-        shut: Arc::clone(&shut),
-        kills: Mutex::new(0),
-    };
+    // The kill counts itself and opens the gate of the stream.
+    let kills = Mutex::new(0);
+    let probes = OnKill(|| {
+        *kills.lock().unwrap() += 1;
+        let (lock, opened) = &*shut;
+        *lock.lock().unwrap() = false;
+        opened.notify_all();
+    });
     std::thread::scope(|scope| {
         scope.spawn(|| super::watch(&watch, &stream, &probes, directory.path()));
         let deadline = Instant::now() + Duration::from_secs(20);
-        while *probes.kills.lock().unwrap() == 0 && Instant::now() < deadline {
+        while *kills.lock().unwrap() == 0 && Instant::now() < deadline {
             std::thread::sleep(Duration::from_millis(10));
         }
-        let killed = *probes.kills.lock().unwrap() == 1;
+        let killed = *kills.lock().unwrap() == 1;
         // Opens the gate in any case, so a watchdog that waits on the stream returns and the scope ends.
         *shut.0.lock().unwrap() = false;
         shut.1.notify_all();
@@ -373,35 +371,6 @@ fn the_kill_comes_before_the_expiry_record_so_a_blocked_stream_does_not_hold_it(
     });
     let records = String::from_utf8(written.lock().unwrap().clone()).unwrap();
     assert!(records.contains("\"watchdogExpired\""), "{records}");
-}
-
-/// Probes whose kill completes the watch, as a run thread does that unwinds at once after the kill.
-struct CompletesOnKill<'a, 's> {
-    watch: &'a Watch,
-    stream: &'a Stream<'s>,
-}
-
-impl Probes for CompletesOnKill<'_, '_> {
-    fn intrusion(&self) -> Option<String> {
-        None
-    }
-
-    fn dismiss_intrusion(&self) -> Option<String> {
-        None
-    }
-
-    fn diagnostic_dump(&self) -> Result<String, String> {
-        Ok(String::new())
-    }
-
-    fn kill(&self) -> Result<(), String> {
-        self.watch.completed(self.stream);
-        Ok(())
-    }
-
-    fn log_dir(&self) -> Option<PathBuf> {
-        None
-    }
 }
 
 // After a kill the watchdog waits for the run thread to complete, and a run thread that does complete ends the wait at
@@ -414,15 +383,8 @@ fn a_run_thread_that_completes_after_the_kill_ends_the_wait_without_a_note() {
     let stream = Stream::new(&mut out);
     watch.execution_started(&stream, identity("first"));
     let started = Instant::now();
-    super::watch(
-        &watch,
-        &stream,
-        &CompletesOnKill {
-            watch: &watch,
-            stream: &stream,
-        },
-        directory.path(),
-    );
+    // The kill completes the watch, as a run thread does that unwinds at once after the kill.
+    super::watch(&watch, &stream, &OnKill(|| watch.completed(&stream)), directory.path());
     assert!(
         started.elapsed() < Duration::from_secs(30),
         "the watchdog waited out its kill grace"

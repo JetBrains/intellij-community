@@ -14,6 +14,7 @@ use crate::areas::Areas;
 use crate::exit::fail_infra;
 use crate::runtime::{Platform, Runtime, repo_file};
 use crate::selector::Resolution;
+use crate::shard_plan::{PLANNED_SHARDS, SHARD_PLAN_ENV};
 
 /// One lane table, a flat object. Only `lanes` is required:
 ///
@@ -22,7 +23,8 @@ use crate::selector::Resolution;
 ///   UI-lane controller and its trace planner read instead of a table of their own.
 /// - `tags`: every Bazel tag a test target of the area may carry, each a [`TagSpec`]. It is the one description of
 ///   them. The area's own tests hold the BUILD files to it, and [`Lanes::parse`] refuses a table whose lanes and
-///   tags disagree. The categories with an exclusion reason, in table order, are what a broad run excludes. The CI
+///   tags disagree. The categories with an exclusion reason, in table order, are what a lane with all of them
+///   excludes. A multi-target run that the caller spelled out excludes them except the `fast-lane` ones. The CI
 ///   exclusion of the area should be the `ci` ones, so it stays correct when a lane is added. Adding a
 ///   `dedicated-suite` category before its build configuration exists would leave the suite running nowhere.
 /// - `integrationRoot`: the target pattern prefix of the integration tree. A multi-target run the caller spelled
@@ -34,10 +36,12 @@ use crate::selector::Resolution;
 /// - The suite catalog, both or none ([`Catalog`]): `flowProfileDir`, where the flow catalog generator writes
 ///   one document per generated suite; `flowTextDir`, where the flow text generator writes one plain-text rendering
 ///   per story flow.
-/// - `specDir`, `laneWideModules` and `laneWidePaths`: what the Air UI-lane controller joins a changed path
-///   through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the lane
-///   harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or directory
-///   that no module of the area holds, by its repo-relative path, in the same shape. This crate reads none of them.
+/// - `specDir`, `laneWideModules`, `laneWidePaths` and `declarationReach`: what the Air UI-lane controller joins a
+///   changed path through. `specDir` is where the specs live. `laneWideModules` names every JPS module that holds the
+///   lane harness, with the lanes it serves (`[]` is every lane). `laneWidePaths` names every harness file or
+///   directory that no module of the area holds, by its repo-relative path, in the same shape. `declarationReach`
+///   names the harness modules whose Kotlin sources the controller joins by declaration, each a [`DeclarationReach`].
+///   This crate reads none of them.
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct Lanes {
@@ -57,7 +61,26 @@ pub struct Lanes {
     lane_wide_modules: BTreeMap<String, Vec<String>>,
     #[serde(default)]
     lane_wide_paths: BTreeMap<String, Vec<String>>,
+    #[serde(default)]
+    declaration_reach: BTreeMap<String, DeclarationReach>,
     lanes: Vec<LaneSpec>,
+}
+
+/// A harness module whose Kotlin sources the Air UI-lane controller joins by declaration: a changed declaration reaches
+/// the suites whose requests reach it, and only a declaration that every suite reaches is lane-wide. All paths are
+/// repo-relative.
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct DeclarationReach {
+    /// The source directories of the module, and those of the modules that call into it inside the IDE.
+    pub sources: Vec<String>,
+    /// The module descriptors whose classes the IDE creates by itself, such as a service or an HTTP handler.
+    pub descriptors: Vec<String>,
+    /// The simple name of the sealed type of every request that the server decodes.
+    pub request_type: String,
+    /// The flow vocabulary file of the module, which the controller joins by its entries.
+    #[serde(default)]
+    pub vocabulary: Option<String>,
 }
 
 /// The suite catalog of a lane table: the two paths the suite join reads, both repo-relative.
@@ -145,6 +168,9 @@ pub enum BroadRunExclusion {
     Ci,
     /// A lane and a CI configuration of its own run the targets.
     DedicatedSuite,
+    /// Only the lanes that name the tag exclude the targets, for their cost. A multi-target run that the caller spelled
+    /// out and the CI configurations run them, so a directory selector still runs what the default loop leaves out.
+    FastLane,
 }
 
 /// A string or an array of strings, as a list.
@@ -174,6 +200,15 @@ impl Lanes {
         }
         lanes.check_tags()?;
         lanes.check_document_lanes()?;
+        if let Some(module) = lanes
+            .declaration_reach
+            .keys()
+            .find(|module| !lanes.lane_wide_modules.contains_key(*module))
+        {
+            return Err(format!(
+                "declarationReach names {module}, which laneWideModules does not name: the reach narrows a harness module"
+            ));
+        }
         Ok(lanes)
     }
 
@@ -371,6 +406,12 @@ impl Lanes {
             .max_by_key(|(directory, _)| directory.len())
     }
 
+    /// How the controller joins the Kotlin sources of a harness module by declaration, or `None` when every path of
+    /// the module is lane-wide.
+    pub fn declaration_reach(&self, module: &str) -> Option<&DeclarationReach> {
+        self.declaration_reach.get(module)
+    }
+
     pub fn lane_wide_paths(&self) -> impl Iterator<Item = (&str, &[String])> {
         self.lane_wide_paths
             .iter()
@@ -381,6 +422,17 @@ impl Lanes {
     fn broad_run_excluded_tags(&self) -> impl Iterator<Item = &String> {
         self.category_tags()
             .filter(|tag| tag.excluded_from_broad_runs.is_some())
+            .map(|tag| &tag.name)
+    }
+
+    /// The tags [`wildcard_guards`] excludes: the categories with an exclusion reason other than
+    /// [`BroadRunExclusion::FastLane`], in table order.
+    fn wildcard_excluded_tags(&self) -> impl Iterator<Item = &String> {
+        self.category_tags()
+            .filter(|tag| {
+                tag.excluded_from_broad_runs
+                    .is_some_and(|exclusion| exclusion != BroadRunExclusion::FastLane)
+            })
             .map(|tag| &tag.name)
     }
 
@@ -437,7 +489,8 @@ impl LaneSpec {
 /// Without it a pattern over an area builds every non-test target in the subtree and then launches real IDEs
 /// through IDE Starter, which also wants the network: one keystroke from the safe command.
 ///
-/// Every area adds the tags its broad runs exclude, joined into one `--test_tag_filters`. A pattern rooted inside
+/// Every area adds the tags its broad runs exclude, joined into one `--test_tag_filters`. A `fast-lane` category is not
+/// one of them: a directory run is how a caller runs the targets that the fast lane leaves out. A pattern rooted inside
 /// an area's integration tree is asking for exactly those tests, so that area keeps its tags. Either way
 /// `-- --test_tag_filters=…` still wins, because passthrough args land last. An empty list is guarded, which is the
 /// safe reading.
@@ -452,7 +505,7 @@ pub fn wildcard_guards(areas: &Areas, labels: &[String]) -> Vec<String> {
         if in_integration {
             continue;
         }
-        for tag in lanes.broad_run_excluded_tags() {
+        for tag in lanes.wildcard_excluded_tags() {
             if !tags.contains(&tag) {
                 tags.push(tag);
             }
@@ -504,6 +557,10 @@ pub struct RunPlan {
     pub no_cache: bool,
     pub test_env: Vec<String>,
     pub passthrough: Vec<String>,
+    /// The shard plan file of a planned run; see [`uses_shard_plan`].
+    pub shard_plan: Option<String>,
+    /// Where bazel writes its profile, for a multi-target run.
+    pub profile: Option<String>,
 }
 
 /// The shard count for a run.
@@ -512,15 +569,22 @@ pub struct RunPlan {
 /// before it runs anything, so shards are only worth buying where they are the sole source of parallelism.
 ///
 /// A run covering many targets already saturates the machine across targets, and there the fixed cost dominates:
-/// measured on `--lane fast` (63 targets, 6221 tests, warm server, nothing to compile), forced=6 spends 3m24s
-/// against 1m55s for forced=2. Below 2 it regresses again, because the lane becomes bound by its heaviest target.
+/// measured on `--lane fast` (63 targets, 6221 tests, warm server, nothing to compile), forced=6 by test spends 3m24s
+/// against 1m55s for forced=2. One count for all targets is still wrong for most of them, so such a run forces
+/// [`PLANNED_SHARDS`] and the shard plan gives each target its own count; see [`crate::shard_plan`].
 pub fn default_shards(resolution: &Resolution, lane: Option<&LaneSpec>) -> u32 {
     // A lane that names its own count owns the decision: for IDE-launching lanes the cost and isolation unit is
     // the IDE, not JVM bootstrap, and the flow lanes rely on one shared instance.
     if let Some(shards) = lane.and_then(|lane| lane.shards) {
         return shards;
     }
-    if resolution.multi_target { 2 } else { 6 }
+    if uses_shard_plan(resolution, lane) { PLANNED_SHARDS } else { 6 }
+}
+
+/// Whether a run without an explicit shard count takes the shard plan: a run over many targets, unless its lane names
+/// its own count.
+pub fn uses_shard_plan(resolution: &Resolution, lane: Option<&LaneSpec>) -> bool {
+    resolution.multi_target && lane.and_then(|lane| lane.shards).is_none()
 }
 
 pub const BEP_FLAG: &str = "--build_event_json_file";
@@ -593,6 +657,12 @@ pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
         .collect();
     if !junit_filters.is_empty() {
         args.push(format!("--test_env=JB_TEST_JUNIT5_FILTERS={}", junit_filters.join(";")));
+    }
+    if let Some(shard_plan) = &plan.shard_plan {
+        args.push(format!("--test_env={SHARD_PLAN_ENV}={shard_plan}"));
+    }
+    if let Some(profile) = &plan.profile {
+        args.push(format!("--profile={profile}"));
     }
     if plan.no_cache {
         args.push("--cache_test_results=no".to_owned());

@@ -2,8 +2,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use avl_trace::bundle::{
-    ALLURE_RESULT_SUFFIX, AllureResult, AllureStatus, allure_history_id, allure_results_dir, bundle_dir, decode_allure_result,
-    snap_image_path,
+    ALLURE_RESULT_SUFFIX, AllureResult, AllureStatus, StillEncoding, allure_history_id, allure_results_dir, bundle_dir,
+    decode_allure_result, snap_image_path,
 };
 use avl_trace::protocol::{AttachCommand, Command, encode_command};
 use pretty_assertions::assert_eq;
@@ -49,6 +49,17 @@ fn results_of(h: &Harness) -> Vec<(AllureResult, PathBuf)> {
 
 /// Feeds one failed scenario: an operation with an action and a failed assertion, a snapshot in each of the two, the
 /// dialog on the second snapshot, and one lane file on the assertion.
+/// A harness whose session got the Allure hello and then the failed scenario `attempts` times. The session stays open.
+fn failed_attempts(attempts: usize) -> (Harness, crate::session::Session<crate::testing::SharedBuffer>) {
+    let h = Harness::new();
+    let mut session = h.session(h.options());
+    h.feed(&mut session, &[&h.allure_hello()]);
+    for _ in 0..attempts {
+        feed_failed_scenario(&h, &mut session);
+    }
+    (h, session)
+}
+
 fn feed_failed_scenario(h: &Harness, session: &mut crate::session::Session<crate::testing::SharedBuffer>) {
     let lane_dir = h.root.join("run-1").join("attach");
     fs::create_dir_all(&lane_dir).unwrap();
@@ -75,10 +86,7 @@ fn label(result: &AllureResult, name: &str) -> Vec<String> {
 /// the lane file sits on its step, and `done` gives the details. A picture that three steps name is one file.
 #[test]
 fn a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment() {
-    let h = Harness::new();
-    let mut session = h.session(h.options());
-    h.feed(&mut session, &[&h.allure_hello()]);
-    feed_failed_scenario(&h, &mut session);
+    let (h, _session) = failed_attempts(1);
 
     let results = results_of(&h);
     assert_eq!(results.len(), 1, "one scenario writes one result");
@@ -155,11 +163,11 @@ fn a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment() {
     let bytes = |name: &str| fs::read(dir.join(name)).unwrap();
     assert_eq!(
         bytes(&source(action, 0)),
-        fs::read(bundle_file(&bundle, &snap_image_path(1))).unwrap()
+        fs::read(bundle_file(&bundle, &snap_image_path(1, StillEncoding::Lossless))).unwrap()
     );
     assert_eq!(
         bytes(&source(action, 1)),
-        fs::read(bundle_file(&bundle, &snap_image_path(2))).unwrap()
+        fs::read(bundle_file(&bundle, &snap_image_path(2, StillEncoding::Lossless))).unwrap()
     );
     assert_eq!(bytes(&source(assertion, 1)), b"row name\nold\n");
     let files = fs::read_dir(dir).unwrap().count();
@@ -171,11 +179,7 @@ fn a_failed_scenario_becomes_a_result_with_its_steps_pictures_and_attachment() {
 #[test]
 fn a_retry_shares_the_history_and_a_replay_writes_the_same_result() {
     let write = || {
-        let h = Harness::new();
-        let mut session = h.session(h.options());
-        h.feed(&mut session, &[&h.allure_hello()]);
-        feed_failed_scenario(&h, &mut session);
-        feed_failed_scenario(&h, &mut session);
+        let (h, _session) = failed_attempts(2);
         let results: Vec<AllureResult> = results_of(&h).into_iter().map(|(result, _)| result).collect();
         (h, results)
     };
@@ -216,7 +220,7 @@ fn an_attachment_is_copied_when_the_link_fails() {
     let root = tempfile::tempdir().unwrap();
     let dir = root.path().join("bundle");
     let results = root.path().join(avl_trace::bundle::ALLURE_RESULTS_DIR);
-    let picture = snap_image_path(1);
+    let picture = snap_image_path(1, StillEncoding::Lossless);
     fs::create_dir_all(bundle_file(&dir, &picture).parent().unwrap()).unwrap();
     fs::create_dir_all(&results).unwrap();
     let links: [(&str, LinkFile, &[u8]); 2] = [
@@ -238,8 +242,8 @@ fn an_attachment_is_copied_when_the_link_fails() {
             problems: Vec::new(),
             link,
         };
-        let first = linker.required(BEFORE, MIME_WEBP, &picture).unwrap();
-        let second = linker.required(AFTER, MIME_WEBP, &picture).unwrap();
+        let first = linker.required(BEFORE, StillEncoding::Lossless.mime(), &picture).unwrap();
+        let second = linker.required(AFTER, StillEncoding::Lossless.mime(), &picture).unwrap();
         assert_eq!(first.source, second.source, "{how}: one bundle file is two attachments");
         assert_eq!(linker.problems, Vec::<String>::new(), "{how}");
         fs::write(bundle_file(&dir, &picture), "changed").unwrap();

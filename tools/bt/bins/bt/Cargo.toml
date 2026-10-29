@@ -16,6 +16,8 @@ bt-junit.workspace = true
 clap.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+yonder-client.workspace = true
+yonder-link.workspace = true
 
 [dev-dependencies]
 pretty_assertions.workspace = true

@@ -145,25 +145,22 @@ const fn ran_nothing(document: &RunReport) -> bool {
 /// through to [`wilson_interval`] as a NaN. A run [`ran_nothing`] describes answers the empty set here *and* in
 /// [`failed_classes`], so executed ⊇ failed still holds.
 pub fn executed_classes(document: &RunReport) -> BTreeSet<String> {
-    if ran_nothing(document) {
-        return BTreeSet::new();
-    }
-    let cases = document.cases.iter().map(|case| case.class_name.clone());
-    let failures = document.failures.iter().filter_map(|failure| failure.class_name.clone());
-    cases.chain(failures).collect()
+    classes_with(document, |_| true)
 }
 
 /// Every class this run has a failed case or a failure entry for. The same [`ran_nothing`] guard as
 /// [`executed_classes`], or `f > n` gets back in by the side door.
 pub fn failed_classes(document: &RunReport) -> BTreeSet<String> {
+    classes_with(document, |case| case.status == CaseStatus::Failed)
+}
+
+/// The class of each case that `keep` takes, and the class of each failure entry. A run [`ran_nothing`] describes has
+/// none.
+fn classes_with(document: &RunReport, keep: impl Fn(&Case) -> bool) -> BTreeSet<String> {
     if ran_nothing(document) {
         return BTreeSet::new();
     }
-    let cases = document
-        .cases
-        .iter()
-        .filter(|case| case.status == CaseStatus::Failed)
-        .map(|case| case.class_name.clone());
+    let cases = document.cases.iter().filter(|case| keep(case)).map(|case| case.class_name.clone());
     let failures = document.failures.iter().filter_map(|failure| failure.class_name.clone());
     cases.chain(failures).collect()
 }

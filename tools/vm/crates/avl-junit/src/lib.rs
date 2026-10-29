@@ -1,7 +1,8 @@
 //! The JUnit XML of a run, written from the run stream of its iterations: the file that Bazel and `bt` count.
 //!
-//! The controller and the guest agent both write it, so it is a crate of its own. It stands on `avl-wire` alone and
-//! does no file I/O, so it adds one crate to the closure of the guest agent.
+//! The controller and the guest agent both write it, so it is a crate of its own. It stands on `avl-wire`, `serde`,
+//! `serde_json` and `jiff`, which the guest agent links already, and it does no file I/O. So it adds one crate to the
+//! closure of the guest agent.
 //!
 //! The shape follows `community/build/rust-tools/libtest-junit-wrapper/src/junit.rs`. The document holds one
 //! `testsuite` for each test class, in the order the stream first names it. A case is
@@ -12,7 +13,8 @@
 //! Two cases have no record of their own and still fail the document, so a cut-off run cannot count as green: a
 //! scenario that started and never finished, and a class of the plan that the run never reached.
 //!
-//! [`teamcity`] writes one TeamCity service message, which the controller and `lane-run` both write.
+//! [`teamcity`] writes one TeamCity service message, which the controller and `lane-run` both write. [`performance`] is
+//! the third shared piece: the IJ Perf file of a scenario, which the controller and `lane-run` both write too.
 
 use std::fmt::Write as _;
 
@@ -21,6 +23,7 @@ use avl_wire::daemon::RunEvent;
 use crate::cases::{CaseFailure, CaseOutcome, FailureOrigin, StreamCase, UNFINISHED_MESSAGE};
 
 pub mod cases;
+pub mod performance;
 pub mod teamcity;
 #[cfg(test)]
 mod testing;
@@ -42,6 +45,37 @@ pub fn destination(variable: impl Fn(&str) -> Option<String>) -> Option<String> 
     [JB_XML_OUTPUT_FILE, XML_OUTPUT_FILE]
         .into_iter()
         .find_map(|name| variable(name).filter(|value| !value.trim().is_empty()))
+}
+
+/// A case that fails the XML, with the failure that the XML writes for it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct FailedCase {
+    pub class_name: String,
+    pub name: String,
+    pub failure: CaseFailure,
+}
+
+/// Every case of the iteration that streamed `events` that fails its XML, in the order of the stream: a failed case,
+/// a case that never finished, and then a class of the plan that the run never reached. `lane-run` names them in the
+/// result of its run.
+pub fn failed_cases(events: &[RunEvent]) -> Vec<FailedCase> {
+    let mut found = cases::cases(events);
+    found.extend(cases::unreported_classes(events).into_iter().map(unreported));
+    found
+        .into_iter()
+        .filter_map(|case| {
+            let failure = match case.outcome {
+                CaseOutcome::Failed(failure) => failure,
+                CaseOutcome::Unfinished => unfinished(),
+                CaseOutcome::Passed | CaseOutcome::Skipped(_) => return None,
+            };
+            Some(FailedCase {
+                class_name: case.class_name,
+                name: case.name,
+                failure,
+            })
+        })
+        .collect()
 }
 
 /// The XML of the run whose iterations streamed `iterations`, each the records of one `/run`.
@@ -162,16 +196,17 @@ fn write_case(out: &mut String, case: &StreamCase) {
             let _ = writeln!(out, "{head}>\n      <skipped message=\"{}\"/>\n    </testcase>", escape(reason));
         }
         CaseOutcome::Failed(failure) => write_failure(out, &head, failure),
-        CaseOutcome::Unfinished => write_failure(
-            out,
-            &head,
-            &CaseFailure {
-                kind: FailureOrigin::Test,
-                r#type: Some(TYPE_UNFINISHED.to_owned()),
-                message: UNFINISHED_MESSAGE.to_owned(),
-                detail: String::new(),
-            },
-        ),
+        CaseOutcome::Unfinished => write_failure(out, &head, &unfinished()),
+    }
+}
+
+/// The failure of a case that started and never finished.
+fn unfinished() -> CaseFailure {
+    CaseFailure {
+        kind: FailureOrigin::Test,
+        r#type: Some(TYPE_UNFINISHED.to_owned()),
+        message: UNFINISHED_MESSAGE.to_owned(),
+        detail: String::new(),
     }
 }
 
@@ -197,7 +232,7 @@ fn seconds(millis: i64) -> String {
 
 /// Whether XML 1.0 admits `character` at all. It admits a tab, a newline and a carriage return of the control
 /// characters, and it forbids `U+FFFE` and `U+FFFF`.
-fn admitted(character: char) -> bool {
+const fn admitted(character: char) -> bool {
     matches!(character, '\t' | '\n' | '\r') || !(character.is_control() || matches!(character, '\u{fffe}' | '\u{ffff}'))
 }
 

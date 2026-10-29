@@ -71,13 +71,13 @@ export function NodeCard({ diagram, node, laneTitle, color, baseDir, onStep, onC
         <section className="node-card-detail">
           <h3>What it does</h3>
           {node.detail !== null && <Markdown source={node.detail} baseDir={baseDir} />}
-          {node.planned !== null && <p className="m-0 mt-2 text-detail text-muted-foreground">{plannedText}</p>}
+          {node.planned !== null && <p className="m-0 mt-2 text-xs text-muted-foreground">{plannedText}</p>}
         </section>
       )}
       {hasCode && (
         <section className="node-card-code">
           <h3>In the code</h3>
-          <div className="grid gap-1.5 text-detail">
+          <div className="grid gap-1.5 text-xs">
             {node.symbolRef !== null && (
               <div><code>{node.symbol}</code> · <SourceLink file={node.symbolRef.file} line={node.symbolRef.line} /></div>
             )}
@@ -106,8 +106,8 @@ export function NodeCard({ diagram, node, laneTitle, color, baseDir, onStep, onC
           <h3>In steps</h3>
           <div className="flex flex-wrap gap-1">
             {steps.map(step => (
-              <Button key={step.number} variant="outline" size="sm" className="h-auto py-1 text-detail" onClick={() => onStep(step.number)}>
-                <i className="mr-1 grid size-4 place-items-center rounded-full bg-primary text-3xs font-bold not-italic text-background">{step.number}</i>
+              <Button key={step.number} variant="outline" size="sm" className="h-auto py-1 text-xs" onClick={() => onStep(step.number)}>
+                <i className="mr-1 grid size-4 place-items-center rounded-full bg-primary text-xs font-bold not-italic text-primary-foreground">{step.number}</i>
                 {step.title}
               </Button>
             ))}

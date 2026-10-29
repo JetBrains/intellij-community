@@ -22,6 +22,9 @@ pub(crate) enum ArmKind {
     /// A project that the command line of the IDE names and that restores no editor, so the empty editor area builds
     /// the Air composer.
     EmptyEditor,
+    /// A Rust project that the command line of the IDE names, to the start of its first Cargo sync, as the perf test
+    /// of RustRover measures it.
+    CargoSync,
 }
 
 /// What a run of an arm must show to pass the gate.
@@ -34,6 +37,14 @@ pub(crate) enum Gate {
     Highlighted,
     /// The span `name` in the trace. The IDE writes a span when it ends. `missing` tells why a run can lack it.
     Span { name: &'static str, missing: &'static str },
+    /// The first line of `idea.log` that holds `line`. The record keeps its time from the process start as `metric`,
+    /// and its time on the clock of the log as `log_metric`.
+    LogLine {
+        line: &'static str,
+        metric: &'static str,
+        log_metric: &'static str,
+        missing: &'static str,
+    },
 }
 
 impl ArmKind {
@@ -45,6 +56,7 @@ impl ArmKind {
             Self::OpenProject => "openProject",
             Self::Project => "project",
             Self::EmptyEditor => "emptyEditor",
+            Self::CargoSync => "cargoSync",
         }
     }
 
@@ -56,11 +68,19 @@ impl ArmKind {
             Self::OpenProject => "open-project",
             Self::Project => "project",
             Self::EmptyEditor => "empty-editor",
+            Self::CargoSync => "cargo-sync",
         }
     }
 
     /// Every kind, in the order of the digest.
-    pub(crate) const ALL: [Self; 5] = [Self::Modal, Self::NonModal, Self::OpenProject, Self::Project, Self::EmptyEditor];
+    pub(crate) const ALL: [Self; 6] = [
+        Self::Modal,
+        Self::NonModal,
+        Self::OpenProject,
+        Self::Project,
+        Self::EmptyEditor,
+        Self::CargoSync,
+    ];
 }
 
 /// One arm of a session: a start-up variant, and the plugin that its runs suppress. An arm with a suppressed plugin is
@@ -83,9 +103,17 @@ impl Arm {
     pub(crate) const OPEN_PROJECT: Self = Self::plain(ArmKind::OpenProject);
     pub(crate) const PROJECT: Self = Self::plain(ArmKind::Project);
     pub(crate) const EMPTY_EDITOR: Self = Self::plain(ArmKind::EmptyEditor);
+    pub(crate) const CARGO_SYNC: Self = Self::plain(ArmKind::CargoSync);
 
     /// Every plain arm, in the order of the digest. A twin is not in it.
-    pub(crate) const ALL: [Self; 5] = [Self::MODAL, Self::NON_MODAL, Self::OPEN_PROJECT, Self::PROJECT, Self::EMPTY_EDITOR];
+    pub(crate) const ALL: [Self; 6] = [
+        Self::MODAL,
+        Self::NON_MODAL,
+        Self::OPEN_PROJECT,
+        Self::PROJECT,
+        Self::EMPTY_EDITOR,
+        Self::CARGO_SYNC,
+    ];
 
     /// The arm of `kind` that suppresses no plugin.
     pub(crate) const fn plain(kind: ArmKind) -> Self {
@@ -126,6 +154,7 @@ impl Arm {
             ArmKind::OpenProject => record::OPEN_HIGHLIGHTED,
             ArmKind::Project => record::EDITOR_HIGHLIGHTED,
             ArmKind::EmptyEditor => record::EMPTY_STATE_BUILT,
+            ArmKind::CargoSync => record::CARGO_SYNC_STARTED,
         }
     }
 
@@ -137,6 +166,7 @@ impl Arm {
             ArmKind::Modal | ArmKind::NonModal | ArmKind::OpenProject => record::WELCOME_BECAME_VISIBLE,
             ArmKind::Project => record::EDITOR_HIGHLIGHTED,
             ArmKind::EmptyEditor => record::EMPTY_STATE_BUILT,
+            ArmKind::CargoSync => record::CARGO_SYNC_STARTED,
         }
     }
 
@@ -149,6 +179,12 @@ impl Arm {
             ArmKind::EmptyEditor => Gate::Span {
                 name: record::EMPTY_STATE_SPAN,
                 missing: "the project restored an editor, or the registry key air.inline.empty.state.prompt is off",
+            },
+            ArmKind::CargoSync => Gate::LogLine {
+                line: record::CARGO_SYNC_LOG_LINE,
+                metric: record::CARGO_SYNC_STARTED,
+                log_metric: record::CARGO_SYNC_LOG_MS,
+                missing: "the IDE has no Rust plugin, or the project has no Cargo.toml",
             },
         }
     }

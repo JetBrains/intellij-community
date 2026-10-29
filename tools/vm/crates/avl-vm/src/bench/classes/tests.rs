@@ -1,16 +1,14 @@
 use std::path::Path;
 
-use avl_base::Reporter;
 use pretty_assertions::assert_eq;
 use serde_json::json;
 
 use super::{ClassRow, ModuleRow, report as classes};
 use crate::bench::arm::Arm;
-use crate::bench::command::replay;
-use crate::bench::options::{ClassesArgs, DEFAULT_TOP};
+use crate::bench::options::{ClassesArgs, DEFAULT_TOP, SpanThread};
 use crate::bench::record;
 use crate::bench::session::SUMMARY_FILE;
-use crate::bench::testing::{assert_golden, fixture_session, project_session, summarize};
+use crate::bench::testing::{assert_golden, fixture_session, project_session, replay, replayed_session, summarize};
 
 fn args() -> ClassesArgs {
     ClassesArgs {
@@ -20,6 +18,10 @@ fn args() -> ClassesArgs {
         plugins: Vec::new(),
         at: None,
         entries: None,
+        span: None,
+        thread: SpanThread::Edt,
+        run: None,
+        timeline: None,
     }
 }
 
@@ -38,9 +40,7 @@ fn row(name: &str, classes: f64, loaders: f64, edt_ms: f64) -> ClassRow {
 /// equals `testdata/bench/classes.txt`.
 #[test]
 fn the_classes_of_the_fixture_match_the_golden() {
-    let (_dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
+    let (_dir, session) = replayed_session();
     let report = classes(&session, &args()).expect("a report");
     assert_eq!(
         (report.arm.clone(), report.at.as_deref(), report.runs),
@@ -65,6 +65,14 @@ fn the_classes_of_the_fixture_match_the_golden() {
         summary_has_no_class_map(&session),
         "summary.json holds no class map; result.json holds them"
     );
+}
+
+/// A replayed copy of the fixture session whose modal run has no class-load log.
+fn replayed_without_modal_class_log() -> (tempfile::TempDir, std::path::PathBuf) {
+    let (dir, session) = fixture_session();
+    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
+    replay(&session);
+    (dir, session)
 }
 
 fn summary_has_no_class_map(session: &Path) -> bool {
@@ -153,9 +161,7 @@ fn the_plugin_table_takes_the_anchor_and_the_named_plugins() {
 /// text equals `testdata/bench/classes-entries.txt`.
 #[test]
 fn the_entries_are_the_first_classes_of_each_plugin_before_the_anchor() {
-    let (_dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
+    let (_dir, session) = replayed_session();
     let report = classes(
         &session,
         &ClassesArgs {
@@ -200,10 +206,7 @@ fn the_entries_are_the_first_classes_of_each_plugin_before_the_anchor() {
 /// `--entries` reads the class logs of the median run, so an arm whose run has no class-load log is a usage refusal.
 #[test]
 fn the_entries_of_a_run_without_its_class_log_are_refused() {
-    let (_dir, session) = fixture_session();
-    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
+    let (_dir, session) = replayed_without_modal_class_log();
     let refusal = classes(
         &session,
         &ClassesArgs {
@@ -224,10 +227,7 @@ fn the_entries_of_a_run_without_its_class_log_are_refused() {
 /// without its class-load log has no anchor, and its plugin table covers the whole run.
 #[test]
 fn an_anchor_or_an_arm_that_the_session_lacks_is_a_usage_refusal() {
-    let (_dir, session) = fixture_session();
-    std::fs::remove_file(session.join("modal-run-01/class-load.log")).expect("a removal");
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
+    let (_dir, session) = replayed_without_modal_class_log();
     let refusal = |args: ClassesArgs| classes(&session, &args).expect_err("a refusal");
     let modal = refusal(ClassesArgs {
         arm: Some(Arm::MODAL),

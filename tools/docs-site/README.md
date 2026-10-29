@@ -79,13 +79,39 @@ roots. The kernel knows no language and no build system.
 
 - `home`, `nav`, `pages`: the Home page, the nav table, and the renderers of the site pages.
 - `routes`: the route extensions, made with `routeBuilder`. They come before the kernel routes, so they can claim a
-  kernel URL.
+  kernel URL. Each canonical entry names the `layout` of its page; the next section lists the layouts.
 - `data`: the `SiteData` read model. It holds the harvested docs, diagrams, specs, and symbols, and the glob loaders
   of the harvested markdown, sources, and pictures. A site with a launch picker gives the `launch` entries too.
-- Optional: `crumbs`, `canvasPages`, `pageIdentity`, `fenceRenderers`, `refLinks`, `searchProviders`, `stepRef`,
-  and `palette`. `src/site.ts` documents each one.
+- Optional: `crumbs`, `sectionTrees`, `pageIdentity`, `fenceRenderers`, `refLinks`, `searchProviders`, `stepRef`,
+  and `palette`. `src/site.ts` and `src/Shell.tsx` document each one.
 
 A kernel module reads the installed parts through `site()` inside a function, never at module load.
+
+### The page layout
+
+The page is flat on `--background`, under a top bar with a bottom border. The route table gives each page one of four
+layouts (`PageLayout` of `src/routeTable.ts`):
+
+| Layout | The columns | Pages of the kernel |
+| --- | --- | --- |
+| `reading` | The section tree, the document with its crumb row (786px, 70ch of the 16px prose), and the table of contents. | A guide, a decision record, a doc. |
+| `catalog` | The reading layout with a 960px document, for cards, tiles and chip rows. | The indexes of the guides, the explainers and the decisions. |
+| `tool` | One column across the page, at `text-sm`. | Home, the source viewer, the launch picker. |
+| `canvas` | The page fills the outlet and draws its own panes. The page owns its trail. | One explainer. |
+
+A canonical route entry without a `layout` does not compile. `src/pageLayout.tsx` draws the layouts. `sectionTrees`
+gives the trees of the site sections by route page, for example the specs of a spec page. The kernel gives the trees of
+the guides and the decision records. A reading page without a tree or a table of contents has no empty column for it,
+and its columns stay in the middle of the page. Below the `section-nav:` breakpoint the tree opens in a Sheet from the
+crumb row.
+
+The tokens are the stock values of the shadcn preset `b0` with the base `base`: Nova, neutral, the stock radius. The
+theme color is the stock blue theme. The
+domain tokens are a status, the six lanes, and the brand gradient. The kernel also defines the host contract tokens of
+the GenUI catalog from the stock values, because a site can render the catalog primitives. A link is the foreground
+color with an underline, as in the shadcn docs. The Air record
+[The docs sites and the GenUI catalog take the stock shadcn preset](../../../plugins/air/docs/decisions/2026-10-26-the-docs-sites-and-the-genui-catalog-take-the-stock-shadcn-preset.md)
+lists every deviation from the stock values and its reason.
 
 The kernel imports each shadcn component by a relative path, for example `./ui/button`. The files under
 `src/components/ui/` are stock shadcn. The Air site resolves a kernel import of a GenUI catalog name to the catalog
@@ -144,7 +170,7 @@ protocol:
 - Exit 3: a check failed. The report follows the sentinel, and no record follows.
 - Any other result, or no sentinel: an infrastructure failure, not a check failure.
 
-`AirArchitectureModelTest` runs the Air gate, and `DevDistDocsSiteTest` runs the build gate. The gate has no
+`air-architecture-model_test` of `plugins/air/tests/architecture-gate` runs the Air gate, and `DevDistDocsSiteTest` runs the build gate. The gate has no
 `node_modules`, so each module that it loads imports nothing from npm. `scripts/yamlCompat.ts` falls back to
 `Bun.YAML` there.
 

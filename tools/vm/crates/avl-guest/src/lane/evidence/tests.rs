@@ -21,6 +21,7 @@ fn execution(scenario: &str) -> ExecutionIdentity {
 
 fn launched(pid: i64, name: &str, root: &Path) -> RunEventKind {
     RunEventKind::IdeLaunched(IdeLaunched {
+        timestamp: None,
         pid,
         launch_name: name.to_owned(),
         launch_key: "air-ui-fa2b".to_owned(),
@@ -30,6 +31,7 @@ fn launched(pid: i64, name: &str, root: &Path) -> RunEventKind {
 
 fn exited(pid: i64) -> RunEventKind {
     RunEventKind::IdeExited(IdeExited {
+        timestamp: None,
         pid,
         exit_code: 0,
         signal: None,
@@ -135,7 +137,7 @@ fn an_expiry_a_failed_class_and_the_hard_stop_affect_the_running_launch_or_else_
         launched(101, "restart-1-b", root),
         started("hangs"),
     ]);
-    assert!(launches(&open, false).1.is_empty());
+    assert_eq!(launches(&open, false).1, []);
     assert_eq!(names(&launches(&open, true).1), ["restart-1-b"]);
 }
 

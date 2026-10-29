@@ -7,6 +7,7 @@ resolver = "3"
 members = [
     "crates/air-trace",
     "crates/avl-affected",
+    "crates/avl-aom-sys",
     "crates/avl-base",
     "crates/avl-bridge",
     "crates/avl-guest",
@@ -25,7 +26,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.93"
+rust-version = "1.99"
 publish = false
 
 # BEGIN rust-tools: generated from community/build/rust-tools/lints.toml by sync.mjs. Edit that file.
@@ -143,6 +144,7 @@ verbose_file_reads = "warn"
 # Workspace crates.
 air-trace = { path = "crates/air-trace" }
 avl-affected = { path = "crates/avl-affected" }
+avl-aom-sys = { path = "crates/avl-aom-sys" }
 avl-base = { path = "crates/avl-base" }
 avl-bridge = { path = "crates/avl-bridge" }
 avl-guest = { path = "crates/avl-guest" }
@@ -183,6 +185,11 @@ terminal-colorsaurus = "1.0.3"
 base64 = "0.23.1"
 form_urlencoded = "1.2.2"
 hex = "0.4.3"
+# The recorder's still encoders. `image-webp`, pure Rust, writes a lossless WebP still. `avl-aom-sys` links libaom, the
+# AV1 encoder of a lossy AVIF still, and `avif-serialize` writes the AVIF container around it. `cmake` builds libaom
+# under cargo only.
+avif-serialize = "0.8.9"
+cmake = "0.1.58"
 image-webp = "0.2.4"
 jiff = "0.2.37"
 # The recorder's H.264 encoder, Cisco's sources built by `cc` (the default `source` feature).

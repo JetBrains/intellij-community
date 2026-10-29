@@ -206,7 +206,7 @@ fn the_remainder_is_the_lightest_shard_and_the_only_one_that_excludes() {
         let mut included: Vec<&str> = Vec::new();
         for shard in plan.shards.iter().filter(|shard| shard.kind == ShardKind::Include) {
             included.extend(shard.classes.iter().map(String::as_str));
-            assert!(filter_literals(shard, "exclude-classname").is_empty());
+            assert_eq!(filter_literals(shard, "exclude-classname"), Vec::<&str>::new());
             assert_eq!(
                 filter_literals(shard, "include-classname"),
                 shard.classes,
@@ -219,7 +219,7 @@ fn the_remainder_is_the_lightest_shard_and_the_only_one_that_excludes() {
         excludes.sort_unstable();
         // Exactly the other shards' classes, and no more: an exclude naming its own class would drop it.
         assert_eq!(excludes, included, "at {shard_count} shards");
-        assert!(filter_literals(remainder, "include-classname").is_empty());
+        assert_eq!(filter_literals(remainder, "include-classname"), Vec::<&str>::new());
     }
 }
 
@@ -257,7 +257,7 @@ fn the_shards_are_disjoint_and_total_including_for_a_class_the_balancer_never_sa
     // One shard is the unsharded lane by construction: no filter at all, so nothing can be lost by it.
     let single = plan(&lane, 1);
     assert_eq!(single.shards.len(), 1);
-    assert!(single.shards[0].junit5_filters.is_empty());
+    assert_eq!(single.shards[0].junit5_filters, Vec::<String>::new());
     for class_name in &discovered {
         assert!(shard_runs(&single.shards[0], class_name));
     }

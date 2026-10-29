@@ -450,6 +450,18 @@ fn kill_after_deadline(
     if system.group_alive(pgid) {
         return abandon(system, root, state, pgid, cancellation);
     }
+    let failure = format!("the supervisor did not end the cancel within its deadline, so the agent killed it and the process group {pgid}");
+    finish_killed_orphan(system, root, state, cancellation, failure).map(CancelEnd::Killed)
+}
+
+/// Finishes `state` as an orphan that the agent sent SIGKILL, with `cancellation` and `failure`, and frees the slot.
+fn finish_killed_orphan(
+    system: &dyn System,
+    root: &Path,
+    state: &RunState,
+    cancellation: CancellationRecord,
+    failure: String,
+) -> Result<RunState, AgentRefusal> {
     let finished = finish_state(
         system,
         root,
@@ -459,15 +471,12 @@ fn kill_after_deadline(
         Outcome::CanceledOrphan,
         FinishExtra {
             cancellation: Some(cancellation),
-            failure: Some(format!(
-                "the supervisor did not end the cancel within its deadline, so the agent killed it and the process group \
-                 {pgid}"
-            )),
+            failure: Some(failure),
             ..FinishExtra::default()
         },
     )?;
     state::clear_active(root, &state.run_id);
-    Ok(CancelEnd::Killed(finished))
+    Ok(finished)
 }
 
 /// Gives up a run whose process group `pgid` outlived a KILL: the run finishes as canceled with the survivors named,
@@ -492,24 +501,11 @@ fn abandon(
         abandoned_at: stamp(system.now()),
     };
     state::write_json_atomic(&root.join(ABANDONED_FILE), &record).map_err(AgentRefusal::internal)?;
-    let finished = finish_state(
-        system,
-        root,
-        state,
-        None,
-        Some(Signal::SIGKILL.as_str().to_owned()),
-        Outcome::CanceledOrphan,
-        FinishExtra {
-            cancellation: Some(cancellation),
-            failure: Some(format!(
-                "the process group {pgid} outlived SIGKILL, so the agent abandoned the run and freed its slot; a recycle of \
-                 the worker discards {members:?}"
-            )),
-            ..FinishExtra::default()
-        },
-    )?;
-    state::clear_active(root, &state.run_id);
-    Ok(CancelEnd::Abandoned(finished))
+    let failure = format!(
+        "the process group {pgid} outlived SIGKILL, so the agent abandoned the run and freed its slot; a recycle of the \
+         worker discards {members:?}"
+    );
+    finish_killed_orphan(system, root, state, cancellation, failure).map(CancelEnd::Abandoned)
 }
 
 /// Takes the thread dump of the live child of `state` before the cancellation request exists, so the dump comes

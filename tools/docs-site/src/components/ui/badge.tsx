@@ -18,6 +18,10 @@ const badgeVariants = cva(
         ghost:
           "hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50",
         link: "text-primary underline-offset-4 hover:underline",
+        // deviation from upstream: the Air status variants. The tokens come from the MCP Apps status variables.
+        info: "border-info-border bg-info-surface text-info",
+        success: "border-success-border bg-success-surface text-success",
+        warning: "border-warning-border bg-warning-surface text-warning",
       },
     },
     defaultVariants: {

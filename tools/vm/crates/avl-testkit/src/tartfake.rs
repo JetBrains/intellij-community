@@ -417,6 +417,18 @@ exit 0'
   cat "$dir/.call-$$" >> "$dir/calls.txt"; } || { echo "fake $self: cannot record the call in $dir/calls.txt" >&2; exit 125; }
 [ -f "$dir/killed-verb.txt" ] && [ "$1" = "$(cat "$dir/killed-verb.txt")" ] && kill -KILL $$
 [ -f "$dir/silent-verb.txt" ] && [ "$1" = "$(cat "$dir/silent-verb.txt")" ] && exit 0
+# The container and docker verbs share these steps. Each reads $dir and $state when it runs.
+started() {
+  if [ -f "$dir/started-state.txt" ]; then cp "$dir/started-state.txt" "$state"; else echo running/0 > "$state"; fi
+}
+has_image() {
+  [ -f "$dir/image-present.txt" ] ||
+    { [ -f "$dir/images.txt" ] && awk -v r="$1" '$0 == r { found = 1 } END { exit !found }' "$dir/images.txt"; }
+}
+drop_image() {
+  [ -f "$dir/images.txt" ] || return 0
+  awk -v r="$1" '$0 != r' "$dir/images.txt" > "$dir/images.txt.new" && mv "$dir/images.txt.new" "$dir/images.txt"
+}
 if [ "$self" = curl ]; then
   out=; upload=; header=; prev=
   for word in "$@"; do
@@ -546,7 +558,7 @@ else
         exit "$code" ;;
       start)
         if [ "$code" = 0 ]; then
-          if [ -f "$dir/started-state.txt" ]; then cp "$dir/started-state.txt" "$state"; else echo running/0 > "$state"; fi
+          started
           echo "$2"
         fi
         exit "$code" ;;
@@ -570,9 +582,7 @@ else
       image)
         case "$2" in
           inspect)
-            if [ -f "$dir/image-present.txt" ]; then :
-            elif [ -f "$dir/images.txt" ] && awk -v r="$ref" '$0 == r { found = 1 } END { exit !found }' "$dir/images.txt"; then :
-            else echo "Error: image not found: $ref" >&2; exit 1; fi
+            has_image "$ref" || { echo "Error: image not found: $ref" >&2; exit 1; }
             revision=$(cat "$dir/image-revision.txt" 2>/dev/null)
             printf '[{"variants":[{"config":{"config":{"Labels":{"org.opencontainers.image.revision":"%s"}}}}]}]\n' "$revision"
             exit 0 ;;
@@ -590,9 +600,7 @@ else
           pull|push) echo "fake container: the controller uses the file mirror, not image $2" >&2; exit 3 ;;
           tag) [ "$code" = 0 ] && printf '%s\n' "$4" >> "$dir/images.txt"; exit "$code" ;;
           delete)
-            if [ "$code" = 0 ] && [ -f "$dir/images.txt" ]; then
-              awk -v r="$ref" '$0 != r' "$dir/images.txt" > "$dir/images.txt.new" && mv "$dir/images.txt.new" "$dir/images.txt"
-            fi
+            [ "$code" = 0 ] && drop_image "$ref"
             exit "$code" ;;
         esac
         exit "$code" ;;
@@ -633,13 +641,7 @@ else
         fi
         exit "$code" ;;
       start)
-        if [ "$code" = 0 ]; then
-          if [ -f "$dir/started-state.txt" ]; then
-            cp "$dir/started-state.txt" "$state"
-          else
-            echo running/0 > "$state"
-          fi
-        fi
+        [ "$code" = 0 ] && started
         exit "$code" ;;
       stop) [ "$code" = 0 ] && [ -f "$state" ] && echo exited/0 > "$state"; exit "$code" ;;
       rm)
@@ -661,15 +663,11 @@ else
         for ref in "$@"; do :; done
         case "$2" in
           inspect)
-            if [ -f "$dir/image-present.txt" ]; then :
-            elif [ -f "$dir/images.txt" ] && awk -v r="$ref" '$0 == r { found = 1 } END { exit !found }' "$dir/images.txt"; then :
-            else exit 1; fi
+            has_image "$ref" || exit 1
             case "$*" in *Labels*) cat "$dir/image-revision.txt" 2>/dev/null ;; esac
             exit 0 ;;
           rm)
-            if [ "$code" = 0 ] && [ -f "$dir/images.txt" ]; then
-              awk -v r="$ref" '$0 != r' "$dir/images.txt" > "$dir/images.txt.new" && mv "$dir/images.txt.new" "$dir/images.txt"
-            fi
+            [ "$code" = 0 ] && drop_image "$ref"
             exit "$code" ;;
         esac ;;
     esac
@@ -825,21 +823,13 @@ impl Fake {
 
     /// Removes one answer file, so the verb answers its default again.
     pub fn forget(&self, answer: Answer) {
-        let path = self.directory().join(answer.file_name());
-        match fs::remove_file(&path) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(error) => panic!("remove {}: {error}", path.display()),
-        }
+        remove_if_present(&self.directory().join(answer.file_name()));
     }
 
     /// Every argv the fakes of this directory were spawned with, in order, without the program name.
     pub fn argvs(&self) -> Vec<Vec<String>> {
-        let path = self.directory().join(CALLS);
-        let log = match fs::read_to_string(&path) {
-            Ok(log) => log,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => return Vec::new(),
-            Err(error) => panic!("read {}: {error}", path.display()),
+        let Some(log) = read_if_present(&self.directory().join(CALLS)) else {
+            return Vec::new();
         };
         log.split_terminator(CALL_END)
             .map(|record| record.split_terminator(ARG_END).map(str::to_owned).collect())
@@ -849,11 +839,8 @@ impl Fake {
     /// The environment the last `container.cmd start` ran with, as `NAME=value` pairs in the order the real script
     /// reads them. Empty before the first start.
     pub fn container_linux_start_environment(&self) -> Vec<(String, String)> {
-        let path = self.directory().join(CONTAINER_LINUX_START_ENVIRONMENT);
-        let text = match fs::read_to_string(&path) {
-            Ok(text) => text,
-            Err(error) if error.kind() == io::ErrorKind::NotFound => return Vec::new(),
-            Err(error) => panic!("read {}: {error}", path.display()),
+        let Some(text) = read_if_present(&self.directory().join(CONTAINER_LINUX_START_ENVIRONMENT)) else {
+            return Vec::new();
         };
         text.lines()
             .filter_map(|line| line.split_once('='))
@@ -873,12 +860,7 @@ impl Fake {
 
     /// Forgets every recorded call, so the next case of a test that shares this fake reads only its own calls.
     pub fn forget_calls(&self) {
-        let path = self.directory().join(CALLS);
-        match fs::remove_file(&path) {
-            Ok(()) => {}
-            Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-            Err(error) => panic!("remove {}: {error}", path.display()),
-        }
+        remove_if_present(&self.directory().join(CALLS));
     }
 
     /// Runs the fake once with `--version`, waits for it, and forgets the call. A suite calls it before it runs
@@ -904,6 +886,24 @@ impl Fake {
 /// The file that answers a `tart exec` or `docker exec` whose first word without a `/` is `verb`.
 pub(crate) fn exec_verb_file(verb: &str) -> String {
     format!("exec-verb-{verb}.txt")
+}
+
+/// The text of a file the fake writes, or `None` before the fake wrote it.
+fn read_if_present(path: &Path) -> Option<String> {
+    match fs::read_to_string(path) {
+        Ok(text) => Some(text),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(error) => panic!("read {}: {error}", path.display()),
+    }
+}
+
+/// Removes a file of the fake directory. A file that is not there is not an error.
+fn remove_if_present(path: &Path) {
+    match fs::remove_file(path) {
+        Ok(()) => {}
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(error) => panic!("remove {}: {error}", path.display()),
+    }
 }
 
 /// A temporary directory removed when the last fake sharing it goes.

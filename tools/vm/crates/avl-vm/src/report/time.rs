@@ -535,7 +535,7 @@ fn compare(run: &RunTime, baseline: &RunTime) -> Baseline {
 }
 
 /// The median of sorted values, the mean of the middle two for an even count.
-fn median(sorted: &[f64]) -> Option<f64> {
+const fn median(sorted: &[f64]) -> Option<f64> {
     let middle = sorted.len() / 2;
     match sorted.len() {
         0 => None,

@@ -7,7 +7,7 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use avl_trace::bundle::{LOGS_FILE, MANIFEST_FILE, SNAP_DIR, SPANS_FILE, VIDEO_FILE, decode_manifest};
+use avl_trace::bundle::{LOGS_FILE, MANIFEST_FILE, SNAP_DIR, SPANS_FILE, VIDEO_FILE, decode_manifest, picture_mime};
 use serde::Serialize;
 
 use super::roots::{Origin, Root, RootKind, within};
@@ -58,6 +58,21 @@ pub struct RootState {
     /// What under the root could not be read, a zip being written for one; at most [MAX_PROBLEMS].
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub problems: Vec<String>,
+}
+
+impl RootState {
+    /// What the scan found under the root, for a person: the count of bundles or `absent`, and the error, if any.
+    pub fn summary(&self) -> String {
+        let found = if self.exists {
+            format!("{} bundles", self.bundles)
+        } else {
+            "absent".to_owned()
+        };
+        match &self.error {
+            Some(error) => format!("{found}: {error}"),
+            None => found,
+        }
+    }
 }
 
 pub(super) const MAX_PROBLEMS: usize = 20;
@@ -484,7 +499,7 @@ fn read_dir_summary(dir: &Path) -> (Summary, bool) {
         summary.thumbnail = entries
             .filter_map(Result::ok)
             .filter_map(|entry| entry.file_name().into_string().ok())
-            .filter(|name| name.ends_with(".webp"))
+            .filter(|name| picture_mime(name).is_some())
             .max()
             .map(|name| format!("{SNAP_DIR}/{name}"));
     }

@@ -56,11 +56,11 @@ function DecisionRow({ doc }: { doc: DecisionDoc }) {
     <li className="decision-row grid grid-cols-[3.25rem_minmax(0,1fr)_auto] items-baseline gap-x-3 gap-y-1 border-b border-border py-2.5 max-sm:grid-cols-[2.75rem_minmax(0,1fr)]">
       <span className="decision-number font-mono text-xs text-muted-foreground tabular-nums">{doc.adr.number ?? doc.adr.date}</span>
       <div className="grid min-w-0 gap-0.5">
-        <a className="decision-title font-medium text-foreground hover:text-primary hover:no-underline" href={decisionRoute(doc.path)}>
+        <a className="decision-title font-medium text-foreground" href={decisionRoute(doc.path)}>
           {doc.title}
         </a>
         {successor !== undefined && successor.adr !== undefined && (
-          <span className="text-detail text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {doc.adr.status === 'superseded' ? 'Superseded by ' : 'In part superseded by '}
             <a href={decisionRoute(successor.path)}>{adrNumberedTitle(successor.adr, successor.title)}</a>
           </span>
@@ -135,9 +135,9 @@ export function DecisionsPage({ anchor, status, topic }: {
         />
       </FilterBar>
       {hiddenCount > 0 && (
-        <p className="decision-hidden-note -mt-2 mb-3 text-detail text-muted-foreground">
+        <p className="decision-hidden-note -mt-2 mb-3 text-xs text-muted-foreground">
           {hiddenCount} records about this docs site are hidden.{' '}
-          <Button variant="link" size="sm" className="h-auto p-0 align-baseline" onClick={() => go({ topic: ALL_TOPICS })}>
+          <Button variant="link" size="sm" className="h-auto p-0 align-baseline text-foreground underline" onClick={() => go({ topic: ALL_TOPICS })}>
             Show them
           </Button>
         </p>

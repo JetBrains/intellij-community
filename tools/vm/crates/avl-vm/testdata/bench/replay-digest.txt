@@ -8,6 +8,7 @@ events and report:
   frameBecameInteractive                                           -                    2528    2528    2528
   totalDuration                                                    -                    3195    3195    3195
   jvm.loadingTime                                                352     352     352     358     358     358
+  jvm.processStart                                               352     352     352     358     358     358
   classLoading.requests                                       191566  191566  191566  267427  267427  267427
   classLoading.time                                             5240    5240    5240    8317    8317    8317
   classLoading.edtTime                                            26      26      26      42      42      42

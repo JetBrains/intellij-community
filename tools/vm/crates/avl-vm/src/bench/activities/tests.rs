@@ -1,11 +1,9 @@
-use avl_base::Reporter;
 use pretty_assertions::assert_eq;
 
 use super::report;
 use crate::bench::arm::Arm;
-use crate::bench::command::replay;
 use crate::bench::options::{ActivitiesArgs, DEFAULT_TOP, RunSelection, Window};
-use crate::bench::testing::{assert_golden, fixture_session};
+use crate::bench::testing::{assert_golden, fixture_session, replayed_session};
 
 fn args(run: Option<&str>, from: Option<f64>, to: Option<f64>, top: u32) -> ActivitiesArgs {
     ActivitiesArgs {
@@ -19,18 +17,10 @@ fn args(run: Option<&str>, from: Option<f64>, to: Option<f64>, top: u32) -> Acti
     }
 }
 
-/// A replayed copy of the fixture session, which has its `summary.json`.
-fn replayed() -> (tempfile::TempDir, std::path::PathBuf) {
-    let (dir, session) = fixture_session();
-    let (reporter, _, _) = Reporter::in_memory("vm");
-    replay(&session, &reporter).expect("a summary");
-    (dir, session)
-}
-
 /// `--arm` picks the median run of an arm, here the modal run, which has no activity.
 #[test]
 fn an_arm_picks_its_median_run() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let mut modal = args(None, None, None, DEFAULT_TOP);
     modal.selection.arm = Some(Arm::MODAL);
     let report = report(&session, &modal).expect("a report");
@@ -44,7 +34,7 @@ fn an_arm_picks_its_median_run() {
 /// The text of the default report of the fixture equals `testdata/bench/activities.txt`.
 #[test]
 fn the_default_activities_match_the_golden() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let report = report(&session, &args(None, None, None, DEFAULT_TOP)).expect("a report");
     assert_eq!(report.run, "non-modal-run-01");
     assert_eq!(report.median_by, Some("welcomeBecameVisible"));
@@ -54,7 +44,7 @@ fn the_default_activities_match_the_golden() {
 
 #[test]
 fn the_activities_are_by_duration_and_the_plugins_by_the_sum_without_the_helper_twins() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let report = report(&session, &args(None, None, None, DEFAULT_TOP)).expect("a report");
     let durations: Vec<String> = report.activities.iter().map(|line| line.span.duration_ms.to_string()).collect();
     assert_eq!(durations, vec!["4500", "1265", "30", "12", "4.2"]);
@@ -101,7 +91,7 @@ fn the_activities_are_by_duration_and_the_plugins_by_the_sum_without_the_helper_
 
 #[test]
 fn the_window_and_the_top_narrow_the_tables_and_the_footer_counts_the_rest() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let narrow = report(&session, &args(None, Some(1714.0), Some(3225.0), 2)).expect("a report");
     assert_eq!((narrow.total_activities, narrow.in_window, narrow.waiters), (5, 4, 1));
     assert_eq!((narrow.activities.len(), narrow.plugins.len(), narrow.total_plugins), (2, 2, 4));
@@ -128,7 +118,7 @@ fn the_window_and_the_top_narrow_the_tables_and_the_footer_counts_the_rest() {
 /// at that time, and the cut does not depend on the duration.
 #[test]
 fn an_activity_that_runs_into_the_quit_is_cut_by_the_quit() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let trace = session.join("non-modal-run-01/opentelemetry.json");
     let mut document: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&trace).expect("a trace")).expect("JSON");
     let spans = document["data"][0]["spans"].as_array_mut().expect("the spans");
@@ -172,7 +162,7 @@ fn an_activity_that_runs_into_the_quit_is_cut_by_the_quit() {
 /// The footer asks for a longer hold only when the quit cut an activity.
 #[test]
 fn a_cut_activity_asks_for_a_longer_hold() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let mut report = report(&session, &args(None, None, None, DEFAULT_TOP)).expect("a report");
     assert_eq!(report.cut_by_quit, 0);
     assert!(!report.text().contains("--hold"), "{}", report.text());
@@ -188,7 +178,7 @@ fn a_cut_activity_asks_for_a_longer_hold() {
 
 #[test]
 fn a_modal_run_has_its_own_activities_and_an_empty_window_is_refused() {
-    let (_dir, session) = replayed();
+    let (_dir, session) = replayed_session();
     let modal = report(&session, &args(Some("modal-run-01"), None, None, DEFAULT_TOP)).expect("a report");
     assert_eq!(modal.median_by, None);
     assert!(

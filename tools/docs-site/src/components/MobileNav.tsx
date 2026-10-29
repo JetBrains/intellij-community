@@ -23,7 +23,7 @@ function NavLink({ item, route }: { item: NavItem, route: Route }) {
       aria-current={active ? 'page' : undefined}
       href={hrefForRoute(item.route)}
       className={cn(
-        'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted hover:no-underline',
+        'flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted no-underline',
         active && 'bg-muted/50 font-medium',
       )}
     >
@@ -50,7 +50,7 @@ export function MobileNav({ nav, route }: { nav: readonly NavEntry[], route: Rou
               isNavGroup(entry)
                 ? (
                     <div key={entry.label} className="flex flex-col gap-0.5">
-                      <div className="px-2 pt-3 pb-1 text-2xs font-medium text-muted-foreground">{entry.label}</div>
+                      <div className="px-2 pt-3 pb-1 text-xs font-medium text-muted-foreground">{entry.label}</div>
                       {entry.items.map(item => <NavLink key={item.label} item={item} route={route} />)}
                     </div>
                   )

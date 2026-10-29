@@ -201,7 +201,7 @@ fn a_raw_recording_decodes_to_every_frame_it_was_written() {
 fn textured(width: usize, height: usize) -> Frame {
     let mut frame = grey(width, height, 0, 1000);
     for row in 0..height {
-        for (column, pixel) in frame.row_mut(row).chunks_exact_mut(BYTES_PER_PIXEL).enumerate() {
+        for (column, pixel) in frame.row_mut(row).as_chunks_mut::<BYTES_PER_PIXEL>().0.iter_mut().enumerate() {
             let level = u8::try_from((column * 37 + row * 91 + column * row * 13) % 256).unwrap();
             pixel.fill(level);
         }

@@ -22,6 +22,11 @@ fn classify_selector_reads_each_kind() {
         ("//plugins/air/shared/core:ai-agent-core-tests_test", SelectorKind::Label),
         ("//plugins/air/...", SelectorKind::Pattern),
         ("//plugins/air/shared/*:all", SelectorKind::Pattern),
+        // A label of another repository, as the hint of a module outside the migrated list prints it.
+        ("@community//platform/build-scripts/tests:tests_test", SelectorKind::Label),
+        ("@@community//tools/bt:bt-core_test", SelectorKind::Label),
+        ("@//plugins/air/shared/core:ai-agent-core-tests_test", SelectorKind::Label),
+        ("@community//platform/...", SelectorKind::Pattern),
         ("AgentThreadCliTest", SelectorKind::SimpleName),
         ("com.intellij.air.threads.AgentThreadCliTest", SelectorKind::Fqn),
         ("com.intellij.air.threads", SelectorKind::Package),
@@ -259,6 +264,98 @@ fn a_directory_becomes_a_recursive_pattern() {
         assert_eq!(resolution.labels, ["//plugins/air/shared/core/..."], "{raw}");
         assert!(resolution.multi_target, "{raw}");
     }
+}
+
+/// The ultimate root ignores `community/`, so `//community/tools/vm/...` names no package there. The directory is a
+/// package of the `@community` repository.
+#[test]
+fn a_directory_under_community_of_the_ultimate_root_is_a_pattern_of_the_community_repository() {
+    let ultimate = || {
+        let fake = fake_air_tree();
+        fake.put("community/MODULE.bazel", "");
+        fake.put("community/tools/vm/BUILD.bazel", "");
+        fake
+    };
+    for (raw, pattern) in [
+        ("community/tools/vm", "@community//tools/vm/..."),
+        ("community/tools/vm/...", "@community//tools/vm/..."),
+        // Without the slash, the name reads as a package.
+        ("community/", "@community//..."),
+        ("plugins/air/shared/core", "//plugins/air/shared/core/..."),
+    ] {
+        let resolution = resolve_in(&ultimate(), raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
+        assert_eq!(resolution.labels, [pattern], "{raw}");
+        assert!(resolution.multi_target, "{raw}");
+    }
+
+    // A community checkout is its own root, so a directory named community there is a package of it.
+    let community = fake_air_tree();
+    community.put("community/tools/vm/BUILD.bazel", "");
+    let resolution = resolve_in(&community, "community/tools/vm").unwrap_or_else(|failure| panic!("{failure}"));
+    assert_eq!(resolution.labels, ["//community/tools/vm/..."]);
+}
+
+/// Bazel only warns about `//community/tools/vm/...` in the ultimate root, and it builds nothing. So a label or a
+/// pattern under `community/` runs in the `@community` repository, as a directory selector does.
+#[test]
+fn a_label_under_community_of_the_ultimate_root_is_a_label_of_the_community_repository() {
+    let ultimate = fake_air_tree();
+    ultimate.put("community/MODULE.bazel", "");
+    for (raw, label) in [
+        ("//community/tools/vm/...", "@community//tools/vm/..."),
+        ("//community/tools/bt:bt-core_test", "@community//tools/bt:bt-core_test"),
+        ("//community/...", "@community//..."),
+        ("//community/...:all", "@community//...:all"),
+        ("//community:target", "@community//:target"),
+        ("//community", "@community//:community"),
+        // Not the community directory.
+        ("//communityx/...", "//communityx/..."),
+        ("//plugins/air/...", "//plugins/air/..."),
+        ("@community//tools/vm/...", "@community//tools/vm/..."),
+    ] {
+        let resolution = resolve_in(&ultimate, raw).unwrap_or_else(|failure| panic!("{raw}: {failure}"));
+        assert_eq!(resolution.labels, [label], "{raw}");
+        assert_eq!(checkout_label(&ultimate, raw), label, "{raw}");
+    }
+
+    // A community checkout is its own root.
+    let community = fake_air_tree();
+    assert_eq!(checkout_label(&community, "//community/tools/vm/..."), "//community/tools/vm/...");
+}
+
+/// `bt` runs in the checkout root, whatever the working directory. A pattern whose directory is not there is refused,
+/// and for a directory of the community repository the refusal names its `@community` spelling.
+#[test]
+fn a_pattern_of_a_missing_directory_is_a_usage_refusal() {
+    let ultimate = fake_air_tree();
+    ultimate.put("community/MODULE.bazel", "");
+    ultimate.put("community/tools/vm/BUILD.bazel", "");
+    for present in [
+        "//plugins/air/...",
+        "//plugins/air:x",
+        "//...",
+        "//:x",
+        "//plugins/*:all",
+        "@community//tools/vm/...",
+        "@community//missing/...",
+    ] {
+        check_package_dir(&ultimate, present).unwrap_or_else(|failure| panic!("{present}: {failure}"));
+    }
+
+    let failure = check_package_dir(&ultimate, "//tools/vm/...").expect_err("a missing directory");
+    assert_eq!(failure.exit, exit::USAGE);
+    assert_eq!(
+        failure.message,
+        "No such directory: tools/vm\n  (bt runs every target pattern in the checkout root /repo, whatever the working \
+         directory;\n   for community/tools/vm, pass @community//tools/vm/...)"
+    );
+    let label = check_package_dir(&ultimate, "//tools/vm:vm").expect_err("a missing directory");
+    assert!(label.message.ends_with("pass @community//tools/vm:vm)"), "{}", label.message);
+
+    // Without the community directory, the refusal names no other spelling.
+    let community = fake_air_tree();
+    let failure = check_package_dir(&community, "//tools/vm/...").expect_err("a missing directory");
+    assert!(failure.message.ends_with("whatever the working directory)"), "{}", failure.message);
 }
 
 #[test]

@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use avl_testkit::ClosedPipe;
 use expect_test::expect;
 use pretty_assertions::assert_eq;
 
@@ -14,46 +15,9 @@ fn case(name: &str) -> CaseIdentity {
     }
 }
 
-// A stream that a client stopped reading takes no record more, and the iteration goes on.
-#[test]
-fn a_broken_stream_drops_the_later_records() {
-    struct Broken;
-    impl Write for Broken {
-        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
-            Err(std::io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let mut out = Broken;
-    let stream = Stream::new(&mut out);
-    stream.note("first");
-    assert!(stream.lock().broken);
-    stream.note("second");
-    let mut kept = Vec::new();
-    let stream = Stream::new(&mut kept);
-    stream.note("line");
-    drop(stream);
-    assert_eq!(String::from_utf8(kept).unwrap(), "{\"event\":\"output\",\"text\":\"line\"}\n");
-}
-
-// The stream keeps its cases for the JUnit XML, also after its reader went away. A prologue failure is a failed case
-// named after its suite, and a skip is a skipped case.
-#[test]
-fn the_cases_of_a_broken_stream_still_render_the_junit_xml() {
-    struct Broken;
-    impl Write for Broken {
-        fn write(&mut self, _: &[u8]) -> std::io::Result<usize> {
-            Err(std::io::ErrorKind::BrokenPipe.into())
-        }
-        fn flush(&mut self) -> std::io::Result<()> {
-            Ok(())
-        }
-    }
-    let mut out = Broken;
-    let stream = Stream::new(&mut out);
-    stream.note("the reader is gone after this record");
+/// Writes three cases to `stream`: `passes` that passes in 1.5 s, `never` that is skipped, and the failed container
+/// `chat-reply`.
+fn write_three_cases(stream: &Stream<'_>) {
     stream.started(&case("passes"));
     stream.finished(
         &case("passes"),
@@ -73,6 +37,31 @@ fn the_cases_of_a_broken_stream_still_render_the_junit_xml() {
             detail: None,
         },
     );
+}
+
+// A stream that a client stopped reading takes no record more, and the iteration goes on.
+#[test]
+fn a_broken_stream_drops_the_later_records() {
+    let mut out = ClosedPipe;
+    let stream = Stream::new(&mut out);
+    stream.note("first");
+    assert!(stream.lock().broken);
+    stream.note("second");
+    let mut kept = Vec::new();
+    let stream = Stream::new(&mut kept);
+    stream.note("line");
+    drop(stream);
+    assert_eq!(String::from_utf8(kept).unwrap(), "{\"event\":\"output\",\"text\":\"line\"}\n");
+}
+
+// The stream keeps its cases for the JUnit XML, also after its reader went away. A prologue failure is a failed case
+// named after its suite, and a skip is a skipped case.
+#[test]
+fn the_cases_of_a_broken_stream_still_render_the_junit_xml() {
+    let mut out = ClosedPipe;
+    let stream = Stream::new(&mut out);
+    stream.note("the reader is gone after this record");
+    write_three_cases(&stream);
     let xml = stream.junit_xml();
     assert!(
         xml.contains(r#"<testsuites tests="3" failures="1" errors="0" skipped="1""#),
@@ -93,25 +82,7 @@ fn the_cases_of_a_broken_stream_still_render_the_junit_xml() {
 fn the_records_of_a_case_name_its_class_and_method_and_the_counts_add_up() {
     let mut out = Vec::new();
     let stream = Stream::new(&mut out);
-    stream.started(&case("passes"));
-    stream.finished(
-        &case("passes"),
-        CaseStatus::Successful,
-        Duration::from_millis(1_500),
-        None,
-        ScenarioReport::default(),
-    );
-    stream.skipped(&case("never"), "scenario 'never' never ran: budget".to_owned());
-    stream.container_failed(
-        "chat-reply",
-        "AirChatReplyGeneratedFlowUiTest",
-        "com.example.AirChatReplyGeneratedFlowUiTest",
-        TypedFailure {
-            kind: Some("lane_document".to_owned()),
-            message: Some("no reset".to_owned()),
-            detail: None,
-        },
-    );
+    write_three_cases(&stream);
     assert_eq!(
         stream.counts(),
         Counts {

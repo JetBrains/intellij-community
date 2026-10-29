@@ -8,6 +8,7 @@ use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::thread;
+use std::time::Duration;
 
 /// The platform whose conventions a path or a command line follows.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -49,6 +50,20 @@ pub struct SpawnResult {
     pub output: String,
 }
 
+/// The content of a checkout as git names it: the commit of HEAD, and the tree of the files with the local changes.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct CheckoutTree {
+    pub head: String,
+    /// `HEAD^{tree}` for a clean checkout. With local changes, the tree that `git add -A` and `git write-tree` would
+    /// give, untracked files included and ignored files left out.
+    pub tree: String,
+    /// The paths with local changes, repo-relative with `/`, as `git status` names them. Empty for a clean checkout.
+    pub changed: Vec<String>,
+}
+
+/// The exit code of a child that [`Runtime::spawn_watched`] stopped, as the `timeout` command answers it.
+pub const STOPPED_IDLE: i32 = 124;
+
 /// Called with the elapsed milliseconds every 30 s while a child runs, so a long bazel run does not look hung.
 pub type Heartbeat<'a> = &'a (dyn Fn(u64) + Sync);
 
@@ -62,6 +77,10 @@ pub trait Runtime: Sync {
     fn platform(&self) -> Platform;
 
     fn read_text_file(&self, path: &Path) -> io::Result<String>;
+
+    /// Replaces a file in one step, so a concurrent reader sees the old text or the new, never a part. Creates the
+    /// directory of the file when it is missing.
+    fn write_text_file(&self, path: &Path, text: &str) -> io::Result<()>;
 
     /// Streams a file that may not exist and may end mid-line.
     ///
@@ -80,18 +99,76 @@ pub trait Runtime: Sync {
     /// would answer every build output and every `node_modules` file under a module as a changed path.
     fn list_files(&self, dir: &Path) -> io::Result<Vec<PathBuf>>;
 
+    /// The text of a repo-relative file at a revision of the checkout, or `None` when the revision holds no such file.
+    /// An error is a revision that the checkout does not hold, or a checkout that the version control cannot read.
+    fn revision_text(&self, revision: &str, path: &str) -> io::Result<Option<String>>;
+
+    /// The commit where `HEAD` meets its upstream: the upstream of the current branch, or the default branch of
+    /// `origin` for a detached `HEAD`. The commits after it are the changes that are not pushed yet. An error is a
+    /// checkout without an upstream.
+    fn upstream_base(&self) -> io::Result<String>;
+
     /// Answers for a directory as well as a file: every test source root this crate probes is a directory.
     fn exists(&self, path: &Path) -> bool;
+
+    /// The content of the checkout now, or `None` when the checkout root is not a linked work tree of git. Only a
+    /// linked work tree, such as a lease of Branch Deck, is landed by `bd lease pick`, so only it needs the tree.
+    ///
+    /// It changes neither the index nor the work tree of the checkout. It writes the blobs and the trees of the local
+    /// changes into the object database, so a later reader can compare two trees.
+    fn checkout_tree(&self) -> io::Result<Option<CheckoutTree>>;
+
+    /// The tree of a commit of the checkout.
+    fn commit_tree(&self, commit: &str) -> io::Result<String>;
+
+    /// The path of a file in the git directory of the checkout, as `git rev-parse --git-path` gives it. A linked work
+    /// tree gives its own directory under `.git/worktrees/`.
+    fn git_path(&self, name: &str) -> io::Result<PathBuf>;
 
     /// Runs a child to completion and never fails: a command that could not start is a [`SpawnResult`] with exit
     /// code 127, a run outcome the classifier can reason about rather than an error to re-classify.
     fn spawn(&self, command: &[OsString], heartbeat: Option<Heartbeat<'_>>) -> SpawnResult;
+
+    /// Runs a child to completion, passes each line of its stderr to [`Runtime::write_error`] as it comes, and answers
+    /// its whole stdout as the [`SpawnResult`] output. Never fails, as [`Runtime::spawn`].
+    ///
+    /// The stdin of the child is a pipe that the runtime keeps open and never writes, until the child exits. So the
+    /// child sees the end of its stdin only when this process is gone. `bt --host` relies on it: ssh passes the end
+    /// to the host, and the host stops the run.
+    fn spawn_streaming(&self, command: &[OsString]) -> SpawnResult;
+
+    /// Runs a child to completion with `input` on its stdin, and answers its stdout and stderr merged. Never fails, as
+    /// [`Runtime::spawn`]. The input stays off the command line, so a secret in it shows in no process list.
+    fn spawn_with_input(&self, command: &[OsString], input: &str) -> SpawnResult;
+
+    /// Runs a child as [`Runtime::spawn`] does, and stops it with its process group when it writes nothing for
+    /// `idle`. A stopped child answers [`STOPPED_IDLE`]. Never fails.
+    ///
+    /// For a child that can stall without an end, such as an ssh or a git push that waits for a dead link or a key
+    /// agent: its options bound the link, and this bounds the rest.
+    fn spawn_watched(&self, command: &[OsString], idle: Duration) -> SpawnResult;
 
     /// A fresh path for a temporary file. The caller owns it and removes it with [`Runtime::remove`], from a guard
     /// that runs even when the run blows up: a leaked BEP file is tens of MB for a lane run.
     fn temp_file(&self, prefix: &str) -> PathBuf;
 
     fn remove(&self, path: &Path) -> io::Result<()>;
+
+    /// Copies one file, and creates the directories of `to` first.
+    fn copy_file(&self, from: &Path, to: &Path) -> io::Result<()>;
+
+    /// Creates a directory and its parents. A directory that is there already is no error.
+    fn create_dir_all(&self, path: &Path) -> io::Result<()>;
+
+    /// Removes a directory with everything in it. A directory that is not there is no error.
+    fn remove_dir_all(&self, path: &Path) -> io::Result<()>;
+
+    /// The home directory of the user, when the platform names one.
+    fn home_dir(&self) -> Option<PathBuf>;
+
+    /// Asks the person at the terminal a yes or no question, on the stderr. Answers `None` when the stdin is not a
+    /// terminal, so a script or an agent never answers it, and `Some(true)` only for a yes.
+    fn confirm(&self, question: &str) -> Option<bool>;
 
     /// Wall-clock milliseconds. Only differences are used, so a fake can start anywhere.
     fn now_ms(&self) -> u64;
@@ -158,6 +235,6 @@ mod tests {
         let items: Vec<usize> = (0..500).collect();
         let doubled = par_map(&items, |item| item * 2);
         assert_eq!(doubled, items.iter().map(|item| item * 2).collect::<Vec<_>>());
-        assert!(par_map(&[] as &[usize], |item| *item).is_empty());
+        assert_eq!(par_map(&[] as &[usize], |item| *item), Vec::<usize>::new());
     }
 }

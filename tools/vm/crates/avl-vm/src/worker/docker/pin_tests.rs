@@ -113,8 +113,9 @@ async fn a_named_cli_keeps_its_own_configuration() {
 #[tokio::test]
 async fn the_guest_line_resolves_the_pinned_cli_without_the_gate() {
     let fixture = Fixture::docker_builder().pinned_docker().build();
-    let backend = fixture.manager.machine().docker().unwrap();
-    let line = backend
+    let line = fixture
+        .manager
+        .machine()
         .guest_argv(&Ctx::background(), "air-docker-1", &[String::from("/usr/bin/true")], false)
         .await
         .unwrap();

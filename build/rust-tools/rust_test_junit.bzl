@@ -4,7 +4,8 @@
 
 libtest writes no report, so Bazel synthesizes one which holds a single test case for the whole target. The
 rule here runs the test binary through `//build/rust-tools/libtest-junit-wrapper` of the community module, which
-writes one test case per test to `XML_OUTPUT_FILE`. The `wrapper` argument names another wrapper binary.
+writes one test case per test to `XML_OUTPUT_FILE`. The `wrapper` argument names another wrapper binary, and the
+`junit_class` argument gives every test case one class name.
 """
 
 load("@rules_rs//rs:rust_test.bzl", "rust_test")
@@ -14,6 +15,9 @@ _WRAPPER = Label("//build/rust-tools/libtest-junit-wrapper")
 
 # Holds the runfiles path of the test binary the wrapper must run.
 _TEST_ENV_VAR = "LIBTEST_JUNIT_TEST"
+
+# Holds the one class name of every test case of the report.
+_CLASS_ENV_VAR = "LIBTEST_JUNIT_CLASS"
 
 def _rlocation_path(ctx, file):
     """The runfiles path of a file, which is what the runfiles library of the wrapper resolves."""
@@ -34,6 +38,8 @@ def _rust_test_junit_test_impl(ctx):
     test_executable = test[DefaultInfo].files_to_run.executable
 
     environment = {_TEST_ENV_VAR: _rlocation_path(ctx, test_executable)}
+    if ctx.attr.junit_class:
+        environment[_CLASS_ENV_VAR] = ctx.attr.junit_class
     inherited_environment = []
     if RunEnvironmentInfo in test:
         test_environment = test[RunEnvironmentInfo]
@@ -77,6 +83,9 @@ _rust_test_junit_test = rule(
     test = True,
     cfg = _platform_transition,
     attrs = {
+        "junit_class": attr.string(
+            doc = "The class name of every test case of the report. Empty keeps the module path of each test.",
+        ),
         "platform": attr.label(
             doc = "The target platform of the test, the wrapper and their dependencies. `None` keeps the platform.",
         ),
@@ -100,6 +109,7 @@ def rust_test_junit(
         args = [],
         exec_properties = {},
         flaky = False,
+        junit_class = "",
         platform = None,
         size = None,
         tags = [],
@@ -125,6 +135,9 @@ def rust_test_junit(
         args: Arguments the wrapper gives to the test binary.
         exec_properties: Execution properties of the test target.
         flaky: Whether Bazel retries the test target.
+        junit_class: The class name of every test case of the report, such as the name of the JUnit test that the
+            target replaces. Each case is then named by the last segment of its test name, which must be unique, and
+            a `--test_filter` of `<class>#<case>` selects the case.
         platform: The target platform of the test target, the wrapper and the `rust_test`. `None` keeps the
             platform of the configuration.
         size: Size of the test target.
@@ -148,6 +161,7 @@ def rust_test_junit(
         args = args,
         exec_properties = exec_properties,
         flaky = flaky,
+        junit_class = junit_class,
         platform = platform,
         size = size,
         tags = tags,

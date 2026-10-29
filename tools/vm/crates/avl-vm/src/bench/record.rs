@@ -8,9 +8,10 @@ use std::path::Path;
 use serde::{Deserialize, Serialize};
 
 use super::arm::{Arm, ArmKind, Gate};
-use super::classload::{self, ClassLoadLog};
+use super::classload::{self, ClassLoadLog, ClockAnchor, MAIN_CLASS, ProcessStart};
 use super::files;
 use super::fus;
+use super::idealog;
 use super::load::HostLoad;
 use super::pluginlog::{self, Owner, PluginLog, Tally};
 use super::profile::{self, EdtProfile, ExcludedSamples, FrameSamples, GATE_PROFILE, ProfileScope, WHOLE_PROFILE};
@@ -31,8 +32,11 @@ pub(crate) const FRAME_BECAME_INTERACTIVE: &str = "frameBecameInteractive";
 /// The metric keys of the report. A start without a project has no end of its start-up, so its report, which the IDE
 /// writes at the exit, can lack [`TOTAL_DURATION`] or hold a negative one. The record keeps neither, with a note.
 pub(crate) const TOTAL_DURATION: &str = "totalDuration";
-/// The milliseconds from the JVM start to the start of the process clock, `jvm.loadingTime` of the report.
+/// `jvm.loadingTime` of the report: the start of the process clock minus the start time of `RuntimeMXBean`.
 pub(crate) const JVM_LOADING_TIME: &str = "jvm.loadingTime";
+/// The start of the process clock on the JVM clock of the class-load log, in ms: the load of
+/// [`classload::MAIN_CLASS`]. The class anchors use it, see [`classload::process_start`].
+pub(crate) const JVM_PROCESS_START: &str = "jvm.processStart";
 /// The class requests of `ClassPath`, which the report writes as `classLoading.count`. A request is not a class: one
 /// class can need many requests.
 pub(crate) const CLASS_REQUESTS: &str = "classLoading.requests";
@@ -66,11 +70,12 @@ pub(crate) const QUIT_ANCHOR: &str = "quit";
 
 /// The anchors of the class counts, in the order of the start-up. Each one except [`QUIT_ANCHOR`] is a metric in
 /// milliseconds from the process start. A run has the metric [`named_at`] for each anchor that it has.
-pub(crate) const CLASS_ANCHORS: [&str; 6] = [
+pub(crate) const CLASS_ANCHORS: [&str; 7] = [
     FRAME_BECAME_VISIBLE,
     EMPTY_STATE_BUILT,
     WELCOME_BECAME_VISIBLE,
     WELCOME_SCREEN_PAINTED,
+    CARGO_SYNC_STARTED,
     EDITOR_HIGHLIGHTED,
     QUIT_ANCHOR,
 ];
@@ -188,14 +193,24 @@ const ERROR_TAG: &str = "error";
 /// [`EMPTY_STATE_SPAN`].
 pub(crate) const EMPTY_STATE_BUILT: &str = "emptyStateBuilt";
 
-/// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration.
+/// The line of `idea.log` that the Rust plugin writes when the first Cargo sync starts. The gate of the cargo-sync arm.
+/// The perf test of RustRover measures `rust_duration_from_start_to_cargo_sync` to the first such line.
+pub(crate) const CARGO_SYNC_LOG_LINE: &str = "CargoSyncTask started";
+
+/// The metric key of the cargo-sync arm: the milliseconds from the process start to the first
+/// [`CARGO_SYNC_LOG_LINE`], on the clock of the anchors.
+pub(crate) const CARGO_SYNC_STARTED: &str = "cargoSyncStarted";
+
+/// The same line on the clock of `idea.log`: the milliseconds in its `[...]` column, from the creation of the log. It
+/// is the value of `rust_duration_from_start_to_cargo_sync` of the perf test.
+pub(crate) const CARGO_SYNC_LOG_MS: &str = "cargoSyncStarted.ideaLog";
+
+/// The prefix of the spans of the Air empty-state composer. Each span is a metric with its duration, and the digest
+/// shows each one.
 pub(crate) const EMPTY_STATE_PREFIX: &str = "air.emptyState.";
 
-/// The prefix of the prologue steps of the composer, which the digest shows after [`EMPTY_STATE_SPANS`].
-pub(crate) const EMPTY_STATE_STEP_PREFIX: &str = "air.emptyState.prologue.";
-
-/// The spans of the composer with a fixed name, in the order of the digest: the whole build, the off-EDT prologue,
-/// the EDT build, and its two halves.
+/// The spans of the composer with a fixed name: the whole build, the off-EDT prologue, the EDT build, and its two
+/// halves. The digest shows them in this order when no run has an order of its spans.
 pub(crate) const EMPTY_STATE_SPANS: [&str; 5] = [
     EMPTY_STATE_SPAN,
     "air.emptyState.prologue",
@@ -264,6 +279,11 @@ pub(crate) struct RunRecord {
     pub(crate) notes: Vec<String>,
     /// Milliseconds, or a count for the class metrics.
     pub(crate) metrics: BTreeMap<String, f64>,
+    /// The names of the spans of the Air empty-state composer, see [`EMPTY_STATE_PREFIX`], in the order of their first
+    /// span: by the start, and the longer span first at one start. So a span comes before the spans inside it, and the
+    /// digest shows a nested span after its parent.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub(crate) empty_state_order: Vec<String>,
     /// The class maps of the run. [`Summary::build`](super::summary::Summary::build) drops them, so only `result.json`
     /// holds them.
     #[serde(flatten)]
@@ -415,32 +435,41 @@ impl RunId {
     }
 }
 
+impl RunRecord {
+    /// The record of the run `id` before its measure: not valid, without a reason, a note, a metric or a profile.
+    pub(crate) fn new(id: &RunId, launch: LaunchFacts) -> Self {
+        Self {
+            arm: id.arm.clone(),
+            kind: id.kind,
+            index: id.index,
+            dir: id.dir_name(),
+            launch,
+            valid: false,
+            reason: None,
+            notes: Vec::new(),
+            metrics: BTreeMap::new(),
+            empty_state_order: Vec::new(),
+            class_maps: ClassMaps::default(),
+            profile_scope: None,
+            excluded_samples: None,
+            edt_samples: None,
+            edt_frames: Vec::new(),
+            triggers: Vec::new(),
+            define_share: None,
+            profile: None,
+        }
+    }
+}
+
 /// Reads one run directory and applies the gate.
 pub(crate) fn collect(run_dir: &Path, id: &RunId, launch: LaunchFacts) -> RunRecord {
-    let mut record = RunRecord {
-        arm: id.arm.clone(),
-        kind: id.kind,
-        index: id.index,
-        dir: id.dir_name(),
-        launch,
-        valid: false,
-        reason: None,
-        notes: Vec::new(),
-        metrics: BTreeMap::new(),
-        class_maps: ClassMaps::default(),
-        profile_scope: None,
-        excluded_samples: None,
-        edt_samples: None,
-        edt_frames: Vec::new(),
-        triggers: Vec::new(),
-        define_share: None,
-        profile: None,
-    };
+    let mut record = RunRecord::new(id, launch);
     match measure(run_dir, &mut record) {
         Ok(()) => record.valid = true,
         Err(reason) => {
             record.reason = Some(reason);
             record.metrics.clear();
+            record.empty_state_order.clear();
         }
     }
     record
@@ -517,10 +546,21 @@ fn measure(run_dir: &Path, record: &mut RunRecord) -> Result<(), String> {
         }
     }
     if let Some(trace) = &trace {
-        empty_state_metrics(trace, metrics);
+        record.empty_state_order = empty_state_metrics(trace, metrics);
     }
     if let Gate::Span { name, missing } = gate {
         span_gate(trace.as_ref(), name, missing)?;
+    }
+    if let Gate::LogLine {
+        line,
+        metric,
+        log_metric,
+        missing,
+    } = gate
+    {
+        let (process_ms, log_ms) = log_line_gate(run_dir, trace.as_ref(), line, missing)?;
+        metrics.insert(metric.to_owned(), process_ms);
+        metrics.insert(log_metric.to_owned(), log_ms);
     }
     if record.arm.kind == ArmKind::OpenProject {
         open_project_metrics(record.launch.open_request_us, trace.as_ref(), stats.as_ref(), metrics)?;
@@ -607,8 +647,8 @@ fn profile_metrics(run_dir: &Path, record: &mut RunRecord) {
 
 /// The class metrics and the class maps of a run. The plugin log alone gives `pluginClasses`, the maps and the
 /// activations. The class-load log gives the counts by source, and with the plugin log the owners of its classes. With
-/// the report too, it gives the counts before each anchor and the first load of each loader: a bound on the process
-/// clock plus `jvm.loadingTime` is a bound on the JVM clock of the log.
+/// the start of the process clock, see [`classload::process_start`], it gives the counts before each anchor and the
+/// first load of each loader: a bound on the process clock plus that start is a bound on the JVM clock of the log.
 fn class_metrics(
     record: &mut RunRecord,
     plugin_log: Option<&PluginLog>,
@@ -648,21 +688,24 @@ fn class_metrics(
         record.metrics.insert(CLASSES_PLATFORM.to_owned(), count(platform));
         record.metrics.insert(CLASSES_PLUGINS.to_owned(), count(plugins));
     }
-    let offset_ms = match stats.map(StartupStats::jvm_loading_ms) {
-        Some(Some(offset_ms)) => Some(as_f64(offset_ms)),
-        Some(None) => {
-            record
-                .notes
-                .push("startup-stats.json has no jvm.loadingTime, so the class counts have no anchors".to_owned());
-            None
-        }
-        None => {
-            record
-                .notes
-                .push("no startup-stats.json, so the class counts have no anchors".to_owned());
-            None
-        }
-    };
+    let start = classload::process_start(log, stats.and_then(StartupStats::jvm_loading_ms));
+    match start.map(|start| start.anchor) {
+        Some(ClockAnchor::MainClass) => {}
+        Some(ClockAnchor::LoadingTime) => record.notes.push(format!(
+            "class-load.log has no {MAIN_CLASS}, so the class anchors start the process clock at {}",
+            ClockAnchor::LoadingTime.text()
+        )),
+        None if stats.is_some() => record.notes.push(format!(
+            "class-load.log has no {MAIN_CLASS} and startup-stats.json has no jvm.loadingTime, so the class counts have no anchors"
+        )),
+        None => record.notes.push(format!(
+            "class-load.log has no {MAIN_CLASS} and the run has no startup-stats.json, so the class counts have no anchors"
+        )),
+    }
+    if let Some(start) = start.filter(|start| start.anchor == ClockAnchor::MainClass) {
+        record.metrics.insert(JVM_PROCESS_START.to_owned(), start.uptime_ms);
+    }
+    let offset_ms = start.map(|start| start.uptime_ms);
     maps.activations = plugin_log
         .map(|owners| {
             let first_loads = offset_ms.map(|offset_ms| (classload::first_loads(log, owners), offset_ms));
@@ -693,6 +736,20 @@ fn class_metrics(
                 .insert(anchor.to_owned(), loader_rows(&classload::by_loader(log, owners, Some(bound))));
         }
     }
+}
+
+/// The start of the process clock on the JVM clock of `log`, the class-load log of the run directory `run_dir`, see
+/// [`classload::process_start`]. It reads `startup-stats.json` of the run only when the log has no [`MAIN_CLASS`]. A
+/// report of another shape is an error.
+pub(crate) fn process_start_of(run_dir: &Path, log: &ClassLoadLog) -> anyhow::Result<Option<ProcessStart>> {
+    if let Some(start) = classload::process_start(log, None) {
+        return Ok(Some(start));
+    }
+    let loading_ms = match files::read_optional(&run_dir.join("startup-stats.json"))? {
+        Some(text) => stats::parse(&text)?.jvm_loading_ms(),
+        None => None,
+    };
+    Ok(classload::process_start(log, loading_ms))
 }
 
 /// The activation of each loader of the plugin log, with its trigger frame. With the first loads on the JVM clock
@@ -787,6 +844,26 @@ fn span_gate(trace: Option<&Trace>, name: &str, missing: &str) -> Result<(), Str
     Ok(())
 }
 
+/// The log-line gate: the first line of `log/idea.log` that holds `line`. Answers its milliseconds from the process
+/// start, on the clock of the anchors, and its milliseconds on the clock of the log. The local time of the line and the
+/// UTC offset of the trace give its time since the epoch, and the origin of the trace is the process start. A run
+/// without the line, without the trace or without its offset is not valid.
+fn log_line_gate(run_dir: &Path, trace: Option<&Trace>, line: &str, missing: &str) -> Result<(f64, f64), String> {
+    let log = files::read_optional(&run_dir.join("log").join("idea.log"))
+        .map_err(|error| format!("{error:#}"))?
+        .ok_or_else(|| "no log/idea.log".to_owned())?;
+    let found = idealog::first_line(&log, line)
+        .map_err(|error| format!("log/idea.log: {error:#}"))?
+        .ok_or_else(|| format!("no line \"{line}\" in log/idea.log: {missing}"))?;
+    let Some((origin_us, offset_s)) = trace.and_then(|trace| Some((trace.origin_us()?, trace.utc_offset_s?))) else {
+        return Err(format!(
+            "{TRACE_FILE} has no process start or no UTC offset, so the line \"{line}\" has no time from the process start"
+        ));
+    };
+    let epoch_ms = found.epoch_ms(offset_s).map_err(|error| format!("log/idea.log: {error:#}"))?;
+    Ok((tenth(as_f64(epoch_ms) - as_f64(origin_us) / 1000.0), as_f64(found.log_ms)))
+}
+
 /// The metrics of the second project, measured from the open request.
 fn open_project_metrics(
     request_us: Option<i64>,
@@ -844,8 +921,10 @@ pub(crate) fn highlighted_ms(trace: Option<&Trace>, stats: Option<&StartupStats>
 
 /// The metrics of the Air empty-state composer: the duration of the first span of each name under
 /// [`EMPTY_STATE_PREFIX`], and [`EMPTY_STATE_BUILT`], the end of the first [`EMPTY_STATE_SPAN`]. A composer that the
-/// IDE builds again, after an editor closed, adds no metric: the first span of a name counts.
-fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) {
+/// IDE builds again, after an editor closed, adds no metric: the first span of a name counts. Answers the names in the
+/// order of [`RunRecord::empty_state_order`].
+fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) -> Vec<String> {
+    let mut firsts: Vec<&trace::Span> = Vec::new();
     for span in &trace.spans {
         let name = span.operation_name.as_str();
         if name.starts_with(EMPTY_STATE_PREFIX)
@@ -854,11 +933,16 @@ fn empty_state_metrics(trace: &Trace, metrics: &mut BTreeMap<String, f64>) {
             && let Some(first) = trace.first(name)
         {
             metrics.insert(name.to_owned(), micros_to_ms(first.duration));
+            firsts.push(first);
         }
     }
     if let (Some(origin), Some(span)) = (trace.origin_us(), trace.first(EMPTY_STATE_SPAN)) {
         metrics.insert(EMPTY_STATE_BUILT.to_owned(), span.end_ms(origin));
     }
+    firsts.sort_by(|left, right| {
+        (left.start_time, right.duration, &left.operation_name).cmp(&(right.start_time, left.duration, &right.operation_name))
+    });
+    firsts.into_iter().map(|span| span.operation_name.clone()).collect()
 }
 
 /// The duration of a span: the trace when it has the span, else the report item.

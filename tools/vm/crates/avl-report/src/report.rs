@@ -235,19 +235,16 @@ fn active_tests(events: &[RunEvent]) -> Vec<ActiveTest> {
         match &event.kind {
             RunEventKind::TestStarted(started) => {
                 let test = ActiveTest {
-                    id: started.execution.id.clone(),
-                    display_name: started.execution.display_name.clone(),
-                    class_name: started.execution.class_name.clone(),
-                    method_name: started.execution.method_name.clone(),
+                    execution: started.execution.clone(),
                     started_at: Some(started.timestamp.clone()),
                 };
-                match active.iter_mut().find(|known| known.id == test.id) {
+                match active.iter_mut().find(|known| known.execution.id == test.execution.id) {
                     Some(known) => *known = test,
                     None => active.push(test),
                 }
             }
-            RunEventKind::TestSkipped(skipped) => active.retain(|known| known.id != skipped.execution.id),
-            RunEventKind::TestFinished(finished) => active.retain(|known| known.id != finished.execution.id),
+            RunEventKind::TestSkipped(skipped) => active.retain(|known| known.execution.id != skipped.execution.id),
+            RunEventKind::TestFinished(finished) => active.retain(|known| known.execution.id != finished.execution.id),
             _ => {}
         }
     }

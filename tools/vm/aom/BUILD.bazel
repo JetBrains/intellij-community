@@ -1,0 +1,33 @@
+# The config of libaom for the repository `avl_aom`, whose BUILD file is `aom.BUILD.bazel`. `update.mjs` generates
+# `config/<arch>/config/` with cmake. The sources include each header as `config/<name>`.
+
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
+exports_files(
+    [
+        "config/x86_64/config/aom_config.asm",
+    ],
+    visibility = ["@avl_aom//:__pkg__"],
+)
+
+[
+    cc_library(
+        name = "config_" + arch,
+        hdrs = glob(["config/%s/config/*.h" % arch]),
+        includes = ["config/" + arch],
+        linkstatic = True,
+    )
+    for arch in [
+        "arm64",
+        "x86_64",
+    ]
+]
+
+alias(
+    name = "config",
+    actual = select({
+        "@platforms//cpu:aarch64": ":config_arm64",
+        "@platforms//cpu:x86_64": ":config_x86_64",
+    }),
+    visibility = ["@avl_aom//:__pkg__"],
+)

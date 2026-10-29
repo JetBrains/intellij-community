@@ -43,6 +43,9 @@ command line.**
 3. **An anchor is a bound on the JVM clock.** The report's `jvm.loadingTime` is the offset between the JVM start and
    the IDE clock of the trace and the FUS events. `classes.named@<anchor>` counts the named classes before the frame,
    the welcome screen, the highlighted editor, and the quit.
+   Amended 2026-10-22: the offset is the load of `com.intellij.idea.Main`, because `jvm.loadingTime` is about 100 ms
+   short. [The bench clock starts at the load of the main class](2026-10-22-the-bench-clock-starts-at-the-load-of-the-main-class.md)
+   records it.
 4. **The `project` arm starts the IDE on the project.** The project lives inside the sandbox, beside the welcome
    project, so the editor state of the prime run is copied per run. The prime run opens the project with its first
    file, and a measured run opens the directory; the IDE restores the editor. The gate is the instant event
