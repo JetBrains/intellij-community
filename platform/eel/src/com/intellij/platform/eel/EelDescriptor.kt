@@ -95,6 +95,14 @@ interface EelDescriptorWithInteractiveDeployment : EelDescriptor {
  * - For Docker: descriptors with `/docker-<id>/...` paths share the same container machine.
  *
  * Use this when caching or pooling long-lived data that’s stable across paths.
+ *
+ * ## Type Consistency
+ * Although not expressible in the static type system, an [EelMachine], its corresponding [EelDescriptor]s, and the `Eel*Api` instances
+ * it produces always share the same backend and operating system characteristics:
+ * - If an [EelMachine] is backed by IJent, its [EelDescriptor]s belong to IJent and all `Eel*Api` instances implement the corresponding
+ *   `Ijent*Api` interfaces (and similarly for [com.intellij.platform.eel.provider.LocalEelMachine] and [LocalEelApi]).
+ * - If a descriptor, machine, or API is for Windows (or POSIX), [EelDescriptor.osFamily] is [EelOsFamily.Windows] (or [EelOsFamily.Posix])
+ *   and all `Eel*Api` instances implement the corresponding `Eel*WindowsApi` (or `Eel*PosixApi`) interfaces.
  */
 @ApiStatus.Experimental
 interface EelMachine {

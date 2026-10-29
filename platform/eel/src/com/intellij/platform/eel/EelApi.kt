@@ -35,6 +35,16 @@ interface LocalEelApi : EelApi
  * Most operations are `suspend` functions and must be called from a coroutine.
  *
  * [EelPosixApi] and [EelWindowsApi] are the OS-family-specific refinements that narrow the capabilities and info to a known [EelOsFamily].
+ *
+ * ## Type Consistency Across `EelMachine`, `EelDescriptor`, and `Eel*Api`
+ * Although not expressible in the static type system, all [EelMachine], [EelDescriptor], and `Eel*Api` instances for a given environment
+ * are consistently linked by their backend and operating system characteristics:
+ * - **Backend family**: If an [EelMachine] is backed by IJent (or is [com.intellij.platform.eel.provider.LocalEelMachine]), its
+ *   corresponding [EelDescriptor]s, [EelApi] (`IjentApi` or [LocalEelApi]), and capability sub-APIs ([fs], [exec], [tunnels], etc.) all
+ *   belong to that same backend implementation family (e.g., `Ijent*Api`).
+ * - **Operating system family**: If a descriptor, machine, or API targets Windows (or POSIX), then [EelDescriptor.osFamily] is
+ *   [EelOsFamily.Windows] (or [EelOsFamily.Posix]), [platform] is [EelPlatform.Windows] (or [EelPlatform.Posix]), and the [EelApi] and its
+ *   sub-APIs implement the corresponding `Eel*WindowsApi` (or `Eel*PosixApi`) interfaces.
  */
 @ApiStatus.Experimental
 interface EelApi {

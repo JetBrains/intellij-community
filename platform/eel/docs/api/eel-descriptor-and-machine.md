@@ -22,6 +22,16 @@ Use `api.platform` for the OS and architecture after you obtain an API.
 `EelMachine` does not expose a `platform` property.
 `descriptor.name` is a display label, not an identity key.
 
+### Shared Backend and OS Characteristics
+
+The type system does not link `EelMachine`, `EelDescriptor`, and `Eel*Api` with type parameters.
+However, all instances for one environment share the same backend and OS characteristics:
+
+- If an `EelMachine` uses IJent, its `EelDescriptor` and every `Eel*Api` instance are IJent types (`Ijent*Api`) too.
+- If an environment runs Windows, `osFamily` is `Windows` and every `Eel*Api` instance implements the corresponding `Eel*WindowsApi` interface. The same rule applies to POSIX and `Eel*PosixApi`.
+
+Because these characteristics match across all types of one environment, code that holds an `EelApi` does not need a separate check on `EelMachine` or `EelDescriptor`.
+
 ## Compare the Identity You Need
 
 ### Descriptor Identity
