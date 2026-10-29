@@ -34,6 +34,7 @@ import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjec
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.AwaitCancellationAndInvoke
+import com.intellij.util.StartupUiGate
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
@@ -132,6 +133,9 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
       FUSProjectHotStartUpMeasurer.reportFrameBecameInteractive()
     }
     else {
+      if (!StartupUiGate.isReady) {
+        (pane as? IdeRootPane)?.holdStartupPaint()
+      }
       trackFrameInteractiveWaiting(loadingState, coroutineScope)
       val startUpContextElementToPass = FUSProjectHotStartUpMeasurer.getStartUpContextElementToPass() ?: EmptyCoroutineContext
       reportFrameInteractiveOnLoadingDone(loadingState, coroutineScope, startUpContextElementToPass)
@@ -141,6 +145,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
             span("hide splash") {
               hideSplash()
             }
+            (pane as? IdeRootPane)?.releaseStartupPaint()
           }
         }
       }
@@ -148,6 +153,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.NonLockedEven
         hideSplash()
         loadingIndicator = IdePaneLoadingLayer(pane = this, loadingState, coroutineScope = coroutineScope) {
           loadingIndicator = null
+          (pane as? IdeRootPane)?.releaseStartupPaint()
           applyActivationState()
         }
         applyActivationState()

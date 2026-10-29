@@ -13,11 +13,13 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.ui.mac.MacWinTabsHandler
+import com.intellij.util.StartupUiGate
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
+import java.awt.Graphics
 import java.awt.LayoutManager
 import javax.accessibility.AccessibleContext
 import javax.swing.JComponent
@@ -36,6 +38,30 @@ class IdeRootPane internal constructor() : JRootPane() {
   private var toolbar: JComponent? = null
 
   private var fixedGlassPane: Boolean = false
+
+  private var startupPaintHeld = false
+
+  /** Paints only the background until [releaseStartupPaint], so the first full paint of the frame includes the restored editor. */
+  internal fun holdStartupPaint() {
+    startupPaintHeld = true
+  }
+
+  internal fun releaseStartupPaint() {
+    if (startupPaintHeld) {
+      startupPaintHeld = false
+      repaint()
+    }
+  }
+
+  override fun paint(g: Graphics) {
+    if (startupPaintHeld && !StartupUiGate.isReady) {
+      // a paint that draws nothing lets the double-buffer path copy a stale tile of the shared back buffer to the screen
+      g.color = background
+      g.fillRect(0, 0, width, height)
+      return
+    }
+    super.paint(g)
+  }
 
   init {
     if (SystemInfoRt.isWindows) {
