@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.colors.impl
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.editor.colors.EditorFontCache
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.testFramework.junit5.TestApplication
 import org.assertj.core.api.Assertions.assertThat
@@ -27,6 +28,15 @@ internal class EditorFontCacheImplTest {
     counter.cache.getFont(EditorFontType.PLAIN)
     counter.cache.getFont(EditorFontType.PLAIN)
     assertThat(counter.builds).isEqualTo(2)
+  }
+
+  @Test
+  fun `the application cache holds the fonts of the global scheme`() {
+    val cache = EditorFontCache.getInstance()
+    cache.reset()
+    val globalScheme = EditorColorsManager.getInstance().globalScheme
+    assertThat(cache).isInstanceOf(GlobalSchemeFontCache::class.java)
+    assertThat(cache.getFont(EditorFontType.PLAIN).size2D).isEqualTo(globalScheme.editorFontSize2D)
   }
 
   @Test

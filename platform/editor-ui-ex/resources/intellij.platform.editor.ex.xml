@@ -30,7 +30,7 @@
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppEditorFontOptions"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.colors.EditorFontCache"
-                        serviceImplementation="com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl"/>
+                        serviceImplementation="com.intellij.openapi.editor.colors.impl.GlobalSchemeFontCache"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.highlighter.EditorHighlighterFactory"
                         serviceImplementation="com.intellij.openapi.editor.highlighter.EditorHighlighterFactoryImpl"/>
     <applicationSettings service="com.intellij.openapi.editor.colors.impl.AppConsoleFontOptions"/>

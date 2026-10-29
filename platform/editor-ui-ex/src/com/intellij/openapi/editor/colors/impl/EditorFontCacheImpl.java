@@ -5,7 +5,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.DelegatingFontPreferences;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -25,6 +24,10 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 import java.util.function.Supplier;
 
+/**
+ * Builds and keeps the editor and console fonts of one scheme.
+ * The application service {@link GlobalSchemeFontCache} and each {@link AbstractColorsScheme} hold an instance.
+ */
 @ApiStatus.Internal
 public final class EditorFontCacheImpl extends EditorFontCache {
   private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
@@ -38,15 +41,6 @@ public final class EditorFontCacheImpl extends EditorFontCache {
 
   private final @NotNull Supplier<? extends EditorColorsScheme> schemeSupplier;
   private volatile Font @NotNull [] fonts = new Font[0];
-
-  /**
-   * Creates the application cache, which reads the global scheme.
-   * The service container calls this constructor.
-   */
-  @SuppressWarnings("unused")
-  public EditorFontCacheImpl() {
-    this(() -> EditorColorsManager.getInstance().getGlobalScheme());
-  }
 
   public EditorFontCacheImpl(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     this.schemeSupplier = schemeSupplier;
