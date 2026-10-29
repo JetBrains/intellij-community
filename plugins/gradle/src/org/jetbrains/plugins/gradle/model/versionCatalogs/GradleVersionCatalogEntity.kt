@@ -10,7 +10,6 @@ import org.jetbrains.plugins.gradle.model.projectModel.GradleBuildEntity
 interface GradleVersionCatalogEntity : WorkspaceEntity {
   val name: String
   // version catalog file location
-  @IndexVfu
   val url: VirtualFileUrl
   @Parent
   val build: GradleBuildEntity

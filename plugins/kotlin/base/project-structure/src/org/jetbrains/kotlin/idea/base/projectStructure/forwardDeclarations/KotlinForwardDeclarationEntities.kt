@@ -18,7 +18,6 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
  * @see [org.jetbrains.kotlin.idea.base.projectStructure.KtNativeKlibLibraryModuleByModuleInfo].
  */
 interface KotlinForwardDeclarationsWorkspaceEntity : WorkspaceEntity {
-    @IndexVfu
     val forwardDeclarationRoots: Set<VirtualFileUrl>
     @Parent
     val library: LibraryEntity

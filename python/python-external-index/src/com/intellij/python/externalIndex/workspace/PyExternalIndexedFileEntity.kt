@@ -7,7 +7,6 @@ import com.intellij.platform.workspace.storage.annotations.IndexVfu
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 
 internal interface PyExternalIndexedFileEntity : WorkspaceEntity {
-  @IndexVfu
   val file: VirtualFileUrl
 }
 

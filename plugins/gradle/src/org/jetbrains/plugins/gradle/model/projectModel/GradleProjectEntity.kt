@@ -18,7 +18,6 @@ interface GradleProjectEntity : WorkspaceEntityWithSymbolicId {
   // The path identifying the project relatively to the root build (with ':' separators)
   val identityPath: String
   // URL of the directory containing the build.gradle(.kts)
-  @IndexVfu
   val url: VirtualFileUrl
 
   // Mostly, is the same as `identityPath`, but is different in case of the root project of the root build.

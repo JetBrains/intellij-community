@@ -67,10 +67,6 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "file", this.file)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -84,10 +80,6 @@ internal class PyExternalIndexedFileEntityImpl(private val dataSource: PyExterna
         checkModificationAllowed()
         getEntityData(true).file = value
         changedProperty.add("file")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "file", value)
-        }
       }
 
     override fun getEntityClass(): Class<PyExternalIndexedFileEntity> = PyExternalIndexedFileEntity::class.java

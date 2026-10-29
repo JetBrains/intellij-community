@@ -34,7 +34,6 @@ interface ArtifactEntity : WorkspaceEntityWithSymbolicId {
 
   val artifactType: @NonNls String
   val includeInProjectBuild: Boolean
-  @IndexVfu
   val outputUrl: VirtualFileUrl?
 
   val rootElement: CompositePackagingElementEntity?

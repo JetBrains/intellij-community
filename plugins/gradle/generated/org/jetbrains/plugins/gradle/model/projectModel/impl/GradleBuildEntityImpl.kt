@@ -114,10 +114,6 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "url", this.url)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -145,10 +141,6 @@ internal class GradleBuildEntityImpl(private val dataSource: GradleBuildEntityDa
         checkModificationAllowed()
         getEntityData(true).url = value
         changedProperty.add("url")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "url", value)
-        }
       }
     override var projects: List<GradleProjectEntityBuilder>
       @Suppress("UNCHECKED_CAST")

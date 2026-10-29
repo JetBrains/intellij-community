@@ -75,10 +75,6 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "roots", this.roots)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -87,9 +83,6 @@ internal class ScratchRootsEntityImpl(private val dataSource: ScratchRootsEntity
         changedProperty.add("entitySource")
       }
     private val rootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      if (diff != null) {
-        index(this, "roots", value)
-      }
       changedProperty.add("roots")
     }
     override var roots: MutableList<VirtualFileUrl>

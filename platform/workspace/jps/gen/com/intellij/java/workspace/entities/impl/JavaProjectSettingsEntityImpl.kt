@@ -98,10 +98,6 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "compilerOutput", this.compilerOutput)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -122,10 +118,6 @@ internal class JavaProjectSettingsEntityImpl(private val dataSource: JavaProject
         checkModificationAllowed()
         getEntityData(true).compilerOutput = value
         changedProperty.add("compilerOutput")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "compilerOutput", value)
-        }
       }
     override var languageLevelId: String?
       get() = getEntityData().languageLevelId

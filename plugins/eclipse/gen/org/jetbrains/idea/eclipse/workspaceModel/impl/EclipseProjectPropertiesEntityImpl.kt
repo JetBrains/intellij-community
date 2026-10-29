@@ -157,10 +157,6 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "eclipseUrls", this.eclipseUrls)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -182,9 +178,6 @@ internal class EclipseProjectPropertiesEntityImpl(private val dataSource: Eclips
         changedProperty.add("variablePaths")
       }
     private val eclipseUrlsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      if (diff != null) {
-        index(this, "eclipseUrls", value)
-      }
       changedProperty.add("eclipseUrls")
     }
     override var eclipseUrls: MutableList<VirtualFileUrl>

@@ -13,7 +13,6 @@ internal interface PyProjectTomlWorkspaceEntity : WorkspaceEntity {
   // [tool, probablyWorkspaceRoot?]. If root is null -> tool didn't implement workspace, just participated in this entry creation
   val participatedTools: Map<ToolId, ModuleId?>
 
-  @IndexVfu
   val dirWithToml: VirtualFileUrl
 
   @Parent

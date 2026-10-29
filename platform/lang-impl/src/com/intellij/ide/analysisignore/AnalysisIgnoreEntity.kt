@@ -13,7 +13,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface AnalysisIgnoreEntity : WorkspaceEntity {
-  @IndexVfu
   val baseDir: VirtualFileUrl
   val patterns: List<String>
 }

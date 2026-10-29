@@ -98,10 +98,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "order", this.order)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -110,9 +106,6 @@ internal class ExcludeUrlOrderEntityImpl(private val dataSource: ExcludeUrlOrder
         changedProperty.add("entitySource")
       }
     private val orderUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      if (diff != null) {
-        index(this, "order", value)
-      }
       changedProperty.add("order")
     }
     override var order: MutableList<VirtualFileUrl>

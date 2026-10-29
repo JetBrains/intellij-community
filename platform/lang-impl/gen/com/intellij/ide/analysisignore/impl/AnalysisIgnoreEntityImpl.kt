@@ -86,10 +86,6 @@ internal class AnalysisIgnoreEntityImpl(private val dataSource: AnalysisIgnoreEn
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "baseDir", this.baseDir)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -103,10 +99,6 @@ internal class AnalysisIgnoreEntityImpl(private val dataSource: AnalysisIgnoreEn
         checkModificationAllowed()
         getEntityData(true).baseDir = value
         changedProperty.add("baseDir")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "baseDir", value)
-        }
       }
     private val patternsUpdater: (value: List<String>) -> Unit = { value ->
       changedProperty.add("patterns")

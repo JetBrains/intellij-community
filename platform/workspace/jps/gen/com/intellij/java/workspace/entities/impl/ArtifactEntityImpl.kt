@@ -119,10 +119,6 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "outputUrl", this.outputUrl)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -157,10 +153,6 @@ internal class ArtifactEntityImpl(private val dataSource: ArtifactEntityData) : 
         checkModificationAllowed()
         getEntityData(true).outputUrl = value
         changedProperty.add("outputUrl")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "outputUrl", value)
-        }
       }
     override var rootElement: CompositePackagingElementEntityBuilder<out CompositePackagingElementEntity>?
       @Suppress("UNCHECKED_CAST")

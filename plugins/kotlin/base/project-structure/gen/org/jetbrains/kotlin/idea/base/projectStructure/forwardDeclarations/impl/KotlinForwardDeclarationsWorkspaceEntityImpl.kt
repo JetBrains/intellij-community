@@ -103,10 +103,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
             updateChildToParentReferences(parents)
         }
 
-        override fun index() {
-            index(this, "forwardDeclarationRoots", this.forwardDeclarationRoots)
-        }
-
         override var entitySource: EntitySource
             get() = getEntityData().entitySource
             set(value) {
@@ -115,9 +111,6 @@ internal class KotlinForwardDeclarationsWorkspaceEntityImpl(private val dataSour
                 changedProperty.add("entitySource")
             }
         private val forwardDeclarationRootsUpdater: (value: Set<VirtualFileUrl>) -> Unit = { value ->
-            if (diff != null) {
-                index(this, "forwardDeclarationRoots", value)
-            }
             changedProperty.add("forwardDeclarationRoots")
         }
         override var forwardDeclarationRoots: MutableSet<VirtualFileUrl>

@@ -23,7 +23,6 @@ interface EclipseProjectPropertiesEntity : WorkspaceEntity {
   val variablePaths: Map<String, String>
 
   // This should be a set
-  @IndexVfu
   val eclipseUrls: List<VirtualFileUrl>
 
   // This should be a set

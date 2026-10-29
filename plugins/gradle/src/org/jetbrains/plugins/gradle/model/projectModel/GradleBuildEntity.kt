@@ -16,7 +16,6 @@ interface GradleBuildEntity : WorkspaceEntityWithSymbolicId {
 
   val name: String
   // URL of the directory containing the settings.gradle(.kts)
-  @IndexVfu
   val url: VirtualFileUrl
   val projects: List<GradleProjectEntity>
 

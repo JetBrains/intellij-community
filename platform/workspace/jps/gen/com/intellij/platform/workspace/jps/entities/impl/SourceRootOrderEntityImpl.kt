@@ -98,10 +98,6 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "orderOfSourceRoots", this.orderOfSourceRoots)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -110,9 +106,6 @@ internal class SourceRootOrderEntityImpl(private val dataSource: SourceRootOrder
         changedProperty.add("entitySource")
       }
     private val orderOfSourceRootsUpdater: (value: List<VirtualFileUrl>) -> Unit = { value ->
-      if (diff != null) {
-        index(this, "orderOfSourceRoots", value)
-      }
       changedProperty.add("orderOfSourceRoots")
     }
     override var orderOfSourceRoots: MutableList<VirtualFileUrl>

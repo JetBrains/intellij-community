@@ -21,7 +21,6 @@ import org.jetbrains.annotations.ApiStatus
 interface JavaProjectSettingsEntity : WorkspaceEntity {
   @Parent
   val projectSettings: ProjectSettingsEntity
-  @IndexVfu
   val compilerOutput: VirtualFileUrl?
   val languageLevelId: String?
   val languageLevelDefault: Boolean?

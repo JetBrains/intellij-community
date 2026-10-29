@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NonNls
  */
 @Internal
 interface SourceRootOrderEntity : WorkspaceEntity {
-  @IndexVfu
   val orderOfSourceRoots: List<VirtualFileUrl>
 
   @Parent
@@ -138,7 +137,6 @@ val SourceRootEntity.customSourceRootProperties: CustomSourceRootPropertiesEntit
  */
 @Internal
 interface ExcludeUrlOrderEntity : WorkspaceEntity {
-  @IndexVfu
   val order: List<VirtualFileUrl>
 
   @Parent

@@ -99,10 +99,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "dirWithToml", this.dirWithToml)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -123,10 +119,6 @@ internal class PyProjectTomlWorkspaceEntityImpl(private val dataSource: PyProjec
         checkModificationAllowed()
         getEntityData(true).dirWithToml = value
         changedProperty.add("dirWithToml")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "dirWithToml", value)
-        }
       }
     override var module: ModuleEntityBuilder
       get() = getParent(MODULE_CONNECTION_ID) as? ModuleEntityBuilder ?: error("module is null for PyProjectTomlWorkspaceEntity")

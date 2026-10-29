@@ -99,10 +99,6 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
       updateChildToParentReferences(parents)
     }
 
-    override fun index() {
-      index(this, "url", this.url)
-    }
-
     override var entitySource: EntitySource
       get() = getEntityData().entitySource
       set(value) {
@@ -123,10 +119,6 @@ internal class GradleVersionCatalogEntityImpl(private val dataSource: GradleVers
         checkModificationAllowed()
         getEntityData(true).url = value
         changedProperty.add("url")
-        val _diff = diff
-        if (_diff != null) {
-          index(this, "url", value)
-        }
       }
     override var build: GradleBuildEntityBuilder
       get() = getParent(BUILD_CONNECTION_ID) as? GradleBuildEntityBuilder ?: error("build is null for GradleVersionCatalogEntity")
