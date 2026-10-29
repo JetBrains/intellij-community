@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
  * A raw search result, with the matchers that decide which parts of its presentation the UI highlights.
  */
 @ApiStatus.Experimental
-interface SeTargetRawItem {
+sealed interface SeTargetRawItem {
   val rawItem: Any
   val weight: Int
   val matchers: ItemMatchers?
@@ -35,7 +35,7 @@ class SeTargetRawItemImpl(
  * A goto search result with its computed presentation.
  */
 @ApiStatus.Experimental
-interface SeTargetPresentableItem : SeItem {
+sealed interface SeTargetPresentableItem : SeItem {
   val extendedInfo: SeExtendedInfo
   val isMultiSelectionSupported: Boolean
   val isExactMatch: Boolean
