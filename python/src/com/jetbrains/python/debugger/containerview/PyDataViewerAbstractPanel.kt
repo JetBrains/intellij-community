@@ -104,6 +104,12 @@ abstract class PyDataViewerAbstractPanel(
     ApplicationManager.getApplication().executeOnPooledThread {
       @Suppress("PyExceptionTooBroad")
       try {
+        if (strategy.typeName == "Tensor" && !isNumpyAvailable(debugValue.frameAccessor)) {
+          ApplicationManager.getApplication().invokeLater {
+            setError(PyBundle.message("debugger.data.view.numpy.is.not.available"), modifier)
+          }
+          return@executeOnPooledThread
+        }
         doStrategyInitExecution(debugValue.frameAccessor, strategy)
         val arrayChunk = debugValue.frameAccessor.getArrayItems(debugValue, 0, 0, 0, 0, format)
         ApplicationManager.getApplication().invokeLater {
@@ -140,6 +146,14 @@ abstract class PyDataViewerAbstractPanel(
       .mapNotNull { it.trim().toIntOrNull() }
       .takeIf { it.size == shape.count { ch -> ch == ',' } + 1 }
   }
+
+  private fun isNumpyAvailable(frameAccessor: PyFrameAccessor): Boolean =
+    try {
+      frameAccessor.evaluate("__import__('torch').zeros(0).numpy() is not None", false, false).value == "True"
+    }
+    catch (_: PyDebuggerException) {
+      false
+    }
 
   @Throws(PyDebuggerException::class)
   protected fun doStrategyInitExecution(frameAccessor: PyFrameAccessor, strategy: DataViewStrategy) {
