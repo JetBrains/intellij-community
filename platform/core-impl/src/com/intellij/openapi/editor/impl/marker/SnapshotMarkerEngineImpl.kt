@@ -8,11 +8,9 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.ReferenceQueue
-import java.util.IdentityHashMap
 
 /**
  * Mutable snapshot-marker engine backed by immutable persistent [PMarkerRoot] values in external marker stores.
@@ -145,53 +143,23 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
    */
   fun processQueue(): Boolean {
     var reference = markerQueue.poll() as? WeakSnapshotMarkerReference<*> ?: return false
-    var firstRootStorage: MarkerRootUpdater? = null
-    val firstHandles = ArrayList<SnapshotMarkerReference<*>>()
-    var handlesByRoot: IdentityHashMap<MarkerRootUpdater, ArrayList<SnapshotMarkerReference<*>>>? = null
+    var batchStorage: MarkerRootUpdater? = null
+    val handles = ArrayList<SnapshotMarkerReference<*>>()
+    var purgedAny = false
     while (true) {
       val rootStorage = reference.rootStorageReference.get()
       if (rootStorage != null) {
-        if (firstRootStorage == null) firstRootStorage = rootStorage
-        if (rootStorage === firstRootStorage) {
-          firstHandles.add(reference)
+        if (rootStorage !== batchStorage) {
+          if (batchStorage != null && batchStorage.purgeCollected(handles)) purgedAny = true
+          handles.clear()
+          batchStorage = rootStorage
         }
-        else {
-          // allocate map only when there are at least two distinct storages found
-          val batches = handlesByRoot ?:
-            IdentityHashMap<MarkerRootUpdater, ArrayList<SnapshotMarkerReference<*>>>().also { handlesByRoot = it }
-          batches.getOrPut(rootStorage) { ArrayList() }.add(reference)
-        }
+        handles.add(reference)
       }
       reference = markerQueue.poll() as? WeakSnapshotMarkerReference<*> ?: break
     }
-    var purgedAny = firstRootStorage?.let { purgeCollected(it, firstHandles) } ?: false
-    for ((rootStorage, handles) in handlesByRoot ?: return purgedAny) {
-      if (purgeCollected(rootStorage, handles)) purgedAny = true
-    }
+    if (batchStorage != null && batchStorage.purgeCollected(handles)) purgedAny = true
     return purgedAny
-  }
-
-  private fun purgeCollected(rootStorage: MarkerRootUpdater, handles: Collection<SnapshotMarkerReference<*>>): Boolean {
-    if (rootStorage is VirtualFileMarkerRoot) {
-      synchronized(rootStorage) {
-        return purgeCollected(rootStorage, rootStorage.document, handles)
-      }
-    }
-    val document = rootStorage.document ?: return false
-    return purgeCollected(rootStorage, document, handles)
-  }
-
-  private fun purgeCollected(
-    rootStorage: MarkerRootUpdater,
-    document: DocumentImpl?,
-    handles: Collection<SnapshotMarkerReference<*>>,
-  ): Boolean {
-    try {
-      return rootStorage.updateCurrentRoot { it.purgeMany(handles) }
-    }
-    finally {
-      if (document != null) ObjectUtilsRt.reachabilityFence(document)
-    }
   }
 
   override fun removeRangeMarker(marker: SnapshotMarker): Boolean {

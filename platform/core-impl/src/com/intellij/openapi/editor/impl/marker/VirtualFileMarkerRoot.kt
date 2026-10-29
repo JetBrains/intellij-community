@@ -53,6 +53,9 @@ class VirtualFileMarkerRoot private constructor(
   }
 
   @Synchronized
+  override fun purgeCollected(handles: Collection<SnapshotMarkerReference<*>>): Boolean = purgeCollected(document, handles)
+
+  @Synchronized
   private fun attach(document: DocumentImpl) {
     rootReference = markerRoot(document)
     if (documentReference?.get() !== document) {

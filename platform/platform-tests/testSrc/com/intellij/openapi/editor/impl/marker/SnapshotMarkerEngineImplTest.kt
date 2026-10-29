@@ -1026,7 +1026,7 @@ class SnapshotMarkerEngineImplTest {
 
   @ParameterizedTest
   @ValueSource(ints = [1, 2, 3])
-  fun `queue processing purges one batch per document`(documentCount: Int) {
+  fun `queue processing batches references from one storage and purges interleaved storages`(documentCount: Int) {
     val documents = List(documentCount) { DocumentImpl("abcdef", true) }
     val markers = documents.map { document -> List(3) { document.createRangeMarker(it, it + 1) as SnapshotRangeMarkerImpl } }
     val batches = ArrayList<List<SnapshotMarkerReference<*>>>()
@@ -1050,8 +1050,10 @@ class SnapshotMarkerEngineImplTest {
 
     assertTrue(SnapshotMarkerEngineImpl.processQueue())
 
-    assertEquals(documentCount, batches.size)
-    assertEquals(markers.map { group -> group.map { it.markerHandle }.toSet() }.toSet(), batches.map { it.toSet() }.toSet())
+    if (documentCount == 1) {
+      assertEquals(1, batches.size)
+      assertEquals(markers.single().map { it.markerHandle }.toSet(), batches.single().toSet())
+    }
     for ((index, document) in documents.withIndex()) {
       val root = document.rangeMarkers.rootStore().rootReference(document.core.snapshot()).get()
       for (marker in markers[index]) {
