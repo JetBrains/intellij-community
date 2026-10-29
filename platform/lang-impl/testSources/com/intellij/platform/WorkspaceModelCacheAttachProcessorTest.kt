@@ -99,6 +99,20 @@ internal class WorkspaceModelCacheAttachProcessorTest {
   }
 
   @Test
+  fun `test primary module depends on attached module`(): Unit = runBlocking {
+    registerAttachProcessors()
+    val attachedProjectPath = createProjectWithModule("attached_project")
+
+    val newProjectPath = tempDirManager.newPath("new_project", refreshVfs = false).also { it.createDirectories() }
+    ProjectManagerEx.getInstanceEx().openProjectAsync(newProjectPath, OpenProjectTask { projectRootDir = newProjectPath })!!.useProjectAsync { newProject ->
+      val primaryModule = addModule(newProject, newProjectPath)
+      assertThat(attachToProjectAsync(newProject, attachedProjectPath)).isTrue()
+      val attachedModule = ModuleManager.getInstance(newProject).findModuleByName(attachedProjectPath.name)!!
+      assertThat(ModuleRootManager.getInstance(primaryModule).dependencies).containsExactly(attachedModule)
+    }
+  }
+
+  @Test
   fun `test detach removes attached project root`(): Unit = runBlocking {
     registerAttachProcessors()
     val attachedProjectPath = createProjectWithModule("attached_project")

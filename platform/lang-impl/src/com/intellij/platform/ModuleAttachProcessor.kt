@@ -131,7 +131,7 @@ internal suspend fun attachModule(project: Project, imlFile: Path): Module {
   return newModule
 }
 
-private fun addPrimaryModuleDependency(project: Project, newModule: Module): Module? {
+internal fun addPrimaryModuleDependency(project: Project, newModule: Module): Module? {
   val module = getPrimaryModule(project)
   if (module != null && module !== newModule) {
     ModuleRootModificationUtil.addDependency(module, newModule)
