@@ -250,6 +250,7 @@ f:com.intellij.platform.eel.EelExecWindowsApiHelpersKt
 - a:isConnected():Z
 - a:ownsDescriptor(com.intellij.platform.eel.EelDescriptor):Z
 - *a:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+- *:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.EelMachineWithConnectionState
 - com.intellij.platform.eel.EelMachine
 *:com.intellij.platform.eel.EelNetworkError
@@ -772,15 +773,31 @@ f:com.intellij.platform.eel.channels.PeekableEelReceiveChannelKt
 - <init>(java.lang.String,java.lang.String):V
 - f:getRaw():java.lang.String
 - f:getReason():java.lang.String
+*f:com.intellij.platform.eel.provider.EelDescriptors
+- sf:INSTANCE:com.intellij.platform.eel.provider.EelDescriptors
+- *f:docker(java.lang.String):com.intellij.platform.eel.EelDescriptor
+- *f:docker(java.lang.String,java.lang.String):com.intellij.platform.eel.EelDescriptor
+- *f:getLocal():com.intellij.platform.eel.provider.LocalEelDescriptor
+- *f:ssh(java.lang.String):com.intellij.platform.eel.EelDescriptor
+- *f:ssh(java.lang.String,com.intellij.platform.eel.EelOsFamily):com.intellij.platform.eel.EelDescriptor
+- *f:wsl(java.lang.String):com.intellij.platform.eel.EelDescriptor
 f:com.intellij.platform.eel.provider.EelMachineProviderUtil
 - *sf:getResolvedEelMachine(com.intellij.platform.eel.EelDescriptor):com.intellij.platform.eel.EelMachine
 - *sf:resolveEelMachine(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
 - *sf:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+- *sf:toEelApi(com.intellij.platform.eel.EelDescriptor,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.provider.EelMachineResolver
 - *sf:Companion:com.intellij.platform.eel.provider.EelMachineResolver$Companion
 - a:resolveEelMachine(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
 *f:com.intellij.platform.eel.provider.EelMachineResolver$Companion
 - f:getAll():java.util.List
+*f:com.intellij.platform.eel.provider.EelMachines
+- sf:INSTANCE:com.intellij.platform.eel.provider.EelMachines
+- *f:docker(java.lang.String,java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- *f:docker(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- *f:getLocal():com.intellij.platform.eel.provider.LocalEelMachine
+- *f:ssh(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
+- *f:wsl(java.lang.String,kotlin.coroutines.Continuation):java.lang.Object
 f:com.intellij.platform.eel.provider.LocalEelApiKt
 - *sf:getLocalEel():com.intellij.platform.eel.LocalEelApi
 *f:com.intellij.platform.eel.provider.LocalEelDescriptor
@@ -800,6 +817,7 @@ f:com.intellij.platform.eel.provider.LocalEelApiKt
 - isConnected():Z
 - ownsDescriptor(com.intellij.platform.eel.EelDescriptor):Z
 - toEelApi(com.intellij.platform.eel.EelDescriptor,kotlin.coroutines.Continuation):java.lang.Object
+- toEelApi(com.intellij.platform.eel.EelDescriptor,kotlinx.coroutines.CoroutineScope,kotlin.coroutines.Continuation):java.lang.Object
 *:com.intellij.platform.eel.provider.LocalPosixEelApi
 - com.intellij.platform.eel.EelPosixApi
 - com.intellij.platform.eel.LocalEelApi

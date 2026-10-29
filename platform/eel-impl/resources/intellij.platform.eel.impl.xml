@@ -20,6 +20,20 @@
                     interface="com.intellij.platform.eel.provider.portAccessibleLocally.EelPortAccessibleLocally"/>
     <extensionPoint qualifiedName="com.intellij.eelMachineResolver"
                     interface="com.intellij.platform.eel.provider.EelMachineResolver" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.wslEelDescriptorProvider"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver$Provider$WslEelDescriptorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.wslEelMachineProvider"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver$Provider$WslEelMachineProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.dockerEelDescriptorProvider"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver$Provider$DockerEelDescriptorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.dockerEelMachineProvider"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver$Provider$DockerEelMachineProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.sshEelDescriptorProvider"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver$Provider$SshEelDescriptorProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.sshEelMachineProvider"
+                    interface="com.intellij.platform.eel.provider.EelMachineResolver$Provider$SshEelMachineProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.eelMachineConnectionProvider"
+                    interface="com.intellij.platform.eel.EelMachineConnectionProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.eelEnvironment"
                     interface="com.intellij.platform.eel.impl.base.EelEnvironmentHousekeepingService" dynamic="true"/>
   </extensionPoints>

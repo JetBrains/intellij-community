@@ -3,7 +3,9 @@ package com.intellij.platform.eel.tcp
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.eel.EelDescriptorWithInteractiveDeployment
+import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.eel.nioFs.impl.EelMachineNioFsUriProvider
 import com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.utils.WindowsPathUtils
@@ -49,7 +51,7 @@ internal class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRouti
   private fun createFilesystem(internalName: String, localFS: FileSystem, descriptor: TcpEelDescriptor): FileSystem {
     val localPath = localFS.getPath(descriptor.rootPathString)
 
-    val ijentUri = URI("ijent", "tcp", "/$internalName", null, null)
+    val ijentUri = getTcpNioFsUri(internalName)
     val ijentDefaultProvider = IjentNioFileSystemProvider.getInstance()
 
     try {
@@ -99,3 +101,15 @@ internal class TcpEelMrfsBackend(private val scope: CoroutineScope) : MultiRouti
     return cache.values.flatMap { it.fileStores }
   }
 }
+
+internal class TcpEelMachineNioFsUriProvider : EelMachineNioFsUriProvider {
+  override fun getNioFsUri(machine: EelMachine): URI? {
+    if (machine !is TcpEelMachine && TcpEelPathParser.EP_NAME.extensionList.none { it.isInternalNameCompatible(machine.internalName) }) {
+      return null
+    }
+    return getTcpNioFsUri(machine.internalName)
+  }
+}
+
+private fun getTcpNioFsUri(internalName: String): URI =
+  URI("ijent", "tcp", "/$internalName", null, null)

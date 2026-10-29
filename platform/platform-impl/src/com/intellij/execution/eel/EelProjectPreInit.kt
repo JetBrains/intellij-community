@@ -1,9 +1,11 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.InitProjectActivity
+import com.intellij.platform.eel.EelMachineConnectionProvider
 import com.intellij.platform.eel.channels.EelDelicateApi
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.resolveEelMachine
@@ -45,6 +47,9 @@ internal class EelProjectPreInit : InitProjectActivity {
     }
     @OptIn(EelDelicateApi::class)
     project.setEelMachine(machine)
+    (project as? ComponentManagerEx)?.getCoroutineScope()?.let { projectScope ->
+      EelMachineConnectionProvider.registry.acquireProjectLease(machine, projectScope)
+    }
   }
 
   companion object {

@@ -56,7 +56,12 @@ interface EelApi {
    */
   val platform: EelPlatform
 
-  /** A view of the environment's file system. See [EelFileSystemApi]. */
+  /**
+   * A view of the environment's file system. See [EelFileSystemApi].
+   *
+   * Instead of using this internal property directly, use the [fileSystem] extension to access the environment's
+   * [java.nio.file.FileSystem] through standard `java.nio.file` APIs.
+   */
   @get:ApiStatus.Internal
   val fs: EelFileSystemApi
 

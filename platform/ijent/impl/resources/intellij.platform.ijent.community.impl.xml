@@ -19,4 +19,8 @@
     <module name="intellij.platform.util.annotations"/>
   </dependencies>
   <!-- endregion -->
+  <extensions defaultExtensionNs="com.intellij">
+    <eelMachineConnectionProvider implementation="com.intellij.platform.ijent.community.impl.EelMachineConnectionManagerImpl"/>
+    <eelMachineNioFileSystemProvider implementation="com.intellij.platform.ijent.community.impl.EelMachineConnectionManagerImpl"/>
+  </extensions>
 </idea-plugin>

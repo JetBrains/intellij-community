@@ -3,6 +3,7 @@ package com.intellij.platform.eel
 
 import com.intellij.platform.eel.path.EelPath.OS
 import com.intellij.platform.util.annotations.VisibleToClasses
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -116,15 +117,39 @@ interface EelMachine {
   val name: @Nls String get() = "TODO OVERRIDE ME"
 
   /**
-   * Converts this machine into a [EelApi] — starts or reuses a running environment.
+   * Converts this machine into a [EelApi] — starts or reuses a running environment without binding a lease to a caller scope.
+   *
    * The machine selects the connection. [descriptor] defines the path namespace of the API and all paths it returns.
    * The caller must ensure that [descriptor] addresses this environment, including when another resolver owns that descriptor.
    * Implementations can reject path namespaces they do not support.
+   *
+   * To tie the environment's lifecycle to a [CoroutineScope] lease, use the [toEelApi] overload taking `lifetime`.
+   *
    * @throws EelUnavailableException if eel is unavailable (i.e. remote machine is gone, docker container removed e.t.c.). Show it to a user, ask to fix and try again.
    */
   @ApiStatus.Experimental
   @Throws(EelUnavailableException::class)
   suspend fun toEelApi(descriptor: EelDescriptor): EelApi
+
+  /**
+   * Acquires a reference-counted connection lease on this machine bound to [lifetime] and returns its [EelApi] for [descriptor].
+   *
+   * Unlike [toEelApi] without a scope, this overload ties the environment's lifecycle to [lifetime]. The lease remains active until
+   * [lifetime] is cancelled or completes. When all leases on this machine (including any open IDE projects) end, its machine-bound
+   * [fileSystem] and underlying remote agent session are closed.
+   *
+   * Why a [lifetime] parameter instead of making [EelApi] implement [AutoCloseable]: an [EelApi] is backed by a machine-wide shared
+   * session, and most callers of the single-parameter [toEelApi] are one-shot lookups that never close the returned instance. Taking
+   * [lifetime] at acquisition time distinguishes lease-holding callers from fire-and-forget callers, so reference counts cannot leak
+   * and closing one caller's scope never terminates a session still used by another lease or an open project.
+   *
+   * @throws EelUnavailableException if the environment cannot be reached.
+   */
+  @ApiStatus.Experimental
+  @Throws(EelUnavailableException::class)
+  suspend fun toEelApi(descriptor: EelDescriptor, lifetime: CoroutineScope): EelApi {
+    return EelMachineConnectionProvider.registry.openConnection(this, descriptor, lifetime)
+  }
 
   fun ownsDescriptor(descriptor: EelDescriptor): Boolean
 }

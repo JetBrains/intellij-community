@@ -27,6 +27,9 @@
     <eelEnvironmentInitializer implementation="com.intellij.platform.ide.impl.wsl.WslEelEnvironmentInitializer" os="windows"/>
     <eelAlternativeRootProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelAlternativeRootProvider" os="windows"/>
     <eelMachineResolver implementation="com.intellij.platform.ide.impl.wsl.WslEelMachineResolver" os="windows"/>
+    <wslEelDescriptorProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelDescriptorProviderImpl" os="windows"/>
+    <wslEelMachineProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelMachineProviderImpl" os="windows"/>
+    <eelMachineNioFsUriProvider implementation="com.intellij.platform.ide.impl.wsl.WslEelMachineNioFsUriProvider"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslIjentManager"
                         serviceImplementation="com.intellij.platform.ide.impl.wsl.ProductionWslIjentManager"/>
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.ide.impl.wsl.EelWslMrfsBackend" os="windows"/>

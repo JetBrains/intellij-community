@@ -1,3 +1,5 @@
+f:com.intellij.platform.eel.EelNioFsKt
+- *sf:getFileSystem(com.intellij.platform.eel.EelApi):java.nio.file.FileSystem
 *:com.intellij.platform.eel.EelPathBoundDescriptor
 - com.intellij.platform.eel.EelDescriptor
 - a:getRootPath():java.nio.file.Path

@@ -16,5 +16,9 @@
   <extensionPoints>
     <extensionPoint name="multiRoutingFileSystemBackend" interface="com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend"
                     dynamic="true"/>
+    <extensionPoint name="eelMachineNioFsUriProvider" interface="com.intellij.platform.eel.nioFs.impl.EelMachineNioFsUriProvider"
+                    dynamic="true"/>
+    <extensionPoint name="eelMachineNioFileSystemProvider" interface="com.intellij.platform.eel.EelMachineNioFileSystemProvider"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

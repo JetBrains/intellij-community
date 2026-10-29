@@ -18,7 +18,9 @@ import com.intellij.platform.eel.EelMachine
 import com.intellij.platform.eel.EelOsFamily
 import com.intellij.platform.eel.EelPathBoundDescriptor
 import com.intellij.platform.util.annotations.paths.NioPath
+import com.intellij.platform.eel.nioFs.impl.EelMachineNioFsUriProvider
 import com.intellij.platform.eel.nioFs.impl.MultiRoutingFileSystemBackend
+import com.intellij.platform.eel.nioFs.impl.nioFsUri
 import com.intellij.platform.eel.provider.EelAlternativeRootProvider
 import com.intellij.platform.eel.provider.EelEnvironmentInitializer
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -89,7 +91,9 @@ class EelWslMrfsBackend(private val coroutineScope: CoroutineScope) : MultiRouti
 
       val distribution = WSLDistribution(distributionId)
       val descriptor = WslEelDescriptor(distribution, wslRoot)
-      val ijentUri = URI("ijent", "wsl", "/$distributionId", null, null)
+      val ijentUri =
+        WslEelMachine(descriptor.distribution).nioFsUri
+        ?: getWslNioFsUri(distributionId)
       try {
         val ijentFs = ijentFailSafeFileSystemApi(coroutineScope, descriptor, checkIsIjentInitialized = {
           WslIjentManager.getInstance().isIjentInitialized(distribution)
@@ -194,6 +198,16 @@ class WslEelAlternativeRootProvider : EelAlternativeRootProvider {
   override fun getAlternativeRoots(descriptor: EelDescriptor): Collection<@NioPath String>? =
     (descriptor as? WslEelDescriptor)?.distribution?.roots
 }
+
+internal class WslEelMachineNioFsUriProvider : EelMachineNioFsUriProvider {
+  override fun getNioFsUri(machine: EelMachine): URI? {
+    if (machine !is WslEelMachine) return null
+    return getWslNioFsUri(machine.distribution.id)
+  }
+}
+
+private fun getWslNioFsUri(distributionId: String): URI =
+  URI("ijent", "wsl", "/$distributionId", null, null)
 
 private val WSL_UNC_SERVER_NAMES: List<String> = WSL_PREFIXES.map { "//$it/" }
 

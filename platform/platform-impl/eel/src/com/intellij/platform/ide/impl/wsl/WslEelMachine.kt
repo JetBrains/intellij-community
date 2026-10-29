@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.impl.wsl
 
 import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelConnectionError
@@ -11,6 +12,7 @@ import com.intellij.platform.eel.EelTunnelsApi
 import com.intellij.platform.eel.ThrowsChecked
 import com.intellij.platform.eel.provider.EelMachineResolver
 import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.eel.provider.resolveEelMachine
 import com.intellij.platform.ijent.IjentMachine
 import com.intellij.platform.ijent.IjentPosixApi
 import com.intellij.platform.ijent.IjentSession
@@ -23,6 +25,24 @@ import org.jetbrains.annotations.VisibleForTesting
 
 private suspend fun WSLDistribution.getIjent(descriptor: EelDescriptor): IjentPosixApi {
   return WslIjentManager.instanceAsync().getIjentApi(descriptor, this, null, false)
+}
+
+private fun findWslDistribution(distributionId: String): WSLDistribution {
+  return WslDistributionManager.getInstance().lastInstalledDistributions.orEmpty()
+    .firstOrNull { it.id.equals(distributionId, ignoreCase = true) || it.msId.equals(distributionId, ignoreCase = true) }
+    ?: WSLDistribution(distributionId)
+}
+
+internal class WslEelDescriptorProviderImpl : EelMachineResolver.Provider.WslEelDescriptorProvider {
+  override fun resolveWslEelDescriptor(distributionId: String): EelDescriptor {
+    return WslEelDescriptor(findWslDistribution(distributionId))
+  }
+}
+
+internal class WslEelMachineProviderImpl : EelMachineResolver.Provider.WslEelMachineProvider {
+  override suspend fun resolveWslEelMachine(distributionId: String): EelMachine {
+    return WslEelDescriptor(findWslDistribution(distributionId)).resolveEelMachine()
+  }
 }
 
 internal class WslEelMachineResolver : EelMachineResolver {

@@ -22,6 +22,7 @@
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij">
     <multiRoutingFileSystemBackend implementation="com.intellij.platform.eel.tcp.TcpEelMrfsBackend"/>
+    <eelMachineNioFsUriProvider implementation="com.intellij.platform.eel.tcp.TcpEelMachineNioFsUriProvider"/>
     <eelEnvironmentInitializer implementation="com.intellij.platform.eel.tcp.TcpEelEnvironmentInitializer"/>
     <eelTcpPathParser implementation="com.intellij.platform.eel.tcp.LocalhostTcpEelPathParser"/>
     <eelMachineResolver implementation="com.intellij.platform.eel.tcp.LocalhostTcpEelMachineResolver"/>
