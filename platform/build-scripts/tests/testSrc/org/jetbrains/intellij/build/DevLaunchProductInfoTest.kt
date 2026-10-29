@@ -25,6 +25,10 @@ class DevLaunchProductInfoTest {
   private val vmOptionsFilePath: String
     get() = if (SystemInfoRt.isMac) "../bin/idea.vmoptions" else "bin/idea64.vmoptions"
 
+  /** The `os` of a launch that the production writer makes on this OS. */
+  private val os: String
+    get() = if (SystemInfoRt.isMac) "macOS" else "Linux"
+
   @Test
   fun `the production place wins over the bin directory`() {
     writeProductInfo(productionFile, mainClass = "Production")
@@ -64,6 +68,16 @@ class DevLaunchProductInfoTest {
   }
 
   @Test
+  fun `the bin directory of a cross-built dev build has the base of its own OS`() {
+    val (otherOs, otherVmOptionsPath) = if (SystemInfoRt.isMac) "Linux" to "bin/idea64.vmoptions" else "macOS" to "../bin/idea.vmoptions"
+    writeProductInfo("bin/product-info.json", mainClass = "DevBuild", vmOptionsFilePath = otherVmOptionsPath, os = otherOs)
+    val mainFile = home.resolve(if (SystemInfoRt.isMac) "bin/idea64.vmoptions" else "bin/idea.vmoptions").createParentDirectories()
+    mainFile.writeText("-Xmx1g\n")
+
+    assertThat(readVmOptions(home)).containsExactly("-Xmx1g", "-Djb.vmOptionsFile=$mainFile")
+  }
+
+  @Test
   fun `a distribution of the other layout is read at its own production place`() {
     val (otherFile, otherVmOptionsPath) = if (SystemInfoRt.isMac) "product-info.json" to "bin/idea64.vmoptions" else "Resources/product-info.json" to "../bin/idea.vmoptions"
     writeProductInfo(otherFile, mainClass = "Cross", vmOptionsFilePath = otherVmOptionsPath)
@@ -92,11 +106,16 @@ class DevLaunchProductInfoTest {
     return mainFile
   }
 
-  private fun writeProductInfo(relativePath: String, mainClass: String, vmOptionsFilePath: String = this.vmOptionsFilePath) {
+  private fun writeProductInfo(
+    relativePath: String,
+    mainClass: String,
+    vmOptionsFilePath: String = this.vmOptionsFilePath,
+    os: String = this.os,
+  ) {
     home.resolve(relativePath).createParentDirectories().writeText(
       """
       {"name": "IDEA", "version": "1", "buildNumber": "1", "productCode": "IU",
-       "launch": [{"os": "macOS", "launcherPath": "bin/idea", "vmOptionsFilePath": "$vmOptionsFilePath",
+       "launch": [{"os": "$os", "launcherPath": "bin/idea", "vmOptionsFilePath": "$vmOptionsFilePath",
                    "customCommands": [{"commands": ["run"], "mainClass": "$mainClass"}]}]}
       """.trimIndent()
     )

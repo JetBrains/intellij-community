@@ -65,16 +65,21 @@ fun readVmOptions(runDir: Path): List<String> {
 /**
  * The main vmoptions file of the distribution at [runDir], as the native launcher finds it.
  *
- * It is `vmOptionsFilePath` of the first launch of [productInfo], relative to the directory of [productInfoFile] when that is
- * a production place. The `bin/product-info.json` of the dev build of `IdeBuilder` holds the text of the production place of
- * this OS, so [PRODUCTION_PRODUCT_INFO_PATH] gives its base. So a vmoptions file of an embedded frontend in `bin` does not
- * matter. A path that leaves [runDir] fails.
+ * It is `vmOptionsFilePath` of the first launch of [productInfo], so a vmoptions file of an embedded frontend in `bin` does
+ * not matter. The path is relative to the directory of [productInfoFile] when that is a production place. The
+ * `bin/product-info.json` of the dev build of `IdeBuilder` holds the text of the production place of the OS of its launch.
+ * That OS is not always this OS, for example in a dev build for a Linux container on macOS. So the base is `Resources` for
+ * a macOS launch, else the home. A path that leaves [runDir] fails.
  */
 private fun mainVmOptionsFile(runDir: Path, productInfoFile: Path, productInfo: ProductInfoData): Path {
   val launch = requireNotNull(productInfo.launch.firstOrNull()) { "$productInfoFile states no launch" }
   val path = launch.vmOptionsFilePath
   val home = runDir.normalize()
-  val base = if (productInfoFile == home.resolve(DEV_BUILD_PRODUCT_INFO_PATH)) home.resolve(PRODUCTION_PRODUCT_INFO_PATH).parent else productInfoFile.parent
+  val base = when {
+    productInfoFile != home.resolve(DEV_BUILD_PRODUCT_INFO_PATH) -> productInfoFile.parent
+    launch.os == MAC_OS_NAME -> home.resolve(MAC_PRODUCT_INFO_PATH).parent
+    else -> home
+  }
   val file = base.resolve(path).normalize()
   require(!Path.of(path).isAbsolute && file.startsWith(home) && file != home) {
     "The vmOptionsFilePath '$path' of $productInfoFile is not a file of $home"
@@ -137,6 +142,9 @@ private fun readProductInfo(file: Path): ProductInfoData {
 }
 
 private const val MAC_PRODUCT_INFO_PATH = "Resources/$PRODUCT_INFO_FILE_NAME"
+
+/** The `os` of a macOS launch in `product-info.json`. */
+private const val MAC_OS_NAME = "macOS"
 
 /** The place of `product-info.json` in the dev build of `IdeBuilder`. */
 private const val DEV_BUILD_PRODUCT_INFO_PATH = "bin/$PRODUCT_INFO_FILE_NAME"
