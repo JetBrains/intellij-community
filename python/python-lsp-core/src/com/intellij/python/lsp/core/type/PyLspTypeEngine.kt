@@ -51,6 +51,11 @@ interface PyLspTypeEngine : PyTypeEngine {
    * state of the server, so it is the same before and after the server starts.
    */
   fun isVisibleToServer(pyTypedElement: PyTypedElement): Boolean {
+    // A light element such as `PyImportedModule` belongs to a file but has no text in it, so it has no
+    // position to send to the server.
+    if (pyTypedElement.textRange == null)
+      return false
+
     val realFile = pyTypedElement.containingFile?.originalFile ?: return false
     if (realFile is PyExpressionCodeFragment)
       return false

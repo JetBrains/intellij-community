@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.platform.lsp.api.LspClient
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.QualifiedName
 import com.intellij.python.lsp.core.fakePyToolClient
 import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.project.PyProject.Companion.asPyProject
@@ -16,14 +17,17 @@ import com.jetbrains.python.documentation.doctest.PyDocstringCodeBlockFile
 import com.jetbrains.python.documentation.doctest.PyDoctestFile
 import com.jetbrains.python.fixtures.PyCodeInsightTestCase
 import com.jetbrains.python.psi.PyExpressionCodeFragment
+import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyStringLiteralExpression
 import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.impl.PyImportedModule
 import com.jetbrains.python.psi.types.PyType
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -118,6 +122,20 @@ class PyLspTypeEngineInjectionTest : PyCodeInsightTestCase() {
 
     val target = PsiTreeUtil.findChildOfType(injectedFile, PyTargetExpression::class.java)!!
     assertFalse(testTypeEngine().isSupportedForResolve(target))
+  }
+
+  /**
+   * A light element such as [PyImportedModule] has no text range, so the server cannot be told where it is.
+   * Pyrefly overrides [PyLspTypeEngine.isSupportedForResolve] without the supported-types visitor and relies on
+   * [PyLspTypeEngine.isVisibleToServer] alone, so the guard has to live there.
+   */
+  @Test
+  @TestFor(issues = ["PY-92969"])
+  fun `light element without a text range is not visible to the server`() = runInEdtAndWait {
+    myFixture.configureByText("a.py", "import os")
+    val importedModule = PyImportedModule(null, myFixture.file as PyFile, QualifiedName.fromDottedString("os"))
+    assertNull(importedModule.textRange)
+    assertFalse(testTypeEngine().isVisibleToServer(importedModule))
   }
 
   private fun injectedDocstringFiles(): List<PsiFile> {
