@@ -4243,14 +4243,18 @@ a:com.intellij.openapi.roots.ui.configuration.actions.ContentEntryEditingAction
 c:com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
 - com.intellij.ide.DeleteProvider
 - com.intellij.ide.TitledHandler
+- sf:Companion:com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider$Companion
 - <init>():V
-- f:canDeleteElement(com.intellij.openapi.actionSystem.DataContext):Z
-- f:deleteElement(com.intellij.openapi.actionSystem.DataContext):V
+- canDeleteElement(com.intellij.openapi.actionSystem.DataContext):Z
+- deleteElement(com.intellij.openapi.actionSystem.DataContext):V
 - p:doDetachModules(com.intellij.openapi.project.Project,com.intellij.openapi.module.Module[],java.util.List):V
-- f:getActionTitle():java.lang.String
-- f:getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
-- s:getInstance():com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
-- s:removeModule(com.intellij.openapi.module.Module,java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
+- getActionTitle():java.lang.String
+- getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- sf:getInstance():com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
+- sf:removeModule(com.intellij.openapi.module.Module,java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
+f:com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider$Companion
+- f:getInstance():com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider
+- f:removeModule(com.intellij.openapi.module.Module,java.util.Collection,com.intellij.openapi.module.ModifiableModuleModel):V
 f:com.intellij.openapi.roots.ui.configuration.impl.ModuleConfigurationEditorProviderEp
 - com.intellij.openapi.extensions.PluginAware
 - implementationClass:java.lang.String
