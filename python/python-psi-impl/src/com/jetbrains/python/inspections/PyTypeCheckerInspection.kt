@@ -9,6 +9,7 @@ import com.intellij.codeInspection.options.OptPane
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.PsiTreeUtil
@@ -1661,6 +1662,11 @@ open class PyTypeCheckerInspection : PyInspection() {
     ): Boolean {
       if (calleesResults.isEmpty() || calleesResults.any { (mapping, results) -> isMatched(results, mapping) }) return false
 
+      if (!Registry.`is`("python.type.checker.overload.report.all.candidates", true)) {
+        reportMatchingCandidates(callSite, calleesResults, allMappings)
+        return true
+      }
+
       // The report lists every candidate in declaration order, also the ones that do not take this number of
       // arguments. Past [MAX_REPORTED_CANDIDATES], it keeps the candidates that take this number of arguments and fills
       // the free places with the others. Only the shown candidates are analyzed. The ones that do not take the
@@ -1684,6 +1690,31 @@ open class PyTypeCheckerInspection : PyInspection() {
           hiddenCandidates = candidates.size - chosen.size,
         )
       return true
+    }
+
+    /**
+     * Reports only the candidates that take this number of arguments. When there is only one of them, the report also
+     * lists each near miss: a candidate that only lacks a required argument. A near miss is rendered only, so its
+     * type-check side effects are suppressed (see [analyzeCallee]).
+     */
+    private fun reportMatchingCandidates(
+      callSite: PyCallSiteOwner,
+      calleesResults: List<Pair<PyArgumentsMapping, AnalyzeCalleeResults>>,
+      allMappings: List<PyArgumentsMapping>,
+    ) {
+      val reportResults =
+        if (calleesResults.size != 1) calleesResults.map { it.second }
+        else allMappings.mapNotNull { mapping ->
+          when {
+            mapping.isComplete -> calleesResults.single().takeIf { it.first === mapping }?.second
+            mapping.unmappedParameters.isNotEmpty() && mapping.unmappedArguments.isEmpty() ->
+              analyzeCallee(mapping, reportProblems = false)
+            else -> null
+          }
+        }
+
+      PyTypeCheckerInspectionProblemRegistrar
+        .registerProblem(holder, callSite, reportResults, myTypeEvalContext, ProblemHighlightType.GENERIC_ERROR_OR_WARNING)
     }
 
     private fun reportArgumentTypeMismatch(callSite: PyCallSiteOwner, argumentsMappings: List<PyArgumentsMapping>): Boolean {
