@@ -43,7 +43,7 @@
 
     <!-- The listener returns early in a process that does not host the model, see doesProcessHostRecentFilesModel -->
     <!--suppress SplitModeXmlApiUsage -->
-    <vfs.asyncListener id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.shared.RecentFilesVfsListener"/>
+    <vfs.asyncListenerBackgroundable id="RecentFileRemovalListener" implementation="com.intellij.platform.recentFiles.shared.RecentFilesVfsListener"/>
     <!-- The activity returns early in a process that does not host the model, see doesProcessHostRecentFilesModel -->
     <postStartupActivity implementation="com.intellij.platform.recentFiles.shared.RecentFileEventsModelSynchronizer"/>
   </extensions>
