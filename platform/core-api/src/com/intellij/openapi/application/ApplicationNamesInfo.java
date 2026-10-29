@@ -82,6 +82,11 @@ public final class ApplicationNamesInfo {
     assert buildNode != null;
     buildNode.attributes.put("number", System.getProperty("qodana.build.number", "QD-SNAPSHOT"));
 
+    String qodanaBuildDate = System.getProperty("qodana.build.date");
+    if (qodanaBuildDate != null && !qodanaBuildDate.isEmpty()) {
+      buildNode.attributes.put("date", qodanaBuildDate);
+    }
+
     String qodanaEap = System.getProperty("qodana.eap", "false");
     XmlElement versionNode = data.getChild("version");
     assert versionNode != null;
