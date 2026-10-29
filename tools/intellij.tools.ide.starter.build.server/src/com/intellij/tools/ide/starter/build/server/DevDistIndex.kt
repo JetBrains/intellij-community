@@ -10,6 +10,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -28,6 +29,9 @@ private const val COMMUNITY_REPOSITORY = "@community"
  * [bundledModules], [platformBundledModules] and [modularLoader] come from the entry of the product in the `products`
  * section of the same index file. [platformBundledModules] maps a main module to the host platforms that bundle it, in
  * the form of [hostPlatformKey].
+ *
+ * [ultimate] is `true` for a distribution of the ultimate index of the monorepo. A standalone community checkout has no
+ * ultimate index.
  */
 internal data class DevDistCandidate(
   @JvmField val name: String,
@@ -38,6 +42,7 @@ internal data class DevDistCandidate(
   @JvmField val platformBundledModules: Map<String, List<String>>,
   @JvmField val runtimeModuleRepository: Boolean,
   @JvmField val modularLoader: Boolean,
+  @JvmField val ultimate: Boolean,
 ) {
   /** Returns the modules that the product bundles on [hostPlatform]. */
   fun bundledModulesOn(hostPlatform: String?): Set<String> {
@@ -91,29 +96,37 @@ internal fun hostPlatformKey(osName: String, osArch: String): String? {
  *
  * The file of [projectHome] comes first. In the monorepo, `community/` holds the index of the community half. Its labels
  * get the `@community` prefix, and the ultimate index wins for a product that both halves have. A standalone community
- * checkout has only the file of [projectHome]. A missing file gives no distributions.
+ * checkout has only the file of [projectHome]. A missing file gives no distributions. A file that cannot be read or
+ * parsed fails with an [IllegalStateException].
  */
 internal fun readDevDistIndex(projectHome: Path): DevDistIndex {
   val missingFiles = ArrayList<Path>()
-  val own = readDevDistIndexFile(projectHome.resolve(DEV_DIST_INDEX_PATH), labelPrefix = "", missingFiles)
   val communityRoot = projectHome.resolve("community")
-  if (!Files.isDirectory(communityRoot)) {
+  val monorepo = Files.isDirectory(communityRoot)
+  val own = readDevDistIndexFile(projectHome.resolve(DEV_DIST_INDEX_PATH), labelPrefix = "", ultimate = monorepo, missingFiles)
+  if (!monorepo) {
     return DevDistIndex(own, missingFiles)
   }
 
-  val community = readDevDistIndexFile(communityRoot.resolve(DEV_DIST_INDEX_PATH), labelPrefix = COMMUNITY_REPOSITORY, missingFiles)
+  val community = readDevDistIndexFile(communityRoot.resolve(DEV_DIST_INDEX_PATH), labelPrefix = COMMUNITY_REPOSITORY, ultimate = false, missingFiles)
   val ownProducts = own.mapTo(HashSet()) { it.product }
   return DevDistIndex(own + community.filter { it.product !in ownProducts }, missingFiles)
 }
 
-private fun readDevDistIndexFile(file: Path, labelPrefix: String, missingFiles: MutableList<Path>): List<DevDistCandidate> {
+private fun readDevDistIndexFile(file: Path, labelPrefix: String, ultimate: Boolean, missingFiles: MutableList<Path>): List<DevDistCandidate> {
   if (!Files.isRegularFile(file)) {
     missingFiles.add(file)
     return emptyList()
   }
 
+  val text = try {
+    Files.readString(file)
+  }
+  catch (e: IOException) {
+    throw IllegalStateException("Cannot read the dev distribution index $file: $e", e)
+  }
   try {
-    val index = Json.parseToJsonElement(Files.readString(file)).jsonObject
+    val index = Json.parseToJsonElement(text).jsonObject
     val products = index.field("products").jsonObject
     return index.field("distributions").jsonArray.map { element ->
       val entry = element.jsonObject
@@ -133,6 +146,7 @@ private fun readDevDistIndexFile(file: Path, labelPrefix: String, missingFiles: 
         },
         runtimeModuleRepository = entry.flag("runtimeModuleRepository"),
         modularLoader = productEntry.flag("modularLoader"),
+        ultimate = ultimate,
       )
     }
   }

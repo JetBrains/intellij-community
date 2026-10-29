@@ -71,12 +71,7 @@ internal class LocalBazelDevDistRunner(private val projectHome: Path) : DevBuild
   }
 
   private fun findDistribution(ideInfo: IdeInfo): DevDistCandidate? {
-    val reason = legacyEngineReason(
-      scrambling = di.direct.instance<ScrambleToolProvider>().get() != null,
-      docker = ConfigurationStorage.useDockerContainer(),
-      platformPrefix = ideInfo.platformPrefix,
-      baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
-    ) ?: run {
+    val reason = legacyEngineReason(ideInfo) ?: run {
       val product = devDistProductKey(ideInfo.platformPrefix, ideInfo.baseIdePlatformPrefixForFrontend)
       val runtimeModuleRepository = ConfigurationStorage.includeRuntimeModuleRepositoryInIde()
       val index = readDevDistIndex(projectHome)
@@ -95,6 +90,14 @@ internal class LocalBazelDevDistRunner(private val projectHome: Path) : DevBuild
     return null
   }
 }
+
+/** Returns [legacyEngineReason] for [ideInfo] and the current scrambling and Docker settings of the test. */
+internal fun legacyEngineReason(ideInfo: IdeInfo): String? = legacyEngineReason(
+  scrambling = di.direct.instance<ScrambleToolProvider>().get() != null,
+  docker = ConfigurationStorage.useDockerContainer(),
+  platformPrefix = ideInfo.platformPrefix,
+  baseIdePlatformPrefixForFrontend = ideInfo.baseIdePlatformPrefixForFrontend,
+)
 
 /**
  * Returns why the legacy engine builds the IDE of one [LocalBazelDevDistRunner.startDevBuild] call, or `null` when a

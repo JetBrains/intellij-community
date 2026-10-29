@@ -16,7 +16,7 @@ load("//platform/build-scripts/bazel-rules:dev_dist_product_files.bzl", "dev_dis
 load("//platform/build-scripts/bazel-rules:dev_dist_runtime_module_repository.bzl", "dev_dist_runtime_layout_parts", "dev_dist_runtime_module_repository")
 load("//platform/build-scripts/bazel-rules:intellij_dev_dist.bzl", "intellij_dev_fragments_dist", "intellij_dev_packed_jars_component")
 load(":dev_launch_dependencies.bzl", "HOST_PLATFORMS", "jbr_runtime_executable_list_label", "jbr_runtime_repository_label", "platform_parts")
-load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_java_launcher_binary")
+load(":intellij_dev.bzl", "export_vm_options", "intellij_dev_dist_config", "intellij_dev_java_launcher_binary")
 
 def _plugin_component_entries(platform_prefix, tier, entries):
     """Reads one tier of the generated component map as `struct(main_module, label, labels)` entries.
@@ -683,12 +683,14 @@ def _declare_fragments_dist(
         target_platform,
         create_local_launch,
         catalogue,
-        export_attrs = {}):
+        export_attrs = {},
+        export_visibility = None):
     """Declares the distribution `name` and, with `create_local_launch`, `<name>_launch` over `catalogue`.
 
     `catalogue` is `_plugin_component_catalogue(tables, product)`. A caller that declares several distributions of one
     product reads it once and passes it to each. `export_attrs` holds the attributes that only the export takes: the
-    sibling vmoptions attributes of `export_vm_options` in `intellij_dev.bzl`.
+    sibling vmoptions attributes of `export_vm_options` in `intellij_dev.bzl`. `export_visibility`, when set, is the
+    visibility of the export instead of `visibility`.
     """
     bundled_components = _plugin_components(target_platform, catalogue.bundled)
 
@@ -731,7 +733,7 @@ def _declare_fragments_dist(
     for local_launch in [False, True] if create_local_launch else [False]:
         intellij_dev_fragments_dist(
             name = name + ("_launch" if local_launch else ""),
-            visibility = visibility,
+            visibility = visibility if local_launch or export_visibility == None else export_visibility,
             tags = ["manual"],
             composer = tables.composer,
             fragments = fragments,
@@ -812,8 +814,12 @@ def _distribution_groups(rows):
         group.names.append(name)
     return groups
 
-def _declare_run_distribution(tables, name, product, additional_modules, runtime_module_repository, catalogue, visibility):
+def _declare_run_distribution(tables, name, product, additional_modules, runtime_module_repository, catalogue, visibility, export_visibility = None):
     """The distribution of one or more launchers: the self-contained `<name>_dist` and the local launch `<name>_dist_launch`.
+
+    `<name>_dist_ide_config` is the config file of `<name>_dist`, for `$(rlocationpath ...)`. A test that declares both
+    in `data` runs on the distribution, see `PrebuiltDevDistRunner`. `export_visibility`, when set, is the visibility
+    of the two instead of `visibility`.
 
     A row starts over the placement of `_dist_launch`, and on Windows over the home of `_dist`. A distribution with
     `runtime_module_repository` composes the `platform_runtime_module_repository` component of its product, which
@@ -842,6 +848,13 @@ def _declare_run_distribution(tables, name, product, additional_modules, runtime
             name + "_dist",
             runtime_module_repository = runtime_module_repository and not _modular_loader(tables, product),
         ),
+        export_visibility = export_visibility,
+    )
+    intellij_dev_dist_config(
+        name = name + "_dist_ide_config",
+        dist = ":" + name + "_dist",
+        tags = ["manual"],
+        visibility = visibility if export_visibility == None else export_visibility,
     )
 
 def _check_before_run(tables, name, jvm_flags, compile_clion_backend_before_run):
@@ -933,6 +946,8 @@ def _run_configurations(tables, rows):
             runtime_module_repository = runtime_module_repository,
             catalogue = catalogues[product],
             visibility = None,
+            # A test target declares the export and its config file, see `PrebuiltDevDistRunner`.
+            export_visibility = ["//visibility:public"],
         )
         for name in group.names:
             row = rows[name]

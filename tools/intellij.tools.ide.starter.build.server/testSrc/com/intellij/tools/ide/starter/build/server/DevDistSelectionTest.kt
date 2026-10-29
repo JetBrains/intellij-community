@@ -159,6 +159,7 @@ internal class DevDistSelectionTest {
         platformBundledModules = mapOf("intellij.wsl" to listOf("windows_x64")),
         runtimeModuleRepository = false,
         modularLoader = false,
+        ultimate = false,
       ),
       candidate,
     )
@@ -175,6 +176,7 @@ internal class DevDistSelectionTest {
     )
     val candidates = readDevDistIndex(projectHome).distributions
     assertEquals(listOf("//build:idea_dist", "@community//build:idea_community_dist"), candidates.map { it.label })
+    assertEquals(listOf(true, false), candidates.map { it.ultimate })
     assertEquals("//build:idea_dist", select(candidates, "idea")?.label)
   }
 
@@ -235,25 +237,6 @@ internal class DevDistSelectionTest {
     Files.writeString(file, """{"generatedBy":"test","products":{$productSection},"distributions":[${entries.joinToString(",")}]}""")
   }
 }
-
-private fun candidate(
-  name: String,
-  product: String = "idea",
-  additionalModules: List<String> = emptyList(),
-  bundledModules: List<String> = emptyList(),
-  platformBundledModules: Map<String, List<String>> = emptyMap(),
-  runtimeModuleRepository: Boolean = false,
-  modularLoader: Boolean = false,
-): DevDistCandidate = DevDistCandidate(
-  name = name,
-  label = "//build:${name}_dist",
-  product = product,
-  additionalModules = additionalModules,
-  bundledModules = bundledModules,
-  platformBundledModules = platformBundledModules,
-  runtimeModuleRepository = runtimeModuleRepository,
-  modularLoader = modularLoader,
-)
 
 private fun entry(name: String, label: String, product: String, additionalModules: String = "[]"): String =
   """{"name":"$name","label":"$label","product":"$product","additionalModules":$additionalModules,"runtimeModuleRepository":false}"""

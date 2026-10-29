@@ -2,7 +2,9 @@
 package com.intellij.tools.ide.starter.build.server
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 internal class DevBuildServerRunnerChoiceTest {
@@ -19,6 +21,14 @@ internal class DevBuildServerRunnerChoiceTest {
       legacyRunnerReason(onCi = false, testJvmOfBuildScripts = true, underBazel = true),
     )
     assertEquals("the test runs under Bazel", legacyRunnerReason(onCi = false, testJvmOfBuildScripts = false, underBazel = true))
+  }
+
+  @Test
+  fun `run under Bazel runfiles without the targets file fails with a recipe`() {
+    assertTrue(legacyEngineHasNoBazelInputs(underBazel = true, bazelTargetsJsonFile = null))
+    // The AT-5301 workaround keeps the legacy engine.
+    assertFalse(legacyEngineHasNoBazelInputs(underBazel = true, bazelTargetsJsonFile = "_main/build/bazel-targets.json"))
+    assertFalse(legacyEngineHasNoBazelInputs(underBazel = false, bazelTargetsJsonFile = null))
   }
 
   @Test
