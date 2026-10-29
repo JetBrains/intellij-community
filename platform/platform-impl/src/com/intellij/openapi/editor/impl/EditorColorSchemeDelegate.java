@@ -394,15 +394,8 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     float fontSize,
     @NotNull FontPreferences fontPreferences
   ) {
-    Font baseFont = FontFamilyService.getFont(
-      familyName,
-      fontPreferences.getRegularSubFamily(),
-      fontPreferences.getBoldSubFamily(),
-      style,
-      fontSize
-    );
     boolean useLigatures = myUseLigatures != null ? myUseLigatures : fontPreferences.useLigatures();
-    myFontsMap.put(fontType, EditorFontFeatures.withFeatures(baseFont, useLigatures, fontPreferences.getCharacterVariants()));
+    myFontsMap.put(fontType, EditorFontFeatures.createFont(familyName, style, fontSize, fontPreferences, useLigatures));
   }
 
   private void updateDelegate() {

@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.impl.EditorFontFeatures;
-import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -99,14 +98,7 @@ public final class EditorFontCacheImpl extends EditorFontCache {
     float fontSize,
     @NotNull FontPreferences fontPreferences
   ) {
-    Font editorFont = FontFamilyService.getFont(
-      familyName,
-      fontPreferences.getRegularSubFamily(),
-      fontPreferences.getBoldSubFamily(),
-      style,
-      fontSize
-    );
-    return EditorFontFeatures.withFeatures(editorFont, fontPreferences.useLigatures(), fontPreferences.getCharacterVariants());
+    return EditorFontFeatures.createFont(familyName, style, fontSize, fontPreferences, fontPreferences.useLigatures());
   }
 
   private static @NotNull String getEditorFontName(@NotNull FontPreferences preferences) {

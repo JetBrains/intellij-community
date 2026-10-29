@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl
 
+import com.intellij.openapi.editor.colors.FontPreferences
+import com.intellij.util.ui.JdkConstants
 import com.jetbrains.JBR
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
@@ -13,6 +15,22 @@ import java.awt.font.TextAttribute
 @ApiStatus.Internal
 object EditorFontFeatures {
   private val LIGATURES_ON: Map<TextAttribute, Int> = mapOf(TextAttribute.LIGATURES to TextAttribute.LIGATURES_ON)
+
+  /**
+   * Creates a font of the family with the subfamilies and the character variants of [preferences].
+   * The ligatures follow [useLigatures], so a caller can override the ligatures of the preferences.
+   */
+  @JvmStatic
+  fun createFont(
+    familyName: String,
+    @JdkConstants.FontStyle style: Int,
+    size: Float,
+    preferences: FontPreferences,
+    useLigatures: Boolean,
+  ): Font {
+    val font = FontFamilyService.getFont(familyName, preferences.regularSubFamily, preferences.boldSubFamily, style, size)
+    return withFeatures(font, useLigatures, preferences.characterVariants)
+  }
 
   /**
    * Returns the font with the ligatures on.
