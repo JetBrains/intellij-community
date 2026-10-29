@@ -18,7 +18,6 @@ import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.BuildPaths
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
-import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.jps.model.JpsModel
@@ -41,7 +40,7 @@ class BazelCompilationContext(
     projectHome = computeProjectHomeForModuleOutputs(delegate.paths.projectHome),
   ),
 ) : CompilationContext {
-  override val outputProvider: ModuleOutputProvider by lazy {
+  override val outputProvider: BazelModuleOutputProvider by lazy {
     BazelModuleOutputProvider(
       state = outputProviderState,
       lifetime = lifetime,
@@ -74,22 +73,33 @@ class BazelCompilationContext(
   override val classesOutputDirectory: Path
     get() = delegate.classesOutputDirectory
 
+  /**
+   * Reports every absent jar of the classpath in one error. The error names the labels, and outside Bazel it also gives
+   * the `bazel build` command for them.
+   */
   override fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean): Collection<Path> {
+    val provider = outputProvider
     val enumerator = moduleRuntimeDependenciesWithoutProvided(module, forTests)
     val result = LinkedHashSet<Path>()
+    val missing = MissingBazelOutputs(outputProviderState.mode)
     enumerator.forEachModuleAndLibrary(
       { depModule ->
-        result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = forTests))
+        result.addAll(provider.collectModuleOutputRoots(depModule, forTests = forTests, missing = missing))
         if (forTests) {  // incl. production
-          result.addAll(outputProvider.getModuleOutputRoots(depModule, forTests = false))
+          result.addAll(provider.collectModuleOutputRoots(depModule, forTests = false, missing = missing))
         }
       },
       { library ->
         val moduleLibraryModuleName = (library.createReference().parentReference as? JpsModuleReference)?.moduleName
-        for (path in outputProvider.findLibraryRoots(library.name, moduleLibraryModuleName)) {
-          result.add(path)
-        }
+        result.addAll(
+          provider.collectLibraryRoots(libraryName = library.name, moduleLibraryModuleName = moduleLibraryModuleName, missing = missing)
+        )
       }
+    )
+    missing.throwIfAny(
+      subject = (if (forTests) "the test runtime classpath of module '" else "the runtime classpath of module '") + module.name + "'",
+      labelFileDirectory = paths.tempDir,
+      starterHint = true,
     )
     return result
   }
@@ -111,9 +121,12 @@ class BazelCompilationContext(
     delegate.prepareForBuild()
   }
 
+  /**
+   * Does nothing, because Bazel builds the module outputs and this build only reads them. The caller builds them first:
+   * `bazel run` and `bazel test` build the `data` of the target. Outside Bazel, the error about an absent jar names the
+   * labels to build.
+   */
   override fun compileModules(moduleNames: Collection<String>?, includingTestsInModules: List<String>?) {
-    // Be sure to call ./bazel-build-all.cmd
-    // Later we will add all required Bazel dependencies to the build scripts target
   }
 
   override fun withCompilationLock(block: () -> Unit): Unit = delegate.withCompilationLock(block)

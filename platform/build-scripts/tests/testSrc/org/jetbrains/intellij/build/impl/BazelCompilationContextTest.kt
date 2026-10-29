@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jetbrains.intellij.build.BuildLifetime
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
@@ -10,8 +11,11 @@ import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.JpsCompilationData
 import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.JpsProject
+import org.jetbrains.jps.model.java.JpsJavaLibraryType
+import org.jetbrains.jps.model.java.JpsJavaModuleType
 import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -146,6 +150,53 @@ internal class BazelCompilationContextTest {
     assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
     assertThat(state.bazelOutputRoot).isEqualTo(tempDir.resolve("output-base"))
     assertThat(resolveCounter.get()).isEqualTo(1)
+  }
+
+  @Test
+  fun `the runtime classpath reports every absent jar in one error`(@TempDir tempDir: Path) {
+    val project = JpsElementFactory.getInstance().createModel().project
+    val app = project.addModule("intellij.demo.app", JpsJavaModuleType.INSTANCE)
+    val core = project.addModule("intellij.demo.core", JpsJavaModuleType.INSTANCE)
+    app.dependenciesList.addModuleDependency(core)
+    app.dependenciesList.addLibraryDependency(project.addLibrary("demo-lib", JpsJavaLibraryType.INSTANCE))
+    val state = BazelModuleOutputProviderState(
+      modules = project.modules,
+      projectHome = tempDir,
+      bazelOutputRootResolver = { tempDir.resolve("output-base") },
+      bazelTargetsLoader = {
+        BazelTargetsInfo.TargetsFile(
+          modules = mapOf(
+            app.name to moduleDescription(targets = listOf("@community//demo/app:app.jar"), jars = listOf("out/demo/app.jar")),
+            core.name to moduleDescription(targets = listOf("@community//demo/core:core.jar"), jars = listOf("out/demo/core.jar")),
+          ),
+          projectLibraries = mapOf(
+            "demo-lib" to BazelTargetsInfo.LibraryDescription(
+              target = "@lib//:demo-lib",
+              jars = listOf("external/lib+/demo-lib-1.0.jar"),
+              jarTargets = listOf("@lib//:demo-lib-1.0.jar"),
+              sourceJars = emptyList(),
+            ),
+          ),
+          pluginDistributionTargets = emptyMap(),
+        )
+      },
+      outputMode = BazelOutputMode.OUTSIDE_BAZEL,
+    )
+    val context = BazelCompilationContext(
+      delegate = testCompilationContext(project = project, tempDir = tempDir, options = BuildOptions()),
+      lifetime = null,
+      outputProviderState = state,
+    )
+
+    assertThatThrownBy { context.getModuleRuntimeClasspath(app, forTests = false) }
+      .isInstanceOf(IllegalStateException::class.java)
+      .hasMessageStartingWith("3 jars of the runtime classpath of module 'intellij.demo.app' do not exist:\n")
+      .hasMessageContaining("  @community//demo/core:core.jar (module 'intellij.demo.core'): ")
+      .hasMessageContaining("  @lib//:demo-lib-1.0.jar (library 'demo-lib' (project level)): ")
+      .hasMessageContaining(
+        "Build them: ./bazel.cmd build @community//demo/app:app.jar @community//demo/core:core.jar @lib//:demo-lib-1.0.jar\n"
+      )
+      .hasMessageContaining("-Didea.ide.config.path=")
   }
 
   private fun testCompilationContext(project: JpsProject, tempDir: Path, options: BuildOptions): CompilationContext {

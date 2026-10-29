@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.ModuleOutputProvider
 import org.jetbrains.intellij.build.buildSpan
 import org.jetbrains.intellij.build.mapConcurrent
 import org.jetbrains.jps.model.module.JpsModule
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.BitSet
@@ -275,8 +276,17 @@ class BazelModuleOutputProviderState(
     requireNotNull(bazelOutputRoot) { "Bazel output root is not available" }
   },
   bazelTargetsLoader: (Path) -> BazelTargetsInfo.TargetsFile = BazelTargetsInfo::loadBazelTargetsJson,
+  /**
+   * `null` takes [BazelOutputMode.current]. A test sets it to choose the branch and the error message of one mode in
+   * any runner. The resolution of a label still reads the process environment: [BazelBuildInputs] reads the system
+   * property, and [BazelRunfiles] reads the runfiles of the process.
+   */
+  private val outputMode: BazelOutputMode? = null,
 ) {
   private val index = ModuleOutputProviderIndex(modules)
+
+  val mode: BazelOutputMode
+    get() = outputMode ?: BazelOutputMode.current()
 
   /**
    * Demanded only to locate library jars outside explicit Bazel inputs and runfiles, where every path comes from a
@@ -396,7 +406,8 @@ class BazelModuleOutputProvider(
   override fun findModulesWithSourceFile(relativePath: String): List<JpsModule> = state.findModulesWithSourceFile(relativePath)
 
   override fun findDeclaredLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
-    if (!BazelBuildInputs.isConfigured && !BazelRunfiles.isRunningFromBazel) {
+    val mode = state.mode
+    if (mode == BazelOutputMode.OUTSIDE_BAZEL) {
       // No manifest, so nothing to narrow to, and a library this build cannot find is still an error worth reporting.
       return findLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
     }
@@ -409,7 +420,7 @@ class BazelModuleOutputProvider(
     // Deliberately *not* [resolveDeclaredLibrary], which the strict path uses: this is a probe, so a partly declared
     // library yields the jars that are declared rather than nothing. The file being searched for may be in one of them,
     // and an undeclared jar has to answer like a jar without the file.
-    val paths = if (BazelBuildInputs.isConfigured) {
+    val paths = if (mode == BazelOutputMode.INPUT_MANIFEST) {
       BazelBuildInputs.resolveAllIfDeclared(library.target)
       ?: library.jarTargets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
     }
@@ -451,6 +462,17 @@ class BazelModuleOutputProvider(
   }
 
   override fun findLibraryRoots(libraryName: String, moduleLibraryModuleName: String?): List<Path> {
+    val missing = MissingBazelOutputs(state.mode)
+    val paths = collectLibraryRoots(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName, missing = missing)
+    missing.throwIfAny(subject = libraryMoniker(libraryName, moduleLibraryModuleName))
+    return paths
+  }
+
+  /**
+   * The roots of a library, as [findLibraryRoots] gives them. An absent jar goes into [missing], and the caller reports
+   * all absent jars of its request at once.
+   */
+  internal fun collectLibraryRoots(libraryName: String, moduleLibraryModuleName: String?, missing: MissingBazelOutputs): List<Path> {
     val libraryMoniker = libraryMoniker(libraryName, moduleLibraryModuleName)
     val library = findLibraryDescription(libraryName = libraryName, moduleLibraryModuleName = moduleLibraryModuleName)
 
@@ -459,23 +481,20 @@ class BazelModuleOutputProvider(
     // expands back into ordered jars. Under plain Bazel runfiles there is no manifest to expand anything, and a
     // container target is not a file, so the library resolves jar by jar. `ArchivedCompilationContextUtil` and
     // `MonorepoProjectStructure` also take the per-jar labels. Outside Bazel entirely it is the output root.
-    val paths = when {
-      BazelBuildInputs.isConfigured -> resolveDeclaredLibrary(library, libraryMoniker)
-      BazelRunfiles.isRunningFromBazel -> resolveLibraryRunfiles(library, libraryMoniker)
-      else -> library.jars.map { state.bazelOutputRoot.resolve(it) }
-    }
-
-    check(paths.isNotEmpty()) {
-      "No files found for $libraryMoniker"
-    }
-
-    for (path in paths) {
-      check(path.isRegularFile()) {
-        "Library file '$path' does not exists, required for $libraryMoniker. Locally please run ./bazel-build-all.cmd"
+    val jars = when (state.mode) {
+      BazelOutputMode.INPUT_MANIFEST -> {
+        resolveDeclaredLibrary(library, libraryMoniker).map { BazelOutputJar(label = library.target, file = it) }
+      }
+      BazelOutputMode.RUNFILES -> resolveLibraryRunfiles(library, libraryMoniker)
+      BazelOutputMode.OUTSIDE_BAZEL -> library.jars.mapIndexed { index, jar ->
+        BazelOutputJar(label = library.jarTargets.getOrNull(index) ?: library.target, file = state.bazelOutputRoot.resolve(jar))
       }
     }
 
-    return paths
+    check(jars.isNotEmpty()) {
+      "No files found for $libraryMoniker"
+    }
+    return jars.mapNotNull { missing.takeIfPresent(jar = it, owner = libraryMoniker) }
   }
 
   /**
@@ -513,21 +532,19 @@ class BazelModuleOutputProvider(
    * A binary whose data is `dev_dist_plugin_content` holds the container jars only. That is the rule of
    * [resolveDeclaredLibrary] too: a jar is declared by its own label or as a file.
    */
-  private fun resolveLibraryRunfiles(library: BazelTargetsInfo.LibraryDescription, libraryMoniker: String): List<Path> {
+  private fun resolveLibraryRunfiles(library: BazelTargetsInfo.LibraryDescription, libraryMoniker: String): List<BazelOutputJar> {
     check(library.jarTargets.size == library.jars.size) { "The jar labels and the jar paths of $libraryMoniker differ in count" }
     return library.jarTargets.zip(library.jars) { jarTarget, jar ->
       findLibraryJarRunfile(jarTarget = jarTarget, jar = jar, findByLabel = ::findRunfileByLabel, findByKey = ::findRunfile)
-      ?: BazelRunfiles.getFileByLabel(BazelLabel.fromString(jarTarget))
+        ?.let { BazelOutputJar(label = jarTarget, file = it) }
+      ?: resolveRunfileJar(jarTarget)
     }
   }
 
   override fun getModuleOutputRoots(module: JpsModule, forTests: Boolean): List<Path> {
-    val jars = getModuleOutputRootsImpl(module, forTests)
-    for (path in jars) {
-      check(path.isRegularFile()) {
-        "Module output '$path' does not exists, required for module ${module.name}. Locally please run ./bazel-build-all.cmd"
-      }
-    }
+    val missing = MissingBazelOutputs(state.mode)
+    val jars = collectModuleOutputRoots(module = module, forTests = forTests, missing = missing)
+    missing.throwIfAny(subject = moduleMoniker(module, forTests))
     return jars
   }
 
@@ -535,17 +552,30 @@ class BazelModuleOutputProvider(
     return state.bazelTargetsMap.pluginDistributionTargets[mainModuleName]
   }
 
-  private fun getModuleOutputRootsImpl(module: JpsModule, forTests: Boolean): List<Path> {
+  /**
+   * The output roots of a module, as [getModuleOutputRoots] gives them. An absent jar goes into [missing], and the caller
+   * reports all absent jars of its request at once.
+   *
+   * Under an explicit input manifest, a label that the manifest does not declare still fails at once, in
+   * [ExplicitBazelInputResolver.resolveAll].
+   */
+  internal fun collectModuleOutputRoots(module: JpsModule, forTests: Boolean, missing: MissingBazelOutputs): List<Path> {
     val moduleDescription = findModuleDescription(module, forTests)
-    return if (BazelBuildInputs.isConfigured || BazelRunfiles.isRunningFromBazel) {
-      val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
-      targets.map(BazelBuildInputs::resolve)
+    val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
+    val jars = when (state.mode) {
+      BazelOutputMode.INPUT_MANIFEST -> targets.map { BazelOutputJar(label = it, file = BazelBuildInputs.resolve(it)) }
+      BazelOutputMode.RUNFILES -> targets.map(::resolveRunfileJar)
+      BazelOutputMode.OUTSIDE_BAZEL -> {
+        // `productionJars` and `productionTargets` are parallel lists, and so are the test lists.
+        val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
+        jarsRelative.mapIndexed { index, jar -> BazelOutputJar(label = targets.getOrNull(index), file = state.projectHome.resolve(jar)) }
+      }
     }
-    else {
-      val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
-      jarsRelative.map { state.projectHome.resolve(it) }
-    }
+    val owner = moduleMoniker(module, forTests)
+    return jars.mapNotNull { missing.takeIfPresent(jar = it, owner = owner) }
   }
+
+  private fun moduleMoniker(module: JpsModule, forTests: Boolean): String = "module '${module.name}'" + if (forTests) " (tests)" else ""
 
   /**
    * The roots that a probe of [module] reads. Each mode gives the roots by its own rule.
@@ -559,10 +589,10 @@ class BazelModuleOutputProvider(
   private fun computeProbeRoots(module: JpsModule, forTests: Boolean): List<Path> {
     val moduleDescription = findModuleDescription(module, forTests)
     val targets = if (forTests) moduleDescription.testTargets else moduleDescription.productionTargets
-    return when {
-      BazelBuildInputs.isConfigured -> targets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
-      BazelRunfiles.isRunningFromBazel -> targets.mapNotNull { resolveProbeRoot(moduleTarget = it, resolveFile = ::findRunfileByLabel) }
-      else -> {
+    return when (state.mode) {
+      BazelOutputMode.INPUT_MANIFEST -> targets.mapNotNull(BazelBuildInputs::resolveIfDeclared)
+      BazelOutputMode.RUNFILES -> targets.mapNotNull { resolveProbeRoot(moduleTarget = it, resolveFile = ::findRunfileByLabel) }
+      BazelOutputMode.OUTSIDE_BAZEL -> {
         val jarsRelative = if (forTests) moduleDescription.testJars else moduleDescription.productionJars
         jarsRelative.map { state.projectHome.resolve(it) }
       }
@@ -590,7 +620,7 @@ class BazelModuleOutputProvider(
    * the outputs of all modules.
    */
   override fun findFileInAnyModuleOutput(relativePath: String, moduleNamePrefix: String?, processedModules: MutableSet<String>?): ByteArray? {
-    if (!BazelBuildInputs.isConfigured && ModuleOutputEntryIndex.isIndexedName(relativePath)) {
+    if (state.mode != BazelOutputMode.INPUT_MANIFEST && ModuleOutputEntryIndex.isIndexedName(relativePath)) {
       return outputEntryIndex.find(
         relativePath = relativePath,
         moduleNamePrefix = moduleNamePrefix,
@@ -612,6 +642,157 @@ class BazelModuleOutputProvider(
 
   override fun toString(): String = "BazelModuleOutputProvider(projectHome=${state.projectHome}, bazelOutputRoot=${state.resolvedBazelOutputRoot ?: "<not resolved>"})"
 }
+
+/** Where a build reads the Bazel outputs from. The mode decides how a label resolves to a file, and what fixes an absent file. */
+@Internal
+enum class BazelOutputMode {
+  /** An explicit input manifest lists the inputs of a dev build fragment. */
+  INPUT_MANIFEST,
+
+  /** `bazel run` or `bazel test` gives the runfiles of the target. */
+  RUNFILES,
+
+  /** No Bazel process runs the build. The files are in the Bazel output directories of the checkout. */
+  OUTSIDE_BAZEL;
+
+  companion object {
+    fun current(): BazelOutputMode = when {
+      BazelBuildInputs.isConfigured -> INPUT_MANIFEST
+      BazelRunfiles.isRunningFromBazel -> RUNFILES
+      else -> OUTSIDE_BAZEL
+    }
+  }
+}
+
+/**
+ * One jar of a request.
+ *
+ * [label] is the Bazel target that produces the jar, or `null` when `bazel-targets.json` names none. [file] is `null`
+ * when the label does not resolve to a path. [detail] tells why it does not resolve.
+ */
+internal class BazelOutputJar(@JvmField val label: String?, @JvmField val file: Path?, @JvmField val detail: String? = null)
+
+/** The runfile of [label]. When the runfiles do not hold it, the jar has no file, and the reason is the detail. */
+private fun resolveRunfileJar(label: String): BazelOutputJar {
+  return try {
+    BazelOutputJar(label = label, file = BazelRunfiles.getFileByLabel(BazelLabel.fromString(label)))
+  }
+  catch (e: IllegalStateException) {
+    BazelOutputJar(label = label, file = null, detail = e.message)
+  }
+}
+
+/**
+ * The absent jars of one request, so that one error names all of them.
+ *
+ * A request is one module, one library or one runtime classpath. [throwIfAny] gives the fix for the [mode].
+ */
+internal class MissingBazelOutputs(private val mode: BazelOutputMode) {
+  /**
+   * By the file, else by the label. A multi-jar library can give one label to several files: the container under an
+   * explicit input manifest, or the container in place of an absent per-jar label.
+   */
+  private val jars = LinkedHashMap<String, MissingBazelOutput>()
+
+  /** Returns the file of [jar] when it is a regular file. Otherwise records the jar and returns `null`. */
+  fun takeIfPresent(jar: BazelOutputJar, owner: String): Path? {
+    val file = jar.file
+    if (file != null && file.isRegularFile()) {
+      return file
+    }
+    val key = file?.toString() ?: jar.label ?: "<no label and no file> #${jars.size}"
+    jars.putIfAbsent(key, MissingBazelOutput(jar = jar, owner = owner))
+    return null
+  }
+
+  /**
+   * Throws one [IllegalStateException] that names every absent jar, when there is one.
+   *
+   * [labelFileDirectory] holds the label file for a command that is too long to read. Without it, the message gives the
+   * full command in one line. [starterHint] adds the IDE Starter workaround. Only a runtime classpath asks for it: the
+   * test class index logs the message of each module that it skips, and that message must stay short.
+   */
+  fun throwIfAny(subject: String, labelFileDirectory: Path? = null, starterHint: Boolean = false) {
+    if (jars.isNotEmpty()) {
+      throw IllegalStateException(message(subject = subject, labelFileDirectory = labelFileDirectory, starterHint = starterHint))
+    }
+  }
+
+  private fun message(subject: String, labelFileDirectory: Path?, starterHint: Boolean): String {
+    val entries = jars.values.toList()
+    val one = entries.size == 1
+    return buildString {
+      append(entries.size).append(if (one) " jar of " else " jars of ").append(subject)
+      append(
+        when (mode) {
+          BazelOutputMode.OUTSIDE_BAZEL -> if (one) " does not exist" else " do not exist"
+          BazelOutputMode.RUNFILES -> if (one) " is not in the Bazel runfiles" else " are not in the Bazel runfiles"
+          BazelOutputMode.INPUT_MANIFEST -> {
+            if (one) " is declared in the explicit input manifest, but its file does not exist"
+            else " are declared in the explicit input manifest, but their files do not exist"
+          }
+        }
+      )
+      append(":\n")
+      for (entry in entries.take(MAX_LISTED_MISSING_JARS)) {
+        append("  ").append(entry.jar.label ?: "<no label>").append(" (").append(entry.owner).append(')')
+        entry.jar.file?.let { append(": ").append(it) }
+        append('\n')
+        entry.jar.detail?.lineSequence()?.filter { it.isNotBlank() }?.forEach { append("    ").append(it).append('\n') }
+      }
+      if (entries.size > MAX_LISTED_MISSING_JARS) {
+        append("  ... and ").append(entries.size - MAX_LISTED_MISSING_JARS).append(" more\n")
+      }
+      when (mode) {
+        BazelOutputMode.OUTSIDE_BAZEL -> {
+          val labels = entries.mapNotNull { it.jar.label }.distinct()
+          if (labels.isNotEmpty()) {
+            append("Build ").append(if (one) "it" else "them").append(": ")
+            append(buildCommand(labels = labels, labelFileDirectory = labelFileDirectory))
+          }
+          if (starterHint) {
+            append("\nFor an IDE Starter test, you can build the dev distribution of the product instead, for example ")
+            append("`./bazel.cmd build //build:idea_dist`. Then give the test JVM ")
+            append("`-Didea.ide.config.path=<absolute path of out/bazel-bin/build/idea_dist.ide.config>`, ")
+            append("and the test runs on that distribution.")
+          }
+        }
+        BazelOutputMode.RUNFILES -> {
+          append("Declare these labels in the `data` of the Bazel target that runs this build. ")
+          append("`./bazel.cmd build` does not help, because a Bazel target reads only the files that it declares.")
+        }
+        BazelOutputMode.INPUT_MANIFEST -> {
+          append("Bazel stages every declared input before the action starts. Make sure that the build runs in the Bazel execution root.")
+        }
+      }
+    }
+  }
+
+  private fun buildCommand(labels: List<String>, labelFileDirectory: Path?): String {
+    if (labels.size > MAX_LISTED_MISSING_JARS && labelFileDirectory != null) {
+      writeLabelFile(labels, labelFileDirectory)?.let { return "./bazel.cmd build --target_pattern_file=$it" }
+    }
+    return labels.joinToString(separator = " ", prefix = "./bazel.cmd build ")
+  }
+
+  /** The file with one label per line, or `null` when it cannot be written. The message then gives the full command. */
+  private fun writeLabelFile(labels: List<String>, directory: Path): Path? {
+    return try {
+      Files.createDirectories(directory)
+      val file = Files.createTempFile(directory, "missing-bazel-outputs-", ".txt")
+      Files.writeString(file, labels.joinToString(separator = "\n", postfix = "\n"))
+      file
+    }
+    catch (_: IOException) {
+      null
+    }
+  }
+}
+
+private class MissingBazelOutput(@JvmField val jar: BazelOutputJar, @JvmField val owner: String)
+
+/** The message lists this many absent jars. A longer command goes into a label file when the caller gives a directory for it. */
+internal const val MAX_LISTED_MISSING_JARS = 50
 
 /** The entries of the runfiles manifest, or `null` when the runfiles have no manifest. */
 private val runfilesManifestEntries: Map<String, String>? by lazy {
