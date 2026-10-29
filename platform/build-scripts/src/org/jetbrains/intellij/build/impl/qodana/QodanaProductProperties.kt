@@ -1,6 +1,10 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.qodana
 
+import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 // list contains non-overridable parameters!
 // user won't be able to change them by using --property in qodana-cli.
@@ -38,10 +42,17 @@ private const val IS_EAP = true
  * @property customVmOptions Distribution-specific vm options required for Qodana application.
  */
 class QodanaProductProperties(val productCode: String, val productName: String, private val customVmOptions: List<String> = emptyList()) {
-  fun getAdditionalVmOptions(buildNumber: String): List<String> {
+  fun getAdditionalVmOptions(buildNumber: String, buildDateInSeconds: Long): List<String> {
+    // Format build date as uuuuMMddHHmm (e.g., "202410281430")
+    val buildDate = ZonedDateTime.ofInstant(
+      Instant.ofEpochSecond(buildDateInSeconds),
+      ZoneOffset.UTC
+    ).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
+
     val appInfoOptions = listOf(
       "-Dqodana.product.name=$productName",
       "-Dqodana.build.number=$productCode-$buildNumber",
+      "-Dqodana.build.date=$buildDate",
       "-Dqodana.eap=${isEap(productCode)}",
     )
     return COMMON_ADDITIONAL_VM_OPTIONS + customVmOptions + appInfoOptions

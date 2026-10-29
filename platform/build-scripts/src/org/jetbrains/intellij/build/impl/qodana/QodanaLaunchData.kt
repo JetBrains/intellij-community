@@ -9,7 +9,8 @@ import org.jetbrains.intellij.build.impl.PlatformJarNames.PLATFORM_CORE_NIO_FS
 
 internal fun generateQodanaLaunchData(ideContext: BuildContext, arch: JvmArchitecture, os: OsFamily): CustomCommandLaunchData? {
   val qodanaProductProperties = ideContext.productProperties.qodanaProductProperties ?: return null
-  val vmOptions = ideContext.getAdditionalJvmArguments(os, arch, isQodana = true) + qodanaProductProperties.getAdditionalVmOptions(ideContext.buildNumber)
+  val vmOptions = ideContext.getAdditionalJvmArguments(os, arch, isQodana = true) +
+    qodanaProductProperties.getAdditionalVmOptions(ideContext.buildNumber, ideContext.options.buildDateInSeconds)
   return CustomCommandLaunchData(
     commands = listOf("qodana"),
     bootClassPathJarNames = ideContext.bootClassPathJarNames + PLATFORM_CORE_NIO_FS,
