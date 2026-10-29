@@ -2,8 +2,6 @@
 package com.intellij.platform.settings.v2.docs
 
 import java.nio.file.Path
-import kotlin.io.path.isDirectory
-import kotlin.io.path.listDirectoryEntries
 
 /**
  * Checks the amendment and supersession graph of the decision records (ADRs) in one folder.
@@ -55,7 +53,7 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
         }
         val backKind = relation.kind.inverse
         val namedBack = other.relations.any { it.kind == backKind && it.number == record.number }
-        val mayBeUnnamed = relation.kind.isFromNewer && record.status == PROPOSED
+        val mayBeUnnamed = relation.kind.isFromNewer && record.statusWord == PROPOSED_STATUS
         if (!namedBack && !mayBeUnnamed) {
           problems += DocProblem(record.file, record.statusLine,
                                  "${relation.kind.text} ADR ${relation.number}, but ADR ${relation.number} has no " +
@@ -109,17 +107,10 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
     return newer
   }
 
-  private fun readRecords(): Map<String, AdrRecord> {
-    if (!adrDir.isDirectory()) return emptyMap()
-    return adrDir.listDirectoryEntries("*.md").mapNotNull { file ->
-      val number = DocLinkChecker.adrNumber(file) ?: return@mapNotNull null
-      val text = readDocText(file)
-      val section = STATUS_SECTION.find(text)
-      val status = section?.groupValues?.get(1).orEmpty()
-      val statusLine = section?.let { lineOf(text, it.range.first) } ?: 0
-      AdrRecord(number, file, statusLine, STATUS_WORD.find(status)?.value.orEmpty(), parseRelations(status))
-    }.associateBy { it.number }
-  }
+  private fun readRecords(): Map<String, AdrRecord> =
+    readAdrFiles(adrDir).associate {
+      it.number to AdrRecord(it.number, it.file, it.statusLine, it.statusWord, parseRelations(it.status))
+    }
 
   private fun parseRelations(status: String): List<Relation> {
     val relations = mutableListOf<Relation>()
@@ -140,7 +131,7 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
     val number: String,
     val file: Path,
     val statusLine: Int,
-    val status: String,
+    val statusWord: String,
     val relations: List<Relation>,
   )
 
@@ -162,9 +153,6 @@ class AdrChainChecker(private val adrDir: Path, private val maxChainLength: Int)
   }
 
   private companion object {
-    const val PROPOSED = "Proposed"
-    val STATUS_SECTION = Regex("""^## Status\n(.*?)(?=^## |\z)""", setOf(RegexOption.MULTILINE, RegexOption.DOT_MATCHES_ALL))
-    val STATUS_WORD = Regex("""\w+""")
     /** Matches a relation keyword, an ADR link text, or a sentence end, which closes the list of a keyword. */
     val RELATION_TOKEN = Regex("""(Amends|Supersedes|Amended by|Superseded by)|\[(?:ADR )?(\d{4})]|\.(?=\s|\z)""")
   }
