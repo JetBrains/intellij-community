@@ -2,11 +2,13 @@
 package com.jetbrains.performancePlugin.commands
 
 import com.intellij.configurationStore.StoreReloadManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.impl.WorkspaceModelInternal
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -16,6 +18,7 @@ import kotlinx.coroutines.withContext
  * The VFS and the workspace model come from the shared `system` directory and keep the state of the test before.
  * Without this command, the IDE applies the rewound files later and undoes the startup commands that ran before,
  * for example `%setupSDK`, see AT-5404. Starter puts this command first after a rewind.
+ * The command ends without an error when the IDE closes the project during the sync.
  *
  * Syntax: %syncRestoredProjectFiles
  */
@@ -27,6 +30,17 @@ internal class SyncRestoredProjectFilesCommand(text: String, line: Int) : Perfor
 
   override suspend fun doExecute(context: PlaybackContext) {
     val project = context.project
+    try {
+      syncRestoredProjectFiles(project)
+    }
+    catch (e: CancellationException) {
+      if (!project.isDisposed) {
+        throw e
+      }
+    }
+  }
+
+  private suspend fun syncRestoredProjectFiles(project: Project) {
     // A change in the project files before this sync does not reach the workspace model until a later refresh.
     @Suppress("UnsafeOpenServiceCast")
     (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).awaitSynchronizationWithJpsModel()
