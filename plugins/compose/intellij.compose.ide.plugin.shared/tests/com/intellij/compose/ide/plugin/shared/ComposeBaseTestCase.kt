@@ -10,6 +10,7 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -193,6 +194,24 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
     }
 
     /**
+     * Disables `AndroidGradleProjectStartupActivity` for the test class.
+     *
+     * The activity attaches the cached Android models after the project opens. The project fixture does not wait for
+     * it, so the activity changes the project model and the PSI while a test runs.
+     */
+    @JvmStatic
+    @BeforeAll
+    fun disableAndroidGradleProjectStartupActivity() {
+      Registry.get(ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY_DISABLED).setValue(true)
+    }
+
+    @JvmStatic
+    @AfterAll
+    fun enableAndroidGradleProjectStartupActivity() {
+      Registry.get(ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY_DISABLED).resetToDefault()
+    }
+
+    /**
      * Removes the SDKs that the Gradle sync created, once after the last test of the class.
      * The tests of one class share the Gradle project fixture, and its modules need these SDKs until the last test.
      * The SDK leak tracker of [GradleProjectTestApplication] runs after this method.
@@ -250,5 +269,7 @@ abstract class ComposeBaseTestCase : GradleCodeInsightBaseTestCase() {
     private const val ANDROID_PLATFORM_HASH_PREFIX = "android-"
 
     private val COMPILE_SDK_REGEX = Regex("""^android-compileSdk\s*=\s*"(\d+)"""", RegexOption.MULTILINE)
+
+    private const val ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY_DISABLED = "android.gradle.project.startup.activity.disabled"
   }
 }
