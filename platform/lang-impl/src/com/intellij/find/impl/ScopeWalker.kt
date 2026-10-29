@@ -44,9 +44,10 @@ internal class ScopeWalker(
   private val project: Project,
   private val candidateFilter: CandidateFilter,
   private val moduleToSearchIn: Module?,
-  private val directoryToSearchIn: VirtualFile?,
+  /** The directories of the model: one named directory, or in JetBrains Light the base directories that stand for the project. */
+  private val directoriesToSearchIn: List<VirtualFile>,
   private val withSubdirectories: Boolean,
-  /** True when [directoryToSearchIn] stands for the whole project, as in JetBrains Light, where every file is non-indexable. */
+  /** True when [directoriesToSearchIn] stand for the whole project, as in JetBrains Light, where every file is non-indexable. */
   private val directoryStandsForProject: Boolean,
   private val customScope: GlobalSearchScope?,
 ) {
@@ -86,7 +87,7 @@ internal class ScopeWalker(
   )
 
   /**
-   * Builds the walk items from _one of_ {custom scope | directory | module | indexable providers}, plus the
+   * Builds the walk items from _one of_ {custom scope | directories | module | indexable providers}, plus the
    * [FindModelExtension]s. Runs on the producer coroutine, once per search and only when the walk phase runs; asks
    * [DirectorySearchEngine.canSearch] here, outside a read action.
    *
@@ -114,24 +115,22 @@ internal class ScopeWalker(
         items.add(WorkItem.Walk.File(NewVirtualFile.asCacheAvoiding(file)))
       }
     }
-    else if (directoryToSearchIn != null) {
-      // The directory can lie outside the project. Wrap a persistent VFS directory so the walk does not fill the VFS cache
-      // with entries from a rarely used file tree. An LSP virtual file is not persistent and is walked as is.
-      val directory = (directoryToSearchIn as? NewVirtualFile)?.asCacheAvoiding() ?: directoryToSearchIn
-      if (withSubdirectories) {
-        // the directory that stands for the project holds only non-indexable files, so a reliable searcher covers its walk too
-        if (directoryStandsForProject && skipNonIndexableRoots) {
-          nonIndexableWalked = false
+    else if (directoriesToSearchIn.isNotEmpty()) {
+      // the directories that stand for the project hold only non-indexable files, so a reliable searcher covers their walk too
+      val skipDirectories = directoryStandsForProject && skipNonIndexableRoots
+      if (skipDirectories) nonIndexableWalked = false
+      for (directory in directoriesToSearchIn) {
+        // The directory can lie outside the project. Wrap a persistent VFS directory so the walk does not fill the VFS cache
+        // with entries from a rarely used file tree. An LSP virtual file is not persistent and is walked as is.
+        val cacheAvoidingDirectory = (directory as? NewVirtualFile)?.asCacheAvoiding() ?: directory
+        if (withSubdirectories) {
+          if (!skipDirectories) items.add(WorkItem.Walk.File(cacheAvoidingDirectory))
+          // DirectorySearchEngine is not obliged to add unsaved documents to the search queue - do it now.
+          getUnsavedDocumentsUnderDirectory(directory).mapTo(items) { WorkItem.Walk.File(it) }
         }
         else {
-          items.add(WorkItem.Walk.File(directory))
+          cacheAvoidingDirectory.children.mapTo(items) { WorkItem.Walk.File(it) }
         }
-
-        // DirectorySearchEngine is not obliged to add unsaved documents to the search queue - do it now.
-        getUnsavedDocumentsUnderDirectory(directoryToSearchIn).mapTo(items) { WorkItem.Walk.File(it) }
-      }
-      else {
-        directory.children.mapTo(items) { WorkItem.Walk.File(it) }
       }
       //MAYBE RC: should we return early here? Should FindModelExtension be added if user explicitly
       //          request a search in a specific directory _only_?
@@ -231,7 +230,7 @@ internal class ScopeWalker(
 
   private fun expandDirectory(plan: WalkPlan, item: WorkItem.Walk.File, directory: VirtualFile, sink: Sink) {
     if (!candidateFilter.claimDirectory(item, directory)) return
-    if (directoryToSearchIn != null && withSubdirectories) {
+    if (directoriesToSearchIn.isNotEmpty() && withSubdirectories) {
       // note that search engine may unfold more than one level and eventually visit already indexed, excluded or ignored
       // files or directories. This might be a performance problem, but does not affect correctness: all the files
       // will be checked against the WSM and requested scope later when this search task deals with individual files.

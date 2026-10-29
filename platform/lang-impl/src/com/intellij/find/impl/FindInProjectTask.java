@@ -16,8 +16,8 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
+import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -34,9 +34,11 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Future;
@@ -94,7 +96,7 @@ final class FindInProjectTask {
     PsiManager psiManager = PsiManager.getInstance(project);
     projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
-    VirtualFile directoryToSearchIn;
+    List<VirtualFile> directoriesToSearchIn;
     boolean withSubdirectories;
     boolean directoryStandsForProject = false;
     var directoryCandidate = FindInProjectUtil.getDirectory(findModel);
@@ -103,19 +105,21 @@ final class FindInProjectTask {
       // iteration and pre-filtering to backend (ijent), thus minimizing amount of round trips over the network.
       // What we configure here is a set of files which should be searched. It may contain more files than requested scope,
       // but not less than requested. All the discovered files will be filtered by actually provided scope later.
-      // In ijLight we have a very primitive workspace model containing only one ProjectRootEntity, so all the scopes, including
-      // Project Scope and All Scope, are the same - this root directory.
-      directoryToSearchIn = ProjectUtil.guessProjectDir(project);
-      if (directoryToSearchIn != null) {
-        LOG.info("Using guessed " + directoryToSearchIn + " for search.");
-        directoryStandsForProject = true;
+      // In ijLight the workspace model holds one ProjectRootEntity per project of the workspace and no module, so the project
+      // is its base directories: the roots of these entities, with a nested root folded into its parent.
+      directoriesToSearchIn = lightProjectDirectories(project);
+      if (directoriesToSearchIn.isEmpty()) {
+        LOG.warn("No project directory found for search in " + project);
       }
       else {
-        LOG.warn("No project directory guessed for search in " + project);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Using the project directories " + directoriesToSearchIn + " for search.");
+        }
+        directoryStandsForProject = true;
       }
       withSubdirectories = true;
     } else {
-      directoryToSearchIn = directoryCandidate;
+      directoriesToSearchIn = ContainerUtil.createMaybeSingletonList(directoryCandidate);
       withSubdirectories = findModel.isWithSubdirectories();
     }
 
@@ -124,15 +128,15 @@ final class FindInProjectTask {
                               null :
                               ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
 
-    skipExcludedFiles = directoryToSearchIn != null
+    skipExcludedFiles = !directoriesToSearchIn.isEmpty()
                         && !Registry.is("find.search.in.excluded.dirs")
-                        && !ReadAction.computeBlocking(() -> projectFileIndex.isExcluded(directoryToSearchIn));
+                        && ReadAction.computeBlocking(() -> ContainerUtil.and(directoriesToSearchIn, dir -> !projectFileIndex.isExcluded(dir)));
 
     SearchScope modelCustomScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope customScope = modelCustomScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(modelCustomScope, project);
 
-    boolean locateClassSources = directoryToSearchIn != null
-                                 && ReadAction.computeBlocking(() -> projectFileIndex.getClassRootForFile(directoryToSearchIn)) != null;
+    boolean locateClassSources = !directoriesToSearchIn.isEmpty()
+                                 && ReadAction.computeBlocking(() -> ContainerUtil.exists(directoriesToSearchIn, dir -> projectFileIndex.getClassRootForFile(dir) != null));
 
     Predicate<CharSequence> fileNamePatternCondition = FindInProjectUtil.createFileMaskCondition(findModel.getFileFilter());
     NotNullLazyValue<GlobalSearchScope> modelScope =
@@ -149,7 +153,7 @@ final class FindInProjectTask {
         return pair == null ? null : pair.second;
       }
     );
-    scopeWalker = new ScopeWalker(findModel, project, candidateFilter, moduleToSearchIn, directoryToSearchIn, withSubdirectories,
+    scopeWalker = new ScopeWalker(findModel, project, candidateFilter, moduleToSearchIn, directoriesToSearchIn, withSubdirectories,
                                   directoryStandsForProject, customScope);
 
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
@@ -160,6 +164,15 @@ final class FindInProjectTask {
     if (tooManyUsagesStatus) {
       TooManyUsagesStatus.createFor(progressIndicator);
     }
+  }
+
+  /**
+   * The directories a Light project search walks: the valid base directories of the project.
+   * Every project of a Light workspace is a base directory, so a search over the project reaches every project of the workspace.
+   */
+  private static @NotNull List<VirtualFile> lightProjectDirectories(@NotNull Project project) {
+    if (project.isDefault()) return List.of();
+    return ContainerUtil.filter(BaseProjectDirectories.getBaseDirectories(project), VirtualFile::isValid);
   }
 
   /**

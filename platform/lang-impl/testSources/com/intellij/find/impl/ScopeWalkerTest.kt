@@ -38,7 +38,7 @@ class ScopeWalkerTest {
       project = project.get(),
       candidateFilter = filter,
       moduleToSearchIn = null,
-      directoryToSearchIn = directory,
+      directoriesToSearchIn = listOf(directory),
       withSubdirectories = true,
       directoryStandsForProject = false,
       customScope = null,
