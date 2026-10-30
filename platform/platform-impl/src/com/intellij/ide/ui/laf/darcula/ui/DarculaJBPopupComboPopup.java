@@ -208,8 +208,11 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
   public void propertyChange(PropertyChangeEvent e) {
     if ("model".equals(e.getPropertyName()) && (myPopup == null)) {
       myProxyList.setModel(myComboBox.getModel());
-      myProxyList.setCellRenderer(myComboBox.getRenderer());
       myProxyList.setSelectedValue(myComboBox.getModel().getSelectedItem(), false);
+    }
+
+    if ("renderer".equals(e.getPropertyName()) && myComboBox.getRenderer() != null) {
+      myProxyList.setCellRenderer(myComboBox.getRenderer());
     }
 
     if (!isVisible()) return;
