@@ -76,7 +76,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
    * The main queue for runnables requiring write-intent lock.
    * guarded by [lockObject]
    */
-  private val writeIntentQueue: BulkArrayQueue<RunnableInfo> = BulkArrayQueue()
+  private val writeIntentQueue: BulkArrayQueue<RunnableInfo> = BulkArrayQueue(1024)
 
   /**
    * Runnables, which require write-intent lock, but that were skipped due to incompatible modality states.
@@ -88,7 +88,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
    * The main queue for runnables not requiring write-intent lock.
    * guarded by [lockObject]
    */
-  private val uiQueue: BulkArrayQueue<FlushQueueCommand> = BulkArrayQueue()
+  private val uiQueue: BulkArrayQueue<FlushQueueCommand> = BulkArrayQueue(1024)
 
   /**
    * Runnables, which do not require write-intent lock, but that were skipped due to incompatible modality states.
@@ -366,7 +366,7 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
   private fun scheduleFlushOnWriteActionTermination() {
     threadingSupport.runWhenWriteActionIsCompleted {
       synchronized(lockObject) {
-        uiQueue.enqueue(WriteActionFinished(timeCounter.getAndIncrement()))
+        uiQueue.addLast(WriteActionFinished(timeCounter.getAndIncrement()))
         requestFlush()
       }
     }
@@ -443,9 +443,9 @@ class NonBlockingFlushQueue(private val threadingSupport: ThreadingSupport) {
       val queueSize = writeIntentQueue.size() + uiQueue.size() // logically, this element goes to the end of the queue
       val info = RunnableInfo(runnable, modalityState, isExpired, isRunningUnderWriteIntent, creationTime, stamp, queueSize, false)
       if (isRunningUnderWriteIntent) {
-        writeIntentQueue.enqueue(info)
+        writeIntentQueue.addLast(info)
       } else {
-        uiQueue.enqueue(info)
+        uiQueue.addLast(info)
       }
       requestFlush()
     }

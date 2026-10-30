@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.NoSuchElementException;
 import java.util.function.Predicate;
 
 /// Array-backed queue with additional support for fast bulk inserts (see [bulkEnqueueFirst])
@@ -16,16 +17,31 @@ public final class BulkArrayQueue<T> {
   // maintain wrap-around queue using these pointers into myQueue
   private int tail; // index at which the next element would be stored via enqueue()
   private int head; // index to a stored element to be returned by pollFirst(); if tail==head the queue is empty
-  private Object[] myQueue = new Object[1024];
+  private Object[] myQueue;
 
-  public void enqueue(@NotNull T info) {
-    int newTail = (tail + 1) % myQueue.length;
+  public BulkArrayQueue(int initialCapacity) {
+    if (initialCapacity <= 0) throw new IllegalArgumentException("initialCapacity must be positive: " + initialCapacity);
+    myQueue = new Object[initialCapacity];
+  }
+
+  public void addLast(@NotNull T info) {
+    int newTail = wrapAroundIndexForward(tail + 1);
     if (newTail == head) {
       growAndUnwrap(0);
       newTail = tail+1;
     }
     myQueue[tail] = info;
     tail = newTail;
+  }
+
+  public void addFirst(@NotNull T info) {
+    int newHead = wrapAroundIndexBackward(head-1);
+    if (newHead == tail) {
+      growAndUnwrap(1);
+      newHead = 0;
+    }
+    myQueue[newHead] = info;
+    head = newHead;
   }
 
   // grow the backing array to accommodate additional elements;
@@ -63,14 +79,51 @@ public final class BulkArrayQueue<T> {
     return head <= tail ? tail - head : tail + myQueue.length-head;
   }
 
-  public int capacity() { return  myQueue.length; }
+  public int capacity() { return myQueue.length; }
 
   public T pollFirst() {
     if (isEmpty()) return null;
-    int nextHead = (head+1) % myQueue.length;
+    int nextHead = wrapAroundIndexForward(head + 1);
     T info = getAndNullize(head);
     head = nextHead;
     return info;
+  }
+
+  /**
+   * Removes and returns the last element.
+   * @throws NoSuchElementException if the queue is empty
+   */
+  public @NotNull T removeLast() {
+    if (isEmpty()) throw new NoSuchElementException();
+    tail = wrapAroundIndexBackward(tail-1);
+    return getAndNullize(tail);
+  }
+
+  /// Returns the element at the given `logicalIndex`.
+  /// `logicalIndex==0` means the queue head, while `logicalIndex==size()-1` means the queue tail element.
+  /// @throws IndexOutOfBoundsException if `logicalIndex < 0 || logicalIndex >= size()`
+  public @NotNull T elementAt(int logicalIndex) {
+    if (logicalIndex < 0 || logicalIndex >= size()) {
+      throw new IndexOutOfBoundsException("index: " + logicalIndex + "; size: " + size());
+    }
+    int offsetToEnd = myQueue.length - head;
+    //noinspection unchecked
+    return (T)myQueue[logicalIndex < offsetToEnd ? head + logicalIndex : logicalIndex - offsetToEnd];
+  }
+  /// Returns the element at the given `logicalIndex`.
+  /// `logicalIndex==0` means the queue head, while `logicalIndex==size()-1` means the queue tail element,
+  /// and then set that element to `tombStone`
+  /// @throws IndexOutOfBoundsException if `logicalIndex < 0 || logicalIndex >= size()`
+  public @NotNull T getAndSetElementAt(int logicalIndex, @NotNull T tombStone) {
+    if (logicalIndex < 0 || logicalIndex >= size()) {
+      throw new IndexOutOfBoundsException("index: " + logicalIndex + "; size: " + size());
+    }
+    int offsetToEnd = myQueue.length - head;
+    int i = logicalIndex < offsetToEnd ? head + logicalIndex : logicalIndex - offsetToEnd;
+    //noinspection unchecked
+    T result = (T)myQueue[i];
+    myQueue[i] = tombStone;
+    return result;
   }
 
   public T peekFirst() {
@@ -79,6 +132,12 @@ public final class BulkArrayQueue<T> {
     return (T)myQueue[head];
   }
 
+  public T peekLast() {
+    if (isEmpty()) return null;
+    int lastIndex = wrapAroundIndexBackward(tail-1);
+    //noinspection unchecked
+    return (T)myQueue[lastIndex];
+  }
 
   private @NotNull T getAndNullize(int head) {
     //noinspection unchecked
@@ -107,10 +166,10 @@ public final class BulkArrayQueue<T> {
     }
   }
 
-  void removeAll(@NotNull Predicate<? super T> shouldRemove) {
+  public void removeAll(@NotNull Predicate<? super T> shouldRemove) {
     int o;
     if (head <= tail) {
-      // shift alive items in [head..tail) left to head
+      // shift alive items in [head...tail) left to head
       o = head;
       for (int i=head; i<tail; i++) {
         T info = getAndNullize(i);
@@ -120,7 +179,7 @@ public final class BulkArrayQueue<T> {
       }
     }
     else {
-      // shift living items in [head..capacity) right
+      // shift living items in [head...capacity) right
       o = myQueue.length;
       for (int i= myQueue.length-1; i>=head; i--) {
         T info = getAndNullize(i);
@@ -128,8 +187,8 @@ public final class BulkArrayQueue<T> {
           myQueue[--o] = info;
         }
       }
-      head = o % myQueue.length;
-      // shift alive items in [0..tail) left to 0
+      head = wrapAroundIndexForward(o);
+      // shift alive items in [0...tail) left to 0
       o = 0;
       for (int i=0; i<tail; i++) {
         T info = getAndNullize(i);
@@ -141,7 +200,14 @@ public final class BulkArrayQueue<T> {
     tail = o;
   }
 
-  boolean isEmpty() {
+  private int wrapAroundIndexForward(int i) {
+    return i == myQueue.length ? 0 : i;
+  }
+  private int wrapAroundIndexBackward(int i) {
+    return i == -1 ? myQueue.length - 1 : i;
+  }
+
+  public boolean isEmpty() {
     return head == tail;
   }
 }
