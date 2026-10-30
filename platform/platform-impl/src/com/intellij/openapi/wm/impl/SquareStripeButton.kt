@@ -43,7 +43,6 @@ import com.intellij.ui.icons.loadIconCustomVersionOrScale
 import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.paint.use
 import com.intellij.ui.paint.useCopy
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -361,7 +360,7 @@ private fun createPresentation(toolWindow: ToolWindowImpl): Presentation {
 
 internal fun getStripeToolbarButtonIconSize(): Int {
   val extension = ToolWindowStripeExtension.getInstance() ?: return JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSize()
-  return JBUIScale.scale(extension.getStripeIconUnscaledSize())
+  return extension.getStripeIconUnscaledSize()
 }
 
 internal fun getStripeToolbarButtonSize(moreButton: Boolean): Dimension {

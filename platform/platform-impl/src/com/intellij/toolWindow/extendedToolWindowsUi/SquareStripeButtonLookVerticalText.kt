@@ -162,7 +162,7 @@ internal class SquareStripeButtonLookVerticalText(button: SquareStripeButton) :
     return UIUtil.computeStringWidth(button, button.getFontMetrics(getTextFont()), getStripeText())
   }
 
-  private fun getTextFont() = if (UISettings.getInstance().compactMode) JBFont.create(button.font).lessOn(1f) else button.font
+  private fun getTextFont() = if (UISettings.getInstance().compactMode) JBFont.create(button.font, false).lessOn(1f) else button.font
 
   private fun getStripeText(): String {
     // Don't use short title the plugin
