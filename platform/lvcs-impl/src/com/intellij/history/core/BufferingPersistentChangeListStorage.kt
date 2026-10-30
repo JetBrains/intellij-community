@@ -86,12 +86,7 @@ internal class BufferingPersistentChangeListStorage(
     }
 
     val fullMsg = buildBrokenStorageMessage(storageDir, timestamp, storageTimestamp, vfsTimestamp, message)
-    if (unitTestMode) {
-      LocalHistoryLog.LOG.warn(fullMsg, e)
-    }
-    else {
-      LocalHistoryLog.LOG.error(fullMsg, e)
-    }
+    logError(fullMsg, e)
 
     Disposer.dispose(storage)
     try {
@@ -203,5 +198,14 @@ internal class BufferingPersistentChangeListStorage(
     isPurged = true
     LocalHistoryLog.LOG.debug("Purging local history...")
     purge(getPurgePeriod(), ChangeList.DEFAULT_INTERVAL_BETWEEN_ACTIVITIES_MILLISECONDS)
+  }
+
+  private fun logError(@NonNls message: String, e: Throwable?) {
+    if (unitTestMode) {
+      LocalHistoryLog.LOG.warn(message, e)
+    }
+    else {
+      LocalHistoryLog.LOG.error(message, e)
+    }
   }
 }
