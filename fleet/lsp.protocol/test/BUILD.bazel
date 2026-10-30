@@ -14,15 +14,12 @@ fleet_wasmjs_module(
         "@community//fleet/test-runtime:wasmjs_module_lib",
         "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
         "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_test",
+        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_io_core",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_core",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlinx_kotlinx_serialization_json",
     ],
     visibility = ["//visibility:public"],
-    deps = [
-        "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
-        "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",
-    ],
 )
 
 ### auto-generated section `build fleet.lsp.protocol.test` start

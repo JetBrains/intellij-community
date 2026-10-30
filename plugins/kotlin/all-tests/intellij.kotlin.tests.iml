@@ -28,7 +28,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.common.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.inspections.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.intentions.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch.tests" />
+    <orderEntry type="module" module-name="intellij.kotlin.codeInsight.structuralSearch.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.postfixTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.lineMarkers" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.navigation.tests" scope="RUNTIME" />
@@ -45,14 +45,14 @@
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.support.bundled" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.uast.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.compilerPlugins.parcelize.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.copyright.tests" />
+    <orderEntry type="module" module-name="intellij.kotlin.copyright.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.injection.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.refactorings" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.liveTemplates" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.j2k.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.fixes.tests" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.kotlin.gradle.java" />
-    <orderEntry type="module" module-name="intellij.kotlin.lombok.tests" />
+    <orderEntry type="module" module-name="intellij.kotlin.gradle.java" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.lombok.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectStructure" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit.kotlin.tests.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.kotlin.tests.k2" scope="RUNTIME" />
