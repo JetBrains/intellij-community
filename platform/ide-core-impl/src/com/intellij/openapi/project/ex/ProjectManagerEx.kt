@@ -87,6 +87,14 @@ abstract class ProjectManagerEx : ProjectManager() {
   @Internal
   abstract fun loadProject(path: Path, beforeInit: ((Project) -> Unit)? = null): Project
 
+  /**
+   * Loads the project at [path] without opening it, as [loadProject] does.
+   *
+   * The load runs on the dispatcher of the caller. It loads the modules concurrently, so on a single thread they load one at a time.
+   */
+  @Internal
+  abstract suspend fun loadProjectAsync(path: Path, beforeInit: ((Project) -> Unit)? = null): Project
+
   @get:TestOnly
   abstract val isDefaultProjectInitialized: Boolean
 
