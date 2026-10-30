@@ -196,10 +196,12 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
           <deprecated<caret>Element/>
         </root>
       """.trimIndent(),
-      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;deprecatedElement&gt;</code></b><hr/>\n" +
-      "<b><i>Deprecated since 2020.1</i></b><br/>" +
-      "<i>Do not use it in new plugins.</i>\n" +
-      "<i>See <a href=\"https://example.com\">Components</a> for the migration guide.</i>" +
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;deprecatedElement&gt;</code></b><hr/>" +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Warning\"/> <b>Deprecated since 2020.1</b><br>\n" +
+      " Do not use it in new plugins.\n" +
+      " See <a href=\"https://example.com\">Components</a> for the migration guide." +
+      "</blockquote>" +
       "<p>The <code>deprecatedElement</code> description." +
       "<h5>Requirement</h5>" +
       "<p>Required: no"
@@ -213,9 +215,25 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
           <elementWithDeprecatedAttribute deprecated-<caret>attribute=""/>
         </root>
       """.trimIndent(),
-      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a> / <b><code>@deprecated-attribute</code></b><hr/>\n" +
-      "<b><i>Deprecated since 2005.1</i></b><br/><i>Use <a href=\"psi_element://#attribute:root__elementWithDeprecatedAttribute__new-attribute\"><code>new-attribute</code></a> instead.</i>" +
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a> / <b><code>@deprecated-attribute</code></b><hr/>" +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Warning\"/> <b>Deprecated since 2005.1</b><br>\n" +
+      " Use <a href=\"psi_element://#attribute:root__elementWithDeprecatedAttribute__new-attribute\"><code>new-attribute</code></a> instead." +
+      "</blockquote>" +
       "<p>The <code>deprecated-attribute</code> description."
+    )
+  }
+
+  fun `test deprecated attribute without a deprecation note`() {
+    doTestDocContains(
+      """
+        <root>
+          <elementWithDeprecatedAttribute deprecated-attribute-without-<caret>note=""/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a> / <b><code>@deprecated-attribute-without-note</code></b><hr/>\n" +
+      "<b><i>Deprecated since 2010.1</i></b>" +
+      "<p>The <code>deprecated-attribute-without-note</code> description."
     )
   }
 
@@ -378,6 +396,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<ul>" +
       "<li><a href=\"psi_element://#attribute:root__experimentalElement__inheritedExperimentalAttribute\"><code>inheritedExperimentalAttribute</code></a> <i>experimental</i></li>" +
       "<li><a href=\"psi_element://#attribute:root__experimentalElement__experimentalAttribute\"><code>experimentalAttribute</code></a> <i>experimental</i></li>" +
+      "<li><a href=\"psi_element://#attribute:root__experimentalElement__requiredExperimentalAttribute\"><code>requiredExperimentalAttribute</code></a> <i><b>required</b></i>; <i>experimental</i></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +

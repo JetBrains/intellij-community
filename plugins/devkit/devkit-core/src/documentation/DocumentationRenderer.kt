@@ -214,33 +214,28 @@ internal class DocumentationRenderer(private val project: Project) {
   }
 
   private fun StringBuilder.appendDeprecation(deprecatedSince: String?, deprecationNote: String?) {
-    if (deprecatedSince != null || deprecationNote != null) {
-      append("**_")
-      if (deprecatedSince != null) {
-        append("Deprecated since ${deprecatedSince}")
-      }
-      else {
-        append("Deprecated")
-      }
-      append("_**")
-      val deprecationNote = deprecationNote
-      if (deprecationNote != null) {
-        append("<br/>")
-        val italicDeprecationNote = deprecationNote.lines().joinToString(separator = "\n") { if (it.isNotEmpty()) "_${it}_" else it }
-        append(italicDeprecationNote)
-
-      }
-      appendLine().appendLine()
+    if (deprecatedSince == null && deprecationNote == null) return
+    val title = if (deprecatedSince != null) "Deprecated since $deprecatedSince" else "Deprecated"
+    if (deprecationNote != null) {
+      appendCallout("warning", title, deprecationNote)
+    }
+    else {
+      // a callout requires at least one content line
+      appendLine("**_${title}_**").appendLine()
     }
   }
 
   private fun StringBuilder.appendExperimental(experimentalNote: String?) {
     experimentalNote ?: return
-    for (line in experimentalNote.trim().lines()) {
-      appendLine(if (line.isEmpty()) ">" else "> $line")
+    appendCallout("note", "Experimental", experimentalNote)
+  }
+
+  private fun StringBuilder.appendCallout(style: String, title: String, content: String) {
+    for (line in content.trim().lines()) {
+      appendLine(if (line.isBlank()) ">" else "> $line")
     }
     appendLine(">")
-    appendLine("{style=\"note\" title=\"Experimental\"}")
+    appendLine("{style=\"$style\" title=\"$title\"}")
     appendLine()
   }
 
