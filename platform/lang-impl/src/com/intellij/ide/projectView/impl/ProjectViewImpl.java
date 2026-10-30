@@ -1441,7 +1441,10 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
 
   protected void createTabActions(@NotNull List<? super AnAction> tabActions) {
     AnAction action = ActionManager.getInstance().getAction("ProjectViewTabToolbar");
-    if (action != null) tabActions.add(action);
+    // An empty group gets no toolbar: the first update of a new toolbar can block the EDT for the fast-track timeout.
+    if (action != null && !(action instanceof DefaultActionGroup group && group.getChildrenCount() == 0)) {
+      tabActions.add(action);
+    }
   }
 
   protected boolean isShowMembersOptionSupported() {

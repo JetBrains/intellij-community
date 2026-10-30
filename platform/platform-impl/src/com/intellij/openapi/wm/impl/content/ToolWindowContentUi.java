@@ -788,6 +788,9 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
   }
 
   public void setTabActions(@NotNull List<AnAction> actions) {
+    tabActionGroup.removeAll();
+    tabActionGroup.addSeparator();
+    tabActionGroup.addAll(actions);
     if (tabToolbar == null) {
       tabToolbar =
           ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLWINDOW_TITLE, new DefaultActionGroup(tabActionGroup), true);
@@ -800,13 +803,11 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
       tabToolbarImpl.setOpaque(false);
       tabToolbarImpl.setBorder(JBUI.Borders.empty());
       if (tabComponent.isShowing()) {
+        // the toolbar updates its actions when it is added
         tabComponent.add(tabToolbarImpl);
       }
     }
-    tabActionGroup.removeAll();
-    tabActionGroup.addSeparator();
-    tabActionGroup.addAll(actions);
-    if (tabComponent.isShowing()) {
+    else if (tabComponent.isShowing()) {
       tabToolbar.updateActionsAsync();
     }
   }
