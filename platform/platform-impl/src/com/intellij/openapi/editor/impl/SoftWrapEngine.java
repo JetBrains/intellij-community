@@ -74,7 +74,10 @@ public final class SoftWrapEngine {
     int startOffset = myEvent.getStartOffset();
     int minEndOffset = myEvent.getMandatoryEndOffset();
     int maxEndOffset = SoftWrapHelper.getEndOffsetUpperEstimate(myEditor, myDocument, myEvent);
-    var inlineInlays = myEditor.getInlayModel().getInlineElementsInRange(startOffset, maxEndOffset);
+    var inlineInlays = ContainerUtil.filter(
+      myEditor.getInlayModel().getInlineElementsInRange(startOffset, maxEndOffset),
+      inlay -> !inlay.getProperties().isSoftWrappingDisabled()
+    );
     var afterLineEndInlays = ContainerUtil.filter(
       myEditor.getInlayModel().getAfterLineEndElementsInRange(DocumentUtil.getLineStartOffset(startOffset, myDocument), maxEndOffset),
       inlay -> !inlay.getProperties().isSoftWrappingDisabled()

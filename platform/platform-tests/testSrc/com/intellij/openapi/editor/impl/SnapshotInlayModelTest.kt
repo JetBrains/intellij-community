@@ -180,6 +180,25 @@ class SnapshotInlayModelTest {
   }
 
   @Test
+  fun `inline inlay preserves disabled soft wrapping`(): Unit = timeoutRunBlocking {
+    val state = withEditor("abcd efgh") { editor ->
+      val properties = InlayProperties()
+        .relatesToPrecedingText(true)
+        .priority(7)
+        .disableSoftWrapping(true)
+      val inlay = editor.inlayModel.addInlineElement(9, properties, renderer)!!
+      listOf(
+        inlay is SnapshotMarker,
+        inlay.properties.isRelatedToPrecedingText,
+        inlay.properties.priority,
+        inlay.properties.isSoftWrappingDisabled,
+      )
+    }
+
+    assertThat(state).containsExactly(true, true, 7, true)
+  }
+
+  @Test
   fun `block inlay follows document edits and preserves properties`(): Unit = timeoutRunBlocking {
     val state = withEditor("a\nb") { editor ->
       val properties = InlayProperties()

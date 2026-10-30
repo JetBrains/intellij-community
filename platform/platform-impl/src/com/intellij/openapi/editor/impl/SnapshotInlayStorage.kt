@@ -43,6 +43,7 @@ internal class SnapshotInlayStorage(
   fun <R : EditorCustomElementRenderer> createInline(
     offset: Int,
     relatesToPrecedingText: Boolean,
+    softWrappable: Boolean,
     priority: Int,
     renderer: R,
   ): SnapshotInlineInlayMarker<R> {
@@ -57,6 +58,7 @@ internal class SnapshotInlayStorage(
       spec = spec,
       initialRange = TextRangeScalarUtil.toScalarRange(offset, offset),
       relatesToPrecedingText = relatesToPrecedingText,
+      softWrappable = softWrappable,
       priority = priority,
       renderer = renderer,
     )
@@ -302,6 +304,7 @@ internal class SnapshotInlineInlayMarker<R : EditorCustomElementRenderer>(
   spec: Byte,
   initialRange: Long,
   relatesToPrecedingText: Boolean,
+  private val softWrappable: Boolean,
   private val priority: Int,
   renderer: R,
 ) : SnapshotInlayMarker<R>(storage, editor, spec, initialRange, relatesToPrecedingText, renderer),
@@ -311,6 +314,8 @@ internal class SnapshotInlineInlayMarker<R : EditorCustomElementRenderer>(
   }
 
   override fun getFlavorFlags(): Byte = INLINE_FLAVOR.toByte()
+
+  override fun isSoftWrappable(): Boolean = softWrappable
 
   override fun getPriority(): Int = priority
 

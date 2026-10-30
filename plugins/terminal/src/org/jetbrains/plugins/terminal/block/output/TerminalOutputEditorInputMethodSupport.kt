@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -179,8 +180,11 @@ class TerminalOutputEditorInputMethodSupport(
 
     private fun showInlayAt(newCursorOffset: Int) {
       hideInlay()
-      inlay = editor.getInlayModel().addInlineElement<InputMethodInlayRenderer>(newCursorOffset, true, -IME_INLAY_PRIORITY,
-                                                                                InputMethodInlayRenderer(composedText))
+      inlay = editor.getInlayModel().addInlineElement<InputMethodInlayRenderer>(
+        newCursorOffset,
+        InlayProperties().relatesToPrecedingText(true).priority(-IME_INLAY_PRIORITY).disableSoftWrapping(true),
+        InputMethodInlayRenderer(composedText)
+      )
       LOG.debug {
         val msg = if (cursorOffset == -1) {
           "Initialized composed text inlay, offset: $newCursorOffset, composed text: $composedText"
