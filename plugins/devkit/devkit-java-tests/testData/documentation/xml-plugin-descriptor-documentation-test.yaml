@@ -144,6 +144,11 @@ elements:
                   #language=Markdown
                   deprecationNote: Use [`new-attribute`](#attribute:root__elementWithDeprecatedAttribute__new-attribute) instead.
               - attribute:
+                  name: deprecated-attribute-without-note
+                  #language=Markdown
+                  description: The `deprecated-attribute-without-note` description.
+                  deprecatedSince: "2010.1"
+              - attribute:
                   name: new-attribute
                   #language=Markdown
                   description: The `new-attribute` description.
@@ -303,6 +308,12 @@ elements:
                   description: Description of `experimentalAttribute`.
                   #language=Markdown
                   experimentalNote: An experimental note for the attribute.
+              - attribute:
+                  name: requiredExperimentalAttribute
+                  #language=Markdown
+                  description: Description of `requiredExperimentalAttribute`.
+                  requirement:
+                    required: yes
             children:
               - element:
                   name: experimentalChildElement
