@@ -129,13 +129,19 @@ a:com.intellij.openapi.actionSystem.AnAction
 f:com.intellij.openapi.actionSystem.Presentation
 - java.lang.Cloneable
 - *sf:NO_ICON_DESCRIPTOR:com.intellij.platform.icons.IconDescriptor
+- *sf:PROP_HOVERED_ICON_DESCRIPTOR:java.lang.String
 - *sf:PROP_ICON_DESCRIPTOR:java.lang.String
+- *sf:PROP_SELECTED_ICON_DESCRIPTOR:java.lang.String
+- *:getHoveredIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - *:getIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - *:getIconDescriptorSupplier():java.util.function.Supplier
+- *:getSelectedIconDescriptor():com.intellij.platform.icons.IconDescriptor
 - *:isRWLockRequired():Z
+- *:setHoveredIconDescriptor(com.intellij.platform.icons.IconDescriptor):V
 - *:setIconDescriptor(com.intellij.platform.icons.IconDescriptor):V
 - *:setIconDescriptorSupplier(java.util.function.Supplier):V
 - *:setRWLockRequired(Z):V
+- *:setSelectedIconDescriptor(com.intellij.platform.icons.IconDescriptor):V
 *:com.intellij.openapi.editor.CustomFoldRegion
 - com.intellij.openapi.editor.FoldRegion
 - a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
