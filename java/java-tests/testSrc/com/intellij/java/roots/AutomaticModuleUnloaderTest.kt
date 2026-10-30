@@ -386,7 +386,12 @@ class AutomaticModuleUnloaderTest(private val reloadingMode: ReloadingMode) {
 
   private suspend fun reloadProjectWithNewModules(project: Project, moduleFiles: List<Path>, beforeReload: () -> Unit = {}): Project {
     when (reloadingMode) {
-      ReloadingMode.ON_THE_FLY -> PlatformTestUtil.saveProject(project, true)
+      ReloadingMode.ON_THE_FLY -> {
+        withContext(Dispatchers.EDT) {
+          ModuleRootModificationUtil.addContentRoot(ModuleManager.getInstance(project).modules.first(), project.basePath!!)
+        }
+        PlatformTestUtil.saveProject(project, true)
+      }
       ReloadingMode.REOPEN -> saveAndCloseProject(project)
     }
 

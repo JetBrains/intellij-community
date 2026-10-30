@@ -141,7 +141,7 @@ class ModuleStoreTest {
 
       val virtualFile = VirtualFileManager.getInstance().findFileByNioPath(moduleFile)!!
       val oldText = moduleFile.readText()
-      val newText = oldText.replace("""<content url="file://${"$"}MODULE_DIR$/${module.name}" />""", "")
+      val newText = oldText.replace("""<content url="file://${"$"}MODULE_DIR$" />""", "")
       assertThat(oldText).isNotEqualTo(newText)
       ApplicationManager.getApplication().runWriteAction {
         virtualFile.setBinaryContent(newText.toByteArray())
@@ -152,8 +152,8 @@ class ModuleStoreTest {
       assertThat(module.contentRootUrls).isEmpty()
     }
 
-    val m1 = projectRule.createModule(root.resolve("m1.iml"))
-    val m2 = projectRule.createModule(root.resolve("m2.iml"))
+    val m1 = projectRule.createModule(root.resolve("m1/m1.iml"))
+    val m2 = projectRule.createModule(root.resolve("m2/m2.iml"))
 
     projectRule.project.messageBus.connect(m1).subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {

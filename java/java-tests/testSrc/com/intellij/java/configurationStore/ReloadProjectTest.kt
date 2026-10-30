@@ -6,12 +6,14 @@ import com.intellij.facet.FacetManager
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.registerFacetType
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ConfigurationErrorDescription
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
@@ -169,8 +171,17 @@ class ReloadProjectTest {
   }
 
   private suspend fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
-    return loadProjectAndCheckResults(listOf(element = testDataRoot.resolve(testDataDirName)),
-                                      tempDirectory = tempDirectory,
-                                      checkProject = checkProject)
+    return loadProjectAndCheckResults(
+      listOf(element = testDataRoot.resolve(testDataDirName)),
+      tempDirectory = tempDirectory,
+      checkProject = { project ->
+        edtWriteAction {
+          val moduleManager = ModuleManager.getInstance(project)
+          val module = moduleManager.modules.firstOrNull()
+                       ?: moduleManager.newModule(Paths.get(project.basePath!!, "main.iml"), "EMPTY_MODULE")
+          ModuleRootModificationUtil.addContentRoot(module, project.basePath!!)
+        }
+        checkProject(project)
+      })
   }
 }
