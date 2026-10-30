@@ -1,0 +1,74 @@
+PsiJavaFile:SeeTag23Markdown.java
+  PsiImportList
+    <empty list>
+  PsiClass:C
+    PsiDocComment
+      PsiDocToken:DOC_COMMENT_LEADING_ASTERISKS('///')
+      PsiWhiteSpace(' ')
+      PsiDocTag:@see
+        PsiDocToken:DOC_TAG_NAME('@see')
+        PsiWhiteSpace(' ')
+        PsiElement(DOC_METHOD_OR_FIELD_REF)
+          PsiElement(DOC_REFERENCE_HOLDER)
+            PsiJavaCodeReferenceElement:java.util.Objects
+              PsiJavaCodeReferenceElement:java.util
+                PsiJavaCodeReferenceElement:java
+                  PsiIdentifier:java('java')
+                  PsiReferenceParameterList
+                    <empty list>
+                PsiJavaToken:DOT('.')
+                PsiIdentifier:util('util')
+                PsiReferenceParameterList
+                  <empty list>
+              PsiJavaToken:DOT('.')
+              PsiIdentifier:Objects('Objects')
+              PsiReferenceParameterList
+                <empty list>
+          PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
+          PsiDocToken:DOC_TAG_VALUE_TOKEN('compare')
+          PsiDocToken:DOC_TAG_VALUE_LPAREN('(')
+          PsiElement(DOC_TAG_VALUE_ELEMENT)
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:Object
+                PsiJavaCodeReferenceElement:Object
+                  PsiIdentifier:Object('Object')
+                  PsiReferenceParameterList
+                    <empty list>
+            PsiDocToken:DOC_TAG_VALUE_COMMA(',')
+            PsiWhiteSpace(' ')
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:Object
+                PsiJavaCodeReferenceElement:Object
+                  PsiIdentifier:Object('Object')
+                  PsiReferenceParameterList
+                    <empty list>
+            PsiDocToken:DOC_TAG_VALUE_COMMA(',')
+            PsiWhiteSpace(' ')
+            PsiElement(DOC_TYPE_HOLDER)
+              PsiTypeElement:Comparator<?
+                PsiJavaCodeReferenceElement:Comparator<?
+                  PsiIdentifier:Comparator('Comparator')
+                  PsiReferenceParameterList
+                    PsiJavaToken:LT('<')
+                    PsiTypeElement:?
+                      PsiJavaToken:QUEST('?')
+                    PsiErrorElement:'>' or ',' expected
+                      <empty list>
+              PsiWhiteSpace(' ')
+              PsiIdentifier:superObject('superObject')
+              PsiJavaToken:GT('>')
+          PsiDocToken:DOC_TAG_VALUE_RPAREN(')')
+    PsiWhiteSpace('\n')
+    PsiModifierList:
+      <empty list>
+    PsiKeyword:class('class')
+    PsiWhiteSpace(' ')
+    PsiIdentifier:C('C')
+    PsiTypeParameterList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiReferenceList
+      <empty list>
+    PsiJavaToken:LBRACE('{')
+    PsiJavaToken:RBRACE('}')

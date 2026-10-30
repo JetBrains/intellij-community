@@ -266,11 +266,14 @@ public final class JavaDocUtil {
       while (tokenizer.hasMoreTokens()) {
         String parmText = tokenizer.nextToken().trim();
         try {
-          Matcher typeMatcher = ourTypePattern.matcher(parmText);
           String typeText = parmText;
 
-          if (typeMatcher.find()) {
-            typeText = parmText.substring(0, typeMatcher.start());
+          if (!typeText.endsWith(">")) {
+            // > very likely means end of generics and not a parameter name
+            Matcher typeMatcher = ourTypePattern.matcher(parmText);
+            if (typeMatcher.find()) {
+              typeText = parmText.substring(0, typeMatcher.start());
+            }
           }
 
           PsiType type = factory.createTypeFromText(typeText, context);

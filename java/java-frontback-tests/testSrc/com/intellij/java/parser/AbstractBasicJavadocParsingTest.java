@@ -327,6 +327,7 @@ public abstract class AbstractBasicJavadocParsingTest extends AbstractBasicJavaP
   public void testSeeTag21Markdown() { doTest(true); }
   @Test
   public void testSeeTag22Markdown() { doTest(true); }
+  public void testSeeTag23Markdown() { doTest(true); }
 
   @Test
   public void testSeparated01Markdown() { doTest(true); }
