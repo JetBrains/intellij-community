@@ -8,7 +8,7 @@ import com.intellij.driver.model.transport.Ref
 import com.intellij.driver.sdk.remoteDev.BeControlComponentBase
 import com.intellij.driver.sdk.remoteDev.getBackendRef
 import com.intellij.driver.sdk.remoteDev.getFrontendRef
-import com.intellij.driver.sdk.remoteDev.validateBeControlElement
+import com.intellij.driver.sdk.remoteDev.hasFrontendAndBackendRefs
 import com.intellij.driver.sdk.withoutPauseOnIndicators
 import org.intellij.lang.annotations.Language
 import org.w3c.dom.Element
@@ -32,17 +32,15 @@ class SearchService(
   fun findAll(@Language("xpath") xpath: String, component: Component? = null, onlyFrontend: Boolean = false): List<Component> =
     withoutPauseOnIndicators {
       var matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, onlyFrontend)
-      if (matchingElements.isNotEmpty() && matchingElements.all { isBeControl(it) && !validateBeControlElement(it) }) {
+      if (matchingElements.isNotEmpty() && matchingElements.all { isBeControl(it) && !hasFrontendAndBackendRefs(it) }) {
         matchingElements = getSwingHierarchyDOMAndFindMatchingElements(xpath, component, true)
       }
       matchingElements.mapNotNull { reconstructComponent(it) }
     }
 
   private fun reconstructComponent(element: Element): Component? {
-    if (isBeControl(element)) {
-      if (!validateBeControlElement(element)) return null
-      return reconstructBeControlComponent(element)
-    }
+    if (hasFrontendAndBackendRefs(element)) return reconstructBeControlComponent(element)
+    if (isBeControl(element)) return null
 
     val ref = Ref(
       element.getAttribute("refId"),

@@ -84,6 +84,10 @@ jvm_library(
     ),
     associates = ["//tools/intellij.tools.ide.starter.driver:ide-starter-driver"],
     kotlinc_opts = ":custom_ide-starter-driver-tests",
+    resource_strip_prefix = "testData",
+    resources = glob(
+        ["testData/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//platform/testFramework/junit5"],
     deps = [

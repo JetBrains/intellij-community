@@ -141,7 +141,7 @@ internal fun getBackendRef(element: Element) = Ref(
   RdTarget.BACKEND
 )
 
-internal fun validateBeControlElement(element: Element): Boolean {
+internal fun hasFrontendAndBackendRefs(element: Element): Boolean {
   val attrNames = listOf("refId", "javaclass", "hashCode", "asString")
   val necessaryAttributes = attrNames.map { "frontend_$it" } + attrNames.map { "backend_$it" }
   return necessaryAttributes.all { element.hasAttribute(it) }
