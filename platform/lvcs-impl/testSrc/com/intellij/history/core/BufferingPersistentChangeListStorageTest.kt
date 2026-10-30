@@ -12,6 +12,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
+import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.WRITE
@@ -23,10 +24,11 @@ internal class BufferingPersistentChangeListStorageTest {
 
   private lateinit var storage: BufferingPersistentChangeListStorage
 
-  private fun createStorage() = BufferingPersistentChangeListStorage(
+  private fun createStorage(openStorage: (Path) -> LocalHistoryStorage = ::LocalHistoryStorage) = BufferingPersistentChangeListStorage(
     storageDir = tempDir.resolve("storage"),
     getCurrentFsTimestamp = { 0 },
     unitTestMode = true,
+    openStorage = openStorage,
   )
 
   @BeforeEach
@@ -290,6 +292,69 @@ internal class BufferingPersistentChangeListStorageTest {
       .`as`("The recovered storage must accept new changes")
       .extracting<Long> { it.id }
       .containsExactly(recoveredChangeSet.id)
+  }
+
+  @Test
+  fun `pending change sets survive a successful recovery`() {
+    val originalChangeSet = createChangeSet(storage.nextId(), 1000L)
+    storage.writeNextSet(originalChangeSet)
+    storage.flush()
+    storage.close(/*drop: */false)
+    makeLastRecordPointToItself()
+    storage = createStorage()
+
+    val iterator = storage.iterate()
+    val pendingChangeSet = createChangeSet(storage.nextId(), 2000L)
+    storage.writeNextSet(pendingChangeSet)
+    assertThat(iterator.asSequence().toList())
+      .describedAs("Reading a recursive record chain must start storage recovery")
+      .extracting<Long> { it.id }
+      .containsExactly(originalChangeSet.id)
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The recovery must keep the pending change sets")
+      .extracting<Long> { it.id }
+      .containsExactly(pendingChangeSet.id)
+
+    storage.close(/*drop: */false)
+    storage = createStorage()
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The recovered storage must persist the pending change sets")
+      .extracting<Long> { it.id }
+      .containsExactly(pendingChangeSet.id)
+  }
+
+  @Test
+  fun `storage keeps change sets in memory when recovery fails`() {
+    val originalChangeSet = createChangeSet(storage.nextId(), 1000L)
+    storage.writeNextSet(originalChangeSet)
+    storage.flush()
+    storage.close(/*drop: */false)
+    makeLastRecordPointToItself()
+    var openCount = 0
+    storage = createStorage { path ->
+      if (++openCount > 1) throw IOException("The test does not allow to open the storage again")
+      LocalHistoryStorage(path)
+    }
+
+    val iterator = storage.iterate()
+    val pendingChangeSet = createChangeSet(storage.nextId(), 2000L)
+    storage.writeNextSet(pendingChangeSet)
+    assertThat(iterator.asSequence().toList())
+      .describedAs("Reading a recursive record chain must start storage recovery")
+      .extracting<Long> { it.id }
+      .containsExactly(originalChangeSet.id)
+    assertThat(openCount)
+      .describedAs("The recovery must try to open the storage again")
+      .isEqualTo(2)
+
+    val nextChangeSet = createChangeSet(storage.nextId(), 3000L)
+    storage.writeNextSet(nextChangeSet)
+    storage.flush()
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The broken storage must keep the change sets in memory")
+      .extracting<Long> { it.id }
+      .containsExactly(nextChangeSet.id, pendingChangeSet.id)
   }
 
   /** Returns the data file that contains the serialized change sets. */

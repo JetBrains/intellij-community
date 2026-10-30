@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history.core
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.history.core.LocalHistoryStorageUtil.buildBrokenStorageMessage
 import com.intellij.history.core.LocalHistoryStorageUtil.getPurgePeriod
 import com.intellij.history.core.LocalHistoryStorageUtil.notifyStorageBroken
@@ -25,12 +26,14 @@ internal class BufferingPersistentChangeListStorage(
   private val storageDir: Path,
   private val getCurrentFsTimestamp: () -> Long = { ManagingFS.getInstance().creationTimestamp },
   private val unitTestMode: Boolean = ApplicationManager.getApplication().isUnitTestMode(),
+  private val openStorage: (Path) -> LocalHistoryStorage = ::LocalHistoryStorage,
 ) : ChangeListStorage {
   //TODO RC: use mmapped storage instead of old-school? Less freezes, and also more reliability
   private var storage: LocalHistoryStorage
 
   /**
-   * Write buffer for the storage
+   * The write buffer for [storage].
+   * [writeNextSet] adds change sets to the end. [flushPending] writes them to [storage] from the start.
    * [pendingSetsLock] guards the buffer.
    */
   private val pendingChangeSets = ArrayDeque<ChangeSet>()
@@ -47,8 +50,17 @@ internal class BufferingPersistentChangeListStorage(
    */
   private val lastIdRef = AtomicLong(Random.nextLong(START_ID_LIMIT))
 
-  @Volatile
-  private var isCompletelyBroken = false
+  /**
+   * True when [storage] cannot be used.
+   * Then [pendingChangeSets] keeps all change sets.
+   */
+  private var isPersistentStorageBroken = false
+
+  /**
+   * The change set that [flushPending] did not write.
+   * If the same change set fails again, [flushPending] sets [isPersistentStorageBroken].
+   */
+  private var lastFailedChangeSet: ChangeSet? = null
 
   /**
    * True after [purgeOnce] ran [purge].
@@ -62,7 +74,7 @@ internal class BufferingPersistentChangeListStorage(
   @Synchronized
   @Throws(IOException::class)
   private fun initStorage(): LocalHistoryStorage {
-    return openLocalHistoryStorage(storageDir, getCurrentFsTimestamp, unitTestMode)
+    return openLocalHistoryStorage(storageDir, getCurrentFsTimestamp, unitTestMode, openStorage)
   }
 
   private fun handleError(e: Throwable?, @NonNls message: @NonNls String?) {
@@ -84,15 +96,16 @@ internal class BufferingPersistentChangeListStorage(
     val fullMsg = buildBrokenStorageMessage(storageDir, timestamp, storageTimestamp, vfsTimestamp, message)
     logError(fullMsg, e)
 
-    Disposer.dispose(storage)
-    try {
-      storageDir.delete()
-      storage = initStorage()
-    }
-    catch (ex: Throwable) {
-      LocalHistoryLog.LOG.error("cannot recreate storage", ex)
-      synchronized(this) {
-        isCompletelyBroken = true
+    synchronized(this) {
+      Disposer.dispose(storage)
+      try {
+        storageDir.delete()
+        storage = initStorage()
+      }
+      catch (ex: Throwable) {
+        rethrowControlFlowException(ex)
+        logError("cannot recreate storage", ex)
+        isPersistentStorageBroken = true
       }
     }
 
@@ -119,7 +132,7 @@ internal class BufferingPersistentChangeListStorage(
     purgeOnce()
     try {
       flushPending()
-      storage.force()
+      synchronized(this) { if (isPersistentStorageBroken) null else storage }?.force()
     }
     catch (e: IOException) {
       handleError(e, null)
@@ -132,42 +145,55 @@ internal class BufferingPersistentChangeListStorage(
 
   @Synchronized
   private fun readPrevious(id: Int, recursionGuard: IntSet): ChangeSetHolder? {
-    if (isCompletelyBroken) return null
+    if (isPersistentStorageBroken) return null
     return storage.readPreviousBlock(id, recursionGuard, ::handleError)
   }
 
+  @Synchronized
   override fun iterate(): Iterator<ChangeSet> {
     flushPending()
-    return EagerNonRecursingReversedChangeSetIterator(::readPrevious)
+    val pendingIterator = synchronized(pendingSetsLock) { pendingChangeSets.reversed() }.iterator()
+
+    // The persistent iterator reads the last record now, under the lock.
+    // So it does not return a pending change set that is written later.
+    val persistentIterator = EagerNonRecursingReversedChangeSetIterator(::readPrevious)
+    return iterator {
+      yieldAll(pendingIterator)
+      yieldAll(persistentIterator)
+    }
   }
 
   override fun writeNextSet(changeSet: ChangeSet) {
-    if (isCompletelyBroken) return
     synchronized(pendingSetsLock) {
       pendingChangeSets.add(changeSet)
     }
   }
 
-  private fun flushPending() {
-    while (true) {
-      synchronized(this) {
-        val set = synchronized(pendingSetsLock) { pendingChangeSets.removeFirstOrNull() } ?: break
-        doWriteNextSet(set)
-      }
-    }
-  }
-
   @Synchronized
-  private fun doWriteNextSet(changeSet: ChangeSet) {
-    if (isCompletelyBroken) return
+  private fun flushPending() {
+    while (!isPersistentStorageBroken) {
+      val changeSet = synchronized(pendingSetsLock) { pendingChangeSets.firstOrNull() } ?: return
 
-    try {
-      storage.writeStream(storage.createNextRecord(changeSet.timestamp), true).use { out ->
-        changeSet.write(out)
+      try {
+        storage.writeStream(storage.createNextRecord(changeSet.timestamp), true).use { out ->
+          changeSet.write(out)
+        }
       }
-    }
-    catch (e: IOException) {
-      handleError(e, null)
+      catch (e: Throwable) {
+        rethrowControlFlowException(e)
+        if (e is ClosedStorageException) return
+        if (changeSet === lastFailedChangeSet) {
+          logError("cannot write the change set ${changeSet.id} after the recovery, the change sets will be kept in memory", e)
+          isPersistentStorageBroken = true
+        }
+        else {
+          lastFailedChangeSet = changeSet
+          handleError(e, null)
+        }
+        return
+      }
+      lastFailedChangeSet = null
+      synchronized(pendingSetsLock) { pendingChangeSets.removeFirst() }
     }
   }
 
@@ -177,7 +203,8 @@ internal class BufferingPersistentChangeListStorage(
    */
   @Synchronized
   override fun purge(period: Long, intervalBetweenActivities: Long) {
-    if (isCompletelyBroken) return
+    // TODO: purge pendingChangeSets to guard against runaway memory consumption
+    if (isPersistentStorageBroken) return
     // unit tests often try to purge the changesets that were added in the same test
     if (unitTestMode) {
       flushPending()
