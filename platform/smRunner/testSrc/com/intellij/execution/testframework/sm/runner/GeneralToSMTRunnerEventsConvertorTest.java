@@ -3,6 +3,7 @@ package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.testframework.AbstractTestProxy;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -794,6 +795,80 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     }
     finally {
       Files.delete(outputFile);
+    }
+  }
+
+  @Test
+  public void testSuiteResultPolicySurvivesNodeReuse() {
+    var root = new SMTestProxy.SMRootTestProxy();
+    var processor = new GeneralToSMTRunnerEventsConvertor(getProject(), root, "SMTestFramework");
+    try {
+      processor.onStartTesting();
+      processor.onSuiteTreeStarted("retry", "java:test://Tests/retry", null, null, null);
+      processor.onSuiteTreeEnded("retry");
+      processor.onBuildTreeEnded();
+      var started = new TestSuiteStartedEvent("retry", "java:test://Tests/retry");
+      started.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+      processor.onSuiteStarted(started);
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
+      processor.onSuiteStarted(new TestSuiteStartedEvent("retry", "java:test://Tests/retry"));
+
+      assertEquals(1, root.getChildren().size());
+      assertEquals(SuiteResultPolicy.LAST_CHILD, processor.getCurrentSuite().getSuiteResultPolicy());
+
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
+      started.setSuiteResultPolicy(SuiteResultPolicy.ALL_CHILDREN);
+      processor.onSuiteStarted(started);
+      assertEquals(SuiteResultPolicy.ALL_CHILDREN, processor.getCurrentSuite().getSuiteResultPolicy());
+      processor.onSuiteFinished(new TestSuiteFinishedEvent("retry"));
+      processor.onFinishTesting();
+    }
+    finally {
+      Disposer.dispose(processor);
+      Disposer.dispose(root);
+    }
+  }
+
+  @Test
+  public void testSuiteResultPolicySurvivesHistoryRoundTrip() throws Exception {
+    mySuite.setSuiteStarted();
+    var retrySuite = createSuiteProxy("retry", mySuite);
+    retrySuite.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+    retrySuite.setSuiteStarted();
+    retrySuite.addChild(mySimpleTest);
+    mySimpleTest.setStarted();
+    mySimpleTest.setTestFailed("failure", "trace", false);
+    var last = createTestProxy("last", retrySuite);
+    last.setStarted();
+    last.setFinished();
+    retrySuite.setFinished();
+    mySuite.setFinished();
+
+    String savedText = exportTestResults(mySuite, ExportTestResultsConfiguration.ExportFormat.Xml);
+    assertTrue(savedText.contains("resultPolicy=\"lastChild\""));
+    assertSuiteResultPolicyAfterImport(savedText, SuiteResultPolicy.LAST_CHILD);
+    assertSuiteResultPolicyAfterImport(savedText.replace(" resultPolicy=\"lastChild\"", ""), SuiteResultPolicy.ALL_CHILDREN);
+    assertSuiteResultPolicyAfterImport(savedText.replace("lastChild", "unknown"), SuiteResultPolicy.ALL_CHILDREN);
+  }
+
+  private void assertSuiteResultPolicyAfterImport(String savedText, SuiteResultPolicy expectedPolicy) throws Exception {
+    var root = new SMTestProxy.SMRootTestProxy();
+    var processor = new GeneralToSMTRunnerEventsConvertor(getProject(), root, "SMTestFramework");
+    try {
+      processor.onStartTesting();
+      ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader(savedText), processor);
+      processor.onFinishTesting();
+
+      SMTestProxy retry = root.getChildren().getFirst();
+      assertEquals(expectedPolicy, retry.getSuiteResultPolicy());
+      assertEquals(expectedPolicy == SuiteResultPolicy.LAST_CHILD, retry.isPassed());
+      assertTrue(retry.getChildren().getFirst().isDefect());
+      assertTrue(retry.getChildren().getLast().isPassed());
+      assertEquals(expectedPolicy == SuiteResultPolicy.LAST_CHILD, root.isPassed());
+    }
+    finally {
+      Disposer.dispose(processor);
+      Disposer.dispose(root);
     }
   }
 

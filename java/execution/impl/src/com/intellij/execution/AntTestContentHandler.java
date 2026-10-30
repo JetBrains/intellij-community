@@ -2,6 +2,7 @@
 package com.intellij.execution;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.execution.testframework.AbstractTestProxy.SuiteResultPolicy;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.runner.GeneralTestEventsProcessor;
 import com.intellij.execution.testframework.sm.runner.events.TestFailedEvent;
@@ -29,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Objects;
 
 public class AntTestContentHandler extends DefaultHandler {
   public static final class AntTestOutputExtension implements ImportTestOutputExtension {
@@ -59,12 +61,6 @@ public class AntTestContentHandler extends DefaultHandler {
   private static final String PACKAGE = "package";
   private static final String CLASSNAME = "classname";
   private static final String DURATION = "time";
-  private static final String ERROR = "error";
-  private static final String FAILURE = "failure";
-  private static final String RERUN_ERROR = "rerunError";
-  private static final String RERUN_FAILURE = "rerunFailure";
-  private static final String FLAKY_ERROR = "flakyError";
-  private static final String FLAKY_FAILURE = "flakyFailure";
   private static final String SKIPPED = "skipped";
   private static final String IGNORED = "ignored";
   private static final String OUT = "system-out";
@@ -78,8 +74,10 @@ public class AntTestContentHandler extends DefaultHandler {
   private final GeneralTestEventsProcessor myProcessor;
   private final Stack<String> mySuites = new Stack<>();
   private String myCurrentTest;
+  private String myLocation;
   private String myDuration;
   private final List<TestProblem> myProblems = new ArrayList<>();
+  private final List<TestOutputEvent> myOutput = new ArrayList<>();
   private TestIgnoredEvent myIgnoredEvent;
   private int myPropertiesLevel;
   private final Deque<TextElement> myTextElements = new ArrayDeque<>();
@@ -106,13 +104,12 @@ public class AntTestContentHandler extends DefaultHandler {
       final String testName = nameValue == null ? "" : StringUtil.unescapeXmlEntities(nameValue);
       myCurrentTest = testName;
       myProblems.clear();
+      myOutput.clear();
       myIgnoredEvent = null;
       myDuration = attributes.getValue(DURATION);
       String classNameValue = attributes.getValue(CLASSNAME);
       String classname = classNameValue == null ? null : StringUtil.unescapeXmlEntities(classNameValue);
-      String location = StringUtil.isEmpty(classname) ? testName : classname + "/" + testName;
-      final TestStartedEvent startedEvent = new TestStartedEvent(testName, "java:test://" + location);
-      myProcessor.onTestStarted(startedEvent);
+      myLocation = "java:test://" + (StringUtil.isEmpty(classname) ? testName : classname + "/" + testName);
     }
     else if (OUT.equals(name) || ERR.equals(name)) {
       myTextElements.push(new TextElement(name, OUT.equals(name) ? TextElementKind.OUTPUT : TextElementKind.ERROR_OUTPUT));
@@ -132,26 +129,22 @@ public class AntTestContentHandler extends DefaultHandler {
                                           StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(MESSAGE))),
                                           null));
     }
-    else if (isProblemElement(name)) {
-      // Text in those enclosed elements are collected as "raw" text.
-      // This allows to handle Surefire's way of nesting a <stackTrace> element inside
-      // flaky/rerun elements ; other junit report writers may also put diagnostic text
-      // in such element.
-      boolean error = ERROR.equals(name) || RERUN_ERROR.equals(name) || FLAKY_ERROR.equals(name);
-      boolean primary = ERROR.equals(name) || FAILURE.equals(name);
-      myTextElements.push(new TextElement(name,
-                                          error ? TextElementKind.ERROR : TextElementKind.FAILURE,
-                                          StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(MESSAGE))),
-                                          StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(TYPE))),
-                                          primary,
-                                          getProblemLabel(name)));
+    else {
+      var problemKind = ProblemKind.forElement(name);
+      if (problemKind != null) {
+        myTextElements.push(new TextElement(name,
+                                            TextElementKind.PROBLEM,
+                                            StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(MESSAGE))),
+                                            StringUtil.unescapeXmlEntities(StringUtil.notNullize(attributes.getValue(TYPE))),
+                                            problemKind));
+      }
     }
   }
 
   @Override
   public void characters(char[] ch, int start, int length) {
-    for (TextElement element : myTextElements) {
-      element.text.append(ch, start, length);
+    if (!myTextElements.isEmpty()) {
+      myTextElements.peek().text.append(ch, start, length);
     }
   }
 
@@ -167,20 +160,6 @@ public class AntTestContentHandler extends DefaultHandler {
       myProcessor.onSuiteFinished(new TestSuiteFinishedEvent(mySuites.pop()));
     }
     else if (TESTCASE.equals(name)) {
-      // Note: TestFailedEvent does not model surefire diagnostic messages (earlier individual attempts).
-      // The failure/error elements define the final state, while Surefire injects retry/flaky elements as diagnostics.
-      // * re-ran tests are appended to the primary stack trace
-      TestFailedEvent failedEvent = createTestFailedEvent();
-      if (failedEvent != null) {
-        myProcessor.onTestFailure(failedEvent);
-      }
-      else {
-        // * flakies, however, are appended to stderr (because there's no primary failures)
-        emitNonPrimaryProblems();
-        if (myIgnoredEvent != null) {
-          myProcessor.onTestIgnored(myIgnoredEvent);
-        }
-      }
       long time;
       try {
         time = myDuration != null ? (long)(1000 * Float.parseFloat(myDuration)) : -1;
@@ -188,10 +167,12 @@ public class AntTestContentHandler extends DefaultHandler {
       catch (NumberFormatException e) {
         time = -1;
       }
-      myProcessor.onTestFinished(new TestFinishedEvent(myCurrentTest, time));
+      emitTestCase(time);
       myCurrentTest = null;
+      myLocation = null;
       myDuration = null;
       myProblems.clear();
+      myOutput.clear();
       myIgnoredEvent = null;
     }
     else if (PROPERTIES.equals(name) && myPropertiesLevel > 0) {
@@ -208,15 +189,8 @@ public class AntTestContentHandler extends DefaultHandler {
       case IGNORED -> myIgnoredEvent = new TestIgnoredEvent(myCurrentTest,
                                                             StringUtil.notNullize(element.message),
                                                             text);
-      case FAILURE, ERROR -> {
-        TestProblem problem = new TestProblem(element.kind == TextElementKind.ERROR,
-                                             element.primaryResult,
-                                             element.message,
-                                             element.type,
-                                             element.label,
-                                             text);
-        myProblems.add(problem);
-      }
+      case PROBLEM -> myProblems.add(new TestProblem(Objects.requireNonNull(element.problemKind),
+                                                    element.message, element.type, text, element.output));
     }
   }
 
@@ -238,71 +212,103 @@ public class AntTestContentHandler extends DefaultHandler {
     if (StringUtil.isEmpty(text)) return;
 
     if (myCurrentTest != null) {
-      myProcessor.onTestOutput(new TestOutputEvent(myCurrentTest, text, !stderr));
+      var output = new TestOutputEvent(myCurrentTest, text, !stderr);
+      if (!myTextElements.isEmpty() && myTextElements.peek().kind == TextElementKind.PROBLEM) {
+        myTextElements.peek().output.add(output);
+      }
+      else {
+        myOutput.add(output);
+      }
     }
     else {
       myProcessor.onUncapturedOutput(text, stderr ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT);
     }
   }
 
-  private @Nullable TestFailedEvent createTestFailedEvent() {
-    int firstPrimaryIndex = -1;
-    for (int i = 0; i < myProblems.size(); i++) {
-      if (myProblems.get(i).primary) {
-        firstPrimaryIndex = i;
-        break;
-      }
+  private void emitTestCase(long time) {
+    List<TestProblem> primary = myProblems.stream().filter(problem -> problem.kind.primary).toList();
+    List<TestProblem> retries = myProblems.stream().filter(problem -> !problem.kind.primary).toList();
+    if (retries.isEmpty()) {
+      emitTest(myCurrentTest, myProblems, myOutput, time, myIgnoredEvent);
+      return;
     }
-    // test passed, but it may have flaked
-    if (firstPrimaryIndex < 0) return null;
 
-    TestProblem first = myProblems.get(firstPrimaryIndex);
+    var suiteStarted = new TestSuiteStartedEvent(myCurrentTest, myLocation);
+    suiteStarted.setSuiteResultPolicy(SuiteResultPolicy.LAST_CHILD);
+    myProcessor.onSuiteStarted(suiteStarted);
+
+    boolean passed = primary.isEmpty() && retries.stream().anyMatch(problem -> problem.kind.impliesSuccess);
+    int count = retries.size() + (primary.isEmpty() ? 0 : 1) + (passed ? 1 : 0);
+    int index = 1;
+    if (!primary.isEmpty()) {
+      emitTest(attemptName(index++, count), primary, myOutput, time, null);
+    }
+    for (TestProblem retry : retries) {
+      boolean first = index == 1 && !passed;
+      emitTest(attemptName(index++, count), List.of(retry), first ? myOutput : List.of(), first ? time : -1, null);
+    }
+    if (passed) {
+      emitTest(attemptName(index, count), List.of(), myOutput, time, myIgnoredEvent);
+    }
+    myProcessor.onSuiteFinished(new TestSuiteFinishedEvent(myCurrentTest));
+  }
+
+  private static @NotNull String attemptName(int index, int count) {
+    return ExecutionBundle.message("junit.xml.import.repetition.name", index, count);
+  }
+
+  private void emitTest(@NotNull String name,
+                        @NotNull List<TestProblem> problems,
+                        @NotNull List<TestOutputEvent> output,
+                        long time,
+                        @Nullable TestIgnoredEvent ignored) {
+    myProcessor.onTestStarted(new TestStartedEvent(name, myLocation));
+    emitTestOutput(name, output);
+    for (TestProblem problem : problems) {
+      emitTestOutput(name, problem.output);
+    }
+    if (!problems.isEmpty()) {
+      myProcessor.onTestFailure(createTestFailedEvent(name, problems));
+    }
+    else if (ignored != null) {
+      myProcessor.onTestIgnored(new TestIgnoredEvent(name, ignored.getIgnoreComment(), ignored.getStacktrace()));
+    }
+    myProcessor.onTestFinished(new TestFinishedEvent(name, time));
+  }
+
+  private void emitTestOutput(@NotNull String name, @NotNull List<TestOutputEvent> output) {
+    for (TestOutputEvent event : output) {
+      myProcessor.onTestOutput(new TestOutputEvent(name, event.getText(), event.getOutputType() == ProcessOutputTypes.STDOUT));
+    }
+  }
+
+  private static @NotNull TestFailedEvent createTestFailedEvent(@NotNull String name, @NotNull List<TestProblem> problems) {
+    TestProblem first = problems.getFirst();
     String message = first.getMessage();
     StringBuilder stackTrace = new StringBuilder(first.text);
-    for (int i = 0; i < myProblems.size(); i++) {
-      if (i == firstPrimaryIndex) continue;
-      TestProblem problem = myProblems.get(i);
+    for (int i = 1; i < problems.size(); i++) {
+      TestProblem problem = problems.get(i);
       if (!stackTrace.isEmpty()) {
         stackTrace.append('\n');
       }
-      stackTrace.append(problem.formatForOutput());
+      stackTrace.append(problem.getMessage());
+      if (!StringUtil.isEmpty(problem.type)) {
+        stackTrace.append(" (").append(problem.type).append(')');
+      }
+      if (!StringUtil.isEmpty(problem.text)) {
+        stackTrace.append('\n').append(problem.text);
+      }
+      stackTrace.append('\n');
     }
     ComparisonFailureData comparisonData = AbstractExpectedPatterns.parseComparisonFailure(message);
     String actual = comparisonData != null ? comparisonData.getActual() : null;
     String expected = comparisonData != null ? comparisonData.getExpected() : null;
-    return new TestFailedEvent(myCurrentTest, message, stackTrace.toString(), first.error, actual, expected);
-  }
-
-  private void emitNonPrimaryProblems() {
-    for (TestProblem problem : myProblems) {
-      if (!problem.primary) {
-        emitOutput(problem.formatForOutput(), true);
-      }
-    }
+    return new TestFailedEvent(name, message, stackTrace.toString(), first.kind.error, actual, expected);
   }
 
   private @Nullable TextElement pollTextElement(@NotNull String name) {
     if (myTextElements.isEmpty() || !name.equals(myTextElements.peek().name)) return null;
     return myTextElements.pop();
-  }
-
-  private static boolean isProblemElement(@NotNull String name) {
-    return ERROR.equals(name) || FAILURE.equals(name) ||
-           RERUN_ERROR.equals(name) || RERUN_FAILURE.equals(name) ||
-           FLAKY_ERROR.equals(name) || FLAKY_FAILURE.equals(name);
-  }
-
-  private static @NotNull String getProblemLabel(@NotNull String name) {
-    return switch (name) {
-      case ERROR -> "Error";
-      case FAILURE -> "Failure";
-      // Surefire problems
-      case RERUN_ERROR -> "Rerun error";
-      case RERUN_FAILURE -> "Rerun failure";
-      case FLAKY_ERROR -> "Flaky error";
-      case FLAKY_FAILURE -> "Flaky failure";
-      default -> "Problem";
-    };
   }
 
   private static @NotNull String getElementName(@NotNull String qName) {
@@ -315,8 +321,7 @@ public class AntTestContentHandler extends DefaultHandler {
     ERROR_OUTPUT,
     PROPERTY,
     IGNORED,
-    FAILURE,
-    ERROR
+    PROBLEM
   }
 
   private static final class TextElement {
@@ -324,71 +329,68 @@ public class AntTestContentHandler extends DefaultHandler {
     final @NotNull TextElementKind kind;
     final @Nullable String message;
     final @Nullable String type;
-    final boolean primaryResult;
-    final @NotNull String label;
+    final @Nullable ProblemKind problemKind;
     final @NotNull StringBuilder text = new StringBuilder();
+    final @NotNull List<TestOutputEvent> output = new ArrayList<>();
 
     TextElement(@NotNull String name, @NotNull TextElementKind kind) {
-      this(name, kind, null, null, false, "");
+      this(name, kind, null, null, null);
     }
 
     TextElement(@NotNull String name, @NotNull TextElementKind kind, @Nullable String message, @Nullable String type) {
-      this(name, kind, message, type, false, "");
+      this(name, kind, message, type, null);
     }
 
     TextElement(@NotNull String name,
                 @NotNull TextElementKind kind,
                 @Nullable String message,
                 @Nullable String type,
-                boolean primaryResult,
-                @NotNull String label) {
+                @Nullable ProblemKind problemKind) {
       this.name = name;
       this.kind = kind;
       this.message = message;
       this.type = type;
-      this.primaryResult = primaryResult;
-      this.label = label;
+      this.problemKind = problemKind;
     }
   }
 
-  private static final class TestProblem {
-    final boolean error;
-    final boolean primary;
-    final @NotNull String message;
-    final @NotNull String type;
-    final @NotNull String label;
-    final @NotNull String text;
-
-    TestProblem(boolean error,
-                boolean primary,
-                @Nullable String message,
-                @Nullable String type,
-                @NotNull String label,
-                @Nullable String text) {
-      this.error = error;
-      this.primary = primary;
-      this.message = StringUtil.notNullize(message);
-      this.type = StringUtil.notNullize(type);
-      this.label = label;
-      this.text = StringUtil.notNullize(text);
-    }
-
+  private record TestProblem(@NotNull ProblemKind kind,
+                             @Nullable String message,
+                             @Nullable String type,
+                             @NotNull String text,
+                             @NotNull List<TestOutputEvent> output) {
     @NotNull String getMessage() {
       if (!StringUtil.isEmpty(message)) return message;
       if (!StringUtil.isEmpty(type)) return type;
-      return error ? TestResultsXmlFormatter.STATUS_ERROR : TestResultsXmlFormatter.STATUS_FAILED;
+      return kind.error ? TestResultsXmlFormatter.STATUS_ERROR : TestResultsXmlFormatter.STATUS_FAILED;
+    }
+  }
+
+  private enum ProblemKind {
+    FAILURE("failure", false, true, false),
+    ERROR("error", true, true, false),
+    RERUN_FAILURE("rerunFailure", false, false, false),
+    RERUN_ERROR("rerunError", true, false, false),
+    FLAKY_FAILURE("flakyFailure", false, false, true),
+    FLAKY_ERROR("flakyError", true, false, true);
+
+    private final String element;
+    private final boolean error;
+    private final boolean primary;
+    private final boolean impliesSuccess;
+
+    ProblemKind(String element, boolean error, boolean primary, boolean impliesSuccess) {
+      this.element = element;
+      this.error = error;
+      this.primary = primary;
+      this.impliesSuccess = impliesSuccess;
     }
 
-    @NotNull String formatForOutput() {
-      StringBuilder builder = new StringBuilder(primary ? getMessage() : label);
-      if (!StringUtil.isEmpty(type)) {
-        builder.append(" (").append(type).append(')');
+    static @Nullable ProblemKind forElement(@NotNull String name) {
+      for (ProblemKind kind : values()) {
+        if (kind.element.equals(name)) return kind;
       }
-      if (!StringUtil.isEmpty(text)) {
-        builder.append('\n').append(text);
-      }
-      builder.append('\n');
-      return builder.toString();
+      return null;
     }
   }
 }

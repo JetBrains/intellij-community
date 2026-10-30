@@ -5,17 +5,20 @@
     <flakyFailure message="first attempt failed" type="java.lang.AssertionError">
       <stackTrace><![CDATA[java.lang.AssertionError: first attempt failed
 ]]></stackTrace>
+      <system-out>first attempt output</system-out>
     </flakyFailure>
     <!-- An errored attempt is reported as flakyError when a later rerun passes. -->
     <flakyError message="second attempt errored" type="java.lang.IllegalStateException">
       <stackTrace><![CDATA[java.lang.IllegalStateException: second attempt errored
 ]]></stackTrace>
     </flakyError>
+    <system-out>successful output</system-out>
   </testcase>
   <testcase name="failsAfterRerun" classname="RetryingTest" time="0.100">
     <!-- The first attempt remains the primary failure when all reruns are exhausted. -->
     <failure message="initial failure" type="java.lang.AssertionError"><![CDATA[java.lang.AssertionError: initial failure
 ]]></failure>
+    <system-out>initial output</system-out>
     <!-- A failed retry after the primary attempt is represented as rerunFailure. -->
     <rerunFailure message="rerun failed" type="java.lang.AssertionError">
       <stackTrace><![CDATA[java.lang.AssertionError: rerun failed
@@ -25,6 +28,7 @@
     <rerunError message="rerun errored" type="java.lang.IllegalStateException">
       <stackTrace><![CDATA[java.lang.IllegalStateException: rerun errored
 ]]></stackTrace>
+      <system-out>retry output</system-out>
     </rerunError>
   </testcase>
 </testsuite>
