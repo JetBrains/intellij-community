@@ -4,6 +4,7 @@ package com.intellij.ide.util.treeView
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
+import com.intellij.ui.LoadingNode
 import com.intellij.ui.treeStructure.BgtAwareTreeModel
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.util.containers.nullize
@@ -81,7 +82,7 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
   }
 
   override fun isLeaf(node: Any): Boolean {
-    // A collapsed cached node has no cached children, so its child count can't tell if it's a leaf.
+    // An expanded cached node can have no cached children, so its child count can't tell if it's a leaf.
     val cachedNode = (node as? DefaultMutableTreeNode)?.userObject as? CachedTreePresentationNode
     return cachedNode?.isLeaf ?: delegate.isLeaf(node)
   }
@@ -331,8 +332,7 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
     init {
       val realRoot = root
       if (realRoot == null) {
-        val cachedRoot = DefaultMutableTreeNode(cachedPresentation.getRoot())
-        applyCachedChildPresentations(cachedRoot)
+        val cachedRoot = createCachedNode(cachedPresentation.getRoot())
         delegate.setRoot(cachedRoot)
         ++cachedNodeCount // count the root
       }
@@ -361,9 +361,7 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
       val realChildCount = delegate.getChildCount(parent)
       if (realChildCount == 0) {
         for ((index, cachedChild) in cachedChildren.withIndex()) {
-          val cachedChildNode = DefaultMutableTreeNode(cachedChild)
-          applyCachedChildPresentations(cachedChildNode)
-          parent.insert(cachedChildNode, index)
+          parent.insert(createCachedNode(cachedChild), index)
           ++cachedNodeCount
         }
         changedParents?.add(parent)
@@ -374,6 +372,22 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
           applyCachedChildPresentations(realChild, changedParents) // does nothing if the presentation doesn't know the child
         }
       }
+    }
+
+    /**
+     * Creates a node for the [cachedObject] with its cached descendants.
+     *
+     * A collapsed node that is not a leaf has no cached children, so it gets a loading node to show when it's expanded.
+     * An expanded node without cached children gets no loading node, because it most likely has no children at all.
+     * The loading node is not counted as a cached node, and it is removed together with its cached parent.
+     */
+    private fun createCachedNode(cachedObject: Any): DefaultMutableTreeNode {
+      val node = DefaultMutableTreeNode(cachedObject)
+      applyCachedChildPresentations(node)
+      if (node.childCount == 0 && !cachedPresentation.isLeaf(cachedObject) && !cachedPresentation.isExpanded(cachedObject)) {
+        node.add(LoadingNode())
+      }
+      return node
     }
 
     fun rootLoaded(newRoot: DefaultMutableTreeNode?) {
