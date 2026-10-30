@@ -295,7 +295,9 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
   // a buggy DE may fail to strip an unused parameter from a .desktop file
   if (rawArgs.size == 1 && rawArgs[0] == "%f") return listOf()
 
-  val (propertyArgs, args) = rawArgs.partition { it.startsWith("-D") && it.contains('=') }
+  val propertyArgs = rawArgs.takeWhile { it.startsWith("-D") && it.contains('=') }
+  val args = rawArgs.drop(propertyArgs.size)
+
   for (arg in propertyArgs) {
     val (option, value) = arg.removePrefix("-D").split('=', limit = 2)
     System.setProperty(option, value)
