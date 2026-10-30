@@ -9,6 +9,7 @@ import com.intellij.history.core.LocalHistoryStorageUtil.openLocalHistoryStorage
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.util.io.ClosedStorageException
@@ -19,8 +20,15 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.random.Random
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 private const val START_ID_LIMIT = 1L shl 62
+
+/**
+ * When the persistent storage is broken, the write buffer keeps the change sets for this time only.
+ */
+private val WRITE_BUFFER_MAX_AGE = 1.hours
 
 internal class BufferingPersistentChangeListStorage(
   private val storageDir: Path,
@@ -160,11 +168,26 @@ internal class BufferingPersistentChangeListStorage(
     }
   }
 
+  /**
+   * Either flushes the persistent storage data or purges the in-memory buffer if the flush is not possible because of a broken storage
+   * The flusher of `LocalHistoryImpl` calls it every second.
+   */
+  @Synchronized
   override fun flush() {
+    if (isPersistentStorageBroken) {
+      purgeWriteBuffer(WRITE_BUFFER_MAX_AGE)
+    }
+    else {
+      flushPersistentStorage()
+    }
+  }
+
+  @Synchronized
+  private fun flushPersistentStorage() {
     purgeOnce()
     try {
       flushPending()
-      synchronized(this) { storage }?.force()
+      storage?.force()
     }
     catch (e: IOException) {
       handleError(e, null)
@@ -234,10 +257,11 @@ internal class BufferingPersistentChangeListStorage(
   /**
    * Purges the obsolete changesets from the *persistent* storage,
    * as non-persistent storage will almost never contain the obsolete data in the real world
+   *
+   * When the persistent storage is broken, [flush] limits the write buffer instead, see [purgeWriteBuffer].
    */
   @Synchronized
   override fun purge(period: Long, intervalBetweenActivities: Long) {
-    // TODO: purge pendingChangeSets to guard against runaway memory consumption
     // unit tests often try to purge the changesets that were added in the same test
     if (unitTestMode) {
       flushPending()
@@ -262,6 +286,34 @@ internal class BufferingPersistentChangeListStorage(
     isPurged = true
     LocalHistoryLog.LOG.debug("Purging local history...")
     purge(getPurgePeriod(), ChangeList.DEFAULT_INTERVAL_BETWEEN_ACTIVITIES_MILLISECONDS)
+  }
+
+  /**
+   * Removes the change sets that are older than [maxAge] from [pendingChangeSets].
+   *
+   * The purge removes the change sets from the start and stops at the first change set that is not obsolete.
+   * It takes [pendingSetsLock] for one change set at a time, so [writeNextSet] does not wait for the whole purge.
+   */
+  @Synchronized
+  private fun purgeWriteBuffer(maxAge: Duration) {
+    val minTimestamp = Clock.getTime() - maxAge.inWholeMilliseconds
+    while (true) {
+      val changeSet = synchronized(pendingSetsLock) {
+        val oldest = pendingChangeSets.firstOrNull()
+        if (oldest == null || oldest.timestamp >= minTimestamp) return
+        pendingChangeSets.removeFirst()
+      }
+      // The release can do IO, so it runs outside pendingSetsLock
+      for (content in changeSet.contentsToPurge) {
+        try {
+          content.release()
+        }
+        catch (e: Exception) {
+          rethrowControlFlowException(e)
+          LocalHistoryLog.LOG.warn("Failed to release the change set $changeSet content", e)
+        }
+      }
+    }
   }
 
   private fun logError(@NonNls message: String, e: Throwable?) {

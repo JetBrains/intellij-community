@@ -2,7 +2,9 @@
 package com.intellij.history.core
 
 import com.intellij.history.core.changes.ChangeSet
+import com.intellij.history.core.changes.ContentChange
 import com.intellij.history.core.changes.CreateFileChange
+import com.intellij.openapi.util.Clock
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.impl.IndexDebugProperties
 import com.intellij.util.io.StorageLockContext
@@ -16,6 +18,8 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.WRITE
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 
 @TestApplication //needed for recovery since it wants notifications
 internal class BufferingPersistentChangeListStorageTest {
@@ -33,12 +37,14 @@ internal class BufferingPersistentChangeListStorageTest {
 
   @BeforeEach
   fun setUp() {
+    Clock.setTime(NOW)
     storage = createStorage()
   }
 
   @AfterEach
   fun tearDown() {
     storage.close(true)
+    Clock.reset()
   }
 
   @Test
@@ -338,7 +344,7 @@ internal class BufferingPersistentChangeListStorageTest {
     }
 
     val iterator = storage.iterate()
-    val pendingChangeSet = createChangeSet(storage.nextId(), 2000L)
+    val pendingChangeSet = createChangeSet(storage.nextId(), NOW - 2000L)
     storage.writeNextSet(pendingChangeSet)
     assertThat(iterator.asSequence().toList())
       .describedAs("Reading a recursive record chain must start storage recovery")
@@ -348,7 +354,7 @@ internal class BufferingPersistentChangeListStorageTest {
       .describedAs("The recovery must try to open the storage again")
       .isEqualTo(2)
 
-    val nextChangeSet = createChangeSet(storage.nextId(), 3000L)
+    val nextChangeSet = createChangeSet(storage.nextId(), NOW - 1000L)
     storage.writeNextSet(nextChangeSet)
     storage.flush()
     assertThat(storage.iterate().asSequence().toList())
@@ -387,9 +393,9 @@ internal class BufferingPersistentChangeListStorageTest {
       throw IOException("The test does not allow to open the storage")
     }
 
-    val cs1 = createChangeSet(storage.nextId(), 1000L)
+    val cs1 = createChangeSet(storage.nextId(), NOW - 2000L)
     storage.writeNextSet(cs1)
-    val cs2 = createChangeSet(storage.nextId(), 2000L)
+    val cs2 = createChangeSet(storage.nextId(), NOW - 1000L)
     storage.writeNextSet(cs2)
     storage.flush()
 
@@ -406,6 +412,97 @@ internal class BufferingPersistentChangeListStorageTest {
     assertThat(storage.iterate().asSequence().toList())
       .describedAs("The change sets of a broken storage must not survive a reopen")
       .isEmpty()
+  }
+
+  @Test
+  fun `flush of a broken storage removes change sets older than one hour`() {
+    breakStorage()
+    val obsoleteChangeSet = createChangeSet(storage.nextId(), NOW - 2.hours.inWholeMilliseconds)
+    storage.writeNextSet(obsoleteChangeSet)
+    val keptChangeSet = createChangeSet(storage.nextId(), NOW - 30.minutes.inWholeMilliseconds)
+    storage.writeNextSet(keptChangeSet)
+
+    storage.flush()
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The flush must remove only the change sets that are older than one hour")
+      .extracting<Long> { it.id }
+      .containsExactly(keptChangeSet.id)
+  }
+
+  @Test
+  fun `flush of a broken storage releases the contents of the removed change sets`() {
+    breakStorage()
+    val obsoleteContent = ReleaseCountingContent()
+    storage.writeNextSet(createContentChangeSet(storage.nextId(), NOW - 2.hours.inWholeMilliseconds, obsoleteContent))
+    val keptContent = ReleaseCountingContent()
+    storage.writeNextSet(createContentChangeSet(storage.nextId(), NOW - 30.minutes.inWholeMilliseconds, keptContent))
+
+    storage.flush()
+
+    assertThat(obsoleteContent.releaseCount)
+      .describedAs("The flush must release the contents of a removed change set")
+      .isEqualTo(1)
+    assertThat(keptContent.releaseCount)
+      .describedAs("The flush must not release the contents of a kept change set")
+      .isZero()
+  }
+
+  @Test
+  fun `flush of a working storage writes old change sets`() {
+    val oldChangeSet = createChangeSet(storage.nextId(), NOW - 2.hours.inWholeMilliseconds)
+    storage.writeNextSet(oldChangeSet)
+
+    storage.flush()
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The flush of a working storage must write old change sets, not remove them")
+      .extracting<Long> { it.id }
+      .containsExactly(oldChangeSet.id)
+  }
+
+  @Test
+  fun `write buffer purge does not block a concurrent write`() {
+    breakStorage()
+    val concurrentChangeSet = createChangeSet(storage.nextId(), NOW)
+    val obsoleteContent = ReleaseCountingContent {
+      val writer = Thread { storage.writeNextSet(concurrentChangeSet) }
+      writer.start()
+      writer.join(10_000)
+      assertThat(writer.isAlive)
+        .describedAs("writeNextSet must not wait for the purge")
+        .isFalse()
+    }
+    storage.writeNextSet(createContentChangeSet(storage.nextId(), NOW - 2.hours.inWholeMilliseconds, obsoleteContent))
+    val keptChangeSet = createChangeSet(storage.nextId(), NOW - 30.minutes.inWholeMilliseconds)
+    storage.writeNextSet(keptChangeSet)
+
+    storage.flush()
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The purge must keep the change set that is written during the purge")
+      .extracting<Long> { it.id }
+      .containsExactly(concurrentChangeSet.id, keptChangeSet.id)
+  }
+
+  @Test
+  fun `purge of a broken storage keeps the write buffer`() {
+    breakStorage()
+    val oldChangeSet = createChangeSet(storage.nextId(), NOW - 2.hours.inWholeMilliseconds)
+    storage.writeNextSet(oldChangeSet)
+
+    storage.purge(1L, 1000L)
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("Only the flush removes change sets from the write buffer of a broken storage")
+      .extracting<Long> { it.id }
+      .containsExactly(oldChangeSet.id)
+  }
+
+  /** Replaces [storage] with a storage that cannot be opened, so it keeps the change sets in the write buffer. */
+  private fun breakStorage() {
+    storage.close(/*drop: */true)
+    storage = createStorage { throw IOException("The test does not allow to open the storage") }
   }
 
   /** Returns the data file that contains the serialized change sets. */
@@ -436,7 +533,34 @@ internal class BufferingPersistentChangeListStorageTest {
     return cs
   }
 
+  private fun createContentChangeSet(id: Long, timestamp: Long, oldContent: Content): ChangeSet {
+    val cs = ChangeSet(id, timestamp)
+    cs.addChange(ContentChange(id, "file.txt", oldContent, timestamp))
+    cs.lock()
+    return cs
+  }
+
+  /** Counts the calls of [release]. Each call also runs [onRelease]. */
+  private class ReleaseCountingContent(private val onRelease: () -> Unit = {}) : Content() {
+    var releaseCount = 0
+
+    override fun getBytes(): ByteArray = ByteArray(0)
+
+    override fun isAvailable(): Boolean = true
+
+    override fun release() {
+      releaseCount++
+      onRelease()
+    }
+  }
+
   private companion object {
     private const val STORAGE_FILE_NAME = "changes"
+
+    /**
+     * The current time in the tests.
+     * The flush of a broken storage removes the change sets that are older than one hour before it.
+     */
+    private const val NOW = 10_000_000_000L
   }
 }
