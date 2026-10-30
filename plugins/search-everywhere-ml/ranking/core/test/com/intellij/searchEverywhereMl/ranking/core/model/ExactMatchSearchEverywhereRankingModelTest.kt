@@ -1,11 +1,10 @@
 package com.intellij.searchEverywhereMl.ranking.core.model
 
-import com.intellij.ide.actions.GotoFileItemProvider
-import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.ide.util.gotoByName.GotoFileModel
 import com.intellij.internal.ml.DecisionFunction
 import com.intellij.internal.ml.FeatureMapper
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.platform.searchEverywhere.SeItem
+import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixture
 import com.intellij.psi.PsiFile
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereRankingModelTest
@@ -20,19 +19,6 @@ internal class ExactMatchSearchEverywhereRankingModelTest : SearchEverywhereRank
   override val tab: SearchEverywhereTab.TabWithMlRanking
     get() = throw NotImplementedError() // Not needed.
 
-  override fun filterElements(searchQuery: String): List<FoundItemDescriptor<*>> {
-    val elements = mutableListOf<FoundItemDescriptor<*>>()
-    gotoFileModelProvider.filterElementsWithWeights(viewModel, searchQuery, false, mockProgressIndicator) {
-      elements.add(it)
-      true
-    }
-    return elements
-  }
-
-
-  private val gotoFileModel by lazy { GotoFileModel(project) }
-  private val gotoFileModelProvider: GotoFileItemProvider by lazy { gotoFileModel.getItemProvider(null) as GotoFileItemProvider }
-  private val viewModel by lazy { StubChooseByNameViewModel(gotoFileModel) }
   override val model = ExactMatchSearchEverywhereRankingModel(
     object : DecisionFunction {
       override fun getFeaturesOrder(): Array<FeatureMapper> {
@@ -58,17 +44,17 @@ internal class ExactMatchSearchEverywhereRankingModelTest : SearchEverywhereRank
 
   private fun assertPredictionEquals(expected: MutableMap<String, Double>, searchQuery: String) {
     VfsTestUtil.syncRefresh()
-    lateinit var rankedElements: Map<FoundItemDescriptor<*>, Double>
+    val foundItems = filterElements(searchQuery)
+    lateinit var rankedElements: Map<SeItem, Double>
     ProgressManager.getInstance().executeNonCancelableSection {
-      rankedElements = filterElements(searchQuery)
-        .associateWith { getMlWeight(it, searchQuery, null) }
+      rankedElements = foundItems.associateWith { getMlWeight(it, searchQuery, null) }
     }
 
     assertEquals("Not all created items were found", rankedElements.size, expected.size)
 
     // Now let's check the predictions for each file.
     rankedElements.entries.forEach {
-      val fileName = (it.key.item as PsiFile).name
+      val fileName = (SeProvidersTestFixture.elementOf(it.key) as PsiFile).name
       Assert.assertEquals("Prediction for $fileName doesn't match expected value for query $searchQuery.",
                           expected[fileName]!!,
                           it.value,

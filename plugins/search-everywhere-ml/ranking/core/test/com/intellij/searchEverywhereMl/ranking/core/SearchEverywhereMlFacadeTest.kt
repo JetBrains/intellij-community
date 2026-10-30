@@ -1,10 +1,12 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultAdapter
+import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchResultProviderAdapter
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchStateChangeReason
+import com.intellij.searchEverywhereMl.ranking.core.adapters.StateLocalId
+import com.intellij.searchEverywhereMl.ranking.core.adapters.TestSearchResultRawAdapter
 import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -45,7 +47,7 @@ internal class SearchEverywhereMlFacadeTest {
   fun `onSessionStarted creates session when ML enabled`() {
     SearchEverywhereMlExperiment.isExperimentalMode = true
     assumeTrue(SearchEverywhereMlFacade.isMlEnabled, "ML must be enabled for this test")
-    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = false)
+    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = true)
 
     assertNotNull(SearchEverywhereMlFacade.activeSession)
   }
@@ -54,7 +56,7 @@ internal class SearchEverywhereMlFacadeTest {
   fun `onSessionStarted does not create session when ML disabled`() {
     SearchEverywhereMlExperiment.isExperimentalMode = false
     assumeFalse(SearchEverywhereMlFacade.isMlEnabled, "ML must be disabled for this test (tab-level ML ranking may override)")
-    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = false)
+    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = true)
 
     assertNull(SearchEverywhereMlFacade.activeSession)
   }
@@ -63,7 +65,7 @@ internal class SearchEverywhereMlFacadeTest {
   fun `onSessionFinished clears active session`() {
     SearchEverywhereMlExperiment.isExperimentalMode = true
     assumeTrue(SearchEverywhereMlFacade.isMlEnabled, "ML must be enabled for this test")
-    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = false)
+    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = true)
     assertNotNull(SearchEverywhereMlFacade.activeSession)
 
     SearchEverywhereMlFacade.onStateStarted(actionsTabId, "q", SearchStateChangeReason.SEARCH_START, null, false)
@@ -76,9 +78,7 @@ internal class SearchEverywhereMlFacadeTest {
   @Test
   fun `processSearchResult throws when no session`() {
     assertNull(SearchEverywhereMlFacade.activeSession)
-    val contributor = MockSearchEverywhereContributor("testId")
-    val elementInfo = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(elementInfo)
+    val adapter = createRawAdapter()
 
     assertThrows(IllegalStateException::class.java) {
       SearchEverywhereMlFacade.processSearchResult(adapter)
@@ -89,14 +89,21 @@ internal class SearchEverywhereMlFacadeTest {
   fun `processSearchResult throws when no active state`() {
     SearchEverywhereMlExperiment.isExperimentalMode = true
     assumeTrue(SearchEverywhereMlFacade.isMlEnabled, "ML must be enabled for this test")
-    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = false)
+    SearchEverywhereMlFacade.onSessionStarted(null, actionsTabId, isNewSearchEverywhere = true)
 
-    val contributor = MockSearchEverywhereContributor("testId")
-    val elementInfo = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(elementInfo)
+    val adapter = createRawAdapter()
 
     assertThrows(IllegalStateException::class.java) {
       SearchEverywhereMlFacade.processSearchResult(adapter)
     }
+  }
+
+  private fun createRawAdapter(): SearchResultAdapter.Raw {
+    return TestSearchResultRawAdapter(
+      provider = SearchResultProviderAdapter.createAdapterFor("testId"),
+      originalWeight = 100,
+      stateLocalId = StateLocalId("uuid-1"),
+      rawItem = "element",
+    )
   }
 }

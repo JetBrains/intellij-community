@@ -143,6 +143,7 @@ jvm_library(
         "//platform/statistics/testFramework",
         "//platform/execution",
         "//platform/searchEverywhere/frontend",
+        "//platform/searchEverywhere/testFramework",
         "//platform/util:util-ui",
         "//plugins/search-everywhere-ml/ranking/java",
         "//plugins/search-everywhere-ml/ranking/yaml",

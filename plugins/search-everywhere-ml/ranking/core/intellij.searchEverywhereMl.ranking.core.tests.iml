@@ -88,6 +88,7 @@
     <orderEntry type="module" module-name="intellij.platform.statistics.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.execution" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.searchEverywhere.frontend" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.searchEverywhere.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.java" scope="TEST" />

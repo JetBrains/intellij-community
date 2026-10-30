@@ -1,8 +1,5 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFeature
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.ListEventField
@@ -11,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.ObjectListEventField
 import com.intellij.internal.statistic.eventLog.events.JcpDataEventField
 import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils
 import com.intellij.searchEverywhereMl.MLSE_RECORDER_ID
 import com.intellij.searchEverywhereMl.SearchEverywhereTab
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.COLLECTED_RESULTS_DATA_KEY
@@ -29,7 +27,6 @@ import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatistics
 import com.intellij.searchEverywhereMl.ranking.core.SearchEverywhereMLStatisticsCollector.STATE_CHANGED
 import com.intellij.searchEverywhereMl.ranking.core.adapters.SearchStateChangeReason
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereStateFeaturesProvider
-import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -47,11 +44,6 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     MockSearchEverywhereProvider.SingleActionSearchEverywhere.runSearchAndCollectLogEvents {
       closePopup()
     }
-  }
-
-  @Before
-  fun setup() {
-    SearchEverywhereFeature.allRegistryKeys.forEach { setRegistryPropertyForTest(it, "false") }
   }
 
   @Test
@@ -97,6 +89,17 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
     assertTrue("First ${STATE_CHANGED.eventId} event's ${REBUILD_REASON_KEY.name} should be ${SearchStateChangeReason.SEARCH_START} " +
                "Got $reportedRestartRestored",
                reportedRestartRestored == SearchStateChangeReason.SEARCH_START.toString())
+  }
+
+  @Test
+  fun `search restarted events after typing have query change restart reason`() {
+    val reasons = actionSelectionEvents.filter { it.event.id == STATE_CHANGED.eventId }.map { it.event.data[REBUILD_REASON_KEY.name] }
+
+    assertEquals(SearchStateChangeReason.SEARCH_START.toString(), reasons.first())
+    reasons.drop(1).forEach { reason ->
+      assertEquals("${STATE_CHANGED.eventId} event after typing should have ${SearchStateChangeReason.QUERY_CHANGE}",
+                   SearchStateChangeReason.QUERY_CHANGE.toString(), reason)
+    }
   }
 
   @Test
@@ -159,12 +162,7 @@ class SearchEverywhereMlStatisticsCollectorTest : SearchEverywhereLoggingTestCas
 
   @Test
   fun `search with no results is properly reported`() {
-    val provider = MockSearchEverywhereProvider { project ->
-      SearchEverywhereUI(project, listOf(
-        MockSearchEverywhereContributor(ActionSearchEverywhereContributor::class.java.simpleName, true) { _, _, _ ->
-        }
-      ))
-    }
+    val provider = MockSearchEverywhereProvider(SeProviderIdUtils.ACTIONS_ID) { emptyList() }
 
     val events = provider.runSearchAndCollectLogEvents {
       type("nonexistent")

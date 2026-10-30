@@ -1,7 +1,6 @@
 package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.MatchMode
 import com.intellij.openapi.actionSystem.AnAction
@@ -199,9 +198,12 @@ internal class SearchEverywhereMLSearchSessionTest {
     val session = SearchEverywhereMLSearchSession.createNext(null)
     session.onStateStarted(actionsTabId, "query", SearchStateChangeReason.SEARCH_START, null, false)
 
-    val contributor = MockSearchEverywhereContributor("testId")
-    val elementInfo = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(elementInfo)
+    val adapter = TestSearchResultRawAdapter(
+      provider = SearchResultProviderAdapter.createAdapterFor("testId"),
+      originalWeight = 100,
+      stateLocalId = StateLocalId("uuid-1"),
+      rawItem = "element",
+    )
 
     assertThrows(IllegalStateException::class.java) {
       session.onItemsSelected(listOf(0 to adapter))

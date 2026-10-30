@@ -1,6 +1,5 @@
 package com.intellij.searchEverywhereMl.ranking.core.adapters
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereSpellCheckResult
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.MatchMode
@@ -8,16 +7,27 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
-import com.intellij.searchEverywhereMl.ranking.core.MockSearchEverywhereContributor
+import com.intellij.searchEverywhereMl.ranking.core.TestItemDataFactory
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.runBlocking
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
-import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
+@TestApplication
 class SearchResultAdapterTest {
+  private val itemDataFactory = TestItemDataFactory()
+
+  @AfterEach
+  fun tearDown() {
+    itemDataFactory.close()
+  }
+
   @Test
   fun `MlProbability toWeight converts 0 to 0`() {
     assertEquals(0, MlProbability(0.0).toWeight())
@@ -45,9 +55,7 @@ class SearchResultAdapterTest {
 
   @Test
   fun `finalPriority uses legacy formula for non abbreviation`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 123, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+    val adapter = createRawAdapter(originalWeight = 123)
     val processed = SearchResultAdapter.Processed(adapter, "element", null, null, MlProbability(0.2))
 
     assertEquals(200_000_123, processed.finalPriority)
@@ -55,9 +63,7 @@ class SearchResultAdapterTest {
 
   @Test
   fun `finalPriority boosts action abbreviations to max ml weight`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 123, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+    val adapter = createRawAdapter(originalWeight = 123)
     val abbreviationItem = createMatchedValue(GotoActionModel.MatchedValueType.ABBREVIATION)
     val processed = SearchResultAdapter.Processed(adapter, abbreviationItem, null, null, MlProbability(0.2))
 
@@ -66,9 +72,7 @@ class SearchResultAdapterTest {
 
   @Test
   fun `finalPriority falls back to original weight when mlProbability is absent`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 321, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+    val adapter = createRawAdapter(originalWeight = 321)
     val processed = SearchResultAdapter.Processed(adapter, "element", null, null, null)
 
     assertEquals(321, processed.finalPriority)
@@ -87,65 +91,52 @@ class SearchResultAdapterTest {
   }
 
   @Test
-  fun `legacy adapter has correct provider id`() {
-    val contributor = MockSearchEverywhereContributor("myProviderId")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+  fun `item data adapter has correct provider id`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "myProviderId"))
 
     assertEquals("myProviderId", adapter.provider.id)
   }
 
   @Test
-  fun `legacy adapter has correct weight`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 42, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+  fun `item data adapter has correct weight`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "id", weight = 42))
 
     assertEquals(42, adapter.originalWeight)
   }
 
   @Test
-  fun `legacy adapter has correct stateLocalId`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("my-uuid-value", "element", 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+  fun `item data adapter has correct stateLocalId`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "id", uuid = "my-uuid-value"))
 
     assertEquals("my-uuid-value", adapter.stateLocalId.value)
   }
 
   @Test
-  fun `legacy adapter throws when uuid is null`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("element", 100, contributor)
-    assertThrows(IllegalArgumentException::class.java) {
-      SearchResultAdapter.createAdapterFor(info)
-    }
-  }
-
-  @Test
-  fun `legacy adapter fetchRawItemIfExists returns element`() {
+  fun `item data adapter fetchRawItemIfExists returns raw object`() = runBlocking {
     val element = "my-element-object"
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", element, 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create(element, "id"))
 
     assertSame(element, adapter.fetchRawItemIfExists())
   }
 
   @Test
-  fun `legacy adapter isSemantic is false for regular contributor`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val adapter = SearchResultAdapter.createAdapterFor(info)
+  fun `item data adapter fetchRawItemIfExists returns null after session is closed`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "id"))
+    itemDataFactory.close()
+
+    assertNull(adapter.fetchRawItemIfExists())
+  }
+
+  @Test
+  fun `item data adapter isSemantic is false for regular item`() = runBlocking {
+    val adapter = SearchResultAdapter.createAdapterFor(itemDataFactory.create("element", "id"))
 
     assertFalse(adapter.isSemantic)
   }
 
   @Test
   fun `Processed delegates provider to underlying adapter`() {
-    val contributor = MockSearchEverywhereContributor("delegateId")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val rawAdapter = SearchResultAdapter.createAdapterFor(info)
+    val rawAdapter = createRawAdapter(providerId = "delegateId")
     val processed = SearchResultAdapter.Processed(rawAdapter, "element", null, null, null)
 
     assertEquals("delegateId", processed.provider.id)
@@ -153,9 +144,7 @@ class SearchResultAdapterTest {
 
   @Test
   fun `Processed delegates originalWeight`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 77, contributor)
-    val rawAdapter = SearchResultAdapter.createAdapterFor(info)
+    val rawAdapter = createRawAdapter(originalWeight = 77)
     val processed = SearchResultAdapter.Processed(rawAdapter, "element", null, null, null)
 
     assertEquals(77, processed.originalWeight)
@@ -163,9 +152,7 @@ class SearchResultAdapterTest {
 
   @Test
   fun `Processed delegates stateLocalId`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-abc", "element", 100, contributor)
-    val rawAdapter = SearchResultAdapter.createAdapterFor(info)
+    val rawAdapter = createRawAdapter(stateLocalId = "uuid-abc")
     val processed = SearchResultAdapter.Processed(rawAdapter, "element", null, null, null)
 
     assertEquals("uuid-abc", processed.stateLocalId.value)
@@ -173,9 +160,7 @@ class SearchResultAdapterTest {
 
   @Test
   fun `Processed exposes its own fields`() {
-    val contributor = MockSearchEverywhereContributor("id")
-    val info = SearchEverywhereFoundElementInfo("uuid-1", "element", 100, contributor)
-    val rawAdapter = SearchResultAdapter.createAdapterFor(info)
+    val rawAdapter = createRawAdapter()
     val rawItem = "my-raw-item"
     val sessionWideId = SessionWideId(5)
     val mlFeatures = listOf<EventPair<*>>()
@@ -203,6 +188,15 @@ class SearchResultAdapterTest {
     val processed = SearchResultAdapter.Processed(adapter, adapter.fetchRawItemIfExists(), null, null, null)
 
     assertSame(correction, processed.correction)
+  }
+
+  private fun createRawAdapter(originalWeight: Int = 100, providerId: String = "id", stateLocalId: String = "uuid-1"): SearchResultAdapter.Raw {
+    return TestSearchResultRawAdapter(
+      provider = SearchResultProviderAdapter.createAdapterFor(providerId),
+      originalWeight = originalWeight,
+      stateLocalId = StateLocalId(stateLocalId),
+      rawItem = "element",
+    )
   }
 
   private fun createMatchedValue(type: GotoActionModel.MatchedValueType): GotoActionModel.MatchedValue {
