@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
@@ -63,8 +62,7 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
     StructuralChangesViewUpdates.getInstance(project).start()
 
     val changeNodes = builder.myRoot.traverse().filter(ChangesBrowserChangeNode::class.java).toList()
-    // The first build names the hunks of each file, so a large change would keep the tree waiting.
-    if (changeNodes.size > Registry.intValue(MAX_FILES_KEY)) return
+    if (changeNodes.size > StructuralChangesViewSettings.maxFiles()) return
 
     val hunksService = StructuralHunksService.getInstance(project)
     for (node in changeNodes) {
@@ -88,10 +86,6 @@ internal class StructuralChangesViewModifier(private val project: Project) : Cha
         logger<StructuralChangesViewModifier>().warn("Cannot collect structural changes for ${path.path}", e)
       }
     }
-  }
-
-  private companion object {
-    const val MAX_FILES_KEY = "vcs.show.structural.changes.max.files"
   }
 }
 

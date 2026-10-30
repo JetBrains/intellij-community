@@ -12,9 +12,15 @@ object StructuralChangesViewSettings {
 
   /** The strength of the dim around the change of a preview, in percent. */
   const val DIM_REGISTRY_KEY: String = "vcs.show.structural.changes.dim"
+
+  /** The most files whose hunks a tree shows. A tree of more files shows no hunk. */
+  const val MAX_FILES_REGISTRY_KEY: String = "vcs.show.structural.changes.max.files"
   private const val OPTION_KEY = "ChangesView.ShowStructuralChanges"
 
   fun isAvailable(): Boolean = RegistryManager.getInstance().`is`(REGISTRY_KEY)
+
+  /** The most files whose hunks a tree shows. The first build of a tree names the hunks of each file, so a large change would keep it waiting. */
+  fun maxFiles(): Int = RegistryManager.getInstance().intValue(MAX_FILES_REGISTRY_KEY)
 
   fun isEnabled(project: Project): Boolean = isAvailable() && PropertiesComponent.getInstance(project).getBoolean(OPTION_KEY)
 
