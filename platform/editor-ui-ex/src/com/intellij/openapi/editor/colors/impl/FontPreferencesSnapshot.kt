@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.colors.impl
 import com.intellij.application.options.EditorFontsConstants
 import com.intellij.openapi.editor.colors.FontPreferences
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 
 /**
@@ -11,8 +12,10 @@ import java.util.function.Consumer
  * [FontPreferencesImpl] keeps its current snapshot in this class and replaces the snapshot on each change.
  * A `with` function returns a new snapshot, or this snapshot when no value changes.
  * The snapshots are safe to use on any thread.
+ * The colors scheme of an editor keeps its own font preferences in snapshots, and changes them with [withChanges].
  */
-internal class FontPreferencesSnapshot private constructor(
+@ApiStatus.Internal
+class FontPreferencesSnapshot private constructor(
   private val effectiveFontFamilies: List<String>,
   private val realFontFamilies: List<String>,
   private val sizedFontFamilies: Array<String>, // the font family of each element of fontSizes

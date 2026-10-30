@@ -32,6 +32,16 @@ internal class EditorFontResolverTest {
   }
 
   @Test
+  fun `a scheme setter without a change keeps the resolver`(): Unit = withEditor { editor ->
+    editor.colorsScheme.isUseLigatures = true
+    val resolver = editor.view.fontResolver
+
+    editor.colorsScheme.isUseLigatures = true
+
+    assertThat(editor.view.fontResolver).isSameAs(resolver)
+  }
+
+  @Test
   fun `the resolver measures with the font preferences of the editor`(): Unit = withEditor { editor ->
     val preferences = editor.view.fontResolver.editorFonts().preferences()
     assertThat(preferences).isSameAs(editor.colorsScheme.fontPreferences.snapshot)

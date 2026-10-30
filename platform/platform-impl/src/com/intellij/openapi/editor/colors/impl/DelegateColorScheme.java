@@ -16,7 +16,10 @@ import java.awt.Font;
 import java.util.Properties;
 
 public abstract class DelegateColorScheme implements EditorColorsScheme {
-  private EditorColorsScheme myDelegate;
+  /**
+   * Volatile, because a reader on another thread can ask the scheme while the global scheme changes.
+   */
+  private volatile EditorColorsScheme myDelegate;
 
   public DelegateColorScheme(@NotNull EditorColorsScheme delegate) {
     myDelegate = delegate;

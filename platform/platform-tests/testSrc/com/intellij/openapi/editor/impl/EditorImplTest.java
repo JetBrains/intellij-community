@@ -1197,7 +1197,8 @@ public class EditorImplTest {
       FontPreferences p2 = colorsScheme.getFontPreferences();
       assertEquals(Collections.singletonList("CustomFont2"), p2.getRealFontFamilies());
       assertEquals(23, p2.getSize("CustomFont2"));
-      assertFalse(p.useLigatures());
+      assertFalse(p2.useLigatures());
+      assertTrue(p.useLigatures(), "The font preferences are a snapshot, so a later change does not change them");
     });
   }
 

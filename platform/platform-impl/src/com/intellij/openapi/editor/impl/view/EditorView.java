@@ -843,10 +843,10 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
    * <p>
    * Runs on whatever thread first finds the metrics uninitialized, and a background reader can be that thread.
    * The AWT side tolerates that: the font render context comes from {@code snapshot}, no component is touched,
-   * and the JDK font APIs measure concurrently. The editor state read here does not. The colors scheme is held in
-   * a plain field, and {@code EditorColorSchemeDelegate} publishes its font map by assigning it before filling it,
-   * so a reader racing a font change can miss the editor's own font and measure the global scheme's instead. That
-   * costs wrong metrics, not a corrupt state, and they last only until the reinit that changed the font resets them.
+   * and the JDK font APIs measure concurrently. The editor holds its colors scheme in a plain field, so a reader
+   * racing a change of the scheme can measure the old scheme. The fonts of one scheme are consistent, because
+   * {@code EditorColorSchemeDelegate} publishes them in one snapshot. Wrong metrics cost no corrupt state, and they
+   * last only until the reinit after the change resets them.
    */
   private @NotNull EditorViewMetrics createNewMetrics(@NotNull EditorViewSnapshot snapshot) {
     FontRenderContext fontRenderContext = snapshot.fontRenderContext();
