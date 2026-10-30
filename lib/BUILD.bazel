@@ -4489,17 +4489,17 @@ jvm_import(
 )
 
 copy_file(
-    name = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.35.jar_copy",
-    src = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_35_http//file",
-    out = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-263.35.jar",
+    name = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-271.36.jar_copy",
+    src = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_36_http//file",
+    out = "org.jetbrains.intellij.deps/intellij-deps-java-atk-wrapper-271.36.jar",
     allow_symlink = True,
     visibility = ["//visibility:public"],
 )
 
 jvm_import(
     name = "jetbrains-intellij-deps-java-atk-wrapper-linux",
-    jar = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_35_http//file",
-    source_jar = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-263_35-sources_http//file",
+    jar = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_36_http//file",
+    source_jar = "@org_jetbrains_intellij_deps-intellij-deps-java-atk-wrapper-271_36-sources_http//file",
     visibility = ["//visibility:public"],
 )
 
