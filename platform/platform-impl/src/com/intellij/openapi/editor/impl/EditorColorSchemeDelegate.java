@@ -36,8 +36,7 @@ import java.util.function.UnaryOperator;
  *   <li>[CR-IC-7467] separated the FontPreferences interface and implementation, added a flag to inherit console font preferences from
  *   editor ones, and moved line spacing to FontPreferences</li>
  *   <li>IDEA-129631 added fractional font sizes</li>
- *   <li>IDEA-304086 resets the font size of the editor to {@link #FONT_SIZE_TO_IGNORE}, so the editor font follows the settings after
- *   Presentation mode</li>
+ *   <li>IDEA-304086 resets the font size of the editor, so the editor font follows the settings after Presentation mode</li>
  *   <li>the line spacing can be set for each editor</li>
  *   <li>IDEA-240654 added ligatures for each editor</li>
  *   <li>IDEA-268567 and IDEA-294744 added an override of the ligatures setting without a replacement of the whole FontPreferences</li>
@@ -48,11 +47,6 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   private static final Logger LOG = Logger.getInstance(EditorColorSchemeDelegate.class);
   private static final AtomicReferenceFieldUpdater<EditorColorSchemeDelegate, EditorColorSchemeSnapshot> SNAPSHOT_UPDATER =
     AtomicReferenceFieldUpdater.newUpdater(EditorColorSchemeDelegate.class, EditorColorSchemeSnapshot.class, "mySnapshot");
-
-  /**
-   * The font size that makes the editor use the font size of the delegate scheme.
-   */
-  static final float FONT_SIZE_TO_IGNORE = -1f;
 
   private final EditorImpl myEditor;
 
@@ -146,13 +140,14 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       fontSize = maxSize;
     }
 
-    if (fontSize == current.fontSize()) {
+    Float currentFontSize = current.fontSize();
+    if (currentFontSize != null && currentFontSize == fontSize) {
       return;
     }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Font size overridden for " + myEditor, new Throwable());
     }
-    float newFontSize = fontSize == originalSize ? FONT_SIZE_TO_IGNORE : fontSize;
+    Float newFontSize = fontSize == originalSize ? null : fontSize;
     if (updateSnapshot(snapshot -> withFonts(snapshot.withFontPreferencesSetExplicitly(false).withFontSize(newFontSize)))) {
       myEditor.reinitSettings(true, false);
     }
@@ -177,7 +172,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       snapshot
         .withFontPreferencesSetExplicitly(true)
         .withFaceName(null)
-        .withFontSize(FONT_SIZE_TO_IGNORE)
+        .withFontSize(null)
         .withFontPreferences(snapshot.fontPreferences().withChanges(preferences::copyTo))
     ));
     if (changed) {
@@ -250,7 +245,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
 
   @Override
   public void setConsoleFontSize(float fontSize) {
-    float newConsoleFontSize = fontSize == super.getConsoleFontSize2D() ? FONT_SIZE_TO_IGNORE : fontSize;
+    Float newConsoleFontSize = fontSize == super.getConsoleFontSize2D() ? null : fontSize;
     if (updateSnapshot(snapshot -> withFonts(snapshot.withConsoleFontSize(newConsoleFontSize)))) {
       myEditor.reinitSettings();
     }
@@ -305,7 +300,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
    * Option to change font size by scroll for all editors (IDEA-158642)
    */
   void resetEditorFontSize() {
-    updateSnapshot(snapshot -> withFonts(snapshot.withFontSize(FONT_SIZE_TO_IGNORE)));
+    updateSnapshot(snapshot -> withFonts(snapshot.withFontSize(null)));
   }
 
   /**
@@ -358,11 +353,12 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       FontPreferences fontPreferences = snapshot.fontPreferences();
       return fontPreferences.getSize2D(fontPreferences.getFontFamily());
     }
-    if (snapshot.fontSize() == FONT_SIZE_TO_IGNORE) {
+    Float fontSize = snapshot.fontSize();
+    if (fontSize == null) {
       // IDEA-311926 Specify UISettings for UISettingsUtils when necessary
       return UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
     }
-    return snapshot.fontSize();
+    return fontSize;
   }
 
   private String getEditorFontName(@NotNull EditorColorSchemeSnapshot snapshot) {
@@ -377,8 +373,8 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   }
 
   private float getConsoleFontSize2D(@NotNull EditorColorSchemeSnapshot snapshot) {
-    float consoleFontSize = snapshot.consoleFontSize();
-    return consoleFontSize == FONT_SIZE_TO_IGNORE ? super.getConsoleFontSize2D() : consoleFontSize;
+    Float consoleFontSize = snapshot.consoleFontSize();
+    return consoleFontSize == null ? super.getConsoleFontSize2D() : consoleFontSize;
   }
 
   /**

@@ -16,8 +16,8 @@ import java.util.Collections
  * A reader that takes the snapshot once sees one consistent version on any thread.
  * A `with` function returns a new snapshot, or this snapshot when no value changes.
  *
- * A font size of [EditorColorSchemeDelegate.FONT_SIZE_TO_IGNORE] and a `null` face name, line spacing or ligature setting
- * mean that the editor uses the value of the delegate scheme.
+ * A `null` font size, console font size, face name, line spacing or ligature setting means that the editor uses
+ * the value of the delegate scheme.
  */
 internal class EditorColorSchemeSnapshot private constructor(
   /** The editor font preferences. Without font families, the editor uses the preferences of the delegate scheme. */
@@ -31,8 +31,8 @@ internal class EditorColorSchemeSnapshot private constructor(
   /** The fonts of the editor. Before the first font setting, the set is empty, and the editor uses the delegate scheme. */
   private val fonts: EditorFonts,
   private val maxFontSize: Float,
-  private val fontSize: Float,
-  private val consoleFontSize: Float,
+  private val fontSize: Float?,
+  private val consoleFontSize: Float?,
   private val faceName: String?,
   private val lineSpacing: Float?,
   private val fontPreferencesAreSetExplicitly: Boolean,
@@ -44,8 +44,8 @@ internal class EditorColorSchemeSnapshot private constructor(
   fun ownColors(): Map<ColorKey, Color?> = ownColors
   fun fonts(): EditorFonts = fonts
   fun maxFontSize(): Float = maxFontSize
-  fun fontSize(): Float = fontSize
-  fun consoleFontSize(): Float = consoleFontSize
+  fun fontSize(): Float? = fontSize
+  fun consoleFontSize(): Float? = consoleFontSize
   fun faceName(): String? = faceName
   fun lineSpacing(): Float? = lineSpacing
   fun fontPreferencesAreSetExplicitly(): Boolean = fontPreferencesAreSetExplicitly
@@ -94,11 +94,11 @@ internal class EditorColorSchemeSnapshot private constructor(
     return if (maxFontSize == this.maxFontSize) this else copy(maxFontSize = maxFontSize)
   }
 
-  fun withFontSize(fontSize: Float): EditorColorSchemeSnapshot {
+  fun withFontSize(fontSize: Float?): EditorColorSchemeSnapshot {
     return if (fontSize == this.fontSize) this else copy(fontSize = fontSize)
   }
 
-  fun withConsoleFontSize(consoleFontSize: Float): EditorColorSchemeSnapshot {
+  fun withConsoleFontSize(consoleFontSize: Float?): EditorColorSchemeSnapshot {
     return if (consoleFontSize == this.consoleFontSize) this else copy(consoleFontSize = consoleFontSize)
   }
 
@@ -129,8 +129,8 @@ internal class EditorColorSchemeSnapshot private constructor(
     ownColors: Map<ColorKey, Color?> = this.ownColors,
     fonts: EditorFonts = this.fonts,
     maxFontSize: Float = this.maxFontSize,
-    fontSize: Float = this.fontSize,
-    consoleFontSize: Float = this.consoleFontSize,
+    fontSize: Float? = this.fontSize,
+    consoleFontSize: Float? = this.consoleFontSize,
     faceName: String? = this.faceName,
     lineSpacing: Float? = this.lineSpacing,
     fontPreferencesAreSetExplicitly: Boolean = this.fontPreferencesAreSetExplicitly,
@@ -165,8 +165,8 @@ internal class EditorColorSchemeSnapshot private constructor(
         ownColors = emptyMap(),
         fonts = EditorFonts.empty(),
         maxFontSize = EditorFontsConstants.getMaxEditorFontSize().toFloat(),
-        fontSize = EditorColorSchemeDelegate.FONT_SIZE_TO_IGNORE,
-        consoleFontSize = EditorColorSchemeDelegate.FONT_SIZE_TO_IGNORE,
+        fontSize = null,
+        consoleFontSize = null,
         faceName = null,
         lineSpacing = null,
         fontPreferencesAreSetExplicitly = false,
