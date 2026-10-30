@@ -141,12 +141,10 @@ fun preloadAllClasses(vm: VirtualMachine) {
 
 internal fun checkBlockingDebuggerOperation() {
   val application = ApplicationManager.getApplication()
-  if (application == null) return
+  if (application == null || application.isDisposed) return
 
   val isEdt = EDT.isCurrentThreadEdt()
-  // only EDT check for now
-  //if (!isEdt && !application.isReadAccessAllowed) return
-  if (!isEdt) return
+  if (!isEdt && !application.isReadAccessAllowed) return
 
   val context = if (isEdt) "on EDT" else "with read access"
   val message = "Debugger communication $context"
