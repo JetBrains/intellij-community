@@ -6,7 +6,6 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicLong
 
 /** Identifies one marker across snapshots and provides access to it with the selected ownership. */
-@ApiStatus.Internal
 sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl?> : Comparable<SnapshotMarkerReference<*>> {
   val order: Long
 

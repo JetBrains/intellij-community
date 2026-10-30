@@ -31,7 +31,6 @@ import java.util.function.Consumer
  * @param onDocumentChanged receives the document event after the marker callbacks run
  * @param onMarkersAffected receives handles for valid markers whose policies processed the text change
  */
-@ApiStatus.Internal
 class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
   document: DocumentImpl,
   private val onMarkersInvalidated: ((List<SnapshotMarkerReference<T>>) -> Unit)?,

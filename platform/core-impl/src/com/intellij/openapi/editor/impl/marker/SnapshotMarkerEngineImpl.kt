@@ -28,8 +28,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   internal val markerQueue: ReferenceQueue<SnapshotRangeMarkerImpl> = ReferenceQueue()
 
   /** Creates a marker in the current snapshot and retries if a text change publishes another snapshot. */
-  @ApiStatus.Internal
-  override fun createRangeMarker(
+    override fun createRangeMarker(
     document: Document,
     startOffset: Int,
     endOffset: Int,
@@ -74,8 +73,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
     return marker
   }
 
-  @ApiStatus.Internal
-  fun createRangeMarkerForVirtualFile(
+    fun createRangeMarkerForVirtualFile(
     file: VirtualFile,
     startOffset: Int,
     startLine: Int,
@@ -206,8 +204,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
    * Returns the marker state in [root], or [PMarkerResolution.ABSENT] when the marker is absent.
    * Marks a retained state as invalid when the marker is disposed.
    */
-  @ApiStatus.Internal
-  fun resolveRangeMarker(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): Long {
+    fun resolveRangeMarker(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): Long {
     val resolution = root.resolve(marker.markerHandle)
     return if (marker.isDisposed()) {
       PMarkerResolution.invalid(resolution)
@@ -218,8 +215,7 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   }
 
   /** Returns the disposal or invalidation reason, or `null` when the marker is valid or absent. */
-  @ApiStatus.Internal
-  fun invalidationReason(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): String? {
+    fun invalidationReason(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): String? {
     return if (marker.isDisposed()) DISPOSED_REASON else root.invalidationReason(marker.markerHandle)
   }
 

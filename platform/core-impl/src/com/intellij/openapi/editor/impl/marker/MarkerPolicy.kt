@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  *
  * Implementations return offsets or a predefined invalidation result. The root preserves the marker metadata.
  */
-@ApiStatus.Internal
 fun interface MarkerPolicy {
   /** True when this policy uses persistent line translation for large document replacements. */
   val isPersistent: Boolean
@@ -38,7 +37,6 @@ fun interface MarkerPolicy {
  * Negative values identify predefined invalidation reasons and contain no offsets.
  * The root retains the input offsets when a policy invalidates a marker.
  */
-@ApiStatus.Internal
 @JvmInline
 value class MarkerTransformResult private constructor(val range: Long) {
   constructor(startOffset: Int, endOffset: Int) : this(TextRangeScalarUtil.toScalarRange(startOffset, endOffset))
@@ -68,7 +66,6 @@ value class MarkerTransformResult private constructor(val range: Long) {
 }
 
 /** Defines the reasons that a marker policy can invalidate a marker. */
-@ApiStatus.Internal
 enum class MarkerTransformError(val message: String) {
   INVALIDATED_BY_EDIT("Marker was invalidated by a document edit"),
   EMPTY_FOLD_REGION("The fold region became empty"),
@@ -81,7 +78,6 @@ enum class MarkerTransformError(val message: String) {
 /**
  * Standard IntelliJ range-marker transformation policy.
  */
-@ApiStatus.Internal
 object DefaultMarkerPolicy : MarkerPolicy {
   override fun transform(
       entry: MarkerEntry,

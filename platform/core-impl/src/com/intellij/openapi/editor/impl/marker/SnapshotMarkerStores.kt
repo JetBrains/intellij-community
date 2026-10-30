@@ -18,7 +18,6 @@ import java.util.IdentityHashMap
  *
  * Its monitor guards validation and publication. Tree transformations run outside the monitor.
  */
-@ApiStatus.Internal
 class SnapshotMarkerStores {
   private val stores: MutableList<SnapshotMarkerRootStore<*>> = ContainerUtil.createEmptyCOWList()
   private val currentRoots: MutableMap<SnapshotMarkerRootStore<*>, SnapshotMarkerRootStore.CurrentRootCache> = IdentityHashMap()

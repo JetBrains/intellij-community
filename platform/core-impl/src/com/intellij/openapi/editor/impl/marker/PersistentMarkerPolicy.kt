@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
  * Range-marker policy that attempts to retain a marker through large replacements by translating its line and column
  * coordinates through a line diff. If diff translation is unavailable, it falls back to [DefaultMarkerPolicy].
  */
-@ApiStatus.Internal
 object PersistentMarkerPolicy : MarkerPolicy {
   override val isPersistent: Boolean
     get() = true

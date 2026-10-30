@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Persistent line translation for an exact-range or line-range highlighter.
  */
-@ApiStatus.Internal
 enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : MarkerPolicy {
   EXACT_RANGE(false),
   LINES_IN_RANGE(true);

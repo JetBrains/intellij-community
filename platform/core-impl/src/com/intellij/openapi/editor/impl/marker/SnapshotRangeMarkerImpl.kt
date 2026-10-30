@@ -15,7 +15,6 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * Ordinary range marker whose offsets are stored in the snapshot marker engine.
  */
-@ApiStatus.Internal
 open class SnapshotRangeMarkerImpl private constructor(
   private val documentOrFile: Any,
   internal val rootStorage: MarkerRootUpdater,

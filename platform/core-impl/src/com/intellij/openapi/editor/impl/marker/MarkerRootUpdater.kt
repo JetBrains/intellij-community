@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * A subclass selects the reference for the current document state.
  */
-@ApiStatus.Internal
 abstract class MarkerRootUpdater {
   internal val weakReference: WeakReference<MarkerRootUpdater> = WeakReference(this)
 

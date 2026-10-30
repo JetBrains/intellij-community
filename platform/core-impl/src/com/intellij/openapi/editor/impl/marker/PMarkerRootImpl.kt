@@ -489,8 +489,7 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
-  @ApiStatus.Internal
-  override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
+    override fun processAllRangeMarkers(processor: MarkerDeltaProcessor): Boolean {
     return processAllRangeMarkers(rootId, ancestorDelta = 0, processor)
   }
 
