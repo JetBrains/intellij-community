@@ -322,6 +322,8 @@
 
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy" open="true"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
+    <registryKey key="vcs.default.roots.from.project.roots" defaultValue="false" restartRequired="true"
+                 description="The project roots of a project replace its base directory as default VCS roots. A project root is a project directory without a module. With the key off, the base directory and its .idea directory are default roots"/>
 
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ModuleVcsDetector$ModuleVcsDetectorStartUpActivity"/>
 

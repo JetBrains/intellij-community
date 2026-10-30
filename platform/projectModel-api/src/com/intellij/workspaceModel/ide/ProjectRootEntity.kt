@@ -54,6 +54,15 @@ fun unregisterProjectRootBlocking(project: Project, projectDir: VirtualFileUrl) 
 }
 
 /**
+ * Non-suspend alternative to [unregisterProjectRoot]
+ */
+@Internal
+fun unregisterProjectRootBlocking(project: Project, projectDir: Path) {
+  val workspaceModel = WorkspaceModel.getInstance(project)
+  unregisterProjectRootBlocking(project, projectDir.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager()))
+}
+
+/**
  * Non-suspend alternative
  */
 @Internal
