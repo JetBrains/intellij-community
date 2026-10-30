@@ -400,7 +400,8 @@ public class ComponentValidator {
       popup = popupBuilder.createPopup();
 
       Insets i = validationInfo.component.getInsets();
-      Point point = new Point(JBUIScale.scale(40), i.top - JBUIScale.scale(6) - popupSize.height);
+      var visibleRect = validationInfo.component.getVisibleRect();
+      Point point = new Point(visibleRect.x + JBUIScale.scale(40), visibleRect.y + i.top - JBUIScale.scale(6) - popupSize.height);
       popupLocation = new RelativePoint(validationInfo.component, point);
 
       popup.show(popupLocation);
