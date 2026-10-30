@@ -136,6 +136,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       linkSupport = true
     }
     implementation = ImplementationCapabilities().apply {
+      dynamicRegistration = true
       linkSupport = true
     }
     completion = CompletionCapabilities().apply {
