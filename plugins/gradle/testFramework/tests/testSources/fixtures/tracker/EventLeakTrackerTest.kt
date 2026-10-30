@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.testFramework.fixtures.tracker
+package com.intellij.gradle.testFramework.tests.fixtures.tracker
 
+import com.intellij.gradle.testFramework.fixtures.tracker.EventLeakTracker
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test
