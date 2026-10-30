@@ -35,8 +35,8 @@
     <extensionPoint qualifiedName="com.intellij.buildProgressListenerRegistrar"
                     interface="com.intellij.build.BuildProgressListenerRegistrar"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.buildNodeIconProvider"
-                    interface="com.intellij.build.BuildNodeIconProvider"
+    <extensionPoint qualifiedName="com.intellij.executionNodePresentationCustomizer"
+                    interface="com.intellij.build.ExecutionNodePresentationCustomizer"
                     dynamic="true"/>
   </extensionPoints>
   <actions>

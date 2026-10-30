@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
-import com.intellij.build.BuildNodeIconProvider.BuildNodeStatus;
 import com.intellij.build.console.BuildConsoleViewHandler;
 import com.intellij.build.console.BuildConsoleViewStrategy;
 import com.intellij.build.events.BuildEvent;
@@ -174,6 +173,7 @@ public final class BuildTreeConsoleView
     myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
     myRootNode = new ExecutionNode(myProject, null, true, this::isCorrectThread);
+    myRootNode.setBuildId(myBuildDescriptor.getId());
     myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode, true, this::isCorrectThread);
     myRootNode.add(myBuildProgressRootNode);
 
@@ -535,22 +535,6 @@ public final class BuildTreeConsoleView
     if (node.getStartTime() == 0) {
       node.setStartTime(event.getEventTime());
     }
-    BuildNodeIconProvider.EP_NAME.getExtensionList().forEach(iconProvider -> {
-      var icon = iconProvider.getIcon(event, getStatus(node));
-      if (icon != null) {
-        node.setIconProvider(() -> icon);
-      }
-    });
-  }
-
-  private static @NotNull BuildNodeStatus getStatus(@NotNull ExecutionNode node) {
-    var result = node.getResult();
-    return node.isRunning() ? BuildNodeStatus.RUNNING :
-           ExecutionNode.isFailed(result) ? BuildNodeStatus.FAILED :
-           ExecutionNode.isSkipped(result) ? BuildNodeStatus.SKIPPED :
-           node.isFailed() ? BuildNodeStatus.FAILED :
-           node.hasWarnings() ? BuildNodeStatus.WARNING :
-           BuildNodeStatus.SUCCESS;
   }
 
   private void setResult(

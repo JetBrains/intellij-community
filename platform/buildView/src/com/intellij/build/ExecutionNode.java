@@ -53,6 +53,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private static final Icon NODE_ICON_RUNNING = new AnimatedIcon.Default();
 
   private @NotNull Object myId = new Object();
+  private volatile @Nullable Object myBuildId;
 
   private final List<ExecutionNode> myChildrenList = new ArrayList<>(); // Accessed from the async model thread only.
   private final AtomicInteger myErrors = new AtomicInteger();
@@ -125,6 +126,18 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
 
   public @NotNull Object getId() {
     return myId;
+  }
+
+  void setBuildId(@NotNull Object buildId) {
+    myBuildId = buildId;
+  }
+
+  private @Nullable Object getBuildId() {
+    ExecutionNode node = this;
+    while (node.myParentNode != null) {
+      node = node.myParentNode;
+    }
+    return node.myBuildId;
   }
 
   public void setId(@NotNull Object id) {
@@ -246,6 +259,16 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
            (myResult instanceof MessageEventResult result && result.getKind() == MessageEvent.Kind.ERROR);
   }
 
+  @ApiStatus.Internal
+  public @NotNull Status getStatus() {
+    return isRunning() ? Status.RUNNING :
+           isFailed(myResult) ? Status.FAILED :
+           isSkipped(myResult) ? Status.SKIPPED :
+           isFailed() ? Status.FAILED :
+           hasWarnings() ? Status.WARNING :
+           Status.SUCCESS;
+  }
+
   public @Nullable EventResult getResult() {
     return myResult;
   }
@@ -328,6 +351,10 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   Icon getCurrentIcon() {
+    var customIcon = getCustomIcon();
+    if (customIcon != null) {
+      return customIcon;
+    }
     var preferredIconValue = myPreferredIconValue;
     if (preferredIconValue != null) {
       return preferredIconValue.getValue();
@@ -336,13 +363,28 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
       return getIcon(result.getKind());
     }
     else {
-      return isRunning() ? NODE_ICON_RUNNING :
-             isFailed(myResult) ? NODE_ICON_ERROR :
-             isSkipped(myResult) ? NODE_ICON_SKIPPED :
-             myErrors.get() > 0 ? NODE_ICON_ERROR :
-             myWarnings.get() > 0 ? NODE_ICON_WARNING :
-             NODE_ICON_OK;
+      return switch (getStatus()) {
+        case RUNNING -> NODE_ICON_RUNNING;
+        case FAILED -> NODE_ICON_ERROR;
+        case SKIPPED -> NODE_ICON_SKIPPED;
+        case WARNING -> NODE_ICON_WARNING;
+        case SUCCESS -> NODE_ICON_OK;
+      };
     }
+  }
+
+  private @Nullable Icon getCustomIcon() {
+    var buildId = getBuildId();
+    if (buildId == null) {
+      return null;
+    }
+    for (ExecutionNodePresentationCustomizer customizer : ExecutionNodePresentationCustomizer.EP_NAME.getExtensionList()) {
+      var icon = customizer.getIcon(buildId, this);
+      if (icon != null) {
+        return icon;
+      }
+    }
+    return null;
   }
 
   public static boolean isFailed(@Nullable EventResult result) {
@@ -430,5 +472,14 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
         return myHint;
       }
     }
+  }
+
+  @ApiStatus.Internal
+  public enum Status {
+    RUNNING,
+    SUCCESS,
+    WARNING,
+    FAILED,
+    SKIPPED,
   }
 }
