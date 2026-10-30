@@ -116,6 +116,10 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
       // add listeners after some delay - doesn't make sense to listen earlier
       delay(listenDelay)
 
+      launch (CoroutineName("Log ConfigurationAwaiter")) {
+        ConfigurationAwaiter.startLogging()
+      }
+
       val settings = serviceAsync<GeneralSettings>()
       launch {
         listenIdleAndActivate(settings)
@@ -675,7 +679,7 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
                             projectHashes.isNotEmpty() &&
                             projectManager != null &&
                             // wait for all projects to be configured. `true` if all are already configured
-                            projectHashes.all { awaitConfiguration(projectManager.findOpenProjectByHash(it)) }
+                            projectHashes.all { awaitConfiguration(projectManager.findOpenProjectByHash(it), keepRefreshing) }
 
         if (canTryRefresh && keepRefreshing() && refreshAllLocalRootsInBackground(queue)) {
           sessions.incrementAndGet()
@@ -695,18 +699,28 @@ internal class SaveAndSyncHandlerImpl @JvmOverloads constructor(
 @Service(Service.Level.PROJECT)
 internal class ConfigurationAwaiter(private val cs: CoroutineScope) {
   companion object {
+    private val logMessages = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+    @OptIn(FlowPreview::class)
+    internal suspend fun startLogging() {
+      logMessages.debounce(1.seconds).collect { LOG.info(it) }
+    }
+
     /**
      * Wait until project is configured. Avoid leaking project by executing wait in project coroutine scope.
      *
      * @return `true` if all project is already configured. `false`, if project was configured during the execution
      * @see Observation.awaitConfiguration
      */
-    internal suspend fun awaitConfiguration(project: Project?): Boolean {
+    internal suspend inline fun awaitConfiguration(project: Project?, crossinline keepRefresh: () -> Boolean): Boolean {
       if (project == null || project.isDisposed) return false
 
       return project.service<ConfigurationAwaiter>().cs.async {
         !Observation.awaitConfiguration(project) { message ->
-          LOG.info("Periodic VFS refresh is blocked because project.name=${project.name} being configured, reason=$message")
+          if (!keepRefresh()) {
+            throw CancellationException()
+          }
+          logMessages.tryEmit("Periodic VFS refresh is blocked because project.name=${project.name} being configured, reason=$message")
         }
       }.await()
     }

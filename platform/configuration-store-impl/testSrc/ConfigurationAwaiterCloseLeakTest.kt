@@ -51,7 +51,7 @@ internal class ConfigurationAwaiterCloseLeakTest {
   private suspend fun CoroutineScope.closeProjectDuringConfigurationAwait(tracker: HangingActivityTracker): WeakReference<com.intellij.openapi.project.Project> {
     val project = openProjectAsync(tempDir)
     val awaitJob = launch {
-      ConfigurationAwaiter.awaitConfiguration(project)
+      ConfigurationAwaiter.awaitConfiguration(project) { true }
     }
     try {
       tracker.awaitEntered.await()
