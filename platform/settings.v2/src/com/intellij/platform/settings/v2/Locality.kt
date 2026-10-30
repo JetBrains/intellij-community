@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Experimental
 /**
  * Tells the storage locality of one layer: which of two boundaries its values may cross. The first is the VCS
  * boundary: committed and shared, or kept out of the repository. The second is the machine boundary: the value may
- * cross the remote-development split between the frontend and the backend, or it stays on one machine. The three
+ * cross the remote-development split between the frontend and the backend, or it stays where it is stored. The three
  * levels form a scale of reach.
  *
  * A layer has exactly **one** locality. Within one context, the layers resolve by
@@ -24,12 +24,17 @@ enum class LayerLocality {
   TEAM,
 
   /**
-   * Kept out of VCS for one user, but it still crosses the remote-development split between the frontend and the
-   * backend. It holds a personal override.
+   * Holds a personal value, which wins over the [TEAM] value. It is kept out of VCS for one user, but it still crosses
+   * the remote-development split between the frontend and the backend. A value that must never go to VCS belongs in
+   * [ENVIRONMENTAL], not here.
    */
   LOCAL,
 
-  /** Bound to the machine, and it never leaves it. An example is an absolute local path, which has no meaning elsewhere. */
+  /**
+   * Stays where it is stored: on one machine, or in one checkout. It never goes to VCS, to Settings Sync or to the other
+   * remote-development side. Examples are an absolute tool path and a choice for one checkout. The name has nothing
+   * to do with environment variables.
+   */
   ENVIRONMENTAL,
   ;
 

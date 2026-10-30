@@ -16,7 +16,8 @@ const val JETBRAINS_CONFIG_NAME: String = ".jetbrains"
  * Returns the on-disk file name of the [locality] variant of the team file [teamFileName]. The team layer keeps the
  * plain name. The local and the environmental layers insert an infix before the extension. So `.jetbrains.json`
  * gives `.jetbrains.local.json` and `.jetbrains.env.json`, and `project.settings.json` gives
- * `project.settings.local.json` and `project.settings.env.json` (ADR 0075).
+ * `project.settings.local.json` and `project.settings.env.json` (ADR 0075). The `env` infix stands for
+ * [LayerLocality.ENVIRONMENTAL], not for environment variables.
  */
 fun localityFileName(teamFileName: String, locality: LayerLocality): String = when (locality) {
   LayerLocality.TEAM -> teamFileName

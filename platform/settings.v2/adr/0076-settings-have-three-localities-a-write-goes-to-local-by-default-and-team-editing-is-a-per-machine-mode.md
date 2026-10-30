@@ -1,4 +1,4 @@
-# 0076. Settings have three layer kinds, a write goes to local by default, and team editing is a per-machine mode
+# 0076. Settings have three localities, a write goes to local by default, and team editing is a per-machine mode
 
 Date: 2026-08-13. Merged: 2026-10-15.
 
@@ -11,9 +11,10 @@ Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
 Some project settings are personal and must not be committed. Today the per-project workspace storage outside the
 project tree serves that. Settings as code also invites a personal file next to the shared one.
 
-A binary split into shared and non-shared data mixes two things: a personal override that should follow the user,
-and a machine-bound value (an absolute path) that must never leave the machine. The dominant enterprise case is a
-developer tweaking some committed settings for themselves, not reconfiguring the shared project.
+A binary split into shared and non-shared data mixes two things. One is a personal override that should follow the
+user. The other is a value of one machine or one checkout, such as an absolute path, that must never leave it. The
+dominant enterprise case is a developer tweaking some committed settings for themselves, not reconfiguring the shared
+project.
 
 A plain write to local leaves no way to write to team, which breaks
 [ADR 0072](./0072-a-delegated-job-comes-with-a-mechanism.md). A committed opt-out setting would flip the mode for
@@ -21,8 +22,9 @@ the whole team.
 
 ## Decision
 
-**Three layer kinds: shared (committed to VCS), local (per-user, not committed, the tier Settings Sync syncs), and
-environmental (machine-bound, never leaves the machine, never syncs). An unhinted write goes to the local layer.**
+**There are three localities. Team is committed to VCS. Local is per-user and not committed, and it is the tier
+Settings Sync syncs. Environmental is bound to one machine or one checkout, never leaves it, and never syncs. An
+unhinted write goes to the local layer.**
 Agreed with Daniil Ovchinnikov.
 
 **An environmental app and project key, `EDIT_TEAM_LAYER`, flips shareable writes to team-first.** Because it is

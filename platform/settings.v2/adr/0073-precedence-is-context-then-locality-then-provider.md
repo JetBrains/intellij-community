@@ -10,8 +10,8 @@ Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Supe
 ## Context
 
 [ADR 0028](./0028-layers-order-by-context-first-and-anchors-break-ties.md) ordered layers by context and broke
-ties with anchors. The prototype orders providers by extension order instead, and the three layer kinds
-([ADR 0076](./0076-settings-have-three-layer-kinds-a-write-goes-to-local-by-default-and-team-editing-is-a-per-machine-mode.md)) add a locality axis.
+ties with anchors. The prototype orders providers by extension order instead, and the three localities
+([ADR 0076](./0076-settings-have-three-localities-a-write-goes-to-local-by-default-and-team-editing-is-a-per-machine-mode.md)) add a locality axis.
 
 ## Decision
 
