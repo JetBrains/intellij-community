@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.indexing.impl.backend
+package com.intellij.openapi.project
 
 import com.intellij.concurrency.captureThreadContext
 import com.intellij.concurrency.resetThreadContext
@@ -12,14 +12,11 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.project.DumbService
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.SmartModeScheduler
-import com.intellij.openapi.project.UnindexedFilesScannerExecutor
 import com.intellij.util.concurrency.ThreadingAssertions
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Async
 import java.util.Deque
@@ -27,9 +24,9 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Consumer
 
 /**
- * Holds a scheduled runnable until neither the scanning nor the dumb mode is in progress.
+ * Holds a scheduled runnable until the first [SmartModeProvider] reports smart mode for the project.
  */
-internal class BackendSmartModeScheduler(private val project: Project, sc: CoroutineScope) : SmartModeScheduler, Disposable {
+internal class SmartModeSchedulerImpl(private val project: Project, scope: CoroutineScope) : SmartModeScheduler, Disposable {
   private class RunnableDelegate(val task: Runnable, private val executor: Consumer<in Runnable>) : Runnable {
     override fun run() {
       executor.accept(task)
@@ -38,32 +35,41 @@ internal class BackendSmartModeScheduler(private val project: Project, sc: Corou
 
   private val myRunWhenSmartQueue: Deque<Runnable> = ConcurrentLinkedDeque()
 
-  private val dumbService get() = DumbService.getInstance(project)
-  private val filesScannerExecutor get() = UnindexedFilesScannerExecutor.getInstance(project)
-  private val projectDumbState: StateFlow<DumbService.DumbState> = dumbService.state
-  private val projectScanningChanged: Flow<*> = filesScannerExecutor.startedOrStoppedEvent
+  private val providersChanged = MutableStateFlow(0)
 
   init {
     project.messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        myRunWhenSmartQueue.removeIf { runnable ->
-          val unwrappedRunnable = if (runnable is RunnableDelegate) runnable.task else runnable
-          val classLoader: ClassLoader = unwrappedRunnable.javaClass.classLoader
-          classLoader is PluginAwareClassLoader && (classLoader as PluginAwareClassLoader).pluginId == pluginDescriptor.pluginId
-        }
+        removeQueued { classLoader -> classLoader.pluginId == pluginDescriptor.pluginId }
+      }
+
+      override fun pluginsUnloaded() {
+        // A content module of the core plugin keeps the plugin id, so the purge by plugin id misses it.
+        removeQueued { classLoader -> classLoader.state == PluginAwareClassLoader.UNLOAD_IN_PROGRESS }
       }
     })
 
-    sc.launch {
-      projectScanningChanged.collect {
-        onStateChanged()
-      }
+    // The listener runs in a write action, so it only signals the change.
+    SmartModeProvider.EP_NAME.addChangeListener(scope) {
+      providersChanged.update { it + 1 }
     }
 
-    sc.launch {
-      projectDumbState.collect {
+    scope.launch {
+      // collectLatest drops the flow of the previous provider, so the class loader of an unloaded module is free.
+      providersChanged.collectLatest {
         onStateChanged()
+        SmartModeProvider.EP_NAME.extensionList.firstOrNull()?.modeChanged(project)?.collect {
+          onStateChanged()
+        }
       }
+    }
+  }
+
+  private fun removeQueued(predicate: (PluginAwareClassLoader) -> Boolean) {
+    myRunWhenSmartQueue.removeIf { runnable ->
+      val unwrappedRunnable = if (runnable is RunnableDelegate) runnable.task else runnable
+      val classLoader = unwrappedRunnable.javaClass.classLoader
+      classLoader is PluginAwareClassLoader && predicate(classLoader)
     }
   }
 
@@ -124,15 +130,17 @@ internal class BackendSmartModeScheduler(private val project: Project, sc: Corou
     }
   }
 
-  override fun getCurrentMode(): Int =
-    (if (filesScannerExecutor.isRunning.value) SmartModeScheduler.SCANNING else 0) +
-    (if (projectDumbState.value.isDumb) SmartModeScheduler.DUMB else 0)
+  override fun getCurrentMode(): Int {
+    // The default project is never dumb.
+    if (project.isDefault) return 0
+    return SmartModeProvider.EP_NAME.extensionList.firstOrNull()?.getCurrentMode(project) ?: 0
+  }
 
   override fun dispose() {
     myRunWhenSmartQueue.clear()
   }
 
   private companion object {
-    val LOG = logger<BackendSmartModeScheduler>()
+    val LOG = logger<SmartModeSchedulerImpl>()
   }
 }

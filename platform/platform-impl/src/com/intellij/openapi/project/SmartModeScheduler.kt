@@ -10,8 +10,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * 1. No scanning is in progress, and the initial scanning of the project has finished.
  * 2. The project is not in dumb mode.
  *
- * The real implementation lives in the `intellij.platform.indexing.impl.backend` module, because it tracks the indexing scanning.
- * The default implementation, [AlwaysSmartModeScheduler], serves a process without that module. It reports smart mode at all times.
+ * The first [SmartModeProvider] supplies the mode, so the modules that the process loads select it.
+ * The `intellij.platform.indexing.impl.backend` module registers the provider that tracks the scanning and the dumb mode.
+ * A process without a provider reports smart mode at all times.
  */
 @Internal
 interface SmartModeScheduler {

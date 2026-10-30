@@ -73,9 +73,7 @@
     <applicationService serviceInterface="com.intellij.util.indexing.diagnostic.ChangedFilesPushedEventReporter"
                         serviceImplementation="com.intellij.platform.indexing.impl.backend.BackendChangedFilesPushedEventReporter"
                         overrides="true"/>
-    <projectService serviceInterface="com.intellij.openapi.project.SmartModeScheduler"
-                    serviceImplementation="com.intellij.platform.indexing.impl.backend.BackendSmartModeScheduler"
-                    overrides="true"/>
+    <smartModeProvider implementation="com.intellij.platform.indexing.impl.backend.BackendSmartModeProvider"/>
 
     <projectService serviceInterface="com.intellij.openapi.project.UnindexedFilesScannerExecutor"
                     serviceImplementation="com.intellij.util.indexing.UnindexedFilesScannerExecutorImpl"/>

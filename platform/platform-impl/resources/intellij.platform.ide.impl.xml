@@ -412,6 +412,9 @@
     <extensionPoint qualifiedName="com.intellij.pluginUpdateHandlerProvider"
                     interface="com.intellij.openapi.updateSettings.impl.PluginUpdateHandlerProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.smartModeProvider"
+                    interface="com.intellij.openapi.project.SmartModeProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.pluginUpdatesProvider"
                     interface="com.intellij.ide.plugins.newui.PluginUpdatesProvider"
                     dynamic="true"/>
@@ -931,8 +934,7 @@
     <projectService serviceInterface="com.intellij.openapi.project.DumbService"
                     serviceImplementation="com.intellij.openapi.project.DumbServiceImpl"/>
     <projectService serviceInterface="com.intellij.openapi.project.SmartModeScheduler"
-                    serviceImplementation="com.intellij.openapi.project.AlwaysSmartModeScheduler"
-                    open="true"/>
+                    serviceImplementation="com.intellij.openapi.project.SmartModeSchedulerImpl"/>
     <initProjectActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <projectService serviceInterface="com.intellij.openapi.project.IncompleteDependenciesService"
                     serviceImplementation="com.intellij.openapi.project.IncompleteDependenciesServiceImpl"/>
