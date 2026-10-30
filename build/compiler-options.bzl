@@ -50,7 +50,7 @@ def create_kotlinc_options(
         x_wasm_generate_closed_world_multimodule = False,
         x_wasm_kclass_fqn = False,
         x_when_guards = False,
-        x_x_language = ["+AllowEagerSupertypeAccessibilityChecks"]):
+        x_x_language = ["+AllowEagerSupertypeAccessibilityChecks", "-WrapContinuationForTailCallFunctions"]):
     if x_jvm_default != None:
         jvm_default = _normalize_legacy_jvm_default(x_jvm_default)
 

@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 25" allPlatforms="JVM [25]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.ExperimentalStdlibApi -P plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -progressive -Xcontext-parameters" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=kotlin.ExperimentalStdlibApi -P plugin:androidx.compose.compiler.plugins.kotlin:featureFlag=-PausableComposition -XXLanguage:+AllowEagerSupertypeAccessibilityChecks -XXLanguage:-WrapContinuationForTailCallFunctions -progressive -Xcontext-parameters" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
