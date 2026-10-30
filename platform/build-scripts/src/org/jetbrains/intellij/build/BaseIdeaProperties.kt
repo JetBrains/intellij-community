@@ -21,7 +21,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.editorconfig.plugin",
   "intellij.configurationScript",
   "intellij.json.plugin",
-  "intellij.yaml",
+  "intellij.yaml.plugin",
   "intellij.html.tools",
   "intellij.maven.plugin",
   "intellij.gradle.plugin",

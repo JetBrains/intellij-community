@@ -89,7 +89,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.sh.plugin",
             "intellij.markdown",
             "intellij.mermaid",
-            "intellij.yaml",
+            "intellij.yaml.plugin",
             "intellij.grazie",
         )
 
