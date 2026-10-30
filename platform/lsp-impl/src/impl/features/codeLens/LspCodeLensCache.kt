@@ -8,9 +8,9 @@ import com.intellij.platform.lsp.impl.features.LspFeaturesRefreshing
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
 import com.intellij.platform.lsp.impl.supportsCodeLens
+import com.intellij.platform.lsp.impl.supportsCodeLensResolve
 import org.eclipse.lsp4j.CodeLens
 import org.eclipse.lsp4j.CodeLensParams
-import org.eclipse.lsp4j.Range
 
 internal class LspCodeLensCache(private val lspClient: LspClientImpl) : LspHighlightingCache<CodeLens>(lspClient.project) {
   override fun isSupportedForFile(file: VirtualFile): Boolean {
@@ -21,7 +21,7 @@ internal class LspCodeLensCache(private val lspClient: LspClientImpl) : LspHighl
   }
 
   override suspend fun sendRequest(file: VirtualFile): LspPullResult<CodeLens> {
-    val resolveSupported = lspClient.serverCapabilities?.codeLensProvider?.resolveProvider == true
+    val resolveSupported = lspClient.supportsCodeLensResolve(file)
     val perDocument = lspClient.documentMapping.forEachDocumentInFile(file) { lspDocument ->
       val params = CodeLensParams(lspDocument.id)
       val result = lspClient.sendRequest { it.textDocumentService.codeLens(params) } ?: return@forEachDocumentInFile null

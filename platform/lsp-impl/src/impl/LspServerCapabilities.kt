@@ -68,6 +68,11 @@ internal fun LspClientImpl.supportsCompletionResolve(file: VirtualFile): Boolean
   ?: serverCapabilities?.completionProvider?.resolveProvider
   ?: false
 
+internal fun LspClientImpl.supportsCodeLensResolve(file: VirtualFile): Boolean =
+  getDynamicCapabilityOptionsForFile(file, LspDynamicCapabilities.codeLens)?.resolveProvider
+  ?: serverCapabilities?.codeLensProvider?.resolveProvider
+  ?: false
+
 internal fun LspClientImpl.supportsGotoDefinition(): Boolean = serverCapabilities?.definitionProvider?.let { it.left ?: true } == true
 
 internal fun LspClientImpl.supportsGotoTypeDefinition(): Boolean = serverCapabilities?.typeDefinitionProvider?.let { it.left ?: true } == true
