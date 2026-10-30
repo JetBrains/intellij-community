@@ -2,36 +2,36 @@
 package com.intellij.markdown.frontend.editor.livepreview
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.awt.Graphics2D
-import java.awt.Rectangle
+import javax.swing.JComponent
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
 interface CodeFenceRenderingService {
-  /** Converts [source] to [CodeFencePainter] for given [language]. Returns null when operation can't be performed. */
-  suspend fun render(language: String, source: String): CodeFencePainter?
+  /**
+   * Creates the view of [source] for the given [language]. Returns null when the service does not render the language.
+   * The view lives while [scope] is active.
+   */
+  suspend fun render(language: String, source: String, scope: CoroutineScope): CodeFenceView?
 
   companion object {
     val EP_NAME: ExtensionPointName<CodeFenceRenderingService> = ExtensionPointName("org.intellij.markdown.codeFenceRenderingService")
 
-    suspend fun render(language: String, source: String): CodeFencePainter? =
-      EP_NAME.extensionList.firstNotNullOfOrNull { it.render(language, source) }
+    suspend fun render(language: String, source: String, scope: CoroutineScope): CodeFenceView? =
+      EP_NAME.extensionList.firstNotNullOfOrNull { it.render(language, source, scope) }
   }
 }
 
 /**
- * The [width] and [height] use logical pixels. The caller chooses the `bounds` for the current view and can fit the
- * painter into a smaller rectangle. The painter must keep the object aspect ratio inside the `bounds`.
+ * The live view of a rendered code fence. The editor shows [component] below the fence at the editor width.
+ * The editor sets the background of [component] and caps its height.
  */
 @ApiStatus.Internal
-interface CodeFencePainter {
-  /** The natural width in logical pixels. */
-  val width: Float
-
-  /** The natural height in logical pixels. */
-  val height: Float
-
-  /** Paints the object inside [bounds]. The rectangle is in the coordinates of [graphics]. */
-  fun paint(graphics: Graphics2D, bounds: Rectangle)
+interface CodeFenceView {
+  /**
+   * The Swing component of the view. Use it on the EDT only.
+   * Its preferred size is the natural size of the view. In a narrower editor, the view keeps the aspect ratio of this size.
+   */
+  val component: JComponent
 }

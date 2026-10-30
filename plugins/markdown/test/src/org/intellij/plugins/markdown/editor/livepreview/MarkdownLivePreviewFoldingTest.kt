@@ -8,8 +8,8 @@ import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePaint
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
-import com.intellij.markdown.frontend.editor.livepreview.CodeFencePainter
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
+import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction.writeCommandAction
@@ -47,19 +47,24 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.EditorMouseFixture
 import com.intellij.util.DocumentUtil
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.CoroutineScope
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.highlighting.MarkdownHighlighterColors
 import org.intellij.plugins.markdown.publishSpecsAndWait
 import java.awt.Color
+import java.awt.Dimension
 import java.awt.Font
-import java.awt.Graphics2D
 import java.awt.Rectangle
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.io.ByteArrayOutputStream
 import java.util.Base64
+import java.util.Collections
 import java.util.concurrent.atomic.AtomicInteger
 import javax.imageio.ImageIO
+import javax.swing.JComponent
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
 
 class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
@@ -1430,6 +1435,8 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val inlay = mermaidInlays().single()
     assertEquals(fence.length, inlay.offset)
     assertEquals(fence, visibleText().substringBefore("\n\n"))
+    assertTrue("The editor hosts the view", SwingUtilities.isDescendingFrom(service.views.single().component, myFixture.editor.contentComponent))
+    assertEquals("A tall diagram is capped at 20 lines", 20 * myFixture.editor.lineHeight + 2 * JBUI.scale(2), inlay.heightInPixels)
 
     myFixture.type("!")
     myFixture.doHighlighting()
@@ -2161,17 +2168,18 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     myFixture.editor.inlayModel.getBlockElementsInRange(0, myFixture.editor.document.textLength).filter { it.isValid }
 }
 
-/** Renders every source as the same empty 40 by 20 diagram. */
+/** Renders every source as the same empty [TallCodeFenceView]. */
 private class FixedCodeFenceRenderingService : CodeFenceRenderingService {
   val renders = AtomicInteger()
+  val views: MutableList<TallCodeFenceView> = Collections.synchronizedList(ArrayList())
 
-  override suspend fun render(language: String, source: String): CodeFencePainter {
+  override suspend fun render(language: String, source: String, scope: CoroutineScope): CodeFenceView {
     renders.incrementAndGet()
-    return object : CodeFencePainter {
-      override val width: Float = 40f
-      override val height: Float = 20f
-
-      override fun paint(graphics: Graphics2D, bounds: Rectangle) = Unit
-    }
+    return TallCodeFenceView().also(views::add)
   }
+}
+
+/** An empty view that needs more height than the editor gives a code fence. */
+private class TallCodeFenceView : CodeFenceView {
+  override val component: JComponent = JPanel().apply { preferredSize = Dimension(0, 10_000) }
 }

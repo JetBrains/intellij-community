@@ -4,48 +4,42 @@ package com.intellij.markdown.frontend.editor.livepreview
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
-import com.intellij.openapi.editor.InlayProperties
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
+import com.intellij.openapi.editor.impl.EditorEmbeddedComponentManager
 import com.intellij.openapi.editor.impl.EditorScopeProvider
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.JBColor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewSpec
+import java.awt.BorderLayout
 import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Graphics2D
-import java.awt.Rectangle
-import kotlin.math.max
-import kotlin.math.roundToInt
+import javax.swing.JPanel
+import javax.swing.SwingUtilities
+import kotlin.math.min
 
 internal class MarkdownLivePreviewCodeFenceRenderer(project: Project, private val editor: EditorEx) : MarkdownLivePreviewElementRenderer {
-  private class Rendering(val language: String, val source: String, val job: Job)
+  private class Rendering(val host: CodeFenceHost, val language: String, val source: String, val job: Job)
 
-  private val renderings = LinkedHashMap<Inlay<CodeFenceInlayRenderer>, Rendering>()
-  private var visibleWidth = editor.scrollingModel.visibleArea.width
+  private val renderings = LinkedHashMap<Inlay<*>, Rendering>()
   private val coroutineScope = EditorScopeProvider.getInstance(project).getEditorScope(editor)
 
   init {
-    editor.scrollingModel.addVisibleAreaListener({ updateGeometry() }, this)
     // A diagram has the colors of the theme, so a new theme renders each diagram again.
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(LafManagerListener.TOPIC, LafManagerListener {
         for ((inlay, rendering) in renderings.entries.toList()) {
-          render(inlay, rendering.language, rendering.source)
+          render(inlay, rendering.host, rendering.language, rendering.source)
         }
       })
     // An inlay must not keep the diagram of an unloaded service. The next reconcile adds the inlays again.
@@ -63,14 +57,14 @@ internal class MarkdownLivePreviewCodeFenceRenderer(project: Project, private va
     val document = editor.document
     val wanted = codeFences(presentation)
 
-    val obsolete = ArrayList<Inlay<CodeFenceInlayRenderer>>()
+    val obsolete = ArrayList<Inlay<*>>()
     val retainedLines = HashSet<Int>()
     for ((inlay, rendering) in renderings.entries.toList()) {
       val line = if (inlay.isValid) document.getLineNumber(inlay.offset) else -1
       val fence = wanted[line]
       when {
         fence == null || !retainedLines.add(line) -> obsolete += inlay
-        fence.language != rendering.language || fence.source != rendering.source -> render(inlay, fence.language, fence.source)
+        fence.language != rendering.language || fence.source != rendering.source -> render(inlay, rendering.host, fence.language, fence.source)
       }
     }
     val missing = wanted.filterKeys { it !in retainedLines }
@@ -78,11 +72,25 @@ internal class MarkdownLivePreviewCodeFenceRenderer(project: Project, private va
 
     EditorScrollingPositionKeeper.perform(editor, false) {
       obsolete.forEach(Disposer::dispose)
+      val componentManager = EditorEmbeddedComponentManager.getInstance()
       for ((line, source) in missing) {
-        val properties = InlayProperties().showAbove(false).relatesToPrecedingText(true)
-        val inlay = editor.inlayModel.addBlockElement(document.getLineEndOffset(line), properties, CodeFenceInlayRenderer(editor)) ?: continue
-        Disposer.register(inlay) { renderings.remove(inlay)?.job?.cancel() }
-        render(inlay, source.language, source.source)
+        val host = CodeFenceHost(editor)
+        val properties = EditorEmbeddedComponentManager.Properties(
+          EditorEmbeddedComponentManager.ResizePolicy.none(),
+          null,
+          true,
+          false,
+          false,
+          false,
+          0,
+          document.getLineEndOffset(line),
+        )
+        val inlay = componentManager.addComponent(editor, host, properties) ?: continue
+        Disposer.register(inlay) {
+          renderings.remove(inlay)?.job?.cancel()
+          host.viewJob?.cancel()
+        }
+        render(inlay, host, source.language, source.source)
       }
     }
   }
@@ -96,36 +104,24 @@ internal class MarkdownLivePreviewCodeFenceRenderer(project: Project, private va
       .associate { document.getLineNumber(it.range.endOffset.coerceIn(0, document.textLength)) to Fence(it.language, it.source) }
   }
 
-  /** Renders [source] into [inlay], and cancels the previous rendering of the inlay. */
-  private fun render(inlay: Inlay<CodeFenceInlayRenderer>, language: String, source: String) {
+  /** Renders [source] into [host], and cancels the previous rendering of the inlay. */
+  private fun render(inlay: Inlay<*>, host: CodeFenceHost, language: String, source: String) {
     val job = coroutineScope.launch(Dispatchers.Default + CoroutineName("Markdown live preview code fence")) {
       val currentJob = checkNotNull(currentCoroutineContext()[Job])
-      val painter = CodeFenceRenderingService.render(language, source)
+      val view = CodeFenceRenderingService.render(language, source, this)
       withContext(Dispatchers.EDT) {
-        if (renderings[inlay]?.job !== currentJob) return@withContext
-        if (!inlay.isValid) return@withContext
-        if (painter == null) {
-          renderings.remove(inlay)
+        if (renderings[inlay]?.job !== currentJob || !inlay.isValid) return@withContext
+        if (view == null) {
           Disposer.dispose(inlay)
           return@withContext
         }
-        inlay.renderer.painter = painter
+        host.show(view, currentJob)
         EditorScrollingPositionKeeper.perform(editor, false) { inlay.update() }
       }
+      awaitCancellation()
     }
-    renderings.put(inlay, Rendering(language, source, job))?.job?.cancel()
-  }
-
-  private fun updateGeometry() {
-    val visibleArea = editor.scrollingModel.visibleArea
-    if (visibleArea.isEmpty || visibleArea.width == visibleWidth) return
-    visibleWidth = visibleArea.width
-
-    val validInlays = renderings.keys.filter { it.isValid }
-    if (validInlays.isEmpty()) return
-    EditorScrollingPositionKeeper.perform(editor, false) {
-      validInlays.forEach(Inlay<*>::update)
-    }
+    val previousJob = renderings.put(inlay, Rendering(host, language, source, job))?.job
+    if (previousJob !== host.viewJob) previousJob?.cancel()
   }
 
   private fun removeInlays() {
@@ -138,40 +134,46 @@ internal class MarkdownLivePreviewCodeFenceRenderer(project: Project, private va
   override fun dispose() = removeInlays()
 }
 
-private class CodeFenceInlayRenderer(private val editor: Editor) : EditorCustomElementRenderer {
-  var painter: CodeFencePainter? = null
+private class CodeFenceHost(private val editor: EditorEx) : JPanel(BorderLayout()) {
+  private var view: CodeFenceView? = null
 
-  override fun calcWidthInPixels(inlay: Inlay<*>): Int = painter?.let { boxSize(it).width + 2 * inset() } ?: 0
+  var viewJob: Job? = null
+    private set
 
-  override fun calcHeightInPixels(inlay: Inlay<*>): Int = painter?.let { boxSize(it).height + 2 * inset() } ?: 0
-
-  override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
-    val painter = this.painter ?: return
-    val size = boxSize(painter)
-    val bounds = Rectangle(targetRegion.x + inset(), targetRegion.y + inset(), size.width, size.height)
-    val graphics = g.create() as Graphics2D
-    try {
-      graphics.color = EditorColorsManager.getInstance().schemeForCurrentUITheme.defaultBackground
-      graphics.fill(bounds)
-      painter.paint(graphics, bounds)
-    }
-    finally {
-      graphics.dispose()
-    }
+  init {
+    isOpaque = false
+    border = JBUI.Borders.empty(2)
   }
 
-  private fun boxSize(painter: CodeFencePainter): Dimension {
-    val width = JBUIScale.scale(painter.width).toDouble()
-    val height = JBUIScale.scale(painter.height).toDouble()
-    val visibleWidth = editor.scrollingModel.visibleArea.width - 2 * inset()
-    val maxHeight = MAX_HEIGHT_IN_LINES * editor.lineHeight
-    val widthScale = if (visibleWidth > 0) visibleWidth / width else 1.0
-    val heightScale = if (maxHeight > 0) maxHeight / height else 1.0
-    val scale = minOf(1.0, widthScale, heightScale)
-    return Dimension(max(1, (width * scale).roundToInt()), max(1, (height * scale).roundToInt()))
+  /**
+   * Shows [view] in place of the shown view. [job] owns [view].
+   * After the replacement, the method cancels the job of the replaced view, so the replaced view closes.
+   */
+  fun show(view: CodeFenceView, job: Job) {
+    val replacedJob = viewJob
+    viewJob = job
+    this.view = view
+    removeAll()
+    view.component.background = JBColor.lazy { editor.backgroundColor }
+    add(view.component, BorderLayout.CENTER)
+    revalidate()
+    repaint()
+    replacedJob?.cancel()
   }
 
-  private fun inset(): Int = JBUI.scale(2)
+  override fun getPreferredSize(): Dimension {
+    val view = view ?: return Dimension()
+    val insets = insets
+    val scrollPane = editor.scrollPane
+    // if scrollbar is on the left side, we'll need all possible space to fit the component
+    val rightWidth = if (editor.verticalScrollbarOrientation == EditorEx.VERTICAL_SCROLLBAR_LEFT) 0 else scrollPane.verticalScrollBar.width
+    val left = SwingUtilities.convertPoint(this, 0, 0, editor.contentComponent).x
+    val width = (scrollPane.viewport.width - rightWidth - left - insets.left - insets.right).coerceAtLeast(0)
+    val natural = view.component.preferredSize
+    val fittedHeight = if (natural.width > width) natural.height * width / natural.width else natural.height
+    val height = min(fittedHeight, MAX_HEIGHT_IN_LINES * editor.lineHeight)
+    return Dimension(width + insets.left + insets.right, height + insets.top + insets.bottom)
+  }
 }
 
 private const val MAX_HEIGHT_IN_LINES = 20
