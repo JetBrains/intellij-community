@@ -511,7 +511,9 @@ private fun addDep(
       require(scope != JpsJavaDependencyScope.TEST || isTest) {
         "module must not have TEST-scope dependencies that only leak onto the test classpath of dependent modules, please consider changing their scope to RUNTIME or move them to the affected test modules: ${dependentModule.imlFile}"
       }
-      // TODO: require scope != JpsJavaDependencyScope.COMPILE || !isTest
+      require(scope != JpsJavaDependencyScope.COMPILE || !isTest) {
+        "module must not have COMPILE-scope dependencies, please change their scope to TEST: ${dependentModule.imlFile}"
+      }
 
       if (hasSources) {
         deps.add(dependencyLabel)

@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="jdk" jdkName="jbr-17" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.module" />
+    <orderEntry type="module" module-name="intellij.module" scope="TEST" />
     <orderEntry type="module" module-name="intellij.module.util" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.module.testFramework" />
+    <orderEntry type="module" module-name="intellij.module.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.module.other.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.module.testData" scope="RUNTIME" />
   </component>
