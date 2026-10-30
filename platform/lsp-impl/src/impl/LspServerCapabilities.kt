@@ -3,6 +3,7 @@ package com.intellij.platform.lsp.impl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClient
 import org.eclipse.lsp4j.SaveOptions
+import org.eclipse.lsp4j.SemanticTokensWithRegistrationOptions
 import org.eclipse.lsp4j.TextDocumentRegistrationOptions
 import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.jetbrains.annotations.ApiStatus
@@ -72,6 +73,14 @@ internal fun LspClientImpl.supportsCodeLensResolve(file: VirtualFile): Boolean =
   getDynamicCapabilityOptionsForFile(file, LspDynamicCapabilities.codeLens)?.resolveProvider
   ?: serverCapabilities?.codeLensProvider?.resolveProvider
   ?: false
+
+internal fun LspClientImpl.getSemanticTokensFullOptions(file: VirtualFile): SemanticTokensWithRegistrationOptions? {
+  val candidates = buildList {
+    addAll(getDynamicCapabilityOptionsListForFile(file, LspDynamicCapabilities.semanticTokens))
+    serverCapabilities?.semanticTokensProvider?.let { add(it) }
+  }
+  return candidates.firstOrNull { options -> options.full?.let { it.left ?: true } == true }
+}
 
 internal fun LspClientImpl.supportsGotoDefinition(file: VirtualFile): Boolean =
   serverCapabilities?.definitionProvider?.let { it.left ?: true } == true ||

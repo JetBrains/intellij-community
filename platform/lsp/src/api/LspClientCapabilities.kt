@@ -198,6 +198,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
     val semanticTokensSupport = lspCustomization.semanticTokensCustomizer
     if (semanticTokensSupport is LspSemanticTokensSupport) {
       semanticTokens = SemanticTokensCapabilities().apply {
+        dynamicRegistration = true
         requests = SemanticTokensClientCapabilitiesRequests().apply {
           range = Either.forLeft(false)
           full = Either.forRight(SemanticTokensClientCapabilitiesRequestsFull().apply {

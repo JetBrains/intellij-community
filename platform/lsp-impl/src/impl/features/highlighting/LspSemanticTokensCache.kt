@@ -12,6 +12,7 @@ import com.intellij.platform.lsp.impl.LspClientImpl
 import com.intellij.platform.lsp.impl.aggregateToPullResult
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspPullResult
+import com.intellij.platform.lsp.impl.getSemanticTokensFullOptions
 import com.intellij.platform.lsp.util.getLsp4jPosition
 import com.intellij.platform.lsp.util.getOffsetInDocument
 import com.intellij.psi.PsiManager
@@ -31,12 +32,11 @@ internal class LspSemanticTokensCache(private val lspClient: LspClientImpl) : Ls
     val psiFile = PsiManager.getInstance(lspClient.project).findFile(file) ?: return false
     if (!semanticTokensSupport.shouldAskServerForSemanticTokens(psiFile)) return false
 
-    val supportsFull = lspClient.serverCapabilities?.semanticTokensProvider?.full?.let { it.left ?: true }
-    return supportsFull == true
+    return lspClient.getSemanticTokensFullOptions(file) != null
   }
 
   override suspend fun sendRequest(file: VirtualFile): LspPullResult<LspSemanticToken> {
-    val legend = lspClient.serverCapabilities?.semanticTokensProvider?.legend ?: return LspPullResult.Failed
+    val legend = lspClient.getSemanticTokensFullOptions(file)?.legend ?: return LspPullResult.Failed
     val initialDocModStamp = readAction { FileDocumentManager.getInstance().getDocument(file)?.modificationStamp }
                              ?: return LspPullResult.Failed
 
