@@ -22,6 +22,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.assertj.core.api.Assertions.assertThat
+import org.jdom.Element
 import org.jetbrains.annotations.Unmodifiable
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -127,6 +128,31 @@ internal class TreeStateTest : BasePlatformTestCase() {
         "/root/a3",
       )
     )
+  }
+
+  fun `test an expanded node without children stays expanded after a save and a load`() {
+    val element = saveCachedPresentation("""
+     +root
+      +a1
+      -a2
+       *a2.1
+    """.trimIndent())
+    val root = checkNotNull(TreeState.createFrom(element).cachedPresentationData)
+    assertThat(root.isExpanded).`as`("the root with children").isTrue()
+    assertThat(root.children.map { it.pathElement.id to it.isExpanded }).containsExactly("a1" to true, "a2" to false)
+  }
+
+  fun `test a state saved without the expanded flag expands only the nodes with children`() {
+    val element = saveCachedPresentation("""
+     +root
+      +a1
+      +a2
+       *a2.1
+    """.trimIndent())
+    element.removeExpandedFlags()
+    val root = checkNotNull(TreeState.createFrom(element).cachedPresentationData)
+    assertThat(root.isExpanded).`as`("the root with children").isTrue()
+    assertThat(root.children.map { it.pathElement.id to it.isExpanded }).containsExactly("a1" to false, "a2" to true)
   }
 
   fun `test restore selection - the selected child is found`() {
@@ -445,6 +471,17 @@ internal class TreeStateTest : BasePlatformTestCase() {
     assertThat(actualLoadedNodes).isEqualTo(expectedLoadedNodes)
   }
 
+  /**
+   * Expands the initially expanded nodes of the [input] tree and saves its state with the cached presentation.
+   */
+  private fun saveCachedPresentation(input: String): Element = timeoutRunBlocking(context = Dispatchers.UiWithModelAccess) {
+    val tree = createTree(input, this, async = true)
+    expandInitiallyExpanded(tree)
+    Element("state").also { element ->
+      TreeState.createOn(tree, true, false, true).writeExternal(element)
+    }
+  }
+
   private suspend fun loadRoot(tree: Tree) {
     TreeUtil.promiseVisit(tree, object : TreeVisitor {
       override fun visit(path: TreePath): TreeVisitor.Action = TreeVisitor.Action.INTERRUPT
@@ -519,6 +556,16 @@ private fun TreePath.toTestString(): String {
 }
 
 private fun TreeModel.getChildren(node: Any): List<Any> = (0 until getChildCount(node)).map { getChild(node, it) }
+
+/**
+ * Makes the saved state look like a state saved before the expanded flag existed.
+ */
+private fun Element.removeExpandedFlags() {
+  removeAttribute("isExpanded")
+  for (child in children) {
+    child.removeExpandedFlags()
+  }
+}
 
 private fun createSyncTreeModel(root: UserObject, coroutineScope: CoroutineScope) =
   SyncTreeModel(root, coroutineScope)

@@ -627,7 +627,7 @@ private class LateTopLevelCachedPresentation(
     }
     LOG.debug("Applying the cached presentation to the late top-level nodes")
     // The entries that are still unmatched stay in the presentation, so they apply to the nodes that come while it's pending.
-    val presentation = CachedTreePresentationData(cachedRoot.pathElement, cachedRoot.presentation, cachedRoot.extraAttributes, entries)
+    val presentation = CachedTreePresentationData(cachedRoot.pathElement, cachedRoot.presentation, cachedRoot.extraAttributes, entries, cachedRoot.isExpanded)
     tree.cachedPresentation = presentation.createTree()
     treeModel.promiseRealNodes().onProcessed {
       tree.cachedPresentation = null
