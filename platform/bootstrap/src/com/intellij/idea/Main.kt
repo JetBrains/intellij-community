@@ -299,7 +299,7 @@ private fun preprocessArgs(rawArgs: Array<String>): List<String> {
   val args = rawArgs.drop(propertyArgs.size)
 
   for (arg in propertyArgs) {
-    val (option, value) = arg.removePrefix("-D").split('=', limit = 2)
+    val [option, value] = arg.removePrefix("-D").split('=', limit = 2)
     System.setProperty(option, value)
   }
 
@@ -365,11 +365,11 @@ private fun printCommands() {
       .flatMap { owningModule ->
         owningModule.extensions["com.intellij.appStarter"].orEmpty().map { it to owningModule }
       }
-      .filter { (starter, _) -> isInternal || !starter.element?.attributes?.get("internal").toBoolean() }
+      .filter { [starter, _] -> isInternal || !starter.element?.attributes?.get("internal").toBoolean() }
       .toList()
     if (startersWithOwners.isNotEmpty()) {
       println("=== ${if (plugin.pluginId == PluginManagerCore.CORE_ID) "Built-in" else plugin.name} commands")
-      startersWithOwners.forEach { (starter, owningModule) ->
+      startersWithOwners.forEach { [starter, owningModule] ->
         val message = starterHelp(owningModule, starter).replace("\n", "\n  ")
         println("\n${starter.orderId}\n  ${message}")
       }
