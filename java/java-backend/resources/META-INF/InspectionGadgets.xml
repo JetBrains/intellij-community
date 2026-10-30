@@ -359,6 +359,10 @@
     <localInspection groupPath="Java" language="JAVA" shortName="StringEqualsCharSequence" bundle="messages.InspectionGadgetsBundle"
                      key="string.equals.char.sequence.display.name" groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true" level="WARNING" implementationClass="com.siyeh.ig.bugs.StringEqualsCharSequenceInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="NanoTimeMagnitudeComparison" bundle="messages.InspectionGadgetsBundle"
+                     key="nanotime.magnitude.comparison.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.bugs.NanoTimeMagnitudeComparisonInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SubtractionInCompareTo" bundle="messages.InspectionGadgetsBundle"
                      key="subtraction.in.compareto.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.probable.bugs" enabledByDefault="false" level="WARNING"
