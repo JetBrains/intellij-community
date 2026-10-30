@@ -6,7 +6,9 @@ import com.intellij.lexer.Lexer
 import com.intellij.lexer.LexerBase
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
 import com.intellij.openapi.editor.impl.view.FontLayoutService
@@ -108,6 +110,45 @@ class SoftWrapHighlighterFontStyleTest {
   }
 
   @Test
+  fun testBoldHighlighterAddedInInlayBatchAddsSoftWrap(): Unit = fixture.runTest {
+    initBoldWidthText()
+    configureSoftWraps(WRAP_COLUMN)
+    assertTrue(softWrapOffsets().isEmpty(), "The plain text must fit in one line")
+
+    editor.inlayModel.execute(true) {
+      addHighlighter(boldAttributes())
+    }
+
+    val offsets = softWrapOffsets()
+    val expected = recalculatedSoftWrapOffsets()
+    assertFalse(expected.isEmpty(), "The bold text must not fit in one line")
+    assertEquals(expected, offsets, STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testBoldHighlighterAddedInDocumentChangeAddsSoftWrap(): Unit = fixture.runTest {
+    initBoldWidthText("x\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    assertTrue(softWrapOffsets().isEmpty(), "The plain text must fit in one line")
+    val document = editor.document
+    document.addDocumentListener(object : PrioritizedDocumentListener {
+      // The editor handles the document change after this listener
+      override fun getPriority(): Int = EditorDocumentPriorities.EDITOR_DOCUMENT_ADAPTER - 1
+
+      override fun documentChanged(event: DocumentEvent) {
+        addHighlighter(document.getLineStartOffset(1), document.textLength, boldAttributes())
+      }
+    }, testRootDisposable)
+
+    runWriteCommand { document.insertString(0, "y") }
+
+    val offsets = softWrapOffsets()
+    val expected = recalculatedSoftWrapOffsets()
+    assertFalse(expected.isEmpty(), "The bold text must not fit in one line")
+    assertEquals(expected, offsets, STALE_SOFT_WRAPS)
+  }
+
+  @Test
   fun testCommentStartAddsSoftWrapToLaterLine(): Unit = fixture.runTest {
     initBoldCommentText("x\n$TEXT")
     configureSoftWraps(WRAP_COLUMN)
@@ -169,9 +210,13 @@ private fun EditorModelFixture.initBoldCommentText(text: String) {
 }
 
 private fun EditorModelFixture.addHighlighter(attributes: TextAttributes): RangeHighlighter {
+  return addHighlighter(0, editor.document.textLength, attributes)
+}
+
+private fun EditorModelFixture.addHighlighter(startOffset: Int, endOffset: Int, attributes: TextAttributes): RangeHighlighter {
   return editor.markupModel.addRangeHighlighter(
-    /* startOffset = */ 0,
-    /* endOffset = */ editor.document.textLength,
+    /* startOffset = */ startOffset,
+    /* endOffset = */ endOffset,
     /* layer = */ HighlighterLayer.SYNTAX,
     /* textAttributes = */ attributes,
     /* targetArea = */ HighlighterTargetArea.EXACT_RANGE,

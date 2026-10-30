@@ -1083,49 +1083,68 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                                    change1.needRestart() || change2.needRestart());
     });
     if (oldChange == null || oldChange.needRestart()) {
-      EdtInvocationManager.invokeLaterIfNeeded(() -> {
-        if (isDisposed() || document.isInBulkUpdate() || myInlayModel.isInBatchMode() || myDocumentChangeInProgress) {
-          myCompositeHighlighterChange.getAndUpdate(old -> old == null ? null : new HighlighterChange(old.affectedStart(), old.affectedEnd(), old.canImpactGutterSize(), old.fontStyleChanged(), old.foregroundColorChanged(), old.isAccessibleGutterElement(), true));
-          return; // will be repainted later
-        }
+      EdtInvocationManager.invokeLaterIfNeeded(this::processHighlighterChange);
+    }
+  }
 
-        HighlighterChange newChange = myCompositeHighlighterChange.getAndSet(null);
-        if (newChange == null) return;
+  /**
+   * Applies the composite highlighter change.
+   * During a document change, a bulk update or an inlay batch, it marks the change for a restart instead.
+   * {@link #processDeferredHighlighterChange} applies the marked change after them.
+   */
+  private void processHighlighterChange() {
+    DocumentEx document = getElfDocument();
+    if (isDisposed() || document.isInBulkUpdate() || myInlayModel.isInBatchMode() || myDocumentChangeInProgress) {
+      myCompositeHighlighterChange.getAndUpdate(old -> old == null ? null : new HighlighterChange(old.affectedStart(), old.affectedEnd(), old.canImpactGutterSize(), old.fontStyleChanged(), old.foregroundColorChanged(), old.isAccessibleGutterElement(), true));
+      return; // will be repainted later
+    }
 
-        if (newChange.canImpactGutterSize()) {
-          updateGutterSize();
-        }
+    HighlighterChange newChange = myCompositeHighlighterChange.getAndSet(null);
+    if (newChange == null) return;
 
-        int docTextLength = document.getTextLength();
-        int start = MathUtil.clamp(newChange.affectedStart(), 0, docTextLength);
-        int end = MathUtil.clamp(newChange.affectedEnd(), start, docTextLength);
+    if (newChange.canImpactGutterSize()) {
+      updateGutterSize();
+    }
 
-        if (myGutterComponent.getCurrentAccessibleLine() != null && newChange.isAccessibleGutterElement()) {
-          escapeGutterAccessibleLine(start, end);
-        }
-        int startLine = document.getLineNumber(start);
-        int endLine = document.getLineNumber(end);
-        boolean softWrapCountChanged = false;
-        if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
-          myView.invalidateRange(start, end, newChange.fontStyleChanged());
-          if (newChange.fontStyleChanged()) {
-            int softWrapCount = mySoftWrapModel.getRegisteredSoftWraps().size();
-            mySoftWrapModel.onFontStyleChanged(start, end);
-            softWrapCountChanged = mySoftWrapModel.getRegisteredSoftWraps().size() != softWrapCount;
-          }
-        }
-        if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
-          if (softWrapCountChanged) {
-            // the visual lines below the range moved
-            validateSize();
-            repaintToScreenBottom(Math.max(0, startLine - 1));
-          }
-          else {
-            repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
-          }
-        }
-        updateCaretCursor();
-      });
+    int docTextLength = document.getTextLength();
+    int start = MathUtil.clamp(newChange.affectedStart(), 0, docTextLength);
+    int end = MathUtil.clamp(newChange.affectedEnd(), start, docTextLength);
+
+    if (myGutterComponent.getCurrentAccessibleLine() != null && newChange.isAccessibleGutterElement()) {
+      escapeGutterAccessibleLine(start, end);
+    }
+    int startLine = document.getLineNumber(start);
+    int endLine = document.getLineNumber(end);
+    boolean softWrapCountChanged = false;
+    if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
+      myView.invalidateRange(start, end, newChange.fontStyleChanged());
+      if (newChange.fontStyleChanged()) {
+        int softWrapCount = mySoftWrapModel.getRegisteredSoftWraps().size();
+        mySoftWrapModel.onFontStyleChanged(start, end);
+        softWrapCountChanged = mySoftWrapModel.getRegisteredSoftWraps().size() != softWrapCount;
+      }
+    }
+    if (!myFoldingModel.isInBatchFoldingOperation()) { // at the end of the batch folding operation everything is repainted
+      if (softWrapCountChanged) {
+        // the visual lines below the range moved
+        validateSize();
+        repaintToScreenBottom(Math.max(0, startLine - 1));
+      }
+      else {
+        repaintLines(Math.max(0, startLine - 1), Math.min(endLine + 1, getDocument().getLineCount()));
+      }
+    }
+    updateCaretCursor();
+  }
+
+  /**
+   * Applies the highlighter change that {@link #processHighlighterChange} marked for a restart.
+   * Without this call, the change waits for the next highlighter change.
+   */
+  private void processDeferredHighlighterChange() {
+    HighlighterChange change = myCompositeHighlighterChange.get();
+    if (change != null && change.needRestart()) {
+      processHighlighterChange();
     }
   }
 
@@ -1162,6 +1181,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.repaint();
     myMarkupModel.repaint();
     updateCaretCursor();
+    processDeferredHighlighterChange();
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(@NotNull VisibleAreaEvent e) {
@@ -2289,6 +2309,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (!Boolean.TRUE.equals(getUserData(DISABLE_CARET_POSITION_KEEPING)) && myScrollingPositionKeeper != null) {
       myScrollingPositionKeeper.restorePosition(true);
     }
+
+    processDeferredHighlighterChange();
   }
 
   private void beforeChangedUpdate(@NotNull DocumentEvent e) {
@@ -2370,6 +2392,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myScrollingPositionKeeper != null) {
       myScrollingPositionKeeper.restorePosition(true);
     }
+
+    processDeferredHighlighterChange();
   }
 
   private void escapeGutterAccessibleLine(int offsetStart, int offsetEnd) {
