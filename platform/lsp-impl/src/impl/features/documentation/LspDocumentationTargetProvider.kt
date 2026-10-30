@@ -29,7 +29,7 @@ internal class LspDocumentationTargetProvider : DocumentationTargetProvider {
 
     return LspClientManagerImpl.getInstanceImpl(project).getClientsForFileRequests(file).mapNotNull { lspClient ->
       if (lspClient.descriptor.lspCustomization.hoverCustomizer !is LspHoverSupport) return@mapNotNull null
-      if (!lspClient.supportsHover()) return@mapNotNull null
+      if (!lspClient.supportsHover(file)) return@mapNotNull null
 
       // When `DocumentationTargetProvider.documentationTargets()` is called on hover, it is cancellable,
       // so using a bigger timeout wouldn't ever cause freezes.

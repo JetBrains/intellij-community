@@ -81,7 +81,9 @@ internal fun LspClientImpl.supportsGotoImplementation(file: VirtualFile): Boolea
   serverCapabilities?.implementationProvider?.let { it.left ?: true }
   ?: hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.implementation)
 
-internal fun LspClientImpl.supportsHover(): Boolean = serverCapabilities?.hoverProvider?.let { it.left ?: true } == true
+internal fun LspClientImpl.supportsHover(file: VirtualFile): Boolean =
+  serverCapabilities?.hoverProvider?.let { it.left ?: true } == true ||
+  hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.hover)
 
 /** True when the server provides the text for [scheme] URIs, through the `workspace/textDocumentContent` request. */
 internal fun LspClientImpl.providesTextDocumentContent(scheme: String?): Boolean =

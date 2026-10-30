@@ -14,11 +14,14 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.Hover
+import org.eclipse.lsp4j.HoverRegistrationOptions
 import org.eclipse.lsp4j.MarkedString
 import org.eclipse.lsp4j.MarkupContent
 import org.eclipse.lsp4j.MarkupKind
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -39,14 +42,21 @@ internal class LspHoverTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
-    configureServerCapabilities = {
-      hoverProvider = Either.forLeft(true)
-    },
-  )
+  /**
+   * Each nested class declares its own fixture.
+   * [DynamicRegistration] needs a server without the static hover capability.
+   */
+  private fun hoverIntegrationFixture() =
+    projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = {
+        hoverProvider = Either.forLeft(true)
+      },
+    )
 
   @Nested
   inner class BasicHover {
+    private val fakeLspIntegration by hoverIntegrationFixture()
+
     @Test
     fun `hover returns content for symbol`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
@@ -90,6 +100,8 @@ internal class LspHoverTest {
 
   @Nested
   inner class ContentFormats {
+    private val fakeLspIntegration by hoverIntegrationFixture()
+
     @Test
     fun `hover with plaintext content`() = timeoutRunBlocking {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
@@ -203,6 +215,50 @@ internal class LspHoverTest {
       val html = readAction { (targets[0].computeDocumentation() as DocumentationData).html }
       assertTrue(html.contains("Header"), "Expected heading in: $html")
       assertTrue(html.contains("Some documentation"), "Expected paragraph in: $html")
+    }
+  }
+
+  @Nested
+  inner class DynamicRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+
+    @Test
+    fun `hover works with a dynamic registration only`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("hover", "textDocument/hover", HoverRegistrationOptions())))
+      }
+
+      serverSession.expectRequest(serverSession.HOVER, { it.textDocument.uri == fileUri }) {
+        Hover(MarkupContent(MarkupKind.PLAINTEXT, "Hello documentation"))
+      }
+
+      val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
+      val targets = readAction {
+        IdeDocumentationTargetProvider.getInstance(project).documentationTargets(codeInsightFixture.editor, codeInsightFixture.file, offset)
+      }
+      serverSession.awaitExpected()
+
+      assertEquals(1, targets.size)
+    }
+
+    @Suppress("AssertBetweenInconvertibleTypes") // Qodana bug
+    @Test
+    fun `hover is not requested without a dynamic registration`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", "hello world").virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+
+      // The documentation target provider waits for the hover response synchronously.
+      val offset = withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset }
+      val targets = readAction {
+        IdeDocumentationTargetProvider.getInstance(project).documentationTargets(codeInsightFixture.editor, codeInsightFixture.file, offset)
+      }
+
+      assertEquals(emptyList<Any>(), serverSession.receivedRequests(serverSession.HOVER),
+                   "Expected no textDocument/hover without a registration")
+      assertTrue(targets.isEmpty(), "Expected no documentation targets without a registration")
     }
   }
 }

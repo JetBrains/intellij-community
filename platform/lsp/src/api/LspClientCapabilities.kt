@@ -159,6 +159,7 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
       }
     }
     hover = HoverCapabilities().apply {
+      dynamicRegistration = true
       contentFormat = listOf(MarkupKind.MARKDOWN, MarkupKind.PLAINTEXT)
     }
     signatureHelp = SignatureHelpCapabilities(true).apply {
