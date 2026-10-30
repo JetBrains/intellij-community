@@ -55,7 +55,15 @@ enum class LayerLocality {
  * types, and the compatibility relation lives here.
  *
  * The relation makes an illegal combination impossible to declare. There is no "team-or-environmental" key, because
- * [ENVIRONMENTAL] is exclusive on both sides: a machine-bound path can only live in the machine layer.
+ * [ENVIRONMENTAL] is exclusive on both sides: a machine-bound path can only live in the environmental layer.
+ *
+ * To pick the policy of a new key, ask whether the team may share the value:
+ * - Yes, and each user may override it: use [SHAREABLE]. An example is a code style option.
+ * - No, it belongs to one machine or one checkout: use [ENVIRONMENTAL]. Examples are a tool path and the
+ *   technologies enabled in one checkout.
+ *
+ * A value that must never go to VCS needs [ENVIRONMENTAL]. A [SHAREABLE] value can land in the team layer, for
+ * example in the team-editing mode ([EDIT_TEAM_LAYER]).
  */
 @Experimental
 enum class KeyLocality(
@@ -66,7 +74,10 @@ enum class KeyLocality(
   /** Team or local: the ordinary key. A write defaults to [LayerLocality.LOCAL]. A write to the team layer is an explicit action. */
   SHAREABLE(LayerLocality.LOCAL, setOf(LayerLocality.TEAM, LayerLocality.LOCAL)),
 
-  /** Environmental only: a machine-bound value, such as a path. A read and a write never touch the team or local layers. */
+  /**
+   * Environmental only: a value of one machine or one checkout, such as a path. A read and a write never touch the
+   * team or local layers.
+   */
   ENVIRONMENTAL(LayerLocality.ENVIRONMENTAL, setOf(LayerLocality.ENVIRONMENTAL)),
   ;
 

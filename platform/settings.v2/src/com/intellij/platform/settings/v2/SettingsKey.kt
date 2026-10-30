@@ -98,9 +98,10 @@ open class SettingsKey<T>(
    */
   val validator: (T) -> String? = { null },
   /**
-   * Tells which layer localities this key may live in: `SHAREABLE`, team or local, by default, or `ENVIRONMENTAL`
-   * for a machine-bound value. A read and a write consider only the layers whose [LayerLocality] it accepts. A plain
-   * write lands in [KeyLocality.defaultLayer]. See [KeyLocality].
+   * Tells which layer localities this key may live in. The default is `SHAREABLE`, team or local. `ENVIRONMENTAL` is
+   * for a value of one machine or one checkout, such as a tool path. A value that must never go to VCS needs
+   * `ENVIRONMENTAL`. A read and a write consider only the layers whose [LayerLocality] it accepts. A plain write lands
+   * in [KeyLocality.defaultLayer]. See [KeyLocality] for how to pick the policy.
    */
   val locality: KeyLocality = KeyLocality.SHAREABLE,
   /**
