@@ -26,7 +26,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//plugins/gradle",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "@lib//:kotlin-stdlib",

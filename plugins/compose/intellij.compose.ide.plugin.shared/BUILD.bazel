@@ -99,7 +99,7 @@ jvm_library(
         "//plugins/kotlin/base/facet",
         "//plugins/kotlin/base/testFramework",
         "//plugins/gradle",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//plugins/kotlin/tests-common:common-tests_test_lib",

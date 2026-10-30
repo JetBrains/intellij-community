@@ -1,22 +1,20 @@
-load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.gradle.testFramework` start
 jvm_library(
-    name = "testFramework_test_lib",
-    testonly = True,
+    name = "testFramework",
     srcs = glob(
         [
-            "testSources/**/*.kt",
-            "testSources/**/*.java",
-            "testSources/**/*.form",
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
         ],
         allow_empty = True,
     ),
     module_name = "intellij.gradle.testFramework",
-    resource_strip_prefix = "testResources",
+    resource_strip_prefix = "resources",
     resources = glob(
-        ["testResources/**/*"],
+        ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/external-system-api/testFramework"],
@@ -83,10 +81,3 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.gradle.testFramework` end
-
-### auto-generated section `test intellij.gradle.testFramework` start
-jps_test(
-    name = "testFramework_test",
-    runtime_deps = [":testFramework_test_lib"],
-)
-### auto-generated section `test intellij.gradle.testFramework` end

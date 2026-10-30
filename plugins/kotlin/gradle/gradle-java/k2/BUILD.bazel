@@ -110,7 +110,7 @@ jvm_library(
         "//libraries/kotlinc/symbol-light-classes:libraries-kotlinc-symbol-light-classes",
         "//libraries/fastutil",
         "//plugins/groovy",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//platform/testFramework",
         "//platform/testFramework/junit5",
         "//plugins/kotlin/project-configuration",

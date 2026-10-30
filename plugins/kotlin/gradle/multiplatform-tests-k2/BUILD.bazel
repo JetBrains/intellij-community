@@ -47,7 +47,7 @@ jvm_library(
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/frontend-independent",
         "//plugins/gradle/java",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//plugins/kotlin/gradle/gradle-tooling/impl",
         "//plugins/kotlin/gradle/gradle",
         "//android/android:core",

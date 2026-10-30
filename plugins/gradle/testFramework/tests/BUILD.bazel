@@ -18,7 +18,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//plugins/gradle/tooling-extension-api:toolingExtension",
         "//libraries/gradle",
         "//platform/core-api:core",

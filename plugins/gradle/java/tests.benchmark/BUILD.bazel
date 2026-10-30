@@ -29,7 +29,7 @@ jvm_library(
         # do not sort,
         "//plugins/gradle",
         "//plugins/gradle/java",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "@lib//:kotlin-stdlib",
         "//libraries/kotlinx/coroutines/core",

@@ -35,7 +35,7 @@ jvm_library(
         "//tools/intellij.tools.ide.metrics.benchmark:ide-metrics-benchmark",
         "//plugins/repository-search/completion",
         "//plugins/gradle",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//plugins/gradle/completion",
         "//plugins/gradle/completion/kotlin",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",

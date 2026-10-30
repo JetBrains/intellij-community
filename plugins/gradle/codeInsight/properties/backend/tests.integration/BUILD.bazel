@@ -31,7 +31,7 @@ jvm_library(
         "//libraries/junit6-params",
         "//plugins/gradle",
         "//plugins/gradle/java",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//platform/core-api:core",
         "//platform/analysis-api:analysis",
         "//platform/testFramework",

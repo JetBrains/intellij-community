@@ -33,7 +33,7 @@ jvm_library(
         "//platform/testFramework",
         "//java/testFramework",
         "//plugins/gradle/java",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//plugins/groovy/testFramework",
         "//plugins/kotlin/gradle/scripting:kotlin-gradle-scripting-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",

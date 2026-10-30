@@ -47,7 +47,7 @@ jvm_library(
         "//plugins/kotlin/lombok",
         "//libraries/junit4",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
-        "//plugins/gradle/testFramework:testFramework_test_lib",
+        "//plugins/gradle/testFramework",
         "//platform/external-system-impl:externalSystem-tests_test_lib",
         "//libraries/junit6",
         "//libraries/junit6-params",
