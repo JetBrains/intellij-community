@@ -1699,6 +1699,66 @@ elements:
               required: no
             children:
               - element: *listener
+
+        - element:
+            name: *xIncludeName
+            namespace: *xIncludeNamespace
+            description: |
+              Allows including content of another plugin descriptor in this descriptor with
+              [XInclude](http://www.w3.org/2001/XInclude) standard.
+            requirement:
+              required: no
+            attributes:
+              - attribute:
+                  name: href
+                  requirement:
+                    required: no
+                  description: Path of the plugin descriptor file to include.
+              - attribute:
+                  name: xpointer
+                  requirement:
+                    required: no
+                  deprecatedSince: '2021.2'
+                  deprecationNote: |
+                    The `xpointer` attribute must be `xpointer(/idea-plugin/*)` or not defined.
+                  description: Elements pointer to include.
+                  defaultValue: |
+                    `xpointer(/idea-plugin/*)`
+            examples:
+              - |
+                Given a plugin descriptor:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <xi:include href="/META-INF/another-plugin.xml"/>
+                  ...
+                </idea-plugin>
+                ```
+                
+                and <path>/META-INF/another-plugin.xml</path>:
+                
+                ```xml
+                <idea-plugin>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                </idea-plugin>
+                ```
+                
+                The effective plugin descriptor loaded to memory will contain the following elements:
+                
+                ```xml
+                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+                  <id>com.example.myplugin</id>
+                  <name>Example</name>
+                  <extensions>...</extensions>
+                  <actions>...</actions>
+                  ...
+                </idea-plugin>
+                ```
+            children:
+              - element: *xIncludeFallback
         - element:
             name: application-components
             deprecatedSince: &componentsDeprecatedSince "2020.1"
@@ -1795,65 +1855,6 @@ elements:
                           if it is required to load a component in the default project.
                         requirement:
                           required: no
-        - element:
-            name: *xIncludeName
-            namespace: *xIncludeNamespace
-            description: |
-              Allows including content of another plugin descriptor in this descriptor with
-              [XInclude](http://www.w3.org/2001/XInclude) standard.
-            requirement:
-              required: no
-            attributes:
-              - attribute:
-                  name: href
-                  requirement:
-                    required: no
-                  description: Path of the plugin descriptor file to include.
-              - attribute:
-                  name: xpointer
-                  requirement:
-                    required: no
-                  deprecatedSince: '2021.2'
-                  deprecationNote: |
-                    The `xpointer` attribute must be `xpointer(/idea-plugin/*)` or not defined.
-                  description: Elements pointer to include.
-                  defaultValue: |
-                    `xpointer(/idea-plugin/*)`
-            examples:
-              - |
-                Given a plugin descriptor:
-                
-                ```xml
-                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-                  <id>com.example.myplugin</id>
-                  <name>Example</name>
-                  <xi:include href="/META-INF/another-plugin.xml"/>
-                  ...
-                </idea-plugin>
-                ```
-                
-                and <path>/META-INF/another-plugin.xml</path>:
-                
-                ```xml
-                <idea-plugin>
-                  <extensions>...</extensions>
-                  <actions>...</actions>
-                </idea-plugin>
-                ```
-                
-                The effective plugin descriptor loaded to memory will contain the following elements:
-                
-                ```xml
-                <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
-                  <id>com.example.myplugin</id>
-                  <name>Example</name>
-                  <extensions>...</extensions>
-                  <actions>...</actions>
-                  ...
-                </idea-plugin>
-                ```
-            children:
-              - element: *xIncludeFallback
         - element:
             name: project-components
             deprecatedSince: *componentsDeprecatedSince
