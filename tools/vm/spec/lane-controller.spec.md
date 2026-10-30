@@ -1914,8 +1914,10 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/trace/tests.rs (`the_hello_keeps_the_videos_that_the_inputs_keep`)
 
 - `lane-run --plan-only` stages the inputs and selects the documents as a run does. It then writes the plan on
-  standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. It launches no IDE,
-  and a plan of suites of a bare IDE alone names no lane key.
+  standard output: the key of the lane IDE, the digests of the inputs, and the suites in run order. The plan also holds
+  the notes that the run stream gives before the first suite. The last note of a plan of a runner of a TeamCity job
+  names the split and the expected total of each runner. It launches no IDE, and a plan of suites of a bare IDE alone
+  names no lane key.
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_selectors_and_the_filters_come_from_the_flags_and_the_environment`)
 

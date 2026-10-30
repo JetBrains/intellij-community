@@ -417,6 +417,38 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     let by_duration = ["--season-dir", season_dir.as_str()];
     assert_eq!(runner_of("0", &by_duration), ["AirStartupClassLoadingBudgetUiTest"]);
     assert_eq!(runner_of("1", &by_duration), ["AirRenameSessionGeneratedFlowUiTest"]);
+    let notes = |plan: &serde_json::Value| -> Vec<String> {
+        plan["notes"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|note| note.as_str().unwrap().to_owned())
+            .collect()
+    };
+    assert_eq!(notes(&whole), Vec::<String>::new(), "the whole lane has no note of a split");
+    let split_plan = plan(&[
+        "--jvm_flag=-Didea.test.runner.index=0",
+        "--jvm_flag=-Didea.test.runners.count=2",
+        "--jvm_flag=-Didea.bucketing.season=AirPluginGuiChatTests",
+        "--jvm_flag=-Didea.tests.duration.bucketing.enabled=true",
+        "--season-dir",
+        season_dir.as_str(),
+    ]);
+    let split_notes = notes(&split_plan);
+    assert!(
+        split_notes
+            .first()
+            .is_some_and(|note| note.contains("by the durations of 2 suite(s) of the season AirPluginGuiChatTests")),
+        "{split_notes:?}"
+    );
+    assert_eq!(
+        split_notes.last().map(String::as_str),
+        Some(
+            "lane ui: the runner with index 0 of 2 runners takes 1 of the 2 selected suite(s) by the duration split of the \
+             season AirPluginGuiChatTests: an expected 1.5 min of 2.0 min, and the runners expect 1.5 min, 0.5 min"
+        ),
+        "the last note of a plan names the split and the expected total of each runner"
+    );
     let mut args = vec!["lane-run", "--lane", "ui", "--plan-only", "--jvm_flag", "-Dunknown.property=1"];
     let descriptor = path(&descriptor);
     args.extend(["--descriptor", &descriptor]);

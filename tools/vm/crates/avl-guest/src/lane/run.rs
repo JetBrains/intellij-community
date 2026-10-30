@@ -408,7 +408,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
         session_logs: session_logs(&daemon, &root, variable)?,
     };
     if args.plan_only {
-        let plan = plan(&daemon, &request, &split)?;
+        let plan = plan(&daemon, &request, &split, &notes)?;
         let mut out = io::stdout().lock();
         serde_json::to_writer_pretty(&mut out, &plan)
             .map_err(io::Error::from)
@@ -713,7 +713,8 @@ fn probe_host(inputs: &LaunchInputs, variable: &dyn Fn(&str) -> Option<String>) 
 /// The refusal code of a plan whose documents do not select.
 pub(crate) const PLAN_CODE: &str = "lane_run_plan";
 
-/// What a run would run, as `--plan-only` writes it: the lane, its IDE, its inputs, and its suites in run order.
+/// What a run would run, as `--plan-only` writes it: the lane, its IDE, its inputs, its suites in run order, and the
+/// notes of its start.
 #[derive(Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub(crate) struct RunPlan {
@@ -729,6 +730,10 @@ pub(crate) struct RunPlan {
     pub cli_runtimes: Vec<String>,
     /// The suites of the shared IDE, then the suites of a bare IDE, as the program runner runs them.
     pub suites: Vec<PlannedSuite>,
+    /// The notes that the run stream of the run gives before its first suite: the notes of its flags and of the season
+    /// file, then the note of the runner split. So the plan of a runner of a TeamCity job names its share and the
+    /// expected total of each runner.
+    pub notes: Vec<String>,
 }
 
 /// One suite of a [`RunPlan`].
@@ -743,9 +748,9 @@ pub(crate) struct PlannedSuite {
     pub bare_launch_key: Option<String>,
 }
 
-/// The plan of `request` for the share `split`: the selection of a run, and the key of the IDE that the run would
-/// launch.
-pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: &RunnerSplit) -> Result<RunPlan, AgentRefusal> {
+/// The plan of `request` for the share `split`: the selection of a run, the key of the IDE that the run would launch,
+/// and the notes of its start, `notes` and then the note of the split.
+pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: &RunnerSplit, notes: &[String]) -> Result<RunPlan, AgentRefusal> {
     let refused = |message: String| AgentRefusal::refused(PLAN_CODE, message);
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err(refused("the run request names no lane and no lane inputs".to_owned()));
@@ -778,6 +783,7 @@ pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: &Runne
         context_plugin_files: request.ide_plugins.len(),
         cli_runtimes,
         suites,
+        notes: notes.iter().cloned().chain(selection.split_note.clone()).collect(),
     })
 }
 
