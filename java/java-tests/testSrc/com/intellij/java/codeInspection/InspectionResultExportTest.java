@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.ConstantValueInspection;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolsSupplier;
@@ -65,6 +66,57 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     doTestExportWithoutResultsView(false, tools);
   }
 
+  public void testUiRerunKeepsContextRegistered() {
+    addTestFile("Foo.java", "class Foo { boolean m() { return 0 == 0; } }");
+    var context = createContext(getTools());
+    var manager = (InspectionManagerEx)InspectionManager.getInstance(getProject());
+    var previous = GlobalInspectionContextImpl.TESTING_VIEW;
+    GlobalInspectionContextImpl.TESTING_VIEW = true;
+    try {
+      context.doInspections(new AnalysisScope(getProject()));
+      waitForResultsView(context);
+      var view = context.getView();
+      assertTrue(view.hasProblems());
+      assertTrue(manager.getRunningContexts().contains(context));
+
+      view.rerun();
+      assertTrue("A UI rerun must keep its context registered", manager.getRunningContexts().contains(context));
+      waitForResultsView(context);
+      assertNotSame(view, context.getView());
+      assertTrue(context.getView().hasProblems());
+      assertTrue(context.areToolsInitialized());
+      assertTrue(manager.getRunningContexts().contains(context));
+
+      context.close(false);
+      assertFalse(manager.getRunningContexts().contains(context));
+      assertFalse(context.areToolsInitialized());
+    }
+    finally {
+      GlobalInspectionContextImpl.TESTING_VIEW = previous;
+    }
+  }
+
+  private static void waitForResultsView(GlobalInspectionContextImpl context) {
+    PlatformTestUtil.waitWithEventsDispatching("Inspection results did not finish updating", () -> {
+      var view = context.getView();
+      return view != null && !view.isUpdating();
+    }, 30);
+  }
+
+  private GlobalInspectionContextImpl createContext(List<InspectionToolWrapper<?, ?>> tools) {
+    var context = (GlobalInspectionContextImpl)InspectionManager.getInstance(getProject()).createNewGlobalContext();
+    Disposer.register(getTestRootDisposable(), () -> context.close(true));
+    var toolSupplier = new InspectionToolsSupplier.Simple(tools);
+    Disposer.register(getTestRootDisposable(), toolSupplier);
+    var profile = new InspectionProfileImpl("test", toolSupplier,
+                                            (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
+    for (var tool : tools) {
+      profile.enableTool(tool.getShortName(), getProject());
+    }
+    context.setExternalProfile(profile);
+    return context;
+  }
+
   private void doTestExportWithoutResultsView(boolean offline, List<InspectionToolWrapper<?, ?>> tools) throws Exception {
     var previous = GlobalInspectionContextImpl.TESTING_NON_HEADLESS;
     GlobalInspectionContextImpl.TESTING_NON_HEADLESS = true;
@@ -94,19 +146,9 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
     List<Path> resultFiles = new ArrayList<>();
     Path outputPath = FileUtil.createTempDirectory("inspection", "results").toPath();
 
-    GlobalInspectionContextImpl context = (GlobalInspectionContextImpl)im.createNewGlobalContext();
-    Disposer.register(getTestRootDisposable(), () -> context.close(true));
+    var context = createContext(tools);
     assertTrue(context.isViewClosed());
     assertNull(context.getView());
-
-    InspectionToolsSupplier.Simple toolSupplier = new InspectionToolsSupplier.Simple(tools);
-    Disposer.register(getTestRootDisposable(), toolSupplier);
-    InspectionProfileImpl profile = new InspectionProfileImpl("test", toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance());
-    for (InspectionToolWrapper<?, ?> t : tools) {
-      profile.enableTool(t.getShortName(), getProject());
-    }
-
-    context.setExternalProfile(profile);
 
     ProgressManager.getInstance().run(new Task.Modal(getProject(), "", true) {
       @Override
@@ -198,7 +240,16 @@ public class InspectionResultExportTest extends LightJava9ModulesCodeInsightFixt
 
     InspectionTestUtil.compareWithExpected(expectedDfaResults, dfaResults, false);
     InspectionTestUtil.compareWithExpected(expectedUnnCondResults, unnCondResults, false);
+    assertTrue(((InspectionManagerEx)im).getRunningContexts().contains(context));
+    assertTrue(context.areToolsInitialized());
+    var wrappers = context.getTools().values().stream().map(tool -> tool.getTool()).toList();
+    var presentations = wrappers.stream().map(context::getPresentation).toList();
     context.close(false);
+    assertFalse("A closed export context must leave the running set", ((InspectionManagerEx)im).getRunningContexts().contains(context));
+    assertFalse("A closed export context must release its tools", context.areToolsInitialized());
+    for (var i = 0; i < wrappers.size(); i++) {
+      assertNotSame(presentations.get(i), context.getPresentation(wrappers.get(i)));
+    }
   }
 
   static @NotNull Element loadFile(@NotNull Path file) {
