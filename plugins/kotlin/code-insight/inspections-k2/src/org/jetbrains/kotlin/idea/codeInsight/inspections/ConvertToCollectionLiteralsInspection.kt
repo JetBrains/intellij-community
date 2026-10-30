@@ -55,7 +55,7 @@ internal class ConvertToCollectionLiteralsInspection :
     override fun getProblemDescription(
         element: KtCallExpression,
         context: Context
-    ): @InspectionMessage String = KotlinBundle.message("inspection.kotlin.convert.to.collection.literals.display.name")
+    ): @InspectionMessage String = KotlinBundle.message("inspection.kotlin.convert.to.collection.literals.problem.descriptor")
 
     override fun buildVisitor(
         holder: ProblemsHolder,
