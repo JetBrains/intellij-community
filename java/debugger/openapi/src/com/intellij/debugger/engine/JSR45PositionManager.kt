@@ -1,255 +1,257 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine;
+package com.intellij.debugger.engine
 
-import com.intellij.debugger.JavaDebuggerBundle;
-import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.ClassNotPreparedException;
-import com.sun.jdi.Location;
-import com.sun.jdi.ObjectCollectedException;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.request.ClassPrepareRequest;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import com.intellij.debugger.JavaDebuggerBundle
+import com.intellij.debugger.NoDataException
+import com.intellij.debugger.PositionManager
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.jdi.VirtualMachineProxy
+import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.fileTypes.FileType
+import com.intellij.openapi.fileTypes.LanguageFileType
+import com.intellij.openapi.util.Computable
+import com.intellij.util.containers.ContainerUtil
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.ClassNotPreparedException
+import com.sun.jdi.Location
+import com.sun.jdi.ObjectCollectedException
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.Unmodifiable
+import java.io.File
+import java.util.Collections
+import java.util.regex.Matcher
+import java.util.regex.Pattern
 
 /**
  * @author Eugene Zhuravlev
  */
-public abstract class JSR45PositionManager<Scope> implements PositionManager {
-  private static final Logger LOG = Logger.getInstance(JSR45PositionManager.class);
-  protected final DebugProcess myDebugProcess;
-  protected final Scope myScope;
-  private final String myStratumId;
-  protected final SourcesFinder<Scope> mySourcesFinder;
-  protected final String GENERATED_CLASS_PATTERN;
-  protected final Matcher myGeneratedClassPatternMatcher;
-  private final Set<LanguageFileType> myFileTypes;
+@Suppress("PropertyName")
+abstract class JSR45PositionManager<Scope> @Deprecated(
+  "Use the constructor without file types and override isAcceptedFileType."
+) constructor(
+  @JvmField protected val myDebugProcess: DebugProcess,
+  @JvmField protected val myScope: Scope,
+  @get:JvmName("getStratumIdForKotlin")
+  @get:JvmSynthetic
+  val stratumId: String?,
+  acceptedFileTypes: Array<out LanguageFileType?>?,
+  @JvmField protected val mySourcesFinder: SourcesFinder<Scope>,
+) : PositionManager {
+  @JvmField
+  protected val GENERATED_CLASS_PATTERN: String
 
-  public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final SourcesFinder<Scope> sourcesFinder) {
-    this(debugProcess, scope, stratumId, null, sourcesFinder);
-  }
+  @JvmField
+  protected val myGeneratedClassPatternMatcher: Matcher
+  private val myFileTypes: Set<LanguageFileType?>? =
+    if (acceptedFileTypes == null) null else Collections.unmodifiableSet(ContainerUtil.newHashSet(*acceptedFileTypes))
 
-  /**
-   * @deprecated use JSR45PositionManager(DebugProcess, Scope, String, SourcesFinder) and override {@link #isAcceptedFileType(FileType)}
-   * to check the file types.
-   */
-  @Deprecated
-  public JSR45PositionManager(DebugProcess debugProcess, Scope scope, final String stratumId, final LanguageFileType[] acceptedFileTypes,
-                              final SourcesFinder<Scope> sourcesFinder) {
-    myDebugProcess = debugProcess;
-    myScope = scope;
-    myStratumId = stratumId;
-    myFileTypes = acceptedFileTypes == null ? null : 
-                  Collections.unmodifiableSet(ContainerUtil.newHashSet(acceptedFileTypes)); // removes possible duplicates
-    mySourcesFinder = sourcesFinder;
-    String generatedClassPattern = getGeneratedClassesPackage();
-    if (generatedClassPattern.isEmpty()) {
-      generatedClassPattern = getGeneratedClassesNamePattern();
+  @Suppress("DEPRECATION")
+  constructor(debugProcess: DebugProcess, scope: Scope, stratumId: String?, sourcesFinder: SourcesFinder<Scope>) : this(
+    debugProcess,
+    scope,
+    stratumId,
+    null,
+    sourcesFinder
+  )
+
+  init {
+    val generatedClassesPackage = getGeneratedClassesPackage()
+    val generatedClassPattern = if (generatedClassesPackage.isEmpty()) {
+      getGeneratedClassesNamePattern()
     }
     else {
-      generatedClassPattern = generatedClassPattern + "." + getGeneratedClassesNamePattern();
+      generatedClassesPackage + "." + getGeneratedClassesNamePattern()
     }
-    GENERATED_CLASS_PATTERN = generatedClassPattern;
-    myGeneratedClassPatternMatcher = Pattern.compile(generatedClassPattern.replaceAll("\\*", ".*")).matcher("");
+    GENERATED_CLASS_PATTERN = generatedClassPattern
+    myGeneratedClassPatternMatcher = Pattern.compile(generatedClassPattern.replace("\\*".toRegex(), ".*")).matcher("")
   }
 
-  protected abstract @NonNls String getGeneratedClassesPackage();
+  protected abstract fun getGeneratedClassesPackage(): @NonNls String
 
-  protected String getGeneratedClassesNamePattern() {
-    return "*";
+  protected open fun getGeneratedClassesNamePattern(): String {
+    return "*"
   }
 
-  public final String getStratumId() {
-    return myStratumId;
+  fun getStratumId(): String? {
+    return stratumId
   }
 
-  @Override
-  public SourcePosition getSourcePosition(final Location location) throws NoDataException {
-    SourcePosition sourcePosition = null;
+  @Throws(NoDataException::class)
+  override fun getSourcePosition(location: Location?): SourcePosition? {
+    var sourcePosition: SourcePosition? = null
 
     try {
-      String sourcePath = getRelativeSourcePathByLocation(location);
-      PsiFile file = mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.getProject(), myScope);
+      val sourcePath = getRelativeSourcePathByLocation(location!!)
+      val file = mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.getProject(), myScope)
       if (file != null) {
-        int lineNumber = getLineNumber(location);
-        sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1);
+        val lineNumber = getLineNumber(location)
+        sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1)
       }
     }
-    catch (AbsentInformationException ignored) { // ignored
+    catch (_: AbsentInformationException) { // ignored
     }
-    catch (Throwable e) {
-      LOG.info(e);
+    catch (e: Throwable) {
+      LOG.info(e)
     }
     if (sourcePosition == null) {
-      throw NoDataException.INSTANCE;
+      throw NoDataException.INSTANCE
     }
-    return sourcePosition;
+    return sourcePosition
   }
 
-  protected String getRelativeSourcePathByLocation(final Location location) throws AbsentInformationException {
-    return getRelativePath(location.sourcePath(myStratumId));
+  @Throws(AbsentInformationException::class)
+  protected open fun getRelativeSourcePathByLocation(location: Location): String? {
+    return getRelativePath(location.sourcePath(stratumId))
   }
 
-  protected int getLineNumber(final Location location) {
-    return location.lineNumber(myStratumId);
+  protected open fun getLineNumber(location: Location): Int {
+    return location.lineNumber(getStratumId())
   }
 
-  @Override
-  public @NotNull List<ReferenceType> getAllClasses(@NotNull SourcePosition classPosition) throws NoDataException {
-    checkSourcePositionFileType(classPosition);
+  @Throws(NoDataException::class)
+  override fun getAllClasses(classPosition: SourcePosition): List<ReferenceType> {
+    checkSourcePositionFileType(classPosition)
 
-    final List<ReferenceType> referenceTypes = VirtualMachineProxy.getCurrent().allClasses();
+    val referenceTypes = VirtualMachineProxy.getCurrent().allClasses()
 
-    final List<ReferenceType> result = new ArrayList<>();
+    val result = ArrayList<ReferenceType>()
 
-    for (final ReferenceType referenceType : referenceTypes) {
-      myGeneratedClassPatternMatcher.reset(referenceType.name());
+    for (referenceType in referenceTypes) {
+      myGeneratedClassPatternMatcher.reset(referenceType.name())
       if (myGeneratedClassPatternMatcher.matches()) {
-        final List<Location> locations = locationsOfClassAt(referenceType, classPosition);
-        if (locations != null && !locations.isEmpty()) {
-          result.add(referenceType);
+        val locations = locationsOfClassAt(referenceType, classPosition)
+        if (!locations.isNullOrEmpty()) {
+          result.add(referenceType)
         }
       }
     }
 
-    return result;
+    return result
   }
 
-  /**
-   * @deprecated use {@link #isAcceptedFileType(FileType)} instead
-   */
-  @Deprecated
-  @Override
-  public @NotNull Set<LanguageFileType> getAcceptedFileTypes() {
-    if (myFileTypes == null) {
-      throw new IllegalStateException("Either pass file types to constructor or override getAcceptedFileTypes() method");
+  @Deprecated("Use isAcceptedFileType instead.")
+  override fun getAcceptedFileTypes(): Set<LanguageFileType?> {
+    checkNotNull(myFileTypes) { "Either pass file types to constructor or override getAcceptedFileTypes() method" }
+    return myFileTypes
+  }
+
+  override fun isAcceptedFileType(fileType: FileType): Boolean {
+    val fileTypes: Set<FileType?> = checkNotNull(myFileTypes) {
+      "Either pass file types to constructor or override isAcceptedFileType(FileType) method"
     }
-    return myFileTypes;
+    return fileTypes.contains(fileType)
   }
 
-  @Override
-  public boolean isAcceptedFileType(@NotNull FileType fileType) {
-    if (myFileTypes == null) {
-      throw new IllegalStateException("Either pass file types to constructor or override isAcceptedFileType(FileType) method");
-    }
-    return myFileTypes.contains(fileType);
-  }
-
-  private void checkSourcePositionFileType(final SourcePosition classPosition) throws NoDataException {
-    final FileType fileType = classPosition.getFile().getFileType();
+  @Throws(NoDataException::class)
+  private fun checkSourcePositionFileType(classPosition: SourcePosition) {
+    val fileType = classPosition.getFile().getFileType()
     if (!isAcceptedFileType(fileType)) {
-      throw NoDataException.INSTANCE;
+      throw NoDataException.INSTANCE
     }
   }
 
-  @Override
-  public @NotNull List<Location> locationsOfLine(final @NotNull ReferenceType type, final @NotNull SourcePosition position) throws NoDataException {
-    List<Location> locations = locationsOfClassAt(type, position);
-    return locations != null ? locations : Collections.emptyList();
+  @Throws(NoDataException::class)
+  override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
+    val locations = locationsOfClassAt(type, position)
+    return locations ?: emptyList()
   }
 
-  private List<Location> locationsOfClassAt(final ReferenceType type, final SourcePosition position) throws NoDataException {
-    checkSourcePositionFileType(position);
+  @Throws(NoDataException::class)
+  private fun locationsOfClassAt(type: ReferenceType, position: SourcePosition): List<Location>? {
+    checkSourcePositionFileType(position)
 
-    return ApplicationManager.getApplication().runReadAction(new Computable<>() {
-      @Override
-      public List<Location> compute() {
+    return ApplicationManager.getApplication().runReadAction(object : Computable<List<Location>?> {
+      override fun compute(): List<Location>? {
         try {
-          final List<String> relativePaths = getRelativeSourePathsByType(type);
-          for (String relativePath : relativePaths) {
-            final PsiFile file = mySourcesFinder.findSourceFile(relativePath, myDebugProcess.getProject(), myScope);
-            if (file != null && file.equals(position.getFile())) {
-              return getLocationsOfLine(type, getSourceName(file.getName(), type), relativePath, position.getLine() + 1);
+          val relativePaths = getRelativeSourePathsByType(type)
+          for (relativePath in relativePaths) {
+            val file = mySourcesFinder.findSourceFile(relativePath, myDebugProcess.getProject(), myScope)
+            if (file != null && file == position.getFile()) {
+              return getLocationsOfLine(type, getSourceName(file.getName(), type), relativePath, position.getLine() + 1)
             }
           }
         }
-        catch (ObjectCollectedException | ClassNotPreparedException | AbsentInformationException ignored) {
+        catch (_: ObjectCollectedException) {
         }
-        catch (InternalError ignored) {
+        catch (_: ClassNotPreparedException) {
+        }
+        catch (_: AbsentInformationException) {
+        }
+        catch (_: InternalError) {
           myDebugProcess.printToConsole(
-            JavaDebuggerBundle.message("internal.error.locations.of.line", type.name()));
+            JavaDebuggerBundle.message("internal.error.locations.of.line", type.name())
+          )
         }
-        return null;
+        return null
       }
 
       // Finds exact server file name (from available in type)
       // This is needed because some servers (e.g. WebSphere) put not exact file name such as 'A.jsp  '
-      private String getSourceName(final String name, final ReferenceType type) throws AbsentInformationException {
-        return type.sourceNames(myStratumId).stream()
-          .filter(sourceNameFromType -> sourceNameFromType.contains(name))
-          .findFirst().orElse(name);
+      @Throws(AbsentInformationException::class)
+      fun getSourceName(name: String, type: ReferenceType): String {
+        return type.sourceNames(stratumId).firstOrNull { it.contains(name) } ?: name
       }
-    });
+    })
   }
 
-  protected @Unmodifiable List<String> getRelativeSourePathsByType(final ReferenceType type) throws AbsentInformationException {
-    return ContainerUtil.map(type.sourcePaths(myStratumId), this::getRelativePath);
+  @Throws(AbsentInformationException::class)
+  protected open fun getRelativeSourePathsByType(type: ReferenceType): @Unmodifiable List<String?> {
+    return type.sourcePaths(stratumId).map(::getRelativePath)
   }
 
-  protected List<Location> getLocationsOfLine(final ReferenceType type, final String fileName,
-                                              final String relativePath, final int lineNumber) throws AbsentInformationException {
-    return type.locationsOfLine(myStratumId, fileName, lineNumber);
+  @Throws(AbsentInformationException::class)
+  protected open fun getLocationsOfLine(
+    type: ReferenceType, fileName: String?,
+    relativePath: String?, lineNumber: Int,
+  ): List<Location>? {
+    return type.locationsOfLine(this.stratumId, fileName, lineNumber)
   }
 
-  @Override
-  public ClassPrepareRequest createPrepareRequest(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
-    throws NoDataException {
-    checkSourcePositionFileType(position);
+  @Throws(NoDataException::class)
+  override fun createPrepareRequest(requestor: ClassPrepareRequestor, position: SourcePosition): ClassPrepareRequest? {
+    checkSourcePositionFileType(position)
 
-    return myDebugProcess.getRequestsManager().createClassPrepareRequest(new ClassPrepareRequestor() {
-      @Override
-      public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-        onClassPrepare(debuggerProcess, referenceType, position, requestor);
-      }
-    }, GENERATED_CLASS_PATTERN);
+    return myDebugProcess.getRequestsManager().createClassPrepareRequest(ClassPrepareRequestor { debuggerProcess, referenceType ->
+      onClassPrepare(debuggerProcess, referenceType, position, requestor)
+    }, GENERATED_CLASS_PATTERN)
   }
 
-  protected void onClassPrepare(final DebugProcess debuggerProcess, final ReferenceType referenceType,
-                                final SourcePosition position, final ClassPrepareRequestor requestor) {
+  protected open fun onClassPrepare(
+    debuggerProcess: DebugProcess?, referenceType: ReferenceType,
+    position: SourcePosition, requestor: ClassPrepareRequestor,
+  ) {
     try {
       if (locationsOfClassAt(referenceType, position) != null) {
-        requestor.processClassPrepare(debuggerProcess, referenceType);
+        requestor.processClassPrepare(debuggerProcess, referenceType)
       }
     }
-    catch (NoDataException ignored) {
+    catch (_: NoDataException) {
     }
   }
 
-  protected String getRelativePath(String sourcePath) {
-
+  protected open fun getRelativePath(sourcePath: String?): String? {
+    var sourcePath = sourcePath
     if (sourcePath != null) {
-      sourcePath = sourcePath.trim();
-      String generatedClassesPackage = getGeneratedClassesPackage();
-      final String prefix = generatedClassesPackage.replace('.', File.separatorChar);
+      sourcePath = sourcePath.trim { it <= ' ' }
+      val generatedClassesPackage = getGeneratedClassesPackage()
+      val prefix = generatedClassesPackage.replace('.', File.separatorChar)
 
       if (sourcePath.startsWith(prefix)) {
-        sourcePath = sourcePath.substring(prefix.length());
+        sourcePath = sourcePath.substring(prefix.length)
         if (sourcePath.startsWith(File.separator)) {
-          sourcePath = sourcePath.substring(1);
+          sourcePath = sourcePath.substring(1)
         }
       }
     }
 
-    return sourcePath;
+    return sourcePath
+  }
+
+  private companion object {
+    private val LOG = Logger.getInstance(JSR45PositionManager::class.java)
   }
 }
