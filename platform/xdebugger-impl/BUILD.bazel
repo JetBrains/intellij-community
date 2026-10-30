@@ -139,6 +139,11 @@ jvm_library(
     associates = ["//platform/xdebugger-impl:debugger-impl"],
     kotlinc_opts = ":custom_debugger-impl-tests",
     visibility = ["//visibility:public"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/main/intellij.platform.monolith.main:monolith-main",
+        "//community-resources:customization",
+    ],
     deps = [
         # do not sort,
         "//platform/analysis-api:analysis",
@@ -177,8 +182,6 @@ jvm_library(
         "//platform/xdebugger-impl/ui",
         "//platform/execution",
         "//libraries/junit4",
-        "//platform/main/intellij.platform.monolith.main:monolith-main",
-        "//community-resources:customization",
         "//libraries/junit6",
     ],
 )
