@@ -83,7 +83,7 @@ Before you improvise a procedure, look for a skill that covers it in the index:
 <!-- IF_EDITION:ULTIMATE -->- Skill index: [`.agents/skills/INDEX.md`](../../.agents/skills/INDEX.md)<!-- /IF_EDITION:ULTIMATE -->
 <!-- IF_EDITION:COMMUNITY -->- Skill index: [`.agents/skills/INDEX.md`](../.agents/skills/INDEX.md)<!-- /IF_EDITION:COMMUNITY -->
 
-Before a plan that adds a responsibility, run the owner check of the `duplicate-and-dead-code` skill.
+Before a plan that adds a responsibility, run the owner check of the `duplicate-and-dead-code` skill. Run it before you write the plan, not as a step of the plan.
 
 {{PARTIAL:knowledge-mcps}}
 

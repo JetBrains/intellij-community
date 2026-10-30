@@ -25,7 +25,7 @@ Each kind of text has one home. Rationale and evidence for a change go in the co
 
 ## Module-specific rules
 
-Before you edit or review a file, read every `AGENTS.md` between its directory and the repository root. They override the general guidance here. The Eel and IJent modules (`platform/eel*/`, `platform/ijent/`) share `platform/eel/AGENTS.md`.
+Before you plan, edit or review a change of a file, read every `AGENTS.md` between its directory and the repository root. They override the general guidance here. The Eel and IJent modules (`platform/eel*/`, `platform/ijent/`) share `platform/eel/AGENTS.md`.
 
 ## Mandatory Rules
 
@@ -78,7 +78,7 @@ Before you improvise a procedure, look for a skill that covers it in the index:
 
 - Skill index: [`.agents/skills/INDEX.md`](./.agents/skills/INDEX.md)
 
-Before a plan that adds a responsibility, run the owner check of the `duplicate-and-dead-code` skill.
+Before a plan that adds a responsibility, run the owner check of the `duplicate-and-dead-code` skill. Run it before you write the plan, not as a step of the plan.
 
 ## Individual Preferences
 

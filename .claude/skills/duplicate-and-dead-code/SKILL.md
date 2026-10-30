@@ -41,9 +41,14 @@ Do this for each responsibility that the plan adds: a mapping, a policy, a parse
 4. For a V1 or V2 change, find the other version: `accio files '<Prefix>V1*'`, `accio files '<Prefix>V2*'`.
 5. `accio trace <Name> --direction callers` for each candidate, then read it. A call site marked `?` (`:57?`) fits
    more than one overload: read it.
+6. For each owner that the plan extends, read the first guard of its entry point and the body of each gate in that
+   guard. A gate whose body is a literal (`fun isFeatureEnabled() = false`) makes the owner gated off. A registry key
+   that is off by default makes it gated. `accio trace` and `accio unused` count a gated caller as a use, so only the
+   body of the gate tells.
 
-The plan then has an **Existing owners** line. It names each owner and the decision: extend it, move it, or write new
-code with the reason why the owner does not fit. When the check finds nothing, the line names the queries.
+The plan then has an **Existing owners** line for each owner, in this form:
+`<owner> — live: <caller path> | gated: <gate> — extend | move | new (<why the owner does not fit>)`. Do not extend a
+gated-off owner: move its live parts out, or write new code. When the check finds nothing, the line names the queries.
 
 ## Before a review: the copy lint
 
