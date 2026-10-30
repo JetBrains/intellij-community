@@ -379,7 +379,7 @@ class SePopupContentPane(
         val searchId = searchContext.searchId
         val throttledResultEventFlow = searchContext.resultsFlow
 
-        coroutineScope {
+        coroutineScope searchScope@{
           withContext(Dispatchers.EDT) {
             SearchEverywhereUI.associateMatcherToResultsList(resultList, searchContext.searchPattern, searchContext.searchPattern)
 
@@ -393,14 +393,7 @@ class SePopupContentPane(
             }
           }
 
-          launch {
-            SeLog.log(SeLog.FROZEN_COUNT) { "Will schedule freeze" }
-            delay(DEFAULT_FREEZING_DELAY_MS.milliseconds)
-            withContext(Dispatchers.EDT) {
-              SeLog.log(SeLog.FROZEN_COUNT) { "Will freeze, because of the scheduled freezing" }
-              resultListModel.freezer.enable()
-            }
-          }
+          var isFreezeScheduled = false
 
           throttledResultEventFlow.coalesceWhileAvailable(FIRST_COALESCING_BATCH_SIZE, MAX_COALESCING_BATCH_SIZE).onCompletion {
             withContext(Dispatchers.EDT) {
@@ -461,6 +454,19 @@ class SePopupContentPane(
                 resultListModel.freezer.enable()
               }
               updateFrozenCount()
+
+              // The freeze keeps the rows that the user saw, so its delay starts when the list shows the first item
+              if (!isFreezeScheduled && !resultListModel.isEmpty) {
+                isFreezeScheduled = true
+                this@searchScope.launch {
+                  SeLog.log(SeLog.FROZEN_COUNT) { "Will schedule freeze" }
+                  delay(DEFAULT_FREEZING_DELAY_MS.milliseconds)
+                  withContext(Dispatchers.EDT) {
+                    SeLog.log(SeLog.FROZEN_COUNT) { "Will freeze, because of the scheduled freezing" }
+                    resultListModel.freezer.enable()
+                  }
+                }
+              }
 
               if (hasResultsUpdates) {
                 hintHelper.setSearchInProgress(false)
