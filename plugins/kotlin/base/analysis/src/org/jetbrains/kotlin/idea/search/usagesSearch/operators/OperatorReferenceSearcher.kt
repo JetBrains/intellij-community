@@ -58,6 +58,13 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
     private val wordsToSearch: List<String>
 ) {
     private val project = targetDeclaration.project
+    private var continueSearch = true
+
+    private fun processReference(reference: PsiReference): Boolean {
+        if (!continueSearch) return false
+        continueSearch = consumer.process(reference)
+        return continueSearch
+    }
 
     /**
      * Invoked for all expressions that may have type matching receiver type of our operator
@@ -78,7 +85,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
         val reference = extractReference(element) ?: return true
         testLog { "Resolved ${logPresentation(element)}" }
         if (reference.isReferenceTo(targetDeclaration)) {
-            return consumer.process(reference)
+            return processReference(reference)
         }
 
         val currentTargets = (reference as? PsiPolyVariantReference)?.multiResolve(false)?.mapNotNull { it.element as? KtDeclaration } ?: return true
@@ -86,7 +93,7 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
         val expectedTarget = targetDeclaration.expectDeclarationIfAny() ?: targetDeclaration
         return if (expectedTarget in currentTargets.map { it.expectDeclarationIfAny() ?: it }
         ) {
-            consumer.process(reference)
+            processReference(reference)
         } else {
             true
         }
@@ -213,11 +220,11 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
         }
     }
 
-    fun run() {
+    fun processOperatorUsages(): Boolean {
 
         val (klass, containsTypeOrDerivedInside) = runReadAction {
             targetDeclaration.getReceiverTypeSearcherInfo(this is DestructuringDeclarationReferenceSearcher)
-        } ?: return
+        } ?: return true
 
         val inProgress = SearchesInProgress.get()
         if (klass != null) {
@@ -227,12 +234,12 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                         targetDeclaration
                     )}."
                 }
-                return
+                return true
             }
         } else {
             if (!inProgress.add(targetDeclaration)) {
                 testLog { "ExpressionOfTypeProcessor is already started for operator ${logPresentation(targetDeclaration)}. Exit." }
-                return //TODO: it's not quite correct
+                return true //TODO: it's not quite correct
             }
         }
 
@@ -242,12 +249,13 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                 klass,
                 searchScope,
                 project,
-                possibleMatchHandler = { expression -> processPossibleReceiverExpression(expression) },
-                possibleMatchesInScopeHandler = { searchScope -> doPlainSearch(searchScope) }
+                possibleMatchHandler = { expression -> if (continueSearch) processPossibleReceiverExpression(expression) },
+                possibleMatchesInScopeHandler = { searchScope -> if (continueSearch) doPlainSearch(searchScope) }
             ).run()
         } finally {
             inProgress.remove(klass ?: targetDeclaration)
         }
+        return continueSearch
     }
 
     private fun doPlainSearch(scope: SearchScope) {
@@ -274,12 +282,13 @@ abstract class OperatorReferenceSearcher<TReferenceElement : KtElement>(
                             for (ref in refs) {
                                 progress?.checkCanceled()
                                 if (ref.isReferenceTo(targetDeclaration)) {
-                                    consumer.process(ref)
+                                    if (!processReference(ref)) return@runReadAction
                                 }
                             }
                         }
                     }
                 }
+                if (!continueSearch) return
             }
         } else {
             scope as GlobalSearchScope

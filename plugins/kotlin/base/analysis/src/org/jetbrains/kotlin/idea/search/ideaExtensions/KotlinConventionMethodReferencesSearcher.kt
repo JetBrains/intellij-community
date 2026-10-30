@@ -6,11 +6,15 @@ import com.intellij.openapi.application.QueryExecutorBase
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
+import com.intellij.psi.search.SearchRequestCollector
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.canBeResolvedWithFrontEnd
 import org.jetbrains.kotlin.idea.search.usagesSearch.operators.OperatorReferenceSearcher
+import org.jetbrains.kotlin.psi.KtElement
 
 class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {
     override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
@@ -21,6 +25,8 @@ class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference,
         }
         runReadAction {
             val method = queryParameters.method
+            // if search was started from kotlin, it already processed convention methods
+            if (method.unwrapped is KtElement) return@runReadAction null
 
             val effectiveSearchScope = queryParameters.effectiveSearchScope
             if (effectiveSearchScope is LocalSearchScope && effectiveSearchScope.scope.size == 1) {
@@ -39,14 +45,17 @@ class KotlinConventionMethodReferencesSearcher : QueryExecutorBase<PsiReference,
 
             if (!method.canBeResolvedWithFrontEnd()) return@runReadAction null
 
-            val operatorSearcher = OperatorReferenceSearcher.create(
+            val conventionCollector = SearchRequestCollector(queryParameters.optimizer.searchSession)
+            val searcher = OperatorReferenceSearcher.create(
                 queryParameters.method,
                 effectiveSearchScope,
                 consumer,
-                queryParameters.optimizer,
+                conventionCollector,
                 KotlinReferencesSearchOptions(acceptCallableOverrides = true)
-            )
-            operatorSearcher
-        }?.run()
+            ) ?: return@runReadAction null
+            queryParameters.optimizer.searchCustom {
+                searcher.processOperatorUsages() && PsiSearchHelper.getInstance(queryParameters.project).processRequests(conventionCollector, consumer)
+            }
+        }
     }
 }

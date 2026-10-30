@@ -206,6 +206,17 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             }
         }
 
+        /**
+         * ensure to execute conventions search after current search has already processed the usages
+         */
+        private fun scheduleConventionSearch(createSearcher: (SearchRequestCollector) -> OperatorReferenceSearcher<*>?) {
+            val conventionCollector = SearchRequestCollector(queryParameters.optimizer.searchSession)
+            val searcher = createSearcher(conventionCollector) ?: return
+            queryParameters.optimizer.searchCustom {
+                searcher.processOperatorUsages() && PsiSearchHelper.getInstance(queryParameters.project).processRequests(conventionCollector, consumer)
+            }
+        }
+
         fun process() {
             var element: SmartPsiElementPointer<PsiElement>? = null
             var classNameForCompanionObject: String? = null
@@ -279,15 +290,12 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                     }
                 }
 
-                element?.element?.takeIf { it is KtFunction || it is PsiMethod }?.let { _ ->
-                    element.element?.let {
+                scheduleConventionSearch { conventionCollector ->
+                    element?.element?.takeIf { it is KtFunction || it is PsiMethod }?.let { target ->
                         OperatorReferenceSearcher.create(
-                            it, effectiveSearchScope, consumer, queryParameters.optimizer, kotlinOptions
+                            target, effectiveSearchScope, consumer, conventionCollector, kotlinOptions
                         )
                     }
-                        ?.let { searcher ->
-                            longTasks.add { searcher.run() }
-                        }
                 }
 
                 element?.element?.takeIf { (it as? KtConstructor<*>)?.containingClass()?.isEnum() == true }?.let { el ->
@@ -498,16 +506,18 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                         searchNamedElement(element, componentMethodName)
 
                         if (kotlinOptions.searchForComponentConventions) {
-                            val componentIndex = element.parameterIndex()
-                            val searcher = DestructuringDeclarationReferenceSearcher(
-                                element,
-                                componentIndex + 1,
-                                queryParameters.effectiveSearchScope,
-                                consumer,
-                                queryParameters.optimizer,
-                                kotlinOptions
-                            )
-                            longTasks.add { searcher.run() }
+                            scheduleConventionSearch { conventionCollector ->
+                                val param = elementPointer.element as? KtParameter ?: return@scheduleConventionSearch null
+                                val componentIndex = element.parameterIndex()
+                                DestructuringDeclarationReferenceSearcher(
+                                    param,
+                                    componentIndex + 1,
+                                    queryParameters.effectiveSearchScope,
+                                    consumer,
+                                    conventionCollector,
+                                    kotlinOptions
+                                )
+                            }
                         }
                     }
 
@@ -537,10 +547,13 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
                 it.name == componentMethodName && it.parameterList.parametersCount == 0
             }?.let {
                 searchNamedElement(it)
-
-                OperatorReferenceSearcher.create(
-                    it, queryParameters.effectiveSearchScope, consumer, queryParameters.optimizer, kotlinOptions
-                )?.let { searcher -> longTasks.add { searcher.run() } }
+                val pointer = it.createSmartPointer()
+                scheduleConventionSearch { conventionCollector ->
+                    val method = pointer.element ?: return@scheduleConventionSearch null
+                    OperatorReferenceSearcher.create(
+                        method, queryParameters.effectiveSearchScope, consumer, conventionCollector, kotlinOptions
+                    )
+                }
             }
         }
 
