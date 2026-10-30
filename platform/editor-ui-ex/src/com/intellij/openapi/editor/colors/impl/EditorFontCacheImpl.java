@@ -72,12 +72,18 @@ public final class EditorFontCacheImpl extends EditorFontCache {
     String consoleFontName = consolePreferences.getFontFamily();
     float editorFontSize = preferences.getSize2D(preferences.getFontFamily());
     float consoleFontSize = getConsoleFontSize(consolePreferences, consoleFontName, editorFontSize);
-
     if (LOG.isDebugEnabled()) {
       logDebug(scheme, schemePreferences instanceof DelegatingFontPreferences, editorFontName, editorFontSize);
     }
-
-    return EditorFonts.empty().with(editorFontName, editorFontSize, preferences, consoleFontName, consoleFontSize, consolePreferences, null);
+    return EditorFonts.empty().with(
+      editorFontName,
+      editorFontSize,
+      preferences,
+      consoleFontName,
+      consoleFontSize,
+      consolePreferences,
+      null
+    );
   }
 
   private static @NotNull String getEditorFontName(@NotNull FontPreferences preferences) {

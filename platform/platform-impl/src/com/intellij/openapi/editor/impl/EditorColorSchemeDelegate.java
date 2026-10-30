@@ -43,31 +43,28 @@ import java.util.function.UnaryOperator;
  * </ul>
  */
 final class EditorColorSchemeDelegate extends DelegateColorScheme {
-
   private static final Logger LOG = Logger.getInstance(EditorColorSchemeDelegate.class);
   private static final AtomicReferenceFieldUpdater<EditorColorSchemeDelegate, EditorColorSchemeSnapshot> SNAPSHOT_UPDATER =
     AtomicReferenceFieldUpdater.newUpdater(EditorColorSchemeDelegate.class, EditorColorSchemeSnapshot.class, "mySnapshot");
 
   private final EditorImpl myEditor;
-
-  /**
-   * RUBY-6775: Force Editor Text fields to use default color scheme with white background
-   */
-  private final EditorColorsScheme myCustomGlobalScheme;
-
-  private volatile @NotNull EditorColorSchemeSnapshot mySnapshot = EditorColorSchemeSnapshot.initial();
+  private final EditorColorsScheme myCustomGlobalScheme; // RUBY-6775: Force Editor Text fields to use default color scheme with white background
+  private volatile @NotNull EditorColorSchemeSnapshot mySnapshot;
 
   EditorColorSchemeDelegate(@NotNull EditorImpl editor, @Nullable EditorColorsScheme globalScheme) {
     super(globalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : globalScheme);
     myEditor = editor;
     myCustomGlobalScheme = globalScheme;
+    mySnapshot = EditorColorSchemeSnapshot.initial();
     updateGlobalScheme();
   }
 
   @Override
   public TextAttributes getAttributes(TextAttributesKey key) {
     Map<TextAttributesKey, TextAttributes> ownAttributes = mySnapshot.ownAttributes();
-    if (ownAttributes.containsKey(key)) return ownAttributes.get(key);
+    if (ownAttributes.containsKey(key)) {
+      return ownAttributes.get(key);
+    }
     return getDelegate().getAttributes(key);
   }
 
@@ -79,8 +76,7 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       // - CWM fixes
       // - support local highlighting re-initialization after a scheme setting changes
       getDelegate().setAttributes(key, attributes);
-    }
-    else {
+    } else {
       updateSnapshot(snapshot -> snapshot.withOwnAttributes(key, attributes));
     }
   }
@@ -99,14 +95,12 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     boolean changed = color == AbstractColorsScheme.INHERITED_COLOR_MARKER
                       ? updateSnapshot(snapshot -> snapshot.withoutOwnColor(key))
                       : updateSnapshot(snapshot -> snapshot.withOwnColor(key, color));
-    if (!changed) {
-      return;
+    if (changed) {
+      // These two are here because those attributes are cached
+      // and I do not want the clients to call editor's reinit settings in this case.
+      myEditor.getCaretModel().reinitSettings();
+      myEditor.getSelectionModel().reinitSettings();
     }
-
-    // These two are here because those attributes are cached
-    // and I do not want the clients to call editor's reinit settings in this case.
-    myEditor.getCaretModel().reinitSettings();
-    myEditor.getSelectionModel().reinitSettings();
   }
 
   @Override
@@ -129,17 +123,14 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     // IDEA-315284 Adjust min and max font size in EditorImpl.MyColorSchemeDelegate
     float originalSize = UISettingsUtils.getInstance().scaleFontSize(getDelegate().getEditorFontSize2D());
     EditorColorSchemeSnapshot current = mySnapshot;
-
     float minSize = Math.min(EditorImpl.MIN_FONT_SIZE, originalSize);
     if (fontSize < minSize) {
       fontSize = minSize;
     }
-
     float maxSize = Math.max(current.maxFontSize(), originalSize);
     if (fontSize > maxSize) {
       fontSize = maxSize;
     }
-
     Float currentFontSize = current.fontSize();
     if (currentFontSize != null && currentFontSize == fontSize) {
       return;
@@ -148,7 +139,12 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       LOG.debug("Font size overridden for " + myEditor, new Throwable());
     }
     Float newFontSize = fontSize == originalSize ? null : fontSize;
-    if (updateSnapshot(snapshot -> withFonts(snapshot.withFontPreferencesSetExplicitly(false).withFontSize(newFontSize)))) {
+    boolean changed = updateSnapshot(snapshot -> withFonts(
+      snapshot
+        .withFontPreferencesSetExplicitly(false)
+        .withFontSize(newFontSize)
+    ));
+    if (changed) {
       myEditor.reinitSettings(true, false);
     }
   }
@@ -157,14 +153,18 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   public @NotNull FontPreferences getFontPreferences() {
     EditorColorSchemeSnapshot snapshot = mySnapshot;
     FontPreferences fontPreferences = snapshot.fontPreferences();
-    return !snapshot.fontPreferencesAreSetExplicitly() && fontPreferences.getEffectiveFontFamilies().isEmpty()
-           ? getDelegate().getFontPreferences() : fontPreferences;
+    if (snapshot.fontPreferencesAreSetExplicitly() || !fontPreferences.getEffectiveFontFamilies().isEmpty()) {
+      return fontPreferences;
+    }
+    return getDelegate().getFontPreferences();
   }
 
   @Override
   public void setFontPreferences(@NotNull FontPreferences preferences) {
     EditorColorSchemeSnapshot current = mySnapshot;
-    if (current.fontPreferencesAreSetExplicitly() && preferences.getSnapshot() == current.fontPreferences()) return;
+    if (current.fontPreferencesAreSetExplicitly() && preferences.getSnapshot() == current.fontPreferences()) {
+      return;
+    }
     if (LOG.isDebugEnabled()) {
       LOG.debug("Font preferences overridden for " + myEditor, new Throwable());
     }
@@ -195,7 +195,10 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
       return;
     }
     boolean changed = updateSnapshot(snapshot -> withFonts(
-      snapshot.withConsoleFontPreferences(snapshot.consoleFontPreferences().withChanges(preferences::copyTo))
+      snapshot
+        .withConsoleFontPreferences(
+          snapshot.consoleFontPreferences().withChanges(preferences::copyTo)
+        )
     ));
     if (changed) {
       myEditor.reinitSettings();
@@ -215,7 +218,12 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Font name overridden for " + myEditor, new Throwable());
     }
-    if (updateSnapshot(snapshot -> withFonts(snapshot.withFontPreferencesSetExplicitly(false).withFaceName(fontName)))) {
+    boolean changed = updateSnapshot(snapshot -> withFonts(
+      snapshot
+        .withFontPreferencesSetExplicitly(false)
+        .withFaceName(fontName)
+    ));
+    if (changed) {
       myEditor.reinitSettings();
     }
   }
@@ -223,18 +231,19 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   @Override
   public @NotNull Font getFont(EditorFontType key) {
     EditorFonts fonts = mySnapshot.fonts();
-    if (key == null || fonts.isEmpty()) {
-      return getDelegate().getFont(key);
+    if (key != null && !fonts.isEmpty()) {
+      return fonts.get(key);
     }
-    return fonts.get(key);
+    return getDelegate().getFont(key);
   }
-
 
   @Override
   public void setDelegate(@NotNull EditorColorsScheme delegate) {
     super.setDelegate(delegate);
     float maxFontSize = Math.max(EditorFontsConstants.getMaxEditorFontSize(), getDelegate().getEditorFontSize2D());
-    updateSnapshot(snapshot -> withFonts(snapshot.withMaxFontSize(maxFontSize)));
+    updateSnapshot(snapshot -> withFonts(
+      snapshot.withMaxFontSize(maxFontSize)
+    ));
     myEditor.reinitStickyLines();
   }
 
@@ -246,7 +255,10 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
   @Override
   public void setConsoleFontSize(float fontSize) {
     Float newConsoleFontSize = fontSize == super.getConsoleFontSize2D() ? null : fontSize;
-    if (updateSnapshot(snapshot -> withFonts(snapshot.withConsoleFontSize(newConsoleFontSize)))) {
+    boolean changed = updateSnapshot(snapshot -> withFonts(
+      snapshot.withConsoleFontSize(newConsoleFontSize)
+    ));
+    if (changed) {
       myEditor.reinitSettings();
     }
   }
@@ -396,7 +408,6 @@ final class EditorColorSchemeDelegate extends DelegateColorScheme {
     FontPreferencesSnapshot consoleFontPreferences = updatePreferences(
       snapshot.consoleFontPreferences(), consoleFontName, consoleFontSize, useLigatures, delegate.getConsoleFontPreferences()
     );
-
     EditorFonts fonts = snapshot.fonts().with(
       editorFontName, editorFontSize, fontPreferences, consoleFontName, consoleFontSize, consoleFontPreferences, useLigatures
     );
