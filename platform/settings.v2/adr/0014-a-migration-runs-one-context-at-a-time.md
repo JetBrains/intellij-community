@@ -4,7 +4,8 @@ Date: 2026-06-11
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Superseded by [ADR 0169](./0169-a-migration-is-a-suspend-function-of-its-scope-context-and-the-platform-does-not-know-its-source.md)
+([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
 
 ## Context
 
