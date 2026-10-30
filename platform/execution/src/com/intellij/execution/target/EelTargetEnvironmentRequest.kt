@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
+import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.target.local.toLocalPtyOptions
@@ -32,8 +33,10 @@ import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.getAcceptorForRemotePort
 import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
+import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.asEelPath
 import com.intellij.platform.eel.provider.asNioPath
+import com.intellij.platform.eel.provider.equalsMayBeUsingMachine
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.eel.provider.getResolvedEelMachine
 import com.intellij.platform.eel.provider.resolveEelMachine
@@ -61,6 +64,7 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.Collections
@@ -128,7 +132,8 @@ class EelTargetEnvironmentRequest(
 ) : BaseTargetEnvironmentRequest() {
   class Configuration private constructor(
     eelDescriptor: EelDescriptor?,
-  ) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess, PersistentStateComponent<Configuration.PersistentState> {
+  ) : TargetEnvironmentConfiguration(TARGET_TYPE_NAME), TargetConfigurationWithLocalFsAccess,
+      PersistentStateComponent<Configuration.PersistentState> {
     internal constructor() : this(null)
 
     constructor(eelApi: EelApi) : this(eelApi.descriptor)
@@ -386,10 +391,14 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
     parentEnvVarsOptions: EelExecApi.EnvironmentVariablesOptions,
   ): Process {
     val command = commandLine.collectCommandsSynchronously()
-    val builder = eel.exec.spawnProcess(command.first())
+    // Since command line is a string, it lacks semantics:
+    // it might be MRFS or an eel path, so we support both cases.
+    val eelDescriptor = eel.descriptor
+    val exe = command.first()
+    val builder = eel.exec.spawnProcess(convertToEel(exe, eelDescriptor)?.toString() ?: exe)
 
     builder.args(command.drop(1))
-    builder.workingDirectory(commandLine.workingDirectory?.let { EelPath.parse(it, eel.descriptor) })
+    builder.workingDirectory(commandLine.workingDirectory?.let { convertToEelOrThrow(it, eelDescriptor) })
     builder.interactionOptions(commandLine.interactionOptions())
     builder.stdErr(commandLine.stdErr())
 
@@ -464,3 +473,33 @@ class EelTargetEnvironment(override val request: EelTargetEnvironmentRequest) : 
 
 @Service
 private class EelTargetScope(val scope: CoroutineScope)
+
+@Throws(ExecutionException::class)
+private fun convertToEelOrThrow(path: String, eelDescriptor: EelDescriptor): EelPath =
+  convertToEel(path, eelDescriptor) ?: throw ExecutionException(ExecutionBundle.message("message.cannot.find.file.0", path))
+
+/**
+ * [path] might be MRFS pointing to [eelDescriptor] or an eel path. We do not know.
+ * We do our best to guess. If we were able to convert [path] to an eel path on [eelDescriptor] we return it.
+ */
+private fun convertToEel(path: String, eelDescriptor: EelDescriptor): EelPath? {
+  // Could be like //wsl$...
+  val mayBeMRFS = try {
+    Path(path)
+  }
+  catch (_: InvalidPathException) {
+    // An eel path can be invalid on the host, like `/tmp/a:b` on Windows
+    null
+  }
+  return try {
+    if (mayBeMRFS != null && mayBeMRFS.getEelDescriptor().equalsMayBeUsingMachine(eelDescriptor)) {
+      mayBeMRFS.asEelPath()
+    }
+    else {
+      EelPath.parse(path, eelDescriptor)
+    }
+  }
+  catch (_: EelPathException) {
+    null
+  }
+}
