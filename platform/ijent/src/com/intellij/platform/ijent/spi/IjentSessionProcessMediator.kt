@@ -118,6 +118,7 @@ class IjentSessionProcessMediator private constructor(
   @VisibleToClasses(
     "com.intellij.platform.ijent.spi.IjentBinaryCacheTest",
     "com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy",
+    "com.intellij.platform.ijent.spi.IjentJavaProcessFacadeTest",
     "com.intellij.platform.ijent.spi.IjentShellBootstrapTest",
   )
   internal class JavaProcessFacade(ijentProcessScope: IjentScope, private val process: Process) : ProcessFacade {
@@ -133,8 +134,13 @@ class IjentSessionProcessMediator private constructor(
     override val stdout: PeekableEelReceiveChannel =
       rawReceiveChannel(process.inputStream).peekable()
 
+    /**
+     * A process that writes to stderr and exits at once is common: `ssh` that cannot connect does it.
+     * So the bytes that the JDK takes from the pipe at the exit are read too. See [ExitDrainedReceiveChannel].
+     */
     override val stderr: EelReceiveChannel =
-      rawReceiveChannel(process.errorStream)
+      if (process is IjentChildProcessAdapter || SystemInfoRt.isWindows) rawReceiveChannel(process.errorStream)
+      else ExitDrainedReceiveChannel(rawReceiveChannel(process.errorStream), process, process.errorStream)
 
     private fun rawSendChannel(stream: OutputStream): EelSendChannel =
       if (process is IjentChildProcessAdapter) stream.asEelChannel(IjentThreadPool.coroutineContext)
@@ -432,6 +438,58 @@ private class EndListeningReceiveChannel(
 
   override val prefersDirectBuffers: Boolean
     get() = delegate.prefersDirectBuffers
+}
+
+/**
+ * Reads the raw pipe of a stream of `java.lang.ProcessImpl`, and after the end of the pipe, the rest from [jdkStream].
+ *
+ * On Linux and macOS, the process reaper of the JDK calls `ProcessImpl.ProcessPipeInputStream.processExited()` when the process exits.
+ * It reads the bytes that are still in the pipe into its own buffer, closes the pipe, and [jdkStream] serves that buffer since then.
+ * So a raw read can end with EOF or with a closed channel while the JDK holds the last bytes of the process.
+ *
+ * The read from [jdkStream] does not block: the pipe is at EOF then, or the JDK has replaced it with the buffer.
+ * `processExited()` holds the lock of [jdkStream], and the read waits for it.
+ * A closed channel while the process is alive is not the JDK reaper, so it stays an error.
+ */
+private class ExitDrainedReceiveChannel(
+  private val raw: EelReceiveChannel,
+  private val process: Process,
+  private val jdkStream: InputStream,
+) : EelReceiveChannel {
+  @Volatile
+  private var drained: EelReceiveChannel? = null
+
+  @ThrowsChecked(EelReceiveChannelException::class)
+  override suspend fun receive(dst: ByteBuffer): ReadResult {
+    drained?.let { return it.receive(dst) }
+    val result = try {
+      raw.receive(dst)
+    }
+    catch (e: EelReceiveChannelException) {
+      if (process.isAlive) throw e
+      ReadResult.EOF
+    }
+    return when (result) {
+      ReadResult.NOT_EOF -> result
+      ReadResult.EOF -> {
+        val drained = jdkStream.consumeAsEelChannel(IjentThreadPool.coroutineContext)
+        this.drained = drained
+        drained.receive(dst)
+      }
+    }
+  }
+
+  @ThrowsChecked(EelReceiveChannelException::class)
+  @EelDelicateApi
+  override fun available(): Int = drained?.available() ?: raw.available()
+
+  override suspend fun closeForReceive() {
+    raw.closeForReceive()
+    drained?.closeForReceive()
+  }
+
+  override val prefersDirectBuffers: Boolean
+    get() = raw.prefersDirectBuffers
 }
 
 private suspend fun awaitProcessExit(process: IjentSessionProcessMediator.ProcessFacade, timeout: Duration) {
