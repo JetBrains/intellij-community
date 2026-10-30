@@ -298,7 +298,12 @@ internal class DocumentationRenderer(private val project: Project) {
     if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in includedAttributes) {
-        val attributeDetails = getDetails(attribute.getOwnOrParentInternalNote(), attribute.getOwnOrParentExperimentalNote(), attribute.requirement)
+        val attributeDetails = getDetails(
+          attribute.getOwnOrParentInternalNote(),
+          attribute.getOwnOrParentExperimentalNote(),
+          attribute.requirement,
+          attribute.deprecatedSince != null || attribute.deprecationNote != null,
+        )
         appendLine("- ${attributeLink(attribute.name!!, attribute.path)}$attributeDetails")
       }
     }
@@ -309,7 +314,7 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`$text`]($ATTRIBUTE_DOC_LINK_PREFIX$linkPath)"
   }
 
-  private fun getDetails(internalNote: String?, experimentalNote: String?, requirement: Requirement?): String {
+  private fun getDetails(internalNote: String?, experimentalNote: String?, requirement: Requirement?, deprecated: Boolean): String {
     val details = mutableListOf<String>()
     if (internalNote != null) {
       details.add("internal")
@@ -326,6 +331,9 @@ internal class DocumentationRenderer(private val project: Project) {
     }
     if (experimentalNote != null) {
       details.add("experimental")
+    }
+    if (deprecated) {
+      details.add("deprecated")
     }
     if (details.isEmpty()) return ""
     return details.joinToString(prefix = " ", separator = "; ") { "_${it}_" }
@@ -345,7 +353,12 @@ internal class DocumentationRenderer(private val project: Project) {
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
         val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"
-        val childDetails = getDetails(childElement.getOwnOrParentInternalNote(), childElement.getOwnOrParentExperimentalNote(), childElement.requirement)
+        val childDetails = getDetails(
+          childElement.getOwnOrParentInternalNote(),
+          childElement.getOwnOrParentExperimentalNote(),
+          childElement.requirement,
+          childElement.deprecatedSince != null || childElement.deprecationNote != null,
+        )
         appendLine("- [`<$linkText>`]($linkUrl)$childDetails")
       }
       appendParagraphSeparator()
