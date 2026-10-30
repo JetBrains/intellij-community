@@ -2,7 +2,9 @@
 package com.intellij.platform.ide.nonModalWelcomeScreen.welcomeFiles
 
 import com.intellij.ide.rpc.awaitWithLocalFallback
+import com.intellij.ide.ui.icons.IconId
 import com.intellij.ide.vfs.VirtualFileId
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.rpc.lite.LiteRemoteApiProviderService
 import fleet.rpc.RemoteApi
@@ -10,6 +12,9 @@ import fleet.rpc.Rpc
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -47,6 +52,22 @@ interface WelcomeFilesApi : RemoteApi<Unit> {
    */
   suspend fun discardOnClose(projectId: ProjectId, files: List<VirtualFileId>)
 
+  /**
+   * Emits the language of [file], then emits it again after each rename or language change of [file].
+   * The flow is empty when [file] is not a Home file of the welcome project [projectId].
+   */
+  suspend fun fileLanguage(projectId: ProjectId, file: VirtualFileId): Flow<WelcomeFileLanguage>
+
+  /**
+   * Returns the languages that the user can select for a Home file.
+   */
+  suspend fun getLanguages(): List<WelcomeLanguageItem>
+
+  /**
+   * Sets the language [languageId] for [file]. [languageId] is a [WelcomeLanguageItem.id] from [getLanguages].
+   */
+  suspend fun changeLanguage(projectId: ProjectId, file: VirtualFileId, languageId: String)
+
   companion object {
     /**
      * Returns the api of this session. A light session has no backend, so it gets an api that finds no Home file.
@@ -71,4 +92,26 @@ private object NoBackendWelcomeFilesApi : WelcomeFilesApi {
 
   override suspend fun discardOnClose(projectId: ProjectId, files: List<VirtualFileId>) {
   }
+
+  override suspend fun fileLanguage(projectId: ProjectId, file: VirtualFileId): Flow<WelcomeFileLanguage> = emptyFlow()
+
+  override suspend fun getLanguages(): List<WelcomeLanguageItem> = emptyList()
+
+  override suspend fun changeLanguage(projectId: ProjectId, file: VirtualFileId, languageId: String) {
+  }
 }
+
+/**
+ * The current language of a Home file.
+ */
+@ApiStatus.Internal
+@Serializable
+class WelcomeFileLanguage(val displayName: @NlsSafe String, val icon: IconId?)
+
+/**
+ * A language that the user can select for a Home file.
+ * [id] is the language ID, or the file type name for a file type without a language.
+ */
+@ApiStatus.Internal
+@Serializable
+class WelcomeLanguageItem(val id: String, val displayName: @NlsSafe String, val extension: @NlsSafe String, val icon: IconId?)

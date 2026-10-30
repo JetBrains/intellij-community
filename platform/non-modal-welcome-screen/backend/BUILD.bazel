@@ -39,6 +39,7 @@ jvm_library(
         "//platform/util:util-ui",
         "//platform/platform-impl/rpc",
         "//platform/lang-impl",
+        "//platform/analysis-api:analysis",
     ],
 )
 ### auto-generated section `build intellij.platform.ide.nonModalWelcomeScreen.backend` end

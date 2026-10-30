@@ -8,8 +8,6 @@ import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -18,7 +16,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -108,15 +105,7 @@ public abstract class ChangeLanguageAction extends DumbAwareAction {
     VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from((Iterable<? extends VirtualFile>)files).toList());
     Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.isCaseSensitive()));
     ScratchLanguageUtil.buildLanguagesPopup(project, title)
-      .onChosen(item -> {
-        try {
-          WriteCommandAction.writeCommandAction(project).withName(LangBundle.message("command.name.change.language")).run(
-            () -> ScratchLanguageUtil.changeLanguageWithUndo(project, item, filesCopy, mapping));
-        }
-        catch (UnexpectedUndoException e1) {
-          ExceptionUtil.rethrowUnchecked(e1);
-        }
-      })
+      .onChosen(item -> ScratchLanguageUtil.changeLanguage(project, item, filesCopy, mapping))
       .buildPopup()
       .showCenteredInCurrentWindow(project);
   }

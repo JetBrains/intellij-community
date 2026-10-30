@@ -108,7 +108,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `cancel keeps the tab and the file`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     TestDialogManager.setTestDialog({ Messages.CANCEL }, disposable)
@@ -124,7 +124,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `do not save closes the tab and deletes the file`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     TestDialogManager.setTestDialog(TestDialog.NO, disposable)
@@ -140,7 +140,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `close all stops the questions at the first cancel`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val discardedFile = createWelcomeFile()
     val cancelledFile = createWelcomeFile()
     val notAskedFile = createWelcomeFile()
@@ -176,7 +176,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `a second close during the save asks nothing`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     val answers = listOf(Messages.OK, Messages.CANCEL)
@@ -206,7 +206,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `a failed save does not stop the next saves`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val failedFile = createWelcomeFile()
     val nextFile = createWelcomeFile()
     for (file in listOf(failedFile, nextFile)) {
@@ -244,7 +244,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `a split copy closes without a question`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     var questionCount = 0
@@ -277,7 +277,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `the tab menu shows Save File only for a Home file`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     val regularFile = LightVirtualFile("regular.txt", "text")
@@ -296,7 +296,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `Save File in the tab menu shows the save dialog`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     val savedFileNames = ArrayList<String>()
@@ -319,13 +319,13 @@ internal class WelcomeFilesCloseTest {
     val api = WelcomeFilesApi.getInstance()
     assertFalse(api.isWelcomeFile(project.projectId(), file.rpcId()))
 
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     assertTrue(api.isWelcomeFile(project.projectId(), file.rpcId()))
   }
 
   @Test
   fun `project close cancel keeps the file`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     var questionCount = 0
@@ -344,7 +344,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `project close with do not save deletes the files after one question`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val files = listOf(createWelcomeFile(), createWelcomeFile())
     for (file in files) {
       openAndAwaitMarker(file)
@@ -369,7 +369,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `project close with save copies the files to the selected directory`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val files = listOf(createWelcomeFile(), createWelcomeFile())
     for (file in files) {
       openAndAwaitMarker(file)
@@ -393,7 +393,7 @@ internal class WelcomeFilesCloseTest {
 
   @Test
   fun `project close with save of one file uses the save dialog`(): Unit = timeoutRunBlocking {
-    markAsWelcomeProject(project)
+    markAsWelcomeProject(project, disposable)
     val file = createWelcomeFile()
     openAndAwaitMarker(file)
     TestDialogManager.setTestDialog(TestDialog.OK, disposable)
@@ -478,14 +478,18 @@ internal class WelcomeFilesCloseTest {
   }
 
   // A fresh mask replaces the provider list, so the service drops the capabilities it cached for the project.
-  private fun markAsWelcomeProject(welcomeProject: Project) {
-    val provider = object : ProjectFrameCapabilitiesProvider {
-      override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
-        return if (project === welcomeProject) setOf(ProjectFrameCapability.WELCOME_EXPERIENCE) else emptySet()
-      }
+}
 
-      override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
+/**
+ * Makes [welcomeProject] the welcome project until [disposable] is disposed.
+ */
+internal fun markAsWelcomeProject(welcomeProject: Project, disposable: Disposable) {
+  val provider = object : ProjectFrameCapabilitiesProvider {
+    override fun getCapabilities(project: Project): Set<ProjectFrameCapability> {
+      return if (project === welcomeProject) setOf(ProjectFrameCapability.WELCOME_EXPERIENCE) else emptySet()
     }
-    ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(provider), disposable)
+
+    override fun getUiPolicy(project: Project, capabilities: Set<ProjectFrameCapability>): ProjectFrameUiPolicy? = null
   }
+  ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(provider), disposable)
 }

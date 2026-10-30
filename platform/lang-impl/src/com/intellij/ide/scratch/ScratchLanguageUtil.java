@@ -2,11 +2,13 @@
 package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.PerFileMappings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
@@ -21,11 +23,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,17 +142,38 @@ public final class ScratchLanguageUtil {
     }
   }
 
-  public static LRUPopupBuilder<LanguageItem> buildLanguagesPopup(@NotNull Project project,
-                                                                  @NotNull @NlsContexts.PopupTitle String title) {
+  /**
+   * Changes the language of {@code sortedFiles} to {@code item} in an undoable write command.
+   */
+  public static void changeLanguage(@NotNull Project project,
+                                    @NotNull LanguageItem item,
+                                    VirtualFile @NotNull [] sortedFiles,
+                                    @NotNull PerFileMappings<Language> mappings) {
+    try {
+      WriteCommandAction.writeCommandAction(project).withName(LangBundle.message("command.name.change.language")).run(
+        () -> changeLanguageWithUndo(project, item, sortedFiles, mappings));
+    }
+    catch (UnexpectedUndoException e) {
+      ExceptionUtil.rethrowUnchecked(e);
+    }
+  }
+
+  /**
+   * Returns the languages and the file types that the user can select in {@link #buildLanguagesPopup}.
+   */
+  public static @NotNull List<LanguageItem> getLanguageItems() {
     FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    List<LanguageItem> items = JBIterable.from(LanguageUtil.getFileLanguages())
+    return JBIterable.from(LanguageUtil.getFileLanguages())
       .map(LanguageItem::fromLanguage)
       .append(JBIterable.of(fileTypeManager.getRegisteredFileTypes())
                 .filter(AbstractFileType.class)
                 .map(o -> LanguageItem.fromAbstractFileType(o, ScratchFileCreator.getFileTypeExtensions(o, true, fileTypeManager).first())))
       .filter(item -> item != null && ScratchFileTypeFilter.isEnabled(item.fileType()))
       .toList();
+  }
 
+  public static LRUPopupBuilder<LanguageItem> buildLanguagesPopup(@NotNull Project project,
+                                                                  @NotNull @NlsContexts.PopupTitle String title) {
     Comparator<LanguageItem> comparator = (o1, o2) -> StringUtil.naturalCompare(o1.getDisplayName(), o2.getDisplayName());
     return new LRUPopupBuilder<LanguageItem>(project, title) {
       @Override
@@ -158,23 +183,34 @@ public final class ScratchLanguageUtil {
 
       @Override
       public Icon getIcon(LanguageItem o) {
-        return ObjectUtils.notNull(o.fileType.getIcon(), AllIcons.FileTypes.Any_type);
+        return o.getIcon();
       }
 
       @Override
       public String getStorageId(LanguageItem o) {
-        return o.language != null ? o.language.getID() : o.fileType.getName();
+        return o.getId();
       }
     }
-      .forValues(items)
+      .forValues(getLanguageItems())
       .withComparator(comparator)
       .withExtraSpeedSearchNamer(o -> o.fileExtension)
       .withSelection(null);
   }
 
   public record LanguageItem(@Nullable Language language, @NotNull FileType fileType, @NotNull String fileExtension) {
+    /**
+     * Returns the language ID, or the file type name for a file type without a language.
+     */
+    public @NotNull @NonNls String getId() {
+      return language != null ? language.getID() : fileType.getName();
+    }
+
     public @NotNull @NlsSafe String getDisplayName() {
       return language != null ? language.getDisplayName() : fileType.getDescription() + " (*." + fileExtension + ")";
+    }
+
+    public @NotNull Icon getIcon() {
+      return ObjectUtils.notNull(fileType.getIcon(), AllIcons.FileTypes.Any_type);
     }
 
     public static @Nullable LanguageItem fromLanguage(@NotNull Language language) {

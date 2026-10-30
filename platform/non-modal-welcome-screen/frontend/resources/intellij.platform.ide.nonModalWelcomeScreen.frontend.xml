@@ -26,6 +26,9 @@
     />
     <virtualFilePreCloseCheck implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.WelcomeFilePreCloseCheck"/>
     <projectCloseHandler implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.FrontendWelcomeProjectCloseHandler"/>
+    <statusBarWidgetFactory id="WelcomeFileLanguage"
+                            implementation="com.intellij.platform.ide.nonModalWelcomeScreen.frontend.welcomeFiles.WelcomeFileLanguageWidgetFactory"
+                            order="before Position"/>
   </extensions>
 
   <projectListeners>

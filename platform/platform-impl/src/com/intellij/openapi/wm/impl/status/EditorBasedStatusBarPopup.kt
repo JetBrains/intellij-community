@@ -250,11 +250,16 @@ abstract class EditorBasedStatusBarPopup(
 
     val dataContext = context
     val popup = createPopup(dataContext) ?: return
+    showPopup(popup, e)
+    // destroy popup on unexpected project close
+    Disposer.register(this, popup)
+  }
+
+  @ApiStatus.Internal
+  protected open fun showPopup(popup: ListPopup, e: MouseEvent) {
     val dimension = popup.content.preferredSize
     val at = Point(0, -dimension.height)
     popup.show(RelativePoint(e.component, at))
-    // destroy popup on unexpected project close
-    Disposer.register(this, popup)
   }
 
   protected val context: DataContext
