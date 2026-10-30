@@ -1,13 +1,13 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.run.gradle
 
+import com.intellij.gradle.testFramework.util.createBuildFile
+import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.project.modules
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions
 import org.jetbrains.plugins.gradle.execution.build.GradleInitScriptGenerator
 import org.jetbrains.plugins.gradle.execution.test.producer.GradleTestRunConfigurationProducerTestCase
-import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 
 private val PLUGIN_VERSION = KotlinGradlePluginVersions.V_2_4_0.toString()

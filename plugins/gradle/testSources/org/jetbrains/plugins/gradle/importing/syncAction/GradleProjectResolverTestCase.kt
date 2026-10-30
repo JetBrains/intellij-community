@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
 import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfoAssertions.assertProjectStructure
 import com.intellij.gradle.testFramework.projectInfo.initProject
 import com.intellij.gradle.testFramework.projectInfo.multiModuleProjectInfo
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 
 abstract class GradleProjectResolverTestCase : GradleImportingTestCase() {
 

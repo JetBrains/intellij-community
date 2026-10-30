@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.gradle.testFramework.importing.GradleImportingTestCase;
+import com.intellij.gradle.testFramework.importing.TestGradleBuildScriptBuilder;
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;

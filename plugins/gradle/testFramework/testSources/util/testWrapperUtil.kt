@@ -1,5 +1,5 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.util
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.testFramework.util
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.eel.provider.getEelDescriptor
@@ -8,6 +8,7 @@ import org.gradle.StartParameter
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.PathAssembler
 import org.jetbrains.plugins.gradle.service.execution.gradleUserHomeDir
+import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipInputStream

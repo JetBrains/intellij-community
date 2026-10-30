@@ -53,8 +53,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.intellij.gradle.testFramework.importing.TestGradleBuildScriptBuilder.extPluginVersionIsAtLeast;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.extPluginVersionIsAtLeast;
 
 /**
  * Created by Nikita.Skvortsov

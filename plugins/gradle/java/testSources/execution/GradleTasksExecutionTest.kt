@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.gradle.testFramework.importing.TestGradleBuildScriptBuilder
 import com.intellij.internal.statistic.FUCollectorTestCase
 import com.intellij.internal.statistic.eventLog.ExternalEventLogSettings
 import com.intellij.openapi.application.ApplicationManager
@@ -17,7 +18,6 @@ import com.intellij.testFramework.ExtensionTestUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import junit.framework.AssertionFailedError
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.statistics.GradleTaskExecutionCollector
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test

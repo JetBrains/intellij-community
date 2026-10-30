@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.gradle.testFramework.importing.GradleImportingTestCase;
 import com.intellij.ide.actions.CreateDirectoryCompletionContributor;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Pair;
@@ -12,7 +13,6 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.gradle.GradleDirectoryCompletionContributor;
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 

@@ -6,6 +6,8 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.execution.lineMarker.ExecutorAction
+import com.intellij.gradle.testFramework.util.createBuildFile
+import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.action.ExternalSystemActionUtil
 import com.intellij.openapi.externalSystem.model.task.TaskData
@@ -29,8 +31,6 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestName
 import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
-import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait

@@ -49,8 +49,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.LockSupport;
 
+import static com.intellij.gradle.testFramework.util.GradleTestEelUtilKt.assumeOnLocalEnvironmentOnly;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.plugins.gradle.testFramework.util.GradleTestEelUtilKt.assumeOnLocalEnvironmentOnly;
 
 /**
  * @author Vladislav.Soroka

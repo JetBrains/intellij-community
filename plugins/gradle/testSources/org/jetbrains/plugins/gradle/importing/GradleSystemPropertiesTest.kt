@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.importing
 import com.google.gson.Gson
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId

@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gradle.importing
 
 
+import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
+import com.intellij.gradle.testFramework.util.createBuildFile
+import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
@@ -27,8 +30,6 @@ import com.intellij.testFramework.roots.ui.configuration.TestSdkType
 import com.intellij.testFramework.roots.ui.configuration.TestUnknownSdkResolver
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
-import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 

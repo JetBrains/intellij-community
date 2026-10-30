@@ -1,8 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util
 
+import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
 import junit.framework.TestCase
-import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
 import org.junit.Test
 import java.io.File
 

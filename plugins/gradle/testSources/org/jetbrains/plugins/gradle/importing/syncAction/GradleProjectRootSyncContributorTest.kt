@@ -1,6 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing.syncAction
 
+import com.intellij.gradle.testFramework.util.createBuildFile
+import com.intellij.gradle.testFramework.util.createGradleWrapper
+import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.getResolvedPath
@@ -12,9 +15,6 @@ import com.intellij.platform.testFramework.assertion.moduleAssertion.ModuleAsser
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.createGradleWrapper
-import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 
 class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {

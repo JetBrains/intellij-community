@@ -1,9 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.importing
+package com.intellij.gradle.testFramework.importing
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.gradle.testFramework.util.getGradleDistributionJarPath
+import com.intellij.gradle.testFramework.util.getGradleDistributionRoot
+import com.intellij.gradle.testFramework.util.getLocalGradleDistributionRoot
+import com.intellij.gradle.testFramework.util.validateGradleJar
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
@@ -75,10 +79,6 @@ import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.getGradleDistributionJarPath
-import org.jetbrains.plugins.gradle.util.getGradleDistributionRoot
-import org.jetbrains.plugins.gradle.util.getLocalGradleDistributionRoot
-import org.jetbrains.plugins.gradle.util.validateGradleJar
 import org.junit.Assume
 import org.junit.Rule
 import org.junit.rules.TestName

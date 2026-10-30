@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.testFramework.util.importProject
 import com.intellij.idea.TestFor
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.util.io.FileUtil
@@ -14,7 +15,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion.version
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
