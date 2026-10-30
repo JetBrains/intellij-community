@@ -8,6 +8,7 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageToolkit
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import com.intellij.util.ui.html.getImageVerticalAlignment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -33,7 +34,6 @@ import javax.swing.text.FlowView
 import javax.swing.text.Position
 import javax.swing.text.View
 import javax.swing.text.ViewFactory
-import javax.swing.text.html.CSS
 import javax.swing.text.html.HTML
 import javax.swing.text.html.HTMLDocument
 import kotlin.math.min
@@ -116,28 +116,8 @@ internal class ResizingHtmlImageView(element: Element) : View(element) {
     }
   }
 
-  override fun getAlignment(axis: Int): Float {
-    if (axis != Y_AXIS) return super.getAlignment(axis)
-
-    val cssAlignment = element.attributes.getAttribute(CSS.Attribute.VERTICAL_ALIGN)?.toString()?.lowercase()
-    val alignment = cssAlignment ?: element.attributes.getAttribute(HTML.Attribute.ALIGN)?.toString()?.lowercase()
-    return when (alignment) {
-      "top", "text-top" -> 0f
-      "middle" -> if (cssAlignment == null) 0.5f else getMiddleAlignment()
-      "absmiddle", "abscenter" -> getMiddleAlignment()
-      else -> 1f
-    }
-  }
-
-  private fun getMiddleAlignment(): Float {
-    val document = document as HTMLDocument
-    val font = document.getFont(document.styleSheet.getViewAttributes(this))
-    val metrics = container?.getFontMetrics(font) ?: return 0.5f
-    val xHeight = font.createGlyphVector(metrics.fontRenderContext, "x").visualBounds.height.toFloat()
-    val height = getPreferredSpan(Y_AXIS).coerceAtLeast(1f)
-    // CSS middle places the image centre half an x-height above the text baseline.
-    return (0.5f + xHeight / (2 * height)).coerceIn(0f, 1f)
-  }
+  override fun getAlignment(axis: Int): Float =
+    if (axis == Y_AXIS) getImageVerticalAlignment() else super.getAlignment(axis)
 
   override fun paint(g: Graphics, allocation: Shape) {
     val rect = if (allocation is Rectangle) allocation else allocation.bounds

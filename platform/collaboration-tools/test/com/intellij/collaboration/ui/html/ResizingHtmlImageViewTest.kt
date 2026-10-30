@@ -21,6 +21,7 @@ import java.util.Hashtable
 import javax.swing.JEditorPane
 import javax.swing.text.GlyphView
 import javax.swing.text.View
+import javax.swing.text.html.StyleSheet
 import kotlin.math.roundToInt
 
 @TestApplication
@@ -60,7 +61,7 @@ internal class ResizingHtmlImageViewTest {
 
   @Test
   fun `middle image sits above the text baseline`(): Unit = timeoutRunBlocking {
-    for (attributes in listOf("align='absmiddle'", "style='vertical-align: middle'")) {
+    for (attributes in listOf("align='absmiddle'", "style='vertical-align: middle'", "class='badge'")) {
       val layout = renderImage(Dimension(16, 16), attributes = attributes)
 
       assertThat(layout.textBaselines).hasSize(2).containsOnly(layout.textBaselines.first())
@@ -74,6 +75,27 @@ internal class ResizingHtmlImageViewTest {
     val layout = renderImage(Dimension(16, 16), attributes = "align='middle'")
 
     assertThat(layout.textBaselines).containsOnly(layout.image.centerY.toInt())
+  }
+
+  @Test
+  fun `image alignment stays local to the image`(): Unit = timeoutRunBlocking {
+    for (attributes in listOf("style='vertical-align: top'", "style='vertical-align: middle'", "align='middle'")) {
+      val layout = renderImage(Dimension(16, 16), body = { "<table><tr><td $attributes>before $it after</td></tr></table>" })
+
+      assertThat(layout.textBaselines).hasSize(2).containsOnly(layout.image.y + layout.image.height)
+    }
+  }
+
+  @Test
+  fun `CSS top aligns short and tall images with the text top`(): Unit = timeoutRunBlocking {
+    for (alignment in listOf("top", "text-top")) {
+      for (height in listOf(8, 24)) {
+        val layout = renderImage(Dimension(16, height), attributes = "style='vertical-align: $alignment'")
+
+        assertThat(layout.image.height).isEqualTo(height)
+        assertThat(layout.textTops).hasSize(2).containsOnly(layout.image.y)
+      }
+    }
   }
 
   @Test
@@ -104,17 +126,19 @@ internal class ResizingHtmlImageViewTest {
 
   private suspend fun renderImage(
     imageSize: Dimension, paneWidth: Int = 400, attributes: String = "", image: Image? = null,
+    body: (String) -> String = { "<p>before $it after</p>" },
   ): Layout {
     val requested = CompletableDeferred<Unit>()
     val pane = withContext(Dispatchers.UI) {
       SimpleHtmlPane(
+        additionalStyleSheet = StyleSheet().apply { addRule("img.badge { vertical-align: middle; }") },
         addBrowserListener = false,
         customImageLoader = AsyncHtmlImageLoader { _, _ ->
           requested.complete(Unit)
           image ?: BufferedImage(imageSize.width, imageSize.height, BufferedImage.TYPE_INT_ARGB)
         },
       ).apply {
-        text = "<html><body><p>before <img src='https://example.invalid/image.png' $attributes> after</p></body></html>"
+        text = "<html><body>${body("<img src='https://example.invalid/image.png' $attributes>")}</body></html>"
         size = Dimension(paneWidth, 1000)
         render()
       }
@@ -125,12 +149,14 @@ internal class ResizingHtmlImageViewTest {
       pane.render()
       var imageBounds: Rectangle? = null
       val baselines = ArrayList<Int>()
+      val textTops = ArrayList<Int>()
       fun visit(view: View, allocation: Shape) {
         if (view.element.name == "img") imageBounds = allocation.bounds
         if (view is GlyphView) {
           val text = view.document.getText(view.startOffset, minOf(view.endOffset, view.document.length) - view.startOffset)
           if (text.contains("before") || text.contains("after")) {
             baselines.add(allocation.bounds.y + pane.getFontMetrics(view.font).ascent)
+            textTops.add(allocation.bounds.y)
           }
         }
         for (index in 0 until view.viewCount) {
@@ -138,7 +164,7 @@ internal class ResizingHtmlImageViewTest {
         }
       }
       visit(pane.ui.getRootView(pane), Rectangle(pane.width, pane.height))
-      Layout(checkNotNull(imageBounds), baselines)
+      Layout(checkNotNull(imageBounds), baselines, textTops)
     }
   }
 
@@ -153,5 +179,5 @@ internal class ResizingHtmlImageViewTest {
     }
   }
 
-  private data class Layout(val image: Rectangle, val textBaselines: List<Int>)
+  private data class Layout(val image: Rectangle, val textBaselines: List<Int>, val textTops: List<Int>)
 }
