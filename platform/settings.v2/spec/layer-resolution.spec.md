@@ -44,7 +44,10 @@ from the narrowest context, and the first layer that holds the key wins. With no
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsBulkMutationTest.kt
 - A narrower context must win over a wider one, whatever the locality or the provider.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMultiLayerContextTest.kt
-- Within one context, a narrower locality must win: environmental, then local, then team.
+- Within one context, a local layer must win over a team layer.
+  [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLocalityTest.kt
+- An environmental value must never override a team or a local value. A key reads only the localities it accepts.
+  See [ADR 0126](../adr/0126-a-key-reads-only-from-the-layers-of-the-localities-it-accepts.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLocalityTest.kt
 - Within one context and locality, the provider that comes later in the extension order must win.
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsMultiProviderTest.kt

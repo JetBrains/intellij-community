@@ -12,9 +12,10 @@ import org.jetbrains.annotations.ApiStatus.Experimental
  * levels form a scale of reach.
  *
  * A layer has exactly **one** locality. Within one context, the layers resolve by
- * **[TEAM] < [LOCAL] < [ENVIRONMENTAL]**. So the machine value overrides the personal override, and the personal
- * override overrides the shared default (see [byResolutionPrecedence]). The provider order only breaks a tie within
- * one locality.
+ * **[TEAM] < [LOCAL] < [ENVIRONMENTAL]** (see [byResolutionPrecedence]). The provider order only breaks a tie within
+ * one locality. A key reads either only the [ENVIRONMENTAL] layers or only the [TEAM] and [LOCAL] layers (see
+ * [KeyLocality]). So for one key, the order only means that the local value wins over the team value. An
+ * environmental value never overrides a team or a local value.
  *
  * @see KeyLocality for the key-side policy that decides which localities a key may live in.
  */
@@ -42,8 +43,9 @@ enum class LayerLocality {
   companion object {
     /**
      * Holds the localities from the highest to the lowest resolution precedence: `ENVIRONMENTAL`, `LOCAL`, `TEAM`. A
-     * read folds the layers in this order, so a more specific locality overrides a wider one. A narrower context
-     * overrides a wider one in the same way. The order lives here, not in the declaration order of the enum.
+     * read folds the layers of one context in this order, and a more specific locality overrides a wider one. The read
+     * skips the localities that its key does not accept. So between localities, only `LOCAL` over `TEAM` can decide a
+     * value. The order lives here, not in the declaration order of the enum.
      */
     val byResolutionPrecedence: List<LayerLocality> = listOf(ENVIRONMENTAL, LOCAL, TEAM)
   }
