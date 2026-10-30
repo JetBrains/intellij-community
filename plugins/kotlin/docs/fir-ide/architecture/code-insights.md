@@ -570,7 +570,7 @@ Each case is one of these kinds:
 
 | Kind | File | Meaning |
 |---|---|---|
-| Positive | `<case>.kt` and `<case>.kt.after` | The action is available, and the result is correct code. |
+| Positive | `<case>.kt`, and `<case>.kt.after` when the action changes code | The action is available, and the result is correct code. An inspection without a quick fix needs only `<case>.kt`. |
 | Negative | `<case>.kt` only | The action is not available. Use `PROBLEM: none`, `"false"`, or `IS_APPLICABLE: false`. |
 | Broken code | `<case>.kt` | The code has a syntax or resolve error. The action does not throw. |
 | Feature off | `<case>.kt` | A language feature or a compiler flag is off. The action is not available. |
