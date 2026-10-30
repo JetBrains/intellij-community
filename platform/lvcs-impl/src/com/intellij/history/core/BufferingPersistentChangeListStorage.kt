@@ -31,8 +31,10 @@ internal class BufferingPersistentChangeListStorage(
 
   /**
    * Write buffer for the storage
+   * [pendingSetsLock] guards the buffer.
    */
   private val pendingChangeSets = ArrayDeque<ChangeSet>()
+  private val pendingSetsLock = Any()
 
   /**
    * The last given ID.
@@ -45,6 +47,7 @@ internal class BufferingPersistentChangeListStorage(
    */
   private val lastIdRef = AtomicLong(Random.nextLong(START_ID_LIMIT))
 
+  @Volatile
   private var isCompletelyBroken = false
 
   /**
@@ -102,7 +105,9 @@ internal class BufferingPersistentChangeListStorage(
       flushPending()
     }
     else {
-      pendingChangeSets.clear()
+      synchronized(pendingSetsLock) {
+        pendingChangeSets.clear()
+      }
     }
     Disposer.dispose(storage)
     if (drop) {
@@ -136,16 +141,17 @@ internal class BufferingPersistentChangeListStorage(
     return EagerNonRecursingReversedChangeSetIterator(::readPrevious)
   }
 
-  @Synchronized
   override fun writeNextSet(changeSet: ChangeSet) {
     if (isCompletelyBroken) return
-    pendingChangeSets.add(changeSet)
+    synchronized(pendingSetsLock) {
+      pendingChangeSets.add(changeSet)
+    }
   }
 
   private fun flushPending() {
     while (true) {
       synchronized(this) {
-        val set = pendingChangeSets.removeFirstOrNull() ?: break
+        val set = synchronized(pendingSetsLock) { pendingChangeSets.removeFirstOrNull() } ?: break
         doWriteNextSet(set)
       }
     }
