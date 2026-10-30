@@ -9,8 +9,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ui.EDT
 import com.sun.jdi.IncompatibleThreadStateException
@@ -21,7 +19,6 @@ import com.sun.jdi.Type
 import com.sun.jdi.VMDisconnectedException
 import com.sun.jdi.VirtualMachine
 import com.sun.jdi.event.ClassPrepareEvent
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.future.await
@@ -158,15 +155,6 @@ internal fun checkBlockingDebuggerOperation() {
                 "writeIntent=${application.isWriteIntentLockAcquired}, writeAccess=${application.isWriteAccessAllowed})"
 
   fileLogger().error(details, trace)
-}
-
-internal fun <T> runBlockingAssertNotInReadAction(block: suspend CoroutineScope.() -> T): T {
-  if (ApplicationManager.getApplication().isInternal
-      && ApplicationManager.getApplication().isReadAccessAllowed
-      && !ProgressManager.getInstance().hasProgressIndicator()) {
-    fileLogger().error("Call runBlocking from read action without indicator")
-  }
-  return runBlockingMaybeCancellable(block)
 }
 
 fun Type.instanceOf(className: String): Boolean = DebuggerUtils.instanceOf(this, className)

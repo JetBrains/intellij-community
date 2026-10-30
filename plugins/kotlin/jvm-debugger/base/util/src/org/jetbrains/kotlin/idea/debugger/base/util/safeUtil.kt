@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.debugger.base.util
 
 import com.intellij.debugger.NoDataException
 import com.intellij.debugger.PositionManager
+import com.intellij.debugger.PositionManagerAsync
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
-import com.intellij.debugger.engine.PositionManagerAsync
 import com.intellij.debugger.engine.evaluation.AbsentInformationEvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl

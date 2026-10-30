@@ -4,6 +4,7 @@ package com.intellij.debugger.engine
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
 import com.intellij.debugger.PositionManager
+import com.intellij.debugger.PositionManagerAsync
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl.Companion.assertIsManagerThread
 import com.intellij.debugger.engine.evaluation.EvaluationContext

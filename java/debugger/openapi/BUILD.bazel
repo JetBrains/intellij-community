@@ -44,6 +44,7 @@ jvm_library(
         "//platform/execution",
         "//platform/ide-core",
         "//platform/util/base",
+        "//libraries/kotlinx/coroutines/core",
     ],
 )
 ### auto-generated section `build intellij.java.debugger` end

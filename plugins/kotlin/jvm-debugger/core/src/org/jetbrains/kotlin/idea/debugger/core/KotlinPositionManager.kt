@@ -6,13 +6,13 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
+import com.intellij.debugger.PositionManagerAsync
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.DebuggerUtils.isAndroidVM
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
-import com.intellij.debugger.engine.PositionManagerAsync
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.engine.PositionManagerWithMultipleStackFrames
 import com.intellij.debugger.engine.evaluation.EvaluationContext
