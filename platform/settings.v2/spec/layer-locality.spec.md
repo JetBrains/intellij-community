@@ -63,7 +63,7 @@ A locality is defined by where its value travels.
   See [ADR 0073](../adr/0073-precedence-is-context-then-locality-then-provider.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsLocalityTest.kt
 - Each locality of a file-backed layer must persist to its own file. The team file keeps the plain name. The local and
-  environmental files insert `local` or `env` before the extension.
+  environmental files insert `local` or `env` before the extension. [File Layers](file-layers.spec.md) maps each file.
   See [ADR 0075](../adr/0075-each-locality-has-its-own-file.md).
   [@test] ../test/src/com/intellij/platform/settings/v2/SettingsFileLocalityTest.kt
 - The application layer must have no local locality. It has only the team and the environmental file.

@@ -45,6 +45,17 @@ file layer holds the settings of a directory and of each file in it, in one conf
 
 ### Layers and files
 
+This table maps each layer and locality to its file. The requirements below define the files. The
+[Layer Locality](layer-locality.spec.md) spec defines the localities.
+
+| Layer and context | Place | Team | Local | Environmental |
+| --- | --- | --- | --- | --- |
+| Application defaults | resource of the platform | `settings/app.settings.default.json`, read-only | none | none |
+| Application | the config `options` directory | `app.settings.json` | none | `app.settings.env.json` |
+| Project | `<basePath>/.jetbrains/` | `project.settings.json` | `project.settings.local.json` | `project.settings.env.json` |
+| File layer, a directory | the directory itself | `.jetbrains.json` | `.jetbrains.local.json` | `.jetbrains.env.json` |
+| File layer, a file | the configs of its directory, under `@@perfile` | `.jetbrains.json` | `.jetbrains.local.json` | `.jetbrains.env.json` |
+
 - The application defaults layer must be first and read-only, from the `settings/app.settings.default.json`
   resource of the platform. It offers no locality for a write at any context.
   See [ADR 0017](../adr/0017-a-context-dependent-default-is-a-factory-and-a-data-driven-default-is-a-layer.md).
