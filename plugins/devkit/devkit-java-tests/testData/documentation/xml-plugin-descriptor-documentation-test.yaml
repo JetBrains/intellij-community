@@ -309,11 +309,12 @@ elements:
                   #language=Markdown
                   experimentalNote: An experimental note for the attribute.
               - attribute:
-                  name: requiredExperimentalAttribute
+                  name: requiredExperimentalDeprecatedAttribute
                   #language=Markdown
-                  description: Description of `requiredExperimentalAttribute`.
+                  description: Description of `requiredExperimentalDeprecatedAttribute`.
                   requirement:
                     required: yes
+                  deprecatedSince: "2015.1"
             children:
               - element:
                   name: experimentalChildElement

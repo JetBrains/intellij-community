@@ -39,7 +39,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__first-level-child-1\"><code>&lt;first-level-child-1&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2\"><code>&lt;firstLevelChild2&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a> <i>deprecated</i></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithDeprecatedAttribute\"><code>&lt;elementWithDeprecatedAttribute&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithCallouts\"><code>&lt;elementWithCallouts&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithNotIncludedAttribute\"><code>&lt;elementWithNotIncludedAttribute&gt;</code></a></li>" +
@@ -205,6 +205,26 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<p>The <code>deprecatedElement</code> description." +
       "<h5>Requirement</h5>" +
       "<p>Required: no"
+    )
+  }
+
+  fun `test element with deprecated attributes`() {
+    doTestDocContains(
+      """
+        <root>
+          <elementWith<caret>DeprecatedAttribute/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;elementWithDeprecatedAttribute&gt;</code></b><hr/>\n" +
+      "The <code>elementWithDeprecatedAttribute</code> description." +
+      "<h5>Requirement</h5>" +
+      "<p>Required: no" +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithDeprecatedAttribute__deprecated-attribute\"><code>deprecated-attribute</code></a> <i>deprecated</i></li>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithDeprecatedAttribute__deprecated-attribute-without-note\"><code>deprecated-attribute-without-note</code></a> <i>deprecated</i></li>" +
+      "<li><a href=\"psi_element://#attribute:root__elementWithDeprecatedAttribute__new-attribute\"><code>new-attribute</code></a></li>" +
+      "</ul>"
     )
   }
 
@@ -396,7 +416,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<ul>" +
       "<li><a href=\"psi_element://#attribute:root__experimentalElement__inheritedExperimentalAttribute\"><code>inheritedExperimentalAttribute</code></a> <i>experimental</i></li>" +
       "<li><a href=\"psi_element://#attribute:root__experimentalElement__experimentalAttribute\"><code>experimentalAttribute</code></a> <i>experimental</i></li>" +
-      "<li><a href=\"psi_element://#attribute:root__experimentalElement__requiredExperimentalAttribute\"><code>requiredExperimentalAttribute</code></a> <i><b>required</b></i>; <i>experimental</i></li>" +
+      "<li><a href=\"psi_element://#attribute:root__experimentalElement__requiredExperimentalDeprecatedAttribute\"><code>requiredExperimentalDeprecatedAttribute</code></a> <i><b>required</b></i>; <i>experimental</i>; <i>deprecated</i></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
