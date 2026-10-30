@@ -48,7 +48,7 @@ internal class FontPreferencesSnapshot private constructor(
   override fun copyTo(preferences: FontPreferences) {
     // A subclass can override a setter, so only the exact class gets the snapshot in one write
     if (preferences.javaClass == FontPreferencesImpl::class.java) {
-      (preferences as FontPreferencesImpl).replaceSnapshot(withRealFontFamilySizesOnly())
+      (preferences as FontPreferencesImpl).updateSnapshot { withRealFontFamilySizesOnly() }
       return
     }
     if (preferences !is ModifiableFontPreferences) {

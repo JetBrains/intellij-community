@@ -154,7 +154,6 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
 
   @Override
   public void register(@NotNull @NonNls String fontFamily, float size) {
-    logSizeChangeIfNeeded(size);
     updateSnapshot(current -> current.withRegisteredFontFamily(fontFamily, size));
   }
 
@@ -235,26 +234,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
       changes.accept(this);
       return;
     }
-    while (true) {
-      var prev = mySnapshot;
-      var next = prev.withChanges(changes);
-      if (next == prev) {
-        return;
-      }
-      if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
-        logSizeChangeIfNeeded(prev, next);
-        notifyStateChanged();
-        return;
-      }
-    }
-  }
-
-  /**
-   * Replaces the snapshot in one write.
-   * Fires one event if the snapshot changes.
-   */
-  void replaceSnapshot(@NotNull FontPreferencesSnapshot replacement) {
-    updateSnapshot(_ -> replacement);
+    updateSnapshot(current -> current.withChanges(changes));
   }
 
   /**
@@ -298,8 +278,9 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   /**
    * Replaces the snapshot with the result of the operation, and fires one event if the snapshot changes.
    * The operation can run more than once, so it must have no side effects.
+   * It is the only write of the snapshot. {@link FontPreferencesSnapshot#copyTo} uses it too.
    */
-  private void updateSnapshot(@NotNull UnaryOperator<FontPreferencesSnapshot> operation) {
+  void updateSnapshot(@NotNull UnaryOperator<FontPreferencesSnapshot> operation) {
     while (true) {
       var prev = mySnapshot;
       var next = operation.apply(prev);
@@ -307,6 +288,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
         return;
       }
       if (SNAPSHOT_UPDATER.compareAndSet(this, prev, next)) {
+        logSizeChangeIfNeeded(prev, next);
         notifyStateChanged();
         return;
       }
