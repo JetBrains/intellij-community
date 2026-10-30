@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter
+import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent
+import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapParsingListener
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -26,6 +28,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.awt.Color
 import java.awt.Font
 import java.awt.FontMetrics
 
@@ -146,6 +149,32 @@ class SoftWrapHighlighterFontStyleTest {
     val expected = recalculatedSoftWrapOffsets()
     assertFalse(expected.isEmpty(), "The bold text must not fit in one line")
     assertEquals(expected, offsets, STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testColorChangeDoesNotWidenSoftWrapRecalculation(): Unit = fixture.runTest {
+    initBoldWidthText("ab\ncd\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    val document = editor.document
+    val textStart = document.getLineStartOffset(2)
+    val recalculationStarts = ArrayList<Int>()
+    (editor.softWrapModel as SoftWrapModelImpl).addSoftWrapParsingListener(object : SoftWrapParsingListener {
+      override fun onRegionReparseStart(event: IncrementalCacheUpdateEvent) {
+        recalculationStarts.add(event.startOffset)
+      }
+    })
+
+    // The inlay batch defers both changes, so the editor applies them together
+    editor.inlayModel.execute(true) {
+      addHighlighter(TextAttributes(Color.RED, null, null, null, Font.PLAIN))
+      addHighlighter(textStart, document.textLength, boldAttributes())
+    }
+
+    assertFalse(recalculationStarts.isEmpty(), "The bold highlighter must recalculate the soft wraps")
+    assertTrue(recalculationStarts.all { it >= textStart }) {
+      "Only the bold text needs new soft wraps, but the recalculations started at $recalculationStarts"
+    }
+    assertEquals(recalculatedSoftWrapOffsets(), softWrapOffsets(), STALE_SOFT_WRAPS)
   }
 
   @Test

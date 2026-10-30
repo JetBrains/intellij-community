@@ -1054,13 +1054,30 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int end = highlighter.getAffectedAreaEndOffset();
     queueErrorStipeRepaintRequest(start, end);
   }
+  /**
+   * The joined changes of the highlighters that the editor did not apply yet.
+   * A color change keeps the text widths, so the font style changes have their own range.
+   *
+   * @param fontStart the start of the font style changes, or {@link Integer#MAX_VALUE} when no font style changed
+   * @param fontEnd   the end of the font style changes, or {@link Integer#MIN_VALUE} when no font style changed
+   */
   private record HighlighterChange(int affectedStart,
                                    int affectedEnd,
+                                   int fontStart,
+                                   int fontEnd,
                                    boolean canImpactGutterSize,
-                                   boolean fontStyleChanged,
                                    boolean foregroundColorChanged,
                                    boolean isAccessibleGutterElement,
-                                   boolean needRestart) {}
+                                   boolean needRestart) {
+    boolean fontStyleChanged() {
+      return fontStart <= fontEnd;
+    }
+
+    @NotNull HighlighterChange withNeedRestart() {
+      return new HighlighterChange(affectedStart, affectedEnd, fontStart, fontEnd, canImpactGutterSize, foregroundColorChanged,
+                                   isAccessibleGutterElement, true);
+    }
+  }
   private final AtomicReference<HighlighterChange> myCompositeHighlighterChange = new AtomicReference<>();
   private void onHighlighterChanged(@NotNull RangeHighlighterEx highlighter,
                                     boolean canImpactGutterSize, boolean fontStyleChanged, boolean foregroundColorChanged) {
@@ -1068,16 +1085,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     int textLength = document.getTextLength();
     int hstart = MathUtil.clamp(highlighter.getAffectedAreaStartOffset(), 0, textLength);
     int hend = MathUtil.clamp(highlighter.getAffectedAreaEndOffset(), hstart, textLength);
+    int fontStart = fontStyleChanged ? hstart : Integer.MAX_VALUE;
+    int fontEnd = fontStyleChanged ? hend : Integer.MIN_VALUE;
     boolean isAccessibleGutterElement = AccessibleGutterLine.isAccessibleGutterElement(highlighter.getGutterIconRenderer());
-    HighlighterChange change = new HighlighterChange(hstart, hend, canImpactGutterSize, fontStyleChanged, foregroundColorChanged, isAccessibleGutterElement, false);
+    HighlighterChange change = new HighlighterChange(hstart, hend, fontStart, fontEnd, canImpactGutterSize, foregroundColorChanged,
+                                                     isAccessibleGutterElement, false);
     HighlighterChange oldChange = myCompositeHighlighterChange.getAndAccumulate(change, (change1, change2) -> {
       if (change1 == null) return change2;
       if (change2 == null) return change1;
       int start2 = MathUtil.clamp(Math.min(change1.affectedStart, change2.affectedStart), 0, textLength);
       int end2 = MathUtil.clamp(Math.max(change1.affectedEnd, change2.affectedEnd), 0, textLength);
       return new HighlighterChange(start2, end2,
+                                   Math.min(change1.fontStart(), change2.fontStart()),
+                                   Math.max(change1.fontEnd(), change2.fontEnd()),
                                    change1.canImpactGutterSize() || change2.canImpactGutterSize(),
-                                   change1.fontStyleChanged() || change2.fontStyleChanged(),
                                    change1.foregroundColorChanged() || change2.foregroundColorChanged(),
                                    change1.isAccessibleGutterElement() || change2.isAccessibleGutterElement(),
                                    change1.needRestart() || change2.needRestart());
@@ -1095,7 +1116,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void processHighlighterChange() {
     DocumentEx document = getElfDocument();
     if (isDisposed() || document.isInBulkUpdate() || myInlayModel.isInBatchMode() || myDocumentChangeInProgress) {
-      myCompositeHighlighterChange.getAndUpdate(old -> old == null ? null : new HighlighterChange(old.affectedStart(), old.affectedEnd(), old.canImpactGutterSize(), old.fontStyleChanged(), old.foregroundColorChanged(), old.isAccessibleGutterElement(), true));
+      myCompositeHighlighterChange.getAndUpdate(old -> old == null ? null : old.withNeedRestart());
       return; // will be repainted later
     }
 
@@ -1115,12 +1136,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     int startLine = document.getLineNumber(start);
     int endLine = document.getLineNumber(end);
-    boolean softWrapCountChanged = false;
     if (start != end && (newChange.fontStyleChanged() || newChange.foregroundColorChanged())) {
-      myView.invalidateRange(start, end, newChange.fontStyleChanged());
-      if (newChange.fontStyleChanged()) {
+      myView.invalidateRange(start, end, false);
+    }
+    boolean softWrapCountChanged = false;
+    if (newChange.fontStyleChanged()) {
+      int fontStart = MathUtil.clamp(newChange.fontStart(), 0, docTextLength);
+      int fontEnd = MathUtil.clamp(newChange.fontEnd(), fontStart, docTextLength);
+      if (fontStart != fontEnd) {
+        myView.invalidateRange(fontStart, fontEnd, true);
         int softWrapCount = mySoftWrapModel.getRegisteredSoftWraps().size();
-        mySoftWrapModel.onFontStyleChanged(start, end);
+        mySoftWrapModel.onFontStyleChanged(fontStart, fontEnd);
         softWrapCountChanged = mySoftWrapModel.getRegisteredSoftWraps().size() != softWrapCount;
       }
     }
