@@ -38,6 +38,13 @@ class CachedTreePresentationData(
   val presentation: CachedPresentationData,
   val extraAttributes: Map<String, String>?,
   val children: List<CachedTreePresentationData>,
+  /**
+   * `true` if the node was expanded.
+   *
+   * Only an expanded node has [children], but an expanded node can have none.
+   * For example, its children were never loaded, or it has no children at all.
+   */
+  val isExpanded: Boolean,
 ) {
   companion object {
     @JvmStatic fun createFromTree(tree: JTree): CachedTreePresentationData? {
@@ -57,14 +64,16 @@ class CachedTreePresentationData(
       val children = mutableListOf<CachedTreePresentationData>()
       val iconData = getIconData(presentation.icon)
       val isLeaf = model.isLeaf(node)
+      val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
+      val isExpanded = tree.isExpanded(nodePath)
       val result = CachedTreePresentationData(
         TreeState.PathElement(TreeState.calcId(node), TreeState.calcType(node), 0, null),
         CachedPresentationDataImpl(presentation.text, iconData, isLeaf),
         presentation.cacheableAttributes,
-        children
+        children,
+        isExpanded,
       )
-      val nodePath = if (parentPath == null) CachingTreePath(node) else parentPath.pathByAddingChild(node)
-      if (tree.isExpanded(nodePath)) {
+      if (isExpanded) {
         val childCount = model.getChildCount(node)
         for (i in 0 until childCount) {
           val child = model.getChild(node, i)
@@ -160,7 +169,7 @@ class CachedTreePresentationNode(
   val isLeaf: Boolean
     get() = data.presentation.isLeaf
 
-  var isExpanded: Boolean = data.children.isNotEmpty()
+  var isExpanded: Boolean = data.isExpanded
 
   init {
     update() // It's cheap, so we don't want to wait for a BGT update here.

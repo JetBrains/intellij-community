@@ -1004,6 +1004,18 @@ internal class DefaultTreeModelWithCachedPresentationTest {
       assertThat(expandedPaths()).containsExactly("root", "root/a", "root/a/a1", "root/b")
     }
 
+    @Test
+    fun `an expanded cached node without children stays expanded when the real node comes`() = runInEdtAndWait(false) {
+      createTree("root")
+      tree.cachedPresentation = cachedPresentationData("root", children = listOf(
+        cachedPresentationData("a", isExpanded = true),
+        cachedPresentationData("b"),
+      )).createTree()
+      assertThat(expandedPaths()).`as`("the cached nodes").containsExactly("root", "root/a")
+      loadChildren("root", "a", "b")
+      assertThat(expandedPaths()).`as`("the real nodes").containsExactly("root", "root/a")
+    }
+
     private fun createTree(initialState: String) {
       sut.setRoot(parse(initialState))
       tree = Tree(sut)
@@ -1034,11 +1046,13 @@ internal class DefaultTreeModelWithCachedPresentationTest {
     text: String,
     isLeaf: Boolean = false,
     children: List<CachedTreePresentationData> = emptyList(),
+    isExpanded: Boolean = children.isNotEmpty(),
   ): CachedTreePresentationData = CachedTreePresentationData(
     pathElement = DefaultCachedPathElement(DefaultTreeModelUserObject(text)),
     presentation = DefaultCachedPresentationData(text, isLeaf),
     extraAttributes = null,
     children = children,
+    isExpanded = isExpanded,
   )
 
   private fun applyPresentation(presentation: String) {
@@ -1318,6 +1332,7 @@ internal class DefaultTreeModelWithCachedPresentationTest {
       presentation = DefaultCachedPresentationData(userObject.text),
       extraAttributes = null,
       children = (0 until this.childCount).map { (getChildAt(it) as DefaultMutableTreeNode).toCachedPresentation() },
+      isExpanded = this.childCount > 0,
     )
   }
 

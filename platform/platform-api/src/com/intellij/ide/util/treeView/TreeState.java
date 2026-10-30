@@ -472,6 +472,7 @@ public final class TreeState implements JDOMExternalizable {
     PathElement item;
     CachedPresentationDataImpl data;
     Map<String, String> attributes;
+    @Nullable Boolean isExpanded;
 
     SerializableCachedPresentation() {
       item = new PathElement();
@@ -482,6 +483,7 @@ public final class TreeState implements JDOMExternalizable {
       this.item = (PathElement)data.getPathElement();
       this.data = (CachedPresentationDataImpl)data.getPresentation();
       this.attributes = data.getExtraAttributes();
+      this.isExpanded = data.isExpanded();
     }
 
     boolean isValid() {
@@ -518,12 +520,26 @@ public final class TreeState implements JDOMExternalizable {
       this.attributes = attributes;
     }
 
+    /**
+     * The state saved before this attribute existed doesn't have it, so it's {@code null} then.
+     */
+    @Attribute("isExpanded")
+    public @Nullable Boolean getExpanded() {
+      return isExpanded;
+    }
+
+    @Attribute("isExpanded")
+    public void setExpanded(@Nullable Boolean expanded) {
+      isExpanded = expanded;
+    }
+
     @Override
     public String toString() {
       return "SerializableCachedPresentation{" +
              "item=" + item +
              ", data=" + data +
              ", attributes=" + attributes +
+             ", isExpanded=" + isExpanded +
              '}';
     }
   }
@@ -690,14 +706,16 @@ public final class TreeState implements JDOMExternalizable {
     var presentationData = deserialized.getData();
     var attributes = deserialized.getAttributes();
     var children = new SmartList<CachedTreePresentationData>();
-    var data = new CachedTreePresentationData(item, presentationData, attributes, children);
     for (Element child : element.getChildren(PRESENTATION_TAG)) {
       readExternalPresentation(child, children);
     }
     if (!children.isEmpty()) { // Just in case isLeaf is incorrect in the XML.
       presentationData.setLeaf(false);
     }
-    result.add(data);
+    // The state saved before the attribute existed has the children only for the expanded nodes.
+    var savedExpanded = deserialized.getExpanded();
+    var isExpanded = savedExpanded != null ? savedExpanded : !children.isEmpty();
+    result.add(new CachedTreePresentationData(item, presentationData, attributes, children, isExpanded));
   }
 
   public static @NotNull TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
