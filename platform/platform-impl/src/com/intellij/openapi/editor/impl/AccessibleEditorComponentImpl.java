@@ -202,7 +202,13 @@ final class AccessibleEditorComponentImpl extends JComponent.AccessibleJComponen
       return null;
     }
     Point point = myAccessibleText.offsetToXY(offset);
+    Point nextPoint = myAccessibleText.offsetToXY(offset + 1);
     FontMetrics fontMetrics = editor.getFontMetrics(Font.PLAIN);
+    if (nextPoint.y == point.y && nextPoint.x != point.x) {
+      // The layout gives the width in the font of the character, for example a bold font or a fallback font
+      return new Rectangle(Math.min(point.x, nextPoint.x), point.y, Math.abs(nextPoint.x - point.x), fontMetrics.getHeight());
+    }
+    // The character is at a line end or before a soft wrap
     char c = myAccessibleText.getText(offset, offset + 1).charAt(0);
     return new Rectangle(point.x, point.y, fontMetrics.charWidth(c), fontMetrics.getHeight());
   }
