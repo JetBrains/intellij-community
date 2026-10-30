@@ -89,14 +89,14 @@ internal class LspImplicitReferenceProvider : ImplicitReferenceProvider {
     lspClient.descriptor.lspCustomization.hoverCustomizer is LspHoverSupport
 
   private fun requestElementDefinitions(lspClient: LspClientImpl, file: VirtualFile, offset: Int): List<LocationLink> {
-    if (!lspClient.supportsGotoDefinition()) return emptyList()
+    if (!lspClient.supportsGotoDefinition(file)) return emptyList()
     val goToDefCustomizer = lspClient.descriptor.lspCustomization.goToDefinitionCustomizer
     if (goToDefCustomizer !is LspGoToDefinitionSupport) return emptyList()
     return lspClient.requestExecutor.getElementDefinitions(file, offset)
   }
 
   private fun requestTypeDefinitions(lspClient: LspClientImpl, file: VirtualFile, offset: Int): List<LocationLink> {
-    if (!lspClient.supportsGotoTypeDefinition()) return emptyList()
+    if (!lspClient.supportsGotoTypeDefinition(file)) return emptyList()
     if (lspClient.descriptor.lspCustomization.goToTypeDefinitionCustomizer is LspGoToTypeDefinitionDisabled) return emptyList()
     return lspClient.requestExecutor.getTypeDefinitions(file, offset)
   }

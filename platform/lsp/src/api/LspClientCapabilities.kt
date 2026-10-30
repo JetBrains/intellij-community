@@ -128,9 +128,11 @@ internal fun createClientCapabilities(lspCustomization: LspCustomization): Clien
     documentHighlight = DocumentHighlightCapabilities(true)
     diagnostic = DiagnosticCapabilities(true)
     definition = DefinitionCapabilities().apply {
+      dynamicRegistration = true
       linkSupport = true
     }
     typeDefinition = TypeDefinitionCapabilities().apply {
+      dynamicRegistration = true
       linkSupport = true
     }
     implementation = ImplementationCapabilities().apply {

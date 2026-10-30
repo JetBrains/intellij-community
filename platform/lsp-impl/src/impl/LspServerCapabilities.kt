@@ -73,9 +73,13 @@ internal fun LspClientImpl.supportsCodeLensResolve(file: VirtualFile): Boolean =
   ?: serverCapabilities?.codeLensProvider?.resolveProvider
   ?: false
 
-internal fun LspClientImpl.supportsGotoDefinition(): Boolean = serverCapabilities?.definitionProvider?.let { it.left ?: true } == true
+internal fun LspClientImpl.supportsGotoDefinition(file: VirtualFile): Boolean =
+  serverCapabilities?.definitionProvider?.let { it.left ?: true } == true ||
+  hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.definition)
 
-internal fun LspClientImpl.supportsGotoTypeDefinition(): Boolean = serverCapabilities?.typeDefinitionProvider?.let { it.left ?: true } == true
+internal fun LspClientImpl.supportsGotoTypeDefinition(file: VirtualFile): Boolean =
+  serverCapabilities?.typeDefinitionProvider?.let { it.left ?: true } == true ||
+  hasDynamicCapabilityToHandleThisFile(file, LspDynamicCapabilities.typeDefinition)
 
 internal fun LspClientImpl.supportsGotoImplementation(file: VirtualFile): Boolean =
   serverCapabilities?.implementationProvider?.let { it.left ?: true }

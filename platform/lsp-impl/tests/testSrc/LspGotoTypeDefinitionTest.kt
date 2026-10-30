@@ -20,6 +20,9 @@ import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
+import org.eclipse.lsp4j.TypeDefinitionRegistrationOptions
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -51,11 +54,16 @@ internal class LspGotoTypeDefinitionTest {
 
   private val codeInsightFixture by codeInsightFixture(projectFixture, tempDirFixture)
 
-  private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture(
-    configureServerCapabilities = {
-      typeDefinitionProvider = Either.forLeft(true)
-    },
-  )
+  /**
+   * Each nested class declares its own fixture.
+   * [DynamicRegistration] needs a server without the static type definition capability.
+   */
+  private fun typeDefinitionIntegrationFixture() =
+    projectFixture.fakeLspIntegrationFixture(
+      configureServerCapabilities = {
+        typeDefinitionProvider = Either.forLeft(true)
+      },
+    )
 
   private fun FakeLspServerSession.expectTypeDefinition(fileUri: String, locationLinks: List<LocationLink>) =
     expectRequest(TYPE_DEFINITION, { it.textDocument.uri == fileUri && it.position == Position(0, OFFSET_IN_REFERENCE) }) {
@@ -67,6 +75,8 @@ internal class LspGotoTypeDefinitionTest {
 
   @Nested
   inner class GoToTypeDeclarationAction {
+    private val fakeLspIntegration by typeDefinitionIntegrationFixture()
+
     @Test
     fun `given type definition when go to type declaration is invoked then the caret moves to the type definition`() =
       timeoutRunBlocking {
@@ -101,6 +111,8 @@ internal class LspGotoTypeDefinitionTest {
 
   @Nested
   inner class CtrlShiftHover {
+    private val fakeLspIntegration by typeDefinitionIntegrationFixture()
+
     private suspend fun ctrlShiftHover(offset: Int): CtrlMouseData? = readAction {
       getCtrlMouseData(ACTION_GOTO_TYPE_DECLARATION, codeInsightFixture.editor, codeInsightFixture.file, offset)
     }
@@ -131,6 +143,45 @@ internal class LspGotoTypeDefinitionTest {
 
       serverSession.awaitExpected()
       assertNull(data, "Expected no Ctrl+Shift+hover data when the server reports no type definition")
+    }
+  }
+
+  @Nested
+  inner class DynamicRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+
+    @Test
+    fun `go to type declaration works with a dynamic registration only`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("type-definition", "textDocument/typeDefinition", TypeDefinitionRegistrationOptions())))
+      }
+      serverSession.expectTypeDefinition(fileUri, typeDefinitionInThisFile(fileUri))
+
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
+      }
+
+      serverSession.awaitExpected()
+      assertEquals(0, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
+
+    @Suppress("AssertBetweenInconvertibleTypes") // Qodana bug
+    @Test
+    fun `go to type declaration does not request a type definition without a dynamic registration`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+
+      // The action asks the server synchronously.
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.performEditorAction(ACTION_GOTO_TYPE_DECLARATION)
+      }
+
+      assertEquals(emptyList<Any>(), serverSession.receivedRequests(serverSession.TYPE_DEFINITION),
+                   "Expected no textDocument/typeDefinition without a registration")
+      assertEquals(OFFSET_IN_REFERENCE, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
     }
   }
 }

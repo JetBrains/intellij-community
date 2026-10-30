@@ -13,6 +13,7 @@ import com.intellij.platform.lsp.api.customization.LspHoverCustomizer
 import com.intellij.platform.lsp.api.customization.LspHoverDisabled
 import com.intellij.platform.lsp.common.FakeLspServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
+import com.intellij.platform.lsp.impl.supportsGotoDefinition
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -21,9 +22,13 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.eclipse.lsp4j.DefinitionRegistrationOptions
+import org.eclipse.lsp4j.DocumentFilter
 import org.eclipse.lsp4j.LocationLink
 import org.eclipse.lsp4j.Position
 import org.eclipse.lsp4j.Range
+import org.eclipse.lsp4j.Registration
+import org.eclipse.lsp4j.RegistrationParams
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -265,6 +270,51 @@ internal class LspGotoDefinitionTest {
 
       serverSession.awaitExpected()
       assertEquals(0, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
+  }
+
+  @Nested
+  inner class DynamicRegistration {
+    private val fakeLspIntegration by projectFixture.fakeLspIntegrationFixture()
+
+    @Test
+    fun `go to declaration works with a dynamic registration only`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val fileUri = serverSession.fileUri(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("definition", "textDocument/definition", DefinitionRegistrationOptions())))
+      }
+      serverSession.expectDefinition(fileUri, definitionInThisFile(fileUri))
+
+      withContext(Dispatchers.EDT) {
+        codeInsightFixture.performEditorAction(ACTION_GOTO_DECLARATION)
+      }
+
+      serverSession.awaitExpected()
+      assertEquals(0, withContext(Dispatchers.EDT) { codeInsightFixture.caretOffset })
+    }
+
+    @Test
+    fun `a registration matches only the files of its document selector`() = timeoutRunBlocking {
+      val virtualFile = codeInsightFixture.configureByText("test.txt", TEXT).virtualFile
+      val serverSession = fakeLspIntegration.serverSession(virtualFile)
+      val client = fakeLspIntegration.client
+
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("other-language", "textDocument/definition", DefinitionRegistrationOptions().apply {
+          documentSelector = listOf(DocumentFilter().apply { language = "otherLanguage" })
+        })))
+      }
+      assertFalse(client.supportsGotoDefinition(virtualFile), "the registration is for another language")
+
+      val languageId = client.descriptor.getLanguageId(virtualFile)
+      serverSession.sendRequest(serverSession.REGISTER_CAPABILITY) {
+        RegistrationParams(listOf(Registration("this-language", "textDocument/definition", DefinitionRegistrationOptions().apply {
+          documentSelector = listOf(DocumentFilter().apply { language = languageId })
+        })))
+      }
+      assertTrue(client.supportsGotoDefinition(virtualFile), "the registration is for the language of the file")
     }
   }
 }
