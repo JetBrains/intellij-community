@@ -10,7 +10,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorListener;
 import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
@@ -312,6 +311,23 @@ public final class SdkDownloadTracker {
     }
   }
 
+  private static final class ProgressIndicatorBridge extends RelayUiToDelegateIndicator {
+
+    private final @NotNull ProgressIndicator taskIndicator;
+    private final @NotNull ProgressIndicator sharedIndicator;
+
+    ProgressIndicatorBridge(@NotNull ProgressIndicator taskIndicator, @NotNull ProgressIndicator sharedIndicator) {
+      super(sharedIndicator);
+      this.taskIndicator = taskIndicator;
+      this.sharedIndicator = sharedIndicator;
+    }
+
+    @Override
+    public boolean isCanceled() {
+      return super.isCanceled() || taskIndicator.isCanceled() || sharedIndicator.isCanceled();
+    }
+  }
+
   private static class PendingDownload {
     final SdkDownloadTask myTask;
     final ProgressIndicatorBase myProgressIndicator = new ProgressIndicatorBase();
@@ -372,20 +388,14 @@ public final class SdkDownloadTracker {
       boolean failed = false;
       Job completionJob = null;
 
+      ProgressIndicator downloadIndicator = new ProgressIndicatorBridge(indicator, myProgressIndicator);
       try {
-        new ProgressIndicatorListener() {
-          @Override
-          public void cancelled() {
-            myProgressIndicator.cancel();
-          }
-        }.installToProgressIfPossible(indicator);
-
         ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(indicator);
 
         myProgressIndicator.addStateDelegate(relayToVisibleIndicator);
         try {
-          myProgressIndicator.checkCanceled();
-          myTask.doDownload(myProgressIndicator);
+          downloadIndicator.checkCanceled();
+          myTask.doDownload(downloadIndicator);
         }
         finally {
           myProgressIndicator.removeStateDelegate(relayToVisibleIndicator);
@@ -403,7 +413,7 @@ public final class SdkDownloadTracker {
       }
       catch (IOException e) {
         failed = true;
-        if (!myProgressIndicator.isCanceled()) {
+        if (!downloadIndicator.isCanceled()) {
           handleDownloadError(type, title, e);
         }
       }
