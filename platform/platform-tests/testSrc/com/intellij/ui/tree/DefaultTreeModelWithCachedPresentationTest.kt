@@ -13,6 +13,7 @@ import com.intellij.ide.util.treeView.PathElementIdProvider
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.runInEdtAndWait
+import com.intellij.ui.LoadingNode
 import com.intellij.ui.treeStructure.CachingTreePath
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
@@ -927,21 +928,45 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   @Test
   fun `cached nodes take the leaf state from the presentation`() {
     sut.setRoot(parse("root"))
-    val cp = cachedPresentationData("root", children = listOf(
-      cachedPresentationData("directory", isLeaf = false),
+    applyPresentation(cachedPresentationData("root", children = listOf(
+      cachedPresentationData("directory", isExpanded = true),
       cachedPresentationData("file", isLeaf = true),
-    )).createTree()
-    cps.applyAlreadyLoadedNodesTo(cp)
-    cps.cachedPresentation = cp
+    )).createTree())
     assertModel("""
       |root
       | *directory
       | *file
       """.trimMargin())
-    assertThat(sut.isLeaf(node("root/directory"))).`as`("a cached non-leaf without cached children").isFalse()
+    assertThat(sut.isLeaf(node("root/directory"))).`as`("an expanded cached non-leaf without cached children").isFalse()
     assertThat(sut.isLeaf(node("root/file"))).`as`("a cached leaf").isTrue()
     loadChildren("root", "directory", "file")
     assertThat(sut.isLeaf(node("root/directory"))).`as`("a real node without children").isTrue()
+  }
+
+  @Test
+  fun `a collapsed cached non-leaf gets a loading node`() {
+    sut.setRoot(parse("root"))
+    applyPresentation(cachedPresentationData("root", children = listOf(
+      cachedPresentationData("collapsed"),
+      cachedPresentationData("expanded", isExpanded = true),
+      cachedPresentationData("file", isLeaf = true),
+    )).createTree())
+    val loadedNodes = trackLoadedNodes()
+    assertModel("""
+      |root
+      | *collapsed
+      |  ...
+      | *expanded
+      | *file
+      """.trimMargin())
+    loadChildren("root", "collapsed", "expanded", "file")
+    assertModel("""
+      |root
+      | collapsed
+      | expanded
+      | file
+      """.trimMargin())
+    assertThat(loadedNodes()).`as`("loaded nodes, the loading node is not a cached node").isEqualTo(3)
   }
 
   @Nested
@@ -1056,7 +1081,10 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   )
 
   private fun applyPresentation(presentation: String) {
-    val cp = presentation(presentation)
+    applyPresentation(presentation(presentation))
+  }
+
+  private fun applyPresentation(cp: CachedTreePresentation) {
     cps.applyAlreadyLoadedNodesTo(cp)
     cps.cachedPresentation = cp
   }
@@ -1304,7 +1332,20 @@ internal class DefaultTreeModelWithCachedPresentationTest {
 
   private fun dump(node: DefaultMutableTreeNode, depth: Int, result: StringBuilder) {
     result.append(" ".repeat(depth))
-    val userObject = node.userObject
+    if (node is LoadingNode) {
+      result.append("...")
+    }
+    else {
+      dumpUserObject(node.userObject, result)
+    }
+    result.append("\n")
+    for (i in 0 until node.childCount) {
+      val child = node.getChildAt(i) as DefaultMutableTreeNode
+      dump(child, depth + 1, result)
+    }
+  }
+
+  private fun dumpUserObject(userObject: Any?, result: StringBuilder) {
     when (userObject) {
         is DefaultTreeModelUserObject -> {
           if (userObject.isCached) {
@@ -1318,18 +1359,13 @@ internal class DefaultTreeModelWithCachedPresentationTest {
       }
       else -> throw IllegalArgumentException("Unknown user object type: $userObject")
     }
-    result.append("\n")
-    for (i in 0 until node.childCount) {
-      val child = node.getChildAt(i) as DefaultMutableTreeNode
-      dump(child, depth + 1, result)
-    }
   }
 
   private fun DefaultMutableTreeNode.toCachedPresentation(): CachedTreePresentationData {
     val userObject = checkNotNull(myUserObject) { "Can only convert a real user object to a cached one, but got ${this.userObject}" }
     return CachedTreePresentationData(
       pathElement = DefaultCachedPathElement(userObject),
-      presentation = DefaultCachedPresentationData(userObject.text),
+      presentation = DefaultCachedPresentationData(userObject.text, isLeaf = this.childCount == 0),
       extraAttributes = null,
       children = (0 until this.childCount).map { (getChildAt(it) as DefaultMutableTreeNode).toCachedPresentation() },
       isExpanded = this.childCount > 0,
@@ -1424,7 +1460,7 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   }
 
   private fun deepCopy(node: DefaultMutableTreeNode): DefaultMutableTreeNode {
-    val result = DefaultMutableTreeNode(node.userObject)
+    val result = if (node is LoadingNode) LoadingNode() else DefaultMutableTreeNode(node.userObject)
     for (i in 0 until node.childCount) {
       result.insert(deepCopy(node.getChildAt(i) as DefaultMutableTreeNode), i)
     }
