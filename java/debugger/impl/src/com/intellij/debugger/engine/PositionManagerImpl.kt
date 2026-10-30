@@ -1,339 +1,285 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.debugger.engine;
+package com.intellij.debugger.engine
 
-import com.intellij.debugger.MultiRequestPositionManager;
-import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.PositionManager;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.impl.AlternativeJreClassFinder;
-import com.intellij.debugger.impl.DebuggerUtilsAsync;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType;
-import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.psi.JavaRecursiveElementVisitor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassOwner;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiCompiledFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EDT;
-import com.intellij.xdebugger.XDebuggerUtil;
-import com.sun.jdi.AbsentInformationException;
-import com.sun.jdi.Location;
-import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.request.ClassPrepareRequest;
-import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-import org.jetbrains.org.objectweb.asm.Opcodes;
+import com.intellij.debugger.MultiRequestPositionManager
+import com.intellij.debugger.NoDataException
+import com.intellij.debugger.PositionManager
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl.Companion.assertIsManagerThread
+import com.intellij.debugger.engine.LambdaOrdinalResolver.findLambdaOrdinal
+import com.intellij.debugger.engine.evaluation.EvaluateException
+import com.intellij.debugger.impl.AlternativeJreClassFinder
+import com.intellij.debugger.impl.DebuggerUtilsAsync
+import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl
+import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
+import com.intellij.ide.IdeBundle
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.registry.Registry.Companion.`is`
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.psi.JavaRecursiveElementVisitor
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiClassOwner
+import com.intellij.psi.PsiCodeBlock
+import com.intellij.psi.PsiCompiledElement
+import com.intellij.psi.PsiCompiledFile
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiLambdaExpression
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.impl.compiled.ClsClassImpl
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.PsiUtil
+import com.intellij.util.Processor
+import com.intellij.util.concurrency.annotations.RequiresReadLock
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.ui.EDT
+import com.intellij.xdebugger.XDebuggerUtil
+import com.sun.jdi.AbsentInformationException
+import com.sun.jdi.Location
+import com.sun.jdi.Method
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Unmodifiable
+import org.jetbrains.org.objectweb.asm.Opcodes
+import java.util.function.Consumer
+import kotlin.math.max
+import kotlin.math.min
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
+open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : PositionManager, MultiRequestPositionManager {
+  open fun getDebugProcess(): DebugProcess = myDebugProcess
 
-public class PositionManagerImpl implements PositionManager, MultiRequestPositionManager {
-  private static final Logger LOG = Logger.getInstance(PositionManagerImpl.class);
+  @get:JvmName("getDebugProcessForKotlin")
+  @get:JvmSynthetic
+  val debugProcess: DebugProcess
+    get() = getDebugProcess()
 
-  private final DebugProcessImpl myDebugProcess;
-
-  public PositionManagerImpl(DebugProcessImpl debugProcess) {
-    myDebugProcess = debugProcess;
-  }
-
-  public DebugProcess getDebugProcess() {
-    return myDebugProcess;
-  }
-
-  @Override
-  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
+  @Throws(NoDataException::class)
+  override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
     try {
-      return DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, position.getLine() + 1);
+      return DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, position.getLine() + 1)
     }
-    catch (AbsentInformationException ignored) {
+    catch (_: AbsentInformationException) {
     }
-    return Collections.emptyList();
+    return emptyList()
   }
 
-  @Override
-  public ClassPrepareRequest createPrepareRequest(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
-    throws NoDataException {
-    throw new IllegalStateException("This class implements MultiRequestPositionManager, corresponding createPrepareRequests version should be used");
+  @Throws(NoDataException::class)
+  override fun createPrepareRequest(requestor: ClassPrepareRequestor, position: SourcePosition): ClassPrepareRequest? {
+    throw IllegalStateException(
+      "This class implements MultiRequestPositionManager, corresponding createPrepareRequests version should be used"
+    )
   }
 
-  @Override
-  public @NotNull List<ClassPrepareRequest> createPrepareRequests(final @NotNull ClassPrepareRequestor requestor, final @NotNull SourcePosition position)
-    throws NoDataException {
-    return ReadAction.compute(() -> {
-      List<ClassPrepareRequest> res = new ArrayList<>();
-      for (PsiClass psiClass : getLineClasses(position.getFile(), position.getLine())) {
-        ClassPrepareRequestor prepareRequestor = requestor;
-        String classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass);
+  @Throws(NoDataException::class)
+  override fun createPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<ClassPrepareRequest> {
+    return ReadAction.computeBlocking<List<ClassPrepareRequest>, RuntimeException> {
+      val res = ArrayList<ClassPrepareRequest>()
+      for (psiClass in getLineClasses(position.getFile(), position.getLine())) {
+        var prepareRequestor = requestor
+        var classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass)
         if (classPattern == null) {
-          final PsiClass parent = JVMNameUtil.getTopLevelParentClass(psiClass);
+          val parent = JVMNameUtil.getTopLevelParentClass(psiClass)
           if (parent == null) {
-            continue;
+            continue
           }
-          final String parentQName = JVMNameUtil.getNonAnonymousClassName(parent);
+          val parentQName = JVMNameUtil.getNonAnonymousClassName(parent)
           if (parentQName == null) {
-            continue;
+            continue
           }
-          classPattern = parentQName + "*";
-          prepareRequestor = new ClassPrepareRequestor() {
-            @Override
-            public void processClassPrepare(DebugProcess debuggerProcess, ReferenceType referenceType) {
-              if (((DebugProcessImpl)debuggerProcess).getPositionManager().getAllClasses(position).contains(referenceType)) {
-                requestor.processClassPrepare(debuggerProcess, referenceType);
-              }
+          classPattern = "$parentQName*"
+          prepareRequestor = ClassPrepareRequestor { debuggerProcess, referenceType ->
+            if ((debuggerProcess as DebugProcessImpl).positionManager.getAllClasses(position).contains(referenceType)) {
+              requestor.processClassPrepare(debuggerProcess, referenceType)
             }
-          };
+          }
         }
-        ClassPrepareRequest request = myDebugProcess.getRequestsManager().createClassPrepareRequest(prepareRequestor, classPattern);
+        val request = myDebugProcess.requestsManager.createClassPrepareRequest(prepareRequestor, classPattern)
         if (request != null) {
-          res.add(request);
+          res.add(request)
         }
       }
-      return res;
-    });
+      res
+    }
   }
 
-  @Override
-  public @Nullable SourcePosition getSourcePosition(final Location location) throws NoDataException {
-    DebuggerManagerThreadImpl.assertIsManagerThread();
+  @Throws(NoDataException::class)
+  override fun getSourcePosition(location: Location?): SourcePosition? {
+    assertIsManagerThread()
     if (location == null) {
-      return null;
+      return null
     }
 
-    Project project = getDebugProcess().getProject();
-    PsiFile psiFile = getPsiFileByLocation(project, location);
+    val project = debugProcess.project
+    var psiFile = getPsiFileByLocation(project, location)
     if (psiFile == null) {
-      return null;
+      return null
     }
 
-    LOG.assertTrue(myDebugProcess != null);
+    val lineNumber = DebuggerUtilsEx.getLineNumber(location, true)
 
-    int lineNumber = DebuggerUtilsEx.getLineNumber(location, true);
-
-    String qName = location.declaringType().name();
+    val qName = location.declaringType().name()
 
     // replace file with alternative
-    String altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, project);
+    val altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, project)
     if (altFileUrl != null) {
-      VirtualFile altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl);
+      val altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl)
       if (altFile != null) {
-        PsiFile altPsiFile = psiFile.getManager().findFile(altFile);
+        val altPsiFile = psiFile.getManager().findFile(altFile)
         if (altPsiFile != null) {
-          psiFile = altPsiFile;
+          psiFile = altPsiFile
         }
       }
     }
 
-    SourcePosition sourcePosition = null;
+    var sourcePosition: SourcePosition? = null
     if (lineNumber > -1) {
-      sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber);
+      sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber)
     }
 
-    final Method method = DebuggerUtilsEx.getMethod(location);
+    val method = DebuggerUtilsEx.getMethod(location)
 
-    if (sourcePosition == null && (psiFile instanceof PsiCompiledElement || lineNumber < 0)) {
-      if (method != null && method.name() != null && method.signature() != null) {
-        PsiClass psiClass = findPsiClassByName(qName, null);
-        PsiMethod compiledMethod = findMethod(psiClass != null ? psiClass : psiFile, qName, method.name(), method.signature());
+    if (sourcePosition == null && (psiFile is PsiCompiledElement || lineNumber < 0)) {
+      if (method?.name() != null && method.signature() != null) {
+        val psiClass = findPsiClassByName(qName, null)
+        val compiledMethod = findMethod(psiClass ?: psiFile, qName, method.name(), method.signature())
         if (compiledMethod != null) {
-          sourcePosition = SourcePosition.createFromElement(compiledMethod);
-          if (lineNumber >= 0) {
-            sourcePosition = new ClsSourcePosition(sourcePosition, lineNumber);
+          sourcePosition = SourcePosition.createFromElement(compiledMethod)
+          if (sourcePosition != null && lineNumber >= 0) {
+            sourcePosition = ClsSourcePosition(sourcePosition, lineNumber)
           }
         }
       }
       else {
-        return SourcePosition.createFromLine(psiFile, -1);
+        return SourcePosition.createFromLine(psiFile, -1)
       }
     }
 
     if (sourcePosition == null) {
-      sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber);
+      sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber)
     }
 
-    int lambdaOrdinal = LambdaOrdinalResolver.findLambdaOrdinal(sourcePosition, method);
+    val lambdaOrdinal = findLambdaOrdinal(sourcePosition, method)
 
-    SourcePosition condRetPos = adjustPositionForConditionalReturn(location, psiFile, lineNumber);
+    val condRetPos: SourcePosition? = adjustPositionForConditionalReturn(location, psiFile, lineNumber)
     if (condRetPos != null) {
-      sourcePosition = condRetPos;
+      sourcePosition = condRetPos
     }
 
-    return new JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal);
+    return JavaSourcePosition(sourcePosition, location.declaringType(), method, lambdaOrdinal)
   }
 
-  @ApiStatus.Internal
-  public static @Nullable SourcePosition adjustPositionForConditionalReturn(Location location, PsiFile file, int lineNumber) {
-    if (location.virtualMachine().canGetBytecodes()) {
-      PsiElement ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber);
-      if (ret != null) {
-        byte[] bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes();
-        int bytecodeOffs = Math.toIntExact(location.codeIndex());
-        // Implicit return instruction at the end of bytecode should not be treated as conditional return.
-        // (Note that we also relay on the fact that all return instructions have no operands.)
-        if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.length - 1) {
-          int opcode = bytecodes[bytecodeOffs] & 0xFF;
-          if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
-            return ReadAction.compute(() -> SourcePosition.createFromOffset(file, ret.getTextOffset()));
-          }
-        }
+  open class JavaSourcePosition : RemappedSourcePosition {
+    private val myExpectedClassName: String?
+    private val myExpectedMethodName: String?
+    private val myLambdaOrdinal: Int
+
+    constructor(delegate: SourcePosition, declaringType: ReferenceType?, method: Method?, lambdaOrdinal: Int) : super(delegate) {
+      myExpectedClassName = declaringType?.name()
+      myExpectedMethodName = method?.name()
+      myLambdaOrdinal = lambdaOrdinal
+    }
+
+    constructor(delegate: SourcePosition, lambdaOrdinal: Int) : super(delegate) {
+      assert(lambdaOrdinal > -1)
+      myExpectedClassName = null
+      myExpectedMethodName = "lambda$" // fake lambda name
+      myLambdaOrdinal = lambdaOrdinal
+    }
+
+    private fun remapElement(element: PsiElement?): PsiElement? {
+      val name = JVMNameUtil.getClassVMName(PsiUtil.getContainingClass(element))
+      if (name != null && name != myExpectedClassName) {
+        return null
       }
-    }
-    return null;
-  }
-
-  public static class JavaSourcePosition extends RemappedSourcePosition {
-    private final String myExpectedClassName;
-    private final String myExpectedMethodName;
-    private final int myLambdaOrdinal;
-
-    public JavaSourcePosition(@NotNull SourcePosition delegate, ReferenceType declaringType, Method method, int lambdaOrdinal) {
-      super(delegate);
-      myExpectedClassName = declaringType != null ? declaringType.name() : null;
-      myExpectedMethodName = method != null ? method.name() : null;
-      myLambdaOrdinal = lambdaOrdinal;
-    }
-
-    public JavaSourcePosition(@NotNull SourcePosition delegate, int lambdaOrdinal) {
-      super(delegate);
-      assert lambdaOrdinal > -1;
-      myExpectedClassName = null;
-      myExpectedMethodName = "lambda$"; // fake lambda name
-      myLambdaOrdinal = lambdaOrdinal;
-    }
-
-    private PsiElement remapElement(PsiElement element) {
-      String name = JVMNameUtil.getClassVMName(PsiUtil.getContainingClass(element));
-      if (name != null && !name.equals(myExpectedClassName)) {
-        return null;
-      }
-      PsiElement method = DebuggerUtilsEx.getContainingMethod(element);
+      val method = DebuggerUtilsEx.getContainingMethod(element)
       if (!StringUtil.isEmpty(myExpectedMethodName)) {
         if (method == null) {
-          return null;
+          return null
         }
-        else if (((method instanceof PsiMethod psiMethod && myExpectedMethodName.equals(psiMethod.getName())) ||
-                  (method instanceof PsiLambdaExpression && DebuggerUtilsEx.isLambdaName(myExpectedMethodName))) &&
-                 insideBody(element, DebuggerUtilsEx.getBody(method))) {
-          return element;
+        else if (((method is PsiMethod && myExpectedMethodName == method.getName()) ||
+                  (method is PsiLambdaExpression && DebuggerUtilsEx.isLambdaName(myExpectedMethodName))) &&
+                 insideBody(element!!, DebuggerUtilsEx.getBody(method))
+        ) {
+          return element
         }
       }
-      return null;
+      return null
     }
 
-    private static boolean insideBody(@NotNull PsiElement element, @Nullable PsiElement body) {
-      if (!PsiTreeUtil.isAncestor(body, element, false)) return false;
-      if (body instanceof PsiCodeBlock block) {
-        return !element.equals(block.getRBrace()) && !element.equals(block.getLBrace());
-      }
-      return true;
-    }
+    override fun mapDelegate(original: SourcePosition): SourcePosition? {
+      return ReadAction.nonBlocking<SourcePosition?> {
+        val file = original.getFile()
+        val line = original.getLine()
 
-    @Override
-    public SourcePosition mapDelegate(final SourcePosition original) {
-      return ReadAction.nonBlocking(() -> {
-        PsiFile file = original.getFile();
-        int line = original.getLine();
-
-        Document document = file.getViewProvider().getDocument();
+        val document = file.getViewProvider().getDocument()
         if (document == null || line >= document.getLineCount()) {
-          return original;
+          return@nonBlocking original
         }
 
         if (DebuggerUtilsEx.isLambdaName(myExpectedMethodName) && myLambdaOrdinal > -1) {
-          List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(original, true);
+          val lambdas = DebuggerUtilsEx.collectLambdas(original, true)
 
-          if (myLambdaOrdinal < lambdas.size()) {
-            PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambdas.get(myLambdaOrdinal), document, line);
+          if (myLambdaOrdinal < lambdas.size) {
+            val firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambdas[myLambdaOrdinal], document, line)
             if (firstElem != null) {
-              return SourcePosition.createFromElement(firstElem);
+              return@nonBlocking createFromElement(firstElem)
             }
           }
         }
         else {
           // There may be more than one class/method code on the line, so we need to find out the correct place
-          Ref<SourcePosition> res = Ref.create();
-          XDebuggerUtil.getInstance().iterateLine(file.getProject(), document, line, elem -> {
-            PsiElement remappedElement = remapElement(elem);
+          val res = Ref.create<SourcePosition?>()
+          XDebuggerUtil.getInstance().iterateLine(file.project, document, line, Processor { elem: PsiElement? ->
+            val remappedElement = remapElement(elem)
             if (remappedElement != null) {
               if (remappedElement.getTextOffset() > original.getOffset()) {
-                res.set(SourcePosition.createFromElement(remappedElement));
+                res.set(createFromElement(remappedElement))
               }
-              return false;
+              return@Processor false
             }
-            return true;
-          });
-          if (!res.isNull()) {
-            return res.get();
+            true
+          })
+          if (!res.isNull) {
+            return@nonBlocking res.get()
           }
         }
-        return original;
-      }).executeSynchronously();
+        original
+      }.executeSynchronously()
     }
-  }
 
-  @RequiresReadLock
-  protected static Set<PsiClass> getLineClasses(final PsiFile file, int lineNumber) {
-    Document document = file.getViewProvider().getDocument();
-    Set<PsiClass> res = new HashSet<>();
-    if (document != null) {
-      XDebuggerUtil.getInstance().iterateLine(file.getProject(), document, lineNumber, element -> {
-        PsiClass aClass = PsiUtil.getContainingClass(element);
-        if (aClass != null) {
-          res.add(aClass);
+    companion object {
+      private fun insideBody(element: PsiElement, body: PsiElement?): Boolean {
+        if (!PsiTreeUtil.isAncestor(body, element, false)) return false
+        if (body is PsiCodeBlock) {
+          return element != body.getRBrace() && element != body.getLBrace()
         }
-        return true;
-      });
+        return true
+      }
     }
-    return res;
   }
 
-  protected @Nullable PsiFile getPsiFileByLocation(final Project project, final Location location) {
-    if (location == null) {
-      return null;
-    }
-    final ReferenceType refType = location.declaringType();
+  protected open fun getPsiFileByLocation(project: Project, location: Location): PsiFile? {
+    val refType = location.declaringType()
     if (refType == null) {
-      return null;
+      return null
     }
 
     // We should find a class no matter what
@@ -341,223 +287,201 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
     //if (DumbService.getInstance(project).isDumb()) {
     //  return null;
     //}
+    val originalQName = refType.name()
 
-    final String originalQName = refType.name();
+    val altSource = Ref<PsiFile?>()
+    val psiClass = findPsiClassByName(originalQName, Consumer { c: ClsClassImpl -> altSource.set(findAlternativeJreSourceFile(c)) })
 
-    Ref<PsiFile> altSource = new Ref<>();
-    PsiClass psiClass = findPsiClassByName(originalQName, c -> altSource.set(findAlternativeJreSourceFile(c)));
-
-    if (!altSource.isNull()) {
-      return altSource.get();
+    if (!altSource.isNull) {
+      return altSource.get()
     }
 
     if (psiClass != null) {
-      PsiElement element = psiClass.getNavigationElement();
+      var element = psiClass.getNavigationElement()
       // see IDEA-137167, prefer not compiled elements
-      if (element instanceof PsiCompiledElement) {
-        PsiElement fileElement = psiClass.getContainingFile().getNavigationElement();
-        if (!(fileElement instanceof PsiCompiledElement)) {
-          element = fileElement;
+      if (element is PsiCompiledElement) {
+        val fileElement = psiClass.getContainingFile().getNavigationElement()
+        if (fileElement !is PsiCompiledElement) {
+          element = fileElement
         }
       }
-      return element.getContainingFile();
+      return element.getContainingFile()
     }
     else {
       // try to search by filename
       try {
-        PsiFile[] files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project));
-        for (PsiFile file : files) {
-          if (file instanceof PsiJavaFile) {
-            for (PsiClass cls : PsiTreeUtil.findChildrenOfAnyType(file, PsiClass.class)) {
+        val files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project))
+        for (file in files) {
+          if (file is PsiJavaFile) {
+            for (cls in PsiTreeUtil.findChildrenOfAnyType<PsiClass?>(file, PsiClass::class.java)) {
               if (StringUtil.equals(originalQName, JVMNameUtil.getClassVMName(cls))) {
-                return file;
+                return file
               }
             }
           }
         }
       }
-      catch (AbsentInformationException ignore) {
+      catch (_: AbsentInformationException) {
       }
     }
 
-    return null;
+    return null
   }
 
-  private PsiClass findPsiClassByName(String originalQName, @Nullable Consumer<? super ClsClassImpl> altClsProcessor) {
-    PsiClass psiClass = null;
+  private fun findPsiClassByName(originalQName: String, altClsProcessor: Consumer<in ClsClassImpl>?): PsiClass? {
+    var psiClass: PsiClass? = null
     // first check alternative jre if any
-    Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
+    val alternativeJre = myDebugProcess.session.alternativeJre
     if (alternativeJre != null) {
-      GlobalSearchScope scope = AlternativeJreClassFinder.getSearchScope(alternativeJre);
-      psiClass = findClass(myDebugProcess.getProject(), originalQName, scope, false);
-      if (psiClass instanceof ClsClassImpl aClass && altClsProcessor != null) { //try to find sources
-        altClsProcessor.accept(aClass);
+      val scope = AlternativeJreClassFinder.getSearchScope(alternativeJre)
+      psiClass = findClass(myDebugProcess.project, originalQName, scope, false)
+      if (psiClass is ClsClassImpl && altClsProcessor != null) { //try to find sources
+        altClsProcessor.accept(psiClass)
       }
     }
 
     if (psiClass == null) {
-      psiClass = findClass(myDebugProcess.getProject(), originalQName, myDebugProcess.getSearchScope(), true);
+      psiClass = findClass(myDebugProcess.project, originalQName, myDebugProcess.searchScope, true)
     }
-    return psiClass;
+    return psiClass
   }
 
-  public static @Nullable PsiClass findClass(Project project, String originalQName, GlobalSearchScope searchScope, boolean fallbackToAllScope) {
-    PsiClass psiClass = DebuggerUtils.findClass(originalQName, project, searchScope, fallbackToAllScope); // try to lookup original name first
-    if (psiClass == null) {
-      int dollar = originalQName.indexOf('$');
-      if (dollar > 0) {
-        psiClass = DebuggerUtils.findClass(originalQName.substring(0, dollar), project, searchScope, fallbackToAllScope);
-      }
-    }
-    return psiClass;
-  }
-
-  private @Nullable PsiFile findAlternativeJreSourceFile(ClsClassImpl psiClass) {
-    String sourceFileName = psiClass.getSourceFileName();
-    String packageName = ((PsiClassOwner)psiClass.getContainingFile()).getPackageName();
-    String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
-    Sdk alternativeJre = myDebugProcess.getSession().getAlternativeJre();
+  private fun findAlternativeJreSourceFile(psiClass: ClsClassImpl): PsiFile? {
+    val sourceFileName = psiClass.getSourceFileName()
+    val packageName = (psiClass.getContainingFile() as PsiClassOwner).getPackageName()
+    val relativePath = if (packageName.isEmpty()) sourceFileName else packageName.replace('.', '/') + '/' + sourceFileName
+    val alternativeJre = myDebugProcess.session.alternativeJre
 
     if (alternativeJre != null) {
-      for (VirtualFile file : AlternativeJreClassFinder.getSourceRoots(alternativeJre)) {
-        VirtualFile source = file.findFileByRelativePath(relativePath);
+      for (file in AlternativeJreClassFinder.getSourceRoots(alternativeJre)) {
+        val source = file.findFileByRelativePath(relativePath)
         if (source != null && source.isValid()) {
-          PsiFile psiSource = psiClass.getManager().findFile(source);
-          if (psiSource instanceof PsiClassOwner) {
-            return psiSource;
+          val psiSource = psiClass.getManager().findFile(source)
+          if (psiSource is PsiClassOwner) {
+            return psiSource
           }
         }
       }
     }
-    return null;
+    return null
   }
 
-  @Override
-  public @NotNull @Unmodifiable List<ReferenceType> getAllClasses(final @NotNull SourcePosition position) throws NoDataException {
-    Set<PsiClass> lineClasses = ReadAction.compute(() -> getLineClasses(position.getFile(), position.getLine()));
-    return ContainerUtil.flatMap(lineClasses, aClass -> getClassReferences(aClass, position));
+  @Throws(NoDataException::class)
+  override fun getAllClasses(position: SourcePosition): @Unmodifiable List<ReferenceType> {
+    val lineClasses = ReadAction.computeBlocking<Set<PsiClass>, RuntimeException> { getLineClasses(position.getFile(), position.getLine()) }
+    return ContainerUtil.flatMap(lineClasses) { aClass -> getClassReferences(aClass, position) }
   }
 
-  private List<ReferenceType> getClassReferences(@NotNull PsiClass psiClass, SourcePosition position) {
-    record ClassInfo(boolean isLocalOrAnonymous, int requiredDepth, String className) {
-      @RequiresReadLock
-      static ClassInfo create(@NotNull PsiClass psiClass) {
-        boolean isLocalOrAnonymous = false;
-        int requiredDepth = 0;
-        String className = JVMNameUtil.getNonAnonymousClassName(psiClass);
-        if (className == null) {
-          isLocalOrAnonymous = true;
-          Pair<PsiClass, Integer> enclosing = getTopOrStaticEnclosingClass(psiClass);
-          PsiClass topLevelClass = enclosing.first;
-          if (topLevelClass != null) {
-            final String parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass);
-            if (parentClassName != null) {
-              requiredDepth = enclosing.second;
-              className = parentClassName;
-            }
-          }
-          else {
-            final StringBuilder sb = new StringBuilder();
-            PsiTreeUtil.treeWalkUp(psiClass, null, (element, element2) -> {
-              sb.append('\n').append(element);
-              return true;
-            });
-            LOG.info("Local or anonymous class " + psiClass + " has no non-local parent, parents:" + sb);
+  private fun getClassReferences(psiClass: PsiClass, position: SourcePosition?): List<ReferenceType> {
+    data class ClassInfo(val isLocalOrAnonymous: Boolean, val requiredDepth: Int, val className: String?)
+
+    @RequiresReadLock
+    fun createClassInfo(): ClassInfo {
+      var isLocalOrAnonymous = false
+      var requiredDepth = 0
+      var className = JVMNameUtil.getNonAnonymousClassName(psiClass)
+      if (className == null) {
+        isLocalOrAnonymous = true
+        val enclosing = getTopOrStaticEnclosingClass(psiClass)
+        val topLevelClass = enclosing.first
+        if (topLevelClass != null) {
+          val parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass)
+          if (parentClassName != null) {
+            requiredDepth = enclosing.second
+            className = parentClassName
           }
         }
-        return new ClassInfo(isLocalOrAnonymous, requiredDepth, className);
+        else {
+          val sb = StringBuilder()
+          PsiTreeUtil.treeWalkUp(psiClass, null) { element, _ ->
+            sb.append('\n').append(element)
+            true
+          }
+          LOG.info("Local or anonymous class $psiClass has no non-local parent, parents:$sb")
+        }
       }
-    }
-    ClassInfo classInfo = ReadAction.compute(() -> ClassInfo.create(psiClass));
-
-    if (classInfo.className == null) {
-      return Collections.emptyList();
+      return ClassInfo(isLocalOrAnonymous, requiredDepth, className)
     }
 
-    List<ReferenceType> matchingClasses = VirtualMachineProxyImpl.getCurrent().classesByName(classInfo.className);
-    if (!classInfo.isLocalOrAnonymous) {
-      return matchingClasses;
+    val (isLocalOrAnonymous, requiredDepth, className) = ReadAction.computeBlocking<ClassInfo, RuntimeException> { createClassInfo() }
+
+    if (className == null) {
+      return emptyList()
+    }
+
+    val matchingClasses = VirtualMachineProxyImpl.getCurrent().classesByName(className)
+    if (!isLocalOrAnonymous) {
+      return matchingClasses
+    }
+
+    if (position == null) {
+      return emptyList()
     }
 
     if (matchingClasses.isEmpty()) { // sometimes inner classes may be loaded before outer
-      return StreamEx.of(VirtualMachineProxyImpl.getCurrent().allClasses())
-        .filter(t -> t.name().startsWith(classInfo.className))
-        .map(outer -> findNested(outer, 0, psiClass, 0, position))
-        .nonNull()
-        .toList();
+      return VirtualMachineProxyImpl.getCurrent().allClasses().asSequence()
+        .filter { t -> t.name().startsWith(className) }
+        .mapNotNull { outer -> findNested(outer, 0, psiClass, 0, position) }
+        .toList()
     }
 
-    return StreamEx.of(matchingClasses)
-      .map(outer -> findNested(outer, 0, psiClass, classInfo.requiredDepth, position))
-      .nonNull()
-      .toList();
+    return matchingClasses.mapNotNull { outer -> findNested(outer, 0, psiClass, requiredDepth, position) }
   }
 
-  private static Pair<PsiClass, Integer> getTopOrStaticEnclosingClass(PsiClass aClass) {
-    int depth = 0;
-    PsiClass enclosing = PsiUtil.getContainingClass(aClass);
-    while (enclosing != null) {
-      depth++;
-      if (enclosing.hasModifierProperty(PsiModifier.STATIC)) {
-        break;
-      }
-      PsiClass next = PsiUtil.getContainingClass(enclosing);
-      if (next == null) {
-        break;
-      }
-      enclosing = next;
-    }
-    return Pair.create(enclosing, depth);
-  }
-
-  private @Nullable ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
-    final VirtualMachineProxyImpl vmProxy = VirtualMachineProxyImpl.getCurrent();
-    if (fromClass.isPrepared()) {
+  private fun findNested(
+    fromClass: ReferenceType,
+    currentDepth: Int,
+    classToFind: PsiClass,
+    requiredDepth: Int,
+    position: SourcePosition,
+  ): ReferenceType? {
+    val vmProxy = VirtualMachineProxyImpl.getCurrent()
+    if (fromClass.isPrepared) {
       // if the depth is still less than required - search nested classes recursively
       if (currentDepth < requiredDepth) {
-        final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
-        for (ReferenceType nested : nestedTypes) {
-          final ReferenceType found = findNested(nested, currentDepth + 1, classToFind, requiredDepth, position);
+        val nestedTypes = vmProxy.nestedTypes(fromClass)
+        for (nested in nestedTypes) {
+          val found = findNested(nested, currentDepth + 1, classToFind, requiredDepth, position)
           if (found != null) {
-            return found;
+            return found
           }
         }
-        return null;
+        return null
       }
 
       // reached the required depth - check if the position is contained within the fromClass locations
-      int rangeBegin = Integer.MAX_VALUE;
-      int rangeEnd = Integer.MIN_VALUE;
-      List<Location> locations = DebuggerUtilsEx.allLineLocations(fromClass);
+      var rangeBegin = Int.MAX_VALUE
+      var rangeEnd = Int.MIN_VALUE
+      val locations = DebuggerUtilsEx.allLineLocations(fromClass)
       if (locations != null) {
-        for (Location location : locations) {
-          final int lnumber = DebuggerUtilsEx.getLineNumber(location, false);
+        for (location in locations) {
+          val lnumber = DebuggerUtilsEx.getLineNumber(location, false)
           if (lnumber <= 1) {
             // should be a native method, skipping
             // sometimes compiler generates location where line number is exactly 1 (e.g. GWT)
             // such locations are hardly correspond to real lines in code, so skipping them too
-            continue;
+            continue
           }
-          final Method method = DebuggerUtilsEx.getMethod(location);
-          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge()) {
+          val method = DebuggerUtilsEx.getMethod(location)
+          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge) {
             // do not take into account synthetic stuff
-            continue;
+            continue
           }
-          int locationLine = lnumber - 1;
-          PsiFile psiFile = position.getFile().getOriginalFile();
-          if (psiFile instanceof PsiCompiledFile) {
-            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine);
-            if (locationLine < 0) continue;
+          var locationLine = lnumber - 1
+          val psiFile = position.getFile().getOriginalFile()
+          if (psiFile is PsiCompiledFile) {
+            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine)
+            if (locationLine < 0) continue
           }
-          rangeBegin = Math.min(rangeBegin, locationLine);
-          rangeEnd = Math.max(rangeEnd, locationLine);
+          rangeBegin = min(rangeBegin, locationLine)
+          rangeEnd = max(rangeEnd, locationLine)
         }
       }
 
-      final int positionLine = position.getLine();
-      if (positionLine >= rangeBegin && positionLine <= rangeEnd) {
-        int finalRangeEnd = rangeEnd;
-        Set<PsiClass> lineClasses = ReadAction.compute(() -> {
+      val positionLine = position.getLine()
+      if (positionLine in rangeBegin..rangeEnd) {
+        val finalRangeEnd = rangeEnd
+        val lineClasses = ReadAction.computeBlocking<Set<PsiClass>, RuntimeException> {
           // Now we use the last line to find the class, previously it was:
           // choose the second line to make sure that only this class' code exists on the line chosen
           // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
@@ -566,127 +490,189 @@ public class PositionManagerImpl implements PositionManager, MultiRequestPositio
           // list.add(new Runnable(){......
           // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
           if (!classToFind.isValid()) {
-            return Collections.emptySet();
+            return@computeBlocking emptySet()
           }
-          return getLineClasses(position.getFile(), finalRangeEnd);
-        });
-        if (lineClasses.contains(classToFind)) {
-          return fromClass;
+          getLineClasses(position.getFile(), finalRangeEnd)
         }
-        return null;
+        if (lineClasses.contains(classToFind)) {
+          return fromClass
+        }
+        return null
       }
     }
-    return null;
+    return null
   }
 
-  public @Nullable PsiMethod findMethod(PsiElement container, String className, String methodName, String methodSignature) {
-    MethodFinder finder = new MethodFinder(className, methodName, methodSignature);
-    container.accept(finder);
-    return finder.getCompiledMethod();
+  open fun findMethod(container: PsiElement, className: String?, methodName: String?, methodSignature: String?): PsiMethod? {
+    val finder = MethodFinder(className, methodName, methodSignature)
+    container.accept(finder)
+    return finder.compiledMethod
   }
 
   //don't use JavaRecursiveElementWalkingVisitor because getNextSibling() works slowly for compiled elements
-  private class MethodFinder extends JavaRecursiveElementVisitor {
-    private final String myClassName;
-    private PsiClass myCompiledClass;
-    private final String myMethodName;
-    private final String myMethodSignature;
-    private PsiMethod myCompiledMethod;
+  private inner class MethodFinder(
+    private val myClassName: String?,
+    private val myMethodName: String?,
+    private val myMethodSignature: String?,
+  ) : JavaRecursiveElementVisitor() {
+    private var myCompiledClass: PsiClass? = null
+    var compiledMethod: PsiMethod? = null
+      private set
 
-    MethodFinder(final String className, final String methodName, final String methodSignature) {
-      myClassName = className;
-      myMethodName = methodName;
-      myMethodSignature = methodSignature;
-    }
-
-    @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (myCompiledMethod == null) {
-        if (ContainerUtil.exists(getClassReferences(aClass, SourcePosition.createFromElement(aClass)),
-                                 referenceType -> referenceType.name().equals(myClassName))) {
-          myCompiledClass = aClass;
+    override fun visitClass(aClass: PsiClass) {
+      if (this.compiledMethod == null) {
+        if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).any { it.name() == myClassName }
+        ) {
+          myCompiledClass = aClass
         }
 
-        aClass.acceptChildren(this);
+        aClass.acceptChildren(this)
       }
     }
 
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      if (myCompiledMethod == null) {
+    override fun visitMethod(method: PsiMethod) {
+      if (this.compiledMethod == null) {
         try {
-          PsiClass containingClass = method.getContainingClass();
+          val containingClass = method.getContainingClass()
 
           if (containingClass != null &&
-              containingClass.equals(myCompiledClass) &&
-              JVMNameUtil.getJVMMethodName(method).equals(myMethodName) &&
-              checkSignature(method)) {
-            myCompiledMethod = method;
+              containingClass == myCompiledClass &&
+              JVMNameUtil.getJVMMethodName(method) == myMethodName &&
+              checkSignature(method)
+          ) {
+            this.compiledMethod = method
           }
         }
-        catch (EvaluateException e) {
-          LOG.debug(e);
+        catch (e: EvaluateException) {
+          LOG.debug(e)
         }
       }
     }
 
-    private boolean checkSignature(@NotNull PsiMethod method) throws EvaluateException {
+    @Throws(EvaluateException::class)
+    fun checkSignature(method: PsiMethod): Boolean {
       try {
-        return JVMNameUtil.getJVMSignature(method).getName(myDebugProcess).equals(myMethodSignature);
+        return JVMNameUtil.getJVMSignature(method).getName(myDebugProcess) == myMethodSignature
       }
-      catch (IndexNotReadyException e) {
-        return true; // fallback: do not care about the signature
-      }
-    }
-
-    @Override
-    public void visitElement(@NotNull PsiElement element) {
-      if (myCompiledMethod == null) {
-        super.visitElement(element);
+      catch (_: IndexNotReadyException) {
+        return true // fallback: do not care about the signature
       }
     }
 
-    public @Nullable PsiMethod getCompiledMethod() {
-      return myCompiledMethod;
+    override fun visitElement(element: PsiElement) {
+      if (this.compiledMethod == null) {
+        super.visitElement(element)
+      }
     }
   }
 
-  public static final class ClsSourcePosition extends RemappedSourcePosition {
-    private final int myOriginalLine;
+  class ClsSourcePosition(delegate: SourcePosition, private val myOriginalLine: Int) : RemappedSourcePosition(delegate) {
+    override fun mapDelegate(original: SourcePosition?): SourcePosition? {
+      val file = getFile()
+      if (myOriginalLine < 0 || !file.isValid()) return original
 
-    public ClsSourcePosition(SourcePosition delegate, int originalLine) {
-      super(delegate);
-      myOriginalLine = originalLine;
-    }
-
-    @Override
-    public SourcePosition mapDelegate(SourcePosition original) {
-      PsiFile file = getFile();
-      if (myOriginalLine < 0 || !file.isValid()) return original;
-
-      if (Registry.is("hyperlink.ide.decompiler.open.file") &&
-          EDT.isCurrentThreadEdt() &&
-          !ApplicationManager.getApplication().isWriteAccessAllowed() &&
-          BinaryFileTypeDecompilers.getInstance().hasDecompiler(file.getVirtualFile())) {
+      if (`is`("hyperlink.ide.decompiler.open.file") &&
+          EDT.isCurrentThreadEdt() && !ApplicationManager.getApplication().isWriteAccessAllowed() &&
+          BinaryFileTypeDecompilers.getInstance().hasDecompiler(file.getVirtualFile())
+      ) {
         ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(() ->
-                                                 ReadAction.computeCancellable(
-                                                   () -> file.getViewProvider().getDocument()),
-                                               IdeBundle.message("progress.title.preparing.navigation"), true, file.getProject());
+          .runProcessWithProgressSynchronously<Document?, RuntimeException>(
+            ThrowableComputable {
+              ReadAction.computeCancellable<Document?, RuntimeException> { file.viewProvider.document }
+            },
+            IdeBundle.message("progress.title.preparing.navigation"), true, file.project
+          )
       }
       else {
-        file.getViewProvider().getDocument(); // to ensure decompilation
+        file.getViewProvider().getDocument() // to ensure decompilation
       }
-      SourcePosition position = calcLineMappedSourcePosition(file, myOriginalLine);
-      return position != null ? position : original;
+      val position: SourcePosition? = calcLineMappedSourcePosition(file, myOriginalLine)
+      return position ?: original
     }
   }
 
-  private static @Nullable SourcePosition calcLineMappedSourcePosition(PsiFile psiFile, int originalLine) {
-    int line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine);
-    if (line > -1) {
-      return SourcePosition.createFromLine(psiFile, line);
+  companion object {
+    private val LOG = Logger.getInstance(PositionManagerImpl::class.java)
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun adjustPositionForConditionalReturn(location: Location, file: PsiFile, lineNumber: Int): SourcePosition? {
+      if (location.virtualMachine().canGetBytecodes()) {
+        val ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber)
+        if (ret != null) {
+          val bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes()
+          val bytecodeOffs = Math.toIntExact(location.codeIndex())
+          // Implicit return instruction at the end of bytecode should not be treated as conditional return.
+          // (Note that we also relay on the fact that all return instructions have no operands.)
+          if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.size - 1) {
+            val opcode = bytecodes[bytecodeOffs].toInt() and 0xFF
+            if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
+              return ReadAction.computeBlocking<SourcePosition?, RuntimeException> {
+                SourcePosition.createFromOffset(
+                  file,
+                  ret.getTextOffset()
+                )
+              }
+            }
+          }
+        }
+      }
+      return null
     }
-    return null;
+
+    @RequiresReadLock
+    @JvmStatic
+    protected fun getLineClasses(file: PsiFile, lineNumber: Int): MutableSet<PsiClass> {
+      val document = file.getViewProvider().getDocument()
+      val res = HashSet<PsiClass>()
+      if (document != null) {
+        XDebuggerUtil.getInstance().iterateLine(file.project, document, lineNumber, Processor { element: PsiElement? ->
+          val aClass = PsiUtil.getContainingClass(element)
+          if (aClass != null) {
+            res.add(aClass)
+          }
+          true
+        })
+      }
+      return res
+    }
+
+    @JvmStatic
+    fun findClass(project: Project, originalQName: String, searchScope: GlobalSearchScope, fallbackToAllScope: Boolean): PsiClass? {
+      var psiClass =
+        DebuggerUtils.findClass(originalQName, project, searchScope, fallbackToAllScope) // try to lookup original name first
+      if (psiClass == null) {
+        val dollar = originalQName.indexOf('$')
+        if (dollar > 0) {
+          psiClass = DebuggerUtils.findClass(originalQName.substring(0, dollar), project, searchScope, fallbackToAllScope)
+        }
+      }
+      return psiClass
+    }
+
+    private fun getTopOrStaticEnclosingClass(aClass: PsiClass): Pair<PsiClass?, Int> {
+      var depth = 0
+      var enclosing = PsiUtil.getContainingClass(aClass)
+      while (enclosing != null) {
+        depth++
+        if (enclosing.hasModifierProperty(PsiModifier.STATIC)) {
+          break
+        }
+        val next = PsiUtil.getContainingClass(enclosing)
+        if (next == null) {
+          break
+        }
+        enclosing = next
+      }
+      return Pair.create(enclosing, depth)
+    }
+
+    private fun calcLineMappedSourcePosition(psiFile: PsiFile, originalLine: Int): SourcePosition? {
+      val line = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, originalLine)
+      if (line > -1) {
+        return SourcePosition.createFromLine(psiFile, line)
+      }
+      return null
+    }
   }
 }
