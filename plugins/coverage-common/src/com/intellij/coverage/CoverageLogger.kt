@@ -19,11 +19,12 @@ private enum class Coverage {
   FULL, PARTIAL, NONE
 }
 
+private const val OTHER_COLUMN_NAME = "other"
 private val POSSIBLE_COLUMN_NAMES = listOf("Element", "Class, %", "Method, %", "Line, %", "Branch, %", "Statistics, %", "Line Coverage, %", "Branch Coverage, %")
 
 @ApiStatus.Internal
 object CoverageLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("coverage", 11)
+  private val GROUP = EventLogGroup("coverage", 12)
 
   private val runners = listOf("idea", "jacoco", "PhpCoverage", "utPlSqlCoverageRunner", "JestJavaScriptTestRunnerCoverage",
                                "rcov", "DartCoverageRunner", "WipCoverageRunner", "VitestJavaScriptTestRunnerCoverage",
@@ -32,7 +33,7 @@ object CoverageLogger : CounterUsagesCollector() {
                                "gcov/llvm", "llvm-cov", "gcov")
   private val RUNNER_NAME = EventFields.String("runner", runners)
   private val RUNNERS = EventFields.StringList("runners", runners)
-  private val COLUMN_NAME = EventFields.String("column_name", POSSIBLE_COLUMN_NAMES)
+  private val COLUMN_NAME = EventFields.String("column_name", POSSIBLE_COLUMN_NAMES + OTHER_COLUMN_NAME)
   private val START = GROUP.registerEvent("started", EventFields.Enum("runner", RunnerType::class.java),
                                           EventFields.Int("includes"), EventFields.Int("excludes"))
   private val REPORT_LOADING = GROUP.registerEvent("report.loaded", RUNNER_NAME, EventFields.DurationMs,
@@ -121,7 +122,7 @@ object CoverageLogger : CounterUsagesCollector() {
 
   @JvmStatic
   fun logColumnSortChanged(columnName: String, sortOrder: SortOrder) {
-    SORTING_CHANGED.log(columnName, sortOrder)
+    SORTING_CHANGED.log(normalizeColumnName(columnName), sortOrder)
   }
 
   @JvmStatic
@@ -137,7 +138,12 @@ object CoverageLogger : CounterUsagesCollector() {
   @JvmStatic
   fun logCoverageMetrics(project: Project, columnName: String, percent: Double?, total: Int?) {
     if (percent == null) return
-    METRICS_UPDATED.log(project, columnName, percent, if (total == null) -1 else StatisticsUtil.roundToPowerOfTwo(total))
+    METRICS_UPDATED.log(project, normalizeColumnName(columnName), percent, if (total == null) -1 else StatisticsUtil.roundToPowerOfTwo(total))
+  }
+
+  private fun normalizeColumnName(columnName: String): String {
+    // TODO: If "other" becomes common, use column IDs that do not depend on the UI language.
+    return if (columnName in POSSIBLE_COLUMN_NAMES) columnName else OTHER_COLUMN_NAME
   }
 
   private fun roundClasses(classes: Int) = StatisticsUtil.roundToPowerOfTwo(classes)
