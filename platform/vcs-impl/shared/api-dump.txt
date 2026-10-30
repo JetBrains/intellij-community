@@ -715,7 +715,6 @@ f:com.intellij.platform.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 - <init>(com.intellij.platform.vcs.impl.shared.changes.DiffPreviewUpdateProcessor,java.lang.String):V
 - closePreview():V
 - openPreview(Z):Z
-- f:updatePreview(Z):V
 f:com.intellij.platform.vcs.impl.shared.commit.EditedCommitNodeKt
 - sf:insertEditedCommitNode(com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder,com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation):V
 com.intellij.platform.vcs.impl.shared.commit.EditedCommitPresentation
