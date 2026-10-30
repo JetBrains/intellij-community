@@ -11,8 +11,8 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.buildNsUnawareJdomAndClose
@@ -114,7 +114,7 @@ abstract class XmlElementStorage protected constructor(
     }
     catch (e: CancellationException) {
       // the caller of the read is canceled, so the storage must not keep the empty data
-      Cancellation.ensureActive()
+      ProgressManager.checkCanceled()
       LOG.error("Cannot load data for $fileSpec", RuntimeException(e))
     }
     catch (e: Throwable) {

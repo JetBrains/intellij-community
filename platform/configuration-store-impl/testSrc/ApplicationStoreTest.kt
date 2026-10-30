@@ -19,7 +19,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.util.registry.Registry
@@ -415,6 +418,49 @@ class ApplicationStoreTest {
     }
     finally {
       storageManager.removeStreamProvider(SlowStreamProvider::class.java)
+    }
+  }
+
+  @Test
+  fun `cancellation of the progress indicator of the caller cancels the read of the service state`() = runBlocking<Unit>(Dispatchers.Default) {
+    val app = ApplicationManager.getApplication()
+    val storageManager = app.stateStore.storageManager
+    val streamProvider = IndicatorCancelingStreamProvider(
+      fileSpec = INDICATOR_CANCELED_READ_FILE_SPEC,
+      data = """<application><component name="IndicatorCanceledReadService" foo="stored"/></application>""",
+    )
+    storageManager.addStreamProvider(streamProvider)
+    val loggedErrors = CopyOnWriteArrayList<String>()
+    val errorProcessor = object : LoggedErrorProcessor() {
+      override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
+        loggedErrors.add("$message: $t")
+        return Action.NONE
+      }
+    }
+    try {
+      val indicator = EmptyProgressIndicator()
+      streamProvider.indicatorToCancel = indicator
+      var error: Throwable? = null
+      LoggedErrorProcessor.executeWith(errorProcessor).use {
+        try {
+          ProgressManager.getInstance().runProcess({ app.service<IndicatorCanceledReadService>() }, indicator)
+        }
+        catch (e: Throwable) {
+          error = e
+        }
+      }
+      // the caller is canceled through the indicator, so the read must stop with the cancellation, not with an error
+      assertThat(error).isInstanceOf(ProcessCanceledException::class.java)
+      assertThat(loggedErrors).isEmpty()
+      assertThat(app.serviceIfCreated<IndicatorCanceledReadService>()).isNull()
+
+      // the canceled read must not keep an empty state for the storage
+      streamProvider.indicatorToCancel = null
+      assertThat(app.service<IndicatorCanceledReadService>().state).isEqualTo(TestState("stored"))
+      assertThat(streamProvider.readCount.get()).isEqualTo(2)
+    }
+    finally {
+      storageManager.removeStreamProvider(IndicatorCancelingStreamProvider::class.java)
     }
   }
 
@@ -870,6 +916,50 @@ class ApplicationStoreTest {
   }
 
   /**
+   * Serves [fileSpec] like a remote storage that checks the progress indicator of the caller.
+   * While [indicatorToCancel] is not `null`, a read of [fileSpec] cancels it and checks the cancellation.
+   */
+  private class IndicatorCancelingStreamProvider(private val fileSpec: String, private val data: String) : StreamProvider {
+    val readCount: AtomicInteger = AtomicInteger()
+
+    @Volatile
+    var indicatorToCancel: ProgressIndicator? = null
+
+    override val isExclusive: Boolean = false
+
+    override fun isApplicable(fileSpec: String, roamingType: RoamingType): Boolean = fileSpec == this.fileSpec
+
+    override fun write(fileSpec: String, content: ByteArray, roamingType: RoamingType) {
+    }
+
+    override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {
+      if (fileSpec != this.fileSpec) {
+        return false
+      }
+      readCount.incrementAndGet()
+
+      val indicator = indicatorToCancel
+      if (indicator != null) {
+        indicator.cancel()
+        ProgressManager.checkCanceled()
+        throw AssertionError("The read of $fileSpec is not canceled")
+      }
+
+      consumer(ByteArrayInputStream(data.toByteArray()))
+      return true
+    }
+
+    override fun processChildren(
+      path: String,
+      roamingType: RoamingType,
+      filter: (String) -> Boolean,
+      processor: (String, InputStream, Boolean) -> Boolean,
+    ): Boolean = false
+
+    override fun delete(fileSpec: String, roamingType: RoamingType): Boolean = false
+  }
+
+  /**
    * Throws [error] on each read of [fileSpec].
    */
   private class ThrowingStreamProvider(private val fileSpec: String, private val error: Throwable) : StreamProvider {
@@ -1052,6 +1142,18 @@ class ApplicationStoreTest {
   }
 
   @Service
+  @State(name = "IndicatorCanceledReadService", storages = [Storage(INDICATOR_CANCELED_READ_FILE_SPEC)], allowLoadInTests = true)
+  private class IndicatorCanceledReadService : PersistentStateComponent<TestState> {
+    private var state = TestState()
+
+    override fun getState(): TestState = state
+
+    override fun loadState(state: TestState) {
+      this.state = state
+    }
+  }
+
+  @Service
   @State(name = "BrokenReadService", storages = [Storage(BROKEN_READ_FILE_SPEC)], allowLoadInTests = true)
   private class BrokenReadService : PersistentStateComponent<TestState> {
     private var state = TestState()
@@ -1074,6 +1176,7 @@ class ApplicationStoreTest {
 
 private const val SLOW_READ_FILE_SPEC = "slow-read.xml"
 private const val BROKEN_READ_FILE_SPEC = "broken-read.xml"
+private const val INDICATOR_CANCELED_READ_FILE_SPEC = "indicator-canceled-read.xml"
 private const val PRELOADED_FILE_SPEC = "preloaded.xml"
 private const val NOT_PRELOADED_FILE_SPEC = "not-preloaded.xml"
 
