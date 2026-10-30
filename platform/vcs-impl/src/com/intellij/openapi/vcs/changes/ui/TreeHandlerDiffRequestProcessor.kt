@@ -156,8 +156,7 @@ open class TreeHandlerChangesTreeTracker(
     if (updateWhileShown) {
       DiffUtil.installShowNotifyListener(editorViewer.component, object : Activatable {
         override fun showNotify() {
-          updatePreview(UpdateType.FULL)
-          updatePreviewQueue.cancelPending()
+          updatePreviewLater(UpdateType.FULL)
         }
 
         override fun hideNotify() {
@@ -166,7 +165,7 @@ open class TreeHandlerChangesTreeTracker(
       })
     }
     else {
-      updatePreview(UpdateType.FULL)
+      updatePreviewLater(UpdateType.FULL)
     }
   }
 
@@ -184,6 +183,7 @@ open class TreeHandlerChangesTreeTracker(
     }
   }
 
+  // diff may need the platform locks, keep the calling dispatcher in mind
   private fun refreshPreview(updateType: UpdateType) {
     if (editorViewer.disposable.isDisposed) return
     when (editorViewer) {
