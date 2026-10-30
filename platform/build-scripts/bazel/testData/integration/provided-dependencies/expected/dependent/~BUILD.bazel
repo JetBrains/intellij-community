@@ -1,0 +1,28 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.module.dependent` start
+jvm_library(
+    name = "dependent",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.module.dependent",
+    visibility = ["//visibility:public"],
+    deps = ["//module"],
+)
+### auto-generated section `build intellij.module.dependent` end
+
+### auto-generated section `iml intellij.module.dependent` start
+exports_files(
+    [
+        "intellij.module.dependent.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.module.dependent` end

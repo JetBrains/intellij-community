@@ -1,0 +1,37 @@
+load("@rules_java//java:defs.bzl", "java_import", "java_library")
+
+### auto-generated section `local-libs` start
+java_import(
+    name = "module-first",
+    jars = ["first.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "module-first-provided",
+    neverlink = True,
+    visibility = ["//visibility:public"],
+    exports = [":module-first"],
+)
+
+java_import(
+    name = "module-second",
+    jars = ["second.jar"],
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "module-second-provided",
+    neverlink = True,
+    visibility = ["//visibility:public"],
+    exports = [":module-second"],
+)
+
+exports_files(
+    [
+        "first.jar",
+        "second.jar",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `local-libs` end

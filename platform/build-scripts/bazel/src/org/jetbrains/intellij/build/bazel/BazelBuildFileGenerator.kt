@@ -778,8 +778,8 @@ internal class BazelBuildFileGenerator(
     load("@rules_jvm//:jvm.bzl", "jvm_library")
 
     if (deps != null && deps.provided.isNotEmpty()) {
-      val extraDeps = generateProvidedLibs(deps.provided)
-      deps = deps.copy(deps = deps.deps + extraDeps)
+      val wrappedProvidedLibs = generateProvidedLibs(deps.provided)
+      deps = deps.copy(deps = deps.deps + wrappedProvidedLibs.values, exports = deps.exports.map { export -> wrappedProvidedLibs.get(export) ?: export })
     }
 
     val mustGenerateFleetPluginServicesResources = moduleDescriptor.isFleetModule() && hasRhizomeDbOrPluginDependency(moduleList, moduleDescriptor)
@@ -1049,20 +1049,18 @@ internal class BazelBuildFileGenerator(
     return glob(sources.flatMap { it.glob }, exclude = sources.flatMap { it.excludes })
   }
 
-  private fun BuildFile.generateProvidedLibs(providedLibs: List<BazelLabel>): List<BazelLabel> {
+  private fun BuildFile.generateProvidedLibs(providedLibs: List<BazelLabel>): Map<BazelLabel, BazelLabel> {
     load("@rules_jvm//:jvm.bzl", "jvm_provided_library")
 
-    val extraDeps = mutableListOf<BazelLabel>()
     val labelToName = getUniqueSegmentName(providedLibs.map { it.label })
-    for (label in providedLibs) {
+    return providedLibs.associateWith { label ->
       val name = labelToName.get(label.label) + "_provided"
-      extraDeps.add(BazelLabel(":$name", null))
       target("jvm_provided_library") {
         option("name", name)
         option("lib", label)
       }
+      BazelLabel(":$name", null)
     }
-    return extraDeps
   }
 
   private data class ResourcesInfo(

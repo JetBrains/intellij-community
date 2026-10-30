@@ -1,0 +1,49 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library", "jvm_provided_library")
+
+### auto-generated section `build intellij.module` start
+jvm_provided_library(
+    name = "provided_provided",
+    lib = "//provided",
+)
+
+jvm_provided_library(
+    name = "exported_provided",
+    lib = "//exported",
+)
+
+jvm_library(
+    name = "module",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = "@community//:k21",
+    module_name = "intellij.module",
+    visibility = ["//visibility:public"],
+    exports = [
+        # do not sort,
+        ":exported_provided",
+        "//libs:module-second-provided",
+    ],
+    deps = [
+        # do not sort,
+        "//libs:module-first-provided",
+        "//libs:module-second-provided",
+        ":provided_provided",
+        ":exported_provided",
+    ],
+)
+### auto-generated section `build intellij.module` end
+
+### auto-generated section `iml intellij.module` start
+exports_files(
+    [
+        "intellij.module.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.module` end

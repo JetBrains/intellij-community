@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/dependent/intellij.module.dependent.iml" filepath="$PROJECT_DIR$/dependent/intellij.module.dependent.iml" />
+      <module fileurl="file://$PROJECT_DIR$/exported/intellij.module.exported.iml" filepath="$PROJECT_DIR$/exported/intellij.module.exported.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module/intellij.module.iml" filepath="$PROJECT_DIR$/module/intellij.module.iml" />
+      <module fileurl="file://$PROJECT_DIR$/module-tests/intellij.module.tests.iml" filepath="$PROJECT_DIR$/module-tests/intellij.module.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/provided/intellij.module.provided.iml" filepath="$PROJECT_DIR$/provided/intellij.module.provided.iml" />
+    </modules>
+  </component>
+</project>

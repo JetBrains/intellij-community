@@ -22,7 +22,7 @@ jvm_library(
         ["resources/**/*"],
     ),
     visibility = ["//visibility:public"],
-    exports = ["//libraries/mcp-kotlin-sdk"],
+    exports = [":libraries_mcp-kotlin-sdk_provided"],
     deps = [
         # do not sort,
         "//libraries/jetbrains/annotations",
