@@ -11,6 +11,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
+import com.intellij.platform.bazel.runfiles.BazelRunfiles;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
@@ -120,6 +121,12 @@ public final class MavenDependencyUtil {
 
   public static @NotNull List<RemoteRepositoryDescription> getRemoteRepositoryDescriptions() {
     String repoForTesting = System.getProperty("maven.repo.for.testing");
+    if (repoForTesting == null) {
+      String bazelRepository = System.getProperty("maven.repo.for.testing.runfiles");
+      if (bazelRepository != null) {
+        repoForTesting = BazelRunfiles.resolveRunfilePath(bazelRepository).toUri().toString();
+      }
+    }
     if (repoForTesting != null) {
       return List.of(new RemoteRepositoryDescription(
         "intellij-dependencies",

@@ -38,6 +38,7 @@ jvm_library(
         "//java/java-syntax:syntax",
         "//java/java-frontback-psi-api:frontback-psi",
         "//platform/editor-ui-api:editor-ui",
+        "//platform/bazel-runfiles",
     ],
 )
 ### auto-generated section `build intellij.java.testFramework.shared` end
