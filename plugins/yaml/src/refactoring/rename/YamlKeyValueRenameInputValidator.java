@@ -19,15 +19,17 @@ public final class YamlKeyValueRenameInputValidator implements RenameInputValida
                                                          "|([?:-][^\\n\\t\\r ])" +
                                                          ")";
 
-  private static final String IDENTIFIER_END_PATTERN = "(([^\\n\\t\\r ]#)" +
-                                                       "|([^\\n\\t\\r :#])" +
+  // The loop in IDENTIFIER_PATTERN is possessive, so a long name causes no StackOverflowError.
+  // A possessive loop does not backtrack, so each alternative must start with a different character.
+  private static final String IDENTIFIER_END_PATTERN = "(([^\\n\\t\\r :#]#*)" +
                                                        "|(:[^\\n\\t\\r ])" +
+                                                       "|(##)" +
                                                        ")";
 
   // Taken from yaml.flex, NS_PLAIN_ONE_LINE_block. This may not be entirely correct, but it is less restrictive than the default names
   // validator
   public static final Pattern IDENTIFIER_PATTERN = Pattern.compile(
-    "(" + IDENTIFIER_START_PATTERN + "([ \t]*" + IDENTIFIER_END_PATTERN + ")*)|" +
+    "(" + IDENTIFIER_START_PATTERN + "([ \t]*" + IDENTIFIER_END_PATTERN + ")*+)|" +
     "('[^\\n']*')|(\"[^\\n\"]*\")"
   );
 

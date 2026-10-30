@@ -149,6 +149,22 @@ public class YAMLKeyPasteTest extends BasePlatformTestCase {
     }
   }
 
+  public void testPasteLongKeySequenceAtEOF() {
+    var longKey = "1".repeat(100_000);
+    myFixture.configureByText("test.yml", "top:\n  first: value1\n<caret>");
+    CopyPasteManager.getInstance().setContents(new StringSelection("1." + longKey));
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    myFixture.checkResult("top:\n  first: value1\n1:\n  " + longKey + ":<caret>");
+  }
+
+  public void testPasteLongKeySequenceIntoQuotedValue() {
+    var pasteText = "1." + "1".repeat(100_000);
+    myFixture.configureByText("test.yml", "key: \"<caret>\"");
+    CopyPasteManager.getInstance().setContents(new StringSelection(pasteText));
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_PASTE);
+    myFixture.checkResult("key: \"" + pasteText + "<caret>\"");
+  }
+
   private void doTest(@NotNull String pasteText) {
     doTest(pasteText, null);
   }

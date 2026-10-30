@@ -48,6 +48,16 @@ public final class YamlKeyValueRenameInputValidatorTest extends BasePlatformTest
     doValidTest("-name");
     doValidTest("name#");
     doValidTest("name:with:colons");
+    doValidTest("name##");
+    doValidTest("name###");
+    doValidTest("na##me");
+  }
+
+  public void testLongNames() {
+    var longName = "1".repeat(100_000);
+    doValidTest(longName);
+    doValidTest("name ".repeat(20_000) + "name");
+    doInvalidTest(longName + " ");
   }
 
   private void doInvalidTest(@NotNull final String name) {
