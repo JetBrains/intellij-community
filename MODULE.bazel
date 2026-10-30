@@ -252,12 +252,12 @@ bazel_dep(name = "rules_go", version = "0.63.0")
 # Rust, for the dev-distribution tools in //build/dev-dist-tools. rules_rs supplies the Rust toolchains and the
 # `@rules_rust` facade. The ultimate root declares the same `bazel_dep`, override and toolchain tag.
 # `BazelProjectStructureTest` requires identical dependencies, overrides and patch files in both roots.
-bazel_dep(name = "rules_rs", version = "0.2.0")
+bazel_dep(name = "rules_rs", version = "0.2.1")
 single_version_override(
     module_name = "rules_rs",
     patch_strip = 1,
     patches = [
-        "//:build/rules_rs-0.2.0-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream, with rules_rust-bootstrap-toolchain-type.patch
+        "//:build/rules_rs-0.2.1-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream, with rules_rust-bootstrap-toolchain-type.patch
     ],
 )
 
@@ -273,7 +273,7 @@ rules_rust.patch(
         # transitions manually everywhere or with a wrapper or child rule
         "//:build/rules_rust-msvc-crt-transition.patch",
         # A toolchain type selects the bootstrap Rust toolchain, so the process wrapper keeps the configuration of the
-        # cc toolchain and compiler-rt. It needs rules_rs-0.2.0-bootstrap-toolchain-type.patch.
+        # cc toolchain and compiler-rt. It needs rules_rs-0.2.1-bootstrap-toolchain-type.patch.
         "//:build/rules_rust-bootstrap-toolchain-type.patch",  # TODO: remove that once merged to upstream
     ],
     strip = 1,
