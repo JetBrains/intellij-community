@@ -570,7 +570,7 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
 
   /**
    * Called when the widths of the text can change in the whole document.
-   * The editor highlighter or the colors scheme changed.
+   * The editor highlighter, the colors scheme or the font render context changed.
    * All soft wraps are recalculated before the next mapping.
    */
   @ApiStatus.Internal

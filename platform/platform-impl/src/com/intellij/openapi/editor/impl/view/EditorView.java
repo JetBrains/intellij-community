@@ -946,6 +946,7 @@ public final class EditorView implements TextDrawingCallback, Disposable, Dumpab
     myTextLayoutCache.resetToDocumentSize(false);
     invalidateFoldRegionLayouts();
     myCharWidthCache.clear();
+    getSoftWrapModel().onTextWidthsChanged();
     getFoldingModel().updateCachedOffsets();
     // TODO IJPL-255731: also invalidate the cached visual line widths of mySizeManager.
     //  They keep the values that the old context measured. Use invalidateRange, never reset,
