@@ -3,6 +3,7 @@ package com.intellij.openapi.project
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -27,4 +28,26 @@ interface SmartModeProvider {
   companion object {
     val EP_NAME: ExtensionPointName<SmartModeProvider> = ExtensionPointName("com.intellij.smartModeProvider")
   }
+}
+
+/**
+ * Reports smart mode at all times.
+ * The split frontend registers it, so a runnable does not wait for the dumb mode that the frontend mirrors from the backend.
+ */
+@Internal
+class AlwaysSmartModeProvider : SmartModeProvider {
+  override fun getCurrentMode(project: Project): Int = 0
+
+  override fun modeChanged(project: Project): Flow<*> = emptyFlow<Nothing>()
+}
+
+/**
+ * Reports dumb mode at all times.
+ * JetBrains Light registers it with `order="last"`, so a runnable waits for the upgrade, and the provider of the new mode wins.
+ */
+@Internal
+class AlwaysDumbModeProvider : SmartModeProvider {
+  override fun getCurrentMode(project: Project): Int = SmartModeScheduler.DUMB
+
+  override fun modeChanged(project: Project): Flow<*> = emptyFlow<Nothing>()
 }

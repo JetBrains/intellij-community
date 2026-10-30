@@ -12,6 +12,8 @@ import org.jetbrains.annotations.ApiStatus.Internal
  *
  * The first [SmartModeProvider] supplies the mode, so the modules that the process loads select it.
  * The `intellij.platform.indexing.impl.backend` module registers the provider that tracks the scanning and the dumb mode.
+ * The split frontend registers [AlwaysSmartModeProvider].
+ * JetBrains Light, local and remote, registers [AlwaysDumbModeProvider] with `order="last"`, so it stays dumb until the upgrade.
  * A process without a provider reports smart mode at all times.
  */
 @Internal
