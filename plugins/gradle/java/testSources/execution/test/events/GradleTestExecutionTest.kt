@@ -1,17 +1,33 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.execution.ExecutionListener
+import com.intellij.execution.ExecutionManager
+import com.intellij.execution.process.ProcessHandler
+import com.intellij.execution.runners.ExecutionEnvironment
+import com.intellij.execution.testframework.TestsUIUtil
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsAdapter
+import com.intellij.execution.testframework.sm.runner.SMTRunnerEventsListener
+import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.JUNIT_5_SUPPORTED_VERSIONS
+import com.intellij.notification.Notification
+import com.intellij.notification.Notifications
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.edtWriteAction
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.findOrCreateDirectory
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
 import com.intellij.platform.testFramework.assertion.consoleText
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
+import com.intellij.testFramework.junit5.TestDisposable
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.tooling.LongRunningOperation
@@ -21,10 +37,16 @@ import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.time.Duration.Companion.minutes
 
 class GradleTestExecutionTest : GradleTestExecutionTestCase() {
+
+  @TestDisposable
+  private lateinit var testDisposable: Disposable
 
   @ParameterizedTest
   @TargetVersions(JUNIT_5_SUPPORTED_VERSIONS)
@@ -769,5 +791,145 @@ class GradleTestExecutionTest : GradleTestExecutionTestCase() {
       }
       assertTestConsoleDoesNotContain("The max parallel fork was [$parallelForks]")
     }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test single completion notification for passed test and rerun`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test() {}
+        |}
+      """.trimMargin())
+
+      for (commandLine in listOf(":test", ":test --rerun-tasks")) {
+        val completion = executeTestsAndAwaitCompletion(commandLine)
+        assertTestRunnerCompletion(completion, exitCode = 0, isDefect = false)
+        assertTestViewTree {
+          assertNode("TestCase") {
+            assertNode("test")
+          }
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test single completion notification for failed test`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test() {
+        |    throw new RuntimeException("Test error message");
+        |  }
+        |}
+      """.trimMargin())
+
+      val completion = executeTestsAndAwaitCompletion(":test")
+      assertTestRunnerCompletion(completion, exitCode = 1, isDefect = true)
+      assertTestViewTree {
+        assertNode("TestCase") {
+          assertNode("test")
+        }
+      }
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test failed root at completion when compilation fails`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      writeText("src/main/java/org/example/App.java", """
+        |package org.example;
+        |public class App {
+        |  compilation error
+        |}
+      """.trimMargin())
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test() {}
+        |}
+      """.trimMargin())
+
+      val completion = executeTestsAndAwaitCompletion(":test")
+      assertTestRunnerCompletion(completion, exitCode = 1, isDefect = true)
+      assertTestViewTreeIsEmpty()
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test single completion notification without test sources`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      val completion = executeTestsAndAwaitCompletion(":test")
+      assertTestRunnerCompletion(completion, exitCode = 0, isDefect = false)
+      assertTestViewTreeIsEmpty()
+    }
+  }
+
+  private fun executeTestsAndAwaitCompletion(commandLine: String): TestRunnerCompletion {
+    val notifications = ConcurrentLinkedQueue<Notification>()
+    val rootStates = ConcurrentLinkedQueue<TestRootState>()
+    val exitCodes = ConcurrentLinkedQueue<Int>()
+    val connection = project.messageBus.connect(testDisposable)
+    connection.subscribe(Notifications.TOPIC, object : Notifications {
+      override fun notify(notification: Notification) {
+        if (notification.groupId == TestsUIUtil.getNotificationGroup().displayId) {
+          notifications.add(notification)
+        }
+      }
+    })
+    connection.subscribe(SMTRunnerEventsListener.TEST_STATUS, object : SMTRunnerEventsAdapter() {
+      override fun onTestingFinished(testsRoot: SMTestProxy.SMRootTestProxy) {
+        rootStates.add(TestRootState(testsRoot.isInProgress, testsRoot.isDefect))
+      }
+    })
+    connection.subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
+      override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+        exitCodes.add(exitCode)
+      }
+    })
+    timeoutRunBlocking(EXECUTION_TIMEOUT) {
+      executeTasksAsync(commandLine, isRunAsTest = true)
+      waitUntil("The test runner didn't complete the test execution") {
+        notifications.isNotEmpty() && rootStates.isNotEmpty() && exitCodes.isNotEmpty()
+      }
+    }
+    // A duplicate notification can be still in the EDT queue.
+    invokeAndWaitIfNeeded {
+      PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+    }
+    return TestRunnerCompletion(notifications.map { it.content }, rootStates.toList(), exitCodes.toList())
+  }
+
+  private fun assertTestRunnerCompletion(completion: TestRunnerCompletion, exitCode: Int, isDefect: Boolean) {
+    Assertions.assertEquals(listOf(exitCode), completion.exitCodes)
+    Assertions.assertEquals(listOf(TestRootState(isInProgress = false, isDefect = isDefect)), completion.rootStates)
+    Assertions.assertEquals(1, completion.notifications.size) {
+      "Expected one test runner notification, but got ${completion.notifications}"
+    }
+  }
+
+  private class TestRunnerCompletion(
+    val notifications: List<String>,
+    val rootStates: List<TestRootState>,
+    val exitCodes: List<Int>,
+  )
+
+  /**
+   * The state of the test root at the moment of the [SMTRunnerEventsListener.onTestingFinished] event.
+   */
+  private data class TestRootState(val isInProgress: Boolean, val isDefect: Boolean)
+
+  companion object {
+    private val EXECUTION_TIMEOUT = 1.minutes
   }
 }

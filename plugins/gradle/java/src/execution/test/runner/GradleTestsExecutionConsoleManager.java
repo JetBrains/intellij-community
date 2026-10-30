@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.runner;
 
 import com.intellij.build.BuildContentManager;
@@ -147,16 +147,12 @@ public final class GradleTestsExecutionConsoleManager
         @Override
         public void processTerminated(@NotNull ProcessEvent event) {
           if (testsRootNode.isInProgress()) {
-            ApplicationManager.getApplication().invokeLater(() -> {
-              if (event.getExitCode() == 1) {
-                testsRootNode.setTestFailed("", null, false);
-              }
-              else {
-                testsRootNode.setFinished();
-              }
-              resultsViewer.onBeforeTestingFinished(testsRootNode);
-              resultsViewer.onTestingFinished(testsRootNode);
-            });
+            if (event.getExitCode() == 1) {
+              testsRootNode.setTestFailed("", null, false);
+            }
+            else {
+              testsRootNode.setFinished();
+            }
           }
         }
       });
