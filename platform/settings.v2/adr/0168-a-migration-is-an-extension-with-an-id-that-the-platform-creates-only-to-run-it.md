@@ -39,6 +39,7 @@ Each extension declares an `id`, unique within its plugin, and an implementation
 - A plugin that is disabled declares no migrations. Its migrations become visible when the plugin is enabled.
 - A migration that runs does not stop when its plugin unloads. The run belongs to the platform, not to the plugin,
   so it goes on with the classes of the unloaded plugin. This is accepted for now.
+- The resulting behavior is in the [Settings Migrations spec](../spec/settings-migrations.spec.md).
 
 ## Rejected alternatives
 

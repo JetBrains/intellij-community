@@ -38,6 +38,7 @@ context of the project. The platform does not know what the migration reads or w
   belongs to a future migration skill.
 - An owner moves the options of one source in one migration, not one migration per option.
 - Until the declarative helpers exist, each migration is code.
+- The resulting behavior is in the [Settings Migrations spec](../spec/settings-migrations.spec.md).
 
 ## Rejected alternatives
 

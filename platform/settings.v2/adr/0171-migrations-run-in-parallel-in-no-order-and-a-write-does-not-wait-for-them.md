@@ -28,9 +28,17 @@ migration, and to record it when it ends with success.**
 - A read between the reload and the end of a migration sees the values before the migration. The listeners fire when
   the migration writes.
 - A user write in that window can be overwritten by the migration. This is accepted.
+- The design assumes that a migration is cheap and fast. So the platform keeps no record of the migrations that run
+  now. This is accepted for now, with two effects:
+  - Two checks close together can launch the same migration twice at the same time. Both runs write the same
+    values.
+  - A reload does not cancel a migration that runs. So when the config changes during a run, for example at a
+    branch switch, the migration still writes the values that it read from the old config. The platform then
+    records it as run for the new config, and it does not run there again.
 - Two steps that depend on each other must be one migration. For example, the import of a
   `PersistentStateComponent` and a later type change of the same key.
 - An ordinal number could order the migrations of one owner. It is not decided whether it is worth it.
+- The resulting behavior is in the [Settings Migrations spec](../spec/settings-migrations.spec.md).
 
 ## Rejected alternatives
 

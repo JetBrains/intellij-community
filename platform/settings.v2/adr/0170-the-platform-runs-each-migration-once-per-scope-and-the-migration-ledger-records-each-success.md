@@ -55,6 +55,7 @@ run to the ledger.**
 - The opposite case also exists. When the ledger is not in VCS, a branch switch that brings back an old config does
   not run the migration again.
   This is accepted. A later product feature can offer to remove the old settings from VCS.
+- The resulting behavior is in the [Settings Migrations spec](../spec/settings-migrations.spec.md).
 
 ## Rejected alternatives
 

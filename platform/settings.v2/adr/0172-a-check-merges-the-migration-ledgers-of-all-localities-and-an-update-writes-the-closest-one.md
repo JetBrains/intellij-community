@@ -51,6 +51,7 @@ rules. The ledger of the other locality stays as it is.**
 - The application layer has no local locality
   ([ADR 0149](./0149-the-application-layer-has-no-local-locality.md)), so the application ledger is in
   `app.settings.json`. For now this file is local to the machine. How Settings Sync treats it is not known.
+- The resulting behavior is in the [Settings Migrations spec](../spec/settings-migrations.spec.md).
 
 ## Rejected alternatives
 

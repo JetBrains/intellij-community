@@ -165,5 +165,5 @@ While a scope reloads, its contexts are dirty: a read still works, but a write w
 - A newer reload could cancel the asks of an older overlapping reload, instead of the reload mutexes. See
   [IJPL-259868](https://youtrack.jetbrains.com/issue/IJPL-259868).
 - A slow provider with a wide range of kinds delays every context that it covers.
-- Migration of settings data is not built. It waits until remote development is done. See
-  [ADR 0142](../adr/0142-migration-waits-until-remote-development-is-done.md).
+- Migration of settings data is not built. The [Settings Migrations](settings-migrations.spec.md) spec holds its
+  planned behavior.
