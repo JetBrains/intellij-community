@@ -30,6 +30,10 @@ private const val START_ID_LIMIT = 1L shl 62
  */
 private val WRITE_BUFFER_MAX_AGE = 1.hours
 
+/**
+ * The constructor does no IO. The storage opens its files on the first use.
+ * Until then, [writeNextSet] keeps the change sets in the write buffer.
+ */
 internal class BufferingPersistentChangeListStorage(
   private val storageDir: Path,
   private val getCurrentFsTimestamp: () -> Long = { ManagingFS.getInstance().creationTimestamp },
@@ -38,9 +42,10 @@ internal class BufferingPersistentChangeListStorage(
 ) : ChangeListStorage {
   //TODO RC: use mmapped storage instead of old-school? Less freezes, and also more reliability
   /**
-   * The persistent storage. It is null when [isPersistentStorageBroken] is true.
+   * The persistent storage. [getOrOpenStorage] opens it on the first use.
+   * It is null before the first use and when [isPersistentStorageBroken] is true.
    */
-  private var storage: LocalHistoryStorage?
+  private var storage: LocalHistoryStorage? = null
 
   /**
    * The write buffer for [storage].
@@ -76,6 +81,7 @@ internal class BufferingPersistentChangeListStorage(
   /**
    * True after [close].
    * Then [writeNextSet] drops the change sets, and a failed operation does not start a recovery.
+   * Also, [getOrOpenStorage] does not open the storage, so a late call cannot leave the files open.
    * [close] sets it under the lock of this storage and under [pendingSetsLock].
    */
   private var isClosed = false
@@ -85,9 +91,16 @@ internal class BufferingPersistentChangeListStorage(
    */
   private var isPurged = false
 
-  init {
-    storage = try {
-      initStorage()
+  /**
+   * Returns [storage] and opens it on the first call.
+   * Returns null after [close], when [isPersistentStorageBroken] is true, or when the storage cannot be opened.
+   */
+  @Synchronized
+  private fun getOrOpenStorage(): LocalHistoryStorage? {
+    if (isClosed || isPersistentStorageBroken) return null
+    storage?.let { return it }
+    return try {
+      initStorage().also { storage = it }
     }
     catch (e: Throwable) {
       rethrowControlFlowException(e)
@@ -163,6 +176,7 @@ internal class BufferingPersistentChangeListStorage(
       isClosed = true
     }
     storage?.let { Disposer.dispose(it) }
+    storage = null
     if (drop) {
       storageDir.delete()
     }
@@ -184,9 +198,9 @@ internal class BufferingPersistentChangeListStorage(
 
   @Synchronized
   private fun flushPersistentStorage() {
-    purgeOnce()
     try {
       flushPending()
+      purgeOnce()
       storage?.force()
     }
     catch (e: IOException) {
@@ -200,7 +214,7 @@ internal class BufferingPersistentChangeListStorage(
 
   @Synchronized
   private fun readPrevious(id: Int, recursionGuard: IntSet): ChangeSetHolder? {
-    val storage = storage ?: return null
+    val storage = getOrOpenStorage() ?: return null
     return storage.readPreviousBlock(id, recursionGuard, ::handleError)
   }
 
@@ -228,8 +242,8 @@ internal class BufferingPersistentChangeListStorage(
   @Synchronized
   private fun flushPending() {
     while (true) {
-      val storage = storage ?: return
       val changeSet = synchronized(pendingSetsLock) { pendingChangeSets.firstOrNull() } ?: return
+      val storage = getOrOpenStorage() ?: return
 
       try {
         storage.writeStream(storage.createNextRecord(changeSet.timestamp), true).use { out ->
@@ -266,7 +280,7 @@ internal class BufferingPersistentChangeListStorage(
     if (unitTestMode) {
       flushPending()
     }
-    val storage = storage ?: return
+    val storage = getOrOpenStorage() ?: return
 
     try {
       storage.purgeObsoleteChangeSets(period, intervalBetweenActivities)
@@ -277,12 +291,13 @@ internal class BufferingPersistentChangeListStorage(
   }
 
   /**
-   * Runs [purge] on the first call only. [getPurgePeriod] gives the period.
-   * [flush] calls it, so the first flush purges the storage.
+   * Runs [purge] on the first call after the open only. [getPurgePeriod] gives the period.
+   * [flush] calls it after the write, so the first flush after the open purges the storage.
+   * Before the open, it does nothing, so the flusher does not open the storage in a session without changes.
    */
   @Synchronized
   private fun purgeOnce() {
-    if (isPurged) return
+    if (isPurged || storage == null) return
     isPurged = true
     LocalHistoryLog.LOG.debug("Purging local history...")
     purge(getPurgePeriod(), ChangeList.DEFAULT_INTERVAL_BETWEEN_ACTIVITIES_MILLISECONDS)

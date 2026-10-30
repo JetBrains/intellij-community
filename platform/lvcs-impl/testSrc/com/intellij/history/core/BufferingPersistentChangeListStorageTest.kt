@@ -259,21 +259,33 @@ internal class BufferingPersistentChangeListStorageTest {
   fun `storage recovers when the data table was not closed`() {
     storage.writeNextSet(createChangeSet(storage.nextId(), 1000L))
     storage.flush()
-    storage.close(/*dropStorages: */false)
+    storage.close(/*drop: */false)
     Files.write(storageDataPath(), ByteArray(Int.SIZE_BYTES), WRITE)
 
     val previousDebugValue = IndexDebugProperties.DEBUG
     IndexDebugProperties.DEBUG = true
-    try {
+    val changeSets = try {
       storage = createStorage()
+      // the storage opens its files on the first use
+      storage.iterate().asSequence().toList()
     }
     finally {
       IndexDebugProperties.DEBUG = previousDebugValue
     }
 
-    assertThat(storage.iterate().asSequence().toList())
+    assertThat(changeSets)
       .describedAs("The recovered storage must not contain data from the damaged table")
       .isEmpty()
+
+    val recoveredChangeSet = createChangeSet(storage.nextId(), 2000L)
+    storage.writeNextSet(recoveredChangeSet)
+    storage.flush()
+    storage.close(/*drop: */false)
+    storage = createStorage()
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The recovered storage must persist new change sets")
+      .extracting<Long> { it.id }
+      .containsExactly(recoveredChangeSet.id)
   }
 
   @Test
@@ -281,7 +293,7 @@ internal class BufferingPersistentChangeListStorageTest {
     val originalChangeSet = createChangeSet(storage.nextId(), 1000L)
     storage.writeNextSet(originalChangeSet)
     storage.flush()
-    storage.close(/*dropStorages: */false)
+    storage.close(/*drop: */false)
     makeLastRecordPointToItself()
     storage = createStorage()
 
@@ -499,10 +511,109 @@ internal class BufferingPersistentChangeListStorageTest {
       .containsExactly(oldChangeSet.id)
   }
 
+  @Test
+  fun `storage opens its files on the first use`() {
+    storage.close(/*drop: */true)
+    var openCount = 0
+    storage = createStorage { path ->
+      openCount++
+      LocalHistoryStorage(path)
+    }
+
+    val changeSet = createChangeSet(storage.nextId(), 1000L)
+    storage.writeNextSet(changeSet)
+    assertThat(openCount)
+      .describedAs("The storage must not open its files before the first use")
+      .isZero()
+
+    storage.flush()
+    assertThat(openCount)
+      .describedAs("The flush of a change set must open the storage")
+      .isEqualTo(1)
+
+    assertThat(storage.iterate().asSequence().toList())
+      .extracting<Long> { it.id }
+      .containsExactly(changeSet.id)
+    assertThat(openCount)
+      .describedAs("The storage must open its files only once")
+      .isEqualTo(1)
+  }
+
+  @Test
+  fun `close does not open the storage when the write buffer is empty`() {
+    storage.close(/*drop: */true)
+    var openCount = 0
+    storage = createStorage { path ->
+      openCount++
+      LocalHistoryStorage(path)
+    }
+
+    storage.flush()
+    storage.close(/*drop: */false)
+
+    assertThat(openCount)
+      .describedAs("The storage must not open its files when it has nothing to write")
+      .isZero()
+    storage = createStorage()
+  }
+
+  @Test
+  fun `storage does not open its files after close`() {
+    storage.close(/*drop: */true)
+    var openCount = 0
+    val closedStorage = createStorage { path ->
+      openCount++
+      LocalHistoryStorage(path)
+    }
+    closedStorage.close(/*drop: */false)
+
+    closedStorage.writeNextSet(createChangeSet(closedStorage.nextId(), 1000L))
+    closedStorage.flush()
+    closedStorage.purge(1L, 1000L)
+    closedStorage.iterate().forEach { _ -> }
+
+    assertThat(openCount)
+      .describedAs("A call after close must not open the storage")
+      .isZero()
+    storage = createStorage()
+  }
+
+  @Test
+  fun `the first flush after the open purges the storage`() {
+    storage.close(/*drop: */true)
+    var openCount = 0
+    storage = createStorage { path ->
+      openCount++
+      LocalHistoryStorage(path)
+    }
+
+    storage.flush()
+    assertThat(openCount)
+      .describedAs("The flush of an empty write buffer must not open the storage")
+      .isZero()
+
+    // 12 change sets that are 11 hours apart give more than the default 5 days of activity, so the purge removes the oldest one
+    val changeSets = (0 until 12).map { createChangeSet(storage.nextId(), it * 11.hours.inWholeMilliseconds) }
+    for (changeSet in changeSets) {
+      storage.writeNextSet(changeSet)
+    }
+    storage.flush()
+
+    assertThat(openCount)
+      .describedAs("The flush of a change set must open the storage")
+      .isEqualTo(1)
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The first flush after the open must purge the obsolete change sets")
+      .extracting<Long> { it.id }
+      .containsExactlyElementsOf(changeSets.drop(1).reversed().map { it.id })
+  }
+
   /** Replaces [storage] with a storage that cannot be opened, so it keeps the change sets in the write buffer. */
   private fun breakStorage() {
     storage.close(/*drop: */true)
     storage = createStorage { throw IOException("The test does not allow to open the storage") }
+    // the storage opens its files on the first use
+    storage.iterate().forEach { _ -> }
   }
 
   /** Returns the data file that contains the serialized change sets. */
