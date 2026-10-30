@@ -1892,6 +1892,7 @@ plugins/xpath
 plugins/xpath/xslt-rt
 plugins/yaml
 plugins/yaml/backend
+plugins/yaml/plugin
 plugins/yaml/spellchecker
 plugins/yaml/syntax
 python

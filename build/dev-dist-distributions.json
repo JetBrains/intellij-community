@@ -69,7 +69,7 @@
                 "intellij.vcs.gitlab",
                 "intellij.webp",
                 "intellij.xml.plugin",
-                "intellij.yaml"
+                "intellij.yaml.plugin"
             ],
             "platformBundledModules": {},
             "modularLoader": false
@@ -142,7 +142,7 @@
                 "intellij.vcs.gitlab",
                 "intellij.webp",
                 "intellij.xml.plugin",
-                "intellij.yaml"
+                "intellij.yaml.plugin"
             ],
             "platformBundledModules": {},
             "modularLoader": false

@@ -24,8 +24,8 @@ dev_dist_plugin_descriptor(
         "intellij.yaml.spellchecker",
         "intellij.yaml.syntax",
     ],
-    descriptor = "//plugins/yaml:resources/META-INF/plugin.xml",
-    main_module = "intellij.yaml",
+    descriptor = "//plugins/yaml/plugin:resources/META-INF/plugin.xml",
+    main_module = "intellij.yaml.plugin",
     mode_refused_content_modules = {
         "frontend": ["intellij.yaml.backend"],
     },
@@ -36,24 +36,26 @@ dev_dist_plugin_descriptor(
 )
 
 dev_plugin(
-    name = "intellij.yaml_dev_plugin",
+    name = "intellij.yaml.plugin_dev_plugin",
     content_module_jars = [
         "//plugins/yaml/backend:backend_content_module_jar",
         "//plugins/yaml/spellchecker:spellchecker_content_module_jar",
         "//plugins/yaml/syntax:syntax_content_module_jar",
+        "//plugins/yaml:yaml_content_module_jar",
     ],
-    descriptor = "//build/dev-dist-descriptors/intellij.yaml:intellij.yaml_dev_descriptor",
+    descriptor = "//build/dev-dist-descriptors/intellij.yaml.plugin:intellij.yaml.plugin_dev_descriptor",
     jars = {
-        "lib/intellij.yaml.jar": [
-            "intellij.yaml",
+        "lib/yaml-plugin.jar": [
+            "intellij.yaml.plugin",
         ],
     },
-    main_module = "intellij.yaml",
+    main_module = "intellij.yaml.plugin",
     module_jar_paths = {
+        "intellij.yaml": "lib/intellij.yaml.jar",
         "intellij.yaml.syntax": "lib/intellij.yaml.syntax.jar",
     },
     modules = {
-        "//plugins/yaml": "intellij.yaml",
+        "//plugins/yaml/plugin": "intellij.yaml.plugin",
     },
     plugin_directory = "plugins/yaml",
 )
