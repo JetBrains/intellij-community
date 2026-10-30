@@ -2158,6 +2158,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void repaint(int startOffset, int endOffset) {
+    if (myDocumentChangeInProgress) {
+      mySoftWrapModel.onHighlighterRepaint(endOffset);
+    }
     repaint(startOffset, endOffset, true);
     myHighlighterListeners.forEach(listener -> listener.highlighterChanged(startOffset, endOffset));
   }

@@ -260,6 +260,13 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
   }
 
   @Override
+  public void onHighlighterRepaint(int endOffset) {
+    if (myDocumentUpdateInProgress) {
+      myApplianceManager.extendDocumentChange(endOffset);
+    }
+  }
+
+  @Override
   public void onBatchModeFinish(@NotNull Editor editor) {
     if (myBulkDocumentUpdateInProgress.getAsBoolean()) return;
     if (myInlayChangedInBatchMode) {

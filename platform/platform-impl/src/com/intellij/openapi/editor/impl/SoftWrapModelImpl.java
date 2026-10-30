@@ -568,6 +568,13 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     myRecalculationManager.onFontStyleChanged(startOffset, endOffset);
   }
 
+  /**
+   * Called when the editor highlighter repaints the text up to {@code endOffset} during a document change.
+   */
+  void onHighlighterRepaint(int endOffset) {
+    myRecalculationManager.onHighlighterRepaint(endOffset);
+  }
+
   void recalculate(@NotNull String reason) {
     myRecalculationManager.recalculate(reason);
   }

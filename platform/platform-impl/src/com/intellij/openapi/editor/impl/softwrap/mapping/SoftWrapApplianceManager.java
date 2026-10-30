@@ -391,6 +391,15 @@ public final class SoftWrapApplianceManager implements Dumpable {
     myDocumentChangeEndOffset = Math.max(region.getEndOffset(), myDocumentChangeEndOffset);
   }
 
+  /**
+   * Makes the soft wrap recalculation of the current document change reach {@code endOffset}.
+   * Call it between {@link #beforeDocumentChange} and {@link #documentChanged}.
+   */
+  @ApiStatus.Internal
+  public void extendDocumentChange(int endOffset) {
+    myDocumentChangeEndOffset = Math.max(endOffset, myDocumentChangeEndOffset);
+  }
+
   @ApiStatus.Internal
   public void beforeDocumentChange(DocumentEvent event) {
     // We call it before the change, because a folding may become invalidated by the change,
