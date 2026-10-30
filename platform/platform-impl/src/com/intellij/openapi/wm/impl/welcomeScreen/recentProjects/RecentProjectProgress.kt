@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.NlsContexts.DialogTitle
@@ -23,6 +24,9 @@ internal sealed interface ProgressId {
 
   @JvmInline
   value class Clone(val projectPath: Path) : ProgressId
+
+  @JvmInline
+  value class Load(val projectPath: Path) : ProgressId
 }
 
 /**
@@ -57,6 +61,20 @@ internal fun TaskHandle.toProgress(state: ProgressState?): RecentProjectProgress
   )
 }
 
+/**
+ * What the load of the recent project at [projectPath] shows.
+ *
+ * A load reports no text and no fraction, and the window offers no cancel button for it.
+ */
+internal fun loadingProgress(projectPath: Path): RecentProjectProgress = RecentProjectProgress(
+  id = ProgressId.Load(projectPath),
+  title = IdeBundle.message("welcome.screen.recent.project.loading.title"),
+  text = null,
+  fraction = null,
+  isCancellable = false,
+  cancelTooltip = IdeBundle.message("welcome.screen.recent.project.cancel.task.tooltip"),
+)
+
 /** What the clone of this project shows now. It reports into an indicator of its own, which is read here. */
 internal fun CloneableProject.toProgress(): RecentProjectProgress {
   val info = cloneTaskInfo
@@ -74,7 +92,7 @@ internal fun CloneableProject.toProgress(): RecentProjectProgress {
 }
 
 /**
- * What every recent project the welcome screen holds is running, in [ROW_ORDER].
+ * What every recent project the welcome screen loads or holds is running: its load first, then its tasks in [ROW_ORDER].
  *
  * It answers for an item rather than handing out its map, because a project is keyed by its path: a [RecentProjectItem] is a value the
  * tree rebuilds on every refresh, and its branch name and its activation time change under the same project.

@@ -11,9 +11,12 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
@@ -89,6 +92,59 @@ class RecentProjectProgressTrackerTest {
   }
 
   @Test
+  fun `a load shows while it runs, and goes once it ends`() = timeoutRunBlocking {
+    withTracker { tracker ->
+      val loaded = CompletableDeferred<Unit>()
+      val load = launch { tracker.reportLoad(projectPath()) { loaded.await() } }
+
+      val loadId: ProgressId = ProgressId.Load(projectPath())
+      val loading = tracker.awaitProgressOf(count = 1).single()
+      assertThat(loading.id).isEqualTo(loadId)
+      assertThat(loading.isCancellable).isFalse()
+      // The window follows its own flow, so it shows the load too.
+      val inWindow = tracker.getProgressFor(itemOf(projectPath())).first { it.isNotEmpty() }
+      assertThat(inWindow.map { it.id }).containsExactly(loadId)
+
+      loaded.complete(Unit)
+      load.join()
+      assertThat(tracker.awaitProgressOf(count = 0)).isEmpty()
+    }
+  }
+
+  @Test
+  fun `a load comes before the tasks its project runs`() = timeoutRunBlocking {
+    val task = addTask("Fetching")
+
+    withTracker { tracker ->
+      tracker.follow(projectPath(), project)
+      val loaded = CompletableDeferred<Unit>()
+      val load = launch { tracker.reportLoad(projectPath()) { loaded.await() } }
+
+      val running = tracker.awaitProgressOf(count = 2)
+      assertThat(running.map { it.id }).containsExactly(ProgressId.Load(projectPath()), ProgressId.Task(task.info.id))
+
+      loaded.complete(Unit)
+      load.join()
+    }
+  }
+
+  @Test
+  fun `a load that fails stops showing`() = timeoutRunBlocking {
+    withTracker { tracker ->
+      val failing = CompletableDeferred<Unit>()
+      val load = async {
+        runCatching { tracker.reportLoad(projectPath()) { failing.await(); error("The project cannot load") } }
+      }
+      tracker.awaitProgressOf(count = 1)
+
+      failing.complete(Unit)
+
+      assertThat(load.await().isFailure).isTrue()
+      assertThat(tracker.awaitProgressOf(count = 0)).isEmpty()
+    }
+  }
+
+  @Test
   fun `a project is empty when it runs nothing, and when it has no path`() {
     val progress = RecentProjectProgress(ProgressId.Clone(Path("/a")), "Cloning", null, null, false, "Cancel")
     val byProject = ProjectsProgress(mapOf(Path("/a") to listOf(progress)))
@@ -98,8 +154,8 @@ class RecentProjectProgressTrackerTest {
     assertThat(byProject.getProgressOf(itemOf(path = null))).isEmpty()
   }
 
-  // The tracker collects until its scope is cancelled, so it gets one of its own that ends with the test.
-  private suspend fun CoroutineScope.withTracker(body: suspend (RecentProjectProgressTracker) -> Unit) {
+  // The tracker collects until its scope is cancelled, so it gets one of its own that ends with the test. The body runs on the test scope.
+  private suspend fun CoroutineScope.withTracker(body: suspend CoroutineScope.(RecentProjectProgressTracker) -> Unit) {
     val scope = childScope("RecentProjectProgressTrackerTest")
     try {
       body(RecentProjectProgressTracker(scope))

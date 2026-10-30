@@ -105,20 +105,23 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
       cachedHeldProject(projectPath)?.let { return it }
       findOpenProject(projectPath)?.let { return hold(projectPath, it, owned = false) }
       LOG.info("Recent project $projectPath: loading it without a frame")
-      // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is cached.
-      // A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
-      val project = projectManager.loadProject(projectPath, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
-      val held = hold(projectPath, project, owned = true)
-      try {
-        initLoadedProject(project)
+      // The row shows the load until the project is initialized, because the operation and its own progress start only then.
+      return taskTracker.reportLoad(projectPath) {
+        // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is
+        // cached. A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
+        val project = projectManager.loadProject(projectPath, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
+        val held = hold(projectPath, project, owned = true)
+        try {
+          initLoadedProject(project)
+        }
+        catch (e: Throwable) {
+          // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
+          heldProjects.remove(projectPath)
+          withContext(NonCancellable) { dispose(held) }
+          throw e
+        }
+        held
       }
-      catch (e: Throwable) {
-        // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
-        heldProjects.remove(projectPath)
-        withContext(NonCancellable) { dispose(held) }
-        throw e
-      }
-      return held
     }
   }
 
