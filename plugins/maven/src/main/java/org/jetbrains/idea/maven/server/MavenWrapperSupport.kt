@@ -3,7 +3,11 @@ package org.jetbrains.idea.maven.server
 
 import com.intellij.build.FilePosition
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.externalSystem.util.environment.Environment
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,9 +32,15 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.PosixFilePermissions
 import java.security.MessageDigest
-import java.util.*
+import java.util.Base64
+import java.util.Properties
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.*
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
+import kotlin.io.path.readBytes
+import kotlin.io.path.readLines
 
 @State(name = "MavenWrapperMapping",
        storages = [Storage(value = "maven.wrapper.mapping.xml", roamingType = RoamingType.PER_OS)],
@@ -102,6 +112,8 @@ internal class MavenWrapperSupport {
 
     val existingMavenHome = zipFile.parent.listDirectoryEntries().firstOrNull { it.isDirectory() }?.toRealPath()
     if (null != existingMavenHome) {
+      // The mapping loses this entry when the caches are cleaned, while the unpacked distribution stays.
+      setDistributionPath(project, urlString, existingMavenHome)
       return LocalMavenDistribution(existingMavenHome, urlString)
     }
 

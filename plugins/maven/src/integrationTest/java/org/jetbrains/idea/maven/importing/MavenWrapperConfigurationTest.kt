@@ -1,12 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing
 
-import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
-import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testFramework.RunAll
-import com.intellij.testFramework.junit5.TestApplication
-import com.intellij.util.io.ZipUtil
-import kotlinx.coroutines.runBlocking
 import com.intellij.maven.testFramework.fixtures.MavenCustomRepositoryHelper
 import com.intellij.maven.testFramework.fixtures.assertOrderedElementsAreEqual
 import com.intellij.maven.testFramework.fixtures.createProjectPom
@@ -14,14 +8,24 @@ import com.intellij.maven.testFramework.fixtures.createProjectSubFile
 import com.intellij.maven.testFramework.fixtures.importProjectAsync
 import com.intellij.maven.testFramework.fixtures.mavenGeneralSettings
 import com.intellij.maven.testFramework.fixtures.mavenImportingFixture
+import com.intellij.maven.testFramework.fixtures.projectPath
 import com.intellij.maven.testFramework.fixtures.refreshFiles
 import com.intellij.maven.testFramework.fixtures.removeFromLocalRepository
 import com.intellij.maven.testFramework.fixtures.updateProjectSubFile
+import com.intellij.maven.testFramework.utils.MavenHttpRepositoryServerFixture
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.testFramework.RunAll
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.io.ZipUtil
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -109,6 +113,26 @@ class MavenWrapperConfigurationTest {
     """)
     assertOrderedElementsAreEqual(maven.projectsManager.projects[0].activatedProfilesIds.enabledProfiles, listOf("profile2"))
 
+  }
+
+  @Test
+  fun testShouldResolveUnpackedWrapperAfterCachesAreCleaned() = runBlocking {
+    val repack = repackCurrentMaven("unpacked.zip") {}
+    httpServerFixtureForWrapper.startRepositoryFor(repack.parent)
+    maven.createProjectSubFile(".mvn/wrapper/maven-wrapper.properties",
+                               "distributionUrl=${httpServerFixtureForWrapper.url()}/unpacked.zip\n")
+    MavenWorkspaceSettingsComponent.getInstance(maven.project).settings.generalSettings.setMavenHomeNoFire(MavenWrapper)
+    val workingDir = maven.projectPath.toString()
+    val cache = MavenDistributionsCache.getInstance(maven.project)
+
+    MavenWrapperDownloader.checkOrInstall(maven.project, workingDir)
+    val unpacked = checkNotNull(cache.getWrapper(workingDir)).mavenHome
+
+    cache.cleanCaches()
+    assertNull(cache.getWrapper(workingDir))
+
+    MavenWrapperDownloader.checkOrInstall(maven.project, workingDir)
+    assertEquals(unpacked, cache.getWrapper(workingDir)?.mavenHome)
   }
 
   @Test
