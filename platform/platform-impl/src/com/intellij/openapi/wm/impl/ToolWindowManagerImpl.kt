@@ -128,13 +128,23 @@ private val performShowInSeparateTask = System.getProperty("idea.toolwindow.show
  *
  * The claimed component is mounted a creation delay later, so focusing a tool window by default here would take focus the empty state is
  * about to be given — and take it visibly, only to lose it again. A claim that ends up with nothing to focus calls
- * [ToolWindowManagerImpl.focusToolWindowByDefault] itself, so standing down cannot leave the frame without a focus owner.
+ * [ToolWindowManagerImpl.focusDefaultToolWindow] itself, so standing down cannot leave the frame without a focus owner.
  */
 @RequiresEdt
 private fun emptyEditorAreaClaimsClosedEditorFocus(project: Project): Boolean {
   val fileEditorManager = project.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return false
   // the init job is awaited because `splitters` reaches `mainSplitters`, which exists only once that job has completed
   return fileEditorManager.initJob.isCompleted && fileEditorManager.splitters.isEmptyStateFocusRequestPending()
+}
+
+/** The rank of [anchor] in the layout order of [ToolWindowManagerImpl.findDefaultToolWindowToFocus]. */
+private fun getLayoutAnchorRank(anchor: ToolWindowAnchor): Int {
+  return when (anchor) {
+    ToolWindowAnchor.LEFT -> 0
+    ToolWindowAnchor.BOTTOM -> 1
+    ToolWindowAnchor.RIGHT -> 2
+    else -> 3
+  }
 }
 
 private typealias Mutation = ((WindowInfoImpl) -> Unit)
@@ -559,8 +569,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         coroutineScope.launch(Dispatchers.EDT) {
           @Suppress("DEPRECATION")
           focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-            if (!FileEditorManager.getInstance(project).hasOpenFiles() && !emptyEditorAreaClaimsClosedEditorFocus(project)) {
-              focusToolWindowByDefault()
+            if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+              focusDefaultToolWindow(emptyStateClaimsFocus = emptyEditorAreaClaimsClosedEditorFocus(project))
             }
           })
         }
@@ -2050,33 +2060,43 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   /**
-   * Focuses the most recently active visible tool window, where the editor area has nothing to hand focus to.
+   * Focuses a tool window when the editor area has no editor to take the focus.
+   * The project open, the close of the last editor, and an empty state that cannot keep its focus claim use this rule.
+   * See [findDefaultToolWindowToFocus] for the guards and the target.
    *
-   * Also called from the editor area itself, for a claim on the focus of an emptied area that could not be kept — see
-   * [EditorsSplitters.requestEmptyStateFocusWhenPresented].
+   * @param emptyStateClaimsFocus true if the empty state of the editor area takes the focus.
+   * Each caller reads the claim itself, because the callers see the claim at different times.
    */
   @RequiresEdt
-  internal fun focusToolWindowByDefault() {
-    var toFocus: ToolWindowEntry? = null
-    for (each in activeStack.stack) {
-      if (each.readOnlyWindowInfo.isVisible) {
-        toFocus = each
-        break
-      }
+  internal fun focusDefaultToolWindow(emptyStateClaimsFocus: Boolean) {
+    if (project.isDisposed || ApplicationManager.getApplication().isDisposed) {
+      return
     }
+    val entry = findDefaultToolWindowToFocus(emptyStateClaimsFocus) ?: return
+    activateToolWindow(entry, getRegisteredMutableInfoOrLogError(entry.id))
+  }
 
-    if (toFocus == null) {
-      for (each in activeStack.persistentStack) {
-        if (each.readOnlyWindowInfo.isVisible) {
-          toFocus = each
-          break
-        }
-      }
+  /**
+   * Returns the tool window that [focusDefaultToolWindow] focuses, or null if it focuses nothing.
+   * It returns null when the empty state claims the focus, or when a tool window is active.
+   *
+   * Otherwise, it returns the first visible tool window in this order: the active stack, the persistent active stack,
+   * and the recent tool windows.
+   * If none of them is visible, it returns the first available visible docked tool window in the layout order.
+   * The layout order sorts by the anchor (left, bottom, right, top), and then by the order on that anchor.
+   */
+  @VisibleForTesting
+  @RequiresEdt
+  internal fun findDefaultToolWindowToFocus(emptyStateClaimsFocus: Boolean): ToolWindowEntry? {
+    if (emptyStateClaimsFocus || activeToolWindowId != null) {
+      return null
     }
-
-    if (toFocus != null && !ApplicationManager.getApplication().isDisposed) {
-      activateToolWindow(toFocus, getRegisteredMutableInfoOrLogError(toFocus.id))
-    }
+    return activeStack.stack.firstOrNull { it.readOnlyWindowInfo.isVisible }
+           ?: activeStack.persistentStack.firstOrNull { it.readOnlyWindowInfo.isVisible }
+           ?: recentToolWindowsState.firstNotNullOfOrNull { id -> idToEntry.get(id)?.takeIf { it.readOnlyWindowInfo.isVisible } }
+           ?: idToEntry.values
+             .filter { it.toolWindow.isAvailable && it.readOnlyWindowInfo.isVisible && it.readOnlyWindowInfo.isDocked }
+             .minWithOrNull(compareBy({ getLayoutAnchorRank(it.readOnlyWindowInfo.anchor) }, { it.readOnlyWindowInfo.order }))
   }
 
   internal fun setShowStripeButton(id: String, value: Boolean) {

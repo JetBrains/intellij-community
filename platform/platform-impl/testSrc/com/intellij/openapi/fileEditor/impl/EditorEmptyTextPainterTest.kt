@@ -22,10 +22,8 @@ import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.finishEmptyEditorStartupBeforeProjectView
 import com.intellij.openapi.project.impl.isReadmeLookupOnStartupEnabled
-import com.intellij.openapi.project.impl.presentProjectViewOnStartup
-import com.intellij.openapi.project.impl.shouldRestoreStartupEditorFocus
+import com.intellij.openapi.project.impl.presentEmptyEditorAfterStartupEditors
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesProvider
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
@@ -994,20 +992,18 @@ internal class EditorEmptyTextPainterTest {
   }
 
   @Test
-  fun startupEmptyStateIsPresentedBeforeProjectViewIsOpened() {
+  fun startupEmptyEditorIsPresentedAfterTheStartupEditors() {
     runBlocking {
       val startupEvents = mutableListOf<String>()
 
-      finishEmptyEditorStartupBeforeProjectView(
+      presentEmptyEditorAfterStartupEditors(
         finishOpeningStartupEditors = { startupEvents.add("startup editors finished") },
         presentEmptyEditor = { startupEvents.add("empty editor presented") },
-        openProjectView = { startupEvents.add("Project view opened") },
       )
 
       assertThat(startupEvents).containsExactly(
         "startup editors finished",
         "empty editor presented",
-        "Project view opened",
       )
     }
   }
@@ -1024,46 +1020,6 @@ internal class EditorEmptyTextPainterTest {
     maskProjectFrameCapabilities(setOf(ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES), disposable)
 
     assertThat(runBlocking { isReadmeLookupOnStartupEnabled(manager.project) }).isTrue()
-  }
-
-  @Test
-  fun startupProjectViewIsShownWithoutActivationWhenTheEditorKeepsFocus() {
-    val events = mutableListOf<String>()
-
-    presentProjectViewOnStartup(
-      focusProjectView = false,
-      showProjectView = { events.add("shown") },
-      activateProjectView = { events.add("activated") },
-    )
-
-    assertThat(events).containsExactly("shown")
-  }
-
-  @Test
-  fun startupProjectViewIsActivatedWhenItTakesFocus() {
-    val events = mutableListOf<String>()
-
-    presentProjectViewOnStartup(
-      focusProjectView = true,
-      showProjectView = { events.add("shown") },
-      activateProjectView = { events.add("activated") },
-    )
-
-    assertThat(events).containsExactly("activated")
-  }
-
-  @Test
-  fun startupEditorFocusIsRestoredOnlyWhenProjectViewTookIt() {
-    val startupFocusOwner = object : JPanel() {
-      override fun isShowing(): Boolean = true
-    }
-    val projectView = JPanel()
-    val projectViewFocusOwner = JPanel().also { projectView.add(it) }
-
-    assertThat(shouldRestoreStartupEditorFocus(startupFocusOwner, projectViewFocusOwner, projectView)).isTrue()
-    assertThat(shouldRestoreStartupEditorFocus(startupFocusOwner, null, projectView)).isTrue()
-    assertThat(shouldRestoreStartupEditorFocus(startupFocusOwner, JPanel(), projectView)).isFalse()
-    assertThat(shouldRestoreStartupEditorFocus(JPanel(), projectViewFocusOwner, projectView)).isFalse()
   }
 
   @Test

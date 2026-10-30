@@ -981,7 +981,7 @@ open class EditorsSplitters internal constructor(
       // The closed editor's focus is inherited by what replaces it, and on an area with nothing left that is its empty state; the
       // request is dropped again if this turns out to be a close that another editor takes over (a preview replacement, say).
       // The tool window manager stands down for this claim, so a claim that finds nothing to focus hands that focus back to it.
-      requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { focusToolWindowByDefaultOnEmptiedArea(manager) })
+      requestEmptyStateFocusWhenPresented(onFocusUnclaimed = { focusDefaultToolWindowOnEmptiedArea(manager) })
     }
     updateEmptyStateComponent()
   }
@@ -1884,20 +1884,20 @@ private fun getSplitCount(component: JComponent): Int {
 }
 
 /**
- * Focuses what [ToolWindowManagerImpl] focuses when the last editor is closed: the most recently active visible tool window.
+ * Focuses what [ToolWindowManagerImpl.focusDefaultToolWindow] focuses when the last editor is closed.
  *
  * It stands down while a claim on the focus of the emptied area is pending, because that focus is the empty state's a creation delay
  * later. This is the other half of standing down — the claim found nothing to focus, so the focus goes where it would have gone.
  */
 @RequiresEdt
-private fun focusToolWindowByDefaultOnEmptiedArea(manager: FileEditorManagerImpl) {
+private fun focusDefaultToolWindowOnEmptiedArea(manager: FileEditorManagerImpl) {
   val project = manager.project
   // `hasOpenFiles` is the condition the tool window manager stood down under, so this hands back exactly the focus it gave up: an area
   // this one shares an editor with — a docked editor window — is one it never stood down for
   if (project.isDisposed || manager.hasOpenFiles()) {
     return
   }
-  (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.focusToolWindowByDefault()
+  (ToolWindowManager.getInstance(project) as? ToolWindowManagerImpl)?.focusDefaultToolWindow(emptyStateClaimsFocus = false)
 }
 
 private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {

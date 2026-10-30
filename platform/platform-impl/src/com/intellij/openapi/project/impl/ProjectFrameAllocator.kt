@@ -115,7 +115,10 @@ private fun <T> Project.getOrCreateDeferred(key: Key<CompletableDeferred<T>>): C
 }
 
 /**
- * Completes after startup restores the editors, presents the empty editor state, and restores the Project view focus.
+ * Completes after startup restores the editors and presents the empty editor state.
+ * On a project open without editors, it also completes after the startup focus step ran.
+ * That step can focus the default tool window, see `ToolWindowManagerImpl.focusDefaultToolWindow`.
+ * The deferred does not wait for the readiness of a tool window.
  *
  * @return `null` when the [Project] was opened without a frame
  */
