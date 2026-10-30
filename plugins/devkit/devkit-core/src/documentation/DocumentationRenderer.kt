@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL
@@ -135,12 +135,12 @@ internal class DocumentationRenderer(private val project: Project) {
     val style = attributes["style"]
     val icon = when (style) {
       "warning" -> "AllIcons.General.Warning" to AllIcons.General.Warning
-      "info" -> "AllIcons.General.Information" to AllIcons.General.Information
+      "note" -> "AllIcons.General.Information" to AllIcons.General.Information
       else -> "AllIcons.Actions.IntentionBulbGrey" to AllIcons.Actions.IntentionBulbGrey
     }
     val text = attributes["title"] ?: when (style) {
       "warning" -> "Warning"
-      "info" -> "Information"
+      "note" -> "Information"
       else -> "Tip"
     }
     return "${indent}> ${buildIconTitle(icon.first, icon.second, text)}<br>"
