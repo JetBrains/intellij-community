@@ -9,8 +9,6 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontCache;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.impl.EditorFontFeatures;
-import com.intellij.util.ui.JdkConstants.FontStyle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,11 +27,11 @@ import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlow
 @ApiStatus.Internal
 public final class EditorFontCacheImpl extends EditorFontCache {
   private static final Logger LOG = Logger.getInstance(EditorFontCacheImpl.class);
-  private static final AtomicReferenceFieldUpdater<EditorFontCacheImpl, Font[]> FONTS_UPDATER =
-    AtomicReferenceFieldUpdater.newUpdater(EditorFontCacheImpl.class, Font[].class, "fonts");
+  private static final AtomicReferenceFieldUpdater<EditorFontCacheImpl, EditorFonts> FONTS_UPDATER =
+    AtomicReferenceFieldUpdater.newUpdater(EditorFontCacheImpl.class, EditorFonts.class, "fonts");
 
   private final @NotNull Supplier<? extends EditorColorsScheme> schemeSupplier;
-  private volatile Font @NotNull [] fonts = new Font[0];
+  private volatile @NotNull EditorFonts fonts = EditorFonts.empty();
 
   public EditorFontCacheImpl(@NotNull Supplier<? extends EditorColorsScheme> schemeSupplier) {
     this.schemeSupplier = schemeSupplier;
@@ -41,14 +39,14 @@ public final class EditorFontCacheImpl extends EditorFontCache {
 
   @Override
   public @NotNull Font getFont(@Nullable EditorFontType key) {
-    Font[] fonts = this.fonts;
-    if (fonts.length == 0) {
-      Font[] newFonts = buildFonts();
+    EditorFonts fonts = this.fonts;
+    if (fonts.isEmpty()) {
+      EditorFonts newFonts = buildFonts();
       FONTS_UPDATER.compareAndSet(this, fonts, newFonts);
       fonts = newFonts;
     }
     EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
-    Font font = fonts[fontType.ordinal()];
+    Font font = fonts.get(fontType);
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getPresentationMode()) {
       return font.deriveFont(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
@@ -58,15 +56,14 @@ public final class EditorFontCacheImpl extends EditorFontCache {
 
   @Override
   public void reset() {
-    fonts = new Font[0];
+    fonts = EditorFonts.empty();
   }
 
   /**
    * Builds the fonts from two snapshots, so the editor fonts come from one version of their preferences.
    * The console fonts also come from one version of their preferences.
-   * The switch has no default branch, so a new font type does not compile until it gets a font.
    */
-  private Font @NotNull [] buildFonts() {
+  private @NotNull EditorFonts buildFonts() {
     EditorColorsScheme scheme = schemeSupplier.get();
     FontPreferences schemePreferences = scheme.getFontPreferences();
     FontPreferences preferences = schemePreferences.getSnapshot();
@@ -80,30 +77,7 @@ public final class EditorFontCacheImpl extends EditorFontCache {
       logDebug(scheme, schemePreferences instanceof DelegatingFontPreferences, editorFontName, editorFontSize);
     }
 
-    EditorFontType[] fontTypes = EditorFontType.values();
-    Font[] result = new Font[fontTypes.length];
-    for (EditorFontType fontType : fontTypes) {
-      result[fontType.ordinal()] = switch (fontType) {
-        case PLAIN -> createFont(editorFontName, Font.PLAIN, editorFontSize, preferences);
-        case BOLD -> createFont(editorFontName, Font.BOLD, editorFontSize, preferences);
-        case ITALIC -> createFont(editorFontName, Font.ITALIC, editorFontSize, preferences);
-        case BOLD_ITALIC -> createFont(editorFontName, Font.BOLD | Font.ITALIC, editorFontSize, preferences);
-        case CONSOLE_PLAIN -> createFont(consoleFontName, Font.PLAIN, consoleFontSize, consolePreferences);
-        case CONSOLE_BOLD -> createFont(consoleFontName, Font.BOLD, consoleFontSize, consolePreferences);
-        case CONSOLE_ITALIC -> createFont(consoleFontName, Font.ITALIC, consoleFontSize, consolePreferences);
-        case CONSOLE_BOLD_ITALIC -> createFont(consoleFontName, Font.BOLD | Font.ITALIC, consoleFontSize, consolePreferences);
-      };
-    }
-    return result;
-  }
-
-  private static @NotNull Font createFont(
-    @NotNull String familyName,
-    @FontStyle int style,
-    float fontSize,
-    @NotNull FontPreferences fontPreferences
-  ) {
-    return EditorFontFeatures.createFont(familyName, style, fontSize, fontPreferences, fontPreferences.useLigatures());
+    return EditorFonts.empty().with(editorFontName, editorFontSize, preferences, consoleFontName, consoleFontSize, consolePreferences, null);
   }
 
   private static @NotNull String getEditorFontName(@NotNull FontPreferences preferences) {
