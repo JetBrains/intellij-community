@@ -58,13 +58,6 @@ internal class BufferingPersistentChangeListStorage(
 
   @Synchronized
   @Throws(IOException::class)
-  private fun dropStorage() {
-    pendingChangeSets.clear()
-    storageDir.delete()
-  }
-
-  @Synchronized
-  @Throws(IOException::class)
   private fun initStorage(): LocalHistoryStorage {
     return openLocalHistoryStorage(storageDir, getCurrentFsTimestamp, unitTestMode)
   }
@@ -90,7 +83,7 @@ internal class BufferingPersistentChangeListStorage(
 
     Disposer.dispose(storage)
     try {
-      dropStorage()
+      storageDir.delete()
       storage = initStorage()
     }
     catch (ex: Throwable) {
@@ -108,9 +101,12 @@ internal class BufferingPersistentChangeListStorage(
     if (!drop) {
       flushPending()
     }
+    else {
+      pendingChangeSets.clear()
+    }
     Disposer.dispose(storage)
     if (drop) {
-      dropStorage()
+      storageDir.delete()
     }
   }
 
