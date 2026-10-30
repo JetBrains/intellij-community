@@ -285,6 +285,30 @@ elements:
                   #language=Markdown
                   description: Description of `internalChildElement`.
         - element:
+            name: experimentalElement
+            #language=Markdown
+            description: An experimental element description.
+            #language=Markdown
+            experimentalNote: |
+              An experimental note for the element.
+              It can [change](https://example.com).
+            attributes:
+              - attribute:
+                  name: inheritedExperimentalAttribute
+                  #language=Markdown
+                  description: Description of `inheritedExperimentalAttribute`.
+              - attribute:
+                  name: experimentalAttribute
+                  #language=Markdown
+                  description: Description of `experimentalAttribute`.
+                  #language=Markdown
+                  experimentalNote: An experimental note for the attribute.
+            children:
+              - element:
+                  name: experimentalChildElement
+                  #language=Markdown
+                  description: Description of `experimentalChildElement`.
+        - element:
             name: xi:include
             namespace: xmlns:xi="http://www.w3.org/2001/XInclude"
             #language=Markdown

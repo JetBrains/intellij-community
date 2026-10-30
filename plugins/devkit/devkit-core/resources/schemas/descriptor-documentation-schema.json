@@ -75,6 +75,11 @@
           "description": "The element is internal if it or any parent element has an internalNote value defined. Internal elements are for JetBrains internal use only. If not specified, the closest parent's internalNote is used. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
         },
+        "experimentalNote": {
+          "type": "string",
+          "description": "The element is experimental if it or any parent element has an experimentalNote value defined. Experimental items can change or be removed in a future version. If not specified, the closest parent's experimentalNote is used. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
         "sdkDocsSupportDetails": {
           "type": "string",
           "description": "Support details. It is rendered only in SDK documentation. Use it when additional information about support is needed. Supports Writerside Markdown format.",
@@ -221,6 +226,11 @@
         "internalNote": {
           "type": "string",
           "description": "The attribute is internal if it or any parent element has an internalNote value defined. Internal elements and attributes are for JetBrains internal use only. If not specified, the closest parent's internalNote is used. Supports Writerside Markdown format.",
+          "x-intellij-language-injection": "Markdown"
+        },
+        "experimentalNote": {
+          "type": "string",
+          "description": "The attribute is experimental if it or any parent element has an experimentalNote value defined. Experimental items can change or be removed in a future version. If not specified, the closest parent's experimentalNote is used. Supports Writerside Markdown format.",
           "x-intellij-language-injection": "Markdown"
         },
         "defaultValue": {
