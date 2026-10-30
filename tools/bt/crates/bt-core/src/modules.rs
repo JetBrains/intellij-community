@@ -9,7 +9,8 @@
 //!   [`MigratedList`] reads it with the rules of `BazelMigratedTestModules.kt`.
 //!
 //! A module of the migrated list resolves, and so does a module inside an area. Every other module is refused with
-//! the `tests.cmd` command that runs it.
+//! the `tests.cmd` command that runs it. When no target runs the module and the `BUILD.bazel` declares exactly one
+//! unfiltered `jps_test`, the refusal also names the label of that target and the bt command that runs it.
 
 use refusal::Refusal;
 use serde_json::json;
@@ -19,7 +20,7 @@ use crate::details::WithDetails;
 use crate::exit::{USAGE, fail_infra};
 use crate::regex;
 use crate::runtime::{Runtime, repo_file};
-use crate::scan::{module_jps_test_name, read_text, read_text_or_none};
+use crate::scan::{module_jps_test_name, parse_jps_test_name, read_text, read_text_or_none};
 use crate::selector::{Resolution, suggest_names};
 
 /// The module list of the checkout, relative to the checkout root.
@@ -183,21 +184,30 @@ pub fn resolve_module(runtime: &dyn Runtime, areas: &Areas, module: &str) -> Res
     };
 
     let build_file = file_in(dir, "BUILD.bazel");
-    let without_target = |reason: String| {
+    let without_target = |reason: String, hint: &str| {
         Refusal::new(
             MODULE_WITHOUT_TEST_TARGET,
             USAGE,
-            format!("module {module} has no test target: {reason}. Run: ./tests.cmd --module {module} --test <FQN>"),
+            format!("module {module} has no test target: {reason}. Run: ./tests.cmd --module {module} --test <FQN>{hint}"),
         )
     };
     let Some(build_text) = read_text_or_none(runtime, &build_file) else {
-        return Err(without_target(format!("{build_file} does not exist")));
+        return Err(without_target(format!("{build_file} does not exist"), ""));
     };
+    let layout = Layout::detect(runtime);
     let Some(name) = module_jps_test_name(&build_text, module)? else {
-        return Err(without_target(format!("{build_file} declares no jps_test that runs the module")));
+        let reason = format!("{build_file} declares no jps_test that runs the module");
+        let Ok(Some(only)) = parse_jps_test_name(&build_text) else {
+            return Err(without_target(reason, ""));
+        };
+        let label = layout.label(dir, &only);
+        let hint = format!(
+            ". The only jps_test of {build_file} is {label}: {} {label} --filter <FQN>",
+            layout.wrapper()
+        );
+        return Err(without_target(reason, &hint).with_details(json!({ "module": module, "label": label })));
     };
 
-    let layout = Layout::detect(runtime);
     let label = layout.label(dir, &name);
     if !areas.iter().any(|area| area.owns(dir)) {
         let list_file = layout.migrated_list_file();

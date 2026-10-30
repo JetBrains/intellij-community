@@ -96,12 +96,11 @@ pub fn parse_iml_test_roots(iml_text: &str) -> Vec<ImlTestRoot> {
 /// 0037), but `plugins/air/sdd/wysiwyg` still does.
 pub fn parse_jps_test_name(build_text: &str) -> Result<Option<String>, Refusal> {
     let marker = regex!(r"(?m)^jps_test\(");
-    let rule_name = regex!(r#"(?:^|[\s,(])name\s*=\s*"([^"]+)""#);
     let names: Vec<String> = marker
         .find_iter(build_text)
         .map(|found| rule_body(build_text, found.end()))
         .filter(|body| !body.contains("JB_TEST_JUNIT5_FILTERS"))
-        .filter_map(|body| Some(rule_name.captures(&body)?.get(1)?.as_str().to_owned()))
+        .filter_map(|body| rule_name(&body))
         .collect();
     match names.len() {
         0 => Ok(None),
@@ -115,25 +114,29 @@ pub fn parse_jps_test_name(build_text: &str) -> Result<Option<String>, Refusal> 
 
 /// The `jps_test` target of a BUILD.bazel that runs the tests of one module, or `None` when no target runs them.
 ///
-/// A target runs the module when its `runtime_deps` name a rule of the same file whose `module_name` is the module, or
-/// the `<rule>_test_lib` of such a rule. The BUILD generator names the test library so, and it omits `module_name` on
-/// a test library that has `associates`. One directory can hold several modules, and its BUILD.bazel then declares a target for each of them. A target that
-/// pins `JB_TEST_JUNIT5_FILTERS` counts too, because for some modules it is the only target. When the module has an
+/// A target runs the module when its `runtime_deps` name a rule of the module, or the `<rule>_test_lib` of such a rule.
+/// A rule of the same file belongs to the module when one of these is true:
+/// - its `module_name` is the module;
+/// - it sits in the `build <module>` section that the BUILD generator writes.
+///
+/// The generator omits `module_name` on a test library that has `associates`, and the name of the test library is not
+/// derivable from the main library. So only the section names the module of such a library. One directory can hold
+/// several modules, and its BUILD.bazel then declares a target for each of them. A target that pins
+/// `JB_TEST_JUNIT5_FILTERS` counts too, because for some modules it is the only target. When the module has an
 /// unfiltered target too, the unfiltered target wins, as in [`parse_jps_test_name`].
 pub fn module_jps_test_name(build_text: &str, module: &str) -> Result<Option<String>, Refusal> {
-    let rule_start = regex!(r"(?m)^([A-Za-z_][A-Za-z0-9_]*)\(");
-    let rule_name = regex!(r#"(?:^|[\s,(])name\s*=\s*"([^"]+)""#);
     let module_name = regex!(r#"(?:^|[\s,(])module_name\s*=\s*"([^"]+)""#);
-    let first = |pattern: &Regex, body: &str| pattern.captures(body).and_then(|found| Some(found.get(1)?.as_str().to_owned()));
-    let rules: Vec<(String, String)> = rule_start
-        .captures_iter(build_text)
-        .filter_map(|found| Some((found.get(1)?.as_str().to_owned(), rule_body(build_text, found.get(0)?.end()))))
-        .collect();
-    let module_rules: Vec<String> = rules
+    let rules = rules(build_text);
+    let mut module_rules: Vec<String> = rules
         .iter()
-        .filter(|(_, body)| first(module_name, body).as_deref() == Some(module))
-        .filter_map(|(_, body)| first(rule_name, body))
+        .filter(|(_, body)| first_capture(module_name, body).as_deref() == Some(module))
+        .filter_map(|(_, body)| rule_name(body))
         .collect();
+    for name in section_rule_names(build_text, module) {
+        if !module_rules.contains(&name) {
+            module_rules.push(name);
+        }
+    }
     let targets: Vec<(String, bool)> = rules
         .iter()
         .filter(|(kind, body)| {
@@ -142,7 +145,7 @@ pub fn module_jps_test_name(build_text: &str, module: &str) -> Result<Option<Str
                     .iter()
                     .any(|rule| body.contains(&format!("\":{rule}\"")) || body.contains(&format!("\":{rule}_test_lib\"")))
         })
-        .filter_map(|(_, body)| Some((first(rule_name, body)?, body.contains("JB_TEST_JUNIT5_FILTERS"))))
+        .filter_map(|(_, body)| Some((rule_name(body)?, body.contains("JB_TEST_JUNIT5_FILTERS"))))
         .collect();
     let unfiltered: Vec<&str> = targets
         .iter()
@@ -163,6 +166,41 @@ pub fn module_jps_test_name(build_text: &str, module: &str) -> Result<Option<Str
             chosen.join(", ")
         ))),
     }
+}
+
+/// The names of the rules between the start and end markers of the `build <module>` section. A section without its end
+/// marker owns no rule.
+fn section_rule_names(build_text: &str, module: &str) -> Vec<String> {
+    let start_marker = format!("### auto-generated section `build {module}` start");
+    let end_marker = format!("### auto-generated section `build {module}` end");
+    let Some(start) = build_text.find(&start_marker).map(|found| found + start_marker.len()) else {
+        return Vec::new();
+    };
+    let Some(end) = build_text[start..].find(&end_marker).map(|found| start + found) else {
+        return Vec::new();
+    };
+    rules(&build_text[start..end])
+        .iter()
+        .filter_map(|(_, body)| rule_name(body))
+        .collect()
+}
+
+/// The kind and the body of each top-level rule call in a BUILD.bazel text.
+fn rules(text: &str) -> Vec<(String, String)> {
+    let rule_start = regex!(r"(?m)^([A-Za-z_][A-Za-z0-9_]*)\(");
+    rule_start
+        .captures_iter(text)
+        .filter_map(|found| Some((found.get(1)?.as_str().to_owned(), rule_body(text, found.get(0)?.end()))))
+        .collect()
+}
+
+/// The `name` of a rule body.
+fn rule_name(body: &str) -> Option<String> {
+    first_capture(regex!(r#"(?:^|[\s,(])name\s*=\s*"([^"]+)""#), body)
+}
+
+fn first_capture(pattern: &Regex, text: &str) -> Option<String> {
+    Some(pattern.captures(text)?.get(1)?.as_str().to_owned())
 }
 
 /// The text of a rule's argument list, from just past its opening paren to the matching close, with `#` comments
