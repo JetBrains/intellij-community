@@ -45,6 +45,7 @@ typedef struct table_str table;
 table* table_create(int capacity);
 void* table_put(table* t, int key, void* value);
 void* table_get(table* t, int key);
+void table_set(table* t, int key, void* value);
 void table_delete(table* t);
 
 
@@ -61,7 +62,8 @@ bool init_inotify(void);
 void set_inotify_callback(void (*callback)(const char *, uint32_t));
 int get_inotify_fd(void);
 int watch(const char* root, array* mounts);
-void unwatch(int id);
+void unwatch(int id, const char* path);
+bool watch_tree_matches(int id, const char* path);
 bool process_inotify_input(void);
 void close_inotify(void);
 
