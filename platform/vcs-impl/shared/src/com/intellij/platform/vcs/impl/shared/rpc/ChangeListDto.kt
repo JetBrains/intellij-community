@@ -113,6 +113,7 @@ data class ChangelistChangeDto(
   override fun toChange(listName: String, listId: String): ChangeListChange = ChangeListChange(change, listName, listId)
 }
 
-private val PLATFORM_FILE_STATUSES: Map<String, FileStatus> by lazy {
+/** The file statuses of the platform by their id, so that a DTO can carry a status as its id. */
+internal val PLATFORM_FILE_STATUSES: Map<String, FileStatus> by lazy {
   FileStatusFactory.getInstance().globalFileStatuses.associateBy { it.id }
 }

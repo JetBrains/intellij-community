@@ -2,8 +2,6 @@
 package com.intellij.platform.vcs.impl.lang.changes
 
 import com.intellij.diagnostic.rethrowControlFlowException
-import com.intellij.diff.util.LineRange
-import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -20,8 +18,6 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.RegistryManager
@@ -29,19 +25,17 @@ import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.FileStatus
-import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListChange
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesViewModifier
 import com.intellij.openapi.vcs.changes.CurrentContentRevision
 import com.intellij.openapi.vcs.changes.HunkLines
-import com.intellij.openapi.vcs.changes.HunkNamePart
 import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
 import com.intellij.openapi.vcs.changes.ui.ChangesViewModelBuilder
+import com.intellij.openapi.vcs.changes.ui.StructuralHunkPresentation
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.ex.LineStatusTrackerI
 import com.intellij.openapi.vcs.ex.LocalRange
@@ -51,14 +45,13 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.navigation.NavigationRequest
+import com.intellij.platform.vcs.impl.shared.rpc.StructuralHunkDto
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiTreeAnyChangeAbstractAdapter
-import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ThreeStateCheckBox
-import org.jetbrains.annotations.Nls
 import java.util.BitSet
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -125,6 +118,7 @@ private class HunkNode(
   partialCommit: Boolean,
 ) : ChangesBrowserStructuralNode<HunkKey>(HunkKey(path, changeListId, hunk.lines), hasInclusion = partialCommit) {
   private val lines = hunk.lines
+  private val presentation = StructuralHunkDto.of(lines, hunk.name)
   private val navigatable = OpenFileDescriptor(project, file, lines.line1, 0)
 
   override fun getNavigatable(): Navigatable = navigatable
@@ -141,7 +135,7 @@ private class HunkNode(
     return TextRange(document.getLineStartOffset(lines.line1), document.getLineEndOffset(lines.line2 - 1))
   }
 
-  override fun getDiffLines(): DiffLines = DiffLines(LineRange(lines.vcsLine1, lines.vcsLine2), LineRange(lines.line1, lines.line2))
+  override fun getDiffLines(): DiffLines = presentation.diffLines
 
   override fun getInclusionState(fileState: ThreeStateCheckBox.State): ThreeStateCheckBox.State {
     val tracker = validPartialTracker() ?: return fileState
@@ -269,81 +263,10 @@ private class HunkNode(
     return if (lines.line1 < document.lineCount) document.getLineStartOffset(lines.line1) else document.textLength
   }
 
-  override fun getTextPresentation(): String {
-    val parts = hunk.name.parts
-    if (parts.isEmpty()) return VcsBundle.message("changes.structural.blank.lines")
-    val shown = shownPartCount()
-    val text = joinedParts(parts.take(shown))
-    return if (shown < parts.size) text + " " + VcsBundle.message("changes.structural.more.parts", parts.size - shown) else text
-  }
-
-  /**
-   * The number of parts in the row: the parts that fit [MAX_ROW_LENGTH] characters, and at least one. A hunk can change hundreds of
-   * elements, as a rename of many methods does, so the row gives the count of the other parts.
-   */
-  private fun shownPartCount(): Int {
-    var length = 0
-    hunk.name.parts.forEachIndexed { index, part ->
-      length += partText(part).length + if (index > 0) SEPARATOR.length else 0
-      if (index > 0 && length > MAX_ROW_LENGTH) return index
-    }
-    return hunk.name.parts.size
-  }
-
-  /** The parts are source text, and the separators are symbols, so the text needs no translation. */
-  private fun joinedParts(parts: List<HunkNamePart>): @NlsSafe String = parts.joinToString(SEPARATOR, transform = ::partText)
-
-  private fun partText(part: HunkNamePart): @NlsSafe String = part.previousText?.let { "$it → ${part.text}" } ?: part.text
-
-  /** Lists the parts one per line, at most [MAX_TOOLTIP_PARTS] of them, and then the detail. */
-  private fun tooltip(): @Nls String {
-    val parts = hunk.name.parts
-    val builder = HtmlBuilder()
-    if (parts.isEmpty()) builder.append(VcsBundle.message("changes.structural.blank.lines"))
-    parts.take(MAX_TOOLTIP_PARTS).forEachIndexed { index, part ->
-      if (index > 0) builder.br()
-      builder.append(partText(part))
-    }
-    if (parts.size > MAX_TOOLTIP_PARTS) {
-      builder.br().append(VcsBundle.message("changes.structural.more.parts", parts.size - MAX_TOOLTIP_PARTS))
-    }
-    hunk.name.detail?.let { builder.br().append(it.text) }
-    return builder.wrapWithHtmlBody().toString()
-  }
+  override fun getTextPresentation(): String = StructuralHunkPresentation.text(presentation)
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-    val name = hunk.name
-    // A line of text names a hunk without an element icon, so the row shows the text icon instead of an empty gap.
-    renderer.icon = name.icon ?: AllIcons.FileTypes.Text
-    if (name.parts.isEmpty()) {
-      renderer.append(VcsBundle.message("changes.structural.blank.lines"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      return
-    }
-    val shown = shownPartCount()
-    name.parts.take(shown).forEachIndexed { index, part ->
-      if (index > 0) renderer.append(SEPARATOR, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      part.previousText?.let {
-        renderer.append(it, attributes(FileStatus.DELETED))
-        renderer.append(" → ", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
-      renderer.append(part.text, attributes(part.status))
-    }
-    if (shown < name.parts.size) {
-      renderer.append(" " + VcsBundle.message("changes.structural.more.parts", name.parts.size - shown), SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
-    if (name.isWhitespaceOnly) {
-      renderer.append("  " + VcsBundle.message("changes.structural.whitespace.only"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
-    name.detail?.let {
-      val style = if (it.status == FileStatus.DELETED) SimpleTextAttributes.STYLE_STRIKEOUT else SimpleTextAttributes.STYLE_PLAIN
-      renderer.append("  " + it.text, SimpleTextAttributes(style, SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor))
-    }
-    renderer.toolTipText = tooltip()
-  }
-
-  private fun attributes(status: FileStatus): SimpleTextAttributes {
-    val style = if (status == FileStatus.DELETED) SimpleTextAttributes.STYLE_STRIKEOUT else SimpleTextAttributes.STYLE_PLAIN
-    return SimpleTextAttributes(style, status.color)
+    StructuralHunkPresentation.render(renderer, presentation)
   }
 
   override fun getSortWeight(): Int = HUNK_SORT_WEIGHT
@@ -352,9 +275,6 @@ private class HunkNode(
 
   private companion object {
     const val HUNK_SORT_WEIGHT = 9
-    const val MAX_ROW_LENGTH = 80
-    const val MAX_TOOLTIP_PARTS = 20
-    const val SEPARATOR = ", "
   }
 }
 
