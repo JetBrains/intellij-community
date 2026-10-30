@@ -103,6 +103,7 @@ internal class BufferingPersistentChangeListStorage(
     notifyStorageBroken()
   }
 
+  @Synchronized
   override fun close(drop: Boolean) {
     if (!drop) {
       flushPending()
