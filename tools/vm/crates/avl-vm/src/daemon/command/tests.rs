@@ -911,6 +911,22 @@ fn a_failure_carries_the_trace_of_its_scenario() {
     );
 }
 
+// A scenario name can hold the name of another scenario of the same class. Each failure gets the trace of its own
+// scenario, also when the bundle of the shorter name comes first (IJAI-4146).
+#[test]
+fn a_failure_gets_its_own_trace_when_its_name_holds_another_scenario() {
+    let class = Some("com.example.AirTest");
+    let short = "subagents have the same v1 and v2 projection";
+    let nested = "nested subagents have the same v1 and v2 projection";
+    let bundles = [bundle("short", short, "passed", false), bundle("nested", nested, "failed", false)];
+    let failures = failures_of(&[report_failure(class, nested, ""), report_failure(class, short, "")], &bundles);
+    let traces: Vec<Option<&str>> = failures
+        .iter()
+        .map(|failure| failure.trace.as_ref().map(|trace| trace.bundle_id.as_str()))
+        .collect();
+    assert_eq!(traces, [Some("nested"), Some("short")]);
+}
+
 // The verdict says whether the tree the build read was clean.
 #[tokio::test]
 async fn the_verdict_states_the_tree() {
