@@ -113,6 +113,26 @@ abstract class IjentDeployingOverShellProcessStrategy(
     }
   }
 
+  /** A [WithShellBootstrap] whose shell is a local [Process], like [JavaProcessBasedStrategy]. */
+  abstract class JavaProcessWithShellBootstrap(
+    scope: ParentOfIjentScopes,
+    currentDispatcher: CoroutineDispatcher,
+    ijentLabel: String,
+  ) : WithShellBootstrap(scope, currentDispatcher, ijentLabel) {
+    /**
+     * Starts a process that runs [script] as the initial command. It must be a raw `java.lang.ProcessImpl` or an
+     * [com.intellij.platform.ijent.IjentChildProcessAdapter].
+     * Once the process is returned, the SPI owns it: the caller never destroys it.
+     */
+    protected abstract suspend fun createShellProcess(ijentProcessScope: IjentScope, script: String): Process
+
+    final override suspend fun createShellProcessFacade(
+      ijentProcessScope: IjentScope,
+      script: String,
+    ): IjentSessionProcessMediator.ProcessFacade =
+      IjentSessionProcessMediator.JavaProcessFacade(ijentProcessScope, createShellProcess(ijentProcessScope, script))
+  }
+
   protected sealed interface ExecutionStrategy {
     data object Default : ExecutionStrategy
 
