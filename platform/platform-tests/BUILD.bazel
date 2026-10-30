@@ -60,6 +60,7 @@ jvm_library(
         "//plugins/jcef/plugin",
         "//platform/platform-impl/jcef",
         "//json/plugin",
+        "//plugins/yaml/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],

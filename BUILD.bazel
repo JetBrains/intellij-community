@@ -259,7 +259,7 @@ jvm_library(
         "//plugins/kotlin/onboarding-promoter",
         "//platform/execution-process-elevation",
         "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
-        "//plugins/yaml",
+        "//plugins/yaml/plugin",
         "//platform/compose/plugin",
         "//json/plugin",
         "//java/terminal/shared",

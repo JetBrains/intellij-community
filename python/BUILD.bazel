@@ -634,6 +634,7 @@ jvm_library(
         "//jupyter:notebooks-jupyter-core",
         "//python/intellij.python.community.communityOnly:community-communityOnly",
         "//json/plugin",
+        "//plugins/yaml/plugin",
         "//python/aliasProvider",
         "//python/python-zuban/frontend",
         "//python/python-zuban/plugin",

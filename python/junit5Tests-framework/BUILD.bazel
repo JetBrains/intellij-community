@@ -48,6 +48,7 @@ jvm_library(
         "//community-resources:customization",
         "//xml/plugin",
         "//json/plugin",
+        "//plugins/yaml/plugin",
     ],
     deps = [
         # do not sort,

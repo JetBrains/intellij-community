@@ -53,6 +53,7 @@ jvm_library(
         "//xml/plugin",
         "//json/spellchecker",
         "//json/plugin",
+        "//plugins/yaml/plugin",
         "//plugins/yaml/spellchecker",
         "//spellchecker/xml/backend",
         "//platform/testRunner/plugin",

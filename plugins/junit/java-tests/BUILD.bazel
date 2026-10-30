@@ -18,6 +18,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//json/plugin",
+        "//plugins/yaml/plugin",
         "//plugins/junit/properties",
         "//java/manifest",
         "//platform/main/intellij.platform.monolith.main:monolith-main",

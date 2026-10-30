@@ -91,6 +91,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//json/plugin",
+        "//plugins/yaml/plugin",
         "//xml/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",

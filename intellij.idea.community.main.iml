@@ -160,7 +160,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.onboarding.promoter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.execution.process.elevation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.gitlab.yaml" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.yaml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.yaml.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.compose.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.json.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.terminal.shared" scope="RUNTIME" />
