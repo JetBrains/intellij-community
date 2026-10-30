@@ -4,7 +4,8 @@ Date: 2026-07-14
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)). Amended by
+[ADR 0170](./0170-the-platform-runs-each-migration-once-per-scope-and-the-migration-ledger-records-each-success.md).
 
 ## Context
 
