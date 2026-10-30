@@ -217,13 +217,12 @@ public final class PsiDiamondTypeUtil {
       }
       else {
         final PsiExpressionList argumentList = context instanceof PsiCallExpression ? ((PsiCallExpression)context).getArgumentList() : null;
-        final Object marker = new Object();
-        PsiTreeUtil.mark(argumentList != null ? argumentList : context, marker);
+        final PsiElement toCopy = argumentList != null ? argumentList : context;
         final PsiCall call = LambdaUtil.treeWalkUp(context);
         if (call != null) {
           RecaptureTypeMapper.encode(encoded = call);
           final PsiCall callCopy = LambdaUtil.copyTopLevelCall(call);
-          copy = callCopy != null ? PsiTreeUtil.releaseMark(callCopy, marker) : null;
+          copy = callCopy != null ? PsiTreeUtil.findSameElementInCopy(toCopy, call, callCopy) : null;
         }
         else  {
           final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(context.getProject());
@@ -232,7 +231,7 @@ public final class PsiDiamondTypeUtil {
           }
           final PsiFile containingFile = context.getContainingFile();
           final PsiFile fileCopy = (PsiFile)containingFile.copy();
-          copy = PsiTreeUtil.releaseMark(fileCopy, marker);
+          copy = PsiTreeUtil.findSameElementInCopy(toCopy, containingFile, fileCopy);
           if (method != null && method.getContainingFile() == containingFile) {
             final PsiElement startMethodElementInCopy = fileCopy.findElementAt(method.getTextOffset());
             method = PsiTreeUtil.getParentOfType(startMethodElementInCopy, PsiMethod.class);

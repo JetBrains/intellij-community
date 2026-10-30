@@ -2175,6 +2175,7 @@ Fc:com.intellij.psi.util.PsiTreeUtil
 - s:findFirstParent(com.intellij.psi.PsiElement,com.intellij.openapi.util.Condition):com.intellij.psi.PsiElement
 - s:findFirstParent(com.intellij.psi.PsiElement,Z,com.intellij.openapi.util.Condition):com.intellij.psi.PsiElement
 - s:findPrevParent(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- s:findSameElementInCopy(com.intellij.psi.PsiElement,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
 - s:findSameElementInCopy(com.intellij.psi.PsiElement,com.intellij.psi.PsiFile):com.intellij.psi.PsiElement
 - s:findSiblingBackward(com.intellij.psi.PsiElement,com.intellij.psi.tree.IElementType,com.intellij.util.Consumer):com.intellij.psi.PsiElement
 - s:findSiblingBackward(com.intellij.psi.PsiElement,com.intellij.psi.tree.IElementType,Z,com.intellij.util.Consumer):com.intellij.psi.PsiElement

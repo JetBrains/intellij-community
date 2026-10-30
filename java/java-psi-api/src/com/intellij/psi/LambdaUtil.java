@@ -23,7 +23,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -1045,12 +1044,10 @@ public final class LambdaUtil {
     if (body == null) return false;
     final PsiCall call = treeWalkUp(body);
     if (call != null) {
-      Object marker = new Object();
-      PsiTreeUtil.mark(lambda, marker);
       PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
       PsiCall copyCall = copyTopLevelCall(call);
       if (copyCall == null) return false;
-      PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
+      PsiLambdaExpression lambdaCopy = PsiTreeUtil.findSameElementInCopy(lambda, call, copyCall);
       if (lambdaCopy == null) return false;
       PsiExpression function = replacer.apply(lambdaCopy);
       if (function == null) return false;
@@ -1183,10 +1180,8 @@ public final class LambdaUtil {
             if (lambdaExpression1 == null) return null;
             PsiElement body = lambdaExpression1.getBody();
             if (body == null) return null;
-            Object marker = new Object();
-            PsiTreeUtil.mark(lambdaReturnExpression, marker);
             PsiElement copy = body.copy();
-            PsiElement exprInReturn = PsiTreeUtil.releaseMark(copy, marker);
+            PsiElement exprInReturn = PsiTreeUtil.findSameElementInCopy(lambdaReturnExpression, body, copy);
             if (exprInReturn == null) return null;
             if (exprInReturn == copy) {
               return exprInReturn.replace(replacement);

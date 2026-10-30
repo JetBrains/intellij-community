@@ -287,13 +287,12 @@ public final class LambdaRefactoringUtil {
     if (call == null) {
       return true;
     }
-    Object marker = new Object();
-    PsiTreeUtil.mark(methodReferenceExpression, marker);
     try {
       RecaptureTypeMapper.encode(methodReferenceExpression);
       PsiCall copyTopLevelCall = LambdaUtil.copyTopLevelCall(call);
       if (copyTopLevelCall != null) {
-        PsiMethodReferenceExpression methodReferenceInCopy = (PsiMethodReferenceExpression)PsiTreeUtil.releaseMark(copyTopLevelCall, marker);
+        PsiMethodReferenceExpression methodReferenceInCopy =
+          PsiTreeUtil.findSameElementInCopy(methodReferenceExpression, call, copyTopLevelCall);
         if (methodReferenceInCopy != null) {
           PsiClassType functionalInterfaceType = ObjectUtils.tryCast(methodReferenceInCopy.getFunctionalInterfaceType(), PsiClassType.class);
           if (functionalInterfaceType == null) return false;

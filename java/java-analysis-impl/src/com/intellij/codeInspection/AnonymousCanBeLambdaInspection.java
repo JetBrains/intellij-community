@@ -200,12 +200,10 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
 
     final PsiCall call = LambdaUtil.treeWalkUp(topExpr);
     if (call != null && call.resolveMethod() != null) {
-      Object marker = new Object();
-      PsiTreeUtil.mark(aClass, marker);
       PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
       if (copyCall == null) return null;
-      final PsiElement classArg = PsiTreeUtil.releaseMark(copyCall, marker);
-      if (classArg instanceof PsiAnonymousClass) {
+      final PsiElement classArg = PsiTreeUtil.findSameElementInCopy(aClass, call, copyCall);
+      if (classArg != null) {
         PsiExpression lambda = JavaPsiFacade.getElementFactory(aClass.getProject())
           .createExpressionFromText(ReplaceWithLambdaFix.composeLambdaText(method), expression);
         lambda = (PsiExpression)classArg.getParent().replace(lambda);
@@ -308,7 +306,7 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
     final PsiMethod method;
     if (ignoreEqualsMethod) {
       final List<PsiMethod> methods = ContainerUtil.filter(anonymousClass.getMethods(), method1 -> !"equals".equals(method1.getName()));
-      method = methods.get(0);
+      method = methods.getFirst();
     } else {
       method = anonymousClass.getMethods()[0];
     }
@@ -516,11 +514,10 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
       final PsiClass containingClass = psiMethod.getContainingClass();
       if (containingClass != null &&
           CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
-        return !(callExpression instanceof PsiMethodCallExpression && ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified());
+        return !(callExpression instanceof PsiMethodCallExpression call && call.getMethodExpression().isQualified());
       }
 
-      if (callExpression instanceof PsiMethodCallExpression &&
-          ((PsiMethodCallExpression)callExpression).getMethodExpression().isQualified()) {
+      if (callExpression instanceof PsiMethodCallExpression call && call.getMethodExpression().isQualified()) {
         return false;
       }
 
@@ -600,14 +597,14 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
         if (member instanceof PsiField || member instanceof PsiClassInitializer) {
           final PsiElement resolved = expression.resolve();
           final PsiClass memberContainingClass = member.getContainingClass();
-          if (resolved instanceof PsiField &&
+          if (resolved instanceof PsiField field &&
               memberContainingClass != null &&
-              PsiTreeUtil.isAncestor(((PsiField)resolved).getContainingClass(), memberContainingClass, false) &&
+              PsiTreeUtil.isAncestor(field.getContainingClass(), memberContainingClass, false) &&
               expression.getQualifierExpression() == null) {
-            final PsiExpression initializer = ((PsiField)resolved).getInitializer();
+            final PsiExpression initializer = field.getInitializer();
             if (initializer == null ||
                 resolved == member ||
-                initializer.getTextOffset() > myAnonymousClass.getTextOffset() && ((PsiField)resolved).hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
+                initializer.getTextOffset() > myAnonymousClass.getTextOffset() && field.hasModifierProperty(PsiModifier.STATIC) == member.hasModifierProperty(PsiModifier.STATIC)) {
               myBodyContainsForbiddenRefs = true;
             }
           }
@@ -615,10 +612,10 @@ public final class AnonymousCanBeLambdaInspection extends AbstractBaseJavaLocalI
           final PsiMethod method = PsiTreeUtil.getParentOfType(myAnonymousClass, PsiMethod.class);
           if (method != null && method.isConstructor()) {
             final PsiElement resolved = expression.resolve();
-            if (resolved instanceof PsiField &&
-                ((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL) &&
-                ((PsiField)resolved).getInitializer() == null &&
-                ((PsiField)resolved).getContainingClass() == method.getContainingClass()) {
+            if (resolved instanceof PsiField field &&
+                field.hasModifierProperty(PsiModifier.FINAL) &&
+                field.getInitializer() == null &&
+                field.getContainingClass() == method.getContainingClass()) {
               try {
                 final PsiCodeBlock constructorBody = method.getBody();
                 if (constructorBody != null) {

@@ -1044,6 +1044,14 @@ public class PsiTreeUtil {
     return true;
   }
 
+  /**
+   * Mark an element in a copyable manner. Later, the copies of the element could be retrieved via {@link #releaseMark(PsiElement, Object)}.
+   * This method is not thread-safe and should be used with caution. If the same element is marked in different threads, the behavior is undefined.
+   * Consider using {@link #findSameElementInCopy(PsiElement, PsiElement, PsiElement)} as a safer alternative.
+   *
+   * @param element an element to mark in a copyable manner
+   * @param marker a marker to associate with the element, so the copy of an element could be retrieved later via {@link #releaseMark(PsiElement, Object)}
+   */
   public static void mark(@NotNull PsiElement element, @NotNull Object marker) {
     element.getNode().putCopyableUserData(MARKER, marker);
   }
@@ -1054,6 +1062,13 @@ public class PsiTreeUtil {
     return mark;
   }
 
+  /**
+   * Retrieve an element previously marked with {@link #mark(PsiElement)} or {@link #mark(PsiElement, Object)} and remove the marker.
+   *
+   * @param root root element to search from
+   * @param marker marker to search under the root
+   * @return the marked element or null if not found
+   */
   public static @Nullable PsiElement releaseMark(@NotNull PsiElement root, @NotNull Object marker) {
     ASTNode node = root.getNode();
     if (marker.equals(node.getCopyableUserData(MARKER))) {
@@ -1482,6 +1497,39 @@ public class PsiTreeUtil {
     if (!cur.getClass().equals(element.getClass())) {
       throw new IllegalStateException("File structure differs: " + cur.getClass() + " != " + element.getClass() + copyInfo(copy));
     }
+    //noinspection unchecked
+    return (T)cur;
+  }
+
+  /**
+   * Returns the same element in a copy of its ancestor.
+   *
+   * @param element  an element to find
+   * @param root     an ancestor of {@code element}, or the {@code element} itself
+   * @param rootCopy a copy of {@code root}
+   * @return the element at the same position in {@code rootCopy} as {@code element} in {@code root};
+   * null if {@code root} is not an ancestor of {@code element}, or if {@code rootCopy} has a different structure
+   */
+  public static <T extends PsiElement> @Nullable T findSameElementInCopy(@NotNull T element,
+                                                                         @NotNull PsiElement root,
+                                                                         @NotNull PsiElement rootCopy) {
+    IntArrayList indices = new IntArrayList();
+    for (PsiElement cur = element; cur != root; cur = cur.getParent()) {
+      if (cur == null) return null;
+      int index = 0;
+      for (PsiElement sibling = cur.getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
+        index++;
+      }
+      indices.add(index);
+    }
+    PsiElement cur = rootCopy;
+    for (int level = indices.size() - 1; level >= 0 && cur != null; level--) {
+      cur = cur.getFirstChild();
+      for (int i = indices.get(level); i > 0 && cur != null; i--) {
+        cur = cur.getNextSibling();
+      }
+    }
+    if (cur == null || !cur.getClass().equals(element.getClass())) return null;
     //noinspection unchecked
     return (T)cur;
   }

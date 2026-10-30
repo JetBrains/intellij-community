@@ -71,6 +71,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Processor;
+import com.siyeh.ig.dataflow.ScopeUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -291,8 +292,8 @@ public final class VariableAccessUtils {
       }
       PsiExpression arrayExpression = arrayAccessExpression.getArrayExpression();
       int count = 1;
-      while (arrayExpression instanceof PsiArrayAccessExpression) {
-        arrayAccessExpression = (PsiArrayAccessExpression)arrayExpression;
+      while (arrayExpression instanceof PsiArrayAccessExpression arrayAccess) {
+        arrayAccessExpression = arrayAccess;
         arrayExpression = arrayAccessExpression.getArrayExpression();
         count++;
       }
@@ -370,8 +371,8 @@ public final class VariableAccessUtils {
   private static @NotNull @Unmodifiable List<PsiReferenceExpression> getVariableReferencesNoCache(@NotNull PsiVariable variable, @NotNull PsiElement context) {
     List<PsiReferenceExpression> result = new ArrayList<>();
     PsiTreeUtil.processElements(context, e -> {
-      if (e instanceof PsiReferenceExpression && ((PsiReferenceExpression)e).isReferenceTo(variable)) {
-        result.add((PsiReferenceExpression)e);
+      if (e instanceof PsiReferenceExpression ref && ref.isReferenceTo(variable)) {
+        result.add(ref);
       }
       return true;
     });
@@ -459,14 +460,11 @@ public final class VariableAccessUtils {
     return variableIsAssignedAtPoint(variable, context, referenceExpression);
   }
 
-  public static boolean variableIsAssignedAtPoint(
-    @NotNull PsiVariable variable, @Nullable PsiElement context,
-    @NotNull PsiElement point) {
-    if (context == null) {
+  public static boolean variableIsAssignedAtPoint(@NotNull PsiVariable variable, @Nullable PsiElement context, @NotNull PsiElement point) {
+    if (context == null || context == point) {
       return false;
     }
-    final PsiElement directChild =
-      getDirectChildWhichContainsElement(context, point);
+    PsiElement directChild = ScopeUtils.getChildWhichContainsElement(context, point);
     if (directChild == null) {
       return false;
     }
@@ -480,24 +478,6 @@ public final class VariableAccessUtils {
       }
     }
     return false;
-  }
-
-  private static @Nullable PsiElement getDirectChildWhichContainsElement(
-    @NotNull PsiElement ancestor,
-    @NotNull PsiElement descendant) {
-    if (ancestor == descendant) {
-      return null;
-    }
-    PsiElement child = descendant;
-    PsiElement parent = child.getParent();
-    while (!parent.equals(ancestor)) {
-      child = parent;
-      parent = child.getParent();
-      if (parent == null) {
-        return null;
-      }
-    }
-    return child;
   }
 
   public static @Unmodifiable Set<PsiVariable> collectUsedVariables(PsiElement context) {
@@ -529,9 +509,9 @@ public final class VariableAccessUtils {
    * Check if local variable has the same behavior as given expression.
    */
   public static boolean isLocalVariableCopy(@NotNull PsiLocalVariable variable, @Nullable PsiExpression expression) {
-    if (expression instanceof PsiTypeCastExpression) {
-      PsiExpression operand = ((PsiTypeCastExpression)expression).getOperand();
-      if (operand instanceof PsiReferenceExpression && RedundantCastUtil.isCastRedundant((PsiTypeCastExpression)expression)) {
+    if (expression instanceof PsiTypeCastExpression cast) {
+      PsiExpression operand = cast.getOperand();
+      if (operand instanceof PsiReferenceExpression && RedundantCastUtil.isCastRedundant(cast)) {
         expression = operand;
       }
     }
@@ -627,12 +607,12 @@ public final class VariableAccessUtils {
   private static boolean isFinalChain(PsiReferenceExpression reference) {
     while (true) {
       PsiElement element = reference.resolve();
-      if (!(element instanceof PsiField)) return true;
-      if (!((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) return false;
+      if (!(element instanceof PsiField field)) return true;
+      if (!field.hasModifierProperty(PsiModifier.FINAL)) return false;
       PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(reference.getQualifierExpression());
       if (qualifier == null || qualifier instanceof PsiThisExpression) return true;
-      if (!(qualifier instanceof PsiReferenceExpression)) return false;
-      reference = (PsiReferenceExpression)qualifier;
+      if (!(qualifier instanceof PsiReferenceExpression ref)) return false;
+      reference = ref;
     }
   }
 
@@ -717,11 +697,8 @@ public final class VariableAccessUtils {
     if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression call) {
       PsiMethod method = call.resolveMethod();
       if (method == null) return false;
-      Object mark = new Object();
-      PsiTreeUtil.mark(reference, mark);
       PsiCallExpression callCopy = (PsiCallExpression)call.copy();
-      PsiTreeUtil.releaseMark(reference, mark);
-      PsiElement refCopy = PsiTreeUtil.releaseMark(callCopy, mark);
+      PsiElement refCopy = PsiTreeUtil.findSameElementInCopy(reference, call, callCopy);
       if (refCopy == null) return false;
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(call.getProject());
       PsiTypeCastExpression insertedCast = (PsiTypeCastExpression)refCopy.replace(
