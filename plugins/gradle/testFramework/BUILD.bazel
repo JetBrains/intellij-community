@@ -18,6 +18,16 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
     exports = ["//platform/external-system-api/testFramework"],
+    runtime_deps = [
+        # do not sort,
+        "//platform/testRunner/plugin",
+        "//platform/structure-view-impl/plugin",
+        "//aether-dependency-resolver/plugin",
+        "//xml/plugin",
+        "//plugins/groovy-scripting",
+        "//plugins/gradle/java/plugin",
+        "//platform/vcs/plugin",
+    ],
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
