@@ -325,7 +325,16 @@ fun MessageBusConnection.subscribeOnVcsToolWindowLayoutChanges(updateLayout: Run
     override fun toolWindowMappingChanged() = updateLayout.run()
   })
   subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-    override fun stateChanged(toolWindowManager: ToolWindowManager) = WriteIntentReadAction.run { updateLayout.run() }
+    override fun stateChanged(
+      toolWindowManager: ToolWindowManager,
+      toolWindow: ToolWindow,
+      changeType: ToolWindowManagerListener.ToolWindowManagerEventType,
+    ) {
+      if (toolWindow.id != ToolWindowId.COMMIT && toolWindow.id != ToolWindowId.VCS) {
+        return
+      }
+      WriteIntentReadAction.run { updateLayout.run() }
+    }
   })
 }
 
