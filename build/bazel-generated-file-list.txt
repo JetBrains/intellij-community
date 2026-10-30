@@ -62,6 +62,7 @@ android/android/sdk
 android/android/ui
 android/android/ui.designer.overlays
 android/android/ui.resourcemanager
+android/android/webp
 android/androidx-integration-tests
 android/apkanalyzer
 android/apkanalyzer/apk

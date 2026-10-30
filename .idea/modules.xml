@@ -170,6 +170,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/android/ui/intellij.android.core.ui.iml" filepath="$PROJECT_DIR$/android/android/ui/intellij.android.core.ui.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/ui.designer.overlays/intellij.android.core.ui.designer.overlays.iml" filepath="$PROJECT_DIR$/android/android/ui.designer.overlays/intellij.android.core.ui.designer.overlays.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android/ui.resourcemanager/intellij.android.core.ui.resourcemanager.iml" filepath="$PROJECT_DIR$/android/android/ui.resourcemanager/intellij.android.core.ui.resourcemanager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/android/android/webp/intellij.android.core.webp.iml" filepath="$PROJECT_DIR$/android/android/webp/intellij.android.core.webp.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/dagger/intellij.android.dagger.iml" filepath="$PROJECT_DIR$/android/dagger/intellij.android.dagger.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/dagger/intellij.android.dagger.tests.iml" filepath="$PROJECT_DIR$/android/dagger/intellij.android.dagger.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/databinding/intellij.android.databinding.iml" filepath="$PROJECT_DIR$/android/databinding/intellij.android.databinding.iml" />
