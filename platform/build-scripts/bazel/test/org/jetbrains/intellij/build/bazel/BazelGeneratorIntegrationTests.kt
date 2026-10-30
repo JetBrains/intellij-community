@@ -65,7 +65,8 @@ class BazelGeneratorIntegrationTests {
 
   /**
    * A PROVIDED dependency is `neverlink`: the module compiles against it and nothing runs with it. An exported PROVIDED
-   * dependency exports its `neverlink` wrapper, so the dependents of the module do not run with it either.
+   * dependency exports its `neverlink` wrapper, so the dependents of the module do not run with it either. The wrapper of a
+   * test module is `testonly`, like the target it wraps.
    */
   @Test fun providedDependencies() = doTest("provided-dependencies")
 

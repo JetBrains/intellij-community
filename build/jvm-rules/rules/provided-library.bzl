@@ -41,9 +41,10 @@ _rule = rule(
     implementation = _jvm_provided_libraries,
 )
 
-def _jvm_provided_library(name, visibility, lib):
+def _jvm_provided_library(name, visibility, lib, testonly):
     return _rule(
         name = name,
+        testonly = testonly,
         visibility = visibility,
         exports = [lib],
     )
@@ -51,6 +52,7 @@ def _jvm_provided_library(name, visibility, lib):
 jvm_provided_library = macro(
     attrs = {
         "lib": attr.label(mandatory = True, allow_files = False, providers = [JavaInfo, KotlinInfo], configurable = False),
+        "testonly": attr.bool(default = False, configurable = False),
     },
     implementation = _jvm_provided_library,
 )

@@ -1057,6 +1057,9 @@ internal class BazelBuildFileGenerator(
       val name = labelToName.get(label.label) + "_provided"
       target("jvm_provided_library") {
         option("name", name)
+        if (label.module?.isTestModule == true) {
+          option("testonly", true)
+        }
         option("lib", label)
       }
       BazelLabel(":$name", null)
