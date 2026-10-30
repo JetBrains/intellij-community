@@ -15,6 +15,7 @@ import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Window;
 import java.awt.event.ComponentEvent;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class WindowManagerEx extends WindowManager {
@@ -91,5 +92,56 @@ public abstract class WindowManagerEx extends WindowManager {
   @ApiStatus.Internal
   public @NotNull AutoCloseable withFrameReuseEnabled() {
     return () -> {};
+  }
+
+  /**
+   * The project that owns the frame that shows {@code project}: {@code project} itself unless it is a frame guest,
+   * a project with no frame of its own that the frame of another project shows.
+   */
+  @ApiStatus.Internal
+  public @NotNull Project getFrameOwner(@NotNull Project project) {
+    return project;
+  }
+
+  /** Tells whether {@code project} is a frame guest, see {@link #getFrameOwner(Project)}. */
+  @ApiStatus.Internal
+  public boolean isFrameGuest(@NotNull Project project) {
+    return false;
+  }
+
+  /** The frame guests of {@code frameOwner}, in the order they joined. */
+  @ApiStatus.Internal
+  public @NotNull List<Project> getFrameGuests(@NotNull Project frameOwner) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * The active project of the frame that shows {@code project}: the project that the frame UI gives to an action.
+   * The owner of the frame when the frame has no active guest.
+   */
+  @ApiStatus.Internal
+  public @NotNull Project getActiveProject(@NotNull Project project) {
+    return project;
+  }
+
+  /**
+   * Makes {@code project} the active project of the frame that shows it. Any thread.
+   * On the EDT the frame shows the change before the call returns.
+   */
+  @ApiStatus.Internal
+  public void setActiveProject(@NotNull Project project) {
+  }
+
+  /**
+   * Records {@code guest} as a frame guest of {@code frameOwner}. The frame of {@code frameOwner} may not exist yet.
+   * A guest leaves its frame when it closes.
+   */
+  @ApiStatus.Internal
+  public void addFrameGuest(@NotNull Project frameOwner, @NotNull Project guest) {
+  }
+
+  /** Takes {@code guest} out of its frame. For a guest that did not load, because a guest that closes leaves on its own. */
+  @ApiStatus.Internal
+  public void removeFrameGuest(@NotNull Project guest) {
   }
 }

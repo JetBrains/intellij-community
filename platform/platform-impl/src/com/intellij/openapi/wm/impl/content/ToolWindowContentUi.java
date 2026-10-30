@@ -22,8 +22,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -37,7 +39,8 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowContentUiType;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -778,7 +781,10 @@ public final class ToolWindowContentUi implements ContentUI, UiCompatibleDataPro
     sink.set(PlatformDataKeys.TOOL_WINDOW, window);
     sink.set(PlatformDataKeys.TOOL_WINDOW_ID, window.getId());
     sink.set(PlatformCoreDataKeys.HELP_ID, window.getHelpId());
-    sink.set(CommonDataKeys.PROJECT, ProjectFrameHelper.activeProjectOf(window.toolWindowManager.getProject()));
+    Project project = window.toolWindowManager.getProject();
+    // a frame that shows frame guests gives its active project, see WindowManagerEx.getActiveProject
+    WindowManager windowManager = ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
+    sink.set(CommonDataKeys.PROJECT, windowManager instanceof WindowManagerEx ex ? ex.getActiveProject(project) : project);
     sink.set(CloseAction.CloseTarget.KEY, computeCloseTarget(window));
     if (getCurrentLayout() instanceof MorePopupAware o) {
       sink.set(MorePopupAware.KEY_TOOLWINDOW_TITLE, o);

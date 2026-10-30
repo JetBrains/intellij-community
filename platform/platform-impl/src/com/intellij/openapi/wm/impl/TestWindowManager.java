@@ -2,10 +2,12 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.progress.ProgressModel;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectCloseListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Disposer;
@@ -17,6 +19,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.WindowManagerListener;
 import kotlin.Pair;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.Deferred;
@@ -46,6 +49,59 @@ import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 @ApiStatus.Internal
 public final class TestWindowManager extends WindowManagerEx {
   private static final Key<StatusBar> STATUS_BAR = Key.create("STATUS_BAR");
+
+  /** The record of the frame owners and the frame guests, as in {@code WindowManagerImpl}, so a unit test sees the guests. */
+  private final ProjectFrameAssignments assignments =
+    new ProjectFrameAssignments(() -> ApplicationManager.getApplication().getMessageBus().syncPublisher(WindowManagerListener.Companion.getTOPIC()));
+
+  public TestWindowManager() {
+    ApplicationManager.getApplication().getMessageBus().simpleConnect().subscribe(ProjectCloseListener.TOPIC, new ProjectCloseListener() {
+      @Override
+      public void projectClosing(@NotNull Project project) {
+        assignments.removeGuest(project);
+      }
+
+      @Override
+      public void projectClosed(@NotNull Project project) {
+        assignments.releaseOwner(project);
+      }
+    });
+  }
+
+  @Override
+  public @NotNull Project getFrameOwner(@NotNull Project project) {
+    return assignments.ownerOf(project);
+  }
+
+  @Override
+  public boolean isFrameGuest(@NotNull Project project) {
+    return assignments.isGuest(project);
+  }
+
+  @Override
+  public @NotNull List<Project> getFrameGuests(@NotNull Project frameOwner) {
+    return assignments.guestsOf(frameOwner);
+  }
+
+  @Override
+  public @NotNull Project getActiveProject(@NotNull Project project) {
+    return assignments.activeProjectOf(project);
+  }
+
+  @Override
+  public void setActiveProject(@NotNull Project project) {
+    assignments.setActive(project);
+  }
+
+  @Override
+  public void addFrameGuest(@NotNull Project frameOwner, @NotNull Project guest) {
+    assignments.addGuest(frameOwner, guest);
+  }
+
+  @Override
+  public void removeFrameGuest(@NotNull Project guest) {
+    assignments.removeGuest(guest);
+  }
 
   @Override
   public void doNotSuggestAsParent(Window window) { }

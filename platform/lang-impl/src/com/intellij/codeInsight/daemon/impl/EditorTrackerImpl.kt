@@ -12,10 +12,12 @@ import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.application
@@ -44,8 +46,9 @@ open class EditorTrackerImpl(@JvmField protected val project: Project) : EditorT
     private fun windowByEditor(editor: Editor, project: Project): Window? {
       val window = SwingUtilities.windowForComponent(editor.component)
       val frameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return window
-      // the frame shows its own project and its frame guests
-      return if (frameHelper.showsProject(project)) window else null
+      // the frame shows its own project and its frame guests, see WindowManagerEx.getFrameOwner
+      val frameOwner = (application.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.getFrameOwner(project) ?: project
+      return if (frameOwner === frameHelper.project) window else null
     }
   }
 

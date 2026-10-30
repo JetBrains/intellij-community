@@ -75,6 +75,7 @@ import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.activeProjectOf
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.fileEditor.FileEntry
 import com.intellij.platform.fileEditor.parseFileEntry
@@ -923,6 +924,9 @@ open class EditorsSplitters internal constructor(
   internal suspend fun updateFrameTitle() {
     val project = manager.project
     val frame = getFrame() ?: return
+    // the frame shows the editors of its active project; the editors of another project of the frame leave the title alone
+    val frameOwner = frame.project
+    if (frameOwner != null && activeProjectOf(frameOwner) !== project) return
     val file = currentCompositeFlow.value?.file
     if (file == null) {
       withContext(Dispatchers.EDT) {

@@ -6,7 +6,10 @@ import com.intellij.openapi.application.UI
 import com.intellij.openapi.application.UiWithModelAccess
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.extensions.trackEachExtensionSafe
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
@@ -45,13 +48,43 @@ internal class IdeProjectFrameHelper(
   lateinit var toolWindowPane: ToolWindowPane
     private set
 
+  /** The editor area of the frame: the editors of the project, and a card per frame guest, see [FrameEditorArea]. */
+  @get:RequiresEdt
+  lateinit var editorArea: FrameEditorArea
+    private set
+
   private var northPanel: JBBox? = null
 
   override fun createCenterComponent(): JComponent {
     val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val pane = ToolWindowPane.create(frame, coroutineScope, paneId)
     toolWindowPane = pane
+    editorArea = FrameEditorArea(pane)
     return pane.buttonManager.wrapWithControls(pane)
+  }
+
+  override fun showActiveProject(active: Project) {
+    if (active === getProject()) {
+      editorArea.showOwnerEditors()
+    }
+    else {
+      editorArea.showGuestEditors(active)
+    }
+    // the title of the frame names the file of the active project
+    coroutineScope.launch(CoroutineName("frame title update on active project change")) {
+      val fileEditorManager = active.serviceIfCreated<FileEditorManager>() as? FileEditorManagerImpl ?: return@launch
+      fileEditorManager.initJob.join()
+      fileEditorManager.mainSplitters.updateFrameTitle()
+    }
+  }
+
+  override fun leaveFrame(guest: Project) {
+    super.leaveFrame(guest)
+    editorArea.removeGuestEditors(guest)
+  }
+
+  override fun setEditorAreaHeader(header: JComponent?) {
+    editorArea.setHeader(header)
   }
 
   override suspend fun setProject(project: Project) {

@@ -5,10 +5,12 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.configurationStore.deserializeInto
 import com.intellij.configurationStore.serialize
+import com.intellij.ide.ActivityTracker
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.UI
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.RoamingType
@@ -58,7 +60,6 @@ import java.awt.Window
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.ComponentListener
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JDialog
 import javax.swing.JFrame
@@ -88,16 +89,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   internal var oldLayout: DesktopLayout? = null
     private set
 
-  private class ProjectItem(@JvmField val frameHelper: ProjectFrameHelper, private val listener: ComponentListener?) {
-    fun release() {
-      listener?.let {
-        frameHelper.frame.removeComponentListener(it)
-      }
-    }
-  }
+  /** The one record of which frame shows each project, see [ProjectFrameAssignments]. */
+  private val assignments = ProjectFrameAssignments { application.messageBus.syncPublisher(WindowManagerListener.TOPIC) }
 
-  // write from EDT; getFrameHelper scans it from any thread
-  private val projectToFrame = ConcurrentHashMap<Project, ProjectItem>()
+  /** The frame state listener of each frame owner. EDT only. */
+  private val frameStateListeners = HashMap<Project, ComponentListener>()
   // read from any thread, write from EDT
   private val frameToReuse = AtomicReference<IdeFrameImpl?>()
 
@@ -114,8 +110,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
       Disposer.register(app, Disposable { disposeRootFrame() })
       connection.subscribe(TitleInfoProvider.TOPIC, object : TitleInfoProvider.TitleInfoProviderListener {
         override fun configurationChanged() {
-          for ((project, item) in projectToFrame) {
-            item.frameHelper.updateTitle(project)
+          for (assignment in assignments.assignments()) {
+            assignment.frameHelper?.updateTitle(assignment.owner)
           }
         }
       })
@@ -123,29 +119,37 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     KeyboardFocusManager.getCurrentKeyboardFocusManager().addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, windowWatcher)
 
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
-      override fun projectClosed(project: Project) {
-        val helper = projectToFrame.get(project)?.frameHelper
-        if (helper == null) {
-          // a frame guest leaves the frame of another project, and that frame stays
-          getFrameHelper(project)?.removeGuestProject(project)
+      override fun projectClosing(project: Project) {
+        // a guest leaves before its dispose starts, so the frame takes its editors out while they are valid
+        if (assignments.isGuest(project)) {
+          leaveFrame(project)
         }
+      }
+
+      override fun projectClosed(project: Project) {
+        val assignment = assignments.assignmentOf(project)
+        val helper = assignment?.frameHelper
         LOG.info("=== Release(${helper != null}) frame on closed project ===")
-        helper?.let {
-          releaseFrame(it)
+        when {
+          helper != null -> releaseFrame(helper)
+          assignment != null -> assignments.releaseOwner(project)
+          else -> leaveFrame(project)
         }
       }
     })
   }
 
-  override fun getAllProjectFrames(): Array<ProjectFrameHelper> = projectToFrame.values.map { it.frameHelper }.toTypedArray()
+  private fun frameHelpers(): List<ProjectFrameHelper> = assignments.assignments().mapNotNull { it.frameHelper }
 
-  override fun getProjectFrameHelpers(): List<ProjectFrameHelper> = projectToFrame.values.map { it.frameHelper }
+  override fun getAllProjectFrames(): Array<ProjectFrameHelper> = frameHelpers().toTypedArray()
+
+  override fun getProjectFrameHelpers(): List<ProjectFrameHelper> = frameHelpers()
 
   override fun findVisibleFrame(): JFrame? {
-    return projectToFrame.values.firstOrNull()?.frameHelper?.frame ?: WelcomeFrame.getInstance() as? JFrame
+    return frameHelpers().firstOrNull()?.frame ?: WelcomeFrame.getInstance() as? JFrame
   }
 
-  override fun findFirstVisibleFrameHelper(): ProjectFrameHelper? = projectToFrame.values.asSequence().map { it.frameHelper }.firstOrNull()
+  override fun findFirstVisibleFrameHelper(): ProjectFrameHelper? = frameHelpers().firstOrNull()
 
   override fun getScreenBounds(): Rectangle = ScreenUtil.getAllScreensRectangle()
 
@@ -272,20 +276,63 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   @Internal
   override fun getFrameHelper(project: Project?): ProjectFrameHelper? {
-    if (project == null) return null
-    projectToFrame.get(project)?.let { return it.frameHelper }
-    // a frame guest resolves to the frame that shows it, see ProjectFrameHelper.addGuestProject
-    return projectToFrame.values.firstOrNull { it.frameHelper.showsProject(project) }?.frameHelper
+    // a frame guest resolves to the frame that shows it
+    return project?.let { assignments.frameHelperOf(it) }
   }
 
-  /**
-   * Tells whether [project] has no frame of its own and shows in the frame of another project,
-   * see [ProjectFrameHelper.addGuestProject].
-   */
   @Internal
-  fun isFrameGuest(project: Project): Boolean {
-    val frameOwner = getFrameHelper(project)?.project ?: return false
-    return frameOwner !== project
+  override fun getFrameOwner(project: Project): Project = assignments.ownerOf(project)
+
+  @Internal
+  override fun isFrameGuest(project: Project): Boolean = assignments.isGuest(project)
+
+  @Internal
+  override fun getFrameGuests(frameOwner: Project): List<Project> = assignments.guestsOf(frameOwner)
+
+  @Internal
+  override fun getActiveProject(project: Project): Project = assignments.activeProjectOf(project)
+
+  @Internal
+  override fun setActiveProject(project: Project) {
+    val change = assignments.setActive(project) ?: return
+    runOnEdt { applyActiveProject(change) }
+  }
+
+  @Internal
+  override fun addFrameGuest(frameOwner: Project, guest: Project) {
+    assignments.addGuest(frameOwner, guest)
+  }
+
+  @Internal
+  override fun removeFrameGuest(guest: Project) {
+    leaveFrame(guest)
+  }
+
+  /** Takes [guest] out of the record and out of the UI of its frame. */
+  private fun leaveFrame(guest: Project) {
+    val left = assignments.removeGuest(guest) ?: return
+    runOnEdt {
+      assignments.frameHelperOf(left.frameOwner)?.leaveFrame(guest)
+      left.activeChange?.let { applyActiveProject(it) }
+    }
+  }
+
+  /** Shows the new active project in its frame. A later change wins, and a frame that is gone shows nothing. */
+  @RequiresEdt
+  private fun applyActiveProject(change: ActiveProjectChange) {
+    if (assignments.activeProjectOf(change.frameOwner) !== change.active) return
+    val frameHelper = assignments.frameHelperOf(change.frameOwner) ?: return
+    frameHelper.showActiveProject(change.active)
+    ActivityTracker.getInstance().inc()
+  }
+
+  private fun runOnEdt(task: () -> Unit) {
+    if (application.isDispatchThread) {
+      task()
+    }
+    else {
+      application.invokeLater({ task() }, ModalityState.any())
+    }
   }
 
   override fun findFrameHelper(project: Project?): ProjectFrameHelper? {
@@ -327,15 +374,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
 
   internal suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project, withListener: Boolean) {
     withContext(Dispatchers.UI) {
-      LOG.assertTrue(!projectToFrame.containsKey(project))
-
+      assignments.assignOwner(project, frameHelper)
       if (withListener) {
         val listener = FrameStateListener(defaultFrameInfoHelper)
         frameHelper.frame.addComponentListener(listener)
-        projectToFrame.put(project, ProjectItem(frameHelper, listener))
-      }
-      else {
-        projectToFrame.put(project, ProjectItem(frameHelper, null))
+        frameStateListeners.put(project, listener)
       }
 
       application.messageBus.syncPublisher(WindowManagerListener.TOPIC).onFramesChanged()
@@ -346,9 +389,14 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun releaseFrame(releasedFrameHelper: ProjectFrameHelper) {
     val project = releasedFrameHelper.project
     if (project != null) {
-      projectToFrame.remove(project)?.release()
+      val remainingGuests = assignments.releaseOwner(project)?.guests ?: emptyList()
+      frameStateListeners.remove(project)?.let { releasedFrameHelper.frame.removeComponentListener(it) }
+      if (remainingGuests.isNotEmpty()) {
+        // the close of an owner closes its guests first; a guest that is still here keeps no frame
+        LOG.warn("The frame of $project is released while it shows the frame guests $remainingGuests")
+      }
 
-      if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible) {
+      if (frameReuseEnabled && frameToReuse.get() == null && project !is LightEditCompatible && remainingGuests.isEmpty()) {
         releasedFrameHelper.storeStateForReuse()
         val frame = releasedFrameHelper.frame
         frameToReuse.set(frame)
@@ -428,6 +476,8 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   override fun isFullScreenSupportedInCurrentOS(): Boolean = isFullScreenSupportedInCurrentOs()
 
   override fun updateDefaultFrameInfoOnProjectClose(project: Project) {
+    // the frame of a guest belongs to its owner, and the owner records it
+    if (assignments.isGuest(project)) return
     val frameHelper = getFrameHelper(project) ?: return
     defaultFrameInfoHelper.copyFrom(getFrameInfoByFrameHelper(frameHelper))
   }

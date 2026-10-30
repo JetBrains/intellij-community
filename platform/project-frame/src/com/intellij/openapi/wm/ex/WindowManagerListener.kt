@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.ex
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
 
@@ -11,5 +12,13 @@ interface WindowManagerListener {
   }
 
   fun onFramesChanged()
+
+  /** The frame of [frameOwner] got a frame guest, or lost one. Called on the thread of the change. */
+  fun onFrameGuestsChanged(frameOwner: Project) {
+  }
+
+  /** The frame of [frameOwner] gives [activeProject] to an action from now on. Called on the thread of the change. */
+  fun onActiveProjectChanged(frameOwner: Project, activeProject: Project) {
+  }
 }
 

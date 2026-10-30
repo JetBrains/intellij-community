@@ -13,10 +13,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.frame
-import com.intellij.ide.frameInfo
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.recentProjectMetaInfo
 import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -238,7 +235,7 @@ internal class IdeProjectFrameAllocator(
             val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
             fileEditorManager.initJob.join()
             span("frame document component install", Dispatchers.UiWithModelAccess) {
-              frameHelper.toolWindowPane.setDocumentComponent(fileEditorManager.mainSplitters)
+              frameHelper.editorArea.setOwnerEditors(fileEditorManager.mainSplitters)
             }
           }
 
