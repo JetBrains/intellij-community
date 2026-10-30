@@ -20,13 +20,17 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -36,6 +40,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Graphics2D
 import javax.swing.JPanel
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.max
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -54,9 +59,20 @@ class MinimapController(
   private val diagnosticsUpdates = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val settings = MinimapSettings.getInstance()
   private val editor: Editor = panel.editor
+  private val edtContext: CoroutineContext = Dispatchers.EDT + ModalityState.stateForComponent(container).asContextElement()
 
   private val model = MinimapModel(editor).also {
     Disposer.register(this, it)
+  }
+
+  private val structureModelInit: Deferred<Unit> = scope.async(start = CoroutineStart.LAZY) {
+    val builder = readAction { model.findStructureViewBuilder() } ?: return@async
+    withContext(edtContext) {
+      if (disposed || editor.isDisposed) return@withContext
+      writeIntentReadAction {
+        model.initStructureModel(builder)
+      }
+    }
   }
 
   private val layoutCalculator = MinimapLayoutCalculator(editor)
@@ -248,10 +264,11 @@ class MinimapController(
   }
 
   private suspend fun updateStructureMarkers() {
+    structureModelInit.await()
     readAction {
       model.updateStructureMarkers()
     }
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(edtContext) {
       if (!disposed) {
         refreshSnapshot()
         panel.repaint()
@@ -267,7 +284,7 @@ class MinimapController(
 
   private fun initDiagnosticsFlow() = scope.launch {
     diagnosticsUpdates.debounce(DIAGNOSTICS_DEBOUNCE_MS.milliseconds).collect {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(edtContext) {
         if (disposed) return@withContext
         refreshSnapshot()
         panel.repaint()
@@ -280,7 +297,7 @@ class MinimapController(
       val structureMarkers = readAction {
         sceneBuilder.captureStructureMarkers()
       }
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(edtContext) {
         val update = buildSnapshotUpdate(request, structureMarkers)
         applySnapshotUpdate(update)
       }

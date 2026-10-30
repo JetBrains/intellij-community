@@ -6,6 +6,7 @@ import com.intellij.ide.minimap.interaction.MinimapInteractionPolicy
 import com.intellij.ide.minimap.layout.MinimapLayoutPolicy
 import com.intellij.ide.structureView.StructureViewModel
 import com.intellij.ide.structureView.StructureViewTreeElement
+import com.intellij.ide.structureView.TreeBasedStructureViewBuilder
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -13,10 +14,16 @@ import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.SmartPointerManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import java.util.IdentityHashMap
 
 class MinimapModel(private val editor: Editor): Disposable {
-  private val structureModel: StructureViewModel? = MinimapStructureProvider(editor.project, this).createModel(editor)
+  private val structureProvider = MinimapStructureProvider(editor.project, this)
+
+  @Volatile
+  private var structureModel: StructureViewModel? = null
   private val pointerManager = editor.project?.let { SmartPointerManager.getInstance(it) }
   private var structureMarkers: List<MinimapStructureMarker> = emptyList()
   private var cachedLineProjection: MinimapLineProjection = MinimapLineProjection.identity(0)
@@ -27,6 +34,16 @@ class MinimapModel(private val editor: Editor): Disposable {
   private var cachedLineProjectionVersion: Long = Long.MIN_VALUE
 
   fun getStructureMarkers(): List<MinimapStructureMarker> = structureMarkers
+
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  fun findStructureViewBuilder(): TreeBasedStructureViewBuilder? = structureProvider.findBuilder(editor)
+
+  @RequiresEdt
+  fun initStructureModel(builder: TreeBasedStructureViewBuilder) {
+    if (structureModel != null) return
+    structureModel = structureProvider.createModel(editor, builder)
+  }
 
   fun isDocumentCommitted(): Boolean {
     val project = editor.project ?: return true
