@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,10 @@ public abstract class ScriptPositionManagerHelper {
     return false;
   }
 
+  /**
+   * Implementations must acquire a read lock for PSI access.
+   */
+  @RequiresBackgroundThread
   public @Nullable String getOriginalScriptName(@NotNull ReferenceType refType, final @NotNull String runtimeName) {
     return null;
   }
@@ -51,8 +56,11 @@ public abstract class ScriptPositionManagerHelper {
   }
 
   /**
+   * Implementations must acquire a read lock for PSI access.
+   *
    * @return Possible script to debug through in project scope if there wer not found other by standarrd methods
    */
+  @RequiresBackgroundThread
   public @Nullable PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType,
                                           @NotNull String runtimeName,
                                           @NotNull Project project,

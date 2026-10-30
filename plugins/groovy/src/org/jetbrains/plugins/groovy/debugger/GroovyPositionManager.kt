@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.groovy.debugger
 
 import com.intellij.debugger.NoDataException
+import com.intellij.debugger.PositionManagerAsync
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerEx
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy
@@ -14,6 +16,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
 import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -30,6 +33,9 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiClassUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Location
@@ -49,7 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache
 
-open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : PositionManagerEx() {
+open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : PositionManagerEx(), PositionManagerAsync {
   open fun getDebugProcess(): DebugProcess = myDebugProcess
 
   @get:JvmName("getDebugProcessForKotlin")
@@ -114,8 +120,15 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     return myDebugProcess.getRequestsManager().createClassPrepareRequest(waitRequestor, "$qName$*")
   }
 
+  @RequiresBlockingContext
   @Throws(NoDataException::class)
   override fun getSourcePosition(location: Location?): SourcePosition? {
+    return super.getSourcePosition(location)
+  }
+
+  @RequiresBackgroundThread
+  override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
     if (location == null) throw NoDataException.INSTANCE
     if (isInGroovyFile(location) == ThreeState.NO) throw NoDataException.INSTANCE
 
@@ -125,52 +138,56 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
     if (LOG.isDebugEnabled()) {
       LOG.debug("getSourcePosition: $location")
     }
-    val psiFile = getPsiFileByLocation(debugProcess.project, location)
-    if (psiFile == null) throw NoDataException.INSTANCE
-
-    return SourcePosition.createFromLine(psiFile, lineNumber)
-  }
-
-  private fun calcLineIndex(location: Location?): Int {
-    if (location == null) return -1
-    return DebuggerUtilsEx.getLineNumber(location, true)
-  }
-
-  private fun getPsiFileByLocation(project: Project, location: Location?): PsiFile? {
-    if (location == null) return null
-
     val refType = location.declaringType()
-    if (refType == null) return null
+    if (refType == null) throw NoDataException.INSTANCE
 
     val originalQName = refType.name().replace('/', '.')
     val dollar = originalQName.indexOf('$')
     val runtimeName = if (dollar >= 0) originalQName.substring(0, dollar) else originalQName
     val qName: String = getOriginalQualifiedName(refType, runtimeName)
 
-    val searchScope = myDebugProcess.getSearchScope()
-    val cache = GroovyShortNamesCache.getGroovyShortNamesCache(project)
-    try {
-      var classes = cache.getClassesByFQName(qName, searchScope, true)
-      if (classes.isEmpty()) {
-        classes = cache.getClassesByFQName(qName, searchScope, false)
-      }
-      if (classes.isEmpty()) {
-        classes = cache.getClassesByFQName(qName, GlobalSearchScope.projectScope(project), false)
-      }
-      if (classes.isEmpty()) {
-        classes = cache.getClassesByFQName(qName, addModuleContent(searchScope), false)
-      }
-      if (!classes.isEmpty()) {
-        classes.sortWith(PsiClassUtil.createScopeComparator(searchScope))
-        val clazz: PsiClass? = classes.first()
-        if (clazz != null) return clazz.getContainingFile()
+    val project = debugProcess.project
+    val searchScope = myDebugProcess.searchScope
+    val sourcePosition = try {
+      readAction {
+        findPsiFile(project, qName, searchScope)?.let { SourcePosition.createFromLine(it, lineNumber) }
       }
     }
     catch (_: IndexNotReadyException) {
-      return null
+      throw NoDataException.INSTANCE
     }
+    if (sourcePosition != null) return sourcePosition
 
-    return getExtraScriptIfNotFound(project, refType, runtimeName, searchScope)
+    val psiFile = getExtraScriptIfNotFound(project, refType, runtimeName, searchScope)
+    if (psiFile == null) throw NoDataException.INSTANCE
+    return readAction {
+      if (!psiFile.isValid) throw NoDataException.INSTANCE
+      SourcePosition.createFromLine(psiFile, lineNumber)
+    }
+  }
+
+  @RequiresBackgroundThread
+  private fun calcLineIndex(location: Location?): Int {
+    if (location == null) return -1
+    return DebuggerUtilsEx.getLineNumber(location, true)
+  }
+
+  @RequiresReadLock
+  private fun findPsiFile(project: Project, qName: String, searchScope: GlobalSearchScope): PsiFile? {
+    val cache = GroovyShortNamesCache.getGroovyShortNamesCache(project)
+    var classes = cache.getClassesByFQName(qName, searchScope, true)
+    if (classes.isEmpty()) {
+      classes = cache.getClassesByFQName(qName, searchScope, false)
+    }
+    if (classes.isEmpty()) {
+      classes = cache.getClassesByFQName(qName, GlobalSearchScope.projectScope(project), false)
+    }
+    if (classes.isEmpty()) {
+      classes = cache.getClassesByFQName(qName, addModuleContent(searchScope), false)
+    }
+    if (classes.isEmpty()) return null
+    classes.sortWith(PsiClassUtil.createScopeComparator(searchScope))
+    return classes.firstOrNull()?.containingFile
   }
 
   @Throws(NoDataException::class)
@@ -255,6 +272,7 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
   companion object {
     private val LOG = Logger.getInstance(GroovyPositionManager::class.java)
 
+    @RequiresBackgroundThread
     private fun isInGroovyFile(location: Location?): ThreeState {
       if (location != null) {
         val refType = location.declaringType()
@@ -406,6 +424,7 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
       return null
     }
 
+    @RequiresBackgroundThread
     private fun getExtraScriptIfNotFound(
       project: Project,
       refType: ReferenceType,
@@ -421,6 +440,7 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
       return null
     }
 
+    @RequiresReadLock
     private fun addModuleContent(scope: GlobalSearchScope): GlobalSearchScope {
       if (scope is ModuleWithDependenciesScope) {
         val module = scope.module
@@ -431,6 +451,7 @@ open class GroovyPositionManager(private val myDebugProcess: DebugProcess) : Pos
       return scope
     }
 
+    @RequiresBackgroundThread
     private fun getOriginalQualifiedName(refType: ReferenceType, runtimeName: String): String {
       for (helper in ScriptPositionManagerHelper.EP_NAME.extensions) {
         if (helper.isAppropriateRuntimeName(runtimeName)) {

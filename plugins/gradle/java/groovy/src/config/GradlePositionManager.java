@@ -3,6 +3,7 @@ package com.intellij.gradle.java.groovy.config;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslPath;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -20,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.io.URLUtil;
 import com.sun.jdi.AbsentInformationException;
@@ -85,6 +87,7 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
   }
 
   @Override
+  @RequiresBackgroundThread
   public PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType,
                                           @NotNull String runtimeName,
                                           @NotNull Project project,
@@ -95,7 +98,7 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
     VirtualFile virtualFile = StandardFileSystems.local().findFileByPath(FileUtil.toSystemIndependentName(sourceFilePath));
     if (virtualFile == null) return null;
 
-    return PsiManager.getInstance(project).findFile(virtualFile);
+    return ReadAction.nonBlocking(() -> PsiManager.getInstance(project).findFile(virtualFile)).executeSynchronously();
   }
 
   @Override
@@ -115,6 +118,7 @@ public final class GradlePositionManager extends ScriptPositionManagerHelper {
     return sourceFilePath;
   }
 
+  @RequiresBackgroundThread
   private static @Nullable String getScriptForClassName(@NotNull ReferenceType refType) {
     try {
       final List<String> data = refType.sourcePaths(null);

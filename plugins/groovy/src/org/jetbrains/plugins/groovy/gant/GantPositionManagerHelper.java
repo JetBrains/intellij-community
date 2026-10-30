@@ -1,15 +1,18 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.gant;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptUtil;
@@ -27,10 +30,16 @@ public final class GantPositionManagerHelper extends ScriptPositionManagerHelper
   }
 
   @Override
+  @RequiresBackgroundThread
   public PsiFile getExtraScriptIfNotFound(@NotNull ReferenceType refType,
                                           final @NotNull String runtimeName,
                                           final @NotNull Project project,
                                           @NotNull GlobalSearchScope scope) {
+    return ReadAction.nonBlocking(() -> findScript(runtimeName, project, scope)).executeSynchronously();
+  }
+
+  @RequiresReadLock
+  private static @Nullable PsiFile findScript(@NotNull String runtimeName, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     try {
       final String fileName = StringUtil.getShortName(runtimeName);
       PsiFile[] files = FilenameIndex.getFilesByName(project, fileName + "." + GantScriptType.DEFAULT_EXTENSION, scope);
@@ -52,7 +61,7 @@ public final class GantPositionManagerHelper extends ScriptPositionManagerHelper
         return candidate;
       }
     }
-    catch (ProcessCanceledException | IndexNotReadyException ignored) {
+    catch (IndexNotReadyException ignored) {
     }
     return null;
   }
