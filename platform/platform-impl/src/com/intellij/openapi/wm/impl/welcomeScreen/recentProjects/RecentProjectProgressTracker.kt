@@ -46,10 +46,11 @@ import kotlinx.coroutines.flow.update
 internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
   private val taskStorage = TaskStorage.getInstance()
 
-  // The things this is told rather than works out: the recent projects the welcome screen holds, by the id their tasks carry, and the
-  // ones it loads now.
+  // The tracker gets these from the callers and does not work them out. They are the recent projects that the welcome screen holds, by the
+  // id that their tasks carry, and the ones that it loads now. A project is in [loadingProjects] once for each request that reports its
+  // load.
   private val followedProjects = MutableStateFlow<Map<ProjectId, RecentProjectId>>(emptyMap())
-  private val loadingProjects = MutableStateFlow<Set<RecentProjectId>>(emptySet())
+  private val loadingProjects = MutableStateFlow<List<RecentProjectId>>(emptyList())
 
   // What [projectsProgress] is made of, which the live flow of one row reads to follow each task.
   private val taskHandles: StateFlow<Map<RecentProjectId, List<TaskHandle>>> =

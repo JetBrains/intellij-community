@@ -13,6 +13,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
@@ -129,17 +130,40 @@ class RecentProjectProgressTrackerTest {
   }
 
   @Test
+  fun `a load shows until the last request that reports it ends`() = timeoutRunBlocking {
+    withTracker { tracker ->
+      val firstLoaded = CompletableDeferred<Unit>()
+      val secondLoaded = CompletableDeferred<Unit>()
+      val first = launch(start = CoroutineStart.UNDISPATCHED) { tracker.reportLoad(recentProjectId()) { firstLoaded.await() } }
+      val second = launch(start = CoroutineStart.UNDISPATCHED) { tracker.reportLoad(recentProjectId()) { secondLoaded.await() } }
+
+      firstLoaded.complete(Unit)
+      first.join()
+
+      // The window flow reads the loads when it starts, so its first value is the state after the first request.
+      val inWindow = tracker.getProgressFor(itemOf(recentProjectId().path)).first()
+      assertThat(inWindow.map { it.id }).containsExactly(ProgressId.Load(recentProjectId()))
+
+      secondLoaded.complete(Unit)
+      second.join()
+      assertThat(tracker.awaitProgressOf(count = 0)).isEmpty()
+    }
+  }
+
+  @Test
   fun `a load that fails stops showing`() = timeoutRunBlocking {
     withTracker { tracker ->
       val failing = CompletableDeferred<Unit>()
+      val message = "The project cannot load"
       val load = async {
-        runCatching { tracker.reportLoad(recentProjectId()) { failing.await(); error("The project cannot load") } }
+        runCatching { tracker.reportLoad(recentProjectId()) { failing.await(); error(message) } }
       }
       tracker.awaitProgressOf(count = 1)
 
       failing.complete(Unit)
 
-      assertThat(load.await().isFailure).isTrue()
+      // A cancelled load fails with a CancellationException, which is an IllegalStateException too. Only the message tells them apart.
+      assertThat(load.await().exceptionOrNull()).hasMessage(message)
       assertThat(tracker.awaitProgressOf(count = 0)).isEmpty()
     }
   }

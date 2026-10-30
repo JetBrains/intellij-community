@@ -100,35 +100,39 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
    * the same instance. Returns null when the user declines to trust the project.
    */
   private suspend fun getOrLoad(recentProjectId: RecentProjectId): HeldProject? {
-    loadMutex.withLock {
-      cachedHeldProject(recentProjectId)?.let { return it }
-      findOpenProject(recentProjectId)?.let { return hold(recentProjectId, it, owned = false) }
-    }
-    if (!confirmTrust(recentProjectId.path)) {
-      return null
-    }
-    loadMutex.withLock {
-      cachedHeldProject(recentProjectId)?.let { return it }
-      findOpenProject(recentProjectId)?.let { return hold(recentProjectId, it, owned = false) }
-      LOG.info("Recent project $recentProjectId: loading it without a frame")
-      // The row shows the load until the project is initialized, because the operation and its own progress start only then.
-      return taskTracker.reportLoad(recentProjectId) {
-        // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is
-        // cached. A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
-        val project = projectManager.loadProject(recentProjectId.path, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
-        val held = hold(recentProjectId, project, owned = true)
-        try {
-          initLoadedProject(project)
-        }
-        catch (e: Throwable) {
-          // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
-          heldProjects.remove(recentProjectId)
-          withContext(NonCancellable) { dispose(held) }
-          throw e
-        }
-        held
+    return taskTracker.reportLoad(recentProjectId) {
+      loadMutex.withLock {
+        cachedHeldProject(recentProjectId)?.let { return@reportLoad it }
+        findOpenProject(recentProjectId)?.let { return@reportLoad hold(recentProjectId, it, owned = false) }
+      }
+      if (!confirmTrust(recentProjectId.path)) {
+        return@reportLoad null
+      }
+      loadMutex.withLock {
+        cachedHeldProject(recentProjectId)
+        ?: findOpenProject(recentProjectId)?.let { hold(recentProjectId, it, owned = false) }
+        ?: loadAndHold(recentProjectId)
       }
     }
+  }
+
+  // Loads the recent project [recentProjectId] without a frame and holds it. Must run under [loadMutex].
+  private suspend fun loadAndHold(recentProjectId: RecentProjectId): HeldProject {
+    LOG.info("Recent project $recentProjectId: loading it without a frame")
+    // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is cached.
+    // A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
+    val project = projectManager.loadProject(recentProjectId.path, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
+    val held = hold(recentProjectId, project, owned = true)
+    try {
+      initLoadedProject(project)
+    }
+    catch (e: Throwable) {
+      // The project is loaded by now, so a failed initialization has to close it: it is out of the map, and nothing else would.
+      heldProjects.remove(recentProjectId)
+      withContext(NonCancellable) { dispose(held) }
+      throw e
+    }
+    return held
   }
 
   /**
