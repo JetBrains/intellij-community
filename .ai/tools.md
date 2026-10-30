@@ -62,10 +62,10 @@ for an artifact nobody named. If the task needs a path outside that set, ask fir
 
 ## IDE-backed semantic tools
 
-Available through ijproxy or JetBrains MCP:
+Available through JetBrains MCP:
 
 - Inspections and symbol info: `lint_files`, `get_symbol_info`
-- Refactors: `rename` (ijproxy) / `rename_refactoring` (JetBrains MCP)
+- Refactors: `rename_refactoring`
 - Formatting: `reformat_file`
 - Concurrency checks: `find_threading_requirements_usages`, `find_lock_requirements_usages`
 - Project structure and VCS: `get_project_modules`, `get_project_dependencies`, `get_repositories`,
