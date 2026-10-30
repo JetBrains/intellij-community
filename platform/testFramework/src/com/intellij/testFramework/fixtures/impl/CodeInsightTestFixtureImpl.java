@@ -49,20 +49,14 @@ import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.find.usages.api.UsageOptions;
 import com.intellij.find.usages.impl.AllSearchOptions;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor;
-import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
-import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.model.psi.impl.ReferencesKt;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomizedDataContext;
@@ -71,7 +65,6 @@ import com.intellij.openapi.actionSystem.EmptyAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
@@ -133,6 +126,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
 import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils;
 import com.intellij.platform.testFramework.core.FileComparisonFailedError;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiDirectory;
@@ -161,6 +155,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.api.RenameTarget;
 import com.intellij.refactoring.rename.impl.RenameKt;
+import com.intellij.testFramework.EditorOpenTestUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.ExpectedHighlightingData;
@@ -170,7 +165,6 @@ import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.InspectionTestUtil;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.EditorOpenTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.RunAll;
@@ -219,7 +213,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexExtension;
-import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.io.ReadOnlyAttributeUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
@@ -2367,20 +2360,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public @NotNull List<Object> getGotoClassResults(@NotNull String pattern,
                                                    boolean searchEverywhere,
                                                    @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockClassSearchEverywhereContributor(searchEverywhere);
-    ArrayList<Object> results = new ArrayList<>();
-    contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
-    return results;
+    return GotoSearchEverywhereTestUtil.findSearchEverywhereElements(getProject(), SeProviderIdUtils.CLASSES_ID, pattern, searchEverywhere);
   }
 
   @Override
   public @NotNull List<Object> getGotoSymbolResults(@NotNull String pattern,
                                                     boolean searchEverywhere,
                                                     @Nullable PsiElement contextForSorting) {
-    SearchEverywhereContributor<Object> contributor = createMockSymbolSearchEverywhereContributor(searchEverywhere);
-    ArrayList<Object> results = new ArrayList<>();
-    contributor.fetchElements(pattern, new MockProgressIndicator(), new CommonProcessors.CollectProcessor<>(results));
-    return results;
+    return GotoSearchEverywhereTestUtil.findSearchEverywhereElements(getProject(), SeProviderIdUtils.SYMBOLS_ID, pattern, searchEverywhere);
   }
 
   @Override
@@ -2423,26 +2410,6 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     finally {
       Disposer.dispose(disposable);
     }
-  }
-
-  private SearchEverywhereContributor<Object> createMockClassSearchEverywhereContributor(boolean everywhere) {
-    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    ClassSearchEverywhereContributor contributor = ReadAction.computeBlocking(() -> new ClassSearchEverywhereContributor(event) {{
-      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
-    }});
-    Disposer.register(getProjectDisposable(), contributor);
-    return contributor;
-  }
-
-  private SearchEverywhereContributor<Object> createMockSymbolSearchEverywhereContributor(boolean everywhere) {
-    DataContext dataContext = SimpleDataContext.getProjectContext(getProject());
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
-    SymbolSearchEverywhereContributor contributor = ReadAction.computeBlocking(() -> new SymbolSearchEverywhereContributor(event) {{
-      myScopeDescriptor = new ScopeDescriptor(FindSymbolParameters.searchScopeFor(myProject, everywhere));
-    }});
-    Disposer.register(getProjectDisposable(), contributor);
-    return contributor;
   }
 
   protected void bringRealEditorBack() {

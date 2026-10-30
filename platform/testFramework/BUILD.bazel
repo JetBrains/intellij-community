@@ -113,6 +113,7 @@ jvm_library(
         "//platform/lang-core",
         "//platform/lang-impl",
         "//platform/lvcs-api:lvcs",
+        "//platform/searchEverywhere/shared:searchEverywhere",
         "//platform/projectModel-api:projectModel",
         "//platform/refactoring",
         "//platform/service-container",
