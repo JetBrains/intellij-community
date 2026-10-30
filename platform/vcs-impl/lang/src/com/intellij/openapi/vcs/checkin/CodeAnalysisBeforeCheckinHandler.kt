@@ -46,6 +46,7 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.isReadyForCodeAnalysis
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.isGeneratedOrExcluded
 import com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler.Companion.processFoundCodeSmells
@@ -75,8 +76,10 @@ import kotlin.reflect.KMutableProperty0
 
 @ApiStatus.Internal
 class CodeAnalysisCheckinHandlerFactory : CheckinHandlerFactory() {
-  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
-    CodeAnalysisBeforeCheckinHandler(panel.project)
+  override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    if (!panel.project.isReadyForCodeAnalysis) return CheckinHandler.DUMMY
+    return CodeAnalysisBeforeCheckinHandler(panel.project)
+  }
 }
 
 @ApiStatus.Internal

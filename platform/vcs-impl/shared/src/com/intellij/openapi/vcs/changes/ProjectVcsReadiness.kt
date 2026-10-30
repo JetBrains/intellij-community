@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
+import com.intellij.openapi.wm.ex.isIndexingActivitiesSuppressedSync
 import org.jetbrains.annotations.ApiStatus
 
 /** Declared in VcsExtensions.xml. The Git branches popup also reads it, and hides its Commit action while this is off. */
@@ -44,3 +45,13 @@ val Project.tracksChanges: Boolean
 @get:ApiStatus.Internal
 val Project.isReadyForChangesView: Boolean
   get() = isInitialized || (isCommitHostedInWindow && !isDisposed)
+
+/**
+ * Whether [this] project can run a commit check that reads the PSI or the indexes.
+ *
+ * Such a check commits the documents synchronously, which needs an initialized project. It also reads the indexes, which a project that
+ * suppresses indexing does not build. A project the welcome screen loaded without a frame is never initialized, so it runs no such check.
+ */
+@get:ApiStatus.Internal
+val Project.isReadyForCodeAnalysis: Boolean
+  get() = isInitialized && !isIndexingActivitiesSuppressedSync(this)

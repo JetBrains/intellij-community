@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.isReadyForCodeAnalysis
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class RearrangeCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
-    if (PlatformUtils.isDataGrip()) return CheckinHandler.DUMMY
+    if (PlatformUtils.isDataGrip() || !panel.project.isReadyForCodeAnalysis) return CheckinHandler.DUMMY
     return RearrangeBeforeCheckinHandler(panel.project)
   }
 }

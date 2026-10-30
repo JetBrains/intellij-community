@@ -88,6 +88,31 @@ internal class ProjectVcsReadinessTest {
     assertFalse(loadedProject().isReadyForChangesView)
   }
 
+  @Test
+  fun `an initialized project runs code analysis`(@TestDisposable disposable: Disposable) {
+    useCapabilities(disposable)
+    assertTrue(openProject().isReadyForCodeAnalysis)
+  }
+
+  @Test
+  fun `a project that suppresses indexing runs no code analysis`(@TestDisposable disposable: Disposable) {
+    useCapabilities(disposable, ProjectFrameCapability.SUPPRESS_INDEXING_ACTIVITIES)
+    assertFalse(openProject().isReadyForCodeAnalysis)
+  }
+
+  @Test
+  fun `a project that suppresses background activities runs no code analysis`(@TestDisposable disposable: Disposable) {
+    useCapabilities(disposable, ProjectFrameCapability.SUPPRESS_BACKGROUND_ACTIVITIES)
+    assertFalse(openProject().isReadyForCodeAnalysis)
+  }
+
+  /** A check commits the documents synchronously, which needs an initialized project. The indexes alone are not enough. */
+  @Test
+  fun `a loaded project runs no code analysis even when it builds indexes`(@TestDisposable disposable: Disposable) {
+    useCapabilities(disposable, ProjectFrameCapability.NO_FRAME_OF_ITS_OWN)
+    assertFalse(loadedProject().isReadyForCodeAnalysis)
+  }
+
   private fun useCapabilities(disposable: Disposable, vararg capabilities: ProjectFrameCapability) {
     ExtensionTestUtil.maskExtensions(ProjectFrameCapabilitiesService.EP_NAME, listOf(FixedCapabilities(capabilities.toSet())), disposable)
   }

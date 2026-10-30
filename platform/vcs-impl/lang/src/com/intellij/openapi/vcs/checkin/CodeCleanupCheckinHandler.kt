@@ -23,6 +23,7 @@ import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.CommitContext
+import com.intellij.openapi.vcs.changes.isReadyForCodeAnalysis
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class CodeCleanupCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
+    if (!panel.project.isReadyForCodeAnalysis) return CheckinHandler.DUMMY
     return CodeCleanupCheckinHandler(panel.project)
   }
 }
