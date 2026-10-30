@@ -14,8 +14,6 @@ import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue;
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValueType;
 import com.intellij.ide.util.gotoByName.MatchMode;
-import com.intellij.java.navigation.ChooseByNameTest;
-import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -32,6 +30,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.platform.searchEverywhere.SeProviderIdUtils;
+import com.intellij.platform.searchEverywhere.testFramework.SeProvidersTestFixture;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestApplicationManager;
@@ -59,6 +59,7 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey");
   private static final Comparator<MatchedValue> MATCH_COMPARATOR = MatchedValue::compareWeights;
   private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY = MatchedValue::equals;
+  private static final int ELEMENTS_LIMIT = 30;
 
   @Override
   protected boolean runInDispatchThread() {
@@ -213,9 +214,9 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testSameActionIsNotReportedTwice() {
     List<String> patterns = List.of("Patch", "Add", "Delete", "Show", "Toggle", "New", "New Class");
 
-    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
     patterns.forEach(pattern -> {
-      List<?> result = ChooseByNameTest.calcContributorElements(contributor, pattern);
+      List<?> result = findActions(fixture, pattern);
       Collection<Object> actions =
         ContainerUtil.mapNotNull(result, o -> {
           if (o instanceof MatchedValue matchedValue) {
@@ -311,9 +312,9 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
 
   public void testNavigableSettingsOptionsAppearInResults() {
     SoftAssertions.assertSoftly(softly -> {
-      SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+      SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
       for (String pattern : List.of("support screen readers", "show line numbers", "tab placement")) {
-        List<?> elements = ChooseByNameTest.calcContributorElements(contributor, pattern);
+        List<?> elements = findActions(fixture, pattern);
         boolean result = false;
         for (Object t : elements) {
           if (isNavigableOption(((MatchedValue)t).value)) {
@@ -346,16 +347,16 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
       }
     };
 
-    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
     runWithGlobalAction("myTestAction", testAction, () -> {
-      List<?> result = ChooseByNameTest.calcContributorElements(contributor, "UpdatedActionName");
+      List<?> result = findActions(fixture, "UpdatedActionName");
       assertEquals(1, result.size());
     });
   }
 
   public void testSearchWorks() {
-    SearchEverywhereContributor<?> contributor = createActionContributor(getProject(), getTestRootDisposable());
-    List<?> list = contributor.search("sea", new MockProgressIndicator(), 10).getItems();
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(getProject(), getTestRootDisposable());
+    List<?> list = fixture.findElementsBlocking(SeProviderIdUtils.ACTIONS_ID, "sea", true, false, 10);
     assertEquals(10, list.size());
   }
 
@@ -424,10 +425,15 @@ public class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   private static List<ActionWrapper> getActionsFromPopup(Project project, Disposable parentDisposable, String pattern) {
-    SearchEverywhereContributor<?> contributor = createActionContributor(project, parentDisposable);
-    return ContainerUtil.mapNotNull(ChooseByNameTest.calcContributorElements(contributor, pattern), e -> {
+    SeProvidersTestFixture fixture = SeProvidersTestFixture.createBlocking(project, parentDisposable);
+    return ContainerUtil.mapNotNull(findActions(fixture, pattern), e -> {
       return e instanceof MatchedValue matchedValue && matchedValue.value instanceof ActionWrapper actionWrapper ? actionWrapper : null;
     });
+  }
+
+  /** Searches the Actions tab. The search includes the disabled actions. */
+  private static List<?> findActions(SeProvidersTestFixture fixture, String pattern) {
+    return fixture.findElementsBlocking(SeProviderIdUtils.ACTIONS_ID, pattern, true, false, ELEMENTS_LIMIT);
   }
 
   private MatchMode actionMatches(String pattern, AnAction action) {
