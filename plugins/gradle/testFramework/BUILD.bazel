@@ -22,6 +22,7 @@ jvm_library(
     exports = ["//platform/external-system-api/testFramework"],
     deps = [
         # do not sort,
+        "@lib//:kotlin-stdlib",
         "//plugins/gradle",
         "//plugins/gradle/java",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
@@ -52,7 +53,6 @@ jvm_library(
         "//platform/testFramework/eelJava",
         "//platform/testFramework/buildView",
         "//platform/testFramework/extensions:testExtensions",
-        "//platform/external-system-impl:externalSystem-tests_test_lib",
         "//platform/external-system-api/testFramework",
         "//platform/boot",
         "//platform/core-ui",
