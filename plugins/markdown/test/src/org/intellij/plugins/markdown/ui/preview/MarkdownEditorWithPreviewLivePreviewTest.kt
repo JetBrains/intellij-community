@@ -207,6 +207,35 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     assertFalse("The soft-wrap toggle must work above the IntelliSense limit", editorWithPreview.editor.settings.isUseSoftWraps)
   }
 
+  fun testLivePreviewLayoutHidesAndRestoresGuides() {
+    val editorWithPreview = createEditor()
+    val editor = editorWithPreview.editor
+    val editorFont = editor.colorsScheme.editorFontName
+    val otherEditor = createEditor().editor
+    otherEditor.settings.isLineNumbersShown = true
+    otherEditor.settings.isIndentGuidesShown = true
+
+    for (lineNumbersShown in listOf(true, false)) {
+      editor.settings.isLineNumbersShown = lineNumbersShown
+      editor.settings.isIndentGuidesShown = !lineNumbersShown
+      repeat(2) {
+        editorWithPreview.setLivePreviewLayout()
+        editorWithPreview.waitForFont(StartupUiUtil.labelFont.fontName)
+
+        assertFalse(editor.settings.isLineNumbersShown)
+        assertFalse(editor.settings.isIndentGuidesShown)
+        assertTrue(otherEditor.settings.isLineNumbersShown)
+        assertTrue(otherEditor.settings.isIndentGuidesShown)
+
+        editorWithPreview.setLayout(Layout.SHOW_EDITOR)
+        editorWithPreview.waitForFont(editorFont)
+
+        assertEquals(lineNumbersShown, editor.settings.isLineNumbersShown)
+        assertEquals(!lineNumbersShown, editor.settings.isIndentGuidesShown)
+      }
+    }
+  }
+
   fun testViewActionsPutLivePreviewBeforePreviewOnly() {
     val editorWithPreview = createEditor()
     editorWithPreview.setLivePreviewLayout()

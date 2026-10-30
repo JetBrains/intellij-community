@@ -20,12 +20,15 @@ import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 
 /**
  * Shows one editor in the UI font at the `Preview font size` and with soft wraps while live preview is on.
+ * Hides line numbers and indent guides while live preview is on.
  * Restores the font of the global scheme and the saved settings from before live preview when live preview turns off.
  * While live preview is on, keeps soft wraps on. Only a document above the IntelliSense size limit keeps its soft-wrap flag.
  */
 internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx) : Disposable {
   /** The editor soft wrap setting before live preview */
   private var preLivePreviewSoftWraps: Boolean? = null
+  private var preLivePreviewLineNumbers = false
+  private var preLivePreviewIndentGuides = false
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
@@ -46,7 +49,11 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     val settings = editor.settings
     if (preLivePreviewSoftWraps == null) {
       preLivePreviewSoftWraps = settings.isUseSoftWraps
+      preLivePreviewLineNumbers = settings.isLineNumbersShown
+      preLivePreviewIndentGuides = settings.isIndentGuidesShown
     }
+    settings.isLineNumbersShown = false
+    settings.isIndentGuidesShown = false
     forceSoftWraps()
   }
 
@@ -58,6 +65,8 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     val softWraps = preLivePreviewSoftWraps ?: return
     preLivePreviewSoftWraps = null
     editor.settings.isUseSoftWraps = softWraps
+    editor.settings.isLineNumbersShown = preLivePreviewLineNumbers
+    editor.settings.isIndentGuidesShown = preLivePreviewIndentGuides
   }
 
   override fun dispose() = Unit
