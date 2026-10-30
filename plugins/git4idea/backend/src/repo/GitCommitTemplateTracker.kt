@@ -29,7 +29,6 @@ import git4idea.config.GitConfigUtil.COMMIT_TEMPLATE
 import git4idea.config.GitExecutableManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import java.io.File
@@ -100,7 +99,6 @@ internal class GitCommitTemplateTracker(
     processEvents(events)
   }
 
-  @VisibleForTesting
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   fun start() {
     try {

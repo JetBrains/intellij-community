@@ -4,6 +4,7 @@ package git4idea.branch
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.RECENT_PROJECT_COMMIT
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectBrancher
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.awt.RelativePoint
@@ -51,7 +52,5 @@ internal class GitRecentProjectBrancher : RecentProjectBrancher {
   }
 }
 
-/** Declared in VcsExtensions.xml, where the change tracking it also turns on lives. */
-private const val RECENT_PROJECT_COMMIT = "vcs.recent.project.commit"
 private const val COMMIT_ACTION = "CheckinProject"
 private const val COMMIT_AND_STAGE_ACTION = "Git.Commit.Stage"

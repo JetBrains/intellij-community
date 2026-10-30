@@ -6,15 +6,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.vcs.changes.ui.subscribeOnVcsToolWindowLayoutChanges
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.content.Content
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.ChangesViewCommitTabTitleUpdater
+import com.intellij.vcs.commit.VcsToolWindowTabs
 import git4idea.index.GitStageContentProvider.Companion.STAGING_AREA_TAB_NAME
 import git4idea.index.ui.GitStagePanel
 import org.jetbrains.annotations.NonNls
 import java.util.function.Predicate
-import javax.swing.JComponent
 
 internal class GitStageContentProvider(private val project: Project) : ChangesViewContentProvider {
 
@@ -60,18 +59,5 @@ fun showStagingArea(project: Project, commitMessage: String) {
 }
 
 internal fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
-  showToolWindowTab(project, STAGING_AREA_TAB_NAME) { (it as? GitStagePanel)?.let(consumer) }
-}
-
-internal fun showToolWindowTab(project: Project, tabName: String, contentConsumer: (JComponent) -> Unit) {
-  ToolWindowManager.getInstance(project).invokeLater {
-    val toolWindow = ChangesViewContentManager.getToolWindowFor(project, tabName) ?: return@invokeLater
-    toolWindow.activate({
-                          val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager
-                          val content = contentManager.findContent(tabName) ?: return@activate
-
-                          contentManager.setSelectedContent(content, true)
-                          contentConsumer(content.component)
-                        }, true)
-  }
+  VcsToolWindowTabs.showCommitTab(project, STAGING_AREA_TAB_NAME, onShown = { (it as? GitStagePanel)?.let(consumer) })
 }

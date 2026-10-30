@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.ProjectLevelVcsManager.Companion.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.VcsType
+import com.intellij.openapi.vcs.changes.isCommitHostedInWindow
 import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
@@ -101,11 +102,6 @@ class CommitModeManager(private val project: Project, private val coroutineScope
       return CommitMode.ModalCommitMode
     }
 
-    // The non-modal commit interface lives in a tool window, which a project that was loaded without being opened has nowhere to show
-    if (!project.isOpen) {
-      return CommitMode.ModalCommitMode
-    }
-
     val commitMode = if (canSetNonModal()) {
       CommitMode.NonModalCommitMode(isCommitTwEnabled, isToggleCommitUi)
     }
@@ -113,7 +109,20 @@ class CommitModeManager(private val project: Project, private val coroutineScope
       CommitMode.ModalCommitMode
     }
 
-    return singleVcs?.getForcedCommitMode(commitMode) ?: commitMode
+    val forcedCommitMode = singleVcs?.getForcedCommitMode(commitMode) ?: commitMode
+    return if (project.isOpen) forcedCommitMode else getCommitModeWithoutToolWindow(forcedCommitMode)
+  }
+
+  /**
+   * Returns the commit mode of a project that is not open.
+   *
+   * Such a project has no tool window. It commits in a window of its own when [isCommitHostedInWindow] is true, and modally in every
+   * other case. The window holds the same tab the Commit tool window would hold, so a mode that replaces that tab works there too. The Git
+   * staging area is one of those.
+   */
+  private fun getCommitModeWithoutToolWindow(commitMode: CommitMode): CommitMode {
+    if (commitMode == CommitMode.ModalCommitMode || commitMode == CommitMode.PendingCommitMode) return commitMode
+    return if (project.isCommitHostedInWindow) commitMode else CommitMode.ModalCommitMode
   }
 
   @CalledInAny

@@ -208,6 +208,7 @@ class ChangesViewCommitWorkflowHandler(
   }
 
   fun resetActivation() {
+    if (ui.host.hidesOnCommit) return
     val isToggleMode: Boolean = isToggleMode()
     if (isToggleMode && isActive) {
       deactivate(false) // disabled by default
@@ -277,7 +278,7 @@ class ChangesViewCommitWorkflowHandler(
       // commit message could be changed during before-commit checks - ensure updated commit message is used for commit
       workflow.commitState = workflow.commitState.copy(getCommitMessage())
 
-      if (isToggleMode()) deactivate(true)
+      if (isToggleMode() || ui.host.hidesOnCommit) deactivate(true)
     }
   }
 

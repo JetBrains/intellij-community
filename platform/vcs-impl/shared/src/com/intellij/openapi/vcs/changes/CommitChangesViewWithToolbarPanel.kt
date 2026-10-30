@@ -165,7 +165,7 @@ abstract class CommitChangesViewWithToolbarPanel(
 
   @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
   private suspend fun refreshView() {
-    if (!cs.isActive || !project.isInitialized || application.isUnitTestMode) return
+    if (!cs.isActive || !project.isReadyForChangesView || application.isUnitTestMode) return
     val (modelData, model) = TRACER.spanBuilder(ChangesView.ChangesViewRefreshBackground.name).use {
       val modelData = getModelData()
 

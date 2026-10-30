@@ -15,6 +15,8 @@ import com.intellij.vcs.commit.ChangesViewCommitWorkflowHandler
 import com.intellij.vcs.commit.CommitMode
 import com.intellij.vcs.commit.CommitModeManager
 import com.intellij.vcs.commit.CommitModeManager.Companion.subscribeOnCommitModeChange
+import com.intellij.vcs.commit.CommitUiHost
+import com.intellij.vcs.commit.CommitUiHostHolder
 import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class ChangesViewWorkflowManagerImpl(
@@ -22,6 +24,9 @@ internal class ChangesViewWorkflowManagerImpl(
 ) : ChangesViewWorkflowManager(), Disposable {
   override val allowExcludeFromCommit = MutableStateFlow(false)
   override val editedCommit = MutableStateFlow<EditedCommitPresentation?>(null)
+
+  private val commitUiHost: CommitUiHost
+    get() = CommitUiHostHolder.getInstance(project).current
 
   private var _commitWorkflowHandler: ChangesViewCommitWorkflowHandler? = null
 
@@ -49,7 +54,7 @@ internal class ChangesViewWorkflowManagerImpl(
 
         val workflow = ChangesViewCommitWorkflow(project)
         val changesView = ChangesViewManager.getInstanceEx(project).getOrCreateCommitChangesView()
-        val commitPanel = ChangesViewCommitPanel(project, changesView)
+        val commitPanel = ChangesViewCommitPanel(project, changesView, commitUiHost)
         setCommitWorkflowHandler(ChangesViewCommitWorkflowHandler(workflow, commitPanel))
 
         activity.end()

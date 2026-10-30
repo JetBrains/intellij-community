@@ -321,19 +321,6 @@ class VcsDirtyScopeManagerImpl(private val project: Project, coroutineScope: Cor
   }
 }
 
-/** Declared in VcsExtensions.xml. Also read by the Git branches popup, which hides its Commit action while this is off. */
-private const val RECENT_PROJECT_COMMIT = "vcs.recent.project.commit"
-
-/**
- * Whether [this] project computes its changes.
- *
- * An open project always does. A project that was only loaded does so behind [RECENT_PROJECT_COMMIT], because the welcome screen loads
- * recent projects that way and its Commit action is the thing that needs their changes: that action and this tracking are the same feature,
- * so they are turned on together.
- */
-private val Project.tracksChanges: Boolean
-  get() = isOpen || `is`(RECENT_PROJECT_COMMIT)
-
 private fun toString(filesByVcs: Map<VcsRoot, Set<FilePath>>): String {
   return filesByVcs.keys.joinToString("\n") { vcs ->
     vcs.vcs.toString() + ": " + filesByVcs.getValue(vcs).joinToString("\n") { it.getPath() }

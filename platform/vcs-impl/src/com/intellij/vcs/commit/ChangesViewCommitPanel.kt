@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.application.writeIntentReadAction
@@ -10,11 +10,7 @@ import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.InclusionModel
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.changes.ui.ChangeListChangesSupplier
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.LOCAL_CHANGES
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.getToolWindowFor
 import com.intellij.openapi.vcs.changes.ui.EditChangelistSupport
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.VcsDisposable
@@ -30,9 +26,8 @@ import javax.swing.JComponent
 class ChangesViewCommitPanel internal constructor(
   project: Project,
   private val changesView: ChangesViewProxy,
+  internal val host: CommitUiHost,
 ) : NonModalCommitPanel(project), ChangesViewCommitWorkflowUi {
-  private var isHideToolWindowOnCommit = false
-
   private val progressPanel = CommitProgressPanel(project, this, commitMessage.editorField)
   private val commitActions = commitActionsPanel.createActions()
   private var rootComponent: JComponent? = null
@@ -100,43 +95,25 @@ class ChangesViewCommitPanel internal constructor(
   }
 
   override fun activate(): Boolean {
-    val toolWindow = getVcsToolWindow() ?: return false
-    val contentManager = ChangesViewContentManager.getInstance(project)
+    if (!host.prepareToShow()) return false
 
-    saveToolWindowState()
     component.isVisible = true
     commitActionsPanel.isActive = true
 
     toolbar.updateActionsImmediately()
 
-    contentManager.selectContent(LOCAL_CHANGES)
-    toolWindow.activate({ commitMessage.requestFocusInMessage() }, false)
+    host.show { commitMessage.requestFocusInMessage() }
     return true
   }
 
   override fun deactivate(isOnCommit: Boolean) {
-    if (isOnCommit && isHideToolWindowOnCommit) {
-      getVcsToolWindow()?.hide(null)
-    }
+    host.hide(isOnCommit)
 
-    clearToolWindowState()
     component.isVisible = false
     commitActionsPanel.isActive = false
 
     toolbar.updateActionsImmediately()
   }
-
-  private fun saveToolWindowState() {
-    if (!isActive) {
-      isHideToolWindowOnCommit = getVcsToolWindow()?.isVisible != true
-    }
-  }
-
-  private fun clearToolWindowState() {
-    isHideToolWindowOnCommit = false
-  }
-
-  private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)
 
   override suspend fun refreshChangesViewBeforeCommit() {
     val deferred = CompletableDeferred<Unit>()
@@ -144,4 +121,3 @@ class ChangesViewCommitPanel internal constructor(
     deferred.await()
   }
 }
-
