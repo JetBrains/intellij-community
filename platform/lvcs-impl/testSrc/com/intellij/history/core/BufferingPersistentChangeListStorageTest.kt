@@ -357,6 +357,27 @@ internal class BufferingPersistentChangeListStorageTest {
       .containsExactly(nextChangeSet.id, pendingChangeSet.id)
   }
 
+  @Test
+  fun `closed storage drops new change sets and keeps its files`() {
+    val changeSet = createChangeSet(storage.nextId(), 1000L)
+    storage.writeNextSet(changeSet)
+    val closedStorage = storage
+    closedStorage.close(/*drop: */false)
+
+    val lateChangeSet = createChangeSet(closedStorage.nextId(), 2000L)
+    closedStorage.writeNextSet(lateChangeSet)
+    assertThat(closedStorage.iterate().asSequence().toList())
+      .describedAs("A closed storage must not keep the change sets that are written after close")
+      .extracting<Long> { it.id }
+      .doesNotContain(lateChangeSet.id)
+
+    storage = createStorage()
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("A call after close must not recreate the storage")
+      .extracting<Long> { it.id }
+      .containsExactly(changeSet.id)
+  }
+
   /** Returns the data file that contains the serialized change sets. */
   private fun storageDataPath(): Path = tempDir.resolve("storage/$STORAGE_FILE_NAME${AbstractStorage.DATA_EXTENSION}")
 

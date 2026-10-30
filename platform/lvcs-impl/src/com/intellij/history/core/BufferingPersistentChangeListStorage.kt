@@ -63,6 +63,13 @@ internal class BufferingPersistentChangeListStorage(
   private var lastFailedChangeSet: ChangeSet? = null
 
   /**
+   * True after [close].
+   * Then [writeNextSet] drops the change sets, and a failed operation does not start a recovery.
+   * [close] sets it under the lock of this storage and under [pendingSetsLock].
+   */
+  private var isClosed = false
+
+  /**
    * True after [purgeOnce] ran [purge].
    */
   private var isPurged = false
@@ -97,6 +104,7 @@ internal class BufferingPersistentChangeListStorage(
     logError(fullMsg, e)
 
     synchronized(this) {
+      if (isClosed) return
       Disposer.dispose(storage)
       try {
         storageDir.delete()
@@ -117,10 +125,11 @@ internal class BufferingPersistentChangeListStorage(
     if (!drop) {
       flushPending()
     }
-    else {
-      synchronized(pendingSetsLock) {
+    synchronized(pendingSetsLock) {
+      if (drop) {
         pendingChangeSets.clear()
       }
+      isClosed = true
     }
     Disposer.dispose(storage)
     if (drop) {
@@ -165,6 +174,7 @@ internal class BufferingPersistentChangeListStorage(
 
   override fun writeNextSet(changeSet: ChangeSet) {
     synchronized(pendingSetsLock) {
+      if (isClosed) return
       pendingChangeSets.add(changeSet)
     }
   }
