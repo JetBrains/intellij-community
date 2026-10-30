@@ -205,8 +205,8 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     assert(textIndex >= 0) { "Text '$text' not found in editor" }
     val offset = textIndex + text.length / 2
     val point = interact {
-      val p = offsetToVisualPosition(offset)
-      visualPositionToXY(p)
+      val lineTop = visualPositionToXY(offsetToVisualPosition(offset))
+      Point(lineTop.x, lineTop.y + getLineHeight() / 2)
     }
     robot.click(component, point, button, times)
   }
