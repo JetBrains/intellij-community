@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory.CommentBlock
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPRReviewCommentBodyComponentFactory.CommentType
-import org.junit.Test
 import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Test
 
 class GHPRReviewCommentBodyComponentFactoryTest {
   private val simpleComment = "Some text"

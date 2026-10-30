@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.FlowTestUtil.assertEmits
-import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.collaboration.util.MainDispatcherExtension
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.coVerifyAll
@@ -19,20 +19,17 @@ import kotlinx.coroutines.withTimeout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestChangedFile
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRFilesService
-import org.junit.Assert.assertEquals
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
+@ExtendWith(MainDispatcherExtension::class)
 class GHPRViewedStateDataProviderImplTest {
   companion object {
     private val PR_ID = GHPRIdentifier("id", 0)
     private val EXCEPTION = object : RuntimeException("TEST_LOADING_EXCEPTION") {}
-
-    @JvmField
-    @ClassRule
-    internal val mainRule = MainDispatcherRule()
   }
 
   private val filesService = mockk<GHPRFilesService>()

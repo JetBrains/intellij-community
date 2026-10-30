@@ -46,13 +46,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHReactionContent
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertNull
 import org.junit.jupiter.api.assertThrows
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.MethodSource
 import tools.jackson.databind.BeanDescription
 import tools.jackson.databind.JavaType
 import tools.jackson.databind.exc.InvalidNullException
@@ -65,12 +65,12 @@ import kotlin.reflect.full.primaryConstructor
 
 typealias PluginQuery<T> = GQLQuery<T>
 
-@RunWith(Parameterized::class)
+@ParameterizedClass(name = "{0}")
+@MethodSource("testCases")
 class GHGQLQueryTest(val testCase: TestCase) {
   companion object {
     //region: Generating Test Cases
     @JvmStatic
-    @Parameterized.Parameters(name = "{0}")
     fun testCases(): List<TestCase> =
       TestCases.constructTestCases { queryName, _, schema ->
         val queryText = schema.queryLoader.loadQueryAsText(queryName)
@@ -148,12 +148,12 @@ class GHGQLQueryTest(val testCase: TestCase) {
  * Used to test that our data classes, mostly situated under [org.jetbrains.plugins.github.api.data],
  * match consistently with the fragment they are expected to follow.
  */
-@RunWith(Parameterized::class)
+@ParameterizedClass(name = "{0}")
+@MethodSource("testCases")
 class GHGQLDTOTest(val testCase: TestCase) {
   companion object {
     //region: Generating Test Cases
     @JvmStatic
-    @Parameterized.Parameters(name = "{0}")
     fun testCases(): List<TestCase> =
       TestCases.constructTestCases { queryName, pluginQueries, schema ->
         val (gqlQuery, auxiliaryFragments) = schema.queryLoader.loadQueryParsed(queryName)
@@ -1223,7 +1223,7 @@ internal class MetaTest {
   )
 
   @Test
-  @Ignore
+  @Disabled
   @IJIgnore(issue = "disabled")
   fun `query path resolution finds nullable components`() {
     `dto testing fails for`(

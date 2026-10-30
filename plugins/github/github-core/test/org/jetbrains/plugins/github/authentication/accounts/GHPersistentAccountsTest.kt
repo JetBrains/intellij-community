@@ -4,19 +4,13 @@ package org.jetbrains.plugins.github.authentication.accounts
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.testFramework.ApplicationRule
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.junit.Assert.assertEquals
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
+@TestApplication
 class GHPersistentAccountsTest {
-  companion object {
-    @ClassRule
-    @JvmField
-    val appRule = ApplicationRule()
-  }
-
   @Test
   fun `test serialize`() {
     val service = GHPersistentAccounts()

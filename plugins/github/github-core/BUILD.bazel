@@ -178,7 +178,6 @@ jvm_library(
         "//libraries/kotlinc/kotlinx-serialization-compiler-plugin:libraries-kotlinc-kotlinx-serialization-compiler-plugin",
         "//platform/util/coroutines",
         "//platform/util:util-ui",
-        "//libraries/junit4",
         "//libraries/kotlinx/coroutines/test",
         "//libraries/mockk",
         "//libraries/mockk/jvm",

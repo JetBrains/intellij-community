@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
-import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.collaboration.util.MainDispatcherExtension
 import com.intellij.util.messages.MessageBus
 import io.mockk.coEvery
 import io.mockk.coVerifyAll
@@ -10,17 +10,14 @@ import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRCommentService
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.util.Date
 
+@ExtendWith(MainDispatcherExtension::class)
 class GHPRCommentsDataProviderImplTest {
   companion object {
     private val PR_ID = GHPRIdentifier("id", 0)
-
-    @JvmField
-    @ClassRule
-    internal val mainRule = MainDispatcherRule()
   }
 
   private val commentsService = mockk<GHPRCommentService>(relaxed = true)

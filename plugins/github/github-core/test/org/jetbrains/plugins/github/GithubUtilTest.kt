@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.collaboration.ui.codereview.commits.splitCommitMessage
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class GithubUtilTest {
   @Test

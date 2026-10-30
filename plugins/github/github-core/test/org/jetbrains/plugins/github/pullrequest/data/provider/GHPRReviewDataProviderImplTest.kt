@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
-import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.collaboration.util.MainDispatcherExtension
 import com.intellij.util.messages.MessageBus
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -18,23 +18,15 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewStat
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRReviewService
-import org.junit.Assert.assertEquals
-import org.junit.ClassRule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 
 private val PR_ID = GHPRIdentifier("id", 0)
 
 //TODO: test threads
-@RunWith(JUnit4::class)
+@ExtendWith(MainDispatcherExtension::class)
 class GHPRReviewDataProviderImplTest {
-
-  companion object {
-    @JvmField
-    @ClassRule
-    internal val mainRule = MainDispatcherRule()
-  }
 
   private val reviewService = mockk<GHPRReviewService>(relaxUnitFun = true)
   private val listener = mockk<GHPRDataOperationsListener>(relaxUnitFun = true)

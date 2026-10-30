@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.collaboration.api.dto.GraphQLNodesDTO
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.FlowTestUtil.assertEmits
-import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.collaboration.util.MainDispatcherExtension
 import git4idea.changes.GitBranchComparisonResult
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -19,20 +19,17 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRChangesService
-import org.junit.Assert.assertEquals
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import java.util.Date
 import kotlin.time.Duration.Companion.seconds
 
+@ExtendWith(MainDispatcherExtension::class)
 class GHPRChangesDataProviderImplTest {
   companion object {
     private val PR_ID = GHPRIdentifier("id", 0)
     private val EXCEPTION = object : RuntimeException("TEST_LOADING_EXCEPTION") {}
-
-    @JvmField
-    @ClassRule
-    internal val mainRule = MainDispatcherRule()
   }
 
   private val changesService = mockk<GHPRChangesService>()

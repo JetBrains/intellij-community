@@ -3,8 +3,8 @@ package org.jetbrains.plugins.github.pullrequest.comment
 
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.diff.impl.patch.PatchReader
-import org.junit.Assert.assertArrayEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertArrayEquals
+import org.junit.jupiter.api.Test
 
 class GHSuggestionHtmlSyntaxHighlighterTest {
 

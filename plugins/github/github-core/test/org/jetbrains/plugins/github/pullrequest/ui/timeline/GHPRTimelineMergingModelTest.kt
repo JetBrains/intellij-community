@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.testFramework.LightPlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import org.jetbrains.plugins.github.api.data.GHLabel
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRAssignedEvent
@@ -15,12 +15,17 @@ import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewRequ
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRReviewUnrequestedEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRUnassignedEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRUnlabeledEvent
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 import java.util.Date
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 import kotlin.time.Duration.Companion.days
 
-class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
+@TestApplication
+class GHPRTimelineMergingModelTest {
   private val YEAR = 365.days.inWholeMilliseconds
   private val actor1 = createTestUser("event_actor1")
   private val actor2 = createTestUser("event_actor2")
@@ -29,8 +34,8 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
 
   private lateinit var model: GHPRTimelineMergingModel
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     model = GHPRTimelineMergingModel()
     model.addListDataListener(object : ListDataListener {
       override fun contentsChanged(e: ListDataEvent) {
@@ -51,6 +56,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     })
   }
 
+  @Test
   fun testMerge() {
     model.add(listOf(
       GHPRAssignedEvent(actor1, currentDate, createTestUser("user")),
@@ -65,6 +71,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     assertEquals(2, model.size)
   }
 
+  @Test
   fun testMergeChunked() {
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user"))))
     model.add(listOf(GHPRLabeledEvent(actor1, currentDate, GHLabel.createTest("label"))))
@@ -78,6 +85,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     assertEquals(2, model.size)
   }
 
+  @Test
   fun testMergeCollapse() {
     model.add(listOf(
       GHPRAssignedEvent(actor1, currentDate, createTestUser("user")),
@@ -98,6 +106,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     assertEquals(0, model.size)
   }
 
+  @Test
   fun testMergeCollapseChunked() {
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user"))))
     model.add(listOf(GHPRLabeledEvent(actor1, currentDate, GHLabel.createTest("label"))))
@@ -116,6 +125,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     assertEquals(0, model.size)
   }
 
+  @Test
   fun testNonMerge() {
     model.add(listOf(
       GHPRAssignedEvent(actor1, Date(currentDate.time - YEAR), createTestUser("user")),
@@ -135,6 +145,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     assertEquals(7, model.size)
   }
 
+  @Test
   fun testNonMergeChunked() {
     model.add(listOf(GHPRAssignedEvent(actor1, Date(currentDate.time - YEAR), createTestUser("user"))))
     model.add(listOf(GHPRAssignedEvent(actor1, currentDate, createTestUser("user2"))))
@@ -146,6 +157,7 @@ class GHPRTimelineMergingModelTest : LightPlatformTestCase() {
     assertEquals(7, model.size)
   }
 
+  @Test
   fun testCorrectEventOnLastCollapsed() {
     val event = GHPRAssignedEvent(actor1, currentDate, createTestUser("user3"))
     model.add(listOf(event))

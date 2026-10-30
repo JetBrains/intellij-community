@@ -1,20 +1,20 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.api
 
-import junit.framework.TestCase.assertEquals
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.Parameterized
-import org.junit.runners.Parameterized.Parameters
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedClass
+import org.junit.jupiter.params.provider.MethodSource
 
-@RunWith(Parameterized::class)
+@ParameterizedClass(name = "GQL API path for {0} should be {1}")
+@MethodSource("tests")
 class GithubServerPathDataResidencyTest(
   private val host: String,
   private val isDataResidency: Boolean
 ) {
   companion object {
-    @JvmStatic @get:Parameters(name = "GQL API path for {0} should be {1}")
-    val tests = arrayOf<Array<Any>>(
+    @JvmStatic
+    fun tests() = arrayOf<Array<Any>>(
       arrayOf("github.com", false),
       arrayOf("okta.github.com", false),
       arrayOf("okta.ghe.com", true),
@@ -32,14 +32,15 @@ class GithubServerPathDataResidencyTest(
   }
 }
 
-@RunWith(Parameterized::class)
+@ParameterizedClass(name = "REST API URL for {0} should be {1}")
+@MethodSource("tests")
 class GithubServerPathApiPathTest(
   private val host: String,
   private val apiPath: String
 ) {
   companion object {
-    @JvmStatic @get:Parameters(name = "REST API URL for {0} should be {1}")
-    val tests = arrayOf<Array<Any>>(
+    @JvmStatic
+    fun tests() = arrayOf<Array<Any>>(
       arrayOf("github.com", "https://api.github.com"),
       arrayOf("github.com/", "https://api.github.com"),
       arrayOf("agithub.com", "https://agithub.com/api/v3"),
@@ -60,14 +61,15 @@ class GithubServerPathApiPathTest(
   }
 }
 
-@RunWith(Parameterized::class)
+@ParameterizedClass(name = "GQL API URL for {0} should be {1}")
+@MethodSource("tests")
 class GithubServerPathGraphqlApiPathTest(
   private val host: String,
   private val apiPath: String
 ) {
   companion object {
-    @JvmStatic @get:Parameters(name = "GQL API URL for {0} should be {1}")
-    val tests = arrayOf<Array<Any>>(
+    @JvmStatic
+    fun tests() = arrayOf<Array<Any>>(
       arrayOf("github.com", "https://api.github.com/graphql"),
       arrayOf("github.com/", "https://api.github.com/graphql"),
       arrayOf("tenant.ghe.com", "https://api.tenant.ghe.com/graphql"),

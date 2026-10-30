@@ -5,10 +5,9 @@ import com.intellij.collaboration.util.IncrementallyComputedValue
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.fileTypes.FileTypes
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testFramework.UsefulTestCase.assertEmpty
-import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
@@ -16,8 +15,8 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelMentionCompletion
+import org.jetbrains.plugins.github.pullrequest.ui.comment.GHViewModelWithTextCompletion
 import org.jetbrains.plugins.github.ui.icons.GHAvatarIconsProvider
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -50,8 +49,9 @@ class GithubMarkdownCompletionContributorTest {
     configure("Test comment @par<caret>", vm)
     val completeBasic = codeInsightFixture.completeBasic()
     assertNotNull(completeBasic!!)
-    assertSameElements(completeBasic.map { it.lookupString },
-                       listOf("@participant1", "@participant2", "@user3"))
+    val lookupStrings = completeBasic.map { it.lookupString }
+    assertEquals(3, lookupStrings.size) { lookupStrings.toString() }
+    assertEquals(setOf("@participant1", "@participant2", "@user3"), lookupStrings.toSet())
   }
 
   @Test
@@ -71,8 +71,9 @@ class GithubMarkdownCompletionContributorTest {
     configure("Test comment\n\n@par<caret>", vm)
     val completeBasic = codeInsightFixture.completeBasic()
     assertNotNull(completeBasic!!)
-    assertSameElements(completeBasic.map { it.lookupString },
-                       listOf("@participant1", "@participant2", "@user3"))
+    val lookupStrings = completeBasic.map { it.lookupString }
+    assertEquals(3, lookupStrings.size) { lookupStrings.toString() }
+    assertEquals(setOf("@participant1", "@participant2", "@user3"), lookupStrings.toSet())
   }
 
   @Test
@@ -84,7 +85,7 @@ class GithubMarkdownCompletionContributorTest {
 
     configure("Comment test<caret>", vm)
     val result = codeInsightFixture.completeBasic()
-    assertEmpty(result)
+    CollectionAssertions.assertEmpty(result!!.asList())
   }
 
   @Test
@@ -96,7 +97,7 @@ class GithubMarkdownCompletionContributorTest {
 
     configure("Comment <caret>", vm)
     val result = codeInsightFixture.completeBasic()
-    assertEmpty(result)
+    CollectionAssertions.assertEmpty(result!!.asList())
   }
 
   @Test
@@ -115,8 +116,9 @@ class GithubMarkdownCompletionContributorTest {
     val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
-    assertSameElements(lookupElements.map { it.lookupString },
-                       listOf("@mentionable1", "@mentionable2", "@mentionable3"))
+    val lookupStrings = lookupElements.map { it.lookupString }
+    assertEquals(3, lookupStrings.size) { lookupStrings.toString() }
+    assertEquals(setOf("@mentionable1", "@mentionable2", "@mentionable3"), lookupStrings.toSet())
   }
 
   @Test
@@ -130,8 +132,9 @@ class GithubMarkdownCompletionContributorTest {
     val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
-    assertSameElements(lookupElements.map { it.lookupString },
-                       listOf("@participant", "@mentionable"))
+    val lookupStrings = lookupElements.map { it.lookupString }
+    assertEquals(2, lookupStrings.size) { lookupStrings.toString() }
+    assertEquals(setOf("@participant", "@mentionable"), lookupStrings.toSet())
   }
 
   @Test
@@ -146,8 +149,9 @@ class GithubMarkdownCompletionContributorTest {
     val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
-    assertSameElements(lookupElements.map { it.lookupString },
-                       listOf("@participant1", "@participant2"))
+    val lookupStrings = lookupElements.map { it.lookupString }
+    assertEquals(2, lookupStrings.size) { lookupStrings.toString() }
+    assertEquals(setOf("@participant1", "@participant2"), lookupStrings.toSet())
   }
 
   @Test
@@ -165,8 +169,9 @@ class GithubMarkdownCompletionContributorTest {
     val lookupElements = codeInsightFixture.completeBasic()
 
     assertNotNull(lookupElements!!)
-    assertSameElements(lookupElements.map { it.lookupString },
-                       listOf("@participant1", "@mentionable1", "@mentionable2", "@mentionable3", "@mentionable4"))
+    val lookupStrings = lookupElements.map { it.lookupString }
+    assertEquals(5, lookupStrings.size) { lookupStrings.toString() }
+    assertEquals(setOf("@participant1", "@mentionable1", "@mentionable2", "@mentionable3", "@mentionable4"), lookupStrings.toSet())
   }
 
   @Test

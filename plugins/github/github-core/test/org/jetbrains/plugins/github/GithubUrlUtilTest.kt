@@ -2,13 +2,14 @@
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.util.Pair
-import junit.framework.TestCase
 import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.util.GithubUrlUtil.getHostFromUrl
 import org.jetbrains.plugins.github.util.GithubUrlUtil.getUserAndRepositoryFromRemoteUrl
 import org.jetbrains.plugins.github.util.GithubUrlUtil.makeGithubRepoUrlFromRemoteUrl
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
-class GithubUrlUtilTest : TestCase() {
+class GithubUrlUtilTest {
   private class TestCase<T> {
     val tests: MutableList<Pair<String, T>> = ArrayList()
 
@@ -23,10 +24,11 @@ class GithubUrlUtilTest : TestCase() {
       val input = test.getFirst()
       val expectedResult = test.getSecond()
       val result = func(input)
-      assertEquals(input, expectedResult, result)
+      assertEquals(expectedResult, result, input)
     }
   }
 
+  @Test
   fun testGetUserAndRepositoryFromRemoteUrl() {
     val tests = TestCase<GHRepositoryPath?>()
 
@@ -53,6 +55,7 @@ class GithubUrlUtilTest : TestCase() {
     runTestCase(tests) { `in` -> getUserAndRepositoryFromRemoteUrl(`in`) }
   }
 
+  @Test
   fun testMakeGithubRepoFromRemoteUrl() {
     val tests = TestCase<String?>()
 
@@ -79,6 +82,7 @@ class GithubUrlUtilTest : TestCase() {
     runTestCase(tests) { `in` -> makeGithubRepoUrlFromRemoteUrl(`in`, "https://github.com") }
   }
 
+  @Test
   fun testGetHostFromUrl() {
     val tests = TestCase<String>()
 

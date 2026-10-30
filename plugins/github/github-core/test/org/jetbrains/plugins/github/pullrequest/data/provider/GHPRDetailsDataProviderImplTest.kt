@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.FlowTestUtil.assertEmits
-import com.intellij.collaboration.util.MainDispatcherRule
+import com.intellij.collaboration.util.MainDispatcherExtension
 import com.intellij.util.messages.MessageBus
 import io.mockk.coEvery
 import io.mockk.coVerifyAll
@@ -19,24 +19,16 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRDetailsService
-import org.junit.Assert.assertEquals
-import org.junit.ClassRule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.ExtendWith
 import kotlin.time.Duration.Companion.seconds
 
 private val PR_ID = GHPRIdentifier("id", 0)
 private val EXCEPTION = object : RuntimeException("TEST_LOADING_EXCEPTION") {}
 
-@RunWith(JUnit4::class)
+@ExtendWith(MainDispatcherExtension::class)
 class GHPRDetailsDataProviderImplTest {
-
-  companion object {
-    @JvmField
-    @ClassRule
-    internal val mainRule = MainDispatcherRule()
-  }
 
   private val detailsService = mockk<GHPRDetailsService>(relaxUnitFun = true)
   private val listener = mockk<GHPRDataOperationsListener>(relaxUnitFun = true)
