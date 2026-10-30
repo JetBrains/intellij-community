@@ -11,6 +11,7 @@ interface PositionManagerAsync : PositionManager {
   suspend fun getSourcePositionAsync(location: Location?): SourcePosition?
 
   @RequiresBlockingContext
+  @Throws(NoDataException::class)
   override fun getSourcePosition(location: Location?): SourcePosition? {
     return runBlockingAssertNotInReadAction {
       getSourcePositionAsync(location)

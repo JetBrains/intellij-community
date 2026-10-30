@@ -3,15 +3,19 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.NoDataException
-import com.intellij.debugger.PositionManager
+import com.intellij.debugger.PositionManagerAsync
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy
 import com.intellij.debugger.requests.ClassPrepareRequestor
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
-import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.ClassNotPreparedException
@@ -40,7 +44,7 @@ abstract class JSR45PositionManager<Scope> @Deprecated(
   val stratumId: String?,
   acceptedFileTypes: Array<out LanguageFileType?>?,
   @JvmField protected val mySourcesFinder: SourcesFinder<Scope>,
-) : PositionManager {
+) : PositionManagerAsync {
   @JvmField
   protected val GENERATED_CLASS_PATTERN: String
 
@@ -80,27 +84,38 @@ abstract class JSR45PositionManager<Scope> @Deprecated(
     return stratumId
   }
 
+  @RequiresBlockingContext
   @Throws(NoDataException::class)
   override fun getSourcePosition(location: Location?): SourcePosition? {
-    var sourcePosition: SourcePosition? = null
+    return super.getSourcePosition(location)
+  }
 
-    try {
-      val sourcePath = getRelativeSourcePathByLocation(location!!)
-      val file = mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.getProject(), myScope)
-      if (file != null) {
-        val lineNumber = getLineNumber(location)
-        sourcePosition = SourcePosition.createFromLine(file, lineNumber - 1)
+  @RequiresBackgroundThread
+  override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
+    ThreadingAssertions.assertBackgroundThread()
+
+    if (location == null) {
+      throw NoDataException.INSTANCE
+    }
+
+    val sourcePosition = try {
+      val sourcePath = getRelativeSourcePathByLocation(location)
+      val lineNumber = getLineNumber(location)
+      readAction {
+        mySourcesFinder.findSourceFile(sourcePath, myDebugProcess.project, myScope)?.let { file ->
+          SourcePosition.createFromLine(file, lineNumber - 1)
+        }
       }
     }
     catch (_: AbsentInformationException) { // ignored
+      null
     }
     catch (e: Throwable) {
+      rethrowControlFlowException(e)
       LOG.info(e)
+      null
     }
-    if (sourcePosition == null) {
-      throw NoDataException.INSTANCE
-    }
-    return sourcePosition
+    return sourcePosition ?: throw NoDataException.INSTANCE
   }
 
   @Throws(AbsentInformationException::class)
@@ -112,6 +127,7 @@ abstract class JSR45PositionManager<Scope> @Deprecated(
     return location.lineNumber(getStratumId())
   }
 
+  @RequiresBackgroundThread
   @Throws(NoDataException::class)
   override fun getAllClasses(classPosition: SourcePosition): List<ReferenceType> {
     checkSourcePositionFileType(classPosition)
@@ -160,42 +176,46 @@ abstract class JSR45PositionManager<Scope> @Deprecated(
     return locations ?: emptyList()
   }
 
+  @RequiresBackgroundThread
   @Throws(NoDataException::class)
   private fun locationsOfClassAt(type: ReferenceType, position: SourcePosition): List<Location>? {
     checkSourcePositionFileType(position)
 
-    return ApplicationManager.getApplication().runReadAction(object : Computable<List<Location>?> {
-      override fun compute(): List<Location>? {
-        try {
-          val relativePaths = getRelativeSourePathsByType(type)
-          for (relativePath in relativePaths) {
-            val file = mySourcesFinder.findSourceFile(relativePath, myDebugProcess.getProject(), myScope)
-            if (file != null && file == position.getFile()) {
-              return getLocationsOfLine(type, getSourceName(file.getName(), type), relativePath, position.getLine() + 1)
-            }
+    try {
+      val relativePaths = getRelativeSourePathsByType(type)
+      for (relativePath in relativePaths) {
+        val sourceInfo = ReadAction.nonBlocking<Pair<String, Int>?> {
+          val file = mySourcesFinder.findSourceFile(relativePath, myDebugProcess.project, myScope)
+          if (file != null && file == position.file) {
+            file.name to (position.line + 1)
           }
+          else null
+        }.executeSynchronously()
+        if (sourceInfo != null) {
+          val [fileName, lineNumber] = sourceInfo
+          return getLocationsOfLine(type, getSourceName(fileName, type), relativePath, lineNumber)
         }
-        catch (_: ObjectCollectedException) {
-        }
-        catch (_: ClassNotPreparedException) {
-        }
-        catch (_: AbsentInformationException) {
-        }
-        catch (_: InternalError) {
-          myDebugProcess.printToConsole(
-            JavaDebuggerBundle.message("internal.error.locations.of.line", type.name())
-          )
-        }
-        return null
       }
+    }
+    catch (_: ObjectCollectedException) {
+    }
+    catch (_: ClassNotPreparedException) {
+    }
+    catch (_: AbsentInformationException) {
+    }
+    catch (_: InternalError) {
+      myDebugProcess.printToConsole(
+        JavaDebuggerBundle.message("internal.error.locations.of.line", type.name())
+      )
+    }
+    return null
+  }
 
-      // Finds exact server file name (from available in type)
-      // This is needed because some servers (e.g. WebSphere) put not exact file name such as 'A.jsp  '
-      @Throws(AbsentInformationException::class)
-      fun getSourceName(name: String, type: ReferenceType): String {
-        return type.sourceNames(stratumId).firstOrNull { it.contains(name) } ?: name
-      }
-    })
+  // Finds exact server file name (from available in type)
+  // This is needed because some servers (e.g. WebSphere) put not exact file name such as 'A.jsp  '
+  @Throws(AbsentInformationException::class)
+  private fun getSourceName(name: String, type: ReferenceType): String {
+    return type.sourceNames(stratumId).firstOrNull { it.contains(name) } ?: name
   }
 
   @Throws(AbsentInformationException::class)
@@ -211,6 +231,7 @@ abstract class JSR45PositionManager<Scope> @Deprecated(
     return type.locationsOfLine(this.stratumId, fileName, lineNumber)
   }
 
+  @RequiresBackgroundThread
   @Throws(NoDataException::class)
   override fun createPrepareRequest(requestor: ClassPrepareRequestor, position: SourcePosition): ClassPrepareRequest? {
     checkSourcePositionFileType(position)
