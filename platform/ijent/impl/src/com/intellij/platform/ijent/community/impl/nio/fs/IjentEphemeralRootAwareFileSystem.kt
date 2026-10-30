@@ -335,7 +335,8 @@ class IjentEphemeralRootAwareFileSystemProvider(
     return originalFsProvider.scheme
   }
 
-  override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V {
+  // Nullable as in `FileSystemProvider`: a Windows environment has no POSIX view, and `EelPathTransfer` expects null then.
+  override fun <V : FileAttributeView> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V? {
     return when {
       originalFs.supportedFileAttributeViews().contains("dos") && eelDescriptor.osFamily == EelOsFamily.Posix -> {
         ijentFsProvider.getFileAttributeViewUsingDosAttributesAdapter(path.toIjentPath(), type, *options)
