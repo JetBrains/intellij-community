@@ -78,7 +78,7 @@ fun isFigmaConnectLoaded(): Boolean =
  * Lower case. A file system keeps the case a user typed, and `README.MD` names the same extension.
  *
  * Mirrors the `extensions` attribute of the `Markdown` file type
- * (`community/plugins/markdown/core/resources/META-INF/plugin.xml:194`). A user who maps another
+ * (`community/plugins/markdown/core/resources/intellij.markdown.xml`). A user who maps another
  * extension to Markdown is not followed here, and pays one surface for it.
  */
 private val MARKDOWN_EXTENSIONS: Set<String> = setOf("md", "markdown", "mdc")
