@@ -174,8 +174,10 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
    * The order matters. A directory created through the VFS (see [createExcludedFile]) is marked as fully loaded. A directory
    * discovered by a refresh under an indexable root gets its whole subtree preloaded and marked complete by
    * `TransientChildScanner`; the scanner skips a directory that is already excluded, which keeps the record shallow.
+   * The scanning of the fixture roots must finish first: it lists the disk and loads a directory that is not excluded yet.
    */
   private suspend fun createExcludedDirOnDisk(excludedDirName: String, populate: (Path) -> Unit): VirtualFile {
+    awaitIndexes()
     val rootDir = sourceRootFixture.get().virtualFile
     val excludedDirPath = rootDir.toNioPath().resolve(excludedDirName)
     Files.createDirectories(excludedDirPath)
@@ -524,6 +526,8 @@ class SearchToolsetTest : GeneralMcpToolsetTestBase() {
   @Test
   fun search_file_excluded_walk_covers_workspace_index_excluded_roots() = runBlocking(Dispatchers.Default) {
     // IDEs without modules exclude folders through a WorkspaceFileIndexContributor, not through module exclude folders.
+    // Indexing of the fixture roots must not run while the directory is on disk but not excluded yet, see createExcludedDirOnDisk.
+    awaitIndexes()
     val excludedDirName = "se_wsm_excluded_dir_9a2c"
     val fileName = "se_wsm_excluded_file_9a2c.txt"
     val rootDir = sourceRootFixture.get().virtualFile
