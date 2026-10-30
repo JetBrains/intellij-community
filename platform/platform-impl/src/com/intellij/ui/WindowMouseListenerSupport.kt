@@ -3,6 +3,7 @@ package com.intellij.ui
 
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.wayland.getValidBoundsForPopup
@@ -68,6 +69,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
    * Updates a cursor and starts moving/resizing if the `start` is specified.
    */
   fun update(event: MouseEvent, start: Boolean) {
+    LOG.debug { "update($event, $start)" }
     if (event.isConsumed || (start && leftMouseButtonOnly && !SwingUtilities.isLeftMouseButton(event))) {
       return
     }
@@ -117,6 +119,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
    * Processes moving/resizing and stops it if not `mouseMove`.
    */
   fun process(event: MouseEvent, mouseMove: Boolean) {
+    LOG.debug { "process($event, $mouseMove)" }
     // Some points:
     // 1. Stop events should be handled even if they're already consumed, so the session finishes correctly.
     // 2. Non-drag unconsumed events should be handled as drag events anyway to support the "move on mouse release" mode.
@@ -154,6 +157,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
   }
 
   private fun handleDragEvent(event: MouseEvent, mouseMove: Boolean) {
+    LOG.debug { "handleDragEvent($event, $mouseMove)" }
     val session = currentSession ?: return
     if (mouseMove) {
       onDraggingStarted(session)
@@ -161,6 +165,7 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
 
     val content = source.getContent(event)
     val view = source.getView(content)
+    LOG.trace { "handleDragEvent: view=$view" }
     // Enter in move mode only after mouse move, so double click is supported
     if (mouseMove && cursorType == Cursor.DEFAULT_CURSOR && jbrMoveSupported(view)) {
       LOG.debug("Entering the move-with-the-mouse mode")
@@ -177,9 +182,13 @@ internal sealed class WindowMouseListenerSupport(private val source: WindowMouse
         if (WindowMouseListener.isStateSet(Frame.MAXIMIZED_VERT, state)) delta.y = 0
       }
       val oldBounds = Rectangle(bounds)
+      LOG.trace { "handleDragEvent: old view bounds: $bounds" }
       source.updateBounds(bounds, view, delta.x, delta.y)
+      LOG.trace { "handleDragEvent: updated view bounds: $bounds" }
       makeChangeValid(oldBounds, bounds, view)
+      LOG.trace { "handleDragEvent: valid updated view bounds: $bounds" }
       val currentViewBounds = view.bounds
+      LOG.trace { "handleDragEvent: current view bounds: $currentViewBounds" }
       if (bounds != currentViewBounds) {
         val moved = bounds.x != currentViewBounds.x || bounds.y != currentViewBounds.y
         val resized = bounds.width != currentViewBounds.width || bounds.height != currentViewBounds.height
