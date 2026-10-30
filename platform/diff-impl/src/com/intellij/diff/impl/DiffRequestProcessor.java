@@ -63,7 +63,6 @@ import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
@@ -90,7 +89,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.HintHint;
@@ -446,37 +444,10 @@ public abstract class DiffRequestProcessor
   // Abstract
   //
 
-  private @Nullable ApplyData myQueuedApplyRequest;
-
   @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
-    applyRequest(request, force, scrollToChangePolicy, false);
-  }
-
-  @RequiresEdt
-  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ThreadingAssertions.assertEventDispatchThread();
     navigator.reset();
-
-    force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
-    myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
-
-    Runnable task = () -> {
-      if (myQueuedApplyRequest == null || myDisposed) return;
-      doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
-      myQueuedApplyRequest = null;
-    };
-
-    if (sync) {
-      task.run();
-    }
-    else {
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task, ModalityState.current());
-    }
-  }
-
-  @RequiresEdt
-  private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
     request.putUserData(DiffUserDataKeysEx.SCROLL_TO_CHANGE, scrollToChangePolicy);
     doApplyRequest(request);
