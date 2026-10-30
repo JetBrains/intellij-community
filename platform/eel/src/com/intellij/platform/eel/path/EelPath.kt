@@ -3,6 +3,7 @@ package com.intellij.platform.eel.path
 
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelOsFamily
+import com.intellij.platform.util.annotations.paths.OsPath
 import org.jetbrains.annotations.ApiStatus
 
 @get:ApiStatus.Internal
@@ -151,7 +152,7 @@ sealed interface EelPath {
   /**
    * @return path in the particular eel, i.e.: `/foo` or `c:\bar`
    */
-  override fun toString(): String
+  override fun toString(): @OsPath String
 
   /** @see [kotlin.io.path.invariantSeparatorsPathString] */
   val invariantSeparatorsPathString: String
