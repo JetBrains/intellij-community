@@ -117,6 +117,7 @@ internal class ProjectViewToolWindowServiceImpl(
    * Restores the state of a pane when it becomes selected and saves it when it becomes unselected.
    *
    * The content manager also unselects the selected content before it removes it, so a removed pane saves its state too.
+   * The cached pane saves its state the same way, so the real pane with the same ID restores it.
    * Both happen in the same EDT event as the selection change, even if the tool window is hidden.
    */
   private val paneSelectionListener: ContentManagerListener = object : ContentManagerListener {
@@ -134,6 +135,10 @@ internal class ProjectViewToolWindowServiceImpl(
         ContentManagerEvent.ContentOperation.remove -> {
           if (pane != null) {
             savePaneStateIfActive(pane)
+          }
+          val cachedPane = event.content.getUserData(CACHED_PANE_KEY)
+          if (cachedPane != null) {
+            saveCachedPaneState(cachedPane)
           }
         }
         ContentManagerEvent.ContentOperation.undefined, null -> { }
@@ -189,13 +194,14 @@ internal class ProjectViewToolWindowServiceImpl(
       LOG.debug { "The pane $paneId has no saved state or name, not showing the cached pane" }
       return
     }
-    val pane = CachedFrontendProjectViewPane()
+    val pane = CachedFrontendProjectViewPane(paneId, presentableName)
     if (!pane.restoreStateFrom(paneElement)) {
       LOG.debug { "The pane $paneId has no cached presentation, not showing the cached pane" }
       return
     }
     val content = ContentFactory.getInstance().createContent(pane.component, presentableName, false)
     content.setPreferredFocusedComponent { pane.componentToFocus }
+    content.putUserData(CACHED_PANE_KEY, pane)
     toolWindow.contentManager.addContent(content)
     ProjectViewInitNotifier.getInstance(project).initCachedNodesLoaded()
     LOG.info("Added the cached pane $paneId")
@@ -444,7 +450,8 @@ internal class ProjectViewToolWindowServiceImpl(
     val isLightToSmartMigration =
       paneState?.paneKind == ProjectViewPaneKind.LIGHT &&
       pane.descriptorImpl.kind == ProjectViewPaneKind.BACKEND
-    pane.safeRestoreStateFrom(paneState?.element, RestorePaneStateOptionsImpl(restoreSelection = isLightToSmartMigration))
+    val restoreSelection = isLightToSmartMigration || paneState?.restoreSelection == true
+    pane.safeRestoreStateFrom(paneState?.element, RestorePaneStateOptionsImpl(restoreSelection = restoreSelection))
     LOG.debug { "Applied the loaded state for ${pane.id}" }
   }
   
@@ -454,9 +461,7 @@ internal class ProjectViewToolWindowServiceImpl(
       LOG.debug { "Not saving the state of ${pane.id} because it's not active" }
       return
     }
-    val paneElement = Element("pane")
-    paneElement.setAttribute("pane", pane.id.idString)
-    paneElement.setAttribute(PRESENTABLE_NAME_ATTRIBUTE, pane.descriptorImpl.presentableName)
+    val paneElement = createPaneElement(pane.id, pane.descriptorImpl.presentableName)
     if (pane.safeSaveStateTo(paneElement)) {
       persistentState.putPaneState(pane.id, PaneState(paneElement, pane.descriptorImpl.kind))
       LOG.debug { "Saved the last state for ${pane.id}" }
@@ -464,6 +469,21 @@ internal class ProjectViewToolWindowServiceImpl(
     else {
       LOG.debug { "Not saved the effectively empty state for ${pane.id}" }
     }
+  }
+
+  @RequiresEdt
+  private fun saveCachedPaneState(pane: CachedFrontendProjectViewPane) {
+    val paneElement = createPaneElement(pane.id, pane.presentableName)
+    pane.saveStateTo(paneElement)
+    persistentState.putPaneState(pane.id, PaneState(paneElement, paneKind = null, restoreSelection = true))
+    LOG.debug { "Saved the state of the cached pane ${pane.id}" }
+  }
+
+  private fun createPaneElement(paneId: ProjectViewPaneId, presentableName: @NlsSafe String): Element {
+    val paneElement = Element("pane")
+    paneElement.setAttribute("pane", paneId.idString)
+    paneElement.setAttribute(PRESENTABLE_NAME_ATTRIBUTE, presentableName)
+    return paneElement
   }
 
   private inner class PaneManager(
@@ -866,6 +886,13 @@ private class ProjectViewToolWindowServiceState {
 private data class PaneState(
   val element: Element,
   val paneKind: ProjectViewPaneKind?,
+  /**
+   * `true` if the next restore must also restore the selection.
+   *
+   * The cached pane sets it, because its state comes from a temporary pane, as with the light to smart switch.
+   * It is not persisted, as it's only used in-process.
+   */
+  val restoreSelection: Boolean = false,
 )
 
 private fun defaultSelectedPaneId(): ProjectViewPaneId =
@@ -919,4 +946,5 @@ private fun FrontendProjectViewPane.safeSaveStateTo(element: Element): Boolean {
 private val PANE_SELECTION_TIMEOUT = 5.seconds
 
 private val PANE_KEY = Key.create<FrontendProjectViewPane>("FrontendProjectViewPane")
+private val CACHED_PANE_KEY = Key.create<CachedFrontendProjectViewPane>("CachedFrontendProjectViewPane")
 private val LOG = logger<ProjectViewToolWindowServiceImpl>()
