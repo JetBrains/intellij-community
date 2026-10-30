@@ -26,6 +26,12 @@ internal abstract class FakeLspServerSession : ServerSessionProtocolScope() {
     handler: suspend (Params) -> Response,
   ): Deferred<Unit>
 
+  /**
+   * The params of every [method] request that the server received, with or without an expectation.
+   * The server records a request before it answers. So the list is complete when a synchronous request of the client returns.
+   */
+  abstract fun <Params : Any> receivedRequests(method: ClientToServerLspRequest<Params, *>): List<Params>
+
   abstract fun <Params : Any> expectNotification(
     method: ClientToServerLspNotification<Params>,
     predicate: (Params) -> Boolean = { true },
@@ -128,6 +134,9 @@ internal class FakeLspServerSessionImpl(
     deferred.invokeOnCompletion { if (it != null) expectations.removeRequest(expectedRequest) }
     return deferred
   }
+
+  override fun <Params : Any> receivedRequests(method: ClientToServerLspRequest<Params, *>): List<Params> =
+    server.getReceivedRequests(method.method).map { method.paramsClass.cast(it) }
 
   override fun <Params : Any> expectNotification(
     method: ClientToServerLspNotification<Params>,

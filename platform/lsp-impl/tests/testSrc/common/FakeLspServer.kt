@@ -33,6 +33,7 @@ import java.io.PipedOutputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
 import java.util.concurrent.LinkedBlockingQueue
@@ -94,6 +95,12 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
   private val didSaveNotificationCount = AtomicInteger(0)
 
   fun getDidSaveNotificationCount(): Int = didSaveNotificationCount.get()
+
+  /** The method and the params of every request, in the order of arrival. */
+  private val receivedRequests = ConcurrentLinkedQueue<Pair<String, Any?>>()
+
+  /** The params of every [method] request, with or without an expectation. The server records a request before it answers. */
+  fun getReceivedRequests(method: String): List<Any?> = receivedRequests.filter { it.first == method }.map { it.second }
 
   protected val clientInputStream: PipedInputStream = PipedInputStream()
   protected val clientOutputStream: PipedOutputStream = PipedOutputStream()
@@ -167,6 +174,7 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
 
   private inner class FakeEndpoint : Endpoint {
     override fun request(method: String, parameter: Any?): CompletableFuture<*> {
+      receivedRequests.add(method to parameter)
       val waiter = expectations.matchRequest(method, parameter)
       if (waiter != null) {
         // The handler starts on the message thread, so one that doesn't suspend answers before the next message is read.
