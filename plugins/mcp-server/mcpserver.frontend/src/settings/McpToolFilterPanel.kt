@@ -133,6 +133,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
   private var managedSessionRouterModeComboBox: JComboBox<ManagedSessionRouterMode>? = null
   private var emptyStateLabel: JComponent? = null
   private var allTools: List<McpTool> = emptyList()
+  private var defaultToolStates: Map<String, ToolState> = emptyMap()
   private val searchableToolTexts = mutableMapOf<String, String>()
   private val categoryViews = mutableMapOf<String, CategoryView>()
   private val toolRowViews = mutableMapOf<String, ToolRowView>()
@@ -374,6 +375,7 @@ class McpToolFilterPanel @RequiresEdt constructor() {
     emptyStateLabel = null
 
     allTools = tools
+    defaultToolStates = tools.associate { toolKey(it) to ToolState.defaultFor(it) }
     initialToolStates = normalizeToolStateKeys(initialToolStates)
     val normalizedToolStates = normalizeToolStateKeys(allToolStates)
     allToolStates.clear()
@@ -481,10 +483,12 @@ class McpToolFilterPanel @RequiresEdt constructor() {
   private fun legacyToolKey(tool: McpTool): String = tool.descriptor.name
 
   private fun currentToolState(tool: McpTool): ToolState {
-    return allToolStates[toolKey(tool)] ?: allToolStates[legacyToolKey(tool)] ?: ToolState()
+    return allToolStates[toolKey(tool)] ?: allToolStates[legacyToolKey(tool)] ?: ToolState.defaultFor(tool)
   }
 
-  private fun currentToolState(toolKey: String): ToolState = allToolStates[toolKey] ?: ToolState()
+  private fun currentToolState(toolKey: String): ToolState = allToolStates[toolKey] ?: defaultToolState(toolKey)
+
+  private fun defaultToolState(toolKey: String): ToolState = defaultToolStates[toolKey] ?: ToolState()
 
   private fun normalizeToolStateKeys(toolStates: Map<String, ToolState>): Map<String, ToolState> {
     if (toolStates.isEmpty() || allTools.isEmpty()) return toolStates
@@ -656,13 +660,13 @@ class McpToolFilterPanel @RequiresEdt constructor() {
     val initialRouterOnlyStates = normalizeToolStateKeys(initialToolStates).mapValues { (_, state) -> state.routerOnly }
     return normalizeToolStateKeys(allToolStates)
       .mapValues { (toolName, state) ->
-        if (includeRouterOnly) state else state.copy(routerOnly = initialRouterOnlyStates[toolName] ?: ToolState().routerOnly)
+        if (includeRouterOnly) state else state.copy(routerOnly = initialRouterOnlyStates[toolName] ?: defaultToolState(toolName).routerOnly)
       }
-      .filterValues { it != ToolState() }
+      .filter { (toolName, state) -> state != defaultToolState(toolName) }
   }
 
   private fun normalizePersistedToolStates(toolStates: Map<String, ToolState>): Map<String, ToolState> {
-    return normalizeToolStateKeys(toolStates).filterValues { it != ToolState() }
+    return normalizeToolStateKeys(toolStates).filter { (toolName, state) -> state != defaultToolState(toolName) }
   }
 
   private fun toThreeStateCheckBoxState(value: Boolean?): ThreeStateCheckBox.State {

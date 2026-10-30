@@ -31,7 +31,11 @@ interface McpToolDisallowListSettings {
   data class ToolState(
     val enabled: Boolean = true,
     val routerOnly: Boolean = true,
-  )
+  ) {
+    companion object {
+      fun defaultFor(tool: McpTool): ToolState = ToolState(routerOnly = !tool.descriptor.category.alwaysIncluded)
+    }
+  }
 }
 
 @Service
@@ -64,7 +68,7 @@ internal class McpToolDisallowListSettingsImpl : McpToolDisallowListSettings, Si
     val states = toolStates
     return states[tool.descriptor.fullyQualifiedName]
            ?: states[tool.descriptor.name]
-           ?: ToolState(routerOnly = !tool.descriptor.category.alwaysIncluded)
+           ?: ToolState.defaultFor(tool)
   }
 
   internal class ToolStateBean() : BaseState() {
