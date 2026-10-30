@@ -199,6 +199,7 @@ jvm_library(
         "//libraries/jna",
         "//plugins/gradle:gradle-common",
         "//plugins/gradle/plugin",
+        "//plugins/gradle/testFramework:testFramework_test_lib",
         "//platform/analysis-api:analysis",
         "//platform/backend/workspace",
         "//platform/core-api:core",

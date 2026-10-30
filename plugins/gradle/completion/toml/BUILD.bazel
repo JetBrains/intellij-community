@@ -93,7 +93,7 @@ jvm_library(
         "//java/openapi:java",
         "//java/plugin",
         "//java/java-impl:impl",
-        "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/gradle/testFramework:testFramework_test_lib",
         "//plugins/groovy",
         "//plugins/groovy/testFramework",
         "//libraries/junit6",

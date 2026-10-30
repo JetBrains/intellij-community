@@ -87,7 +87,7 @@ jvm_library(
         "//plugins/gradle/properties",
         "//plugins/gradle",
         "//plugins/gradle/settings",
-        "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/gradle/testFramework:testFramework_test_lib",
         "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//plugins/properties/properties-psi-api:psi",
         "//platform/analysis-api:analysis",

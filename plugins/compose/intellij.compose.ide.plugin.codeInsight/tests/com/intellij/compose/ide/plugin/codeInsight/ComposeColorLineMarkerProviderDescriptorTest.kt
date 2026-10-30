@@ -6,13 +6,13 @@ import com.intellij.codeInsight.daemon.impl.LineMarkersPass.getDisplayedLineMark
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ColorIconRenderer
 import com.intellij.compose.ide.plugin.codeInsight.lineMarkers.ComposeColorLineMarkerProviderDescriptor
 import com.intellij.compose.ide.plugin.shared.ComposeIdeBundle
+import com.intellij.gradle.testFramework.fixtures.FileTestFixture
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.runInEdtAndGet
 import com.intellij.testFramework.runInEdtAndWait
 import org.intellij.lang.annotations.Language
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.junit.jupiter.api.Test
 import java.awt.Color
 import java.nio.file.Path

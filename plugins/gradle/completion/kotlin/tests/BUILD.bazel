@@ -41,7 +41,7 @@ jvm_library(
         "//platform/testFramework",
         "//platform/testFramework/junit5",
         "//java/testFramework",
-        "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/gradle/testFramework:testFramework_test_lib",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/groovy",
         "//plugins/kotlin/base/testFramework",

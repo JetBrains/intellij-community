@@ -111,6 +111,7 @@ jvm_library(
         "//libraries/fastutil",
         "//plugins/groovy",
         "//plugins/gradle:gradle-tests_test_lib",
+        "//plugins/gradle/testFramework:testFramework_test_lib",
         "//platform/testFramework",
         "//platform/testFramework/junit5",
         "//plugins/kotlin/project-configuration",

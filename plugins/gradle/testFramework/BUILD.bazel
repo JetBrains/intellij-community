@@ -1,0 +1,89 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+### auto-generated section `build intellij.gradle.testFramework` start
+jvm_library(
+    name = "testFramework_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSources/**/*.kt",
+            "testSources/**/*.java",
+            "testSources/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.gradle.testFramework",
+    visibility = ["//visibility:public"],
+    exports = ["//platform/external-system-api/testFramework"],
+    deps = [
+        # do not sort,
+        "//plugins/gradle",
+        "//plugins/gradle/java",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
+        "//plugins/groovy/testFramework",
+        "//java/openapi:java",
+        "//java/compiler/openapi:java-compiler",
+        "//java/compiler/impl",
+        "//java/testFramework",
+        "//libraries/assertj-core",
+        "//libraries/kotlinx/coroutines/core",
+        "//libraries/mockito",
+        "//libraries/mockito-kotlin",
+        "//libraries/junit4",
+        "//libraries/junit6",
+        "//libraries/junit6-params",
+        "//platform/analysis-api:analysis",
+        "//platform/core-api:core",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/execution-impl",
+        "//platform/external-system-impl:externalSystem-impl",
+        "//platform/observable",
+        "//platform/ide-core",
+        "//jps/model-api:model",
+        "//platform/lang-core",
+        "//platform/projectModel-api:projectModel",
+        "//platform/testFramework",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/eelJava",
+        "//platform/testFramework/buildView",
+        "//platform/testFramework/extensions:testExtensions",
+        "//platform/external-system-impl:externalSystem-tests_test_lib",
+        "//platform/external-system-api/testFramework",
+        "//platform/boot",
+        "//platform/core-ui",
+        "//platform/util/jdom",
+        "//platform/util:util-ui",
+        "//platform/util-ex",
+        "//platform/backend/workspace",
+        "//platform/workspace/jps",
+        "//platform/workspace/storage",
+        "//platform/xdebugger-api:debugger",
+        "//platform/execution",
+        "//platform/eel",
+        "//platform/eel-provider",
+        "//platform/testRunner",
+        "//platform/smRunner",
+        "//tools/intellij.tools.ide.starter:ide-starter",
+        "//platform/buildView",
+        "//platform/consoleView",
+        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
+    ],
+)
+### auto-generated section `build intellij.gradle.testFramework` end
+
+### auto-generated section `iml intellij.gradle.testFramework` start
+exports_files(
+    [
+        "intellij.gradle.testFramework.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.gradle.testFramework` end
+
+### auto-generated section `test intellij.gradle.testFramework` start
+jps_test(
+    name = "testFramework_test",
+    runtime_deps = [":testFramework_test_lib"],
+)
+### auto-generated section `test intellij.gradle.testFramework` end

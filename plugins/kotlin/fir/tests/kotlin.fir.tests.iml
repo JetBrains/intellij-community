@@ -72,7 +72,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.shared" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.codeInsight.overrideImplement" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.fir" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.gradle.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.testFramework" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.indices" scope="TEST" />
