@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.util.SystemProperties
 
 internal class CallSaulAction : DumbAwareAction() {
@@ -93,4 +94,4 @@ internal class CacheRecoveryActionGroup: ActionGroup(), DumbAware {
 
 private val isSaulHere: Boolean
   get() = ApplicationManager.getApplication().isInternal ||
-          SystemProperties.getBooleanProperty("idea.cache.recovery.enabled", true)
+          SystemProperties.getBooleanProperty("idea.cache.recovery.enabled", !IdeProductMode.isLight)
