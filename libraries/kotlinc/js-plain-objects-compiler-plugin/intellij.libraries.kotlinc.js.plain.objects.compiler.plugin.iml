@@ -9,19 +9,19 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library" exported="">
       <library name="kotlinc.js-plain-objects-compiler-plugin" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:js-plain-objects-compiler-plugin-for-ide:2.5.0-ij263-40">
+        <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:js-plain-objects-compiler-plugin-for-ide:2.5.0-ij263-56">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.0-ij263-40/js-plain-objects-compiler-plugin-for-ide-2.5.0-ij263-40.jar">
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.0-ij263-56/js-plain-objects-compiler-plugin-for-ide-2.5.0-ij263-56.jar">
               <sha256sum>199b36b86c57288e48ed20b37232a102f6ade036a807228e7005da22255e8384</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.0-ij263-40/js-plain-objects-compiler-plugin-for-ide-2.5.0-ij263-40.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.0-ij263-56/js-plain-objects-compiler-plugin-for-ide-2.5.0-ij263-56.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.0-ij263-40/js-plain-objects-compiler-plugin-for-ide-2.5.0-ij263-40-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/js-plain-objects-compiler-plugin-for-ide/2.5.0-ij263-56/js-plain-objects-compiler-plugin-for-ide-2.5.0-ij263-56-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

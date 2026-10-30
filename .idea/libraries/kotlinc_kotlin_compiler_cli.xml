@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinc.kotlin-compiler-cli" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:2.5.0-ij263-40">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-compiler-cli-for-ide:2.5.0-ij263-56">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.0-ij263-40/kotlin-compiler-cli-for-ide-2.5.0-ij263-40.jar">
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.0-ij263-56/kotlin-compiler-cli-for-ide-2.5.0-ij263-56.jar">
           <sha256sum>770648af80d3cfd9ca349c79bf3cd8ce07eeadac705f4979513edc6cc1af407c</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.0-ij263-40/kotlin-compiler-cli-for-ide-2.5.0-ij263-40.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.0-ij263-56/kotlin-compiler-cli-for-ide-2.5.0-ij263-56.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.0-ij263-40/kotlin-compiler-cli-for-ide-2.5.0-ij263-40-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-cli-for-ide/2.5.0-ij263-56/kotlin-compiler-cli-for-ide-2.5.0-ij263-56-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
