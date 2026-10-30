@@ -23,7 +23,6 @@ class DevDistReferenceInputsTest {
       productionJars = emptyList(),
       testTargets = emptyList(),
       testJars = emptyList(),
-      exports = emptyList(),
       moduleLibraries = libraries,
     )
   }

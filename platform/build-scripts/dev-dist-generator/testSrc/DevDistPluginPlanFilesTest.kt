@@ -533,7 +533,6 @@ internal fun syntheticIndex(
           productionJars = emptyList(),
           testTargets = listOfNotNull(testTargets.get(module)),
           testJars = emptyList(),
-          exports = emptyList(),
           moduleLibraries = emptyMap(),
         )
       },

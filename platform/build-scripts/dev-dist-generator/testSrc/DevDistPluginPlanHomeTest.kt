@@ -85,7 +85,6 @@ class DevDistPluginPlanHomeTest {
             productionJars = emptyList(),
             testTargets = listOf("//plugins/test:plugin_test_lib.jar"),
             testJars = emptyList(),
-            exports = emptyList(),
             moduleLibraries = emptyMap(),
           ),
         ),

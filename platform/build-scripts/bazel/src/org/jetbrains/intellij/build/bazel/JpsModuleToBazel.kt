@@ -236,7 +236,6 @@ internal class JpsModuleToBazel {
       val productionJars: List<String>,
       val testTargets: List<String>,
       val testJars: List<String>,
-      val exports: List<String>,
       val moduleLibraries: Map<String, LibraryDescription>,
     )
 
@@ -370,7 +369,7 @@ internal class JpsModuleToBazel {
       }
 
       val skippedModules = moduleList.skippedModules
-      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())
+      val emptyModule = TargetsFileModuleDescription(emptyList(), emptyList(), emptyList(), emptyList(), emptyMap())
       val module2Libraries = libs
         .filter { it.target.moduleLibraryModuleName != null }
         .groupBy { it.target.moduleLibraryModuleName }
@@ -383,7 +382,6 @@ internal class JpsModuleToBazel {
             productionJars = moduleTarget.productionJars.map { adjustOutputPath(it) },
             testTargets = moduleTarget.testTargets.map { "$it.jar" },
             testJars = moduleTarget.testJars.map { adjustOutputPath(it) },
-            exports = moduleList.deps[moduleTarget.moduleDescriptor]?.exports?.map { it.label } ?: emptyList(),
             moduleLibraries = module2Libraries[moduleName]
                                 ?.associateTo(TreeMap()) { it.target.jpsName to makeLibraryDescription(it) } ?: emptyMap(),
           ).also {

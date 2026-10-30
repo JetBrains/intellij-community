@@ -9,7 +9,6 @@
       "testJars": [
         "out/bazel-out/jvm-fastbuild/bin/module/module_test_lib.jar"
       ],
-      "exports": [],
       "moduleLibraries": {}
     }
   },

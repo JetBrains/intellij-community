@@ -291,7 +291,6 @@ private fun targetsModule(target: String, jar: String): BazelTargetsInfo.Targets
     productionJars = listOf(jar),
     testTargets = emptyList(),
     testJars = emptyList(),
-    exports = emptyList(),
     moduleLibraries = emptyMap(),
   )
 }

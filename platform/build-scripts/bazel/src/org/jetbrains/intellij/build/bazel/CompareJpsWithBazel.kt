@@ -165,7 +165,6 @@ internal class CompareJpsWithBazel {
       val productionJars: List<String>,
       val testTargets: List<String>,
       val testJars: List<String>,
-      val exports: List<String>,
     )
 
     @Serializable

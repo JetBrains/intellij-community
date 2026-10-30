@@ -9,10 +9,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [
-        "//exported",
-        "//libs:module-second-provided"
-      ],
       "moduleLibraries": {
         "first": {
           "target": "//libs:module-first",
@@ -45,7 +41,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.exported": {
@@ -57,7 +52,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.provided": {
@@ -69,7 +63,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.tests": {
@@ -81,7 +74,6 @@
       "testJars": [
         "out/bazel-out/jvm-fastbuild/bin/module-tests/module-tests_test_lib.jar"
       ],
-      "exports": [],
       "moduleLibraries": {}
     }
   },

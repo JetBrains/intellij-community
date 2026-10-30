@@ -246,7 +246,6 @@ internal fun snapshotDevDistBazelIndex(index: DevDistBazelIndex): DevDistBazelIn
           productionJars = java.util.List.copyOf(module.productionJars),
           testTargets = java.util.List.copyOf(module.testTargets),
           testJars = java.util.List.copyOf(module.testJars),
-          exports = java.util.List.copyOf(module.exports),
           moduleLibraries = Collections.unmodifiableMap(module.moduleLibraries.mapValues { snapshotLibrary(it.value) }),
         )
       }),

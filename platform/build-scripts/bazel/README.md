@@ -371,7 +371,6 @@ The file is the JPS index. It carries no dev-distribution fact.
       "productionJars": ["bazel-out/.../core.jar"],
       "testTargets": ["@community//platform/core:core_test_lib"],
       "testJars": ["bazel-out/.../core_test_lib.jar"],
-      "exports": ["@lib//:annotations"],
       "moduleLibraries": {}
     }
   },

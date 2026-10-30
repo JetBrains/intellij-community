@@ -118,7 +118,6 @@ class DevDistRenderDocRuntimeTest {
             productionJars = emptyList(),
             testTargets = emptyList(),
             testJars = emptyList(),
-            exports = emptyList(),
             moduleLibraries = mapOf(
               libraryName to BazelTargetsInfo.LibraryDescription(
                 target = libraryLabel,

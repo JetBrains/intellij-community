@@ -9,7 +9,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {
         "kotlinc.analysis-api": {
           "target": "@lib//:libraries-kotlinc-analysis-api-kotlinc-analysis-api",

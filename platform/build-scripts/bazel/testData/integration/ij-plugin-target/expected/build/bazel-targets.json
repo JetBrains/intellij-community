@@ -9,7 +9,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.plugin": {
@@ -21,7 +20,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     }
   },

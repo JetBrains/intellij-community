@@ -169,7 +169,6 @@ class BazelTargetsInfo {
     @JvmField val productionJars: List<String>,
     @JvmField val testTargets: List<String>,
     @JvmField val testJars: List<String>,
-    @JvmField val exports: List<String>,
     @JvmField val moduleLibraries: Map<String, LibraryDescription>,
   )
 

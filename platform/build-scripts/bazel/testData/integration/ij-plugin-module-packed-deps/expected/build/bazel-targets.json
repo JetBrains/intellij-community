@@ -9,7 +9,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.libraries.example": {
@@ -21,7 +20,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {
         "first": {
           "target": "//libs:libraries-example-first",
@@ -64,7 +62,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     }
   },

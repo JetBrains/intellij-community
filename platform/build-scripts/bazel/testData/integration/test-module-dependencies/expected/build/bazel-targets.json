@@ -9,9 +9,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [
-        "//test-framework"
-      ],
       "moduleLibraries": {}
     },
     "intellij.module.other.tests": {
@@ -23,7 +20,6 @@
       "testJars": [
         "out/bazel-out/jvm-fastbuild/bin/other-tests/module-other-tests_test_lib.jar"
       ],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.testData": {
@@ -35,7 +31,6 @@
       "testJars": [
         "out/bazel-out/jvm-fastbuild/bin/test-data/test-data_test_lib.jar"
       ],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.testFramework": {
@@ -47,7 +42,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.tests": {
@@ -59,7 +53,6 @@
       "testJars": [
         "out/bazel-out/jvm-fastbuild/bin/module-tests/module-tests_test_lib.jar"
       ],
-      "exports": [],
       "moduleLibraries": {}
     },
     "intellij.module.util": {
@@ -71,7 +64,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {}
     }
   },

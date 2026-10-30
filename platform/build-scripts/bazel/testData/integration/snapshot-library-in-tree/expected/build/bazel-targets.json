@@ -9,7 +9,6 @@
       ],
       "testTargets": [],
       "testJars": [],
-      "exports": [],
       "moduleLibraries": {
         "#": {
           "target": "//mylibs:module-dokka-core-1-4-10-2-dev-52-snapshot",

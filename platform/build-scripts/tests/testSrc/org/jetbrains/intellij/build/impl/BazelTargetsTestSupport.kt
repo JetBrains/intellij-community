@@ -8,7 +8,6 @@ internal fun moduleDescription(targets: List<String>, jars: List<String>): Bazel
     productionJars = jars,
     testTargets = emptyList(),
     testJars = emptyList(),
-    exports = emptyList(),
     moduleLibraries = emptyMap(),
   )
 }
