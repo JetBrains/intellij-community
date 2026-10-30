@@ -130,7 +130,7 @@ elements:
               Defines the current plugin's alias.
               
               The alias can be used instead of the plugin [ID](#element:idea-plugin__id) in [`depends`](#element:idea-plugin__depends)
-              or [`dependencies/plugin@id`](#element:idea-plugin__dependencies__plugin__id).
+              or [`dependencies/plugin@id`](#attribute:idea-plugin__dependencies__plugin__id).
               
               Aliases are usually added to core plugins and work as markers of the corresponding IDEs.
               For example, `com.intellij.modules.ruby-capable` alias is declared in core plugins for IntelliJ IDEA Ultimate and RubyMine,
