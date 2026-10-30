@@ -3218,6 +3218,7 @@ com.intellij.psi.stubs.BinaryFileStubBuilder$CompositeBinaryFileStubBuilder
 - a:getSubBuilderVersion(java.lang.Object):java.lang.String
 f:com.intellij.psi.stubs.EmptyStub
 - com.intellij.psi.stubs.StubBase
+- <init>(com.intellij.psi.stubs.StubElement,com.intellij.psi.tree.IElementType):V
 a:com.intellij.psi.stubs.EmptyStubElementType
 - com.intellij.psi.stubs.IStubElementType
 a:com.intellij.psi.stubs.ILightStubElementType
