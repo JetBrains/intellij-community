@@ -109,7 +109,7 @@ DEV_DIST_PLUGIN_COMPONENTS = {
             "intellij.java.decompiler": "//plugins/java-decompiler/plugin:intellij.java.decompiler_dev_plugin",
             "intellij.eclipse": "//plugins/eclipse:intellij.eclipse_dev_plugin",
             "intellij.sh.plugin": "//build/dev-dist-descriptors/intellij.sh.plugin:intellij.sh.plugin_dev_plugin",
-            "intellij.markdown": "//build/dev-dist-descriptors/intellij.markdown:intellij.markdown_dev_plugin",
+            "intellij.markdown.plugin": "//build/dev-dist-descriptors/intellij.markdown.plugin:intellij.markdown.plugin_dev_plugin",
             "intellij.mermaid": "//plugins/mermaid:intellij.mermaid_dev_plugin",
             "intellij.mcpserver.plugin": "//plugins/mcp-server/mcpserver.plugin:intellij.mcpserver.plugin_dev_plugin",
             "intellij.webp": {
@@ -232,7 +232,7 @@ DEV_DIST_PLUGIN_COMPONENTS = {
             "intellij.java.decompiler": "//plugins/java-decompiler/plugin:intellij.java.decompiler_dev_plugin",
             "intellij.eclipse": "//plugins/eclipse:intellij.eclipse_dev_plugin",
             "intellij.sh.plugin": "//build/dev-dist-descriptors/intellij.sh.plugin:intellij.sh.plugin_dev_plugin",
-            "intellij.markdown": "//build/dev-dist-descriptors/intellij.markdown:intellij.markdown_dev_plugin",
+            "intellij.markdown.plugin": "//build/dev-dist-descriptors/intellij.markdown.plugin:intellij.markdown.plugin_dev_plugin",
             "intellij.mermaid": "//plugins/mermaid:intellij.mermaid_dev_plugin",
             "intellij.webp": {
                 "darwin_aarch64": "//plugins/webp:intellij.webp_darwin_aarch64_component",

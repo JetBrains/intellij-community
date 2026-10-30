@@ -40,8 +40,8 @@ dev_dist_plugin_descriptor(
         "intellij.markdown.vcs",
         "intellij.markdown.xml",
     ],
-    descriptor = "//plugins/markdown/core:resources/META-INF/plugin.xml",
-    main_module = "intellij.markdown",
+    descriptor = "//plugins/markdown/plugin:resources/META-INF/plugin.xml",
+    main_module = "intellij.markdown.plugin",
     mode_refused_content_modules = {
         "frontend": [
             "intellij.markdown.frontmatter",
@@ -61,12 +61,13 @@ dev_dist_plugin_descriptor(
 )
 
 dev_plugin(
-    name = "intellij.markdown_dev_plugin",
+    name = "intellij.markdown.plugin_dev_plugin",
     content_module_jars = [
         "//plugins/markdown/compose:compose-preview_content_module_jar",
         "//plugins/markdown/core/backend:backend_content_module_jar",
         "//plugins/markdown/core/frontend/execution:execution_content_module_jar",
         "//plugins/markdown/core/frontend:frontend_content_module_jar",
+        "//plugins/markdown/core:markdown_content_module_jar",
         "//plugins/markdown/execution:execution_content_module_jar",
         "//plugins/markdown/fenceInjection:fenceInjection_content_module_jar",
         "//plugins/markdown/figmaAdvertiser:figmaAdvertiser_content_module_jar",
@@ -83,15 +84,18 @@ dev_plugin(
         "//plugins/markdown/vcs:vcs_content_module_jar",
         "//plugins/markdown/xml:xml_content_module_jar",
     ],
-    descriptor = "//build/dev-dist-descriptors/intellij.markdown:intellij.markdown_dev_descriptor",
+    descriptor = "//build/dev-dist-descriptors/intellij.markdown.plugin:intellij.markdown.plugin_dev_descriptor",
     jars = {
-        "lib/intellij.markdown.jar": [
-            "intellij.markdown",
+        "lib/markdown-plugin.jar": [
+            "intellij.markdown.plugin",
         ],
     },
-    main_module = "intellij.markdown",
+    main_module = "intellij.markdown.plugin",
+    module_jar_paths = {
+        "intellij.markdown": "lib/intellij.markdown.jar",
+    },
     modules = {
-        "//plugins/markdown/core:markdown": "intellij.markdown",
+        "//plugins/markdown/plugin": "intellij.markdown.plugin",
     },
     plugin_directory = "plugins/markdown",
 )
