@@ -175,9 +175,9 @@ public final class JiraRepository extends BaseRepositoryImpl {
     // may be used instead version string parsing
     myJiraVersion = serverInfo.get("version").getAsString();
     myInCloud = isHostedInCloud(serverInfo);
-    LOG.info("JIRA version (from serverInfo): " + getPresentableVersion());
+    LOG.info("Jira version (from serverInfo): " + getPresentableVersion());
     if (isInCloud()) {
-      LOG.info("Connecting to JIRA Cloud. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
+      LOG.info("Connecting to Jira Cloud. Cookie authentication is enabled unless 'tasks.jira.basic.auth.only' VM flag is used.");
     }
     String providedRestApiVersion = Registry.stringValue("tasks.jira.use.rest.api.version");
     if ("3".equals(providedRestApiVersion)) {

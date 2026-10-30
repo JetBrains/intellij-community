@@ -19,7 +19,7 @@ public class JiraVersion implements Comparable<JiraVersion> {
   public JiraVersion(@NotNull String version) {
     Matcher m = VERSION_PATTERN.matcher(version);
     if (!m.matches()) {
-      throw new IllegalArgumentException("Illegal JIRA version number: " + version);
+      throw new IllegalArgumentException("Illegal Jira version number: " + version);
     }
     myMajorNumber = m.group(1) == null ? 0 : Integer.parseInt(m.group(1));
     myMinorNumber = m.group(2) == null ? 0 : Integer.parseInt(m.group(2));
