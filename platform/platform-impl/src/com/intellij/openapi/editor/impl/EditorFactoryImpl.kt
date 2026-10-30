@@ -76,7 +76,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
         }
       }
     })
-    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { refreshAllEditors() })
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { refreshAllEditorsAfterColorsSchemeChange() })
     connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == EditorGutterComponentImpl.DISTRACTION_FREE_MARGIN || id == EditorPainter.EDITOR_TAB_PAINTING || id == EDITOR_SHOW_SPECIAL_CHARS) {
@@ -140,6 +140,22 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     for (editor in ClientEditorManager.getCurrentInstance().editors) {
       if (isEditorLoaded(editor)) {
         (editor as EditorEx).reinitSettings()
+      }
+    }
+  }
+
+  /**
+   * Refreshes all editors as [refreshAllEditors] does. The new colors scheme can give the text other font styles,
+   * so an [EditorImpl] also recalculates its soft wraps.
+   */
+  private fun refreshAllEditorsAfterColorsSchemeChange() {
+    for (editor in ClientEditorManager.getCurrentInstance().editors) {
+      if (isEditorLoaded(editor)) {
+        if (editor is EditorImpl) {
+          editor.reinitSettingsAfterColorsSchemeChange()
+        } else {
+          (editor as EditorEx).reinitSettings()
+        }
       }
     }
   }

@@ -36,6 +36,11 @@ internal abstract class SoftWrapRecalculationManager : InlayModel.SimpleAdapter(
   abstract fun onFontStyleChanged(startOffset: Int, endOffset: Int)
 
   /**
+   * Called when the widths of the text can change in the whole document.
+   */
+  abstract fun onTextWidthsChanged()
+
+  /**
    * Called when the editor highlighter repaints the text up to [endOffset] during a document change.
    * The editor highlighter lexes the text after the changed text again, and the new tokens can have other font styles.
    * The soft wraps of the document change must then reach [endOffset].

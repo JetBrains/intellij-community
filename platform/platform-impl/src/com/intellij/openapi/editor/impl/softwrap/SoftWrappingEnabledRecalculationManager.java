@@ -260,6 +260,14 @@ public final class SoftWrappingEnabledRecalculationManager extends SoftWrapRecal
   }
 
   @Override
+  public void onTextWidthsChanged() {
+    if (myBulkDocumentUpdateInProgress.getAsBoolean()) {
+      return; // the end of the bulk update recalculates all soft wraps
+    }
+    myDirty = true;
+  }
+
+  @Override
   public void onHighlighterRepaint(int endOffset) {
     if (myDocumentUpdateInProgress) {
       myApplianceManager.extendDocumentChange(endOffset);

@@ -4,7 +4,10 @@ package com.intellij.openapi.editor.impl
 import com.intellij.lang.Language
 import com.intellij.lexer.Lexer
 import com.intellij.lexer.LexerBase
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.EditorEx
@@ -178,6 +181,52 @@ class SoftWrapHighlighterFontStyleTest {
   }
 
   @Test
+  fun testNewEditorHighlighterAddsSoftWrap(): Unit = fixture.runTest {
+    initBoldWidthText("${COMMENT_START}x\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    assertTrue(softWrapOffsets().isEmpty(), "The plain text must fit in one line")
+
+    setBoldCommentHighlighter()
+
+    val offsets = softWrapOffsets()
+    val expected = recalculatedSoftWrapOffsets()
+    assertFalse(expected.isEmpty(), "The bold comment must not fit in one line")
+    assertEquals(expected, offsets, STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testNewColorsSchemeAddsSoftWrap(): Unit = fixture.runTest {
+    initPlainCommentText("${COMMENT_START}x\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    assertTrue(softWrapOffsets().isEmpty(), "The plain comment must fit in one line")
+    val scheme = EditorColorsManager.getInstance().globalScheme.clone() as EditorColorsScheme
+    scheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, boldAttributes())
+
+    (editor as EditorEx).colorsScheme = scheme
+
+    val offsets = softWrapOffsets()
+    val expected = recalculatedSoftWrapOffsets()
+    assertFalse(expected.isEmpty(), "The bold comment must not fit in one line")
+    assertEquals(expected, offsets, STALE_SOFT_WRAPS)
+  }
+
+  @Test
+  fun testGlobalSchemeChangeAddsSoftWrap(): Unit = fixture.runTest {
+    initPlainCommentText("${COMMENT_START}x\n$TEXT")
+    configureSoftWraps(WRAP_COLUMN)
+    assertTrue(softWrapOffsets().isEmpty(), "The plain comment must fit in one line")
+    // The scheme of this editor stands in for the global scheme, so the test changes no global state
+    editor.colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, boldAttributes())
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(EditorColorsManager.TOPIC).globalSchemeChange(null)
+
+    val offsets = softWrapOffsets()
+    val expected = recalculatedSoftWrapOffsets()
+    assertFalse(expected.isEmpty(), "The bold comment must not fit in one line")
+    assertEquals(expected, offsets, STALE_SOFT_WRAPS)
+  }
+
+  @Test
   fun testCommentStartAddsSoftWrapToLaterLine(): Unit = fixture.runTest {
     initBoldCommentText("x\n$TEXT")
     configureSoftWraps(WRAP_COLUMN)
@@ -233,8 +282,28 @@ private fun EditorModelFixture.initBoldWidthText(text: String = TEXT) {
  */
 private fun EditorModelFixture.initBoldCommentText(text: String) {
   initBoldWidthText(text)
+  setBoldCommentHighlighter()
+}
+
+/**
+ * Opens a plain text file with [text] and gives the editor a highlighter with [CommentToEndLexer].
+ * The comment key is plain in the scheme of this editor only.
+ */
+private fun EditorModelFixture.initPlainCommentText(text: String) {
+  initBoldWidthText(text)
+  setCommentHighlighter(TextAttributes())
+}
+
+/**
+ * Gives the editor a highlighter with [CommentToEndLexer]. The comment key is bold in the scheme of this editor only.
+ */
+private fun EditorModelFixture.setBoldCommentHighlighter() {
+  setCommentHighlighter(boldAttributes())
+}
+
+private fun EditorModelFixture.setCommentHighlighter(commentAttributes: TextAttributes) {
   val editor = editor as EditorEx
-  editor.colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, boldAttributes())
+  editor.colorsScheme.setAttributes(DefaultLanguageHighlighterColors.BLOCK_COMMENT, commentAttributes)
   editor.highlighter = LexerEditorHighlighter(CommentToEndHighlighter(), editor.colorsScheme)
 }
 

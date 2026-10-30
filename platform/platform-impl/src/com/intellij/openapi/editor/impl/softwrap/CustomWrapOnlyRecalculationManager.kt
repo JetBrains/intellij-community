@@ -118,6 +118,10 @@ internal class CustomWrapOnlyRecalculationManager(
     // custom wraps do not depend on the text width
   }
 
+  override fun onTextWidthsChanged() {
+    // custom wraps do not depend on the text width
+  }
+
   override fun onHighlighterRepaint(endOffset: Int) {
     // custom wraps do not depend on the text width
   }

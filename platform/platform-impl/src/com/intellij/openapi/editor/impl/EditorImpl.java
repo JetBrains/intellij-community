@@ -1538,9 +1538,28 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }, getDisposable());
   }
 
+  /**
+   * Reinitializes the settings after a change of the global colors scheme.
+   */
+  @RequiresEdt
+  void reinitSettingsAfterColorsSchemeChange() {
+    reinitSettings(true, true, true);
+  }
+
   @RequiresEdt
   void reinitSettings(boolean updateGutterSize, boolean reinitSettings) {
+    reinitSettings(updateGutterSize, reinitSettings, false);
+  }
+
+  /**
+   * @param highlightingChanged true when the editor highlighter or the colors scheme changed.
+   *                            The text can then get other font styles, so all soft wraps are recalculated.
+   */
+  @RequiresEdt
+  private void reinitSettings(boolean updateGutterSize, boolean reinitSettings, boolean highlightingChanged) {
     myScheme.updateGlobalScheme();
+    // before the soft wraps, so that their recalculation reads the text attributes of the current scheme
+    myHighlighter.setColorScheme(myScheme);
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
@@ -1548,6 +1567,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       mySettings.reinitSettings();
     }
     mySoftWrapModel.reinitSettings();
+    if (highlightingChanged) {
+      mySoftWrapModel.onTextWidthsChanged();
+    }
     myCaretModel.reinitSettings();
     mySelectionModel.reinitSettings();
 
@@ -1562,7 +1584,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
     }
 
-    myHighlighter.setColorScheme(myScheme);
     myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
 
@@ -1999,7 +2020,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myPropertyChangeSupport.firePropertyChange(PROP_HIGHLIGHTER, oldHighlighter, highlighter);
 
     if (myPanel != null) {
-      WriteIntentReadAction.run(() -> reinitSettings());
+      WriteIntentReadAction.run(() -> reinitSettings(true, true, true));
     }
   }
 
@@ -4044,7 +4065,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     else {
       myScheme = new EditorColorSchemeDelegate(this, scheme);
     }
-    reinitSettings();
+    reinitSettings(true, true, true);
   }
 
   @Override
