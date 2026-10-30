@@ -261,7 +261,7 @@ jvm_library(
         "//plugins/gitlab/gitlab-yaml:vcs-gitlab-yaml",
         "//plugins/yaml",
         "//platform/compose/plugin",
-        "//json",
+        "//json/plugin",
         "//java/terminal/shared",
         "//java/terminal/backend",
         "//java/terminal/frontend",

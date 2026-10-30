@@ -633,6 +633,7 @@ jvm_library(
         "//python/python-features-trainer:featuresTrainer",
         "//jupyter:notebooks-jupyter-core",
         "//python/intellij.python.community.communityOnly:community-communityOnly",
+        "//json/plugin",
         "//python/aliasProvider",
         "//python/python-zuban/frontend",
         "//python/python-zuban/plugin",

@@ -52,6 +52,7 @@ jvm_library(
         "//aether-dependency-resolver/plugin",
         "//xml/plugin",
         "//json/spellchecker",
+        "//json/plugin",
         "//plugins/yaml/spellchecker",
         "//spellchecker/xml/backend",
         "//platform/testRunner/plugin",

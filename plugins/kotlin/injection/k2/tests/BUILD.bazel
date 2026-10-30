@@ -39,6 +39,7 @@ jvm_library(
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//plugins/markdown/fenceInjection",
         "//plugins/markdown/core/frontend",
+        "//json/plugin",
     ],
     deps = [
         # do not sort,

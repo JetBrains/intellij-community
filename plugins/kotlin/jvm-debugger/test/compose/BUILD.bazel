@@ -46,6 +46,7 @@ jvm_library(
         "//community-resources:customization",
         "//aether-dependency-resolver/plugin",
         "//java/java-frontend:frontend",
+        "//json/plugin",
         "//platform/navbar/plugin",
         "//platform/structure-view-impl/plugin",
         "//platform/testRunner/plugin",

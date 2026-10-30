@@ -59,6 +59,7 @@ jvm_library(
         "//platform/xdebugger-impl:debugger-impl",
         "//plugins/jcef/plugin",
         "//platform/platform-impl/jcef",
+        "//json/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],

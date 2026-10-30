@@ -33,18 +33,6 @@ jvm_library(
     ),
     visibility = ["//visibility:public"],
 )
-
-jvm_library(
-    name = "plugin_test_lib",
-    testonly = True,
-    srcs = glob(
-        [],
-        allow_empty = True,
-    ),
-    module_name = "intellij.json.plugin",
-    visibility = ["//visibility:public"],
-    runtime_deps = [":plugin"],
-)
 ### auto-generated section `build intellij.json.plugin` end
 
 ### auto-generated section `iml intellij.json.plugin` start

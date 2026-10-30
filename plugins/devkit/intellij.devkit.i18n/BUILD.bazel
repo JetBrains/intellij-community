@@ -90,6 +90,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//json/plugin",
         "//xml/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
