@@ -4,10 +4,8 @@ package com.jetbrains.python.sdk.add.v2
 import com.intellij.execution.target.BrowsableTargetEnvironmentType
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.getTargetType
 import com.intellij.execution.target.joinTargetPaths
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.fileLogger
 import com.intellij.openapi.fileChooser.FileChooser
@@ -189,8 +187,6 @@ data class EelFileSystem(
     }
     return BinOnEel(path.path, eelWorkingDir)
   }
-
-  override fun createTargetRequest(): TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
 
   @RequiresEdt
   override fun <T> configureFileBrowseEditor(
@@ -558,9 +554,6 @@ internal data class TargetFileSystem(
   override fun parsePath(raw: @OsPath String): PyResult<PathHolder.Target> {
     return PyResult.success(PathHolder.Target(raw))
   }
-
-  override fun createTargetRequest(): TargetEnvironmentRequest =
-    targetEnvironmentConfiguration.createEnvironmentRequest(project = null)
 
   @RequiresEdt
   override fun <T> configureFileBrowseEditor(

@@ -8,7 +8,6 @@ import com.jetbrains.python.project.PyProject
 import com.jetbrains.python.sdk.ModuleOrProject
 import com.intellij.execution.target.TargetBrowserHints
 import com.intellij.execution.target.TargetEnvironmentConfiguration
-import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -112,7 +111,6 @@ interface FileSystem<P : PathHolder> {
     suggestedSdkName: String?,
   ): PyResult<PythonInterpreter>
 
-  fun createTargetRequest(): TargetEnvironmentRequest
   suspend fun validateVenv(homePath: P): PyResult<Unit>
   suspend fun suggestVenv(projectPath: Path): PyResult<P>
   suspend fun wrapSdk(pythonInterpreter: PythonInterpreter): PythonInterpreterWrapper<P>
