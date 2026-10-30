@@ -28,6 +28,9 @@ interface VmAttacher {
     /** Perform any setup operations */
     fun setUp() {}
 
+    /** Override expected output file */
+    fun getExpectedOutputFile(testDataPath: String, testName: String): File? = null
+
     /** Perform any tear down operations */
     fun tearDown() {}
 
