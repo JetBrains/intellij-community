@@ -619,20 +619,20 @@ elements:
                         description: |
                           Specifies when a content module of a plugin should be loaded.
                           Allowed values:
-                          - `required` - the module is a required part of the plugin.
-                            If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't
-                            loaded, and an error is shown to the user.
-                          - `embedded` - the same as `required`, but also puts the module's classes to the main plugin JAR and loads them
-                            using the main plugin classloader.
-                            **This is an internal temporary option added to simplify the migration of some existing plugins.
-                            For new modules, use `required` instead.**
-                          - `optional` - the module is an optional part of the plugin.
-                            If the module cannot be loaded, it is skipped and doesn't prevent other modules from the plugin from being
-                            loaded.
-                          - `on-demand` - the module is used by other modules of the plugin and doesn't provide user-visible functionality
-                            itself.
-                            The module is loaded if and only if another `required` or `optional` module, which depends on it, is loaded.
-                            **Effective since 2026.3**; in older versions, it behaves the same way as `optional`.
+                            - `required` - the module is a required part of the plugin.
+                              If the module cannot be loaded because some of its dependencies aren't available, the whole plugin isn't
+                              loaded, and an error is shown to the user.
+                            - `embedded` - the same as `required`, but also puts the module's classes to the main plugin JAR and loads them
+                              using the main plugin classloader.
+                              **This is an internal temporary option added to simplify the migration of some existing plugins.
+                              For new modules, use `required` instead.**
+                            - `optional` - the module is an optional part of the plugin.
+                              If the module cannot be loaded, it is skipped and doesn't prevent other modules from the plugin from being
+                              loaded.
+                            - `on-demand` - the module is used by other modules of the plugin and doesn't provide user-visible functionality
+                              itself.
+                              The module is loaded if and only if another `required` or `optional` module, which depends on it, is loaded.
+                              **Effective since 2026.3**; in older versions, it behaves the same way as `optional`.
                         defaultValue: |
                           `optional`
                     - attribute:
