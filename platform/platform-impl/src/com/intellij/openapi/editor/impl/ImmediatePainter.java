@@ -182,7 +182,7 @@ public final class ImmediatePainter {
     final float width2 = fontLayoutService.charWidth2D(editor.getFontMetrics(attributes2.getFontType()), c2);
 
     final Font font1 = EditorUtil.fontForChar(c1, attributes1.getFontType(), editor).getFont();
-    final Font font2 = EditorUtil.fontForChar(c1, attributes2.getFontType(), editor).getFont();
+    final Font font2 = EditorUtil.fontForChar(c2, attributes2.getFontType(), editor).getFont();
 
     final Point2D p2 = editor.offsetToPoint2D(offset);
     float p2x = (float)p2.getX();
