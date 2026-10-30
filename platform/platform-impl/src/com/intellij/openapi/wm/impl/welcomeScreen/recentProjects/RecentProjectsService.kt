@@ -121,7 +121,7 @@ internal class RecentProjectsService(private val coroutineScope: CoroutineScope)
     LOG.info("Recent project $recentProjectId: loading it without a frame")
     // Marked before it initializes, because the load itself can ask whether the project is one of these, and the first answer is cached.
     // A project without a workspace model cache asks: it reads its model files during the load, and the root change asks.
-    val project = projectManager.loadProject(recentProjectId.path, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
+    val project = projectManager.loadProjectAsync(recentProjectId.path, beforeInit = { it.putUserData(FRAMELESS_RECENT_PROJECT, true) })
     val held = hold(recentProjectId, project, owned = true)
     try {
       initLoadedProject(project)
