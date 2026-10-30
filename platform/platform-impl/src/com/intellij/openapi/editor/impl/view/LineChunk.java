@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.DocumentText;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
@@ -67,7 +66,7 @@ class LineChunk {
     @NotNull EditorView view
   ) {
     fragments = new ArrayList<>();
-    addFragments(chars, getStartOffset(), getEndOffset(), level, false, null, ffi, view);
+    addFragments(chars, getStartOffset(), getEndOffset(), level, null, null, ffi, view);
   }
 
   void ensureLayout(@NotNull EditorView view, @NotNull DocumentText document, int line, byte level) {
@@ -96,12 +95,13 @@ class LineChunk {
       false,
       false
     );
+    EditorFontResolver fontResolver = view.getFontResolver();
     FontFallbackIterator ffi = new FontFallbackIterator(
-      editor.getColorsScheme().getFontPreferences(),
-      view.getFontRenderContext(),
+      fontResolver.editorFonts().preferences(),
+      fontResolver.fontRenderContext(),
       Font.PLAIN
     );
-    boolean specialCharsEnabled = editor.getSettings().isShowingSpecialChars();
+    Font specialCharacterFont = fontResolver.specialCharacterFont();
     char[] chars = CharArrayUtil.fromSequence(document.chars(), start, end);
     @FontStyle int currentFontType = Font.PLAIN;
     Color currentColor = null;
@@ -117,7 +117,7 @@ class LineChunk {
             currentStart - start,
             tokenStart - start,
             level,
-            specialCharsEnabled,
+            specialCharacterFont,
             view.getTabFragment(),
             ffi,
             view
@@ -136,7 +136,7 @@ class LineChunk {
         currentStart - start,
         end - start,
         level,
-        specialCharsEnabled,
+        specialCharacterFont,
         view.getTabFragment(),
         ffi,
         view
@@ -194,13 +194,12 @@ class LineChunk {
     int start,
     int end,
     byte level,
-    boolean showSpecialChars,
+    @Nullable Font specialCharacterFont,
     @Nullable TabFragment tabFragment,
     @NotNull FontFallbackIterator ffi,
     @NotNull EditorView view
   ) {
     EditorViewSnapshot viewSnapshot = null;
-    Font font = null;
     assert start < end;
     boolean isRtl = BitUtil.isSet(level, 1);
     int last = start;
@@ -210,13 +209,12 @@ class LineChunk {
       if (c == '\t') {
         assert level == 0;
         specialFragment = tabFragment;
-      } else if (showSpecialChars) {
+      } else if (specialCharacterFont != null) {
         if (viewSnapshot == null) {
           viewSnapshot = view.getSnapshot();
-          font = view.getEditor().getColorsScheme().getFont(EditorFontType.PLAIN);
         }
         // only BMP special chars are supported currently, so there's no need to check for surrogate pairs
-        specialFragment = SpecialCharacterFragment.create(viewSnapshot, font, c, text, i);
+        specialFragment = SpecialCharacterFragment.create(viewSnapshot, specialCharacterFont, c, text, i);
       }
       if (specialFragment != null) {
         addFragmentsNoTabs(text, last, i, isRtl, ffi, view);

@@ -53,7 +53,7 @@ public final class WrapElementMeasuringIterator extends WrapElementIterator {
       if (c == '\t') {
         x = EditorUtil.nextTabStop(x, plainSpaceWidth, tabSize);
       }
-      else if (CharWidthCache.isPrintableAscii(c)) {
+      else if (TextFonts.isPrintableAscii(c)) {
         x += charWidth;
       }
       else {

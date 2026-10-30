@@ -7,6 +7,7 @@ import java.awt.font.FontRenderContext
 internal data class EditorViewSnapshot(
   private val fontRenderContext: FontRenderContext,
   private val metrics: EditorViewMetrics,
+  private val fontResolver: EditorFontResolver,
   private val tabSize: Int,
   private val bidiFlags: Int,
   private val rtlEnabled: Boolean,
@@ -16,6 +17,7 @@ internal data class EditorViewSnapshot(
   constructor(fontRenderContext: FontRenderContext, rtlEnabled: Boolean) : this(
     fontRenderContext = fontRenderContext,
     metrics = EditorViewMetrics.UNINITIALIZED,
+    fontResolver = EditorFontResolver.UNINITIALIZED,
     tabSize = -1,
     bidiFlags = 0,
     rtlEnabled = rtlEnabled,
@@ -44,6 +46,7 @@ internal data class EditorViewSnapshot(
   fun paintCallback(): Runnable? = paintCallback
   fun prefix(): EditorPrefix? = prefix
   fun metrics(): EditorViewMetrics = metrics
+  fun fontResolver(): EditorFontResolver = fontResolver
 
   fun withFontRenderContext(fontRenderContext: FontRenderContext): EditorViewSnapshot {
     return if (fontRenderContext === this.fontRenderContext) {
@@ -58,6 +61,14 @@ internal data class EditorViewSnapshot(
       this
     } else {
       copy(metrics = metrics)
+    }
+  }
+
+  fun withFontResolver(fontResolver: EditorFontResolver): EditorViewSnapshot {
+    return if (fontResolver === this.fontResolver) {
+      this
+    } else {
+      copy(fontResolver = fontResolver)
     }
   }
 

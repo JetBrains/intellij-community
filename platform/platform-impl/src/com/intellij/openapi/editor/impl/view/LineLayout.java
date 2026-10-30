@@ -133,9 +133,10 @@ sealed abstract class LineLayout permits SingleChunkLayout, MultiChunkLayout, Li
     if (text.isEmpty()) {
       return Collections.emptyList();
     }
+    EditorFontResolver fontResolver = view.getFontResolver();
     FontFallbackIterator ffi = new FontFallbackIterator(
-      view.getEditor().getColorsScheme().getFontPreferences(),
-      view.getFontRenderContext(),
+      fontResolver.editorFonts().preferences(),
+      fontResolver.fontRenderContext(),
       fontStyle
     );
     char[] chars = CharArrayUtil.fromSequence(text);

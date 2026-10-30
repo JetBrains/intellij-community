@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics2D;
+import java.awt.font.FontRenderContext;
 import java.util.function.Consumer;
 
 final class SpecialCharacterFragment implements LineFragment {
@@ -85,6 +86,15 @@ final class SpecialCharacterFragment implements LineFragment {
     return new SpecialCharacterFragment(view, font, code);
   }
 
+  /**
+   * Returns the width of the fragment for {@code codePoint}, or a negative value when the code point is not a special character.
+   * Unlike {@link #create}, it does not check the surrounding text.
+   */
+  static float getCodeWidth(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, int codePoint) {
+    String code = SPECIAL_CHAR_CODES.get(codePoint);
+    return code == null ? -1 : calculateCodeWidth(font, fontRenderContext, code);
+  }
+
   private final EditorViewSnapshot view;
   private final Font font;
   private final String code;
@@ -94,7 +104,7 @@ final class SpecialCharacterFragment implements LineFragment {
     this.view = view;
     this.font = font;
     this.code = code;
-    this.width = calculateCodeWidth(view, font, code);
+    this.width = calculateCodeWidth(font, view.fontRenderContext(), code);
   }
 
   @Override
@@ -176,8 +186,8 @@ final class SpecialCharacterFragment implements LineFragment {
     return this;
   }
 
-  private static int calculateCodeWidth(@NotNull EditorViewSnapshot view, @NotNull Font font, @NotNull String code) {
-    FontMetrics fontMetrics = FontInfo.getFontMetrics(font, view.fontRenderContext());
+  private static int calculateCodeWidth(@NotNull Font font, @NotNull FontRenderContext fontRenderContext, @NotNull String code) {
+    FontMetrics fontMetrics = FontInfo.getFontMetrics(font, fontRenderContext);
     return FontLayoutService.getInstance().stringWidth(fontMetrics, code);
   }
 
