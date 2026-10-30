@@ -225,7 +225,6 @@ jvm_library(
         "//plugins/sh/plugin:plugin-main",
         "//plugins/terminal/sh",
         "//plugins/gradle-maven:gradle-java-maven",
-        "//plugins/markdown/core:markdown",
         "//plugins/mermaid",
         "//plugins/markdown/plugin:plugin-main",
         "//plugins/webp",

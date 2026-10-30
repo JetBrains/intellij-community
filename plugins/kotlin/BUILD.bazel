@@ -335,7 +335,7 @@ jvm_library(
         "//libraries/kotlin/reflect",
         "//libraries/kotlinc/kotlin-script-runtime:libraries-kotlinc-kotlin-script-runtime",
         "@lib//:vavr",
-        "//plugins/markdown/core:markdown",
+        "//plugins/markdown/plugin:plugin-main",
         "@lib//:javax-inject",
         "//plugins/kotlin/kotlin.searching",
         "//plugins/kotlin/kotlin.searching/base",

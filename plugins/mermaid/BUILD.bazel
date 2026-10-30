@@ -142,6 +142,7 @@ jvm_library(
         # do not sort,
         "//json/plugin",
         "//plugins/yaml/plugin",
+        "//plugins/markdown/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],

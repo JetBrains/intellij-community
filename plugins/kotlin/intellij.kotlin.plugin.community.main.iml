@@ -167,7 +167,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="vavr" level="project" />
-    <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin.main" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
     <orderEntry type="module" module-name="intellij.kotlin.searching" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.searching.base" exported="" />

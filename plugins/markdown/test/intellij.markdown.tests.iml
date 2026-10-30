@@ -103,6 +103,7 @@
     <orderEntry type="module" module-name="intellij.sh.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown.vcs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.markdown.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.vcs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
