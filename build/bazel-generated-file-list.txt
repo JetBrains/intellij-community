@@ -2069,7 +2069,6 @@ tools/intellij.tools.ide.starter.build.server
 tools/intellij.tools.ide.starter.driver
 tools/intellij.tools.ide.starter.junit5
 tools/intellij.tools.ide.starter.product.android.studio
-tools/intellij.tools.ide.starter.product.aqua
 tools/intellij.tools.ide.starter.product.clion
 tools/intellij.tools.ide.starter.product.datagrip
 tools/intellij.tools.ide.starter.product.gateway
