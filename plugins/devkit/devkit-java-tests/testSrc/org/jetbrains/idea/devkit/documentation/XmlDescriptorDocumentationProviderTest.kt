@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
@@ -46,6 +46,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<li><a href=\"psi_element://#element:root__elementWithChildrenDescription\"><code>&lt;elementWithChildrenDescription&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__internalElement\"><code>&lt;internalElement&gt;</code></a> <i>internal</i></li>" +
       "<li><a href=\"psi_element://#element:root__elementWithInternalLinks\"><code>&lt;elementWithInternalLinks&gt;</code></a> <i>internal</i></li>" +
+      "<li><a href=\"psi_element://#element:root__experimentalElement\"><code>&lt;experimentalElement&gt;</code></a> <i>experimental</i></li>" +
       "<li><a href=\"psi_element://#element:root__xi:include\"><code>&lt;xi:include&gt;</code></a></li>" +
       "</ul>"
     )
@@ -356,6 +357,65 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "Description of <code>internalAttribute</code>." +
       "<h6><icon src=\"AllIcons.General.Warning\"/> <b>Internal Use Only</b></h6>" +
       "<p>An internal note for the attribute."
+    )
+  }
+
+  fun `test an experimental element`() {
+    doTestDocContains(
+      """
+        <root>
+          <experimental<caret>Element/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;experimentalElement&gt;</code></b><hr/>" +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Information\"/> <b>Experimental</b><br>\n" +
+      " An experimental note for the element.\n" +
+      " It can <a href=\"https://example.com\">change</a>." +
+      "</blockquote>" +
+      "<p>An experimental element description." +
+      "<h5>Attributes</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#attribute:root__experimentalElement__inheritedExperimentalAttribute\"><code>inheritedExperimentalAttribute</code></a> <i>experimental</i></li>" +
+      "<li><a href=\"psi_element://#attribute:root__experimentalElement__experimentalAttribute\"><code>experimentalAttribute</code></a> <i>experimental</i></li>" +
+      "</ul>" +
+      "<h5>Children</h5>" +
+      "<ul>" +
+      "<li><a href=\"psi_element://#element:root__experimentalElement__experimentalChildElement\"><code>&lt;experimentalChildElement&gt;</code></a> <i>experimental</i></li>" +
+      "</ul>"
+    )
+  }
+
+  fun `test an attribute inheriting the experimental note`() {
+    doTestDocContains(
+      """
+        <root>
+          <experimentalElement inheritedExperimental<caret>Attribute="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__experimentalElement\"><code>&lt;experimentalElement&gt;</code></a> / <b><code>@inheritedExperimentalAttribute</code></b><hr/>" +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Information\"/> <b>Experimental</b><br>\n" +
+      " An experimental note for the element.\n" +
+      " It can <a href=\"https://example.com\">change</a>." +
+      "</blockquote>" +
+      "<p>Description of <code>inheritedExperimentalAttribute</code>."
+    )
+  }
+
+  fun `test an attribute with its own experimental note`() {
+    doTestDocContains(
+      """
+        <root>
+          <experimentalElement experimental<caret>Attribute="any"/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__experimentalElement\"><code>&lt;experimentalElement&gt;</code></a> / <b><code>@experimentalAttribute</code></b><hr/>" +
+      "<blockquote>" +
+      "<p><icon src=\"AllIcons.General.Information\"/> <b>Experimental</b><br>\n" +
+      " An experimental note for the attribute." +
+      "</blockquote>" +
+      "<p>Description of <code>experimentalAttribute</code>."
     )
   }
 

@@ -169,6 +169,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendElementPath(element.path)
     appendLine("<hr/>")
     appendDeprecation(element.deprecatedSince, element.deprecationNote)
+    appendExperimental(element.getOwnOrParentExperimentalNote())
     appendSinceUntil(element.since, element.until)
     element.description?.trim()?.let { appendLine("$it\n") }
     appendNamespace(element.namespace)
@@ -233,6 +234,16 @@ internal class DocumentationRenderer(private val project: Project) {
     }
   }
 
+  private fun StringBuilder.appendExperimental(experimentalNote: String?) {
+    experimentalNote ?: return
+    for (line in experimentalNote.trim().lines()) {
+      appendLine(if (line.isEmpty()) ">" else "> $line")
+    }
+    appendLine(">")
+    appendLine("{style=\"note\" title=\"Experimental\"}")
+    appendLine()
+  }
+
   private fun StringBuilder.appendSinceUntil(since: String?, until: String?) {
     if (since != null || until != null) {
       append('_')
@@ -292,7 +303,7 @@ internal class DocumentationRenderer(private val project: Project) {
     if (includedAttributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in includedAttributes) {
-        val attributeDetails = getDetails(attribute.getOwnOrParentInternalNote(), attribute.requirement)
+        val attributeDetails = getDetails(attribute.getOwnOrParentInternalNote(), attribute.getOwnOrParentExperimentalNote(), attribute.requirement)
         appendLine("- ${attributeLink(attribute.name!!, attribute.path)}$attributeDetails")
       }
     }
@@ -303,7 +314,7 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`$text`]($ATTRIBUTE_DOC_LINK_PREFIX$linkPath)"
   }
 
-  private fun getDetails(internalNote: String?, requirement: Requirement?): String {
+  private fun getDetails(internalNote: String?, experimentalNote: String?, requirement: Requirement?): String {
     val details = mutableListOf<String>()
     if (internalNote != null) {
       details.add("internal")
@@ -317,6 +328,9 @@ internal class DocumentationRenderer(private val project: Project) {
       if (requiredDetails != null) {
         details.add("**$requiredDetails**")
       }
+    }
+    if (experimentalNote != null) {
+      details.add("experimental")
     }
     if (details.isEmpty()) return ""
     return details.joinToString(prefix = " ", separator = "; ") { "_${it}_" }
@@ -336,7 +350,7 @@ internal class DocumentationRenderer(private val project: Project) {
         val linkText = childElement.name
         val linkPath = childElement.path.toPathString()
         val linkUrl = "$ELEMENT_DOC_LINK_PREFIX$linkPath"
-        val childDetails = getDetails(childElement.getOwnOrParentInternalNote(), childElement.requirement)
+        val childDetails = getDetails(childElement.getOwnOrParentInternalNote(), childElement.getOwnOrParentExperimentalNote(), childElement.requirement)
         appendLine("- [`<$linkText>`]($linkUrl)$childDetails")
       }
       appendParagraphSeparator()
@@ -379,6 +393,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendAttributePath(attribute.path)
     appendLine("<hr/>")
     appendDeprecation(attribute.deprecatedSince, attribute.deprecationNote)
+    appendExperimental(attribute.getOwnOrParentExperimentalNote())
     appendSinceUntil(attribute.since, attribute.until)
     attribute.description?.trim()?.let { append("$it\n") }
     appendParagraphSeparator()

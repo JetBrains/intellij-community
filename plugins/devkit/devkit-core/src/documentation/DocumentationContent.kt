@@ -1,4 +1,4 @@
-// Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.documentation
 
 internal data class DocumentationContent(
@@ -40,6 +40,7 @@ internal interface DocumentationItem {
   val parent: DocumentationItem?
   val renderContexts: List<RenderContext>
   val internalNote: String?
+  val experimentalNote: String?
 
   /**
    * Determines whether the current documentation item should be rendered in the specified render context.
@@ -62,6 +63,10 @@ internal interface DocumentationItem {
   fun getOwnOrParentInternalNote(): String? {
       return internalNote ?: parent?.getOwnOrParentInternalNote()
   }
+
+  fun getOwnOrParentExperimentalNote(): String? {
+    return experimentalNote ?: parent?.getOwnOrParentExperimentalNote()
+  }
 }
 
 internal data class Element(
@@ -75,6 +80,7 @@ internal data class Element(
   var deprecationNote: String? = null,
   var description: String? = null,
   override var internalNote: String? = null,
+  override var experimentalNote: String? = null,
   var sdkDocsSupportDetails: String? = null,
   var attributes: List<AttributeWrapper> = emptyList(),
   var containsItself: Boolean = false,
@@ -120,6 +126,7 @@ internal data class Attribute(
   var requirement: Requirement? = null,
   var description: String? = null,
   override var internalNote: String? = null,
+  override var experimentalNote: String? = null,
   var defaultValue: String? = null,
   var path: List<String> = emptyList(),
   override var parent: DocumentationItem? = null,
