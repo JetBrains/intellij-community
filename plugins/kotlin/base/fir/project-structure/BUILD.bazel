@@ -149,7 +149,6 @@ jvm_library(
         "//plugins/kotlin/base/plugin",
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//libraries/gradle",
-        "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/groovy",
         "//plugins/kotlin/base/platforms",
         "//libraries/kotlinc/kotlin-jps-common:libraries-kotlinc-kotlin-jps-common",
