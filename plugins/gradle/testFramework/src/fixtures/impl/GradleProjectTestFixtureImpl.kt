@@ -24,6 +24,7 @@ import com.intellij.testFramework.closeProjectAsync
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.openProjectAsync
 import com.intellij.testFramework.useProjectAsync
+import com.intellij.util.indexing.FileBasedIndex
 import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
@@ -97,7 +98,10 @@ internal class GradleProjectTestFixtureImpl(
 
   override fun tearDown() {
     runAll(
-      { ApplicationManager.getApplication().serviceIfCreated<FileBasedIndexEx>()?.waitUntilIndicesAreInitialized() },
+      {
+        val index = ApplicationManager.getApplication().serviceIfCreated<FileBasedIndex>() as? FileBasedIndexEx
+        index?.waitUntilIndicesAreInitialized()
+      },
       { runBlocking { fileFixture.root.refreshAndAwait() } },
       { runBlocking { _project?.closeProjectAsync() } },
       { _project = null },
