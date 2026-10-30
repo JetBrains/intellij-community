@@ -36,6 +36,7 @@ import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Computable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.SpanBuilder;
@@ -166,25 +167,18 @@ public class Invoker implements InvokerMBean {
 
     if (call.getDispatcher() == OnDispatcher.EDT) {
       Object[] res = new Object[1];
-      ModalityState[] modalityState = new ModalityState[1];
-      try {
-        SwingUtilities.invokeAndWait(() -> {
-          modalityState[0] = ModalityState.current();
-        });
-      }
-      catch (Throwable e) {
-        throw new RuntimeException(e);
-      }
       Application app = ApplicationManager.getApplication();
       Runnable runnable = () -> {
         res[0] = withSemantics(call, () -> invokeMethod(callTarget, instance, transformedArgs));
       };
-      if (call.getLockSemantics() == LockSemantics.NO_LOCK && app instanceof ApplicationEx applicationEx) {
-        applicationEx.invokeAndWaitRelaxed(runnable, modalityState[0]);
-      }
-      else {
-        app.invokeAndWait(runnable, modalityState[0]);
-      }
+      EdtCallDispatcher.invokeAndWait(runnable, Invoker::currentModalityState, (r, modalityState) -> {
+        if (call.getLockSemantics() == LockSemantics.NO_LOCK && app instanceof ApplicationEx applicationEx) {
+          applicationEx.invokeAndWaitRelaxed(r, modalityState);
+        }
+        else {
+          app.invokeAndWait(r, modalityState);
+        }
+      }, AppExecutorUtil.getAppExecutorService());
       result = res[0];
     }
     else {
@@ -193,6 +187,19 @@ public class Invoker implements InvokerMBean {
     }
 
     return getRemoteCallResult(sessions.get(call.getSessionId()), callTarget, result);
+  }
+
+  private static @NotNull ModalityState currentModalityState() {
+    ModalityState[] modalityState = new ModalityState[1];
+    try {
+      SwingUtilities.invokeAndWait(() -> {
+        modalityState[0] = ModalityState.current();
+      });
+    }
+    catch (Throwable e) {
+      throw new RuntimeException(e);
+    }
+    return modalityState[0];
   }
 
   @Override
