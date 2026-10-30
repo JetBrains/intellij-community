@@ -529,9 +529,7 @@ private fun addDep(
       runtimeDeps.add(dependencyLabel)
     }
     JpsJavaDependencyScope.PROVIDED -> {
-      require(!isTest ||
-              dependentModule.module.name == "fleet.compose.conformance.tests" || dependentModule.module.name == "fleet.noria.ui.test"  // TODO: remove this
-      ) {
+      require(!isTest) {
         "module must not have PROVIDED-scope dependencies, please change their scope to TEST: ${dependentModule.imlFile}"
       }
 
