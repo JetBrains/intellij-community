@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectBrancher
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectItem
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.RecentProjectsService
-import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.projectNioPath
+import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.getRecentProjectId
 import com.intellij.ui.awt.RelativePoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -23,15 +23,16 @@ internal class BranchesRecentProjectAction : RecentProjectsWelcomeScreenActionBa
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(event: AnActionEvent) {
-    val projectPath = selectedProjectPath(event)
+    val projectPath = (getSelectedItem(event) as? RecentProjectItem)?.getRecentProjectId()?.path
     event.presentation.isEnabledAndVisible = projectPath != null && RecentProjectBrancher.findBrancher(projectPath) != null
   }
 
   override fun actionPerformed(event: AnActionEvent) {
-    val projectPath = selectedProjectPath(event) ?: return
+    val item = getSelectedItem(event) as? RecentProjectItem ?: return
+    val projectPath = item.getRecentProjectId()?.path ?: return
     val anchor = welcomeScreenAnchor(event)
     val brancher = RecentProjectBrancher.findBrancher(projectPath)
-    recentProjectsService.runOnRecentProject(projectPath) { project ->
+    recentProjectsService.runOnRecentProject(item) { project ->
       if (brancher != null) {
         brancher.showBranches(project, projectPath, anchor)
       }
@@ -49,9 +50,6 @@ internal class BranchesRecentProjectAction : RecentProjectsWelcomeScreenActionBa
       }
     }
   }
-
-  private fun selectedProjectPath(event: AnActionEvent): Path? =
-    (getSelectedItem(event) as? RecentProjectItem)?.projectNioPath()
 
   /**
    * The place on the welcome screen where the branches popup opens: under the button that ran the action, or at the selected row when the

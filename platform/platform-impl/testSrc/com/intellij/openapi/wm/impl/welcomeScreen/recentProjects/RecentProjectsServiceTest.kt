@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
+import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.io.path.writeText
 
 /**
@@ -59,8 +60,16 @@ internal class RecentProjectsServiceTest {
     TrustedProjects.setProjectTrusted(projectPath, isTrusted = true)
     val service = RecentProjectsService.getInstance()
     val result = CompletableDeferred<T>()
+    // The item the welcome screen shows for the project: the recent projects list stores the path in the system-independent form.
+    val item = RecentProjectItem(
+      projectPath = projectPath.invariantSeparatorsPathString,
+      projectName = projectPath.fileName.toString(),
+      displayName = projectPath.fileName.toString(),
+      projectGroup = null,
+      activationTimestamp = null,
+    )
     try {
-      service.runOnRecentProject(projectPath, operation = { project -> result.complete(action(project)) })
+      service.runOnRecentProject(item, operation = { project -> result.complete(action(project)) })
       return result.await()
     }
     finally {

@@ -40,7 +40,7 @@ class RecentProjectProgressTrackerTest {
     addTask("Fetching")
 
     withTracker { tracker ->
-      tracker.follow(projectPath(), project)
+      tracker.follow(recentProjectId(), project)
 
       val running = tracker.awaitProgressOf(count = 1)
       assertThat(running.map { it.title }).containsExactly("Fetching")
@@ -56,7 +56,7 @@ class RecentProjectProgressTrackerTest {
     addTask("Fetching", isVisibleInStatusBar = true, isCancellable = true)
 
     withTracker { tracker ->
-      tracker.follow(projectPath(), project)
+      tracker.follow(recentProjectId(), project)
 
       // Seen before unseen, cancellable before not, and the one that started first before the one that followed it.
       val running = tracker.awaitProgressOf(count = 4)
@@ -69,7 +69,7 @@ class RecentProjectProgressTrackerTest {
     val task = addTask("Fetching")
 
     withTracker { tracker ->
-      tracker.follow(projectPath(), project)
+      tracker.follow(recentProjectId(), project)
       tracker.awaitProgressOf(count = 1)
 
       taskStorage.removeTask(task)
@@ -83,7 +83,7 @@ class RecentProjectProgressTrackerTest {
     val task = addTask("Fetching")
 
     withTracker { tracker ->
-      tracker.follow(projectPath(), project)
+      tracker.follow(recentProjectId(), project)
 
       tracker.cancel(tracker.awaitProgressOf(count = 1).single().id)
 
@@ -95,14 +95,14 @@ class RecentProjectProgressTrackerTest {
   fun `a load shows while it runs, and goes once it ends`() = timeoutRunBlocking {
     withTracker { tracker ->
       val loaded = CompletableDeferred<Unit>()
-      val load = launch { tracker.reportLoad(projectPath()) { loaded.await() } }
+      val load = launch { tracker.reportLoad(recentProjectId()) { loaded.await() } }
 
-      val loadId: ProgressId = ProgressId.Load(projectPath())
+      val loadId: ProgressId = ProgressId.Load(recentProjectId())
       val loading = tracker.awaitProgressOf(count = 1).single()
       assertThat(loading.id).isEqualTo(loadId)
       assertThat(loading.isCancellable).isFalse()
       // The window follows its own flow, so it shows the load too.
-      val inWindow = tracker.getProgressFor(itemOf(projectPath())).first { it.isNotEmpty() }
+      val inWindow = tracker.getProgressFor(itemOf(recentProjectId().path)).first { it.isNotEmpty() }
       assertThat(inWindow.map { it.id }).containsExactly(loadId)
 
       loaded.complete(Unit)
@@ -116,12 +116,12 @@ class RecentProjectProgressTrackerTest {
     val task = addTask("Fetching")
 
     withTracker { tracker ->
-      tracker.follow(projectPath(), project)
+      tracker.follow(recentProjectId(), project)
       val loaded = CompletableDeferred<Unit>()
-      val load = launch { tracker.reportLoad(projectPath()) { loaded.await() } }
+      val load = launch { tracker.reportLoad(recentProjectId()) { loaded.await() } }
 
       val running = tracker.awaitProgressOf(count = 2)
-      assertThat(running.map { it.id }).containsExactly(ProgressId.Load(projectPath()), ProgressId.Task(task.info.id))
+      assertThat(running.map { it.id }).containsExactly(ProgressId.Load(recentProjectId()), ProgressId.Task(task.info.id))
 
       loaded.complete(Unit)
       load.join()
@@ -133,7 +133,7 @@ class RecentProjectProgressTrackerTest {
     withTracker { tracker ->
       val failing = CompletableDeferred<Unit>()
       val load = async {
-        runCatching { tracker.reportLoad(projectPath()) { failing.await(); error("The project cannot load") } }
+        runCatching { tracker.reportLoad(recentProjectId()) { failing.await(); error("The project cannot load") } }
       }
       tracker.awaitProgressOf(count = 1)
 
@@ -146,8 +146,8 @@ class RecentProjectProgressTrackerTest {
 
   @Test
   fun `a project is empty when it runs nothing, and when it has no path`() {
-    val progress = RecentProjectProgress(ProgressId.Clone(Path("/a")), "Cloning", null, null, false, "Cancel")
-    val byProject = ProjectsProgress(mapOf(Path("/a") to listOf(progress)))
+    val progress = RecentProjectProgress(ProgressId.Clone(RecentProjectId(Path("/a"))), "Cloning", null, null, false, "Cancel")
+    val byProject = ProjectsProgress(mapOf(RecentProjectId(Path("/a")) to listOf(progress)))
 
     assertThat(byProject.getProgressOf(itemOf(Path("/a")))).containsExactly(progress)
     assertThat(byProject.getProgressOf(itemOf(Path("/b")))).isEmpty()
@@ -179,11 +179,11 @@ class RecentProjectProgressTrackerTest {
 
   // The tracker publishes from its own coroutine, so a reader waits for the report it expects.
   private suspend fun RecentProjectProgressTracker.awaitProgressOf(count: Int): List<RecentProjectProgress> {
-    val item = itemOf(projectPath())
+    val item = itemOf(recentProjectId().path)
     return projectsProgress.first { it.getProgressOf(item).size == count }.getProgressOf(item)
   }
 
-  private fun projectPath(): Path = Path(project.basePath!!)
+  private fun recentProjectId(): RecentProjectId = RecentProjectId(Path(project.basePath!!))
 
   private fun itemOf(path: Path?): RecentProjectItem = RecentProjectItem(
     projectPath = path?.toString() ?: "",

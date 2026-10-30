@@ -360,7 +360,7 @@ class RecentProjectFilteringTree internal constructor(
         repaintRow = true
       }
       projectActionButtonViewModel.hoveredSpinnerId =
-        itemAt(row)?.takeIf { hovered is RecentProjectRowButton.TaskProgress }?.let(::getRowId)
+        itemAt(row)?.takeIf { hovered is RecentProjectRowButton.TaskProgress }?.getRecentProjectId()
 
       if (repaintRow && row != -1) {
         // Repaint whole row to avoid flickering of row buttons
@@ -370,14 +370,14 @@ class RecentProjectFilteringTree internal constructor(
 
     private fun toggleProgressPopup(row: Int) {
       val item = itemAt(row) ?: return
-      val rowId = getRowId(item) ?: return
+      val recentProjectId = item.getRecentProjectId() ?: return
       val bounds = getSpinnerBounds(row) ?: return
 
-      val isShowingRow = progressPopup?.isShowingRow(rowId) == true
+      val isShowingRow = progressPopup?.isShowingRow(recentProjectId) == true
       progressPopup?.close()
       if (isShowingRow) return
       progressPopup = RecentProjectTaskProgressPopup(
-        rowId = rowId,
+        recentProjectId = recentProjectId,
         windowTitle = IdeBundle.message("welcome.screen.recent.project.processes.window.title", item.displayName()),
         operations = getProgressFor(item),
         onCancel = onCancel,
@@ -387,7 +387,7 @@ class RecentProjectFilteringTree internal constructor(
           tree.repaint()
         },
       ).also { it.show(RelativePoint(tree, Point(bounds.x, bounds.y + bounds.height))) }
-      projectActionButtonViewModel.windowRowId = rowId
+      projectActionButtonViewModel.windowRowId = recentProjectId
     }
 
     private fun getSpinnerBounds(row: Int): Rectangle? {
@@ -927,15 +927,15 @@ class RecentProjectFilteringTree internal constructor(
   private class ProjectActionButtonViewModel(
     var hovered: RecentProjectRowButton? = null,
     /** The row whose spinner the cursor is on. */
-    var hoveredSpinnerId: RowId? = null,
+    var hoveredSpinnerId: RecentProjectId? = null,
     /** The row whose process window is open. */
-    var windowRowId: RowId? = null,
+    var windowRowId: RecentProjectId? = null,
   ) {
     /**
      * The rows that keep their spinner after their operations end: the row whose spinner the cursor is on, and the row whose window is
      * open. A late click then reaches the spinner, and not the button or the row behind it.
      */
-    val keptSpinnerIds: Set<RowId>
+    val keptSpinnerIds: Set<RecentProjectId>
       get() = setOfNotNull(hoveredSpinnerId, windowRowId)
   }
 
@@ -1119,9 +1119,9 @@ private fun rowButtons(
   item: RecentProjectTreeItem,
   isProjectValid: Boolean,
   runningTasks: List<RecentProjectProgress> = emptyList(),
-  keptSpinnerIds: Set<RowId> = emptySet(),
+  keptSpinnerIds: Set<RecentProjectId> = emptySet(),
 ): List<RecentProjectRowButton> {
-  val isSpinnerKept = getRowId(item)?.let { it in keptSpinnerIds } == true
+  val isSpinnerKept = item.getRecentProjectId()?.let { it in keptSpinnerIds } == true
   return when (item) {
     is RecentProjectItem -> listOfNotNull(
       when {
@@ -1143,21 +1143,6 @@ private fun rowButtons(
   }
 }
 
-/** Tells the spinner and the window of one row from those of another. A path, because the tree rebuilds its items. */
-@JvmInline
-private value class RowId(val path: String)
-
-/**
- * The id of the row of [item], or null for a row that runs no operation.
- *
- * A clone writes its path the way the recent project it becomes does, so a kept spinner stays on the row when the clone succeeds.
- */
-private fun getRowId(item: RecentProjectTreeItem): RowId? = when (item) {
-  is RecentProjectItem -> RowId(item.projectPath)
-  is CloneableProjectItem -> RowId(item.projectPath.invariantSeparatorsPathString)
-  else -> null
-}
-
 /** When a row shows its buttons. */
 private enum class SlotVisibility {
   /** Only while the cursor is on the row, which is how a row keeps its buttons out of the way until wanted. */
@@ -1177,7 +1162,7 @@ private enum class SlotVisibility {
  * [operations] reports, and it stays open until the user closes it. An operation that ends takes its row away, so the window can be empty.
  */
 private class RecentProjectTaskProgressPopup(
-  private val rowId: RowId,
+  private val recentProjectId: RecentProjectId,
   private val windowTitle: @NlsContexts.PopupTitle String,
   private val operations: Flow<List<RecentProjectProgress>>,
   private val onCancel: (ProgressId) -> Unit,
@@ -1192,7 +1177,7 @@ private class RecentProjectTaskProgressPopup(
   private class Window(val popup: ProcessPopup, val rows: ProgressRows)
 
   /** Whether this window is open on the operations of the row [id]. */
-  fun isShowingRow(id: RowId): Boolean = window?.popup?.isShowing == true && rowId == id
+  fun isShowingRow(id: RecentProjectId): Boolean = window?.popup?.isShowing == true && recentProjectId == id
 
   /**
    * Opens the window on the first operations [operations] reports, and renders what it reports from there.

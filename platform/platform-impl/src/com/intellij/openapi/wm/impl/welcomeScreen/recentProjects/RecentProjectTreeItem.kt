@@ -69,8 +69,28 @@ sealed interface RecentProjectTreeItem {
   }
 }
 
-/** The item's stored path, or null when it is not a valid path. Stored paths come from disk and outlive the projects they point at. */
-internal fun RecentProjectItem.projectNioPath(): Path? = runCatching { Path.of(projectPath) }.getOrNull()
+/**
+ * Tells one recent project from another: the path that the recent projects list stores for it.
+ *
+ * It is not always the base path of the project. For a project kept in an `.ipr` file it is that file, so compare it with a [Project]
+ * through [com.intellij.ide.impl.ProjectUtil.isSameProject], not by its path.
+ */
+@JvmInline
+internal value class RecentProjectId(val path: Path) {
+  override fun toString(): String = path.toString()
+}
+
+/**
+ * The id of the recent project that the row of this item shows, or null for a row that shows no single project.
+ *
+ * A stored path comes from disk and outlives the project it points at, so it can be invalid. Then the item has no id.
+ */
+internal fun RecentProjectTreeItem.getRecentProjectId(): RecentProjectId? = when (this) {
+  is RecentProjectItem -> runCatching { RecentProjectId(Path.of(projectPath)) }.getOrNull()
+  // A clone has the id of the recent project it becomes, so a spinner that the row keeps stays on it when the clone succeeds.
+  is CloneableProjectItem -> RecentProjectId(projectPath)
+  else -> null
+}
 
 internal data class RecentProjectItem(
   @JvmField val projectPath: @SystemIndependent String,

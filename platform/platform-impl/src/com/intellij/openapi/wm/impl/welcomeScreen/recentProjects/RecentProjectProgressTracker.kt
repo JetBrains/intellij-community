@@ -34,7 +34,6 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import java.nio.file.Path
 
 /**
  * Tells the welcome screen which of its recent projects run a background task.
@@ -48,12 +47,12 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
   private val taskStorage = TaskStorage.getInstance()
 
   // The things this is told rather than works out: the recent projects the welcome screen holds, by the id their tasks carry, and the
-  // ones it loads now, by their path.
-  private val followedProjects = MutableStateFlow<Map<ProjectId, Path>>(emptyMap())
-  private val loadingProjects = MutableStateFlow<Set<Path>>(emptySet())
+  // ones it loads now.
+  private val followedProjects = MutableStateFlow<Map<ProjectId, RecentProjectId>>(emptyMap())
+  private val loadingProjects = MutableStateFlow<Set<RecentProjectId>>(emptySet())
 
   // What [projectsProgress] is made of, which the live flow of one row reads to follow each task.
-  private val taskHandles: StateFlow<Map<Path, List<TaskHandle>>> =
+  private val taskHandles: StateFlow<Map<RecentProjectId, List<TaskHandle>>> =
     combine(taskStorage.tasks, followedProjects, ::tasksByProject).stateIn(coroutineScope, SharingStarted.Eagerly, emptyMap())
 
   /**
@@ -63,39 +62,38 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
    * the fraction are the ones reported then. A window takes [getProgressFor] instead, which reports on every report.
    */
   val projectsProgress: StateFlow<ProjectsProgress> = combine(taskHandles, loadingProjects) { byProject, loading ->
-    ProjectsProgress((loading + byProject.keys).associateWith { path ->
-      val load = if (path in loading) listOf(loadingProgress(path)) else emptyList()
-      load + byProject[path].orEmpty().map { it.toProgress(it.progress.value) }
+    ProjectsProgress((loading + byProject.keys).associateWith { recentProjectId ->
+      val load = if (recentProjectId in loading) listOf(loadingProgress(recentProjectId)) else emptyList()
+      load + byProject[recentProjectId].orEmpty().map { it.toProgress(it.progress.value) }
     })
   }.stateIn(coroutineScope, SharingStarted.Eagerly, ProjectsProgress.NONE)
 
   /**
-   * Follows the tasks of [project], held for the recent project at [projectPath], until the project is disposed.
+   * Follows the tasks of [project], held for the recent project [recentProjectId], until the project is disposed.
    *
    * Call it once, when the project is held: disposing the project stops the follow, so no caller has to remember to.
    */
-  fun follow(projectPath: Path, project: Project) {
+  fun follow(recentProjectId: RecentProjectId, project: Project) {
     if (project.isDisposed) return
     val projectId = project.projectIdOrNull() ?: return
-    followedProjects.update { it + (projectId to projectPath) }
+    followedProjects.update { it + (projectId to recentProjectId) }
     Disposer.register(project) {
       followedProjects.update { followed -> followed.filterKeys { it != projectId } }
     }
   }
 
   /**
-   * Reports the load of the recent project at [projectPath] while [load] runs.
+   * Reports the load of the recent project [recentProjectId] while [load] runs.
    *
    * A load takes seconds on a big project. The project has no id yet, so no task of it can report the load.
    */
-  suspend fun <T> reportLoad(projectPath: Path, load: suspend () -> T): T {
-    // A path is a collection of its own names, so a plain `+` would add each name.
-    loadingProjects.update { it.plusElement(projectPath) }
+  suspend fun <T> reportLoad(recentProjectId: RecentProjectId, load: suspend () -> T): T {
+    loadingProjects.update { it + recentProjectId }
     try {
       return load()
     }
     finally {
-      loadingProjects.update { it.minusElement(projectPath) }
+      loadingProjects.update { it - recentProjectId }
     }
   }
 
@@ -129,7 +127,7 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
         val clones = CloneableProjectsService.getInstance()
         clones.collectCloneableProjects()
           .map { it.cloneableProject }
-          .find { it.projectPath == id.projectPath }
+          .find { RecentProjectId(it.projectPath) == id.recentProjectId }
           ?.let(clones::cancelClone)
       }
       // The window offers no cancel button for a load.
@@ -139,11 +137,11 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
 
   @OptIn(ExperimentalCoroutinesApi::class)
   private fun getTaskProgress(item: RecentProjectItem): Flow<List<RecentProjectProgress>> {
-    val projectPath = item.projectNioPath() ?: return flowOf(emptyList())
-    val load = loadingProjects.map { projectPath in it }.distinctUntilChanged().map { isLoading ->
-      if (isLoading) listOf(loadingProgress(projectPath)) else emptyList()
+    val recentProjectId = item.getRecentProjectId() ?: return flowOf(emptyList())
+    val load = loadingProjects.map { recentProjectId in it }.distinctUntilChanged().map { isLoading ->
+      if (isLoading) listOf(loadingProgress(recentProjectId)) else emptyList()
     }
-    val tasks = taskHandles.map { byProject -> byProject[projectPath].orEmpty() }.distinctUntilChanged().flatMapLatest { tasks ->
+    val tasks = taskHandles.map { byProject -> byProject[recentProjectId].orEmpty() }.distinctUntilChanged().flatMapLatest { tasks ->
       if (tasks.isEmpty()) {
         flowOf(emptyList())
       }
@@ -185,10 +183,13 @@ internal class RecentProjectProgressTracker(coroutineScope: CoroutineScope) {
     }
   }.conflate()
 
-  private fun tasksByProject(tasks: Map<TaskId, TaskHandle>, followed: Map<ProjectId, Path>): Map<Path, List<TaskHandle>> =
+  private fun tasksByProject(
+    tasks: Map<TaskId, TaskHandle>,
+    followed: Map<ProjectId, RecentProjectId>,
+  ): Map<RecentProjectId, List<TaskHandle>> =
     tasks.values
-      .mapNotNull { task -> followed[task.info.projectId]?.let { path -> path to task } }
-      .groupBy({ (path, _) -> path }) { (_, task) -> task }
+      .mapNotNull { task -> followed[task.info.projectId]?.let { recentProjectId -> recentProjectId to task } }
+      .groupBy({ (recentProjectId, _) -> recentProjectId }) { (_, task) -> task }
       .mapValues { (_, running) -> running.sortedWith(ROW_ORDER) }
 
   companion object {
