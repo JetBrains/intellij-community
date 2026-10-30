@@ -81,7 +81,9 @@ class DefaultTreeModelWithCachedPresentation : TreeModel, CachedTreePresentation
   }
 
   override fun isLeaf(node: Any): Boolean {
-    return delegate.isLeaf(node)
+    // A collapsed cached node has no cached children, so its child count can't tell if it's a leaf.
+    val cachedNode = (node as? DefaultMutableTreeNode)?.userObject as? CachedTreePresentationNode
+    return cachedNode?.isLeaf ?: delegate.isLeaf(node)
   }
 
   override fun getIndexOfChild(parent: Any, child: Any): Int {

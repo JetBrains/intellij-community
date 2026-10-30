@@ -924,6 +924,26 @@ internal class DefaultTreeModelWithCachedPresentationTest {
       """.trimMargin())
   }
 
+  @Test
+  fun `cached nodes take the leaf state from the presentation`() {
+    sut.setRoot(parse("root"))
+    val cp = cachedPresentationData("root", children = listOf(
+      cachedPresentationData("directory", isLeaf = false),
+      cachedPresentationData("file", isLeaf = true),
+    )).createTree()
+    cps.applyAlreadyLoadedNodesTo(cp)
+    cps.cachedPresentation = cp
+    assertModel("""
+      |root
+      | *directory
+      | *file
+      """.trimMargin())
+    assertThat(sut.isLeaf(node("root/directory"))).`as`("a cached non-leaf without cached children").isFalse()
+    assertThat(sut.isLeaf(node("root/file"))).`as`("a cached leaf").isTrue()
+    loadChildren("root", "directory", "file")
+    assertThat(sut.isLeaf(node("root/directory"))).`as`("a real node without children").isTrue()
+  }
+
   @Nested
   inner class TreeLevel {
     private lateinit var tree: Tree
@@ -1009,6 +1029,17 @@ internal class DefaultTreeModelWithCachedPresentationTest {
   }
 
   private fun presentation(input: String): CachedTreePresentation = checkNotNull(parse(input)).toCachedPresentation().createTree()
+
+  private fun cachedPresentationData(
+    text: String,
+    isLeaf: Boolean = false,
+    children: List<CachedTreePresentationData> = emptyList(),
+  ): CachedTreePresentationData = CachedTreePresentationData(
+    pathElement = DefaultCachedPathElement(DefaultTreeModelUserObject(text)),
+    presentation = DefaultCachedPresentationData(text, isLeaf),
+    extraAttributes = null,
+    children = children,
+  )
 
   private fun applyPresentation(presentation: String) {
     val cp = presentation(presentation)
@@ -1410,12 +1441,12 @@ private data class DefaultCachedPathElement(override val type: String, override 
   }
 }
 
-private data class DefaultCachedPresentationData(override val text: String) : CachedPresentationData {
+private data class DefaultCachedPresentationData(
+  override val text: String,
+  override val isLeaf: Boolean = false,
+) : CachedPresentationData {
   override val iconData: CachedIconPresentation?
     get() = null
-
-  override val isLeaf: Boolean
-    get() = false
 }
 
 private class DefaultMutableTreeModelParser(
