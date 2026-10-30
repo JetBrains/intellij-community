@@ -50,7 +50,7 @@ Branch Deck is optional. First check for the `branch-deck` skill: the skill list
 
 ## Tools
 
-Search the repository with `{{TOOLS_DIR}}/accio.cmd`, not with the `search_*` tools of an IDE MCP server or the `code-search` skill. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. For a log, build output, or a path outside the repository, use `{{TOOLS_DIR}}/rg.cmd` or `{{TOOLS_DIR}}/fd.cmd`. The `Glob` and `Grep` tools, `find`, and a recursive `grep` are denied.
+Search the repository with `{{TOOLS_DIR}}/accio.cmd`, not with the `search_*` tools of an IDE MCP server or the `code-search` skill. It answers from the working tree of the current checkout, a lease included. An answer that is not `exact` and `complete` is a lead: read the code it points to. For a log, build output, or a path outside the repository, use `{{TOOLS_DIR}}/rg.cmd` or `{{TOOLS_DIR}}/fd.cmd`. The `Glob` and `Grep` tools, `find`, a recursive `grep`, and `git grep` are denied. A rename or a move is a search too: `accio locate '<regex>' --mode regex --files` lists the files to change.
 <!-- IF_EDITION:ULTIMATE -->
 Ask the Product DSL for a plugin model answer, not `rg` or `bazel cquery`: `./bazel.cmd run //platform/buildScripts:plugin-model-tool -- --json='<request>'`. The `plugin-model-analyzer` skill holds the request shapes.
 <!-- /IF_EDITION:ULTIMATE -->

@@ -96,7 +96,6 @@
     ["git", "diff"],
     ["git", "log"],
     ["git", "show"],
-    ["git", "grep"],
     ["git", "ls-files"],
     ["git", "rev-list"],
     ["git", "rev-parse"],
@@ -154,7 +153,10 @@
     "`find` is denied outright, in every pipeline position: `accio files` finds a file. `grep` is",
     "allowed: a filter of a pipeline needs it, and the guide sends a search of the source to accio.",
     "A recursive `grep` is a search of the source, so its common spellings are denied. A prefix rule",
-    "sees only the first argument: `grep -n -r` still runs."
+    "sees only the first argument: `grep -n -r` still runs.",
+    "`git grep` is denied too. It is a search of the source, and from the root it reads 1.4 million",
+    "files. A prefix rule cannot tell a module path from the root, so the whole command is denied:",
+    "`accio locate '<regex>' --mode regex --files` lists the files that hold a text, untracked ones too."
   ],
   "deny": [
     ["bazel", "clean"],
@@ -170,7 +172,8 @@
     ["grep", "-ri"],
     ["grep", "-rni"],
     ["grep", "-rin"],
-    ["grep", "--recursive"]
+    ["grep", "--recursive"],
+    ["git", "grep"]
   ],
 
   "$comment_denyTools": [
