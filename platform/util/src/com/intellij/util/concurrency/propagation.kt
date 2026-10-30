@@ -189,15 +189,34 @@ data class ChildContext internal constructor(
     runInChildContext(completeOnFinish = true, action::run)
   }
 
+  /**
+   * @param completeOnFinish whether this run is the last one. If so, the [BlockingJob] forgets the elements of this context afterward.
+   */
   fun <T> runInChildContext(completeOnFinish: Boolean, action: () -> T): T {
-    return if (continuation == null) {
-      applyContextActions().use {
-        action()
+    try {
+      return if (continuation == null) {
+        applyContextActions().use {
+          action()
+        }
+      }
+      else {
+        runAsCoroutine(continuation, completeOnFinish) { applyContextActions().use { action() } }
       }
     }
-    else {
-      runAsCoroutine(continuation, completeOnFinish) { applyContextActions().use { action() } }
+    finally {
+      if (completeOnFinish) {
+        forgetRememberedElements()
+      }
     }
+  }
+
+  /**
+   * Makes the [BlockingJob] forget the elements that it remembered for this context.
+   * Call it when the computation has ended: it finished, was canceled, or will never run.
+   * Only the first call has an effect.
+   */
+  fun forgetRememberedElements() {
+    additionalCleanup?.finish()
   }
 
   @DelicateCoroutinesApi
@@ -235,10 +254,15 @@ data class ChildContext internal constructor(
   }
 
   fun cancelAllIntelliJElements() {
-    ijElements.forEachGuaranteed {
-      if (it is IntelliJThreadContextElement<*>) {
-        it.canceled(context)
+    try {
+      ijElements.forEachGuaranteed {
+        if (it is IntelliJThreadContextElement<*>) {
+          it.canceled(context)
+        }
       }
+    }
+    finally {
+      forgetRememberedElements()
     }
   }
 }
@@ -281,10 +305,13 @@ private fun doCreateChildContext(debugName: @NonNls String, unconditionalCancell
     ijElements.forEachGuaranteed {
       blockingJob.rememberElement(it)
     }
+    val forgotten = AtomicBoolean(false)
     object : AccessToken() {
       override fun finish() {
-        ijElements.forEachGuaranteed {
-          blockingJob.forgetElement(it)
+        if (forgotten.compareAndSet(false, true)) {
+          ijElements.forEachGuaranteed {
+            blockingJob.forgetElement(it)
+          }
         }
       }
     }

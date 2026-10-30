@@ -175,6 +175,7 @@ open class AsyncPromise<T> private constructor(
     val ijElementsToken = childContext.applyContextActions(false)
     return capturingFuture.whenComplete { _, result ->
       ijElementsToken.finish()
+      childContext.forgetRememberedElements()
       val continuation = childContext.continuation
       when (result) {
         null -> continuation?.resume(Unit)

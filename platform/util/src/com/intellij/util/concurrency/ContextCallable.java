@@ -92,11 +92,16 @@ final class ContextCallable<V> implements Callable<V> {
         });
       };
       Continuation<Unit> continuation = myChildContext.getContinuation();
-      if (continuation == null) {
-        result = temp.get();
+      try {
+        if (continuation == null) {
+          result = temp.get();
+        }
+        else {
+          result = Propagation.runAsCoroutine(continuation, true, temp::get);
+        }
       }
-      else {
-        result = Propagation.runAsCoroutine(continuation, true, temp::get);
+      finally {
+        myChildContext.forgetRememberedElements();
       }
     }
     return result.get();

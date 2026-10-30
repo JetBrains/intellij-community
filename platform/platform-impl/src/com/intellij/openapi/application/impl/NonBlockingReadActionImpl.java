@@ -906,7 +906,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (job != null) {
         job.cancel(e);
       }
-      childContextToken.finish();
+      finishChildContext();
     }
 
     private void completeJob() {
@@ -914,7 +914,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (continuation != null) {
         continuation.resumeWith(Unit.INSTANCE);
       }
-      childContextToken.finish();
+      finishChildContext();
     }
 
     private void failJob(@NotNull Throwable reason) {
@@ -922,7 +922,16 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       if (continuation != null) {
         continuation.resumeWith(new Result.Failure(reason));
       }
-      childContextToken.finish();
+      finishChildContext();
+    }
+
+    private void finishChildContext() {
+      try {
+        childContextToken.finish();
+      }
+      finally {
+        myChildContext.forgetRememberedElements();
+      }
     }
 
     private boolean checkObsolete() {
