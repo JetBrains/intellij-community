@@ -1,10 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInsight.NullabilitySource;
-import com.intellij.codeInsight.TypeNullability;
 import com.intellij.codeInspection.dataFlow.java.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaDfaAnchor;
@@ -15,7 +12,6 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.LambdaUtil;
-import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiArrayInitializerExpression;
@@ -79,13 +75,11 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -93,7 +87,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -408,43 +401,7 @@ public final class NullabilityProblemKind<T extends PsiElement> {
       leftType = captured.getLowerBound();
     }
     return PsiUtil.resolveClassInClassTypeOnly(leftType) instanceof PsiTypeParameter leftTp && leftTp.isEquivalentTo(tp)
-      && sameNullability(rightType.getNullability(), leftType.getNullability());
-  }
-
-  /**
-   * Compares two nullabilities like {@link TypeNullability#equals}, but compares the annotations of the sources with
-   * {@link AnnotationUtil#equal(PsiAnnotation, PsiAnnotation)}.
-   * One annotation can have two PSI instances: one from the stub and one from the AST.
-   */
-  @ApiStatus.Internal
-  @VisibleForTesting
-  public static boolean sameNullability(@NotNull TypeNullability left, @NotNull TypeNullability right) {
-    return left.nullability() == right.nullability() && sameSource(left.source(), right.source());
-  }
-
-  private static boolean sameSource(@NotNull NullabilitySource left, @NotNull NullabilitySource right) {
-    if (left.equals(right)) return true;
-    if (left instanceof NullabilitySource.ExtendsBound leftBound && right instanceof NullabilitySource.ExtendsBound rightBound) {
-      return sameSource(leftBound.boundSource(), rightBound.boundSource());
-    }
-    if (left instanceof NullabilitySource.ExplicitAnnotation leftExplicit &&
-        right instanceof NullabilitySource.ExplicitAnnotation rightExplicit) {
-      return AnnotationUtil.equal(leftExplicit.annotation(), rightExplicit.annotation());
-    }
-    if (left instanceof NullabilitySource.ContainerAnnotation leftContainer &&
-        right instanceof NullabilitySource.ContainerAnnotation rightContainer) {
-      PsiAnnotation leftAnnotation = leftContainer.annotation();
-      PsiAnnotation rightAnnotation = rightContainer.annotation();
-      return leftAnnotation.getOwner() instanceof PsiElement leftOwner &&
-             leftAnnotation.getManager().areElementsEquivalent(leftOwner, tryCast(rightAnnotation.getOwner(), PsiElement.class)) &&
-             AnnotationUtil.equal(leftAnnotation, rightAnnotation);
-    }
-    if (left instanceof NullabilitySource.MultiSource leftMulti && right instanceof NullabilitySource.MultiSource rightMulti) {
-      Set<NullabilitySource> rightSources = rightMulti.sources();
-      return leftMulti.sources().size() == rightSources.size() &&
-             ContainerUtil.and(leftMulti.sources(), source -> ContainerUtil.exists(rightSources, other -> sameSource(source, other)));
-    }
-    return false;
+      && rightType.getNullability().equals(leftType.getNullability());
   }
 
   private static @Nullable NullabilityProblem<?> getArrayInitializerProblem(@NotNull PsiArrayInitializerExpression initializer,

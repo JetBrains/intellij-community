@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.util.TypeAnnotationPath;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -189,10 +190,10 @@ public final class ExplicitTypeAnnotationContainer implements TypeAnnotationCont
   }
 
   public static class Collector {
-    public static final byte ARRAY_ELEMENT = 0;
-    public static final byte ENCLOSING_CLASS = 1;
-    public static final byte WILDCARD_BOUND = 2;
-    public static final byte TYPE_ARGUMENT = 3;
+    public static final byte ARRAY_ELEMENT = TypeAnnotationPath.ARRAY_ELEMENT;
+    public static final byte ENCLOSING_CLASS = TypeAnnotationPath.ENCLOSING_CLASS;
+    public static final byte WILDCARD_BOUND = TypeAnnotationPath.WILDCARD_BOUND;
+    public static final byte TYPE_ARGUMENT = TypeAnnotationPath.TYPE_ARGUMENT;
 
     private final @NotNull ArrayList<TypeAnnotationEntry> myList = new ArrayList<>();
     protected final @NotNull TypeInfo myTypeInfo;

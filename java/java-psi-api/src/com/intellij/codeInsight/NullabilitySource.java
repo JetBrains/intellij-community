@@ -11,9 +11,11 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiPackageStatement;
+import com.intellij.psi.util.TypeAnnotationPath;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -111,11 +113,19 @@ public /* sealed */ interface NullabilitySource {
   /**
    * Type nullability is explicitly specified by an annotation.
    * Annotation owner is normally the type.
+   * <p>
+   * Two sources are equal if their annotations have the same {@link TypeAnnotationPath}.
+   * Thus, the annotation from the stub type and the annotation from the AST type give equal sources.
+   * An annotation without a path, like an annotation in a modifier list, is compared by identity.
    */
   final class ExplicitAnnotation implements NullabilitySource {
     private final @NotNull PsiAnnotation myAnnotation;
+    private final @Nullable TypeAnnotationPath myPath;
 
-    public ExplicitAnnotation(@NotNull PsiAnnotation annotation) { myAnnotation = annotation; }
+    public ExplicitAnnotation(@NotNull PsiAnnotation annotation) {
+      myAnnotation = annotation;
+      myPath = TypeAnnotationPath.of(annotation);
+    }
 
     public @NotNull PsiAnnotation annotation() {
       return myAnnotation;
@@ -126,12 +136,12 @@ public /* sealed */ interface NullabilitySource {
       if (o == null || getClass() != o.getClass()) return false;
 
       ExplicitAnnotation that = (ExplicitAnnotation)o;
-      return myAnnotation.equals(that.myAnnotation);
+      return myPath != null ? myPath.equals(that.myPath) : that.myPath == null && myAnnotation.equals(that.myAnnotation);
     }
 
     @Override
     public int hashCode() {
-      return myAnnotation.hashCode();
+      return myPath != null ? myPath.hashCode() : myAnnotation.hashCode();
     }
 
     @Override

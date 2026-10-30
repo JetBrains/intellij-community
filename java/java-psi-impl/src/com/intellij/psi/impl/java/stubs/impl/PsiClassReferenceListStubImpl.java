@@ -20,6 +20,7 @@ import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.java.IJavaElementType;
+import com.intellij.psi.util.TypeAnnotationPath;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,6 +88,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
         try {
           final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myInfos[i].text(), psi);
           ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
+          TypeAnnotationPath.markStubReference(ref, psi, i);
           types[i] = factory.createType(ref);
         }
         catch (IncorrectOperationException e) {

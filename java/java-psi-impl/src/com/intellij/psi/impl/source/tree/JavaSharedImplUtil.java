@@ -47,6 +47,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.JavaPsiPatternUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeAnnotationPath;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaTypeNullabilityUtil;
@@ -144,7 +145,9 @@ public final class JavaSharedImplUtil {
 
   public static @NotNull PsiType createTypeFromStub(@NotNull PsiModifierListOwner owner, @NotNull TypeInfo typeInfo) {
     String typeText = typeInfo.annotatedText();
-    return JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeElementFromText(typeText, owner).getType();
+    PsiTypeElement typeElement = JavaPsiFacade.getInstance(owner.getProject()).getParserFacade().createTypeElementFromText(typeText, owner);
+    TypeAnnotationPath.markStubType(typeElement, owner);
+    return typeElement.getType();
   }
 
   public static @NotNull PsiType annotate(@NotNull PsiType type,
