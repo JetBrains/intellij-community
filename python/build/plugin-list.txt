@@ -7,7 +7,7 @@ intellij.copyright
 intellij.editorconfig.plugin
 intellij.featuresTrainer
 intellij.grazie
-intellij.markdown
+intellij.markdown.plugin
 intellij.mermaid
 intellij.minimap.plugin
 intellij.properties

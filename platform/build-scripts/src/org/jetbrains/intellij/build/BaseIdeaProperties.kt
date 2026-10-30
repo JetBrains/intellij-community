@@ -43,7 +43,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   "intellij.java.decompiler",
   "intellij.eclipse",
   "intellij.sh.plugin",
-  "intellij.markdown",
+  "intellij.markdown.plugin",
   "intellij.mermaid",
   "intellij.mcpserver.plugin",
   "intellij.webp",

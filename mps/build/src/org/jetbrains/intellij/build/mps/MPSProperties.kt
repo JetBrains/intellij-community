@@ -87,7 +87,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.vcs.git.commit.modal",
             //"intellij.ant",
             "intellij.sh.plugin",
-            "intellij.markdown",
+            "intellij.markdown.plugin",
             "intellij.mermaid",
             "intellij.yaml.plugin",
             "intellij.grazie",
