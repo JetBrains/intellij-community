@@ -58,7 +58,8 @@ private fun init(
 
 object ToolWindowManagerTestHelper {
   fun available(isNewUi: Boolean, project: Project) {
-    val manager = init(project, isNewUi)
+    // A headless test has no tool window pane, so the removal of a visible tool window fails. The test checks only the stripe button.
+    val manager = init(project, isNewUi, layoutCustomizer = { it.getInfo("Project")!!.isVisible = false })
     try {
       val toolWindow = manager.getToolWindow("Project")!!
       assertThat(manager.getEntry(toolWindow.id)!!.stripeButton).isNotNull()

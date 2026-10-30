@@ -3,6 +3,7 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.Service
@@ -13,6 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.DesktopLayout
 import com.intellij.openapi.wm.impl.UnifiedToolWindowWeights
@@ -24,6 +26,15 @@ import com.intellij.ui.ExperimentalUI
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Rectangle
+
+/**
+ * The version of the migration that shows the Project view in the active default layout.
+ * [ToolWindowDefaultLayoutManager.initializeComponent] runs the migration when the stored version is lower.
+ */
+private const val DEFAULT_LAYOUT_MIGRATION_VERSION = 1
+
+/** The local application property that holds the applied [DEFAULT_LAYOUT_MIGRATION_VERSION]. */
+private const val DEFAULT_LAYOUT_MIGRATION_PROPERTY = "toolwindow.default.layout.migration.version"
 
 @Service(Service.Level.APP)
 @State(name = "ToolWindowLayout", category = SettingsCategory.UI, storages = [
@@ -129,6 +140,42 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
       setLayout(newState.activeLayoutName, newState.getActiveLayoutCopy(isNewUi))
     }
   }
+
+  /**
+   * Shows the Project view once in the active default layout.
+   * The migration changes the layout only when the active layout is [INITIAL_LAYOUT_NAME] and hides the Project view.
+   *
+   * The store calls this method once per session, after [loadState] or [noStateLoaded].
+   * A manager that the store does not initialize, such as a delegate of another component, keeps its layout.
+   * A named active layout is a user choice and also stays as it is.
+   *
+   * Two markers record the migration: a local application property and a roamed version in the state.
+   * The migration runs only when both markers are absent.
+   * So an older IDE that drops the roamed version through Settings Sync does not cause a second migration.
+   * The modification count changes only with the layout, so the store does not save a fresh default layout.
+   */
+  @Internal
+  override fun initializeComponent() {
+    val properties = PropertiesComponent.getInstance()
+    if (properties.getInt(DEFAULT_LAYOUT_MIGRATION_PROPERTY, 0) >= DEFAULT_LAYOUT_MIGRATION_VERSION) {
+      return
+    }
+
+    val currentState = state
+    if (currentState.defaultLayoutMigrationVersion < DEFAULT_LAYOUT_MIGRATION_VERSION) {
+      val migratedState = if (currentState.activeLayoutName == INITIAL_LAYOUT_NAME) {
+        currentState.withProjectViewShown(INITIAL_LAYOUT_NAME)
+      }
+      else {
+        null
+      }
+      state = (migratedState ?: currentState).copy(defaultLayoutMigrationVersion = DEFAULT_LAYOUT_MIGRATION_VERSION)
+      if (migratedState != null) {
+        tracker.incModificationCount()
+      }
+    }
+    properties.setValue(DEFAULT_LAYOUT_MIGRATION_PROPERTY, DEFAULT_LAYOUT_MIGRATION_VERSION, 0)
+  }
 }
 
 /**
@@ -148,6 +195,8 @@ data class ToolWindowLayoutStorageManagerState(
   val layouts: Map<String, ToolWindowLayoutDescriptor> = emptyMap(),
   val v1: List<ToolWindowDescriptor> = emptyList(),
   val v2: List<ToolWindowDescriptor> = emptyList(),
+  /** The applied version of the migration in [ToolWindowDefaultLayoutManager.initializeComponent]. Settings Sync roams it. */
+  val defaultLayoutMigrationVersion: Int = 0,
 ) {
 
   fun getActiveLayoutCopy(isNewUi: Boolean): DesktopLayout = getLayoutCopy(activeLayoutName, isNewUi)
@@ -188,6 +237,30 @@ data class ToolWindowLayoutStorageManagerState(
   }
 
   fun withoutLayout(name: String): ToolWindowLayoutStorageManagerState = copy(layouts = layouts - name)
+
+  /**
+   * Returns the state where both variants of the layout [name] show the Project view, or `null` if nothing changes.
+   *
+   * An empty variant stays empty, because it falls back to the default layout.
+   * A variant without a Project view entry also stays as it is.
+   */
+  internal fun withProjectViewShown(name: String): ToolWindowLayoutStorageManagerState? {
+    val descriptor = layouts.get(name) ?: return null
+    val v1 = descriptor.v1.withProjectViewShown()
+    val v2 = descriptor.v2.withProjectViewShown()
+    if (v1 == null && v2 == null) {
+      return null
+    }
+    return copy(layouts = layouts + (name to descriptor.copy(v1 = v1 ?: descriptor.v1, v2 = v2 ?: descriptor.v2)))
+  }
+}
+
+private fun List<ToolWindowDescriptor>.withProjectViewShown(): List<ToolWindowDescriptor>? {
+  val index = indexOfFirst { it.id == ToolWindowId.PROJECT_VIEW }
+  if (index < 0 || get(index).isVisible) {
+    return null
+  }
+  return mapIndexed { i, descriptor -> if (i == index) descriptor.copy(isVisible = true) else descriptor.copy() }
 }
 
 @Serializable
@@ -206,7 +279,7 @@ data class ToolWindowLayoutDescriptor(
   }
 }
 
-private fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> = buildDefaultLayout(isNewUi).build()
+internal fun getDefaultLayoutToolWindowDescriptors(isNewUi: Boolean): List<ToolWindowDescriptor> = buildDefaultLayout(isNewUi).build()
 
 private fun buildDefaultLayout(isNewUi: Boolean): DefaultToolWindowLayoutBuilderImpl {
   val builder = DefaultToolWindowLayoutBuilderImpl()

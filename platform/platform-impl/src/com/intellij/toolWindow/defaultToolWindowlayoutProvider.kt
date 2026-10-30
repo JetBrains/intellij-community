@@ -253,6 +253,7 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
         ToolWindowDescriptor.ToolWindowAnchor.TOP -> throw UnsupportedOperationException("The top stripe is not supported")
         ToolWindowDescriptor.ToolWindowAnchor.LEFT -> {
           addOrUpdate("Project") {
+            isVisible = true
             weight = 0.25f
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
@@ -275,6 +276,7 @@ internal class DefaultToolWindowLayoutBuilderImpl : DefaultToolWindowLayoutBuild
         ToolWindowDescriptor.ToolWindowAnchor.TOP -> throw UnsupportedOperationException("The top stripe is not supported")
         ToolWindowDescriptor.ToolWindowAnchor.LEFT -> {
           addOrUpdate("Project") {
+            isVisible = true
             weight = 0.25f
             contentUiType = ToolWindowDescriptor.ToolWindowContentUiType.COMBO
           }
