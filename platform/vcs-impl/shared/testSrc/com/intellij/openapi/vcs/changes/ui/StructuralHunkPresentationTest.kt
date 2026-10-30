@@ -74,5 +74,5 @@ internal class StructuralHunkPresentationTest {
     StructuralHunkDto.of(HunkLines(0, 1, 0, 1), HunkName(parts, detail, icon, isWhitespaceOnly))
 
   private fun tooltipLines(hunk: StructuralHunkDto): List<String> =
-    checkNotNull(StructuralHunkPresentation.tooltip(hunk)).removePrefix("<html><body>").removeSuffix("</body></html>").split(Regex("<br/?>"))
+    checkNotNull(StructuralHunkPresentation.tooltip(hunk)).toString().removePrefix("<html><body>").removeSuffix("</body></html>").split(Regex("<br/?>"))
 }

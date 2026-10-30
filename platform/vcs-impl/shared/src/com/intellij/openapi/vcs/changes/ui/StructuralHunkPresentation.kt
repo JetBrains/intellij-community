@@ -2,9 +2,11 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.ide.setToolTipText
 import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.platform.vcs.impl.shared.rpc.StructuralHunkDto
@@ -30,7 +32,7 @@ object StructuralHunkPresentation {
   fun render(component: SimpleColoredComponent, hunk: StructuralHunkDto) {
     component.icon = icon(hunk)
     for ((text, attributes) in fragments(hunk)) component.append(text, attributes)
-    component.toolTipText = tooltip(hunk)
+    component.setToolTipText(tooltip(hunk))
   }
 
   /** The icon of the row. A line of text names a hunk without an element icon, so the row shows the text icon instead of an empty gap. */
@@ -71,7 +73,7 @@ object StructuralHunkPresentation {
   }
 
   /** Lists the parts one per line, at most [MAX_TOOLTIP_PARTS] of them, and then the detail. A hunk of blank lines has no tooltip. */
-  fun tooltip(hunk: StructuralHunkDto): @Nls String? {
+  fun tooltip(hunk: StructuralHunkDto): HtmlChunk? {
     val parts = hunk.parts
     if (parts.isEmpty()) return null
     val builder = HtmlBuilder()
@@ -83,7 +85,7 @@ object StructuralHunkPresentation {
       builder.br().append(VcsBundle.message("changes.structural.more.parts", parts.size - MAX_TOOLTIP_PARTS))
     }
     hunk.detail?.let { builder.br().append(it.text) }
-    return builder.wrapWithHtmlBody().toString()
+    return builder.wrapWithHtmlBody()
   }
 
   private fun shownPartCount(parts: List<StructuralHunkPartDto>): Int {
