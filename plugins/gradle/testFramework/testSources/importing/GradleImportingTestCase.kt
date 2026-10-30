@@ -4,6 +4,10 @@ package com.intellij.gradle.testFramework.importing
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.execution.RunManagerEx
 import com.intellij.execution.process.ProcessOutputType
+import com.intellij.gradle.testFramework.junit4.TargetJavaVersionWatcher
+import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
+import com.intellij.gradle.testFramework.jvm.GradleJvmResolver
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.gradle.testFramework.util.getGradleDistributionJarPath
 import com.intellij.gradle.testFramework.util.getGradleDistributionRoot
 import com.intellij.gradle.testFramework.util.getLocalGradleDistributionRoot
@@ -73,10 +77,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
-import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
-import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume
 import org.junit.Rule

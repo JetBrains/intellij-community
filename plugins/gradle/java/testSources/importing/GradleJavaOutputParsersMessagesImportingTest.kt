@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.createBuildFile
 import com.intellij.gradle.testFramework.util.importProject
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
@@ -9,7 +10,6 @@ import com.intellij.platform.testFramework.assertion.BuildViewNodeAssertion
 import com.intellij.platform.testFramework.assertion.consoleText
 import com.intellij.platform.testFramework.assertion.isNodeSelected
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
 

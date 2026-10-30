@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.build
 import com.intellij.execution.RunManager
 import com.intellij.gradle.testFramework.GradleExecutionTestCase
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.GROOVY_5_SUPPORTED_VERSIONS
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewNode
 import com.intellij.platform.testFramework.assertion.BuildViewAssertions.assertBuildViewTree
@@ -12,7 +13,6 @@ import com.intellij.util.LocalTimeCounter
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.execution.build.GroovyGradleProjectTaskRunnerTest.Companion.GROOVY5_PROJECT
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.junit.jupiter.params.ParameterizedTest

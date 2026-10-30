@@ -3,11 +3,11 @@ package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspect
 
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDuplicateRepositoriesInspection
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.DEPENDENCY_RESOLUTION_MANAGEMENT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDuplicateRepositoriesInspectionTest : K2GradleCodeInsightTestCase() {

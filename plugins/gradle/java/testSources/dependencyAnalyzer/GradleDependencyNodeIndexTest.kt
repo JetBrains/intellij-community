@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.dependencyAnalyzer
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.ISOLATED_PROJECTS_SUPPORTED_VERSIONS
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
@@ -16,7 +17,6 @@ import org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyNodeInde
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder.Companion.buildScript
 import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase.Companion.assertNodeWithDeprecatedGradleWarning
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleDependencyNodeIndexTest : GradleDependencyNodeIndexTestCase() {

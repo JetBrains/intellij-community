@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.StartParameter
@@ -10,7 +11,6 @@ import org.gradle.wrapper.WrapperConfiguration
 import org.gradle.wrapper.WrapperExecutor
 import org.jetbrains.plugins.gradle.settings.DistributionType
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
 import java.net.URI

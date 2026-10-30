@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.scripting.projectStructure
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.KOTLIN_SUPPORTED_VERSIONS
@@ -13,7 +14,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.scripting.workspaceModel.GradleScriptDefinitionEntity
 import org.jetbrains.kotlin.idea.core.script.modules.KotlinScriptEntity
 import org.jetbrains.kotlin.idea.testFramework.gradle.KotlinGradleProjectTestCase
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
 

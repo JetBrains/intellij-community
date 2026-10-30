@@ -4,6 +4,7 @@ package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspect
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.AvoidRepositoriesInBuildGradleInspection
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.DEPENDENCY_RESOLUTION_MANAGEMENT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
@@ -13,7 +14,6 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.jupiter.params.ParameterizedTest
 

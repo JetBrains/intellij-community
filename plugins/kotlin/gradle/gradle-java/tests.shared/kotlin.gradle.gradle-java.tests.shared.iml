@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.gradle.tooling.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" exported="" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinTest" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.base.projectModel" scope="TEST" />
     <orderEntry type="module" module-name="intellij.kotlin.highlighting" scope="TEST" />

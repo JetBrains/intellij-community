@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.gradle.testFramework.util.VersionMatcher
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.project.Project
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.kotlin.tooling.core.isDev
 import org.jetbrains.kotlin.tooling.core.isSnapshot
 import org.jetbrains.kotlin.tooling.core.isStable
-import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.div

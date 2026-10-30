@@ -2,10 +2,10 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.SPOCK_SUPPORTED_VERSIONS
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class SpockGradleTestNavigationTest : GradleTestExecutionTestCase() {

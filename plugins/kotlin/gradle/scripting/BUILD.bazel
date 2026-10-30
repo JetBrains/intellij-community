@@ -194,7 +194,6 @@ jvm_library(
         "//platform/testFramework",
         "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/gradle/testFramework:testFramework_test_lib",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//libraries/junit4",
         "//platform/observable",
         "//platform/external-system-impl:externalSystem-tests_test_lib",

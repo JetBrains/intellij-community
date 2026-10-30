@@ -5,6 +5,7 @@ import com.intellij.gradle.properties.GradleVersionQuickFix
 import com.intellij.gradle.testFramework.fixtures.gradleFixture
 import com.intellij.gradle.testFramework.fixtures.gradleProjectRootFixture
 import com.intellij.gradle.testFramework.fixtures.projectFixture
+import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.SUPPORTED_GRADLE_VERSIONS
 import com.intellij.gradle.testFramework.projectInfo.gradleProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.simpleJavaRootModuleInfo
 import com.intellij.gradle.testFramework.projectInfo.simpleSettingsFile
@@ -25,7 +26,6 @@ import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.SUPPORTED_GRADLE_VERSIONS
 import org.junit.jupiter.api.Test
 import java.nio.file.Path
 import kotlin.io.path.readText

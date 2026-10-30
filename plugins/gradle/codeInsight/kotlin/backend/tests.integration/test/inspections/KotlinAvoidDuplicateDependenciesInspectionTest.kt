@@ -4,6 +4,7 @@ package com.intellij.gradle.codeInsight.kotlin.backend.tests.integration.inspect
 import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAvoidDuplicateDependenciesInspection
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.KOTLIN_DSL_SCRIPTS_MODEL_IMPORT_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.VERSION_CATALOGS_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.assertThatKotlinDslScriptsModelImportIsSupported
@@ -12,7 +13,6 @@ import com.intellij.gradle.testFramework.util.withSettingsFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class KotlinAvoidDuplicateDependenciesInspectionTest : K2GradleCodeInsightTestCase() {

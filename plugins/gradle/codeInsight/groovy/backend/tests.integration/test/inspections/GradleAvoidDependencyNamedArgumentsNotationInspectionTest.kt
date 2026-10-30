@@ -5,11 +5,11 @@ import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleAv
 import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.testFramework.runInEdtAndWait
 import org.assertj.core.api.Assertions.assertThat
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleAvoidDependencyNamedArgumentsNotationInspectionTest : GradleCodeInsightTestCase() {

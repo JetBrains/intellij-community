@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.navigation
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.fixtures.application.GradleProjectTestApplication
 import com.intellij.gradle.testFramework.util.BUILD_SRC_AS_INCLUDED_BUILD_SUPPORTED_VERSIONS
 import com.intellij.testFramework.TestDataPath
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.gradle.AbstractKotlinGradleNavigationTest
 import org.jetbrains.kotlin.gradle.GRADLE_BUILD_SRC_FIXTURE
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 @GradleProjectTestApplication

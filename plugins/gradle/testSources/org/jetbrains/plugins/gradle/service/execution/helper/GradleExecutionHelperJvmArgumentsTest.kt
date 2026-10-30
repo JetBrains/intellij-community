@@ -16,10 +16,10 @@
 package org.jetbrains.plugins.gradle.service.execution.helper
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.util.net.NetUtils
 import org.assertj.core.api.Assertions
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleExecutionHelperJvmArgumentsTest : GradleExecutionHelperJvmArgumentsTestCase() {

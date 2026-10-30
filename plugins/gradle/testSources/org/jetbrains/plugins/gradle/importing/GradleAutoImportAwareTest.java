@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions;
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.module.Module;
@@ -9,7 +10,6 @@ import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.plugins.gradle.service.project.GradleAutoImportAware;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 import java.nio.file.Path;

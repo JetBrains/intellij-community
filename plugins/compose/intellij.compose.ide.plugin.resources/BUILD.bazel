@@ -166,7 +166,6 @@ jvm_library(
         "//platform/external-system-impl:externalSystem-tests_test_lib",
         "//platform/external-system-api/testFramework",
         "@lib//:kotlinc-kotlin-compiler-tests",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//libraries/kotlinx/coroutines/test",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
         "//plugins/kotlin/tests-common:common-tests_test_lib",

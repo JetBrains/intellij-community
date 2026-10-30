@@ -161,7 +161,6 @@ jvm_library(
         "//plugins/gradle/java/plugin",
         "//plugins/gradle:gradle-tests_test_lib",
         "//plugins/gradle/testFramework:testFramework_test_lib",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//java/compiler/impl",
         "//platform/xdebugger-api:debugger",
         "//platform/external-system-api/dependency-updater",

@@ -3,6 +3,7 @@ package com.intellij.compose.ide.plugin.resources.gradle
 
 import com.intellij.compose.ide.plugin.gradleTooling.rt.ComposeResourcesModel
 import com.intellij.compose.ide.plugin.shared.TARGET_GRADLE_VERSION
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
@@ -10,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.readText
 import com.intellij.openapi.vfs.writeText
 import org.jetbrains.kotlin.test.TestMetadata
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.junit.Test

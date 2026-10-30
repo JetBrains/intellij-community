@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
 import com.intellij.gradle.testFramework.util.createBuildFile
 import com.intellij.openapi.externalSystem.model.project.repository.FileRepositoryData
 import com.intellij.openapi.externalSystem.model.project.repository.ProjectRepositoryData
 import com.intellij.openapi.externalSystem.model.project.repository.UrlRepositoryData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import java.net.URI

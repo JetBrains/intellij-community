@@ -3,6 +3,7 @@ package com.intellij.gradle.testFramework.fixtures
 
 import com.intellij.gradle.testFramework.fixtures.impl.GradleJvmTestFixture
 import com.intellij.gradle.testFramework.fixtures.impl.GradleTestFixtureImpl
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.gradle.testFramework.projectInfo.GradleProjectInfo
 import com.intellij.gradle.testFramework.projectInfo.initProject
 import com.intellij.openapi.project.Project
@@ -14,7 +15,6 @@ import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import com.intellij.testFramework.junit5.fixture.testFixture
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import java.nio.file.Path
 
 fun gradleJvmFixture(

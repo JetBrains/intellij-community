@@ -5,11 +5,11 @@ import com.intellij.gradle.codeInsight.backend.inspections.declarations.GradleRe
 import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.VERSION_CATALOGS_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.assertThatVersionCatalogsAreSupported
 import com.intellij.gradle.testFramework.util.withBuildFile
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleRedundantKotlinStdLibInspectionTest : GradleCodeInsightTestCase() {

@@ -2,13 +2,13 @@
 package com.intellij.gradle.testFramework.annotations.processors
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
+import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.SUPPORTED_GRADLE_VERSIONS
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.util.setSystemProperty
 import com.intellij.testFramework.junit5.TestDisposable
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.SUPPORTED_GRADLE_VERSIONS
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedTest

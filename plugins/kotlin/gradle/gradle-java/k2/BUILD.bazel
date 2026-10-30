@@ -117,7 +117,6 @@ jvm_library(
         "//plugins/kotlin/fir/testFramework:testFramework_test_lib",
         "//jps/model-api:model",
         "//platform/ide-core",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//java/java-runtime:rt",
         "//platform/external-system-impl:externalSystem-impl",
         "//plugins/kotlin/base/project-structure",

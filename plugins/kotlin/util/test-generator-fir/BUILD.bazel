@@ -58,7 +58,6 @@ jvm_library(
         "//plugins/kotlin/copyright/fir-tests:kotlin-copyright-tests_test_lib",
         "//plugins/kotlin/code-insight/live-templates-k2:kotlin-codeInsight-liveTemplates",
         "//plugins/kotlin/code-insight/fixes-k2/tests:tests_test_lib",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//plugins/kotlin/gradle/gradle-java/k2:kotlin-gradle-java",
         "//plugins/kotlin/jvm-debugger/test/compose/testFramework:testFramework_test_lib",
         "//plugins/kotlin/injection/k2/tests:tests_test_lib",

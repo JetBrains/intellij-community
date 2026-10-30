@@ -6,13 +6,13 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.gradle.testFramework.annotations.TargetVersions;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.plugins.gradle.execution.build.GradleApplicationEnvironmentProviderTestCase;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
 
 /**

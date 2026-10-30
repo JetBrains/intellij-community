@@ -67,7 +67,6 @@ jvm_library(
         "//tools/intellij.tools.ide.starter:ide-starter",
         "//platform/buildView",
         "//platform/consoleView",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
     ],
 )
 ### auto-generated section `build intellij.gradle.testFramework` end

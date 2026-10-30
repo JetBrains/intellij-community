@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
@@ -10,7 +11,6 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleConfiguratorPlatformSpecificTest3 : KotlinGradleImportingTestCase() {

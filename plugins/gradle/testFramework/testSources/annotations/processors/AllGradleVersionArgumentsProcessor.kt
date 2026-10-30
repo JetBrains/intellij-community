@@ -3,11 +3,11 @@ package com.intellij.gradle.testFramework.annotations.processors
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
 import com.intellij.gradle.testFramework.annotations.ArgumentsProcessor
+import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.junit4.VersionMatcherRule
+import com.intellij.gradle.testFramework.util.VersionMatcher
 import com.intellij.util.containers.orNull
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.provider.Arguments
 import org.junit.jupiter.params.support.ParameterDeclarations

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.quarantine.importing.syncAction
 
 import com.google.common.collect.HashBasedTable
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.toolingExtension.modelAction.GradleModelFetchPhase
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.service
@@ -61,7 +62,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleEntitySource
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase.Dynamic.Companion.asSyncPhase
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.entity.GradleTestBridgeEntitySource
 import org.jetbrains.plugins.gradle.util.entity.GradleTestEntity

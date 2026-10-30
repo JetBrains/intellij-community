@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.testFramework.fixtures.impl
 
+import com.intellij.gradle.testFramework.jvm.GradleJvmResolver
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
@@ -13,8 +15,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.JdkVersionDetector
 import org.jetbrains.jps.model.java.JdkVersionDetector.JdkVersionInfo
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
 /**
  * A fixture which provides SDKs for Gradle JVM and cleans up it when test will be finished.

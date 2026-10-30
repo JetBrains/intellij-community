@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.psi.PsiMethod
 import com.intellij.testFramework.assertInstanceOf
 import groovy.lang.Closure.DELEGATE_FIRST
@@ -12,7 +13,6 @@ import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADL
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_FILE_COPY_SPEC
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_PROJECT
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_PROCESS_EXEC_SPEC
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
 import org.junit.jupiter.api.Assertions.assertEquals

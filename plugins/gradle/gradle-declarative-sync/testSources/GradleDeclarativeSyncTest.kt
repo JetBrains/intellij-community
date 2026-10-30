@@ -2,6 +2,7 @@
 package com.intellij.gradle.declarativeSync
 
 import com.android.tools.idea.gradle.feature.flags.DeclarativeStudioSupport
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.createBuildFile
 import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
@@ -18,7 +19,6 @@ import org.jetbrains.plugins.gradle.importing.syncAction.GradlePhasedSyncTestCas
 import org.jetbrains.plugins.gradle.importing.syncAction.whenSyncPhaseCompleted
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncPhase
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList

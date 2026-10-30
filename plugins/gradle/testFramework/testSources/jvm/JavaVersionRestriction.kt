@@ -1,11 +1,9 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.testFramework.jvm
 
+import com.intellij.gradle.testFramework.util.JavaVersionMatcher.isVersionMatch
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.jvm.GradleBrokenJvmSerialisationVersionRestriction
-import org.jetbrains.plugins.gradle.tooling.jvm.GradleToolingApi9VersionRestriction
-import org.jetbrains.plugins.gradle.tooling.util.JavaVersionMatcher.isVersionMatch
 
 fun interface JavaVersionRestriction {
 
@@ -23,7 +21,7 @@ fun interface JavaVersionRestriction {
 
     /**
      * @param targetVersionNotation the java version restriction in string form.
-     * The notation variants can be found in the [org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion] documentation.
+     * The notation variants can be found in the [com.intellij.gradle.testFramework.annotations.TargetJavaVersion] documentation.
      */
     @JvmStatic
     fun javaRestrictionOf(targetVersionNotation: String): JavaVersionRestriction {

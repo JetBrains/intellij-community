@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.importing.syncAction
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.annotations.processors.CsvCrossProductArgumentsProcessor
 import com.intellij.gradle.testFramework.fixtures.gradleFixture
 import com.intellij.gradle.testFramework.projectInfo.GradleModuleInfoBuilder
@@ -28,7 +29,6 @@ import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.jupiter.params.ParameterizedClass
 import org.junit.jupiter.params.ParameterizedTest

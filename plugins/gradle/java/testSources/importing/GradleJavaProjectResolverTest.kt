@@ -1,6 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing
 
+import com.intellij.gradle.testFramework.jvm.GradleJvmResolver
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.gradle.testFramework.projectModel.mock.GradleTestExternalProject.Companion.externalProjects
 import com.intellij.gradle.testFramework.projectModel.mock.GradleTestIdeaProject.Companion.ideaProject
 import com.intellij.gradle.testFramework.projectModel.mock.GradleTestProjectNode.Companion.projectNode
@@ -33,8 +35,6 @@ import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtensi
 import org.jetbrains.plugins.gradle.service.project.JavaGradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.gradleSettings
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse

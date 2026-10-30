@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.scripting.inspections
 
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.assertThatGradleIsAtLeast
 import com.intellij.gradle.testFramework.util.assertThatGradleIsOlderThan
 import com.intellij.gradle.testFramework.util.withBuildFile
@@ -10,7 +11,6 @@ import com.intellij.gradle.testFramework.util.withSettingsFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.K2GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 

@@ -1,5 +1,5 @@
 # Used to prefetch Gradle versions to TeamCity build agents
-# Keep in sync with org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
+# Keep in sync with com.intellij.gradle.testFramework.junit4.VersionMatcherRule.SUPPORTED_GRADLE_VERSIONS
 4.6
 4.10.3
 5.0

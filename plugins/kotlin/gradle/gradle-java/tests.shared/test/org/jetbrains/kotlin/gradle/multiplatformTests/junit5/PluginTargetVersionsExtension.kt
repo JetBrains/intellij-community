@@ -1,13 +1,13 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.gradle.multiplatformTests.junit5
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions
+import com.intellij.gradle.testFramework.util.VersionMatcher
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.codeInsight.gradle.matches
 import org.jetbrains.kotlin.idea.codeInsight.gradle.parseKotlinVersionRequirement
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.extension.BeforeEachCallback
 import org.junit.jupiter.api.extension.ExtensionContext

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle
 
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.TYPESAFE_PROJECT_ACCESSORS_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.gradle.testFramework.util.withSettingsFile
@@ -11,7 +12,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleDsl
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 @TestRoot("idea/tests/testData/")

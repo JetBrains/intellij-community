@@ -49,7 +49,6 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java/tests.shared:tests.shared_test_lib",
         "//plugins/gradle/testFramework:testFramework_test_lib",
         "//platform/external-system-impl:externalSystem-tests_test_lib",
-        "//plugins/gradle/tooling-extension-impl:toolingExtension-tests_test_lib",
         "//libraries/junit6",
         "//libraries/junit6-params",
         "//platform/testFramework/junit5",

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.execution.test.events
 
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.CONFIGURATION_CACHE_SUPPORTED_VERSIONS
 import com.intellij.gradle.testFramework.util.JUNIT_5_SUPPORTED_VERSIONS
 import com.intellij.openapi.application.edtWriteAction
@@ -18,7 +19,6 @@ import org.jetbrains.plugins.gradle.importing.BuildViewMessagesImportingTestCase
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionContext
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelperExtension
 import org.jetbrains.plugins.gradle.testFramework.GradleTestExecutionTestCase
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.params.ParameterizedTest
 

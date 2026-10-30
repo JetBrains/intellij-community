@@ -1,17 +1,17 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.runInEdtAndWait
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.kotlin.idea.highlighting.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.idea.highlighter.checkHighlighting
+import org.jetbrains.kotlin.idea.highlighting.KotlinProblemHighlightFilter
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils.parseDirectives
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.pathString

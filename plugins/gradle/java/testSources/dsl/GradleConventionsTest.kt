@@ -3,11 +3,11 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.gradle.testFramework.GradleCodeInsightTestCase
 import com.intellij.gradle.testFramework.annotations.AllGradleVersionsSource
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.gradle.testFramework.util.TOP_LEVEL_JAVA_CONVENTIONS_SUPPORTED_VERSIONS
 import com.intellij.psi.PsiMethod
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_JAVA_PLUGIN_CONVENTION
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleConventionsTest : GradleCodeInsightTestCase() {

@@ -3,12 +3,12 @@ package org.jetbrains.plugins.gradle.execution.build
 
 import com.intellij.gradle.testFramework.GradleTestFixtureBuilder
 import com.intellij.gradle.testFramework.annotations.BaseGradleVersionSource
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.gradle.testFramework.util.withBuildFile
 import com.intellij.gradle.testFramework.util.withSettingsFile
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfigurationType
 import org.junit.jupiter.params.ParameterizedTest
 

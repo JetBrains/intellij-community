@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling
+package com.intellij.gradle.testFramework.jvm
 
 import com.intellij.ide.starter.sdk.JdkDownloaderFacade
 import com.intellij.ide.starter.sdk.JdkVersion
@@ -14,8 +14,8 @@ import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.tools.ide.performanceTesting.commands.SdkObject
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
-import org.junit.jupiter.api.Assertions.assertNotNull
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
+import org.junit.jupiter.api.Assertions.assertNotNull
 
 object GradleJvmResolver {
 

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.ProcessOutputType;
+import com.intellij.gradle.testFramework.annotations.TargetJavaVersion;
+import com.intellij.gradle.testFramework.annotations.TargetVersions;
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase;
 import com.intellij.gradle.testFramework.importing.TestGradleBuildScriptBuilder;
 import com.intellij.idea.TestFor;
@@ -44,8 +46,6 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
 import org.jetbrains.plugins.gradle.service.resolve.VersionCatalogsLocator;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.junit.Test;
 

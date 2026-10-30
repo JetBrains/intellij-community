@@ -97,6 +97,7 @@ jvm_library(
         ["testResources/**/*"],
     ),
     visibility = ["//visibility:public"],
+    exports = ["//plugins/gradle/testFramework:testFramework_test_lib"],
     runtime_deps = [
         # do not sort,
         "//libraries/groovy/ant",
@@ -106,6 +107,7 @@ jvm_library(
         # do not sort,
         "//plugins/gradle/tooling-extension-impl:toolingExtension-impl",
         "//plugins/gradle:gradle-common",
+        "//plugins/gradle/testFramework:testFramework_test_lib",
         "//plugins/gradle/plugin",
         "//java/testFramework",
         "//libraries/assertj-core",

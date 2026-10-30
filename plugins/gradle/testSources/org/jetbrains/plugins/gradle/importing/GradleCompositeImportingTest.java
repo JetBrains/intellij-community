@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions;
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTrackerSettings;
@@ -22,7 +23,6 @@ import org.jetbrains.plugins.gradle.settings.CompositeDefinitionSource;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.jetbrains.plugins.gradle.util.GradleModuleDataKt;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Ignore;

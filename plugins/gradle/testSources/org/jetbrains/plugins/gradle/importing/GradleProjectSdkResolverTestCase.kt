@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.importing
 
 
 import com.intellij.gradle.testFramework.importing.GradleImportingTestCase
+import com.intellij.gradle.testFramework.jvm.GradleJvmResolver
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.gradle.testFramework.util.createBuildFile
 import com.intellij.gradle.testFramework.util.createSettingsFile
 import com.intellij.openapi.application.ApplicationManager
@@ -30,8 +32,6 @@ import com.intellij.testFramework.roots.ui.configuration.TestSdkType
 import com.intellij.testFramework.roots.ui.configuration.TestUnknownSdkResolver
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.service.project.open.linkAndSyncGradleProject
-import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
 abstract class GradleProjectSdkResolverTestCase : GradleImportingTestCase() {
 

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.model
 
 import com.intellij.gradle.testFramework.annotations.GradleTestSource
+import com.intellij.gradle.testFramework.junit4.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcAddedInEditableBuilds
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildSrcSyncedSeparately
 import com.intellij.gradle.toolingExtension.util.GradleVersionSpecificsUtil.isBuildTreePathAvailable
@@ -11,7 +12,6 @@ import org.gradle.tooling.model.gradle.BasicGradleProject
 import org.gradle.tooling.model.gradle.GradleBuild
 import org.gradle.tooling.model.internal.ImmutableDomainObjectSet
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule.Companion.BASE_GRADLE_VERSION
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalProjectIdentifier
 import org.junit.jupiter.api.Assertions.assertEquals

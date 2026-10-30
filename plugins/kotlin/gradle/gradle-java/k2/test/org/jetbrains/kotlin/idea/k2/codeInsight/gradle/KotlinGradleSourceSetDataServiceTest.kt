@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeInsight.gradle
 
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.externalSystem.model.ProjectKeys
@@ -13,7 +14,6 @@ import org.jetbrains.kotlin.gradle.facetSettings
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCase
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetData
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleProjectDataService
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Test
 import org.junit.jupiter.api.assertDoesNotThrow

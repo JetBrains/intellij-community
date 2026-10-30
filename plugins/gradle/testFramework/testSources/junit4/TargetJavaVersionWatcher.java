@@ -1,11 +1,12 @@
-// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gradle.tooling;
+// Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.gradle.testFramework.junit4;
 
+import com.intellij.gradle.testFramework.annotations.TargetJavaVersion;
+import com.intellij.gradle.testFramework.jvm.GradleBrokenJvmSerialisationVersionRestriction;
+import com.intellij.gradle.testFramework.jvm.GradleToolingApi9VersionRestriction;
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetJavaVersion;
-import org.jetbrains.plugins.gradle.tooling.jvm.GradleBrokenJvmSerialisationVersionRestriction;
-import org.jetbrains.plugins.gradle.tooling.jvm.GradleToolingApi9VersionRestriction;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
 

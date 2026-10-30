@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.runConfiguration
 
 import com.intellij.execution.actions.ConfigurationFromContextImpl
 import com.intellij.execution.junit.AllInPackageConfigurationProducer
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.idea.run.getConfigurations
 import org.jetbrains.plugins.gradle.execution.test.runner.TestClassGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfigurationProducer
 import org.jetbrains.plugins.gradle.settings.TestRunner
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
 class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {

@@ -4,8 +4,8 @@ package com.intellij.gradle.testFramework
 import com.intellij.gradle.testFramework.fixtures.FileTestFixture
 import com.intellij.gradle.testFramework.fixtures.GradleProjectTestFixture
 import com.intellij.gradle.testFramework.fixtures.impl.GradleProjectTestFixtureImpl
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 
 interface GradleTestFixtureBuilder {
 

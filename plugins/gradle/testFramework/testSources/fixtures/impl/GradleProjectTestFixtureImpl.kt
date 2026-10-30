@@ -3,6 +3,7 @@ package com.intellij.gradle.testFramework.fixtures.impl
 
 import com.intellij.gradle.testFramework.fixtures.FileTestFixture
 import com.intellij.gradle.testFramework.fixtures.GradleProjectTestFixture
+import com.intellij.gradle.testFramework.jvm.JavaVersionRestriction
 import com.intellij.gradle.testFramework.util.refreshAndAwait
 import com.intellij.gradle.testFramework.util.withGradleWrapper
 import com.intellij.openapi.Disposable
@@ -27,7 +28,6 @@ import com.intellij.util.indexing.FileBasedIndexEx
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
 import org.jetbrains.plugins.gradle.util.whenExternalSystemTaskFinished
 

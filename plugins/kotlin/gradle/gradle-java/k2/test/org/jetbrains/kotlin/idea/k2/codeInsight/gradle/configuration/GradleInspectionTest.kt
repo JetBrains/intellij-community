@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.gradle.configuration
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.gradle.testFramework.annotations.TargetVersions
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
@@ -11,7 +12,6 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradleImportingTestCas
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.inspections.runInspection
-import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
 
