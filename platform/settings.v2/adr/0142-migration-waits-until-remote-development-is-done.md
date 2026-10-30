@@ -4,7 +4,7 @@ Date: 2026-10-02
 
 ## Status
 
-Accepted ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
+Deprecated ([IJPL-228928](https://youtrack.jetbrains.com/issue/IJPL-228928)).
 
 ## Context
 
