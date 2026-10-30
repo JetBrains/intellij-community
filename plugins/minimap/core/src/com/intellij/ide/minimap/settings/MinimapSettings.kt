@@ -2,12 +2,11 @@
 package com.intellij.ide.minimap.settings
 
 import com.intellij.ide.minimap.utils.WeakDelegate
-import com.intellij.openapi.application.InitialConfigImportState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.util.PlatformUtils
+import org.jetbrains.annotations.ApiStatus
 
 @State(name = "Minimap", storages = [Storage(value = "Minimap.xml")])
 class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
@@ -26,6 +25,7 @@ class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
   private var state = createDefaultState()
 
   override fun getState(): MinimapSettingsState = state
+
   fun setState(state: MinimapSettingsState) {
     this.state = state
   }
@@ -34,9 +34,10 @@ class MinimapSettings : PersistentStateComponent<MinimapSettingsState> {
     this.state = state.copy(width = MinimapSettingsState.FIXED_WIDTH)
   }
 
-  private fun createDefaultState(): MinimapSettingsState {
+  @ApiStatus.Internal
+  fun createDefaultState(): MinimapSettingsState {
     return MinimapSettingsState(
-      enabled = PlatformUtils.isPyCharm() && InitialConfigImportState.isNewUser(),
+      enabled = true,
     )
   }
 }
