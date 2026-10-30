@@ -8,18 +8,17 @@ import com.intellij.util.ui.JdkConstants.FontStyle
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 
-private val FONT_TYPES: Array<EditorFontType> = EditorFontType.entries.toTypedArray()
-
 /**
  * The editor fonts and the console fonts of a colors scheme, in each [EditorFontType].
  * The instances are immutable and safe to use on any thread.
  * [with] gives the fonts of other font settings, or this instance when the settings are the same.
  *
+ * @param fonts the font of each font type, at the index of its ordinal. A set from [empty] has no fonts.
  * @param useLigatures the ligatures of all fonts, or `null` for the ligatures of their preferences
- * @param empty `true` only for a set from [empty]
  */
 @ApiStatus.Internal
 class EditorFonts private constructor(
+  private val fonts: Array<Font>,
   private val editorFontName: String,
   private val editorFontSize: Float,
   private val editorPreferences: FontPreferences,
@@ -27,10 +26,9 @@ class EditorFonts private constructor(
   private val consoleFontSize: Float,
   private val consolePreferences: FontPreferences,
   private val useLigatures: Boolean?,
-  empty: Boolean,
 ) {
-  /** The font of each font type, at the index of its ordinal. A set from [empty] has no fonts. */
-  private val fonts: Array<Font> = if (empty) emptyArray() else Array(FONT_TYPES.size) { index -> createFont(FONT_TYPES[index]) }
+  /** The last result of [withSize]. */
+  @Volatile private var lastSized: EditorFonts? = null
 
   /**
    * Returns `true` for a set from [empty], which has no fonts.
@@ -72,47 +70,44 @@ class EditorFonts private constructor(
         useLigatures == this.useLigatures) {
       return this
     }
-    return EditorFonts(
-      editorFontName = editorFontName,
-      editorFontSize = editorFontSize,
-      editorPreferences = editorPreferences,
-      consoleFontName = consoleFontName,
-      consoleFontSize = consoleFontSize,
-      consolePreferences = consolePreferences,
-      useLigatures = useLigatures,
-      empty = false,
+    return create(
+      editorFontName,
+      editorFontSize,
+      editorPreferences,
+      consoleFontName,
+      consoleFontSize,
+      consolePreferences,
+      useLigatures,
     )
   }
 
   /**
-   * Creates the font of [fontType]. The `when` has no `else` branch, so a new font type does not compile until it gets a font.
+   * Returns these fonts with all of them at [size], for presentation mode.
+   * It keeps the last result, so a repeated call with the same size creates no font.
    */
-  private fun createFont(fontType: EditorFontType): Font {
-    return when (fontType) {
-      EditorFontType.PLAIN -> createEditorFont(Font.PLAIN)
-      EditorFontType.BOLD -> createEditorFont(Font.BOLD)
-      EditorFontType.ITALIC -> createEditorFont(Font.ITALIC)
-      EditorFontType.BOLD_ITALIC -> createEditorFont(Font.BOLD or Font.ITALIC)
-      EditorFontType.CONSOLE_PLAIN -> createConsoleFont(Font.PLAIN)
-      EditorFontType.CONSOLE_BOLD -> createConsoleFont(Font.BOLD)
-      EditorFontType.CONSOLE_ITALIC -> createConsoleFont(Font.ITALIC)
-      EditorFontType.CONSOLE_BOLD_ITALIC -> createConsoleFont(Font.BOLD or Font.ITALIC)
+  fun withSize(size: Float): EditorFonts {
+    check(fonts.isNotEmpty()) { "The empty font set has no fonts" }
+    val last = lastSized
+    if (last != null && last.editorFontSize == size) {
+      return last
     }
-  }
-
-  private fun createEditorFont(@FontStyle style: Int): Font {
-    return createFont(editorFontName, style, editorFontSize, editorPreferences)
-  }
-
-  private fun createConsoleFont(@FontStyle style: Int): Font {
-    return createFont(consoleFontName, style, consoleFontSize, consolePreferences)
-  }
-
-  private fun createFont(familyName: String, @FontStyle style: Int, fontSize: Float, preferences: FontPreferences): Font {
-    return EditorFontFeatures.createFont(familyName, style, fontSize, preferences, useLigatures ?: preferences.useLigatures())
+    val sized = EditorFonts(
+      fonts = Array(fonts.size) { index -> fonts[index].deriveFont(size) },
+      editorFontName = editorFontName,
+      editorFontSize = size,
+      editorPreferences = editorPreferences,
+      consoleFontName = consoleFontName,
+      consoleFontSize = size,
+      consolePreferences = consolePreferences,
+      useLigatures = useLigatures,
+    )
+    lastSized = sized
+    return sized
   }
 
   companion object {
+    private val FONT_TYPES: Array<EditorFontType> = EditorFontType.entries.toTypedArray()
+
     /**
      * Returns a new font set without fonts. A scheme that has not built its fonts yet keeps it.
      * Each call gives a new instance, so [EditorFontCacheImpl] can tell its resets apart by identity:
@@ -121,6 +116,7 @@ class EditorFonts private constructor(
     @JvmStatic
     fun empty(): EditorFonts {
       return EditorFonts(
+        fonts = emptyArray(),
         editorFontName = "",
         editorFontSize = 0f,
         editorPreferences = FontPreferencesSnapshot.EMPTY,
@@ -128,7 +124,51 @@ class EditorFonts private constructor(
         consoleFontSize = 0f,
         consolePreferences = FontPreferencesSnapshot.EMPTY,
         useLigatures = null,
-        empty = true,
+      )
+    }
+
+    /**
+     * Creates the fonts of the settings. The `when` has no `else` branch, so a new font type does not compile until it gets a font.
+     */
+    private fun create(
+      editorFontName: String,
+      editorFontSize: Float,
+      editorPreferences: FontPreferences,
+      consoleFontName: String,
+      consoleFontSize: Float,
+      consolePreferences: FontPreferences,
+      useLigatures: Boolean?,
+    ): EditorFonts {
+      fun font(familyName: String, @FontStyle style: Int, fontSize: Float, preferences: FontPreferences): Font {
+        return EditorFontFeatures.createFont(familyName, style, fontSize, preferences, useLigatures ?: preferences.useLigatures())
+      }
+      fun editorFont(@FontStyle style: Int): Font {
+        return font(editorFontName, style, editorFontSize, editorPreferences)
+      }
+      fun consoleFont(@FontStyle style: Int): Font {
+        return font(consoleFontName, style, consoleFontSize, consolePreferences)
+      }
+      val fonts = Array(FONT_TYPES.size) { index ->
+        when (FONT_TYPES[index]) {
+          EditorFontType.PLAIN -> editorFont(Font.PLAIN)
+          EditorFontType.BOLD -> editorFont(Font.BOLD)
+          EditorFontType.ITALIC -> editorFont(Font.ITALIC)
+          EditorFontType.BOLD_ITALIC -> editorFont(Font.BOLD or Font.ITALIC)
+          EditorFontType.CONSOLE_PLAIN -> consoleFont(Font.PLAIN)
+          EditorFontType.CONSOLE_BOLD -> consoleFont(Font.BOLD)
+          EditorFontType.CONSOLE_ITALIC -> consoleFont(Font.ITALIC)
+          EditorFontType.CONSOLE_BOLD_ITALIC -> consoleFont(Font.BOLD or Font.ITALIC)
+        }
+      }
+      return EditorFonts(
+        fonts = fonts,
+        editorFontName = editorFontName,
+        editorFontSize = editorFontSize,
+        editorPreferences = editorPreferences,
+        consoleFontName = consoleFontName,
+        consoleFontSize = consoleFontSize,
+        consolePreferences = consolePreferences,
+        useLigatures = useLigatures,
       )
     }
   }

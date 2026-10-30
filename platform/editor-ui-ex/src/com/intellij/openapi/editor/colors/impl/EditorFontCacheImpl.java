@@ -46,12 +46,12 @@ public final class EditorFontCacheImpl extends EditorFontCache {
       fonts = newFonts;
     }
     EditorFontType fontType = Objects.requireNonNullElse(key, EditorFontType.PLAIN);
-    Font font = fonts.get(fontType);
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getPresentationMode()) {
-      return font.deriveFont(UISettingsUtils.with(uiSettings).getPresentationModeFontSize());
+      float size = UISettingsUtils.with(uiSettings).getPresentationModeFontSize();
+      return fonts.withSize(size).get(fontType);
     }
-    return font;
+    return fonts.get(fontType);
   }
 
   @Override

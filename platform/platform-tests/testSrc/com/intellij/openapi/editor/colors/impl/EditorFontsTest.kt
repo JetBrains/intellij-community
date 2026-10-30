@@ -60,6 +60,20 @@ class EditorFontsTest {
   }
 
   @Test
+  fun `a size gives every font that size and keeps the last result`() {
+    val fonts = fonts(useLigatures = null)
+
+    val sized = fonts.withSize(30f)
+
+    for (fontType in EditorFontType.entries) {
+      assertThat(sized.get(fontType).size2D).describedAs(fontType.name).isEqualTo(30f)
+      assertThat(sized.get(fontType).style).describedAs(fontType.name).isEqualTo(fonts.get(fontType).style)
+    }
+    assertThat(fonts.withSize(30f)).isSameAs(sized)
+    assertThat(fonts.withSize(31f)).isNotSameAs(sized)
+  }
+
+  @Test
   fun `an empty set has no fonts`() {
     val empty = EditorFonts.empty()
     assertThat(empty.isEmpty()).isTrue()

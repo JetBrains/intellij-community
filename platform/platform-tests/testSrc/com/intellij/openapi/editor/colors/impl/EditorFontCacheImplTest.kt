@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors.impl
 
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsUtils
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.EditorFontCache
@@ -57,6 +58,21 @@ internal class EditorFontCacheImplTest {
     val before = scheme.getFont(EditorFontType.CONSOLE_PLAIN)
     scheme.setConsoleFontName(Font.MONOSPACED)
     assertThat(scheme.getFont(EditorFontType.CONSOLE_PLAIN).family).isNotEqualTo(before.family)
+  }
+
+  @Test
+  fun `presentation mode gives the same font on each call`() {
+    val cache = EditorFontCacheImpl { EditorColorsManager.getInstance().globalScheme }
+    val uiSettings = UISettings.getInstance()
+    val initialPresentationMode = uiSettings.presentationMode
+    try {
+      uiSettings.presentationMode = true
+      val font = cache.getFont(EditorFontType.PLAIN)
+      assertThat(font.size2D).isEqualTo(UISettingsUtils.with(uiSettings).presentationModeFontSize)
+      assertThat(cache.getFont(EditorFontType.PLAIN)).isSameAs(font)
+    } finally {
+      uiSettings.presentationMode = initialPresentationMode
+    }
   }
 
   @Test
