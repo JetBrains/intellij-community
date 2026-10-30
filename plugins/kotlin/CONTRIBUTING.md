@@ -83,7 +83,9 @@ The full guideline for inspections is in [Code insight: Inspections](docs/fir-id
 Read it before you write an inspection. The main rules are:
 
 1. Put a new inspection in [`code-insight/inspections-k2`](code-insight/inspections-k2).
-   Extend `KotlinApplicableInspectionBase.Simple` or `KotlinApplicableInspectionBase`, and use a `KotlinModCommandQuickFix`.
+   Use `KotlinApplicableInspectionBase.Simple` for exactly one quick fix.
+   Use `KotlinApplicableInspectionBase` for no quick fix or multiple quick fixes.
+   Extend `KotlinModCommandQuickFix` for each quick fix.
 2. Register inspections in [`intellij.kotlin.codeInsight.inspections.xml`](code-insight/inspections-k2/resources/intellij.kotlin.codeInsight.inspections.xml).
    Register intentions in [`intellij.kotlin.codeInsight.intentions.xml`](code-insight/intentions-k2/resources/intellij.kotlin.codeInsight.intentions.xml).
 3. Write a description in English.

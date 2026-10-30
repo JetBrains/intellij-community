@@ -108,7 +108,9 @@ Do not use `AbstractApplicabilityBasedInspection` or `IntentionBasedInspection`.
 
 ### Structure of an applicable inspection
 
-`KotlinApplicableInspectionBase.visitTargetElement` calls the methods in this order.
+The IntelliJ inspection framework calls `isAvailableForFile` and `buildVisitor` before it inspects elements in a file.
+`buildVisitor` returns a `KtVisitor` that calls `visitTargetElement` for each candidate element.
+`visitTargetElement` runs stages 3 through 6 for that element.
 Each step must be cheaper than the next one.
 
 1. `isAvailableForFile(file)`
@@ -120,7 +122,9 @@ Each step must be cheaper than the next one.
     - Visit only the element type that you need. Use a helper such as `callExpressionVisitor { }`.
     - Call `visitTargetElement(element, holder, isOnTheFly)` from the visitor.
 3. `isApplicableByPsi(element)`
-    - Do all the PSI-only checks here. The Analysis API is forbidden here (`forbidAnalysis`).
+    - Use PSI only for cheap structural checks here.
+      `prepareContext` uses the Analysis API for semantic checks and context data.
+      The Analysis API is forbidden here (`forbidAnalysis`).
     - Reject most elements in this step. For example, check the callee name before you resolve the call.
 4. `getApplicableRanges(element)`
     - Return the narrowest range. Highlight the name or the keyword, not the whole declaration or call.
@@ -140,7 +144,8 @@ Rules for the context:
 - Do not store a raw `PsiElement`. Use `SmartPsiElementPointer`, a name, an `FqName`, a `ClassId`, or a string.
 
 Rules for the quick fix:
-- Extend `KotlinModCommandQuickFix<E>`. It runs in a background read action on a non-physical copy of the file.
+- Extend `KotlinModCommandQuickFix<E>`. It computes changes off the EDT on a non-physical file copy.
+  The IntelliJ Platform can preview the result and apply it to the real file.
 - Do not call `analyze` in `applyFix`. Compute everything in `prepareContext`.
 - Change only `element` or elements from `updater.getWritable(...)`.
   For an element in another file, map it to the copy explicitly.
