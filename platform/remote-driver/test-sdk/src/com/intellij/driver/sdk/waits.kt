@@ -9,9 +9,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.nanoseconds
 import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeSource
 
 private val LOG get() = fileLogger()
 
@@ -108,15 +108,18 @@ fun <T> waitAny(
   getter: () -> List<T>,
   checker: (T) -> Boolean = { true },
 ): List<T> {
-  return waitFor(message = message, timeout = timeout,
-                 interval = interval,
-                 errorMessage = if (errorMessage == null) {
-                   null
-                 }
-                 else { it -> errorMessage.invoke(it) },
-                 getter = getter,
-                 checker = { it.any { checker(it) } }
-  ).filter { checker(it) }
+  // keep the elements of the successful observation: checking them again can give a different answer
+  var suitable = emptyList<T>()
+  waitFor(message = message, timeout = timeout,
+          interval = interval,
+          errorMessage = if (errorMessage == null) {
+            null
+          }
+          else { it -> errorMessage.invoke(it) },
+          getter = getter,
+          checker = { all -> all.filter { checker(it) }.also { suitable = it }.isNotEmpty() }
+  )
+  return suitable
 }
 
 private fun logAwaitStart(message: String?, timeout: Duration) {
@@ -149,23 +152,23 @@ fun <T> waitFor(
   checker: (T) -> Boolean,
 ): T {
   logAwaitStart(message, timeout)
-  // TODO It's NOT a monotonic timer, so it can be a reason of some sporadic incorrect test timeouts.
-  //  use System.nanoTime instead.
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
+  val start = TimeSource.Monotonic.markNow()
   var result = getter()
-  while (endTime > System.currentTimeMillis() && checker(result).not()) {
+  // check each observation once: a checker that reads remote state can answer differently when asked again
+  var satisfied = checker(result)
+  while (!satisfied && start.elapsedNow() < timeout) {
     Thread.sleep(interval.inWholeMilliseconds)
     result = getter()
+    satisfied = checker(result)
   }
-  if (checker(result).not()) {
+  if (!satisfied) {
     throw WaitForException(timeout,
                            errorMessage = errorMessage?.invoke(result)
                                           ?: ("Failed: $message" + if (result !is Boolean) ". Actual: $result" else ""))
       .also { LOG.warn(it) }
   }
   else {
-    val passedTime = (System.currentTimeMillis() - startTime).milliseconds
+    val passedTime = start.elapsedNow()
     if (result !is Boolean || passedTime > 10.seconds) {
       logAwaitFinish(message, result, passedTime)
     }
@@ -228,9 +231,8 @@ fun <T> waitForOne(
   logAwaitStart(message, timeout)
   var resultList = getter()
   var filteredResultList = resultList.filter { checker(it) }
-  val startTime = System.currentTimeMillis()
-  val endTime = startTime + timeout.inWholeMilliseconds
-  while (endTime > System.currentTimeMillis() && filteredResultList.size != 1) {
+  val start = TimeSource.Monotonic.markNow()
+  while (start.elapsedNow() < timeout && filteredResultList.size != 1) {
     Thread.sleep(interval.inWholeMilliseconds)
     resultList = getter()
     filteredResultList = resultList.filter { checker(it) }
@@ -246,8 +248,7 @@ fun <T> waitForOne(
   }
   else {
     return filteredResultList.single().also {
-      val passedTime = (System.currentTimeMillis() - startTime).milliseconds
-      logAwaitFinish(message, it, passedTime)
+      logAwaitFinish(message, it, start.elapsedNow())
     }
   }
 }
