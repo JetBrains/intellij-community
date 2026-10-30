@@ -30,7 +30,7 @@ internal class BufferingPersistentChangeListStorage(
   private var storage: LocalHistoryStorage
 
   /**
-   * Write cache for the storage
+   * Write buffer for the storage
    */
   private val pendingChangeSets = ArrayDeque<ChangeSet>()
 

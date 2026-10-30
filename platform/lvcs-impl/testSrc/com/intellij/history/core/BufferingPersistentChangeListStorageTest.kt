@@ -194,7 +194,7 @@ internal class BufferingPersistentChangeListStorageTest {
     storage.writeNextSet(cs1)
     storage.writeNextSet(cs2)
 
-    // data should be readable from the in-memory write cache even without flushing
+    // data should be readable from the in-memory write buffer even without flushing
     val result = storage.iterate().asSequence().toList()
     assertThat(result).hasSize(2)
     assertThat(result[0].id).isEqualTo(cs2.id)
@@ -202,11 +202,11 @@ internal class BufferingPersistentChangeListStorageTest {
   }
 
   @Test
-  fun `flush moves data from write cache to persistent storage`() {
+  fun `flush moves data from write buffer to persistent storage`() {
     val cs = createChangeSet(storage.nextId(), 1000L)
     storage.writeNextSet(cs)
 
-    // before flush, data is in write cache; after reopen without flush it would be lost
+    // before flush, data is in write buffer; after reopen without flush it would be lost
     storage.flush()
 
     storage.close(false)
@@ -218,7 +218,7 @@ internal class BufferingPersistentChangeListStorageTest {
   }
 
   @Test
-  fun `unflushed write cache data is flushed on close without drop`() {
+  fun `unflushed write buffer data is flushed on close without drop`() {
     val cs = createChangeSet(storage.nextId(), 1000L)
     storage.writeNextSet(cs)
 
