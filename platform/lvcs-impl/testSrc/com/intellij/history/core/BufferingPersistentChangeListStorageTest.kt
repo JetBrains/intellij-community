@@ -378,6 +378,36 @@ internal class BufferingPersistentChangeListStorageTest {
       .containsExactly(changeSet.id)
   }
 
+  @Test
+  fun `storage keeps change sets in memory when it cannot be opened`() {
+    storage.close(/*drop: */true)
+    var openCount = 0
+    storage = createStorage {
+      openCount++
+      throw IOException("The test does not allow to open the storage")
+    }
+
+    val cs1 = createChangeSet(storage.nextId(), 1000L)
+    storage.writeNextSet(cs1)
+    val cs2 = createChangeSet(storage.nextId(), 2000L)
+    storage.writeNextSet(cs2)
+    storage.flush()
+
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The broken storage must keep the change sets in memory")
+      .extracting<Long> { it.id }
+      .containsExactly(cs2.id, cs1.id)
+    assertThat(openCount)
+      .describedAs("The broken storage must not try to open the storage again")
+      .isEqualTo(1)
+
+    storage.close(/*drop: */false)
+    storage = createStorage()
+    assertThat(storage.iterate().asSequence().toList())
+      .describedAs("The change sets of a broken storage must not survive a reopen")
+      .isEmpty()
+  }
+
   /** Returns the data file that contains the serialized change sets. */
   private fun storageDataPath(): Path = tempDir.resolve("storage/$STORAGE_FILE_NAME${AbstractStorage.DATA_EXTENSION}")
 

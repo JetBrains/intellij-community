@@ -29,7 +29,10 @@ internal class BufferingPersistentChangeListStorage(
   private val openStorage: (Path) -> LocalHistoryStorage = ::LocalHistoryStorage,
 ) : ChangeListStorage {
   //TODO RC: use mmapped storage instead of old-school? Less freezes, and also more reliability
-  private var storage: LocalHistoryStorage
+  /**
+   * The persistent storage. It is null when [isPersistentStorageBroken] is true.
+   */
+  private var storage: LocalHistoryStorage?
 
   /**
    * The write buffer for [storage].
@@ -75,7 +78,15 @@ internal class BufferingPersistentChangeListStorage(
   private var isPurged = false
 
   init {
-    storage = initStorage()
+    storage = try {
+      initStorage()
+    }
+    catch (e: Throwable) {
+      rethrowControlFlowException(e)
+      LocalHistoryLog.LOG.warn("cannot create storage, the change sets will be kept in memory", e)
+      isPersistentStorageBroken = true
+      null
+    }
   }
 
   @Synchronized
@@ -93,7 +104,7 @@ internal class BufferingPersistentChangeListStorage(
     val timestamp = System.currentTimeMillis()
 
     val storageTimestamp = try {
-      storage.getFSTimestamp()
+      storage?.fsTimestamp ?: -1L
     }
     catch (ex: Exception) {
       LocalHistoryLog.LOG.warn("cannot read storage timestamp", ex)
@@ -105,7 +116,8 @@ internal class BufferingPersistentChangeListStorage(
 
     synchronized(this) {
       if (isClosed) return
-      Disposer.dispose(storage)
+      storage?.let { Disposer.dispose(it) }
+      storage = null
       try {
         storageDir.delete()
         storage = initStorage()
@@ -113,11 +125,22 @@ internal class BufferingPersistentChangeListStorage(
       catch (ex: Throwable) {
         rethrowControlFlowException(ex)
         logError("cannot recreate storage", ex)
-        isPersistentStorageBroken = true
+        markPersistentStorageBroken()
       }
     }
 
     notifyStorageBroken()
+  }
+
+  /**
+   * Disposes [storage] and sets [isPersistentStorageBroken].
+   * Then [pendingChangeSets] keeps all change sets.
+   */
+  @Synchronized
+  private fun markPersistentStorageBroken() {
+    storage?.let { Disposer.dispose(it) }
+    storage = null
+    isPersistentStorageBroken = true
   }
 
   @Synchronized
@@ -131,7 +154,7 @@ internal class BufferingPersistentChangeListStorage(
       }
       isClosed = true
     }
-    Disposer.dispose(storage)
+    storage?.let { Disposer.dispose(it) }
     if (drop) {
       storageDir.delete()
     }
@@ -141,7 +164,7 @@ internal class BufferingPersistentChangeListStorage(
     purgeOnce()
     try {
       flushPending()
-      synchronized(this) { if (isPersistentStorageBroken) null else storage }?.force()
+      synchronized(this) { storage }?.force()
     }
     catch (e: IOException) {
       handleError(e, null)
@@ -154,7 +177,7 @@ internal class BufferingPersistentChangeListStorage(
 
   @Synchronized
   private fun readPrevious(id: Int, recursionGuard: IntSet): ChangeSetHolder? {
-    if (isPersistentStorageBroken) return null
+    val storage = storage ?: return null
     return storage.readPreviousBlock(id, recursionGuard, ::handleError)
   }
 
@@ -181,7 +204,8 @@ internal class BufferingPersistentChangeListStorage(
 
   @Synchronized
   private fun flushPending() {
-    while (!isPersistentStorageBroken) {
+    while (true) {
+      val storage = storage ?: return
       val changeSet = synchronized(pendingSetsLock) { pendingChangeSets.firstOrNull() } ?: return
 
       try {
@@ -194,7 +218,7 @@ internal class BufferingPersistentChangeListStorage(
         if (e is ClosedStorageException) return
         if (changeSet === lastFailedChangeSet) {
           logError("cannot write the change set ${changeSet.id} after the recovery, the change sets will be kept in memory", e)
-          isPersistentStorageBroken = true
+          markPersistentStorageBroken()
         }
         else {
           lastFailedChangeSet = changeSet
@@ -214,11 +238,11 @@ internal class BufferingPersistentChangeListStorage(
   @Synchronized
   override fun purge(period: Long, intervalBetweenActivities: Long) {
     // TODO: purge pendingChangeSets to guard against runaway memory consumption
-    if (isPersistentStorageBroken) return
     // unit tests often try to purge the changesets that were added in the same test
     if (unitTestMode) {
       flushPending()
     }
+    val storage = storage ?: return
 
     try {
       storage.purgeObsoleteChangeSets(period, intervalBetweenActivities)
