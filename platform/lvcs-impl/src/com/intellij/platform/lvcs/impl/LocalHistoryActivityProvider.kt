@@ -17,13 +17,15 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.BaseProjectDirectories.Companion.getBaseDirectories
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.platform.lvcs.impl.actions.isShowSystemLabelsEnabled
+import com.intellij.platform.lvcs.impl.actions.isShowAllLabelsEnabled
 import com.intellij.platform.lvcs.impl.diff.createDiffData
 import com.intellij.platform.lvcs.impl.diff.createSingleFileDiffRequestProducer
+import com.intellij.ui.JBColor
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Color
 
 internal const val USE_OLD_CONTENT = true
 
@@ -75,17 +77,20 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
   ) {
     var lastEventLabel: ChangeSet? = null
     val userLabels = mutableListOf<ChangeSet>()
-    val showSystemLabels = filter.showSystemLabels()
+    val showAllLabels = filter.showAllLabels()
 
     facade.collectChanges(path, ChangeAndPathProcessor(projectId, filter?.filePathFilter, affectedPaths::add) { changeSet ->
-      if (!showSystemLabels && changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
+      if (showAllLabels) {
+        activityItems.add(changeSet.toActivityItem(scope))
+        return@ChangeAndPathProcessor
+      }
+
+      if (changeSet.isSystemLabelOnly) return@ChangeAndPathProcessor
       if (changeSet.isLabelOnly) {
         if (changeSet.activityId == CommonActivity.UserLabel) {
           userLabels.add(changeSet)
-          if (showSystemLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = null
         } else {
-          if (showSystemLabels && lastEventLabel != null) activityItems.add(lastEventLabel!!.toActivityItem(scope))
           lastEventLabel = changeSet
         }
       }
@@ -105,10 +110,10 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     val result = mutableListOf<ActivityItem>()
     val paths = project.getBaseDirectories().map { gateway.getPathOrUrl(it) }
     val fileFilter = filter?.filePathFilter
-    val showSystemLabels = filter.showSystemLabels()
+    val showAllLabels = filter.showAllLabels()
 
     for (changeSet in facade.changes) {
-      if (!showSystemLabels && changeSet.isSystemLabelOnly) continue
+      if (!showAllLabels && changeSet.isSystemLabelOnly) continue
       if (changeSet.isLabelOnly) {
         if (fileFilter != null || !changeSet.changes.any { it.affectsProject(projectId) }) continue
       }
@@ -122,16 +127,14 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     return ActivityData(result).also { it.putUserData(AFFECTED_PATHS, paths) }
   }
 
-  override fun filterActivityList(scope: ActivityScope, data: ActivityData, filter: ActivityFilter?): Set<ActivityItem>? {
+  override fun filterActivityList(scope: ActivityScope, data: ActivityData, contentFilter: String?): Set<ActivityItem>? {
     val changeSets = data.getChangeSets()
-    if (changeSets.isEmpty()) return null
+    if (contentFilter.isNullOrEmpty() || changeSets.isEmpty()) return null
     val fileScope = scope as? ActivityScope.File ?: return null
-    val contentFilter = filter?.contentFilter
-    val showSystemLabels = filter.showSystemLabels()
 
     val filteredIds = mutableSetOf<Long>()
     val processor: (Long, String?) -> Boolean = { changeSetId, content ->
-      if (contentFilter == null || content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
+      if (content?.contains(contentFilter, true) == true) filteredIds.add(changeSetId)
       true
     }
 
@@ -144,14 +147,7 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
       facade.processContents(gateway, rootEntry, path, changeSets, before = USE_OLD_CONTENT, processor = processor)
     }
 
-    val result = mutableSetOf<ActivityItem>()
-    for (item in data.items) {
-      when {
-        !showSystemLabels && item is ChangeSetActivityItem && item.isSystemLabelOnly() -> continue
-        item is ChangeSetActivityItem && filteredIds.contains(item.id) -> result.add(item)
-      }
-    }
-    return result
+    return data.items.filterTo(mutableSetOf()) { (it is ChangeSetActivityItem) && filteredIds.contains(it.id) }
   }
 
   override fun loadDiffData(scope: ActivityScope, selection: ActivitySelection, diffMode: DirectoryDiffMode): ActivityDiffData? {
@@ -175,15 +171,19 @@ class LocalHistoryActivityProvider(val project: Project, private val gateway: Id
     val activityId = item.activityId
     val provider = activityId?.let { ACTIVITY_PRESENTATION_PROVIDER_EP.findFirstSafe { it.id == activityId.providerId } }
     val icon = provider?.getIcon(activityId.kind)
+    val color = provider?.getColor(activityId.kind)
     return when (item) {
-      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon)
-      is LabelActivityItem -> ActivityPresentation(item.name ?: "", icon, item.color)
+      is ChangeActivityItem -> ActivityPresentation(item.name ?: "", icon, color)
+      is LabelActivityItem -> {
+        ActivityPresentation(item.name ?: "", icon,
+                             color ?: item.color.takeIf { it != -1 }?.let { JBColor(it, Color(it).darker().rgb) })
+      }
       else -> null
     }
   }
 }
 
-private fun ActivityFilter?.showSystemLabels(): Boolean = this?.showSystemLabels ?: isShowSystemLabelsEnabled()
+private fun ActivityFilter?.showAllLabels(): Boolean = this?.showAllLabels ?: isShowAllLabelsEnabled()
 
 private fun LocalHistoryFacade.onChangeSetFinished(project: Project, gateway: IdeaGateway, scope: ActivityScope): Flow<Unit> {
   val condition: (ChangeSet) -> Boolean

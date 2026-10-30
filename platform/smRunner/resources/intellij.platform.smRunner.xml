@@ -38,6 +38,7 @@
                  key="test.console.verbose"/>
     <projectService serviceImplementation="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
     <projectSettings service="com.intellij.execution.testframework.sm.TestHistoryConfiguration"/>
+    <history.activityPresentationProvider implementation="com.intellij.execution.testframework.sm.runner.ui.TestActivityPresentationProvider"/>
   </extensions>
   <actions>
     <group id="SmRunTestGroup">

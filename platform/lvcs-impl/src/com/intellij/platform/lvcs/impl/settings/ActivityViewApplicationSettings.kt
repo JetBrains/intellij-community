@@ -17,7 +17,7 @@ internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<
 
   class State : BaseState() {
     var diffMode by enum(DirectoryDiffMode.WithLocal)
-    var showSystemLabels by property(true)
+    var showSystemLabels by property(false)
   }
 
   var diffMode: DirectoryDiffMode
@@ -27,7 +27,7 @@ internal class ActivityViewApplicationSettings : SimplePersistentStateComponent<
       eventDispatcher.multicaster.settingsChanged()
     }
 
-  var showSystemLabels: Boolean
+  var showAllLabels: Boolean
     get() = state.showSystemLabels
     set(value) {
       state.showSystemLabels = value

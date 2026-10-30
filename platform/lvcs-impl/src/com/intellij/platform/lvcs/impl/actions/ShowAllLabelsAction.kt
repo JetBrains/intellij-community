@@ -6,21 +6,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
-import com.intellij.platform.lvcs.impl.ui.ActivityViewDataKeys
 
-internal class ShowSystemLabelsAction: DumbAwareToggleAction() {
+internal class ShowAllLabelsAction: DumbAwareToggleAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return isShowSystemLabelsEnabled()
+    return isShowAllLabelsEnabled()
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
-    service<ActivityViewApplicationSettings>().showSystemLabels = state
-    e.getData(ActivityViewDataKeys.ACTIVITY_VIEW_MODEL)?.setSystemLabelsFiltered(state)
+    service<ActivityViewApplicationSettings>().showAllLabels = state
   }
 }
 
-internal fun isShowSystemLabelsEnabled(): Boolean =
-  service<ActivityViewApplicationSettings>().showSystemLabels
+internal fun isShowAllLabelsEnabled(): Boolean =
+  service<ActivityViewApplicationSettings>().showAllLabels

@@ -58,11 +58,7 @@ internal class ActivityItemRenderer(private val presentationFunction: (item: Act
 
     val cellBackgroundColor = if (isSelected) list.selectionBackground
     else if (index == ListHoverListener.getHoveredIndex(list)) JBUI.CurrentTheme.List.Hover.background(cellHasFocus)
-    else if (activityPresentation.color != -1) {
-      @Suppress("UseJBColor")
-      JBColor(activityPresentation.color, Color(activityPresentation.color).darker().rgb)
-    }
-    else null
+    else activityPresentation.color
 
     val rowComponent = createRowComponent(list, activityPresentation.text, activityPresentation.icon, value.timestamp,
                                           cellBackgroundColor, isSelected, isSelectionTop, isSelectionBottom)

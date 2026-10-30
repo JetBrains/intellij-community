@@ -17,7 +17,7 @@ import com.intellij.platform.lvcs.impl.ActivitySelection
 import com.intellij.platform.lvcs.impl.DirectoryDiffMode
 import com.intellij.platform.lvcs.impl.FilterKind
 import com.intellij.platform.lvcs.impl.LocalHistoryActivityProvider
-import com.intellij.platform.lvcs.impl.actions.isShowSystemLabelsEnabled
+import com.intellij.platform.lvcs.impl.actions.isShowAllLabelsEnabled
 import com.intellij.platform.lvcs.impl.hasMultipleFiles
 import com.intellij.platform.lvcs.impl.statistics.LocalHistoryCounter
 import com.intellij.util.EventDispatcher
@@ -49,7 +49,7 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
 
   private val filterFlow = MutableStateFlow<String?>(null)
 
-  private val filterSystemLabelsFlow = MutableStateFlow(isShowSystemLabelsEnabled())
+  private val filterAllLabelsFlow = MutableStateFlow(isShowAllLabelsEnabled())
 
   private val isVisibleFlow = MutableStateFlow(true)
 
@@ -58,16 +58,16 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
       combine(activityProvider.getActivityItemsChanged(activityScope).debounce(500),
               if (filterKind == FilterKind.FILE) filterFlow else flowOf(null),
               isVisibleFlow,
-              filterSystemLabelsFlow.debounce(100)) { _, filter, isVisible, showSystemLabels -> Triple(filter, isVisible, showSystemLabels) }
+              filterAllLabelsFlow.debounce(100)) { _, filter, isVisible, showAllLabels -> Triple(filter, isVisible, showAllLabels) }
         .filter { (_, isVisible, _) -> isVisible }
         .map { it.first to it.third }
-        .collect { (filter, showSystemLabels) ->
+        .collect { (filter, showAllLabels) ->
           thisLogger<ActivityViewModel>().debug("Loading activity items for $activityScope and filter $filter")
           withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onItemsLoadingStarted() }
           val activityData = withContext(Dispatchers.Default) {
             LocalHistoryCounter.logLoadItems(project, activityScope) {
               val pathFilter = HistoryPathFilter.create(filter, project)
-              activityProvider.loadActivityList(activityScope, ActivityFilter(pathFilter, null, showSystemLabels))
+              activityProvider.loadActivityList(activityScope, ActivityFilter(pathFilter, showAllLabels))
             }
           }
           withContext(Dispatchers.EDT) {
@@ -99,14 +99,12 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
 
     if (filterKind == FilterKind.CONTENT) {
       coroutineScope.launch {
-        combine(filterFlow.debounce(100),
-                filterSystemLabelsFlow.debounce(100),
-                activityItemsFlow) { ff, fs, r -> Triple(ff, fs, r) }
-          .collect { (filter, showSystemLabels, data) ->
+        combine(filterFlow.debounce(100), activityItemsFlow) { f, r -> f to r }
+          .collect { (filter, data) ->
             thisLogger<ActivityViewModel>().debug("Filtering activity items for $activityScope by $filter")
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStarted() }
             val result = LocalHistoryCounter.logFilter(project, activityScope) {
-              activityProvider.filterActivityList(activityScope, data, ActivityFilter(null, filter, showSystemLabels))
+              activityProvider.filterActivityList(activityScope, data, filter)
             }
             withContext(Dispatchers.EDT) { eventDispatcher.multicaster.onFilteringStopped(result) }
           }
@@ -129,8 +127,8 @@ internal class ActivityViewModel(private val project: Project, gateway: IdeaGate
     filterFlow.value = pattern
   }
 
-  fun setSystemLabelsFiltered(filtered: Boolean) {
-    filterSystemLabelsFlow.value = filtered
+  fun setAllLabelsShown(isAllLabelsShown: Boolean) {
+    filterAllLabelsFlow.value = isAllLabelsShown
   }
 
   @RequiresEdt
