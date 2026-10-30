@@ -38,6 +38,7 @@ class ExternalCoverageTest : CoverageIntegrationBaseTest() {
         VirtualFileManager.getInstance().asyncRefresh()
       }
 
+      Assert.assertSame(ijSuite, manager.currentSuitesBundle)
       val projectData = ijSuite.coverageData!!
       val classData = projectData.getClassData("foo.bar.BarClass")
       val lineData = classData.getLineData(9)

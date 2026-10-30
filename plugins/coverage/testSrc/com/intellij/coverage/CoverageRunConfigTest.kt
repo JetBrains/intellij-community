@@ -264,6 +264,7 @@ class CoverageRunConfigTest : CoverageIntegrationBaseTest() {
       val completedBundle = withTimeout(10_000.milliseconds) { completed.await() }
 
       Assert.assertSame(activeBundle, manager.currentSuitesBundle)
+      Assert.assertNull(CoverageViewManager.getInstance(project).getView(completedBundle))
       Assert.assertSame(isolatedAnnotator, completedBundle.getAnnotator(project))
       Assert.assertEquals(activeClassCoverage, activeAnnotator.classesCoverage)
       Assert.assertTrue(isolatedAnnotator.classesCoverage.isNotEmpty())

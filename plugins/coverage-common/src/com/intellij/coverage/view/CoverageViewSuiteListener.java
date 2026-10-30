@@ -15,6 +15,7 @@
  */
 package com.intellij.coverage.view;
 
+import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageSuite;
 import com.intellij.coverage.CoverageSuiteListener;
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -33,6 +34,7 @@ public class CoverageViewSuiteListener implements CoverageSuiteListener {
 
   @Override
   public void coverageDataCalculated(@NotNull CoverageSuitesBundle suitesBundle) {
+    if (!CoverageDataManager.getInstance(myProject).activeSuites().contains(suitesBundle)) return;
     if (suitesBundle.getCoverageEngine().createCoverageViewExtension(myProject, suitesBundle) != null) {
       CoverageViewManager.getInstance(myProject).createView(suitesBundle, shouldActivate(suitesBundle));
     }

@@ -362,7 +362,7 @@ public class CoverageView extends BorderLayoutPanel implements UiDataProvider, D
 
   @Override
   public void dispose() {
-    if (!myProject.isDisposed()) {
+    if (!myProject.isDisposed() && CoverageViewManager.getInstance(myProject).getView(mySuitesBundle) == this) {
       CoverageDataManager.getInstance(myProject).closeSuitesBundle(mySuitesBundle);
     }
   }
