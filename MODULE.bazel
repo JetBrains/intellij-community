@@ -293,7 +293,7 @@ use_repo(rules_rust, "rules_rust")
 rust_toolchains = use_extension("@rules_rs//rs/toolchains:module_extension.bzl", "toolchains")
 rust_toolchains.toolchain(
     edition = "2024",
-    version = "1.99.1",  # rust-toolchain-version-marker
+    version = "1.99.1",
 )
 use_repo(rust_toolchains, "default_rust_toolchains")
 
