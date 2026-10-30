@@ -28,6 +28,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.system.OS;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -368,7 +369,7 @@ public final class SystemShortcuts {
   private static final boolean DEBUG_SYSTEM_SHORTCUTS = Boolean.getBoolean("debug.system.shortcuts");
 
   private static @Nullable com.jetbrains.SystemShortcuts getJbrApi() {
-    if (!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm || !Registry.is("read.system.shortcuts")) {
+    if (!(OS.CURRENT == OS.macOS || OS.CURRENT == OS.OHOS) || !SystemInfo.isJetBrainsJvm || !Registry.is("read.system.shortcuts")) {
       return null;
     }
     return JBR.getSystemShortcuts();
