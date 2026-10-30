@@ -1,8 +1,8 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run.target
 
+import com.intellij.execution.target.EelTargetEnvironmentRequest
 import com.intellij.execution.target.TargetEnvironmentRequest
-import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.constantExplicit
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.platform.eel.EelDescriptor
@@ -16,10 +16,12 @@ import com.intellij.python.community.execService.impl.processLaunchers.getHelper
  */
 internal class HelpersAwareEelTargetEnvironmentRequest(private val eel: EelDescriptor) : HelpersAwareTargetEnvironmentRequest {
   /**
-   * The request is always local. The platform starts the process on the eel of its working directory.
-   * The debugger and the console check for a local request before they open their tunnel to the IDE.
+   * The request runs the process on [eel]. The platform, the paths, the upload and download volumes,
+   * and the port bindings are the ones of [eel], not of the IDE machine.
+   * For example, `PYTHONPATH` gets the paths and the separator of [eel] (PY-93388).
    */
-  override val targetEnvironmentRequest: TargetEnvironmentRequest = LocalTargetEnvironmentRequest()
+  override val targetEnvironmentRequest: TargetEnvironmentRequest =
+    EelTargetEnvironmentRequest(EelTargetEnvironmentRequest.Configuration.create(eel))
 
   override fun preparePyCharmHelpers(): PythonHelpersMappings = runBlockingMaybeCancellable {
     val eelApi = eel.toEelApi()
