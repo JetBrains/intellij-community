@@ -1,16 +1,12 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
-import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.tools.util.DiffDataKeys
-import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.ide.DataManager
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
@@ -64,8 +60,7 @@ class StructuralChangesPreview(
   private val cs: CoroutineScope,
 ) {
   private var pendingPreview: Job? = null
-  private var highlight: Disposable? = null
-  private var highlightOwner: Any? = null
+  private val dim = StructuralChangesPreviewDim(tree.project)
 
   @RequiresEdt
   fun install() {
@@ -73,7 +68,7 @@ class StructuralChangesPreview(
     tree.addSelectionListener(Runnable { selectionChanged() }, disposable)
     val modelListener = PropertyChangeListener {
       // Only a shown or a pending preview follows the refresh, so a closed diff tab stays closed.
-      val restart = pendingPreview?.isActive == true || highlight != null
+      val restart = pendingPreview?.isActive == true || dim.isShown
       cancelPendingJob()
       if (restart) SwingUtilities.invokeLater { treeModelUpdated() }
     }
@@ -127,7 +122,7 @@ class StructuralChangesPreview(
   @RequiresEdt
   fun cancelPendingPreview() {
     cancelPendingJob()
-    clearHighlight()
+    dim.clear()
   }
 
   @RequiresEdt
@@ -141,7 +136,7 @@ class StructuralChangesPreview(
   private fun treeModelUpdated() {
     if (tree.isModelUpdateInProgress) return
     val node = tree.selectionPath?.lastPathComponent as? ChangesBrowserNode<*>
-    if (highlight != null && node != null && node.userObject == highlightOwner) return
+    if (dim.isShown && node != null && node.userObject == dim.owner) return
     selectionChanged()
   }
 
@@ -153,7 +148,7 @@ class StructuralChangesPreview(
     cancelPendingJob()
     val node = tree.selectionPath?.lastPathComponent as? ChangesBrowserNode<*>
     if (node == null || !canPreviewSelection()) {
-      clearHighlight()
+      dim.clear()
       return
     }
     val model = tree.model
@@ -161,7 +156,7 @@ class StructuralChangesPreview(
     pendingPreview = cs.launch(Dispatchers.EDT + modality.asContextElement()) {
       delay(Registry.intValue("ide.autoscroll.to.source.delay", 100).milliseconds)
       val replaced = isCurrentSelection(model, node) && preview(node, model)
-      if (!replaced) clearHighlight()
+      if (!replaced) dim.clear()
     }
   }
 
@@ -177,22 +172,8 @@ class StructuralChangesPreview(
   private suspend fun showDiff(preview: EditorTabDiffPreview, node: ChangesBrowserNode<*>, model: TreeModel): Boolean {
     if (!preview.isPreviewOpen()) preview.openPreview(false)
     val lines = (node as? ChangesBrowserStructuralNode<*>)?.getDiffLines() ?: return false
-    val viewer = awaitViewer(preview, node.diffFile(), model, node) ?: return false
-    return replaceHighlight(node.userObject) { highlighter()?.highlightDiff(viewer, lines) }
-  }
-
-  /** Waits until the preview shows the file of the node and finishes its diff. The preview follows the tree selection on its own. */
-  private suspend fun awaitViewer(preview: EditorTabDiffPreview, file: VirtualFile?, model: TreeModel, node: ChangesBrowserNode<*>): DiffViewerBase? {
-    val highlighter = highlighter() ?: return null
-    repeat(VIEWER_WAIT_ATTEMPTS) {
-      if (!isCurrentSelection(model, node)) return null
-      val viewer = highlighter.findDiffViewer(preview.previewFile)
-      if (viewer != null && !viewer.hasPendingRediff() && (file == null || viewer.request.contents.any { (it as? DocumentContent)?.highlightFile == file })) {
-        return viewer
-      }
-      delay(VIEWER_WAIT_STEP)
-    }
-    return null
+    // The preview follows the tree selection on its own.
+    return dim.showInDiff(preview.previewFile, node.diffFile(), lines, node.userObject) { isCurrentSelection(model, node) }
   }
 
   private suspend fun showSource(node: ChangesBrowserNode<*>, model: TreeModel): Boolean {
@@ -208,7 +189,7 @@ class StructuralChangesPreview(
     coroutineScope { requestNavigate(tree.project, preview.request, options, coroutineScope = this).await() }
     val target = preview.highlightTarget
     if (target == null || !isCurrentSelection(model, node)) return false
-    return replaceHighlight(owner = null) { highlighter()?.highlight(target.file, target.range, target.modificationStamp) }
+    return dim.replace(owner = null) { it.highlight(target.file, target.range, target.modificationStamp) }
   }
 
   @RequiresEdt
@@ -250,42 +231,6 @@ class StructuralChangesPreview(
     return HighlightTarget(file, range, document.modificationStamp)
   }
 
-  /** Only the frontend module registers the highlighter. A process without that module shows the preview without the dim. */
-  private fun highlighter(): StructuralChangesPreviewHighlighter? = tree.project.serviceOrNull()
-
-  /** Keeps the highlight until it ends. A closed diff tab or input in the editor ends it, and then the preview counts as closed. */
-  @RequiresEdt
-  private fun keepHighlight(handle: Disposable, owner: Any?) {
-    highlight = handle
-    highlightOwner = owner
-    Disposer.register(handle) {
-      if (highlight === handle) {
-        highlight = null
-        highlightOwner = null
-      }
-    }
-  }
-
-  /**
-   * Ends the previous dim and starts the new one in the same event, so the editor never paints a frame without a dim in between. The new dim
-   * starts after the end of the previous one, because both can wrap the same divider painter.
-   */
-  @RequiresEdt
-  private fun replaceHighlight(owner: Any?, create: () -> Disposable?): Boolean {
-    clearHighlight()
-    val handle = create() ?: return false
-    keepHighlight(handle, owner)
-    return true
-  }
-
-  @RequiresEdt
-  private fun clearHighlight() {
-    val previous = highlight
-    highlight = null
-    highlightOwner = null
-    previous?.let { Disposer.dispose(it) }
-  }
-
   private fun ChangesBrowserNode<*>.diffFile(): VirtualFile? = when (this) {
     is ChangesBrowserStructuralNode<*> -> getPreviewFile()
     is ChangesBrowserChangeNode -> userObject.afterRevision?.file?.virtualFile
@@ -295,9 +240,4 @@ class StructuralChangesPreview(
   private data class PreviewRequest(val request: NavigationRequest, val highlightTarget: HighlightTarget?)
 
   private data class HighlightTarget(val file: VirtualFile, val range: TextRange, val modificationStamp: Long)
-
-  private companion object {
-    const val VIEWER_WAIT_ATTEMPTS = 100
-    val VIEWER_WAIT_STEP = 50.milliseconds
-  }
 }
