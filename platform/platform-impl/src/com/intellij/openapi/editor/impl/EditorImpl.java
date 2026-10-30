@@ -421,7 +421,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private final PropertyChangeSupport myPropertyChangeSupport = new PropertyChangeSupport(this);
   private final EditorCopyPastProvider myEditable = new EditorCopyPastProvider(this);
 
-  private @NotNull EditorColorSchemeDelegate myScheme;
+  /**
+   * Volatile, because readers on other threads ask the scheme, for example the metrics of {@link EditorView}.
+   */
+  private volatile @NotNull EditorColorSchemeDelegate myScheme;
   private final @NotNull SelectionModelImpl mySelectionModel;
   private final @NotNull EditorMarkupModelImpl myMarkupModel;
   private final @NotNull EditorFilteringMarkupModelEx myEditorFilteringMarkupModel;
