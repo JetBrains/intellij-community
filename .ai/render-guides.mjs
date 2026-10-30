@@ -262,8 +262,8 @@ function isReferenceCandidate(word) {
   if (!word.includes("/")) {
     return false;
   }
-  // A URL, an external Bazel repository, a glob, and a placeholder all name nothing in this checkout.
-  return !/^(?:https?:|@)/.test(word) && !word.includes("*") && !word.includes("<") && !word.includes(">");
+  // A URL, an external Bazel repository, a home path, a glob, and a placeholder all name nothing in this checkout.
+  return !/^(?:https?:|@|~\/)/.test(word) && !word.includes("*") && !word.includes("<") && !word.includes(">");
 }
 
 /**

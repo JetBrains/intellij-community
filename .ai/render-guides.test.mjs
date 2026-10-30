@@ -129,10 +129,11 @@ describe('render-guides skills', () => {
     )
   })
 
-  it('skips a URL, a glob, a placeholder and a per-developer file', async () => {
+  it('skips a URL, a home path, a glob, a placeholder and a per-developer file', async () => {
     const text = [
       '`https://example.com/nope`',
       '`@community//nope:nope`',
+      '`~/nope/SKILL.md`',
       '`build/eap/*.py`',
       '`<path-to-iml>/nope`',
       '`.ai/local.md`',
