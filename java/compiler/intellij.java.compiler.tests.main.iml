@@ -7,18 +7,18 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.ant.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.devkit.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.compiler.heavy.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.guiForms.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.maven.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.langInjection.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.ant.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler.heavy.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.compiler.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.maven.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.serialization.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.langInjection.tests" scope="RUNTIME" />
   </component>
 </module>

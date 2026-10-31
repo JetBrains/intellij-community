@@ -7,20 +7,20 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.completion.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.decompiler.engine.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.mcp.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.decompiler.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.featuresTrainer.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.ide.customization.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.ide.customization.backend.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.rareRefactorings.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.structuralSearch.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.lombok.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.completion.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.decompiler.engine.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.mcp.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.decompiler.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.featuresTrainer.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.ide.customization.backend.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.rareRefactorings.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.structuralSearch.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.lombok.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="RUNTIME" />
   </component>
 </module>

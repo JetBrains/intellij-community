@@ -7,9 +7,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.uast.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.groovy.compiler.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.uast.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.groovy.compiler.tests" scope="RUNTIME" />
   </component>
 </module>

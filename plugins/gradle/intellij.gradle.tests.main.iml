@@ -7,21 +7,21 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.backend.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.java.toml.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.java.coverage.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.properties.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.native.tooling.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.completion.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.completion.toml.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.toolingProxy.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.codeInsight.groovy.backend.tests.integration" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.codeInsight.properties.backend.tests.integration" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.gradle.codeInsight.toml.backend.tests.integration" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.bootstrap.coroutine" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.backend.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.toml.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.java.coverage.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.jps.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.properties.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.native.tooling.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.completion.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.completion.toml.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingProxy.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.groovy.backend.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.properties.backend.tests.integration" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.gradle.codeInsight.toml.backend.tests.integration" scope="RUNTIME" />
   </component>
 </module>

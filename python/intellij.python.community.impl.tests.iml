@@ -30,8 +30,8 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.testRunner.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="RUNTIME" />
-    <orderEntry type="library" scope="TEST" name="Ant" level="project" />
-    <orderEntry type="module-library" scope="TEST">
+    <orderEntry type="library" scope="RUNTIME" name="Ant" level="project" />
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="ml-completion-prev-exprs-models" type="repository">
         <properties maven-id="completion.ml.python.features:ml-completion-prev-exprs-models:1.11">
           <verification>
@@ -54,9 +54,9 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.jcef" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.jna" scope="TEST" />
-    <orderEntry type="module-library" scope="TEST">
+    <orderEntry type="module" module-name="intellij.libraries.jcef" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="RUNTIME" />
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="completion-ranking-python-with-full-line" type="repository">
         <properties maven-id="org.jetbrains.intellij.deps.completion:completion-ranking-python-with-full-line:0.2.1">
           <verification>
@@ -75,8 +75,8 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.libraries.fus.ap.validation" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.fus.ap.validation" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml.plugin" scope="RUNTIME" />
   </component>
