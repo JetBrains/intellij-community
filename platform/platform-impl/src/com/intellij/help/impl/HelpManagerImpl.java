@@ -12,6 +12,7 @@ import com.intellij.openapi.help.HelpTarget;
 import com.intellij.openapi.help.HelpTargetProvider;
 import com.intellij.openapi.help.KeymapHelpIdPresenter;
 import com.intellij.openapi.help.WebHelpProvider;
+import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import org.jetbrains.annotations.ApiStatus;
@@ -79,8 +80,8 @@ public class HelpManagerImpl extends HelpManager {
     if (urlSupplier == null) return null;
     var url = urlSupplier.invoke(requireNonNullElse(id, "top"));
 
-    var activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
-    if (activeKeymap != null && activeKeymap.canModify()) {
+    Keymap activeKeymap = KeymapManagerEx.getInstanceEx().getActiveKeymap();
+    if (activeKeymap.canModify()) {
       // if the user has a custom keymap, we need to show the predefined keymap it was inherited from
       activeKeymap = activeKeymap.getParent();
     }
