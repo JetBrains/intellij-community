@@ -1,7 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 import {describe, it} from 'node:test'
-import {equal, ok, rejects} from 'node:assert/strict'
+import {equal, ok, rejects, throws} from 'node:assert/strict'
 import {existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {dirname, join} from 'node:path'
@@ -9,11 +9,14 @@ import {fileURLToPath} from 'node:url'
 import {
   applyClaudePermissions,
   applyEditionBlocks,
+  applyGeneratedAttributes,
   assertReferencesResolve,
   applyPartials,
   buildCodexRules,
+  listWholeOutputs,
   loadToolPermissions,
   renderAgentPermissionOutputs,
+  renderGitAttributesOutputs,
   renderGuideOutputs,
   renderSkills,
   resolveCommunityDir,
@@ -268,6 +271,61 @@ describe('render-guides skills', () => {
 
     const emptied = JSON.parse(applyClaudePermissions(settingsText, {...permissions, additionalDirectories: []}))
     ok(!('additionalDirectories' in emptied.permissions), 'an empty list should drop the key')
+  })
+
+  it('keeps the hand-kept lines of a .gitattributes around its generated block', () => {
+    const begin = '# BEGIN community/.ai/render-guides.mjs: the files it writes whole; rerun it instead of editing this block'
+    const end = '# END community/.ai/render-guides.mjs'
+    const handKept = '# keep this the first line in the file\n*\ttext=auto eol=lf\n'
+
+    const appended = applyGeneratedAttributes(handKept, ['AGENTS.md', 'skills/testing/'])
+    equal(appended, `${handKept}\n${begin}\n/AGENTS.md linguist-generated\n/skills/testing/** linguist-generated\n${end}\n`)
+    equal(applyGeneratedAttributes(appended, ['AGENTS.md', 'skills/testing/']), appended, 'a second render should not churn')
+
+    const withLineBelow = `${appended}*.ps1 -text\n`
+    equal(
+      applyGeneratedAttributes(withLineBelow, ['opencode.json']),
+      `${handKept}\n${begin}\n/opencode.json linguist-generated\n${end}\n*.ps1 -text\n`,
+      'the block should be rewritten in place',
+    )
+    equal(applyGeneratedAttributes(appended, []), handKept, 'an empty list should remove the block')
+    equal(applyGeneratedAttributes('', ['INDEX.md']), `${begin}\n/INDEX.md linguist-generated\n${end}\n`)
+
+    throws(() => applyGeneratedAttributes(`${begin}\n`, ['AGENTS.md']), /block of render-guides.mjs is broken/)
+    throws(() => applyGeneratedAttributes('', ['a skill/']), /special character/)
+  })
+
+  it('marks only the outputs the renderer writes whole', async () => {
+    const repoRoot = join(__dirname, '..', '..')
+    const paths = await listWholeOutputs()
+
+    ok(paths.includes('AGENTS.md'), 'the guide should be marked')
+    ok(paths.includes('community/.agents/skills/INDEX.md'), 'the community skill index should be marked')
+    ok(paths.includes('.claude/skills/testing/'), 'a skill stub directory should be marked')
+    ok(!paths.some(path => path.startsWith('community/.agents/skills/') && path.endsWith('/')), 'a skill source should not be marked')
+    ok(!paths.includes('.claude/settings.json'), 'settings.json is hand-edited beside its permission arrays')
+    for (const path of paths) {
+      ok(existsSync(join(repoRoot, path)), `${path} should exist in the checkout`)
+      if (path.endsWith('/')) {
+        ok(readFileSync(join(repoRoot, path, 'SKILL.md'), 'utf8').includes(generatedSkillMarker), `${path} should be a generated stub`)
+      }
+    }
+    if (existsSync(join(repoRoot, '.ultimate.root.marker'))) {
+      for (const output of ['community/AGENTS.md', '.codex/rules/default.rules', 'opencode.json']) {
+        ok(paths.includes(output), `${output} should be marked`)
+      }
+    }
+  })
+
+  it('keeps committed .gitattributes blocks up to date', async () => {
+    const repoRoot = join(__dirname, '..', '..')
+    const renderedOutputs = await renderGitAttributesOutputs()
+
+    ok(renderedOutputs.has('.claude/skills/.gitattributes'), 'a skill tree should hold the lines of its stubs')
+    for (const [output, expectedContent] of renderedOutputs) {
+      const actualContent = existsSync(join(repoRoot, output)) ? readFileSync(join(repoRoot, output), 'utf8') : ''
+      equal(actualContent, expectedContent, `${output} is stale; run ./bazel.cmd run //.ai:render-guides`)
+    }
   })
 
   // NOTE: The committed-skill-output freshness / collision check lives in the Kotlin test

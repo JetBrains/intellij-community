@@ -32,6 +32,7 @@ AI_GUIDE_EDITION=ULTIMATE  ./bazel.cmd run //.ai:render-guides
 - `opencode.json` (from `.mcp.json`)
 - Skill stubs in `.agents/skills/*`, `.claude/skills/*`, `community/.claude/skills/*`
 - Tool-permission rules (ultimate only): the `permissions` arrays of `.claude/settings.json` and all of `.codex/rules/default.rules`, both from `tool-permissions.json`
+- `linguist-generated` lines for the outputs it writes whole, so a review folds them: a marked block at the end of `.gitattributes` and `community/.gitattributes`, and a `.gitattributes` in each skill stub tree (`.agents/skills`, `.claude/skills`, `community/.claude/skills`) with a line per stub directory. Git matches each path against every pattern above it, so the stub lines stay in their tree, where they cost nothing for the rest of the monorepo. `.claude/settings.json` gets no line: the renderer rewrites only its permission arrays, and its hand-written keys must stay visible in a review.
 
 ## High-level render pipeline
 

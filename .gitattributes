@@ -3,3 +3,8 @@
 
 # Do not touch line endings, but show diff
 .idea/libraries/rd* -text
+
+# BEGIN community/.ai/render-guides.mjs: the files it writes whole; rerun it instead of editing this block
+/.agents/skills/INDEX.md linguist-generated
+/AGENTS.md linguist-generated
+# END community/.ai/render-guides.mjs
