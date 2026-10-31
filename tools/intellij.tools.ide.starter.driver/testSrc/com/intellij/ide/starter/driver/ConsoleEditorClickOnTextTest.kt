@@ -70,7 +70,7 @@ class ConsoleEditorClickOnTextTest {
     Starter.newContext(IdeInfo.IdeaUltimate) {
       project = LocalProjectInfo(projectDir)
     }.copyWithProjectSdk(jdk17.toSdk()).runIdeWithDriver(pauseOnIndicators = 5.minutes).useDriverAndCloseIde {
-      openFile(fileToOpen)
+      openFile(fileToOpen, waitForCodeAnalysis = false)
       ideFrame(action)
     }
   }
