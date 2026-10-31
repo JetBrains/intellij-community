@@ -224,6 +224,11 @@ private fun runOnProjectInit(project: Project) {
 
   fun createAlarm(): Alarm = Alarm(project.service<CodeAnalysisStateListener>().cs, Alarm.ThreadToUse.SWING_THREAD)
 
+  // the command classes load here, not on the EDT when the runner resolves the first script line
+  for (provider in CommandProvider.EP_NAME.extensionList) {
+    provider.commands
+  }
+
   if (shouldOpenInSmartMode(project)) {
     runScriptWhenInitializedAndIndexed(project, createAlarm())
   }
