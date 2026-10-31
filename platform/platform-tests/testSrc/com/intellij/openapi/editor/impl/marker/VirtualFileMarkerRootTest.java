@@ -127,7 +127,7 @@ final class VirtualFileMarkerRootTest {
 
     assertTrue(updateTask.get(10, TimeUnit.SECONDS));
     attachmentTask.get(10, TimeUnit.SECONDS);
-    assertTrue(document.getRangeMarkers().rootStore().containsMarker(document.getCore().snapshot(), handle));
+    assertTrue(document.getRangeMarkers().rootStore().root(document.getCore().snapshot()).isValid(handle));
   }
 
   private static void waitUntilBlockedOrCompleted(Thread thread, Future<?> completion) {

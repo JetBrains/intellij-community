@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl.marker
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.util.Processor
+import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 
 /**
@@ -41,9 +42,6 @@ interface PMarkerRoot {
    */
   fun isEmpty(): Boolean
 
-  /** Returns whether this root retains a valid, invalid, or removed state for [handle]. */
-  fun containsMarker(handle: SnapshotMarkerReference<*>): Boolean
-
   /** Returns whether [handle] is valid in this root without resolving its offsets. */
   fun isValid(handle: SnapshotMarkerReference<*>): Boolean
 
@@ -55,6 +53,7 @@ interface PMarkerRoot {
   fun resolve(handle: SnapshotMarkerReference<*>): Long
 
   /** Returns the invalidation reason, or `null` when the marker is valid or absent. */
+  @TestOnly
   fun invalidationReason(handle: SnapshotMarkerReference<*>): String?
 
   /**
@@ -147,6 +146,7 @@ interface PMarkerRoot {
    * Removes [handles] and retains absent tombstones, as [remove] does.
    * Repeated or absent handles have no effect. An unchanged batch returns the receiver.
    */
+  @TestOnly
   fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot
 
   /**

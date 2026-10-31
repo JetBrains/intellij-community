@@ -1284,7 +1284,7 @@ public class RangeMarkerTest {
     });
     if (snapshotMarker) {
       var documentImpl = (DocumentImpl)document;
-      assertFalse(documentImpl.getRangeMarkers().rootStore().containsMarker(documentImpl.getCore().snapshot(), handle));
+      assertFalse(documentImpl.getRangeMarkers().rootStore().purgeMany(documentImpl.getCore().snapshot(), List.of(handle)));
     }
   }
 

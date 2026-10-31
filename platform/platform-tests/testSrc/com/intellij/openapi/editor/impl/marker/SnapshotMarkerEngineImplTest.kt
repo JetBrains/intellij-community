@@ -839,7 +839,7 @@ class SnapshotMarkerEngineImplTest {
     })
 
     assertEquals(listOf(first, last), visited)
-    assertFalse(rootStore.containsMarker(snapshot, (cleared as SnapshotRangeMarkerImpl).markerHandle))
+    assertFalse(rootStore.purgeMany(snapshot, listOf((cleared as SnapshotRangeMarkerImpl).markerHandle)))
     assertFalse(disposed.isValid)
   }
 
@@ -997,12 +997,12 @@ class SnapshotMarkerEngineImplTest {
   fun `garbage collected marker is purged from the current root`() {
     val fixture = Fixture("abcdef")
     val weakMarker = createWeakMarker(fixture, startOffset = 2, endOffset = 4)
-    assertTrue(currentRootContains(fixture, weakMarker.handle))
+    assertTrue(PMarkerResolution.isValid(currentRootResolution(fixture, weakMarker.handle)))
 
     gcMarkerAndWaitForProcessQueues(weakMarker)
 
     assertEquals(0, countOverlappingMarkers(fixture.rootStore, fixture.initialSnapshot, startOffset = 0, endOffset = 6))
-    assertFalse(currentRootContains(fixture, weakMarker.handle))
+    assertEquals(PMarkerResolution.ABSENT, currentRootResolution(fixture, weakMarker.handle))
   }
 
   @Test
@@ -1023,7 +1023,7 @@ class SnapshotMarkerEngineImplTest {
     assertTrue(markerReferences.getValue(firstMarker.markerHandle).enqueue())
 
     assertTrue(SnapshotMarkerEngineImpl.processQueue())
-    assertFalse(rootStore.containsMarker(snapshot, firstMarker.markerHandle))
+    assertFalse(rootStore.purgeMany(snapshot, listOf(firstMarker.markerHandle)))
   }
 
   @ParameterizedTest
@@ -1059,8 +1059,8 @@ class SnapshotMarkerEngineImplTest {
     for ([index, document] in documents.withIndex()) {
       val root = document.rangeMarkers.rootStore().rootReference(document.core.snapshot()).get()
       for (marker in markers[index]) {
-        assertFalse(root.containsMarker(marker.markerHandle))
-        assertTrue(originalRoots[index].containsMarker(marker.markerHandle))
+        assertSame(root, root.purgeMany(listOf(marker.markerHandle)))
+        assertTrue(originalRoots[index].isValid(marker.markerHandle))
       }
     }
     assertFalse(SnapshotMarkerEngineImpl.processQueue())
@@ -1108,10 +1108,10 @@ class SnapshotMarkerEngineImplTest {
 
       assertEquals(listOf(markers[2].id), visited)
       assertEquals(listOf(listOf(markers[0].markerHandle, markers[1].markerHandle)), batches)
-      assertFalse(rootStore.containsMarker(snapshot, markers[0].markerHandle))
-      assertFalse(rootStore.containsMarker(snapshot, markers[1].markerHandle))
-      assertTrue(rootStore.containsMarker(snapshot, markers[2].markerHandle))
-      assertTrue(rootStore.containsMarker(snapshot, markers[3].markerHandle))
+      assertFalse(rootStore.purgeMany(snapshot, listOf(markers[0].markerHandle, markers[1].markerHandle)))
+      val currentRoot = checkNotNull(rootStore.root(snapshot))
+      assertTrue(currentRoot.isValid(markers[2].markerHandle))
+      assertTrue(currentRoot.isValid(markers[3].markerHandle))
     }
   }
 
@@ -1166,7 +1166,7 @@ class SnapshotMarkerEngineImplTest {
     GCUtil.tryGcSoftlyReachableObjects()
 
     assertNotNull(strongMarker.get())
-    assertTrue(rootStore.containsMarker(child, checkNotNull(strongMarker.get()).markerHandle))
+    assertTrue(checkNotNull(rootStore.root(child)).isValid(checkNotNull(strongMarker.get()).markerHandle))
   }
 
   @Test
@@ -1177,19 +1177,19 @@ class SnapshotMarkerEngineImplTest {
     gcMarkerAndWaitForProcessQueues(weakMarker)
     fixture.document.insertString(0, "X")
 
-    assertFalse(currentRootContains(fixture, weakMarker.handle))
+    assertEquals(PMarkerResolution.ABSENT, currentRootResolution(fixture, weakMarker.handle))
   }
 
   @Test
   fun `garbage collected invalid marker is purged`() {
     val fixture = Fixture("abcdef")
     val weakMarker = createWeakInvalidMarker(fixture, 2, 4)
-    assertTrue(currentRootContains(fixture, weakMarker.handle))
+    assertFalse(PMarkerResolution.isAbsent(currentRootResolution(fixture, weakMarker.handle)))
 
     gcMarkerAndWaitForProcessQueues(weakMarker)
     assertEquals(0, countOverlappingMarkers(fixture.rootStore, fixture.document.core.snapshot(), startOffset = 0, endOffset = 2))
 
-    assertFalse(currentRootContains(fixture, weakMarker.handle))
+    assertEquals(PMarkerResolution.ABSENT, currentRootResolution(fixture, weakMarker.handle))
   }
 
   private fun gcMarkerAndWaitForProcessQueues(weakMarker: WeakMarker) {
@@ -1222,11 +1222,11 @@ class SnapshotMarkerEngineImplTest {
   fun `root purge removes state while disposal removal retains it`() {
     val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, nonGreedySpec(), flavorFlags = 0)
 
-    val removed = root.remove(handle(1)) as PMarkerRootImpl
-    val purged = root.purgeMany(listOf(handle(1))) as PMarkerRootImpl
+    val removed = root.remove(handle(1))
+    val purged = root.purgeMany(listOf(handle(1)))
 
-    assertTrue(removed.containsMarker(handle(1)))
-    assertFalse(purged.containsMarker(handle(1)))
+    assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(handle(1)))
+    assertEquals(root.resolve(handle(1)), purged.mergeValidMarkersFrom(root).resolve(handle(1)))
   }
 
   @Test
@@ -1700,8 +1700,8 @@ class SnapshotMarkerEngineImplTest {
     return entries.mapTo(mutableListOf()) { label(it.handle) }
   }
 
-  private fun currentRootContains(fixture: Fixture, handle: SnapshotMarkerReference<*>): Boolean =
-    fixture.rootStore.containsMarker(fixture.document.core.snapshot(), handle)
+  private fun currentRootResolution(fixture: Fixture, handle: SnapshotMarkerReference<*>): Long =
+    fixture.rootStore.root(fixture.document.core.snapshot())?.resolve(handle) ?: PMarkerResolution.ABSENT
 
   private fun createWeakMarker(fixture: Fixture, startOffset: Int, endOffset: Int): WeakMarker {
     val marker = SnapshotMarkerEngineImpl.createRangeMarker(

@@ -38,9 +38,6 @@ open class CompoundPMarkerRoot private constructor(
                      linesInRangeRoot.restoreEntries(entries.filter { linesInRangeRoot.isValid(it.handle) }))
   }
 
-  override fun containsMarker(handle: SnapshotMarkerReference<*>): Boolean =
-    exactRangeRoot.containsMarker(handle) || linesInRangeRoot.containsMarker(handle)
-
   override fun isEmpty(): Boolean = exactRangeRoot.isEmpty() && linesInRangeRoot.isEmpty()
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean = exactRangeRoot.isValid(handle) || linesInRangeRoot.isValid(handle)
@@ -51,6 +48,7 @@ open class CompoundPMarkerRoot private constructor(
 
     return linesInRangeRoot.resolve(handle)
   }
+  @TestOnly
 
   override fun invalidationReason(handle: SnapshotMarkerReference<*>): String? {
     return if (PMarkerResolution.isAbsent(exactRangeRoot.resolve(handle))) {
@@ -131,6 +129,7 @@ open class CompoundPMarkerRoot private constructor(
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot {
     return updateMarker { it.remove(handle) }
   }
+  @TestOnly
 
   override fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
     return withRoots(exactRangeRoot.removeMany(handles), linesInRangeRoot.removeMany(handles))

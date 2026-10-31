@@ -8,7 +8,6 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
@@ -148,8 +147,8 @@ class PMarkerRootBatchTest {
     assertEquivalent(individuallyRemoved, removed, (1L..48L).toList())
     assertEquivalent(individuallyRemoved, purged, (1L..48L).toList(), ids.toSet())
     assertEquivalent(individuallyRemoved, removed.purgeMany(ids.map(::handle)), (1L..48L).toList(), ids.toSet())
-    assertTrue((removed as PMarkerRootImpl).containsMarker(handle(24)))
-    assertFalse((purged as PMarkerRootImpl).containsMarker(handle(24)))
+    assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(handle(24)))
+    assertEquals(root.resolve(handle(24)), purged.mergeValidMarkersFrom(root).resolve(handle(24)))
     assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle(24)))
     assertEquals(PMarkerResolution.ABSENT, purged.resolve(handle(24)))
     assertEquals(before, resolvedEntries(root))
@@ -207,7 +206,7 @@ class PMarkerRootBatchTest {
     for (invalid in invalidEntries) {
       assertThrows(IllegalArgumentException::class.java) { root.insertMany(listOf(valid, invalid)) }
       assertEquals(before, resolvedEntries(root))
-      assertFalse((root as PMarkerRootImpl).containsMarker(handle(100)))
+      assertEquals(PMarkerResolution.ABSENT, root.resolve(handle(100)))
     }
   }
 
@@ -299,8 +298,6 @@ class PMarkerRootBatchTest {
       assertEquals(if (id in purgedIds) null else expected.invalidationReason(handle(id)),
                    actual.invalidationReason(handle(id)),
                    "Marker $id")
-      val expectedContains = id !in purgedIds && (expected as PMarkerRootImpl).containsMarker(handle(id))
-      assertEquals(expectedContains, (actual as PMarkerRootImpl).containsMarker(handle(id)), "Marker $id")
     }
     for (offset in -1..32) {
       assertEquals(expected.getPrefixAggregate(offset), actual.getPrefixAggregate(offset), "Offset $offset")

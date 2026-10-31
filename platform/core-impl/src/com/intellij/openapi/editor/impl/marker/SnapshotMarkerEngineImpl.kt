@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Processor
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 
 /**
@@ -215,7 +216,8 @@ object SnapshotMarkerEngineImpl : SnapshotMarkerEngine {
   }
 
   /** Returns the disposal or invalidation reason, or `null` when the marker is valid or absent. */
-    fun invalidationReason(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): String? {
+  @TestOnly
+  fun invalidationReason(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): String? {
     return if (marker.isDisposed()) DISPOSED_REASON else root.invalidationReason(marker.markerHandle)
   }
 

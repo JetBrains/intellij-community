@@ -80,9 +80,7 @@ internal class SnapshotFocusRegionStorageTest {
     fun assertPurged() {
       assertThat(batches).hasSize(1)
       assertThat(batches.single()).containsExactlyInAnyOrderElementsOf(collected.map { it.markerHandle })
-      for (region in collected) {
-        assertThat(storage.rootStore.containsMarker(snapshot, region.markerHandle)).isFalse()
-      }
+      assertThat(storage.rootStore.purgeMany(snapshot, collected.map { it.markerHandle })).isFalse()
       assertThat(live.isValid).isTrue()
     }
 

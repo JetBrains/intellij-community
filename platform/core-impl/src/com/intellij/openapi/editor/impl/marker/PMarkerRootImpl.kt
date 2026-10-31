@@ -11,6 +11,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.containers.Java11Shim
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.ArrayDeque
 import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 import java.util.function.Consumer
@@ -82,6 +83,7 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
+  @TestOnly
   override fun invalidationReason(handle: SnapshotMarkerReference<*>): String? = (states.getUnchecked(handle.order) as? InvalidNode)?.reason
 
   override fun insert(
@@ -195,6 +197,7 @@ open class PMarkerRootImpl private constructor(
     }
   }
 
+  @TestOnly
   override fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot = removeMarkers(handles, retainTombstones = true)
 
   override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot = removeMarkers(handles, retainTombstones = false)
@@ -234,8 +237,6 @@ open class PMarkerRootImpl private constructor(
     val newStates = editor.build()
     return if (newStates === states) this else PMarkerRootImpl(newRoot, newStates, editor.persistentMarkerCount(), cachedOffsets)
   }
-
-  override fun containsMarker(handle: SnapshotMarkerReference<*>): Boolean = states.getUnchecked(handle.order) != null
 
   override fun applyPatch(
     patch: DocumentPatch,

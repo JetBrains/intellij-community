@@ -11,7 +11,6 @@ import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.ReferenceQueueable
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -113,11 +112,6 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
   /** Creates a handle in this store's family without reading a document snapshot. */
   override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T> =
     referenceFactory(emptyRoot, marker, retainStrong)
-
-  /** Returns whether the root for [snapshot] contains a state for [handle], including invalid and removed states. */
-  @TestOnly
-  fun containsMarker(snapshot: DocumentSnapshot, handle: SnapshotMarkerReference<*>): Boolean =
-    root(snapshot)?.containsMarker(handle) == true
 
   /**
    * Returns the shared atomic reference for [snapshot], creating a root entry from [initialRoot] when necessary.
