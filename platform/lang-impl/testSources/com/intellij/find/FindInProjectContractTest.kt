@@ -19,8 +19,10 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.CacheAvoidingVirtualFile
 import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.psi.PsiFileFactory
@@ -249,6 +251,35 @@ class FindInProjectContractTest {
     assertThat(canSearchModels[0]).isSameAs(model)
     assertThat(searchedModels).isNotEmpty()
     assertThat(searchedModels.all { it === model }).describedAs("searchDirectory gets the model of the search").isTrue()
+  }
+
+  @Test
+  @Timeout(value = 60, unit = TimeUnit.SECONDS)
+  fun `the files of an excluded searched directory are kept when the directory is transient and the engine gives cached files`() {
+    val module = projectModel.createModule()
+    val content = baseDir.newVirtualDirectory("content")
+    baseDir.newVirtualFile("content/kept.txt", "kept file with data".toByteArray())
+    // the excluded directory enters the VFS with its children unlisted, so `gen` stays out of the VFS until a lookup caches it
+    baseDir.newFileNio("content/excluded/gen/hit.txt", "hit file with data".toByteArray())
+    val excluded = checkNotNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir.rootPath.resolve("content/excluded")))
+    // the root and its exclusion arrive in one change: the scan of a content root lists every directory that is not excluded yet
+    ModuleRootModificationUtil.updateModel(module) { model -> model.addContentEntry(content).addExcludeFolder(excluded) }
+    VfsTestUtil.syncRefresh()
+    waitUntilIndexesAreReady(project)
+    // the engine resolves the directory by path, as the index searcher and the Eel engine do, so its files are cached VFS files
+    registerDirectoryEngine { directory, consumer ->
+      val cached = checkNotNull(LocalFileSystem.getInstance().findFileByPath(directory.path))
+      consumer.accept(cached.children.toList())
+    }
+
+    val model = directoryModel("${excluded.path}/gen", "data")
+    val directory = checkNotNull(FindInProjectUtil.getDirectory(model))
+    assertThat(directory).isInstanceOf(CacheAvoidingVirtualFile::class.java)
+    assertThat((directory as CacheAvoidingVirtualFile).isCached).describedAs("the searched directory is cached already").isFalse()
+    val usages = synchronizedList(ArrayList<String>())
+    findUsages(model) { usages.add(it.virtualFile!!.name) }
+
+    assertThat(usages).containsExactly("hit.txt")
   }
 
   @Test
@@ -852,13 +883,15 @@ class FindInProjectContractTest {
     }
   }
 
-  private fun directoryModel(directory: VirtualFile, pattern: String): FindModel {
+  private fun directoryModel(directory: VirtualFile, pattern: String): FindModel = directoryModel(directory.path, pattern)
+
+  private fun directoryModel(directoryPath: String, pattern: String): FindModel {
     return FindModel().apply {
       stringToFind = pattern
       isCaseSensitive = false
       isMultipleFiles = true
       isProjectScope = false
-      directoryName = directory.path
+      directoryName = directoryPath
       isWithSubdirectories = true
     }
   }

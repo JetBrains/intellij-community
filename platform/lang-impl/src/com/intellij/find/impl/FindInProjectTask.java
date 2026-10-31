@@ -77,8 +77,11 @@ final class FindInProjectTask {
 
   /** See {@link #isExcludedFromSearch(VirtualFile)}. */
   private final boolean skipExcludedFiles;
-  /** The searched directories that are excluded themselves; the user asked for them, so their files are searched. */
-  private final List<VirtualFile> excludedRoots;
+  /**
+   * The paths of the searched directories that are excluded themselves; the user asked for them, so their files are searched.
+   * A path, because the searched directory can be a transient VFS file while a directory search engine gives cached files.
+   */
+  private final List<String> excludedRootPaths;
 
   private final @NotNull CandidateFilter candidateFilter;
   private final @NotNull ScopeWalker scopeWalker;
@@ -131,9 +134,9 @@ final class FindInProjectTask {
     }
 
     skipExcludedFiles = !directoriesToSearchIn.isEmpty() && !Registry.is("find.search.in.excluded.dirs");
-    excludedRoots = skipExcludedFiles ?
-                    ReadAction.computeBlocking(() -> ContainerUtil.filter(directoriesToSearchIn, projectFileIndex::isExcluded)) :
-                    List.of();
+    excludedRootPaths = !skipExcludedFiles ? List.of() : ReadAction.computeBlocking(
+      () -> ContainerUtil.mapNotNull(directoriesToSearchIn, dir -> projectFileIndex.isExcluded(dir) ? dir.getPath() : null)
+    );
 
     SearchScope modelCustomScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope customScope = modelCustomScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(modelCustomScope, project);
@@ -293,10 +296,11 @@ final class FindInProjectTask {
   /**
    * A directory search skips the excluded files, unless the registry key allows them or the file lies under a searched directory
    * that is excluded itself. One excluded directory does not open the excluded files of the other searched directories.
+   * The check compares paths: the searched directory and the file can be different VFS objects for one disk directory.
    */
   private boolean isExcludedFromSearch(@NotNull VirtualFile file) {
     return skipExcludedFiles
            && projectFileIndex.isExcluded(file)
-           && !ContainerUtil.exists(excludedRoots, root -> VfsUtilCore.isAncestor(root, file, false));
+           && !ContainerUtil.exists(excludedRootPaths, rootPath -> VfsUtilCore.isAncestorOrSelf(rootPath, file));
   }
 }
