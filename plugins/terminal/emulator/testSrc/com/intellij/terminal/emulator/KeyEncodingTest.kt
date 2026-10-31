@@ -303,8 +303,8 @@ class KeyEncodingTest {
   // ---- Ghostty reference cases ----
   //
   // Each expected string below is the one the matching test of ghostty's src/input/key_encode.zig
-  // asserts, at 3a3047f6b, the pinned native version, so the two encoders cannot drift apart
-  // silently. Cases whose text would be a control byte are left out: this layer never passes one.
+  // asserts, so the two encoders cannot drift apart silently.
+  // Cases whose text would be a control byte are left out: this layer never passes one.
   // A case whose result depends on the OS says so; the encoder decides some rules at compile time.
 
   @Test
