@@ -35,7 +35,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
     return null
   }
 
-  val pluginXml = pluginXml(pluginVersion, context)
+  val pluginXml = helpPluginXml(pluginVersion, context.buildNumber, productName)
   return PluginLayout.pluginAutoWithCustomDirName(BUILT_IN_HELP_MODULE_NAME) { spec ->
     val productLowerCase = productName.replace(' ', '-').lowercase()
     spec.mainJarName = "$productLowerCase-help.jar"
@@ -61,8 +61,7 @@ internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): Pair
   } to pluginXml
 }
 
-private fun pluginXml(version: String, context: BuildContext): String {
-  val productName = context.applicationInfo.fullProductName
+internal fun helpPluginXml(version: String, buildNumber: String, productName: String): String {
   val productLowerCase = productName.replace(" ", "-").lowercase()
   val pluginId = "bundled-$productLowerCase-help"
   val pluginName = "$productName Help"
@@ -72,19 +71,36 @@ private fun pluginXml(version: String, context: BuildContext): String {
   <name>$pluginName</name>
   <id>$pluginId</id>
   <version>$version</version>
-  <idea-version since-build="${version.substring(0, version.lastIndexOf('.'))}"/>
+  <idea-version since-build="$buildNumber"/>
   <vendor>JetBrains</vendor>
   <description>$productName Web Help for offline use: when help is invoked, pages are delivered via built-in Web server. In the plugin settings (Settings | Tools | $productName Help), you can opt to always use built-in help, even when Internet connection is available.</description>
 
   <depends>$productModuleDep</depends>
   <dependencies>
+    <module name="intellij.libraries.jackson3"/>
+    <module name="intellij.libraries.jackson3.databind"/>
+    <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.jaxb"/>
+    <module name="intellij.libraries.jsoup"/>
+    <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.lucene.common"/>
+    <module name="intellij.libraries.netty.buffer"/>
+    <module name="intellij.libraries.netty.codec.http"/>
+    <module name="intellij.platform.builtInServer.impl"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.impl"/>
+    <module name="intellij.platform.credentialStore"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.ide.core"/>
+    <module name="intellij.platform.ide.impl"/>
+    <module name="intellij.platform.ide.util.netty"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ex"/>
   </dependencies>
   <resource-bundle>messages.BuiltInHelpBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-      <applicationService serviceInterface="com.intellij.openapi.help.HelpManager" overrides="true"
-                          serviceImplementation="com.jetbrains.builtInHelp.BuiltInHelpManager" order="last"/>
+      <helpTargetProvider implementation="com.jetbrains.builtInHelp.BuiltInHelpManager"/>
       <httpRequestHandler implementation="com.jetbrains.builtInHelp.HelpSearchRequestHandler"/>
       <httpRequestHandler implementation="com.jetbrains.builtInHelp.HelpContentRequestHandler"/>
       <applicationConfigurable instance="com.jetbrains.builtInHelp.settings.SettingsPage"

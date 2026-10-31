@@ -1,3 +1,4 @@
+load("@community//build:tests-options.bzl", "jps_test")
 load("@rules_jvm//:jvm.bzl", "jvm_library")
 
 ### auto-generated section `build intellij.builtInHelp` start
@@ -20,6 +21,7 @@ jvm_library(
     deps = [
         # do not sort,
         "@lib//:kotlin-stdlib",
+        "//libraries/kotlinx/coroutines/core",
         "//libraries/netty/codec-http:libraries-netty-codec-http",
         "@lib//:built_in_help-lucene-codecs",
         "@lib//:built_in_help-lucene-memory",
@@ -60,3 +62,58 @@ exports_files(
     visibility = ["//visibility:public"],
 )
 ### auto-generated section `iml intellij.builtInHelp` end
+
+### auto-generated section `build intellij.builtInHelp.tests` start
+jvm_library(
+    name = "builtInHelp-tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "testSrc/**/*.kt",
+            "testSrc/**/*.java",
+            "testSrc/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    associates = ["//plugins/built-in-help"],
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit6",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework",
+        "//platform/platform-api:ide",
+        "//platform/ide-core",
+        "//platform/platform-impl:ide-impl",
+        "//platform/core-api:core",
+        "//platform/util",
+        "//platform/platform-util-io:ide-util-io",
+        "//platform/platform-util-netty:ide-util-netty",
+        "//platform/built-in-server:builtInServer-impl",
+        "//libraries/netty/codec-http:libraries-netty-codec-http",
+        "//libraries/netty/buffer",
+        "//libraries/kotlinx/coroutines/core",
+    ],
+)
+### auto-generated section `build intellij.builtInHelp.tests` end
+
+### auto-generated section `iml intellij.builtInHelp.tests` start
+exports_files(
+    [
+        "intellij.builtInHelp.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.builtInHelp.tests` end
+
+### auto-generated section `test intellij.builtInHelp.tests` start
+jps_test(
+    name = "builtInHelp-tests_test",
+    runtime_deps = [":builtInHelp-tests_test_lib"],
+)
+### auto-generated section `test intellij.builtInHelp.tests` end

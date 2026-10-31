@@ -28,6 +28,6 @@ class HelpMap {
   @NotNull
   private fun getDefaultUrl(): String {
     return mappings
-      .first { "yes" == it.isDefault }.url
+      .firstOrNull { "yes" == it.isDefault }?.url ?: mappings.firstOrNull { it.target == "top" }?.url ?: "index.html"
   }
 }
