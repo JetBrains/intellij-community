@@ -19,11 +19,16 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.IntPredicate;
 
+import static com.intellij.util.SystemProperties.getBooleanProperty;
+
 @Internal
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
+  private static final boolean USE_FILE_CHANNEL_KEY_HASH_LOG_STORAGE = getBooleanProperty("idea.indexes.file-channel-key-hash-log-storage", false);
+
   /**
    * Enables {@link #processKeys(Processor, GlobalSearchScope, IdFilter)} optimization in multi-project environment:
    * {@link KeyHashLog} persists (key.hash, fileId) pairs, and caches `Set(keyHash : fileId in project)` in memory,
@@ -116,15 +121,30 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
     if (myBuildKeyHashToVirtualFileMapping && myBaseStorageFile != null) {
       FileSystem projectFileFS = myBaseStorageFile.getFileSystem();
       assert !projectFileFS.isReadOnly() : "File system " + projectFileFS + " is read only";
-      myKeyHashToVirtualFileMapping = new KeyHashLog<>(
-        myKeyDescriptor,
-        new FileKeyHashLogStorage(myBaseStorageFile, storageLockContext()),
-        new FileKeyHashLogCheckpointStore(myBaseStorageFile)
-      );
+      myKeyHashToVirtualFileMapping = createKeyHashLog(myKeyDescriptor, myBaseStorageFile, storageLockContext());
     }
     else {
       myKeyHashToVirtualFileMapping = null;
     }
+  }
+
+  private static <Key> @NotNull KeyHashLog<Key> createKeyHashLog(@NotNull KeyDescriptor<Key> keyDescriptor,
+                                                                 @NotNull Path baseStorageFile,
+                                                                 @Nullable StorageLockContext storageLockContext) throws IOException {
+    KeyHashLogStorage storage;
+    if (USE_FILE_CHANNEL_KEY_HASH_LOG_STORAGE) {
+      Path legacyLengthFile = baseStorageFile.resolveSibling(baseStorageFile.getFileName() + ".project.len");
+      if (Files.exists(legacyLengthFile)) {
+        throw new IOException("The key hash log uses the legacy format: " + baseStorageFile);
+      }
+      storage = storageLockContext == null
+                ? new FileChannelKeyHashLogStorage(baseStorageFile)
+                : new FileChannelKeyHashLogStorage(baseStorageFile, storageLockContext.getChannelsAccessor(false));
+    }
+    else {
+      storage = new FileKeyHashLogStorage(baseStorageFile, storageLockContext);
+    }
+    return new KeyHashLog<>(keyDescriptor, storage, new FileKeyHashLogCheckpointStore(baseStorageFile));
   }
 
   @Override

@@ -10,6 +10,7 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.registerOrReplaceServiceInstance
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.IdFilter.FilterScopeType
+import com.intellij.util.io.ChannelsAccessor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.ResizeableMappedFile
 import com.intellij.util.io.StorageLockContext
@@ -393,10 +394,18 @@ class KeyHashLogTest {
       storageLockContext,
     ).use { storage ->
       val keyHashLog = storage.getFieldValue<KeyHashLog<String>>("myKeyHashToVirtualFileMapping")
-      val mapping = keyHashLog.getFileMapping()
-      val mappedFile = mapping.getFieldValue<ResizeableMappedFile>("storage")
-
-      TestCase.assertSame(storageLockContext, mappedFile.storageLockContext)
+      when (val keyHashLogStorage = keyHashLog.getFieldValue<KeyHashLogStorage>("myStorage")) {
+        is FileChannelKeyHashLogStorage -> {
+          val channelsAccessor = keyHashLogStorage.getFieldValue<ChannelsAccessor>("channelsAccessor")
+          TestCase.assertSame(storageLockContext.getChannelsAccessor(false), channelsAccessor)
+        }
+        is FileKeyHashLogStorage -> {
+          val mapping = keyHashLogStorage.getFieldValue<AppendableStorageBackedByResizableMappedFile<IntArray>>("mapping")
+          val mappedFile = mapping.getFieldValue<ResizeableMappedFile>("storage")
+          TestCase.assertSame(storageLockContext, mappedFile.storageLockContext)
+        }
+        else -> TestCase.fail("Unexpected key hash log storage: ${keyHashLogStorage.javaClass.name}")
+      }
     }
   }
 

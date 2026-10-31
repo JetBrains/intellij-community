@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl.storage
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.platform.util.io.storages.CommonKeyDescriptors
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.indexing.IdFilter
 import com.intellij.util.indexing.impl.storage.durablemap.DurableMapIndexStorage
@@ -29,6 +30,36 @@ import java.nio.file.Path
 class FileChannelKeyHashLogStorageTest {
   @TempDir
   lateinit var directory: Path
+
+  @Test
+  @SystemProperty(propertyKey = "idea.index.use.file.channel.key.hash.log.storage", propertyValue = "true")
+  fun `legacy key hash log uses file channel storage when enabled`() {
+    val base = directory.resolve("log")
+    VfsAwareMapIndexStorage(
+      base, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE, 16, false, true
+    ).use { storage ->
+      storage.addValue("key", 1, "value")
+      storage.flush()
+    }
+
+    assertEquals(8L, Files.size(directory.resolve("log.project")), "The enabled storage must write one fixed-size record")
+  }
+
+  @Test
+  @SystemProperty(propertyKey = "idea.index.use.file.channel.key.hash.log.storage", propertyValue = "true")
+  fun `legacy key hash log rejects the previous storage format when enabled`() {
+    val base = directory.resolve("log")
+    FileKeyHashLogStorage(base, null).use { storage ->
+      storage.append(1, 1)
+      storage.flush()
+    }
+
+    assertThrows(IOException::class.java, {
+      VfsAwareMapIndexStorage(
+        base, EnumeratorStringDescriptor.INSTANCE, EnumeratorStringDescriptor.INSTANCE, 16, false, true
+      ).close()
+    }, "The incompatible log must cause an index rebuild")
+  }
 
   @Test
   fun `full and tail scans cross buffer boundaries and respect snapshots`() {
