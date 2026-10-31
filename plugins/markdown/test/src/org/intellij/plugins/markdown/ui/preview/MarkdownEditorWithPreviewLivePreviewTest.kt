@@ -163,6 +163,17 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
     editorWithPreview.waitForSoftWraps(false)
   }
 
+  fun testLivePreviewLayoutTurnsTheCustomSoftWrapIndentOnAndEditorOnlyRestoresIt() {
+    val editorWithPreview = createEditor()
+    editorWithPreview.editor.settings.isUseCustomSoftWrapIndent = false
+
+    editorWithPreview.setLivePreviewLayout()
+    editorWithPreview.waitForCustomSoftWrapIndent(true)
+
+    editorWithPreview.setLayout(Layout.SHOW_EDITOR)
+    editorWithPreview.waitForCustomSoftWrapIndent(false)
+  }
+
   fun testSoftWrapToggleDoesNotTurnSoftWrapsOffInLivePreview() {
     val editorWithPreview = createEditor()
     editorWithPreview.setLivePreviewLayout()
@@ -301,6 +312,12 @@ class MarkdownEditorWithPreviewLivePreviewTest : BasePlatformTestCase() {
   private fun MarkdownEditorWithPreview.waitForSoftWraps(enabled: Boolean) {
     waitFor({ "The editor soft wraps are ${editor.settings.isUseSoftWraps} instead of $enabled" }) {
       editor.settings.isUseSoftWraps == enabled
+    }
+  }
+
+  private fun MarkdownEditorWithPreview.waitForCustomSoftWrapIndent(enabled: Boolean) {
+    waitFor({ "The custom soft-wrap indent is ${editor.settings.isUseCustomSoftWrapIndent} instead of $enabled" }) {
+      editor.settings.isUseCustomSoftWrapIndent == enabled
     }
   }
 

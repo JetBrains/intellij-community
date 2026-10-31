@@ -194,6 +194,17 @@ sealed interface MarkdownLivePreviewSpec {
     override val range: MarkdownLivePreviewRange,
     val checked: Boolean,
   ) : MarkdownLivePreviewSpec
+
+  /**
+   * Widens the indent of one logical line of a nested list item. The [range] is empty and sits at the line start.
+   * [depth] is the nesting depth of the list item that holds the first non-blank character of the line, at least 2.
+   * The frontend adds one indent unit per level above the first.
+   */
+  @Serializable
+  data class ListIndent(
+    override val range: MarkdownLivePreviewRange,
+    val depth: Int,
+  ) : MarkdownLivePreviewSpec
 }
 
 /** Everything live preview wants to hide in one state of a document. */

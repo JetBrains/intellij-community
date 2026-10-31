@@ -23,12 +23,13 @@ import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
  * Hides line numbers and indent guides while live preview is on.
  * Restores the font of the global scheme and the saved settings from before live preview when live preview turns off.
  * While live preview is on, keeps soft wraps on. Only a document above the IntelliSense size limit keeps its soft-wrap flag.
+ * A wrapped line keeps the indent of its first line, so a nested list item stays indented.
  */
 internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx) : Disposable {
-  /** The editor soft wrap setting before live preview */
-  private var preLivePreviewSoftWraps: Boolean? = null
-  private var preLivePreviewLineNumbers = false
-  private var preLivePreviewIndentGuides = false
+  /** The editor settings before live preview. Null while live preview is off. */
+  private var preLivePreviewState: State? = null
+
+  private data class State(val softWraps: Boolean, val customSoftWrapIndent: Boolean, val lineNumbers: Boolean, val indentGuides: Boolean)
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
@@ -47,14 +48,13 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
   private fun apply() {
     applyFont()
     val settings = editor.settings
-    if (preLivePreviewSoftWraps == null) {
-      preLivePreviewSoftWraps = settings.isUseSoftWraps
-      preLivePreviewLineNumbers = settings.isLineNumbersShown
-      preLivePreviewIndentGuides = settings.isIndentGuidesShown
+    if (preLivePreviewState == null) {
+      preLivePreviewState = State(settings.isUseSoftWraps, settings.isUseCustomSoftWrapIndent, settings.isLineNumbersShown, settings.isIndentGuidesShown)
     }
     settings.isLineNumbersShown = false
     settings.isIndentGuidesShown = false
     forceSoftWraps()
+    settings.isUseCustomSoftWrapIndent = true
   }
 
   private fun restore() {
@@ -62,11 +62,12 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     editor.colorsScheme.editorFontName = null
     // The zoomed global size clears the font size of this editor.
     editor.setFontSize(UISettingsUtils.getInstance().scaledEditorFontSize)
-    val softWraps = preLivePreviewSoftWraps ?: return
-    preLivePreviewSoftWraps = null
+    (val softWraps, val customSoftWrapIndent, val lineNumbers, val indentGuides) = preLivePreviewState ?: return
+    preLivePreviewState = null
     editor.settings.isUseSoftWraps = softWraps
-    editor.settings.isLineNumbersShown = preLivePreviewLineNumbers
-    editor.settings.isIndentGuidesShown = preLivePreviewIndentGuides
+    editor.settings.isUseCustomSoftWrapIndent = customSoftWrapIndent
+    editor.settings.isLineNumbersShown = lineNumbers
+    editor.settings.isIndentGuidesShown = indentGuides
   }
 
   override fun dispose() = Unit
@@ -74,7 +75,7 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
   private fun onFontSettingsChanged() {
     val update = Runnable {
       // Null saved settings mean that live preview is off, so the editor keeps the font of the global scheme.
-      if (!editor.isDisposed && preLivePreviewSoftWraps != null) applyFont()
+      if (!editor.isDisposed && preLivePreviewState != null) applyFont()
     }
     val application = ApplicationManager.getApplication()
     if (application.isDispatchThread) update.run() else application.invokeLater(update, ModalityState.any())
@@ -82,9 +83,9 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
 
   private fun onSoftWrapsChanged() {
     // Null saved settings mean that live preview is off, so the editor keeps the soft wraps that the user chose.
-    if (preLivePreviewSoftWraps == null || editor.settings.isUseSoftWraps) return
+    if (preLivePreviewState == null || editor.settings.isUseSoftWraps) return
     ApplicationManager.getApplication().invokeLater({
-      if (!editor.isDisposed && preLivePreviewSoftWraps != null) forceSoftWraps()
+      if (!editor.isDisposed && preLivePreviewState != null) forceSoftWraps()
     }, ModalityState.any())
   }
 

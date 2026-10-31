@@ -11,6 +11,7 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewDocumentVersion
 import org.intellij.plugins.markdown.editor.livepreview.MarkdownLivePreviewRange
@@ -62,18 +63,19 @@ private const val BULLET_PLACEHOLDERS = "•◦▪"
 /**
  * The live-preview spec set for [file] in [editor], sorted by element start offset.
  *
- * Collects the markup to hide, skipping the subtrees named in [NoDescendTypes].
+ * Collects the markup to hide and the lines of nested list items, skipping the subtrees named in [NoDescendTypes].
  */
 @ApiStatus.Internal
 fun computeLivePreviewSpecs(file: PsiFile, editor: Editor): MarkdownLivePreviewSpecSet {
-  val blockQuotes by lazy { BlockQuoteSpecBuilder(file.viewProvider.contents, editor.document) }
+  val lines by lazy { LineIndex(file.viewProvider.contents, editor.document) }
   val elements = SyntaxTraverser.psiTraverser(file)
     .expand { PsiUtilCore.getElementType(it) !in NoDescendTypes }
     .asSequence()
     .flatMap {
       when (PsiUtilCore.getElementType(it)) {
-        MarkdownElementTypes.BLOCK_QUOTE -> blockQuotes.create(it.textRange)
-        MarkdownElementTypes.ALERT -> blockQuotes.create(it.textRange, it.alertType())
+        MarkdownElementTypes.BLOCK_QUOTE -> lines.blockQuoteSpecs(it.textRange)
+        MarkdownElementTypes.ALERT -> lines.blockQuoteSpecs(it.textRange, it.alertType())
+        MarkdownElementTypes.LIST_ITEM -> lines.listIndentSpecs(it)
         else -> listOfNotNull(it.toDecorationSpecs(editor))
       }
     }
@@ -111,8 +113,10 @@ private fun PsiElement.toDecorationSpecs(editor: Editor): MarkdownLivePreviewSpe
   }
 }
 
-/** Indexes blockquote markers once and creates one spec per marker in PSI traversal order. */
-private class BlockQuoteSpecBuilder(private val source: CharSequence, private val document: Document) {
+/** Indexes the lines of the document once and creates the specs that depend on the line layout */
+private class LineIndex(private val source: CharSequence, private val document: Document) {
+  /** The offset of the first non-blank character of each line, or -1 for a blank line. */
+  private val contentStarts = IntArray(document.lineCount)
   private val markersByLine = HashMap<Int, List<Int>>()
   private val markersByDepth = mutableListOf<MutableList<MarkdownLivePreviewRange>>()
   /** The run of markers on the line of each marker, keyed by the marker offset. */
@@ -121,10 +125,14 @@ private class BlockQuoteSpecBuilder(private val source: CharSequence, private va
 
   init {
     for (line in 0 until document.lineCount) {
-      val markers = source.blockQuoteMarkerOffsets(document.getLineStartOffset(line), document.getLineEndOffset(line))
+      val lineStart = document.getLineStartOffset(line)
+      val lineEnd = document.getLineEndOffset(line)
+      val contentStart = CharArrayUtil.shiftForward(source, lineStart, lineEnd, " \t")
+      contentStarts[line] = if (contentStart < lineEnd) contentStart else -1
+      val markers = source.blockQuoteMarkerOffsets(contentStart, lineEnd)
       if (markers.isEmpty()) continue
       markersByLine[line] = markers
-      for ((depth, offset) in markers.withIndex()) {
+      for ([depth, offset] in markers.withIndex()) {
         if (depth == markersByDepth.size) markersByDepth.add(mutableListOf())
         markersByDepth[depth].add(MarkdownLivePreviewRange(offset, offset + 1))
       }
@@ -135,7 +143,7 @@ private class BlockQuoteSpecBuilder(private val source: CharSequence, private va
   /** Splits the markers of one line into runs. Only spaces and tabs separate the markers of a run. */
   private fun indexRuns(markers: List<Int>) {
     var runStart = 0
-    for ((index, offset) in markers.withIndex()) {
+    for ([index, offset] in markers.withIndex()) {
       val next = markers.getOrNull(index + 1)
       if (next != null && (offset + 1 until next).all { source[it] in " \t" }) continue
       val run = MarkdownLivePreviewRange(markers[runStart], offset + 1)
@@ -144,7 +152,8 @@ private class BlockQuoteSpecBuilder(private val source: CharSequence, private va
     }
   }
 
-  fun create(blockQuoteRange: TextRange, alertType: MarkdownLivePreviewSpec.AlertType? = null): List<MarkdownLivePreviewSpec.BlockQuote> {
+  /** One spec per marker of the blockquote, in PSI traversal order. */
+  fun blockQuoteSpecs(blockQuoteRange: TextRange, alertType: MarkdownLivePreviewSpec.AlertType? = null): List<MarkdownLivePreviewSpec.BlockQuote> {
     while (quoteEnds.isNotEmpty() && quoteEnds.last() <= blockQuoteRange.startOffset) quoteEnds.removeLast()
     quoteEnds.addLast(blockQuoteRange.endOffset)
 
@@ -177,7 +186,33 @@ private class BlockQuoteSpecBuilder(private val source: CharSequence, private va
     val index = binarySearchBy(offset) { it.startOffset }
     return if (index < 0) -index - 1 else index
   }
+
+  /**
+   * One spec per indented line of a nested list [item], for the lines whose first non-blank character is in [item].
+   * A line whose content starts in a nested item gets its spec from that item.
+   * A line with no indent gets no spec, because an inlay before a non-blank character is not part of the soft-wrap indent.
+   * So a lazy continuation line, and a line that starts with the `>` of a top-level blockquote, keep the source indent.
+   */
+  fun listIndentSpecs(item: PsiElement): List<MarkdownLivePreviewSpec.ListIndent> {
+    val depth = item.listItemDepth()
+    if (depth < 2) return emptyList()
+    val range = item.textRange
+    val file = item.containingFile
+    val firstLine = document.getLineNumber(range.startOffset)
+    val lastLine = document.getLineNumber(maxOf(range.startOffset, range.endOffset - 1))
+    return (firstLine..lastLine).mapNotNull { line ->
+      val lineStart = document.getLineStartOffset(line)
+      val contentStart = contentStarts[line]
+      if (contentStart <= lineStart) return@mapNotNull null
+      if (PsiTreeUtil.getParentOfType(file.findElementAt(contentStart), MarkdownListItem::class.java) != item) return@mapNotNull null
+      MarkdownLivePreviewSpec.ListIndent(MarkdownLivePreviewRange(lineStart, lineStart), depth)
+    }
+  }
 }
+
+/** The number of list items that hold this element, counting the element itself when it is a list item. */
+private fun PsiElement.listItemDepth(): Int =
+  generateSequence(this) { it.parent }.count { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM }
 
 private fun CharSequence.blockQuoteMarkerOffsets(lineStart: Int, lineEnd: Int): List<Int> =
   buildList {
@@ -310,8 +345,7 @@ private fun PsiElement.toBulletSpec(): MarkdownLivePreviewSpec.Bullet? {
   }
   val markerOffset = text.indexOfFirst { it in "-*+" }
   if (markerOffset < 0) return null
-  val depth = generateSequence(listItem) { it.parent }
-    .count { PsiUtilCore.getElementType(it) == MarkdownElementTypes.LIST_ITEM }
+  val depth = listItem.listItemDepth()
   val markerStart = textRange.startOffset + markerOffset
   return MarkdownLivePreviewSpec.Bullet(
     range = MarkdownLivePreviewRange(markerStart, markerStart + 1),

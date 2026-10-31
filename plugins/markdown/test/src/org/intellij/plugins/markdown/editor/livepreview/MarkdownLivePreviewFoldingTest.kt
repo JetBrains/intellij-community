@@ -7,6 +7,7 @@ import com.intellij.markdown.backend.editor.livepreview.computeLivePreviewSpecs
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownBlockQuotePainter
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewCheckboxInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewImageInlayRenderer
+import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewListIndentInlayRenderer
 import com.intellij.markdown.frontend.editor.livepreview.MarkdownLivePreviewReconciler
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceRenderingService
 import com.intellij.markdown.frontend.editor.livepreview.CodeFenceView
@@ -649,6 +650,53 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       assertEquals(listOf(marker), concealed())
       assertEquals(marker != "-", checkboxInlays().isNotEmpty())
     }
+  }
+
+  fun testNestedListLinesGetIndentInlaysAndTopLevelLinesDoNot() {
+    val content = "- one\n  * two\n    + three\n- four\n\ntail"
+    configure("$content<caret>")
+    val document = myFixture.editor.document
+    val inlays = listIndentInlays()
+    assertEquals(listOf(document.getLineStartOffset(1), document.getLineStartOffset(2)), inlays.map { it.offset })
+    assertTrue(inlays[0].widthInPixels > 0)
+    assertEquals(inlays[0].widthInPixels * 2, inlays[1].widthInPixels)
+    assertEquals(listOf("-", "*", "+", "-"), concealed())
+  }
+
+  fun testCaretAtANestedLineStartKeepsItsIndentInlay() {
+    val content = "- one\n  * two\n\ntail"
+    configure("$content<caret>")
+    val inlay = listIndentInlays().single()
+    val lineStart = content.indexOf("  * two")
+
+    moveCaretTo(lineStart)
+    assertEquals(listOf("-", "*"), concealed())
+    assertSame(inlay, listIndentInlays().single())
+
+    moveCaretTo(lineStart + 2)
+    assertEquals(listOf("-"), concealed())
+    assertSame(inlay, listIndentInlays().single())
+    assertTrue(inlay.isValid)
+  }
+
+  /** The soft-wrap engine takes the indent of the original line from the first non-whitespace element. The indent inlay sits before it. */
+  fun testSoftWrappedNestedItemContinuationStartsAtOrAfterItsMarker() {
+    val content = "- parent\n  - a long nested item that wraps over several visual lines\n\ntail"
+    configure("$content<caret>")
+    val editor = myFixture.editor
+    EditorTestUtil.configureSoftWraps(editor, 20)
+    assertTrue(editor.settings.isUseCustomSoftWrapIndent)
+    val markerOffset = content.indexOf("- a long")
+    val lineEnd = content.indexOf("\n\ntail")
+    val markerX = editor.offsetToXY(markerOffset).x
+    val continuationX = editor.offsetToXY(editor.softWrapModel.getSoftWrapsForRange(markerOffset, lineEnd).first().start, true, false).x
+    assertTrue("The continuation starts at $continuationX, before the marker at $markerX", continuationX >= markerX)
+    assertTrue(continuationX >= listIndentInlays().single().widthInPixels)
+
+    // Without the custom indent, the continuation starts at the margin. This pins the platform behaviour that the live preview relies on.
+    editor.settings.isUseCustomSoftWrapIndent = false
+    val plainX = editor.offsetToXY(editor.softWrapModel.getSoftWrapsForRange(markerOffset, lineEnd).first().start, true, false).x
+    assertTrue("The continuation starts at $plainX, at or after the marker at $markerX", plainX < markerX)
   }
 
   fun testSelectionAndMultipleCaretsRevealListMarkers() {
@@ -1716,6 +1764,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     val specs = computeLivePreviewSpecs(myFixture.file, editor)
     val folds = concealedLivePreviewRegions(editor)
     val checkbox = checkboxInlays().single()
+    val indent = listIndentInlays().single()
     val rule = thematicBreakHighlighters().single()
     val image = imageInlays().single()
 
@@ -1723,16 +1772,19 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     assertEmpty(concealed())
     assertEmpty(checkboxInlays())
+    assertEmpty(listIndentInlays())
     assertEmpty(thematicBreakHighlighters())
     assertEmpty(imageInlays())
     assertTrue(folds.all { !it.isValid })
     assertFalse(checkbox.isValid)
+    assertFalse(indent.isValid)
     assertFalse(rule.isValid)
     assertFalse(image.isValid)
 
     reconciler.publishSpecsAndWait(specs)
-    assertEquals(4, concealed().size)
+    assertEquals(5, concealed().size)
     assertEquals(1, checkboxInlays().size)
+    assertEquals(1, listIndentInlays().size)
     assertEquals(1, thematicBreakHighlighters().size)
     assertEquals(1, imageInlays().size)
 
@@ -1741,6 +1793,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
     assertEmpty(concealed())
     assertEmpty(checkboxInlays())
+    assertEmpty(listIndentInlays())
     assertEmpty(thematicBreakHighlighters())
     assertEmpty(imageInlays())
   }
@@ -1759,6 +1812,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertFalse(reconciler.hasCurrentSpecs())
     assertEmpty(concealed())
     assertEmpty(checkboxInlays())
+    assertEmpty(listIndentInlays())
     assertEmpty(thematicBreakHighlighters())
     assertEmpty(imageInlays())
   }
@@ -1955,16 +2009,22 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
 
   private fun configureAllDecorations() {
     addPng(80, 40)
-    configureProjectFile("- [ ] task\n\n-----\n\n![alt](image.png)\n\n# heading\n\ntail")
+    configureProjectFile("- [ ] task\n  - nested\n\n-----\n\n![alt](image.png)\n\n# heading\n\ntail")
     waitForImageInlay()
-    assertEquals(4, concealed().size)
+    assertEquals(5, concealed().size)
     assertEquals(1, checkboxInlays().size)
+    assertEquals(1, listIndentInlays().size)
     assertEquals(1, thematicBreakHighlighters().size)
   }
 
   private fun checkboxInlays(): List<Inlay<out MarkdownLivePreviewCheckboxInlayRenderer>> =
     myFixture.editor.inlayModel.getInlineElementsInRange(
       0, myFixture.editor.document.textLength, MarkdownLivePreviewCheckboxInlayRenderer::class.java,
+    )
+
+  private fun listIndentInlays(): List<Inlay<out MarkdownLivePreviewListIndentInlayRenderer>> =
+    myFixture.editor.inlayModel.getInlineElementsInRange(
+      0, myFixture.editor.document.textLength, MarkdownLivePreviewListIndentInlayRenderer::class.java,
     )
 
   private fun clickCheckbox(inlay: Inlay<*>) {

@@ -106,6 +106,7 @@ internal class MarkdownLivePreviewPresentationFactory(project: Project, editor: 
   private val elementRenderers: Map<Class<out MarkdownLivePreviewSpec>, MarkdownLivePreviewElementRenderer> = mapOf(
     MarkdownLivePreviewSpec.Conceal::class.java to MarkdownLivePreviewConcealRenderer(editor),
     MarkdownLivePreviewSpec.Bullet::class.java to MarkdownLivePreviewBulletRenderer(),
+    MarkdownLivePreviewSpec.ListIndent::class.java to MarkdownLivePreviewListIndentRenderer(editor),
     MarkdownLivePreviewSpec.BlockQuote::class.java to MarkdownLivePreviewBlockQuoteRenderer(editor),
     MarkdownLivePreviewSpec.HorizontalRule::class.java to MarkdownLivePreviewHorizontalRuleRenderer(editor),
     MarkdownLivePreviewSpec.TaskCheckbox::class.java to MarkdownLivePreviewCheckboxRenderer(project, editor),

@@ -340,18 +340,41 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     val elements = elements(content)
     assertEquals(listOf("-", "*", "+", "-"), concealed(content))
     assertEquals(listOf("-", "*", "+", "-"), revealRanges(content))
-    assertEquals(listOf("•", "◦", "▪", "•"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
+    assertEquals(listOf("•", "◦", "▪", "•"), elements.filterIsInstance<MarkdownLivePreviewSpec.Bullet>().map { it.placeholderText })
   }
 
   fun testOrderedListParentsCountTowardsBulletDepth() {
     val content = "1. one\n   - two"
     val elements = elements(content)
     assertEquals(listOf("-"), concealed(content))
-    assertEquals(listOf("◦"), elements.map { (it as MarkdownLivePreviewSpec.Bullet).placeholderText })
+    assertEquals(listOf("◦"), elements.filterIsInstance<MarkdownLivePreviewSpec.Bullet>().map { it.placeholderText })
   }
 
   fun testOrderedListMarkersAreNotConcealed() {
     assertEmpty(elements("1. ordered"))
+  }
+
+  fun testNestedListLinesGetIndentSpecsWithTheirDepth() {
+    assertEquals(listOf(1 to 2, 2 to 3, 3 to 2), listIndents("- one\n  * two\n    + three\n  * two again"))
+  }
+
+  fun testNestedItemContinuationLinesGetTheDepthOfTheirItem() {
+    val content = "- one\n  - two\n    continuation\n\n    second paragraph\n  - three"
+    assertEquals(listOf(1 to 2, 2 to 2, 4 to 2, 5 to 2), listIndents(content))
+  }
+
+  fun testOrderedNestedListsGetIndentSpecs() {
+    assertEquals(listOf(1 to 2, 2 to 3), listIndents("1. one\n   1. two\n      - three"))
+  }
+
+  fun testTopLevelLazyAndQuoteMarkedLinesGetNoIndentSpec() {
+    assertEmpty(listIndents("- one\n  continuation\n\n- two"))
+    assertEquals(listOf(1 to 2), listIndents("- one\n  - two\nlazy"))
+    assertEmpty(listIndents("> - a\n>   - b"))
+  }
+
+  fun testLineThatStartsInAnOuterItemGetsTheDepthOfThatItem() {
+    assertEquals(listOf(1 to 2, 2 to 2), listIndents("- a\n  - b\n    > - c"))
   }
 
   fun testTaskCheckboxesConcealAndRevealTheirMarkers() {
@@ -583,6 +606,7 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     is MarkdownLivePreviewSpec.CodeFence -> emptyList()
     is MarkdownLivePreviewSpec.Bullet -> listOf(range)
     is MarkdownLivePreviewSpec.TaskCheckbox -> listOf(range)
+    is MarkdownLivePreviewSpec.ListIndent -> emptyList()
   }
 
   private fun elements(content: String): List<MarkdownLivePreviewSpec> {
@@ -590,7 +614,11 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     val elements = computeLivePreviewSpecs(myFixture.file, myFixture.editor).elements
     for (element in elements) {
       val conceals = element.concealedRanges()
-      if (element !is MarkdownLivePreviewSpec.CodeFence) {
+      if (element is MarkdownLivePreviewSpec.ListIndent) {
+        val offset = element.range.startOffset
+        assertTrue("An indent must be empty and sit at a line start: $element", element.range.isEmpty && (offset == 0 || content[offset - 1] == '\n'))
+      }
+      else if (element !is MarkdownLivePreviewSpec.CodeFence) {
         assertFalse("An element with nothing to conceal must not be reported: $element", conceals.isEmpty())
       }
       assertTrue("An element must contain the markup it conceals: $element", conceals.all { element.range.contains(it) })
@@ -607,7 +635,13 @@ class MarkdownLivePreviewSpecTest : BasePlatformTestCase() {
     elements(content).flatMap { it.concealedRanges() }.map { content.substring(it.startOffset, it.endOffset) }
 
   private fun revealRanges(content: String): List<String> =
-    elements(content).map { content.substring(it.range.startOffset, it.range.endOffset) }
+    elements(content).filterNot { it is MarkdownLivePreviewSpec.ListIndent }.map { content.substring(it.range.startOffset, it.range.endOffset) }
+
+  /** The line number and the depth of each list indent, in document order. */
+  private fun listIndents(content: String): List<Pair<Int, Int>> =
+    elements(content).filterIsInstance<MarkdownLivePreviewSpec.ListIndent>().map {
+      myFixture.editor.document.getLineNumber(it.range.startOffset) to it.depth
+    }
 
   private fun ruleSegments(content: String): List<String> =
     blockQuotes(content).map { content.substring(it.ruleRange.startOffset, it.ruleRange.endOffset) }
