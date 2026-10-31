@@ -99,7 +99,7 @@
     <orderEntry type="module" module-name="intellij.kotlin.j2k.mcp" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm.shared" exported="" />
-    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch" />
+    <orderEntry type="module" module-name="intellij.kotlin.base.scripting.scratch" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.base.util" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.core" exported="" />
     <orderEntry type="module" module-name="intellij.kotlin.jvm.debugger.coroutines" exported="" />
@@ -162,9 +162,9 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.assignment.compiler.plugin" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-gradle-statistics" level="project" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.parcelize.compiler.plugin" exported="" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.collections.immutable" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlin.reflect" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="vavr" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />

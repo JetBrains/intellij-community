@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.jna" />
+    <orderEntry type="module" module-name="intellij.libraries.jna" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="pty4j" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.pty4j:pty4j:0.14.0">

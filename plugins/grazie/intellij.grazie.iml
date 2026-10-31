@@ -8,14 +8,14 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.grazie.core" exported="" />
-    <orderEntry type="module" module-name="intellij.grazie.todo" />
-    <orderEntry type="module" module-name="intellij.grazie.java" />
-    <orderEntry type="module" module-name="intellij.grazie.json" />
-    <orderEntry type="module" module-name="intellij.grazie.markdown" />
-    <orderEntry type="module" module-name="intellij.grazie.markdown.specification" />
-    <orderEntry type="module" module-name="intellij.grazie.properties" />
-    <orderEntry type="module" module-name="intellij.grazie.vcs" />
-    <orderEntry type="module" module-name="intellij.grazie.xml" />
-    <orderEntry type="module" module-name="intellij.grazie.yaml" />
+    <orderEntry type="module" module-name="intellij.grazie.todo" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.java" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.json" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.markdown.specification" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.properties" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.vcs" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.xml" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.grazie.yaml" scope="RUNTIME" />
   </component>
 </module>

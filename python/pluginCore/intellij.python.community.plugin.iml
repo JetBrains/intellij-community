@@ -24,6 +24,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="RUNTIME" />
   </component>
 </module>

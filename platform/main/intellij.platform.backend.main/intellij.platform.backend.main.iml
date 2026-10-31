@@ -16,7 +16,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.bookmarks.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.recentFiles.backend" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.execution.impl.backend" />
+    <orderEntry type="module" module-name="intellij.platform.execution.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.execution.dashboard.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker.xml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.spellchecker.xml.backend" scope="RUNTIME" />
@@ -24,7 +24,7 @@
     <orderEntry type="module" module-name="intellij.platform.todo.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.managed.cache.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.scopes.backend" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics.backend" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.buildView.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.pluginManager.backend" scope="RUNTIME" />

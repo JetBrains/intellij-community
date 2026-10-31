@@ -15,9 +15,9 @@
     <orderEntry type="module" module-name="intellij.platform.todo" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.find" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.settings.local" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" />
-    <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" />
-    <orderEntry type="module" module-name="intellij.platform.rpc.topics" />
-    <orderEntry type="module" module-name="intellij.platform.pluginManager.shared" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.rpc" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.rpc.topics" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.pluginManager.shared" scope="RUNTIME" />
   </component>
 </module>

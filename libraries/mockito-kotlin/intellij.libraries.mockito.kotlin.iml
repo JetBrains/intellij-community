@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.mockito" />
+    <orderEntry type="module" module-name="intellij.libraries.mockito" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="mockito-kotlin" type="repository">
         <properties include-transitive-deps="false" maven-id="org.mockito.kotlin:mockito-kotlin:6.3.0">

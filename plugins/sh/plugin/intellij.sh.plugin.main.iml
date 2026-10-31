@@ -4,14 +4,14 @@
     <exclude-output />
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.sh.plugin" />
-    <orderEntry type="module" module-name="intellij.sh.core" />
-    <orderEntry type="module" module-name="intellij.sh.execution" />
+    <orderEntry type="module" module-name="intellij.sh.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.execution" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh.backend" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.sh.terminal" />
-    <orderEntry type="module" module-name="intellij.sh.copyright" />
-    <orderEntry type="module" module-name="intellij.sh.markdown" />
-    <orderEntry type="module" module-name="intellij.sh.python" />
+    <orderEntry type="module" module-name="intellij.sh.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.copyright" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.markdown" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.sh.python" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh.spellchecker" scope="RUNTIME" />
   </component>
 </module>

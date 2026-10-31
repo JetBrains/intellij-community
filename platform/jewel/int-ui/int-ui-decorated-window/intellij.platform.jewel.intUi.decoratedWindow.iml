@@ -25,13 +25,13 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.ui" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" />
-    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.decoratedWindow" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.ui" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.foundation" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.jewel.intUi.standalone" scope="RUNTIME" />
   </component>
 </module>

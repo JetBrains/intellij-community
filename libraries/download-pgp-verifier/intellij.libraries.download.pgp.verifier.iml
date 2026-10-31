@@ -25,6 +25,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.pgp" />
+    <orderEntry type="module" module-name="intellij.libraries.bouncy.castle.pgp" scope="RUNTIME" />
   </component>
 </module>

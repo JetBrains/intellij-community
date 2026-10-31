@@ -19,7 +19,7 @@ fleet_wasmjs_module(
         "@kmp_deps_wasmjs//:io_ktor_ktor_websocket_serialization",
         "@kmp_deps_wasmjs//:io_ktor_ktor_websockets",
     ],
-    deps = [
+    runtime_deps = [
         "@kmp_deps_wasmjs//:org_jetbrains_annotations",
         "@kmp_deps_wasmjs//:org_jetbrains_intellij_deps_kotlinx_kotlinx_coroutines_core",
         "@kmp_deps_wasmjs//:org_jetbrains_kotlin_kotlin_stdlib",

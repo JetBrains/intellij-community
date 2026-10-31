@@ -35,12 +35,12 @@
     <orderEntry type="library" exported="" name="fleet:io.ktor.websocket.serialization" level="project" />
     <orderEntry type="library" exported="" name="fleet:io.ktor.websockets" level="project" />
     <orderEntry type="library" exported="" name="fleet:io.ktor.http.cio" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" />
-    <orderEntry type="library" name="slf4j-api" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.jetbrains.annotations" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.slf4j" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.io" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.serialization.core" scope="RUNTIME" />
+    <orderEntry type="library" scope="RUNTIME" name="slf4j-api" level="project" />
   </component>
 </module>

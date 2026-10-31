@@ -23,7 +23,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
+    <orderEntry type="module" module-name="intellij.gradle.toolingExtension" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlin.gradle.plugin.idea" scope="RUNTIME" />
   </component>
 </module>

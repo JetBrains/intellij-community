@@ -34,7 +34,7 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" />
-    <orderEntry type="module" module-name="intellij.libraries.byte.buddy.agent" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.byte.buddy.agent" scope="RUNTIME" />
   </component>
 </module>

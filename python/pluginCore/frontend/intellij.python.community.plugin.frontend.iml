@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.frontend" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
+    <orderEntry type="module" module-name="intellij.platform.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="RUNTIME" />
   </component>
 </module>

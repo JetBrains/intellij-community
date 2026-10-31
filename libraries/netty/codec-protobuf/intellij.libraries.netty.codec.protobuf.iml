@@ -25,8 +25,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="intellij.libraries.protobuf" />
-    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" />
-    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" />
+    <orderEntry type="module" module-name="intellij.libraries.protobuf" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.buffer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.netty.codec.http" scope="RUNTIME" />
   </component>
 </module>

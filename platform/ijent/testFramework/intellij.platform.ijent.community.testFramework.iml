@@ -7,16 +7,16 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="kotlin-stdlib" level="project" />
-    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" />
-    <orderEntry type="module" module-name="intellij.platform.core" />
-    <orderEntry type="module" module-name="intellij.platform.eel.impl" />
-    <orderEntry type="module" module-name="intellij.platform.eel.provider" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework" />
-    <orderEntry type="module" module-name="intellij.platform.util.coroutines" />
-    <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" />
-    <orderEntry type="module" module-name="intellij.platform.execution" />
-    <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib" level="project" />
+    <orderEntry type="module" module-name="intellij.libraries.kotlinx.coroutines.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.provider" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.util.coroutines" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.ide.impl.wsl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.execution" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.eel.nioFs.impl" scope="RUNTIME" />
   </component>
 </module>

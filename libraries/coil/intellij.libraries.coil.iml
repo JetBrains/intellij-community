@@ -7,8 +7,8 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
-    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.libraries.compose.foundation.desktop" scope="RUNTIME" />
     <orderEntry type="module-library" exported="">
       <library name="io.coil.kt.coil3.network.ktor3.jvm" type="repository">
         <properties maven-id="io.coil-kt.coil3:coil-network-ktor3-jvm:3.2.0">
