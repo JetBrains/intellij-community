@@ -7,7 +7,7 @@
 //! command:
 //! 1. `reset:before`: `Reset` in the IDE, then the registry fault, the feedback queue and the cloud record. A reset
 //!    that does not hold recycles the IDE, see [`super::recycle`]. A scenario after a passed scenario of the same suite
-//!    whose `reset:after` held sends none, because nothing ran on the IDE since that reset.
+//!    whose `reset:after` held with no recycle sends none, because nothing ran on the IDE since that reset.
 //! 2. The preparation of a story scenario, one `StepSequence`: `SetScenarioFixture`, `SetRegistryFlag` per flag,
 //!    `SeedSessionPresets`, `RemountEditorEmptyState` for the inline prompt flag, and `SessionTabs`, whose terminal tabs
 //!    are the runner value `terminalBaseline`.
@@ -367,9 +367,11 @@ pub(crate) struct Runner<'r, 's> {
     failed: RefCell<Vec<(usize, usize)>>,
     /// Whether the scenarios that run now are reruns.
     rerunning: Cell<bool>,
-    /// Whether the scenario that ran last passed and its `reset:after` held, and the IDE ran nothing since. The next
-    /// scenario of the same suite then starts on that clean IDE, with no `reset:before`.
+    /// Whether the scenario that ran last passed and its `reset:after` held with no recycle, and the IDE ran nothing
+    /// since. The next scenario of the same suite then starts on that clean IDE, with no `reset:before`.
     clean_handover: Cell<bool>,
+    /// How many relaunches of the IDE ran, so a scenario can tell that its `reset:after` recycled the IDE.
+    relaunches: Cell<u32>,
 }
 
 impl<'r, 's> Runner<'r, 's> {
@@ -398,6 +400,7 @@ impl<'r, 's> Runner<'r, 's> {
             failed: RefCell::new(Vec::new()),
             rerunning: Cell::new(false),
             clean_handover: Cell::new(false),
+            relaunches: Cell::new(0),
         }
     }
 
@@ -853,8 +856,11 @@ impl<'r, 's> Runner<'r, 's> {
         if !self.isolation.borrow().exhausted() && self.watch.expired().is_none() {
             // A failed scenario can leave a registry agent removed or half installed, so its reset restores the baseline.
             let baseline = reset.install.as_ref().filter(|_| verdict.is_err());
+            let relaunches = self.relaunches.get();
             let cleanup = self.traced_reset(ResetPhase::After, &profile.name, reset.reset, baseline);
-            self.clean_handover.set(verdict.is_ok() && cleanup.is_ok());
+            // A reset after that recycled the IDE held on a new IDE, so the next scenario checks that IDE once more.
+            self.clean_handover
+                .set(verdict.is_ok() && cleanup.is_ok() && self.relaunches.get() == relaunches);
             verdict = match (verdict, cleanup) {
                 (Err(mut primary), Err(cleanup)) => {
                     primary.suppressed.push(cleanup.message);
@@ -1064,6 +1070,7 @@ impl<'r, 's> Runner<'r, 's> {
     /// recycle, as the recorder keys them. Each part of the relaunch is a `relaunch` span inside it, see [`TracedParts`].
     fn relaunch_span(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
         self.clean_handover.set(false);
+        self.relaunches.set(self.relaunches.get() + 1);
         let id = match cause {
             Relaunch::Restart => "ide",
             Relaunch::Recycle => "recycle",

@@ -757,7 +757,8 @@ fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
 }
 
 // The reset after a passed scenario leaves the IDE clean, and nothing runs on it before the next scenario of the
-// suite. So that scenario sends no reset before. A scenario after a failed one resets before again.
+// suite. So that scenario sends no reset before. A scenario after a failed one, or after a reset after that recycled
+// the IDE, resets before again.
 #[test]
 fn a_scenario_after_a_passed_one_of_its_suite_sends_no_reset_before() {
     let resets_of = |fake: &Fake| -> Vec<Value> {
@@ -786,6 +787,21 @@ fn a_scenario_after_a_passed_one_of_its_suite_sends_no_reset_before() {
     let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
     assert_eq!(statuses, [&json!("FAILED"), &json!("FAILED")]);
     assert_eq!(resets_of(&fake), [json!(false), json!(true), json!(false), json!(true)]);
+
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
+        resets: VecDeque::from([Value::Null, json!("a session tab survived")]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[story(&vocabulary, &json!([profile, second]))], None);
+    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
+    assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
+    assert_eq!(*fake.relaunches.lock().unwrap(), [Relaunch::Recycle]);
+    assert_eq!(
+        resets_of(&fake),
+        [json!(false), json!(true), json!(true), json!(false), json!(true)],
+        "a reset after that recycled the IDE leaves the next scenario a reset before"
+    );
 }
 
 // A green scenario: the baseline, the reset before, the preparation chain, each instruction as one request with its
