@@ -70,7 +70,8 @@ internal class ScopeWalker(
    * What [roots] decided for one search; [expand] reads it on the workers.
    *
    * @param items        the root walk items
-   * @param searchInLibs true when the custom scope searches in libraries, so a library iterator is walked too
+   * @param searchInLibs true when the custom scope searches in libraries, so a library iterator is walked too; the directories
+   *                     that stand for the project hold no library, so their plan gets the library iterators as items
    * @param engines      the [DirectorySearchEngine]s whose [DirectorySearchEngine.canSearch] accepted the model
    */
   data class WalkPlan(
@@ -88,7 +89,8 @@ internal class ScopeWalker(
 
   /**
    * Builds the walk items from _one of_ {custom scope | directories | module | indexable providers}, plus the
-   * [FindModelExtension]s. Runs on the producer coroutine, once per search and only when the walk phase runs; asks
+   * [FindModelExtension]s. The directories that stand for the project also get the library iterators when the custom
+   * scope searches in libraries. Runs on the producer coroutine, once per search and only when the walk phase runs; asks
    * [DirectorySearchEngine.canSearch] here, outside a read action.
    *
    * @param skipNonIndexableRoots true when a reliable searcher reported
@@ -131,6 +133,11 @@ internal class ScopeWalker(
         else {
           cacheAvoidingDirectory.children.mapTo(items) { WorkItem.Walk.File(it) }
         }
+      }
+      if (directoryStandsForProject && searchInLibs) {
+        // the libraries lie outside the directories of the project, so a custom scope that searches in them walks their iterators
+        val indexes = FileBasedIndex.getInstance() as? FileBasedIndexEx
+        indexes?.getIndexableFilesProviders(project)?.filter { it.origin !is ContentOrigin }?.mapTo(items) { WorkItem.Walk.Indexable(it) }
       }
       //MAYBE RC: should we return early here? Should FindModelExtension be added if user explicitly
       //          request a search in a specific directory _only_?

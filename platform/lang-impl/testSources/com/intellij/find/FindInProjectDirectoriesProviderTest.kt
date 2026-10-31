@@ -7,8 +7,10 @@ import com.intellij.find.impl.FindInProjectDirectoriesProvider
 import com.intellij.find.impl.FindInProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
@@ -113,6 +115,24 @@ class FindInProjectDirectoriesProviderTest {
     }
     assertThat(findFileNames(model)).containsExactlyInAnyOrder("module.txt")
     assertThat(calls.get()).isZero()
+  }
+
+  @Test
+  fun `a custom scope that searches in libraries reaches the library files`(): Unit = runBlocking {
+    val module = projectModel.createModule("a")
+    val libraryRoot = baseDir.newVirtualDirectory("lib")
+    baseDir.newVirtualFile("lib/lib.txt", "library file with zq data".toByteArray())
+    projectModel.addModuleLevelLibrary(module, "lib") { it.addRoot(libraryRoot.url, OrderRootType.CLASSES) }
+    registerProvider(listOf(firstRoot))
+
+    // a pattern without a trigram has no index candidates, so the walk alone decides
+    val model = projectModel().apply {
+      stringToFind = "zq"
+      isProjectScope = false
+      isCustomScope = true
+      customScope = GlobalSearchScope.allScope(project)
+    }
+    assertThat(findFileNames(model)).containsExactlyInAnyOrder("first.txt", "lib.txt")
   }
 
   @Test
