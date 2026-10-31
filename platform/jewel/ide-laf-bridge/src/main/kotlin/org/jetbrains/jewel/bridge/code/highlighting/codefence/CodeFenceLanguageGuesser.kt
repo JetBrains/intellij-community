@@ -5,18 +5,31 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
 
 /**
- * Copied from org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
+ * Guesses the [Language] of a Markdown code fence from its info string.
  *
- * For now, we removed support for both org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider and
- * org.intellij.plugins.markdown.injection.aliases.AdditionalFenceLanguageSuggester. In other words, we can't fetch
- * languages from custom providers.
+ * The guesser asks the registered [CodeFenceLanguageResolver] extensions first. The Markdown plugin registers one that
+ * reads the `org.intellij.markdown.fenceLanguageProvider` extension point. The default Markdown provider in that
+ * extension point reads the `org.intellij.markdown.additionalFenceLanguageSuggester` extension point.
  *
- * This will be solved in JEWEL-973.
+ * When no resolver gives an injectable language, the guesser uses its own alias table. The fallback is copied from
+ * `org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser`.
  */
 internal object CodeFenceLanguageGuesser {
     @JvmStatic
-    fun guessLanguageForInjection(value: String): Language? =
-        findLanguage(value.lowercase())?.takeIf { LanguageUtil.isInjectableLanguage(it) }
+    fun guessLanguageForInjection(value: String): CodeFenceLanguage? {
+        val resolved = resolveWithExtensions(value)
+        if (resolved != null) {
+            return resolved
+        }
+        val language = findLanguage(value.lowercase())?.takeIf { LanguageUtil.isInjectableLanguage(it) } ?: return null
+        return CodeFenceLanguage(language)
+    }
+
+    // The extension point is missing when the bridge module descriptor is not loaded, for example in some tests.
+    private fun resolveWithExtensions(value: String): CodeFenceLanguage? =
+        CodeFenceLanguageResolver.EP_NAME.extensionsIfPointIsRegistered.firstNotNullOfOrNull { resolver ->
+            resolver.resolve(value)?.takeIf { LanguageUtil.isInjectableLanguage(it.language) }
+        }
 
     private fun findLanguage(value: String, registeredLanguages: Collection<Language>): Language? {
         val entry = CodeFenceLanguageAliases.findRegisteredEntry(value) ?: value

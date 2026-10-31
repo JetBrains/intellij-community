@@ -1709,6 +1709,8 @@ plugins/markdown/frontmatter/yaml
 plugins/markdown/images
 plugins/markdown/java
 plugins/markdown/jcef
+plugins/markdown/jewel
+plugins/markdown/jewel/tests
 plugins/markdown/model
 plugins/markdown/plugin
 plugins/markdown/projectView

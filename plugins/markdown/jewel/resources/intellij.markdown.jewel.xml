@@ -1,0 +1,13 @@
+<idea-plugin>
+  <!-- region Generated dependencies - run `Generate Product Layouts` to regenerate -->
+  <dependencies>
+    <module name="intellij.markdown"/>
+    <module name="intellij.platform.core"/>
+    <module name="intellij.platform.jewel.foundation"/>
+    <module name="intellij.platform.jewel.ideLafBridge"/>
+  </dependencies>
+  <!-- endregion -->
+  <extensions defaultExtensionNs="org.jetbrains.jewel.bridge">
+    <codeFenceLanguageResolver implementation="com.intellij.markdown.jewel.MarkdownCodeFenceLanguageResolver"/>
+  </extensions>
+</idea-plugin>
