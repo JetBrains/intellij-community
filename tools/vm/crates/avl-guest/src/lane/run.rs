@@ -40,13 +40,14 @@ use super::build_log::BuildLog;
 use super::channel::{self, BOOT_CODE, log};
 use super::evidence::{self, Evidence, Limits, Moment};
 use super::inputs::{self, LaunchInputs, guest_platform};
-use super::iteration::{self, RunnerSplit};
+use super::iteration;
 use super::monitor::{self, BUDGET_PROBLEM, LiveStop, MONITOR_THREAD, Monitor, MonitorPaths};
 use super::own_display;
 use super::package::sha256_hex;
 use super::performance;
 use super::rerun;
 use super::run_result::{self, RunEnd};
+use super::split::{RunnerSplit, SeasonDurations};
 use super::watchdog::{ExpiryReason, KILL_GRACE};
 use crate::cli::{LaneDaemonArgs, LaneRunArgs, ValidateGuestArgs};
 use crate::ide::launch::CODE_DISPLAY_MISSING;
@@ -100,29 +101,31 @@ const ALLURE_PROPERTY: &str = "air.flow.trace.allure";
 pub(crate) const VIDEO_VARIABLE: &str = "AIR_LANE_VIDEO";
 /// The refusal code of a value of [`VIDEO_VARIABLE`] that names no retention.
 pub(crate) const VIDEO_CODE: &str = "lane_run_video";
-/// Why lane-run ignores a bucketing property of the JUnit runner.
-const BUCKETING_IGNORED: &str = "lane-run splits the lane by the order of its suites, not by duration buckets";
+/// The JVM property of the season of the duration bucketing: the name of its file `<season>.csv`.
+const SEASON_PROPERTY: &str = "idea.bucketing.season";
+/// The JVM property that asks for the duration bucketing with the value `true`.
+const DURATION_BUCKETING_PROPERTY: &str = "idea.tests.duration.bucketing.enabled";
 /// The JVM properties that lane-run ignores, each with the reason that its note gives.
-const IGNORED_PROPERTIES: [(&str, &str); 3] = [
-    ("java.awt.headless", "the lane IDE runs headed on the display of the run"),
-    ("idea.bucketing.season", BUCKETING_IGNORED),
-    ("idea.tests.duration.bucketing.enabled", BUCKETING_IGNORED),
-];
+const IGNORED_PROPERTIES: [(&str, &str); 1] = [("java.awt.headless", "the lane IDE runs headed on the display of the run")];
 
 /// What the `--jvm_flag` arguments of a run ask for: the share of this runner of the lane, one note for each flag that
-/// lane-run ignores, and whether the recorder writes the Allure results.
+/// lane-run ignores, whether the recorder writes the Allure results, and the season of the duration split.
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) struct JvmFlags {
     pub split: RunnerSplit,
     pub notes: Vec<String>,
     pub allure: bool,
+    /// The season whose durations split the lane, or `None` for the position split.
+    pub season: Option<String>,
 }
 
 /// Reads the `--jvm_flag` arguments that the UI job of TeamCity passes to the JUnit runner. The runner index and count
-/// give the split. `-Dair.flow.trace.allure=on` asks for the Allure results, and another value of that property is
-/// refused. Each ignored property gives a note. A flag that is no `-D` property, another property, a property with two
-/// values, and an index and a count that do not make a split are refused. The refusal of another flag names it and
-/// never its value.
+/// give the split. With `-Didea.tests.duration.bucketing.enabled=true`, the season of `idea.bucketing.season` names
+/// the durations of the duration split, as for the JVM duration bucketing. A split by position because one of the two
+/// is missing gives a note. `-Dair.flow.trace.allure=on` asks for the Allure results, and another value of that
+/// property is refused. Each ignored property gives a note. A flag that is no `-D` property, another property, a
+/// property with two values, and an index and a count that do not make a split are refused. The refusal of another
+/// flag names it and never its value.
 pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
     let refused = |message: String| AgentRefusal::refused(JVM_FLAG_CODE, message);
     let mut properties: BTreeMap<&str, &str> = BTreeMap::new();
@@ -147,10 +150,18 @@ pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
             allure = true;
             continue;
         }
-        if name != RUNNER_INDEX_PROPERTY && name != RUNNERS_COUNT_PROPERTY {
+        if ![
+            RUNNER_INDEX_PROPERTY,
+            RUNNERS_COUNT_PROPERTY,
+            SEASON_PROPERTY,
+            DURATION_BUCKETING_PROPERTY,
+        ]
+        .contains(&name)
+        {
             return Err(refused(format!(
                 "lane-run does not take the JVM property {name}: it takes {RUNNER_INDEX_PROPERTY}, \
-                 {RUNNERS_COUNT_PROPERTY} and {ALLURE_PROPERTY}, and it ignores {}",
+                 {RUNNERS_COUNT_PROPERTY}, {SEASON_PROPERTY}, {DURATION_BUCKETING_PROPERTY} and {ALLURE_PROPERTY}, and it \
+                 ignores {}",
                 IGNORED_PROPERTIES.map(|(ignored, _)| ignored).join(", ")
             )));
         }
@@ -170,7 +181,11 @@ pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
     };
     let split = match (number(RUNNER_INDEX_PROPERTY)?, number(RUNNERS_COUNT_PROPERTY)?) {
         (None, None) => RunnerSplit::WHOLE,
-        (Some(index), Some(count)) if index < count => RunnerSplit { index, count },
+        (Some(index), Some(count)) if index < count => RunnerSplit {
+            index,
+            count,
+            durations: None,
+        },
         (Some(index), Some(count)) => {
             return Err(refused(format!(
                 "the runner index {index} of {RUNNER_INDEX_PROPERTY} is not below the runner count {count} of \
@@ -184,7 +199,58 @@ pub(crate) fn jvm_flags(flags: &[String]) -> Result<JvmFlags, AgentRefusal> {
             )));
         }
     };
-    Ok(JvmFlags { split, notes, allure })
+    let season = properties.get(SEASON_PROPERTY).filter(|season| !season.is_empty());
+    let by_duration = properties
+        .get(DURATION_BUCKETING_PROPERTY)
+        .is_some_and(|value| value.eq_ignore_ascii_case("true"));
+    let season = match (season, by_duration) {
+        (Some(season), true) => Some((*season).to_owned()),
+        (None, true) if split.count > 1 => {
+            notes.push(format!(
+                "lane-run splits the lane by position, because the run asks for {DURATION_BUCKETING_PROPERTY} and names no \
+                 {SEASON_PROPERTY}"
+            ));
+            None
+        }
+        (Some(season), false) if split.count > 1 => {
+            notes.push(format!(
+                "lane-run splits the lane by position, because the run names the season {season} and does not set \
+                 {DURATION_BUCKETING_PROPERTY} to true"
+            ));
+            None
+        }
+        _ => None,
+    };
+    Ok(JvmFlags {
+        split,
+        notes,
+        allure,
+        season,
+    })
+}
+
+/// `split` with the durations of `season` from `season_dir`, and the note of what lane-run read. The whole lane and a
+/// run without a season read nothing. A season without `--season-dir`, a file that cannot be read and a file without
+/// a duration give a note and the position split, so a run never fails for its durations.
+pub(crate) fn split_with_durations(
+    mut split: RunnerSplit,
+    season: Option<&str>,
+    season_dir: Option<&Path>,
+    notes: &mut Vec<String>,
+) -> RunnerSplit {
+    let Some(season) = season.filter(|_| split.count > 1) else {
+        return split;
+    };
+    let Some(directory) = season_dir else {
+        notes.push(format!(
+            "lane-run splits the lane by position, because the lane test names no --season-dir for the season {season}"
+        ));
+        return split;
+    };
+    let (durations, note) = SeasonDurations::read(directory, season);
+    notes.push(note);
+    split.durations = durations;
+    split
 }
 
 /// Packs each recorded session that [`session_log::VARIABLE`] names into the jar store, as the controller pushes them
@@ -281,6 +347,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
     launch_inputs.trace.keep_video = keep_video;
     let jcmd = launch_inputs.jcmd();
     let mut notes = flags.notes;
+    let split = split_with_durations(flags.split, flags.season.as_deref(), args.season_dir.as_deref(), &mut notes);
     notes.extend(rerun.injected.iter().map(rerun::Injection::describe));
     // Held to the end of the run: its drop stops the display.
     let run_display = if owns_screen && !args.plan_only {
@@ -341,7 +408,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
         session_logs: session_logs(&daemon, &root, variable)?,
     };
     if args.plan_only {
-        let plan = plan(&daemon, &request, flags.split)?;
+        let plan = plan(&daemon, &request, &split)?;
         let mut out = io::stdout().lock();
         serde_json::to_writer_pretty(&mut out, &plan)
             .map_err(io::Error::from)
@@ -355,7 +422,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
         &args.lane,
         &mut notes,
     );
-    let end = run_end(&daemon, &request, flags.split, performance_plan, &root, variable);
+    let end = run_end(&daemon, &request, &split, performance_plan, &root, variable);
     let evidence = bazel_outputs(variable).map(|outputs| Evidence::new(&daemon_args.state_dir, &daemon_args.ide_root, &outputs));
     let stream_path = root.join(STREAM_FILE);
     let stream = File::create(&stream_path)
@@ -389,7 +456,7 @@ fn run_lane(args: &LaneRunArgs, variable: &dyn Fn(&str) -> Option<String>) -> Re
                 "cannot start the monitor, so the run has no hang report and no hard stop: {error}"
             ));
         }
-        let xml = iteration::run_split(&daemon, &request, flags.split, &notes, Some(&rerun), &mut tee);
+        let xml = iteration::run_split(&daemon, &request, &split, &notes, Some(&rerun), &mut tee);
         monitor.run_returned();
         let mut ending = LaneRunEnding {
             daemon: &daemon,
@@ -535,7 +602,7 @@ impl Ending for LaneRunEnding<'_> {
 pub(crate) fn run_end(
     daemon: &channel::Daemon,
     request: &RunRequest,
-    split: RunnerSplit,
+    split: &RunnerSplit,
     plan: Option<Plan>,
     root: &Path,
     variable: &dyn Fn(&str) -> Option<String>,
@@ -678,7 +745,7 @@ pub(crate) struct PlannedSuite {
 
 /// The plan of `request` for the share `split`: the selection of a run, and the key of the IDE that the run would
 /// launch.
-pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: RunnerSplit) -> Result<RunPlan, AgentRefusal> {
+pub(crate) fn plan(daemon: &channel::Daemon, request: &RunRequest, split: &RunnerSplit) -> Result<RunPlan, AgentRefusal> {
     let refused = |message: String| AgentRefusal::refused(PLAN_CODE, message);
     let (Some(lane), Some(lane_inputs)) = (&request.lane, &request.lane_inputs) else {
         return Err(refused("the run request names no lane and no lane inputs".to_owned()));

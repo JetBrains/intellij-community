@@ -69,7 +69,7 @@ fn planned(root: &Path, lane: &str, selectors: &[&str], filters: &[&str], lane_c
         selectors: &owned(selectors),
         junit5_filters: &owned(filters),
         lane_classes,
-        split: RunnerSplit::WHOLE,
+        split: &RunnerSplit::WHOLE,
     })
 }
 
@@ -258,7 +258,11 @@ fn the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_w
             selectors: &[],
             junit5_filters: &[],
             lane_classes: &[],
-            split: RunnerSplit { index, count },
+            split: &RunnerSplit {
+                index,
+                count,
+                durations: None,
+            },
         })
         .unwrap()
     };
@@ -273,7 +277,7 @@ fn the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_w
         let mut runs = Vec::new();
         for index in 0..count {
             let part = share(index, count);
-            assert_eq!(part.selected, 2, "runner {index} of {count}");
+            assert_eq!(part.split_note.is_some(), count > 1, "runner {index} of {count}");
             runs.extend(part.class_names());
         }
         runs.sort();

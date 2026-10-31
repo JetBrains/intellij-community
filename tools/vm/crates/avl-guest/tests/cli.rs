@@ -323,7 +323,8 @@ fn the_lane_daemon_serves_a_run_that_logs_from_its_run_thread_and_ends_with_a_su
 /// selects the documents, and writes the plan: the key of the lane IDE and the suites in run order, the suite of a bare
 /// IDE last. It launches no IDE, so no context of a launch key appears under the run directory. A selection of bare
 /// suites alone needs no lane IDE, so its plan names no lane key. The JVM flags of a TeamCity UI job split the lane
-/// between its runners, and an unknown flag is refused.
+/// between its runners, by position without `--season-dir` and by the durations of the season with it. An unknown flag
+/// is refused.
 #[test]
 fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     let root = tempfile::tempdir().unwrap();
@@ -384,15 +385,25 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
     assert_eq!(bare_only["suites"].as_array().unwrap().len(), 1);
 
     // The argv of the UI job of TeamCity build 1097187017: each of its two runners plans its own share of the lane.
-    let runner = |index: &str| {
+    let seasons = root.path().join("seasons");
+    put(
+        &seasons.join("AirPluginGuiChatTests.csv"),
+        b"com.intellij.air.integration.flow.AirStartupClassLoadingBudgetUiTest,90000\n\
+          com.intellij.air.integration.flow.generated.ui.AirRenameSessionGeneratedFlowUiTest,30000\n",
+        false,
+    );
+    let season_dir = path(&seasons);
+    let runner_of = |index: &str, extra: &[&str]| {
         let index = format!("--jvm_flag=-Didea.test.runner.index={index}");
-        let shared = plan(&[
+        let mut args = vec![
             "--jvm_flag=-Djava.awt.headless=false",
             &index,
             "--jvm_flag=-Didea.test.runners.count=2",
             "--jvm_flag=-Didea.bucketing.season=AirPluginGuiChatTests",
             "--jvm_flag=-Didea.tests.duration.bucketing.enabled=true",
-        ]);
+        ];
+        args.extend(extra);
+        let shared = plan(&args);
         let classes: Vec<String> = shared["suites"]
             .as_array()
             .unwrap()
@@ -401,8 +412,11 @@ fn lane_run_plan_only_writes_the_plan_and_launches_no_ide() {
             .collect();
         classes
     };
-    assert_eq!(runner("0"), ["AirRenameSessionGeneratedFlowUiTest"]);
-    assert_eq!(runner("1"), ["AirStartupClassLoadingBudgetUiTest"]);
+    assert_eq!(runner_of("0", &[]), ["AirRenameSessionGeneratedFlowUiTest"]);
+    assert_eq!(runner_of("1", &[]), ["AirStartupClassLoadingBudgetUiTest"]);
+    let by_duration = ["--season-dir", season_dir.as_str()];
+    assert_eq!(runner_of("0", &by_duration), ["AirStartupClassLoadingBudgetUiTest"]);
+    assert_eq!(runner_of("1", &by_duration), ["AirRenameSessionGeneratedFlowUiTest"]);
     let mut args = vec!["lane-run", "--lane", "ui", "--plan-only", "--jvm_flag", "-Dunknown.property=1"];
     let descriptor = path(&descriptor);
     args.extend(["--descriptor", &descriptor]);

@@ -716,6 +716,17 @@ daemon of a worker reruns nothing, so `vm.cmd run` shows each flake.
 see the rerun. [lane-run reruns each failed scenario once](decisions/2026-10-29-lane-run-reruns-each-failed-scenario-once.md)
 records why.
 
+A TeamCity UI job splits a lane across its runners with `-Didea.test.runner.index` and `-Didea.test.runners.count`.
+With `-Didea.tests.duration.bucketing.enabled=true`, `lane-run` splits the selected suites by the durations of the
+season of `-Didea.bucketing.season`. It reads them from `tests/classes-duration/seasons/<season>.csv`, the file that
+the JVM duration bucketing reads, and `air_lane_test` names that directory as `--season-dir`. The longest suite goes
+first, to the runner with the least expected total. A suite that the file does not name takes the median of the
+selected suites that it names. Without the file, or when it names no selected suite, a runner takes each suite whose
+position in the lane order is its index modulo the count. Each runner computes the same split, so the job runs each
+suite once. A note at the start of the run names the split and the expected total of each runner. The season files
+`AirPluginUiTests.csv` and `AirPluginGuiChatTests.csv` hold the 75th percentile of the duration of each test class
+over the last green master builds of the two runners.
+
 **The versioned JSON report is the contract, and the run stream is its one source.** The report, the
 JUnit XML and the TeamCity service messages are three readers of that stream. The controller writes
 the XML of each iteration beside its report, and the XML of the command to the file that

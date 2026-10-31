@@ -35,6 +35,7 @@ use super::readiness::{self, Bridge, READY_TIMEOUT, request};
 use super::rerun::Rerun;
 use super::services::cloud::spawner::ControlEndpoint;
 use super::session_logs;
+use super::split::RunnerSplit;
 use super::stream::Stream;
 use super::trace::{MAX_LOOSE_BYTES, RecorderProcess, Trace};
 use super::watchdog::{self, DISMISS_TIMEOUT, INTRUDER_GRACE_MS, PROBE_TIMEOUT, Policy, Probes, WATCHDOG_THREAD, Watch};
@@ -62,36 +63,8 @@ pub(crate) struct Selection {
     /// The suites of the lane that the controller names and that have no suite document. The plan names each one, and
     /// each ends as a failed container [`kind::UNSUPPORTED`].
     pub undocumented: Vec<LaneClass>,
-    /// The count of the selected suites before the runner split, documented and undocumented.
-    pub selected: usize,
-}
-
-/// The share of one runner when a TeamCity job splits a lane across its runners. Of the selected suites in the order
-/// of the lane, runner `index` takes each suite whose position is `index` modulo `count`. So the runners of one job
-/// together run each selected suite once. The whole lane is runner 0 of 1.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub(crate) struct RunnerSplit {
-    pub index: u32,
-    pub count: u32,
-}
-
-impl RunnerSplit {
-    /// The whole lane: the split of the lane daemon and of a run that names no runner.
-    pub(crate) const WHOLE: Self = Self { index: 0, count: 1 };
-
-    /// Whether this runner takes the selected suite at `position`.
-    fn takes(self, position: usize) -> bool {
-        u32::try_from(position).is_ok_and(|position| position % self.count == self.index)
-    }
-
-    /// The items at the positions that this runner takes, in their order.
-    fn share<T>(self, items: Vec<T>) -> Vec<T> {
-        items
-            .into_iter()
-            .enumerate()
-            .filter_map(|(position, item)| self.takes(position).then_some(item))
-            .collect()
-    }
+    /// The note that names the runner split and the share of this runner, or `None` for the whole lane.
+    pub split_note: Option<String>,
 }
 
 impl Selection {
@@ -118,7 +91,7 @@ pub(crate) struct SelectionInputs<'a> {
     /// The suites of the lane that the catalog names, `laneClasses` of the request.
     pub lane_classes: &'a [LaneClass],
     /// The share of this runner of the selected suites.
-    pub split: RunnerSplit,
+    pub split: &'a RunnerSplit,
 }
 
 /// Reads the lane document `<lane>.json`, the digest of the flow vocabulary beside it, and the suite documents of its
@@ -187,14 +160,14 @@ pub(crate) fn select(inputs: &SelectionInputs<'_>) -> Result<Selection, String> 
     }
     apply_filters(&mut suites, &mut undocumented, inputs.junit5_filters, &lane.lane)?;
     suites.sort_by(|left, right| left.program.test_class_name.cmp(&right.program.test_class_name));
-    let selected = suites.len() + undocumented.len();
+    let share = inputs.split.share(inputs.lane, suites, undocumented);
     Ok(Selection {
         lane_bytes,
         lane,
         vocabulary_digest,
-        suites: inputs.split.share(suites),
-        undocumented: inputs.split.share(undocumented),
-        selected,
+        suites: share.suites,
+        undocumented: share.undocumented,
+        split_note: share.note,
     })
 }
 
@@ -274,7 +247,7 @@ pub(crate) fn apply_filters(
 /// The JUnit XML of the records goes to [`TEST_XML_FILE`] of the iteration directory, and the run answers it. The lane
 /// daemon reruns no failed scenario.
 pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + Send)) -> String {
-    run_split(daemon, request, RunnerSplit::WHOLE, &[], None, out)
+    run_split(daemon, request, &RunnerSplit::WHOLE, &[], None, out)
 }
 
 /// [`run`] of the share `split` of the selected suites, with the rerun `rerun` of a `lane-run`. The stream carries
@@ -282,7 +255,7 @@ pub(crate) fn run(daemon: &Daemon, request: &RunRequest, out: &mut (dyn Write + 
 pub(crate) fn run_split(
     daemon: &Daemon,
     request: &RunRequest,
-    split: RunnerSplit,
+    split: &RunnerSplit,
     notes: &[String],
     rerun: Option<&Rerun>,
     out: &mut (dyn Write + Send),
@@ -364,7 +337,7 @@ pub(crate) fn selection_of(
     lane: &str,
     lane_inputs: &LaneInputs,
     request: &RunRequest,
-    split: RunnerSplit,
+    split: &RunnerSplit,
 ) -> Result<Selection, String> {
     let lane_documents = daemon.stored(&lane_inputs.lane_documents)?;
     let suite_documents = daemon.stored(&lane_inputs.suite_documents)?;
@@ -417,7 +390,7 @@ pub(crate) fn lane_key(daemon: &Daemon, selection: &Selection, product_stamp: &s
 fn execute(
     daemon: &Daemon,
     request: &RunRequest,
-    split: RunnerSplit,
+    split: &RunnerSplit,
     rerun: Option<&Rerun>,
     stream: &Stream<'_>,
     iteration_dir: &Path,
@@ -429,15 +402,8 @@ fn execute(
     };
     let fake_agent_jar = daemon.stored(&lane_inputs.fake_agent_jar)?;
     let selection = selection_of(daemon, lane, lane_inputs, request, split)?;
-    if split != RunnerSplit::WHOLE {
-        stream.note(format!(
-            "lane {lane}: the runner with index {index} of {count} runners takes {} of the {} selected suite(s), each one \
-             whose position in the lane order is {index} modulo {count}",
-            selection.suites.len() + selection.undocumented.len(),
-            selection.selected,
-            index = split.index,
-            count = split.count,
-        ));
+    if let Some(note) = &selection.split_note {
+        stream.note(note.clone());
     }
     let live = start_live(daemon, &selection, stream)?;
     let outcome = execute_selection(

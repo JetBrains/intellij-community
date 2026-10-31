@@ -10,6 +10,7 @@ use tempfile::TempDir;
 
 use super::*;
 use crate::lane::services::testing::{Answer, call};
+use crate::lane::split::RunnerSplit;
 use crate::lane::testing::launch_inputs;
 use crate::linux::validate::SHARED_OBJECT_UNRESOLVED_CODE;
 use crate::step::tests_support::Transcript;
@@ -285,7 +286,11 @@ fn the_notes_of_a_lane_run_follow_the_start_of_the_run() {
     iteration::run_split(
         &booted.daemon,
         &request,
-        iteration::RunnerSplit { index: 1, count: 2 },
+        &RunnerSplit {
+            index: 1,
+            count: 2,
+            durations: None,
+        },
         &notes,
         None,
         &mut out,

@@ -1689,15 +1689,34 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_run_of_more_than_one_shard_is_refused`)
 
 - `lane-run` takes the `--jvm_flag` arguments of a TeamCity UI job, in the joined and in the two-token form. The runner
-  index and count of the job split the selected suites of the lane. In the order of the lane, a runner takes each suite
-  whose position is its index modulo the count. So the runners of one job run each selected suite once. `lane-run`
-  ignores `java.awt.headless` and the two bucketing properties, with one note each in the run stream. It refuses
-  another flag with `lane_run_jvm_flag`, and the refusal names the property and never its value.
+  index and count of the job split the selected suites of the lane. `lane-run` ignores `java.awt.headless`, with a
+  note in the run stream. It refuses another flag with `lane_run_jvm_flag`, and the refusal names the property and
+  never its value.
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`lane_run_takes_the_jvm_flags_of_the_teamcity_ui_job_in_both_forms`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_runner_flags_split_the_lane_and_each_ignored_flag_gives_one_note`)
   [@test] ../crates/avl-guest/src/lane/run/tests.rs (`an_unknown_jvm_flag_or_a_split_that_is_not_one_is_refused_by_name`)
-  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_whole_lane`)
   [@test] ../crates/avl-guest/src/lane/channel/tests.rs (`the_notes_of_a_lane_run_follow_the_start_of_the_run`)
+
+- With `idea.tests.duration.bucketing.enabled=true` and the season of `idea.bucketing.season`, the runners split the
+  lane by the durations of `<season>.csv` of `--season-dir`. `air_lane_test` names `tests/classes-duration/seasons`, the
+  season files of the JVM duration bucketing. A row is `<test class>,<milliseconds>`, keyed by the simple class name.
+  `lane-run` skips a row in another form. The longest suite goes first, to the runner with the least expected total.
+  Equal durations go in the order of the class name, and equal totals to the lower index. A suite that the file does not
+  name takes the median of the selected suites that it names. A split run splits by position when it has one of the two
+  properties alone or no `--season-dir`. It also splits by position without the file, or with a file that names no
+  selected suite. In the order of the lane, a runner then takes each suite whose position is its index modulo the count.
+  Each case gives a note, and no case fails the run. Every runner computes the same split from the same selection and
+  file, so the runners of one job run each selected suite once. A runner keeps the lane order of its suites. A note at
+  the start of the run names the split, the share of the runner and the expected total of each runner.
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`a_season_file_keys_each_duration_by_the_simple_class_name_and_skips_a_malformed_row`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`reading_a_season_names_the_file_and_a_missing_or_empty_file_is_a_note_and_no_durations`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`the_greedy_split_gives_the_longest_suite_first_to_the_runner_with_the_least_total`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`a_suite_without_a_duration_takes_the_median_and_equal_durations_go_by_class_name`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`the_runners_of_a_duration_split_take_each_selected_suite_once_and_compute_the_same_split`)
+  [@test] ../crates/avl-guest/src/lane/split/tests.rs (`the_position_split_runs_without_durations_and_when_the_season_names_no_selected_suite`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`a_season_without_the_duration_flag_or_the_flag_without_a_season_splits_by_position_with_a_note`)
+  [@test] ../crates/avl-guest/src/lane/run/tests.rs (`the_durations_of_the_season_come_from_the_season_directory_and_their_absence_is_a_note`)
+  [@test] ../crates/avl-guest/src/lane/iteration/tests.rs (`the_runners_of_a_split_run_each_selected_suite_once_and_one_runner_runs_the_whole_lane`)
   [@test] ../crates/avl-guest/tests/cli.rs (`lane_run_plan_only_writes_the_plan_and_launches_no_ide`)
 
 - Before the lane IDE starts, `lane-run` on a Linux host that no controller prepared proves the host. A TeamCity
