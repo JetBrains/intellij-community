@@ -2338,6 +2338,10 @@ public final class BuildManager implements Disposable {
       var projectPath = getProjectPath(project);
       Disposer.register(ProjectDisposableService.getInstance(project), () -> {
         var buildManager = getInstance();
+        if (buildManager == null) {
+          // The dynamic unload of the plugin removes the application service before this project service.
+          return;
+        }
         buildManager.cancelPreloadedBuilds(projectPath);
         buildManager.myProjectDataMap.remove(projectPath);
       });
