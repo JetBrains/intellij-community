@@ -7,6 +7,7 @@ import com.intellij.history.FileRevisionTimestampComparator
 import com.intellij.history.Label
 import com.intellij.history.LocalHistoryAction
 import com.intellij.history.LocalHistoryException
+import com.intellij.history.core.BufferingPersistentChangeListStorage
 import com.intellij.history.core.ByteContentRetriever
 import com.intellij.history.core.ChangeAndPathProcessor
 import com.intellij.history.core.ChangeListImpl
@@ -104,9 +105,15 @@ class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistor
 
     ShutDownTracker.getInstance().registerShutdownTask(Runnable { doDispose(drop = false) })
 
+    val useBufferingStorage = SystemProperties.getBooleanProperty("lvcs.use.buffering.storage", true)
     val storage = try {
       val storageDir = PathManager.getSystemDir().resolve("LocalHistory")
-      PersistentChangeListStorage(storageDir)
+      if (useBufferingStorage) {
+        BufferingPersistentChangeListStorage(storageDir)
+      }
+      else {
+        PersistentChangeListStorage(storageDir)
+      }
     }
     catch (e: Throwable) {
       LocalHistoryLog.LOG.warn("cannot create storage, in-memory implementation will be used", e)
