@@ -2085,8 +2085,13 @@ The run slot of a worker holds the `lane-daemon` verb of the installed guest age
   parse, so the verb never reads a field that it does not know as an absent field.
   [@test] ../crates/avl-wire/src/program/tests.rs (`a_document_of_another_schema_version_is_refused`)
 
-- A bare IDE gets the option files and the token of the bridge, and no other context file. It gets the stated launch
-  properties of the lane document without the internal mode, and no property of a requirement or a lane service.
+- A bare IDE gets the option files, its own `config/options/other.xml` and the token of the bridge, and no other
+  context file. It gets the stated launch properties of the lane document without the internal mode, and no property
+  of a requirement or a lane service.
+  [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
+
+- The `other.xml` of a bare IDE holds the Air onboarding as completed, in the form that Air writes. A bare IDE measures
+  a normal start, and the first start of a new user does work that no later start does.
   [@test] ../crates/avl-guest/src/lane/context/tests.rs (`a_bare_context_holds_the_option_files_and_the_token_alone`)
   [@test] ../crates/avl-guest/src/lane/ide/tests.rs (`a_bare_ide_gets_the_stated_defaults_without_the_internal_mode_or_the_requirements`)
 
