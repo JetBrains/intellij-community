@@ -216,6 +216,14 @@ class ToolWindowPane private constructor(
     }
   }
 
+  /**
+   * Releases the listeners of a pane that no frame shows, see `ToolWindowManagerImpl.initDetachedDefaultPane`.
+   * A pane in a frame releases them in [removeNotify].
+   */
+  internal fun disposeDetached() {
+    Disposer.dispose(disposable)
+  }
+
   private fun updateInnerMinSize(value: RegistryValue) {
     val minSize = max(0, min(100, value.asInteger()))
     verticalSplitter.minSize = JBUIScale.scale(minSize)

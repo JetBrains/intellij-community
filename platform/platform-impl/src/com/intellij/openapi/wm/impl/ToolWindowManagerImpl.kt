@@ -173,6 +173,10 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   private val notifications = ToolWindowManagerNotifications(this)
   private val decorators = ToolWindowManagerDecorators(this)
 
+  /** The default pane of a project without a frame of its own, see [initDetachedDefaultPane]. No frame removes it, so [dispose] releases it. */
+  @Volatile
+  private var detachedDefaultPane: ToolWindowPane? = null
+
   private var projectFrame: JFrame?
     get() = state.projectFrame
     set(value) {
@@ -307,6 +311,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
   }
 
   override fun dispose() {
+    detachedDefaultPane?.disposeDetached()
   }
 
   private fun getDefaultToolWindowPane() = toolWindowPanes.get(WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)!!
@@ -514,9 +519,9 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
    * A tool window registration then works, and nothing is visible. [frame] is the frame that hosts the project.
    * The tool windows of the extension point are not registered, and a task that [invokeLater] queued before this call is dropped.
    */
-  @ApiStatus.Internal
-  suspend fun initDetachedDefaultPane(frame: JFrame) {
+  internal suspend fun initDetachedDefaultPane(frame: JFrame) {
     val pane = ToolWindowPane.create(frame, coroutineScope, WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID)
+    detachedDefaultPane = pane
     doInit(
       pane = pane,
       connection = project.messageBus.connect(coroutineScope),
