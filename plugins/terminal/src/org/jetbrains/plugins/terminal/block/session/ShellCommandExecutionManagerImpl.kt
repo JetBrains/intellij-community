@@ -24,6 +24,7 @@ import org.jetbrains.plugins.terminal.fus.TerminalUsageTriggerCollector
 import org.jetbrains.plugins.terminal.fus.TimeSpanType
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import org.jetbrains.plugins.terminal.util.ShellType
+import org.jetbrains.plugins.terminal.util.wrapInBracketedPaste
 import java.nio.charset.StandardCharsets
 import java.util.LinkedList
 import java.util.Queue
@@ -292,7 +293,7 @@ internal class ShellCommandExecutionManagerImpl(
     var adjustedCommand = shellCommand
     val enterCode = String(terminal.getCodeForKey(KeyEvent.VK_ENTER, 0), StandardCharsets.UTF_8)
     if (session.model.isBracketedPasteMode && (adjustedCommand.contains("\n") || adjustedCommand.contains(System.lineSeparator()))) {
-      adjustedCommand = bracketed(adjustedCommand)
+      adjustedCommand = wrapInBracketedPaste(adjustedCommand)
     }
     else {
       // in the IDE we use '\n' line separator, but Windows requires '\r\n'
@@ -422,10 +423,6 @@ internal class ShellCommandExecutionManagerImpl(
           append(pwshCharsToEscape[ch] ?: ch)
         }
       }
-    }
-
-    private fun bracketed(command: String): String {
-      return "\u001b[200~$command\u001b[201~"
     }
 
     private fun createCommandMetric(shellType: ShellType, type: TimeSpanType): ActionCoordinator<String, TimeMark> = ActionCoordinator<String, TimeMark>(
