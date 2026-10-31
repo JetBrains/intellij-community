@@ -1,6 +1,7 @@
 // Copyright 2000-2025 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.builtInHelp.indexer
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import org.apache.lucene.analysis.standard.StandardAnalyzer
 import org.apache.lucene.document.Document
 import org.apache.lucene.document.Field
@@ -89,6 +90,7 @@ internal constructor(indexDir: String) {
             println("Added: $file")
           }
           catch (e: Throwable) {
+            rethrowControlFlowException(e)
             System.err.println("Could not add: $file because ${e.message}")
           }
         }
@@ -109,7 +111,7 @@ internal constructor(indexDir: String) {
       indexer.closeIndex()
       //Store the list of generated files for the search to work
       Path.of(dirToStore, "rlist")
-        .writeLines(Path.of(dirToStore).walk().map { it.name })
+        .writeLines(Path.of(dirToStore).walk().filter { it.isRegularFile() && it.name != "rlist" }.map { it.name }.toList())
     }
 
     @Throws(IOException::class)

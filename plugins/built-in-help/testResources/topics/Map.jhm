@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map>
+  <mapID target="top" url="index.html" default="yes"/>
+  <mapID target="editor.settings" url="editor.html#shortcuts"/>
+  <mapID target="special &amp; topic" url="editor.html"/>
+</map>

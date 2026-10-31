@@ -5,14 +5,17 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.WebBrowser;
 import com.intellij.ide.browsers.WebBrowserManager;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.uiDesigner.core.Spacer;
 import com.jetbrains.builtInHelp.BuiltInHelpBundle;
+import com.jetbrains.builtInHelp.HelpUrls;
 import com.jetbrains.builtInHelp.Utils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.BorderFactory;
 import javax.swing.JCheckBox;
@@ -29,6 +32,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.ResourceBundle;
 
 
@@ -50,9 +54,10 @@ public class SettingsPage implements Configurable {
     ui.addListeners();
 
     WebBrowserManager mgr = WebBrowserManager.getInstance();
-    ui.webBrowserList.addItem(BuiltInHelpBundle.message("use.default.browser"));
+    ui.webBrowserList.removeAllItems();
+    ui.webBrowserList.addItem(new BrowserChoice("", BuiltInHelpBundle.message("use.default.browser")));
     for (WebBrowser browser : mgr.getBrowsers()) {
-      ui.webBrowserList.addItem(browser.getName());
+      ui.webBrowserList.addItem(new BrowserChoice(browser.getId().toString(), browser.getName()));
     }
 
     return ui.root;
@@ -74,8 +79,32 @@ public class SettingsPage implements Configurable {
   }
 
   @Override
-  public void apply() {
+  public void apply() throws ConfigurationException {
+    if (!HelpUrls.isValidBaseUrl(ui.baseUrl.getText())) {
+      throw new ConfigurationException(BuiltInHelpBundle.message("invalid.online.help.base.url"));
+    }
     ui.apply();
+  }
+
+  public static @Nullable String getSelectedBrowserId() {
+    return resolveBrowserId(Utils.getStoredValue(USE_BROWSER, ""), WebBrowserManager.getInstance().getBrowsers());
+  }
+
+  public static @Nullable String resolveBrowserId(String value, List<WebBrowser> browsers) {
+    for (var browser : browsers) {
+      if (browser.getId().toString().equals(value)) return value;
+    }
+    for (var browser : browsers) {
+      if (browser.getName().equals(value)) return browser.getId().toString();
+    }
+    return null;
+  }
+
+  private record BrowserChoice(String id, String name) {
+    @Override
+    public String toString() {
+      return name;
+    }
   }
 
   public static class SettingKey extends Pair<String, Boolean> {
@@ -105,7 +134,7 @@ public class SettingsPage implements Configurable {
     final JPanel root;
     final JCheckBox openWebSite;
     final JTextField baseUrl;
-    final JComboBox<String> webBrowserList;
+    final JComboBox<BrowserChoice> webBrowserList;
 
     public SettingsPageUI() {
       {
@@ -244,17 +273,19 @@ public class SettingsPage implements Configurable {
 
     void apply() {
       Utils.setStoredValue(OPEN_HELP_FROM_WEB, String.valueOf(openWebSite.isSelected()));
-      Utils.setStoredValue(USE_BROWSER, String.valueOf(webBrowserList.getSelectedItem()));
-      Utils.setStoredValue(OPEN_HELP_BASE_URL, baseUrl.getText());
+      var browser = (BrowserChoice)webBrowserList.getSelectedItem();
+      Utils.setStoredValue(USE_BROWSER, browser == null ? "" : browser.id());
+      Utils.setStoredValue(OPEN_HELP_BASE_URL, baseUrl.getText().trim());
       modified = false;
     }
 
     void reset() {
-      final String storedSelection = Utils.getStoredValue(USE_BROWSER, BuiltInHelpBundle.message("use.default.browser"));
+      final String storedSelection = getSelectedBrowserId();
       int totalItems = webBrowserList.getItemCount();
+      if (totalItems > 0) webBrowserList.setSelectedIndex(0);
 
       for (int i = 0; i < totalItems; i++) {
-        if (webBrowserList.getItemAt(i).equals(storedSelection)) {
+        if (webBrowserList.getItemAt(i).id().equals(storedSelection)) {
           webBrowserList.setSelectedIndex(i);
           break;
         }

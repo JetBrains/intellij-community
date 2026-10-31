@@ -5,7 +5,6 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.util.ResourceUtil
 import com.jetbrains.builtInHelp.settings.SettingsPage
 import org.jetbrains.annotations.NonNls
 
@@ -21,32 +20,13 @@ class Utils {
 
     fun getResourceWithFallback(resPath: String, resName: String, localePath: String): ByteArray? {
 
-      val resStream = ResourceUtil.getResourceAsStream(
-        HelpRequestHandlerBase::class.java.classLoader,
-        "${if (localePath.isNotEmpty()) "$localePath/" else ""}$resPath", resName
-      )
+      val localized = getResource(resPath, resName, localePath)
+      return localized ?: if (localePath.isNotEmpty()) getResource(resPath, resName, "") else null
+    }
 
-      return resStream.use { res ->
-        try {
-          res.readAllBytes()
-        }
-        catch (e: Exception) {
-          LOG.warn("$localePath resource failed", e)
-          //So we couldn't find any localized resource, try the default English one
-          ResourceUtil.getResourceAsStream(
-            HelpRequestHandlerBase::class.java.classLoader,
-            resPath, resName
-          ).use { res ->
-            try {
-              res.readAllBytes()
-            }
-            catch (e: Exception) {
-              LOG.warn("Fallback resource failed", e)
-              null
-            }
-          }
-        }
-      }
+    fun getResource(resPath: String, resName: String, localePath: String): ByteArray? {
+      val path = "${if (localePath.isNotEmpty()) "$localePath/" else ""}$resPath/$resName"
+      return HelpRequestHandlerBase::class.java.classLoader.getResourceAsStream(path)?.use { it.readAllBytes() }
     }
 
 

@@ -120,6 +120,7 @@
     <extensionPoint qualifiedName="org.jetbrains.urlOpener" interface="com.intellij.ide.browsers.UrlOpener" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.actionFromOptionDescriptorProvider" interface="com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.webHelpProvider" interface="com.intellij.openapi.help.WebHelpProvider" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.helpTargetProvider" interface="com.intellij.openapi.help.HelpTargetProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.smartSelectProvider" interface="com.intellij.openapi.ide.SmartSelectProvider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.fileBreadcrumbsCollector" interface="com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector" area="IDEA_PROJECT" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider" dynamic="true"/>

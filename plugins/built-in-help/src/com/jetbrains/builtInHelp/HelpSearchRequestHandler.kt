@@ -3,9 +3,12 @@ package com.jetbrains.builtInHelp
 
 import com.jetbrains.builtInHelp.search.HelpSearch
 import io.netty.channel.ChannelHandlerContext
+import io.netty.handler.codec.http.DefaultHttpHeaders
 import io.netty.handler.codec.http.FullHttpRequest
+import io.netty.handler.codec.http.HttpResponseStatus
 import io.netty.handler.codec.http.QueryStringDecoder
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.io.send
 
 @Suppress("unused")
 class HelpSearchRequestHandler : HelpRequestHandlerBase() {
@@ -18,17 +21,22 @@ class HelpSearchRequestHandler : HelpRequestHandlerBase() {
     context: ChannelHandlerContext,
   ): Boolean {
 
-    val query = urlDecoder.parameters()["query"]?.get(0)
-    val maxHitsParam = urlDecoder.parameters()["maxHits"]?.get(0)
+    val query = urlDecoder.parameters()["query"]?.firstOrNull()
+    val maxHitsParam = urlDecoder.parameters()["maxHits"]?.firstOrNull()
+    val maxHits = maxHitsParam?.toIntOrNull() ?: if (maxHitsParam == null) 100 else 0
+    if (maxHits !in 1..1000) {
+      HttpResponseStatus.BAD_REQUEST.send(context.channel(), request)
+      return true
+    }
 
-    sendData(
-      HelpSearch.search(query,
-                        if (maxHitsParam != null) Integer.parseInt(maxHitsParam) else 100,
-                        getRequestLocalePath(request)).encodeToByteArray(),
-      "data.json",
-      request,
-      context.channel(),
-      request.headers())
+    HelpRequestExecutor.getInstance().execute(request, context) { retainedRequest ->
+      sendData(
+        HelpSearch.search(query, maxHits, getRequestLocalePath(retainedRequest)).encodeToByteArray(),
+        "data.json",
+        retainedRequest,
+        context.channel(),
+        DefaultHttpHeaders())
+    }
 
     return true
   }
