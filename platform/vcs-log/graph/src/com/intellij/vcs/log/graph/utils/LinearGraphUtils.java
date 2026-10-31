@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.IntPredicate;
 
 public final class LinearGraphUtils {
   @ApiStatus.Internal
@@ -69,17 +70,51 @@ public final class LinearGraphUtils {
   }
 
   /**
+   * Passes each normal up node of {@code nodeIndex} to {@code processor}, in the order of {@link #getUpNodes}.
+   * Stops at the first node for which {@code processor} returns {@code false}.
+   * For a {@link PermanentLinearGraphImpl}, it does not make the list.
+   *
+   * @return {@code false} if {@code processor} stopped the iteration, {@code true} otherwise
+   */
+  @ApiStatus.Internal
+  public static boolean processUpNodes(@NotNull LinearGraph graph, int nodeIndex, @NotNull IntPredicate processor) {
+    if (graph instanceof PermanentLinearGraphImpl permanentGraph) {
+      return permanentGraph.processUpNodes(nodeIndex, processor);
+    }
+    for (var upNode : getUpNodes(graph, nodeIndex)) {
+      if (!processor.test(upNode)) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Passes each normal down node of {@code nodeIndex} to {@code processor}, in the order of {@link #getDownNodes}.
+   * Stops at the first node for which {@code processor} returns {@code false}.
+   * For a {@link PermanentLinearGraphImpl}, it does not make the list.
+   *
+   * @return {@code false} if {@code processor} stopped the iteration, {@code true} otherwise
+   */
+  @ApiStatus.Internal
+  public static boolean processDownNodes(@NotNull LinearGraph graph, int nodeIndex, @NotNull IntPredicate processor) {
+    if (graph instanceof PermanentLinearGraphImpl permanentGraph) {
+      return permanentGraph.processDownNodes(nodeIndex, processor);
+    }
+    for (var downNode : getDownNodes(graph, nodeIndex)) {
+      if (!processor.test(downNode)) return false;
+    }
+    return true;
+  }
+
+  /**
    * Clears {@code result} and fills it with the normal up nodes of {@code nodeIndex}, in the order of {@link #getUpNodes}.
    */
   @ApiStatus.Internal
   public static void collectUpNodes(@NotNull LinearGraph graph, int nodeIndex, @NotNull IntList result) {
     result.clear();
-    if (graph instanceof PermanentLinearGraphImpl permanentGraph) {
-      permanentGraph.forEachUpNode(nodeIndex, node -> result.add(node));
-    }
-    else {
-      result.addAll(getUpNodes(graph, nodeIndex));
-    }
+    processUpNodes(graph, nodeIndex, node -> {
+      result.add(node);
+      return true;
+    });
   }
 
   /**
@@ -88,12 +123,10 @@ public final class LinearGraphUtils {
   @ApiStatus.Internal
   public static void collectDownNodes(@NotNull LinearGraph graph, int nodeIndex, @NotNull IntList result) {
     result.clear();
-    if (graph instanceof PermanentLinearGraphImpl permanentGraph) {
-      permanentGraph.forEachDownNode(nodeIndex, node -> result.add(node));
-    }
-    else {
-      result.addAll(getDownNodes(graph, nodeIndex));
-    }
+    processDownNodes(graph, nodeIndex, node -> {
+      result.add(node);
+      return true;
+    });
   }
 
   public static @NotNull LiteLinearGraph asLiteLinearGraph(final @NotNull LinearGraph graph) {

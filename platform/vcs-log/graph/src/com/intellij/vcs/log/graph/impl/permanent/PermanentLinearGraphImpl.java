@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.IntConsumer;
+import java.util.function.IntPredicate;
 
 import static com.intellij.vcs.log.graph.api.elements.GraphEdgeType.USUAL;
 
@@ -62,37 +63,36 @@ public class PermanentLinearGraphImpl implements LinearGraph {
   }
 
   /**
-   * Passes each normal down node of {@code nodeIndex} to {@code handler},
+   * Passes each normal down node of {@code nodeIndex} to {@code processor},
    * in the order of {@link #getAdjacentEdges} with {@link EdgeFilter#NORMAL_DOWN}.
+   * Stops at the first node for which {@code processor} returns {@code false}.
+   *
+   * @return {@code false} if {@code processor} stopped the iteration, {@code true} otherwise
    */
   @ApiStatus.Internal
-  public void forEachDownNode(int nodeIndex, @NotNull IntConsumer handler) {
-    for (int i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
-      int adjacentNode = myLongEdges.getInt(i);
-      if (adjacentNode >= 0 && nodeIndex < adjacentNode) {
-        handler.accept(adjacentNode);
-      }
+  public boolean processDownNodes(int nodeIndex, @NotNull IntPredicate processor) {
+    for (var i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
+      var adjacentNode = myLongEdges.getInt(i);
+      if (adjacentNode >= 0 && nodeIndex < adjacentNode && !processor.test(adjacentNode)) return false;
     }
-    if (mySimpleNodes.get(nodeIndex)) {
-      handler.accept(nodeIndex + 1);
-    }
+    return !mySimpleNodes.get(nodeIndex) || processor.test(nodeIndex + 1);
   }
 
   /**
-   * Passes each normal up node of {@code nodeIndex} to {@code handler},
+   * Passes each normal up node of {@code nodeIndex} to {@code processor},
    * in the order of {@link #getAdjacentEdges} with {@link EdgeFilter#NORMAL_UP}.
+   * Stops at the first node for which {@code processor} returns {@code false}.
+   *
+   * @return {@code false} if {@code processor} stopped the iteration, {@code true} otherwise
    */
   @ApiStatus.Internal
-  public void forEachUpNode(int nodeIndex, @NotNull IntConsumer handler) {
-    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1)) {
-      handler.accept(nodeIndex - 1);
+  public boolean processUpNodes(int nodeIndex, @NotNull IntPredicate processor) {
+    if (nodeIndex != 0 && mySimpleNodes.get(nodeIndex - 1) && !processor.test(nodeIndex - 1)) return false;
+    for (var i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
+      var adjacentNode = myLongEdges.getInt(i);
+      if (adjacentNode >= 0 && nodeIndex > adjacentNode && !processor.test(adjacentNode)) return false;
     }
-    for (int i = myNodeToEdgeIndex.getInt(nodeIndex); i < myNodeToEdgeIndex.getInt(nodeIndex + 1); i++) {
-      int adjacentNode = myLongEdges.getInt(i);
-      if (adjacentNode >= 0 && nodeIndex > adjacentNode) {
-        handler.accept(adjacentNode);
-      }
-    }
+    return true;
   }
 
   /**
