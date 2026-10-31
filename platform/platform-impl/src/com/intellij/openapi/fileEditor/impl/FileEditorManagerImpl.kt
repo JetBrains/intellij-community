@@ -187,7 +187,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.annotations.VisibleForTesting
 import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
@@ -470,7 +469,7 @@ open class FileEditorManagerImpl(
     processFileUpdateRequests()
   }
 
-  @VisibleForTesting
+  /** The main splitters and the saved editor state, once. The frame allocator restores the state, see `restoreEditors`. */
   @Internal
   suspend fun init(): kotlin.Pair<EditorsSplitters, EditorSplitterState?> {
     initJob.join()

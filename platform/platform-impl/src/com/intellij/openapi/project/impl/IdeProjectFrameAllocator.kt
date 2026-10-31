@@ -13,7 +13,10 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.frame
+import com.intellij.ide.frameInfo
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.ide.recentProjectMetaInfo
 import com.intellij.ide.util.runOnceForProject
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationManager
@@ -762,6 +765,41 @@ internal fun CoroutineScope.preloadDaemonServices(project: Project) {
   launch {
     daemonCodeAnalyzerSettingsJob.join()
     project.serviceAsync<DaemonCodeAnalyzer>()
+  }
+}
+
+/**
+ * Restores the editors of a frame guest from its saved state, or presents the empty state of its editor area when there is none.
+ *
+ * The frame belongs to another project, so the gates of the startup UI, the startup measurements and the focus of a restored
+ * editor stay with [restoreEditors] of the frame owner. The caller puts the editor area of the guest into the frame first.
+ */
+internal suspend fun restoreFrameGuestEditors(project: Project, fileEditorManager: FileEditorManagerImpl) {
+  // `init` gives the saved state once, and the splitters it gives are the main splitters
+  val editorState = fileEditorManager.init().second
+  val editorComponent = fileEditorManager.mainSplitters
+  // the hold may mount or dispose the empty state, so this runs where the write-intent lock may be taken, see `restoreEditors`
+  withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    editorComponent.beginStartupEmptyStatePresentationHold()
+    if (editorState == null) {
+      editorComponent.markNoEditorsToRestore()
+      editorComponent.finishStartupEditorRestore()
+    }
+  }
+  try {
+    if (editorState != null) {
+      span("frame guest editor restoring") {
+        editorComponent.createEditors(state = editorState)
+      }
+    }
+  }
+  finally {
+    // a guest opens no editor of its own after the restore, so the editor area keeps what the restore left
+    withContext(NonCancellable + Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      if (!project.isDisposed) {
+        editorComponent.endStartupEmptyStatePresentationHold()
+      }
+    }
   }
 }
 

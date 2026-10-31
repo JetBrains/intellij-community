@@ -4,9 +4,8 @@
 package com.intellij.openapi.project.impl
 
 import com.intellij.conversion.CannotConvertException
-import com.intellij.ide.RecentProjectMetaInfo
+import com.intellij.ide.frameOwner
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.effectiveImplOptions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -23,8 +22,6 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
-import com.intellij.openapi.wm.impl.FrameInfo
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
 import kotlinx.coroutines.CancellationException
@@ -99,43 +96,10 @@ class HeadlessProjectFrameAllocator : ProjectFrameAllocator {
 }
 
 /**
- * The frame-related options of an open: the one payload of `OpenProjectTask.implOptions` that the frame allocator reads.
- *
- * [recentProjectMetaInfo] and [frameInfo] carry the saved bounds and the frame type of a project of the recent list. [frame] is a
- * frame that the caller created before the open, see `RecentProjectsManagerBase.openMultiple`. [frameOwner] opens the project as a
- * frame guest of that project: the project gets no frame of its own, and the frame of [frameOwner] shows it, see
- * [FrameGuestProjectFrameAllocator].
- */
-@Internal
-class OpenProjectFrameOptions(
-  @JvmField val recentProjectMetaInfo: RecentProjectMetaInfo? = null,
-  @JvmField val frameInfo: FrameInfo? = null,
-  @JvmField val frame: IdeFrameImpl? = null,
-  @JvmField val frameOwner: Project? = null,
-)
-
-private val OpenProjectTask.frameOptions: OpenProjectFrameOptions?
-  get() = effectiveImplOptions as? OpenProjectFrameOptions
-
-val OpenProjectTask.frame: IdeFrameImpl?
-  @Internal get() = frameOptions?.frame
-
-val OpenProjectTask.frameInfo: FrameInfo?
-  @Internal get() = frameOptions?.frameInfo
-
-val OpenProjectTask.recentProjectMetaInfo: RecentProjectMetaInfo?
-  @Internal get() = frameOptions?.recentProjectMetaInfo
-
-/** The project whose frame shows the opened project, see [OpenProjectFrameOptions.frameOwner]. */
-val OpenProjectTask.frameOwner: Project?
-  @Internal get() = frameOptions?.frameOwner
-
-/**
  * The allocator of the frame of a project that opens with [options]. A frame guest joins the frame of its owner, with and
  * without a frame. A headless application and a unit test allocate no frame. Every other project gets a frame of its own.
  */
-@Internal
-fun createProjectFrameAllocator(options: OpenProjectTask, projectStoreBaseDir: Path): ProjectFrameAllocator {
+internal fun createProjectFrameAllocator(options: OpenProjectTask, projectStoreBaseDir: Path): ProjectFrameAllocator {
   options.frameOwner?.let { return FrameGuestProjectFrameAllocator(it) }
   val app = ApplicationManager.getApplication()
   if (app.isHeadlessEnvironment || app.isUnitTestMode) {
@@ -146,17 +110,21 @@ fun createProjectFrameAllocator(options: OpenProjectTask, projectStoreBaseDir: P
 
 /**
  * Opens a project as a frame guest of [frameOwner]: the project gets no frame of its own, and the frame of [frameOwner] shows it.
+ * The opener asks for it with `OpenProjectImplOptions.frameOwner`.
  *
  * The window manager records the guest before the startup activities of the guest run, so a lookup of its frame works from the
  * start, see `WindowManagerEx.addFrameGuest`. With a frame of [frameOwner], the status bar of the frame shows the status text of
- * the guest, the editor area of the frame gets a card with the editors of the guest, and the tool-window manager of the guest gets
- * a default pane that no frame shows, so a tool window of the guest can register. Without a frame of [frameOwner], as in a unit
- * test, the guest opens as in a headless application.
+ * the guest, the editor area of the frame gets a card with the editors of the guest, the saved editors of the guest come back into
+ * the card, and the tool-window manager of the guest gets a default pane that no frame shows, so a tool window of the guest can
+ * register. Without a frame of [frameOwner], as in a unit test, the guest opens as in a headless application.
  */
-@Internal
-class FrameGuestProjectFrameAllocator(private val frameOwner: Project) : ProjectFrameAllocator {
+internal class FrameGuestProjectFrameAllocator(private val frameOwner: Project) : ProjectFrameAllocator {
   @Volatile
   private var guest: Project? = null
+
+  /** A headless application and a unit test allocate no frame, and the frame deferred of a test window manager never completes. */
+  private val isHeadless: Boolean
+    get() = ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }
 
   override suspend fun runInBackground(projectInitObservable: ProjectInitObservable) {
   }
@@ -164,37 +132,45 @@ class FrameGuestProjectFrameAllocator(private val frameOwner: Project) : Project
   override suspend fun preInitProject(project: Project) {
     guest = project
     windowManager().addFrameGuest(frameOwner, project)
+    if (!isHeadless) {
+      // the guest restores its editors in [run], as a project with a frame of its own does
+      project.getOrCreatePostOpenEditorsDeferred()
+    }
   }
 
   override suspend fun run(projectInitObservable: ProjectInitObservable) {
-    // a headless application and a unit test allocate no frame, and the frame deferred of a test window manager never completes
-    val app = ApplicationManager.getApplication()
-    val frameHelper = if (app.isHeadlessEnvironment || app.isUnitTestMode) {
-      null
-    }
-    else {
-      windowManager().getIdeFrameDeferred(frameOwner).await() as? IdeProjectFrameHelper
-    }
-    val project = projectInitObservable.awaitProjectPreInit()
-    if (frameHelper == null || frameHelper.isDisposed()) {
-      project.getOrCreateIdeFrameDeferred().complete(null)
+    if (isHeadless) {
+      projectInitObservable.awaitProjectPreInit().getOrCreateIdeFrameDeferred().complete(null)
       return
     }
-    withContext(Dispatchers.UI) {
-      frameHelper.joinFrame(project)
+    val frameHelper = windowManager().getIdeFrameDeferred(frameOwner).await() as? IdeProjectFrameHelper
+    val project = projectInitObservable.awaitProjectPreInit()
+    try {
+      if (frameHelper == null || frameHelper.isDisposed()) {
+        project.getOrCreateIdeFrameDeferred().complete(null)
+        return
+      }
+      withContext(Dispatchers.UI) {
+        frameHelper.joinFrame(project)
+      }
+      projectInitObservable.awaitProjectInit()
+      val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
+      fileEditorManager.initJob.join()
+      // DaemonCodeAnalyzer uses FileEditorManager
+      coroutineScope { preloadDaemonServices(project) }
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+        // the state of the dockable editors, as for a project with a frame of its own
+        fileEditorManager.initDockableContentFactory()
+        frameHelper.editorArea.addGuestEditors(project, fileEditorManager.mainSplitters)
+      }
+      (project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.initDetachedDefaultPane(frameHelper.frame)
+      // the card is in the frame, so a restored editor shows as soon as the guest is the active project
+      restoreFrameGuestEditors(project, fileEditorManager)
+      project.getOrCreateIdeFrameDeferred().complete(frameHelper)
     }
-    projectInitObservable.awaitProjectInit()
-    val fileEditorManager = FileEditorManager.getInstanceAsync(project) as FileEditorManagerImpl
-    fileEditorManager.initJob.join()
-    // DaemonCodeAnalyzer uses FileEditorManager
-    coroutineScope { preloadDaemonServices(project) }
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-      // the state of the dockable editors, as for a project with a frame of its own
-      fileEditorManager.initDockableContentFactory()
-      frameHelper.editorArea.addGuestEditors(project, fileEditorManager.mainSplitters)
+    finally {
+      project.getOrCreatePostOpenEditorsDeferred().complete(Unit)
     }
-    (project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl)?.initDetachedDefaultPane(frameHelper.frame)
-    project.getOrCreateIdeFrameDeferred().complete(frameHelper)
   }
 
   /** A project that never opened fires no close event, so the guest leaves here. */
