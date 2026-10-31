@@ -27,6 +27,7 @@ import org.jetbrains.plugins.terminal.session.impl.TerminalResizeEvent
 import org.jetbrains.plugins.terminal.session.impl.TerminalSession
 import org.jetbrains.plugins.terminal.session.impl.TerminalWriteBytesEvent
 import org.jetbrains.plugins.terminal.util.getNow
+import org.jetbrains.plugins.terminal.util.wrapInBracketedPaste
 import org.jetbrains.plugins.terminal.view.impl.TerminalSendTextOptions
 import java.awt.event.KeyEvent
 import java.nio.charset.StandardCharsets
@@ -109,7 +110,7 @@ class TerminalInput(
     text = sanitizeLineSeparators(text)
 
     if (options.useBracketedPasteMode && terminalState.isBracketedPasteMode) {
-      text = "\u001b[200~$text\u001b[201~"
+      text = wrapInBracketedPaste(text)
     }
 
     if (options.shouldExecute && !text.endsWith('\r')) {
