@@ -297,15 +297,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "avl-local-app"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "serde_json",
- "tempfile",
-]
-
-[[package]]
 name = "avl-record"
 version = "0.1.0"
 dependencies = [

@@ -14,7 +14,6 @@ members = [
     "crates/avl-host-sys",
     "crates/avl-host-testkit",
     "crates/avl-junit",
-    "crates/avl-local-app",
     "crates/avl-record",
     "crates/avl-report",
     "crates/avl-testkit",

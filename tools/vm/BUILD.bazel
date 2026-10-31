@@ -68,14 +68,13 @@ rust_lints_as_errors(
     visibility = ["//visibility:public"],
 )
 
-# `clippy-linux-arm64` and `clippy-linux-x86_64`: the three binaries that run inside a Linux guest.
+# `clippy-linux-arm64` and `clippy-linux-x86_64`: the two binaries that run inside a Linux guest.
 platform_clippy_tests(
     os = "linux",
     platforms = LINUX_MUSL_PLATFORMS,
     target_compatible_with = NOT_ON_WINDOWS,
     targets = [
         "//tools/vm/crates/avl-guest:vm-guest-agent-bin",
-        "//tools/vm/crates/avl-local-app:air-local-app",
         "//tools/vm/crates/avl-record:air-trace-record",
     ],
 )
@@ -168,30 +167,6 @@ avl_binary(
 avl_binary(
     name = "air-trace-record-linux-x86_64",
     binary = "//tools/vm/crates/avl-record:air-trace-record",
-    platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
-)
-
-# The local app of the local launch scenarios, which the lane IDE starts as the declared CLI runtime `air-local-app`
-# (`plugins/air/tests/tools/local-app`). It follows the guest like the recorder.
-avl_binary(
-    name = "air-local-app",
-    binary = "//tools/vm/crates/avl-local-app:air-local-app",
-    visibility = ["//visibility:public"],
-)
-
-avl_binary(
-    name = "air-local-app-linux-arm64",
-    binary = "//tools/vm/crates/avl-local-app:air-local-app",
-    platform = "@rules_rs//rs/platforms:aarch64-unknown-linux-musl",
-    tags = ["manual"],
-    visibility = ["//visibility:public"],
-)
-
-avl_binary(
-    name = "air-local-app-linux-x86_64",
-    binary = "//tools/vm/crates/avl-local-app:air-local-app",
     platform = "@rules_rs//rs/platforms:x86_64-unknown-linux-musl",
     tags = ["manual"],
     visibility = ["//visibility:public"],
