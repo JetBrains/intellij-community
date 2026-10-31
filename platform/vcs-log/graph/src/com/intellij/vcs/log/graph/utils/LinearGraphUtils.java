@@ -118,6 +118,15 @@ public final class LinearGraphUtils {
   }
 
   /**
+   * Returns {@code true} if {@link #getUpNodes} is not empty for {@code nodeIndex}.
+   * For a {@link PermanentLinearGraphImpl}, it does not make the list.
+   */
+  @ApiStatus.Internal
+  public static boolean hasUpNodes(@NotNull LinearGraph graph, int nodeIndex) {
+    return !processUpNodes(graph, nodeIndex, _ -> false);
+  }
+
+  /**
    * Clears {@code result} and fills it with the normal down nodes of {@code nodeIndex}, in the order of {@link #getDownNodes}.
    */
   @ApiStatus.Internal

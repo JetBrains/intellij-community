@@ -12,6 +12,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.IntPredicate
 import kotlin.time.measureTimedValue
 
 @ApiStatus.Internal
@@ -57,7 +58,7 @@ object GraphLayoutBuilder {
   internal fun LinearGraph.getHeads(): IntList {
     val heads = IntArrayList()
     for (i in 0 until nodesCount()) {
-      if (LinearGraphUtils.getUpNodes(this, i).isEmpty()) {
+      if (!LinearGraphUtils.hasUpNodes(this, i)) {
         heads.add(i)
       }
     }
@@ -67,6 +68,15 @@ object GraphLayoutBuilder {
   private fun build(graph: LinearGraph, sortedHeads: IntList): GraphLayoutImpl {
     val layoutIndex = IntArray(graph.nodesCount())
     val importantHeads = IntArrayList()
+    // reused between walk iterations to reduce the number of created predicates
+    var childWithoutLayoutIndex: Int
+    val processor = IntPredicate { child ->
+      if (layoutIndex[child] != 0) {
+        return@IntPredicate true
+      }
+      childWithoutLayoutIndex = child
+      false
+    }
 
     var currentLayoutIndex = 1
     for (i in sortedHeads.indices) {
@@ -79,8 +89,10 @@ object GraphLayoutBuilder {
         val firstVisit = layoutIndex[currentNode] == 0
         if (firstVisit) layoutIndex[currentNode] = currentLayoutIndex
 
-        val childWithoutLayoutIndex = LinearGraphUtils.getDownNodes(graph, currentNode).firstOrNull { layoutIndex[it] == 0 }
-        if (childWithoutLayoutIndex == null) {
+        childWithoutLayoutIndex = Dfs.NextNode.NODE_NOT_FOUND
+        LinearGraphUtils.processDownNodes(graph, currentNode, processor)
+
+        if (childWithoutLayoutIndex == Dfs.NextNode.NODE_NOT_FOUND) {
           if (firstVisit) currentLayoutIndex++
           return@walk Dfs.NextNode.NODE_NOT_FOUND
         }
