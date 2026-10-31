@@ -49,7 +49,7 @@ class LinuxIdeDistribution : IdeDistribution() {
     private val windowManagerScript = $$"""
       log="$1"
       shift
-      socket_seconds=30
+      display_seconds=30
       xprop_seconds=2
       wm_seconds=10
       wm_attempts=3
@@ -61,13 +61,27 @@ class LinuxIdeDistribution : IdeDistribution() {
       wm_running() { id=$(wm_check -root); [ -n "$id" ] && [ "$(wm_check -id "$id")" = "$id" ]; }
       # the clock, not the number of checks, limits a wait, because one check can take two xprop calls
       seconds_since() { echo $(($(date +%s) - $1)); }
+      # xprop exits with 0 also when the property is missing, so the exit code tells only that the X server accepts a client
+      x_reachable() { $limit xprop -root _NET_SUPPORTING_WM_CHECK >/dev/null 2>&1; }
+      # one line, so the run reports it with the message before it
+      x_state() {
+        echo "fluxbox exit code: $1; xprop: $($limit xprop -root _NET_SUPPORTING_WM_CHECK 2>&1 | tr '\n' ' ');" \
+          "sockets: $(ls -l /tmp/.X11-unix 2>&1 | tr '\n' ' '); lock: $(tr -d ' \n' 2>/dev/null <"/tmp/.X$display-lock" || echo none);" \
+          "X servers: $(ps -eo pid,ppid,etimes,args 2>/dev/null | sed -n '/[X]vfb\|[X]org/p' | tr '\n' ';')"
+      }
       # a DISPLAY without a colon, such as NoDisplay of a remote dev backend, names no X server
       if [ "${DISPLAY#*:}" != "$DISPLAY" ]; then
+        start=$(date +%s)
         if [ "${DISPLAY#:}" != "$DISPLAY" ]; then
           display="${DISPLAY#:}"
           display="${display%%.*}"
-          start=$(date +%s)
-          while [ ! -e "/tmp/.X11-unix/X$display" ] && [ $(seconds_since $start) -lt $socket_seconds ]; do
+          while [ ! -e "/tmp/.X11-unix/X$display" ] && [ $(seconds_since $start) -lt $display_seconds ]; do
+            sleep 0.5
+          done
+        fi
+        # the socket can exist before the X server accepts a client
+        if command -v xprop >/dev/null 2>&1; then
+          until x_reachable || [ $(seconds_since $start) -ge $display_seconds ]; do
             sleep 0.5
           done
         fi
@@ -101,10 +115,15 @@ class LinuxIdeDistribution : IdeDistribution() {
               } | tee -a "$log" >&2
               break
             fi
+            wait $wm
+            code=$?
             echo "fluxbox exited before it became the window manager on $DISPLAY, attempt $attempt/$wm_attempts, see $log" >&2
             if [ $attempt -eq $wm_attempts ]; then
               echo "$$NO_WINDOW_MANAGER_MESSAGE on $DISPLAY, because fluxbox exited $wm_attempts times, see $log" | tee -a "$log" >&2
             fi
+            x_state $code >>"$log"
+            # a quick exit can repeat at once, so the next attempt waits a little
+            [ $attempt -lt $wm_attempts ] && sleep 1
           done
         fi
       fi

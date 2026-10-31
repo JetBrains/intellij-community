@@ -122,18 +122,41 @@ class LinuxIdeDistributionTest {
 
     result.exitCode shouldBe 0
     result.stderr shouldContain "attempt 3/3"
-    tempDir.resolve("fluxbox.log").readText() shouldContain "fluxbox is not the window manager on $DISPLAY, because fluxbox exited 3 times"
+    val log = tempDir.resolve("fluxbox.log").readText()
+    log shouldContain "fluxbox is not the window manager on $DISPLAY, because fluxbox exited 3 times"
+    log shouldContain "fluxbox exit code: 1; xprop: "
+  }
+
+  @Test
+  fun `fluxbox starts only after the X server accepts a client`() {
+    val serverUp = tempDir.resolve("server-up")
+    val xprop = "[ -e '$serverUp' ] || { touch '$serverUp'; exit 1; }; $registeredXprop"
+
+    val result = runScript(display = DISPLAY, ide = listOf("/bin/sh", "-c", "[ -e '$marker' ] && exit 7"), xprop = xprop)
+
+    result.exitCode shouldBe 7
+    serverUp.exists() shouldBe true
+    result.stderr shouldContain "a window manager runs on $DISPLAY after about "
   }
 
   private class ScriptResult(val pid: Long, val exitCode: Int, val stdout: String, val stderr: String)
 
   private val registeringFluxbox: String get() = "echo $$ > '$fluxboxPidFile'; touch '$marker'; exec sleep 60"
 
-  private fun runScript(display: String?, ide: List<String>, fakeTools: Boolean = true, fluxbox: String = registeringFluxbox): ScriptResult {
+  /** Like a real `xprop`, it exits with 0 also when the property is missing. */
+  private val registeredXprop: String get() = "[ -e '$marker' ] && echo '_NET_SUPPORTING_WM_CHECK(WINDOW): window id # 0x1'; exit 0"
+
+  private fun runScript(
+    display: String?,
+    ide: List<String>,
+    fakeTools: Boolean = true,
+    fluxbox: String = registeringFluxbox,
+    xprop: String = registeredXprop,
+  ): ScriptResult {
     val commandLine = LinuxIdeDistribution.linuxCommandLine(xvfbRunLog(), vmOptions { withEnv("DISPLAY", ":5") })
     val bin = tempDir.resolve("bin").createDirectories()
     if (fakeTools) {
-      bin.writeScript("xprop", "[ -e '$marker' ] && echo '_NET_SUPPORTING_WM_CHECK(WINDOW): window id # 0x1'")
+      bin.writeScript("xprop", xprop)
       bin.writeScript("fluxbox", fluxbox)
     }
     val process = ProcessBuilder(commandLine + ide).apply {
