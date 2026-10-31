@@ -105,6 +105,7 @@ fun Project.getEelDescriptor(): EelDescriptor {
   "com.intellij.air.backend.machine.AgentMachineLeaseServiceTest",
   "com.intellij.air.frontend.llm.AirLlmProxyBackendDescriptorStateTest",
   "com.intellij.air.shared.core.AirAgentEnvironmentTest",
+  "com.intellij.draft.customization.DraftProjectEelPreInit",
   "com.intellij.ide.lightProducts.LightProjectOpeningKt",
   "com.intellij.rustrover.solana.runconfig.anchor.AnchorTestCommandLineStateTest",
   "com.jetbrains.thinclient.connection.ThinClientRdProjectViewSession",
