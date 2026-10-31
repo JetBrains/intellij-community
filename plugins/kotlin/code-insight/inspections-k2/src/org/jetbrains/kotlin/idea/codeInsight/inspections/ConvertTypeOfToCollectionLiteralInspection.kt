@@ -48,7 +48,7 @@ internal class ConvertTypeOfToCollectionLiteralInspection :
         element: KtDotQualifiedExpression,
         context: Context,
     ): @InspectionMessage String =
-        KotlinBundle.message("inspection.kotlin.convert.type.of.to.collection.literal.display.name")
+        KotlinBundle.message("inspection.kotlin.convert.type.of.to.collection.literal.problem.descriptor")
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitDotQualifiedExpression(expression: KtDotQualifiedExpression) {

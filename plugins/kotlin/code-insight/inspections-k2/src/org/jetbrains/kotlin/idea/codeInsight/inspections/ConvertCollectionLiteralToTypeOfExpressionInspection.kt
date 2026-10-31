@@ -46,7 +46,7 @@ internal class ConvertCollectionLiteralToTypeOfExpressionInspection :
         element: KtCollectionLiteralExpression,
         context: Context,
     ): @InspectionMessage String =
-        KotlinBundle.message("inspection.kotlin.convert.collection.literal.to.type.of.display.name", "${context.className}.of")
+        KotlinBundle.message("inspection.kotlin.convert.collection.literal.to.type.of.problem.descriptor", "${context.className}.of")
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : KtVisitorVoid() {
         override fun visitCollectionLiteralExpression(expression: KtCollectionLiteralExpression) {
