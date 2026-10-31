@@ -1070,14 +1070,15 @@ internal class TerminalEmulatorOutputProjectorTest {
       write(lines.joinToString("\r\n"))
       collectUpdate()
 
-      // Line 9 fills its last row exactly, so the cursor rests on that row's final cell with the wrap
-      // pending. Its column is therefore 19, one before the 20-character line end.
+      // Line 9 fills its last row exactly, so the cursor rests on that row's final cell with
+      // the wrap pending. The reflow leaves room after that cell, so the engine clears the
+      // pending wrap and moves the cursor to the line end, column 20.
       emulator.resize(TerminalSize(40, 4))
       val event = collectUpdate()
 
       assertThat(event.cursorLogicalLineIndex).isEqualTo(9L)
-      assertThat(event.cursorColumnIndex).isEqualTo(19)
-      assertThat(projector.computeCursor()).isEqualTo(9L to 19)
+      assertThat(event.cursorColumnIndex).isEqualTo(20)
+      assertThat(projector.computeCursor()).isEqualTo(9L to 20)
     }
 
   // ---------------------------------------------------------------------------

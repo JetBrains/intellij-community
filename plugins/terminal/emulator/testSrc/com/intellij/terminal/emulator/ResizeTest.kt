@@ -449,8 +449,12 @@ class ResizeTest {
 
       session.assertScrollbackLines("main_")
       session.assertScreenLines("line1", "main_", "line2", "main_", "line")
-      // ENGINE-SPECIFIC: DECSC/DECRC interacts with the alt-screen save/restore here.
-      session.assertCursorPosition(1, 4)
+
+      // Initially, the saved cursor was in the blank cell after "main_line".
+      // ENGINE-SPECIFIC: a saved cursor in trailing blanks is clamped to the last column
+      // of the first row of its line, so it lands on the "_" of "main_".
+      // The live cursor lands after the text instead: reflowSplitsLineIntoContinuationsWhenNarrowed.
+      session.assertCursorPosition(5, 4)
     }
 
     @Test
@@ -504,7 +508,7 @@ class ResizeTest {
         "first", "_line", "secon", "d_lin", "third", "_line", "fourt", "h_lin")
       session.assertScreenLines("fifth", "_line", "sixth", "_lin")
       // ENGINE-SPECIFIC: see altMainSwitchWidthChangeDuringAltBuffer.
-      session.assertCursorPosition(1, 3)
+      session.assertCursorPosition(5, 3)
     }
 
     // ===================== reflow of soft-wrapped lines (libvterm scenarios) =====================
@@ -660,7 +664,10 @@ class ResizeTest {
       // ENGINE-SPECIFIC: see mainBufferResizeToSmallerHeightAndBack.
       session.assertScrollbackLines("main_", "lin1", "main_")
       session.assertScreenLines("lin2", "main_", "lin3")
-      session.assertCursorPosition(2, 3)
+      // ENGINE-SPECIFIC: the saved cursor sat in the blank cell after "main_lin3".
+      // The reflow to 8 columns clamps it onto the "n" that ends "main_lin", as in
+      // altMainSwitchWidthChangeDuringAltBuffer. The later reflows keep it on that "n".
+      session.assertCursorPosition(3, 3)
     }
 
     // Pull-sensitive despite no row-count change: widening enough to rejoin the wrapped line frees a

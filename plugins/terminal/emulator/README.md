@@ -11,37 +11,44 @@ When running from sources (including tests), it's downloaded on the fly — see 
 
 ## Syncing the fork with upstream
 
-Run these commands in a clone of `JetBrains/ghostty`:
+Run these commands in a clone of `JetBrains/ghostty`.
+The `+` prefix lets Git replace the moving `tip` tag.
 
-1. Add the upstream remote once:
-   ```
+1. If `upstream` is missing from `git remote -v`, add it:
+
+   ```sh
    git remote add upstream https://github.com/ghostty-org/ghostty.git
    ```
-2. Fetch both remotes.
-   Upstream moves the `tip` tag on each commit that passed tests, so the tag needs a forced fetch:
-   ```
+
+2. Fetch the branches, release tags, and `tip`:
+
+   ```sh
    git fetch origin
    git fetch upstream
-   git fetch upstream '+refs/tags/tip:refs/tags/tip'
+   git fetch upstream 'refs/tags/v*:refs/tags/v*' '+refs/tags/tip:refs/tags/tip'
    ```
-3. Merge the fork and upstream changes into the local `main` branch:
-   ```
+
+3. Merge both remote `main` branches into the local branch:
+
+   ```sh
    git switch main
    git merge --no-edit origin/main
    git merge --no-edit upstream/main
    ```
    When the fork has no commits of its own, the merge is a fast-forward. Otherwise, Git makes a merge commit.
    If Git reports conflicts, resolve them and run `git commit --no-edit`.
-4. Push the branch and the tag to the fork:
-   ```
-   git push origin main
-   git push --force origin tip
+
+4. Push `main`, the release tags, and `tip` to the fork:
+
+   ```sh
+   git push origin main 'refs/tags/v*:refs/tags/v*' '+refs/tags/tip:refs/tags/tip'
    ```
 
-## Updating the library
+## Updating the bundled library
 
-1. Run the `Terminal: libghostty-vt / Publish` TeamCity configuration on the `tip` branch.
-   The `tip` tag marks the last upstream commit that passed the tests.
+1. Run the `Terminal: libghostty-vt / Publish` TeamCity configuration on a tag or a branch.
+   For example, use a release tag such as `v1.4.0` or the rolling `tip` tag, which marks
+   the last commit on the `main` branch that passed the tests (a prerelease build).
    The configuration builds the library and uploads it to the storage.
 2. Set the `libGhosttyVtVersion` property in
    [dependencies.properties](../../../build/dependencies/dependencies.properties) to the uploaded version.
