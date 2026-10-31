@@ -20,11 +20,13 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
   val supportedLocales: Set<String> = setOf("zh-cn")
 
   override fun isAccessible(request: HttpRequest): Boolean {
-    return super.isAccessible(request) && request.uri().contains(prefix)
+    return super.isAccessible(request) && matchesPath(request.uri().substringBefore('?'))
   }
 
+  internal fun matchesPath(path: String): Boolean = path.startsWith(prefix) || supportedLocales.any { path.startsWith("/$it$prefix") }
+
   fun getRequestLocalePath(request: HttpRequest): String {
-    val requestLocale = request.uri().substringBefore(prefix).substringAfter("/")
+    val requestLocale = request.uri().substringBefore('?').substringBefore(prefix).removePrefix("/")
     return if (supportedLocales.contains(requestLocale)) requestLocale else ""
   }
 
@@ -36,7 +38,7 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
     extraHeaders: HttpHeaders,
   ): Boolean {
 
-    val isImage = resourceLocation.contains("/img/")
+    val isImage = resourceLocation.endsWith("/img") || resourceLocation.contains("/img/")
 
     //We don't ship dark images because of storage concerns, yet frontend might still request them, and to avoid 404 we provide fallback
     val retrieveName = when (isImage) {
@@ -51,8 +53,9 @@ abstract class HelpRequestHandlerBase : HttpRequestHandler() {
 
     val content = Utils.getResourceWithFallback(if (isImage) "images" else "topics",
                                                 retrieveName, getRequestLocalePath(request))
+    if (content == null) return false
     return sendData(
-      content ?: throw Exception("$resourceName not found in $resourceLocation via ${request.uri()}"), resourceName,
+      content, resourceName,
       request, channel,
       extraHeaders
     )

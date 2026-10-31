@@ -3,6 +3,7 @@
 
 package com.jetbrains.builtInHelp.search
 
+import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.safeOutputStream
 import com.jetbrains.builtInHelp.Utils
@@ -37,9 +38,11 @@ class HelpSearch {
     private val analyzer: StandardAnalyzer = StandardAnalyzer()
 
     @NotNull
-    fun search(query: String?, maxHits: Int, locale: String): String {
+    fun search(query: String?, maxHits: Int, locale: String): String = search(query, maxHits, locale, Utils.Companion::getResource)
 
-      if (query != null) {
+    internal fun search(query: String?, maxHits: Int, locale: String, resource: (String, String, String) -> ByteArray?): String {
+
+      if (!query.isNullOrBlank() && maxHits in 1..1000) {
         val indexDir: Path? = Files.createTempDirectory("${locale}-search-index")
         var indexDirectory: NIOFSDirectory? = null
         var reader: DirectoryReader? = null
@@ -50,15 +53,15 @@ class HelpSearch {
             Files.createDirectories(indexDir)
 
             //Read required names from the rlist file and then load resources based off of them
-            val searchList = Utils.getResourceWithFallback("search", "rlist", locale)
-                             ?: return NOT_FOUND
+            val localizedList = resource("search", "rlist", locale)
+            val indexLocale = if (localizedList != null) locale else ""
+            val searchList = localizedList ?: resource("search", "rlist", "") ?: return NOT_FOUND
 
             BufferedReader(InputStreamReader(ByteArrayInputStream(searchList))).useLines { lines ->
               lines.forEach { line ->
                 val path = Paths.get(indexDirPath, line)
 
-                val dataToDeploy = Utils.getResourceWithFallback("search", line, locale)
-                                   ?: return@forEach
+                val dataToDeploy = resource("search", line, indexLocale) ?: return NOT_FOUND
 
                 path.safeOutputStream().use { resourceOutput ->
                   resourceOutput.write(dataToDeploy)
@@ -112,11 +115,12 @@ class HelpSearch {
               return jacksonObjectMapper().writeValueAsString(HelpSearchResults(results))
           }
           catch (e: Throwable) {
+            rethrowControlFlowException(e)
             Logger.getInstance(HelpSearch::class.java).info("Error searching help for $query", e)
           }
           finally {
-            indexDirectory?.close()
             reader?.close()
+            indexDirectory?.close()
             indexDir.deleteRecursively()
           }
       }
