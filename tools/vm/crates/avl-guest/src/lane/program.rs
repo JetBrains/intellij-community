@@ -6,7 +6,8 @@
 //! never seen. A suite whose fixtures start with installed agents then sends its `managedAgentInstall`. A prologue that fails is one container failure of the suite. Per scenario, under the recorder `scenario`
 //! command:
 //! 1. `reset:before`: `Reset` in the IDE, then the registry fault, the feedback queue and the cloud record. A reset
-//!    that does not hold recycles the IDE, see [`super::recycle`].
+//!    that does not hold recycles the IDE, see [`super::recycle`]. A scenario after a passed scenario of the same suite
+//!    whose `reset:after` held sends none, because nothing ran on the IDE since that reset.
 //! 2. The preparation of a story scenario, one `StepSequence`: `SetScenarioFixture`, `SetRegistryFlag` per flag,
 //!    `SeedSessionPresets`, `RemountEditorEmptyState` for the inline prompt flag, and `SessionTabs`, whose terminal tabs
 //!    are the runner value `terminalBaseline`.
@@ -366,6 +367,9 @@ pub(crate) struct Runner<'r, 's> {
     failed: RefCell<Vec<(usize, usize)>>,
     /// Whether the scenarios that run now are reruns.
     rerunning: Cell<bool>,
+    /// Whether the scenario that ran last passed and its `reset:after` held, and the IDE ran nothing since. The next
+    /// scenario of the same suite then starts on that clean IDE, with no `reset:before`.
+    clean_handover: Cell<bool>,
 }
 
 impl<'r, 's> Runner<'r, 's> {
@@ -393,6 +397,7 @@ impl<'r, 's> Runner<'r, 's> {
             rerun: None,
             failed: RefCell::new(Vec::new()),
             rerunning: Cell::new(false),
+            clean_handover: Cell::new(false),
         }
     }
 
@@ -627,6 +632,8 @@ impl<'r, 's> Runner<'r, 's> {
     /// The prologue of a suite: the document, the declared CLIs, the managed-agent baseline, and the Agent Spawner of the
     /// Cloud emulator. It answers what the reset of each scenario sends.
     fn prologue<'p>(&self, suite: &'p SuiteProgram) -> Result<ScenarioReset<'p>, Failure> {
+        // The prologue changes the IDE, and the next suite sends another reset, so its first scenario resets before.
+        self.clean_handover.set(false);
         document_fits(suite)?;
         if self.document.lane != LIVE_LANE {
             refuse_live_host_ids(suite)?;
@@ -830,8 +837,13 @@ impl<'r, 's> Runner<'r, 's> {
             .open_scenario(scenario_command(suite, profile, raw, self.lane.recorder_bridge()));
         let fixture = suite.fixtures.get(&profile.fixture).cloned().unwrap_or_default();
 
-        let mut verdict = self
-            .traced_reset(ResetPhase::Before, &profile.name, reset.reset, None)
+        // The `reset:after` of the scenario before held, and nothing ran since, so a `reset:before` would only repeat it.
+        let before = if self.clean_handover.replace(false) {
+            Ok(())
+        } else {
+            self.traced_reset(ResetPhase::Before, &profile.name, reset.reset, None)
+        };
+        let mut verdict = before
             .and_then(|()| self.body(suite, profile, &fixture))
             .and_then(|()| self.injected_failure(profile));
         if verdict.is_err() {
@@ -842,6 +854,7 @@ impl<'r, 's> Runner<'r, 's> {
             // A failed scenario can leave a registry agent removed or half installed, so its reset restores the baseline.
             let baseline = reset.install.as_ref().filter(|_| verdict.is_err());
             let cleanup = self.traced_reset(ResetPhase::After, &profile.name, reset.reset, baseline);
+            self.clean_handover.set(verdict.is_ok() && cleanup.is_ok());
             verdict = match (verdict, cleanup) {
                 (Err(mut primary), Err(cleanup)) => {
                     primary.suppressed.push(cleanup.message);
@@ -1050,6 +1063,7 @@ impl<'r, 's> Runner<'r, 's> {
     /// A relaunch of the IDE as a `restart` span with the key `restart:ide` for `restart-ide` and `restart:recycle` for a
     /// recycle, as the recorder keys them. Each part of the relaunch is a `relaunch` span inside it, see [`TracedParts`].
     fn relaunch_span(&self, cause: Relaunch, while_down: &mut dyn FnMut(&Path) -> Result<(), String>) -> Result<(), String> {
+        self.clean_handover.set(false);
         let id = match cause {
             Relaunch::Restart => "ide",
             Relaunch::Recycle => "recycle",

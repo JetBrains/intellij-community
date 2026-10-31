@@ -756,6 +756,38 @@ fn a_recorder_that_refuses_the_scenarios_is_one_trace_failure_of_the_stream() {
     assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
 }
 
+// The reset after a passed scenario leaves the IDE clean, and nothing runs on it before the next scenario of the
+// suite. So that scenario sends no reset before. A scenario after a failed one resets before again.
+#[test]
+fn a_scenario_after_a_passed_one_of_its_suite_sends_no_reset_before() {
+    let resets_of = |fake: &Fake| -> Vec<Value> {
+        fake.bodies(&format!("{BRIDGE}Reset"))
+            .iter()
+            .map(|reset| reset["afterScenario"].clone())
+            .collect()
+    };
+    let (vocabulary, profile) = green_story();
+    let mut second = profile.clone();
+    second["name"] = json!("rename-again");
+
+    let fake = green_fake();
+    let ran = run(&fake, &[story(&vocabulary, &json!([profile, second]))], None);
+    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
+    assert_eq!(statuses, [&json!("SUCCESSFUL"), &json!("SUCCESSFUL")]);
+    assert_eq!(resets_of(&fake), [json!(false), json!(true), json!(true)]);
+
+    let failure = json!({"type": "java.lang.AssertionError", "message": "expected the title 'Renamed'", "stack": []});
+    let fake = Fake::new(Script {
+        answers: BTreeMap::from([("action/rename-session-select".to_owned(), json!({"session": {"id": "s-1"}}))]),
+        failures: BTreeMap::from([("assertion/rename-session-title".to_owned(), failure)]),
+        ..Script::default()
+    });
+    let ran = run(&fake, &[story(&vocabulary, &json!([profile, second]))], None);
+    let statuses: Vec<&Value> = ran.events("testFinished").iter().map(|finished| &finished["status"]).collect();
+    assert_eq!(statuses, [&json!("FAILED"), &json!("FAILED")]);
+    assert_eq!(resets_of(&fake), [json!(false), json!(true), json!(false), json!(true)]);
+}
+
 // A green scenario: the baseline, the reset before, the preparation chain, each instruction as one request with its
 // arguments in camel case, the values it takes and its deadline, then the reset after. The trace is the golden.
 #[test]
