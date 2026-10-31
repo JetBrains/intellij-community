@@ -805,32 +805,35 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
         }
         return true;
       }
-      synchronized (usages) {
-        firstUsageSpan.end();
-        if (visibleUsages.size() >= parameters.maxUsages) {
-          tooManyResults.set(true);
-          return false;
-        }
 
-        UsageNode nodes = ReadAction.computeBlocking(() -> usageView.doAppendUsage(usage));
-        usages.add(usage);
-        firstUsageAddedTS.compareAndSet(0, System.nanoTime()); // Successes only once - at first assignment
-
-        if (nodes != null) {
-          visibleUsages.add(nodes.getUsage());
-          boolean continueSearch = true;
-          if (visibleUsages.size() == parameters.maxUsages) {
-            visibleUsages.add(MORE_USAGES_SEPARATOR_NODE.getUsage());
-            usages.add(table.MORE_USAGES_SEPARATOR);
-            continueSearch = false;
+      return ReadAction.computeBlocking(() ->{
+        synchronized (usages) {
+          firstUsageSpan.end();
+          if (visibleUsages.size() >= parameters.maxUsages) {
+            tooManyResults.set(true);
+            return false;
           }
-          pingEDT.ping();
 
-          return continueSearch;
+          UsageNode nodes = usageView.doAppendUsage(usage);
+          usages.add(usage);
+          firstUsageAddedTS.compareAndSet(0, System.nanoTime()); // Successes only once - at first assignment
+
+          if (nodes != null) {
+            visibleUsages.add(nodes.getUsage());
+            boolean continueSearch = true;
+            if (visibleUsages.size() == parameters.maxUsages) {
+              visibleUsages.add(MORE_USAGES_SEPARATOR_NODE.getUsage());
+              usages.add(table.MORE_USAGES_SEPARATOR);
+              continueSearch = false;
+            }
+            pingEDT.ping();
+
+            return continueSearch;
+          }
         }
-      }
 
-      return true;
+        return true;
+      });
     };
 
     UsageSearcher usageSearcher = actionHandler.createUsageSearcher();
