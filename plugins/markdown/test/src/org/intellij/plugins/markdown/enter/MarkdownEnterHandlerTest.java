@@ -14,6 +14,10 @@ public class MarkdownEnterHandlerTest extends BasePlatformTestCase {
     doTest();
   }
 
+  public void testNestedQuote() {
+    doTest();
+  }
+
   public void testCodeFence() {
     doTest();
   }

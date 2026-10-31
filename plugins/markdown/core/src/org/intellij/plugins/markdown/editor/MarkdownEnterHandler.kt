@@ -100,18 +100,21 @@ internal class MarkdownEnterHandler : EnterHandlerDelegate {
     val markdown = CodeStyle.getCustomSettings(quote.containingFile, MarkdownCustomCodeStyleSettings::class.java)
 
     val document = editor.document
-    val offset = editor.caretModel.offset
-    val column = quote.textRange.startOffset - document.getLineStartOffset(document.getLineNumber(quote.textRange.startOffset))
-    val missingIndent = column - (offset - document.getLineStartOffset(document.getLineNumber(offset)))
-    if (missingIndent > 0) {
-      EditorModificationUtil.insertStringAtCaret(editor, " ".repeat(missingIndent))
-    }
+    val text = document.charsSequence
+    val quoteStart = quote.textRange.startOffset
+    val quoteLineStart = document.getLineStartOffset(document.getLineNumber(quoteStart))
+    // Outer `>` markers and whitespace stay. A list marker on the same line becomes spaces.
+    val outerPrefix = text.subSequence(quoteLineStart, quoteStart)
+      .map { if (it == '>' || it.isWhitespace()) it else ' ' }
+      .joinToString("")
+    val marker = if (markdown.FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL) "> " else ">"
 
-    var toAdd = ">"
-    if (markdown.FORCE_ONE_SPACE_AFTER_BLOCKQUOTE_SYMBOL) {
-      toAdd += " "
+    val offset = editor.caretModel.offset
+    val lineStart = document.getLineStartOffset(document.getLineNumber(offset))
+    if (text.subSequence(lineStart, offset).isBlank()) {
+      document.deleteString(lineStart, offset)
     }
-    EditorModificationUtil.insertStringAtCaret(editor, toAdd)
+    EditorModificationUtil.insertStringAtCaret(editor, outerPrefix + marker)
   }
 
   /**
