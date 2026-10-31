@@ -519,7 +519,11 @@ private fun addDep(
         deps.add(dependencyLabel)
       }
       else {
-        // TODO: require scope != JpsJavaDependencyScope.COMPILE || isExported  -- aka TEST_RUNTIME
+        require(isExported ||
+                dependentModule.module.name == "fleet.dock.bootstrapWasm"  // TODO: remove this
+        ) {
+          "module must not have COMPILE-scope, TEST-scope, or PROVIDED-scope dependencies, please consider changing their scope to RUNTIME or remove them: ${dependentModule.imlFile}"
+        }
         runtimeDeps.add(dependencyLabel)
       }
       if (isExported) {

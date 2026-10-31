@@ -4,7 +4,7 @@
     <exclude-output />
     <orderEntry type="jdk" jdkName="jbr-17" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" scope="RUNTIME">
       <library name="dokka-core" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.dokka:dokka-core:1.4.10.2-dev-52-SNAPSHOT">
         </properties>
