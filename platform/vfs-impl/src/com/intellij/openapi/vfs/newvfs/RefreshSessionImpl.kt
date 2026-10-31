@@ -228,7 +228,9 @@ internal class RefreshSessionImpl internal constructor(
 
     var count = 0
     val events = ArrayList<VFileEvent?>()
-    withPrefetchForRemoteRoots(refreshRoots) {
+    // a shallow scan lists only the roots, one request each; a tree prefetch would walk the whole remote tree under them
+    val prefetchRoots = if (myIsRecursive) refreshRoots else emptyList()
+    withPrefetchForRemoteRoots(prefetchRoots) {
       do {
         if (myCanceled) break
         if (LOG.isTraceEnabled) LOG.trace("try=${count}")
