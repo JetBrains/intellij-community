@@ -12,6 +12,7 @@ import com.intellij.codeInsight.hints.declarative.impl.InlayDataExternalizer
 import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeExternalizer
 import com.intellij.codeInsight.hints.declarative.impl.ZombieSmartPointer
 import com.intellij.codeInsight.hints.declarative.impl.ZombieSymbolPointer
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.zombie.LimbedNecromancy
 import com.intellij.openapi.editor.impl.zombie.LimbedZombie
@@ -43,8 +44,10 @@ internal object DeclarativeHintsNecromancy
   }
 }
 
+private val LOG = logger<NecromancyPresentationTreeExternalizer>()
+
 private object NecromancyPresentationTreeExternalizer : PresentationTreeExternalizer() {
-  private const val SERDE_VERSION = 0
+  private const val SERDE_VERSION = 1
   override fun serdeVersion(): Int = SERDE_VERSION + super.serdeVersion()
 
   override fun writeInlayActionPayload(output: DataOutput, actionPayload: InlayActionPayload) {
@@ -59,16 +62,20 @@ private object NecromancyPresentationTreeExternalizer : PresentationTreeExternal
       is SymbolPointerInlayActionPayload -> {
         writeINT(output, 2)
       }
-      else -> error("unknown payload type: $actionPayload")
+      else -> {
+        LOG.error("unknown payload type: ${actionPayload.javaClass.name}")
+        writeINT(output, 3)
+      }
     }
   }
 
-  override fun readInlayActionPayload(input: DataInput): InlayActionPayload {
+  override fun readInlayActionPayload(input: DataInput): InlayActionPayload? {
     val type = readINT(input)
     return when (type) {
       0 -> StringInlayActionPayload(readUTF(input))
       1 -> PsiPointerInlayActionPayload(ZombieSmartPointer())
       2 -> SymbolPointerInlayActionPayload(ZombieSymbolPointer())
+      3 -> null
       else -> error("unknown payload type: $type")
     }
   }

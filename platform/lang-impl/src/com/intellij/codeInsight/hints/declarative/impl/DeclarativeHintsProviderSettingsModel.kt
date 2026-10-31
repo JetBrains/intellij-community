@@ -258,12 +258,15 @@ private class PreviewInlayTreeSink(
 ) {
   private val inlayData = mutableListOf<InlayData>()
 
+  private val payloadContributors = DeclarativeInlayPayloadContributor.EP_NAME.extensionList
+
   private val activeOptions = ArrayList<MutableOption>()
 
   fun addPresentation(position: InlayPosition, hintFormat: HintFormat, enabled: Boolean, builder: PresentationTreeBuilder.() -> Unit) {
     val b = PresentationTreeBuilderImpl.createRoot(position)
     b.builder()
     val tree = b.complete()
+    val activeOptionIds = activeOptions.map { it.description.requireOptionId() }
     inlayData.add(InlayData(
       position = position,
       tooltip = null,
@@ -271,10 +274,9 @@ private class PreviewInlayTreeSink(
       tree = tree,
       providerId = providerBean.requiredProviderId(),
       disabled = !enabled || !providerEnabled || activeOptions.any { !it.isEnabled },
-      payloads = emptyList(),
+      payloads = payloadContributors.mapNotNull { it.contribute(activeOptionIds) },
       providerClass = providerBean.instance.javaClass,
-      sourceId = sourceId,
-      optionId = activeOptions.lastOrNull()?.description?.requireOptionId()
+      sourceId = sourceId
     ))
   }
 

@@ -305,11 +305,9 @@ com.intellij.codeInsight.hints.declarative.InlayHintsProvider
 - sf:Companion:com.intellij.codeInsight.hints.declarative.InlayHintsProvider$Companion
 - a:createCollector(com.intellij.psi.PsiFile,com.intellij.openapi.editor.Editor):com.intellij.codeInsight.hints.declarative.InlayHintsCollector
 - s:getINLAY_PAYLOADS():com.intellij.openapi.actionSystem.DataKey
-- s:getOPTION_ID():com.intellij.openapi.actionSystem.DataKey
 - s:getPROVIDER_ID():com.intellij.openapi.actionSystem.DataKey
 - s:getPROVIDER_NAME():com.intellij.openapi.actionSystem.DataKey
 f:com.intellij.codeInsight.hints.declarative.InlayHintsProvider$Companion
-- f:getOPTION_ID():com.intellij.openapi.actionSystem.DataKey
 f:com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean
 - com.intellij.openapi.extensions.CustomLoadingExtensionPointBean
 - com.intellij.util.KeyedLazyInstance

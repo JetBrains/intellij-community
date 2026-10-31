@@ -50,7 +50,6 @@ data class InlayData(
    */
   val tree: TinyTree<Any?>,
   val providerId: String,
-  val optionId: String?,
   /** Strikethrough text. Used in settings to indicate disabled inlay hints. */
   val disabled: Boolean, // todo: make this a formatting option
   /**
@@ -109,7 +108,6 @@ abstract class InlayDataExternalizer(
     writeHintFormat(output, inlayData.hintFormat)
     treeExternalizer.save(output, inlayData.tree)
     writeUTF(output, inlayData.providerId)
-    writeNullableString(output, inlayData.optionId)
     writeDisabled(output, inlayData.disabled)
     writePayloads(output, inlayData.payloads)
     writeProviderClass(output, inlayData.providerClass)
@@ -122,12 +120,11 @@ abstract class InlayDataExternalizer(
     val hintFormat: HintFormat        = readHintFormat(input)
     val tree: TinyTree<Any?>          = treeExternalizer.read(input)
     val providerId: String            = readUTF(input)
-    val optionId: String?             = readNullableString(input)
     val disabled: Boolean             = readDisabled(input)
     val payloads: List<InlayPayload>  = readPayloads(input)
     val providerClass: Class<*>       = readProviderClass(input)
     val sourceId: String              = readSourceId(input)
-    return InlayData(position, tooltip, hintFormat, tree, providerId, optionId, disabled, payloads, providerClass, sourceId)
+    return InlayData(position, tooltip, hintFormat, tree, providerId, disabled, payloads, providerClass, sourceId)
   }
 
   private fun writePosition(output: DataOutput, position: InlayPosition) {

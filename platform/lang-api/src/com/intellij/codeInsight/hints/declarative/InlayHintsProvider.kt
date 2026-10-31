@@ -21,8 +21,6 @@ interface InlayHintsProvider : PossiblyDumbAware {
     @JvmStatic
     val PROVIDER_ID: DataKey<@NonNls String> = DataKey.create("declarative.hints.provider.id")
     @JvmStatic
-    val OPTION_ID: DataKey<@NonNls String> = DataKey.create("declarative.hints.provider.option.id")
-    @JvmStatic
     val INLAY_PAYLOADS: DataKey<Map<String, InlayActionPayload>> = DataKey.create("declarative.hints.inlay.payload")
   }
 

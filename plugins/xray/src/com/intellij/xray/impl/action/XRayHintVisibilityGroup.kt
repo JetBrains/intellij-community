@@ -7,9 +7,10 @@ import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.InlayHintSettingsKey
 import com.intellij.codeInsight.hints.LegacyInlayHintSettingsKey
 import com.intellij.codeInsight.hints.ParameterHintSettingsKey
-import com.intellij.codeInsight.hints.declarative.InlayHintsProvider.Companion.OPTION_ID
+import com.intellij.codeInsight.hints.declarative.InlayHintsProvider.Companion.INLAY_PAYLOADS
 import com.intellij.codeInsight.hints.declarative.InlayHintsProvider.Companion.PROVIDER_ID
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean
+import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
 import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.showInlaySettings
 import com.intellij.lang.Language
@@ -25,8 +26,10 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.platform.ide.productMode.IdeProductMode
+import com.intellij.util.asSafely
 import com.intellij.xray.api.InlayHintStage
 import com.intellij.xray.api.XRayBundle
+import com.intellij.xray.impl.platform.XRAY_OPTION_ID_PAYLOAD
 import com.intellij.xray.impl.service.XRayModeService
 import com.intellij.xray.impl.service.XRayStageStore
 
@@ -96,7 +99,8 @@ internal class XRayHintVisibilityGroup(
     return when (key) {
       null -> {
         val providerId = event.getData(PROVIDER_ID) ?: return null
-        DeclarativeInlayHintSettingsKey(providerId, event.getData(OPTION_ID))
+        val optionId = event.getData(INLAY_PAYLOADS)?.get(XRAY_OPTION_ID_PAYLOAD).asSafely<StringInlayActionPayload>()?.text
+        DeclarativeInlayHintSettingsKey(providerId, optionId)
       }
       is DeclarativeInlayHintSettingsKey -> key
       is LegacyInlayHintSettingsKey -> key.copy(language = key.language ?: language)

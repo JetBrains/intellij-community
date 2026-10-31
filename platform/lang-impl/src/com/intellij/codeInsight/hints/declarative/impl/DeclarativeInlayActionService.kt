@@ -37,7 +37,6 @@ class DeclarativeInlayActionService {
       .add(InlayHintsProvider.PROVIDER_ID, providerId)
       .add(InlayHintsProvider.PROVIDER_NAME, providerName)
       .add(InlayHintsProvider.INLAY_PAYLOADS, hintData.payloads.associate { it.payloadName to it.payload })
-      .apply { hintData.optionId?.let { add(InlayHintsProvider.OPTION_ID, it) } }
       .build()
 
     val popupMenu = JBPopupFactory.getInstance().createActionGroupPopup(null, inlayMenuActionGroup, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)

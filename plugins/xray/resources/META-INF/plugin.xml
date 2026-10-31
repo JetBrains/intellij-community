@@ -21,6 +21,7 @@
     <codeInsight.inlayHintSettingsOverrider implementation="com.intellij.xray.impl.platform.XRayInlayHintSettingsOverrider"/>
     <codeInsight.inlayContextMenuContributor implementation="com.intellij.xray.impl.platform.XRayInlayContextMenuContributor"/>
     <codeInsight.inlaySettingsConfigurableFactory implementation="com.intellij.xray.impl.platform.XRayInlaySettingsConfigurableFactory"/>
+    <codeInsight.declarativeInlayPayloadContributor implementation="com.intellij.xray.impl.platform.XRayDeclarativeInlayPayloadContributor"/>
     <codeVision.codeVisionEntryExtraActionContributor implementation="com.intellij.xray.impl.platform.XRayCodeVisionEntryExtraActionContributor"/>
   </extensions>
 

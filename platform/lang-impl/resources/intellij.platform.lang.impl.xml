@@ -301,6 +301,8 @@
                     interface="com.intellij.codeInsight.hints.InlayHintSettingsOverrider" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlayContextMenuContributor"
                     interface="com.intellij.codeInsight.hints.InlayContextMenuContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.codeInsight.declarativeInlayPayloadContributor"
+                    interface="com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayPayloadContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeVision.codeVisionEntryExtraActionContributor"
                     interface="com.intellij.codeInsight.codeVision.ui.CodeVisionEntryExtraActionContributor" dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.inlaySettingsConfigurableFactory"

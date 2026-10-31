@@ -69,7 +69,7 @@ abstract class PresentationTreeExternalizer : TinyTree.Externalizer<Any?>() {
 
   abstract fun writeInlayActionPayload(output: DataOutput, actionPayload: InlayActionPayload)
 
-  abstract fun readInlayActionPayload(input: DataInput): InlayActionPayload
+  abstract fun readInlayActionPayload(input: DataInput): InlayActionPayload?
 
   protected open fun decorateContent(content: String): String = content
 }
@@ -110,6 +110,6 @@ internal inline fun <T> PresentationTreeExternalizer.readNamedInlayActionPayload
   constructor: (String, InlayActionPayload) -> T,
 ): T? {
   val name = readNullableString(input) ?: return null
-  val payload = readInlayActionPayload(input)
+  val payload = readInlayActionPayload(input) ?: return null
   return constructor(name, payload)
 }

@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -29,15 +30,16 @@ class InlayTreeSinkImpl(
 ) : InlayTreeSink {
   private val inlayDataToPresentation = ArrayList<InlayData>()
 
-  // id -> isEnabled
-  private val activeOptions = LinkedHashMap<String, Boolean>()
+  private val payloadContributors = DeclarativeInlayPayloadContributor.EP_NAME.extensionList
+
+  // the option IDs of the enclosing whenOptionEnabled blocks, from the outermost to the innermost
+  private val activeOptionIds = ArrayList<String>()
 
   override fun addPresentation(position: InlayPosition,
                                payloads: List<InlayPayload>?,
                                @NlsContexts.HintText tooltip: String?,
                                hintFormat: HintFormat,
                                builder: PresentationTreeBuilder.() -> Unit) {
-    val optionId = activeOptions.keys.lastOrNull()
     val b = PresentationTreeBuilderImpl.createRoot(position)
     b.builder()
     val tree = b.complete()
@@ -45,15 +47,23 @@ class InlayTreeSinkImpl(
       throw PluginException.createByClass("Provider didn't provide any presentation. It is forbidden - do not try to create it in this case.", RuntimeException(
         "${providerClass.canonicalName} id: $providerId"), providerClass)
     }
-    val disabled = providerIsDisabled || if (activeOptions.isNotEmpty()) {
-      activeOptions.values.any { !it }
-    }
-    else {
-      false
-    }
+    val disabled = providerIsDisabled || activeOptionIds.any { !enabledOptions.getValue(it) }
     inlayDataToPresentation.add(
-      InlayData(position, tooltip, hintFormat, tree, providerId, optionId, disabled, payloads ?: emptyList(), providerClass, sourceId)
+      InlayData(position, tooltip, hintFormat, tree, providerId, disabled, collectContributorPayloads(payloads), providerClass, sourceId)
     )
+  }
+
+  private fun collectContributorPayloads(providerPayloads: List<InlayPayload>?): List<InlayPayload> {
+    val provided = providerPayloads ?: emptyList()
+    var result: MutableList<InlayPayload>? = null
+    for (contributor in payloadContributors) {
+      val payload = contributor.contribute(activeOptionIds) ?: continue
+      if (result == null) {
+        result = SmartList(provided)
+      }
+      result.add(payload)
+    }
+    return result ?: provided
   }
 
   override fun whenOptionEnabled(optionId: String, block: () -> Unit) {
@@ -64,14 +74,12 @@ class InlayTreeSinkImpl(
     if (!isInPreview) {
       if (!isEnabled) return
     }
-    val wasNotEnabledEarlier = activeOptions.put(optionId, isEnabled) != null
+    activeOptionIds.add(optionId)
     try {
       block()
     }
     finally {
-      if (!wasNotEnabledEarlier) {
-        activeOptions.remove(optionId)
-      }
+      activeOptionIds.removeAt(activeOptionIds.lastIndex)
     }
   }
 
