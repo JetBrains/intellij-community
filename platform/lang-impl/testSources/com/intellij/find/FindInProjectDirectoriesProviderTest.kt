@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
+import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
 import com.intellij.testFramework.PsiTestUtil
@@ -22,8 +23,12 @@ import com.intellij.testFramework.rules.ProjectModelExtension
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.CommonProcessors.CollectProcessor
 import com.intellij.util.Processor
+import com.intellij.util.indexing.testEntities.IndexingTestEntity2
 import com.intellij.util.indexing.testEntities.NonIndexableKindFileSetTestContributor
 import com.intellij.util.indexing.testEntities.NonIndexableTestEntity
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
+import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetRegistrar
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import kotlinx.coroutines.runBlocking
@@ -55,6 +60,7 @@ class FindInProjectDirectoriesProviderTest {
   @BeforeEach
   fun setup(): Unit = runBlocking {
     WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(NonIndexableKindFileSetTestContributor(), disposable)
+    WorkspaceFileIndexImpl.EP_NAME.point.registerExtension(ExternalNonIndexableKindFileSetTestContributor(), disposable)
 
     firstRoot = baseDir.newVirtualDirectory("first")
     secondRoot = baseDir.newVirtualDirectory("second")
@@ -136,6 +142,29 @@ class FindInProjectDirectoriesProviderTest {
   }
 
   @Test
+  fun `a custom scope that searches in libraries reaches the external non-indexable files`(): Unit = runBlocking {
+    val externalRoot = baseDir.newVirtualDirectory("ext")
+    baseDir.newVirtualFile("ext/ext.txt", "external file with zq data".toByteArray())
+    val urlManager = project.workspaceModel.getVirtualFileUrlManager()
+    project.workspaceModel.update("add an external non-indexable root") { storage ->
+      storage.addEntity(IndexingTestEntity2(listOf(urlManager.storeAndGet(externalRoot.url)), emptyList(), NonPersistentEntitySource))
+    }
+    VfsTestUtil.syncRefresh()
+    waitUntilIndexesAreReady(project)
+    registerProvider(listOf(firstRoot))
+
+    val model = projectModel().apply {
+      stringToFind = "zq"
+      isProjectScope = false
+      isCustomScope = true
+      customScope = GlobalSearchScope.allScope(project)
+    }
+    assertThat(findFileNames(model)).containsExactlyInAnyOrder("first.txt", "ext.txt")
+    // the external roots are libraries, so a project search leaves them out
+    assertThat(findFileNames(projectModel().apply { stringToFind = "zq" })).containsExactlyInAnyOrder("first.txt")
+  }
+
+  @Test
   fun `an excluded root is walked and the excluded subdirectory of another root is skipped`(): Unit = runBlocking {
     val module = projectModel.createModule("a")
     val contentRoot = baseDir.newVirtualDirectory("content")
@@ -204,5 +233,16 @@ class FindInProjectDirectoriesProviderTest {
     val presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model))
     FindInProjectUtil.findUsages(model, project, consumer, presentation)
     return usages.map { it!!.virtualFile!!.name }.distinct()
+  }
+}
+
+/** Gives the roots of an [IndexingTestEntity2] the external non-indexable kind: a library root that no index covers. */
+private class ExternalNonIndexableKindFileSetTestContributor : WorkspaceFileIndexContributor<IndexingTestEntity2> {
+  override val entityClass: Class<IndexingTestEntity2> = IndexingTestEntity2::class.java
+
+  override fun registerFileSets(entity: IndexingTestEntity2, registrar: WorkspaceFileSetRegistrar, storage: EntityStorage) {
+    for (root in entity.roots) {
+      registrar.registerFileSet(root, WorkspaceFileKind.EXTERNAL_NON_INDEXABLE, entity, null)
+    }
   }
 }

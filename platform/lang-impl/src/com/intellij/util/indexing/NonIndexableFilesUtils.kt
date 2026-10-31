@@ -186,11 +186,24 @@ interface ConcurrentFileTraversal {
       searchInLibraries: Boolean = true,
       filter: VirtualFileFilter? = null,
     ): ConcurrentFileTraversal {
-      val workspaceFileIndex = WorkspaceFileIndexEx.getInstance(project)
-      val roots = when {
-        searchInLibraries -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding()
-        else -> workspaceFileIndex.nonIndexableRootsAsCacheAvoiding { fileSet -> fileSet.kind.isContent }
-      }
+      val fileSetFilter: (WorkspaceFileSet) -> Boolean = if (searchInLibraries) { _ -> true } else { fileSet -> fileSet.kind.isContent }
+      return traversalOf(project, fileSetFilter, filter)
+    }
+
+    /**
+     * The traversal of the external non-indexable roots only: the library roots that no index covers.
+     * A search that reaches the content roots in another way adds this traversal when its scope searches in libraries.
+     */
+    @ApiStatus.Internal
+    @JvmStatic
+    @JvmOverloads
+    @RequiresReadLock
+    @RequiresBackgroundThread
+    fun externalNonIndexableTraversal(project: Project, filter: VirtualFileFilter? = null): ConcurrentFileTraversal =
+      traversalOf(project, { fileSet -> !fileSet.kind.isContent }, filter)
+
+    private fun traversalOf(project: Project, fileSetFilter: (WorkspaceFileSet) -> Boolean, filter: VirtualFileFilter?): ConcurrentFileTraversal {
+      val roots = WorkspaceFileIndexEx.getInstance(project).nonIndexableRootsAsCacheAvoiding(fileSetFilter)
       return ConcurrentNonIndexableFileTraversal(project, roots, filter)
     }
   }
