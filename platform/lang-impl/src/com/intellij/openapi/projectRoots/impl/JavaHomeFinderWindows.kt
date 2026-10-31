@@ -26,6 +26,24 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
     @Suppress("SpellCheckingInspection")
     private val regCommand = listOf("reg", "query", """HKLM\SOFTWARE\JavaSoft\JDK""", "/s", "/v", "JavaHome")
 
+    /**
+     * Vendor directories under `Program Files` where JDK installers put their JDKs.
+     * Most of these installers do not write `JavaSoft` registry keys by default.
+     * For example, `winget install Microsoft.OpenJDK.17` installs into `C:\Program Files\Microsoft\jdk-17.x-hotspot`.
+     */
+    private val vendorDirs = listOf(
+      "Microsoft",
+      "Eclipse Adoptium",
+      "Eclipse Foundation",
+      "AdoptOpenJDK",
+      "Zulu",
+      "BellSoft",
+      "Amazon Corretto",
+      "Semeru",
+      "SapMachine",
+      "RedHat",
+    )
+
     private val javaHomePattern = Regex("""^\s+JavaHome\s+REG_SZ\s+(\S.+\S)\s*$""", setOf(MULTILINE, IGNORE_CASE))
 
     private val logger: Logger = Logger.getInstance(JavaHomeFinderWindows::class.java)
@@ -142,6 +160,11 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       roots.add(root.resolve("Program Files/Java"))
       roots.add(root.resolve("Program Files (x86)/Java"))
       roots.add(root.resolve("Java"))
+      // Missing vendor dirs are harmless: scanAll skips them.
+      for (vendor in vendorDirs) {
+        roots.add(root.resolve("Program Files/$vendor"))
+        roots.add(root.resolve("Program Files (x86)/$vendor"))
+      }
     }
     getPathInUserHome(".jdks")?.let { roots.add(it) }
     return scanAll(roots, true)
