@@ -1923,7 +1923,9 @@ private fun getSplittersToFocus(suggestedProject: Project?): EditorsSplitters? {
 
   val frame = FocusManagerImpl.getInstance().lastFocusedFrame
   if (frame is IdeFrameImpl && frame.isActive) {
-    return activeWindow?.let { getSplittersToActivate(activeWindow = it, project = frame.getProject()) }
+    // a frame that shows frame guests focuses the editors of its active project, see WindowManagerEx.getActiveProject
+    val frameProject = ProjectFrameHelper.getFrameHelper(frame)?.project?.let(::activeProjectOf)
+    return activeWindow?.let { getSplittersToActivate(activeWindow = it, project = frameProject) }
   }
 
   // getSplitters is not implemented in unit test mode
