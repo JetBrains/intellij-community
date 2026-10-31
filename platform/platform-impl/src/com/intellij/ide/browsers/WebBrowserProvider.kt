@@ -2,6 +2,8 @@
 package com.intellij.ide.browsers
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -28,4 +30,13 @@ interface WebBrowserProvider {
    * The id of the browser must not change, because the settings store it.
    */
   val browser: WebBrowser?
+
+  /**
+   * Creates the file of a new editor tab of [browser] that shows [url] in [project].
+   * Each call creates a new file, so each opened file is a new tab.
+   * The caller opens the file where it wants the tab, see [createWebPageTabFile].
+   *
+   * @return `null` when the browser shows no pages in editor tabs, or while [browser] is `null`
+   */
+  fun createEditorTabFile(project: Project, url: String): VirtualFile? = null
 }
