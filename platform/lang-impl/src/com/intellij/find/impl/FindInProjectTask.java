@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -76,6 +77,8 @@ final class FindInProjectTask {
 
   /** See {@link #isExcludedFromSearch(VirtualFile)}. */
   private final boolean skipExcludedFiles;
+  /** The searched directories that are excluded themselves; the user asked for them, so their files are searched. */
+  private final List<VirtualFile> excludedRoots;
 
   private final @NotNull CandidateFilter candidateFilter;
   private final @NotNull ScopeWalker scopeWalker;
@@ -127,9 +130,10 @@ final class FindInProjectTask {
       withSubdirectories = findModel.isWithSubdirectories();
     }
 
-    skipExcludedFiles = !directoriesToSearchIn.isEmpty()
-                        && !Registry.is("find.search.in.excluded.dirs")
-                        && ReadAction.computeBlocking(() -> ContainerUtil.and(directoriesToSearchIn, dir -> !projectFileIndex.isExcluded(dir)));
+    skipExcludedFiles = !directoriesToSearchIn.isEmpty() && !Registry.is("find.search.in.excluded.dirs");
+    excludedRoots = skipExcludedFiles ?
+                    ReadAction.computeBlocking(() -> ContainerUtil.filter(directoriesToSearchIn, projectFileIndex::isExcluded)) :
+                    List.of();
 
     SearchScope modelCustomScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     GlobalSearchScope customScope = modelCustomScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(modelCustomScope, project);
@@ -286,8 +290,13 @@ final class FindInProjectTask {
     ExceptionUtil.rethrowAllAsUnchecked(ProgressIndicatorUtils.awaitWithCheckCanceled(search, progressIndicator));
   }
 
-  /** A directory search skips the excluded subdirectories, unless the registry key allows them or the directory itself is excluded. */
+  /**
+   * A directory search skips the excluded files, unless the registry key allows them or the file lies under a searched directory
+   * that is excluded itself. One excluded directory does not open the excluded files of the other searched directories.
+   */
   private boolean isExcludedFromSearch(@NotNull VirtualFile file) {
-    return skipExcludedFiles && projectFileIndex.isExcluded(file);
+    return skipExcludedFiles
+           && projectFileIndex.isExcluded(file)
+           && !ContainerUtil.exists(excludedRoots, root -> VfsUtilCore.isAncestor(root, file, false));
   }
 }

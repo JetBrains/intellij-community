@@ -136,6 +136,24 @@ class FindInProjectDirectoriesProviderTest {
   }
 
   @Test
+  fun `an excluded root is walked and the excluded subdirectory of another root is skipped`(): Unit = runBlocking {
+    val module = projectModel.createModule("a")
+    val contentRoot = baseDir.newVirtualDirectory("content")
+    val excludedDirectory = baseDir.newVirtualDirectory("content/excluded")
+    val bannedRoot = baseDir.newVirtualDirectory("banned")
+    baseDir.newVirtualFile("content/keep.txt", "kept file with zq data".toByteArray())
+    baseDir.newVirtualFile("content/excluded/hidden.txt", "hidden file with zq data".toByteArray())
+    baseDir.newVirtualFile("banned/banned.txt", "banned file with zq data".toByteArray())
+    PsiTestUtil.addContentRoot(module, contentRoot)
+    PsiTestUtil.addExcludedRoot(module, excludedDirectory)
+    PsiTestUtil.addContentRoot(module, bannedRoot)
+    PsiTestUtil.addExcludedRoot(module, bannedRoot)
+    registerProvider(listOf(contentRoot, bannedRoot))
+
+    assertThat(findFileNames(projectModel())).containsExactlyInAnyOrder("keep.txt", "banned.txt")
+  }
+
+  @Test
   fun `the directories of the provider stand for the project, so a searcher that covers all candidates skips their walk`(): Unit = runBlocking {
     registerProvider(listOf(firstRoot, secondRoot))
     val occurrence = checkNotNull(secondRoot.findChild("second.txt"))
