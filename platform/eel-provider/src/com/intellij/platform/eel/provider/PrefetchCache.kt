@@ -17,6 +17,7 @@ import com.intellij.platform.eel.fs.PrefetchedStat
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.util.annotations.VisibleToClasses
 import kotlinx.coroutines.ThreadContextElement
+import kotlinx.coroutines.flow.takeWhile
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
@@ -36,6 +37,7 @@ private val LOG = logger<PrefetchCache>()
 @ApiStatus.Internal
 @VisibleToClasses(
   "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApiPrefetchTest",
+  "com.intellij.platform.ijent.impl.base.PrefetchCacheLimitTest",
 )
 class PrefetchCache private constructor(
   private val listings: Map<EelPath, Map<String, EelFileInfo>>,
@@ -70,12 +72,62 @@ class PrefetchCache private constructor(
   internal fun <T> runWith(block: () -> T): T = installThreadContext(currentThreadContext() + this, replace = true, block)
 
   companion object {
+    /** A rough heap cost of one cached tree entry: the path, the name, the info and the map slots. */
+    private const val BYTES_PER_ENTRY = 300
+
     internal fun of(stats: Map<EelPath, EelFileInfo>): PrefetchCache = PrefetchCache(emptyMap(), stats.mapValues { PrefetchedStat.of(it.value) })
+
+    /**
+     * The most tree entries one prefetch may hold. A positive [registryValue] wins.
+     * Otherwise it is 10% of [maxMemory] at [BYTES_PER_ENTRY] per entry, about 358K entries at 1 GB.
+     */
+    fun entryLimit(registryValue: Int, maxMemory: Long): Int {
+      if (registryValue > 0) return registryValue
+      return (maxMemory / 10 / BYTES_PER_ENTRY).coerceIn(1L, Int.MAX_VALUE.toLong()).toInt()
+    }
+
+    /**
+     * Fills a [Builder] of at most [maxEntries] tree entries with [fill] and runs [block] with the cache.
+     * When [fill] fails, or the builder has [Builder.limitExceeded] set after it, [block] runs without a cache.
+     * A partial cache is never used: the server walks the roots concurrently in no order, so a truncated tree reads as deleted files.
+     */
+    fun <T> runWithPrefetched(maxEntries: Int, remotePathCount: Int, fill: (Builder) -> Unit, block: () -> T): T {
+      val builder = Builder(maxEntries)
+      val cache = try {
+        fill(builder)
+        if (builder.limitExceeded) {
+          LOG.info("Prefetch: gave up after $maxEntries entries for $remotePathCount remote paths")
+          null
+        }
+        else {
+          builder.build()
+        }
+      }
+      catch (e: Exception) {
+        rethrowControlFlowException(e)
+        LOG.warn("Failed to prefetch $remotePathCount remote paths", e)
+        null
+      }
+      if (cache == null) return block()
+      LOG.info("Prefetch: ${builder.treeEntries} tree entries, ${cache.size} listings and stats cached for $remotePathCount remote paths")
+      return cache.runWith(block)
+    }
   }
 
-  class Builder {
+  /**
+   * Holds at most [maxEntries] tree entries over all [prefetchTrees] calls. Past it [prefetchTrees] sets [limitExceeded]
+   * and stops; the caller must drop the builder, because its listings are partial.
+   */
+  class Builder(private val maxEntries: Int = Int.MAX_VALUE) {
     private val listings = HashMap<EelPath, HashMap<String, EelFileInfo>>()
     private val stats = HashMap<EelPath, PrefetchedStat>()
+    /** The tree entries [prefetchTrees] received so far. */
+    internal var treeEntries: Int = 0
+      private set
+
+    /** True once the tree entries went past `maxEntries`. Then the listings are partial and [prefetchTrees] does nothing. */
+    var limitExceeded: Boolean = false
+      private set
 
     /** The complete [children] of [directory]. A name that is not in [children] does not exist. */
     fun listing(directory: EelPath, children: Map<String, EelFileInfo>): Builder {
@@ -89,9 +141,17 @@ class PrefetchCache private constructor(
       return this
     }
 
-    /** Walks the trees under [roots] in one streaming RPC and caches every walked directory as a complete listing. */
+    /**
+     * Walks the trees under [roots] in one streaming RPC and caches every walked directory as a complete listing.
+     * Right after the entry past `maxEntries` it sets [limitExceeded] and stops the stream, which cancels the RPC.
+     * That entry is not cached. Once [limitExceeded] is set, it returns at once.
+     */
     suspend fun prefetchTrees(api: EelPrefetchApi, roots: Collection<EelPath>): Builder {
-      api.prefetchDirectories(roots).collect { (path, info) ->
+      if (limitExceeded) return this
+      api.prefetchDirectories(roots).takeWhile {
+        limitExceeded = ++treeEntries > maxEntries
+        !limitExceeded
+      }.collect { (path, info) ->
         val parent = path.parent ?: return@collect
         listings.getOrPut(parent) { HashMap() }[path.fileName] = info
         when (info.type) {
@@ -161,24 +221,17 @@ private fun <T> withPrefetch(
 
   // The bridge the VFS uses for its own stats: it also serves a write action, where a cancellable wait is forbidden.
   val bridge = EelBlockingBridge.getInstanceOrNull() ?: return block()
-  val cache = try {
-    val builder = PrefetchCache.Builder()
+  val maxEntries = PrefetchCache.entryLimit(Registry.intValue("vfs.eel.scanning.prefetch.max.entries", 0), Runtime.getRuntime().maxMemory())
+  val fillAll = { builder: PrefetchCache.Builder ->
     for ((descriptor, eelPaths) in remotePaths) {
+      if (builder.limitExceeded) break
       bridge.run(descriptor) {
         val api = descriptor.toEelApi().fs as? EelPrefetchApi
         if (api != null) builder.fill(api, eelPaths)
       }
     }
-    builder.build()
   }
-  catch (e: Exception) {
-    rethrowControlFlowException(e)
-    LOG.warn("Failed to prefetch ${paths.size} remote paths", e)
-    null
-  }
-  if (cache == null) return block()
-  LOG.info("Prefetch: ${cache.size} entries cached for ${remotePaths.values.sumOf { it.size }} remote paths")
-  return cache.runWith(block)
+  return PrefetchCache.runWithPrefetched(maxEntries, remotePaths.values.sumOf { it.size }, fillAll, block)
 }
 
 private fun remoteEelPaths(paths: Collection<Path>, skipFsRoots: Boolean): Map<EelDescriptor, List<EelPath>> {

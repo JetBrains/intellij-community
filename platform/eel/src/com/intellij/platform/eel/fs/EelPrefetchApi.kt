@@ -24,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
   "com.intellij.platform.ijent.functional.IjentApiErrorsTest",
   "com.intellij.platform.ijent.functional.TcpLocalBootstrapTest",
   "com.intellij.platform.ijent.functional.fs.IjentFileSystemTest",
+  "com.intellij.platform.ijent.impl.base.PrefetchCacheLimitTest",
 )
 interface EelPrefetchApi {
   /**
@@ -50,6 +51,7 @@ interface EelPrefetchApi {
   "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApi",
   "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemPosixApiPrefetchTest",
   "com.intellij.platform.ijent.impl.base.GrpcIjentFileSystemWindowsApi",
+  "com.intellij.platform.ijent.impl.base.PrefetchCacheLimitTest",
 )
 sealed interface PrefetchedStat {
   /**
