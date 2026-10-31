@@ -244,6 +244,64 @@ public class GradleMiscImportingTest extends GradleJavaImportingTestCase {
   }
 
   @Test
+  public void testCompilerArgumentsPatchModuleWithGradleOutput() {
+    assumeOnLocalEnvironmentOnly(this, "Compiler arguments keep the paths of the Gradle environment");
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .addPrefix("sourceSets.main.output.classesDirs.from(file('build/classes/kotlin/main'))")
+      .compileJava(task -> {
+        task.code("options.compilerArgs += ['--patch-module', 'app=' + sourceSets.main.output.classesDirs.asPath]");
+        task.code("options.compilerArgs += ['--patch-module', 'lib=patch' + File.pathSeparator + sourceSets.main.output.resourcesDir]");
+        task.code("options.compilerArgs << '-param'");
+      })
+      .compileTestJava(task -> {
+        task.code("options.compilerArgs << '-param1' << '-param2' << '-param3' << '-param4'");
+      })
+    ));
+    importProject();
+
+    assertModuleCompilerArgumentsVersion("project.main", "--patch-module", "lib=patch", "-param");
+    assertModuleCompilerArgumentsVersion("project", "-param1", "-param2", "-param3", "-param4");
+    assertProjectCompilerArgumentsVersion("-param1", "-param2", "-param3", "-param4");
+  }
+
+  @Test
+  public void testCompilerArgumentsPatchModuleInHolderSourceSet() {
+    assumeOnLocalEnvironmentOnly(this, "Compiler arguments keep the paths of the Gradle environment");
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .compileJava(task -> {
+        task.code("options.compilerArgs += ['--patch-module', 'app=' + sourceSets.main.output.classesDirs.asPath]");
+        task.code("options.compilerArgs << '-param'");
+      })
+      .compileTestJava(task -> {
+        task.code("options.compilerArgs << '-param1' << '-param2' << '-param3' << '-param4'");
+      })
+    ));
+    importProject();
+
+    assertModuleCompilerArgumentsVersion("project.main", "-param");
+    assertModuleCompilerArgumentsVersion("project", "-param");
+    assertProjectCompilerArgumentsVersion("-param");
+  }
+
+  @Test
+  public void testCompilerArgumentsPatchModuleWithIdeOutput() {
+    assumeOnLocalEnvironmentOnly(this, "Compiler arguments keep the paths of the Gradle environment");
+    createProjectConfig(script(it -> it
+      .withJavaPlugin()
+      .withIdeaPlugin()
+      .addPostfix("idea.module.sourceDirs += file('gen')", "idea.module.generatedSourceDirs += file('gen')")
+      .compileJava(task -> {
+        task.code("options.compilerArgs += ['--patch-module', 'app=' + file('out/production/classes')]");
+      })
+    ));
+    importProject();
+
+    assertModuleCompilerArgumentsVersion("project.main", "--patch-module", "app=" + getProjectPath("out/production/classes"));
+  }
+
+  @Test
   public void testJdkName() throws Exception {
     assumeOnLocalEnvironmentOnly(this, "JDK should be explicitly defined by the test environment");
     Sdk myJdk = IdeaTestUtil.getMockJdk17("MyJDK");

@@ -21,6 +21,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.NioPathUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,10 +43,12 @@ import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -64,6 +67,8 @@ import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
 public final class JavaGradleProjectResolver extends AbstractProjectResolverExtension {
 
   private static final Logger LOG = Logger.getInstance(JavaGradleProjectResolver.class);
+
+  private static final String PATCH_MODULE_OPTION = "--patch-module";
 
   private static final Key<Map<String, Optional<Sdk>>> SDK_BY_NAME_CACHE =
     Key.create("JavaGradleProjectResolver.sdkByNameCache");
@@ -388,20 +393,63 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
 
   private @NotNull List<String> getProjectCompilerArguments(@NotNull IdeaProject ideaProject) {
     return collectAllSourceSetModels(ideaProject)
-      .map(it -> getHolderCompilerArguments(it.getSecond()))
-      .min(Comparator.comparing(it -> it.size()))
+      .map(it -> getHolderSourceSet(it.getSecond()))
+      .min(Comparator.comparing(it -> it.map(sourceSet -> sourceSet.getCompilerArguments().size()).orElse(0)))
+      .flatMap(it -> it)
+      .map(it -> getSourceSetCompilerArguments(it))
       .orElse(Collections.emptyList());
   }
 
   private static @NotNull List<String> getHolderCompilerArguments(@NotNull GradleSourceSetModel sourceSetModel) {
-    return sourceSetModel.getSourceSets().values().stream()
+    return getHolderSourceSet(sourceSetModel)
       .map(it -> getSourceSetCompilerArguments(it))
-      .min(Comparator.comparing(it -> it.size()))
       .orElse(Collections.emptyList());
   }
 
+  /**
+   * Returns the source set with the shortest list of compiler arguments, before {@link #removeGradleOutputFromPatchModule}.
+   */
+  private static @NotNull Optional<? extends ExternalSourceSet> getHolderSourceSet(@NotNull GradleSourceSetModel sourceSetModel) {
+    return sourceSetModel.getSourceSets().values().stream()
+      .min(Comparator.comparing(it -> it.getCompilerArguments().size()));
+  }
+
   private static @NotNull List<String> getSourceSetCompilerArguments(@NotNull ExternalSourceSet sourceSet) {
-    return sourceSet.getCompilerArguments();
+    return removeGradleOutputFromPatchModule(sourceSet);
+  }
+
+  /**
+   * Removes the Gradle output directories of the source set from each {@code --patch-module} value,
+   * and removes the option when no path remains.
+   */
+  private static @NotNull List<String> removeGradleOutputFromPatchModule(@NotNull ExternalSourceSet sourceSet) {
+    var arguments = sourceSet.getCompilerArguments();
+    if (!arguments.contains(PATCH_MODULE_OPTION)) return arguments;
+    var gradleOutputDirs = new HashSet<File>();
+    for (var directorySet : sourceSet.getSources().values()) {
+      gradleOutputDirs.addAll(directorySet.getGradleOutputDirs());
+    }
+    for (var directorySet : sourceSet.getSources().values()) {
+      gradleOutputDirs.remove(directorySet.getOutputDir());
+    }
+    var result = new ArrayList<String>(arguments.size());
+    var i = 0;
+    while (i < arguments.size()) {
+      var argument = arguments.get(i++);
+      var separator = i < arguments.size() ? arguments.get(i).indexOf('=') : -1;
+      if (!PATCH_MODULE_OPTION.equals(argument) || separator < 0) {
+        result.add(argument);
+        continue;
+      }
+      var value = arguments.get(i++);
+      var paths = ContainerUtil.filter(StringUtil.split(value.substring(separator + 1), File.pathSeparator),
+                                       it -> !gradleOutputDirs.contains(new File(it)));
+      if (!paths.isEmpty()) {
+        result.add(argument);
+        result.add(value.substring(0, separator + 1) + String.join(File.pathSeparator, paths));
+      }
+    }
+    return result;
   }
 
   private @NotNull ProjectSdkData createProjectSdkData(@NotNull IdeaProject ideaProject) {
