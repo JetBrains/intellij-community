@@ -8,10 +8,11 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.closeAndDisposeProject
+import com.intellij.openapi.wm.impl.frameOwnerOf
+import com.intellij.openapi.wm.impl.openFrameOwners
 import com.intellij.openapi.wm.impl.opensWelcomeScreenProjectAfterClose
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.ComponentUtil
@@ -25,13 +26,14 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
     templatePresentation.isApplicationScope = true
   }
   override fun actionPerformed(e: AnActionEvent) {
-    val currentProject = getProjectEvenIfNotInitialized(e) ?: return
+    // a frame guest has no frame of its own: the action closes the project that owns the frame, and the guests close with it
+    val currentProject = frameOwnerOf(getProjectEvenIfNotInitialized(e) ?: return)
 
     // This needs to be called early because once the current project is disposed we lose the ability to check on things like
     // ProjectFrameCapability
     val shouldReopenWelcomeFrameAfterClose = shouldReopenWelcomeFrameAfterClose(currentProject)
 
-    val openProjects = ProjectManager.getInstance().openProjects
+    val openProjects = openFrameOwners()
     val projectsToClose = openProjects.filter { canClose(it, currentProject) }
 
     // the welcome screen project opens in the frame of the current project when no project stays open

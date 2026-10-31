@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.wm.impl.openFrameOwners
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.ui.IdeUICustomization
 
@@ -22,7 +22,7 @@ open class CloseProjectAction : CloseProjectsActionBase() {
 
   override fun shouldShow(e: AnActionEvent): Boolean {
     val project = getProjectEvenIfNotInitialized(e) ?: return false
-    return !WelcomeUtils.isWelcomeProject(project) || ProjectManager.getInstance().openProjects.size > 1
+    return !WelcomeUtils.isWelcomeProject(project) || openFrameOwners().size > 1
   }
 
   override fun update(e: AnActionEvent) {

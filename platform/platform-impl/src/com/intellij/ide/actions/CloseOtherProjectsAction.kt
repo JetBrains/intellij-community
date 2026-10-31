@@ -4,7 +4,7 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.wm.impl.openFrameOwners
 import com.intellij.ui.IdeUICustomization
 import org.jetbrains.annotations.ApiStatus
 
@@ -21,7 +21,7 @@ open class CloseOtherProjectsAction : CloseProjectsActionBase() {
 
   override fun canClose(project: Project, currentProject: Project): Boolean = project !== currentProject
 
-  override fun shouldShow(e: AnActionEvent): Boolean = ProjectManager.getInstance().openProjects.size > 1
+  override fun shouldShow(e: AnActionEvent): Boolean = openFrameOwners().size > 1
 
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

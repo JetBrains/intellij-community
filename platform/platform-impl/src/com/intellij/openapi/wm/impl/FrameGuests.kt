@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 
@@ -23,6 +24,13 @@ internal fun isFrameGuest(project: Project): Boolean = frameGuestRecord()?.isFra
 
 /** The frame guests of [frameOwner], in the order they joined. */
 internal fun frameGuestsOf(frameOwner: Project): List<Project> = frameGuestRecord()?.getFrameGuests(frameOwner) ?: emptyList()
+
+/** The open projects that have a frame of their own: every open project except the frame guests. */
+internal fun openFrameOwners(): List<Project> {
+  val record = frameGuestRecord()
+  val openProjects = ProjectManager.getInstance().openProjects
+  return if (record == null) openProjects.asList() else openProjects.filter { !record.isFrameGuest(it) }
+}
 
 /** The active project of the frame that shows [project], see `WindowManagerEx.getActiveProject`. */
 internal fun activeProjectOf(project: Project): Project = frameGuestRecord()?.getActiveProject(project) ?: project
