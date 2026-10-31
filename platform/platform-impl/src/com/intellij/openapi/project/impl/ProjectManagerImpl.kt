@@ -508,9 +508,6 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (checkCanClose && !canCloseWithGuests(project, guests)) {
       return false
     }
-    if (!closeFrameGuests(guests, saveProject = saveProject, checkCanClose = checkCanClose)) {
-      return false
-    }
 
     val saveHandler = SaveAndSyncHandler.getInstance()
     return saveHandler.withDisabledAutoSaveBlocking {
@@ -529,6 +526,11 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         return@withDisabledAutoSaveBlocking false
       }
 
+      // the owner is sure to close now, so a guest never closes for an owner that stays open
+      if (!closeFrameGuests(guests, saveProject = saveProject, checkCanClose = checkCanClose)) {
+        return@withDisabledAutoSaveBlocking false
+      }
+
       closePreparedProject(project, dispose, projectCloseStartedMs, projectSaveSettingsDurationMs)
       true
     }
@@ -536,6 +538,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
 
   /**
    * The open frame guests that close with [project], before it, so no guest stays open with a released frame.
+   * They close after [project] saved and confirmed its close, so a cancel of that close keeps them open.
    * An exit closes every project itself, the guests before the owners, see [prepareProjectsForExit].
    */
   private fun frameGuestsToCloseWith(project: Project): List<Project> {
