@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.IndexingTestUtil.Companion.waitUntilIndexesAreReady
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.junit5.RegistryKey
@@ -95,6 +96,22 @@ class FindInProjectDirectoriesProviderTest {
       directoryName = secondRoot.path
     }
     assertThat(findFileNames(model)).containsExactlyInAnyOrder("second.txt")
+    assertThat(calls.get()).isZero()
+  }
+
+  @Test
+  fun `a module search does not ask the provider`(): Unit = runBlocking {
+    val module = projectModel.createModule("a")
+    val moduleRoot = baseDir.newVirtualDirectory("content")
+    baseDir.newVirtualFile("content/module.txt", "module file with zq data".toByteArray())
+    PsiTestUtil.addContentRoot(module, moduleRoot)
+    val calls = registerProvider(listOf(moduleRoot, firstRoot))
+
+    val model = projectModel().apply {
+      isProjectScope = false
+      moduleName = module.name
+    }
+    assertThat(findFileNames(model)).containsExactlyInAnyOrder("module.txt")
     assertThat(calls.get()).isZero()
   }
 

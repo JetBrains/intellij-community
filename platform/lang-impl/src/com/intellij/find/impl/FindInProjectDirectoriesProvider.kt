@@ -14,7 +14,7 @@ import org.jetbrains.annotations.ApiStatus
  * walks them with a [com.intellij.find.DirectorySearchEngine], the way it walks a directory the user named, and a
  * reliable [com.intellij.find.FindInProjectSearchEngine] that covers them skips the walk.
  *
- * The search asks when the model names no directory. The scope of the model still filters every candidate.
+ * The search asks when the model names no directory and no module. The scope of the model still filters every candidate.
  */
 @ApiStatus.Internal
 interface FindInProjectDirectoriesProvider {

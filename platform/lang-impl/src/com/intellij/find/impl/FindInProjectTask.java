@@ -95,11 +95,17 @@ final class FindInProjectTask {
     PsiManager psiManager = PsiManager.getInstance(project);
     projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
+    String moduleName = findModel.getModuleName();
+    Module moduleToSearchIn = moduleName == null ?
+                              null :
+                              ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
+
     List<VirtualFile> directoriesToSearchIn;
     boolean withSubdirectories;
     boolean directoryStandsForProject = false;
     var directoryCandidate = FindInProjectUtil.getDirectory(findModel);
-    List<VirtualFile> projectDirectories = directoryCandidate == null ? projectDirectories(project) : null;
+    // a module search walks the module, and the module scope filters only the index candidates, so the directories stay out of it
+    List<VirtualFile> projectDirectories = directoryCandidate == null && moduleToSearchIn == null ? projectDirectories(project) : null;
     if (projectDirectories != null) {
       // A directory search is a set of files that holds every file of the requested scope, and maybe more: the scope filters
       // each discovered file later. A DirectorySearchEngine can delegate the walk and the pre-filtering of a directory to a
@@ -120,11 +126,6 @@ final class FindInProjectTask {
       directoriesToSearchIn = ContainerUtil.createMaybeSingletonList(directoryCandidate);
       withSubdirectories = findModel.isWithSubdirectories();
     }
-
-    String moduleName = findModel.getModuleName();
-    Module moduleToSearchIn = moduleName == null ?
-                              null :
-                              ReadAction.computeBlocking(() -> ModuleManager.getInstance(project).findModuleByName(moduleName));
 
     skipExcludedFiles = !directoriesToSearchIn.isEmpty()
                         && !Registry.is("find.search.in.excluded.dirs")
