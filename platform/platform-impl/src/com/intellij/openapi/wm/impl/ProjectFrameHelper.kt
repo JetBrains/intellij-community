@@ -451,8 +451,8 @@ abstract class ProjectFrameHelper internal constructor(
     sink[IdeFrame.KEY] = this
     if (project == null || !project.isInitialized) return
     // a frame that shows guests gives the active one, see WindowManagerEx.getActiveProject
-    val active = WindowManagerEx.getInstanceEx().getActiveProject(project)
-    if (!active.isInitialized) return
+    // a guest that still opens or closes is not initialized, and the frame then gives its own project
+    val active = activeProjectOf(project).takeIf { it.isInitialized } ?: project
     sink[CommonDataKeys.PROJECT] = active
     // The tool windows belong to the project of the frame
     sink[PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS] =
