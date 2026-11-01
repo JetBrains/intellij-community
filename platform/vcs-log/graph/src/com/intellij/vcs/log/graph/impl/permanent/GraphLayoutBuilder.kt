@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.graph.impl.permanent
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.utils.Dfs
@@ -11,6 +12,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.ints.IntList
 import org.jetbrains.annotations.ApiStatus
+import kotlin.time.measureTimedValue
 
 @ApiStatus.Internal
 object GraphLayoutBuilder {
@@ -23,10 +25,17 @@ object GraphLayoutBuilder {
 
   @JvmStatic
   fun build(graph: LinearGraph, branches: Set<Int>, comparator: IntComparator): GraphLayoutImpl {
-    val allHeads = branches + graph.getHeads()
-    val sortedHeads = IntArrayList(allHeads).sortCatching(comparator)
+    val (graphHeads, headsTime) = measureTimedValue { graph.getHeads() }
+    LOG.trace { "Graph heads found in ${headsTime.inWholeMilliseconds} ms: ${graphHeads.size} graph heads" }
+    val (sortedHeads, sortTime) = measureTimedValue { IntArrayList(branches + graphHeads).sortCatching(comparator) }
+    LOG.trace {
+      "Heads sorted in ${sortTime.inWholeMilliseconds} ms: " +
+      "${sortedHeads.size} heads from ${branches.size} branches and ${graphHeads.size} graph heads"
+    }
 
-    return build(graph, sortedHeads)
+    val (layout, walkTime) = measureTimedValue { build(graph, sortedHeads) }
+    LOG.trace { "Layout walked in ${walkTime.inWholeMilliseconds} ms" }
+    return layout
   }
 
   /**
