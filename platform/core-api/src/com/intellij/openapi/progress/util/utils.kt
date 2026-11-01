@@ -81,7 +81,6 @@ fun <T> Future<T>.awaitWithCheckCanceled(indicator: ProgressIndicator?): T {
       if (cause is ProcessCanceledException) {
         throw cause
       }
-      @Suppress("RethrowControlFlowExceptionWithUtil")
       if (cause is CancellationException) {
         throw ProcessCanceledException(cause)
       }

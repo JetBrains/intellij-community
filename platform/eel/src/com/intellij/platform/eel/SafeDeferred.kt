@@ -32,7 +32,6 @@ import kotlin.coroutines.cancellation.CancellationException
  *   [Deferred.await] throws an exception that destroyed the job of the deferred.
  *   It does not show the place where [Deferred.await] is actually called.
  */
-@Suppress("RethrowControlFlowExceptionWithUtil")
 @ApiStatus.Experimental
 class SafeDeferred<T> private constructor(
   private val deferred: Deferred<T>,
