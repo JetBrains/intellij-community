@@ -35,6 +35,11 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/util",
         "//platform/statistics",
+        "//libraries/jackson3/jackson:libraries-jackson3",
+        "//libraries/jackson3/module-kotlin:libraries-jackson3-module-kotlin",
+        "//libraries/jackson3/databind",
+        "//platform/collaboration-tools/shared",
+        "//platform/util/diff",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.shared` end

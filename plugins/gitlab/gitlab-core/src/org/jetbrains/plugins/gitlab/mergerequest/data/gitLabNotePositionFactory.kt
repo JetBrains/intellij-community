@@ -17,12 +17,12 @@ private val LOG = logger<GitLabNotePosition>()
  */
 @Suppress("DuplicatedCode")
 fun GitLabNoteRestDTO.Position.toNotePosition(): GitLabNotePosition? {
-  if (baseSha == null) {
+  val parentSha = baseSha
+  if (parentSha == null) {
     LOG.debug("Missing merge base in the note position: $this")
     return null
   }
 
-  val parentSha = baseSha
   val sha = headSha
 
   return when (positionType) {
@@ -42,12 +42,12 @@ fun GitLabNoteRestDTO.Position.toNotePosition(): GitLabNotePosition? {
  */
 @Suppress("DuplicatedCode")
 fun GitLabMergeRequestDraftNoteRestDTO.Position.toNotePosition(): GitLabNotePosition? {
-  if (baseSha == null) {
+  val parentSha = baseSha
+  if (parentSha == null) {
     LOG.debug("Missing merge base in the draft note position: $this")
     return null
   }
 
-  val parentSha = baseSha
   val sha = headSha ?: return null
 
   return when (positionType) {

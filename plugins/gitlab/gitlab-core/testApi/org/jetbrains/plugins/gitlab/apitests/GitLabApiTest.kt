@@ -1,25 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.apitests
 
-import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
-import com.intellij.collaboration.async.withInitial
 import com.intellij.collaboration.util.asFlow
 import com.intellij.collaboration.util.toList
 import com.intellij.openapi.components.service
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.fold
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.test.runTest
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.GitLabEdition
 import org.jetbrains.plugins.gitlab.api.GitLabServerPath
-import org.jetbrains.plugins.gitlab.api.dto.GitLabDiscussionRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceLabelEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceMilestoneEventDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabResourceStateEventDTO
 import org.jetbrains.plugins.gitlab.api.request.checkIsGitLabServer
 import org.jetbrains.plugins.gitlab.api.request.createAllProjectLabelsFlow
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
@@ -54,7 +43,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.api.request.mergeRequestUnAppro
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.updateNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestState
 import org.jetbrains.plugins.gitlab.upload.markdownUploadFile
-import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertIterableEquals
