@@ -35,8 +35,7 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
         readAction {
           blockingContextToIndicator {
             dumbService.computeWithAlternativeResolveEnabled<NavigationActionResult?, Throwable> {
-              handleLookup(project, editor, offset)
-              ?: gotoTypeDeclaration(psiFile, offset)?.result()
+              (handleLookup(project, editor, offset) ?: gotoTypeDeclaration(psiFile, offset)?.result())?.withSingleTargetRequest()
             }
           }
         }

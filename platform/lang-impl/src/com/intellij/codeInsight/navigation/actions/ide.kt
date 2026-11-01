@@ -6,6 +6,9 @@ import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.codeInsight.navigation.impl.NavigationRequestor
 import com.intellij.codeInsight.navigation.impl.gtdTargetNavigatable
 import com.intellij.ide.DataManager
@@ -26,7 +29,9 @@ import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.event.MouseEvent
@@ -43,6 +48,24 @@ internal fun navigateToLookupItem(project: Project, editor: Editor): Boolean {
       ?.navigationRequest()
   }, editor)
   return true
+}
+
+/**
+ * Computes the request of a [SingleTarget] in the read action that resolved it.
+ *
+ * The requestor may hold PSI from that read action. [navigateRequestLazy] restarts on a write action,
+ * and a write that reparses the target would leave the PSI invalid, so navigation would silently stop.
+ */
+@RequiresReadLock
+@RequiresBackgroundThread
+internal fun NavigationActionResult.withSingleTargetRequest(): NavigationActionResult {
+  return when (this) {
+    is SingleTarget -> {
+      val request = requestor.navigationRequest()
+      SingleTarget({ request }, navigationProvider)
+    }
+    is MultipleTargets -> this
+  }
 }
 
 /**

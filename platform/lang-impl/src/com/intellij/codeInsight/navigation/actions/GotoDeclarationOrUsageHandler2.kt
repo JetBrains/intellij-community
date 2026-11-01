@@ -130,7 +130,10 @@ class GotoDeclarationOrUsageHandler2 internal constructor(
         readAction {
           blockingContextToIndicator {
             PsiUtilCore.ensureValid(psiFile)
-            gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()
+            when (val result = gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()) {
+              null, is GTDUActionResult.SU -> result
+              is GTDUActionResult.GTD -> GTDUActionResult.GTD(result.navigationActionResult.withSingleTargetRequest())
+            }
           }
         }
       }

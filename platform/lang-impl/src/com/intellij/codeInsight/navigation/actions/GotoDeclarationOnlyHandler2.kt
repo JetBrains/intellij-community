@@ -99,7 +99,7 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       runWithModalProgressBlocking(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
         readAction {
           blockingContextToIndicator {
-            gotoDeclaration(project, editor, psiFile, offset)?.result()
+            gotoDeclaration(project, editor, psiFile, offset)?.result()?.withSingleTargetRequest()
           }
         }
       }

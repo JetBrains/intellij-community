@@ -3,6 +3,7 @@ package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolDeclarationProvider
@@ -18,11 +19,13 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPlainText
 import com.intellij.psi.PsiReference
+import com.intellij.psi.impl.FakePsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.ExtensionTestUtil
@@ -121,6 +124,23 @@ internal class GotoDeclarationYieldsToWriteTest {
   }
 
   @Test
+  fun `go to type declaration navigates after a write action reparses the target`() = timeoutRunBlocking(30.seconds) {
+    codeInsightFixture.configureByText("test.txt", TEXT)
+    val probe = WriteProbe()
+    val provider = TypeDeclarationProvider { symbol -> arrayOf(SpinningNavigationElement(symbol, probe)) }
+    val disposable = codeInsightFixture.testRootDisposable
+    ExtensionTestUtil.maskExtensions(DECLARATION_PROVIDER_EP, listOf(PlainTextDeclarationProvider()), disposable)
+    ExtensionTestUtil.maskExtensions(TypeDeclarationProvider.EP_NAME, listOf(provider), disposable)
+
+    val document = codeInsightFixture.editor.document
+    // the whole plain-text leaf is reparsed; the text is added after the caret, so only navigation moves the caret
+    probe.run(this, ACTION_GOTO_TYPE_DECLARATION) {
+      document.insertString(document.textLength, "_x")
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+    }
+  }
+
+  @Test
   fun `highlight usages restores the symbol after a write action reparses the file`() = timeoutRunBlocking(30.seconds) {
     codeInsightFixture.configureByText("test.txt", TEXT)
     val probe = WriteProbe()
@@ -157,6 +177,21 @@ internal class GotoDeclarationYieldsToWriteTest {
         override fun getRangeInDeclaringElement(): TextRange = TextRange(0, element.textLength)
         override fun getSymbol(): Symbol = PsiSymbolService.getInstance().asSymbol(element)
       })
+    }
+  }
+
+  /**
+   * A type declaration that spins in [navigationRequest] and then navigates to [target].
+   * Like PSI navigation of the platform, it gives no request once [target] is invalid.
+   */
+  private class SpinningNavigationElement(private val target: PsiElement, private val probe: WriteProbe) : FakePsiElement() {
+    override fun getParent(): PsiElement = target
+
+    override fun isValid(): Boolean = target.isValid
+
+    override fun navigationRequest(): NavigationRequest? {
+      probe.waitForWrite()
+      return if (target.isValid) PsiNavigationSupport.getInstance().getDescriptor(target)?.navigationRequest() else null
     }
   }
 
