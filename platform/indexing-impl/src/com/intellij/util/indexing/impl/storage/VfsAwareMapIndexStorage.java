@@ -27,7 +27,7 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @Internal
 public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
-  private static final boolean USE_FILE_CHANNEL_KEY_HASH_LOG_STORAGE = getBooleanProperty("idea.indexes.file-channel-key-hash-log-storage", false);
+  private static final boolean USE_FILE_CHANNEL_KEY_HASH_LOG_STORAGE = getBooleanProperty("idea.indexes.file-channel-key-hash-log-storage", true);
 
   /**
    * Enables {@link #processKeys(Processor, GlobalSearchScope, IdFilter)} optimization in multi-project environment:
