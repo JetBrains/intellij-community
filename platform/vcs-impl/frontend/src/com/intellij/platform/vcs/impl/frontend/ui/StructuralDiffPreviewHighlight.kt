@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.StructuralChangesViewSettings
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
+import com.intellij.openapi.vcs.changes.ui.STRUCTURAL_DIFF_DIM_HUNK_LINES
 import com.intellij.openapi.vcs.changes.ui.highlightStructuralPreview
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.ui.JBColor
@@ -116,11 +117,19 @@ internal class StructuralDiffPreviewHighlight(
     }
   }
 
-  /** Dims the editor and its gutter outside the lines. A side without lines of the hunk gets the dim on all its lines. */
+  /**
+   * Dims the editor and its gutter outside the lines, and names the lines with [STRUCTURAL_DIFF_DIM_HUNK_LINES] while the dim shows. A side
+   * without lines of the hunk gets the dim on all its lines.
+   */
   private fun dim(editor: Editor, range: LineRange): Disposable? {
     if (range.end > editor.document.lineCount) return null
     val lines = if (range.isEmpty) null else DiffUtil.getLinesRange(editor.document, range.start, range.end)
-    return highlightStructuralPreview(editor, lines, wholeLines = true, gutter = true)
+    val markup = highlightStructuralPreview(editor, lines, wholeLines = true, gutter = true) ?: return null
+    editor.putUserData(STRUCTURAL_DIFF_DIM_HUNK_LINES, range)
+    return Disposable {
+      Disposer.dispose(markup)
+      if (editor.getUserData(STRUCTURAL_DIFF_DIM_HUNK_LINES) === range) editor.putUserData(STRUCTURAL_DIFF_DIM_HUNK_LINES, null)
+    }
   }
 
   /** Moves the caret to the first line of the range. A side without lines of the hunk gets the caret on the line after the change. */
