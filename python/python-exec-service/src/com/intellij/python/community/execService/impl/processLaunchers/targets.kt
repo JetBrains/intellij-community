@@ -126,7 +126,10 @@ internal suspend fun createProcessLauncherOnTarget(
     return@withContext Result.failure(ExecuteGetProcessError.EnvironmentError(MessageError("Failed to start environment due to ${e.localizedMessage}")))
   }
   val workingDirOnTarget = workingDir?.let { targetEnv.getTargetPaths(it.pathString).firstOrNull() ?: it.pathString }
-  val uploadConfig = launchRequest.uploadConfig
+  // A null config copies the full working directory, and the copy can delete the files that only the target has.
+  // A sync folder can have such files, for example a remote .venv, so it gets the empty config.
+  val isWorkingDirSyncFolder = workingDir != null && uploadRoots[workingDir]?.isSyncFolder == true
+  val uploadConfig = launchRequest.uploadConfig ?: UploadConfig().takeIf { isWorkingDirSyncFolder }
   if (uploadConfig?.ensureWorkingDirectoryExists == true && workingDirOnTarget != null) {
     ensureTargetDirectoryExists(targetEnv, request, workingDirOnTarget).getOr { failure ->
       targetEnv.shutdown()
