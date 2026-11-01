@@ -1,6 +1,6 @@
 ---
 name: testing-internals
-description: Debug IntelliJ `bt.cmd` and `tests.cmd` runs, discovery, and runner internals.
+description: Debug `bt.cmd` and `tests.cmd` runs, discovery, and runner internals.
 ---
 
 # Test Execution Internals
