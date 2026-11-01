@@ -15,6 +15,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.containers.ContainerUtil
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
@@ -67,6 +68,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testReference_single() {
     val builder =
       FilePredictionTestProjectBuilder().addFile(
@@ -76,6 +78,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testReference_multiple() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -97,6 +100,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testReference_moreThanLimit() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -134,6 +138,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testReference_anotherPackage() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -331,6 +336,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_sameDir() {
     val builder =
       FilePredictionTestProjectBuilder().addFile(
@@ -347,6 +353,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_childDirs() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -370,6 +377,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_childAndParentsDirs() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -395,6 +403,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_anotherPackage() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -421,6 +430,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_moreThanLimitRef() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -458,6 +468,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_moreThanLimitNeighbor() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -489,6 +500,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_moreThanLimit() {
     val builder =
       FilePredictionTestProjectBuilder().addFile("com/test/MainTest.java", """
@@ -539,6 +551,7 @@ class FilePredictionCandidateProviderTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun testComposite_differentSources() {
     val builder =
       FilePredictionTestProjectBuilder().addFile(

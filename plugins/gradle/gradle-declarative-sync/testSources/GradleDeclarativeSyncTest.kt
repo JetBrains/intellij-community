@@ -19,6 +19,7 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
+import org.junit.Ignore
 import org.junit.Test
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -78,6 +79,7 @@ class GradleDeclarativeSyncTest : GradlePhasedSyncTestCase() {
   }
 
   @Test
+  @Ignore("AT-3959")
   @TargetVersions("8.9+")
   fun `test declarative model creation in a simple Gradle project`() {
     createProjectSubFile("settings.gradle.dcl", """

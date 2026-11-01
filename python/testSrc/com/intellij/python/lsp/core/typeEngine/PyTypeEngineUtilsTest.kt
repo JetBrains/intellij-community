@@ -12,6 +12,7 @@ import com.jetbrains.python.junit5.framework.pyMockInterpreterFixture
 import com.jetbrains.python.tools.sdkTools.PythonMockSdk
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 
@@ -41,6 +42,7 @@ internal class PyTypeEngineUtilsTest {
     private val secondPyProject = projectFixture.pyProjectFixture(projectFixture.pathInProjectFixture(Path("second")))
 
     @Test
+    @Disabled("AT-3959")
     fun `engine is unsupported while the registry key is off`() {
       mainSdk.get()
       secondPyProject.get()

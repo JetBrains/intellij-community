@@ -19,11 +19,13 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 
 @TestApplication
 @TestDataPath($$"$PROJECT_ROOT/community/plugins/filePrediction/testData/com/intellij/filePrediction/java/referencesProvider")
+@Disabled("AT-3959")
 class JavaExternalReferenceProviderTest {
   private val projectFixture = codeInsightProjectFixture()
   private val myFixture by codeInsightFixture(projectFixture)

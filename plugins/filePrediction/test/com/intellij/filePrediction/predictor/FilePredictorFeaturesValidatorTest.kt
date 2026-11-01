@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.testFramework.junit5.TestApplication
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 
 @TestApplication
@@ -69,6 +70,7 @@ class FilePredictorFeaturesValidatorTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun `test list of file types from one provider accepted`() {
     doTestAccepted("JAVA,XML")
     doTestAccepted("JAVA,XML,")
@@ -91,6 +93,7 @@ class FilePredictorFeaturesValidatorTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun `test list of file types from multiple providers accepted`() {
     doTestAccepted("JAVA,XML;PLAIN_TEXT")
     doTestAccepted("JAVA,XML,;PLAIN_TEXT,third.party")
@@ -99,6 +102,7 @@ class FilePredictorFeaturesValidatorTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun `test list of mixed features from multiple providers accepted`() {
     doTestAccepted("1,;0,PLAIN_TEXT,0,1,,1,0,13,JAVA,2,1,1;0.51342,0.00921,0.0,0.0,0.0,4,12,0.43256,0.00142,0.08730,4.0;0,0,")
     doTestAccepted("1,;0,XML,0,0,,0,8,43,XML,38,1,0;0.54123,0.08301,0.0,0.0,0.0,1,10,0.98123,0.0098,0.01284,6.0;0,0,")

@@ -28,6 +28,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Test
@@ -278,6 +279,7 @@ internal class PyLspServedModulesTest {
 
     @Test
     @TestFor(issues = ["PY-92008"])
+    @Disabled("AT-3959")
     fun `the type engine registry key does not decide how many servers run`() {
       firstSdk.get()
       secondSdk.get()

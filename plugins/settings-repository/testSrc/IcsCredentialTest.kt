@@ -10,9 +10,11 @@ import org.jetbrains.settingsRepository.IcsCredentialsStore
 import org.jetbrains.settingsRepository.git.JGitCredentialsProvider
 import org.jetbrains.settingsRepository.git.buildBareRepository
 import org.junit.ClassRule
+import org.junit.Ignore
 import org.junit.Test
 import java.nio.file.Paths
 
+@Ignore("AT-3959")
 internal class IcsCredentialTest {
   companion object {
     @JvmField

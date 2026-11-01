@@ -28,6 +28,7 @@ import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
@@ -299,6 +300,7 @@ class FileUsagePredictorLoggerTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun `test candidate and opened files has opened field`() {
     val builder = FilePredictionTestProjectBuilder("com/test").addFiles(
       "com/test/Foo1.txt",

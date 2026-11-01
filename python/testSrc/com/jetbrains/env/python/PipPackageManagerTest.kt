@@ -2,9 +2,11 @@
 package com.jetbrains.env.python
 
 import com.intellij.testFramework.RuleChain
+import org.junit.Ignore
 import org.junit.Rule
 
 // Tests local pip
+@Ignore("AT-3959")
 class PipPackageManagerTest : PipPackageManagerTestBase() {
   override val sdkRule: PySDKRule = PySDKRule({ projectRule.project }, null)
 

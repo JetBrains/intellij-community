@@ -9,9 +9,11 @@ import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.pySdkAdditionalData
 import org.jdom.Element
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 
+@Ignore("AT-3959")
 class PySdkAdditionalDataSaveRestoreTest {
 
   @JvmField

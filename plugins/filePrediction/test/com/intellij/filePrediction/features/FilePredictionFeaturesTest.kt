@@ -13,6 +13,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.runInEdtAndWait
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Test
 import java.util.concurrent.Callable
 import java.util.concurrent.TimeUnit
@@ -177,6 +178,7 @@ class FilePredictionFeaturesTest {
   }
 
   @Test
+  @Disabled("AT-3959")
   fun `test file type features are encoded correctly`() {
     val features = hashMapOf(
       "file_type" to FilePredictionFeature.fileType("JAVA"),

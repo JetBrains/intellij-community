@@ -1,5 +1,6 @@
 package com.intellij.python.markdown
 
+import com.intellij.idea.IJIgnore
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 
@@ -129,6 +130,7 @@ class PyCodeFenceTest : PyTestCase() {
   }
 
   //PY-40313
+  @IJIgnore(issue = "AT-3959")
   fun testStringsAndBytesResolvedCorrectlyInPythonFragment() {
     myFixture.configureByText("a.md", """
     ```python

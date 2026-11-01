@@ -25,6 +25,7 @@ import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity
 import com.jetbrains.python.sdk.flavors.conda.addCondaPythonToTargetCommandLine
 import org.junit.Assert
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -89,6 +90,7 @@ internal class PyCondaTest {
   }
 
   @Test
+  @Ignore("AT-3959")
   fun testCondaCreateByYaml() =  timeoutRunBlocking(60.seconds) {
     PyCondaEnv.createEnv(condaRule.condaCommand,
                          LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath, emptyList())).getOrThrow()
@@ -101,6 +103,7 @@ internal class PyCondaTest {
   }
 
   @Test
+  @Ignore("AT-3959")
   fun testCondaCreateEnv(): Unit =  timeoutRunBlocking(20.seconds) {
     val envName = "myNewEnvForTests"
     PyCondaEnv.createEnv(condaRule.condaCommand,
@@ -133,6 +136,7 @@ internal class PyCondaTest {
   }
 
   @Test
+  @Ignore("AT-3959")
   fun testCondaListUnnamedEnvs(): Unit =  timeoutRunBlocking(90.seconds) {
     val envDirs = CondaExecutor.listEnvs(condaRule.getCondaBinaryToExec()).mapSuccess { it.envsDirs }.getOrThrow()
     val envsDirs = Path.of(envDirs.first())

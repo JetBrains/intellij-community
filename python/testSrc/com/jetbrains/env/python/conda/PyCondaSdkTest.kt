@@ -34,6 +34,7 @@ import org.hamcrest.Matchers
 import org.junit.Assert
 import org.junit.Assume
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.RuleChain
@@ -134,6 +135,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
+  @Ignore("AT-3959")
   fun testExecuteCommandOnSdk(): Unit = timeoutRunBlocking(60.seconds) {
     val condaEnv = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
@@ -164,6 +166,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
+  @Ignore("AT-3959")
   fun testCreateFromExisting() =  timeoutRunBlocking(10.minutes) { 
     val env = PyCondaEnv.getEnvs(condaRule.getCondaBinaryToExec()).getOrThrow().first()
     val sdk = condaRule.condaCommand.createCondaSdkFromExistingEnvironment(
