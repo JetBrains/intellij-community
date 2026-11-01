@@ -5,30 +5,36 @@ import com.intellij.execution.process.ProcessOutputType
 import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogMessageBuilder
 import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogToolWindow
 import com.intellij.platform.statistics.devkit.toolwindow.StatisticsLogFilterModel
+import com.intellij.testFramework.junit5.TestApplication
+import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.jetbrains.fus.reporting.api.ValidationResultType.ACCEPTED
+import com.jetbrains.fus.reporting.api.ValidationResultType.DEFAULT_VALUE_APPLIED
 import com.jetbrains.fus.reporting.api.ValidationResultType.INCORRECT_RULE
 import com.jetbrains.fus.reporting.api.ValidationResultType.THIRD_PARTY
-import com.jetbrains.fus.reporting.api.ValidationResultType.DEFAULT_VALUE_APPLIED
 import com.jetbrains.fus.reporting.api.ValidationResultType.UNDEFINED_RULE
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
+@TestApplication
+class StatisticsEventLogToolWindowTest {
   private val eventId = "third.party"
   private val eventTime = 1564643114456
   private val eventGroup = "toolwindow"
   private val groupVersion = "21"
   private lateinit var formattedEventTime: String
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     formattedEventTime = DateFormatUtil.formatTimeWithSeconds(eventTime)
   }
 
+  @Test
   fun testShortenProjectId() {
     val data: MutableMap<String, Any> = hashMapOf(
       "project" to "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea",
@@ -39,6 +45,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     doTestCountCollector("{\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}", action, data)
   }
 
+  @Test
   fun testNotShortenProjectId() {
     val projectId = "12345"
     val action = LogEventAction(eventId, data = hashMapOf("project" to projectId))
@@ -46,6 +53,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     doTestCountCollector("{\"project\":\"$projectId\"}", action, hashMapOf("project" to projectId))
   }
 
+  @Test
   fun testShortenAnonymizedIds() {
     val data: MutableMap<String, Any> = hashMapOf(
       "plugin_type" to "PLATFORM",
@@ -63,6 +71,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     )
   }
 
+  @Test
   fun testFilterSystemFields() {
     val data: MutableMap<String, Any> = hashMapOf(
       "last" to "1564643442610",
@@ -73,6 +82,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     doTestCountCollector("{}", action, data)
   }
 
+  @Test
   fun testLogIncorrectEventIdAsError() {
     val incorrectEventId = INCORRECT_RULE.description
     val action = LogEventAction(incorrectEventId)
@@ -84,6 +94,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
+  @Test
   fun testLogIncorrectEventDataAsError() {
     val data: MutableMap<String, Any> = hashMapOf("test" to INCORRECT_RULE.description,
       "project" to UNDEFINED_RULE.description)
@@ -104,6 +115,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
+  @Test
   fun testLogIncorrectEventDataWithoutRawData() {
     val data = mutableMapOf(
       "test" to INCORRECT_RULE.description,
@@ -123,20 +135,23 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
+  @Test
   fun testAllValidationTypesUsed() {
     val correctValidationTypes = setOf(ACCEPTED, THIRD_PARTY, DEFAULT_VALUE_APPLIED)
     for (resultType in ValidationResultType.entries) {
-      assertTrue("Don't forget to change toolWindow logic in case of a new value ${resultType.name} in ValidationResult",
-                 StatisticsEventLogToolWindow.rejectedValidationTypes.contains(resultType) || correctValidationTypes.contains(resultType))
+      assertTrue(StatisticsEventLogToolWindow.rejectedValidationTypes.contains(resultType) || correctValidationTypes.contains(resultType),
+                 "Don't forget to change toolWindow logic in case of a new value ${resultType.name} in ValidationResult")
     }
   }
 
+  @Test
   fun testHandleCollectionsInEventData() {
     val action = LogEventAction(eventId, data = hashMapOf("dataKey" to listOf("1", "2", "3")))
 
     doTestCountCollector("{\"dataKey\":[\"1\",\"2\",\"3\"]}", action, hashMapOf("dataKey" to listOf("1", "2", "3")))
   }
 
+  @Test
   fun testLogCountCollectors() {
     val count = 2
     val action = LogEventAction(eventId, false, count = count)

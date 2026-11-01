@@ -7,13 +7,19 @@ import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogFilt
 import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogFormatter
 import com.intellij.platform.statistics.devkit.toolwindow.StatisticsEventLogMessageBuilder
 import com.intellij.platform.statistics.devkit.toolwindow.StatisticsLogFilterModel
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.text.DateFormatUtil
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Test
 
-class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
+@TestApplication
+class StatisticsEventLogFormatterTest {
   companion object {
     private const val MAGENTA_START = "\u001B[38;2;102;14;122m"
     private const val GREEN_START = "\u001B[38;2;0;128;0m"
@@ -52,8 +58,8 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   private lateinit var multiLineLogObjectEventDataValue: String
   private lateinit var multiLineLogNestedObjectEventDataValue: String
 
-  override fun setUp() {
-    super.setUp()
+  @BeforeEach
+  fun setUp() {
     formattedEventTime = DateFormatUtil.formatTimeWithSeconds(EVENT_TIME)
     oneLineLogEmptyEventData = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {}"
     oneLineLogSeveralEventData = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"field1\":\"test\", \"field2\":500}"
@@ -85,6 +91,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that the one-line log message with empty event data matches the log regexp pattern.
    */
+  @Test
   fun testLogWithoutEventDataMatchesLogPattern() {
     val action = LogEventAction(EVENT_ID)
     val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), EVENT_ID, emptyMap())
@@ -97,6 +104,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with empty event data -> formated one-line log with empty event data if stream is output, log presentation is one-line.
    */
+  @Test
   fun testLogWithoutEventDataFormatToOutputOneLine() {
     val action = LogEventAction(EVENT_ID)
     val formatedLogMessage = getFormatedMessage(action, ProcessOutputType.STDOUT, false)
@@ -106,6 +114,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with empty event data -> one-line log with empty event data if stream is error, log presentation is one-line.
    */
+  @Test
   fun testLogWithoutEventDataFormatToErrorOneLine() {
     val action = LogEventAction(EVENT_ID)
     val formatedLogMessage = getFormatedMessage(action, ProcessOutputType.STDERR, false)
@@ -115,6 +124,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with empty event data -> formated multiline log with empty event data if stream is output, log presentation is multiline.
    */
+  @Test
   fun testLogWithoutEventDataFormatToOutputMultiline() {
     val action = LogEventAction(EVENT_ID)
     val formatedLogMessage = getFormatedMessage(action, ProcessOutputType.STDOUT, true)
@@ -124,6 +134,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with empty event data -> multiline log with empty event data if stream is error, log presentation is multiline.
    */
+  @Test
   fun testLogWithoutEventDataFormatToErrorMultiline() {
     val action = LogEventAction(EVENT_ID)
     val formatedLogMessage = getFormatedMessage(action, ProcessOutputType.STDERR, true)
@@ -133,6 +144,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that the one-line log message with event data matches the log regexp pattern
    */
+  @Test
   fun testLogWithEventDataMatchesLogPattern() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data)
@@ -146,6 +158,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with event data -> formated one-line log with event data if stream is output, log presentation is one-line.
    */
+  @Test
   fun testLogWithEventDataFormatToOutputOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data)
@@ -156,6 +169,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with event data -> one-line log with event data if stream is error, log presentation is one-line.
    */
+  @Test
   fun testLogWithEventDataFormatToErrorOneLIne() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data)
@@ -166,6 +180,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with event data -> formated multiline log with event data if stream is output, log presentation is multiline.
    */
+  @Test
   fun testLogWithEventDataFormatToOutputMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data)
@@ -176,6 +191,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check a one-line log with event data -> multiline log with event data if stream is error, log presentation is multiline.
    */
+  @Test
   fun testLogWithEventDataFormatToErrorMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data)
@@ -186,6 +202,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that the one-line log message for one event with list event data value matches the log regexp pattern
    */
+  @Test
   fun testLogWithListEventDataValueMatchesLogPattern() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to listOf(1, 2, 3))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -200,6 +217,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with list event data value -> formated one-line log with list event data value if stream is output,
    * log presentation is one-line.
    */
+  @Test
   fun testLogWithListEventDataValueFormatToOutputOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to listOf(1, 2, 3))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -211,6 +229,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with list event data value -> one-line log with list event data value if stream is an error,
    * log presentation is one-line.
    */
+  @Test
   fun testLogWithListEventDataValueFormatToErrorOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to listOf(1, 2, 3))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -222,6 +241,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with list event data value -> formated multiline log with list event data value if stream is output,
    * log presentation is multiline.
    */
+  @Test
   fun testLogWithListEventDataValueFormatToOutputMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to listOf(1, 2, 3))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -233,6 +253,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with list event data value -> multiline log with list event data value if stream is an error,
    * log presentation is multiline.
    */
+  @Test
   fun testLogWithListEventDataValueFormatToErrorMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to listOf(1, 2, 3))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -243,6 +264,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that the one-line log message for one event with event data object value matches the log regexp pattern
    */
+  @Test
   fun testLogWithEventDataObjectValueMatchesLogPattern() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf("field1" to "test", "field2" to 500))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -257,6 +279,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with event data object value -> formated one-line log with event data object value if stream is output,
    * log presentation is one-line.
    */
+  @Test
   fun testLogWithEventDataObjectValueFormatToOutputOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf("field1" to "test", "field2" to 500))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -268,6 +291,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with event data object value -> one-line log with event data object value if stream is an error,
    * log presentation is one-line.
    */
+  @Test
   fun testLogWithEventDataObjectValueFormatToErrorOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf("field1" to "test", "field2" to 500))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -279,6 +303,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with event data object value -> formated multiline log with event data object value if stream is output,
    * log presentation is multiline.
    */
+  @Test
   fun testLogWithEventDataObjectValueFormatToOutputMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf("field1" to "test", "field2" to 500))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -290,6 +315,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with event data object value -> multiline log with event data object value if stream is error,
    * log presentation is multiline.
    */
+  @Test
   fun testLogWithEventDataObjectValueFormatToErrorMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf("field1" to "test", "field2" to 500))
     val action = LogEventAction(EVENT_ID, data = data)
@@ -300,6 +326,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that the one-line log message for one event with nested object event data value matches the log regexp pattern
    */
+  @Test
   fun testLogWithEventDataNestedObjectValueMatchesLogPattern() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf(
       "field1" to hashMapOf("field1" to "test", "field2" to 500),
@@ -317,6 +344,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with nested object event data value -> formated one-line log with nested object event data value if stream is output,
    * log presentation is one-line.
    */
+  @Test
   fun testLogWithEventDataNestedObjectValueFormatToOutputOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf(
       "field1" to hashMapOf("field1" to "test", "field2" to 500),
@@ -331,6 +359,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with nested object event data value -> one-line log with nested object event data value if stream is error,
    * log presentation is one-line.
    */
+  @Test
   fun testLogWithEventDataNestedObjectValueFormatToErrorOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf(
       "field1" to hashMapOf("field1" to "test", "field2" to 500),
@@ -345,6 +374,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with nested object event data value -> formated multiline log with nested object event data value if stream is output,
    * log presentation is multiline.
    */
+  @Test
   fun testLogWithEventDataNestedObjectValueFormatToOutputMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf(
       "field1" to hashMapOf("field1" to "test", "field2" to 500),
@@ -359,6 +389,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with nested object event data value -> multiline log with nested object event data value if stream is error,
    * log presentation is multiline.
    */
+  @Test
   fun testLogWithEventDataNestedObjectValueFormatToErrorMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("parent" to hashMapOf(
       "field1" to hashMapOf("field1" to "test", "field2" to 500),
@@ -372,6 +403,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that the one-line log message for several equal events with event data matches the log regexp pattern
    */
+  @Test
   fun testLogForSeveralEqualEventsMatchesLogPattern() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data, count = 12)
@@ -386,6 +418,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with several equal events with event data -> formated one-line log with several equal events with event data
    * if stream is output, log presentation is one-line.
    */
+  @Test
   fun testLogForSeveralEqualEventsFormatToOutputOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data, count = 12)
@@ -397,6 +430,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with several equal events with event data -> one-line log with several equal events with event data
    * if stream is error, log presentation is one-line.
    */
+  @Test
   fun testLogForSeveralEqualEventsFormatToErrorOneLine() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data, count = 12)
@@ -408,6 +442,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with several equal events with event data -> formated multiline log with several equal events with event data
    * if stream is output, log presentation is multiline.
    */
+  @Test
   fun testLogForSeveralEqualEventsFormatToOutputMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data, count = 12)
@@ -419,6 +454,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
    * Check a one-line log with several equal events with event data -> multiline log with several equal events with event data
    * if stream is error, log presentation is multiline.
    */
+  @Test
   fun testLogForSeveralEqualEventsFormatToErrorMultiline() {
     val data: MutableMap<String, Any> = hashMapOf("field1" to "test", "field2" to 500)
     val action = LogEventAction(EVENT_ID, data = data, count = 12)
@@ -429,6 +465,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Check that a message without '{' does not throw StringIndexOutOfBoundsException and is returned as-is.
    */
+  @Test
   fun testFormatMessageWithoutBraceDoesNotThrow() {
     val processingResult = MyProcessingResult(ProcessOutputType.STDOUT, true, null)
     val logFilterModel = TestStatisticsLogFilterModel(processingResult)
@@ -440,6 +477,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test that malformed JSON input returns the original message without throwing exceptions.
    */
+  @Test
   fun testMalformedJsonReturnsOriginalMessage() {
     val malformedJson = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"field1\":\"test\", \"field2\":"
     val formattedMessage = getFormatedMessage(malformedJson, ProcessOutputType.STDOUT, false)
@@ -449,6 +487,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test that input with missing colon separator returns the original message.
    */
+  @Test
   fun testMissingColonSeparatorReturnsOriginalMessage() {
     val invalidFormat = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"field1\"\"test\"}"
     val formattedMessage = getFormatedMessage(invalidFormat, ProcessOutputType.STDOUT, false)
@@ -458,6 +497,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test that input with invalid JSON structure returns the original message.
    */
+  @Test
   fun testInvalidJsonStructureReturnsOriginalMessage() {
     val invalidJson = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"field1\":}"
     val formattedMessage = getFormatedMessage(invalidJson, ProcessOutputType.STDOUT, false)
@@ -467,6 +507,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test that input with unclosed braces returns the original message.
    */
+  @Test
   fun testUnclosedBracesReturnsOriginalMessage() {
     val unclosedBraces = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"field1\":\"test\""
     val formattedMessage = getFormatedMessage(unclosedBraces, ProcessOutputType.STDOUT, false)
@@ -476,6 +517,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test that input with empty field name returns the original message.
    */
+  @Test
   fun testEmptyFieldNameReturnsOriginalMessage() {
     val emptyFieldName = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"\":\"test\"}"
     val formattedMessage = getFormatedMessage(emptyFieldName, ProcessOutputType.STDOUT, false)
@@ -486,6 +528,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test that completely invalid input (no braces) returns the original message.
    */
+  @Test
   fun testNoBracesReturnsOriginalMessage() {
     val noBraces = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\""
     val formattedMessage = getFormatedMessage(noBraces, ProcessOutputType.STDOUT, false)
@@ -495,6 +538,7 @@ class StatisticsEventLogFormatterTest : BasePlatformTestCase() {
   /**
    * Test multiline formatting with malformed JSON returns the original message.
    */
+  @Test
   fun testMalformedJsonMultilineReturnsOriginalMessage() {
     val malformedJson = "$formattedEventTime - [\"$EVENT_GROUP\", v$GROUP_VERSION]: \"$EVENT_ID\" {\"field1\":\"test\", \"field2\":"
     val formattedMessage = getFormatedMessage(malformedJson, ProcessOutputType.STDOUT, true)

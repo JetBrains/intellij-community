@@ -2,15 +2,28 @@
 package com.intellij.internal.statistic.actions.devkit.scheme
 
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.openapi.application.EDT
 import com.intellij.platform.statistics.devkit.actions.scheme.EVENTS_TEST_SCHEME_VALIDATION_RULES_KEY
 import com.intellij.platform.statistics.devkit.actions.scheme.EventsTestSchemeGroupConfiguration
 import com.intellij.platform.statistics.devkit.actions.scheme.PREFIXES
 import com.intellij.platform.statistics.devkit.actions.scheme.TOP_LEVEL_PROPERTIES
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertContainsUnordered
+import com.intellij.platform.testFramework.assertion.collectionAssertion.CollectionAssertions.assertEmpty
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightProjectFixture
 import com.intellij.psi.PsiFile
-import com.intellij.testFramework.UsefulTestCase
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.TestApplication
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import org.junit.jupiter.api.Test
 
-class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
+@TestApplication
+class ValidationRulesCompletionContributorTest {
+  private val projectFixture = codeInsightProjectFixture()
+  private val myFixture by codeInsightFixture(projectFixture)
+
+  @Test
   fun testPrefixCompletion() {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
@@ -23,9 +36,10 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertContainsElements(strings, PREFIXES)
+    assertContainsUnordered(PREFIXES, strings)
   }
 
+  @Test
   fun testCompletionInEventId() {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
@@ -35,11 +49,12 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertContainsElements(strings, PREFIXES)
+    assertContainsUnordered(PREFIXES, strings)
   }
 
 
-  fun testPrefixInsert() {
+  @Test
+  fun testPrefixInsert(): Unit = timeoutRunBlocking {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
         "event_id": ["eventId"],
@@ -49,9 +64,11 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
       }
     """.trimIndent())
     markValidationRulesFile(file)
-    val variants = myFixture.completeBasic()
-    myFixture.lookup.currentItem = variants.find { it.lookupString == "{util#}" }
-    myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+    withContext(Dispatchers.EDT) {
+      val variants = myFixture.completeBasic()
+      myFixture.lookup.currentItem = variants.find { it.lookupString == "{util#}" }
+      myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+    }
     myFixture.checkResult("""
       {
         "event_id": ["eventId"],
@@ -62,7 +79,8 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
-  fun testInsertPrefixWithBracket() {
+  @Test
+  fun testInsertPrefixWithBracket(): Unit = timeoutRunBlocking {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
         "event_id": ["eventId"],
@@ -72,9 +90,11 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
       }
     """.trimIndent())
     markValidationRulesFile(file)
-    val variants = myFixture.completeBasic()
-    myFixture.lookup.currentItem = variants.find { it.lookupString == "{util#}" }
-    myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+    withContext(Dispatchers.EDT) {
+      val variants = myFixture.completeBasic()
+      myFixture.lookup.currentItem = variants.find { it.lookupString == "{util#}" }
+      myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR)
+    }
     myFixture.checkResult("""
       {
         "event_id": ["eventId"],
@@ -85,6 +105,7 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     """.trimIndent())
   }
 
+  @Test
   fun testTopLevelPropertyCompletion() {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
@@ -94,10 +115,11 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertContainsElements(strings, TOP_LEVEL_PROPERTIES)
+    assertContainsUnordered(TOP_LEVEL_PROPERTIES, strings)
   }
 
 
+  @Test
   fun testNoCompletionInDataFieldPropertyKey() {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
@@ -109,9 +131,10 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertEmpty(strings)
+    assertEmpty(strings)
   }
 
+  @Test
   fun testReferenceCompletion() {
     val file = myFixture.configureByText("event-log-validation-rules.json", """
       {
@@ -126,7 +149,7 @@ class ValidationRulesCompletionContributorTest : BasePlatformTestCase() {
     markValidationRulesFile(file)
     myFixture.completeBasic()
     val strings = myFixture.lookupElementStrings!!
-    UsefulTestCase.assertContainsElements(strings, "{regexp#version}", "{regexp#integer}", "{enum#boolean}", "{util#plugin}")
+    assertContainsUnordered(listOf("{regexp#version}", "{regexp#integer}", "{enum#boolean}", "{util#plugin}"), strings)
   }
 
   private fun markValidationRulesFile(file: PsiFile) {

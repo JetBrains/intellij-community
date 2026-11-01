@@ -119,7 +119,9 @@ jvm_library(
         "//platform/consoleView",
         "//platform/consoleView/impl",
         "//plugins/dev/intellij.dev:dev",
-        "//libraries/junit4",
+        "//libraries/junit6",
+        "//platform/testFramework/junit5",
+        "//platform/testFramework/junit5/codeInsight",
         "//platform/scratch/plugin",
     ],
 )
