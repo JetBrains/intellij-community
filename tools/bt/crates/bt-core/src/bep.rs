@@ -55,6 +55,26 @@ pub struct BepSummary {
     pub saw_any_event: bool,
 }
 
+impl BepSummary {
+    /// Adds the events of another invocation of the same run, which tested other targets.
+    ///
+    /// The run saw events only when each invocation did, and it succeeded only when each one did: an invocation that
+    /// wrote nothing must not hide behind the events of the other.
+    pub fn merge(&mut self, other: Self) {
+        self.attempts.extend(other.attempts);
+        self.targets.extend(other.targets);
+        self.failed_to_build.extend(other.failed_to_build);
+        self.completed_targets += other.completed_targets;
+        self.aborted.extend(other.aborted);
+        self.action_stderr.extend(other.action_stderr);
+        self.overall_success = match (self.overall_success, other.overall_success) {
+            (Some(first), Some(second)) => Some(first && second),
+            _ => None,
+        };
+        self.saw_any_event &= other.saw_any_event;
+    }
+}
+
 /// A `file://` URI as a path in the platform's own dialect; anything else is left alone.
 ///
 /// A malformed escape is left as it was: a path is still more useful than nothing, and the caller only ever prints

@@ -39,10 +39,20 @@ refuses. The ultimate checkout names `plugins/air`, with its lane table `plugins
 
 ## Shards
 
-A run over many targets forces two shards on each target and passes the shard plan `out/bt/shard-plan.tsv` to the
-tests. The JUnit runner gives each target its planned count and splits the classes of the target by their recorded
-seconds. bt records the class times of each run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules. The
-same run writes the Bazel profile to `out/bt/profile.json.gz`.
+A run over many targets passes the shard plan `out/bt/shard-plan.tsv` to the tests. The JUnit runner gives each target
+its planned count and splits the classes of the target by their recorded seconds. bt records the class times of each
+run in the plan. `crates/bt-core/src/shard_plan.rs` gives the rules.
+
+Bazel forces one shard count on a whole invocation, so such a run has two `bazel test` invocations. The first one runs
+the heavy targets, the targets whose recorded seconds want more than two shards, and forces eight shards. The second
+one runs the patterns of the run less the heavy targets, and forces two shards. `--dry-run` shows the first one as
+`heavy` and the second one as `argv`. The two invocations write the Bazel profiles `out/bt/profile-heavy.json.gz` and
+`out/bt/profile.json.gz`. An explicit `--shards` and a BEP file of the caller give one invocation.
+
+A shard that hits the Bazel timeout of its target is a shard timeout. The digest names the shard and the test where it
+stopped, and that test is not a failure. The `--json` payload lists the shard in `shardTimeouts`. When the times of
+such a target in the run want more than two shards, bt raises its record in the plan, so the next run makes it a
+heavy target.
 
 ## Modules
 

@@ -48,6 +48,28 @@ pub struct TargetResult {
     pub wrapper_exit_code: Option<i32>,
 }
 
+/// The text that the JUnit runner writes as the failure of each test that had not ended when the runner was stopped.
+/// `TestCaseXmlRenderer` of `community/platform/testFramework/bootstrap` writes it.
+pub const INTERRUPTED_DETAIL: &str = "Test timed out and was interrupted";
+
+/// One shard that Bazel stopped at the timeout of its target.
+///
+/// The JUnit runner then marks each test that had not ended as failed with [`INTERRUPTED_DETAIL`]. Such a test did not
+/// fail: the shard ran out of time. So the run reports the shard, and the test only as the place where the shard
+/// stopped.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ShardTimeout {
+    pub label: String,
+    /// The shard, from 1.
+    pub shard: u32,
+    /// The shards of the target in this run.
+    pub shards: u32,
+    pub duration_ms: u64,
+    /// The tests that had not ended, as `<class>#<name>`.
+    pub interrupted: Vec<String>,
+}
+
 /// One target or shard that passed only on a retry.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FlakyRun {
@@ -71,9 +93,14 @@ pub struct RunResult {
     pub degraded: bool,
     /// The class times of each target whose shards all ran and passed, which the shard plan records.
     pub timings: Vec<TargetTiming>,
+    /// The class times of each target with a shard timeout. They are lower bounds, because the classes after the
+    /// timeout did not run. See [`crate::shard_plan::ShardPlan::record_lower_bound`].
+    pub lower_bounds: Vec<TargetTiming>,
     /// The labels of the targets whose shards read different versions of the shard plan. Their shards can have split
     /// the classes differently, so a class can have run in no shard: [`classify_run`] makes such a run INFRA.
     pub mixed_shard_plans: Vec<String>,
+    /// The shards that Bazel stopped at their timeout. Bazel exits 3 for them, so the run is FAIL.
+    pub timeouts: Vec<ShardTimeout>,
 }
 
 /// The test seconds of each class of one target, by the suite name of test.xml, over all its shards.
@@ -199,6 +226,8 @@ struct Aggregate {
     class_seconds: BTreeMap<String, f64>,
     /// The shard plan digest of each shard whose test.xml was read, `None` for a report without one.
     plan_digests: BTreeSet<Option<String>>,
+    /// The shards that timed out, as [`ShardTimeout`] without the shard count, which is known only at the end.
+    timeouts: Vec<ShardTimeout>,
 }
 
 /// Reads a finished run.
@@ -244,6 +273,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
                 timed: true,
                 class_seconds: BTreeMap::new(),
                 plan_digests: BTreeSet::new(),
+                timeouts: Vec::new(),
             });
             targets.len() - 1
         });
@@ -254,6 +284,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         target.cached &= last.cached;
         target.duration_ms = target.duration_ms.max(last.duration_ms);
         let passed = last.status == "PASSED";
+        let timed_out = last.status == "TIMEOUT";
         target.timed &= passed && !last.cached;
         // A failing shard's log is the one worth reading, so it wins over an already-recorded green one.
         if let Some(log) = &last.log_path
@@ -279,6 +310,7 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             _ => target.timed = false,
         }
 
+        let mut interrupted = Vec::new();
         for suite in suites {
             if suite.empty_stub {
                 continue;
@@ -291,35 +323,50 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             *target.class_seconds.entry(suite.name.clone()).or_default() += suite.time_seconds;
             target.tests += suite.tests;
             target.skipped += suite.skipped;
-            let counted = suite.cases.iter().filter(|case| case.outcome == junit::Outcome::Failed).count();
+            // In a shard that timed out, a test that had not ended is the place where the shard stopped, not a failure.
+            let any_failed = suite.cases.iter().any(|case| case.outcome == junit::Outcome::Failed);
+            let mut failing = Vec::new();
+            for (index, case) in suite.cases.iter().enumerate() {
+                if case.outcome != junit::Outcome::Failed {
+                    continue;
+                }
+                if timed_out && is_interrupted(case) {
+                    interrupted.push(format!("{}#{}", case.class_name, case.name));
+                } else {
+                    failing.push((index, case));
+                }
+            }
             // A runner that reruns a failed test, as the Air lane-run does, writes each attempt as a case of the same
             // name. A failure that a later pass follows is flaky, not failed.
-            let retried: Vec<FlakyRun> = suite
-                .cases
-                .iter()
-                .enumerate()
-                .filter(|(index, case)| case.outcome == junit::Outcome::Failed && passed_later(&suite.cases[index + 1..], case))
+            let (retried, failed): (Vec<_>, Vec<_>) = failing
+                .into_iter()
+                .partition(|(index, case)| passed_later(&suite.cases[index + 1..], case));
+            let retried: Vec<FlakyRun> = retried
+                .into_iter()
                 .map(|(_, case)| FlakyRun {
                     id: format!("{} {}.{}", last.label, case.class_name, case.name),
                     attempts: 2,
                 })
                 .collect();
-            failures.extend(
-                suite
-                    .cases
-                    .iter()
-                    .enumerate()
-                    .filter(|(index, case)| case.outcome == junit::Outcome::Failed && !passed_later(&suite.cases[index + 1..], case))
-                    .map(|(_, case)| case.clone()),
-            );
             // Trust the suite header when a runner reported counts without per-case failure elements.
-            target.failed += if counted == 0 {
-                suite.failures + suite.errors
+            target.failed += if any_failed {
+                u32::try_from(failed.len()).unwrap_or(u32::MAX)
             } else {
-                u32::try_from(counted - retried.len()).unwrap_or(u32::MAX)
+                suite.failures + suite.errors
             };
+            failures.extend(failed.into_iter().map(|(_, case)| case.clone()));
             target.flaky += u32::try_from(retried.len()).unwrap_or(u32::MAX);
             flaky.extend(retried);
+        }
+
+        if timed_out {
+            target.timeouts.push(ShardTimeout {
+                label: last.label.clone(),
+                shard: u32::try_from(last.shard).unwrap_or(0),
+                shards: 0,
+                duration_ms: last.duration_ms,
+                interrupted,
+            });
         }
 
         if group.len() > 1 && passed {
@@ -366,6 +413,19 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
             class_seconds: std::mem::take(&mut target.class_seconds),
         })
         .collect();
+    let lower_bounds: Vec<TargetTiming> = targets
+        .iter_mut()
+        .filter(|target| !target.timeouts.is_empty() && target.plan_digests.len() <= 1 && !target.class_seconds.is_empty())
+        .map(|target| TargetTiming {
+            label: target.label.clone(),
+            class_seconds: std::mem::take(&mut target.class_seconds),
+        })
+        .collect();
+    let mut timeouts = Vec::new();
+    for target in &mut targets {
+        let shards = u32::try_from(target.shards.len()).unwrap_or(u32::MAX);
+        timeouts.extend(target.timeouts.drain(..).map(|timeout| ShardTimeout { shards, ..timeout }));
+    }
     let mut targets: Vec<TargetResult> = targets
         .into_iter()
         .map(|target| TargetResult {
@@ -414,8 +474,17 @@ pub fn collect_results(runtime: &dyn Runtime, bep: &BepSummary, duration_ms: u64
         build_errors,
         degraded,
         timings,
+        lower_bounds,
         mixed_shard_plans,
+        timeouts,
     }
+}
+
+/// Whether the runner marked the case as failed because it had not ended when the runner was stopped.
+fn is_interrupted(case: &TestCase) -> bool {
+    case.failure
+        .as_ref()
+        .is_some_and(|failure| failure.message.as_deref().is_none_or(str::is_empty) && failure.detail.trim() == INTERRUPTED_DETAIL)
 }
 
 /// Compiler diagnostics normalised to `file:line:col: error: message`.

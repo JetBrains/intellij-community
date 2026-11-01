@@ -213,6 +213,7 @@ fn interrupted_payload(message: &str) -> JsonPayload {
         targets: Vec::new(),
         failures: Vec::new(),
         flaky: Vec::new(),
+        shard_timeouts: Vec::new(),
         errors: vec![message.to_owned()],
         degraded: false,
     }

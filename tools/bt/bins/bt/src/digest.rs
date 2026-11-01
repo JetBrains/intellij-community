@@ -3,7 +3,7 @@
 
 use bt_junit::TestCase;
 
-use bt_core::result::{RunResult, RunStatus, TargetResult, filter_matched_no_class, totals_of};
+use bt_core::result::{RunResult, RunStatus, ShardTimeout, TargetResult, filter_matched_no_class, totals_of};
 use bt_core::selector::Selector;
 
 /// Everything a stack trace carries that is not the test.
@@ -174,6 +174,28 @@ pub(crate) fn render_failure(position: usize, case: &TestCase) -> Vec<String> {
     out
 }
 
+/// One shard that Bazel stopped at its timeout. The test that had not ended is where the shard stopped, and the
+/// digest names it as that, not as a failure.
+pub(crate) fn render_timeout(timeout: &ShardTimeout) -> String {
+    // `com.a.FooTest#name` as `FooTest#name`, as [`test_case_id`] names a failure.
+    let simple = |id: &str| match id.split_once('#') {
+        Some((class, name)) => format!("{}#{name}", class.rsplit_once('.').map_or(class, |(_, simple)| simple)),
+        None => id.to_owned(),
+    };
+    let stopped = match timeout.interrupted.as_slice() {
+        [] => String::new(),
+        [only] => format!(", stopped in {}", simple(only)),
+        [first, rest @ ..] => format!(", stopped in {} (+{} more)", simple(first), rest.len()),
+    };
+    format!(
+        "shard timeout  {} shard {} of {} after {}{stopped}",
+        target_name(&timeout.label),
+        timeout.shard,
+        timeout.shards,
+        format_duration(timeout.duration_ms)
+    )
+}
+
 /// A duration the way the digest shows it: `420ms`, `12.3s`, `4m12s`.
 ///
 /// Tenths are rounded half up in integer arithmetic, so 3750 ms is `3.8s`: the exact decimal value, with no binary
@@ -308,12 +330,21 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
             }
         }
         RunStatus::Fail => {
+            let timeouts = if result.timeouts.is_empty() {
+                String::new()
+            } else {
+                format!(", {}", plural(result.timeouts.len() as u64, "shard timeout"))
+            };
             out.push(format!(
-                "FAIL  {} of {}{scope}  {duration}{single}",
+                "FAIL  {} of {}{timeouts}{scope}  {duration}{single}",
                 sum.failed,
                 plural(sum.tests, "test")
             ));
             out.push(String::new());
+            out.extend(result.timeouts.iter().map(render_timeout));
+            if !result.timeouts.is_empty() {
+                out.push(String::new());
+            }
             let shown = result.failures.len().min(options.max_failures);
             for (position, failure) in result.failures[..shown].iter().enumerate() {
                 out.extend(render_failure(position + 1, failure));
@@ -383,7 +414,9 @@ pub(crate) fn render_digest(result: &RunResult, options: &RenderOptions) -> Stri
     let blamed: Vec<&TargetResult> = result
         .targets
         .iter()
-        .filter(|target| target.failed > 0 || target.wrapper_exit_code.is_some())
+        .filter(|target| {
+            target.failed > 0 || target.wrapper_exit_code.is_some() || result.timeouts.iter().any(|timeout| timeout.label == target.label)
+        })
         .collect();
     let source: Vec<&TargetResult> = if blamed.is_empty() {
         result.targets.iter().collect()

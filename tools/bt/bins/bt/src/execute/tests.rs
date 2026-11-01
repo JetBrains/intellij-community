@@ -283,6 +283,176 @@ fn only_a_run_of_all_classes_records_the_class_times() {
     )));
 }
 
+const HEAVY_BEP_PATH: &str = "/tmp/air-bazel-test-bep-heavy.json";
+
+/// A plan where the core target wants six shards and the other target one.
+fn heavy_plan_tree() -> FakeRuntime {
+    let fake = fake_air_tree();
+    fake.put_absolute(
+        SHARD_PLAN,
+        &format!("default\t2\nclass\t{CORE_LABEL}\tcom.A\t530.000\nclass\t{OTHER_LABEL}\tcom.B\t7.000\n"),
+    );
+    fake
+}
+
+/// One forced count for a whole invocation: the heavy targets get an invocation of their own with the heavy count,
+/// and the invocation of the lane leaves them out.
+#[test]
+fn a_heavy_target_runs_in_an_invocation_of_its_own_with_the_heavy_count() {
+    let text = run(&["--lane", "fast", "--dry-run"], &heavy_plan_tree()).text;
+    let line = |prefix: &str| {
+        text.lines()
+            .find(|line| line.starts_with(prefix))
+            .unwrap_or_else(|| panic!("no {prefix:?} in:\n{text}"))
+            .to_owned()
+    };
+    let heavy = line("heavy   ");
+    assert_mentions(
+        &heavy,
+        &[
+            "--test_sharding_strategy=forced=8",
+            "--test_env=JB_TEST_SHARD_PLAN=out/bt/shard-plan.tsv",
+            "--profile=/repo/out/bt/profile-heavy.json.gz",
+            "--test_tag_filters=-air-integration-ui,-air-integration-headless,-air-property,-air-slow",
+            CORE_LABEL,
+        ],
+    );
+    assert!(!heavy.contains("//plugins/air/..."), "{heavy}");
+    let main = line("argv    ");
+    assert_mentions(
+        &main,
+        &[
+            "--test_sharding_strategy=forced=2",
+            "--profile=/repo/out/bt/profile.json.gz",
+            "//plugins/air/...",
+            &format!(" -- -{CORE_LABEL}"),
+        ],
+    );
+    assert!(!main.contains(OTHER_LABEL), "{main}");
+
+    // an explicit count or a BEP file of the caller keeps one invocation
+    for argv in [
+        &["--lane", "fast", "--shards", "3", "--dry-run"][..],
+        &["--lane", "fast", "--dry-run", "--", "--build_event_json_file=/tmp/mine.json"][..],
+    ] {
+        let text = run(argv, &heavy_plan_tree()).text;
+        assert!(!text.contains("heavy   ") && !text.contains(" -- -"), "{argv:?}:\n{text}");
+    }
+}
+
+/// The invocations read as one run: the targets of both, one verdict, one plan update.
+#[test]
+fn the_heavy_and_the_lane_invocation_read_as_one_run() {
+    let fake = heavy_plan_tree();
+    let xml = |suite: &str, seconds: u32| format!(r#"<testsuites><testsuite name="{suite}" tests="1" time="{seconds}"/></testsuites>"#);
+    let mut heavy_events = Vec::new();
+    for (shard, path) in [
+        (1, "/exec/testlogs/core/shard_1/test.xml"),
+        (2, "/exec/testlogs/core/shard_2/test.xml"),
+    ] {
+        fake.put_absolute(path, &xml("com.A", 260 + shard));
+        heavy_events.push(test_result_event(&AttemptSpec {
+            shard: i64::from(shard),
+            xml: path,
+            ..attempt(CORE_LABEL)
+        }));
+    }
+    fake.put_absolute(HEAVY_BEP_PATH, &bep_lines(&heavy_events));
+    fake.put_absolute("/exec/testlogs/other/test.xml", &xml("com.B", 5));
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&[test_result_event(&AttemptSpec {
+            xml: "/exec/testlogs/other/test.xml",
+            ..attempt(OTHER_LABEL)
+        })]),
+    );
+    let outcome = run(&["--lane", "fast"], &fake);
+
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+    assert_mentions(&outcome.text, &["PASS  3 tests  2 targets"]);
+    let spawned: Vec<String> = fake.spawned().iter().map(|argv| argv.join(" ")).collect();
+    assert_eq!(spawned.len(), 3, "{spawned:#?}");
+    assert!(
+        spawned[1].contains("forced=8") && spawned[1].ends_with(CORE_LABEL),
+        "{}",
+        spawned[1]
+    );
+    assert!(
+        spawned[2].contains("forced=2") && spawned[2].ends_with(&format!("-- -{CORE_LABEL}")),
+        "{}",
+        spawned[2]
+    );
+    let plan = fake.state().files.get(SHARD_PLAN).cloned().unwrap_or_default();
+    assert_mentions(
+        &plan,
+        &[
+            &format!("target\t{CORE_LABEL}\t6\n"),
+            &format!("class\t{CORE_LABEL}\tcom.A\t523.000\n"),
+            &format!("class\t{OTHER_LABEL}\tcom.B\t5.000\n"),
+        ],
+    );
+    let removed = fake.state().removed.clone();
+    assert!(
+        removed.contains(&HEAVY_BEP_PATH.to_owned()) && removed.contains(&BEP_PATH.to_owned()),
+        "{removed:?}"
+    );
+}
+
+/// A command that is not a verdict, such as 8 for an interrupted bazel, ends the run: the lane must not start after
+/// a Ctrl+C.
+#[test]
+fn an_interrupted_heavy_invocation_starts_no_lane_invocation() {
+    let fake = heavy_plan_tree();
+    fake.put_absolute(HEAVY_BEP_PATH, "");
+    let answer = |exit_code| SpawnResult {
+        exit_code,
+        output: String::new(),
+    };
+    fake.state().spawn_results = [answer(0), answer(8)].into();
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::INFRA, "{}", outcome.text);
+    assert_eq!(fake.spawned().len(), 2, "{:#?}", fake.spawned());
+}
+
+/// The tag filters of a lane can leave out every heavy target, and then the heavy invocation exits 4 with no test.
+/// The lane invocation still gives the answer.
+#[test]
+fn a_heavy_invocation_without_a_test_leaves_the_answer_to_the_lane_invocation() {
+    let fake = heavy_plan_tree();
+    fake.put_absolute(HEAVY_BEP_PATH, &bep_lines(&[json!({"id": {"progress": {}}, "progress": {}})]));
+    fake.put_absolute(XML_PATH, &suite_xml(&suite("com.B", vec![case("b")])));
+    fake.put_absolute(
+        BEP_PATH,
+        &bep_lines(&[test_result_event(&AttemptSpec {
+            xml: XML_PATH,
+            ..attempt(OTHER_LABEL)
+        })]),
+    );
+    let answer = |exit_code| SpawnResult {
+        exit_code,
+        output: String::new(),
+    };
+    fake.state().spawn_results = [answer(0), answer(4), answer(0)].into();
+    let outcome = run(&["--lane", "fast"], &fake);
+    assert_eq!(outcome.exit_code, exit::GREEN, "{}", outcome.text);
+}
+
+#[test]
+fn the_worse_exit_of_two_invocations_is_the_exit_of_the_run() {
+    for (first, second, worse) in [
+        (4, 0, 0),
+        (0, 4, 0),
+        (4, 4, 4),
+        (0, 3, 3),
+        (3, 1, 1),
+        (1, 3, 1),
+        (3, 8, 8),
+        (2, 0, 2),
+    ] {
+        assert_eq!(worse_exit(first, second), worse, "{first} and {second}");
+    }
+}
+
 #[test]
 fn a_dry_run_writes_no_shard_plan() {
     let fake = fake_air_tree();
@@ -552,6 +722,7 @@ fn json_returns_a_structured_payload_alongside_the_digest() {
     assert_eq!(decoded["targets"][0]["label"], CORE_LABEL);
     assert_eq!(decoded["flaky"], json!([]));
     assert_eq!(decoded["errors"], json!([]));
+    assert_eq!(decoded["shardTimeouts"], json!([]));
     // Every key of the published contract, in its published order, so a rename cannot pass unnoticed.
     let mut keys: Vec<&str> = decoded.as_object().expect("an object").keys().map(String::as_str).collect();
     keys.sort_unstable();
@@ -564,6 +735,7 @@ fn json_returns_a_structured_payload_alongside_the_digest() {
         "targets",
         "failures",
         "flaky",
+        "shardTimeouts",
         "errors",
         "degraded",
     ];

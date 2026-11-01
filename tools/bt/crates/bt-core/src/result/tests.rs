@@ -665,3 +665,100 @@ fn a_shard_without_a_plan_digest_differs_from_a_shard_with_one() {
 
     assert_eq!(collect_results(&fake, &bep, 5000, 0, "").mixed_shard_plans, ["//p:t"]);
 }
+
+/// The test.xml of a shard that Bazel stopped at its timeout, as the JUnit runner writes it: the test that had not
+/// ended fails with [`INTERRUPTED_DETAIL`], and no message.
+fn timed_out_xml(real_failure: bool) -> String {
+    let real = if real_failure {
+        r#"<testcase name="b" classname="com.a.BarTest" time="0.2"><failure message="expected: 14" type="E">at x</failure></testcase>"#
+    } else {
+        ""
+    };
+    format!(
+        r#"<testsuites><testsuite name="com.a.BarTest" tests="3" time="250" failures="0" errors="0" skipped="0">
+<testcase name="a" classname="com.a.BarTest" time="0.1"/>{real}
+<testcase name="a close stops the row" classname="com.a.BarTest" time="0.4"><failure><![CDATA[{INTERRUPTED_DETAIL}]]></failure></testcase>
+</testsuite></testsuites>"#
+    )
+}
+
+/// A timeout is the verdict of a shard, not of the test that ran when it came. The run is FAIL with the shard named,
+/// and a real failure of the same shard stays a failure.
+#[test]
+fn a_shard_that_timed_out_is_a_shard_timeout_and_not_a_failure_of_its_last_test() {
+    let fake = FakeRuntime::new([]);
+    fake.put_absolute("/exec/testlogs/p/t/s1/test.xml", &timed_out_xml(true));
+    fake.put_absolute(
+        "/exec/testlogs/p/t/s2/test.xml",
+        &suite_xml(&suite("com.a.FooTest", vec![case("c")])),
+    );
+    let bep = bep_of(
+        &fake,
+        &[
+            test_result_event(&AttemptSpec {
+                shard: 1,
+                status: "TIMEOUT",
+                duration_ms: 300_000,
+                ..at("//p:t", "/exec/testlogs/p/t/s1/test.xml")
+            }),
+            test_result_event(&AttemptSpec {
+                shard: 2,
+                ..at("//p:t", "/exec/testlogs/p/t/s2/test.xml")
+            }),
+        ],
+    );
+    let result = collect_results(&fake, &bep, 5000, 3, "");
+
+    assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
+    assert_eq!(
+        result.timeouts,
+        [ShardTimeout {
+            label: "//p:t".to_owned(),
+            shard: 1,
+            shards: 2,
+            duration_ms: 300_000,
+            interrupted: vec!["com.a.BarTest#a close stops the row".to_owned()],
+        }]
+    );
+    assert_eq!(
+        result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
+        ["b"]
+    );
+    assert_eq!((result.targets[0].tests, result.targets[0].failed), (4, 1));
+    assert!(result.timings.is_empty(), "a timed out target has no whole record");
+    assert_eq!(
+        result.lower_bounds,
+        [TargetTiming {
+            label: "//p:t".to_owned(),
+            class_seconds: [("com.a.BarTest".to_owned(), 250.0), ("com.a.FooTest".to_owned(), 0.5)].into(),
+        }]
+    );
+}
+
+/// The marker alone is no timeout: only a shard that Bazel reports as TIMEOUT turns it into one.
+#[test]
+fn an_interrupted_test_of_a_shard_that_did_not_time_out_is_a_failure() {
+    let result = collect_failed(&timed_out_xml(false), &failed_attempt());
+    assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
+    assert_eq!(result.timeouts, []);
+    assert_eq!(
+        result.failures.iter().map(|failure| failure.name.as_str()).collect::<Vec<_>>(),
+        ["a close stops the row"]
+    );
+}
+
+/// A timeout whose shard stopped between two tests interrupts no test, and Bazel's exit still makes the run FAIL.
+#[test]
+fn a_shard_timeout_without_an_interrupted_test_still_fails_the_run() {
+    let result = collect_failed(
+        &suite_xml(&suite("com.a.FooTest", vec![case("c")])),
+        &AttemptSpec {
+            status: "TIMEOUT",
+            ..failed_attempt()
+        },
+    );
+    assert_eq!((result.status, result.exit_code), (RunStatus::Fail, exit::TEST_FAILED));
+    assert_eq!(result.timeouts.len(), 1);
+    assert_eq!(result.timeouts[0].interrupted, Vec::<String>::new());
+    assert_eq!(result.failures, []);
+}

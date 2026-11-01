@@ -10,7 +10,7 @@ use bt_core::fake::{FakeRuntime, REPO_ROOT, area_files, refusal};
 const COMMIT: &str = "0123456789abcdef0123456789abcdef01234567";
 
 /// A green payload as the host writes it with `--json`.
-const PAYLOAD: &str = r#"{"status":"PASS","exitCode":0,"durationMs":5,"cachedTargets":0,"ranTargets":1,"targets":[],"failures":[],"flaky":[],"errors":[],"degraded":false}"#;
+const PAYLOAD: &str = r#"{"status":"PASS","exitCode":0,"durationMs":5,"cachedTargets":0,"ranTargets":1,"targets":[],"failures":[],"flaky":[],"shardTimeouts":[],"errors":[],"degraded":false}"#;
 
 /// The tree of [`COMMIT`].
 const TREE: &str = "fedcba9876543210fedcba9876543210fedcba98";

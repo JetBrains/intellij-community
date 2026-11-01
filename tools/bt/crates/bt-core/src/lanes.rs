@@ -559,6 +559,9 @@ pub struct RunPlan {
     pub passthrough: Vec<String>,
     /// The shard plan file of a planned run; see [`uses_shard_plan`].
     pub shard_plan: Option<String>,
+    /// The labels that the patterns of the run cover and another invocation runs: the heavy targets of a planned run.
+    /// See [`crate::shard_plan`].
+    pub excluded: Vec<String>,
     /// Where bazel writes its profile, for a multi-target run.
     pub profile: Option<String>,
 }
@@ -571,7 +574,8 @@ pub struct RunPlan {
 /// A run covering many targets already saturates the machine across targets, and there the fixed cost dominates:
 /// measured on `--lane fast` (63 targets, 6221 tests, warm server, nothing to compile), forced=6 by test spends 3m24s
 /// against 1m55s for forced=2. One count for all targets is still wrong for most of them, so such a run forces
-/// [`PLANNED_SHARDS`] and the shard plan gives each target its own count; see [`crate::shard_plan`].
+/// [`PLANNED_SHARDS`] and the shard plan gives each target its own count. The heavy targets of the plan run in an
+/// invocation of their own; see [`crate::shard_plan`].
 pub fn default_shards(resolution: &Resolution, lane: Option<&LaneSpec>) -> u32 {
     // A lane that names its own count owns the decision: for IDE-launching lanes the cost and isolation unit is
     // the IDE, not JVM bootstrap, and the flow lanes rely on one shared instance.
@@ -676,6 +680,14 @@ pub fn build_bazel_args(plan: &RunPlan) -> Vec<String> {
     args.extend(resolution.labels.iter().cloned());
     // Caller args land last so they win over anything above.
     args.extend(plan.passthrough.iter().cloned());
+    // A negative pattern needs the `--` of bazel, or bazel reads it as an option. Each word after `--` is a pattern,
+    // so the exclusions come after the caller args.
+    if !plan.excluded.is_empty() {
+        if !plan.passthrough.iter().any(|argument| argument == "--") {
+            args.push("--".to_owned());
+        }
+        args.extend(plan.excluded.iter().map(|label| format!("-{label}")));
+    }
     args
 }
 
