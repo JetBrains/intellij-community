@@ -4,6 +4,7 @@
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
     <module name="intellij.libraries.jackson3.module.kotlin"/>
+    <module name="intellij.libraries.jsoup"/>
     <module name="intellij.libraries.kotlinx.coroutines.core"/>
     <module name="intellij.libraries.kotlinx.serialization.core"/>
     <module name="intellij.libraries.kotlinx.serialization.json"/>
@@ -11,9 +12,19 @@
     <module name="intellij.platform.core"/>
     <module name="intellij.platform.statistics"/>
     <module name="intellij.platform.util.diff"/>
+    <module name="intellij.platform.util.ex"/>
+    <module name="intellij.platform.vfs.impl"/>
+    <module name="intellij.vcs.git.shared"/>
   </dependencies>
   <!-- endregion -->
   <extensions defaultExtensionNs="com.intellij.statistics">
     <counterUsagesCollector implementationClass="org.jetbrains.plugins.gitlab.util.GitLabStatistics$GitLabCountersCollector"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.api.GitLabApiManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.api.GitLabApiManagerImpl"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gitlab.GitLabServersManager"
+                        serviceImplementation="org.jetbrains.plugins.gitlab.CachingGitLabServersManager"/>
   </extensions>
 </idea-plugin>

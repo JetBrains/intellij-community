@@ -40,6 +40,10 @@ jvm_library(
         "//libraries/jackson3/databind",
         "//platform/collaboration-tools/shared",
         "//platform/util/diff",
+        "//platform/util-ex",
+        "//plugins/git4idea/shared",
+        "//libraries/jsoup",
+        "//platform/vfs-impl",
     ],
 )
 ### auto-generated section `build intellij.vcs.gitlab.shared` end
