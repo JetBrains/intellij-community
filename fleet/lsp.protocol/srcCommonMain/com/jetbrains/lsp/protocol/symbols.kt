@@ -1,6 +1,7 @@
 package com.jetbrains.lsp.protocol
 
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
@@ -115,6 +116,12 @@ data class WorkspaceSymbol(
      * workspace symbol request and a workspace symbol resolve request.
      */
     val data: JsonElement? = null,
+
+    /**
+     * JetBrains extension: the module, library or SDK that owns the file of the symbol.
+     * Other servers do not send it.
+     */
+    val owner: WorkspaceSymbolOwner? = null,
 ) {
     @Serializable(with = SymbolLocation.Serializer::class)
     sealed interface SymbolLocation {
@@ -134,6 +141,29 @@ data class WorkspaceSymbol(
             }
         }
     }
+}
+
+/**
+ * JetBrains extension: the owner of the file of a [WorkspaceSymbol], as IntelliJ IDEA shows it on the right of Go to Class.
+ */
+@Serializable
+data class WorkspaceSymbolOwner(
+    /**
+     * The module name, the library presentable name (with ` (jar name)` when the jar is named differently), or the SDK name.
+     */
+    val name: String,
+    val kind: WorkspaceSymbolOwnerKind,
+    /**
+     * A module owner: the file is in its test sources.
+     */
+    val tests: Boolean = false,
+)
+
+@Serializable
+enum class WorkspaceSymbolOwnerKind {
+    @SerialName("module") Module,
+    @SerialName("library") Library,
+    @SerialName("sdk") Sdk,
 }
 
 /**

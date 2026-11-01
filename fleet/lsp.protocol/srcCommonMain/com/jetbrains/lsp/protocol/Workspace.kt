@@ -353,12 +353,14 @@ private class WorkspaceSymbolOrInformation(
     val location: WorkspaceSymbol.SymbolLocation?,
     val containerName: String?,
     val data: JsonElement?,
+    val owner: WorkspaceSymbolOwner?,
 ) {
     fun workspaceSymbol(): WorkspaceSymbol {
         if (name == null || kind == null || location == null) {
             throw missingFields(WorkspaceSymbol.serializer().descriptor, "name" to name, "kind" to kind, "location" to location)
         }
-        return WorkspaceSymbol(name = name, kind = kind, tags = tags, containerName = containerName, location = location, data = data)
+        return WorkspaceSymbol(name = name, kind = kind, tags = tags, containerName = containerName, location = location, data = data,
+                               owner = owner)
     }
 
     fun symbolInformation(): SymbolInformation {
@@ -380,6 +382,7 @@ private class WorkspaceSymbolOrInformation(
         private const val LOCATION = 4
         private const val CONTAINER_NAME = 5
         private const val DATA = 6
+        private const val OWNER = 7
 
         private val tagsSerializer = SymbolTagListSerializer().nullable
 
@@ -392,6 +395,7 @@ private class WorkspaceSymbolOrInformation(
             element("location", WorkspaceSymbol.SymbolLocation.serializer().nullable.descriptor, isOptional = true)
             element("containerName", String.serializer().nullable.descriptor, isOptional = true)
             element("data", JsonElement.serializer().nullable.descriptor, isOptional = true)
+            element("owner", WorkspaceSymbolOwner.serializer().nullable.descriptor, isOptional = true)
         }
 
         override fun deserialize(decoder: Decoder): WorkspaceSymbolOrInformation {
@@ -403,6 +407,7 @@ private class WorkspaceSymbolOrInformation(
             var location: WorkspaceSymbol.SymbolLocation? = null
             var containerName: String? = null
             var data: JsonElement? = null
+            var owner: WorkspaceSymbolOwner? = null
             decoder.decodeStructure(descriptor) {
                 while (true) {
                     when (val index = decodeElementIndex(descriptor)) {
@@ -416,12 +421,13 @@ private class WorkspaceSymbolOrInformation(
                         LOCATION -> location = decodeNullableSerializableElement(descriptor, index, WorkspaceSymbol.SymbolLocation.serializer())
                         CONTAINER_NAME -> containerName = decodeNullableSerializableElement(descriptor, index, String.serializer())
                         DATA -> data = decodeNullableSerializableElement(descriptor, index, JsonElement.serializer())
+                        OWNER -> owner = decodeNullableSerializableElement(descriptor, index, WorkspaceSymbolOwner.serializer())
                         CompositeDecoder.DECODE_DONE -> break
                         else -> throw SerializationException("Unexpected index $index")
                     }
                 }
             }
-            return WorkspaceSymbolOrInformation(name, kind, tags, hasDeprecated, deprecated, location, containerName, data)
+            return WorkspaceSymbolOrInformation(name, kind, tags, hasDeprecated, deprecated, location, containerName, data, owner)
         }
     }
 }
