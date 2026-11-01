@@ -39,7 +39,7 @@ runtime/service boundaries. That changes the default architecture instincts:
   one. Start file watchers, subprocesses, autosync, and persistence from presenter/runtime objects with explicit
   close/cancel paths; compositions only subscribe and render.
 - **Swing/AWT is an interop boundary.** File choosers, popups, clipboard/action-system hooks, and host components belong
-  behind a small callback or interop helper. Use `jewel-swing-interop` for the mechanics; do not leak AWT details into
+  behind a small callback or interop helper. Use the `jewel` skill ([swing-interop](../../../jewel/swing-interop/GUIDE.md) guide) for the mechanics; do not leak AWT details into
   leaf composables.
 - **Window, focus, and shortcuts are UI wiring.** The composition may request focus, execute scroll/focus commands,
   and bind keyboard shortcuts, but the decision that a shortcut means "abort", "archive", or "send" belongs in the

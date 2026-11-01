@@ -4,8 +4,7 @@
 /code-style/** linguist-generated
 /commits/** linguist-generated
 /compare-python-typecheckers/** linguist-generated
-/compose-ui-architecture/** linguist-generated
-/compose-ui-audit/** linguist-generated
+/compose-ui/** linguist-generated
 /conda-env-tests/** linguist-generated
 /debugging/** linguist-generated
 /driver-ui-tests/** linguist-generated

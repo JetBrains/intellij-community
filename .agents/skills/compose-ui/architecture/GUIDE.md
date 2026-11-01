@@ -1,13 +1,8 @@
----
-name: compose-ui-architecture
-description: Write Compose Desktop UI state, effects, and presenter boundaries.
----
-
 # Compose UI Architecture
 
 Use this skill to keep Compose Desktop UI code architecturally correct while editing IntelliJ-style desktop surfaces.
 This skill provides authoring and review guardrails for individual changes. When the user asks for a systemic Compose UI
-architecture assessment across a codebase, use `compose-ui-audit` instead.
+architecture assessment across a codebase, use the [audit](../audit/GUIDE.md) guide instead.
 
 For general post-change review or cleanup, use the review subagents available in the current harness instead of
 stretching this skill beyond UI architecture. If subagent delegation is unavailable, run those review passes
@@ -20,18 +15,18 @@ details conflict.
 
 Pair it with:
 
-- Pair this skill with `jewel-ui` when selecting Jewel components, theme wrappers, icons, typography, and
+- Pair this skill with the `jewel` skill ([ui](../../jewel/ui/GUIDE.md) guide) when selecting Jewel components, theme wrappers, icons, typography, and
   IntelliJ-style controls.
-- Pair this skill with `jewel-swing-interop` when configuring Swing/AWT hosting, `ComposePanel`, `LocalComponent`,
+- Pair this skill with the `jewel` skill ([swing-interop](../../jewel/swing-interop/GUIDE.md) guide) when configuring Swing/AWT hosting, `ComposePanel`, `LocalComponent`,
   popups, and bridge theme mechanics.
 
 Defer these adjacent tasks instead of stretching this skill:
 
-- Use `jewel-ui` for component choice, label rules, icons, theme wrappers, typography, and Jewel visual style.
-- Use `jewel-swing-interop` for `ComposePanel`, AWT popup forwarding, `LocalComponent`, and host Swing component access.
+- Use the `jewel` skill ([ui](../../jewel/ui/GUIDE.md) guide) for component choice, label rules, icons, theme wrappers, typography, and Jewel visual style.
+- Use the `jewel` skill ([swing-interop](../../jewel/swing-interop/GUIDE.md) guide) for `ComposePanel`, AWT popup forwarding, `LocalComponent`, and host Swing component access.
 - Use configured review or refactoring subagents for general post-change code review or cleanup, or run those passes
   sequentially yourself if delegation is unavailable.
-- Use `compose-ui-audit` for a whole-surface systemic Compose UI architecture assessment.
+- Use the [audit](../audit/GUIDE.md) guide for a whole-surface systemic Compose UI architecture assessment.
 
 ## Desktop Compose Terminology
 

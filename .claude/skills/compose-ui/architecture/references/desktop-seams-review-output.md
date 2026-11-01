@@ -10,7 +10,7 @@ When touching desktop-specific UI surfaces, check these extra seams:
 - **Dialogs and file pickers:** composition may show/request them, but selected paths/settings mutations go through
   callbacks and presenter APIs.
 - **Popups:** Jewel popups can involve real AWT windows; keep click-through or host-component mechanics isolated and
-  documented with `jewel-swing-interop` patterns.
+  documented with the `jewel` skill ([swing-interop](../../../jewel/swing-interop/GUIDE.md) guide) patterns.
 - **Keyboard shortcuts:** bind at the shell/screen level, route intent through presenter/app state, and keep platform
   differences explicit.
 - **Clipboard/open URI:** access through a small environment/callback seam so tests can fake it.

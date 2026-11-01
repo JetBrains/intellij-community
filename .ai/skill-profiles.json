@@ -37,9 +37,7 @@
     ],
     "toolbox": ["tbx-update-jetbrainsd"],
     "ui": [
-      "compose",
-      "compose-ui-architecture",
-      "compose-ui-audit",
+      "compose-ui",
       "icon-resources",
       "icons",
       "kotlin-ui-dsl",
