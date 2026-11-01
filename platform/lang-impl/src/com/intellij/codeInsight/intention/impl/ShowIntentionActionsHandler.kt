@@ -103,8 +103,8 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
             for (info in lazyFixInfos) {
               phase { lazyQuickFixUpdater.waitQuickFixesSynchronously(info, project, document) }
             }
-            val intentions = phase { ShowIntentionsPass.getActionsToShow(editor, file) }
-            phase { CachedIntentions.createAndUpdateActions(project, file, editor, intentions) }
+            // collected intentions hold the caret offset and PSI, so a write must restart the collection too
+            phase { CachedIntentions.createAndUpdateActions(project, file, editor, ShowIntentionsPass.getActionsToShow(editor, file)) }
           }
         }
       })

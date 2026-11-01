@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.progress.ProgressManager
@@ -22,6 +23,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.testFramework.junit5.codeInsight.fixture.codeInsightFixture
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiPlainText
@@ -111,6 +113,23 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
   }
 
   @Test
+  fun `Alt+Enter collects intentions again after a write removes text before the caret`() = timeoutRunBlocking(60.seconds) {
+    val probe = WriteProbe()
+    // the first check is in the collection, the second one is in the availability update of the collected intentions
+    val setup = setUp(intentionProbe = probe, lazyFixProbe = null, intentionSpinsFromCheck = 2)
+    val document = setup.editor.document
+    val firstLine = TEXT.substringBefore('\n') + '\n'
+
+    // the caret offset of the first collection is beyond the end of the shorter file
+    probe.run(this, write = {
+      CommandProcessor.getInstance().runUndoTransparentAction { document.deleteString(0, firstLine.length) }
+      PsiDocumentManager.getInstance(project).commitDocument(document)
+    }) { calcCachedIntentions(setup) }
+
+    assertTrue(probe.intentionTexts().contains(INTENTION_TEXT), "intention must be offered: ${probe.intentionTexts()}")
+  }
+
+  @Test
   fun `lazy quick fix wait in a read action lets a write action run`() = timeoutRunBlocking(60.seconds) {
     val probe = WriteProbe()
     val setup = setUp(intentionProbe = null, lazyFixProbe = probe)
@@ -140,9 +159,10 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
 
   /**
    * Registers an intention and an annotator with a lazy fix on [PROBLEM], highlights the file, and moves the caret to
-   * [PROBLEM]. The given probes are called from the intention's `isAvailable` and from the lazy fix computation.
+   * [PROBLEM]. The given probes are called from the intention's `isAvailable`, starting with its [intentionSpinsFromCheck]-th
+   * call, and from the lazy fix computation.
    */
-  private suspend fun setUp(intentionProbe: WriteProbe?, lazyFixProbe: WriteProbe?): Setup {
+  private suspend fun setUp(intentionProbe: WriteProbe?, lazyFixProbe: WriteProbe?, intentionSpinsFromCheck: Int = 1): Setup {
     val disposable = codeInsightFixture.testRootDisposable
     val lazyFixComputations = AtomicInteger()
     val availabilityChecks = AtomicInteger()
@@ -152,8 +172,7 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
       override fun getText(): String = INTENTION_TEXT
 
       override fun isAvailable(project: Project, editor: Editor?, psiFile: PsiFile?): Boolean {
-        if (armed.get()) {
-          availabilityChecks.incrementAndGet()
+        if (armed.get() && availabilityChecks.incrementAndGet() >= intentionSpinsFromCheck) {
           intentionProbe?.waitForWrite()
         }
         return true
@@ -233,6 +252,10 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
     @Volatile
     private var result: List<String> = emptyList()
 
+    /** The modality of the code that calls the probe; the write is posted with it, so it is write-safe. */
+    @Volatile
+    private var modality: ModalityState = ModalityState.nonModal()
+
     fun intentionTexts(): List<String> = result
 
     /** Spins on `checkCanceled` until the write action has run, or [SPIN_BOUND] passes; counts every call. */
@@ -241,6 +264,7 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
       if (ProgressManager.getGlobalProgressIndicator() == null) {
         withoutIndicator.incrementAndGet()
       }
+      modality = ModalityState.defaultModalityState()
       started.complete(Unit)
       val deadline = System.nanoTime() + SPIN_BOUND.inWholeNanoseconds
       try {
@@ -255,8 +279,8 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
       }
     }
 
-    /** Runs [compute], posts a write action once the probe spins, and checks the outcome. */
-    suspend fun run(scope: CoroutineScope, compute: suspend () -> List<String>) {
+    /** Runs [compute], posts a write action that runs [write] once the probe spins, and checks the outcome. */
+    suspend fun run(scope: CoroutineScope, write: () -> Unit = {}, compute: suspend () -> List<String>) {
       val errors = Collections.synchronizedList(ArrayList<String>())
       val errorProcessor = object : LoggedErrorProcessor() {
         override fun processError(category: String, message: String, details: Array<String>, t: Throwable?): Set<Action> {
@@ -269,10 +293,11 @@ internal class CalcCachedIntentionsYieldsToWriteTest {
         postedAt = System.nanoTime()
         ApplicationManager.getApplication().invokeLater({
           ApplicationManager.getApplication().runWriteAction {
+            write()
             writtenAt = System.nanoTime()
             writeDone.set(true)
           }
-        }, ModalityState.any())
+        }, modality)
       }
       LoggedErrorProcessor.executeWith(errorProcessor).use {
         result = compute()
