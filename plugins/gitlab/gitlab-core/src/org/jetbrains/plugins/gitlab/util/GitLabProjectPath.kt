@@ -3,9 +3,7 @@ package org.jetbrains.plugins.gitlab.util
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.text.nullize
-import git4idea.remote.hosting.GitHostingUrlUtil
 import kotlinx.serialization.Serializable
-import org.jetbrains.plugins.gitlab.api.GitLabServerPath
 
 @Serializable
 data class GitLabProjectPath(val owner: @NlsSafe String, val name: @NlsSafe String) {
@@ -16,23 +14,6 @@ data class GitLabProjectPath(val owner: @NlsSafe String, val name: @NlsSafe Stri
   override fun toString(): String = "$owner/$name"
 
   companion object {
-    /**
-     * Gets the project path from [gitRemoteUrl].
-     * SSH URLs use the full project path. HTTP URLs include the web path of [server], which this function removes.
-     */
-    fun create(server: GitLabServerPath, gitRemoteUrl: String): GitLabProjectPath? {
-      val serverPath = server.toURI().path
-      val remotePath = GitHostingUrlUtil.getUriFromRemoteUrl(gitRemoteUrl)?.path ?: return null
-
-      val repositoryPath = when {
-        GitHostingUrlUtil.isSshUrl(gitRemoteUrl) -> remotePath
-        remotePath.startsWith(serverPath) -> remotePath.removePrefix(serverPath)
-        else -> return null
-      }.removePrefix("/")
-
-      return extractProjectPath(repositoryPath)
-    }
-
     fun extractProjectPath(repositoryPath: String): GitLabProjectPath? {
       val lastSlashIdx = repositoryPath.lastIndexOf('/')
       if (lastSlashIdx < 0) return null
