@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.vcs.log.graph.GraphCommit;
@@ -11,6 +12,7 @@ import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
+import java.util.function.Consumer;
 
 /**
  * Attaches the block of the latest commits, which was read from the VCS, to the existing log structure.
@@ -277,13 +281,37 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
   }
 
 
-  static class NewCommitIntegrator<CommitId, Commit extends GraphCommit<CommitId>> {
+  /**
+   * Puts each new commit into {@code list}, before the first commit of {@code list} that is its parent
+   * or that is older than it. A commit always comes before its parents.
+   */
+  @VisibleForTesting
+  @ApiStatus.Internal
+  public static class NewCommitIntegrator<CommitId, Commit extends GraphCommit<CommitId>> {
+    private static final @NonNls String INDEXED_INSERT_KEY = "vcs.log.joiner.indexed.insert";
+
     private final List<Commit> list;
     private final Map<CommitId, Commit> newCommitsMap;
 
     private final Stack<Commit> commitsStack;
 
-    NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
+    /**
+     * The new commits to put before {@code list.get(index)}, by that index. An index of {@code list.size()} means the end of the list.
+     */
+    private final TreeMap<Integer, List<Commit>> insertedByIndex = new TreeMap<>();
+    /**
+     * The smallest timestamp of {@code list.get(0)} up to {@code list.get(index)}, by that index.
+     * It never grows, so a binary search finds the first commit of {@code list} that is older than a new commit.
+     */
+    private long[] prefixMinTimestamp;
+    /**
+     * The index in {@code list} of each commit that is a parent of a new commit.
+     */
+    private Map<CommitId, Integer> parentIndexes;
+
+    @VisibleForTesting
+    @ApiStatus.Internal
+    public NewCommitIntegrator(@NotNull List<Commit> list, @NotNull Collection<Commit> newCommits) {
       this.list = list;
       newCommitsMap = new HashMap<>();
       for (Commit commit : newCommits) {
@@ -292,7 +320,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       commitsStack = new Stack<>();
     }
 
-    private void insertAllUseStack() {
+    private void insertAllUseStack(@NotNull Consumer<? super Commit> insert) {
       StopWatch stopWatch = StopWatch.start("VcsLogJoiner.NewCommitIntegrator.insertAllUseStack");
       try {
         while (!newCommitsMap.isEmpty()) {
@@ -313,19 +341,7 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
               continue;
             }
 
-            int insertIndex;
-            Set<CommitId> parents = new HashSet<>(currentCommit.getParents());
-            for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
-              Commit someCommit = list.get(insertIndex);
-              if (parents.contains(someCommit.getId())) {
-                break;
-              }
-              if (someCommit.getTimestamp() < currentCommit.getTimestamp()) {
-                break;
-              }
-            }
-
-            list.add(insertIndex, currentCommit);
+            insert.accept(currentCommit);
             commitsStack.pop();
           }
         }
@@ -335,14 +351,138 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       }
     }
 
+    /**
+     * Reads {@code list} from the start to find the place of {@code commit}.
+     */
+    private void insertScanning(@NotNull Commit commit) {
+      int insertIndex;
+      Set<CommitId> parents = new HashSet<>(commit.getParents());
+      for (insertIndex = 0; insertIndex < list.size(); insertIndex++) {
+        Commit someCommit = list.get(insertIndex);
+        if (parents.contains(someCommit.getId())) {
+          break;
+        }
+        if (someCommit.getTimestamp() < commit.getTimestamp()) {
+          break;
+        }
+      }
+
+      list.add(insertIndex, commit);
+    }
+
+    /**
+     * Fills {@link #prefixMinTimestamp} and {@link #parentIndexes}, so that {@link #insertIndexed} does not read all of {@code list}.
+     */
+    private void prepareIndexes() {
+      Set<CommitId> parentIds = new HashSet<>();
+      for (Commit commit : newCommitsMap.values()) {
+        parentIds.addAll(commit.getParents());
+      }
+
+      prefixMinTimestamp = new long[list.size()];
+      parentIndexes = new HashMap<>();
+      long minTimestamp = Long.MAX_VALUE;
+      for (int index = 0; index < list.size(); index++) {
+        Commit commit = list.get(index);
+        minTimestamp = Math.min(minTimestamp, commit.getTimestamp());
+        prefixMinTimestamp[index] = minTimestamp;
+        if (parentIds.contains(commit.getId())) {
+          parentIndexes.put(commit.getId(), index);
+        }
+      }
+    }
+
+    /**
+     * Finds the place of {@code commit} with {@link #prefixMinTimestamp} and {@link #parentIndexes},
+     * and keeps it in {@link #insertedByIndex}. It gives the same result as {@link #insertScanning}.
+     */
+    private void insertIndexed(@NotNull Commit commit) {
+      Set<CommitId> parents = new HashSet<>(commit.getParents());
+      int index = firstOlderIndex(commit.getTimestamp());
+      for (CommitId parent : parents) {
+        Integer parentIndex = parentIndexes.get(parent);
+        if (parentIndex != null && parentIndex < index) {
+          index = parentIndex;
+        }
+      }
+
+      // the new commits before list.get(index) come first, so the place of the commit can be between them
+      for (List<Commit> inserted : insertedByIndex.headMap(index, true).values()) {
+        for (int position = 0; position < inserted.size(); position++) {
+          if (goesBefore(commit, parents, inserted.get(position))) {
+            inserted.add(position, commit);
+            return;
+          }
+        }
+      }
+      insertedByIndex.computeIfAbsent(index, __ -> new ArrayList<>()).add(commit);
+    }
+
+    /**
+     * Returns {@code true} if {@code commit} must come before {@code someCommit}, because {@code someCommit} is its parent or is older.
+     * {@code parents} are the parents of {@code commit}.
+     */
+    private boolean goesBefore(@NotNull Commit commit, @NotNull Set<CommitId> parents, @NotNull Commit someCommit) {
+      return someCommit.getTimestamp() < commit.getTimestamp() || parents.contains(someCommit.getId());
+    }
+
+    /**
+     * Returns the index of the first commit of {@code list} that is older than {@code timestamp}, or the size of {@code list}.
+     */
+    private int firstOlderIndex(long timestamp) {
+      int low = 0;
+      int high = prefixMinTimestamp.length;
+      while (low < high) {
+        int middle = (low + high) >>> 1;
+        if (prefixMinTimestamp[middle] < timestamp) {
+          high = middle;
+        }
+        else {
+          low = middle + 1;
+        }
+      }
+      return low;
+    }
+
+    private @NotNull List<Commit> buildResultList() {
+      int insertedCount = 0;
+      for (List<Commit> inserted : insertedByIndex.values()) {
+        insertedCount += inserted.size();
+      }
+
+      List<Commit> result = new ArrayList<>(list.size() + insertedCount);
+      int from = 0;
+      for (Map.Entry<Integer, List<Commit>> entry : insertedByIndex.entrySet()) {
+        result.addAll(list.subList(from, entry.getKey()));
+        result.addAll(entry.getValue());
+        from = entry.getKey();
+      }
+      result.addAll(list.subList(from, list.size()));
+      return result;
+    }
+
     private void visitCommit(@NotNull Commit commit) {
       commitsStack.push(commit);
       newCommitsMap.remove(commit.getId());
     }
 
     public @NotNull List<Commit> getResultList() {
-      insertAllUseStack();
-      return list;
+      return getResultList(Registry.is(INDEXED_INSERT_KEY, true));
+    }
+
+    @VisibleForTesting
+    public @NotNull List<Commit> getResultList(boolean indexedInsert) {
+      if (newCommitsMap.isEmpty()) {
+        return list;
+      }
+      if (!indexedInsert) {
+        insertAllUseStack(this::insertScanning);
+        return list;
+      }
+
+      prepareIndexes();
+      insertAllUseStack(this::insertIndexed);
+      return buildResultList();
     }
   }
 }

@@ -116,6 +116,8 @@
                  description="Restore VCS Log tabs with empty filters when project is re-opened"/>
     <registryKey key="vcs.log.small.data.pack.from.recent.commits" defaultValue="true"
                  description="Build the small data pack from the recent commits that the refresh loads, instead of loading it separately"/>
+    <registryKey key="vcs.log.joiner.indexed.insert" defaultValue="true"
+                 description="Find the place of each new commit in the log with a binary search, instead of reading the log from the start"/>
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 

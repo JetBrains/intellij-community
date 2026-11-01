@@ -22,6 +22,7 @@ import com.intellij.vcs.log.impl.HashImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.fail
 import org.junit.Test
+import kotlin.random.Random
 
 
 class VcsLogJoinerTest {
@@ -943,6 +944,37 @@ class VcsLogJoinerTest {
       expected {
 
       }
+    }
+  }
+
+  /**
+   * The indexed insert of [VcsLogJoiner.NewCommitIntegrator] must give the same order as the insert that reads the log from the start.
+   */
+  @Test
+  fun indexedInsertGivesTheSameOrder() {
+    val random = Random(239)
+    repeat(300) { run ->
+      val commitCount = 2 + random.nextInt(30)
+      val ids = (1..commitCount).map { "c$it" }
+      // a commit can only be the parent of an earlier commit, so the commits make a graph with no cycle
+      val commits = ids.mapIndexed { index, id ->
+        val parents = (0 until random.nextInt(3))
+          .map { index + 1 + random.nextInt(commitCount - index) }
+          .filter { it < commitCount }
+          .distinct()
+          .joinToString(" ") { ids[it] }
+        // the timestamps are random, so a parent can be newer than its child
+        "${random.nextInt(20)}|-$id|-$parents"
+      }
+      val newIndexes = ids.indices.filter { random.nextInt(4) == 0 }.toSet()
+      val savedLog = TimedCommitParser.log(commits.filterIndexed { index, _ -> index !in newIndexes })
+      val newCommits = TimedCommitParser.log(commits.filterIndexed { index, _ -> index in newIndexes })
+
+      val scanning = VcsLogJoiner.NewCommitIntegrator(ArrayList(savedLog), newCommits).getResultList(false)
+      val indexed = VcsLogJoiner.NewCommitIntegrator(ArrayList(savedLog), newCommits).getResultList(true)
+      assertEquals("run $run of ${savedLog.size} saved and ${newCommits.size} new commits",
+                   scanning.joinToString(separator = "\n") { it.id.asString() },
+                   indexed.joinToString(separator = "\n") { it.id.asString() })
     }
   }
 }
