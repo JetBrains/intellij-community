@@ -27,8 +27,6 @@ Each kind of text has one home. Rationale and evidence for a change go in the co
 
 {{PARTIAL:module-specific}}
 
-{{PARTIAL:code-ownership}}
-
 ## Mandatory Rules
 
 ### Before the First Edit
