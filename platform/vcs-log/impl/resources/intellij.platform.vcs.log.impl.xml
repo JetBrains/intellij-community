@@ -114,6 +114,8 @@
     <postStartupActivity implementation="com.intellij.vcs.log.impl.IdeVcsProjectLog$InitLogStartupActivity"/>
     <registryKey key="vcs.log.tabs.restore.without.filters" defaultValue="false"
                  description="Restore VCS Log tabs with empty filters when project is re-opened"/>
+    <registryKey key="vcs.log.small.data.pack.from.recent.commits" defaultValue="true"
+                 description="Build the small data pack from the recent commits that the refresh loads, instead of loading it separately"/>
 
     <cachesInvalidator implementation="com.intellij.vcs.log.impl.VcsLogCachesInvalidator"/>
 

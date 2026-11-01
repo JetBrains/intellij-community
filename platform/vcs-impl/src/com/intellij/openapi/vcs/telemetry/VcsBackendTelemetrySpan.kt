@@ -126,6 +126,12 @@ interface VcsBackendTelemetrySpan: VcsTelemetrySpan {
     CreatingRefsModel("vcs-log-creating-refs-model"),
 
     /**
+     * Building the overlay data from the first recent commits during [Refreshing].
+     * It replaces [PartialRefreshing] when the refresh reads the recent commits of all roots.
+     */
+    BuildingOverlayData("vcs-log-building-overlay-data"),
+
+    /**
      * Building a [com.intellij.vcs.log.graph.PermanentGraph] for the list of commits.
      */
     BuildingGraph("vcs-log-building-graph"),

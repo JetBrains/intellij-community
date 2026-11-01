@@ -8,6 +8,8 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.RegistryManager
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.BuildingOverlayData
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CollectingPreviousCommits
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CompactingCommits
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CompressingRefs
@@ -176,7 +178,11 @@ class VcsLogRefresherImpl(
     }
 
     LOG.debug("Refreshing roots: ${request.roots}")
-    if (request.loadOverlayData && VcsLogGraphData.OverlayData.isEnabled) {
+    val loadOverlayData = request.loadOverlayData && VcsLogGraphData.OverlayData.isEnabled
+    // the recent log of all roots contains the overlay commits, so the small datapack is not necessary
+    val overlayFromRecentLog = loadOverlayData && currentDataPack.isFull && rootsToRefresh.containsAll(providers.keys) &&
+                               RegistryManager.getInstanceAsync().`is`("vcs.log.small.data.pack.from.recent.commits")
+    if (loadOverlayData && !overlayFromRecentLog) {
       val smallDataPack = loadSmallDataPack()
       if (smallDataPack !== VcsLogGraphData.Empty) {
         dataPackUpdateHandler.accept(smallDataPack)
@@ -186,7 +192,7 @@ class VcsLogRefresherImpl(
     checkCanceled()
     return runCatching {
       val partiallyLoadedLog =
-        if (currentDataPack.isFull) loadUpdatedDataPack(currentDataPack, refreshSessionData, rootsToRefresh)
+        if (currentDataPack.isFull) loadUpdatedDataPack(currentDataPack, refreshSessionData, rootsToRefresh, overlayFromRecentLog)
         else null
 
       partiallyLoadedLog ?: loadFullLog()
@@ -254,6 +260,7 @@ class VcsLogRefresherImpl(
     dataPack: VcsLogGraphData,
     refreshSessionData: RefreshSessionData,
     roots: Collection<VirtualFile>,
+    overlayFromRecentLog: Boolean,
   ): VcsLogGraphData? =
     VcsTracer.traceSuspending(Refreshing) {
       LOG.debug("Loading the recent data for roots $roots")
@@ -265,7 +272,7 @@ class VcsLogRefresherImpl(
         }
       }
       var commitCount = recentCommitCount
-      repeat(2) {
+      repeat(2) { attempt ->
         val activity = providers.values.singleOrNull()?.let { singleProvider ->
           VcsLogPerformanceStatisticsCollector.startUpdateDataPackActivity(project, singleProvider.supportedVcs)
         }
@@ -275,6 +282,7 @@ class VcsLogRefresherImpl(
         checkCanceled()
         refreshSessionData.put(currentAttemptData)
         val compoundLog = multiRepoJoin(refreshSessionData.commits)
+        if (overlayFromRecentLog && attempt == 0) showOverlayData(compoundLog, refreshSessionData.refs)
         val allNewRefs = currentRefs.toMutableMap().apply {
           replaceAll { root, refs ->
             refreshSessionData.getRefs(root) ?: refs
@@ -326,6 +334,24 @@ class VcsLogRefresherImpl(
       }
       VcsLogGraphData.Empty
     }
+
+  /**
+   * Builds the overlay data from the first commits of [log] and [refs], and passes it to [dataPackUpdateHandler].
+   * It replaces [loadSmallDataPack] when [log] is the joined recent commits of all roots.
+   */
+  private fun showOverlayData(log: List<GraphCommit<Int>>, refs: Map<VirtualFile, VcsLogRootStoredRefs>) {
+    try {
+      val overlayData = VcsTracer.trace(BuildingOverlayData) {
+        val commits = log.take(VcsLogGraphData.OverlayData.commitsCount)
+        VcsLogGraphDataFactory.buildOverlayData(commits, refs, providers, storage)
+      }
+      dataPackUpdateHandler.accept(overlayData)
+    }
+    catch (e: Exception) {
+      rethrowControlFlowException(e)
+      LOG.info(e)
+    }
+  }
 
   private fun prepareRequirements(roots: Collection<VirtualFile>, commitCount: Int, prevRefs: Map<VirtualFile, VcsLogRootStoredRefs>?) =
     roots.associateWith { root ->
