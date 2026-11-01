@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserStructuralNode
+import com.intellij.openapi.vcs.changes.ui.STRUCTURAL_DIFF_DIM_HUNK_LINES
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
@@ -52,6 +53,22 @@ internal class StructuralDiffPreviewHighlightTest {
       assertEquals(before.map { it + 1 }, gutters.map { it.componentCount }, "Each gutter gets one dim")
       Disposer.dispose(highlight)
       assertEquals(before, gutters.map { it.componentCount }, "The end of the dim removes it from the gutters")
+    }
+  }
+
+  @Test
+  fun `each editor names the lines of the hunk while the dim shows`(): Unit = timeoutRunBlocking {
+    withViewer(base = "first\nremoved\nlast", current = "first\nlast") { viewer ->
+      val editors = Side.entries.map<Side, Editor> { viewer.getEditor(it) }
+      val hunk = listOf(LineRange(1, 2), LineRange(1, 1))
+      val highlight = StructuralDiffPreviewHighlight(viewer, ChangesBrowserStructuralNode.DiffLines(hunk[0], hunk[1]))
+      highlight.apply(scroll = false)
+      assertEquals(hunk, editors.map { it.getUserData(STRUCTURAL_DIFF_DIM_HUNK_LINES) }, "The side without lines names the place of the hunk")
+      // A rediff applies the dim again.
+      highlight.apply(scroll = false)
+      assertEquals(hunk, editors.map { it.getUserData(STRUCTURAL_DIFF_DIM_HUNK_LINES) })
+      Disposer.dispose(highlight)
+      assertEquals(listOf(null, null), editors.map { it.getUserData(STRUCTURAL_DIFF_DIM_HUNK_LINES) }, "The end of the dim removes the lines")
     }
   }
 
