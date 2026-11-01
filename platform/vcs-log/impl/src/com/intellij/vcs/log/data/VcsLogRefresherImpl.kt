@@ -259,6 +259,11 @@ class VcsLogRefresherImpl(
       LOG.debug("Loading the recent data for roots $roots")
       val permanentGraph = dataPack.permanentGraph
       val currentRefs = dataPack.refsModel.refsByRoot
+      val previousLog by lazy(LazyThreadSafetyMode.NONE) {
+        VcsTracer.trace(CollectingPreviousCommits) { span ->
+          permanentGraph.allCommits.toList().also { span.setAttribute("commitCount", it.size.toLong()) }
+        }
+      }
       var commitCount = recentCommitCount
       repeat(2) {
         val activity = providers.values.singleOrNull()?.let { singleProvider ->
@@ -277,9 +282,6 @@ class VcsLogRefresherImpl(
         }
         checkCanceled()
         val (joinedFullLog, joinTime) = measureTimedValue {
-          val previousLog = VcsTracer.trace(CollectingPreviousCommits) { span ->
-            permanentGraph.allCommits.toList().also { span.setAttribute("commitCount", it.size.toLong()) }
-          }
           join(previousLog, compoundLog, currentRefs, allNewRefs)
         }
         if (joinedFullLog != null) {
