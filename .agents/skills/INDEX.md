@@ -23,11 +23,7 @@ One row per skill in this directory. `SKILL.md` holds the full instructions.
 | [icon-resources](icon-resources/SKILL.md) | Manage IntelliJ icons, generated Icons classes, and icon-robots rules. |
 | [icons](icons/SKILL.md) | Create or review IntelliJ New UI SVG icons and theme variants. |
 | [ide-diagnostics-mcp](ide-diagnostics-mcp/SKILL.md) | Inspect a running IntelliJ IDE for freezes or blocked threads via MCP. |
-| [jewel-markdown](jewel-markdown/SKILL.md) | Build or debug Jewel Markdown parsing, rendering, and styling. |
-| [jewel-release](jewel-release/SKILL.md) | Prepare a Jewel PR or release: checks, release notes, cherry-picks, tagging. |
-| [jewel-swing-interop](jewel-swing-interop/SKILL.md) | Embed Jewel Compose UI in Swing. |
-| [jewel-ui](jewel-ui/SKILL.md) | Build UI with Jewel components and themes. |
-| [jewel-ui-audit](jewel-ui-audit/SKILL.md) | Audit Jewel UI theming and idioms. |
+| [jewel](jewel/SKILL.md) | Jewel UI: build, audit, Markdown, Swing interop, PRs and releases. |
 | [jna](jna/SKILL.md) | Implement or debug JNA bindings and ABI layouts in Kotlin or Java. |
 | [kotlin-ui-dsl](kotlin-ui-dsl/SKILL.md) | Write IntelliJ dialogs and settings with Kotlin UI DSL v2 panels. |
 | [kotlin-ui-swing-component-architecture](kotlin-ui-swing-component-architecture/SKILL.md) | Design IntelliJ Swing UI components, state flow, and EDT work. |

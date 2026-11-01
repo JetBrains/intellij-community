@@ -16,11 +16,7 @@
 /icon-resources/** linguist-generated
 /icons/** linguist-generated
 /ide-diagnostics-mcp/** linguist-generated
-/jewel-markdown/** linguist-generated
-/jewel-release/** linguist-generated
-/jewel-swing-interop/** linguist-generated
-/jewel-ui/** linguist-generated
-/jewel-ui-audit/** linguist-generated
+/jewel/** linguist-generated
 /jna/** linguist-generated
 /kotlin-ui-dsl/** linguist-generated
 /kotlin-ui-swing-component-architecture/** linguist-generated
