@@ -49,7 +49,8 @@ interface GitLabApiHelper : HttpApiHelper {
 }
 
 // this dark inheritance magic is required to make extensions work properly
-internal class GitLabApiImpl(
+@ApiStatus.Internal
+class GitLabApiImpl(
   private val serversManager: GitLabServersManager,
   override val server: GitLabServerPath,
   httpHelper: HttpApiHelper,
