@@ -57,11 +57,8 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.Name.identifier
-import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtBlockExpression
@@ -103,8 +100,7 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     // Abstract variables and functions are front-end dependent (K1 or K2).
     abstract val kotlinSupport: KotlinLanguageInjectionSupportBase?
 
-    abstract fun KtCallExpression.callableId(): CallableId?
-    abstract fun KtExpression?.computeConstantExpression(): Any?
+    abstract fun KtCallExpression.trimIndentHandler(): IndentHandler?
 
     abstract fun resolveReference(reference: PsiReference): PsiElement?
 
@@ -115,11 +111,6 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
     abstract fun injectionInfoByExtensionReceiverParameter(callableDeclaration: KtCallableDeclaration): InjectionInfo?
 
     private val absentKotlinInjection: BaseInjection = BaseInjection("ABSENT_KOTLIN_BASE_INJECTION")
-
-    companion object {
-        private val trimIndentCallableId = CallableId(StandardClassIds.BASE_TEXT_PACKAGE, identifier("trimIndent"))
-        private val trimMarginCallableId = CallableId(StandardClassIds.BASE_TEXT_PACKAGE, identifier("trimMargin"))
-    }
 
     private data class KotlinCachedInjection(val modificationCount: Long, val baseInjection: BaseInjection)
 
@@ -214,22 +205,9 @@ abstract class KotlinLanguageInjectionContributorBase : LanguageInjectionContrib
         if (!Registry.`is`("kotlin.injection.handle.trimindent", true)) return ktHost
         val dotQualifiedExpression = ktHost.parent as? KtDotQualifiedExpression ?: return ktHost
         val callExpression = dotQualifiedExpression.selectorExpression as? KtCallExpression ?: return ktHost
-        val callableId = callExpression.callableId()
-        return when (callableId) {
-            trimIndentCallableId -> {
-                ktHost.indentHandler = TrimIndentHandler()
-                dotQualifiedExpression
-            }
-
-            trimMarginCallableId -> {
-                val argumentExpression = callExpression.valueArguments.firstOrNull()?.getArgumentExpression()
-                val marginChar = argumentExpression.computeConstantExpression() as? String
-                ktHost.indentHandler = TrimIndentHandler(marginChar)
-                dotQualifiedExpression
-            }
-
-            else -> ktHost
-        }
+        val indentHandler = callExpression.trimIndentHandler() ?: return ktHost
+        ktHost.indentHandler = indentHandler
+        return dotQualifiedExpression
     }
 
     private fun findInjectionInfo(place: KtElement, containingFile: PsiFile, configuration: Configuration, originalHost: Boolean = true): InjectionInfo? {

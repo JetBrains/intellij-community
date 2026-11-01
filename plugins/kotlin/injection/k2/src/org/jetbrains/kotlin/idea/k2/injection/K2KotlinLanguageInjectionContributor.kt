@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.injection
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
-import com.intellij.psi.impl.LanguageConstantExpressionEvaluator
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.intelliLang.inject.InjectorUtils
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -15,27 +14,22 @@ import org.jetbrains.kotlin.analysis.api.components.resolveToSymbol
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.analysis.api.projectStructure.copyOrigin
-import org.jetbrains.kotlin.analysis.api.resolution.function
-import org.jetbrains.kotlin.analysis.api.resolution.single
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.resolution.tryResolveCall
 import org.jetbrains.kotlin.analysis.api.session.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.symbol
+import org.jetbrains.kotlin.idea.base.injection.IndentHandler
 import org.jetbrains.kotlin.idea.base.injection.InjectionInfo
 import org.jetbrains.kotlin.idea.base.injection.KotlinLanguageInjectionContributorBase
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtProperty
 import org.intellij.lang.annotations.Language as LanguageAnnotation
@@ -45,17 +39,7 @@ internal class K2KotlinLanguageInjectionContributor : KotlinLanguageInjectionCon
         InjectorUtils.getActiveInjectionSupports().filterIsInstance<K2KotlinLanguageInjectionSupport>().firstOrNull()
     }
 
-    override fun KtCallExpression.callableId(): CallableId? = analyze(this) {
-        val symbol = tryResolveCall()?.single?.function?.symbol
-        symbol?.callableId
-    }
-
-    override fun KtExpression?.computeConstantExpression(): Any? {
-        val language = this?.language ?: return null
-        val expressionEvaluator =
-            LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(language)
-        return expressionEvaluator.computeConstantExpression(this, false)
-    }
+    override fun KtCallExpression.trimIndentHandler(): IndentHandler? = findTrimIndentHandler()
 
     override fun resolveReference(reference: PsiReference): PsiElement? = reference.resolve()
 
