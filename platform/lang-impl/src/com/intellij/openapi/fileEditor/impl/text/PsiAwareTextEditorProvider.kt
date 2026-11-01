@@ -128,11 +128,14 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       try {
         if (SystemProperties.getBooleanProperty("idea.editor.highlighter.prepare.in.parallel", true) &&
-            this@PsiAwareTextEditorProvider.javaClass == PsiAwareTextEditorProvider::class.java) {
+            this@PsiAwareTextEditorProvider.javaClass == PsiAwareTextEditorProvider::class.java &&
+            !highlighterDeferred.isCompleted) {
           span("editor shell construction on EDT", Dispatchers.EDT) {
-            val pending = factory.prepareMainEditor(effectiveDocument, project, file)
-            pendingEditor = pending
-            disposeOnFailure = pending::close
+            if (!highlighterDeferred.isCompleted) {
+              val pending = factory.prepareMainEditor(effectiveDocument, project, file)
+              pendingEditor = pending
+              disposeOnFailure = pending::close
+            }
           }
         }
         val highlighter = span("editor prepared highlighter await") { highlighterDeferred.await() }
