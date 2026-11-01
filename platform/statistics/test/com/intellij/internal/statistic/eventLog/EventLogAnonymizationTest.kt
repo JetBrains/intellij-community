@@ -4,6 +4,8 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.trace.TraceEventLoggerProvider
 import com.intellij.internal.statistic.eventLog.trace.TracePiiFilteringEventLogger
+import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManagerEx
@@ -13,6 +15,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
+import com.jetbrains.fus.reporting.api.ValidationResultType
 import com.jetbrains.fus.reporting.model.lion3.LogEvent
 import com.jetbrains.fus.reporting.model.lion3.LogEventAction
 import com.jetbrains.fus.reporting.model.lion3.LogEventGroup
@@ -23,6 +26,7 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -148,6 +152,47 @@ internal class EventLogAnonymizationTest {
     assertEquals("INDEPENDENT", trace.alternativeRecorderId)
     assertEquals(independent.anonymize("session-id"), trace.anonymize("session-id"))
     assertNotEquals(configuration.getOrCreate("FUS").anonymize("session-id"), independent.anonymize("session-id"))
+  }
+
+  @Test
+  @Timeout(30)
+  fun `a short hash stays short after a full hash of the same ID`() {
+    checkHashFormats(shortFirst = false)
+  }
+
+  @Test
+  @Timeout(30)
+  fun `a full hash stays full after a short hash of the same ID`() {
+    checkHashFormats(shortFirst = true)
+  }
+
+  @Suppress("EventLogDescription")
+  private fun checkHashFormats(shortFirst: Boolean) {
+    val configuration = EventLogConfiguration()
+    val container = (ApplicationManager.getApplication() as ComponentManagerEx).getMutableComponentContainer() as TestMutableComponentManager
+    container.replaceServiceInstance(EventLogConfiguration::class.java, configuration, disposable)
+    val recorder = configuration.getOrCreate("FUS")
+    val rawId = "toolu_private_shared_invocation"
+    val shortField = EventFields.ShortAnonymizedField("skill_invocation_id")
+    val fullField = EventFields.AnonymizedField("tool_call_id")
+    val fields = if (shortFirst) listOf(shortField, fullField) else listOf(fullField, shortField)
+
+    repeat(2) {
+      val data = FeatureUsageData("FUS")
+      for (field in fields) {
+        field.addData(data, rawId)
+      }
+      val row = data.build()
+      val shortHash = row.getValue(shortField.name) as String
+      val fullHash = row.getValue(fullField.name) as String
+      val context = EventContext.create("invocation", row)
+
+      assertEquals(ValidationResultType.ACCEPTED, RegexpValidationRule("[0-9a-f]{12}").validate(shortHash, context))
+      assertEquals(ValidationResultType.ACCEPTED, RegexpValidationRule("[0-9a-f]{64}").validate(fullHash, context))
+      assertEquals(recorder.anonymizeSkipCache(rawId, short = true), shortHash)
+      assertEquals(recorder.anonymizeSkipCache(rawId), fullHash)
+      assertEquals(fullHash.take(12), shortHash)
+    }
   }
 
   @Suppress("EventLogDescription")

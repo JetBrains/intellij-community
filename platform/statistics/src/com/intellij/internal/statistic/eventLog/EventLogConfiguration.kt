@@ -227,7 +227,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       return data
     }
 
-    return anonymizedCache.computeIfAbsent(data) { hashSha256(salt, it).applyIf(short) { this.substring(0, 12) } }
+    return anonymizedCache.computeIfAbsent(data) { hashSha256(salt, it) }.applyIf(short) { this.substring(0, 12) }
   }
 
   @TestOnly
