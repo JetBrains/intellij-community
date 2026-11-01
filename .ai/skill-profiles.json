@@ -19,15 +19,14 @@
     "air": ["acp-sync", "air", "vm-ui-tests"],
     "build": ["bazel-test-migration", "convert-lib-to-product-module", "module-set-pluginization", "plugin-model-analyzer"],
     "clion": ["clion-test-in-tc"],
+    "daemon": ["daemon"],
     "dotnet": ["dotnet"],
     "jewel": ["jewel-markdown", "jewel-release", "jewel-swing-interop", "jewel-ui", "jewel-ui-audit"],
     "kotlin-mpp": ["kmt-tc-duty"],
     "python": ["compare-python-typecheckers", "py-junit5-tests", "pycharm-dev-workflow"],
     "remote-dev": [
-      "daemon-libraries",
       "investigate-split-completion",
       "remote-dev",
-      "setup-local-rd-flow",
       "split-mode-debug-run-config"
     ],
     "teamcity": [
@@ -36,7 +35,7 @@
       "mute-teamcity-test",
       "teamcity-batch-verify"
     ],
-    "toolbox": ["tbx-update-jetbrainsd", "toolbox-agent-ssh-deploy"],
+    "toolbox": ["tbx-update-jetbrainsd"],
     "ui": [
       "compose",
       "compose-ui-architecture",
@@ -54,9 +53,9 @@
     "dotnet": {"keeps": ["dotnet", "clion", "teamcity"]},
     "jewel": {"keeps": ["jewel", "ui"]},
     "minimal": {"keeps": []},
-    "platform": {"keeps": ["build", "remote-dev", "teamcity", "ui"]},
+    "platform": {"keeps": ["build", "daemon", "remote-dev", "teamcity", "ui"]},
     "python": {"keeps": ["build", "python", "teamcity"]},
-    "remote-dev": {"keeps": ["build", "remote-dev", "ui"]},
-    "toolbox": {"keeps": ["teamcity", "toolbox"]}
+    "remote-dev": {"keeps": ["build", "daemon", "remote-dev", "ui"]},
+    "toolbox": {"keeps": ["daemon", "teamcity", "toolbox"]}
   }
 }
