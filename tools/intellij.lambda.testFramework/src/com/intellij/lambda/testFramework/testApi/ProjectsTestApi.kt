@@ -14,7 +14,6 @@ import com.intellij.remoteDev.tests.impl.utils.waitSuspending
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingForOne
 import com.intellij.remoteDev.tests.impl.utils.waitSuspendingNotNull
 import com.intellij.ui.AppIcon
-import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
@@ -123,11 +122,8 @@ suspend fun openProject(projectPath: Path): Project {
   ) ?: error("Failed to open project at $projectPath")
 
   lambdaBackendContext.addAfterEachCleanup {
-    @Suppress("RAW_RUN_BLOCKING")
-    runBlocking {
-      projectManager.forceCloseProjectAsync(project, save = false)
-      waitForProject(timeout = 5.seconds) // waits there is a single project left
-    }
+    projectManager.forceCloseProjectAsync(project, save = false)
+    waitForProject(timeout = 5.seconds) // waits there is a single project left
   }
   project.waitInitialised()
   frameworkLogger.info("Project '${project.name}' opened and initialized")

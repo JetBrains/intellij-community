@@ -19,7 +19,7 @@ interface LambdaIdeContext : CoroutineScope {
   var testData: Any?
   val testFixtures: TestFixtures
   val globalDisposable: Disposable
-  fun addAfterEachCleanup(action: () -> Unit)
+  fun addAfterEachCleanup(action: suspend () -> Unit)
 }
 
 @ApiStatus.Internal
@@ -47,12 +47,12 @@ abstract class LambdaIdeContextClass(
   override var testFixtures: TestFixtures = TestFixtures(mutableListOf()),
   override val globalDisposable: Disposable = Disposer.newDisposable("Global LambdaIdeContext disposable"),
 ) : LambdaIdeContext {
-  private val actionsAfterEach: MutableList<() -> Unit> = mutableListOf()
+  private val actionsAfterEach: MutableList<suspend () -> Unit> = mutableListOf()
 
   /**
    * Added action will be executed after the current test finishes
    */
-  override fun addAfterEachCleanup(action: () -> Unit) {
+  override fun addAfterEachCleanup(action: suspend () -> Unit) {
     actionsAfterEach.add(action)
   }
 
@@ -61,7 +61,7 @@ abstract class LambdaIdeContextClass(
     if (actionsAfterEach.isNotEmpty()) {
       actionsAfterEach.reversed().forEachIndexed { index, function ->
         runLogged("After each cleanup action [#$index/${actionsAfterEach.size}]") {
-          function.invoke()
+          function()
         }
       }
     }

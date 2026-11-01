@@ -2,9 +2,12 @@ package com.intellij.lambda.sampleTestsWithFixtures.fixtures
 
 import com.intellij.lambda.testFramework.frameworkLogger
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
 import com.intellij.remoteDev.tests.LambdaIdeContext
 import com.intellij.testFramework.fixtures.IdeaTestFixture
 import com.intellij.testFramework.junit5.fixture.TestFixtureImpl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /** Inits legacy test fixtures from IntelliJ test framework */
 context(context: LambdaIdeContext)
@@ -17,7 +20,9 @@ inline fun <reified T : IdeaTestFixture> newTestFixture(fixtureSetup: (Disposabl
 
   context.addAfterEachCleanup {
     frameworkLogger.info("Disposing test fixture '${T::class.simpleName}'")
-    fixture.tearDown()
+    withContext(Dispatchers.EDT) {
+      fixture.tearDown()
+    }
   }
 
   context.testFixtures.add(fixture)
