@@ -17,13 +17,7 @@ internal fun VcsLogObjectsFactory.createBranchesRefs(repository: GitRepository):
   return createBranchesRefsSequence(repoInfo, root).toCollection(refs)
 }
 
-internal fun VcsLogObjectsFactory.createBranchesRefsSequence(repository: GitRepository): Sequence<VcsRef> {
-  val repoInfo = repository.info
-  val root = repository.root
-  return createBranchesRefsSequence(repoInfo, root)
-}
-
-private fun VcsLogObjectsFactory.createBranchesRefsSequence(
+internal fun VcsLogObjectsFactory.createBranchesRefsSequence(
   repoInfo: GitRepoInfo,
   root: VirtualFile,
 ): Sequence<VcsRef> {

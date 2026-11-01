@@ -53,7 +53,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedClass
-import org.junit.jupiter.params.provider.ValueSource
+import org.junit.jupiter.params.provider.CsvSource
 
 /**
  * Prior to 1.8.0 --regexp-ignore-case does not work when --fixed-strings parameter is specified,
@@ -62,6 +62,7 @@ import org.junit.jupiter.params.provider.ValueSource
 private val FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = GitVersion(1, 8, 0, 0)
 
 private const val EXPERIMENTAL_REFS_COLLECTION = "git.log.provider.experimental.refs.collection"
+private const val BRANCH_TIPS = "git.log.provider.experimental.branch.tips"
 
 @TestApplication
 internal class GitLogProviderTest {
@@ -313,10 +314,10 @@ internal class GitLogProviderTest {
 }
 
 @TestApplication
-@ParameterizedClass(name = "experimental refs collection = {0}")
-@ValueSource(booleans = [false, true])
-internal class GitReadRecentCommitsTest(experimentalRefsCollection: Boolean) {
-  private val fixture = gitSingleRepoContextFixture().gitLogProviderTestFixture(experimentalRefsCollection)
+@ParameterizedClass(name = "experimental refs collection = {0}, branch tips = {1}")
+@CsvSource("false, false", "true, false", "true, true")
+internal class GitReadRecentCommitsTest(experimentalRefsCollection: Boolean, branchTips: Boolean) {
+  private val fixture = gitSingleRepoContextFixture().gitLogProviderTestFixture(experimentalRefsCollection, branchTips)
   private val context: GitSingleRepoContext get() = fixture.get()
 
   @Test
@@ -390,9 +391,50 @@ internal class GitReadRecentCommitsTest(experimentalRefsCollection: Boolean) {
     assertThat(data.refsIterable).anyMatch { it.name == "build" && it.type === GitRefManager.TAG }
   }
 
-  private fun GitSingleRepoContext.readRecentCommits(requirements: VcsLogProvider.Requirements): DetailedLogData {
+  @Test
+  fun `test commits of local and remote branches and detached HEAD`(): Unit = with(context) {
+    prepareSomeHistory()
+    git("checkout -b feature")
+    repo.tac("feature.txt")
+    git("checkout master")
+    repo.tac("remote.txt")
+    git("update-ref refs/remotes/origin/remote-only HEAD")
+    git("reset --hard HEAD~1")
+    git("checkout --detach")
+    repo.tac("detached.txt")
+
+    val expectedLog = readCommitsFromGit()
+    val block = readRecentCommits(SimpleLogProviderRequirements(1000))
+    assertThat(block.commits).containsExactlyInAnyOrderElementsOf(expectedLog)
+  }
+
+  @Test
+  fun `test stale branch with deleted commit object`(): Unit = with(context) {
+    prepareSomeHistory()
+    git("checkout -b deleted")
+    repo.tac("deleted.txt")
+    git("checkout master")
     repo.update()
-    (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
+    git("branch -D deleted")
+    git("reflog expire --expire=now --all")
+    git("gc --prune=now")
+
+    val expectedLog = readCommitsFromGit()
+    assertThat(repo.branches.localBranches.map { it.name })
+      .describedAs("GitRepository must still have the deleted branch")
+      .contains("deleted")
+    val block = readRecentCommits(SimpleLogProviderRequirements(1000), updateRepository = false)
+    assertThat(block.commits).containsExactlyInAnyOrderElementsOf(expectedLog)
+  }
+
+  private fun GitSingleRepoContext.readRecentCommits(
+    requirements: VcsLogProvider.Requirements,
+    updateRepository: Boolean = true,
+  ): DetailedLogData {
+    if (updateRepository) {
+      repo.update()
+      (repo.tagsHolder as? GitRepositoryTagsHolderImpl)?.updateForTests()
+    }
     return runBlocking {
       logProvider.readRecentCommits(projectRoot, requirements, requirements.toRefsLoadingPolicy())
     }
@@ -400,11 +442,17 @@ internal class GitReadRecentCommitsTest(experimentalRefsCollection: Boolean) {
 }
 
 
-private fun TestFixture<GitSingleRepoContext>.gitLogProviderTestFixture(experimentalRefsCollection: Boolean? = null): TestFixture<GitSingleRepoContext> {
+private fun TestFixture<GitSingleRepoContext>.gitLogProviderTestFixture(
+  experimentalRefsCollection: Boolean? = null,
+  branchTips: Boolean? = null,
+): TestFixture<GitSingleRepoContext> {
 
   return testFixture {
     experimentalRefsCollection?.let { value ->
       registryKeyFixture(EXPERIMENTAL_REFS_COLLECTION) { setValue(value) }.init()
+    }
+    branchTips?.let { value ->
+      registryKeyFixture(BRANCH_TIPS) { setValue(value) }.init()
     }
     initialized(init()) {}
   }

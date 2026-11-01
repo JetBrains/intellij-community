@@ -25,6 +25,7 @@ internal fun createLogDataIn(cs: CoroutineScope, repo: GitRepository, logProvide
 }
 
 internal fun VcsLogData.refreshAndWait(repo: GitRepository, waitIndexFinishing: Boolean) {
+  repo.update()
   val logWaiter = CompletableFuture<VcsLogData>()
   val dataPackChangeListener = DataPackChangeListener { newDataPack ->
     if (newDataPack.isFull) {
