@@ -26,10 +26,7 @@ Below, `accio` stands for `accio.cmd`. `accio <command> --help` lists the option
   `complete` answer as it is.
 - accio indexes the files that git tracks, dot-directories such as `.agents/` included.
 - A `--scope` that names a git-ignored file or a directory under it is read from the working tree, for example
-  `--scope out/air/`. Two cases still miss: a directory outside the repository answers 0 hits
-  ([accio#26](https://github.com/JetBrains/accio/issues/26)), and `--scope out/` searches the tracked `**/out/**`
-  directories instead of the root `out/` ([accio#27](https://github.com/JetBrains/accio/issues/27)). Use `rg.cmd`
-  there.
+  `--scope out/air/`. A directory outside the repository is read from disk.
 - `--mode regex` has no look-around. Use `rg.cmd --pcre2` for it.
 
 ## Text wrappers
