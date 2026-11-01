@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.vcs.impl.shared.telemetry.VcsTracer
+import com.intellij.platform.vcs.impl.shared.telemetry.trace
 import com.intellij.platform.vcs.impl.shared.telemetry.traceSuspending
 import com.intellij.platform.vcs.impl.shared.telemetry.withVcsAttributes
 import com.intellij.util.ArrayUtilRt
@@ -32,7 +33,9 @@ import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.telemetry.GitBackendTelemetrySpan.Log
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.FindingRepository
 import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.LoadingCommitsOnTaggedBranch
+import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.PreparingTags
 import git4idea.telemetry.GitBackendTelemetrySpan.LogProvider.SortingCommits
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -48,15 +51,24 @@ internal class GitLogExperimentalProvider(private val project: Project) {
     requirements: VcsLogProvider.Requirements,
     refsLoadingPolicy: VcsLogProvider.RefsLoadingPolicy,
   ): VcsLogProvider.DetailedLogData {
-    val repository = withContext(Dispatchers.IO) {
-      coroutineToIndicator {
-        GitRepositoryManager.getInstance(project).getRepositoryUnlessFresh(root)
+    val repository = VcsTracer.traceSuspending(FindingRepository) {
+      it.withVcsAttributes(root)
+      withContext(Dispatchers.IO) {
+        coroutineToIndicator {
+          GitRepositoryManager.getInstance(project).getRepositoryUnlessFresh(root)
+        }
       }
     } ?: return LogDataImpl.empty()
 
     return withContext(Dispatchers.Default) {
       val branches = vcsLogObjectsFactory.createBranchesRefsSequence(repository)
-      val tagsLoader = TagsLoader.create(repository, refsLoadingPolicy)
+      val tagsLoader = VcsTracer.trace(PreparingTags) { span ->
+        span.withVcsAttributes(root)
+        TagsLoader.create(repository, refsLoadingPolicy).also {
+          span.setAttribute("tagCount", it.tags.size.toLong())
+          span.setAttribute("modifiedTagCount", it.modifiedTags.size.toLong())
+        }
+      }
 
       // need to query more to sort them manually; this doesn't affect performance: it is equal for -1000 and -2000
       val commitsFromLogCommand = getCommits(root, requirements.commitCount * 2)
@@ -64,6 +76,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
 
       val sortedCommits = VcsTracer.traceSuspending(SortingCommits) {
         it.withVcsAttributes(root)
+        it.setAttribute("commitCount", allCommits.size.toLong())
         VcsLogSorter.sortByDateTopoOrder(allCommits).take(requirements.commitCount)
       }
 
@@ -101,6 +114,7 @@ internal class GitLogExperimentalProvider(private val project: Project) {
           handlerListener.reportErrors()
         }
       }
+      it.setAttribute("commitCount", commits.size.toLong())
     }
     return commits
   }
@@ -141,6 +155,7 @@ private class TagsLoader(
     val commits = HashSet<VcsCommitMetadata>()
     VcsTracer.traceSuspending(LoadingCommitsOnTaggedBranch) {
       it.withVcsAttributes(repository.root)
+      it.setAttribute("tagCount", unreachableTags.size.toLong())
       val maxCountParam = listOf("--max-count=$COMMITS_TO_LOAD")
 
       withContext(Dispatchers.IO) {
@@ -150,6 +165,7 @@ private class TagsLoader(
           commits.addAll(logData.commits)
         }
       }
+      it.setAttribute("commitCount", commits.size.toLong())
     }
     return commits
   }

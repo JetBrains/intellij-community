@@ -139,6 +139,14 @@ interface VcsBackendTelemetrySpan: VcsTelemetrySpan {
     CompactingCommits("vcs-log-compacting-commits"),
 
     /**
+     * Copying the commits of the current [com.intellij.vcs.log.graph.PermanentGraph] to a list,
+     * so that [JoiningNewAndOldCommits] can join the new commits to them.
+     *
+     * Only reported during [Refreshing].
+     */
+    CollectingPreviousCommits("vcs-log-collecting-previous-commits"),
+
+    /**
      * Combining new commits, received during [Refreshing], with previously loaded commits, to get a single commit list.
      */
     JoiningNewAndOldCommits("vcs-log-joining-new-and-old-commits"),

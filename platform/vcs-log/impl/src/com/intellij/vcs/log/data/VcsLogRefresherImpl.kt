@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.progress.coroutineToIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CollectingPreviousCommits
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CompactingCommits
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.CompressingRefs
 import com.intellij.openapi.vcs.telemetry.VcsBackendTelemetrySpan.LogData.FlushingCommitData
@@ -276,7 +277,10 @@ class VcsLogRefresherImpl(
         }
         checkCanceled()
         val (joinedFullLog, joinTime) = measureTimedValue {
-          join(permanentGraph.allCommits.toList(), compoundLog, currentRefs, allNewRefs)
+          val previousLog = VcsTracer.trace(CollectingPreviousCommits) { span ->
+            permanentGraph.allCommits.toList().also { span.setAttribute("commitCount", it.size.toLong()) }
+          }
+          join(previousLog, compoundLog, currentRefs, allNewRefs)
         }
         if (joinedFullLog != null) {
           val (result, buildTime) = measureTimedValue {
@@ -389,7 +393,8 @@ class VcsLogRefresherImpl(
               }
             }
           }
-          refreshSessionData.put(root, graphCommits, RootRefsModel.create(data.refs, storage))
+          val compressedRefs = VcsTracer.trace(CompressingRefs) { RootRefsModel.create(data.refs, storage) }
+          refreshSessionData.put(root, graphCommits, compressedRefs)
 
           VcsTracer.trace(StoringCommitData) { storeSpan ->
             storeSpan.setAttribute("commitCount", graphCommits.size.toLong())

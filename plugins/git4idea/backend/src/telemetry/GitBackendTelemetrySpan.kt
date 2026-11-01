@@ -34,6 +34,14 @@ interface GitBackendTelemetrySpan : VcsBackendTelemetrySpan, GitTelemetrySpan {
   }
 
   enum class LogProvider : GitBackendTelemetrySpan {
+    FindingRepository {
+      override fun getName() = "git-log-finding-repository"
+    },
+
+    PreparingTags {
+      override fun getName() = "git-log-preparing-tags"
+    },
+
     SortingCommits {
       override fun getName() = "git-log-sorting-commits"
     },

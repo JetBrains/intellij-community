@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.util.StopWatch;
+import io.opentelemetry.api.trace.Span;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,6 +61,17 @@ public final class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> 
       Set<Commit> allNewsCommits = newCommitsAndSavedGreenIndex.second;
 
       int unsafeBlockSize = Math.max(redCommitsAndSavedRedIndex.first, newCommitsAndSavedGreenIndex.first);
+      // StopWatch does not make its span current, so these attributes go to the span of the caller
+      Span.current()
+        .setAttribute("savedLogSize", savedLog.size())
+        .setAttribute("firstBlockSize", firstBlock.size())
+        .setAttribute("previousRefCount", previousRefs.size())
+        .setAttribute("newRefCount", newRefs.size())
+        .setAttribute("unsafeBlockSize", unsafeBlockSize)
+        .setAttribute("greenIndex", newCommitsAndSavedGreenIndex.first)
+        .setAttribute("redIndex", redCommitsAndSavedRedIndex.first)
+        .setAttribute("newCommitCount", allNewsCommits.size())
+        .setAttribute("removedCommitCount", removeCommits.size());
 
       List<Commit> unsafePartSavedLog = buildUnsafePartSavedLog(savedLog, unsafeBlockSize, removeCommits, firstBlock);
 

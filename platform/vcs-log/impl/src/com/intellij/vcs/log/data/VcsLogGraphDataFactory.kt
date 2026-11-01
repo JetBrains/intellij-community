@@ -54,7 +54,7 @@ object VcsLogGraphDataFactory {
     providers: Map<VirtualFile, VcsLogProvider>,
     storage: VcsLogStorage,
   ): VcsLogGraphData.OverlayData = VcsTracer.trace(BuildingGraphData) {
-    val refsModel = RefsModel.create(refs, storage, providers)
+    val refsModel = VcsTracer.trace(CreatingRefsModel) { RefsModel.create(refs, storage, providers) }
     val permanentGraph = buildPermanentGraph(commits, refsModel, providers, storage)
     VcsLogGraphOverlayData(refsModel, permanentGraph, providers)
   }
