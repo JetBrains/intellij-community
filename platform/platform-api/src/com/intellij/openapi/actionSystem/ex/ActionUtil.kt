@@ -405,6 +405,11 @@ object ActionUtil {
    * @throws ProcessCanceledException if the user has canceled the progress. If the action can be safely stopped at this point
    * without leaving inconsistent data behind, this exception doesn't need to be caught and processed.
    */
+  @Deprecated("Holds a blocking read lock under the modal progress: a pending write action waits for the computation, " +
+              "and the EDT freezes with it. For an idempotent computation use " +
+              "`runWithModalProgressBlocking(project, title) { readAction { blockingContextToIndicator { ... } } }` (Kotlin, EDT only) or " +
+              "`ProgressManager.runProcessWithProgressSynchronously` with `ReadAction.nonBlocking(...).executeSynchronously()` (Java, any thread). " +
+              "A computation with side effects needs `ReadAction.computeBlocking` under the progress and must stay short.")
   @Throws(ProcessCanceledException::class)
   @JvmStatic
   fun <T> underModalProgress(

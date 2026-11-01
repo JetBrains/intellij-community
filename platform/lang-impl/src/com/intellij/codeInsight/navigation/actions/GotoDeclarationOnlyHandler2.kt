@@ -12,15 +12,17 @@ import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTar
 import com.intellij.codeInsight.navigation.impl.fromGTDProviders
 import com.intellij.codeInsight.navigation.impl.gotoDeclaration
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.components.JBList
@@ -94,8 +96,12 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
 
     val offset = editor.caretModel.offset
     val actionResult: NavigationActionResult? = try {
-      underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
-        gotoDeclaration(project, editor, psiFile, offset)?.result()
+      runWithModalProgressBlocking(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+        readAction {
+          blockingContextToIndicator {
+            gotoDeclaration(project, editor, psiFile, offset)?.result()
+          }
+        }
       }
     }
     catch (_: IndexNotReadyException) {

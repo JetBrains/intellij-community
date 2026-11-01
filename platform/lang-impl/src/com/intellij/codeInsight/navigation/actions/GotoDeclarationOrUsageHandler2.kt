@@ -19,9 +19,9 @@ import com.intellij.find.actions.TargetVariant
 import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
@@ -30,8 +30,10 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.util.Key
+import com.intellij.platform.ide.navigation.NavigationOptions
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -121,12 +123,16 @@ class GotoDeclarationOrUsageHandler2 internal constructor(
     val offset = editor.caretModel.offset
     try {
       PsiUtilCore.ensureValid(psiFile)
-      val actionResult: GTDUActionResult? = underModalProgress(
+      val actionResult: GTDUActionResult? = runWithModalProgressBlocking(
         project,
         CodeInsightBundle.message("progress.title.resolving.reference")
       ) {
-        PsiUtilCore.ensureValid(psiFile)
-        gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()
+        readAction {
+          blockingContextToIndicator {
+            PsiUtilCore.ensureValid(psiFile)
+            gotoDeclarationOrUsages(project, editor, psiFile, offset)?.result()
+          }
+        }
       }
       when (actionResult) {
         null -> {

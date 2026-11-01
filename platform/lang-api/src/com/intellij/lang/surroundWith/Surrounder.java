@@ -4,7 +4,6 @@ package com.intellij.lang.surroundWith;
 import com.intellij.openapi.application.WriteActionAware;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -16,8 +15,10 @@ import org.jetbrains.annotations.Nullable;
  * Defines a single template which can be used in <em>Code | Surround With</em> action.
  * <p>
  * When creating a surrounder that potentially performs a long-running computation {@link #startInWriteAction()} should be set to false and
- * the long-running task should be put under a modal progress, see
- * {@link com.intellij.openapi.actionSystem.ex.ActionUtil#underModalProgress(Project, String, Computable)}.
+ * the long-running task should be put under a modal progress in a read action that yields to write actions:
+ * {@code runWithModalProgressBlocking(project, title) { readAction { ... } }} in Kotlin, or
+ * {@link com.intellij.openapi.progress.ProgressManager#runProcessWithProgressSynchronously} with
+ * {@code ReadAction.nonBlocking(...).executeSynchronously()} in Java.
  *
  * @see SurroundDescriptor
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/surround-with.html">Surround With (IntelliJ Platform Docs)</a>

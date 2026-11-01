@@ -12,7 +12,6 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.model.Pointer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -29,6 +28,7 @@ import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -238,11 +238,10 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
       nav = (Navigatable)element.getItem();
     }
     else {
-      nav = ActionUtil.underModalProgress(project, IdeBundle.message("progress.title.preparing.navigation"),
-                                          () -> {
-                                            PsiElement psiElement = ((SmartPsiElementPointer<?>)element.getItem()).getElement();
-                                            return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
-                                          });
+      nav = computeInNonBlockingReadActionUnderProgress(project, IdeBundle.message("progress.title.preparing.navigation"), () -> {
+        PsiElement psiElement = ((SmartPsiElementPointer<?>)element.getItem()).getElement();
+        return psiElement == null ? null : EditSourceUtil.getDescriptor(psiElement);
+      });
     }
     try {
       if (nav != null && nav.canNavigate()) {
@@ -267,10 +266,28 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     boolean hasDifferentNames
   ) {
     SmartPointerManager manager = SmartPointerManager.getInstance(project);
-    return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"),
-                                         () -> ContainerUtil.map(targets, element -> new ItemWithPresentation(
-                                           manager.createSmartPsiElementPointer(element),
-                                           computePresentation(element, hasDifferentNames))));
+    // a write action between attempts of the read action may invalidate some targets
+    return computeInNonBlockingReadActionUnderProgress(project, CodeInsightBundle.message("progress.title.preparing.result"),
+                                                       () -> ContainerUtil.mapNotNull(targets, element -> element.isValid()
+                                                         ? new ItemWithPresentation(manager.createSmartPsiElementPointer(element),
+                                                                                    computePresentation(element, hasDifferentNames))
+                                                         : null));
+  }
+
+  /**
+   * Runs {@code computable} under a modal progress in a read action that is cancelled and restarted when a write action comes,
+   * so it must be idempotent. Keeps alternative resolve if the caller enabled it, as {@code GotoSuperAction} does.
+   */
+  private static <T> T computeInNonBlockingReadActionUnderProgress(@NotNull Project project,
+                                                                   @NotNull @NlsContexts.ProgressTitle String title,
+                                                                   @NotNull Computable<T> computable) {
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean alternativeResolve = dumbService.isAlternativeResolveEnabled();
+    return ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      () -> ReadAction.nonBlocking(() -> alternativeResolve ? dumbService.computeWithAlternativeResolveEnabled(computable::compute)
+                                                            : computable.compute())
+        .executeSynchronously(),
+      title, true, project);
   }
 
   public static @NotNull TargetPresentation computePresentation(@NotNull PsiElement element, boolean hasDifferentNames) {

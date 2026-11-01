@@ -13,16 +13,18 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.idea.ActionsBundle
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.navigation.NavigationOptions
 import com.intellij.platform.ide.navigation.requestNavigate
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EDT
@@ -54,8 +56,8 @@ internal fun navigateRequestLazy(
 ) {
   EDT.assertIsEdt()
   @Suppress("DialogTitleCapitalization")
-  val request = underModalProgress(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
-    requestor.navigationRequest()
+  val request = runWithModalProgressBlocking(project, ActionsBundle.actionText("GotoDeclarationOnly")) {
+    readAction { blockingContextToIndicator { requestor.navigationRequest() } }
   }
   if (request != null) {
     val dataContext = editor.component.let { DataManager.getInstance().getDataContext(it) }

@@ -19,10 +19,13 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolService
 import com.intellij.model.psi.impl.targetSymbols
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.blockingContextToIndicator
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
@@ -47,9 +50,19 @@ fun highlightUsages(project: Project, editor: Editor, file: PsiFile): Boolean {
 
 private fun highlightSymbolUsages(project: Project, editor: Editor, file: PsiFile, symbol: Symbol, clearHighlights: Boolean) {
   val hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor)
-  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = ActionUtil.underModalProgress(
+  // a write action between attempts of the read action may invalidate the PSI behind the symbol, so each attempt restores it
+  val symbolPointer = symbol.createPointer()
+  // the only caller (HighlightUsagesHandler) enables alternative resolve on the EDT; the read action runs on another thread
+  val (readRanges, writeRanges, readDeclarationRanges, writeDeclarationRanges) = runWithModalProgressBlocking(
     project, FindBundle.message("progress.title.finding.usages")
-  ) { getUsageRanges(file, symbol) } ?: return
+  ) {
+    readAction {
+      blockingContextToIndicator {
+        val restoredSymbol = symbolPointer.dereference() ?: return@blockingContextToIndicator null
+        DumbService.getInstance(project).computeWithAlternativeResolveEnabled<UsageRanges?, Throwable> { getUsageRanges(file, restoredSymbol) }
+      }
+    }
+  } ?: return
   HighlightUsagesHandler.highlightUsages(
     project, hostEditor,
     readRanges + readDeclarationRanges,

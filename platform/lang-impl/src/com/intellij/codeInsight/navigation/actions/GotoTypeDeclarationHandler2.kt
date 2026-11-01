@@ -12,12 +12,14 @@ import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTar
 import com.intellij.codeInsight.navigation.impl.elementTypeTargets
 import com.intellij.codeInsight.navigation.impl.gotoTypeDeclaration
 import com.intellij.codeInsight.navigation.impl.result
-import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
 
@@ -29,10 +31,14 @@ internal object GotoTypeDeclarationHandler2 : CodeInsightActionHandler {
     val offset = editor.caretModel.offset
     val dumbService = DumbService.getInstance(project)
     val result: NavigationActionResult? = try {
-      underModalProgress(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
-        dumbService.computeWithAlternativeResolveEnabled<NavigationActionResult?, Throwable> {
-          handleLookup(project, editor, offset)
-          ?: gotoTypeDeclaration(psiFile, offset)?.result()
+      runWithModalProgressBlocking(project, CodeInsightBundle.message("progress.title.resolving.reference")) {
+        readAction {
+          blockingContextToIndicator {
+            dumbService.computeWithAlternativeResolveEnabled<NavigationActionResult?, Throwable> {
+              handleLookup(project, editor, offset)
+              ?: gotoTypeDeclaration(psiFile, offset)?.result()
+            }
+          }
         }
       }
     }
