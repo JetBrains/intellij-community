@@ -22,6 +22,10 @@ Reports <code>ProcessCanceledException</code> and <code>CancellationException</c
   or declares that it throws <code>ProcessCanceledException</code>. A call inside a lambda or a local class does not count,
   because the <code>try</code> block may only pass it on.
 </p>
+<p>
+  The reported problems provide fixes to insert a leading <code>rethrowControlFlowException()</code> call into the catch body,
+  or to remove a logging statement.
+</p>
 
 <h3>Examples:</h3>
 

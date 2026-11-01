@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
+import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.registerUProblem
 import com.intellij.lang.Language
@@ -20,6 +21,8 @@ import com.intellij.uast.UastHintedVisitorAdapter.Companion.create
 import com.intellij.util.asSafely
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.devkit.DevKitBundle.message
+import org.jetbrains.idea.devkit.inspections.quickfix.CancellationExceptionHandlingFixProvider
+import org.jetbrains.idea.devkit.inspections.quickfix.cancellationExceptionHandlingFixes
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UCatchClause
 import org.jetbrains.uast.UClass
@@ -67,7 +70,8 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         val loggedClassName = argType.asSafely<PsiClassType>()?.resolve()?.qualifiedName ?: return false
         // 'as UExpression' selects the UExpression overload (anchors the whole call); the UCallExpression overload would
         // anchor only the method identifier.
-        holder.registerUProblem(node as UExpression, message("inspections.incorrect.exception.logged.name", loggedClassName))
+        holder.registerUProblem(node as UExpression, message("inspections.incorrect.exception.logged.name", loggedClassName),
+                                *removeLoggingFixes(node))
         return true
       }
 
@@ -119,7 +123,8 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
         if (!ceIsRethrown(node.body, caughtCeInfo.parameter)) {
           holder.registerUProblem(caughtCeInfo.parameter,
                                   message("inspections.incorrect.cancellation.exception.handling.name.not.rethrown",
-                                          caughtCeInfo.ceClassName))
+                                          caughtCeInfo.ceClassName),
+                                  *insertHelperFixes(caughtCeInfo.parameter))
         }
       }
 
@@ -243,7 +248,10 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
               if (resolvedParam == caughtCeInfo.parameter) {
                 holder.registerUProblem(node as UExpression,
                                         message("inspections.incorrect.implicit.cancellation.exception.handling.name.logged",
-                                                caughtCeInfo.ceClassName, methodName))
+                                                caughtCeInfo.ceClassName, methodName),
+                                        // The broad catch also logs failures that are not cancellations, so the log stays;
+                                        // a leading helper call rethrows the cancellation before it is logged.
+                                        *insertHelperFixes(caughtCeInfo.parameter))
                 return super.visitCallExpression(node)
               }
             }
@@ -257,7 +265,8 @@ internal class IncorrectCancellationExceptionHandlingInspection : DevKitUastInsp
           val methodName = caughtCeInfo.ceThrowingMethodName ?: return
           holder.registerUProblem(caughtCeInfo.parameter,
                                   message("inspections.incorrect.implicit.cancellation.exception.handling.name.not.rethrown",
-                                          caughtCeInfo.ceClassName, methodName))
+                                          caughtCeInfo.ceClassName, methodName),
+                                  *insertHelperFixes(caughtCeInfo.parameter))
         }
       }
 
@@ -388,6 +397,14 @@ private object CancellationExceptionHandlingCheckers :
 
 private fun cancellationExceptionHandlingChecker(language: Language): CancellationExceptionHandlingChecker? {
   return CancellationExceptionHandlingCheckers.forLanguage(language)
+}
+
+private fun insertHelperFixes(parameter: UParameter): Array<LocalQuickFix> {
+  return cancellationExceptionHandlingFixes(parameter, CancellationExceptionHandlingFixProvider::getInsertRethrowControlFlowExceptionFix)
+}
+
+private fun removeLoggingFixes(node: UCallExpression): Array<LocalQuickFix> {
+  return cancellationExceptionHandlingFixes(node, CancellationExceptionHandlingFixProvider::getRemoveLoggingStatementFix)
 }
 
 @ApiStatus.Internal

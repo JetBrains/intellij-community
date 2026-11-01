@@ -1045,6 +1045,9 @@
     <cancellationCheckInLoopsFixProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
+    <cancellationExceptionHandlingFixProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationExceptionHandlingFixProvider"/>
     <useHtmlChunkToolTipFixProvider
       language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaUseHtmlChunkToolTipFixProvider"/>
@@ -1185,6 +1188,12 @@
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
       <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationExceptionHandlingChecker"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="DevKit.lang.cancellationExceptionHandlingFixProvider"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass"
+            implements="org.jetbrains.idea.devkit.inspections.quickfix.CancellationExceptionHandlingFixProvider"/>
     </extensionPoint>
   </extensionPoints>
 

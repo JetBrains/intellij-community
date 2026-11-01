@@ -219,5 +219,8 @@
     <cancellationExceptionHandlingChecker
       language="kotlin"
       implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationExceptionHandlingChecker"/>
+    <cancellationExceptionHandlingFixProvider
+      language="kotlin"
+      implementationClass="org.jetbrains.idea.devkit.kotlin.inspections.KtCancellationExceptionHandlingFixProvider"/>
   </extensions>
 </idea-plugin>
