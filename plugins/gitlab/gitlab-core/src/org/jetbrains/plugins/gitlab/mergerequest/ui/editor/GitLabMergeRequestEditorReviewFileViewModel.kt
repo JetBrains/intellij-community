@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNewDiscussionPositionFactory
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
@@ -141,7 +142,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
     }.map { lines -> lines.filterNotNullTo(mutableSetOf()) }.stateInNow(cs, emptySet())
 
   override fun requestNewDiscussion(location: GitLabNoteLocation, focus: Boolean) {
-    val position = GitLabMergeRequestNewDiscussionPosition.calcFor(diffData, location).let {
+    val position = GitLabNewDiscussionPositionFactory.calcFor(diffData, location).let {
       GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition(it, Side.RIGHT)
     }
     discussionsContainer.requestNewDiscussion(position, focus)

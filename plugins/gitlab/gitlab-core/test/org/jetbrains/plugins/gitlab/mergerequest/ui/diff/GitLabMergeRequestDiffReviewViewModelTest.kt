@@ -26,7 +26,7 @@ import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNewDiscussionPositionFactory
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
@@ -107,7 +107,7 @@ internal class GitLabMergeRequestDiffReviewViewModelTest {
   @Test
   fun `cancellation keeps a note at the same line in another file`() = withReview {
     val otherDiff = createDiffData("other.txt")
-    val otherPosition = GitLabMergeRequestNewDiscussionPosition.calcFor(
+    val otherPosition = GitLabNewDiscussionPositionFactory.calcFor(
       otherDiff, GitLabNoteLocation(Side.RIGHT, 3, Side.RIGHT, 3)
     )
     discussionsContainer.requestNewDiscussion(NewDiscussionPosition(otherPosition, Side.RIGHT), false)
@@ -128,7 +128,7 @@ internal class GitLabMergeRequestDiffReviewViewModelTest {
    */
   @Test
   fun `review probe for gutter updates with a note in another file`() = withReview {
-    val otherPosition = GitLabMergeRequestNewDiscussionPosition.calcFor(
+    val otherPosition = GitLabNewDiscussionPositionFactory.calcFor(
       createDiffData("other.txt"), GitLabNoteLocation(Side.RIGHT, 3, Side.RIGHT, 3)
     )
     discussionsContainer.requestNewDiscussion(NewDiscussionPosition(otherPosition, Side.RIGHT), false)

@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.mergerequest.api.dto
 
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.toLinePositionDTO
 
 data class GitLabDiffPositionInput(
   val baseSha: String, // Merge base of the branch the comment was made on.

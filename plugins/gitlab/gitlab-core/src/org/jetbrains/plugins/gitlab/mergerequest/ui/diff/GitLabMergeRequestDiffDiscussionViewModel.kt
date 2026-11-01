@@ -11,6 +11,7 @@ import com.intellij.diff.util.Side
 import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNewDiscussionPositionFactory
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
@@ -70,7 +71,7 @@ class GitLabMergeRequestDiffNewDiscussionViewModel internal constructor(
     val diffDataValue = diffData.value ?: return
     val newLocation = GitLabNoteLocation(startLocation.first, startLocation.second, endLocation.first, endLocation.second)
     val newPosition = GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition(
-      GitLabMergeRequestNewDiscussionPosition.calcFor(diffDataValue.diffData, newLocation), endLocation.first
+      GitLabNewDiscussionPositionFactory.calcFor(diffDataValue.diffData, newLocation), endLocation.first
     )
     base.updatePosition(newPosition)
   }
