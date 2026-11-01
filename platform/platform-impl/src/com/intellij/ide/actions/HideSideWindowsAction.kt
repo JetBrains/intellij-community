@@ -8,11 +8,13 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.frameOwnerOf
 import com.intellij.toolWindow.ToolWindowEventSource
 
 internal class HideSideWindowsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.project ?: return
+    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
+    val project = frameOwnerOf(e.project ?: return)
     val toolWindowManager = ToolWindowManagerEx.getInstanceEx(project) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
     val window = toolWindowManager.getToolWindow(id) ?: return
@@ -23,7 +25,7 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
 
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
-    val project = event.project
+    val project = event.project?.let(::frameOwnerOf)
     if (project == null) {
       presentation.isEnabled = false
       return

@@ -9,11 +9,13 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.frameOwnerOf
 import com.intellij.toolWindow.ToolWindowEventSource
 
 internal class HideBottomToolWindowsAction : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
-    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(e.project ?: return) as? ToolWindowManagerImpl ?: return
+    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
+    val toolWindowManager = ToolWindowManagerEx.getInstanceEx(frameOwnerOf(e.project ?: return)) as? ToolWindowManagerImpl ?: return
     for (toolWindow in getBottomToolwindows(toolWindowManager)) {
       toolWindowManager.hideToolWindow(id = toolWindow.id, source = ToolWindowEventSource.HideBottomWindowsAction)
     }
@@ -21,7 +23,7 @@ internal class HideBottomToolWindowsAction : AnAction(), DumbAware {
 
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
-    val project = event.project
+    val project = event.project?.let(::frameOwnerOf)
     if (project == null) {
       presentation.isEnabled = false
       return

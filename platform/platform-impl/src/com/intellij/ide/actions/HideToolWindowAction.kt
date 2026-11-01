@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.frameOwnerOf
 import com.intellij.openapi.wm.impl.isInternal
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.util.ui.UIUtil
@@ -21,14 +22,15 @@ internal class HideToolWindowAction : AnAction(), DumbAware {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val toolWindowManager = ToolWindowManager.getInstance(e.project ?: return) as ToolWindowManagerImpl
+    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
+    val toolWindowManager = ToolWindowManager.getInstance(frameOwnerOf(e.project ?: return)) as ToolWindowManagerImpl
     val id = toolWindowManager.activeToolWindowId ?: toolWindowManager.lastActiveToolWindowId ?: return
     toolWindowManager.hideToolWindow(id = id, source = ToolWindowEventSource.HideToolWindowAction)
   }
 
   override fun update(event: AnActionEvent) {
     val presentation = event.presentation
-    val project = event.project
+    val project = event.project?.let(::frameOwnerOf)
     if (project == null) {
       presentation.isEnabled = false
       return

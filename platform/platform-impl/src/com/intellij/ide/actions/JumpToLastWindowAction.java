@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.impl.FrameGuestsKt;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.toolWindow.ToolWindowEventSource;
 import org.jetbrains.annotations.ApiStatus;
@@ -21,7 +22,8 @@ public final class JumpToLastWindowAction extends AnAction implements DumbAware 
     if (project == null) {
       return;
     }
-    ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
+    ToolWindowManagerImpl manager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(FrameGuestsKt.frameOwnerOf(project));
     String id = manager.getLastActiveToolWindowId();
     if (id == null || !manager.getToolWindow(id).isAvailable()) {
       return;
@@ -38,7 +40,7 @@ public final class JumpToLastWindowAction extends AnAction implements DumbAware 
       return;
     }
 
-    ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    ToolWindowManager manager = ToolWindowManager.getInstance(FrameGuestsKt.frameOwnerOf(project));
     String id = manager.getLastActiveToolWindowId();
     presentation.setEnabled(id != null && manager.getToolWindow(id).isAvailable());
   }

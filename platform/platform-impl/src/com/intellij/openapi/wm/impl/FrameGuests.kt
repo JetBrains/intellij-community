@@ -16,7 +16,11 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
  * own. The queries never create the window manager service.
  */
 
-/** The project that owns the frame that shows [project]: [project] itself unless it is a frame guest. */
+/**
+ * The project that owns the frame that shows [project]: [project] itself unless it is a frame guest.
+ * The JVM name lets a Java action of this module call it as `FrameGuestsKt.frameOwnerOf`.
+ */
+@JvmName("frameOwnerOf")
 internal fun frameOwnerOf(project: Project): Project = frameGuestRecord()?.getFrameOwner(project) ?: project
 
 /** Tells whether [project] is a frame guest, see `WindowManagerEx.isFrameGuest`. */

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
+import com.intellij.openapi.wm.impl.frameOwnerOf
 import com.intellij.toolWindow.ToolWindowEventSource
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
 import com.intellij.ui.SizedIcon
@@ -115,7 +116,7 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
 
   override fun update(e: AnActionEvent) {
     e.presentation.putClientProperty(ActionUtil.SHOW_ICON_IN_MAIN_MENU, true)
-    val project = getEventProject(e)?.takeIf { !it.isDisposed }
+    val project = getEventProject(e)?.takeIf { !it.isDisposed }?.let(::frameOwnerOf)
     val presentation = e.presentation
     if (project == null) {
       presentation.isEnabledAndVisible = false
@@ -143,7 +144,8 @@ open class ActivateToolWindowAction protected constructor(val toolWindowId: Stri
   protected open fun hasEmptyState(project: Project): Boolean = false
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = getEventProject(e) ?: return
+    // a frame guest shows no tool window of its own: the action acts on the manager of the frame that shows it
+    val project = frameOwnerOf(getEventProject(e) ?: return)
 
     val toolWindowManager = ToolWindowManager.getInstance(project)
     val source = when {
