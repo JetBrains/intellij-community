@@ -82,7 +82,48 @@ interface VcsBackendTelemetrySpan: VcsTelemetrySpan {
      */
     ReadingCurrentUser("vcs-log-reading-current-user"),
 
+    /**
+     * Calling [com.intellij.vcs.log.VcsLogProvider.readRecentCommits] for one root.
+     *
+     * Part of [ReadingRecentCommitsInRoot].
+     */
+    ReadingRecentCommitsFromProvider("vcs-log-reading-recent-commits-from-provider"),
+
+    /**
+     * Calling [com.intellij.vcs.log.VcsLogProvider.readAllHashes] for one root.
+     * The time includes the conversion of each commit, which [CompactingCommits] reports for the recent commits.
+     *
+     * Part of [ReadingAllCommitsInRoot].
+     */
+    ReadingAllCommitsFromProvider("vcs-log-reading-all-commits-from-provider"),
+
+    /**
+     * Converting the references received from [com.intellij.vcs.log.VcsLogProvider] for one root to a `RootRefsModel`.
+     */
+    CompressingRefs("vcs-log-compressing-refs"),
+
+    /**
+     * Passing the commits and the users of one root to the `VcsLogCommitDataConsumer`.
+     */
+    StoringCommitData("vcs-log-storing-commit-data"),
+
+    /**
+     * Telling the `VcsLogCommitDataConsumer` that the data of all roots is loaded.
+     */
+    FlushingCommitData("vcs-log-flushing-commit-data"),
+
     // Building new DataPack
+
+    /**
+     * Building `VcsLogGraphData` from the commits and the references.
+     * It consists of [CreatingRefsModel] and [BuildingGraph].
+     */
+    BuildingGraphData("vcs-log-building-graph-data"),
+
+    /**
+     * Creating a `RefsModel` for the references of all roots.
+     */
+    CreatingRefsModel("vcs-log-creating-refs-model"),
 
     /**
      * Building a [com.intellij.vcs.log.graph.PermanentGraph] for the list of commits.
