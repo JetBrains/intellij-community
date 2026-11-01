@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.python.community.execService.ExecOptions
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.pyproject.PY_PROJECT_TOML
 import com.intellij.python.pyproject.PyProjectToml
 import com.intellij.python.pytools.backend.PyTool
@@ -70,12 +71,16 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 /**
  * The `major.minor` head of a version as uv prints it. Taken as a prefix rather than parsed, because a pre-release
  * (`3.15.0b4`) is not a dotted triple and the combo shows the language level anyway.
  */
 private val LANGUAGE_LEVEL_PREFIX: Regex = Regex("""^\d+\.\d+""")
+
+/** The files of a directory that `uv python find` reads to choose the version. */
+private val UV_PYTHON_FIND_FILES: List<String> = listOf(".python-version", PY_PROJECT_TOML)
 
 /** The granularity uv's `--python` resolves at, and the granularity the version combo shows: `3.14`. */
 private fun Version.languageLevel(): @NlsSafe String = "$major.$minor"
@@ -295,7 +300,14 @@ internal class EnvironmentCreatorUv<P : PathHolder>(
   internal suspend fun resolveDefaultLanguageLevel(uvExecutable: P, projectPath: Path): String? {
     val workingDir = generateSequence(projectPath) { it.parent }.firstOrNull { withContext(Dispatchers.IO) {it.isDirectory()} } ?: return null
 
-    val runtime = PyToolRuntime(model.fileSystem.getBinaryToExec(uvExecutable, workingDir), ExecOptions())
+    // On a target, uv gets only the files of workingDir that it reads, not a copy of the full workingDir.
+    val uploadConfig = when (uvExecutable) {
+      is PathHolder.Eel -> null
+      is PathHolder.Target -> withContext(Dispatchers.IO) {
+        UploadConfig(relativePaths = UV_PYTHON_FIND_FILES.filter { workingDir.resolve(it).isRegularFile() })
+      }
+    }
+    val runtime = PyToolRuntime(model.fileSystem.getBinaryToExec(uvExecutable, workingDir), ExecOptions(uploadBeforeExecution = uploadConfig))
     val reported = runtime.uvCli().python().find(showVersion = true, system = true).successOrNull ?: return null
     return LANGUAGE_LEVEL_PREFIX.find(reported)?.value
   }

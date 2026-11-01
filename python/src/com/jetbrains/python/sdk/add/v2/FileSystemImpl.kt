@@ -42,7 +42,9 @@ import com.intellij.python.community.execService.Args
 import com.intellij.python.community.execService.BinOnEel
 import com.intellij.python.community.execService.BinOnTarget
 import com.intellij.python.community.execService.BinaryToExec
+import com.intellij.python.community.execService.ExecOptions
 import com.intellij.python.community.execService.ExecService
+import com.intellij.python.community.execService.UploadConfig
 import com.intellij.python.community.execService.execGetStdout
 import com.intellij.python.community.execService.python.getLanguageLevelFromVersionStringSafe
 import com.intellij.python.community.execService.python.getVersionFromVersionStringSafe
@@ -914,7 +916,8 @@ internal data class TargetFileSystem(
   private suspend fun executeCommand(cmd: String, workingDir: Path? = null): PyResult<String> {
     val shell = getShell()
     val bin = getBinaryToExec(PathHolder.Target(shell), workingDir)
-    return ExecService().execGetStdout(bin, Args("-l", "-c", cmd))
+    // The command reads no local file. The empty upload list maps workingDir to the target and uploads none of its files.
+    return ExecService().execGetStdout(bin, Args("-l", "-c", cmd), ExecOptions(uploadBeforeExecution = UploadConfig()))
   }
 
   private suspend fun getEnvVar(envVarName: String): PyResult<String> = executeCommand("printenv ${envVarName}")

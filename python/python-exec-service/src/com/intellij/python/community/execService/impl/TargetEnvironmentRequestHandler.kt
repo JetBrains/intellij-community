@@ -54,6 +54,11 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
        * If true, call [com.intellij.python.community.execService.impl.processLaunchers.measureUploadTime]
        */
       val uploadVolumeExplicitly: Boolean,
+      /**
+       * True when [root] is a sync folder of the target, see [UploadInfo.persistentPaths].
+       * A sync folder can have files that only the target has.
+       */
+      val isSyncFolder: Boolean,
     )
 
     /**
@@ -80,7 +85,8 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
           LocalPathToTargetResult(
             targetPath = TargetEnvironment.TargetPath.Persistent(mightBeHelperRemoteRoot),
             removeAtShutdown = false,
-            uploadVolumeExplicitly = false
+            uploadVolumeExplicitly = false,
+            isSyncFolder = false,
           )
         }
         else {
@@ -91,7 +97,8 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
           LocalPathToTargetResult(
             targetPath = targetPath,
             removeAtShutdown = removeAtShutdown,
-            uploadVolumeExplicitly = true
+            uploadVolumeExplicitly = true,
+            isSyncFolder = localPath in uploadInfo.persistentPaths,
           )
         }
       }
@@ -104,7 +111,11 @@ abstract class TargetEnvironmentRequestHandler<T : TargetEnvironmentRequest>(pri
           targetRootPath = localPathToTargetRes.targetPath,
           removeAtShutdown = localPathToTargetRes.removeAtShutdown
         )
-        UploadRootWithExplicitUploadInfo(root, uploadVolumeExplicitly = localPathToTargetRes.uploadVolumeExplicitly)
+        UploadRootWithExplicitUploadInfo(
+          root,
+          uploadVolumeExplicitly = localPathToTargetRes.uploadVolumeExplicitly,
+          isSyncFolder = localPathToTargetRes.isSyncFolder,
+        )
       }
     }
   }
@@ -124,4 +135,5 @@ private data class LocalPathToTargetResult(
   val targetPath: TargetEnvironment.TargetPath,
   val removeAtShutdown: Boolean,
   val uploadVolumeExplicitly: Boolean,
+  val isSyncFolder: Boolean,
 )

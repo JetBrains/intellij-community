@@ -288,6 +288,9 @@ data class DownloadConfig(
  * Configuration for uploading files before command execution.
  * Uses existing upload volume mappings (from web deployment).
  *
+ * When the config is null, the full working directory goes to the target. This copy can delete the files that only the target has.
+ * When the working directory is a sync folder of the target, a null config works as the default [UploadConfig].
+ *
  * @param relativePaths Relative paths to upload from the working directory.
  *                      Empty list means upload no files.
  * @param ensureWorkingDirectoryExists Creates the target working directory before execution, even when no files are uploaded.
@@ -303,7 +306,8 @@ data class UploadConfig(
  * @property[processDescription] optional description to be displayed to user
  * @property[tty] Much like [com.intellij.platform.eel.EelExecApi.Pty]
  * @property[weight] use it to limit the number of concurrent processes not to exhaust user resources, see [ConcurrentProcessWeight]
- * @property[uploadBeforeExecution] configuration for uploading files before command execution (Target-based execution only)
+ * @property[uploadBeforeExecution] configuration for uploading files before command execution (Target-based execution only).
+ * Null uploads the full working directory, except for a sync folder, see [UploadConfig].
  * @property[downloadAfterExecution] configuration for downloading files after command execution (Target-based execution only).
  * To download a directory that is not the working directory, see [DirScope.downloadAfterExecution].
  */
