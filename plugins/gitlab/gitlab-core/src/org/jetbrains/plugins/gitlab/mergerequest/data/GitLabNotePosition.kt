@@ -3,9 +3,6 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 
 import com.intellij.collaboration.ui.codereview.diff.DiffLineRange
 import com.intellij.diff.util.Side
-import com.intellij.openapi.diagnostic.logger
-import org.jetbrains.plugins.gitlab.api.dto.GitLabMergeRequestDraftNoteRestDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabNoteRestDTO
 
 sealed interface GitLabNotePosition {
   val parentSha: String
@@ -41,50 +38,6 @@ sealed interface GitLabNotePosition {
     override val filePathBefore: String?,
     override val filePathAfter: String?,
   ) : GitLabNotePosition
-
-  companion object {
-    private val LOG = logger<GitLabNotePosition>()
-
-    @Suppress("DuplicatedCode")
-    fun from(position: GitLabNoteRestDTO.Position): GitLabNotePosition? {
-      if (position.baseSha == null) {
-        LOG.debug("Missing merge base in note position: $position")
-        return null
-      }
-
-      val parentSha = position.baseSha
-      val sha = position.headSha
-
-      return when (position.positionType) {
-        "text" -> Text(parentSha, sha, position.oldPath, position.newPath,
-                       position.oldLine?.dec(), position.newLine?.dec(),
-                       position.lineRange?.start?.oldLine?.dec(), position.lineRange?.start?.newLine?.dec(),
-                       position.lineRange?.end?.oldLine?.dec(), position.lineRange?.end?.newLine?.dec()
-        )
-        else -> Image(parentSha, sha, position.oldPath, position.newPath)
-      }
-    }
-
-    @Suppress("DuplicatedCode")
-    fun from(position: GitLabMergeRequestDraftNoteRestDTO.Position): GitLabNotePosition? {
-      if (position.baseSha == null) {
-        LOG.debug("Missing merge base in note position: $position")
-        return null
-      }
-
-      val parentSha = position.baseSha
-      val sha = position.headSha ?: return null
-
-      return when (position.positionType) {
-        "text" -> Text(parentSha, sha, position.oldPath, position.newPath,
-                       position.oldLine?.dec(), position.newLine?.dec(),
-                       position.lineRange?.start?.oldLine?.dec(), position.lineRange?.start?.newLine?.dec(),
-                       position.lineRange?.end?.oldLine?.dec(), position.lineRange?.end?.newLine?.dec()
-        )
-        else -> Image(parentSha, sha, position.oldPath, position.newPath)
-      }
-    }
-  }
 }
 
 val GitLabNotePosition.filePath: String

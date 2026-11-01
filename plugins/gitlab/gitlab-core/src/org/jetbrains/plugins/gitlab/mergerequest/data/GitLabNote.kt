@@ -126,7 +126,7 @@ class MutableGitLabMergeRequestNote(
   override val body: StateFlow<String> = data.mapState(cs, GitLabNoteRestDTO::body)
   override val resolved: StateFlow<Boolean> = data.mapState(cs, GitLabNoteRestDTO::resolved)
   override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) {
-    it.position?.let(GitLabNotePosition::from)
+    it.position?.toNotePosition()
   }
   override val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =
     position.mapPosition(mr).stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
@@ -248,7 +248,7 @@ class GitLabMergeRequestDraftNoteImpl(
   override val body: StateFlow<String> = data.mapState(cs, GitLabMergeRequestDraftNoteRestDTO::note)
   override val awardEmojis: StateFlow<List<GitLabAwardEmojiDetails>> = MutableStateFlow(emptyList())
 
-  override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.let(GitLabNotePosition::from) }
+  override val position: StateFlow<GitLabNotePosition?> = data.mapState(cs) { it.position.toNotePosition() }
   override val positionMapping: StateFlow<ComputedResult<GitLabMergeRequestNotePositionMapping?>> =
     position.mapPosition(mr).stateIn(cs, SharingStarted.Eagerly, ComputedResult.loading())
 
