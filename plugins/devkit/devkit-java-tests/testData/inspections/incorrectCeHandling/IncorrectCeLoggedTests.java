@@ -65,16 +65,16 @@ class IncorrectCeLoggedTests {
   void testPceInheritorSwallowedAndLogged() {
     try {
       // anything
-    } catch (SubclassOfProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+    } catch (SubclassOfProcessCanceledException <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">LOG.error(e)</error>;
     }
   }
 
   void testPceInheritorSwallowedAndLoggedWhenDisjunctionTypeDefined() {
     try {
       // anything
-    } catch (IllegalArgumentException | SubclassOfProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+    } catch (IllegalArgumentException | SubclassOfProcessCanceledException <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown">e</error>) {
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">LOG.error(e)</error>;
     }
   }
 
@@ -83,7 +83,7 @@ class IncorrectCeLoggedTests {
   }
 
   void testPceInheritorLoggedOutsideCatchBlock(com.example.SubclassOfProcessCanceledException e) {
-    <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+    <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">LOG.error(e)</error>;
   }
 
   void testPceLoggedAsSecondArgOutsideCatchBlock(ProcessCanceledException e) {

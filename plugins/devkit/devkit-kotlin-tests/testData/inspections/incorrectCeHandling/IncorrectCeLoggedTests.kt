@@ -74,8 +74,8 @@ class IncorrectCeLoggedTests {
     try {
       // anything
     }
-    catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>: SubclassOfProcessCanceledException) {
-      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">error(e)</error>
+    catch (<error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown">e</error>: SubclassOfProcessCanceledException) {
+      LOG.<error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">error(e)</error>
     }
   }
 
@@ -84,7 +84,7 @@ class IncorrectCeLoggedTests {
   }
 
   fun testPceInheritorLoggedOutsideCatchBlock(e: SubclassOfProcessCanceledException) {
-    LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">error(e)</error>
+    LOG.<error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">error(e)</error>
   }
 
   fun testPceLoggedAsSecondArgOutsideCatchBlock(e: ProcessCanceledException) {

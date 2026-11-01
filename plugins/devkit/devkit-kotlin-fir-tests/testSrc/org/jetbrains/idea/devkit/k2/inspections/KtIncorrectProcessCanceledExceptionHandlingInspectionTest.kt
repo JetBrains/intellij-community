@@ -18,7 +18,7 @@ abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : Inco
     addKotlinFile("SomeControlFlowException.kt", """
         package com.example
         import com.intellij.openapi.diagnostic.ControlFlowException
-        class SomeControlFlowException : ControlFlowException()
+        class SomeControlFlowException : RuntimeException(), ControlFlowException
       """.trimIndent())
     addKotlinFile("SubclassOfProcessCanceledException.kt", """
         package com.example
@@ -29,6 +29,11 @@ abstract class KtIncorrectCancellationExceptionHandlingInspectionTestBase : Inco
         package kotlinx.coroutines
         @SinceKotlin("1.4")
         typealias CancellationException = java.util.concurrent.CancellationException
+      """.trimIndent())
+    addKotlinFile("Job.kt", """
+        package kotlinx.coroutines
+        interface Job
+        fun Job.ensureActive() {}
       """.trimIndent())
   }
 

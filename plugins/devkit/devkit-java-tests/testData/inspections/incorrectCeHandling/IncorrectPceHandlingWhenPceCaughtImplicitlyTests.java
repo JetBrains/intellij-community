@@ -1,5 +1,6 @@
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.example.SubclassOfProcessCanceledException;
 
 class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
@@ -18,6 +19,15 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPce();
     } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown. It is thrown by 'throwPce()'.">e</error>) {
+      // exception swallowed
+    }
+  }
+
+  // 'ProcessCanceledException' is a 'CancellationException', which extends 'IllegalStateException'.
+  void testPceCaughtByIllegalStateExceptionSwallowed() {
+    try {
+      throwPce();
+    } catch (IllegalStateException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown. It is thrown by 'throwPce()'.">e</error>) {
       // exception swallowed
     }
   }
@@ -151,7 +161,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
   void testPceInheritorSwallowed() {
     try {
       throwPceInheritor();
-    } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+    } catch (Exception <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
       // exception swallowed
     }
   }
@@ -160,7 +170,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPceInheritor();
     } catch (Exception e) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.error(e)</error>;
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.error(e)</error>;
       throw e;
     }
   }
@@ -168,31 +178,31 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
   void testPceInheritorSwallowedAndLoggedWithMessageOnInfoLevel() {
     try {
       throwPceInheritor();
-    } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.info("Error occured", e)</error>;
+    } catch (Exception <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.info("Error occured", e)</error>;
     }
   }
 
   void testPceInheritorSwallowedAndLoggedOnInfoLevel() {
     try {
       throwPceInheritor();
-    } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.info(e)</error>;
+    } catch (Exception <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.info(e)</error>;
     }
   }
 
   void testPceInheritorSwallowedAndLoggedOnErrorLevel() {
     try {
       throwPceInheritor();
-    } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.error(e)</error>;
+    } catch (Exception <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.error(e)</error>;
     }
   }
 
   void testPceInheritorSwallowedAndOnlyExceptionMessageLogged() {
     try {
       throwPceInheritor();
-    } catch (Exception <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+    } catch (Exception <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
       LOG.error("Error occurred: " + e.getMessage());
     }
   }
@@ -200,7 +210,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
   void testDisjunctionTypesWhenPceInheritorIsFirst() {
     try {
       throwPceInheritor();
-    } catch (RuntimeException | Error <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+    } catch (RuntimeException | Error <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
       LOG.error("Error occurred: " + e.getMessage());
     }
   }
@@ -208,7 +218,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
   void testDisjunctionTypesWhenPceInheritorIsSecond() {
     try {
       throwPceInheritor();
-    } catch (Error | RuntimeException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+    } catch (Error | RuntimeException <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
       LOG.error("Error occurred: " + e.getMessage());
     }
   }
@@ -216,7 +226,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
   void testPceInheritorSwallowedAndMultipleGenericCatchClauses() {
     try {
       throwPceInheritor();
-    } catch (RuntimeException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
+    } catch (RuntimeException <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown. It is thrown by 'throwPceInheritor()'.">e</error>) {
       // exception swallowed
     } catch (Exception e) {
       // exception swallowed
@@ -229,7 +239,7 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
     try {
       throwPceInheritor();
     } catch (RuntimeException e) {
-      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.error(e)</error>;
+      <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged. It is thrown by 'throwPceInheritor()'.">LOG.error(e)</error>;
       throw e;
     } catch (Exception e) {
       LOG.error(e);
@@ -246,12 +256,58 @@ class IncorrectPceHandlingWhenPceCaughtImplicitlyTests {
       try {
         throwPceInheritor();
       }
-      catch (SubclassOfProcessCanceledException <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>) {
-        <error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">LOG.error(e)</error>;
+      catch (SubclassOfProcessCanceledException <error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown">e</error>) {
+        <error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">LOG.error(e)</error>;
       }
     }
     catch (Throwable e) {
       LOG.error(e);
+    }
+  }
+
+  // tests for cancellation checks
+
+  void later(Runnable task) {
+  }
+
+  // The lambda only passes to 'later()', so its 'checkCanceled()' does not run inside the 'try'.
+  void testCheckCanceledInDeferredLambdaNotFlagged() {
+    try {
+      later(() -> ProgressManager.checkCanceled());
+    } catch (Exception e) {
+      LOG.warn(e);
+    }
+  }
+
+  void testCheckCanceledInAnonymousClassNotFlagged() {
+    try {
+      later(new Runnable() {
+        @Override
+        public void run() {
+          ProgressManager.checkCanceled();
+        }
+      });
+    } catch (Exception e) {
+      LOG.warn(e);
+    }
+  }
+
+  // A 'checkCanceled()' before the log rethrows the current cancellation, as a leading 'rethrowControlFlowException(e)' does.
+  void testCheckCanceledBeforeLogNotFlagged() {
+    try {
+      ProgressManager.checkCanceled();
+    } catch (Exception e) {
+      ProgressManager.checkCanceled();
+      LOG.error(e);
+    }
+  }
+
+  void testCheckCanceledAfterLogFlagged() {
+    try {
+      ProgressManager.checkCanceled();
+    } catch (Exception e) {
+      <error descr="'com.intellij.openapi.progress.ProcessCanceledException' must not be logged. It is thrown by 'checkCanceled()'.">LOG.error(e)</error>;
+      ProgressManager.checkCanceled();
     }
   }
 

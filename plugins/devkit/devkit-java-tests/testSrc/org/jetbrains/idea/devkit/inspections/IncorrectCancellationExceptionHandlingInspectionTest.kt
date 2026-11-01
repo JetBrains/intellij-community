@@ -12,7 +12,7 @@ class IncorrectCancellationExceptionHandlingInspectionTest : IncorrectCancellati
     myFixture.addClass("""
         package com.example;
         import com.intellij.openapi.diagnostic.ControlFlowException;
-        public class SomeControlFlowException extends ControlFlowException {}
+        public class SomeControlFlowException extends RuntimeException implements ControlFlowException {}
         """.trimIndent())
     myFixture.addClass("""
         package com.example;

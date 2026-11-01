@@ -119,7 +119,7 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
     try {
       // anything
     }
-    catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must be rethrown">e</error>: SubclassOfProcessCanceledException) {
+    catch (<error descr="'com.example.SubclassOfProcessCanceledException' must be rethrown">e</error>: SubclassOfProcessCanceledException) {
       // exception swallowed
     }
     catch (<error descr="'com.intellij.openapi.progress.ProcessCanceledException' must be rethrown">e</error>: ProcessCanceledException) {
@@ -141,7 +141,7 @@ class IncorrectPceHandlingWhenMultipleCatchClausesTests {
       // anything
     }
     catch (e: SubclassOfProcessCanceledException) {
-      LOG.<error descr="'com.intellij.openapi.progress.ProcessCanceledException' inheritor must not be logged">error(e)</error>
+      LOG.<error descr="'com.example.SubclassOfProcessCanceledException' must not be logged">error(e)</error>
       throw e
     }
     catch (e: ProcessCanceledException) {

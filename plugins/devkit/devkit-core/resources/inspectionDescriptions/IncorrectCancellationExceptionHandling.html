@@ -12,12 +12,15 @@ Reports <code>ProcessCanceledException</code> and <code>CancellationException</c
 </p>
 
 <p>
-  <i>*The inspection reports logging these exceptions in any execution context.</i>
+  <i>*The inspection reports logging these exceptions, and any other <code>ControlFlowException</code>, in any execution context.</i>
 </p>
 
 <p>
-  The inspection reports both explicit <code>ProcessCanceledException</code> (including inheritors) and <code>CancellationException</code> catching,
-  as well as catching <code>RuntimeException</code>, <code>Exception</code> and <code>Throwable</code> covering cancellation exceptions.
+  The inspection reports explicit <code>ProcessCanceledException</code> catches (including inheritors), and catches of
+  <code>CancellationException</code>, <code>IllegalStateException</code>, <code>RuntimeException</code>, <code>Exception</code>, and
+  <code>Throwable</code> when a call in the <code>try</code> block is a cancellation check such as <code>checkCanceled()</code>
+  or declares that it throws <code>ProcessCanceledException</code>. A call inside a lambda or a local class does not count,
+  because the <code>try</code> block may only pass it on.
 </p>
 
 <h3>Examples:</h3>
@@ -63,9 +66,9 @@ cs.launch {
 suspend fun suspendingFunction() {
   try {
     // ...
-  } catch (ProcessCanceledException e) {
-    LOG.error("Error occurred", e); // exception should not be logged
-    throw e;
+  } catch (e: CancellationException) {
+    LOG.error("Error occurred", e) // exception should not be logged
+    throw e
   }
 }
 
@@ -74,9 +77,9 @@ suspend fun suspendingFunction() {
 cs.launch {
   try {
     // ...
-  } catch (ProcessCanceledException e) {
+  } catch (e: CancellationException) {
     // additional actions
-    throw e;
+    throw e
   }
 }
 </code></pre>

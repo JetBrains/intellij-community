@@ -10,10 +10,7 @@ abstract class IncorrectCancellationExceptionHandlingInspectionTestBase : LightJ
     myFixture.enableInspections(IncorrectCancellationExceptionHandlingInspection())
     myFixture.addClass("""
         package com.intellij.openapi.diagnostic;
-        public class ControlFlowException extends RuntimeException {
-          public ControlFlowException() {}
-          public ControlFlowException(String message) { super(message); }
-        }
+        public interface ControlFlowException {}
         """.trimIndent())
     myFixture.addClass("""
         package java.util.concurrent;
@@ -22,7 +19,23 @@ abstract class IncorrectCancellationExceptionHandlingInspectionTestBase : LightJ
     myFixture.addClass("""
         package com.intellij.openapi.progress;
         import java.util.concurrent.CancellationException;
-        public class ProcessCanceledException extends CancellationException {}
+        public class CeProcessCanceledException extends ProcessCanceledException {
+          public CeProcessCanceledException(CancellationException e) {}
+        }
+        """.trimIndent())
+    myFixture.addClass("""
+        package com.intellij.openapi.progress;
+        import java.util.concurrent.CancellationException;
+        import com.intellij.openapi.diagnostic.ControlFlowException;
+        public class ProcessCanceledException extends CancellationException implements ControlFlowException {}
+        """.trimIndent())
+    // No 'throws' clause: the inspection must recognize the check by its declaring package, as for the Kotlin
+    // 'suspend fun checkCanceled()', which declares nothing.
+    myFixture.addClass("""
+        package com.intellij.openapi.progress;
+        public final class ProgressManager {
+          public static void checkCanceled() {}
+        }
         """.trimIndent())
     myFixture.addClass("""
         package com.intellij.openapi.diagnostic;
