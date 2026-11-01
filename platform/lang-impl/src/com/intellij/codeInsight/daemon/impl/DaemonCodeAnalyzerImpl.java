@@ -1033,32 +1033,42 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   public static void waitForLazyQuickFixesUnderCaret(@NotNull Project project, @NotNull Editor editor) {
     ThreadingAssertions.assertBackgroundThread();
     ThreadingAssertions.assertNoOwnReadAccess();
-    List<HighlightInfo> relevantInfos = new ArrayList<>();
     Document document = editor.getDocument();
-    ReadAction.runBlocking(() -> {
-      PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
-      CaretModel caretModel = editor.getCaretModel();
-      int offset = caretModel.getOffset();
-      int logicalLine = caretModel.getLogicalPosition().line;
-      processHighlights(document, project, null, 0, document.getTextLength(), info -> {
-        if (!info.hasLazyQuickFixes()) {
-          return true;
-        }
-        if (info.containsOffset(offset, true)) {
-          relevantInfos.add(info);
-          return true;
-        }
-        // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all HighlightInfos at the same line
-        boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
-        if (atTheSameLine) {
-          relevantInfos.add(info);
-        }
-        return true;
-      });
-    });
+    List<HighlightInfo> relevantInfos = ReadAction.computeBlocking(() -> collectLazyQuickFixInfosUnderCaret(project, editor));
     for (HighlightInfo info : relevantInfos) {
       LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, document);
     }
+  }
+
+  /**
+   * Returns the highlights with lazy quick fixes at the caret offset or on the caret line,
+   * for which {@link LazyQuickFixUpdater#waitQuickFixesSynchronously} must be called before the quick fixes are shown.
+   */
+  @ApiStatus.Internal
+  @RequiresReadLock
+  public static @NotNull List<HighlightInfo> collectLazyQuickFixInfosUnderCaret(@NotNull Project project, @NotNull Editor editor) {
+    List<HighlightInfo> relevantInfos = new ArrayList<>();
+    Document document = editor.getDocument();
+    PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
+    CaretModel caretModel = editor.getCaretModel();
+    int offset = caretModel.getOffset();
+    int logicalLine = caretModel.getLogicalPosition().line;
+    processHighlights(document, project, null, 0, document.getTextLength(), info -> {
+      if (!info.hasLazyQuickFixes()) {
+        return true;
+      }
+      if (info.containsOffset(offset, true)) {
+        relevantInfos.add(info);
+        return true;
+      }
+      // since we don't know fix ranges of potentially not-yet-added quick fixes, consider all HighlightInfos at the same line
+      boolean atTheSameLine = editor.offsetToLogicalPosition(info.getActualStartOffset()).line <= logicalLine && logicalLine <= editor.offsetToLogicalPosition(info.getActualEndOffset()).line;
+      if (atTheSameLine) {
+        relevantInfos.add(info);
+      }
+      return true;
+    });
+    return relevantInfos;
   }
 
   @ApiStatus.Internal

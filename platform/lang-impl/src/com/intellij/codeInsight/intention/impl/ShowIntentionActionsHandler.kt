@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException
 import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.quickfix.LazyQuickFixUpdater
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInspection.SuppressIntentionActionFromFix
@@ -34,13 +35,14 @@ import com.intellij.modcommand.ModCommandService
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
@@ -49,6 +51,8 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPointerManager
@@ -78,27 +82,31 @@ open class ShowIntentionActionsHandler : CodeInsightActionHandler {
     ): CachedIntentions {
       ThreadingAssertions.assertEventDispatchThread()
       check(!ApplicationManager.getApplication().isWriteAccessAllowed()) { "must not wait for intentions inside write action" }
+      val dumbService = DumbService.getInstance(project)
+      val alternativeResolve = dumbService.isAlternativeResolveEnabled
+      val document = editor.document
+      val progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions")
       return ApplicationManager.getApplication().runWriteIntentReadAction(ThrowableComputable {
-        val prioritizedRunnable = ThrowableComputable<CachedIntentions, RuntimeException> {
-          ProgressManager.getInstance().computePrioritized(ThrowableComputable {
-            DaemonCodeAnalyzerImpl.waitForLazyQuickFixesUnderCaret(project, editor)
-            runReadActionBlocking {
-              CachedIntentions.createAndUpdateActions(project, file, editor, ShowIntentionsPass.getActionsToShow(editor, file))
+        runWithModalProgressBlocking(project, progressTitle) {
+          // keeps the progress text that ShowIntentionsPass sets on the global indicator across read action restarts
+          reportRawProgress {
+            // one read action per phase: a write action restarts only the phase it interrupts
+            suspend fun <T> phase(compute: () -> T): T = readAction {
+              blockingContextToIndicator {
+                if (alternativeResolve) dumbService.computeWithAlternativeResolveEnabled<T, Throwable>(ThrowableComputable { compute() })
+                else compute()
+              }
             }
-          })
-        }
 
-        val process = if (DumbService.getInstance(project).isAlternativeResolveEnabled) {
-          ThrowableComputable {
-            DumbService.getInstance(project).computeWithAlternativeResolveEnabled(prioritizedRunnable)
+            val lazyQuickFixUpdater = LazyQuickFixUpdater.getInstance(project)
+            val lazyFixInfos = phase { DaemonCodeAnalyzerImpl.collectLazyQuickFixInfosUnderCaret(project, editor) }
+            for (info in lazyFixInfos) {
+              phase { lazyQuickFixUpdater.waitQuickFixesSynchronously(info, project, document) }
+            }
+            val intentions = phase { ShowIntentionsPass.getActionsToShow(editor, file) }
+            phase { CachedIntentions.createAndUpdateActions(project, file, editor, intentions) }
           }
         }
-        else {
-          prioritizedRunnable
-        }
-
-        val progressTitle = CodeInsightBundle.message("progress.title.searching.for.context.actions")
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
       })
     }
 

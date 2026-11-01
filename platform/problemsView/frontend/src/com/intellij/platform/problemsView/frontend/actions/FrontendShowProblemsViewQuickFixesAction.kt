@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
@@ -74,13 +75,16 @@ internal class FrontendShowProblemsViewQuickFixesAction : AnAction(), ActionRemo
     if (IdeProductMode.isMonolith) {
       val info = problem.info ?: return emptyList()
       // The action coroutine scope runs on Dispatchers.Default, so it is fine to block here.
-      if (info.hasLazyQuickFixes()) {
-        LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, problem.highlighter.document)
-      }
-      return buildList {
-        info.findRegisteredQuickFix { action, _ ->
-          add(action)
-          null
+      // The wait runs inside the read action, so a pending write restarts it instead of waiting for it.
+      return readAction {
+        if (info.hasLazyQuickFixes()) {
+          LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, problem.highlighter.document)
+        }
+        buildList {
+          info.findRegisteredQuickFix { action, _ ->
+            add(action)
+            null
+          }
         }
       }
     }

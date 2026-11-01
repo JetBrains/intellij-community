@@ -36,6 +36,7 @@ public interface LazyQuickFixUpdater {
   /**
    * Wait until the background calculation of unresolved reference quickfixes for {@code info} is completed.
    * This method might be needed when that information is required synchronously, e.g., when user pressed Alt-Enter.
+   * Under a cancellable read action it runs in that context and restarts with it, so a pending write action does not wait for it.
    */
   @RequiresBackgroundThread
   void waitQuickFixesSynchronously(@NotNull HighlightInfo info, @NotNull Project project, @NotNull Document document);

@@ -63,10 +63,10 @@ internal class BackendProblemsViewQuickFixService(private val project: Project) 
     val file = fileId.virtualFile() ?: return null
     val (highlighter, info) = findHighlightInfo(file, highlighterId) ?: return null
 
-    LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, highlighter.document)
-
     val quickFixes = readAction {
       if (!highlighter.isValid || findHighlighter(file, highlighterId) !== highlighter) return@readAction null
+      // inside the read action, so the wait restarts with it on a pending write instead of blocking the write
+      LazyQuickFixUpdater.getInstance(project).waitQuickFixesSynchronously(info, project, highlighter.document)
       collectAvailableQuickFixes(info, file, project).takeIf { it.isNotEmpty() }
     } ?: return null
 
