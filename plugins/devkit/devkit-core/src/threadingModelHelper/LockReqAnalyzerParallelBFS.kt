@@ -284,7 +284,7 @@ class LockReqAnalyzerParallelBFS {
           assert(queue.isEmpty())
           LOG.trace {
             buildString {
-              "Global counter: ${payload.globalCounter.get()}"
+              appendLine("Global counter: ${payload.globalCounter.get()}")
               context.visited.forEach { signature, i ->
                 appendLine("Visited $signature $i times")
               }
