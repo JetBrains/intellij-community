@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 
 // HIGHLIGHT_WARNINGS
 // TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.kdoc.KDocUnresolvedReferenceInspection

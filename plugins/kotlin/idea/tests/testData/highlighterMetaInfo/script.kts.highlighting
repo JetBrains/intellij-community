@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 
 class MyScriptClass {
     fun memberFunction(i: Int) {

@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
 data class Box(val v: Int)

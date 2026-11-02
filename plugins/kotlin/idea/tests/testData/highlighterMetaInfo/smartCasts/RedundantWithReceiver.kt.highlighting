@@ -23,7 +23,7 @@ fun <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesK
     if (this is <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_TRAIT'")!>Bar<!>) {
         <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>foo<!>()
         <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>bar<!>
-        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Extension implicit receiver smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>newFoo<!>()
-        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Extension implicit receiver smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>newBar<!>
+        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Implicit receiver smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_FUNCTION_CALL'")!>newFoo<!>()
+        <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; descr='Implicit receiver smart cast to Bar'; highlightingTextAttributesKey='KOTLIN_SMART_CAST_RECEIVER'"), HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_INSTANCE_PROPERTY'")!>newBar<!>
     }
 }

@@ -1,5 +1,4 @@
 
-// FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
 <!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_KEYWORD'")!>import<!> kotlin.reflect.full.<!HIGHLIGHTING("severity='SYMBOL_TYPE_SEVERITY'; highlightingTextAttributesKey='KOTLIN_EXTENSION_PROPERTY'")!>declaredMembers<!>

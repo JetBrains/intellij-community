@@ -1,4 +1,0 @@
-<!HIGHLIGHTING("severity='WEAK WARNING'; descr='Package directive does not match the file location'")!>package x<!>
-// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.PackageDirectoryMismatchInspection
-// HIGHLIGHT_WARNINGS
-// IMPLICIT_PACKAGE_PREFIX: "foo"

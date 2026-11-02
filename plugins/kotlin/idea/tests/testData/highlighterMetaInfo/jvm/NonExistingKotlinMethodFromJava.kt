@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // ALLOW_ERRORS
 // FILE: JavaClass.java
 

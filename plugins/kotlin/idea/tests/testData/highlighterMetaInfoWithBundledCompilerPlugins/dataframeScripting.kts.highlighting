@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // COMPILER_ARGUMENTS: -Xallow-any-scripts-in-source-roots
 // COMPILER_ARGUMENTS: -Xplugin=$KOTLIN_BUNDLED$/lib/kotlin-dataframe-compiler-plugin-experimental.jar
 // CHECK_SYMBOL_NAMES

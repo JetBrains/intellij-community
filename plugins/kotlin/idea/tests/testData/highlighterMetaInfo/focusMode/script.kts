@@ -1,5 +1,4 @@
 
-// FIR_IDENTICAL
 // CHECK_SYMBOL_NAMES
 // HIGHLIGHTER_ATTRIBUTES_KEY
 import kotlin.reflect.full.declaredMembers

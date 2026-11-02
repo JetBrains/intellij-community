@@ -1,4 +1,3 @@
-// FIR_IDENTICAL
 // WITH_STDLIB
 // ISSUE: KT-73649
 // FILE: main.kt
