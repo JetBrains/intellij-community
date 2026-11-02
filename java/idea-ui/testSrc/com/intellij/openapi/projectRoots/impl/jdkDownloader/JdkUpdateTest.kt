@@ -3,15 +3,21 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.application.subscribe
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.Disposer
@@ -21,7 +27,9 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.util.SystemProperties
+import com.intellij.util.system.OS
 import org.junit.Assert
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -29,6 +37,7 @@ import java.awt.event.KeyEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import java.nio.file.attribute.PosixFilePermissions
 import java.util.Collections
 import javax.swing.JPanel
 
@@ -41,6 +50,7 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
 
   @Before fun setUp() {
     service<JdkInstallerStore>().loadState(JdkInstallerState())
+    JdkUpdaterSettings.getInstance().loadState(JdkUpdaterState())
 
     val key = "jdk.downloader.home"
     val oldHome = System.setProperty(key, tempDir.newDirectory("jdk-install-home").toString())
@@ -54,6 +64,7 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
 
     doEventsWhile(1)
     listOurNotifications().forEach { it.expire() }
+    listCleanupNotifications().forEach { it.expire() }
     listOurActions().forEach { it.reachTerminalState() }
   }
 
@@ -65,6 +76,13 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
   private fun listOurNotifications() = myNotifications
     .filter { !it.isExpired }
     .filter { it.groupId == "JDK Update" || it.groupId == "JDK Update Error" }
+
+  private fun listCleanupNotifications() = myNotifications
+    .filter { !it.isExpired }
+    .filter { it.groupId == "JDK Update Cleanup" }
+
+  private fun cleanupAction(notification: Notification, messageKey: String): NotificationAction =
+    notification.actions.single { it.templatePresentation.text == ProjectBundle.message(messageKey) } as NotificationAction
 
   private fun newNotification(sdkName: String,
                               oldVersion: JdkItem = mockZipOld,
@@ -125,8 +143,49 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
     doEventsWhile(5)
 
     Assert.assertEquals(customJdks, Paths.get(update.jdk.homePath!!).parent)
+    Assert.assertTrue(Files.exists(oldJdkHome))
+    Assert.assertTrue(Files.exists(customJdks.resolve(".old-jdk.intellij")))
+    val cleanupNotification = listCleanupNotifications().single()
+    runNotificationAction(cleanupNotification, cleanupAction(cleanupNotification, "notification.action.jdk.update.cleanup.remove"))
+    doEventsWhile(5)
+
     Assert.assertFalse(Files.exists(oldJdkHome))
     Assert.assertFalse(Files.exists(customJdks.resolve(".old-jdk.intellij")))
+  }
+
+  @Test fun `test Always action enables automatic cleanup`() {
+    val customJdks = tempDir.newDirectory("custom-jdks-always-remove").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    val markerFile = Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+    val update = newNotification("old-sdk-always-remove", oldHome = oldJdkHome)!!
+
+    update.fireAction()
+    doEventsWhile(5)
+
+    val cleanupNotification = listCleanupNotifications().single()
+    runNotificationAction(cleanupNotification, cleanupAction(cleanupNotification, "notification.action.jdk.update.cleanup.always"))
+    doEventsWhile(5)
+
+    Assert.assertTrue(JdkUpdaterSettings.getInstance().isRemoveOutdatedJdksAutomatically)
+    Assert.assertFalse(Files.exists(oldJdkHome))
+    Assert.assertFalse(Files.exists(markerFile))
+  }
+
+  @Test fun `test automatic cleanup removes outdated JDK without a notification`() {
+    val customJdks = tempDir.newDirectory("custom-jdks-automatic-remove").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    val markerFile = Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+    JdkUpdaterSettings.getInstance().isRemoveOutdatedJdksAutomatically = true
+    val update = newNotification("old-sdk-automatic-remove", oldHome = oldJdkHome)!!
+
+    update.fireAction()
+    doEventsWhile(5)
+
+    Assert.assertFalse(Files.exists(oldJdkHome))
+    Assert.assertFalse(Files.exists(markerFile))
+    Assert.assertTrue(listCleanupNotifications().isEmpty())
   }
 
   @Test fun `test jdk update keeps old install used by another sdk`() {
@@ -151,7 +210,108 @@ class JdkUpdateTest : BareTestFixtureTestCase() {
 
     Assert.assertTrue(Files.exists(oldJdkHome))
     Assert.assertTrue(Files.exists(customJdks.resolve(".old-jdk.intellij")))
-    Assert.assertEquals(listOf(oldJdkHome.toString()), service<JdkInstallerStore>().listOutdated())
+    Assert.assertTrue(listCleanupNotifications().isEmpty())
+  }
+
+  @Test fun `test cleanup keeps JDK that becomes used before removal`() {
+    val customJdks = tempDir.newDirectory("custom-jdks-in-use-after-notification").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+    val update = newNotification("old-sdk-in-use-after-notification", oldHome = oldJdkHome)!!
+
+    update.fireAction()
+    doEventsWhile(5)
+
+    val cleanupNotification = listCleanupNotifications().single()
+    val anotherSdk = ProjectJdkTable.getInstance().createSdk("another-old-sdk-after-notification", JavaSdk.getInstance())
+    val sdkModificator = anotherSdk.sdkModificator.apply {
+      homePath = oldJdkHome.toString()
+      versionString = mockZipOld.versionString
+    }
+    ApplicationManager.getApplication().runWriteAction {
+      sdkModificator.commitChanges()
+      ProjectJdkTable.getInstance().addJdk(anotherSdk, testRootDisposable)
+    }
+
+    runNotificationAction(cleanupNotification, cleanupAction(cleanupNotification, "notification.action.jdk.update.cleanup.remove"))
+    doEventsWhile(5)
+
+    Assert.assertTrue(Files.exists(oldJdkHome))
+    Assert.assertTrue(Files.exists(customJdks.resolve(".old-jdk.intellij")))
+  }
+
+  @Test fun `test removal deletes marked outdated JDK`() {
+    val customJdks = tempDir.newDirectory("custom-jdks-remove").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    val markerFile = Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+
+    val installer = JdkInstaller.getInstance()
+    val installDir = installer.findRemovableOutdatedJdk(oldJdkHome.toString())!!
+    Assert.assertEquals(oldJdkHome, installDir)
+
+    installer.removeOutdatedJdk(installDir)
+
+    Assert.assertFalse(Files.exists(oldJdkHome))
+    Assert.assertFalse(Files.exists(markerFile))
+  }
+
+  @Test fun `test removal skips JDK that becomes used after availability check`() {
+    val customJdks = tempDir.newDirectory("custom-jdks-used-after-check").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    Files.createDirectories(oldJdkHome)
+    Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+
+    val installer = JdkInstaller.getInstance()
+    val installDir = installer.findRemovableOutdatedJdk(oldJdkHome.toString())!!
+    Assert.assertEquals(oldJdkHome, installDir)
+
+    val anotherSdk = ProjectJdkTable.getInstance().createSdk("another-old-sdk-after-check", JavaSdk.getInstance())
+    val sdkModificator = anotherSdk.sdkModificator.apply {
+      homePath = oldJdkHome.toString()
+      versionString = mockZipOld.versionString
+    }
+    ApplicationManager.getApplication().runWriteAction {
+      sdkModificator.commitChanges()
+      ProjectJdkTable.getInstance().addJdk(anotherSdk, testRootDisposable)
+    }
+
+    installer.removeOutdatedJdk(installDir)
+
+    Assert.assertTrue(Files.exists(oldJdkHome))
+    Assert.assertTrue(Files.exists(customJdks.resolve(".old-jdk.intellij")))
+  }
+
+  @Test fun `test failed removal is retried silently`() {
+    Assume.assumeTrue(OS.CURRENT != OS.Windows)
+    val customJdks = tempDir.newDirectory("custom-jdks-failed-removal").toPath()
+    val oldJdkHome = customJdks.resolve("old-jdk")
+    val lockedDir = Files.createDirectories(oldJdkHome.resolve("locked"))
+    Files.createFile(lockedDir.resolve("file"))
+    val markerFile = Files.createFile(customJdks.resolve(".old-jdk.intellij"))
+    val store = service<JdkInstallerStore>()
+    val installer = JdkInstaller.getInstance()
+    val installDir = installer.findRemovableOutdatedJdk(oldJdkHome.toString())!!
+
+    Files.setPosixFilePermissions(lockedDir, PosixFilePermissions.fromString("r-xr-xr-x"))
+    try {
+      installer.removeOutdatedJdk(installDir)
+    }
+    finally {
+      Files.setPosixFilePermissions(lockedDir, PosixFilePermissions.fromString("rwxr-xr-x"))
+    }
+
+    Assert.assertTrue(Files.exists(oldJdkHome))
+    Assert.assertTrue(Files.exists(markerFile))
+    Assert.assertEquals(listOf(oldJdkHome.toAbsolutePath().toString()), store.listOutdated())
+    Assert.assertTrue(listCleanupNotifications().isEmpty())
+
+    installer.retryOutdatedJdkRemoval()
+
+    Assert.assertFalse(Files.exists(oldJdkHome))
+    Assert.assertFalse(Files.exists(markerFile))
+    Assert.assertTrue(store.listOutdated().isEmpty())
   }
 
   @Test fun `test jdk update failed`() {
@@ -305,6 +465,14 @@ private fun runAction(theAction: AnAction) {
   ApplicationManager.getApplication().invokeAndWait {
     val event = KeyEvent(JPanel(), 1, 0, 0, 0, ' ')
     ActionManager.getInstance().tryToExecute(theAction, event, null, null, true)
+  }
+}
+
+private fun runNotificationAction(notification: Notification, theAction: NotificationAction) {
+  ApplicationManager.getApplication().invokeAndWait {
+    val event = KeyEvent(JPanel(), 1, 0, 0, 0, ' ')
+    val actionEvent = AnActionEvent.createEvent(theAction, DataContext.EMPTY_CONTEXT, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, event)
+    theAction.actionPerformed(actionEvent, notification)
   }
 }
 

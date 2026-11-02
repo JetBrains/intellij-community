@@ -31,7 +31,6 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkInstallerEel.unpa
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.EelDescriptor
 import com.intellij.platform.eel.EelPlatform
@@ -117,6 +116,8 @@ interface JdkInstallerListener {
   fun onJdkDownloadFinished(request: JdkInstallRequest, project: Project?) {}
 }
 
+internal data class InstallDirAndMarkerFile(val installDir: Path, val markerFile: Path)
+
 @Service
 @Internal
 class JdkInstaller : JdkInstallerBase() {
@@ -183,12 +184,12 @@ class JdkInstaller : JdkInstallerBase() {
     }
   }
 
-  fun removeOutdatedJdk(oldJdkHome: String?) {
-    if (!RegistryManager.getInstance().get("jdk.updater.remove.outdated").asBoolean()) return
+  fun findRemovableOutdatedJdk(oldJdkHome: String?): Path? = findRemovableOutdatedJdkAndMarkerFile(oldJdkHome)?.installDir
 
-    val oldJdkPath = oldJdkHome?.let { Path.of(it) } ?: return
-    val installDir = findInstallDirForInstalledJdk(oldJdkHome) ?: return
-    val markerFile = findMarkerFile(oldJdkPath) ?: return
+  private fun findRemovableOutdatedJdkAndMarkerFile(oldJdkHome: String?): InstallDirAndMarkerFile? {
+    val oldJdkPath = oldJdkHome?.let { runCatching { Path.of(it) }.getOrNull() } ?: return null
+    val installDirAndMarkerFile = findInstallDirAndMarkerFile(oldJdkPath) ?: return null
+    val installDir = installDirAndMarkerFile.installDir
     val normalizedInstallDir = installDir.toAbsolutePath().normalize()
     val sdkHomes = runReadActionBlocking {
       ProjectJdkTable.getInstance().allJdks.mapNotNull { sdk ->
@@ -197,33 +198,52 @@ class JdkInstaller : JdkInstallerBase() {
     }
     val ideJavaHome = Path.of(System.getProperty("java.home")).toAbsolutePath().normalize()
     if (sdkHomes.any { it.startsWith(normalizedInstallDir) } || ideJavaHome.startsWith(normalizedInstallDir)) {
-      service<JdkInstallerStore>().registerOutdated(installDir)
-      return
+      return null
     }
 
+    return installDirAndMarkerFile
+  }
+
+  /**
+   * Removes the outdated JDK at [installDir] if no SDK and no IDE runtime use it.
+   * If the removal fails, the IDE records [installDir] and [retryOutdatedJdkRemoval] tries again later.
+   */
+  fun removeOutdatedJdk(installDir: Path) {
     val store = service<JdkInstallerStore>()
+    val removableInstallDirAndMarkerFile = findRemovableOutdatedJdkAndMarkerFile(installDir.toString())
+    if (removableInstallDirAndMarkerFile == null || removableInstallDirAndMarkerFile.installDir != installDir) {
+      store.unregisterOutdated(installDir.toAbsolutePath().toString())
+      return
+    }
+    val removableInstallDir = removableInstallDirAndMarkerFile.installDir
+    val markerFile = removableInstallDirAndMarkerFile.markerFile
+
     try {
-      installDir.delete()
+      removableInstallDir.delete()
       markerFile.delete()
-      store.unregisterOutdated(installDir)
+      store.unregisterOutdated(installDir.toAbsolutePath().toString())
     }
     catch (e: IOException) {
-      LOG.warn("Failed to delete outdated JDK at $installDir", e)
+      LOG.warn("Failed to remove outdated JDK at $installDir. The IDE tries again on the next project opening", e)
       store.registerOutdated(installDir)
     }
   }
 
-  fun cleanupOutdatedJdks() {
-    if (!RegistryManager.getInstance().get("jdk.updater.remove.outdated").asBoolean()) return
-
+  fun retryOutdatedJdkRemoval() {
     val store = service<JdkInstallerStore>()
     for (installDirString in store.listOutdated()) {
-      val installDir = Path.of(installDirString)
-      if (!installDir.isDirectory()) {
-        store.unregisterOutdated(installDir)
+      val installDir = runCatching { Path.of(installDirString) }.getOrNull()
+      if (installDir == null || !installDir.isDirectory()) {
+        try {
+          installDir?.let { markerFile(it)?.delete() }
+          store.unregisterOutdated(installDirString)
+        }
+        catch (e: IOException) {
+          LOG.warn("Failed to remove the marker file of outdated JDK at $installDir", e)
+        }
         continue
       }
-      removeOutdatedJdk(installDirString)
+      removeOutdatedJdk(installDir)
     }
   }
 
@@ -314,9 +334,6 @@ abstract class JdkInstallerBase {
     val markerFile = findMarkerFile(jdkPath) ?: return null
     return markerFile.parent?.let { defaultInstallDir(it, newVersion) }
   }
-
-  fun findInstallDirForInstalledJdk(jdkHome: String?): Path? =
-    jdkHome?.let { findInstallDirAndMarkerFile(Path.of(it))?.first }
 
   protected fun defaultInstallDir(installDir: Path, newVersion: JdkItem): Path {
     val targetDir = installDir.resolve(newVersion.installFolderName)
@@ -538,7 +555,7 @@ abstract class JdkInstallerBase {
     return request
   }
 
-  private fun markerFile(installDir: Path): Path? = installDir.parent?.resolve(".${installDir.fileName}.intellij")
+  protected fun markerFile(installDir: Path): Path? = installDir.parent?.resolve(".${installDir.fileName}.intellij")
 
   private fun writeMarkerFile(request: JdkInstallRequest) {
     val installDir = request.installDir
@@ -579,13 +596,13 @@ abstract class JdkInstallerBase {
   }
 
   // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
-  protected fun findMarkerFile(jdkPath: Path): Path? = findInstallDirAndMarkerFile(jdkPath)?.second
+  protected fun findMarkerFile(jdkPath: Path): Path? = findInstallDirAndMarkerFile(jdkPath)?.markerFile
 
-  private fun findInstallDirAndMarkerFile(jdkPath: Path): Pair<Path, Path>? = generateSequence(jdkPath) { it.parent }
+  internal fun findInstallDirAndMarkerFile(jdkPath: Path): InstallDirAndMarkerFile? = generateSequence(jdkPath) { it.parent }
     .takeWhile { it.isDirectory() }
     .take(5)
     .firstNotNullOfOrNull { installDir ->
-      markerFile(installDir)?.takeIf { it.isRegularFile() }?.let { installDir to it }
+      markerFile(installDir)?.takeIf { it.isRegularFile() }?.let { InstallDirAndMarkerFile(installDir, it) }
     }
 
   private fun findAlreadyInstalledJdk(feedItem: JdkItem, distribution: OsAbstractionForJdkInstaller?): JdkInstallRequest? {
@@ -809,8 +826,8 @@ class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkI
     state.outdatedInstallDirs.toList()
   }
 
-  fun unregisterOutdated(installDir: Path): Unit = lock.withLock {
-    if (state.outdatedInstallDirs.remove(installDir.toAbsolutePath().toString())) {
+  fun unregisterOutdated(installDirString: String): Unit = lock.withLock {
+    if (state.outdatedInstallDirs.remove(installDirString)) {
       state.intIncrementModificationCount()
     }
   }

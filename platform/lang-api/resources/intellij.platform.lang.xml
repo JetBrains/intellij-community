@@ -262,6 +262,8 @@
     <editorActionHandler action="EditorUnindentSelection" implementationClass="com.intellij.codeInsight.completion.PrevParameterHandler"/>
     <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle"
                        key="notification.group.jdk.update.error"/>
+    <notificationGroup id="JDK Update Cleanup" displayType="BALLOON" bundle="messages.LangBundle"
+                       key="notification.group.jdk.update.cleanup"/>
     <notificationGroup id="Batch quick fix" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.batch.quick.fix"/>
     <notificationGroup id="language.service.stopped.or.restarted" displayType="BALLOON" isLogByDefault="false"
                        bundle="messages.LangBundle" key="language.services.notification.group.service.stopped.or.restarted"/>

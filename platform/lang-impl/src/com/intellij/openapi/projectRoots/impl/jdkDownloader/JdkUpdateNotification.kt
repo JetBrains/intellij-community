@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.diagnostic.rethrowControlFlowException
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.notification.Notification
@@ -15,6 +14,7 @@ import com.intellij.openapi.application.backgroundWriteAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
@@ -206,7 +206,7 @@ class JdkUpdateNotification(
       val eel = jdk.homePath?.let { Path.of(it).getEelDescriptor().toEelApi() }
       val wsl = jdk.homePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
       val installDir = installer.installDirNextToInstalledJdk(jdk.homePath, newItem)
-                     ?: installer.defaultInstallDir(newItem, eel, wsl)
+                       ?: installer.defaultInstallDir(newItem, eel, wsl)
       val request = installer.prepareJdkInstallation(newItem, installDir)
 
       coroutineToIndicator { indicator ->
@@ -242,12 +242,16 @@ class JdkUpdateNotification(
 
       val oldJdkPath = jdkHome?.let { runCatching { Path.of(it).toAbsolutePath().normalize() }.getOrNull() }
       if (oldJdkPath != null && oldJdkPath != newJdkHome.toAbsolutePath().normalize()) {
-        withContext(Dispatchers.IO) {
-          runCatching { JdkInstaller.getInstance().removeOutdatedJdk(jdkHome) }
-            .onFailure { t ->
-              rethrowControlFlowException(t)
-              LOG.warn("Failed to remove outdated JDK at $jdkHome", t)
+        val installDir = JdkInstaller.getInstance().findRemovableOutdatedJdk(jdkHome)
+        if (installDir != null) {
+          if (JdkUpdaterSettings.getInstance().isRemoveOutdatedJdksAutomatically) {
+            JdkInstaller.getInstance().removeOutdatedJdk(installDir)
+          }
+          else {
+            withContext(Dispatchers.EDT) {
+              showRemoveOutdatedJdkNotification(e.project, installDir)
             }
+          }
         }
       }
       reachTerminalState()
@@ -260,6 +264,34 @@ class JdkUpdateNotification(
 
       LOG.warn("Failed to apply downloaded JDK update for $jdk from $newItem at $newJdkHome. ${t.message}", t)
       fail()
+    }
+  }
+
+  private fun showRemoveOutdatedJdkNotification(project: Project?, installDir: Path) {
+    NotificationGroupManager.getInstance().getNotificationGroup("JDK Update Cleanup")
+      .createNotification(
+        "",
+        ProjectBundle.message("notification.content.jdk.update.cleanup", installDir.fileName),
+        NotificationType.INFORMATION)
+      .addAction(object : NotificationAction(ProjectBundle.message("notification.action.jdk.update.cleanup.remove")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          notification.expire()
+          removeOutdatedJdkInBackground(installDir)
+        }
+      })
+      .addAction(object : NotificationAction(ProjectBundle.message("notification.action.jdk.update.cleanup.always")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          JdkUpdaterSettings.getInstance().isRemoveOutdatedJdksAutomatically = true
+          notification.expire()
+          removeOutdatedJdkInBackground(installDir)
+        }
+      })
+      .notify(project)
+  }
+
+  private fun removeOutdatedJdkInBackground(installDir: Path) {
+    scope.launch(Dispatchers.IO) {
+      JdkInstaller.getInstance().removeOutdatedJdk(installDir)
     }
   }
 
