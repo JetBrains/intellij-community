@@ -88,6 +88,7 @@ object ThisRebinderForAddingNewReceiver {
             )
             val selector = qualified.selectorExpression
                 ?: error("Expected selector to be present for the qualified expression created by KtPsiFactory")
+            replacements[psi] = qualified
             replacements[selector] = qualified
         }
 

@@ -272,6 +272,7 @@ class CollectionConcatenationToBuildCollectionInspection :
         val expressionToConvert = expression.expressionToConvert()
         val replacementTarget = expressionToConvert.getTopmostParenthesizedExpressionOrSelf()
         val commentsBeforeOperations = commentsBeforeOperations(expressionToConvert)
+        val operationExpressions = writableOperations.map { operation -> operation.expression.element ?: return }
         val replacements = ThisRebinderForAddingNewReceiver.apply(writableRebinderContext)
 
         val ktPsiFactory = KtPsiFactory(project)
@@ -287,19 +288,16 @@ class CollectionConcatenationToBuildCollectionInspection :
         val collectionType = elementContext.collectionType
         for (index in writableOperations.indices) {
             val operation = writableOperations[index]
+            val expression = operationExpressions[index].elementOrReplacement()
             for (comment in commentsBeforeOperations.getOrNull(index).orEmpty()) {
                 bodyExpression.addStatement(ktPsiFactory, comment)
             }
             when (operation) {
                 is Context.Operation.AddRemoveOperation -> {
-                    val expression = operation.expression.element?.elementOrReplacement()
-                        ?: error("Element is invalid for operation: $operation")
                     bodyExpression.addOperation(ktPsiFactory, collectionType.operationNames.getValue(operation.kind), expression)
                 }
 
                 is Context.Operation.TransformingOperation -> {
-                    val expression = operation.expression.element?.elementOrReplacement()
-                        ?: error("Element is invalid for operation: $operation")
                     val callExpression = expression.transformingCallExpression() ?: return
                     val nameReferenceExpression = callExpression.calleeExpression as? KtNameReferenceExpression ?: return
                     val identifier = nameReferenceExpression.getIdentifier() ?: return

@@ -13352,6 +13352,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             public void testInsideBuilderSameName() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/implicitThis/insideBuilderSameName.kt");
             }
+
+            @TestMetadata("memberFunctionsOfOuterClass.kt")
+            public void testMemberFunctionsOfOuterClass() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/implicitThis/memberFunctionsOfOuterClass.kt");
+            }
+
+            @TestMetadata("memberFunctionsWithTransformingCall.kt")
+            public void testMemberFunctionsWithTransformingCall() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/implicitThis/memberFunctionsWithTransformingCall.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
