@@ -35,11 +35,16 @@ class PyRunToolLaunch(val command: List<FullPathOnTarget>, val envs: Map<String,
 /**
  * The launch of [python] through this tool for a process that the machine of the interpreter spawns rather than the
  * IDE, such as the debuggee of the debugpy launcher. [python] and the paths in the result are paths on that machine.
+ * For an interpreter of the IDE host that machine is the host itself.
  * The command is the one `PythonScripts.applyRunToolAsync` builds for Run.
  */
 @ApiStatus.Internal
-fun PyRunToolParameters.launchOnRemoteMachine(python: FullPathOnTarget): PyRunToolLaunch =
-  PyRunToolLaunch(listOf(exe.toStringOnRemoteMachine()) + args + listOfNotNull(python.takeIf { includeOriginalExe }), envs)
+fun PyRunToolParameters.launchOnInterpreterMachine(python: FullPathOnTarget): PyRunToolLaunch =
+  PyRunToolLaunch(buildList {
+    addAll(listOf(this@launchOnInterpreterMachine.exe.toStringOnRemoteMachine()))
+    addAll(this@launchOnInterpreterMachine.args)
+    addAll(listOfNotNull(python.takeIf { this@launchOnInterpreterMachine.includeOriginalExe }))
+  }, envs)
 
 internal fun AbstractPythonRunConfiguration<*>.useRunTool(sdk: Sdk): Boolean {
   val explicit = this.useRunTool
