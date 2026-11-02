@@ -312,7 +312,10 @@ public final class WindowWatcher implements PropertyChangeListener {
         }
       }
       final DataContext dataContext = DataManager.getInstance().getDataContext(window);
-      if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
+      Project windowProject = CommonDataKeys.PROJECT.getData(dataContext);
+      // the frame of a project with frame guests gives its active project, so the owners of the two frames are compared
+      if (project == windowProject ||
+          (project != null && windowProject != null && FrameGuestsKt.frameOwnerOf(project) == FrameGuestsKt.frameOwnerOf(windowProject))) {
         return window;
       }
     }
