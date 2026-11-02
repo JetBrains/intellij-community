@@ -5,7 +5,6 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
@@ -88,8 +87,8 @@ class ProjectWindowAction(
   }
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    // show check mark for active and visible project frame
-    val project = e.getData(CommonDataKeys.PROJECT) as? ProjectStoreOwner ?: return false
+    // show check mark for active and visible project frame; the entry of the frame owner stands for an active frame guest
+    val project = e.project?.let(::frameOwnerOf) as? ProjectStoreOwner ?: return false
     return projectLocation == project.componentStore.storeDescriptor.presentableUrl
   }
 

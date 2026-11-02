@@ -7,7 +7,6 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
@@ -72,25 +71,34 @@ class ProjectWindowActionGroup : IdeDependentActionGroup(), ActionRemoteBehavior
   }
 
   fun canActivateNext(project: Project?): Boolean {
-    val projectLocation = (project as? ProjectStoreOwner)?.componentStore?.storeDescriptor?.presentableUrl ?: return false
+    val projectLocation = locationOf(project) ?: return false
     return findSwitchTarget(projectLocation, next = true) != null
   }
 
   fun canActivatePrevious(project: Project?): Boolean {
-    val projectLocation = (project as? ProjectStoreOwner)?.componentStore?.storeDescriptor?.presentableUrl ?: return false
+    val projectLocation = locationOf(project) ?: return false
     return findSwitchTarget(projectLocation, next = false) != null
   }
 
   override fun isDumbAware(): Boolean = true
 
   fun activateNextWindow(e: AnActionEvent) {
-    val presentableUrl = (e.getData(CommonDataKeys.PROJECT) as? ProjectStoreOwner ?: return).componentStore.storeDescriptor.presentableUrl
+    val presentableUrl = locationOf(e.project) ?: return
     findSwitchTarget(presentableUrl, next = true)?.setSelected(e, true)
   }
 
   fun activatePreviousWindow(e: AnActionEvent) {
-    val presentableUrl = (e.getData(CommonDataKeys.PROJECT) as? ProjectStoreOwner ?: return).componentStore.storeDescriptor.presentableUrl
+    val presentableUrl = locationOf(e.project) ?: return
     findSwitchTarget(presentableUrl, next = false)?.setSelected(e, true)
+  }
+
+  /**
+   * The location of the entry that stands for [project]: the location of the owner of its frame. A frame guest has no
+   * entry of its own, see `WindowDressingStartupActivity`. Null for a project without a store.
+   */
+  private fun locationOf(project: Project?): Path? {
+    val owner = project?.let(::frameOwnerOf)
+    return (owner as? ProjectStoreOwner)?.componentStore?.storeDescriptor?.presentableUrl
   }
 
   fun findSwitchTarget(projectLocation: Path, next: Boolean): ProjectWindowAction? {
