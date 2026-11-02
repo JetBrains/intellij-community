@@ -596,7 +596,10 @@ public class PropertyUtilBase {
       PsiUtil.setModifierProperty(getMethod, PsiModifier.STATIC, true);
     }
 
-    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, getMethod);
+    NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(project);
+    if (nullableManager != null) {
+      nullableManager.copyNullableOrNotNullAnnotation(field, getMethod);
+    }
 
     PsiCodeBlock body = factory.createCodeBlockFromText("{\nreturn " + name + ";\n}", null);
     Objects.requireNonNull(getMethod.getBody()).replace(body);
@@ -651,7 +654,10 @@ public class PropertyUtilBase {
     String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
     PsiParameter param = factory.createParameter(parameterName, AnnotationTargetUtil.keepStrictlyTypeUseAnnotations(field.getModifierList(), field.getType()));
 
-    NullableNotNullManager.getInstance(project).copyNullableOrNotNullAnnotation(field, param);
+    NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(project);
+    if (nullableManager != null) {
+      nullableManager.copyNullableOrNotNullAnnotation(field, param);
+    }
 
     setMethod.getParameterList().add(param);
     PsiUtil.setModifierProperty(setMethod, PsiModifier.PUBLIC, true);

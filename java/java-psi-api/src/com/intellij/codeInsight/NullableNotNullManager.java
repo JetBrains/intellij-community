@@ -446,7 +446,9 @@ public abstract class NullableNotNullManager {
    * @return found nullability; {@link Nullability#UNKNOWN} if not specified or non-applicable
    */
   public static @NotNull Nullability getNullability(@NotNull PsiModifierListOwner owner) {
-    NullabilityAnnotationInfo info = getInstance(owner.getProject()).findEffectiveNullabilityInfo(owner);
+    NullableNotNullManager manager = getInstance(owner.getProject());
+    if (manager == null) return Nullability.UNKNOWN;
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 
@@ -460,8 +462,9 @@ public abstract class NullableNotNullManager {
    * @return true if given annotation specifies nullability
    */
   public static boolean isNullabilityAnnotation(@NotNull PsiAnnotation annotation) {
-    return getInstance(annotation.getProject()).getAllNullabilityAnnotationsWithNickNames()
-             .getNullability(annotation.getQualifiedName()) != null;
+    NullableNotNullManager manager = getInstance(annotation.getProject());
+    return manager != null && manager.getAllNullabilityAnnotationsWithNickNames()
+                                .getNullability(annotation.getQualifiedName()) != null;
   }
 
   /**
