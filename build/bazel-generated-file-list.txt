@@ -295,6 +295,7 @@ images
 images/intellij.platform.images.copyright
 images/intellij.platform.images.xdebugger
 images/jcef
+java/basic-plugin
 java/codeserver/core
 java/codeserver/highlighting
 java/compiler

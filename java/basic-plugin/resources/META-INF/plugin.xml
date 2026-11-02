@@ -1,0 +1,24 @@
+<idea-plugin allow-bundled-update="true">
+  <id>com.intellij.java.basic</id>
+  <name>Java Basic Syntax Highlighting</name>
+  <description><![CDATA[
+    Adds basic support for Java files: lexer-based syntax highlighting, the Java parser and PSI, formatting, brace matching, and the editor handlers.
+    The Java plugin adds Java projects, code analysis, completion, inspections, and the other coding assistance features.
+  ]]></description>
+
+  <vendor>JetBrains</vendor>
+  <category>Languages</category>
+
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+  </dependencies>
+
+  <content namespace="jetbrains">
+    <module name="intellij.java.syntax" loading="embedded"/>
+    <module name="intellij.java.frontback.psi" loading="embedded"/>
+    <module name="intellij.java.frontback.psi.impl" loading="embedded"/>
+    <module name="intellij.java.psi" loading="embedded"/>
+    <module name="intellij.java.psi.impl" loading="embedded"/>
+    <module name="intellij.java.frontback.impl" loading="embedded"/>
+  </content>
+</idea-plugin>
