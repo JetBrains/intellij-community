@@ -2930,6 +2930,32 @@ public abstract class FindUsagesWithCompilerReferenceIndexFirTestGenerated exten
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
+            public static class TestPrimaryConstructorDataClass extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("primaryConstructorDataClass.0.kt")
+                public void testPrimaryConstructorDataClass() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorDataClass.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
+            public static class TestPrimaryConstructorDataClassJava extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("primaryConstructorDataClassJava.0.kt")
+                public void testPrimaryConstructorDataClassJava() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorDataClassJava.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages")
             public static class TestPrimaryConstructorNoKeyword extends AbstractFindUsagesWithCompilerReferenceIndexFirTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

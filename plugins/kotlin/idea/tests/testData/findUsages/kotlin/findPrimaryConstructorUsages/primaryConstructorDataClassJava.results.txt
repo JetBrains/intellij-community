@@ -1,0 +1,3 @@
+[primaryConstructorDataClassJava.0.kt] New instance creation 8 A(1)
+[primaryConstructorDataClassJava.1.java] New instance creation 3 A a = new A(1);
+[primaryConstructorDataClassJava.1.java] Unclassified 4 A b = a.copy(42);

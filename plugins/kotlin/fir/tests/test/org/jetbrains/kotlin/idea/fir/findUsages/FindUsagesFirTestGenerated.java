@@ -1220,6 +1220,16 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorByRef.0.kt");
             }
 
+            @TestMetadata("primaryConstructorDataClass.0.kt")
+            public void testPrimaryConstructorDataClass() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorDataClass.0.kt");
+            }
+
+            @TestMetadata("primaryConstructorDataClassJava.0.kt")
+            public void testPrimaryConstructorDataClassJava() throws Exception {
+                runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorDataClassJava.0.kt");
+            }
+
             @TestMetadata("primaryConstructorNoKeyword.0.kt")
             public void testPrimaryConstructorNoKeyword() throws Exception {
                 runTest("../../idea/tests/testData/findUsages/kotlin/findPrimaryConstructorUsages/primaryConstructorNoKeyword.0.kt");

@@ -1,0 +1,2 @@
+Function call 9 val b = a.copy(n = 42)
+New instance creation 8 val a = A(1)

@@ -372,16 +372,13 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
 
                     psiMethods.forEach { psiMethod ->
                         val pointer = psiMethod.createSmartPointer()
-                        longTasks.add {
-                            runReadAction { pointer.element }?.let {
-                                MethodReferencesSearch.search(
-                                    it,
-                                    queryParameters.effectiveSearchScope.excludeFileTypes(
-                                        project, KotlinFileType.INSTANCE
-                                    ),
-                                    true
-                                ).forEach(consumer)
-                            }
+                        queryParameters.optimizer.searchCustom {
+                            val method = runReadAction { pointer.element } ?: return@searchCustom true
+                            MethodReferencesSearch.search(
+                                method,
+                                queryParameters.effectiveSearchScope,
+                                true
+                            ).forEach(consumer)
                         }
                     }
                 }
@@ -443,10 +440,9 @@ class KotlinReferencesSearcher : QueryExecutorBase<PsiReference, ReferencesSearc
             val namedElements = lightMethods.filterDataClassComponentsIfDisabled(kotlinOptions).filterIsInstance<PsiMethod>()
             for (element in namedElements) {
                 val pointer = element.createSmartPointer()
-                longTasks.add {
-                    runReadAction { pointer.element }?.let {
-                        MethodReferencesSearch.search(it, queryParameters.effectiveSearchScope, true).forEach(consumer)
-                    }
+                queryParameters.optimizer.searchCustom {
+                    val method = runReadAction { pointer.element } ?: return@searchCustom true
+                    MethodReferencesSearch.search(method, queryParameters.effectiveSearchScope, true).forEach(consumer)
                 }
             }
         }

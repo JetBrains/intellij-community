@@ -51,7 +51,6 @@ import org.jetbrains.kotlin.idea.base.util.excludeKotlinSources
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.dataClassComponentMethodName
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.SearchUtils.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
@@ -316,23 +315,18 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
 
                 if (element is KtElement && !isOnlyKotlinSearch(options.searchScope)) {
                     val nonKotlinSources = options.searchScope.excludeKotlinSources(project)
-                    val psiMethodScopeSearch = when {
-                        element is KtParameter && element.dataClassComponentMethodName != null -> {
-                            nonKotlinSources
-                        }
-                        else -> options.searchScope
-                    }
-
-                    for (psiMethod in element.toLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
-                        addTask {
-                            // function as property syntax when there is java super
-                            val query = MethodReferencesSearch.search(psiMethod, psiMethodScopeSearch, true)
-                            applyQueryFilters(
-                                element,
-                                options,
-                                forHighlight,
-                                query
-                            ).forEach(referenceProcessor)
+                    if (element !is KtConstructor<*> && element !is KtParameter) {
+                        for (psiMethod in element.toLightMethods().filterDataClassComponentsIfDisabled(kotlinSearchOptions)) {
+                            addTask {
+                                // function as property syntax when there is java super
+                                val query = MethodReferencesSearch.search(psiMethod, options.searchScope, true)
+                                applyQueryFilters(
+                                    element,
+                                    options,
+                                    forHighlight,
+                                    query
+                                ).forEach(referenceProcessor)
+                            }
                         }
                     }
 
