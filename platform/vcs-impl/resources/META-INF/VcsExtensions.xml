@@ -333,7 +333,6 @@
 
     <customScopesProvider implementation="com.intellij.vcs.changes.ChangeListsScopesProvider" order="last"/>
 
-    <checkinHandlerFactory implementation="com.intellij.tools.ExternalToolsCheckinHandlerFactory"/>
     <findInProjectExtension implementation="com.intellij.vcs.changes.ChangeListsFindInProjectExtension" />
     <silentChangeVetoer implementation="com.intellij.codeInsight.daemon.VcsSilentChangeVetoer" />
 

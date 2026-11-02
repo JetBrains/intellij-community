@@ -46,7 +46,6 @@ jvm_library(
         "//platform/core-ui",
         "//libraries/caffeine",
         "//platform/vcs-api/shared",
-        "//platform/execution",
         "//platform/consoleView",
         "//platform/util/concurrency",
     ],

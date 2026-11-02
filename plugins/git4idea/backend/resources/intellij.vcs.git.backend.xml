@@ -36,8 +36,6 @@
     <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.eel.impl"/>
     <module name="intellij.platform.eel.provider"/>
-    <module name="intellij.platform.execution"/>
-    <module name="intellij.platform.execution.impl"/>
     <module name="intellij.platform.externalProcessAuthHelper"/>
     <module name="intellij.platform.ide"/>
     <module name="intellij.platform.ide.core"/>

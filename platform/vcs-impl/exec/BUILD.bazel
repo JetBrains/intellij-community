@@ -29,6 +29,12 @@ jvm_library(
         "//platform/core-api:core",
         "//platform/vcs-api:vcs",
         "//platform/execution",
+        "//platform/execution-impl",
+        "//platform/platform-api:ide",
+        "//platform/editor-ui-api:editor-ui",
+        "//platform/util:util-ui",
+        "//platform/core-ui",
+        "//platform/projectModel-api:projectModel",
     ],
 )
 ### auto-generated section `build intellij.platform.vcs.impl.exec` end

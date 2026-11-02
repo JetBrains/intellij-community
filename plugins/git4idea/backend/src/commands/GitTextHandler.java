@@ -3,10 +3,10 @@ package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.execution.process.KillableProcessHandler;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessEvent;
+import com.intellij.execution.process.ProcessHandlerFunctions;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -150,7 +150,7 @@ public abstract class GitTextHandler extends GitHandler {
 
     LOG.warn("Soft-kill failed for [" + printableCommandLine() + "].");
 
-    ExecutionManagerImpl.stopProcess(myHandler);
+    ProcessHandlerFunctions.initiateProcessTermination(myHandler);
     if (myHandler.waitFor(myTerminationTimeoutMs)) {
       return;
     }

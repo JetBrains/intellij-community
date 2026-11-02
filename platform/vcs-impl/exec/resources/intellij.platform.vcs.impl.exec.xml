@@ -3,7 +3,13 @@
   <dependencies>
     <plugin id="com.intellij.modules.execution"/>
     <module name="intellij.platform.core"/>
+    <module name="intellij.platform.core.ui"/>
+    <module name="intellij.platform.editor.ui"/>
     <module name="intellij.platform.execution"/>
+    <module name="intellij.platform.execution.impl"/>
+    <module name="intellij.platform.ide"/>
+    <module name="intellij.platform.projectModel"/>
+    <module name="intellij.platform.util.ui"/>
     <module name="intellij.platform.vcs"/>
     <module name="intellij.platform.vcs.impl"/>
   </dependencies>
@@ -12,5 +18,6 @@
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
                     serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
                     overrides="true"/>
+    <checkinHandlerFactory implementation="com.intellij.platform.vcs.impl.exec.ExternalToolsCheckinHandlerFactory"/>
   </extensions>
 </idea-plugin>

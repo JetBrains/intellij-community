@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.tools
+package com.intellij.platform.vcs.impl.exec
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -9,6 +9,10 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
+import com.intellij.tools.ToolAction
+import com.intellij.tools.ToolSelectComboBox
+import com.intellij.tools.ToolsBundle
+import com.intellij.tools.ToolsProjectConfig
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
