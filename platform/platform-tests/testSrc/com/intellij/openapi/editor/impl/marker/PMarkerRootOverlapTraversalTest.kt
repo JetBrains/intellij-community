@@ -14,7 +14,7 @@ import kotlin.random.Random
 @UsePMarkerImplementation
 internal class PMarkerRootOverlapTraversalTest {
   private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
-    SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy)
+    DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
   }
 
   @Test

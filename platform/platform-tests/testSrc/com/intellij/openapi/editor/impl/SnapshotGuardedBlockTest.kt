@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.ref.GCUtil
@@ -33,8 +34,8 @@ class SnapshotGuardedBlockTest {
     val snapshotGuard = guard as SnapshotRangeMarkerImpl
     val markerStores = document.snapshotMarkerStores
     val rootStore = document.rangeMarkers.rootStore()
-    Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(snapshotGuard, rootStore.rootReference(initialSnapshot).get()))
-      .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(4, 10)))
+    Assertions.assertThat(guard.textRange).isEqualTo(TextRange(4, 10))
+    Assertions.assertThat(guard.isValid).isTrue()
 
     val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
     Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(snapshotGuard, rootStore.rootReference(insertedBefore).get()))

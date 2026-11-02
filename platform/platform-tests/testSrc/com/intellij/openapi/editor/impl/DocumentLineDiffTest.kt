@@ -3,10 +3,9 @@ package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
-import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
-import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
+import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -63,16 +62,7 @@ internal class DocumentLineDiffTest {
     val document = DocumentImpl(OLD_TEXT, true)
     val initialSnapshot = document.core.snapshot()
     val markerStart = OLD_TEXT.indexOf("target") + 1
-    val marker = SnapshotMarkerEngine.createRangeMarker(
-      document,
-      markerStart,
-      markerStart + 3,
-      MarkerSpec.create(
-        isGreedyToLeft = false,
-        isGreedyToRight = false,
-      ),
-      policy = PersistentMarkerPolicy,
-    )
+    val marker = document.createRangeMarker(markerStart, markerStart + 3, true) as SnapshotRangeMarkerImpl
     val patch = DocumentPatch.simple(
       startOffset = 0,
       endOffset = OLD_TEXT.length,
@@ -110,16 +100,7 @@ internal class DocumentLineDiffTest {
       val document = DocumentImpl(oldText, true, true)
       val initialSnapshot = document.core.snapshot()
       val markerStart = oldText.indexOf("target") + 1
-      val marker = SnapshotMarkerEngine.createRangeMarker(
-        document,
-        markerStart,
-        markerStart + 3,
-        MarkerSpec.create(
-          isGreedyToLeft = false,
-          isGreedyToRight = false,
-        ),
-        policy = PersistentMarkerPolicy,
-      )
+      val marker = document.createRangeMarker(markerStart, markerStart + 3, true) as SnapshotRangeMarkerImpl
 
       val snapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, patch)
       val root = document.rangeMarkers.rootStore().rootReference(snapshot).get()

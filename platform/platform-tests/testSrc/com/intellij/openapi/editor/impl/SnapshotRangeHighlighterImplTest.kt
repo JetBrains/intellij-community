@@ -378,10 +378,10 @@ class SnapshotRangeHighlighterImplTest {
       val exactMarker = exactHighlighter as SnapshotRangeMarkerImpl
       val lineMarker = lineHighlighter as SnapshotRangeMarkerImpl
       val rootStore = model.rootStore()
-      Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(exactMarker, rootStore.rootReference(initialSnapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(4, 12)))
-      Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(lineMarker, rootStore.rootReference(initialSnapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(6, 12)))
+      Assertions.assertThat(exactHighlighter.textRange).isEqualTo(TextRange(4, 12))
+      Assertions.assertThat(exactHighlighter.isValid).isTrue()
+      Assertions.assertThat(lineHighlighter.textRange).isEqualTo(TextRange(6, 12))
+      Assertions.assertThat(lineHighlighter.isValid).isTrue()
 
       val insertedBefore = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x\n"))
       Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(exactMarker, rootStore.rootReference(insertedBefore).get()))
@@ -450,8 +450,8 @@ class SnapshotRangeHighlighterImplTest {
       val firstBranch = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "X"))
       val secondBranch = markerStores.applyPatch(initialSnapshot, textPatch(0, 0, "YYYY"))
 
-      Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(highlighter, rootStore.rootReference(initialSnapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)))
+      Assertions.assertThat(highlighter.textRange).isEqualTo(TextRange(2, 4))
+      Assertions.assertThat(highlighter.isValid).isTrue()
       Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(highlighter, rootStore.rootReference(firstBranch).get()))
         .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(3, 5)))
       Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(highlighter, rootStore.rootReference(secondBranch).get()))
@@ -468,18 +468,13 @@ class SnapshotRangeHighlighterImplTest {
     val firstModel = MarkupModelImpl(document)
     val secondModel = MarkupModelImpl(document)
     try {
-      val snapshot = document.core.snapshot()
       val firstHighlighter = firstModel.addRangeHighlighter(1, 2, 1, null, HighlighterTargetArea.EXACT_RANGE)
       val secondHighlighter = secondModel.addRangeHighlighter(4, 5, 1, null, HighlighterTargetArea.EXACT_RANGE)
-      val first = firstHighlighter as SnapshotRangeMarkerImpl
-      val second = secondHighlighter as SnapshotRangeMarkerImpl
-      val firstRootStore = firstModel.rootStore()
-      val secondRootStore = secondModel.rootStore()
 
-      Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(first, firstRootStore.rootReference(snapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(1, 2)))
-      Assertions.assertThat(SnapshotMarkerEngine.resolveRangeMarker(second, secondRootStore.rootReference(snapshot).get()))
-        .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(4, 5)))
+      Assertions.assertThat(firstHighlighter.textRange).isEqualTo(TextRange(1, 2))
+      Assertions.assertThat(firstHighlighter.isValid).isTrue()
+      Assertions.assertThat(secondHighlighter.textRange).isEqualTo(TextRange(4, 5))
+      Assertions.assertThat(secondHighlighter.isValid).isTrue()
       Assertions.assertThat(firstModel.allHighlighters).containsExactly(firstHighlighter)
       Assertions.assertThat(secondModel.allHighlighters).containsExactly(secondHighlighter)
     }

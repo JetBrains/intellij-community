@@ -41,12 +41,11 @@ class SnapshotFoldingModelTest {
       val region = addFoldRegion(editor, 1, 4) as SnapshotRangeMarkerImpl
       val rootStore = editor.foldingModel.rootStore()
       val shiftedSnapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, textPatch(0, 0, "xy"))
-      val initialResolution = SnapshotMarkerEngine.resolveRangeMarker(region, rootStore.rootReference(initialSnapshot).get())
       val shiftedResolution = SnapshotMarkerEngine.resolveRangeMarker(region, rootStore.rootReference(shiftedSnapshot).get())
 
       BranchState(
         usesSnapshotStorage = editor.foldingModel.isUsingSnapshotFoldingStorage,
-        initialStart = PMarkerResolution.startOffset(initialResolution),
+        initialStart = region.startOffset,
         shiftedStart = PMarkerResolution.startOffset(shiftedResolution),
       )
     }

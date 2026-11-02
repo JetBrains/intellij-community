@@ -154,7 +154,7 @@ internal class SnapshotRangeMarkerImplTest {
   fun `root insertion does not need a live marker for its policy`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-      val marker = SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, spec, false, DefaultMarkerPolicy)
+      val marker = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
       val handle = SnapshotMarkerReference.create(marker, false)
       (handle as Reference<*>).clear()
       val policy = MarkerPolicy { _, _, _, _ -> error("Insertion must not transform the marker") }
