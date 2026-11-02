@@ -12,7 +12,8 @@ import java.awt.event.KeyEvent
 
 /**
  * Reports to FUS each key press in the terminal that types no character.
- * For example, Ctrl+C, Shift+Tab, Escape, Enter, or an arrow key.
+ * For example, Ctrl+C, Shift+Tab, Shift+Enter, Escape, or an arrow key.
+ * Does not report unmodified Enter, Tab, or Backspace because these keys occur frequently.
  */
 internal class TerminalShortcutsPressStatistics(
   private val project: Project,
@@ -20,6 +21,7 @@ internal class TerminalShortcutsPressStatistics(
 ) : TerminalKeyEventsListener {
   override fun afterKeyEvent(event: TerminalKeyEvent) {
     val keyEvent = event.awtEvent
+    if (isIgnoredShortcut(keyEvent)) return
     if (isShortcut(keyEvent)) {
       ReworkedTerminalUsageCollector.logShortcutPressed(project, keyEvent, terminalView.getRunningProcessExecutableForFus())
     }
@@ -28,6 +30,12 @@ internal class TerminalShortcutsPressStatistics(
   private fun isShortcut(e: KeyEvent): Boolean {
     if (e.id != KeyEvent.KEY_PRESSED || e.keyCode in MODIFIER_KEY_CODES) return false
     return e.modifiersEx and SHORTCUT_MODIFIERS_MASK != 0 || e.keyChar == KeyEvent.CHAR_UNDEFINED || e.keyChar.isISOControl()
+  }
+
+  private fun isIgnoredShortcut(e: KeyEvent): Boolean {
+    return (e.id == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_ENTER && e.modifiersEx == 0) ||
+           (e.id == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_TAB && e.modifiersEx == 0) ||
+           (e.id == KeyEvent.KEY_PRESSED && e.keyCode == KeyEvent.VK_BACK_SPACE && e.modifiersEx == 0)
   }
 }
 
