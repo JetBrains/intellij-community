@@ -37,6 +37,7 @@ import org.jetbrains.plugins.gitlab.authentication.ui.GitLabCustomServersPanelFa
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabCustomServersViewModel
 import org.jetbrains.plugins.gitlab.ui.util.GitLabPluginProjectScopeProvider
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
+import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 import org.jetbrains.plugins.gitlab.util.GitLabUtil
 
 internal class GitLabSettingsConfigurable(private val project: Project) :
@@ -81,7 +82,10 @@ internal class GitLabSettingsConfigurable(private val project: Project) :
           cell(GitLabCustomServersPanelFactory.create(project, scope, customServersVm))
             .align(Align.FILL)
             .onIsModified { customServersVm.servers.value != oauthSettings.customServers }
-            .onApply { oauthSettings.customServers = customServersVm.servers.value }
+            .onApply {
+              oauthSettings.customServers = customServersVm.servers.value
+              GitLabStatistics.logOAuthConfigChanged(project)
+            }
             .onReset { customServersVm.reset(oauthSettings.customServers) }
         }.resizableRow()
       }

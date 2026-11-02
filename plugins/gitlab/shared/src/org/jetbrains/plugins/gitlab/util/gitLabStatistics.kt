@@ -1,10 +1,17 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.util
 
+import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.api.GitLabEdition
@@ -15,7 +22,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabVersion
 @ApiStatus.Internal
 object GitLabStatistics {
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 33)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 34)
 
   /**
    * Server metadata was fetched
@@ -271,6 +278,13 @@ object GitLabStatistics {
     NOTIFICATION,
     TIMELINE_LINK
   }
+
+  /**
+   * The user applied a changed OAuth configuration
+   */
+  private val OAUTH_CONFIG_CHANGED_EVENT = COUNTERS_GROUP.registerEvent("oauth.config.changed")
+
+  fun logOAuthConfigChanged(project: Project): Unit = OAUTH_CONFIG_CHANGED_EVENT.log(project)
   //endregion
 }
 
