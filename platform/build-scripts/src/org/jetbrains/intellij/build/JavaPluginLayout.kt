@@ -47,7 +47,9 @@ object JavaPluginLayout {
   /**
    * The layout of `com.intellij.java.basic`.
    *
-   * Register it next to [javaPlugin].
+   * [javaPluginLayouts] registers it next to the Java layout. Register it alone only in a product without an explicit
+   * Java layout, as the JetBrains Client does. The Java main module depends on [BASIC_PLUGIN_MAIN_MODULE_NAME], and the
+   * name has the `intellij.java.` prefix. So without this layout, the `auto` Java layout packs the module as its own child.
    */
   fun javaBasicPlugin(): PluginLayout = PluginLayout.pluginAuto(listOf(BASIC_PLUGIN_MAIN_MODULE_NAME))
 }
