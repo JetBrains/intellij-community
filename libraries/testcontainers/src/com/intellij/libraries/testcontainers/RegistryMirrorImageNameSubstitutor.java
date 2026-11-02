@@ -1,5 +1,5 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.testcontainers;
+package com.intellij.libraries.testcontainers;
 
 import com.github.dockerjava.api.model.AuthConfig;
 import org.testcontainers.utility.DockerImageName;
