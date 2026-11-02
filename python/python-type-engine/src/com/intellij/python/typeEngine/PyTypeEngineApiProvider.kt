@@ -22,11 +22,8 @@ import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
 import com.intellij.python.typeEngine.common.PyTypeEngineEventRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineId
-import com.intellij.python.typeEngine.common.PyTypeEngineOperationResultDto
-import com.intellij.python.typeEngine.common.PyTypeEngineRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineSelectionRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineStateDto
-import com.intellij.python.ty.TyUtil
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
 import com.jetbrains.python.packaging.management.PythonPackageManager
 import com.jetbrains.python.packaging.management.hasInstalledPackageSnapshot
@@ -82,16 +79,6 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
     return state(project)
   }
 
-  override suspend fun install(request: PyTypeEngineRequest): PyTypeEngineOperationResultDto {
-    val project = request.projectId.findProject()
-    if (request.typeEngineId != PyTypeEngineId.TY) {
-      return PyTypeEngineOperationResultDto.Failure("The type engine does not support direct installation")
-    }
-    val path = TyUtil.downloadTyBinary()
-      ?: return PyTypeEngineOperationResultDto.Failure("Cannot install ty")
-    return PyTypeEngineOperationResultDto.Success(state(project), path.toString())
-  }
-
   override suspend fun logEvent(request: PyTypeEngineEventRequest) {
     val project = request.projectId.findProject()
     when (request.event) {
@@ -134,7 +121,6 @@ private fun state(project: Project): PyTypeEngineStateDto {
   val installed = supported.filterTo(mutableSetOf()) { type ->
     when (type) {
       PyTypeEngineId.PYCHARM -> true
-      PyTypeEngineId.TY -> TyUtil.isTyInstalled()
       else -> sdks.any { sdk -> PythonPackageManager.forSdk(project, sdk).hasInstalledPackageSnapshot(type.packageName) }
     }
   }
