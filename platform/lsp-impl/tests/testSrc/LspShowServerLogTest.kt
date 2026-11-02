@@ -25,7 +25,9 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.MessageActionItem
 import org.eclipse.lsp4j.MessageParams
@@ -65,10 +67,13 @@ internal class LspShowServerLogTest {
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Error, "error-marker") }
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Warning, "warning-marker") }
       serverSession.sendNotification(serverSession.SHOW_MESSAGE) { MessageParams(MessageType.Info, "info-marker") }
-      serverSession.sendRequestNoWait(serverSession.SHOW_MESSAGE_REQUEST) {
-        ShowMessageRequestParams(listOf(MessageActionItem("Retry"))).apply {
-          type = MessageType.Error
-          message = "request-marker"
+      // Nobody picks an action of the notification, so the request never gets an answer.
+      val showMessageRequest = launch(start = CoroutineStart.UNDISPATCHED) {
+        serverSession.sendRequest(serverSession.SHOW_MESSAGE_REQUEST) {
+          ShowMessageRequestParams(listOf(MessageActionItem("Retry"))).apply {
+            type = MessageType.Error
+            message = "request-marker"
+          }
         }
       }
 
@@ -82,6 +87,7 @@ internal class LspShowServerLogTest {
                    requestActions.map { it.templatePresentation.text },
                    "An error request should keep the server actions first and then offer to show the server log")
 
+      showMessageRequest.cancel()
       stopFakeServers(project)
     }
   }

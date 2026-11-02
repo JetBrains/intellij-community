@@ -18,6 +18,7 @@ import com.intellij.platform.lsp.api.LspClientManagerListener
 import com.intellij.platform.lsp.api.LspIntegrationProvider
 import com.intellij.platform.lsp.api.LspServerState
 import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
+import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.currentServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
@@ -61,7 +62,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.nio.file.Files
 import java.util.Collections
-import java.util.concurrent.CompletableFuture
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
@@ -400,8 +400,8 @@ internal class LspDynamicFilesTest {
     val serverSession = configureServerSession(project, virtualFile)
 
     val uri = "jar:///lib/foo.jar!/com/foo/Unknown.txt"
-    serverSession.expectRequestAsync(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
-      CompletableFuture.failedFuture(ResponseErrorException(ResponseError(ResponseErrorCode.InvalidParams, "unknown uri", null)))
+    serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) {
+      throw ResponseErrorException(ResponseError(ResponseErrorCode.InvalidParams, "unknown uri", null))
     }
     // an error response is a normal server answer: it must give a negative result, not an IDE error
     val result = serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams(uri) }
@@ -417,8 +417,8 @@ internal class LspDynamicFilesTest {
     val serverSession = configureServerSession(project, virtualFile)
 
     val uri = "jar:///lib/foo.jar!/com/foo/Slow.txt"
-    val pendingContent = CompletableFuture<TextDocumentContentResult>()
-    val contentRequested = serverSession.expectRequestAsync(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) { pendingContent }
+    val pendingContent = UnansweredRequest()
+    val contentRequested = serverSession.expectRequest(serverSession.TEXT_DOCUMENT_CONTENT, { it.uri == uri }) { pendingContent.hold() }
     val showDocument = async { serverSession.sendRequest(serverSession.SHOW_DOCUMENT) { ShowDocumentParams(uri) } }
     contentRequested.await()
 

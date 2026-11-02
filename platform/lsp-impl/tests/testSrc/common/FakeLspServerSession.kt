@@ -7,10 +7,10 @@ import com.intellij.platform.lsp.testFramework.awaitFileOpenedByLspServer
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.future.await
-import java.util.concurrent.CompletableFuture
+import kotlinx.coroutines.job
 
 internal suspend fun CoroutineScope.configureServerSession(
   project: Project,
@@ -30,33 +30,20 @@ internal fun CoroutineScope.currentServerSession(project: Project): FakeLspServe
 internal abstract class FakeLspServerSession : ServerSessionProtocolScope(), CoroutineScope {
   abstract fun fileUri(file: VirtualFile): String
 
-  abstract suspend fun <Params : Any, Response> awaitRequest(
-    method: ClientToServerLspRequest<Params, Response>,
-    predicate: (Params) -> Boolean = { true },
-    result: (Params) -> Response,
-  )
-
+  /**
+   * The returned [Deferred] completes when a request matching [predicate] arrives, before [handler] starts.
+   * The fake server answers the request with the value [handler] returns.
+   *
+   * The handler can suspend to hold the response, send requests and notifications of its own before answering,
+   * or throw a [org.eclipse.lsp4j.jsonrpc.ResponseErrorException] to answer with an error. Any other exception is logged as an error.
+   * A `$/cancelRequest` from the client cancels the handler; [UnansweredRequest] lets a test assert that.
+   * Handlers still running when the server stops are cancelled.
+   */
   abstract fun <Params : Any, Response> expectRequest(
     method: ClientToServerLspRequest<Params, Response>,
     predicate: (Params) -> Boolean = { true },
-    result: (Params) -> Response,
+    handler: suspend (Params) -> Response,
   ): Deferred<Unit>
-
-  /**
-   * Like [expectRequest], but [result] returns a [CompletableFuture] that the fake server sends back as is.
-   * A test can keep the future pending to delay the response, complete it exceptionally to simulate a server
-   * error, or assert [CompletableFuture.isCancelled] to observe a `$/cancelRequest` from the client.
-   */
-  abstract fun <Params : Any, Response> expectRequestAsync(
-    method: ClientToServerLspRequest<Params, Response>,
-    predicate: (Params) -> Boolean = { true },
-    result: (Params) -> CompletableFuture<Response>,
-  ): Deferred<Unit>
-
-  abstract suspend fun <Params : Any> awaitNotification(
-    method: ClientToServerLspNotification<Params>,
-    predicate: (Params) -> Boolean = { true },
-  )
 
   abstract fun <Params : Any> expectNotification(
     method: ClientToServerLspNotification<Params>,
@@ -67,18 +54,6 @@ internal abstract class FakeLspServerSession : ServerSessionProtocolScope(), Cor
     method: ServerToClientLspRequest<Params, Response>,
     paramsBuilder: () -> Params,
   ): Response
-
-  /**
-   * Sends a server-to-client request and returns immediately without waiting for the response.
-   * Unlike [sendRequest], this is safe to call from within an [expectRequest] result lambda (which runs on the fake
-   * server's single message-processing thread) - awaiting the response there would deadlock that thread. The request is
-   * written to the wire before this function returns, so it reaches the client before any response the same lambda
-   * produces afterward.
-   */
-  abstract fun <Params : Any, Response> sendRequestNoWait(
-    method: ServerToClientLspRequest<Params, Response>,
-    paramsBuilder: () -> Params,
-  )
 
   abstract fun <Params : Any> sendNotification(
     method: ServerToClientLspNotification<Params>,
@@ -97,6 +72,25 @@ internal abstract class FakeLspServerSession : ServerSessionProtocolScope(), Cor
   abstract suspend fun awaitExpected()
 }
 
+/**
+ * Holds a request without ever answering it: `expectRequest(method) { unanswered.hold() }`.
+ * The handler is cancelled when the client sends `$/cancelRequest`, or when the server stops; [isCancelled] turns true then.
+ */
+internal class UnansweredRequest {
+  private val cancelled = CompletableDeferred<Unit>()
+
+  val isCancelled: Boolean get() = cancelled.isCompleted
+
+  suspend fun hold(): Nothing {
+    try {
+      awaitCancellation()
+    }
+    finally {
+      cancelled.complete(Unit)
+    }
+  }
+}
+
 internal data class ExpectedNotification(
   val method: String,
   val predicate: (Any?) -> Boolean,
@@ -106,7 +100,7 @@ internal data class ExpectedNotification(
 internal data class ExpectedRequest(
   val method: String,
   val predicate: (Any?) -> Boolean,
-  val resultProvider: (Any?) -> Any?,
+  val handler: suspend (Any?) -> Any?,
   val deferred: CompletableDeferred<Unit>,
 )
 
@@ -133,92 +127,45 @@ private class FakeLspServerSessionImpl(
     server.destroy()
   }
 
-  override suspend fun <Params : Any, Response> awaitRequest(
-    method: ClientToServerLspRequest<Params, Response>,
-    predicate: (Params) -> Boolean,
-    result: (Params) -> Response,
-  ) {
-    expectRequest(method, predicate, result).await()
-  }
-
   override fun <Params : Any, Response> expectRequest(
     method: ClientToServerLspRequest<Params, Response>,
     predicate: (Params) -> Boolean,
-    result: (Params) -> Response,
-  ): Deferred<Unit> = doExpectRequest(method, predicate, result)
-
-  override fun <Params : Any, Response> expectRequestAsync(
-    method: ClientToServerLspRequest<Params, Response>,
-    predicate: (Params) -> Boolean,
-    result: (Params) -> CompletableFuture<Response>,
-  ): Deferred<Unit> = doExpectRequest(method, predicate, result)
-
-  private fun <Params : Any> doExpectRequest(
-    method: ClientToServerLspRequest<Params, *>,
-    predicate: (Params) -> Boolean,
-    result: (Params) -> Any?,
+    handler: suspend (Params) -> Response,
   ): Deferred<Unit> {
-    val deferred = CompletableDeferred<Unit>()
+    val deferred = newExpectationDeferred()
     @Suppress("UNCHECKED_CAST")
-    val expectedRequest = ExpectedRequest(method.method, { predicate(it as Params) }, { result(it as Params) }, deferred)
+    val expectedRequest = ExpectedRequest(method.method, { predicate(it as Params) }, { handler(it as Params) }, deferred)
 
     expectations.addRequest(expectedRequest)
-
-    val asyncDeferred = async {
-      try {
-        deferred.await()
-      }
-      catch (e: Exception) {
-        expectations.removeRequest(expectedRequest)
-        throw e
-      }
-    }
-    pendingExpectations.add(asyncDeferred)
-    return asyncDeferred
-  }
-
-  override suspend fun <Params : Any> awaitNotification(
-    method: ClientToServerLspNotification<Params>,
-    predicate: (Params) -> Boolean,
-  ) {
-    expectNotification(method, predicate).await()
+    deferred.invokeOnCompletion { if (it != null) expectations.removeRequest(expectedRequest) }
+    return deferred
   }
 
   override fun <Params : Any> expectNotification(
     method: ClientToServerLspNotification<Params>,
     predicate: (Params) -> Boolean,
   ): Deferred<Unit> {
-    val deferred = CompletableDeferred<Unit>()
+    val deferred = newExpectationDeferred()
     @Suppress("UNCHECKED_CAST")
     val expectedNotification = ExpectedNotification(method.method, { predicate(it as Params) }, deferred)
 
     expectations.addNotification(expectedNotification)
-
-    val asyncDeferred = async {
-      try {
-        deferred.await()
-      }
-      catch (e: Exception) {
-        expectations.removeNotification(expectedNotification)
-        throw e
-      }
-    }
-    pendingExpectations.add(asyncDeferred)
-    return asyncDeferred
+    deferred.invokeOnCompletion { if (it != null) expectations.removeNotification(expectedNotification) }
+    return deferred
   }
+
+  /**
+   * The fake server completes the returned deferred itself, as soon as a message matches, so it is completed before the handler starts.
+   * It is a child of the test's job: an expectation that never matches keeps the test running until it is cancelled.
+   */
+  private fun newExpectationDeferred(): CompletableDeferred<Unit> =
+    CompletableDeferred<Unit>(coroutineContext.job).also { pendingExpectations.add(it) }
 
   override suspend fun <Params : Any, Response> sendRequest(
     method: ServerToClientLspRequest<Params, Response>,
     paramsBuilder: () -> Params,
   ): Response {
     return method.send(server.remoteLanguageClient, paramsBuilder()).await()
-  }
-
-  override fun <Params : Any, Response> sendRequestNoWait(
-    method: ServerToClientLspRequest<Params, Response>,
-    paramsBuilder: () -> Params,
-  ) {
-    method.send(server.remoteLanguageClient, paramsBuilder())
   }
 
   override fun <Params : Any> sendNotification(

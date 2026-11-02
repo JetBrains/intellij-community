@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
+import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.LspClientManagerImpl
@@ -52,7 +53,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CompletableFuture
 
 
 @TestApplication
@@ -814,11 +814,11 @@ internal class LspCompletionTest {
       val virtualFile = codeInsightFixture.configureByText("test.txt", "hello").virtualFile
       val serverSession = configureServerSession(project, virtualFile)
 
-      val pendingResponse = CompletableFuture<Either<List<CompletionItem>, CompletionList>>()
-      val requestArrived = serverSession.expectRequestAsync(
+      val pendingResponse = UnansweredRequest()
+      val requestArrived = serverSession.expectRequest(
         serverSession.COMPLETION,
         { it.textDocument.uri == serverSession.fileUri(virtualFile) },
-      ) { pendingResponse }
+      ) { pendingResponse.hold() }
 
       val requestExecutor = LspClientManagerImpl.getInstanceImpl(project)
         .getClients(FakeLspIntegrationProvider::class.java).first().requestExecutor

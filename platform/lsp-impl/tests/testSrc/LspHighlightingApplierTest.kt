@@ -29,6 +29,7 @@ import com.intellij.testFramework.junit5.fixture.tempPathFixture
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import org.eclipse.lsp4j.SemanticTokens
@@ -38,7 +39,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -190,9 +190,7 @@ internal class LspHighlightingApplierTest {
 
   /** From here on, every apply must come from the pending-edit math: the next pull never completes. */
   private fun TokenSession.neverCompletingPull(): Deferred<Unit> =
-    serverSession.expectRequestAsync(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) {
-      CompletableFuture()
-    }
+    serverSession.expectRequest(serverSession.SEMANTIC_TOKENS_FULL, { it.textDocument.uri == uri }) { awaitCancellation() }
 
   private suspend fun semanticTokenRanges(document: Document): List<TextRange> = readAction {
     val markupModel = DocumentMarkupModel.forDocument(document, project, false) ?: return@readAction emptyList()

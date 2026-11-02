@@ -2,7 +2,15 @@ package com.intellij.platform.lsp.common
 
 import com.intellij.execution.process.SelfKiller
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.AppExecutorUtil
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.future.future
 import org.eclipse.lsp4j.InitializeResult
 import org.eclipse.lsp4j.ServerCapabilities
 import org.eclipse.lsp4j.ServerInfo
@@ -10,6 +18,7 @@ import org.eclipse.lsp4j.TextDocumentSyncKind
 import org.eclipse.lsp4j.TextDocumentSyncOptions
 import org.eclipse.lsp4j.jsonrpc.Endpoint
 import org.eclipse.lsp4j.jsonrpc.Launcher
+import org.eclipse.lsp4j.jsonrpc.ResponseErrorException
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.services.ServiceEndpoints
 import org.eclipse.lsp4j.launch.LSPLauncher
@@ -99,6 +108,10 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
 
   private val errorOutput = FakeProcessOutput()
 
+  // Not a child of the test's scope: a handler that never answers must not keep the test running.
+  @OptIn(DelicateCoroutinesApi::class)
+  private val handlerScope = GlobalScope.childScope("FakeLspServer handlers", Dispatchers.Default)
+
   @Volatile
   var initialized: Boolean = false
     private set
@@ -142,6 +155,7 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
   }
 
   override fun destroy() {
+    handlerScope.cancel()
     serverListening.cancel(true)
     clientInputStream.close()
     clientOutputStream.close()
@@ -155,10 +169,22 @@ internal open class FakeLspServer(configureServerCapabilities: (ServerCapabiliti
     override fun request(method: String, parameter: Any?): CompletableFuture<*> {
       val waiter = expectations.matchRequest(method, parameter)
       if (waiter != null) {
-        // A CompletableFuture result is passed through as is. It lets a test hold a request pending
-        // and observe its cancellation when the client sends $/cancelRequest.
-        val result = waiter.resultProvider(parameter)
-        return result as? CompletableFuture<*> ?: CompletableFuture.completedFuture(result)
+        // The handler starts on the message thread, so one that doesn't suspend answers before the next message is read.
+        // Once it suspends, the message thread is free to read the client's messages, e.g. responses to the handler's own requests.
+        // lsp4j cancels the returned future on $/cancelRequest, which cancels the handler.
+        return handlerScope.future(start = CoroutineStart.UNDISPATCHED) {
+          try {
+            waiter.handler(parameter)
+          }
+          catch (e: Throwable) {
+            // A ResponseErrorException is a deliberate error response. Anything else means the test's handler is broken;
+            // lsp4j would only answer InternalError, which the test may never notice.
+            if (e !is CancellationException && e !is ResponseErrorException) {
+              LOG.error("Handler of $method failed", e)
+            }
+            throw e
+          }
+        }
       }
 
       val result = when (method) {

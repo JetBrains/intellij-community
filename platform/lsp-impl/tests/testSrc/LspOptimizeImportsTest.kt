@@ -165,7 +165,7 @@ class LspOptimizeImportsTest {
     // On `workspace/executeCommand`, the server sends a `workspace/applyEdit` request before returning the command response.
     // The client must return that edit from executeCommandExpectingWorkspaceEdit() and apply it.
     serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "organizeImports" }) {
-      serverSession.sendRequestNoWait(serverSession.APPLY_EDIT) {
+      serverSession.sendRequest(serverSession.APPLY_EDIT) {
         ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
           fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "X"))
         )))
@@ -220,7 +220,7 @@ class LspOptimizeImportsTest {
     }
 
     serverSession.expectRequest(serverSession.EXECUTE_COMMAND, { it.command == "organizeImports" }) {
-      serverSession.sendRequestNoWait(serverSession.APPLY_EDIT) {
+      serverSession.sendRequest(serverSession.APPLY_EDIT) {
         ApplyWorkspaceEditParams(WorkspaceEdit(mapOf(
           fileUri to listOf(TextEdit(Range(Position(0, 0), Position(0, 0)), "X"))
         )))

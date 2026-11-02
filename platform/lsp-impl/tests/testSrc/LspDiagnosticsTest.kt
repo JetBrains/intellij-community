@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.lsp.api.LspClientManager
 import com.intellij.platform.lsp.common.FakeLspIntegrationProvider
 import com.intellij.platform.lsp.common.SpaceTokenizingFileType
+import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.assertCustomPsiTree
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
@@ -36,9 +37,11 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.fixture.moduleFixture
 import com.intellij.testFramework.junit5.fixture.projectFixture
 import com.intellij.testFramework.junit5.fixture.tempPathFixture
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -64,7 +67,6 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import java.util.Collections
-import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration.Companion.milliseconds
 
 
@@ -97,7 +99,7 @@ internal class LspDiagnosticsTest {
       val uri = serverSession.fileUri(virtualFile)
 
       launch(start = CoroutineStart.UNDISPATCHED) {
-        serverSession.awaitNotification(serverSession.DID_CHANGE) { it.textDocument.uri == uri }
+        serverSession.expectNotification(serverSession.DID_CHANGE) { it.textDocument.uri == uri }.await()
         delay(200)
         serverSession.sendNotification(serverSession.PUBLISH_DIAGNOSTICS) {
           PublishDiagnosticsParams(uri, listOf(
@@ -384,8 +386,8 @@ internal class LspDiagnosticsTest {
       val uri = serverSession.fileUri(virtualFile)
 
       // Phase 1: the server answers the first pull with an error response.
-      serverSession.expectRequestAsync(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
-        CompletableFuture.failedFuture(ResponseErrorException(ResponseError(ResponseErrorCode.InternalError, "simulated server error", null)))
+      serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
+        throw ResponseErrorException(ResponseError(ResponseErrorCode.InternalError, "simulated server error", null))
       }
 
       // Phase 2: the next pull must still go out, without any PSI change in between.
@@ -413,8 +415,8 @@ internal class LspDiagnosticsTest {
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
-      val pendingResponse = CompletableFuture<DocumentDiagnosticReport>()
-      val requestArrived = serverSession.expectRequestAsync(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { pendingResponse }
+      val pendingResponse = CompletableDeferred<DocumentDiagnosticReport>()
+      val requestArrived = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { pendingResponse.await() }
 
       // Trigger the pull. No diagnostics are expected while the response is pending.
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(createExpectedDataFromText("hello world"))
@@ -446,8 +448,8 @@ internal class LspDiagnosticsTest {
       val serverSession = configureServerSession(project, virtualFile)
       val uri = serverSession.fileUri(virtualFile)
 
-      val pendingResponse = CompletableFuture<DocumentDiagnosticReport>()
-      val firstRequestArrived = serverSession.expectRequestAsync(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { pendingResponse }
+      val pendingResponse = UnansweredRequest()
+      val firstRequestArrived = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { pendingResponse.hold() }
 
       (codeInsightFixture as CodeInsightTestFixtureImpl).collectAndCheckHighlighting(createExpectedDataFromText("hello world"))
       firstRequestArrived.await()
@@ -569,9 +571,7 @@ internal class LspDiagnosticsTest {
         val coalescedPull = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
           DocumentDiagnosticReport(RelatedFullDocumentDiagnosticReport(emptyList()))
         }
-        val tripwire = serverSession.expectRequestAsync(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
-          CompletableFuture<DocumentDiagnosticReport>()
-        }
+        val tripwire = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { awaitCancellation() }
 
         // The burst that used to produce "send, $/cancelRequest, re-send": edit, trigger, edit, trigger.
         writeCommandAction(project, "") {
@@ -605,8 +605,8 @@ internal class LspDiagnosticsTest {
       val client = LspClientManagerImpl.getInstanceImpl(project).getClients(FakeLspIntegrationProvider::class.java).first()
 
       // Hold the first pull pending.
-      val pendingResponse = CompletableFuture<DocumentDiagnosticReport>()
-      val firstRequestArrived = serverSession.expectRequestAsync(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { pendingResponse }
+      val pendingResponse = UnansweredRequest()
+      val firstRequestArrived = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { pendingResponse.hold() }
       withContext(Dispatchers.IO) { readAction { client.getDiagnosticsAndQuickFixes(virtualFile) } }
       firstRequestArrived.await()
 
@@ -662,9 +662,7 @@ internal class LspDiagnosticsTest {
       delay(500.milliseconds) // let the confirmation reach the cache
 
       // The cache must settle: a further read keeps the diagnostics and sends no new pull.
-      val tripwire = serverSession.expectRequestAsync(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) {
-        CompletableFuture<DocumentDiagnosticReport>()
-      }
+      val tripwire = serverSession.expectRequest(serverSession.DIAGNOSTIC, { it.textDocument.uri == uri }) { awaitCancellation() }
       assertTrue(withContext(Dispatchers.IO) { readAction { client.getDiagnosticsAndQuickFixes(virtualFile) } }.isNotEmpty())
       delay(500.milliseconds)
       assertFalse(tripwire.isCompleted, "the cache must not re-pull after an accepted unchanged report")

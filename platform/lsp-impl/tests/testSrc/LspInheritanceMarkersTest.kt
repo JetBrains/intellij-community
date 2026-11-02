@@ -11,6 +11,7 @@ import com.intellij.platform.lsp.api.customization.LspDocumentSymbolCustomizer
 import com.intellij.platform.lsp.api.customization.LspDocumentSymbolDisabled
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersCustomizer
 import com.intellij.platform.lsp.api.customization.LspInheritanceMarkersSupport
+import com.intellij.platform.lsp.common.UnansweredRequest
 import com.intellij.platform.lsp.common.configureServerSession
 import com.intellij.platform.lsp.common.fakeLspIntegrationFixture
 import com.intellij.platform.lsp.impl.features.highlightingCommon.LspHighlightingCache
@@ -37,7 +38,6 @@ import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CompletableFuture
 import kotlin.time.Duration
 
 @TestApplication
@@ -268,8 +268,8 @@ internal class LspInheritanceMarkersTest {
       listOf(typeHierarchyItem("I", fileUri, range(0, 10, 0, 11)))
     }
     serverSession.expectRequest(serverSession.TYPE_HIERARCHY_SUBTYPES) { emptyList() }
-    val pendingImplementation = CompletableFuture<Either<List<Location>, List<org.eclipse.lsp4j.LocationLink>>>()
-    val implementationRequested = serverSession.expectRequestAsync(serverSession.IMPLEMENTATION) { pendingImplementation }
+    val pendingImplementation = UnansweredRequest()
+    val implementationRequested = serverSession.expectRequest(serverSession.IMPLEMENTATION) { pendingImplementation.hold() }
 
     codeInsightFixture.doHighlighting()
     implementationRequested.await()

@@ -69,6 +69,7 @@ jvm_library(
         "//platform/core-ui",
         "//platform/util:util-ui",
         "//platform/util-ex",
+        "//platform/util/coroutines",
         "//xml/xml-psi-impl:psi-impl",
         "//libraries/junit4",
         "//libraries/junit6",
