@@ -1,0 +1,6 @@
+// FIX: Convert to collection builder
+
+fun test(a: List<Int>, b: List<Int>, c: List<Int>) {
+    var x: List<Int> = emptyList()
+    x = a +<caret> b + c
+}

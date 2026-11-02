@@ -407,15 +407,25 @@ class CollectionConcatenationToBuildCollectionInspection :
             }
     }
 
+    /**
+     * A binary parent extends the chain only if it is a `+` or `-` operation,
+     * and the chain is not a receiver of a qualified expression, as in `1 + (a + b).size`.
+     */
     private fun KtExpression.expressionToConvert(): KtExpression {
         var currentExpression: KtExpression = this
         var topmostBinaryExpression: KtBinaryExpression? = currentExpression as? KtBinaryExpression
+        var isChainEnded = false
         while (true) {
             val parent = currentExpression.parent
             currentExpression = when (parent) {
                 is KtParenthesizedExpression -> parent
-                is KtQualifiedExpression -> parent
+                is KtQualifiedExpression -> {
+                    if (topmostBinaryExpression != null) isChainEnded = true
+                    parent
+                }
+
                 is KtBinaryExpression -> {
+                    if (isChainEnded || !parent.hasApplicableToken()) break
                     topmostBinaryExpression = parent
                     parent
                 }

@@ -13414,6 +13414,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/arrayOperand.kt");
             }
 
+            @TestMetadata("assignment.kt")
+            public void testAssignment() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/assignment.kt");
+            }
+
             @TestMetadata("caretAtCall.kt")
             public void testCaretAtCall() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/caretAtCall.kt");
@@ -13447,6 +13452,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("multipleListOf.kt")
             public void testMultipleListOf() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/multipleListOf.kt");
+            }
+
+            @TestMetadata("operandOfIn.kt")
+            public void testOperandOfIn() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/operandOfIn.kt");
+            }
+
+            @TestMetadata("operandOfIntSum.kt")
+            public void testOperandOfIntSum() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/operandOfIntSum.kt");
             }
 
             @TestMetadata("parenthesis.kt")
@@ -13515,6 +13530,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("multipleSetOf.kt")
             public void testMultipleSetOf() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/set/multipleSetOf.kt");
+            }
+
+            @TestMetadata("operandOfEquality.kt")
+            public void testOperandOfEquality() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/set/operandOfEquality.kt");
             }
 
             @TestMetadata("parenthesis.kt")
