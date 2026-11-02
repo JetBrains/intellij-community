@@ -1,0 +1,14 @@
+// FIX: Convert to collection builder
+
+fun test(a: Set<Int>, b: Set<Int>, c: Set<Int>): Set<Int> {
+    return buildSet {
+        addAll(a)
+        // first
+        addAll(b)
+        /* before operator */
+        removeAll(c)
+        addAll(listOf(/* inside */ 1))
+        // last
+        add(2)
+    }
+}

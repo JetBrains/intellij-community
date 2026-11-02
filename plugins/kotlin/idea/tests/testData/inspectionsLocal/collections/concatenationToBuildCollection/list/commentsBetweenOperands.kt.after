@@ -1,0 +1,9 @@
+// FIX: Convert to collection builder
+
+fun test(a: List<Int>, b: List<Int>, c: List<Int>): List<Int> =
+    buildList {
+        addAll(a)
+        /* from cache */
+        addAll(b)
+        addAll(c)
+    } // tail

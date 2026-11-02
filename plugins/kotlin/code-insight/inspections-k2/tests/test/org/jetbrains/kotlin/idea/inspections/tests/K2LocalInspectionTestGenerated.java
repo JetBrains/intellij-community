@@ -13419,6 +13419,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/caretAtCall.kt");
             }
 
+            @TestMetadata("commentsBetweenOperands.kt")
+            public void testCommentsBetweenOperands() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/commentsBetweenOperands.kt");
+            }
+
             @TestMetadata("complexExpressions.kt")
             public void testComplexExpressions() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/complexExpressions.kt");
@@ -13485,6 +13490,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("arrayOperandMinus.kt")
             public void testArrayOperandMinus() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/set/arrayOperandMinus.kt");
+            }
+
+            @TestMetadata("commentsBetweenOperands.kt")
+            public void testCommentsBetweenOperands() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/set/commentsBetweenOperands.kt");
             }
 
             @TestMetadata("complexExpressions.kt")

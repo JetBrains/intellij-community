@@ -10,6 +10,8 @@ import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiComment
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parents
@@ -49,6 +51,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtVisitorVoid
 import org.jetbrains.kotlin.psi.expressionVisitor
+import org.jetbrains.kotlin.psi.psiUtil.allChildren
 
 /**
  * Applicable to a topmost [KtBinaryExpression] possibly wrapped into `()`
@@ -268,6 +271,7 @@ class CollectionConcatenationToBuildCollectionInspection :
         val expression = writableElement.safeDeparenthesize()
         val expressionToConvert = expression.expressionToConvert()
         val replacementTarget = expressionToConvert.getTopmostParenthesizedExpressionOrSelf()
+        val commentsBeforeOperations = commentsBeforeOperations(expressionToConvert)
         val replacements = ThisRebinderForAddingNewReceiver.apply(writableRebinderContext)
 
         val ktPsiFactory = KtPsiFactory(project)
@@ -281,7 +285,11 @@ class CollectionConcatenationToBuildCollectionInspection :
             replacements[this] ?: this
 
         val collectionType = elementContext.collectionType
-        for (operation in writableOperations) {
+        for (index in writableOperations.indices) {
+            val operation = writableOperations[index]
+            for (comment in commentsBeforeOperations.getOrNull(index).orEmpty()) {
+                bodyExpression.addStatement(ktPsiFactory, comment)
+            }
             when (operation) {
                 is Context.Operation.AddRemoveOperation -> {
                     val expression = operation.expression.element?.elementOrReplacement()
@@ -435,7 +443,18 @@ class CollectionConcatenationToBuildCollectionInspection :
     }
 
 
-    private fun KtBlockExpression.addStatement(ktPsiFactory: KtPsiFactory, statement: KtExpression) {
+    /**
+     * Returns the comments between the operands of [expression], grouped by the index of the operation that follows them.
+     */
+    private fun commentsBeforeOperations(expression: KtExpression): List<List<PsiComment>> {
+        if (expression !is KtBinaryExpression) return emptyList()
+        val binaryExpressions = nestedBinaryExpressionSequence(expression).toList().reversed()
+        return listOf(emptyList<PsiComment>()) + binaryExpressions.map { binaryExpression ->
+            binaryExpression.allChildren.filterIsInstance<PsiComment>().toList()
+        }
+    }
+
+    private fun KtBlockExpression.addStatement(ktPsiFactory: KtPsiFactory, statement: PsiElement) {
         addBefore(statement, rBrace)
         addBefore(ktPsiFactory.createNewLine(), rBrace)
     }
