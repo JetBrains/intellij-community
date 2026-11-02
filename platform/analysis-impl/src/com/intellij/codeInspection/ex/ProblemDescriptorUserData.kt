@@ -5,3 +5,9 @@ import com.intellij.openapi.util.Key
 
 @JvmField
 val FINGERPRINT_DATA = Key.create<Map<String, String>>("problem.fingerprint")
+
+/**
+ * Vulnerability identifiers of the problem, for example `CVE-2021-44228`.
+ */
+@JvmField
+val VULNERABILITY_IDS: Key<List<String>> = Key.create("problem.vulnerability.ids")
