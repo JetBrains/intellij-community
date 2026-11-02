@@ -3,7 +3,6 @@ package com.intellij.psi.impl
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
-import com.intellij.core.CoreJavaFileManager
 import com.intellij.core.CoreJavaPsiImplementationHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,20 +19,21 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Gives the Java services that the Java PSI code reads also in a process without the Java plugin, such as the frontend.
  *
- * `intellij.java.psi.impl.xml` registers an open default for [JavaDirectoryService], and the Java plugin overrides it.
- * `JavaCoreApplicationEnvironment` registers it in code. So the getter of this service returns the registered service.
+ * `intellij.java.psi.impl.xml` registers an open default for [JavaFileManager] and [JavaDirectoryService], and the Java
+ * plugin overrides each of them. `JavaCoreProjectEnvironment` and `JavaCoreApplicationEnvironment` register them in code.
+ * So the getters of these services return the registered service.
  *
- * The frontend does not register [JavaFileManager], [JavaPsiImplementationHelper], [ExternalAnnotationsManager] and
+ * The frontend does not register [JavaPsiImplementationHelper], [ExternalAnnotationsManager] and
  * [InferredAnnotationsManager]. The getters of these services return the registered service, or a default implementation.
  *
  * Call a getter here from code that a frontend module ships. Code that runs on the backend only can keep `getInstance`.
  */
 @ApiStatus.Internal
 object JavaOptionalServices {
-  /** Returns the registered [JavaFileManager], or a new [CoreJavaFileManager] with an empty classpath. */
+  /** Returns the registered [JavaFileManager]. */
   @JvmStatic
   fun getJavaFileManager(project: Project): JavaFileManager {
-    return JavaFileManager.getInstance(project) ?: CoreJavaFileManager(project)
+    return JavaFileManager.getInstance(project)
   }
 
   /** Returns the registered [JavaPsiImplementationHelper], or a new [CoreJavaPsiImplementationHelper]. */

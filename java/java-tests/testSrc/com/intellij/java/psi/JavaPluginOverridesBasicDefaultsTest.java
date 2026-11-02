@@ -3,6 +3,7 @@ package com.intellij.java.psi;
 
 import com.intellij.core.CoreJavaCodeStyleManager;
 import com.intellij.core.CoreJavaDirectoryService;
+import com.intellij.core.CoreJavaFileManager;
 import com.intellij.core.CoreLanguageLevelProjectExtension;
 import com.intellij.core.CorePackageIndex;
 import com.intellij.core.CorePsiPackageImplementationHelper;
@@ -13,6 +14,7 @@ import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.file.PsiPackageImplementationHelper;
+import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
 import org.junit.jupiter.api.Test;
@@ -40,6 +42,7 @@ public class JavaPluginOverridesBasicDefaultsTest {
   public void projectServices() {
     Project project = projectFixture.get();
     assertNotEquals(CoreLanguageLevelProjectExtension.class, LanguageLevelProjectExtension.getInstance(project).getClass());
+    assertNotEquals(CoreJavaFileManager.class, JavaFileManager.getInstance(project).getClass());
     assertNotEquals(CoreJavaCodeStyleManager.class, JavaCodeStyleManager.getInstance(project).getClass());
     assertNotEquals(CorePackageIndex.class, PackageIndex.getInstance(project).getClass());
   }

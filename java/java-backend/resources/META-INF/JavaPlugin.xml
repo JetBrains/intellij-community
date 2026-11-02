@@ -1139,7 +1139,7 @@
     <java.errorFixProvider implementation="com.intellij.codeInsight.daemon.impl.analysis.DefaultJavaErrorFixProvider"/>
     <filePropertyPusher implementation="com.intellij.openapi.roots.impl.JavaLanguageLevelPusher"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
-                    serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl"/>
+                    serviceImplementation="com.intellij.psi.impl.file.impl.JavaFileManagerImpl" overrides="true"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
     <daemon.changeLocalityDetector implementation="com.intellij.codeInsight.daemon.impl.JavaChangeLocalityDetector"/>
     <customScopesProvider implementation="com.intellij.analysis.PackagesScopesProvider" order="first,after default"/>
