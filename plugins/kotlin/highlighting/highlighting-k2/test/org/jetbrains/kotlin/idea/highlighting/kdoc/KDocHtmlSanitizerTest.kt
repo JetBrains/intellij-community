@@ -3,12 +3,49 @@ package org.jetbrains.kotlin.idea.highlighting.kdoc
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import java.net.URI
 
 class KDocHtmlSanitizerTest {
     @Test
     fun `accepted tags do not change`() {
         val html = "<b>bold</b>, <code>code</code> and <a href=\"https://example.com\">link</a><br/>"
         assertEquals(html, KDocHtmlSanitizer.sanitize(html))
+    }
+
+    @Test
+    fun `image tags keep their attributes`() {
+        val html = "<img src=\"https://example.com/diagram.png\" alt=\"Diagram\" width=\"640\" height=\"560\">"
+        assertEquals(html, KDocHtmlSanitizer.sanitize(html))
+    }
+
+    @Test
+    fun `relative image sources resolve against the source file`() {
+        val baseUrl = URI("file:/project/p/C.kt").toURL()
+        for (source in listOf("\"doc-files/diagram.png\"", "'doc-files/diagram.png'", "doc-files/diagram.png")) {
+            assertEquals(
+                "<img title=\"src='other.png'\" SRC=\"file:/project/p/doc-files/diagram.png\" width='640'>",
+                KDocHtmlSanitizer.sanitize("<img title=\"src='other.png'\" SRC=$source width='640'>", baseUrl)
+            )
+        }
+    }
+
+    @Test
+    fun `image sources resolve within source archives`() {
+        assertEquals(
+            "<img src=\"jar:file:/project/sources.jar!/doc-files/diagram.png?x=1&amp;y=2#part\">",
+            KDocHtmlSanitizer.sanitize(
+                "<img src='../doc-files/diagram.png?x=1&amp;y=2#part'>",
+                URI("jar:file:/project/sources.jar!/p/C.kt").toURL()
+            )
+        )
+    }
+
+    @Test
+    fun `empty and unsupported image sources stay unchanged`() {
+        for (source in listOf("", "data:image/png;base64,abc")) {
+            val html = "<img src=\"$source\">"
+            assertEquals(html, KDocHtmlSanitizer.sanitize(html, URI("file:/project/p/C.kt").toURL()))
+        }
     }
 
     @Test

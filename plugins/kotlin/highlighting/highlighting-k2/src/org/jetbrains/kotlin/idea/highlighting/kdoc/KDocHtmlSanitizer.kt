@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.highlighting.kdoc
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocHtmlSanitizer.ACCEPTABLE_TAGS
 import org.jetbrains.kotlin.idea.highlighting.kdoc.KDocHtmlSanitizer.TAG_REPLACEMENTS
+import java.net.MalformedURLException
+import java.net.URL
 
 /**
  * Sanitizes the raw HTML in a KDoc comment for Quick Documentation.
@@ -40,6 +42,8 @@ internal object KDocHtmlSanitizer {
         "a", "b", "br", "code", "em", "i", "s", "span", "strong", "u", "wbr", "kbd", "samp", "sub", "sup",
         // Svg and math
         "svg",
+        // Images
+        "img",
         // Obsolete
         "tt",
         // Special IntelliJ tags
@@ -56,7 +60,7 @@ internal object KDocHtmlSanitizer {
      * One attribute of an HTML tag.
      * Note: quoted attribute values can contain `<` and `>`.
      */
-    private val ATTRIBUTE_PATTERN = Regex("""\s+[A-Za-z_:][A-Za-z0-9_.:-]*(?:\s*=\s*(?:[^\s"'=<>`]+|'[^']*'|"[^"]*"))?""")
+    private val ATTRIBUTE_PATTERN: Regex = Regex("""\s+([A-Za-z_:][A-Za-z0-9_.:-]*)(?:\s*=\s*([^\s"'=<>`]+|'[^']*'|"[^"]*"))?""")
 
     private val TAG_END_PATTERN = Regex("""\s*/?>""")
 
@@ -64,7 +68,7 @@ internal object KDocHtmlSanitizer {
      * Appends the sanitized tag that starts at [start] and returns the offset after it.
      * When no complete tag starts at [start], appends an escaped `<` and returns the next offset.
      */
-    private fun StringBuilder.appendSanitizedTag(html: CharSequence, start: Int): Int {
+    private fun StringBuilder.appendSanitizedTag(html: CharSequence, start: Int, baseUrl: URL?): Int {
         val tagStart = TAG_START_PATTERN.matchAt(html, start)
         val tagEnd = if (tagStart != null) findTagEnd(html, tagStart) else -1
         if (tagStart == null || tagEnd < 0) {
@@ -76,6 +80,8 @@ internal object KDocHtmlSanitizer {
         val tagName = tagMatch.value.lowercase()
         val tagReplacement = TAG_REPLACEMENTS[tagName]
         when {
+            tagName == "img" && baseUrl != null -> appendImageTag(html, start, tagStart, tagEnd, baseUrl)
+
             // For tag replacements we should keep their attributes, so we need to do some extra work
             tagReplacement != null ->
                 append(html, start, tagMatch.range.first) // Before the tag name
@@ -86,6 +92,34 @@ internal object KDocHtmlSanitizer {
             else -> append(StringUtil.escapeXmlEntities(html.substring(start, tagEnd))) // do not allow the tag, escape it
         }
         return tagEnd
+    }
+
+    private fun StringBuilder.appendImageTag(html: CharSequence, start: Int, tagStart: MatchResult, tagEnd: Int, baseUrl: URL) {
+        var index = tagStart.range.last + 1
+        while (true) {
+            val attribute = ATTRIBUTE_PATTERN.matchAt(html, index) ?: break
+            val value = attribute.groups[2]
+            if (attribute.groupValues[1].equals("src", ignoreCase = true) && value != null) {
+                val attributeValue = value.value
+                val source = StringUtil.unescapeXmlEntities(
+                    if (attributeValue.startsWith('"') || attributeValue.startsWith('\'')) attributeValue.substring(1, attributeValue.length - 1)
+                    else attributeValue
+                )
+                if (source.isEmpty()) break
+                val resolved = try {
+                    @Suppress("DEPRECATION")
+                    URL(baseUrl, source).toExternalForm()
+                } catch (_: MalformedURLException) {
+                    break
+                }
+                append(html, start, value.range.first)
+                append('"').append(StringUtil.escapeXmlEntities(resolved)).append('"')
+                append(html, value.range.last + 1, tagEnd)
+                return
+            }
+            index = attribute.range.last + 1
+        }
+        append(html, start, tagEnd)
     }
 
     /**
@@ -109,15 +143,16 @@ internal object KDocHtmlSanitizer {
      * Sanitizes each HTML tag in [html].
      * Tags not within [ACCEPTABLE_TAGS] and [TAG_REPLACEMENTS] are escaped.
      * The content of the tags is never affected.
+     * Resolves image sources against [baseUrl] when supplied.
      */
-    fun sanitize(html: CharSequence): String {
+    fun sanitize(html: CharSequence, baseUrl: URL? = null): String {
         val result = StringBuilder(html.length)
         var index = 0
         while (true) {
             val lessThan = html.indexOf('<', index)
             if (lessThan < 0) break
             result.append(html, index, lessThan)
-            index = result.appendSanitizedTag(html, lessThan)
+            index = result.appendSanitizedTag(html, lessThan, baseUrl)
         }
         return result.append(html, index, html.length).toString()
     }

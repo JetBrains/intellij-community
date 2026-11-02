@@ -166,6 +166,7 @@ jvm_library(
         "//java/java-analysis-impl:analysis-impl",
         "//plugins/kotlin/base/project-structure",
         "//platform/testFramework",
+        "//platform/testFramework/junit5",
         "//platform/workspace/jps",
         "//platform/backend",
         "//plugins/kotlin/test-framework:test-framework_test_lib",
