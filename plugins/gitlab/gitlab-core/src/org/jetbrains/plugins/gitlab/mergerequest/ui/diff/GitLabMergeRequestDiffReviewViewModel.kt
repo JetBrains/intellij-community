@@ -10,7 +10,6 @@ import com.intellij.collaboration.ui.codereview.diff.UnifiedCodeReviewItemPositi
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
-import com.intellij.diff.util.Side
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
@@ -25,12 +24,10 @@ import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
-import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabPersistentMergeRequestChangesViewedState
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.toLocations
 
@@ -93,17 +90,14 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
     diffVm.newDiscussions.filterInFile(change).stateInNow(cs, emptyList())
 
   override val locationsWithDiscussions: StateFlow<Set<DiffLineLocation>> = GitLabMergeRequestDiscussionUtil
-    .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLocations {
-      it.mapToLocation(diffData, Side.LEFT)?.let { DiffLineLocation(it.side, it.lineIdx) }
-    }.stateInNow(cs, emptySet())
+    .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption)
+    .toLocations { it.mapToDiffLineLocation(diffData) }
+    .stateInNow(cs, emptySet())
 
   override val locationsWithNewDiscussions: StateFlow<Set<DiffLineLocation>> =
     discussionsContainer.newDiscussions
       .flatMapLatestEach { noteVm ->
-        noteVm.position.mapNotNull { pos ->
-          pos.position.mapToLocation(diffData, Side.LEFT)
-            ?.let { DiffLineLocation(it.side, it.lineIdx) }
-        }
+        noteVm.position.mapNotNull { it.position.mapToDiffLineLocation(diffData) }
       }.map { locations -> locations.toSet() }
       .stateInNow(cs, emptySet())
 
