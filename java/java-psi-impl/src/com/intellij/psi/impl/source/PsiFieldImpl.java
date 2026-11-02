@@ -11,6 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -36,6 +37,7 @@ import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiConstantEvaluationHelperImpl;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.PsiVariableEx;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
@@ -147,7 +149,10 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     if (stub != null) {
       PsiType type = dereference(myCachedType);
       if (type == null) {
-        type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
+        PsiField firstField = findFirstFieldInDeclaration();
+        type = firstField == this
+               ? JavaSharedImplUtil.createTypeFromStub(this, stub.getType())
+               : withArrayDimensions(firstField.getType(), arrayDimensions(stub.getType()));
         myCachedType = new SoftReference<>(type);
       }
       return type;
@@ -162,6 +167,32 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
       return PsiTypes.nullType();
     }
     return JavaSharedImplUtil.getType(typeElement, getNameIdentifier());
+  }
+
+  /**
+   * Converts the type of the first field in a declaration like {@code int a[], b;} to the type of another field.
+   * The C-style brackets of a field are the outermost array dimensions of its type.
+   * Thus, the other field shares the annotation instances of the common type element with the first field.
+   */
+  private static @NotNull PsiType withArrayDimensions(@NotNull PsiType firstFieldType, int dimensions) {
+    PsiType type = firstFieldType;
+    int difference = dimensions - type.getArrayDimensions();
+    for (; difference < 0 && type instanceof PsiArrayType; difference++) {
+      type = ((PsiArrayType)type).getComponentType();
+    }
+    for (; difference > 0; difference--) {
+      type = type.createArrayType();
+    }
+    return type;
+  }
+
+  private static int arrayDimensions(@NotNull TypeInfo info) {
+    int dimensions = 0;
+    while (info instanceof TypeInfo.DerivedTypeInfo && info.getKind() == TypeInfo.TypeKind.ARRAY) {
+      info = ((TypeInfo.DerivedTypeInfo)info).child();
+      dimensions++;
+    }
+    return dimensions;
   }
 
   @Override

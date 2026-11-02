@@ -135,6 +135,32 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     });
   }
 
+  public void testCompoundField() {
+    assertStubAndAstNullable("List<@Nullable String> a, b;", aClass ->
+      ((PsiClassType)aClass.findFieldByName("b", false).getType()).getParameters()[0]);
+  }
+
+  public void testCompoundFieldWithFewerDimensions() {
+    assertStubAndAstNullable("List<@Nullable String> @Nullable [] a[], b;", aClass ->
+      ((PsiClassType)((PsiArrayType)aClass.findFieldByName("b", false).getType()).getComponentType()).getParameters()[0]);
+  }
+
+  public void testCompoundFieldWithMoreDimensions() {
+    assertStubAndAstNullable("List<@Nullable String> a, b[];", aClass -> {
+      PsiArrayType array = (PsiArrayType)aClass.findFieldByName("b", false).getType();
+      return ((PsiClassType)array.getComponentType()).getParameters()[0];
+    });
+  }
+
+  public void testCompoundFieldSharesAnnotation() {
+    assertStubAndAstNullable("List<@Nullable String> a, b;", aClass -> {
+      PsiType first = ((PsiClassType)aClass.findFieldByName("a", false).getType()).getParameters()[0];
+      PsiType second = ((PsiClassType)aClass.findFieldByName("b", false).getType()).getParameters()[0];
+      assertEquals(first.getNullability(), second.getNullability());
+      return second;
+    });
+  }
+
   private void assertStubAndAstNullable(@NotNull String member, @NotNull Function<PsiClass, PsiType> typeGetter) {
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Stubbed.java", """
       import org.jetbrains.annotations.*;
@@ -154,6 +180,7 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
     assertTrue(file.withGreenStubTreeOrAst(_ -> false, _ -> true));
     PsiType fromAst = typeGetter.apply(aClass);
     assertEquals("AST: " + fromAst.getCanonicalText(true), Nullability.NULLABLE, fromAst.getNullability().nullability());
+    assertEquals(fromStub.getCanonicalText(true), fromAst.getCanonicalText(true));
     assertEquals(fromStub.getNullability(), fromAst.getNullability());
     assertNotNull(node);
   }
