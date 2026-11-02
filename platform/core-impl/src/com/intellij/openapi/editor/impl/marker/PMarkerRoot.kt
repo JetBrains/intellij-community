@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
+import com.intellij.openapi.editor.ex.RangeMarkers
 import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
@@ -33,7 +34,7 @@ interface PMarkerRoot {
   /** Replaces the offsets of existing valid markers and discards stale cached offsets. */
   fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot
 
-  /** Returns an empty root with the same implementation and handle family as this root. */
+  /** Returns an empty root with the same implementation as this root. */
   fun emptyRoot(): PMarkerRoot
 
   /**
@@ -249,8 +250,16 @@ interface PMarkerRoot {
     @JvmField
     val EMPTY_HANDLE_CONSUMER: Consumer<SnapshotMarkerReference<*>> = Consumer { }
 
-    /** Creates an empty marker root. */
+    /**
+     * Creates a root with direct links when [RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS] is true.
+     * A store retains that choice through its snapshots.
+     */
     @JvmStatic
-    fun empty(): PMarkerRoot = PMarkerRootImpl.empty()
+    fun empty(): PMarkerRoot = if (RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS) {
+      PMarkerDirectRoot.empty()
+    }
+    else {
+      PMarkerRootImpl.empty()
+    }
   }
 }

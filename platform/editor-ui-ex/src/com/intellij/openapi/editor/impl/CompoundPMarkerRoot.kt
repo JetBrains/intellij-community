@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerDeltaProcessor
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
-import com.intellij.openapi.editor.impl.marker.PMarkerRootImpl
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
@@ -25,7 +24,7 @@ open class CompoundPMarkerRoot private constructor(
 ) : PMarkerRoot {
   override val resolutionCacheIdentity: Any = Any()
 
-  override fun emptyRoot(): CompoundPMarkerRoot = empty()
+  override fun emptyRoot(): CompoundPMarkerRoot = CompoundPMarkerRoot(exactRangeRoot.emptyRoot(), linesInRangeRoot.emptyRoot())
 
   override fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
     exactRangeRoot.createHandle(marker, retainStrong)
@@ -48,8 +47,8 @@ open class CompoundPMarkerRoot private constructor(
 
     return linesInRangeRoot.resolve(handle)
   }
-  @TestOnly
 
+  @TestOnly
   override fun invalidationReason(handle: SnapshotMarkerReference<*>): String? {
     return if (PMarkerResolution.isAbsent(exactRangeRoot.resolve(handle))) {
       linesInRangeRoot.invalidationReason(handle)
@@ -129,8 +128,8 @@ open class CompoundPMarkerRoot private constructor(
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot {
     return updateMarker { it.remove(handle) }
   }
-  @TestOnly
 
+  @TestOnly
   override fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
     return withRoots(exactRangeRoot.removeMany(handles), linesInRangeRoot.removeMany(handles))
   }
@@ -218,11 +217,10 @@ open class CompoundPMarkerRoot private constructor(
   }
 
   companion object {
-    private object EMPTY : CompoundPMarkerRoot(PMarkerRootImpl.empty(), PMarkerRootImpl.empty()) {
-      override fun toString(): String = "EMPTY"
+    fun empty(): CompoundPMarkerRoot {
+      val root = PMarkerRoot.empty()
+      return CompoundPMarkerRoot(root, root.emptyRoot())
     }
-
-    fun empty(): CompoundPMarkerRoot = EMPTY
 
     private fun compareEntries(first: MarkerEntry, second: MarkerEntry): Int {
       val byStartOffset = first.nodeStart.compareTo(second.nodeStart)

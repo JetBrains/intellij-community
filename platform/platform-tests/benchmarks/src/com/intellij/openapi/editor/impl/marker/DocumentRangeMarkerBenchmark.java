@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
+import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.RangeMarkersImpl;
 import com.intellij.util.Processor;
@@ -19,6 +20,7 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Timeout;
 import org.openjdk.jmh.annotations.Warmup;
@@ -27,8 +29,9 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Measures the same fixed-size workloads as {@link SnapshotMarkerEngineBenchmark}, using IntelliJ's built-in document range
- * marker storage.
+ * Compares legacy markers and snapshot markers through the document API.
+ * Snapshot markers use either {@link PMarkerRootImpl} or {@link PMarkerDirectRoot}.
+ * Measures the same fixed-size workloads as {@link SnapshotMarkerEngineBenchmark}.
  *
  * <p>Every benchmark invocation performs exactly the number of operations stated in its method name. Because the
  * class uses {@link Mode#SingleShotTime} and does not use {@code OperationsPerInvocation}, JMH reports the total time
@@ -55,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 @Timeout(time = 10, timeUnit = TimeUnit.MINUTES)
 public class DocumentRangeMarkerBenchmark {
   /**
-   * Creates a fresh document outside the timed region, then measures creation of 50,000 native range markers.
+   * Creates a fresh document outside the timed region, then measures creation of 50,000 range markers.
    *
    * <p>Marker handles are retained in {@link CreateState#createdMarkers} so their lifetime matches a real marker
    * population and they cannot become garbage during the measured invocation.</p>
@@ -64,7 +67,7 @@ public class DocumentRangeMarkerBenchmark {
   public long create50KRangeMarkers(CreateState state) {
     long[] checksum = {0L};
 
-    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(state.usesSnapshotMarkers(), () -> {
       for (int index = 0; index < MARKER_COUNT; index++) {
         int startOffset = markerStart(index);
         RangeMarker marker = state.document.createRangeMarker(startOffset, startOffset + MARKER_LENGTH);
@@ -77,7 +80,7 @@ public class DocumentRangeMarkerBenchmark {
   }
 
   /**
-   * Resolves native range markers 4,000,000 times.
+   * Resolves the selected marker implementation 4,000,000 times.
    *
    * <p>The precomputed access order visits every one of the 50,000 markers exactly 80 times in a permuted order. Each
    * loop iteration reads both offsets and consumes them through the returned checksum.</p>
@@ -88,7 +91,7 @@ public class DocumentRangeMarkerBenchmark {
     int[] resolveOrder = state.resolveOrder;
     long[] checksum = {0L};
 
-    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(state.usesSnapshotMarkers(), () -> {
       for (int index = 0; index < RESOLVE_CALLS; index++) {
         RangeMarker marker = markers[resolveOrder[index]];
         checksum[0] += (long)marker.getStartOffset() + marker.getEndOffset();
@@ -101,7 +104,7 @@ public class DocumentRangeMarkerBenchmark {
   /**
    * Calls {@link DocumentEx#processRangeMarkersOverlappingWith(int, int, Processor)} 2,000,000 times.
    *
-   * <p>{@link IntersectionState#markersPerQuery} controls the exact output size {@code k}. The benchmark uses one
+   * <p>{@link IntersectionState#hitsPerQuery} controls the exact output size {@code k}. The benchmark uses one
    * reusable processor, so it does not allocate a callback for every query. The returned value consumes the total
    * number of reported markers without adding offset-resolution work to the spatial-query benchmark.</p>
    */
@@ -113,7 +116,7 @@ public class DocumentRangeMarkerBenchmark {
     RangeMarkerAccumulator accumulator = state.accumulator;
     accumulator.reset();
 
-    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(state.usesSnapshotMarkers(), () -> {
       for (int index = 0; index < INTERSECTION_CALLS; index++) {
         boolean completed = document.processRangeMarkersOverlappingWith(
           queryStarts[index],
@@ -125,7 +128,7 @@ public class DocumentRangeMarkerBenchmark {
         }
       }
 
-      long expectedCount = (long)INTERSECTION_CALLS * state.markersPerQuery;
+      long expectedCount = (long)INTERSECTION_CALLS * state.hitsPerQuery;
       if (accumulator.getCount() != expectedCount) {
         throw new IllegalStateException(
           "Expected " + expectedCount + " intersecting markers, got " + accumulator.getCount()
@@ -150,7 +153,7 @@ public class DocumentRangeMarkerBenchmark {
     RangeMarkerIdAccumulator accumulator = state.idAccumulator;
     accumulator.reset();
 
-    RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+    RangeMarkersImpl.usePMarkerImplementationIn(state.usesSnapshotMarkers(), () -> {
       for (int index = 0; index < INTERSECTION_CALLS; index++) {
         boolean completed = document.processRangeMarkersOverlappingWith(
           queryStarts[index],
@@ -162,7 +165,7 @@ public class DocumentRangeMarkerBenchmark {
         }
       }
 
-      long expectedCount = (long)INTERSECTION_CALLS * state.markersPerQuery;
+      long expectedCount = (long)INTERSECTION_CALLS * state.hitsPerQuery;
       if (accumulator.getCount() != expectedCount) {
         throw new IllegalStateException(
           "Expected " + expectedCount + " intersecting markers, got " + accumulator.getCount()
@@ -173,15 +176,42 @@ public class DocumentRangeMarkerBenchmark {
     return accumulator.getChecksum() ^ accumulator.getCount();
   }
 
+  /** Shares the implementation parameter and direct-root setting across all workloads. */
   @State(Scope.Thread)
-  public static class CreateState {
+  public static class ImplementationState {
+    @Param({"legacy", "states", "direct"})
+    @SuppressWarnings("WeakerAccess")
+    public String implementation = "direct";
+
+    private boolean previousEnableDirectMarkerLinks;
+
+    @Setup(Level.Trial)
+    @SuppressWarnings("unused")
+    public void setUpImplementation() {
+      previousEnableDirectMarkerLinks = RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS;
+      RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS = !"states".equals(implementation);
+    }
+
+    @TearDown(Level.Trial)
+    @SuppressWarnings("unused")
+    public void tearDownImplementation() {
+      RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS = previousEnableDirectMarkerLinks;
+    }
+
+    final boolean usesSnapshotMarkers() {
+      return !"legacy".equals(implementation);
+    }
+  }
+
+  @State(Scope.Thread)
+  public static class CreateState extends ImplementationState {
     Document document;
     RangeMarker[] createdMarkers;
 
     /** A new mutable document is required for every measured marker-creation batch. */
     @Setup(Level.Invocation)
     public void setUp() {
-      RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
         document = new DocumentImpl(BENCHMARK_TEXT);
         createdMarkers = new RangeMarker[MARKER_COUNT];
       });
@@ -189,7 +219,7 @@ public class DocumentRangeMarkerBenchmark {
   }
 
   @State(Scope.Thread)
-  public static class ResolveState {
+  public static class ResolveState extends ImplementationState {
     Document document;
     RangeMarker[] markers;
     int[] resolveOrder;
@@ -197,7 +227,7 @@ public class DocumentRangeMarkerBenchmark {
     /** Builds the 50,000-marker population once per fork, outside measured invocations. */
     @Setup(Level.Trial)
     public void setUp() {
-      RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
         document = new DocumentImpl(BENCHMARK_TEXT);
         markers = new RangeMarker[MARKER_COUNT];
 
@@ -212,9 +242,11 @@ public class DocumentRangeMarkerBenchmark {
   }
 
   @State(Scope.Thread)
-  public static class IntersectionState {
+  public static class IntersectionState extends ImplementationState {
+    /** The number of markers that each intersection query returns. */
     @Param({"1", "8"})
-    public int markersPerQuery = 1;
+    @SuppressWarnings("WeakerAccess")
+    public int hitsPerQuery = 1;
 
     DocumentEx document;
     RangeMarker[] markers;
@@ -226,7 +258,7 @@ public class DocumentRangeMarkerBenchmark {
     /** Builds the 50,000-marker population and deterministic query workload once per parameter value and fork. */
     @Setup(Level.Trial)
     public void setUp() {
-      RangeMarkersImpl.usePMarkerImplementationIn(false, () -> {
+      RangeMarkersImpl.usePMarkerImplementationIn(usesSnapshotMarkers(), () -> {
         document = new DocumentImpl(BENCHMARK_TEXT);
         markers = new RangeMarker[MARKER_COUNT];
         for (int index = 0; index < MARKER_COUNT; index++) {
@@ -236,12 +268,12 @@ public class DocumentRangeMarkerBenchmark {
 
         queryStarts = new int[INTERSECTION_CALLS];
         queryEnds = new int[INTERSECTION_CALLS];
-        int availableBases = MARKER_COUNT - markersPerQuery + 1;
+        int availableBases = MARKER_COUNT - hitsPerQuery + 1;
         int baseMarker = 0;
 
         for (int index = 0; index < INTERSECTION_CALLS; index++) {
           int firstMarkerStart = markerStart(baseMarker);
-          int lastMarkerStart = markerStart(baseMarker + markersPerQuery - 1);
+          int lastMarkerStart = markerStart(baseMarker + hitsPerQuery - 1);
           queryStarts[index] = firstMarkerStart + QUERY_INSET;
           queryEnds[index] = lastMarkerStart + QUERY_INSET + 1;
 

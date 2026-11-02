@@ -1,11 +1,10 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
+import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Transforms one marker in response to a logical document edit.
@@ -55,7 +54,7 @@ value class MarkerTransformResult private constructor(val range: Long) {
     get() = TextRangeScalarUtil.endOffset(range)
 
   val errorReason: String?
-    get() = if (isValid) null else MarkerTransformError.entries[(-range - 1).toInt()].message
+    get() = if (isValid) null else MarkerTransformError.messageForCode(range.toInt())
 
   /** Applies valid offsets to [entry] and preserves its metadata. */
   internal fun applyTo(entry: MarkerEntry): MarkerEntry {
@@ -72,7 +71,11 @@ enum class MarkerTransformError(val message: String) {
   EMPTY_CUSTOM_FOLD_REGION("The custom fold region became empty"),
   CUSTOM_FOLD_REGION_OUTSIDE_LINE_BOUNDARIES("The custom fold region left its line boundaries"),
   INVALID_CUSTOM_WRAP_OFFSET("The custom wrap reached an invalid offset"),
-  INLINE_INLAY_INSIDE_SURROGATE_PAIR("The inline inlay reached a surrogate pair"),
+  INLINE_INLAY_INSIDE_SURROGATE_PAIR("The inline inlay reached a surrogate pair");
+
+  companion object {
+    internal fun messageForCode(code: Int): String = entries[-code - 1].message
+  }
 }
 
 /**

@@ -40,10 +40,11 @@ internal class MarkerTransformResultTest {
       val before = document.core.snapshot().text()
       val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
       val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())
-      for (empty in listOf(PMarkerRootImpl.empty(), PMarkerRoot.empty()).distinctBy { it.javaClass }) {
+      for (empty in listOf(PMarkerRootImpl.empty(), PMarkerDirectRoot.empty(), PMarkerRoot.empty()).distinctBy { it.javaClass }) {
         for (error in MarkerTransformError.entries) {
           val failure = MarkerTransformResult(error)
           assertFalse(failure.isValid)
+          assertEquals(error.message, failure.errorReason)
           val handle = empty.createHandle(marker, true)
           val root = empty.insert(handle, 2, 4, spec = 0, flavorFlags = 0, policy = MarkerPolicy { _, _, _, _ -> failure })
           val invalidated = ArrayList<SnapshotMarkerReference<*>>()
@@ -56,6 +57,11 @@ internal class MarkerTransformResultTest {
           assertTrue(affected.isEmpty())
           assertTrue(root.isValid(handle))
           assertNull(root.invalidationReason(handle))
+          for (removed in listOf(edited.remove(handle), edited.removeMany(listOf(handle)), edited.purgeMany(listOf(handle)))) {
+            assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle))
+            assertNull(removed.invalidationReason(handle))
+          }
+          assertEquals(error.message, edited.invalidationReason(handle))
         }
       }
     }

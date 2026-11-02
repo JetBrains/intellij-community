@@ -10,7 +10,6 @@ import com.intellij.openapi.editor.impl.EditorDocumentPriorities
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.ReferenceQueueable
-import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -109,7 +108,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
     return reference.get()
   }
 
-  /** Creates a handle in this store's family without reading a document snapshot. */
+  /** Creates a handle for this store without reading a document snapshot. */
   override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T> =
     referenceFactory(emptyRoot, marker, retainStrong)
 
