@@ -130,7 +130,7 @@
     <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
-                    serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl"/>
+                    serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl" overrides="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager" open="true"
                     serviceImplementation="com.intellij.codeInsight.NullableNotNullManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager" open="true"

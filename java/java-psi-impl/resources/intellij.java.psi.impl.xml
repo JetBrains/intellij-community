@@ -110,6 +110,8 @@
                     serviceImplementation="com.intellij.psi.impl.JavaPsiFacadeImpl"/>
 
     <!-- The defaults for a process without a Java backend, such as JetBrains Light. The Java plugin overrides each of them. -->
+    <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
+                    serviceImplementation="com.intellij.core.CoreJavaCodeStyleManager" open="true"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"
                     serviceImplementation="com.intellij.core.CorePackageIndex" open="true"/>
     <psi.treeChangePreprocessor implementation="com.intellij.psi.impl.PsiJavaModuleTreeChangePreprocessor"/>
