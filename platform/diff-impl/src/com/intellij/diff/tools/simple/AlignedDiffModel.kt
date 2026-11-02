@@ -64,6 +64,8 @@ class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer): AlignedDiffModelBase
   }
 
   override fun getDiffChanges(): List<AlignableChange> = viewer.diffChanges
+
+  override fun needAlignChanges(): Boolean = viewer.isAligningViewModeSupported && super.needAlignChanges()
 }
 
 @ApiStatus.Internal
