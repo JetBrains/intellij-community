@@ -127,6 +127,8 @@
                     serviceImplementation="com.intellij.core.CoreLanguageLevelProjectExtension" open="true"/>
     <projectService serviceInterface="com.intellij.psi.impl.file.impl.JavaFileManager"
                     serviceImplementation="com.intellij.core.CoreJavaFileManager" open="true"/>
+    <projectService serviceInterface="com.intellij.psi.impl.JavaPsiImplementationHelper"
+                    serviceImplementation="com.intellij.core.CoreJavaPsiImplementationHelper" open="true"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
                     serviceImplementation="com.intellij.core.CoreJavaCodeStyleManager" open="true"/>
     <projectService serviceInterface="com.intellij.openapi.roots.PackageIndex"

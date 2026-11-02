@@ -3,7 +3,6 @@ package com.intellij.psi.impl
 
 import com.intellij.codeInsight.ExternalAnnotationsManager
 import com.intellij.codeInsight.InferredAnnotationsManager
-import com.intellij.core.CoreJavaPsiImplementationHelper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaDirectoryService
@@ -19,12 +18,12 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * Gives the Java services that the Java PSI code reads also in a process without the Java plugin, such as the frontend.
  *
- * `intellij.java.psi.impl.xml` registers an open default for [JavaFileManager] and [JavaDirectoryService], and the Java
- * plugin overrides each of them. `JavaCoreProjectEnvironment` and `JavaCoreApplicationEnvironment` register them in code.
- * So the getters of these services return the registered service.
+ * `intellij.java.psi.impl.xml` registers an open default for [JavaFileManager], [JavaPsiImplementationHelper] and
+ * [JavaDirectoryService], and the Java plugin overrides each of them. `JavaCoreProjectEnvironment` and
+ * `JavaCoreApplicationEnvironment` register them in code. So the getters of these services return the registered service.
  *
- * The frontend does not register [JavaPsiImplementationHelper], [ExternalAnnotationsManager] and
- * [InferredAnnotationsManager]. The getters of these services return the registered service, or a default implementation.
+ * The frontend does not register [ExternalAnnotationsManager] and [InferredAnnotationsManager].
+ * The getters of these services return the registered service, or a default implementation.
  *
  * Call a getter here from code that a frontend module ships. Code that runs on the backend only can keep `getInstance`.
  */
@@ -36,10 +35,10 @@ object JavaOptionalServices {
     return JavaFileManager.getInstance(project)
   }
 
-  /** Returns the registered [JavaPsiImplementationHelper], or a new [CoreJavaPsiImplementationHelper]. */
+  /** Returns the registered [JavaPsiImplementationHelper]. */
   @JvmStatic
   fun getJavaPsiImplementationHelper(project: Project): JavaPsiImplementationHelper {
-    return JavaPsiImplementationHelper.getInstance(project) ?: CoreJavaPsiImplementationHelper(project)
+    return JavaPsiImplementationHelper.getInstance(project)
   }
 
   /** Returns the registered [JavaDirectoryService]. */
