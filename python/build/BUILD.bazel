@@ -110,6 +110,10 @@ jvm_library(
     ),
     associates = ["//python/build"],
     kotlinc_opts = ":custom_pycharm-community-build-tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
     visibility = ["//visibility:public"],
     runtime_deps = ["//libraries/byte-buddy"],
     deps = [
