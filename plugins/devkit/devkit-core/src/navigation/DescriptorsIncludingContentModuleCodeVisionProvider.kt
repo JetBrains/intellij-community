@@ -33,7 +33,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProvider : DaemonBound
   override val id: String get() = ID
   override val name: String get() = DevKitBundle.message("code.vision.descriptors.including.content.module.name")
   override val relativeOrderings: List<CodeVisionRelativeOrdering> get() = emptyList()
-  override val defaultAnchor: CodeVisionAnchorKind get() = CodeVisionAnchorKind.Top
+  override val defaultAnchor: CodeVisionAnchorKind get() = CodeVisionAnchorKind.Default
 
   override fun computeForEditor(editor: Editor, file: PsiFile): List<Pair<TextRange, CodeVisionEntry>> {
     if (!DescriptorUtil.isPluginXml(file) || !DevKitInspectionUtil.isAllowed(file)) return emptyList()

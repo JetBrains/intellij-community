@@ -55,8 +55,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
 
     testCodeVision("""
       <!-- copyright -->
-      /*<# block [Included in 1 descriptor] #>*/
-      <idea-plugin>
+      <idea-plugin>/*<# [Included in 1 descriptor] #>*/
         <!-- any -->
       </idea-plugin>
       """.trimIndent(),
@@ -79,8 +78,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
     )
 
     testCodeVision("""
-      /*<# block [Included in 1 descriptor] #>*/
-      <idea-plugin>
+      <idea-plugin>/*<# [Included in 1 descriptor] #>*/
         <!-- any -->
       </idea-plugin>
       """.trimIndent(),
@@ -109,8 +107,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
     )
 
     testCodeVision("""
-      /*<# block [Included in 2 descriptors] #>*/
-      <idea-plugin>
+      <idea-plugin>/*<# [Included in 2 descriptors] #>*/
         <!-- any -->
       </idea-plugin>
       """.trimIndent(),
@@ -130,8 +127,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
     )
 
     testCodeVision("""
-      /*<# block [Included in 1 descriptor] #>*/
-      <idea-plugin>
+      <idea-plugin>/*<# [Included in 1 descriptor] #>*/
         <!-- any -->
       </idea-plugin>
       """.trimIndent(),
@@ -152,8 +148,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
     )
 
     testCodeVision("""
-      /*<# block [Included in 1 descriptor] #>*/
-      <idea-plugin>
+      <idea-plugin>/*<# [Included in 1 descriptor] #>*/
         <dependencies>
           <module name="intellij.platform.frontend"/>
           <module name="intellij.platform.rpc"/>
@@ -176,8 +171,7 @@ internal class DescriptorsIncludingContentModuleCodeVisionProviderTest {
     )
 
     testCodeVision("""
-      /*<# block [Included in 1 descriptor] #>*/
-      <idea-plugin>
+      <idea-plugin>/*<# [Included in 1 descriptor] #>*/
         <dependencies>
           <module name="intellij.platform.frontend"/>
         </dependencies>
