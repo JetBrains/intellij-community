@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -58,7 +59,9 @@ import org.jetbrains.eval4j.Eval4JIllegalArgumentException
 import org.jetbrains.eval4j.Eval4JIllegalStateException
 import org.jetbrains.eval4j.Eval4JInterpretingException
 import org.jetbrains.eval4j.ExceptionThrown
+import org.jetbrains.eval4j.FieldDescription
 import org.jetbrains.eval4j.InterpreterResult
+import org.jetbrains.eval4j.MethodDescription
 import org.jetbrains.eval4j.ValueReturned
 import org.jetbrains.eval4j.interpreterLoop
 import org.jetbrains.eval4j.jdi.JDIEval
@@ -72,6 +75,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
+import org.jetbrains.kotlin.idea.debugger.core.KotlinMangledMemberContributor
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
@@ -120,6 +124,9 @@ object KotlinEvaluatorBuilder : EvaluatorBuilder {
         return ExpressionEvaluatorImpl(KotlinEvaluator(codeFragment, position))
     }
 }
+
+private const val GET_DECLARED_FIELD_METHOD = "getDeclaredField"
+private const val GET_FIELD_METHOD = "getField"
 
 class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePosition: SourcePosition?) : Evaluator, ExternalExpressionEvaluator {
 
@@ -399,7 +406,28 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                     if (BitUtil.isSet(policy, ObjectReference.INVOKE_NONVIRTUAL)) {
                         invocationOptions = ObjectReference.INVOKE_NONVIRTUAL
                     }
-                    return context.invokeMethod(obj, method, args, invocationOptions)
+                    try {
+                        return context.invokeMethod(obj, method, args, invocationOptions)
+                    } catch (e: EvaluateException) {
+                        // Fragment compiler reads private props via Class.getDeclaredField(name); retry if a plugin renamed it.
+                        for (mangledArgs in mangledReflectiveFieldLookupArgs(method, args)) {
+                            try {
+                                return context.invokeMethod(obj, method, mangledArgs, invocationOptions)
+                            } catch (_: EvaluateException) {
+                                // Miss, try the next. If all miss, rethrow the original `e` below (the real failure).
+                            }
+                        }
+                        throw e
+                    }
+                }
+
+                fun mangledReflectiveFieldLookupArgs(method: Method, args: List<Value?>): List<List<Value?>> {
+                    if (method.declaringType().name() != CommonClassNames.JAVA_LANG_CLASS) return emptyList()
+                    if (method.name() != GET_DECLARED_FIELD_METHOD && method.name() != GET_FIELD_METHOD) return emptyList()
+                    val fieldName = (args.singleOrNull() as? StringReference)?.value() ?: return emptyList()
+                    return KotlinMangledMemberContributor.getMangledFieldNames(fieldName).map { candidate ->
+                        listOf(DebuggerUtilsEx.mirrorOfString(candidate, context.evaluationContext))
+                    }
                 }
 
                 override fun jdiNewInstance(clazz: ClassType, ctor: Method, args: List<Value?>, policy: Int): Value {
@@ -413,6 +441,27 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
                 override fun jdiNewArray(arrayType: ArrayType, size: Int): ArrayReference {
                     return DebuggerUtilsEx.mirrorOfArray(arrayType, size, context.evaluationContext)
                 }
+
+                override fun getAlternativeFieldNames(fieldDesc: FieldDescription): Collection<String> =
+                    KotlinMangledMemberContributor.getMangledFieldNames(fieldDesc.name)
+
+                override fun getBackingFieldForMissingMethod(methodDesc: MethodDescription): String? =
+                    KotlinMangledMemberContributor.getBackingFieldForGetter(
+                        methodDesc.name, methodDesc.desc.substringAfterLast(')')
+                    )
+
+                override fun returnsReceiverForMissingMethod(methodDesc: MethodDescription): Boolean =
+                    // A parameterless `.value` getter on an erased atomicfu holder: the receiver was already
+                    // unwrapped from the atomic, so the read is the identity. See IDEA-335346.
+                    methodDesc.desc.startsWith("()") &&
+                            KotlinMangledMemberContributor.isUnwrappedValueAccessor(methodDesc.ownerInternalName, methodDesc.name)
+
+                override fun canCastTo(value: Eval4JValue, targetType: Type): Boolean =
+                    // A CHECKCAST to an atomicfu holder that the compiler actually erased (absent in the target VM)
+                    // is a no-op: the value is already unwrapped. We no-op only the cast and only when the type is
+                    // truly absent, so a non-erased type and every `is` / INSTANCEOF still go through the honest check.
+                    (KotlinMangledMemberContributor.isErasedHolderType(targetType.internalName) && isAbsentInTargetVm(targetType)) ||
+                            isInstanceOf(value, targetType)
 
                 override fun shouldInvokeMethodWithReflection(method: Method, args: List<Value?>): Boolean {
                     // invokeMethod in ExecutionContext already handles everything
