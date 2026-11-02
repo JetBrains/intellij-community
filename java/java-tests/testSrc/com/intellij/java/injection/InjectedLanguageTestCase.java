@@ -41,10 +41,10 @@ public abstract class InjectedLanguageTestCase extends LightQuickFixTestCase {
     }
   }
 
-  protected @NotNull String toParseTreeText(@NotNull PsiFile file) {
+  protected static @NotNull String toParseTreeText(@NotNull PsiFile file) {
     String result = JBIterable.from(file.getViewProvider().getAllFiles()).map(
         root -> DebugUtil.psiToString(root, true, false, (psiElement, consumer) ->
-          InjectedLanguageManager.getInstance(getProject()).enumerate(psiElement, (injectedPsi, _) -> consumer.consume(injectedPsi))))
+          InjectedLanguageManager.getInstance(file.getProject()).enumerate(psiElement, (injectedPsi, _) -> consumer.consume(injectedPsi))))
       .reduce(null, (r, o) -> r == null ? o : r + o);
     return Objects.requireNonNull(result);
   }
