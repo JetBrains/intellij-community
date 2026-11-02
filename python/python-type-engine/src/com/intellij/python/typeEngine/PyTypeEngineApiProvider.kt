@@ -16,13 +16,10 @@ import com.intellij.python.pytools.backend.ProjectLevelPyTool
 import com.intellij.python.pytools.backend.PyToolsState
 import com.intellij.python.pytools.backend.setEnabledOn
 import com.intellij.python.sdk.backend.PythonInterpreter
-import com.intellij.python.ty.TyUtil
 import com.intellij.python.typeEngine.common.PyTypeEngineApi
 import com.intellij.python.typeEngine.common.PyTypeEngineEvent
 import com.intellij.python.typeEngine.common.PyTypeEngineEventRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineId
-import com.intellij.python.typeEngine.common.PyTypeEngineOperationResultDto
-import com.intellij.python.typeEngine.common.PyTypeEngineRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineSelectionRequest
 import com.intellij.python.typeEngine.common.PyTypeEngineStateDto
 import com.jetbrains.python.packaging.common.PythonPackageManagementListener
@@ -84,16 +81,6 @@ private object PyTypeEngineApiImpl : PyTypeEngineApi {
     return currentState(project)
   }
 
-  override suspend fun install(request: PyTypeEngineRequest): PyTypeEngineOperationResultDto {
-    val project = request.projectId.findProject()
-    if (request.typeEngineId != PyTypeEngineId.TY) {
-      return PyTypeEngineOperationResultDto.Failure("The type engine does not support direct installation")
-    }
-    val path = TyUtil.downloadTyBinary()
-      ?: return PyTypeEngineOperationResultDto.Failure("Cannot install ty")
-    return PyTypeEngineOperationResultDto.Success(currentState(project), path.toString())
-  }
-
   override suspend fun logEvent(request: PyTypeEngineEventRequest) {
     val project = request.projectId.findProject()
     when (request.event) {
@@ -140,7 +127,6 @@ private fun state(project: Project, snapshot: EvoPyProjectModel.Snapshot): PyTyp
   val installed = supported.filterTo(mutableSetOf()) { type ->
     when (type) {
       PyTypeEngineId.PYCHARM -> true
-      PyTypeEngineId.TY -> TyUtil.isTyInstalled()
       else -> snapshot.interpreters.any { interpreter ->
         PythonPackageManager.forPythonInterpreter(project, interpreter).hasInstalledPackageSnapshot(type.packageName)
       }
