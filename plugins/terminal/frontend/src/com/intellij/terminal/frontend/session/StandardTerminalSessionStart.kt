@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.util.coroutines.childScope
 import com.jediterm.core.util.TermSize
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.terminal.JBTerminalSystemSettingsProvider
 import org.jetbrains.plugins.terminal.ShellStartupOptions
@@ -36,13 +37,20 @@ fun startStandardTerminalSession(
   val observableTtyConnector = ObservableTtyConnector(ttyConnector)
 
   val originalSession = scope.childScope("original session")
-  val delegate = createTerminalSession(
-    project = statisticsProject,
-    ttyConnector = observableTtyConnector,
-    options = configuredOptions,
-    settings = JBTerminalSystemSettingsProvider(),
-    coroutineScope = originalSession,
-  )
+  val delegate = try {
+    createTerminalSession(
+      project = statisticsProject,
+      ttyConnector = observableTtyConnector,
+      options = configuredOptions,
+      settings = JBTerminalSystemSettingsProvider(),
+      coroutineScope = originalSession,
+    )
+  }
+  catch (e: Throwable) {
+    runCatching { observableTtyConnector.close() }.onFailure(e::addSuppressed)
+    originalSession.cancel()
+    throw e
+  }
   val startupOptions = TerminalStartupOptionsImpl(
     shellCommand = configuredOptions.shellCommand!!,
     workingDirectory = configuredOptions.workingDirectory!!,
