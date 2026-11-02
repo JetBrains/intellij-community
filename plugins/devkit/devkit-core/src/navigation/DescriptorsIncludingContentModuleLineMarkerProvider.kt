@@ -3,14 +3,10 @@ package org.jetbrains.idea.devkit.navigation
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo
 import com.intellij.codeInsight.navigation.NavigationGutterIconBuilder
-import com.intellij.codeInsight.navigation.impl.PsiTargetPresentationRenderer
-import com.intellij.devkit.core.icons.DevkitCoreIcons
 import com.intellij.icons.AllIcons
 import com.intellij.navigation.GotoRelatedItem
 import com.intellij.openapi.editor.markup.GutterIconRenderer
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
@@ -18,7 +14,6 @@ import com.intellij.psi.xml.XmlToken
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.NotNullFunction
 import com.intellij.util.xml.DomUtil
-import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
@@ -76,29 +71,11 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
     }
     return NavigationGutterIconBuilder.create(gutterIcon, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(contentEntries)
-      .setTargetRenderer { TargetRenderer() }
+      .setTargetRenderer { IncludingDescriptorTargetRenderer() }
       .setPopupTitle(DevKitBundle.message("line.marker.descriptors.including.content.module.popup.title"))
       .setTooltipText(tooltip)
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(leaf)
-  }
-
-  class TargetRenderer : PsiTargetPresentationRenderer<PsiElement>() {
-    override fun getPresentation(element: PsiElement): TargetPresentation {
-      val module = ProjectRootManager.getInstance(element.project).getFileIndex().getModuleForFile(element.containingFile.virtualFile)
-                   ?: return super.getPresentation(element)
-      return TargetPresentation.builder(element.containingFile.name)
-        .icon(SplitModeModuleKindIcons.getDescriptorIcon(element.containingFile) ?: DevkitCoreIcons.PluginV2)
-        .containerText(getLoading(element))
-        .locationText(module.name, AllIcons.Nodes.Module)
-        .presentation()
-    }
-
-    private fun getLoading(element: PsiElement): @Nls String {
-      val moduleDescriptor = DomUtil.getDomElement(element) as? ModuleDescriptor
-                             ?: throw IllegalStateException("ModuleDescriptor expected, got: $element")
-      return moduleDescriptor.loading.value?.value ?: "optional"
-    }
   }
 }
 
