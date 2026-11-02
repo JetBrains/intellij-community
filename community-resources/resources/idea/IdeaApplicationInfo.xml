@@ -9,6 +9,7 @@
 
   <essential-plugin>com.intellij.idea.customization</essential-plugin>
   <essential-plugin>com.intellij.java</essential-plugin>
+  <essential-plugin>com.intellij.java.basic</essential-plugin>
   <essential-plugin>com.intellij.java.ide</essential-plugin>
   <essential-plugin>com.intellij.modules.json</essential-plugin>
 </component>
