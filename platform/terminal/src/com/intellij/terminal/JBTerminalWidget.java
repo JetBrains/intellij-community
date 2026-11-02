@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.terminal.actions.TerminalPlatformDataKeys;
 import com.intellij.terminal.search.DefaultJediTermSearchComponent;
 import com.intellij.terminal.search.JediTermSearchComponentProvider;
 import com.intellij.terminal.ui.TerminalWidget;
@@ -63,7 +64,10 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
   private static final Logger LOG = Logger.getInstance(JBTerminalWidget.class);
 
   public static final DataKey<JBTerminalWidget> TERMINAL_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName());
-  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = DataKey.create(JBTerminalWidget.class.getName() + " selected text");
+
+  /// @deprecated please use {@link com.intellij.terminal.actions.TerminalPlatformDataKeys#CLASSIC_TERMINAL_SELECTED_TEXT_KEY}
+  @Deprecated
+  public static final DataKey<String> SELECTED_TEXT_DATA_KEY = TerminalPlatformDataKeys.CLASSIC_TERMINAL_SELECTED_TEXT_KEY;
 
   private JBTerminalWidgetListener myListener;
   private final Project myProject;
@@ -206,7 +210,7 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, UiCo
 
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
-    sink.set(SELECTED_TEXT_DATA_KEY, getSelectedText());
+    sink.set(TerminalPlatformDataKeys.CLASSIC_TERMINAL_SELECTED_TEXT_KEY, getSelectedText());
     sink.set(TERMINAL_DATA_KEY, this);
   }
 

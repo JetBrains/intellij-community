@@ -31,7 +31,7 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.actions.TerminalPlatformDataKeys;
 import com.intellij.util.FontUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText == null) {
-      selectedText = e.getData(JBTerminalWidget.SELECTED_TEXT_DATA_KEY);
+      selectedText = e.getData(TerminalPlatformDataKeys.CLASSIC_TERMINAL_SELECTED_TEXT_KEY);
     }
     return selectedText != null && !selectedText.contains("\n") ? selectedText : null;
   }

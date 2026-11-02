@@ -1,6 +1,10 @@
 f:com.intellij.terminal.TerminalTitle
 - *f:buildFullTitle(Z):java.lang.String
 - *f:buildTitle(Z):java.lang.String
+*f:com.intellij.terminal.actions.TerminalPlatformDataKeys
+- sf:CLASSIC_TERMINAL_SELECTED_TEXT_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:EDITOR_KEY:com.intellij.openapi.actionSystem.DataKey
+- sf:INSTANCE:com.intellij.terminal.actions.TerminalPlatformDataKeys
 com.intellij.terminal.ui.TerminalWidget
 - com.intellij.openapi.ui.ComponentContainer
 - *:getCurrentDirectory():java.lang.String

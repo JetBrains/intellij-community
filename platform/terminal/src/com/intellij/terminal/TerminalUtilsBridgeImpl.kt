@@ -2,6 +2,7 @@
 package com.intellij.terminal
 
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.terminal.actions.TerminalPlatformDataKeys
 import com.jediterm.terminal.ui.TerminalPanel
 import java.awt.Component
 
@@ -23,6 +24,6 @@ internal class TerminalUtilsBridgeImpl : TerminalUtilsBridge {
   }
 
   override fun getSelectedTextInTerminal(context: DataContext): String? {
-    return context.getData(JBTerminalWidget.SELECTED_TEXT_DATA_KEY)
+    return context.getData(TerminalPlatformDataKeys.CLASSIC_TERMINAL_SELECTED_TEXT_KEY)
   }
 }

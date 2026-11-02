@@ -5,8 +5,11 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.editor.Editor
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 object TerminalPlatformDataKeys {
   @JvmField
   val EDITOR_KEY: DataKey<Editor> = DataKey.create("TERMINAL_EDITOR")
+
+  @JvmField
+  val CLASSIC_TERMINAL_SELECTED_TEXT_KEY: DataKey<String> = DataKey.create("JBTerminalWidget selected text")
 }
