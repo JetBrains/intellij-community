@@ -18,6 +18,11 @@
 
   <resource-bundle>messages.DevkitThreadingBundle</resource-bundle>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <registryKey key="devkit.threading.open.statistics.report" defaultValue="false"
+                 description="Open the statistics report in the editor after the lock requirements analysis completes"/>
+  </extensions>
+
   <actions resource-bundle="messages.DevkitThreadingBundle">
     <action id="LockReqAnalysis"
             class="com.intellij.devkit.threading.threadingModelHelper.LockReqAction"

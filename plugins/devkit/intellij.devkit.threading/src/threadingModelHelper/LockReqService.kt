@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.psi.PsiMethod
@@ -47,7 +48,9 @@ internal class LockReqsService(private val project: Project, private val corouti
       }
       val consumer = object : LockReqConsumer by defaultConsumer {
         override fun onStatisticsReport(file: Path) {
-          openStatisticsReport(file)
+          if (Registry.`is`("devkit.threading.open.statistics.report", false)) {
+            openStatisticsReport(file)
+          }
         }
       }
       analyzer.analyzeMethodStreaming(methodPtr, config, project, consumer)
