@@ -88,6 +88,7 @@ class GCRootPathsTree(
         disposed -> Warning
         refIndex == RefIndexUtil.SOFT_REFERENCE -> Warning
         refIndex == RefIndexUtil.WEAK_REFERENCE -> Warning
+        refIndex == RefIndexUtil.PHANTOM_REFERENCE -> Warning
         else -> None
       }
     }

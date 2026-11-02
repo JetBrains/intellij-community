@@ -229,6 +229,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     DisposerTree,
     SoftReferences,
     WeakReferences,
+    PhantomReferences,
     CleanerFinalizerReferences,
     Finished
   }
@@ -305,6 +306,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     val reachableNonStrongHistogramEntries = HashMap<ClassDefinition, HistogramVisitor.InternalHistogramEntry>()
     val softReferenceIdToParentMap = Int2IntOpenHashMap()
     val weakReferenceIdToParentMap = Int2IntOpenHashMap()
+    val phantomReferenceIdToParentMap = Int2IntOpenHashMap()
 
     var visitedInstancesCount = 0
     val stopwatch = Stopwatch.createStarted()
@@ -318,6 +320,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
     var finalizableBytes = 0L
     var softBytes = 0L
     var weakBytes = 0L
+    var phantomBytes = 0L
 
     var phase = WalkGraphPhase.StrongReferencesNonLocalVariables // initial state
 
@@ -381,6 +384,14 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
           references[nav.getSoftWeakReferenceIndex()] = 0L
         }
 
+        // Postpone any phantom references encountered before the phase that handles them
+        if (phase < WalkGraphPhase.PhantomReferences && nav.getPhantomReferenceId() != 0L) {
+          if (!onlyStrongReferences) {
+            phantomReferenceIdToParentMap.put(nav.getPhantomReferenceId().toInt(), id)
+          }
+          references[nav.getSoftWeakReferenceIndex()] = 0L
+        }
+
         val size = nav.getObjectSize()
         val nonDisposerReferences = references.size
 
@@ -434,6 +445,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
           when (phase) {
             WalkGraphPhase.CleanerFinalizerReferences -> finalizableBytes += size
             WalkGraphPhase.SoftReferences -> softBytes += size
+            WalkGraphPhase.PhantomReferences -> phantomBytes += size
             else -> {
               assert(phase == WalkGraphPhase.WeakReferences)
               weakBytes += size
@@ -493,6 +505,18 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
             // No need to store the list anymore
             weakReferenceIdToParentMap.clear()
             weakReferenceIdToParentMap.trim()
+          }
+          WalkGraphPhase.PhantomReferences -> {
+            phantomReferenceIdToParentMap.int2IntEntrySet().forEach {
+              val phantomId = it.intKey
+              val parentId = it.intValue
+              if (addIdToListAndSetParentIfOrphan(toVisit, phantomId, parentId)) {
+                refIndexList[phantomId] = RefIndexUtil.PHANTOM_REFERENCE
+              }
+            }
+            // No need to store the list anymore
+            phantomReferenceIdToParentMap.clear()
+            phantomReferenceIdToParentMap.trim()
           }
           WalkGraphPhase.DisposerTree -> {
             if (analysisContext.disposerTreeObjectId != 0) {
@@ -574,6 +598,7 @@ open class AnalyzeGraph(protected val analysisContext: AnalysisContext, private 
       appendLine("Finalizable size: ${toShortStringAsSize(finalizableBytes)}")
       appendLine("Soft-reachable size: ${toShortStringAsSize(softBytes)}")
       appendLine("Weak-reachable size: ${toShortStringAsSize(weakBytes)}")
+      appendLine("Phantom-reachable size: ${toShortStringAsSize(phantomBytes)}")
       appendLine("Reachable only from disposer tree: ${unreachableDisposableObjects.size}")
       TruncatingPrintBuffer(10, 0, this::appendLine).use { buffer ->
         val unreachableChildren = LongOpenHashSet()

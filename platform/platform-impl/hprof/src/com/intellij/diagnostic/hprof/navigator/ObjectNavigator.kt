@@ -56,6 +56,16 @@ abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Lo
 
   abstract fun getSoftReferenceId(): Long
   abstract fun getWeakReferenceId(): Long
+
+  /**
+   * Returns the referent of the current object when it is a `PhantomReference`, or `0` otherwise.
+   * The referent of a phantom reference is not strongly reachable through it.
+   */
+  abstract fun getPhantomReferenceId(): Long
+
+  /**
+   * Returns the index of the referent of a soft, weak or phantom reference in the references of the current object, or `-1`.
+   */
   abstract fun getSoftWeakReferenceIndex(): Int
 
   fun goToInstanceField(@NonNls className: String?, @NonNls fieldName: String) {

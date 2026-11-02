@@ -29,6 +29,7 @@ object RefIndexUtil {
       ROOT -> "(root)"
       SOFT_REFERENCE -> "(soft)"
       WEAK_REFERENCE -> "(weak)"
+      PHANTOM_REFERENCE -> "(phantom)"
       ARRAY_ELEMENT -> "[]"
       DISPOSER_CHILD -> "(disposer-tree)"
       FIELD_OMITTED -> null
@@ -43,8 +44,9 @@ object RefIndexUtil {
   }
 
   const val FIELD_OMITTED: Int = 0
-  const val MAX_FIELD_INDEX: Int = 250
+  const val MAX_FIELD_INDEX: Int = 249
 
+  const val PHANTOM_REFERENCE: Int = 250
   const val ROOT: Int = 251
   const val SOFT_REFERENCE: Int = 252
   const val WEAK_REFERENCE: Int = 253
