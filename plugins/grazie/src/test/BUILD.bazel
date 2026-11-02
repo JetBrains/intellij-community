@@ -51,6 +51,7 @@ jvm_library(
         "//platform/vcs/plugin",
         "//aether-dependency-resolver/plugin",
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//json/spellchecker",
         "//json/plugin",
         "//plugins/yaml/plugin",

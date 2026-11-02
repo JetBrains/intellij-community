@@ -49,6 +49,7 @@ jvm_library(
         "//java/langInjection",
         "//xml/langInjection",
         "//plugins/ui-designer/jps-plugin:java-guiForms-jps",
+        "//plugins/properties/plugin",
     ],
     deps = [
         # do not sort,

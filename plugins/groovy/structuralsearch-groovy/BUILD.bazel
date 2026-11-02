@@ -83,6 +83,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//plugins/groovy-scripting",
         "//xml/plugin",
+        "//plugins/properties/plugin",
     ],
     deps = [
         # do not sort,

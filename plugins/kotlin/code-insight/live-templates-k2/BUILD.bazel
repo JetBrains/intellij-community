@@ -116,6 +116,7 @@ jvm_library(
         # do not sort,
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/structuralsearch/plugin",

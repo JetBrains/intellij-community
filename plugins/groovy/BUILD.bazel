@@ -189,6 +189,7 @@ jvm_library(
         "//plugins/groovy/spock",
         "//platform/vcs/plugin",
         "//plugins/ant",
+        "//plugins/properties/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],

@@ -53,6 +53,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//platform/vcs/plugin",
         "//xml/plugin",
+        "//plugins/properties/plugin",
     ],
     deps = [
         # do not sort,

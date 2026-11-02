@@ -97,6 +97,7 @@ jvm_library(
     runtime_deps = [
         # do not sort,
         "//plugins/maven/groovy",
+        "//plugins/properties/plugin",
         "//platform/main/intellij.platform.monolith.main:monolith-main",
         "//community-resources:customization",
     ],

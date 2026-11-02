@@ -86,6 +86,7 @@ jvm_library(
         "//platform/testRunner/plugin",
         "//plugins/kotlin:kotlin-plugin-community-main",
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//platform/vcs/plugin",
         "//java/plugin",
     ],

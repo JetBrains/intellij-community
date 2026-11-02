@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tasks.jira" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.settingsRepository" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.properties.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties.backend" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.mermaid" scope="RUNTIME" />

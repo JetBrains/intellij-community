@@ -142,6 +142,7 @@ jvm_library(
         "//platform/platform-api:ide",
         "//platform/platform-impl:ide-impl",
         "//platform/starter",
+        "//plugins/properties/plugin",
         "//plugins/properties:properties-backend",
         "//java/ide-resources",
         "//java/ide-customization",
@@ -360,6 +361,7 @@ jvm_library(
     visibility = ["//visibility:public"],
     runtime_deps = [
         # do not sort,
+        "//plugins/properties/plugin",
         "//platform/platform-impl/presentation-assistant",
         "//platform/platform-impl/tab-in-editor",
         "//plugins/filePrediction:filePrediction-tests_test_lib",

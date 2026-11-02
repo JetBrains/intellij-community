@@ -42,6 +42,7 @@ jvm_library(
         "//platform/structure-view-impl/plugin",
         "//platform/testRunner/plugin",
         "//platform/todo/plugin",
+        "//plugins/properties/plugin",
     ],
     deps = [
         # do not sort,

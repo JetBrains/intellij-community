@@ -21,6 +21,7 @@ jvm_library(
         "//plugins/kotlin/fir",
         "//plugins/kotlin/uast/uast-kotlin-idea-fir:kotlin-uast-idea",
         "//xml/plugin",
+        "//plugins/properties/plugin",
         "//platform/structure-view-impl/plugin",
         "//aether-dependency-resolver/plugin",
         "//platform/structuralsearch/plugin",
