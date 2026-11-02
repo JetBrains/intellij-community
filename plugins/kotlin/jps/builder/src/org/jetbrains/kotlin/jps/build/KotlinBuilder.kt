@@ -11,6 +11,7 @@ import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
+import org.jetbrains.jps.builders.storage.BuildDataPaths
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException
 import org.jetbrains.jps.incremental.BuilderCategory
 import org.jetbrains.jps.incremental.CompileContext
@@ -112,18 +113,23 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) return
         val kotlinChunk = kotlinContext.getChunk(chunk) ?: return
         if (kotlinChunk.isEnabled) {
-            markChunkDirtyIfArgumentsChanged(context, kotlinChunk)
+            markChunkDirtyIfNeeded(context, kotlinChunk)
         }
     }
 
     /**
-     * Some argument changes need a compilation of all Kotlin sources of the chunk, as in the legacy Kotlin JPS plugin. The
-     * files are marked for the first round, so JPS deletes their outputs before it.
+     * Some changes need a compilation of all Kotlin sources of the chunk:
+     * - an argument change, as in the legacy Kotlin JPS plugin;
+     * - an output that another compiler wrote after the last compilation of this builder.
+     *
+     * The files are marked for the first round, so JPS deletes their outputs before it. The check runs before JPS deletes
+     * the outputs of the dirty sources, so the module mapping of the previous compilation is still in the output.
      */
-    private fun markChunkDirtyIfArgumentsChanged(context: CompileContext, kotlinChunk: KotlinChunk) {
+    private fun markChunkDirtyIfNeeded(context: CompileContext, kotlinChunk: KotlinChunk) {
         val dataPaths = context.projectDescriptor.dataManager.dataPaths
         val reason = kotlinChunk.targets.firstNotNullOfOrNull { target ->
             TargetCompilerArguments(dataPaths, target.jpsModuleBuildTarget).reasonToRebuild(kotlinChunk.compilerArguments)
+            ?: reasonForForeignOutput(dataPaths, target)
         } ?: return
 
         LOG.info("$reason. Compiling all Kotlin sources of ${kotlinChunk.presentableShortName}")
@@ -134,6 +140,18 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
                 target.jpsModuleBuildTarget
             ) { file -> FileUtilRt.extensionEquals(file.name, "kt") }
             KotlinModuleMappingStorage.of(context, target.jpsModuleBuildTarget).clean()
+        }
+    }
+
+    private fun reasonForForeignOutput(dataPaths: BuildDataPaths, target: KotlinModuleBuildTarget): String? {
+        val marker = TargetCompilerMarker(dataPaths, target.jpsModuleBuildTarget)
+        val lastCompilation = marker.lastWriteTime() ?: return null
+        return when {
+            LegacyKotlinJpsState.compiledSince(dataPaths, target.jpsModuleBuildTarget, lastCompilation) ->
+                "The legacy Kotlin JPS plugin compiled $target after this builder"
+            marker.isModuleMappingForeign(target.moduleMappingFile) ->
+                "Another compiler rewrote ${target.moduleMappingFile} after this builder"
+            else -> null
         }
     }
 
@@ -288,20 +306,21 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         LOG.debug { "Compiling files: ${kotlinDirtyFilesHolder.allDirtyFiles}" }
         JavaBuilderUtil.registerFilesToCompile(context, kotlinDirtyFilesHolder.allDirtyFiles)
 
+        val dataPaths = context.projectDescriptor.dataManager.dataPaths
+        LegacyKotlinJpsState.deleteLookups(dataPaths)
+
         val registrar = DependencyGraphRegistrar(context, outputConsumer, kotlinContext.isInstrumentationEnabled)
         var compiledSomething = false
         for (target in kotlinChunk.targets) {
+            LegacyKotlinJpsState.handOver(dataPaths, target.jpsModuleBuildTarget)
             target.nextRound(context)
             val outcome = target.compile(kotlinDirtyFilesHolder, session, context, sink) ?: continue
             compiledSomething = true
             if (!outcome.success || sink.hasErrors) break
 
             registrar.register(target.jpsModuleBuildTarget, outcome)
-            TargetCompilerMarker(context.projectDescriptor.dataManager.dataPaths, target.jpsModuleBuildTarget).write(compilerVersion)
-            TargetCompilerArguments(
-                context.projectDescriptor.dataManager.dataPaths,
-                target.jpsModuleBuildTarget
-            ).write(kotlinChunk.compilerArguments)
+            TargetCompilerMarker(dataPaths, target.jpsModuleBuildTarget).write(compilerVersion, target.moduleMappingFile)
+            TargetCompilerArguments(dataPaths, target.jpsModuleBuildTarget).write(kotlinChunk.compilerArguments)
         }
 
         if (!compiledSomething) {
@@ -323,6 +342,9 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
      * The output of another compiler cannot be extended file by file: the module mapping and the class files must come
      * from one compiler. The same holds for the output of the legacy Kotlin JPS plugin, which registered the module
      * mapping with its sources. The builder asks JPS to rebuild such a chunk once.
+     *
+     * A target without a marker has legacy output when the module mapping or the legacy caches exist. JPS can delete the
+     * module mapping with the outputs of the dirty sources, but the caches stay.
      */
     private fun needsChunkRebuild(
         context: CompileContext,
@@ -337,7 +359,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
             val previousVersion = TargetCompilerMarker(dataPaths, target.jpsModuleBuildTarget).read()
             if (previousVersion == compilerVersion) continue
 
-            val hasPreviousOutput = File(target.outputDir, "META-INF/${target.moduleName}.${ModuleMapping.MAPPING_FILE_EXT}").isFile
+            val hasPreviousOutput = target.moduleMappingFile.isFile || LegacyKotlinJpsState.hasCompiled(dataPaths, target.jpsModuleBuildTarget)
             if (previousVersion == null && !hasPreviousOutput) continue
 
             if (dirtyFilesHolder.getDirtyFiles(target.jpsModuleBuildTarget).size >= target.sources.size) continue
@@ -348,3 +370,7 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         return false
     }
 }
+
+/** The module mapping of the target, `META-INF/<module>.kotlin_module` in the output directory. */
+private val KotlinModuleBuildTarget.moduleMappingFile: File
+    get() = File(outputDir, "META-INF/$moduleName.${ModuleMapping.MAPPING_FILE_EXT}")

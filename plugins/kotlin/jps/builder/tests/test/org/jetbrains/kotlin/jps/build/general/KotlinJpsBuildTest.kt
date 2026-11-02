@@ -7,6 +7,8 @@ import org.jetbrains.jps.builders.BuildResult
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase
 import org.jetbrains.jps.incremental.CompileContext
+import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
+import org.jetbrains.jps.incremental.ModuleBuildTarget
 import org.jetbrains.jps.incremental.ModuleLevelBuilder
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.kotlin.jps.build.KotlinBuilderTestingLogger
@@ -475,6 +477,62 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
       System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
     }
   }
+
+  @WorkingDir("KotlinProjectTwoFilesInOnePackage")
+  @Test
+  fun testCompileAllAfterAnotherCompilerRewritesModuleMapping() {
+    doTest()
+
+    File(workDir, module("kotlinProject")).appendBytes(byteArrayOf(0))
+    // A new source has no outputs yet, so JPS keeps the module mapping until the builder sees it
+    File(workDir, "src/test3.kt").writeText("fun test3() {}\n")
+    buildAllModules().assertSuccessful()
+    assertCompiled(KotlinBuilder.KOTLIN_BUILDER_NAME, "src/test1.kt", "src/test2.kt", "src/test3.kt")
+  }
+
+  @WorkingDir("KotlinProjectTwoFilesInOnePackage")
+  @Test
+  fun testCompileAllAfterLegacyPluginCompilesWithoutCaches() {
+    doTest()
+
+    // The legacy plugin rewrites the marker after each compilation, also without the incremental caches
+    val marker = File(productionDataRoot(), "kotlin/has-kotlin-marker.txt")
+    marker.parentFile.mkdirs()
+    marker.writeText("true")
+    marker.setLastModified(System.currentTimeMillis() + 60_000)
+
+    checkWhen(createTouchAction("src/test1.kt"), arrayOf("src/test1.kt", "src/test2.kt"), null)
+  }
+
+  @WorkingDir("KotlinProjectTwoFilesInOnePackage")
+  @Test
+  fun testHandOverLegacyCaches() {
+    doTest()
+
+    // The caches that the legacy plugin leaves after it compiles the target
+    val dataRoot = productionDataRoot()
+    val cacheFile = File(dataRoot, "kotlin/proto.tab")
+    cacheFile.parentFile.mkdirs()
+    cacheFile.writeText("")
+    File(dataRoot, "format-version.txt").writeText("16")
+    val lookups = dataPaths().targetsDataRoot.resolve("kotlin-data-container").toFile()
+    File(lookups, "kotlin-data-container/data-container-format-version.txt").apply { parentFile.mkdirs() }.writeText("7")
+
+    checkWhen(createTouchAction("src/test1.kt"), arrayOf("src/test1.kt", "src/test2.kt"), null)
+
+    assertFalse(cacheFile.exists(), "$cacheFile is not deleted")
+    assertFalse(File(dataRoot, "format-version.txt").exists(), "The legacy cache version is not deleted")
+    assertFalse(lookups.exists(), "$lookups is not deleted")
+    assertEquals("true", File(dataRoot, "kotlin/has-kotlin-marker.txt").readText())
+
+    // The handed over target is not compiled in full again
+    checkWhen(createTouchAction("src/test1.kt"), arrayOf("src/test1.kt"), null)
+  }
+
+  private fun dataPaths(): BuildDataPathsImpl = BuildDataPathsImpl(myDataStorageRoot.toPath())
+
+  private fun productionDataRoot(): File =
+    dataPaths().getTargetDataRootDir(ModuleBuildTarget(myProject.modules.single(), JavaModuleBuildTargetType.PRODUCTION)).toFile()
 
   @WorkingDir("KotlinProject")
   @Test
