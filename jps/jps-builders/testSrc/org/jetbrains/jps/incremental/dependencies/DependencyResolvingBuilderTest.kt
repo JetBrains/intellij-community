@@ -28,15 +28,15 @@ import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
 class DependencyResolvingBuilderTest : JpsBuildTestBase() {
-  private lateinit var cachedArtifact: Path
+  private lateinit var mavenCacheArtifact: Path
   private lateinit var remoteArtifact: Path
   private lateinit var expectedChecksum: String
 
   @BeforeEach
   fun configureRepositories() {
-    val localRepository = createTempDirectory("local-repository").toPath()
-    val remoteRepository = createTempDirectory("remote-repository").toPath()
-    cachedArtifact = localRepository.resolve("test/single/1/single-1.jar")
+    val localRepository = createTempDirectory("maven-cache").toPath()
+    val remoteRepository = createTempDirectory("upstream-repository").toPath()
+    mavenCacheArtifact = localRepository.resolve("test/single/1/single-1.jar")
     remoteArtifact = remoteRepository.resolve("test/single/1/single-1.jar")
     writeArtifact(remoteArtifact, "valid artifact")
     expectedChecksum = JpsChecksumUtil.getSha256Checksum(remoteArtifact)
@@ -52,14 +52,14 @@ class DependencyResolvingBuilderTest : JpsBuildTestBase() {
 
   @Test
   fun `corrupt cached artifact is downloaded again`() {
-    writeArtifact(cachedArtifact, "corrupt artifact")
-    val actualChecksum = JpsChecksumUtil.getSha256Checksum(cachedArtifact)
+    writeArtifact(mavenCacheArtifact, "corrupt artifact")
+    val actualChecksum = JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact)
     addLibrary()
 
     val result = resolveLibraries()
 
     result.assertSuccessful()
-    assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(cachedArtifact))
+    assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
     val warning = result.getMessages(BuildMessage.Kind.WARNING).single().messageText
     assertTrue(warning.contains(expectedChecksum))
     assertTrue(warning.contains(actualChecksum))
@@ -86,14 +86,14 @@ class DependencyResolvingBuilderTest : JpsBuildTestBase() {
       val errors = result.getMessages(BuildMessage.Kind.ERROR).joinToString { it.messageText }
       assertTrue(errors.contains(expectedChecksum))
       assertTrue(errors.contains(actualChecksum))
-      assertEquals(actualChecksum, JpsChecksumUtil.getSha256Checksum(cachedArtifact))
+      assertEquals(actualChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
     }
   }
 
   @Test
   fun `third download can recover the artifact`() {
-    writeArtifact(cachedArtifact, "corrupt cached artifact")
-    val corruptArtifact = Files.readAllBytes(cachedArtifact)
+    writeArtifact(mavenCacheArtifact, "corrupt cached artifact")
+    val corruptArtifact = Files.readAllBytes(mavenCacheArtifact)
     val validArtifact = Files.readAllBytes(remoteArtifact)
     addLibrary()
 
@@ -103,29 +103,92 @@ class DependencyResolvingBuilderTest : JpsBuildTestBase() {
       result.assertSuccessful()
       assertEquals(3, downloads.get())
       assertEquals(3, result.getMessages(BuildMessage.Kind.WARNING).size)
-      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(cachedArtifact))
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
     }
   }
 
   @Test
-  fun `corrupt artifact outside the cache also replaces the cached artifact`() {
-    val libraryArtifact = createTempDirectory("library").toPath().resolve(cachedArtifact.fileName)
-    writeArtifact(libraryArtifact, "corrupt library artifact")
-    writeArtifact(cachedArtifact, "corrupt cached artifact")
-    addLibrary(libraryArtifact)
+  fun `a valid project JAR leaves a corrupt Maven cache untouched`() {
+    val projectArtifact = createTempDirectory("project-lib").toPath().resolve(mavenCacheArtifact.fileName)
+    Files.copy(remoteArtifact, projectArtifact)
+    writeArtifact(mavenCacheArtifact, "corrupt cached artifact")
+    val cachedChecksum = JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact)
+    val validArtifact = Files.readAllBytes(remoteArtifact)
+    addLibrary(projectArtifact)
 
-    val result = resolveLibraries()
+    withArtifactServer({ validArtifact }) { downloads ->
+      val result = resolveLibraries()
 
-    result.assertSuccessful()
-    assertEquals(1, result.getMessages(BuildMessage.Kind.WARNING).size)
-    assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(libraryArtifact))
-    assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(cachedArtifact))
+      result.assertSuccessful()
+      assertEquals(0, downloads.get())
+      assertTrue(result.getMessages(BuildMessage.Kind.WARNING).isEmpty())
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(projectArtifact))
+      assertEquals(cachedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
+    }
+  }
+
+  @Test
+  fun `a corrupt project JAR is restored from the Maven cache without a download`() {
+    val projectArtifact = createTempDirectory("project-lib").toPath().resolve(mavenCacheArtifact.fileName)
+    writeArtifact(projectArtifact, "corrupt project artifact")
+    Files.createDirectories(mavenCacheArtifact.parent)
+    Files.copy(remoteArtifact, mavenCacheArtifact)
+    val validArtifact = Files.readAllBytes(remoteArtifact)
+    addLibrary(projectArtifact)
+
+    withArtifactServer({ validArtifact }) { downloads ->
+      val result = resolveLibraries()
+
+      result.assertSuccessful()
+      assertEquals(0, downloads.get())
+      assertEquals(1, result.getMessages(BuildMessage.Kind.WARNING).size)
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(projectArtifact))
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
+    }
+  }
+
+  @Test
+  fun `a corrupt project JAR is downloaded when the Maven cache is empty`() {
+    val projectArtifact = createTempDirectory("project-lib").toPath().resolve(mavenCacheArtifact.fileName)
+    writeArtifact(projectArtifact, "corrupt project artifact")
+    assertTrue(Files.notExists(mavenCacheArtifact))
+    val validArtifact = Files.readAllBytes(remoteArtifact)
+    addLibrary(projectArtifact)
+
+    withArtifactServer({ validArtifact }) { downloads ->
+      val result = resolveLibraries()
+
+      result.assertSuccessful()
+      assertEquals(1, downloads.get())
+      assertEquals(1, result.getMessages(BuildMessage.Kind.WARNING).size)
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(projectArtifact))
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
+    }
+  }
+
+  @Test
+  fun `a corrupt project JAR is downloaded when the Maven cache is corrupt`() {
+    val projectArtifact = createTempDirectory("project-lib").toPath().resolve(mavenCacheArtifact.fileName)
+    writeArtifact(projectArtifact, "corrupt project artifact")
+    writeArtifact(mavenCacheArtifact, "corrupt cached artifact")
+    val validArtifact = Files.readAllBytes(remoteArtifact)
+    addLibrary(projectArtifact)
+
+    withArtifactServer({ validArtifact }) { downloads ->
+      val result = resolveLibraries()
+
+      result.assertSuccessful()
+      assertEquals(1, downloads.get())
+      assertEquals(1, result.getMessages(BuildMessage.Kind.WARNING).size)
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(projectArtifact))
+      assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
+    }
   }
 
   @Test
   fun `valid cached artifact needs no download`() {
-    Files.createDirectories(cachedArtifact.parent)
-    Files.copy(remoteArtifact, cachedArtifact)
+    Files.createDirectories(mavenCacheArtifact.parent)
+    Files.copy(remoteArtifact, mavenCacheArtifact)
     Files.delete(remoteArtifact)
     addLibrary()
 
@@ -133,24 +196,24 @@ class DependencyResolvingBuilderTest : JpsBuildTestBase() {
 
     result.assertSuccessful()
     assertTrue(result.getMessages(BuildMessage.Kind.WARNING).isEmpty())
-    assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(cachedArtifact))
+    assertEquals(expectedChecksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
   }
 
   @Test
   fun `missing verification metadata does not replace the artifact`() {
-    writeArtifact(cachedArtifact, "unverified artifact")
-    val checksum = JpsChecksumUtil.getSha256Checksum(cachedArtifact)
+    writeArtifact(mavenCacheArtifact, "unverified artifact")
+    val checksum = JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact)
     addLibrary(includeVerification = false)
 
     val result = resolveLibraries()
 
     result.assertFailed()
     assertTrue(result.getMessages(BuildMessage.Kind.WARNING).isEmpty())
-    assertEquals(checksum, JpsChecksumUtil.getSha256Checksum(cachedArtifact))
+    assertEquals(checksum, JpsChecksumUtil.getSha256Checksum(mavenCacheArtifact))
   }
 
-  private fun addLibrary(artifact: Path = cachedArtifact, includeVerification: Boolean = true) {
-    val url = JpsPathUtil.pathToUrl(artifact.toString())
+  private fun addLibrary(libraryRoot: Path = mavenCacheArtifact, includeVerification: Boolean = true) {
+    val url = JpsPathUtil.pathToUrl(libraryRoot.toString())
     val verification = if (includeVerification) listOf(ArtifactVerification(url, expectedChecksum)) else emptyList()
     val descriptor = JpsMavenRepositoryLibraryDescriptor("test:single:1", false, emptyList(), verification, "test")
     val library = myProject.libraryCollection.addLibrary(

@@ -309,8 +309,13 @@ public final class DependencyResolvingBuilder extends ModuleLevelBuilder {
             if (cachedArtifact == null) {
               cachedArtifact = mapArtifactsByName(cachedArtifacts).get(invalidRoot.getName());
             }
-            if (cachedArtifact != null) {
-              Files.deleteIfExists(cachedArtifact.toPath());
+            if (cachedArtifact != null && !FileUtil.filesEqual(cachedArtifact, invalidRoot)) {
+              var verification = ContainerUtil.find(descriptor.getArtifactsVerification(),
+                                                   it -> FileUtil.filesEqual(JpsPathUtil.urlToFile(it.getUrl()), invalidRoot));
+              if (verification != null &&
+                  !Objects.equals(verification.getSha256sum(), JpsChecksumUtil.getSha256Checksum(cachedArtifact.toPath()))) {
+                Files.deleteIfExists(cachedArtifact.toPath());
+              }
             }
             Files.deleteIfExists(invalidRoot.toPath());
           }
