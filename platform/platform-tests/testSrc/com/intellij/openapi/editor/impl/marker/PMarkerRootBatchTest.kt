@@ -42,7 +42,6 @@ class PMarkerRootBatchTest {
       root.updateFlavor(handle(12), 0),
       root.updateMeasure(handle(1), 99),
       root.remove(handle(12)),
-      root.removeMany(listOf(handle(12))),
       root.purgeMany(listOf(handle(12))),
     )
 
@@ -117,19 +116,17 @@ class PMarkerRootBatchTest {
   }
 
   @Test
-  fun `remove and purge batches handle shifted invalid absent and repeated IDs`() {
+  fun `purge batches handle shifted invalid absent and repeated IDs`() {
     val initial = PMarkerRoot.empty().insertMany(entries())
     val shifted = applyPatch(initial, TEXT, 0, 0, "xx")
     val root = applyPatch(shifted, "xx$TEXT", 3, 7, "").remove(handle(7))
     val ids = LongArrayList(longArrayOf(1, 2, 7, 24, 36, 999, 36))
     val before = resolvedEntries(root)
-    val removed = root.removeMany(ids.map(::handle))
+    val removed = ids.fold(root) { current, id -> current.remove(handle(id)) }
     val purged = root.purgeMany(ids.map(::handle))
 
-    val individuallyRemoved = ids.fold(root) { current, id -> current.remove(handle(id)) }
-    assertEquivalent(individuallyRemoved, removed, (1L..48L).toList())
-    assertEquivalent(individuallyRemoved, purged, (1L..48L).toList(), ids.toSet())
-    assertEquivalent(individuallyRemoved, removed.purgeMany(ids.map(::handle)), (1L..48L).toList(), ids.toSet())
+    assertEquivalent(removed, purged, (1L..48L).toList(), ids.toSet())
+    assertEquivalent(removed, removed.purgeMany(ids.map(::handle)), (1L..48L).toList(), ids.toSet())
     assertEquals(PMarkerResolution.ABSENT, removed.mergeValidMarkersFrom(root).resolve(handle(24)))
     assertEquals(root.resolve(handle(24)), purged.mergeValidMarkersFrom(root).resolve(handle(24)))
     assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle(24)))
@@ -139,9 +136,10 @@ class PMarkerRootBatchTest {
     val beforeText = "xx$TEXT".removeRange(3, 7)
     val patchText = beforeText.take(20)
     assertEquivalent(
-      applyPatch(ids.fold(root) { current, id -> current.remove(handle(id)) }, beforeText, 0, beforeText.length, patchText),
       applyPatch(removed, beforeText, 0, beforeText.length, patchText),
+      applyPatch(purged, beforeText, 0, beforeText.length, patchText),
       (1L..48L).toList(),
+      ids.toSet(),
     )
   }
 
@@ -151,11 +149,10 @@ class PMarkerRootBatchTest {
     val unknownIds = LongArrayList(longArrayOf(999, 999))
 
     assertSame(root, root.insertMany(emptyList()))
-    assertSame(root, root.removeMany(emptyList()))
     assertSame(root, root.purgeMany(emptyList()))
-    assertSame(root, root.removeMany(unknownIds.map(::handle)))
+    assertSame(root, root.remove(handle(999)))
     assertSame(root, root.purgeMany(unknownIds.map(::handle)))
-    assertSame(root, root.removeMany(listOf(handle(1), handle(1), handle(999))))
+    assertSame(root, root.remove(handle(1)))
   }
 
   @Test
@@ -172,7 +169,7 @@ class PMarkerRootBatchTest {
 
     applyPatch(root, "0123456789", 1, 9, "")
     assertEquals(1, transformed)
-    for (reduced in listOf(root.removeMany(listOf(handle(2))), root.purgeMany(listOf(handle(2))))) {
+    for (reduced in listOf(root.remove(handle(2)), root.purgeMany(listOf(handle(2))))) {
       transformed = 0
       applyPatch(reduced, "0123456789", 1, 9, "")
       assertEquals(0, transformed)
@@ -216,7 +213,7 @@ class PMarkerRootBatchTest {
         1 -> {
           val ids = LongArrayList(LongArray(random.nextInt(9)) { random.nextLong(1, nextId + 5) })
           expected = ids.fold(expected) { root, id -> root.remove(handle(id)) }
-          actual = actual.removeMany(ids.map(::handle))
+          actual = ids.fold(actual) { root, id -> root.remove(handle(id)) }
         }
         2 -> {
           val ids = LongArrayList(LongArray(random.nextInt(9)) { random.nextLong(1, nextId + 5) })

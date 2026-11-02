@@ -57,7 +57,7 @@ internal class MarkerTransformResultTest {
         assertTrue(affected.isEmpty())
         assertTrue(root.isValid(handle))
         assertNull(root.invalidationReason(handle))
-        for (removed in listOf(edited.remove(handle), edited.removeMany(listOf(handle)), edited.purgeMany(listOf(handle)))) {
+        for (removed in listOf(edited.remove(handle), edited.purgeMany(listOf(handle)))) {
           assertEquals(PMarkerResolution.ABSENT, removed.resolve(handle))
           assertNull(removed.invalidationReason(handle))
         }

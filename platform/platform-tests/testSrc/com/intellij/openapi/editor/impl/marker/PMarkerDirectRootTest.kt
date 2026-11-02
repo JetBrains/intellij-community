@@ -98,7 +98,7 @@ internal class PMarkerDirectRootTest {
       metadata.purgeMany(listOf(first.handle)),
       metadata.restoreEntries(listOf(second.copy(nodeStart = 30, nodeEnd = 32))),
       metadata.mergeValidMarkersFrom(metadata.insertMany(listOf(addition))),
-      metadata.emptyRoot(),
+      PMarkerDirectRoot.empty(),
     )
     for (changedRoot in changedRoots) {
       assertEquals(PMarkerResolution.UNRESOLVED, changedRoot.advanceResolution(root.resolutionCacheIdentity, root.resolve(second.handle)))
@@ -196,7 +196,7 @@ internal class PMarkerDirectRootTest {
       flavor,
       measure,
       root.remove(entries[12].handle),
-      root.removeMany(listOf(entries[12].handle, entries[12].handle)),
+      root.remove(entries[12].handle).remove(entries[12].handle),
       root.purgeMany(listOf(entries[12].handle, entries[12].handle)),
       root.mergeValidMarkersFrom(root.insertMany(additions)),
     )
@@ -308,7 +308,7 @@ internal class PMarkerDirectRootTest {
     for (root in listOf(second, secondEdited)) {
       assertEquals(PMarkerResolution.ABSENT, root.resolve(firstEntry.handle))
     }
-    val reset = firstEdited.emptyRoot()
+    val reset = PMarkerDirectRoot.empty()
     assertTrue(reset.isEmpty())
     assertEquals(PMarkerResolution.ABSENT, reset.resolve(firstEntry.handle))
   }

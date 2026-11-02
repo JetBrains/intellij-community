@@ -41,8 +41,6 @@ class PMarkerDirectRoot private constructor(
   override fun advanceResolution(previousIdentity: Any, resolution: Long): Long =
     resolutionUpdate?.advance(previousIdentity, resolution) ?: PMarkerResolution.UNRESOLVED
 
-  override fun emptyRoot(): PMarkerDirectRoot = empty()
-
   override fun isEmpty(): Boolean = root == null
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean {
@@ -165,13 +163,8 @@ class PMarkerDirectRoot private constructor(
     editor.finish(result)
   }
 
-  @TestOnly
-  override fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerDirectRoot = removeMany(handles, purge = false)
-
-  override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerDirectRoot = removeMany(handles, purge = true)
-
-  /** Removes each distinct handle in one version, retaining tombstones unless [purge] removes their entries from [invalids]. */
-  private fun removeMany(handles: Collection<SnapshotMarkerReference<*>>, purge: Boolean): PMarkerDirectRoot = keepingRootAlive {
+  /** Removes each distinct handle in one version and discards its entry from [invalids]. */
+  override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerDirectRoot = keepingRootAlive {
     if (handles.isEmpty()) return@keepingRootAlive this
     val editor = Editor()
     var result = root
@@ -185,12 +178,8 @@ class PMarkerDirectRoot private constructor(
         if (!PMarkerResolution.isValid(offsets)) continue
         result = editor.delete(result, TextRangeScalarUtil.startOffset(offsets), handle)
       }
-      else if (!purge && (previous as PMarkerInvalidNode).reason == 0) continue
-      if (purge) {
-        editor.pending[handle] = PMarkerNodeHistory.purgedState
-        editor.invalidsBuilder.remove(handle.order)
-      }
-      else editor.recordInvalid(handle, 0, 0)
+      editor.pending[handle] = PMarkerNodeHistory.purgedState
+      editor.invalidsBuilder.remove(handle.order)
       changed = true
     }
     if (changed) editor.finish(result) else this

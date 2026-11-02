@@ -27,9 +27,6 @@ interface PMarkerRoot {
   /** Replaces the offsets of existing valid markers and discards stale cached offsets. */
   fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot
 
-  /** Returns an empty root with the same implementation as this root. */
-  fun emptyRoot(): PMarkerRoot
-
   /**
    * Returns `true` when this root contains no valid markers.
    * Removed and invalid markers do not affect the result.
@@ -137,17 +134,10 @@ interface PMarkerRoot {
   fun remove(handle: SnapshotMarkerReference<*>): PMarkerRoot
 
   /**
-   * Removes [handles] and retains absent tombstones, as [remove] does.
-   * Repeated or absent handles have no effect. An unchanged batch returns the receiver.
-   */
-  @TestOnly
-  fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot
-
-  /**
    * Removes every trace of [handles], including their stored resolutions.
    *
-   * This operation is intended for garbage-collected marker handles. Unlike [removeMany], it does not retain an absent
-   * tombstone because no handle remains that could resolve against it.
+   * This operation removes collected marker handles without retaining removal tombstones.
+   * No marker remains that could resolve against a tombstone.
    *
    * Repeated or absent handles have no effect. An unchanged batch returns the receiver.
    */

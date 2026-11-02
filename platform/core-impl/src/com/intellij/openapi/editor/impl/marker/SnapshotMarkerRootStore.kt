@@ -37,7 +37,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   private val onMarkersInvalidated: ((List<SnapshotMarkerReference<T>>) -> Unit)? = null,
   private val onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
   private val onMarkersAffected: ((List<SnapshotMarkerReference<T>>) -> Unit)? = null,
-  @Volatile private var emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
+  private val emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
 ) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
@@ -217,9 +217,8 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     return updateRootIfPresent(snapshot) { it.purgeMany(handles) }
   }
 
-  /** Replaces the root for [snapshot] with [root] and adopts its empty root for future entries. */
+  /** Replaces the root for [snapshot] with [root]. */
   internal fun restoreRoot(snapshot: DocumentSnapshot, root: PMarkerRoot) {
-    emptyRoot = root.emptyRoot()
     rootReference(snapshot, root).set(root)
   }
 

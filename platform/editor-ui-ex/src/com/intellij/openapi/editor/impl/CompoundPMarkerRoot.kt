@@ -23,8 +23,6 @@ open class CompoundPMarkerRoot private constructor(
 ) : PMarkerRoot {
   override val resolutionCacheIdentity: Any = Any()
 
-  override fun emptyRoot(): CompoundPMarkerRoot = CompoundPMarkerRoot(exactRangeRoot.emptyRoot(), linesInRangeRoot.emptyRoot())
-
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerRoot {
     return withRoots(exactRangeRoot.restoreEntries(entries.filter { exactRangeRoot.isValid(it.handle) }),
                      linesInRangeRoot.restoreEntries(entries.filter { linesInRangeRoot.isValid(it.handle) }))
@@ -122,11 +120,6 @@ open class CompoundPMarkerRoot private constructor(
     return updateMarker { it.remove(handle) }
   }
 
-  @TestOnly
-  override fun removeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
-    return withRoots(exactRangeRoot.removeMany(handles), linesInRangeRoot.removeMany(handles))
-  }
-
   override fun purgeMany(handles: Collection<SnapshotMarkerReference<*>>): PMarkerRoot {
     return withRoots(exactRangeRoot.purgeMany(handles), linesInRangeRoot.purgeMany(handles))
   }
@@ -210,10 +203,7 @@ open class CompoundPMarkerRoot private constructor(
   }
 
   companion object {
-    fun empty(): CompoundPMarkerRoot {
-      val root = PMarkerRoot.empty()
-      return CompoundPMarkerRoot(root, root.emptyRoot())
-    }
+    fun empty(): CompoundPMarkerRoot = CompoundPMarkerRoot(PMarkerRoot.empty(), PMarkerRoot.empty())
 
     private fun compareEntries(first: MarkerEntry, second: MarkerEntry): Int {
       val byStartOffset = first.nodeStart.compareTo(second.nodeStart)

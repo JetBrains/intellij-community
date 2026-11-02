@@ -58,7 +58,7 @@ class SnapshotRangeHighlighterImplTest {
       val line = model.addRangeHighlighter(5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE) as SnapshotRangeMarkerImpl
       val original = exact.currentRootReference().get() as CompoundPMarkerRoot
       val entries = original.overlappingIterator(0, document.textLength, 0).asSequence().toList()
-      val root = original.emptyRoot().insertMany(entries) as CompoundPMarkerRoot
+      val root = CompoundPMarkerRoot.empty().insertMany(entries) as CompoundPMarkerRoot
       val ids = listOf(line.markerHandle, exact.markerHandle, line.markerHandle, SnapshotMarkerReference.create(exact, true))
 
       Assertions.assertThat(root.exactRangeRoot.resolve(exact.markerHandle)).isEqualTo(
@@ -67,7 +67,8 @@ class SnapshotRangeHighlighterImplTest {
       Assertions.assertThat(root.linesInRangeRoot.resolve(line.markerHandle)).isEqualTo(
         original.linesInRangeRoot.resolve(line.markerHandle)
       )
-      val removed = root.removeMany(ids)
+      var removed: PMarkerRoot = root
+      for (id in ids) removed = removed.remove(id)
       val purged = root.purgeMany(ids)
       Assertions.assertThat(removed.isEmpty()).isTrue()
       Assertions.assertThat(purged.isEmpty()).isTrue()
@@ -79,7 +80,6 @@ class SnapshotRangeHighlighterImplTest {
       }
       Assertions.assertThat(root.isEmpty()).isFalse()
       Assertions.assertThat(root.insertMany(emptyList())).isSameAs(root)
-      Assertions.assertThat(root.removeMany(emptyList())).isSameAs(root)
       Assertions.assertThat(root.purgeMany(emptyList())).isSameAs(root)
     }
     finally {
@@ -419,7 +419,7 @@ class SnapshotRangeHighlighterImplTest {
         5, 6, 1, null, HighlighterTargetArea.LINES_IN_RANGE
       ) as SnapshotRangeMarkerImpl
       val rootReference = exactHighlighter.currentRootReference()
-      val mergedRoot = rootReference.get().emptyRoot().mergeValidMarkersFrom(rootReference.get()) as CompoundPMarkerRoot
+      val mergedRoot = CompoundPMarkerRoot.empty().mergeValidMarkersFrom(rootReference.get()) as CompoundPMarkerRoot
 
       val exactMarkers = mergedRoot.exactRangeRoot.overlappingIterator(0, document.textLength, 0)
         .asSequence()
