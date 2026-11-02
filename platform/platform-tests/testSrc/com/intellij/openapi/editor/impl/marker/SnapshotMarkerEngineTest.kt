@@ -42,7 +42,7 @@ class SnapshotMarkerEngineTest {
     SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy)
   }
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
-  private var handleRoot: PMarkerRoot = PMarkerRootImpl.empty()
+  private var handleRoot: PMarkerRoot = PMarkerRoot.empty()
 
   private fun handle(label: Long): SnapshotMarkerReference<*> {
     while (handles.size <= label) handles.add(handleRoot.createHandle(markerForHandles, false))
@@ -914,7 +914,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `root emptiness ignores removed markers`() {
-    val empty = PMarkerRootImpl.empty()
+    val empty = PMarkerRoot.empty()
     assertTrue(empty.isEmpty())
 
     val populated = empty
@@ -934,7 +934,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `root emptiness ignores invalid markers`() {
-    val populated = PMarkerRootImpl.empty()
+    val populated = PMarkerRoot.empty()
       .insert(handle(1), 2, 4, nonGreedySpec(), 0)
       .insert(handle(2), 5, 6, nonGreedySpec(), 0)
     val invalidated = applyPatch(populated, "abcdef", textPatch(1, 5, ""))
@@ -949,7 +949,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `full traversal preserves marker order and lazy shifts`() {
-    var root: PMarkerRoot = PMarkerRootImpl.empty()
+    var root: PMarkerRoot = PMarkerRoot.empty()
       .insert(handle(30), 8, 10, nonGreedySpec(), 0)
       .insert(handle(20), 2, 7, nonGreedySpec(), 0)
       .insert(handle(10), 2, 4, nonGreedySpec(), 0)
@@ -977,7 +977,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `full traversal stops when the processor returns false`() {
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 2, 4, nonGreedySpec(), 0)
       .insert(handle(2), 6, 8, nonGreedySpec(), 0)
       .insert(handle(3), 10, 12, nonGreedySpec(), 0)
@@ -989,7 +989,7 @@ class SnapshotMarkerEngineTest {
     })
 
     assertEquals(listOf(1L), visited)
-    assertTrue(PMarkerRootImpl.empty().processAllRangeMarkers { _, _ -> error("An empty root must not visit a marker") })
+    assertTrue(PMarkerRoot.empty().processAllRangeMarkers { _, _ -> error("An empty root must not visit a marker") })
   }
 
   @Test
@@ -1219,7 +1219,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `root purge removes state while disposal removal retains it`() {
-    val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, nonGreedySpec(), flavorFlags = 0)
+    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, nonGreedySpec(), flavorFlags = 0)
 
     val removed = root.remove(handle(1))
     val purged = root.purgeMany(listOf(handle(1)))
@@ -1230,7 +1230,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `root aggregates marker measures by start offset`() {
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 0, 0, nonGreedySpec(), flavorFlags = 0, measure = 2)
       .insert(handle(2), 2, 2, nonGreedySpec(), flavorFlags = 0, measure = 3)
       .insert(handle(3), 2, 2, nonGreedySpec(), flavorFlags = 0, measure = 5)
@@ -1246,7 +1246,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `non-empty markers reject non-zero measures`() {
-    val root = PMarkerRootImpl.empty().insert(handle(1), 1, 2, nonGreedySpec(), flavorFlags = 0)
+    val root = PMarkerRoot.empty().insert(handle(1), 1, 2, nonGreedySpec(), flavorFlags = 0)
 
     assertThrows(IllegalArgumentException::class.java) {
       root.insert(handle(2), 2, 3, nonGreedySpec(), flavorFlags = 0, measure = 1)
@@ -1258,7 +1258,7 @@ class SnapshotMarkerEngineTest {
 
   @Test
   fun `root marker measures survive persistent mutations`() {
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 1, 1, nonGreedySpec(), flavorFlags = 0, measure = 2)
       .insert(handle(2), 3, 3, nonGreedySpec(), flavorFlags = 0, measure = 4)
       .insert(handle(3), 5, 5, nonGreedySpec(), flavorFlags = 0, measure = 8)
@@ -1279,7 +1279,7 @@ class SnapshotMarkerEngineTest {
     val removed = invalidated.remove(handle(1))
     assertEquals(8, removed.getPrefixAggregate(Int.MAX_VALUE))
 
-    val other = PMarkerRootImpl.empty().insert(handle(4), 0, 0, nonGreedySpec(), flavorFlags = 0, measure = 16)
+    val other = PMarkerRoot.empty().insert(handle(4), 0, 0, nonGreedySpec(), flavorFlags = 0, measure = 16)
     val merged = removed.mergeValidMarkersFrom(other)
     assertEquals(24, merged.getPrefixAggregate(Int.MAX_VALUE))
   }
@@ -1289,7 +1289,7 @@ class SnapshotMarkerEngineTest {
     val oldText = "alpha\ntarget\nomega"
     val newText = "prefix\nalpha\ntarget\nomega\nsuffix"
     val markerStart = oldText.indexOf("target") + 1
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), markerStart, markerStart, nonGreedySpec(), flavorFlags = 0, measure = 3, policy = PersistentMarkerPolicy)
       .insert(handle(2), markerStart, markerStart, nonGreedySpec(), flavorFlags = 0, measure = 5)
 
@@ -1365,7 +1365,7 @@ class SnapshotMarkerEngineTest {
       receivedPatch = patch
       MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
-    val root = PMarkerRootImpl.empty().insert(
+    val root = PMarkerRoot.empty().insert(
       handle = handle(1),
       startOffset = 2,
       endOffset = 4,
@@ -1401,7 +1401,7 @@ class SnapshotMarkerEngineTest {
     val invalidatingPolicy = MarkerPolicy { _, _, _, _ ->
       MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 0, 1, nonGreedySpec(), flavorFlags = 0)
       .insert(handle(2), 1, 6, nonGreedySpec(), flavorFlags = 0)
       .insert(handle(3), 3, 5, nonGreedySpec(), flavorFlags = 0)
@@ -1426,7 +1426,7 @@ class SnapshotMarkerEngineTest {
     val secondFlavor: Byte = 2
     val combinedFlavor: Byte = 3
     val highFlavor = 0x80.toByte()
-    val rootWithoutCombined = PMarkerRootImpl.empty()
+    val rootWithoutCombined = PMarkerRoot.empty()
       .insert(handle(1), 0, 4, nonGreedySpec(), firstFlavor)
       .insert(handle(2), 1, 4, nonGreedySpec(), secondFlavor)
 
@@ -1459,7 +1459,7 @@ class SnapshotMarkerEngineTest {
   fun `root processing reports non-strict overlaps`() {
     val flavor: Byte = 1
     val otherFlavor: Byte = 2
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 0, 0, nonGreedySpec(), flavor)
       .insert(handle(2), 0, 2, nonGreedySpec(), flavor)
       .insert(handle(3), 2, 4, nonGreedySpec(), flavor)
@@ -1474,7 +1474,7 @@ class SnapshotMarkerEngineTest {
   fun `root overlapping iterator reports non-strict overlaps`() {
     val flavor: Byte = 1
     val otherFlavor: Byte = 2
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 0, 0, nonGreedySpec(), flavor)
       .insert(handle(2), 0, 2, nonGreedySpec(), flavor)
       .insert(handle(3), 2, 4, nonGreedySpec(), flavor)
@@ -1489,7 +1489,7 @@ class SnapshotMarkerEngineTest {
   fun `root overlapping iterator respects flavors and lazy shifts`() {
     val firstFlavor: Byte = 1
     val secondFlavor: Byte = 2
-    val root = PMarkerRootImpl.empty()
+    val root = PMarkerRoot.empty()
       .insert(handle(1), 0, 2, nonGreedySpec(), firstFlavor)
       .insert(handle(2), 3, 5, nonGreedySpec(), secondFlavor)
       .insert(handle(3), 6, 8, nonGreedySpec(), firstFlavor)

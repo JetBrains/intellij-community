@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
-import com.intellij.openapi.editor.ex.RangeMarkers
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.openapi.util.TextRangeScalarUtil
@@ -31,23 +30,9 @@ internal class PMarkerDirectRootTest {
     SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy)
   }
 
-  @ParameterizedTest
-  @ValueSource(booleans = [false, true])
-  fun `factory selects roots from the direct marker links flag`(enableDirectMarkerLinks: Boolean) {
-    val previous = RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS
-    RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS = enableDirectMarkerLinks
-    try {
-      val root = PMarkerRoot.empty()
-      if (enableDirectMarkerLinks) {
-        assertTrue(root is PMarkerDirectRoot)
-      }
-      else {
-        assertTrue(root is PMarkerRootImpl)
-      }
-    }
-    finally {
-      RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS = previous
-    }
+  @Test
+  fun `factory creates a root with direct marker links`() {
+    assertTrue(PMarkerRoot.empty() is PMarkerDirectRoot)
   }
 
   @Test

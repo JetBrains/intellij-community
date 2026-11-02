@@ -135,10 +135,10 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
       val marker = SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, spec, false, DefaultMarkerPolicy)
-      val handle = PMarkerRootImpl.empty().createHandle(marker, false)
+      val handle = PMarkerRoot.empty().createHandle(marker, false)
       (handle as Reference<*>).clear()
       val policy = MarkerPolicy { _, _, _, _ -> error("Insertion must not transform the marker") }
-      val root = PMarkerRootImpl.empty().insert(handle, 2, 4, spec, flavorFlags = 0, policy = policy)
+      val root = PMarkerRoot.empty().insert(handle, 2, 4, spec, flavorFlags = 0, policy = policy)
 
       assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(2, 4)), root.resolve(handle))
       assertSame(policy, root.overlappingIterator(2, 4, 0).next().policy)
@@ -224,7 +224,7 @@ internal class SnapshotRangeMarkerImplTest {
       val resolution = root.resolve(marker.markerHandle)
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
       val otherRoot = if (absent) root.remove(marker.markerHandle)
-      else PMarkerRootImpl.empty().insert(marker.markerHandle, 4, 6, spec, flavorFlags = 0)
+      else PMarkerRoot.empty().insert(marker.markerHandle, 4, 6, spec, flavorFlags = 0)
       val otherResolution = otherRoot.resolve(marker.markerHandle)
       val start = CountDownLatch(1)
       val executor = Executors.newFixedThreadPool(3)

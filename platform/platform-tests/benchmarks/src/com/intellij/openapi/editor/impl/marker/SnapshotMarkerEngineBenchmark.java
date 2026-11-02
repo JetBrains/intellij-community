@@ -60,7 +60,7 @@ import java.util.jar.Manifest;
 @Timeout(time = 10, timeUnit = TimeUnit.MINUTES)
 @SuppressWarnings({"MethodMayBeStatic", "WeakerAccess"})
 public class SnapshotMarkerEngineBenchmark {
-  /** Creates the same marker population with each persistent root implementation. */
+  /** Creates the marker population in a persistent root. */
   @Benchmark
   public Object create50KRootMarkers(RootCreateState state) {
     var root = state.root;
@@ -73,7 +73,7 @@ public class SnapshotMarkerEngineBenchmark {
     return root;
   }
 
-  /** Resolves the roots directly. The direct implementation uses retained handles. */
+  /** Resolves the root through retained handles. */
   @Benchmark
   public long resolve4MRootMarkers(RootState state) {
     long checksum = 0;
@@ -98,7 +98,7 @@ public class SnapshotMarkerEngineBenchmark {
     return root;
   }
 
-  /** Applies an insertion at the middle of the document to each root implementation. */
+  /** Applies an insertion at the middle of the document to the root. */
   @Benchmark
   public Object patchRoot(RootState state) {
     return state.root.applyPatch(state.patch, state.beforeText, state.afterText,
@@ -107,23 +107,17 @@ public class SnapshotMarkerEngineBenchmark {
 
   @State(Scope.Thread)
   public static class RootCreateState {
-    @Param({"states", "direct"})
-    public String implementation = "direct";
-
     PMarkerRoot root;
     final SnapshotRangeMarkerImpl markerForHandles = createMarkerForHandles();
 
     @Setup(Level.Invocation)
     public void setUp() {
-      root = createRoot(implementation);
+      root = PMarkerRoot.empty();
     }
   }
 
   @State(Scope.Thread)
   public static class RootState {
-    @Param({"states", "direct"})
-    public String implementation = "direct";
-
     PMarkerRoot root;
     SnapshotRangeMarkerImpl markerForHandles;
     SnapshotMarkerReference<?>[] handles;
@@ -134,7 +128,7 @@ public class SnapshotMarkerEngineBenchmark {
 
     @Setup(Level.Trial)
     public void setUp() {
-      var population = createRootPopulation(implementation);
+      var population = createRootPopulation();
       root = population.root();
       markerForHandles = population.markerForHandles();
       handles = population.handles();
@@ -290,9 +284,6 @@ public class SnapshotMarkerEngineBenchmark {
 
   @State(Scope.Thread)
   public static class IntersectionState {
-    @Param({"states", "direct"})
-    public String implementation = "direct";
-
     @Param({"1", "8"})
     public int markersPerQuery = 1;
 
@@ -305,7 +296,7 @@ public class SnapshotMarkerEngineBenchmark {
     /** Builds the root and deterministic query workload once per parameter value and fork. */
     @Setup(Level.Trial)
     public void setUp() {
-      var population = createRootPopulation(implementation);
+      var population = createRootPopulation();
       root = population.root();
       markerForHandles = population.markerForHandles();
 
@@ -476,16 +467,8 @@ public class SnapshotMarkerEngineBenchmark {
     );
   }
 
-  private static PMarkerRoot createRoot(String implementation) {
-    return switch (implementation) {
-      case "states" -> PMarkerRootImpl.Companion.empty();
-      case "direct" -> PMarkerDirectRoot.Companion.empty();
-      default -> throw new IllegalArgumentException("Unknown marker implementation: " + implementation);
-    };
-  }
-
-  private static RootPopulation createRootPopulation(String implementation) {
-    var root = createRoot(implementation);
+  private static RootPopulation createRootPopulation() {
+    var root = PMarkerRoot.empty();
     var markerForHandles = createMarkerForHandles();
     var handles = new SnapshotMarkerReference<?>[MARKER_COUNT];
     for (int index = 0; index < MARKER_COUNT; index++) {

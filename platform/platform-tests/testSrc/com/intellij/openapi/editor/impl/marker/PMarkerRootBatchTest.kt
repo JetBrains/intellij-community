@@ -8,8 +8,6 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotSame
-import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -25,17 +23,16 @@ class PMarkerRootBatchTest {
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
 
   private fun handle(label: Long): SnapshotMarkerReference<*> {
-    while (handles.size <= label) handles.add(PMarkerRootImpl.empty().createHandle(markerForHandles, false))
+    while (handles.size <= label) handles.add(PMarkerRoot.empty().createHandle(markerForHandles, false))
     return handles[label.toInt()]
   }
 
   private fun label(handle: SnapshotMarkerReference<*>): Long = handles.indexOf(handle).toLong()
 
   @Test
-  fun `marker changes share offsets without changing old roots`() {
-    val root = applyPatch(PMarkerRootImpl.empty().insertMany(entries()), TEXT, 0, 0, "abcd")
+  fun `marker changes preserve offsets in old roots`() {
+    val root = applyPatch(PMarkerRoot.empty().insertMany(entries()), TEXT, 0, 0, "abcd")
     root.resolve(handle(12))
-    val cache = checkNotNull(offsetCache(root))
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
     val roots = listOf(
       root,
@@ -51,7 +48,6 @@ class PMarkerRootBatchTest {
 
     repeat(2) { pass ->
       for (current in roots.shuffled(Random(pass))) {
-        assertSame(cache, offsetCache(current))
         val expected = resolvedEntries(current).associateBy { label(it.handle) }
         for (id in ((1L..48L).toList() + (100L..102L).toList()).shuffled(Random(pass))) {
           val entry = expected[id]
@@ -63,25 +59,12 @@ class PMarkerRootBatchTest {
     }
 
     val edited = applyPatch(root, "abcd$TEXT", 0, 0, "x")
-    assertNull(offsetCache(edited))
     assertEquals(TextRangeScalarUtil.shift(root.resolve(handle(12)), 1), edited.resolve(handle(12)))
-    assertNotSame(cache, offsetCache(edited))
-  }
-
-  @Test
-  fun `shared cache rejects conflicting offsets for one marker ID`() {
-    val root = PMarkerRootImpl.empty().insertMany(entries())
-    root.resolve(handle(12))
-    val inserted = root.insertMany(listOf(entry(100, 1, 2)))
-
-    assertThrows(AssertionError::class.java) { root.insertMany(listOf(entry(100, 3, 4))) }
-    assertEquals(PMarkerResolution.ABSENT, root.resolve(handle(100)))
-    assertEquals(TextRangeScalarUtil.toScalarRange(1, 2), inserted.resolve(handle(100)))
   }
 
   @Test
   fun `cached absolute offsets preserve shifted roots and removals`() {
-    val initial = PMarkerRootImpl.empty().insertMany(entries() + entry(100, 0, 0))
+    val initial = PMarkerRoot.empty().insertMany(entries() + entry(100, 0, 0))
     val shifted = applyPatch(initial, TEXT, 0, 0, "abcd")
     val edited = applyPatch(shifted, "abcd$TEXT", 10, 12, "")
     edited.resolve(handle(12))
@@ -108,7 +91,7 @@ class PMarkerRootBatchTest {
 
   @Test
   fun `cached absolute offsets support empty and maximum ranges`() {
-    val root = PMarkerRootImpl.empty().insertMany(listOf(entry(1, 0, 0), entry(2, Int.MAX_VALUE - 1, Int.MAX_VALUE)))
+    val root = PMarkerRoot.empty().insertMany(listOf(entry(1, 0, 0), entry(2, Int.MAX_VALUE - 1, Int.MAX_VALUE)))
 
     repeat(2) {
       assertEquals(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(0, 0)), root.resolve(handle(1)))
@@ -118,7 +101,7 @@ class PMarkerRootBatchTest {
 
   @Test
   fun `insert batch preserves shifted markers and entry metadata`() {
-    val initial = insertIndividually(PMarkerRootImpl.empty(), entries())
+    val initial = insertIndividually(PMarkerRoot.empty(), entries())
     val shifted = applyPatch(initial, TEXT, 0, 0, "xx").remove(handle(7))
     val additions = listOf(entry(100, 3, 3, measure = 5), entry(102, 10, 12), entry(101, 3, 6))
     val before = resolvedEntries(shifted)
@@ -128,14 +111,14 @@ class PMarkerRootBatchTest {
 
     assertEquivalent(expected, actual, (1L..48L).toList() + listOf(100L, 101L, 102L))
     assertEquals(before, resolvedEntries(shifted))
-    assertEquivalent(insertIndividually(PMarkerRootImpl.empty(), entries()),
-                     PMarkerRootImpl.empty().insertMany(entries()),
+    assertEquivalent(insertIndividually(PMarkerRoot.empty(), entries()),
+                     PMarkerRoot.empty().insertMany(entries()),
                      (1L..48L).toList())
   }
 
   @Test
   fun `remove and purge batches handle shifted invalid absent and repeated IDs`() {
-    val initial = PMarkerRootImpl.empty().insertMany(entries())
+    val initial = PMarkerRoot.empty().insertMany(entries())
     val shifted = applyPatch(initial, TEXT, 0, 0, "xx")
     val root = applyPatch(shifted, "xx$TEXT", 3, 7, "").remove(handle(7))
     val ids = LongArrayList(longArrayOf(1, 2, 7, 24, 36, 999, 36))
@@ -164,7 +147,7 @@ class PMarkerRootBatchTest {
 
   @Test
   fun `unchanged batches retain root identity`() {
-    val root = PMarkerRootImpl.empty().insertMany(entries()).remove(handle(1))
+    val root = PMarkerRoot.empty().insertMany(entries()).remove(handle(1))
     val unknownIds = LongArrayList(longArrayOf(999, 999))
 
     assertSame(root, root.insertMany(emptyList()))
@@ -182,7 +165,7 @@ class PMarkerRootBatchTest {
       transformed++
       MarkerTransformResult(marker)
     }
-    val root = PMarkerRootImpl.empty().insertMany(listOf(
+    val root = PMarkerRoot.empty().insertMany(listOf(
       entry(1, 0, 0).copy(spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = countingPolicy),
       entry(2, 5, 6).copy(spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = PersistentMarkerPolicy),
     ))
@@ -198,7 +181,7 @@ class PMarkerRootBatchTest {
 
   @Test
   fun `invalid insert batches leave the receiver unchanged`() {
-    val root = PMarkerRootImpl.empty().insertMany(entries())
+    val root = PMarkerRoot.empty().insertMany(entries())
     val before = resolvedEntries(root)
     val valid = entry(100, 1, 2)
     val invalidEntries = listOf(entry(1, 1, 2), entry(100, 1, 2), entry(101, -1, 2), entry(102, 2, 1))
@@ -213,8 +196,8 @@ class PMarkerRootBatchTest {
   @Test
   fun `random batches match individual operations through text changes`() {
     val random = Random(0x5EED)
-    var expected: PMarkerRoot = PMarkerRootImpl.empty()
-    var actual: PMarkerRoot = PMarkerRootImpl.empty()
+    var expected: PMarkerRoot = PMarkerRoot.empty()
+    var actual: PMarkerRoot = PMarkerRoot.empty()
     val purgedIds = HashSet<Long>()
     var nextId = 1L
     var text = TEXT
@@ -253,10 +236,6 @@ class PMarkerRootBatchTest {
       assertEquivalent(expected, actual, (1L until nextId).toList(), purgedIds)
     }
   }
-
-  private fun offsetCache(root: PMarkerRoot): Any? = PMarkerRootImpl::class.java.getDeclaredField("cachedOffsets").apply {
-    isAccessible = true
-  }.get(root)
 
   private fun entries(): List<MarkerEntry> = List(48) { index ->
     val start = index / 2 + 2

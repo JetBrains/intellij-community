@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
-import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.RangeMarkersImpl;
 import com.intellij.util.Processor;
@@ -20,7 +19,6 @@ import org.openjdk.jmh.annotations.Param;
 import org.openjdk.jmh.annotations.Scope;
 import org.openjdk.jmh.annotations.Setup;
 import org.openjdk.jmh.annotations.State;
-import org.openjdk.jmh.annotations.TearDown;
 import org.openjdk.jmh.annotations.Threads;
 import org.openjdk.jmh.annotations.Timeout;
 import org.openjdk.jmh.annotations.Warmup;
@@ -30,7 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Compares legacy markers and snapshot markers through the document API.
- * Snapshot markers use either {@link PMarkerRootImpl} or {@link PMarkerDirectRoot}.
+ * Snapshot markers use {@link PMarkerDirectRoot}.
  * Measures the same fixed-size workloads as {@link SnapshotMarkerEngineBenchmark}.
  *
  * <p>Every benchmark invocation performs exactly the number of operations stated in its method name. Because the
@@ -176,27 +174,12 @@ public class DocumentRangeMarkerBenchmark {
     return accumulator.getChecksum() ^ accumulator.getCount();
   }
 
-  /** Shares the implementation parameter and direct-root setting across all workloads. */
+  /** Shares the implementation parameter across all workloads. */
   @State(Scope.Thread)
   public static class ImplementationState {
-    @Param({"legacy", "states", "direct"})
+    @Param({"legacy", "direct"})
     @SuppressWarnings("WeakerAccess")
     public String implementation = "direct";
-
-    private boolean previousEnableDirectMarkerLinks;
-
-    @Setup(Level.Trial)
-    @SuppressWarnings("unused")
-    public void setUpImplementation() {
-      previousEnableDirectMarkerLinks = RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS;
-      RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS = !"states".equals(implementation);
-    }
-
-    @TearDown(Level.Trial)
-    @SuppressWarnings("unused")
-    public void tearDownImplementation() {
-      RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS = previousEnableDirectMarkerLinks;
-    }
 
     final boolean usesSnapshotMarkers() {
       return !"legacy".equals(implementation);

@@ -16,18 +16,18 @@ import kotlin.experimental.or
  * @property entry the marker state before shifts from ancestors.
  * @property lazyDelta the offset shift still pending for both children. [entry] already includes this shift.
  */
-internal class PMarkerDirectNode(
+internal class PMarkerNode(
   val version: PMarkerNodeVersion,
   val entry: MarkerEntry,
-  val left: PMarkerDirectNode?,
-  val right: PMarkerDirectNode?,
+  val left: PMarkerNode?,
+  val right: PMarkerNode?,
   val lazyDelta: Int = 0,
 ) : PMarkerNodeState {
-  val handle: PMarkerDirectNodeReference<*>
-    get() = entry.handle as PMarkerDirectNodeReference<*>
+  val handle: PMarkerNodeReference<*>
+    get() = entry.handle as PMarkerNodeReference<*>
 
   /** Finds a parent for a snapshot version without retaining that parent. */
-  val parents: PMarkerNodeHistory<PMarkerDirectNode> = PMarkerNodeHistory()
+  val parents: PMarkerNodeHistory<PMarkerNode> = PMarkerNodeHistory()
   val height: Int = maxOf(left?.height ?: 0, right?.height ?: 0) + 1
 
   /** Gives the largest end offset in this subtree, including [lazyDelta] but excluding shifts from ancestors. */
@@ -43,24 +43,24 @@ internal class PMarkerDirectNode(
   val persistentCount: Int = (if (entry.policy.isPersistent) 1 else 0) +
                              (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0)
 
-  private fun shiftedEnd(child: PMarkerDirectNode?): Int = if (child == null) Int.MIN_VALUE else child.maximumEnd + lazyDelta
+  private fun shiftedEnd(child: PMarkerNode?): Int = if (child == null) Int.MIN_VALUE else child.maximumEnd + lazyDelta
 }
 
 /** Identifies one marker across node copies without retaining the nodes. */
-internal sealed interface PMarkerDirectNodeReference<out T : SnapshotRangeMarkerImpl?> : SnapshotMarkerReference<T> {
+internal sealed interface PMarkerNodeReference<out T : SnapshotRangeMarkerImpl?> : SnapshotMarkerReference<T> {
   /** Selects a marker state for a snapshot version without retaining that state. */
   val states: PMarkerNodeHistory<PMarkerNodeState>
 }
 
 /** Retains the marker while keeping only weak references to its states. */
-internal class PMarkerStrongDirectNodeReference<T : SnapshotRangeMarkerImpl>(marker: T) :
-  StrongSnapshotMarkerReference<T>(marker), PMarkerDirectNodeReference<T> {
+internal class PMarkerStrongNodeReference<T : SnapshotRangeMarkerImpl>(marker: T) :
+  StrongSnapshotMarkerReference<T>(marker), PMarkerNodeReference<T> {
   override val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
 }
 
 /** Lets the marker and its states be collected when their owners release them. */
-internal class PMarkerWeakDirectNodeReference<T : SnapshotRangeMarkerImpl>(marker: T) :
-  WeakSnapshotMarkerReference<T>(marker), PMarkerDirectNodeReference<T?> {
+internal class PMarkerWeakNodeReference<T : SnapshotRangeMarkerImpl>(marker: T) :
+  WeakSnapshotMarkerReference<T>(marker), PMarkerNodeReference<T?> {
   override val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
 }
 
@@ -73,7 +73,7 @@ internal sealed interface PMarkerNodeState
  * @property range the offsets packed by [com.intellij.openapi.util.TextRangeScalarUtil]. A removed marker stores zero.
  * @property reason the negative reason code from [MarkerTransformResult.range], or zero for a removed marker.
  */
-internal class PMarkerInvalidDirectNode(
+internal class PMarkerInvalidNode(
   val range: Long,
   val reason: Int,
 ) : PMarkerNodeState
@@ -244,7 +244,7 @@ internal class PMarkerNodeHistory<T : Any> {
      * Keeps purge records alive so an older valid state cannot become visible again.
      * Each history record stores the actual purge version separately.
      */
-    val purgedState: PMarkerInvalidDirectNode = PMarkerInvalidDirectNode(0, 0)
+    val purgedState: PMarkerInvalidNode = PMarkerInvalidNode(0, 0)
 
     /**
      * Extends the branch of [previous] if [previous] is still its tip. Otherwise, starts a new branch at [previous].

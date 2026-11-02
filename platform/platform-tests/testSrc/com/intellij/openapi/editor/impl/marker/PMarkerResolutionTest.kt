@@ -22,7 +22,7 @@ internal class PMarkerResolutionTest {
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
 
   private fun handle(label: Long): SnapshotMarkerReference<*> {
-    while (handles.size <= label) handles.add(PMarkerRootImpl.empty().createHandle(markerForHandles, false))
+    while (handles.size <= label) handles.add(PMarkerRoot.empty().createHandle(markerForHandles, false))
     return handles[label.toInt()]
   }
 
@@ -60,8 +60,8 @@ internal class PMarkerResolutionTest {
     assertNotEquals(PMarkerResolution.UNRESOLVED, PMarkerResolution.ABSENT)
     assertTrue(PMarkerResolution.isAbsent(PMarkerResolution.ABSENT))
     assertFalse(PMarkerResolution.isValid(PMarkerResolution.ABSENT))
-    assertEquals(PMarkerResolution.ABSENT, PMarkerRootImpl.empty().resolve(handle(1)))
-    assertFalse(PMarkerRootImpl.empty().isValid(handle(1)))
+    assertEquals(PMarkerResolution.ABSENT, PMarkerRoot.empty().resolve(handle(1)))
+    assertFalse(PMarkerRoot.empty().isValid(handle(1)))
   }
 
   @Test
@@ -75,7 +75,7 @@ internal class PMarkerResolutionTest {
   @Test
   fun `removed markers stay absent after a merge`() {
     val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-    val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0)
+    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0)
     val removed = root.remove(handle(1))
 
     assertTrue(root.isValid(handle(1)))
@@ -95,7 +95,7 @@ internal class PMarkerResolutionTest {
     val policy = MarkerPolicy { _, _, _, _ ->
       MarkerTransformResult(MarkerTransformError.INVALIDATED_BY_EDIT)
     }
-    val root = PMarkerRootImpl.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0, policy = policy)
+    val root = PMarkerRoot.empty().insert(handle(1), 2, 4, spec, flavorFlags = 0, policy = policy)
     val before = document.core.snapshot().text()
     val patch = DocumentPatch.simple(2, 3, "x", newModStamp = 1, clearLineFlags = false)
     val after = before.replace(patch.startOffset(), patch.endOffset(), patch.newFragment())

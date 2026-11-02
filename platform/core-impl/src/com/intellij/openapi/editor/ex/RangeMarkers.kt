@@ -58,8 +58,5 @@ interface RangeMarkers {
   object Holder {
     @JvmField
     var USE_PMARKER_IMPLEMENTATION: Boolean = Registry.`is`("editor.range.marker.use.pmarker.internal")
-
-    @JvmField
-    var ENABLE_DIRECT_MARKER_LINKS: Boolean = Registry.`is`("editor.range.marker.enable.direct.links.internal", true)
   }
 }

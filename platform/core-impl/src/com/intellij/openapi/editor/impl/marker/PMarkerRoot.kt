@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
-import com.intellij.openapi.editor.ex.RangeMarkers
 import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
@@ -250,16 +249,8 @@ interface PMarkerRoot {
     @JvmField
     val EMPTY_HANDLE_CONSUMER: Consumer<SnapshotMarkerReference<*>> = Consumer { }
 
-    /**
-     * Creates a root with direct links when [RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS] is true.
-     * A store retains that choice through its snapshots.
-     */
+    /** Creates an empty root with direct links. */
     @JvmStatic
-    fun empty(): PMarkerRoot = if (RangeMarkers.Holder.ENABLE_DIRECT_MARKER_LINKS) {
-      PMarkerDirectRoot.empty()
-    }
-    else {
-      PMarkerRootImpl.empty()
-    }
+    fun empty(): PMarkerRoot = PMarkerDirectRoot.empty()
   }
 }
