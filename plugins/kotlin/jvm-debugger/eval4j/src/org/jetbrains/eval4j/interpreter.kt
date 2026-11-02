@@ -167,6 +167,14 @@ interface Eval {
     fun newInstance(classType: Type): Value
     fun isInstanceOf(value: Value, targetType: Type): Boolean
 
+    /**
+     * Whether a `CHECKCAST` of [value] to [targetType] succeeds. Separate from [isInstanceOf] so an
+     * evaluator can let a cast pass as a no-op (e.g. a compiler-erased holder type whose runtime value
+     * is already unwrapped) without also turning the `is` / `INSTANCEOF` test against that type into a
+     * false positive. Defaults to [isInstanceOf].
+     */
+    fun canCastTo(value: Value, targetType: Type): Boolean = isInstanceOf(value, targetType)
+
     fun newArray(arrayType: Type, size: Int): Value
     fun newMultiDimensionalArray(arrayType: Type, dimensionSizes: List<Int>): Value
     fun getArrayLength(array: Value): Value
@@ -317,7 +325,7 @@ class SingleInstructionInterpreter(private val eval: Eval) : Interpreter<Value>(
                 val targetType = Type.getObjectType((insn as TypeInsnNode).desc)
                 when {
                     value == NULL_VALUE -> NULL_VALUE
-                    eval.isInstanceOf(value, targetType) -> ObjectValue(value.obj(), targetType)
+                    eval.canCastTo(value, targetType) -> ObjectValue(value.obj(), targetType)
                     else -> throwInterpretingException(
                         ClassCastException(
                             "${value.asmType.className} cannot be cast to ${targetType.className}"

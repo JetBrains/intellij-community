@@ -28,6 +28,7 @@ import org.jetbrains.eval4j.FieldDescription
 import org.jetbrains.eval4j.MethodDescription
 import org.jetbrains.eval4j.NULL_VALUE
 import org.jetbrains.eval4j.NewObjectValue
+import org.jetbrains.eval4j.ObjectValue
 import org.jetbrains.eval4j.ThrownFromEvaluatedCodeException
 import org.jetbrains.eval4j.Value
 import org.jetbrains.eval4j.boolean
@@ -204,8 +205,22 @@ open class JDIEval(
         }
         DebuggerUtils.findField(fieldDesc.ownerType.asReferenceType(), fieldDesc.name)?.let { return it }
 
+        // Field may be mangled by a compiler plugin (atomicfu: `<name>$volatile`); try alternatives on a miss.
+        for (alternativeName in getAlternativeFieldNames(fieldDesc)) {
+            if (receiver != null) {
+                DebuggerUtils.findField(receiver, alternativeName)?.let { return it }
+            }
+            DebuggerUtils.findField(fieldDesc.ownerType.asReferenceType(), alternativeName)?.let { return it }
+        }
+
         throwBrokenCodeException(NoSuchFieldError("Field not found: $fieldDesc"))
     }
+
+    /**
+     * Runtime field names [fieldDesc] may have been mangled to by a compiler plugin.
+     * Called only on a miss. Default: none. The Kotlin debugger overrides this to consult an EP.
+     */
+    protected open fun getAlternativeFieldNames(fieldDesc: FieldDescription): Collection<String> = emptyList()
 
     private fun findStaticField(fieldDesc: FieldDescription): Field {
         val field = findField(fieldDesc)
@@ -395,9 +410,53 @@ open class JDIEval(
             val method = findMethod(methodDesc)
             doInvokeMethod(obj, method, invokePolicy or ObjectReference.INVOKE_NONVIRTUAL)
         } else {
-            val method = findMethod(methodDesc, obj.referenceType() ?: methodDesc.ownerType.asReferenceType())
-            doInvokeMethod(obj, method, invokePolicy)
+            val clazz = obj.referenceType() ?: methodDesc.ownerType.asReferenceType()
+            val method = findMethodOrNull(methodDesc, clazz)
+            if (method != null) {
+                doInvokeMethod(obj, method, invokePolicy)
+            } else {
+                readBackingFieldForMissingMethod(methodDesc, obj, clazz)
+                    ?: if (returnsReceiverForMissingMethod(methodDesc)) receiverAsReturnType(instance, methodDesc)
+                       else throwBrokenCodeException(NoSuchMethodError("Method not found: $methodDesc"))
+            }
         }
+    }
+
+    /**
+     * Reads the backing field when a (getter) method is missing because a compiler plugin replaced the
+     * property with a field (kotlinx.atomicfu renames `_state` to `_state$volatile`). Null if no mapping.
+     */
+    private fun readBackingFieldForMissingMethod(methodDesc: MethodDescription, receiver: ObjectReference, clazz: ReferenceType): Value? {
+        val fieldName = getBackingFieldForMissingMethod(methodDesc) ?: return null
+        val field = DebuggerUtils.findField(clazz, fieldName) ?: return null
+        return mayThrow { receiver.getValue(field) }.ifFail(field, receiver).asValue()
+    }
+
+    /**
+     * Backing field to read when [methodDesc] (usually a property getter) is missing at runtime.
+     * Default: none. The Kotlin debugger overrides this to consult an EP.
+     */
+    protected open fun getBackingFieldForMissingMethod(methodDesc: MethodDescription): String? = null
+
+    /**
+     * True if a missing [methodDesc] reads the receiver's own value unchanged, so the call is the identity
+     * on the receiver. Default: false. The Kotlin debugger overrides this for an atomicfu holder's `.value`
+     * getter, which follows the receiver that was already unwrapped from the atomic.
+     */
+    protected open fun returnsReceiverForMissingMethod(methodDesc: MethodDescription): Boolean = false
+
+    /** True if no class named [type] is loaded in the target VM, e.g. a type the compiler erased at runtime. */
+    protected fun isAbsentInTargetVm(type: Type): Boolean = vm.classesByName(type.className).isEmpty()
+
+    /**
+     * The identity-getter [receiver] re-typed to [methodDesc]'s return type. A primitive-returning getter
+     * (e.g. an erased `AtomicInt.getValue()I` whose receiver was boxed by the preceding CHECKCAST) needs the
+     * boxed receiver unboxed, or the interpreter reads the result as the wrong [Value] kind.
+     */
+    private fun receiverAsReturnType(receiver: Value, methodDesc: MethodDescription): Value {
+        val returnType = methodDesc.returnType
+        val isReference = returnType.sort == Type.OBJECT || returnType.sort == Type.ARRAY
+        return if (!isReference && receiver is ObjectValue) unboxType(receiver, returnType) else receiver
     }
 
     open fun shouldInvokeMethodWithReflection(method: Method, args: List<com.sun.jdi.Value?>): Boolean {
