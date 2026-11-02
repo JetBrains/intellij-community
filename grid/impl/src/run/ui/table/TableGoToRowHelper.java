@@ -38,8 +38,8 @@ class TableGoToRowHelper implements GotoRowAction.GoToRowHelper {
     Counter counter = Counter.get(myView);
     int column = counter.horizontalUnit(coordinates);
     int row = counter.verticalUnit(coordinates);
-    ModelIndex<GridColumn> columnIdx = myView.uiColumn(column);
-    int absoluteRowIdx = myView.fromRealRowIdx(row);
+    ModelIndex<GridColumn> columnIdx = myView.modelColumnOfNumber(column);
+    int absoluteRowIdx = myView.rowIndexOfNumber(row);
     if (columnIdx.isValid(myDataGrid) && absoluteRowIdx != -1) { // do not use ModelIndex#isValid for row as it can be not loaded yet
       myDataGrid.showCell(absoluteRowIdx, columnIdx);
     }

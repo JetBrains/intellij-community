@@ -54,6 +54,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JList
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 import javax.swing.KeyStroke
 import javax.swing.ListSelectionModel
 import javax.swing.ScrollPaneConstants
@@ -674,19 +675,23 @@ class ColumnsListPopup(private val grid: DataGrid) {
     }
 
     /**
-     * The top left corner of the popup, so that it opens level with the top of the table and centred on it.
+     * The top left corner of the popup, so that it opens level with the top of the view's cells and centered on them.
      * A toolbar button alone drops the popup below the toolbar.
      *
-     * The anchor is the visible rectangle of the table, not its bounds. A table inside a scroll pane is as
-     * wide as all of its columns, so its own width can place the popup far outside the frame.
+     * The anchor is the visible area of the cells, not the table's bounds. A table in a scroll pane is as wide
+     * as all its columns, so its own width can place the popup far outside the frame.
      */
     private fun topOfTable(grid: DataGrid, columnsList: ColumnsListPopup): RelativePoint? {
-      val table = grid.resultView.component
-      if (!table.isShowing) return null
-      val visible = table.visibleRect
+      val cells = scrollingCells(grid.resultView.component)
+      if (!cells.isShowing) return null
+      val visible = cells.visibleRect
       if (visible.isEmpty) return null
       val x = visible.x + ((visible.width - columnsList.component.preferredSize.width) / 2).coerceAtLeast(0)
-      return RelativePoint(table, Point(x, visible.y))
+      return RelativePoint(cells, Point(x, visible.y))
     }
+
+    /** The cells that scroll: a scroll pane's viewport view, without its headers, or [viewComponent] itself. */
+    private fun scrollingCells(viewComponent: JComponent): JComponent =
+      (viewComponent as? JScrollPane)?.viewport?.view as? JComponent ?: viewComponent
   }
 }

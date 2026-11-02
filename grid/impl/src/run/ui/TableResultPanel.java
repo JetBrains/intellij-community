@@ -135,8 +135,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Container;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
@@ -368,7 +366,7 @@ public class TableResultPanel extends UserDataHolderBase
   @Override
   public void addResultViewMouseListener(@NotNull MouseListener listener) {
     myResultViewSettings.myMouseListener = listener;
-    myResultView.getComponent().addMouseListener(myResultViewSettings.myMouseListener);
+    myResultView.addMouseListenerToCells(myResultViewSettings.myMouseListener);
   }
 
   @Override
@@ -501,7 +499,7 @@ public class TableResultPanel extends UserDataHolderBase
       }
     });
     if (myResultViewSettings.myMouseListener != null) {
-      myResultView.getComponent().addMouseListener(myResultViewSettings.myMouseListener);
+      myResultView.addMouseListenerToCells(myResultViewSettings.myMouseListener);
     }
     if (myResultViewSettings.myVisibleRowCount > 0) myResultView.setVisibleRowCount(myResultViewSettings.myVisibleRowCount);
     if (myResultViewSettings.myFitColumnsToWidth) myResultView.setFitColumnsToWidth(true);
@@ -2413,12 +2411,8 @@ public class TableResultPanel extends UserDataHolderBase
 
   @Override
   public void trueLayout() {
-    Container parent = myResultView != null ? myResultView.getComponent().getParent() : null;
-    if (parent == null) return;
-
-    final Dimension size = parent.getSize();
-    int colNum = getDataModel(DATA_WITH_MUTATIONS).getColumnCount();
-    myResultView.getComponent().setPreferredSize(colNum == 0 ? size : null);
+    if (myResultView == null) return;
+    myResultView.updateCellsPreferredSize();
     myMainResultViewComponent.revalidate();
     myMainResultViewComponent.repaint(50);
   }

@@ -41,7 +41,7 @@ public interface ResultViewWithCells {
   @NotNull
   Color getCellForeground(boolean selected);
 
-  /** {@code resultView} must also be a {@link ResultView}; for one table of a view, use the overload below. */
+  /** {@code resultView} must also be a {@link ResultView}; for colors already resolved, use the overload below. */
   static @NotNull Component prepareComponent(@NotNull Component component,
                                              @NotNull DataGrid grid,
                                              @NotNull ResultViewWithCells resultView,
@@ -53,19 +53,20 @@ public interface ResultViewWithCells {
     SelectionModel<GridRow, GridColumn> selectionModel = SelectionModelUtil.get(grid, view);
     boolean selected = selectionModel.isSelected(row, column);
     return prepareComponent(component, grid, selected, resultView.getCellBackground(row, column, selected),
-                            resultView.getCellForeground(selected), view.getComponent(), row, column);
+                            resultView.getCellForeground(selected), view.getBackground(), row, column);
   }
 
   /**
-   * Prepares a displayed cell that {@code cellComponent} shows, such as one table of a view, with colors already resolved.
-   * A null {@code background} gives the cell the background of {@code cellComponent}, unless the table paints the row background.
+   * Prepares a displayed cell with colors already resolved.
+   * A null {@code background} gives the cell {@code cellsBackground}, the background of the view or of the table that renders it. The
+   * exception is a row whose background the table paints.
    */
   static @NotNull Component prepareComponent(@NotNull Component component,
                                              @NotNull DataGrid grid,
                                              boolean selected,
                                              @Nullable Color background,
                                              @NotNull Color foreground,
-                                             @NotNull JComponent cellComponent,
+                                             @NotNull Color cellsBackground,
                                              @NotNull ViewIndex<GridRow> row,
                                              @NotNull ViewIndex<GridColumn> column) {
     JComponent unwrapped = (JComponent)ExpandedItemRendererComponentWrapper.unwrap(component);
@@ -74,12 +75,12 @@ public interface ResultViewWithCells {
       unwrapped.setBackground(background);
     }
     else if (!isRowBgPaintedByTable(grid.getResultView().isTransposed() ? column : row, grid, selected)) {
-      unwrapped.setBackground(cellComponent.getBackground());
+      unwrapped.setBackground(cellsBackground);
     }
     unwrapped.setForeground(foreground);
-    unwrapped.setOpaque(!Comparing.equal(unwrapped.getBackground(), cellComponent.getBackground()));
+    unwrapped.setOpaque(!Comparing.equal(unwrapped.getBackground(), cellsBackground));
     if (unwrapped instanceof CellRendererPanel) {
-      ((CellRendererPanel)unwrapped).setSelected(!Comparing.equal(background, cellComponent.getBackground()));
+      ((CellRendererPanel)unwrapped).setSelected(!Comparing.equal(background, cellsBackground));
     }
     return component;
   }

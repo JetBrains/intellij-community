@@ -84,18 +84,18 @@ public class SelectionColorLayer implements ColorLayer {
   @Override
   public @NotNull Color getRowHeaderForeground(@NotNull ModelIndex<GridRow> row, @NotNull DataGrid grid, @Nullable Color color) {
     if (grid.getResultView().isTransposed() || !myTransparentRowHeaderBg) {
-      return grid.getResultView().getComponent().getForeground();
+      return grid.getResultView().getForeground();
     }
     Color lineNumbersColor = grid.getColorsScheme().getColor(EditorColors.LINE_NUMBERS_COLOR);
     Color c = grid.getSelectionModel().isSelectedRow(row)
                    ? grid.getColorsScheme().getColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR)
                    : lineNumbersColor;
-    return ObjectUtils.notNull(ObjectUtils.chooseNotNull(c, lineNumbersColor), grid.getResultView().getComponent().getForeground());
+    return ObjectUtils.notNull(ObjectUtils.chooseNotNull(c, lineNumbersColor), grid.getResultView().getForeground());
   }
 
   @Override
   public @NotNull Color getColumnHeaderForeground(@NotNull ModelIndex<GridColumn> column, @NotNull DataGrid grid, @Nullable Color color) {
-    return grid.getResultView().getComponent().getForeground();
+    return grid.getResultView().getForeground();
   }
 
   @Override
@@ -107,7 +107,7 @@ public class SelectionColorLayer implements ColorLayer {
     return color == null
            ? transparent
              ? null
-             : softHighlightOf(myGrid.getResultView().getComponent().getBackground())
+             : softHighlightOf(myGrid.getResultView().getBackground())
            : color;
   }
 

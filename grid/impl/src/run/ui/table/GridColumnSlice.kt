@@ -19,16 +19,19 @@ import javax.swing.table.TableColumnModel
 enum class ColumnsToShow { ALL, PINNED, UNPINNED }
 
 /**
- * The columns one table shows: the columns of the view's master column model that [columnsToShow] names, by the [pins] it is
- * given, in master order. A slice copies no column and knows no table or view. A move or a resize goes to the master, and the
- * master's events reach the table in the slice's own indices. Its selection model maps the same way to the master's.
+ * A filtered window onto the view's column model, "the master". It gives one table its subset of the columns; the order, selection and
+ * widths stay in the master. The pinned table's slice shows the pinned columns, the main table's the unpinned ones, both in master order;
+ * [columnsToShow] and [pins] decide which.
  *
- * The slice caches its columns and their master indices, and updates the cache on each master event. A table reads the columns from the
- * cache, so they match the column count it was told, even in the middle of a master change. The master moves a column by removing it and
- * inserting it again, and fires selection events in between. Those reach the table once the move is over, when the cached columns are where
- * the master's selection has them again.
+ * A slice copies no column. It translates a table's local index to a master index and back. A read returns the master's column object;
+ * a move, a resize or a selection change goes to the master. The master's events come back to each table in its own indices.
  *
- * The indices stay `int`: they are Swing positions in a column model, and in a transposed view the columns are the grid's rows.
+ * The master moves a column by removing it and inserting it again, with selection events in between. The slice caches its columns and
+ * updates the cache on each master event. So a table always reads the columns it was last told about, and gets the move's selection
+ * events only after the move completes.
+ *
+ * The [ColumnsToShow.ALL] slice backs no table. The grid's selection listeners listen to it, so they are notified after both tables have
+ * updated.
  */
 @ApiStatus.Internal
 class GridColumnSlice(
@@ -64,7 +67,7 @@ class GridColumnSlice(
 
     override fun columnMoved(e: TableColumnModelEvent) {
       val fromLocalIndex = masterIndices.indexOf(e.fromIndex)
-      if (e.fromIndex != e.toIndex) moveMasterIndex(e.fromIndex, e.toIndex)
+      if (e.fromIndex != e.toIndex) applyMasterMove(e.fromIndex, e.toIndex)
       // The master fires the move after its selection changes, so the table hears of them in the same order.
       selection.catchUp()
       // A move of a column this slice doesn't show leaves its order as it is.
@@ -118,17 +121,20 @@ class GridColumnSlice(
     }
   }
 
-  /** The master index of the column at [localIndex] in this slice, or -1. */
+  /**
+   * The master index of the column at [localIndex] in this slice, or -1. Local and master indices stay `Int`: they are Swing positions in a
+   * column model, and in a transposed view the columns are the grid's rows.
+   */
   fun toMaster(localIndex: Int): Int = masterIndices.getOrElse(localIndex) { -1 }
 
-  /** The index in this slice of the master column at [masterIndex], or -1 when this slice doesn't show it. */
+  /** The index in this slice of the master column at [masterIndex], or -1 when this slice doesn't show it. Indices as in [toMaster]. */
   fun toLocal(masterIndex: Int): Int = if (masterIndex < 0) -1 else masterIndices.binarySearch(masterIndex).takeIf { it >= 0 } ?: -1
 
   /** Whether [masterIndex] is a column of the master that this slice doesn't show. */
-  internal fun isOutside(masterIndex: Int): Boolean = masterIndex in 0 until masterColumns.columnCount && toLocal(masterIndex) < 0
+  internal fun omits(masterIndex: Int): Boolean = masterIndex in 0 until masterColumns.columnCount && toLocal(masterIndex) < 0
 
   /** Whether each cached column is at its master index, which it is except while the master is in the middle of a move. */
-  internal fun isInStep(): Boolean {
+  internal fun isInStepWithMaster(): Boolean {
     val count = masterColumns.columnCount
     return masterIndices.indices.all { masterIndices[it] < count && masterColumns.getColumn(masterIndices[it]) === columns[it] }
   }
@@ -139,6 +145,7 @@ class GridColumnSlice(
     ColumnsToShow.UNPINNED -> !pins.isPinned(column)
   }
 
+  /** Adds [column] among the cached columns in master order, and returns its local index. */
   private fun insert(masterIndex: Int, column: TableColumn): Int {
     val localIndex = -(masterIndices.binarySearch(masterIndex) + 1)
     columns.add(localIndex, column)
@@ -146,14 +153,17 @@ class GridColumnSlice(
     return localIndex
   }
 
-  /** The indices ascend, so only the tail from [fromMasterIndex] on shifts, and a rebuild that adds or removes at the end shifts none. */
+  /**
+   * Shifts the cached master indices from [fromMasterIndex] on by [delta], after the master added or removed a column there. The indices
+   * ascend, so a rebuild that adds or removes at the end shifts none.
+   */
   private fun shiftMasterIndices(fromMasterIndex: Int, delta: Int) {
     val found = masterIndices.binarySearch(fromMasterIndex)
     for (localIndex in (if (found >= 0) found else -(found + 1)) until masterIndices.size) masterIndices[localIndex] += delta
   }
 
-  /** The master moved the column at [fromMasterIndex] to [toMasterIndex], and the columns between them one place the other way. */
-  private fun moveMasterIndex(fromMasterIndex: Int, toMasterIndex: Int) {
+  /** The master moved the column at [fromMasterIndex] to [toMasterIndex]; the cache follows, shifting the columns between by one. */
+  private fun applyMasterMove(fromMasterIndex: Int, toMasterIndex: Int) {
     val movedLocalIndex = masterIndices.indexOf(fromMasterIndex)
     val column = if (movedLocalIndex >= 0) columns.removeAt(movedLocalIndex) else null
     if (movedLocalIndex >= 0) masterIndices.removeAt(movedLocalIndex)
@@ -239,10 +249,10 @@ class GridColumnSlice(
 }
 
 /**
- * The selection model of a [GridColumnSlice]: the master's column selection in the slice's own indices. It keeps nothing of its own and
- * maps every call; an index the slice doesn't show reads as -1. It extends [DefaultListSelectionModel] because Swing's actions that move
- * the lead alone check for it. It does nothing on `insertIndexInterval` and `removeIndexInterval`, which only a `DefaultTableColumnModel`
- * calls: the master adjusts its own selection. It assumes the grid's multiple-interval selection.
+ * The column selection of a [GridColumnSlice], in the slice's own indices. It reads and writes the master's selection, and an index the
+ * slice doesn't show reads as -1. The class extends [DefaultListSelectionModel] because Swing's actions that move the lead alone check for
+ * it. `insertIndexInterval` and `removeIndexInterval` do nothing: only a `DefaultTableColumnModel` calls them, and the master adjusts its
+ * own selection. The grid's multiple-interval selection is assumed.
  */
 private class GridColumnSliceSelection(
   private val slice: GridColumnSlice,
@@ -253,7 +263,7 @@ private class GridColumnSliceSelection(
 
   private val masterListener = ListSelectionListener { e ->
     // Mid-move, the cached columns don't match the master's selection yet, so the change waits for the end of the move.
-    if (!slice.isInStep()) {
+    if (!slice.isInStepWithMaster()) {
       changedOutOfStep = true
       return@ListSelectionListener
     }
@@ -295,18 +305,18 @@ private class GridColumnSliceSelection(
 
   /** Writing back an anchor read as -1 leaves the master's anchor in the other table as it is. */
   override fun setAnchorSelectionIndex(anchorIndex: Int) {
-    if (anchorIndex < 0 && slice.isOutside(masterSelection.anchorSelectionIndex)) return
+    if (anchorIndex < 0 && slice.omits(masterSelection.anchorSelectionIndex)) return
     masterSelection.anchorSelectionIndex = slice.toMaster(anchorIndex)
   }
 
   /** Writing back a lead read as -1 leaves the master's lead in the other table as it is. */
   override fun setLeadSelectionIndex(leadIndex: Int) {
-    if (leadIndex < 0 && slice.isOutside(masterSelection.leadSelectionIndex)) return
+    if (leadIndex < 0 && slice.omits(masterSelection.leadSelectionIndex)) return
     masterSelection.leadSelectionIndex = slice.toMaster(leadIndex)
   }
 
   override fun moveLeadSelectionIndex(leadIndex: Int) {
-    if (leadIndex < 0 && slice.isOutside(masterSelection.leadSelectionIndex)) return
+    if (leadIndex < 0 && slice.omits(masterSelection.leadSelectionIndex)) return
     val masterLead = slice.toMaster(leadIndex)
     if (masterSelection is DefaultListSelectionModel) masterSelection.moveLeadSelectionIndex(masterLead)
     else masterSelection.leadSelectionIndex = masterLead
@@ -347,9 +357,9 @@ private class GridColumnSliceSelection(
   }
 
   /**
-   * A local interval can span columns of the other table. So it becomes one master interval per run of this slice's columns, inside
-   * one adjusting change. The anchor and the lead end on the master columns of [index0] and [index1], as for one interval. An
-   * interval of one run is one master interval, which the master changes in one step, as for a table on the master itself.
+   * Applies the local interval [index0]..[index1] to the master's selection. A local interval can span the other table's columns, so it
+   * becomes one master interval per run of this slice's columns, in one adjusting change. A single run is one master interval. The anchor
+   * and the lead end on the master columns of [index0] and [index1].
    */
   private fun changeSelection(index0: Int, index1: Int, clearFirst: Boolean, select: Boolean) {
     if (index0 < 0 || index1 < 0) return

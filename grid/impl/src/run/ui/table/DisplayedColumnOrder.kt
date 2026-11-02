@@ -3,8 +3,8 @@ package com.intellij.database.run.ui.table
 import org.jetbrains.annotations.ApiStatus
 
 /**
- * The order in which the user sees the grid's columns. The pinned columns come first, in the pinned table's order, then the other grid
- * columns in grid order. [Column] identifies a grid column; the pinned-table controller uses the column's `ViewIndex<GridColumn>`.
+ * The order in which the user sees the grid's columns: the pinned ones first, in the pinned table's order, then the rest in grid order.
+ * [Column] identifies a grid column, such as its `ViewIndex<GridColumn>`. A pinned column that [gridOrder] lacks is left out.
  */
 @ApiStatus.Internal
 class DisplayedColumnOrder<Column>(gridOrder: List<Column>, pinnedOrder: List<Column>) {
@@ -21,7 +21,9 @@ class DisplayedColumnOrder<Column>(gridOrder: List<Column>, pinnedOrder: List<Co
     return displayedColumns.getOrNull(position + if (forward) 1 else -1)
   }
 
-  fun edge(first: Boolean): Column? = if (first) displayedColumns.firstOrNull() else displayedColumns.lastOrNull()
+  fun first(): Column? = displayedColumns.firstOrNull()
+
+  fun last(): Column? = displayedColumns.lastOrNull()
 
   fun range(anchor: Column, target: Column): List<Column>? {
     val anchorPosition = displayedColumns.indexOf(anchor)

@@ -13,6 +13,7 @@ import com.intellij.ui.JBAutoScroller
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.AbstractAction
 import javax.swing.ActionMap
@@ -30,7 +31,7 @@ import javax.swing.table.TableColumnModel
  */
 internal class FrozenColumnsController(
   /** The view's tables and the columns each shows, which only the view changes. */
-  private val tables: ViewTableLookup,
+  private val tables: ViewTables,
   /** The view's column model: the grid's columns in grid order, and their selection. */
   private val gridColumns: TableColumnModel,
   /** The view's row selection, which both tables share. */
@@ -39,14 +40,18 @@ internal class FrozenColumnsController(
 ) : Disposable {
   private val mainTable: GridTable = tables.main
 
-  /** A position in the view's column model as a grid column, which it is while the grid isn't transposed, the only time it pins. */
+  /**
+   * The grid column at [position] of the view's column model. The two match while the grid isn't transposed, which is the only time the
+   * view pins columns.
+   */
   private fun gridColumnAt(position: Int): ViewIndex<GridColumn> = ViewIndex.forColumn(grid, position)
 
   /** The grid column of the lead, or null when the view's column model has no lead column. */
   private fun leadGridColumn(): ViewIndex<GridColumn>? =
     gridColumns.selectionModel.leadSelectionIndex.takeIf { it in 0 until gridColumns.columnCount }?.let(::gridColumnAt)
 
-  private var region: FrozenRegion? = null
+  private var strip: PinnedStrip? = null
+  /** The view row a left press started a drag on, or -1 without one; both tables share their rows. */
   private var dragAnchorRow = -1
   /** The grid column a left press started a drag on, or null without one. */
   private var dragAnchorColumn: ViewIndex<GridColumn>? = null
@@ -58,8 +63,12 @@ internal class FrozenColumnsController(
 
   private var disposed = false
 
-  /** Installs navigation that treats the pinned table and the main table as one displayed column sequence. */
-  fun installColumnNavigationActions(table: GridTable, actionMap: ActionMap) {
+  /**
+   * Wraps the navigation and Select All actions in [table]'s own action map, so they treat both tables as one displayed column sequence.
+   * A theme change replaces only the parent map, so the wrappers stay; call this once per table.
+   */
+  fun installColumnNavigationActions(table: GridTable) {
+    val actionMap = table.actionMap
     wrapColumnMoveAction(table, actionMap, "selectNextColumnCell", forward = true, extend = false, wrapsRows = true)
     wrapColumnMoveAction(table, actionMap, "selectPreviousColumnCell", forward = false, extend = false, wrapsRows = true)
     wrapColumnMoveAction(table, actionMap, "selectNextColumn", forward = true, extend = false)
@@ -81,13 +90,13 @@ internal class FrozenColumnsController(
     val original = actionMap["selectAll"] ?: return
     actionMap.put("selectAll", object : AbstractAction() {
       override fun actionPerformed(event: ActionEvent) {
-        val columns = gridColumns.selectionModel
-        val lead = columns.leadSelectionIndex
-        val anchor = columns.anchorSelectionIndex
+        val columnSelection = gridColumns.selectionModel
+        val lead = columnSelection.leadSelectionIndex
+        val anchor = columnSelection.anchorSelectionIndex
         original.actionPerformed(event)
         if (mainTable.rowCount == 0 || gridColumns.columnCount == 0) return
-        columns.addSelectionInterval(0, gridColumns.columnCount - 1)
-        TableSelectionModel.restoreLeadAndAnchor(columns, lead, anchor)
+        columnSelection.addSelectionInterval(0, gridColumns.columnCount - 1)
+        TableSelectionModel.restoreLeadAndAnchor(columnSelection, lead, anchor)
       }
     })
   }
@@ -95,11 +104,12 @@ internal class FrozenColumnsController(
   /**
    * Runs a row action in the table that shows the grid's lead column, when [table] doesn't show it, and moves the focus there.
    * Swing's row actions keep the lead column of their own table, which would be its first column for a lead it doesn't show.
+   * This stays: keys typed before the view's delayed focus check runs, such as Down right after F3, reach the table without the lead.
    */
   private fun runInLeadColumnTable(table: GridTable, name: String): Boolean {
     if (pinnedTable == null || (table !== pinnedTable && table !== mainTable)) return false
     val lead = leadGridColumn() ?: return false
-    if (tables.localColumn(table, lead) >= 0) return false
+    if (tables.localIndexOf(table, lead) >= 0) return false
     val target = tables.tableOf(lead)
     val action = target.actionMap[name]
     if (target === table || action == null) return false
@@ -121,6 +131,7 @@ internal class FrozenColumnsController(
     wrapNavigationAction(actionMap, name) { handleColumnEdgeMove(table, first, extend) }
   }
 
+  /** [handler] returns true when it took the key, also when it refused the move; Swing's own action then doesn't run. */
   private fun wrapNavigationAction(actionMap: ActionMap, name: String, handler: () -> Boolean) {
     val original = actionMap[name] ?: return
     actionMap.put(name, object : AbstractAction() {
@@ -130,94 +141,96 @@ internal class FrozenColumnsController(
     })
   }
 
-  /** A direct resize may shrink freely, but it may not introduce or increase avoidable pinned-strip overflow. */
-  fun constrainFrozenColumnResize(table: GridTable, column: TableResultViewColumn, requestedWidth: Int): Int =
-    region?.resize?.constrainFrozenColumnResize(table, column, requestedWidth) ?: requestedWidth
+  /**
+   * The width [column] of [table] takes for a user resize to [requestedWidth]. A pinned column shrinks freely, but grows only while the
+   * columns fit and never adds to an overflow.
+   */
+  fun constrainColumnResize(table: GridTable, column: TableResultViewColumn, requestedWidth: Int): Int =
+    strip?.resize?.constrainColumnResize(table, column, requestedWidth) ?: requestedWidth
 
-  /** Keeps the keyboard width action consistent with mouse resizing, including mixed and multi-column selections. */
+  /** The largest part of [delta] that each selected column can grow by while the columns still fit; see [FrozenColumnResize]. */
   fun constrainSelectedColumnWidthDelta(selectedPinnedCount: Int, selectedUnpinnedCount: Int, delta: Int): Int =
-    region?.resize?.constrainSelectedColumnWidthDelta(selectedPinnedCount, selectedUnpinnedCount, delta) ?: delta
+    strip?.resize?.constrainSelectedColumnWidthDelta(selectedPinnedCount, selectedUnpinnedCount, delta) ?: delta
 
   /** The width the columns of both tables share: the scroll pane's width without the row numbers and the vertical scroll bar. */
   fun getAvailableColumnsWidth(): Int {
-    val parent = findScrollPane() ?: return maxOf(0, mainTable.width)
-    region?.let { return it.layout.availableColumnsWidth() }
-    val width = containerColumnsWidth(parent, if (rowHeader != null && !mainTable.isTransposed) shownRowHeaderWidth(parent) else 0)
-    return if (width > 0) width else parent.viewport.extentSize.width
+    val scrollPane = findScrollPane() ?: return maxOf(0, mainTable.width)
+    strip?.let { return it.layout.availableColumnsWidth() }
+    val width =
+      containerColumnsWidth(scrollPane, if (rowHeader != null && !mainTable.isTransposed) shownRowHeaderWidth(scrollPane) else 0)
+    return if (width > 0) width else scrollPane.viewport.extentSize.width
   }
 
   fun columnMarginChanged(table: GridTable) {
-    region?.layout?.columnMarginChanged(table)
+    strip?.layout?.columnMarginChanged(table)
   }
 
-  /** Shows [header], the view's row header, or none; while the pinned table is laid out, its row numbers go beside it. */
+  /** Shows [header], the view's row header, or none. While the pinned table is laid out, the row numbers go beside the pinned table. */
   fun showRowHeader(header: GridRowHeader?) {
     rowHeader = header
-    val region = region
-    if (region != null && !mainTable.isTransposed) {
+    val strip = strip
+    if (strip != null && !mainTable.isTransposed) {
       // The layout keeps its scroll pane, and the view disposes the header this replaces right after.
-      region.layout.installFrozenRegion(header)
-      region.layout.scrollPane.revalidate()
-      region.layout.scrollPane.repaint()
+      strip.layout.layOut(header)
+      strip.layout.scrollPane.revalidate()
+      strip.layout.scrollPane.repaint()
       return
     }
     replaceRowHeaderView(findScrollPane() ?: return, header)
   }
 
-  /** Lays out the pinned table, which the view added, and lays it out again after each change of the pins. */
+  /** Lays out the pinned table that the view added. The view calls this again after each change of the pins. */
   fun showPinnedTable() {
     if (disposed) return
     val pinned = pinnedTable ?: return
-    val parent = findScrollPane() ?: return
-    val region = region ?: createRegion(parent, pinned)
-    val orientation = parent.componentOrientation
+    val scrollPane = findScrollPane() ?: return
+    val strip = strip ?: createStrip(scrollPane, pinned)
+    val orientation = scrollPane.componentOrientation
     mainTable.applyComponentOrientation(orientation)
     pinned.applyComponentOrientation(orientation)
-    region.layout.installFrozenRegion(rowHeader)
-    parent.revalidate()
-    parent.repaint()
+    strip.layout.layOut(rowHeader)
+    scrollPane.revalidate()
+    scrollPane.repaint()
   }
 
-  private fun createRegion(parent: TableScrollPane, pinned: GridTable): FrozenRegion {
-    val layout = FrozenStripLayout(mainTable, pinned, parent)
-    return FrozenRegion(layout, FrozenColumnResize(mainTable, pinned, layout)).also { region = it }
+  private fun createStrip(scrollPane: TableScrollPane, pinned: GridTable): PinnedStrip {
+    val layout = FrozenStripLayout(mainTable, pinned, scrollPane)
+    return PinnedStrip(layout, FrozenColumnResize(mainTable, pinned, layout)).also { strip = it }
   }
 
   /** The view is about to drop the pinned table, so the scroll pane goes back to the main table alone, with its row numbers. */
   fun pinnedTableDropping() {
     if (disposed) return
-    val parent = findScrollPane()
-    releaseScrollPane(restoreCorners = parent != null)
-    if (parent == null) return
-    replaceRowHeaderView(parent, rowHeader)
-    parent.revalidate()
-    parent.repaint()
+    val scrollPane = findScrollPane()
+    dropStrip(restoreCorners = scrollPane != null)
+    if (scrollPane == null) return
+    replaceRowHeaderView(scrollPane, rowHeader)
+    scrollPane.revalidate()
+    scrollPane.repaint()
   }
 
-  private fun releaseScrollPane(restoreCorners: Boolean) {
-    val region = region ?: return
-    this.region = null
-    region.layout.uninstallFrozenScrolling()
-    region.resize.uninstallColumnResizeHandle()
-    if (restoreCorners) region.layout.restoreOriginalCorners()
+  private fun dropStrip(restoreCorners: Boolean) {
+    val strip = strip ?: return
+    this.strip = null
+    strip.layout.uninstall()
+    strip.resize.uninstallColumnResizeHandle()
+    if (restoreCorners) strip.layout.restoreOriginalCorners()
   }
 
   override fun dispose() {
     disposed = true
-    releaseScrollPane(restoreCorners = findScrollPane() != null)
+    dropStrip(restoreCorners = findScrollPane() != null)
   }
 
-  /** The layout and the resize handle of the pinned table, created together for one pinned table and dropped together. */
-  private class FrozenRegion(val layout: FrozenStripLayout, val resize: FrozenColumnResize)
+  /** The layout and the resize handle of one pinned table, created and dropped together. */
+  private class PinnedStrip(val layout: FrozenStripLayout, val resize: FrozenColumnResize)
 
   /** Brings the lead row into view in the main table while the lead is on a pinned column, which the main table's autoscroller skips. */
   fun revealPinnedLeadRow() {
     val pinned = pinnedTable ?: return
     if (grid.autoscrollLocker.locked()) return
-    val rows = rowSelection
-    val columns = gridColumns.selectionModel
-    if (rows.isSelectionEmpty || columns.isSelectionEmpty) return
-    val row = rows.leadSelectionIndex
+    if (rowSelection.isSelectionEmpty || gridColumns.selectionModel.isSelectionEmpty) return
+    val row = rowSelection.leadSelectionIndex
     val lead = leadGridColumn() ?: return
     if (row in 0 until mainTable.rowCount && tables.tableOf(lead) === pinned) revealRow(row)
   }
@@ -231,13 +244,21 @@ internal class FrozenColumnsController(
   /** Whether [table] goes on with [event]: a non-left press first commits an open editor, and is dropped if the editor refuses. */
   fun beforeMouseEvent(table: GridTable, event: MouseEvent): Boolean = stopEditingBeforeNonLeftPress(table, event)
 
-  /** [table] handled [event]; a left press starts a drag that may go on across the divider, from the cell it was on. */
-  fun afterMouseEvent(table: GridTable, event: MouseEvent) {
-    if (event.id == MouseEvent.MOUSE_PRESSED && SwingUtilities.isLeftMouseButton(event) && pinnedTable != null) {
-      dragAnchorRow = clampedRowAt(table, event)
-      dragAnchorColumn = unifiedGridColumn(table, event)
+  /** A left press starts a drag that may go on across the divider, from the cell it was on. */
+  private val dragAnchorListener = object : MouseAdapter() {
+    override fun mousePressed(event: MouseEvent) {
+      val table = event.component as? GridTable ?: return
+      if (SwingUtilities.isLeftMouseButton(event) && pinnedTable != null) {
+        dragAnchorRow = clampedRowAt(table, event)
+        dragAnchorColumn = gridColumnNear(table, event)
+      }
     }
   }
+
+  /** Lets a left press in [table] anchor a drag that may go on across the divider. */
+  fun addDragAnchorListener(table: GridTable): Unit = table.addMouseListener(dragAnchorListener)
+
+  fun removeDragAnchorListener(table: GridTable): Unit = table.removeMouseListener(dragAnchorListener)
 
   /**
    * Commits before a non-left press can change the selection. Swing handles left presses itself.
@@ -250,51 +271,52 @@ internal class FrozenColumnsController(
 
   fun processMouseMotionEvent(table: GridTable, event: MouseEvent) {
     if (event.id == MouseEvent.MOUSE_DRAGGED && !event.isConsumed && SwingUtilities.isLeftMouseButton(event)) {
-      extendDragAcrossFrozenRegion(table, event)
+      extendDragAcrossDivider(table, event)
     }
   }
 
-  private fun extendDragAcrossFrozenRegion(table: GridTable, event: MouseEvent) {
+  private fun extendDragAcrossDivider(table: GridTable, event: MouseEvent) {
     val pinned = pinnedTable ?: return
     val anchorColumn = dragAnchorColumn ?: return
     if (dragAnchorRow < 0) return
     if (GridUtil.isIntervalModifierSet(event) || GridUtil.isExclusiveModifierSet(event)) return
-    if (!isDragOverOtherRegion(table, event)) return
-    val targetColumn = unifiedGridColumn(table, event) ?: return
+    if (!isOverOtherTable(table, event)) return
+    val targetColumn = gridColumnNear(table, event) ?: return
     val targetRow = clampedRowAt(table, event)
     if (targetRow < 0) return
-    // BasicTableUI cannot extend a drag into another JTable, so continue it through the grid's selection.
-    val selection = mainTable.gridSelectionModel() as? TableSelectionModel ?: return
+    // Rows can go away during a drag; the drag then stops extending.
+    if (dragAnchorRow >= mainTable.rowCount || targetRow >= mainTable.rowCount) return
+    // BasicTableUI cannot extend a drag into another JTable, so continue it through the view's selection.
     if (table !== mainTable) gridColumns.selectionModel.valueIsAdjusting = true
-    selection.setRowSelectionInterval(dragAnchorRow, targetRow)
+    rowSelection.setSelectionInterval(dragAnchorRow, targetRow)
     // Pinned columns keep their grid indices, so select the range in displayed order.
     selectDisplayedColumnRange(displayedColumnOrder(pinned), targetColumn, addToSelection = false, anchorOverride = anchorColumn)
   }
 
-  private fun isDragOverOtherRegion(table: GridTable, event: MouseEvent): Boolean =
-    pinnedTable != null && (table !== mainTable) != isOverFrozenStrip(table, event)
+  private fun isOverOtherTable(table: GridTable, event: MouseEvent): Boolean =
+    pinnedTable != null && (table !== mainTable) != isOverPinnedViewport(table, event)
 
-  /** The strip is only as wide as its viewport shows, so the columns it hides do not belong to the region either. */
-  private fun isOverFrozenStrip(table: GridTable, event: MouseEvent): Boolean {
+  /** Whether [event] is over the part of the pinned table that its viewport shows; columns scrolled out of the viewport don't count. */
+  private fun isOverPinnedViewport(table: GridTable, event: MouseEvent): Boolean {
     val pinned = pinnedTable ?: return false
-    val viewport = region?.layout?.frozenViewport
+    val viewport = strip?.layout?.pinnedViewport
                    ?: return SwingUtilities.convertPoint(table, event.point, pinned).x < pinned.width
     return SwingUtilities.convertPoint(table, event.point, viewport).x < viewport.width
   }
 
-  /** The grid column under [event], in whichever table it is over, or null. */
-  private fun unifiedGridColumn(table: GridTable, event: MouseEvent): ViewIndex<GridColumn>? {
+  /** The grid column under [event], or the nearest one in the table it is over, or null. */
+  private fun gridColumnNear(table: GridTable, event: MouseEvent): ViewIndex<GridColumn>? {
     val pinned = pinnedTable ?: return null
-    if (isOverFrozenStrip(table, event)) {
+    if (isOverPinnedViewport(table, event)) {
       if (pinned.width <= 0 || pinned.columnCount == 0) return null
-      val inPinned = SwingUtilities.convertPoint(table, event.point, pinned)
-      var pinnedColumn = pinned.columnAtPoint(Point(inPinned.x.coerceIn(0, pinned.width - 1), 0))
-      if (pinnedColumn < 0) pinnedColumn = pinned.columnCount - 1
-      return gridColumnOfTable(pinned, pinnedColumn)
+      val pointInPinned = SwingUtilities.convertPoint(table, event.point, pinned)
+      var pinnedLocalIndex = pinned.columnAtPoint(Point(pointInPinned.x.coerceIn(0, pinned.width - 1), 0))
+      if (pinnedLocalIndex < 0) pinnedLocalIndex = pinned.columnCount - 1
+      return gridColumnOfTable(pinned, pinnedLocalIndex)
     }
     if (mainTable.width <= 0) return null
-    val inMain = SwingUtilities.convertPoint(table, event.point, mainTable)
-    return gridColumnOfTable(mainTable, mainTable.columnAtPoint(Point(inMain.x.coerceIn(0, mainTable.width - 1), 0)))
+    val pointInMain = SwingUtilities.convertPoint(table, event.point, mainTable)
+    return gridColumnOfTable(mainTable, mainTable.columnAtPoint(Point(pointInMain.x.coerceIn(0, mainTable.width - 1), 0)))
   }
 
   private fun clampedRowAt(table: GridTable, event: MouseEvent): Int {
@@ -306,21 +328,21 @@ internal class FrozenColumnsController(
   fun handleColumnMove(table: GridTable, forward: Boolean, extend: Boolean, wrapsRows: Boolean): Boolean {
     val pinned = pinnedTable ?: return false
     if (table !== pinned && table !== mainTable) return false
-    val current = leadGridColumn() ?: return false
+    val leadColumn = leadGridColumn() ?: return false
     val order = displayedColumnOrder(pinned)
     val row = leadRow(table)
     if (row < 0) return false
-    if (wrapsRows && !extend && moveWithinSelection(pinned, order, row, current, forward)) return true
+    if (wrapsRows && !extend && moveWithinSelection(pinned, order, row, leadColumn, forward)) return true
     // The lead in the focused table, where Swing's own action would move it, or -1 when the other table shows the lead.
-    val lead = tables.localColumn(table, current)
-    val target = order.adjacent(current, forward)
+    val localLead = tables.localIndexOf(table, leadColumn)
+    val target = order.adjacent(leadColumn, forward)
     // At the edge, Tab wraps rows; Swing can't move a lead that the focused table doesn't show.
     if (target == null) {
-      return wrapsRows && !extend && continueInAdjacentRow(order, row, forward) || lead < 0
+      return wrapsRows && !extend && continueInAdjacentRow(order, row, forward) || localLead < 0
     }
     val focusTarget = tables.tableOf(target)
-    val swingTarget = lead + if (forward) 1 else -1
-    val handledHere = extend || lead < 0 || focusTarget !== table || tables.localColumn(table, target) != swingTarget
+    val localSwingTarget = localLead + if (forward) 1 else -1
+    val handledHere = extend || localLead < 0 || focusTarget !== table || tables.localIndexOf(table, target) != localSwingTarget
     return handledHere && changeColumnSelection(order, row, target, extend, focusTarget)
   }
 
@@ -333,47 +355,46 @@ internal class FrozenColumnsController(
                                   row: Int,
                                   column: ViewIndex<GridColumn>,
                                   forward: Boolean): Boolean {
-    val rows = rowSelection
-    val columns = gridColumns.selectionModel
+    val columnSelection = gridColumns.selectionModel
     val displayed = order.displayedColumns
-    val selectedPositions = displayed.indices.filter { columns.isSelectedIndex(displayed[it].asInteger()) }
-    if (rows.isSelectionEmpty || selectedPositions.isEmpty()) return false
-    val oneCell = rows.minSelectionIndex == rows.maxSelectionIndex && selectedPositions.size == 1
-    if (oneCell && rows.isSelectedIndex(row) && columns.isSelectedIndex(column.asInteger())) return false
+    val selectedDisplayedPositions = displayed.indices.filter { columnSelection.isSelectedIndex(displayed[it].asInteger()) }
+    if (rowSelection.isSelectionEmpty || selectedDisplayedPositions.isEmpty()) return false
+    val oneCell = rowSelection.minSelectionIndex == rowSelection.maxSelectionIndex && selectedDisplayedPositions.size == 1
+    if (oneCell && rowSelection.isSelectedIndex(row) && columnSelection.isSelectedIndex(column.asInteger())) return false
 
-    val firstColumn = selectedPositions.first()
-    val lastColumn = selectedPositions.last()
-    var nextRow = row.coerceIn(rows.minSelectionIndex - 1, rows.maxSelectionIndex + 1)
-    var position = displayed.indexOf(column).coerceIn(firstColumn - 1, lastColumn + 1)
+    val firstSelected = selectedDisplayedPositions.first()
+    val lastSelected = selectedDisplayedPositions.last()
+    var nextRow = row.coerceIn(rowSelection.minSelectionIndex - 1, rowSelection.maxSelectionIndex + 1)
+    var displayedPosition = displayed.indexOf(column).coerceIn(firstSelected - 1, lastSelected + 1)
     do {
-      position += if (forward) 1 else -1
-      if (position > lastColumn) {
-        position = firstColumn
-        nextRow = if (nextRow >= rows.maxSelectionIndex) rows.minSelectionIndex else nextRow + 1
+      displayedPosition += if (forward) 1 else -1
+      if (displayedPosition > lastSelected) {
+        displayedPosition = firstSelected
+        nextRow = if (nextRow >= rowSelection.maxSelectionIndex) rowSelection.minSelectionIndex else nextRow + 1
       }
-      else if (position < firstColumn) {
-        position = lastColumn
-        nextRow = if (nextRow <= rows.minSelectionIndex) rows.maxSelectionIndex else nextRow - 1
+      else if (displayedPosition < firstSelected) {
+        displayedPosition = lastSelected
+        nextRow = if (nextRow <= rowSelection.minSelectionIndex) rowSelection.maxSelectionIndex else nextRow - 1
       }
     }
-    while (!rows.isSelectedIndex(nextRow) || !columns.isSelectedIndex(displayed[position].asInteger()))
+    while (!rowSelection.isSelectedIndex(nextRow) || !columnSelection.isSelectedIndex(displayed[displayedPosition].asInteger()))
 
-    val target = displayed[position]
+    val target = displayed[displayedPosition]
     if (!stopEditingBeforeGridSelectionChange(nextRow, target)) return true
     val inPinnedTable = tables.tableOf(target) === pinned
     // Selecting a selected index again moves the lead and the anchor to it and leaves the selection as it is.
     val moveLead = {
-      rows.addSelectionInterval(nextRow, nextRow)
-      columns.addSelectionInterval(target.asInteger(), target.asInteger())
+      rowSelection.addSelectionInterval(nextRow, nextRow)
+      columnSelection.addSelectionInterval(target.asInteger(), target.asInteger())
     }
     if (inPinnedTable) {
       runWithAutoscrollLocked(grid, moveLead)
-      region?.layout?.scrollFrozenColumnToVisible(tables.localColumn(pinned, target))
+      strip?.layout?.scrollPinnedColumnToVisible(tables.localIndexOf(pinned, target))
       revealRow(nextRow)
     }
     else {
       moveLead()
-      mainTable.scrollRectToVisible(mainTable.getCellRect(nextRow, tables.localColumn(mainTable, target), false))
+      mainTable.scrollRectToVisible(mainTable.getCellRect(nextRow, tables.localIndexOf(mainTable, target), false))
     }
     (if (inPinnedTable) pinned else mainTable).requestFocusInWindow()
     return true
@@ -383,10 +404,10 @@ internal class FrozenColumnsController(
    * Wraps Tab/Shift+Tab through both tables instead of wrapping within the focused table alone.
    */
   private fun continueInAdjacentRow(order: DisplayedColumnOrder<ViewIndex<GridColumn>>, row: Int, forward: Boolean): Boolean {
-    val rows = mainTable.rowCount
-    if (rows == 0) return false
-    val target = order.edge(forward) ?: return false
-    val nextRow = if (forward) (row + 1) % rows else (row + rows - 1) % rows
+    val rowCount = mainTable.rowCount
+    if (rowCount == 0) return false
+    val target = (if (forward) order.first() else order.last()) ?: return false
+    val nextRow = if (forward) (row + 1) % rowCount else (row + rowCount - 1) % rowCount
     return changeColumnSelection(order, nextRow, target, false, tables.tableOf(target))
   }
 
@@ -395,7 +416,7 @@ internal class FrozenColumnsController(
     val pinned = pinnedTable ?: return false
     if (table !== pinned && table !== mainTable) return false
     val order = displayedColumnOrder(pinned)
-    val target = order.edge(first) ?: return false
+    val target = (if (first) order.first() else order.last()) ?: return false
     val row = leadRow(table)
     if (row < 0) return false
     return changeColumnSelection(order, row, target, extend, tables.tableOf(target))
@@ -408,51 +429,52 @@ internal class FrozenColumnsController(
   private fun handleColumnLeadMove(table: GridTable, forward: Boolean): Boolean {
     val pinned = pinnedTable ?: return false
     if (table !== pinned && table !== mainTable) return false
-    val columns = gridColumns.selectionModel as? DefaultListSelectionModel ?: return false
-    val current = leadGridColumn() ?: return false
-    val lead = tables.localColumn(table, current)
+    val columnSelection = gridColumns.selectionModel as? DefaultListSelectionModel ?: return false
+    val leadColumn = leadGridColumn() ?: return false
+    val localLead = tables.localIndexOf(table, leadColumn)
     // At the edge Swing keeps the lead where it is, which it can only do for a lead the focused table shows.
-    val target = displayedColumnOrder(pinned).adjacent(current, forward) ?: return lead < 0
+    val target = displayedColumnOrder(pinned).adjacent(leadColumn, forward) ?: return localLead < 0
     val focusTarget = tables.tableOf(target)
-    val swingTarget = lead + if (forward) 1 else -1
-    if (lead >= 0 && focusTarget === table && tables.localColumn(table, target) == swingTarget) return false
+    val localSwingTarget = localLead + if (forward) 1 else -1
+    if (localLead >= 0 && focusTarget === table && tables.localIndexOf(table, target) == localSwingTarget) return false
     if (!stopEditingUnlessAt(null)) return true
-    columns.moveLeadSelectionIndex(target.asInteger())
-    val rows = rowSelection as? DefaultListSelectionModel ?: return true
-    if (rows.leadSelectionIndex !in 0 until mainTable.rowCount && mainTable.rowCount > 0) rows.moveLeadSelectionIndex(0)
-    val row = rows.leadSelectionIndex
-    val column = tables.localColumn(focusTarget, target)
+    columnSelection.moveLeadSelectionIndex(target.asInteger())
+    val defaultRowSelection = rowSelection as? DefaultListSelectionModel ?: return true
+    if (defaultRowSelection.leadSelectionIndex !in 0 until mainTable.rowCount && mainTable.rowCount > 0) {
+      defaultRowSelection.moveLeadSelectionIndex(0)
+    }
+    val row = defaultRowSelection.leadSelectionIndex
+    val localIndex = tables.localIndexOf(focusTarget, target)
     if (focusTarget === mainTable) {
-      mainTable.scrollRectToVisible(mainTable.getCellRect(row, column, false))
+      mainTable.scrollRectToVisible(mainTable.getCellRect(row, localIndex, false))
     }
     else {
-      region?.layout?.scrollFrozenColumnToVisible(column)
+      strip?.layout?.scrollPinnedColumnToVisible(localIndex)
       revealRow(row)
     }
     focusTarget.requestFocusInWindow()
     return true
   }
 
-  /** Applies a Shift+click cell range in displayed order, even when its anchor is in the other table; [localColumn] is [table]'s own. */
-  fun handleCellRangeSelection(table: GridTable, row: Int, localColumn: Int, addToSelection: Boolean): Boolean {
+  /** Applies a Shift+click cell range in displayed order, even when its anchor is in the other table; [localIndex] is [table]'s own. */
+  fun selectCellRange(table: GridTable, row: Int, localIndex: Int, addToSelection: Boolean): Boolean {
     val pinned = pinnedTable ?: return false
     if ((table !== pinned && table !== mainTable) || row !in 0 until table.rowCount) return false
     val order = displayedColumnOrder(pinned)
-    val target = gridColumnOfTable(table, localColumn) ?: return false
+    val target = gridColumnOfTable(table, localIndex) ?: return false
 
-    val rows = rowSelection
-    val rowAnchor = rows.anchorSelectionIndex.takeIf { it in 0 until mainTable.rowCount } ?: row
-    if (addToSelection) rows.addSelectionInterval(rowAnchor, row)
-    else rows.setSelectionInterval(rowAnchor, row)
+    val rowAnchor = rowSelection.anchorSelectionIndex.takeIf { it in 0 until mainTable.rowCount } ?: row
+    if (addToSelection) rowSelection.addSelectionInterval(rowAnchor, row)
+    else rowSelection.setSelectionInterval(rowAnchor, row)
     return selectDisplayedColumnRange(order, target, addToSelection)
   }
 
-  /** Applies a whole-column Shift range from the unified anchor to [localColumn] of [table], in either table. */
-  fun selectDisplayedColumnRange(table: GridTable, localColumn: Int, addToSelection: Boolean): Boolean {
+  /** Applies a whole-column Shift range from the anchor of the view's column selection to [localIndex] of [table], in either table. */
+  fun selectDisplayedColumnRange(table: GridTable, localIndex: Int, addToSelection: Boolean): Boolean {
     val pinned = pinnedTable ?: return false
     if (table !== pinned && table !== mainTable) return false
     val order = displayedColumnOrder(pinned)
-    val target = gridColumnOfTable(table, localColumn) ?: return false
+    val target = gridColumnOfTable(table, localIndex) ?: return false
     return selectDisplayedColumnRange(order, target, addToSelection)
   }
 
@@ -463,18 +485,18 @@ internal class FrozenColumnsController(
                                     focusTarget: GridTable): Boolean {
     // A rejected edit must prevent scrolling and focus transfer as well as the selection change.
     if (!stopEditingBeforeGridSelectionChange(row, target)) return true
-    val column = tables.localColumn(focusTarget, target)
+    val localIndex = tables.localIndexOf(focusTarget, target)
     if (extend) {
       if (!selectDisplayedColumnRange(order, target, false)) return false
-      if (focusTarget === mainTable) mainTable.scrollRectToVisible(mainTable.getCellRect(row, column, true))
+      if (focusTarget === mainTable) mainTable.scrollRectToVisible(mainTable.getCellRect(row, localIndex, true))
     }
-    else if (focusTarget === mainTable) mainTable.changeSelection(row, column, false, false)
+    else if (focusTarget === mainTable) mainTable.changeSelection(row, localIndex, false, false)
     else runWithAutoscrollLocked(grid) {
-      // The pinned cell is in the fixed strip already, so it must not move the main viewport.
-      focusTarget.changeSelection(row, column, false, false)
+      // The pinned cell is in the pinned strip already, so it must not move the main viewport.
+      focusTarget.changeSelection(row, localIndex, false, false)
     }
     if (focusTarget !== mainTable) {
-      region?.layout?.scrollFrozenColumnToVisible(column)
+      strip?.layout?.scrollPinnedColumnToVisible(localIndex)
       // Tab may have changed the row when it wrapped.
       revealRow(row)
     }
@@ -488,8 +510,8 @@ internal class FrozenColumnsController(
    *
    * @return false when an editor refused to commit, in which case the selection has to stay where it is.
    */
-  fun stopEditingBeforeSelectionChange(table: GridTable, row: Int, localColumn: Int): Boolean =
-    pinnedTable == null || !isViewTable(table) || stopEditingUnlessAt(modelCell(table, row, localColumn))
+  fun stopEditingBeforeSelectionChange(table: GridTable, row: Int, localIndex: Int): Boolean =
+    pinnedTable == null || !isViewTable(table) || stopEditingUnlessAt(modelCell(table, row, localIndex))
 
   /** [stopEditingBeforeSelectionChange] for a cell given by its grid column. */
   private fun stopEditingBeforeGridSelectionChange(row: Int, column: ViewIndex<GridColumn>): Boolean =
@@ -510,10 +532,13 @@ internal class FrozenColumnsController(
     return (editing != null && editing == target) || editor.stopCellEditing()
   }
 
-  /** The two tables index rows and columns on their own, so only model indices identify a cell in both. */
-  private fun modelCell(table: GridTable, row: Int, localColumn: Int): ModelCell? =
-    if (row in 0 until table.rowCount && localColumn in 0 until table.columnCount)
-      modelCell(table.convertRowIndexToModel(row), table.convertColumnIndexToModel(localColumn))
+  /**
+   * The cell at [row] and [localIndex] of [table] in model indices, or null outside [table]. Only model indices name one cell in both
+   * tables.
+   */
+  private fun modelCell(table: GridTable, row: Int, localIndex: Int): ModelCell? =
+    if (row in 0 until table.rowCount && localIndex in 0 until table.columnCount)
+      modelCell(table.convertRowIndexToModel(row), table.convertColumnIndexToModel(localIndex))
     else null
 
   /** The cell at [row] of the tables, which share their rows, and at grid column [column], in model indices. */
@@ -527,7 +552,10 @@ internal class FrozenColumnsController(
 
   private data class ModelCell(val row: ModelIndex<GridRow>, val column: ModelIndex<GridColumn>)
 
-  /** Selects a range in displayed order, pinned columns first, in the view's column model, which both tables show. */
+  /**
+   * Selects the columns from the anchor to [target] in displayed order, in the view's column model. The anchor is [anchorOverride] or the
+   * selection's own, or [target] when that one isn't displayed.
+   */
   private fun selectDisplayedColumnRange(order: DisplayedColumnOrder<ViewIndex<GridColumn>>,
                                          target: ViewIndex<GridColumn>,
                                          addToSelection: Boolean,
@@ -566,11 +594,11 @@ internal class FrozenColumnsController(
     return runs
   }
 
-  /** The grid column at [localColumn] of [table], one of the two tables, or null. */
-  private fun gridColumnOfTable(table: GridTable, localColumn: Int): ViewIndex<GridColumn>? =
-    if (isViewTable(table)) tables.gridColumn(table, localColumn).takeIf { it.asInteger() >= 0 } else null
+  /** The grid column at [localIndex] of [table], one of the two tables, or null. */
+  private fun gridColumnOfTable(table: GridTable, localIndex: Int): ViewIndex<GridColumn>? =
+    if (isViewTable(table)) tables.gridColumn(table, localIndex).takeIf { it.asInteger() >= 0 } else null
 
-  /** The grid's columns in grid order, and the pinned table's in its own order. */
+  /** The columns as the user sees them: the pinned table's in its own order, then the rest in grid order. */
   private fun displayedColumnOrder(pinned: GridTable): DisplayedColumnOrder<ViewIndex<GridColumn>> = DisplayedColumnOrder(
     gridOrder = (0 until gridColumns.columnCount).map(::gridColumnAt),
     pinnedOrder = (0 until pinned.columnCount).map { tables.gridColumn(pinned, it) },
@@ -581,16 +609,19 @@ internal class FrozenColumnsController(
   private fun findScrollPane(): TableScrollPane? = ComponentUtil.getParentOfType(TableScrollPane::class.java, mainTable)
 }
 
-/** [JBAutoScroller.AutoscrollLocker] is not reentrant: an inner lock would otherwise release its outer caller. */
+/**
+ * Runs [action] with the grid's autoscroll locked, joining a lock a caller already holds. [JBAutoScroller.AutoscrollLocker] is not
+ * reentrant, so an inner lock would release the outer one.
+ */
 internal fun runWithAutoscrollLocked(grid: DataGrid, action: () -> Unit) {
   val locker = grid.autoscrollLocker
   if (locker.locked()) action()
   else locker.runWithLock { action() }
 }
 
-/** Shows [header] in the row header of [parent], or none. */
-internal fun replaceRowHeaderView(parent: TableScrollPane, header: JComponent?) {
-  if (header == null) parent.setRowHeader(null) else parent.setRowHeaderView(header)
+/** Shows [header] in the row header of [scrollPane], or none. */
+internal fun replaceRowHeaderView(scrollPane: TableScrollPane, header: JComponent?) {
+  if (header == null) scrollPane.setRowHeader(null) else scrollPane.setRowHeaderView(header)
 }
 
 /**

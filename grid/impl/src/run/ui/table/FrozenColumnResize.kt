@@ -6,47 +6,50 @@ import java.awt.event.MouseEvent
 import javax.swing.event.MouseInputAdapter
 
 /**
- * Resizes the last pinned column from the main header's leading edge and keeps resizes from overflowing the pinned table. It lives
- * as long as one pinned table, and holds its handle on the main header meanwhile.
+ * Resizes pinned columns while keeping space for the main table. A drag on the main header's leading edge, beside the strip's
+ * divider, resizes the last pinned column. A resize may shrink a pinned column freely, but widens it only as far as [PinnedColumnsFit]
+ * lets the strip grow.
+ *
+ * One instance serves one pinned table, and holds its handle on the main header until that table is dropped.
  */
 internal class FrozenColumnResize(
   private val mainTable: GridTable,
-  private val frozen: GridTable,
+  private val pinnedTable: GridTable,
   private val layout: FrozenStripLayout,
 ) {
-  private var resizingFrozenColumn = false
-  private var frozenResizeCursorShown = false
-  private var frozenResizeStartX = 0
-  private var frozenResizeStartWidth = 0
+  private var resizing = false
+  private var resizeCursorShown = false
+  private var dragStartScreenX = 0
+  private var dragStartWidth = 0
 
-  private val frozenColumnResizeHandle = object : MouseInputAdapter() {
+  private val resizeHandle = object : MouseInputAdapter() {
     override fun mouseMoved(e: MouseEvent) {
-      if (inFrozenResizeZone(e.x)) {
+      if (isOnResizeEdge(e.x)) {
         mainTable.tableHeader.cursor = Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR)
-        frozenResizeCursorShown = true
+        resizeCursorShown = true
       }
-      else if (frozenResizeCursorShown) {
+      else if (resizeCursorShown) {
         mainTable.tableHeader.cursor = Cursor.getDefaultCursor()
-        frozenResizeCursorShown = false
+        resizeCursorShown = false
       }
     }
 
     override fun mousePressed(e: MouseEvent) {
-      val last = lastFrozenColumn()
-      if (last == null || !inFrozenResizeZone(e.x)) return
-      resizingFrozenColumn = true
-      frozenResizeStartX = e.xOnScreen
-      frozenResizeStartWidth = last.width
+      val last = lastPinnedColumn()
+      if (last == null || !isOnResizeEdge(e.x)) return
+      resizing = true
+      dragStartScreenX = e.xOnScreen
+      dragStartWidth = last.width
       e.consume()
     }
 
     override fun mouseDragged(e: MouseEvent) {
-      if (!resizingFrozenColumn) return
-      val last = lastFrozenColumn()
+      if (!resizing) return
+      val last = lastPinnedColumn()
       if (last != null) {
         val direction = if (mainTable.componentOrientation.isLeftToRight) 1 else -1
-        val requestedWidth = maxOf(JBUI.scale(24), frozenResizeStartWidth + direction * (e.xOnScreen - frozenResizeStartX))
-        val width = constrainFrozenColumnResize(last, requestedWidth)
+        val requestedWidth = maxOf(JBUI.scale(24), dragStartWidth + direction * (e.xOnScreen - dragStartScreenX))
+        val width = constrainPinnedColumnResize(last, requestedWidth)
         last.setColumnWidthByUser(width)
         layout.scrollPane.revalidate()
         layout.scrollPane.repaint()
@@ -55,42 +58,43 @@ internal class FrozenColumnResize(
     }
 
     override fun mouseReleased(e: MouseEvent) {
-      resizingFrozenColumn = false
+      resizing = false
     }
   }
 
   init {
-    mainTable.tableHeader.addMouseListener(frozenColumnResizeHandle)
-    mainTable.tableHeader.addMouseMotionListener(frozenColumnResizeHandle)
+    mainTable.tableHeader.addMouseListener(resizeHandle)
+    mainTable.tableHeader.addMouseMotionListener(resizeHandle)
   }
 
   fun uninstallColumnResizeHandle() {
-    mainTable.tableHeader.removeMouseListener(frozenColumnResizeHandle)
-    mainTable.tableHeader.removeMouseMotionListener(frozenColumnResizeHandle)
-    if (frozenResizeCursorShown) mainTable.tableHeader.cursor = Cursor.getDefaultCursor()
+    mainTable.tableHeader.removeMouseListener(resizeHandle)
+    mainTable.tableHeader.removeMouseMotionListener(resizeHandle)
+    if (resizeCursorShown) mainTable.tableHeader.cursor = Cursor.getDefaultCursor()
   }
 
-  private fun inFrozenResizeZone(x: Int): Boolean {
+  private fun isOnResizeEdge(headerX: Int): Boolean {
     if (mainTable.isTransposed) return false
     // A clipped divider is a viewport edge, not a column edge that can be resized.
-    if (layout.frozenScrollBar?.isVisible == true) return false
+    if (layout.pinnedScrollBar?.isVisible == true) return false
     val resizeArea = JBUI.scale(3)
-    return if (mainTable.componentOrientation.isLeftToRight) x in 0..resizeArea
-    else x in mainTable.tableHeader.width - resizeArea..mainTable.tableHeader.width
+    return if (mainTable.componentOrientation.isLeftToRight) headerX in 0..resizeArea
+    else headerX in mainTable.tableHeader.width - resizeArea..mainTable.tableHeader.width
   }
 
-  private fun lastFrozenColumn(): TableResultViewColumn? {
-    val columns = frozen.columnModel
+  private fun lastPinnedColumn(): TableResultViewColumn? {
+    val columns = pinnedTable.columnModel
     return if (columns.columnCount == 0) null else columns.getColumn(columns.columnCount - 1) as TableResultViewColumn
   }
 
-  /** A direct resize may shrink freely, but it may not introduce or increase avoidable pinned-strip overflow. */
-  fun constrainFrozenColumnResize(table: GridTable,
-                                  column: TableResultViewColumn,
-                                  requestedWidth: Int): Int =
-    if (table === frozen) constrainFrozenColumnResize(column, requestedWidth) else requestedWidth
+  /**
+   * The width [column] of [table] takes for a user resize to [requestedWidth]. A pinned column shrinks freely, but grows only while the
+   * columns fit and never adds to an overflow.
+   */
+  fun constrainColumnResize(table: GridTable, column: TableResultViewColumn, requestedWidth: Int): Int =
+    if (table === pinnedTable) constrainPinnedColumnResize(column, requestedWidth) else requestedWidth
 
-  private fun constrainFrozenColumnResize(column: TableResultViewColumn, requestedWidth: Int): Int {
+  private fun constrainPinnedColumnResize(column: TableResultViewColumn, requestedWidth: Int): Int {
     val currentWidth = column.columnWidth
     if (requestedWidth <= currentWidth) return requestedWidth
     val availableWidth = layout.availableColumnsWidth()
@@ -101,24 +105,24 @@ internal class FrozenColumnResize(
       mainTable.columnModel.totalColumnWidth,
     )
     // If the result area was narrowed around an already oversized strip, resizing must not snap a user width down.
-    val maximumTotalWidth = if (layout.frozenScrollBar?.isVisible == true)
-      maxOf(fittingWidth, layout.frozenScrollBar?.maximum ?: 0)
+    val maximumTotalWidth = if (layout.pinnedScrollBar?.isVisible == true)
+      maxOf(fittingWidth, layout.pinnedScrollBar?.maximum ?: 0)
     else
       fittingWidth
-    val otherColumnsWidth = layout.frozenColumnsWidth(except = column)
+    val otherColumnsWidth = layout.pinnedColumnsWidth(except = column)
     return minOf(requestedWidth, maxOf(column.minWidth, maximumTotalWidth - otherColumnsWidth))
   }
 
   /**
-   * Keeps the keyboard width action consistent with mouse resizing, including mixed and multi-column selections.
-   * Takes how many of the selected columns are pinned and how many are not.
+   * The largest part of [delta] that each selected column can grow by while the pinned and unpinned columns still fit, as with a mouse
+   * resize. A shrink, or a selection without pinned columns, keeps [delta]. The result is 0 when the columns already overflow.
    */
   fun constrainSelectedColumnWidthDelta(selectedPinnedCount: Int, selectedUnpinnedCount: Int, delta: Int): Int {
     if (delta <= 0 || selectedPinnedCount == 0) return delta
 
     val availableWidth = layout.availableColumnsWidth()
     if (availableWidth <= 0) return delta
-    val pinnedWidth = layout.frozenColumnsWidth()
+    val pinnedWidth = layout.pinnedColumnsWidth()
     val unpinnedWidth = mainTable.columnModel.totalColumnWidth
     if (!PinnedColumnsFit.fits(pinnedWidth, unpinnedWidth, availableWidth)) return 0
 

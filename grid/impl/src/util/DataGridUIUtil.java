@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
@@ -20,8 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.JComponent;
-import javax.swing.JScrollPane;
-import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 import java.awt.Color;
 import java.awt.Component;
@@ -78,13 +75,7 @@ public final class DataGridUIUtil {
   }
 
   public static boolean isInsideGrid(@NotNull DataGrid grid, @NotNull Component component) {
-    Component focus = grid.getPreferredFocusedComponent();
-    if (SwingUtilities.isDescendingFrom(component, focus)) return true;
-    // The pinned/frozen region is a separate table placed in the scroll pane's row header, not under the main result
-    // view, so also treat components in that row header as inside the grid (DBE-26267).
-    JScrollPane scrollPane = ComponentUtil.getParentOfType(JScrollPane.class, focus);
-    JViewport rowHeader = scrollPane == null ? null : scrollPane.getRowHeader();
-    return rowHeader != null && SwingUtilities.isDescendingFrom(component, rowHeader);
+    return grid.getResultView().isViewComponent(component);
   }
 
   public static boolean isInsideEditMaximizedView(@Nullable EditMaximizedView view, @NotNull Component component) {

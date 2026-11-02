@@ -123,8 +123,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.Action;
-import javax.swing.ActionMap;
 import javax.swing.Icon;
 import javax.swing.JComponent;
 import javax.swing.border.Border;
@@ -134,7 +132,6 @@ import javax.swing.event.HyperlinkListener;
 import java.awt.Component;
 import java.awt.Insets;
 import java.awt.Point;
-import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -995,14 +992,8 @@ public class GridUtil extends GridUtilCore {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         KeyEvent keyEvent = (KeyEvent)e.getInputEvent();
-        JComponent gridComponent = grid.getPreferredFocusedComponent();
-        ActionMap actionMap = gridComponent.getActionMap();
-        Action action = up.getFirstKeyStroke().getKeyCode() == keyEvent.getKeyCode()
-                        ? actionMap.get("selectPreviousRow")
-                        : actionMap.get("selectNextRow");
-        if (action == null) return;
-        action.actionPerformed(
-          new ActionEvent(gridComponent, keyEvent.getID(), keyEvent.toString(), keyEvent.getWhen(), keyEvent.getModifiers()));
+        boolean isUp = up.getFirstKeyStroke().getKeyCode() == keyEvent.getKeyCode();
+        grid.getResultView().moveLead(isUp ? ResultView.LeadMove.PREVIOUS_ROW : ResultView.LeadMove.NEXT_ROW);
       }
     };
     registerAction(editor, action, new CustomShortcutSet(up, down));

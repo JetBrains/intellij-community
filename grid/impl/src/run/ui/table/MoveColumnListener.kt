@@ -48,14 +48,14 @@ class MoveColumnListener internal constructor(
         {
           object : AutoCloseable {
             init {
-              gridTable.isEditingBlocked = true
+              gridTable.isColumnReorderingBlocked = true
               grid.getPanel().getComponent().setLoadingText(DataGridBundle.message("DataView.updatingFile"))
               grid.getPanel().getComponent().startLoading()
             }
 
             override fun close() {
               grid.getPanel().getComponent().stopLoading()
-              gridTable.isEditingBlocked = false
+              gridTable.isColumnReorderingBlocked = false
             }
           }
         },

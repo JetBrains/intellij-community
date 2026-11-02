@@ -268,10 +268,10 @@ public final class DefaultTextRendererFactory implements GridCellRendererFactory
       EditorColorsScheme scheme = editor.getColorsScheme();
       boolean schemeAlreadySet = scheme instanceof DelegateColorScheme &&
                                  ((DelegateColorScheme)scheme).getDelegate() == grid.getColorsScheme() &&
-                                 scheme.getEditorFontSize() == grid.getPreferredFocusedComponent().getFont().getSize();
+                                 scheme.getEditorFontSize() == grid.getResultView().getCellFont().getSize();
       if (schemeAlreadySet) return;
       EditorColorsScheme bounded = editor.createBoundColorSchemeDelegate(grid.getColorsScheme());
-      bounded.setEditorFontSize(grid.getPreferredFocusedComponent().getFont().getSize());
+      bounded.setEditorFontSize(grid.getResultView().getCellFont().getSize());
       editor.setColorsScheme(bounded);
     }
 

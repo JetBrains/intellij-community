@@ -28,30 +28,40 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 /**
- * Places one pinned table in the scroll pane's row header and corners, and scrolls it horizontally when it overflows. It lives as
- * long as that table: the controller creates it with the table and uninstalls it when the table goes.
+ * Puts the pinned table in the main table's scroll pane as its row header, so both tables scroll vertically as one. The strip is the
+ * pinned table's area beside the main table. The pinned header goes in the upper leading corner. When shown, row numbers appear beside the
+ * pinned table.
+ *
+ * Unless every column fits, the strip leaves part of the width to the main table, so the divider stays in reach. [PinnedColumnsFit] sets
+ * how much. Pinned columns that don't fit scroll horizontally, with a scroll bar of their own in the lower leading corner.
+ *
+ * One instance serves one pinned table.
  */
 internal class FrozenStripLayout(
   private val mainTable: GridTable,
-  private val frozen: GridTable,
+  private val pinnedTable: GridTable,
   /** The main table's scroll pane, whose row header and corners the strip takes over. */
   val scrollPane: TableScrollPane,
 ) {
-  private val originalCorner: Component? = scrollPane.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
+  private val originalUpperCorner: Component? = scrollPane.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER)
   private val originalLowerCorner: Component? = scrollPane.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER)
   private var scrolling: FrozenScrolling? = null
-  private var updatingFrozenViewport = false
+  /**
+   * True while this layout itself moves the pinned viewports or their scroll bar. The listeners that keep them in step, and a nested
+   * update, then skip that move.
+   */
+  private var syncingPinnedScroll = false
   /** The width of the pinned columns when the strip was last laid out, so a width change can tell whether they grew. */
   private var laidOutPinnedWidth = Int.MAX_VALUE
 
-  /** The view's row header while it shows row numbers beside the strip. */
+  /** The view's row header beside the strip, or null while there is none or the grid is transposed. */
   private var gutter: GridRowHeader? = null
   // These fill in lazily, the wrappers only while the gutter shows, and go away with the strip.
   private var gutterWrappers: GutterWrappers? = null
   private var lowerCorner: JComponent? = null
 
-  /** Zooms the grid on a pinch over the pinned part, keeping the pinched row and the main table's left edge in place. */
-  private val pinnedPartMagnificator = Magnificator { scale, at ->
+  /** Zooms the grid on a pinch over the pinned table, keeping the pinched row and the main table's left edge in place. */
+  private val pinnedTableMagnificator = Magnificator { scale, at ->
     val anchor = Point(mainTable.visibleRect.x, at.y)
     val zoomed = ClientProperty.get(mainTable, Magnificator.CLIENT_PROPERTY_KEY)?.magnify(scale, anchor) ?: anchor
     // The zoom scrolls to the returned point minus the pointer, so adding at.x puts zoomed.x at the main table's left edge.
@@ -59,28 +69,28 @@ internal class FrozenStripLayout(
   }
 
   init {
-    installFrozenScrolling()
+    installPinnedScrolling()
   }
 
-  /** The strip's horizontal scroll bar, or null once [uninstallFrozenScrolling] has run. */
-  val frozenScrollBar: JScrollBar? get() = scrolling?.scrollBar
+  /** The strip's horizontal scroll bar, or null once [uninstall] has run. */
+  val pinnedScrollBar: JScrollBar? get() = scrolling?.scrollBar
 
-  /** The viewport that shows the strip, or null once [uninstallFrozenScrolling] has run. */
-  val frozenViewport: JViewport? get() = scrolling?.viewport
+  /** The viewport that shows the pinned table, or null once [uninstall] has run. */
+  val pinnedViewport: JViewport? get() = scrolling?.viewport
 
   fun restoreOriginalCorners() {
-    scrollPane.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, originalCorner)
+    scrollPane.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, originalUpperCorner)
     scrollPane.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, originalLowerCorner)
   }
 
   /** Lays the strip out, with the row numbers of [rowHeader], the view's row header, beside it. */
-  fun installFrozenRegion(rowHeader: GridRowHeader?) {
+  fun layOut(rowHeader: GridRowHeader?) {
     useGutter(rowHeader)
     gutter?.updatePreferredSize()
-    renderFrozenRegion(gutter)
+    placeInScrollPane(gutter)
   }
 
-  /** Takes [rowHeader] as the gutter beside the strip while it shows row numbers, and lets go of the one it replaces. */
+  /** Makes [rowHeader] the gutter beside the strip, or none while the grid is transposed, and releases the previous gutter. */
   private fun useGutter(rowHeader: GridRowHeader?) {
     val gutter = rowHeader?.takeIf { !mainTable.isTransposed }
     val replaced = this.gutter
@@ -90,46 +100,49 @@ internal class FrozenStripLayout(
     scrolling?.let { gutter?.addMouseWheelListener(it.wheelListener) }
   }
 
-  /** The view keeps its gutter, so the gutter lets go of the strip's wheel listener and of the panel that holds the strip. */
+  /**
+   * Detaches [gutter] from the strip: takes the strip's wheel listener off it and removes it from the wrapper panel. The view keeps the
+   * gutter and disposes it.
+   */
   private fun releaseGutter(gutter: GridRowHeader) {
     scrolling?.let { gutter.removeMouseWheelListener(it.wheelListener) }
     gutterWrappers?.let {
-      it.rowHeader.remove(gutter)
+      it.rowHeaderView.remove(gutter)
       // The gutter's corner is sized by the gutter, and it holds the scroll pane's original corner, which this layout keeps.
       it.gutterCorner.removeAll()
     }
     gutterWrappers = null
   }
 
-  private fun renderFrozenRegion(gutter: GridRowHeader?) {
+  private fun placeInScrollPane(gutter: GridRowHeader?) {
     val orientation = scrollPane.componentOrientation
     val scrolling = scrolling ?: return
     val viewport = scrolling.viewport
     val headerViewport = scrolling.headerViewport
     val viewportWrapper = scrolling.viewportWrapper
-    var rowHeader: JComponent = viewportWrapper
-    var corner: JComponent = headerViewport
+    var rowHeaderView: JComponent = viewportWrapper
+    var upperCorner: JComponent = headerViewport
     if (gutter != null) {
       val wrappers = gutterWrappers(gutter, viewport, headerViewport)
-      wrappers.rowHeader.applyComponentOrientation(orientation)
-      wrappers.corner.applyComponentOrientation(orientation)
-      rowHeader = wrappers.rowHeader
-      corner = wrappers.corner
+      wrappers.rowHeaderView.applyComponentOrientation(orientation)
+      wrappers.upperCorner.applyComponentOrientation(orientation)
+      rowHeaderView = wrappers.rowHeaderView
+      upperCorner = wrappers.upperCorner
     }
     else {
-      center(viewportWrapper, viewport)
+      fillWith(viewportWrapper, viewport)
     }
     // A JTableHeader is not a child of its table, so it never receives the orientation applied to the pinned table.
-    frozen.tableHeader.applyComponentOrientation(orientation)
+    pinnedTable.tableHeader.applyComponentOrientation(orientation)
     viewport.applyComponentOrientation(orientation)
     headerViewport.applyComponentOrientation(orientation)
     scrolling.scrollBar.applyComponentOrientation(orientation)
-    // A pinch takes the magnificator of the view of the viewport under the pointer; over the pinned part that is this row header.
-    ClientProperty.put(rowHeader, Magnificator.CLIENT_PROPERTY_KEY, pinnedPartMagnificator)
+    // A pinch takes the magnificator of the view of the viewport under the pointer; over the pinned table that is this row header.
+    ClientProperty.put(rowHeaderView, Magnificator.CLIENT_PROPERTY_KEY, pinnedTableMagnificator)
     // Reuse installed components to avoid relayout and flicker when pinning another column.
-    if (scrollPane.rowHeader?.view !== rowHeader) replaceRowHeaderView(scrollPane, rowHeader)
-    if (scrollPane.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== corner) {
-      scrollPane.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, corner)
+    if (scrollPane.rowHeader?.view !== rowHeaderView) replaceRowHeaderView(scrollPane, rowHeaderView)
+    if (scrollPane.getCorner(ScrollPaneConstants.UPPER_LEADING_CORNER) !== upperCorner) {
+      scrollPane.setCorner(ScrollPaneConstants.UPPER_LEADING_CORNER, upperCorner)
     }
     // Match the grid background in the corner beside the horizontal scrollbar.
     val lowerCorner = this.lowerCorner ?: FrozenLowerCorner().also { this.lowerCorner = it }
@@ -137,53 +150,58 @@ internal class FrozenStripLayout(
     if (scrollPane.getCorner(ScrollPaneConstants.LOWER_LEADING_CORNER) !== lowerCorner) {
       scrollPane.setCorner(ScrollPaneConstants.LOWER_LEADING_CORNER, lowerCorner)
     }
-    updateFrozenViewport()
+    updatePinnedViewport()
   }
 
-  /** The row-number gutter and the strip share the row header, and their headers share the corner. */
+  /**
+   * The panels that put the gutter beside the strip: [rowHeaderView] holds the gutter and the strip's viewport, [upperCorner] holds
+   * [gutterCorner] and the strip's header.
+   */
   private class GutterWrappers(
     val gutter: GridRowHeader,
-    val frozenViewport: HorizontalViewport,
+    val pinnedViewport: HorizontalViewport,
     val gutterCorner: JPanel,
-    val rowHeader: JPanel,
-    val corner: JPanel,
+    val rowHeaderView: JPanel,
+    val upperCorner: JPanel,
   )
 
   /** Built once per gutter, so a rebuild for another pinned column does not replace the whole row header. */
   private fun gutterWrappers(gutter: GridRowHeader,
                              viewport: HorizontalViewport,
                              headerViewport: HorizontalViewport): GutterWrappers {
-    val wrappers = gutterWrappers?.takeIf { it.gutter === gutter && it.frozenViewport === viewport }
+    val wrappers = gutterWrappers?.takeIf { it.gutter === gutter && it.pinnedViewport === viewport }
                    ?: createGutterWrappers(gutter, viewport).also { gutterWrappers = it }
     // Without the gutter the strip and its header go into the scroll pane itself, which takes them out of these panels.
-    pair(wrappers.rowHeader, gutter, viewport)
-    pair(wrappers.corner, wrappers.gutterCorner, headerViewport)
+    fillSideBySide(wrappers.rowHeaderView, gutter, viewport)
+    fillSideBySide(wrappers.upperCorner, wrappers.gutterCorner, headerViewport)
     return wrappers
   }
 
   private fun createGutterWrappers(gutter: GridRowHeader, viewport: HorizontalViewport): GutterWrappers {
     val gutterCorner = object : JPanel(BorderLayout()) {
       override fun getPreferredSize(): Dimension =
-        Dimension(gutter.preferredSize.width, frozen.tableHeader.preferredSize.height)
+        Dimension(gutter.preferredSize.width, pinnedTable.tableHeader.preferredSize.height)
     }
-    originalCorner?.let { gutterCorner.add(it, BorderLayout.CENTER) }
+    originalUpperCorner?.let { gutterCorner.add(it, BorderLayout.CENTER) }
     return GutterWrappers(gutter, viewport, gutterCorner, JPanel(BorderLayout()), JPanel(BorderLayout()))
   }
 
-  private fun pair(panel: JPanel, lineStart: Component, center: Component) {
+  /** Puts the components in [panel] unless they are there already, so a relayout doesn't flicker. */
+  private fun fillSideBySide(panel: JPanel, lineStart: Component, center: Component) {
     if (panel.componentCount == 2 && panel.getComponent(0) === lineStart && panel.getComponent(1) === center) return
     panel.removeAll()
     panel.add(lineStart, BorderLayout.LINE_START)
     panel.add(center, BorderLayout.CENTER)
   }
 
-  private fun center(panel: JPanel, component: Component) {
+  /** Puts [component] in [panel] unless it is there already, so a relayout doesn't flicker. */
+  private fun fillWith(panel: JPanel, component: Component) {
     if (panel.componentCount == 1 && panel.getComponent(0) === component) return
     panel.removeAll()
     panel.add(component, BorderLayout.CENTER)
   }
 
-  /** Fills the corner beside the horizontal scrollbar with the grid background. */
+  /** Hosts the strip's scroll bar on the grid background, in the scroll pane's lower leading corner. */
   private inner class FrozenLowerCorner : JPanel() {
     init {
       layout = BorderLayout()
@@ -208,30 +226,30 @@ internal class FrozenStripLayout(
   }
 
   /**
-   * Caps the strip's viewport using [PinnedColumnsFit], preserving column widths and scrolling overflow.
-   *
-   * The row header derives its width from the live gutter and strip sizes to avoid gaps after gutter resizing.
+   * Sizes the pinned table's viewport, and shows the strip's scroll bar while the pinned columns don't fit. Column widths stay;
+   * [PinnedColumnsFit] caps the viewport. [anchorNewOverflowAtTrailingEdge] scrolls a new overflow to its trailing edge, for a pinned
+   * column that grew.
    */
-  private fun updateFrozenViewport(anchorNewOverflowAtTrailingEdge: Boolean = false) {
+  private fun updatePinnedViewport(anchorNewOverflowAtTrailingEdge: Boolean = false) {
     val scrolling = scrolling ?: return
-    if (updatingFrozenViewport) return
+    if (syncingPinnedScroll) return
     val viewport = scrolling.viewport
     val headerViewport = scrolling.headerViewport
     val scrollBar = scrolling.scrollBar
     val availableWidth = availableColumnsWidth()
     if (availableWidth <= 0) return
 
-    val pinnedWidth = frozenColumnsWidth()
+    val pinnedWidth = pinnedColumnsWidth()
     laidOutPinnedWidth = pinnedWidth
     val unpinnedWidth = mainTable.columnModel.totalColumnWidth
     val allColumnsFit = pinnedWidth.toLong() + unpinnedWidth <= availableWidth
-    val minimumFrozenWidth = minOf(JBUI.scale(24), maxOf(0, availableWidth - 1))
-    val maximumPinnedWidth = maxOf(PinnedColumnsFit.maximumPinnedWidth(availableWidth), minimumFrozenWidth)
+    val minimumPinnedWidth = minOf(JBUI.scale(24), maxOf(0, availableWidth - 1))
+    val maximumPinnedWidth = maxOf(PinnedColumnsFit.maximumPinnedWidth(availableWidth), minimumPinnedWidth)
     val visibleWidth = minOf(pinnedWidth, if (allColumnsFit) availableWidth else maximumPinnedWidth)
     val overflow = pinnedWidth > visibleWidth
 
     var layoutChanged = false
-    updatingFrozenViewport = true
+    syncingPinnedScroll = true
     try {
       if (viewport.preferredWidth != visibleWidth) {
         viewport.preferredWidth = visibleWidth
@@ -247,34 +265,34 @@ internal class FrozenStripLayout(
         scrollPane.horizontalScrollBarPolicy = policy
         layoutChanged = true
       }
-      if (scrollPane.isFrozenHorizontalScrollBarVisible != overflow) {
-        scrollPane.setFrozenHorizontalScrollBarVisible(overflow)
+      if (scrollPane.isPinnedScrollBarVisible != overflow) {
+        scrollPane.setPinnedScrollBarVisible(overflow)
         layoutChanged = true
       }
-      updateFrozenScrollRange(pinnedWidth, visibleWidth, anchorNewOverflowAtTrailingEdge)
+      updatePinnedScrollRange(pinnedWidth, visibleWidth, anchorNewOverflowAtTrailingEdge)
       if (scrollBar.isVisible != overflow) {
         scrollBar.isVisible = overflow
         layoutChanged = true
       }
     }
     finally {
-      updatingFrozenViewport = false
+      syncingPinnedScroll = false
     }
     if (layoutChanged) scrollPane.revalidate()
     scrollPane.repaint()
   }
 
   /** The width of the pinned columns, without [except]. */
-  fun frozenColumnsWidth(except: TableResultViewColumn? = null): Int {
+  fun pinnedColumnsWidth(except: TableResultViewColumn? = null): Int {
     var width = 0L
-    for (index in 0 until frozen.columnCount) {
-      val column = frozen.columnModel.getColumn(index) as TableResultViewColumn
-      if (column !== except) width += column.frozenStripWidth
+    for (index in 0 until pinnedTable.columnCount) {
+      val column = pinnedTable.columnModel.getColumn(index) as TableResultViewColumn
+      if (column !== except) width += column.pinnedWidth
     }
     return width.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
   }
 
-  private fun visibleFrozenWidth(): Int {
+  private fun visiblePinnedWidth(): Int {
     val rowHeaderWidth = scrollPane.rowHeader?.extentSize?.width ?: return 0
     val gutterWidth = rowNumberGutterWidth()
     return maxOf(0, rowHeaderWidth - minOf(gutterWidth, rowHeaderWidth))
@@ -288,10 +306,10 @@ internal class FrozenStripLayout(
   /** The width the columns of both tables share while the strip shows. */
   fun availableColumnsWidth(): Int {
     val width = containerColumnsWidth(scrollPane, rowNumberGutterWidth())
-    return if (width > 0) width else scrollPane.viewport.extentSize.width + visibleFrozenWidth()
+    return if (width > 0) width else scrollPane.viewport.extentSize.width + visiblePinnedWidth()
   }
 
-  private fun updateFrozenScrollRange(contentWidth: Int,
+  private fun updatePinnedScrollRange(contentWidth: Int,
                                       visibleWidth: Int,
                                       anchorNewOverflowAtTrailingEdge: Boolean) {
     val scrolling = scrolling ?: return
@@ -322,67 +340,70 @@ internal class FrozenStripLayout(
   private fun leadingScrollPosition(maximum: Int): Int =
     if (mainTable.componentOrientation.isLeftToRight) 0 else maximum
 
-  private fun installFrozenScrolling() {
-    val viewport = HorizontalViewport(frozen)
+  private fun installPinnedScrolling() {
+    val viewport = HorizontalViewport(pinnedTable)
     val viewportWrapper = JPanel(BorderLayout()).apply { isOpaque = false }
-    val headerViewport = HorizontalViewport(frozen.tableHeader)
+    val headerViewport = HorizontalViewport(pinnedTable.tableHeader)
     val scrollBar = JBScrollBar(JScrollBar.HORIZONTAL).apply {
       isVisible = false
       unitIncrement = JBUI.scale(16)
       accessibleContext.accessibleName = DataGridBundle.message("data.grid.pinned.columns.accessible.name")
       addAdjustmentListener { event ->
-        if (updatingFrozenViewport) return@addAdjustmentListener
-        updatingFrozenViewport = true
+        if (syncingPinnedScroll) return@addAdjustmentListener
+        syncingPinnedScroll = true
         try {
           viewport.viewPosition = Point(event.value, 0)
           headerViewport.viewPosition = Point(event.value, 0)
         }
         finally {
-          updatingFrozenViewport = false
+          syncingPinnedScroll = false
         }
       }
     }
     val viewportListener = ChangeListener {
-      if (updatingFrozenViewport) return@ChangeListener
-      updatingFrozenViewport = true
+      if (syncingPinnedScroll) return@ChangeListener
+      syncingPinnedScroll = true
       try {
         val position = viewport.viewPosition.x
         headerViewport.viewPosition = Point(position, 0)
         scrollBar.value = position
       }
       finally {
-        updatingFrozenViewport = false
+        syncingPinnedScroll = false
       }
     }
     viewport.addChangeListener(viewportListener)
-    val wheelListener = MouseWheelListener { event -> scrollFrozenHorizontally(event, scrollBar) }
-    frozen.addMouseWheelListener(wheelListener)
-    frozen.tableHeader.addMouseWheelListener(wheelListener)
+    val wheelListener = MouseWheelListener { event -> scrollPinnedHorizontally(event, scrollBar) }
+    pinnedTable.addMouseWheelListener(wheelListener)
+    pinnedTable.tableHeader.addMouseWheelListener(wheelListener)
 
-    val mainListener = object : ComponentAdapter() {
+    val resizeListener = object : ComponentAdapter() {
       override fun componentResized(e: ComponentEvent) {
-        updateFrozenViewport()
+        updatePinnedViewport()
       }
     }
     scrolling = FrozenScrolling(scrollPane, viewport, viewportWrapper, headerViewport, scrollBar,
-                                scrollPane.horizontalScrollBarPolicy, viewportListener, wheelListener, mainListener)
-    scrollPane.addComponentListener(mainListener)
-    scrollPane.viewport.addComponentListener(mainListener)
+                                scrollPane.horizontalScrollBarPolicy, viewportListener, wheelListener, resizeListener)
+    scrollPane.addComponentListener(resizeListener)
+    scrollPane.viewport.addComponentListener(resizeListener)
   }
 
-  /** Runs before the strip is dropped, since it reads the strip; the gutter parts go with the strip, the gutter stays with the view. */
-  fun uninstallFrozenScrolling() {
+  /**
+   * Takes the strip's listeners off the scroll pane and the pinned table, restores the horizontal scroll bar, and releases the gutter.
+   * Runs while the pinned table still exists, since it removes listeners from that table. The view keeps the gutter.
+   */
+  fun uninstall() {
     gutter?.let(::releaseGutter)
     gutter = null
-    scrolling?.uninstall(frozen)
+    scrolling?.uninstall(pinnedTable)
     scrolling = null
-    updatingFrozenViewport = false
+    syncingPinnedScroll = false
     laidOutPinnedWidth = Int.MAX_VALUE
     gutterWrappers = null
     lowerCorner = null
   }
 
-  private fun scrollFrozenHorizontally(event: MouseWheelEvent, scrollBar: JScrollBar) {
+  private fun scrollPinnedHorizontally(event: MouseWheelEvent, scrollBar: JScrollBar) {
     if (scrollBar.isVisible && shouldIgnorePerpendicularWheelDrift(event)) {
       event.consume()
       return
@@ -411,7 +432,7 @@ internal class FrozenStripLayout(
   private fun shouldIgnorePerpendicularWheelDrift(event: MouseWheelEvent): Boolean {
     if (!LatchingScroll.isEnabled()) return false
     val scrolling = scrolling ?: return false
-    val pane = scrolling.parent
+    val pane = scrolling.scrollPane
     val paneEvent = MouseWheelEvent(
       pane,
       event.id,
@@ -437,7 +458,7 @@ internal class FrozenStripLayout(
   private fun forwardWheelToScrollPane(event: MouseWheelEvent) {
     if (event.isConsumed) return
     val source = event.component ?: return
-    val pane = scrolling?.parent ?: return
+    val pane = scrolling?.scrollPane ?: return
     pane.dispatchEvent(SwingUtilities.convertMouseEvent(source, event, pane))
   }
 
@@ -446,7 +467,7 @@ internal class FrozenStripLayout(
    * All of it is installed at once and removed at once, so one field holds it and no caller can meet a half of it.
    */
   private class FrozenScrolling(
-    val parent: TableScrollPane,
+    val scrollPane: TableScrollPane,
     val viewport: HorizontalViewport,
     val viewportWrapper: JPanel,
     val headerViewport: HorizontalViewport,
@@ -454,19 +475,20 @@ internal class FrozenStripLayout(
     val originalHorizontalScrollBarPolicy: Int,
     val viewportListener: ChangeListener,
     val wheelListener: MouseWheelListener,
-    val mainViewportListener: ComponentListener,
+    /** Lays the strip out again when the scroll pane or its viewport is resized. */
+    val resizeListener: ComponentListener,
   ) {
     val latching = LatchingScroll()
 
-    fun uninstall(frozen: GridTable) {
-      parent.removeComponentListener(mainViewportListener)
-      parent.viewport.removeComponentListener(mainViewportListener)
+    fun uninstall(pinnedTable: GridTable) {
+      scrollPane.removeComponentListener(resizeListener)
+      scrollPane.viewport.removeComponentListener(resizeListener)
       viewport.removeChangeListener(viewportListener)
-      frozen.removeMouseWheelListener(wheelListener)
-      frozen.tableHeader.removeMouseWheelListener(wheelListener)
-      parent.rowHeader?.setPreferredSize(null)
-      parent.setFrozenHorizontalScrollBarVisible(false)
-      parent.horizontalScrollBarPolicy = originalHorizontalScrollBarPolicy
+      pinnedTable.removeMouseWheelListener(wheelListener)
+      pinnedTable.tableHeader.removeMouseWheelListener(wheelListener)
+      scrollPane.rowHeader?.setPreferredSize(null)
+      scrollPane.setPinnedScrollBarVisible(false)
+      scrollPane.horizontalScrollBarPolicy = originalHorizontalScrollBarPolicy
     }
   }
 
@@ -484,11 +506,11 @@ internal class FrozenStripLayout(
       Dimension(preferredWidth ?: view.preferredSize.width, view.preferredSize.height)
   }
 
-  /** Reveals [frozenColumn], the pinned table's column that keyboard navigation reached, in an overflowing strip. */
-  fun scrollFrozenColumnToVisible(frozenColumn: Int) {
+  /** Scrolls an overflowing strip so that the pinned table's column at [localIndex] shows. */
+  fun scrollPinnedColumnToVisible(localIndex: Int) {
     val scrollBar = scrolling?.scrollBar?.takeIf { it.isVisible } ?: return
-    if (frozenColumn !in 0 until frozen.columnCount) return
-    val cell = frozen.getCellRect(0, frozenColumn, true)
+    if (localIndex !in 0 until pinnedTable.columnCount) return
+    val cell = pinnedTable.getCellRect(0, localIndex, true)
     val position = when {
       cell.x < scrollBar.value -> cell.x
       cell.x + cell.width > scrollBar.value + scrollBar.visibleAmount -> maxOf(0, cell.x + cell.width - scrollBar.visibleAmount)
@@ -499,27 +521,27 @@ internal class FrozenStripLayout(
 
   /** Lays the strip out again after a width change that [table] reports, once that table has settled the resized width. */
   fun columnMarginChanged(table: GridTable) {
-    if (table !== frozen && table !== mainTable) return
+    if (table !== pinnedTable && table !== mainTable) return
     // Both tables hear of every width change: follow the edge of a pinned column that grew, otherwise keep the strip where it is.
-    val anchorAtTrailingEdge = frozenColumnsWidth() > laidOutPinnedWidth
-    updateFrozenViewport(anchorNewOverflowAtTrailingEdge = anchorAtTrailingEdge)
+    val anchorAtTrailingEdge = pinnedColumnsWidth() > laidOutPinnedWidth
+    updatePinnedViewport(anchorNewOverflowAtTrailingEdge = anchorAtTrailingEdge)
   }
 }
 
-/** The width the columns get in [parent], without the row-number [gutterWidth], the vertical scroll bar and the borders. */
-internal fun containerColumnsWidth(parent: TableScrollPane, gutterWidth: Int): Int {
-  val insets = parent.insets
-  val viewportBorderInsets = parent.viewportBorder?.getBorderInsets(parent)
-  val verticalScrollBarWidth = parent.verticalScrollBar
+/** The width the columns get in [scrollPane], without the row-number [gutterWidth], the vertical scroll bar and the borders. */
+internal fun containerColumnsWidth(scrollPane: TableScrollPane, gutterWidth: Int): Int {
+  val insets = scrollPane.insets
+  val viewportBorderInsets = scrollPane.viewportBorder?.getBorderInsets(scrollPane)
+  val verticalScrollBarWidth = scrollPane.verticalScrollBar
     .takeIf { it.isVisible }
     ?.let { maxOf(it.width, it.preferredSize.width) } ?: 0
-  return parent.width - insets.left - insets.right -
+  return scrollPane.width - insets.left - insets.right -
          (viewportBorderInsets?.left ?: 0) - (viewportBorderInsets?.right ?: 0) -
          verticalScrollBarWidth - gutterWidth
 }
 
-/** The width of what [parent] shows in its row header, which is the row-number gutter while no strip is shown. */
-internal fun shownRowHeaderWidth(parent: TableScrollPane): Int {
-  val rowHeader = parent.rowHeader ?: return 0
+/** The width of what [scrollPane] shows in its row header, which is the row-number gutter while no strip is shown. */
+internal fun shownRowHeaderWidth(scrollPane: TableScrollPane): Int {
+  val rowHeader = scrollPane.rowHeader ?: return 0
   return rowHeader.extentSize.width.takeIf { it > 0 } ?: rowHeader.preferredSize.width
 }

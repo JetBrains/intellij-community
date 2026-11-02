@@ -7,11 +7,11 @@ import java.util.EventListener
 import java.util.TreeMap
 
 /**
- * The rows of the view that have a height of their own. Every table of the view applies them to itself, so a row has the same height in
- * both tables. That holds for a pinned table created after the resize too. Other rows use the uniform row height.
+ * Stores custom row heights by model row for both tables. A Swing table keeps its row heights to itself, so they live here, where a pinned
+ * table created later finds them too. Other rows use the uniform row height.
  *
- * A row is a row of the view's data model, as an `int`: a grid row, or a grid column in a transposed view. So neither
- * `ModelIndex<GridRow>` nor `ModelIndex<GridColumn>` would always be right. Heights are in pixels.
+ * A row is a model row of the view's data model, so its height follows its record through a sort or a filter. Rows stay `int`, as in a
+ * transposed view the model rows are grid columns.
  */
 internal class RowHeightModel {
   /** The height in pixels of each row that has one of its own, by model row. Sorted, so an insert or a delete shifts the rows after it. */
@@ -49,20 +49,20 @@ internal class RowHeightModel {
 
   /** Moves the heights with the rows. The tables move the heights they applied themselves, so this fires no event. */
   fun rowsInserted(firstModelRow: Int, lastModelRow: Int) {
-    shiftHeights(fromModelRow = firstModelRow, rowCount = lastModelRow - firstModelRow + 1)
+    shiftHeights(fromModelRow = firstModelRow, rowOffset = lastModelRow - firstModelRow + 1)
   }
 
   /** Drops the heights of the deleted rows and moves the others, without an event as [rowsInserted]. */
   fun rowsDeleted(firstModelRow: Int, lastModelRow: Int) {
     heightByModelRow.subMap(firstModelRow, true, lastModelRow, true).clear()
-    shiftHeights(fromModelRow = lastModelRow + 1, rowCount = firstModelRow - lastModelRow - 1)
+    shiftHeights(fromModelRow = lastModelRow + 1, rowOffset = firstModelRow - lastModelRow - 1)
   }
 
-  /** Moves the height of each row from [fromModelRow] on by [rowCount] rows, down for a positive count and up for a negative one. */
-  private fun shiftHeights(fromModelRow: Int, rowCount: Int) {
+  /** Moves the height of each row from [fromModelRow] on by [rowOffset] rows, down for a positive offset and up for a negative one. */
+  private fun shiftHeights(fromModelRow: Int, rowOffset: Int) {
     val moved = heightByModelRow.tailMap(fromModelRow, true)
     if (moved.isEmpty()) return
-    val shifted = moved.mapKeys { it.key + rowCount }
+    val shifted = moved.mapKeys { it.key + rowOffset }
     moved.clear()
     heightByModelRow.putAll(shifted)
   }

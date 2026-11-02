@@ -3,9 +3,9 @@ package com.intellij.database.run.ui.table
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.table.TableColumn
 
-/** Tells a column of the view, or a slice of the view's columns, whether the column is pinned, so that it keeps no pin state. */
+/** Which of the view's columns are pinned, by model index, as the view last set the pins. Columns and slices ask it and hold no pins. */
 @ApiStatus.Internal
 interface ColumnPins {
-  /** Answers from the pins the view last gave, by the column's model index; the column doesn't know the grid. */
+  /** Whether [column] is pinned. */
   fun isPinned(column: TableColumn): Boolean
 }

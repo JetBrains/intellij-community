@@ -27,7 +27,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,10 +57,13 @@ import static java.awt.event.InputEvent.ALT_DOWN_MASK;
 import static javax.swing.SwingUtilities.isLeftMouseButton;
 
 /**
+ * The view's row header: row numbers, or the column names while the grid is transposed. It follows the main table's rows and row heights.
+ * A press or a drag selects whole rows across both tables, and a drag on a row's edge resizes that row.
+ *
  * @author gregsh
  */
 public class TableResultRowHeader extends GridRowHeader {
-  private final DataGrid myResultPanel;
+  private final DataGrid myGrid;
   private final TableResultView myView;
   /** The main table, for row geometry, paint settings and its Swing row selection; grid operations go through {@link #myView}. */
   private final JBTable myTable;
@@ -77,7 +79,7 @@ public class TableResultRowHeader extends GridRowHeader {
 
   public TableResultRowHeader(@NotNull DataGrid grid, @NotNull TableResultView view, @Nullable ActionGroup popupActions) {
     super(view.rowHeaderTable(), () -> view.getShowHorizontalLines(), () -> view.rowHeaderTable().getShowLastHorizontalLine());
-    myResultPanel = grid;
+    myGrid = grid;
     myView = view;
     myTable = view.rowHeaderTable();
     myPopupActions = popupActions;
@@ -140,14 +142,14 @@ public class TableResultRowHeader extends GridRowHeader {
   private void paintCellEffects(Graphics g, int row, Rectangle cellRect) {
     CellAttributes attributes;
     if (isTransposed()) {
-      attributes = myResultPanel.getMarkupModel().getColumnHeaderAttributes(
-        ViewIndex.forColumn(myResultPanel, row).toModel(myResultPanel),
-        myResultPanel.getColorsScheme());
+      attributes = myGrid.getMarkupModel().getColumnHeaderAttributes(
+        ViewIndex.forColumn(myGrid, row).toModel(myGrid),
+        myGrid.getColorsScheme());
     }
     else {
-      attributes = myResultPanel.getMarkupModel().getRowHeaderAttributes(
-        ViewIndex.forRow(myResultPanel, row).toModel(myResultPanel),
-        myResultPanel.getColorsScheme());
+      attributes = myGrid.getMarkupModel().getRowHeaderAttributes(
+        ViewIndex.forRow(myGrid, row).toModel(myGrid),
+        myGrid.getColorsScheme());
     }
     if (attributes != null) {
       CellRenderingUtils.paintCellEffect(g, cellRect, attributes, DataGridUIUtil.softHighlightOf(attributes.getEffectColor()));
@@ -160,22 +162,23 @@ public class TableResultRowHeader extends GridRowHeader {
     int viewRowIdx = rowForPoint(point);
     if (viewRowIdx < 0 || !isTransposed()) return null;
 
-    ModelIndex<GridColumn> columnIdx = ModelIndex.forColumn(myResultPanel, myTable.convertRowIndexToModel(viewRowIdx));
-    return GridHelper.get(myResultPanel).getColumnTooltipHtml(myResultPanel, columnIdx);
+    ModelIndex<GridColumn> columnIdx = ModelIndex.forColumn(myGrid, myTable.convertRowIndexToModel(viewRowIdx));
+    return GridHelper.get(myGrid).getColumnTooltipHtml(myGrid, columnIdx);
   }
 
   private class GutterMouseListener extends PopupHandler {
     private boolean mySelectWhileDraggingInExclusiveMode;
     private int myResizingRow = -1;
-    private boolean myResizingColumn = false;
+    /** Whether a drag resizes the row header's own width, which only a transposed grid allows. */
+    private boolean myResizingWidth = false;
 
     @Override
     public void mouseClicked(MouseEvent e) {
       if (isTransposed() && isLeftMouseButton(e) && e.getModifiersEx() == ALT_DOWN_MASK) {
         int viewRow = myTable.rowAtPoint(e.getPoint());
-        int modelColumn = myResultPanel.getRawIndexConverter().column2Model().applyAsInt(viewRow);
-        DataGridSettings settings = GridUtil.getSettings(myResultPanel);
-        myView.toggleSortOrder(ModelIndex.forColumn(myResultPanel, modelColumn), settings == null || settings.isAddToSortViaAltClick());
+        int modelColumn = myGrid.getRawIndexConverter().column2Model().applyAsInt(viewRow);
+        DataGridSettings settings = GridUtil.getSettings(myGrid);
+        myView.toggleSortOrder(ModelIndex.forColumn(myGrid, modelColumn), settings == null || settings.isAddToSortViaAltClick());
         return;
       }
       if (isLeftMouseButton(e) && e.getClickCount() % 2 == 0) {
@@ -191,9 +194,9 @@ public class TableResultRowHeader extends GridRowHeader {
       int viewRow = myTable.rowAtPoint(point);
       if (viewRow < 0) return;
       if (isTransposed()) {
-        int modelColumn = myResultPanel.getRawIndexConverter().column2Model().applyAsInt(viewRow);
+        int modelColumn = myGrid.getRawIndexConverter().column2Model().applyAsInt(viewRow);
         if (modelColumn >= 0) {
-          myView.invokeColumnPopup(ModelIndex.forColumn(myResultPanel, modelColumn), comp, point);
+          myView.invokeColumnPopup(ModelIndex.forColumn(myGrid, modelColumn), comp, point);
         }
       }
       else if (myPopupActions != null) {
@@ -201,7 +204,7 @@ public class TableResultRowHeader extends GridRowHeader {
         menu.getComponent().show(comp, x, y);
       }
       else {
-        int modelRow = myResultPanel.getRawIndexConverter().row2Model().applyAsInt(viewRow);
+        int modelRow = myGrid.getRawIndexConverter().row2Model().applyAsInt(viewRow);
         if (modelRow >= 0) {
           myView.invokeRowPopup(comp, x, y);
         }
@@ -210,7 +213,7 @@ public class TableResultRowHeader extends GridRowHeader {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (shouldResizeColumn(e)) {
+      if (shouldResizeWidth(e)) {
         setCursor(Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR));
       }
       else if (shouldResizeRow(e)) {
@@ -225,14 +228,14 @@ public class TableResultRowHeader extends GridRowHeader {
       return getRowToResize(e) != -1;
     }
 
-    private boolean shouldResizeColumn(MouseEvent e) {
+    private boolean shouldResizeWidth(MouseEvent e) {
       return isTransposed() && e.getX() >= (getWidth() - 5) && e.getX() <= getWidth();
     }
 
     @Override
     public void mousePressed(MouseEvent e) {
-      if (shouldResizeColumn(e)) {
-        myResizingColumn = true;
+      if (shouldResizeWidth(e)) {
+        myResizingWidth = true;
       }
       else {
         int rowToResize = getRowToResize(e);
@@ -240,7 +243,7 @@ public class TableResultRowHeader extends GridRowHeader {
           myResizingRow = rowToResize;
         }
         else {
-          myResultPanel.getAutoscrollLocker().runWithLock(() -> processSelectionEvent(e, false));
+          myGrid.getAutoscrollLocker().runWithLock(() -> processSelectionEvent(e, false));
         }
       }
       super.mousePressed(e);
@@ -249,13 +252,13 @@ public class TableResultRowHeader extends GridRowHeader {
     @Override
     public void mouseReleased(MouseEvent e) {
       myResizingRow = -1;
-      myResizingColumn = false;
+      myResizingWidth = false;
       super.mouseReleased(e);
     }
 
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
-      if (myResizingColumn) {
+      if (myResizingWidth) {
         TableResultRowHeader.this.updatePreferredSize(e.getX(), true);
         TableResultRowHeader.this.revalidate();
         TableResultRowHeader.this.repaint();
@@ -277,7 +280,7 @@ public class TableResultRowHeader extends GridRowHeader {
       int rowAtPoint = rowForPoint(e.getPoint());
       if (rowAtPoint == -1) return -1;
 
-      // resize area is 6px
+      // A point within 4 px of a row's bottom edge, on either side, resizes that row.
       Rectangle cellRect = myTable.getCellRect(rowAtPoint, 0, true);
       int yInCellRect = e.getY() - cellRect.y;
       return yInCellRect < 4 ? (rowAtPoint == 0 ? -1 : rowAtPoint - 1) :
@@ -291,39 +294,38 @@ public class TableResultRowHeader extends GridRowHeader {
         return;
       }
       boolean selected = processSelectionEventInternal(e, isDragEvent, currentRow);
-      // Typing then edits the lead cell, which the pinned table may show.
+      // Typing then edits the lead cell, which the pinned table may show. The row header isn't a table, so it asks for the focus itself.
       JComponent focusTarget = myView.leadColumnTable();
-      if (!focusTarget.hasFocus()) IdeFocusManager.getInstance(myResultPanel.getProject()).requestFocus(focusTarget, true);
-      myResultPanel.getHiddenColumnSelectionHolder().setWholeRowSelected(!isTransposed() && selected);
+      if (!focusTarget.hasFocus()) IdeFocusManager.getInstance(myGrid.getProject()).requestFocus(focusTarget, true);
+      myGrid.getHiddenColumnSelectionHolder().setWholeRowSelected(!isTransposed() && selected);
       e.consume();
     }
 
     private boolean processSelectionEventInternal(MouseEvent e, boolean isDragEvent, int currentRow) {
       boolean interval = GridUtil.isIntervalModifierSet(e);
       boolean exclusive = GridUtil.isExclusiveModifierSet(e);
-      TableSelectionModel selectionModel = ObjectUtils.tryCast(myResultPanel.getSelectionModel(), TableSelectionModel.class);
-      if (selectionModel == null) return false;
-      TableColumnModel columns = myView.getGridColumnModel();
+      TableSelectionModel selectionModel = myView.selectionModel();
+      TableColumnModel gridColumns = myView.getViewColumnModel();
       if (interval) {
         int lead = myTable.getSelectionModel().getLeadSelectionIndex();
         if (exclusive) {
           selectionModel.addRowSelectionInterval(currentRow, lead);
-          selectionModel.addColumnSelectionInterval(columns.getColumnCount() - 1, 0);
+          selectionModel.addColumnSelectionInterval(gridColumns.getColumnCount() - 1, 0);
         }
         else {
           selectionModel.setRowSelectionInterval(currentRow, lead);
-          selectionModel.setColumnSelectionInterval(columns.getColumnCount() - 1, 0);
+          selectionModel.setColumnSelectionInterval(gridColumns.getColumnCount() - 1, 0);
         }
         return true;
       }
       else if (exclusive) {
         if (!isDragEvent) {
           mySelectWhileDraggingInExclusiveMode = !myTable.isRowSelected(currentRow) ||
-                                                 columns.getSelectedColumnCount() != columns.getColumnCount();
+                                                 gridColumns.getSelectedColumnCount() != gridColumns.getColumnCount();
         }
         if (mySelectWhileDraggingInExclusiveMode) {
-          selectionModel.addRowSelection(ModelIndexSet.forRows(myResultPanel, currentRow));
-          selectionModel.addColumnSelectionInterval(columns.getColumnCount() - 1, 0);
+          selectionModel.addRowSelection(ModelIndexSet.forRows(myGrid, currentRow));
+          selectionModel.addColumnSelectionInterval(gridColumns.getColumnCount() - 1, 0);
         }
         else {
           myTable.removeRowSelectionInterval(currentRow, currentRow);
@@ -333,16 +335,16 @@ public class TableResultRowHeader extends GridRowHeader {
       else {
         int lead = isDragEvent ? myTable.getSelectionModel().getLeadSelectionIndex() : currentRow;
         selectionModel.setRowSelectionInterval(currentRow, lead);
-        selectionModel.setColumnSelectionInterval(columns.getColumnCount() - 1, 0);
+        selectionModel.setColumnSelectionInterval(gridColumns.getColumnCount() - 1, 0);
         return true;
       }
     }
 
     private void toggleColumnSorting(MouseEvent e) {
-      if (!e.isConsumed() && isTransposed() && myResultPanel.isSortViaOrderBy()) {
-        ViewIndex<GridColumn> viewIndex = ViewIndex.forColumn(myResultPanel, rowForPoint(e.getPoint()));
-        ModelIndex<GridColumn> idx = viewIndex.toModel(myResultPanel);
-        myResultPanel.toggleSortColumns(Collections.singletonList(idx), false);
+      if (!e.isConsumed() && isTransposed() && myGrid.isSortViaOrderBy()) {
+        ViewIndex<GridColumn> viewIndex = ViewIndex.forColumn(myGrid, rowForPoint(e.getPoint()));
+        ModelIndex<GridColumn> idx = viewIndex.toModel(myGrid);
+        myGrid.toggleSortColumns(Collections.singletonList(idx), false);
         e.consume();
       }
     }
@@ -385,13 +387,13 @@ public class TableResultRowHeader extends GridRowHeader {
     @Override
     public Color getBackground() {
       Color background = isTransposed() ?
-                         myResultPanel.getColorModel().getColumnHeaderBackground(getColumnModelIndex()) :
-                         myResultPanel.getColorModel().getRowHeaderBackground(getRowModelIndex());
+                         myGrid.getColorModel().getColumnHeaderBackground(getColumnModelIndex()) :
+                         myGrid.getColorModel().getRowHeaderBackground(getRowModelIndex());
       if (background != null) {
         return background;
       }
-      Color hoveredColor = myTable.getShowHorizontalLines() || myTable.isStriped() ? null : myResultPanel.getHoveredRowBackground();
-      Color stripedColor = myTable.isStriped() ? myResultPanel.getStripeRowBackground() : null;
+      Color hoveredColor = myTable.getShowHorizontalLines() || myTable.isStriped() ? null : myGrid.getHoveredRowBackground();
+      Color stripedColor = myTable.isStriped() ? myGrid.getStripeRowBackground() : null;
       return hoveredColor != null && myRow == TableHoverListener.getHoveredRow(myTable)
              ? hoveredColor
              : stripedColor != null && myRow % 2 == 0
@@ -402,8 +404,8 @@ public class TableResultRowHeader extends GridRowHeader {
     @Override
     public Color getForeground() {
       return isTransposed() ?
-             myResultPanel.getColorModel().getColumnHeaderForeground(getColumnModelIndex()) :
-             myResultPanel.getColorModel().getRowHeaderForeground(getRowModelIndex());
+             myGrid.getColorModel().getColumnHeaderForeground(getColumnModelIndex()) :
+             myGrid.getColorModel().getRowHeaderForeground(getRowModelIndex());
     }
 
     private void paintBackground(Graphics g) {
@@ -415,12 +417,12 @@ public class TableResultRowHeader extends GridRowHeader {
 
     private @NotNull ModelIndex<GridRow> getRowModelIndex() {
       assert !isTransposed();
-      return ModelIndex.forRow(myResultPanel, myResultPanel.getRawIndexConverter().row2Model().applyAsInt(myRow));
+      return ModelIndex.forRow(myGrid, myGrid.getRawIndexConverter().row2Model().applyAsInt(myRow));
     }
 
     private @NotNull ModelIndex<GridColumn> getColumnModelIndex() {
       assert isTransposed();
-      return ModelIndex.forColumn(myResultPanel, myResultPanel.getRawIndexConverter().column2Model().applyAsInt(myRow));
+      return ModelIndex.forColumn(myGrid, myGrid.getRawIndexConverter().column2Model().applyAsInt(myRow));
     }
   }
 
@@ -459,7 +461,7 @@ public class TableResultRowHeader extends GridRowHeader {
     }
 
     private @NotNull String getRowNumberString() {
-      return GridUtil.getRowName(myResultPanel, getRow());
+      return GridUtil.getRowName(myGrid, getRow());
     }
 
     protected void drawEffects(Graphics g, Rectangle r) {
@@ -494,8 +496,8 @@ public class TableResultRowHeader extends GridRowHeader {
       assert isTransposed();
 
       ModelIndex<GridColumn> modelColumnIdx =
-        ViewIndex.forColumn(myResultPanel, viewRowIdx).toModel(myResultPanel);
-      GridColumn column = myResultPanel.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(modelColumnIdx);
+        ViewIndex.forColumn(myGrid, viewRowIdx).toModel(myGrid);
+      GridColumn column = myGrid.getDataModel(DataAccessType.DATA_WITH_MUTATIONS).getColumn(modelColumnIdx);
       if (column == null) return;
 
       Font font = myTable.getTableHeader().getFont();
@@ -505,19 +507,19 @@ public class TableResultRowHeader extends GridRowHeader {
       myNameLabel.setForeground(fg);
       mySortLabel.setForeground(fg);
 
-      Icon icon = GridHelper.get(myResultPanel).getColumnIcon(myResultPanel, column, forDisplay);
+      Icon icon = GridHelper.get(myGrid).getColumnIcon(myGrid, column, forDisplay);
       myNameLabel.setIcon(icon);
-      String displayTypeName = isBinary(modelColumnIdx, myResultPanel) ?
-                               " (" + myResultPanel.getDisplayType(modelColumnIdx).getName() + ")" :
+      String displayTypeName = isBinary(modelColumnIdx, myGrid) ?
+                               " (" + myGrid.getDisplayType(modelColumnIdx).getName() + ")" :
                                "";
-      myNameLabel.setText(myResultPanel.getName(column) + displayTypeName);
+      myNameLabel.setText(myGrid.getName(column) + displayTypeName);
 
       mySortLabel.setText("");
       mySortLabel.setIcon(null);
-      if (myResultPanel.isSortViaOrderBy() && myResultPanel.getComparator(modelColumnIdx) != null) {
-        int sortOrder = myResultPanel.getSortOrder(column);
+      if (myGrid.isSortViaOrderBy() && myGrid.getComparator(modelColumnIdx) != null) {
+        int sortOrder = myGrid.getSortOrder(column);
         mySortLabel.setIcon(GridTable.getSortOrderIcon(sortOrder));
-        mySortLabel.setText(myResultPanel.countSortedColumns() > 1 ? GridTable.getSortOrderText(sortOrder) : "");
+        mySortLabel.setText(myGrid.countSortedColumns() > 1 ? GridTable.getSortOrderText(sortOrder) : "");
       }
     }
 
@@ -544,10 +546,11 @@ public class TableResultRowHeader extends GridRowHeader {
     @Override
     public Component getRendererComponent(int row, boolean forDisplay) {
       RowHeaderCellComponentBase c = isTransposed() ? myTransposed : myRegular;
-      int li = isLeftSide() ? 1 : 0; //left indicator
-      int ri = 1 - li; //right indicator
+      // A line on the side that faces the table.
+      int rightLine = isLeftSide() ? 1 : 0;
+      int leftLine = 1 - rightLine;
       c.setBorder(BorderFactory.createCompoundBorder(
-        new CustomLineBorder(myTable.getGridColor(), 0, ri, 0, li),
+        new CustomLineBorder(myTable.getGridColor(), 0, leftLine, 0, rightLine),
         JBUI.Borders.empty(0, 8)));
 
       c.setRow(row, forDisplay);

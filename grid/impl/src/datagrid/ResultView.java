@@ -8,16 +8,25 @@ import com.intellij.find.FindModel;
 import com.intellij.find.SearchSession;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.AbstractAction;
 import javax.swing.JComponent;
+import javax.swing.JScrollPane;
+import javax.swing.JViewport;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
+import java.awt.Color;
 import java.awt.Component;
+import java.awt.Font;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -25,7 +34,8 @@ import java.util.function.Consumer;
 public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, GridColumn>, GridSearchSession.Listener, Disposable,
                                     LocalFilterState.Listener, ColumnHierarchyListener {
   /**
-   * The component that shows the view's main cells and receives its focus and input.
+   * The view's root, which holds its cells and carries the view's client properties.
+   * Focus goes to {@link #getPreferredFocusedComponent()}, not to this component.
    * {@link ResultViewFactory#wrap} returns the component that goes into the grid layout.
    */
   @NotNull
@@ -99,6 +109,7 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
   @NotNull
   RawIndexConverter getRawIndexConverter();
 
+  /** Adds a mouse listener to the components that show the view's cells and to the empty space around them. */
   void addMouseListenerToComponents(@NotNull MouseListener listener);
 
   boolean supportsCustomSearchSession();
@@ -108,11 +119,74 @@ public interface ResultView extends CoreResultView, GridModel.Listener<GridRow, 
 
   default void searchSessionStarted(@NotNull SearchSession searchSession) { }
 
+  /** The component that takes focus, for focus requests and platform focus APIs only. Ask it at each request and never store it. */
   default @NotNull JComponent getPreferredFocusedComponent() {
     return getComponent();
   }
 
-  /** Whether the view has the focus; a view that shows its cells in more than one component counts each of them. */
+  /**
+   * Whether {@code component} is part of the view: its cells or row numbers, and in some views its headers.
+   * The default counts the preferred focused component and the row header of the scroll pane around it.
+   */
+  default boolean isViewComponent(@NotNull Component component) {
+    JComponent focus = getPreferredFocusedComponent();
+    if (SwingUtilities.isDescendingFrom(component, focus)) return true;
+    JScrollPane scrollPane = ComponentUtil.getParentOfType(JScrollPane.class, focus);
+    JViewport rowHeader = scrollPane == null ? null : scrollPane.getRowHeader();
+    return rowHeader != null && SwingUtilities.isDescendingFrom(component, rowHeader);
+  }
+
+  /** A one-step move of the lead cell: down or up a row, or to the next or previous cell as Tab and Shift+Tab do. */
+  enum LeadMove { NEXT_ROW, PREVIOUS_ROW, NEXT_CELL, PREVIOUS_CELL }
+
+  /**
+   * Moves the lead cell one step, as the key bound to {@code move} does in the view's cells. A cell editor that consumed the key calls
+   * this. The default does nothing: only a view with cell editors gets this call.
+   */
+  default void moveLead(@NotNull LeadMove move) { }
+
+  /** The font of the view's cells; the text cell renderer takes its size. */
+  default @NotNull Font getCellFont() {
+    return getPreferredFocusedComponent().getFont();
+  }
+
+  /** The foreground of the view's cells and headers. */
+  default @NotNull Color getForeground() {
+    return getComponent().getForeground();
+  }
+
+  /** The background of the view's cells. */
+  default @NotNull Color getBackground() {
+    return getComponent().getBackground();
+  }
+
+  /** Lets the view's cells fill the space they get while the grid's data has no columns, and take their own size otherwise. */
+  void updateCellsPreferredSize();
+
+  /**
+   * Adds a mouse listener to the components that show the view's cells, without the empty space around them. The default adds it to
+   * {@link #getComponent()}.
+   */
+  default void addMouseListenerToCells(@NotNull MouseListener listener) {
+    getComponent().addMouseListener(listener);
+  }
+
+  /** Adds a mouse motion listener to the components that show the view's cells. The default adds it to {@link #getComponent()}. */
+  default void addMouseMotionListenerToCells(@NotNull MouseMotionListener listener) {
+    getComponent().addMouseMotionListener(listener);
+  }
+
+  /** Adds a focus listener to the components that take the focus for the view's cells, until {@code parent} goes. */
+  default void addFocusListenerToCells(@NotNull FocusListener listener, @NotNull Disposable parent) {
+    JComponent cells = getPreferredFocusedComponent();
+    cells.addFocusListener(listener);
+    Disposer.register(parent, () -> cells.removeFocusListener(listener));
+  }
+
+  /**
+   * Whether the view has the focus. The default asks {@link #getComponent()}; a view whose focus goes to another component, or to one of
+   * several, overrides this.
+   */
   default boolean hasFocus() {
     return getComponent().hasFocus();
   }

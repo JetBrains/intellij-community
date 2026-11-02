@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.DocumentAdapter
+import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.scale.JBUIScale
@@ -25,7 +26,6 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
-import java.awt.Toolkit
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.awt.event.InputEvent
@@ -205,7 +205,7 @@ class LocalFilterPopup(
     .setMinSize(Dimension(JBUIScale.scale(200), JBUIScale.scale(200)))
     .setLocateWithinScreenBounds(false)
     .createPopup().apply {
-      val screenWidth = Toolkit.getDefaultToolkit().screenSize.width
+      val screenWidth = ScreenUtil.getScreenRectangle(grid.panel.component).width
       setSize(Dimension(min(screenWidth / 2, valueColumn.width + countColumn.width + popupPanel.insets.width), JBUIScale.scale(500)))
     }
 
@@ -274,11 +274,11 @@ class LocalFilterPopup(
 
     column.setMinWidth(c.minimumSize.width)
     val preferredWidth = c.preferredSize.width.coerceAtLeast(
-      items.asSequence().map { item ->
+      items.maxOfOrNull { item ->
         info.getCustomizedRenderer(item, null)
           .getTableCellRendererComponent(null, info.valueOf(item), false, false, 0, 0)
           .preferredSize.width
-      }.maxOrNull() ?: 0
+      } ?: 0
     ) + JBUIScale.scale(10)
 
     column.setPreferredWidth(preferredWidth)

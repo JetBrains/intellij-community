@@ -23,7 +23,7 @@ internal class AdjustColumnsAfterMoveInData(
 
   private val columnWidths = originallyVisibleColumns
     .mapTo(mutableListOf()) { modelIndex ->
-      val width = columns.getLayoutColumn(modelIndex)?.columnWidth ?: 0
+      val width = columns.shownColumn(modelIndex)?.columnWidth ?: 0
       Pair(modelIndex, width)
     }
     .toMap()
@@ -37,7 +37,7 @@ internal class AdjustColumnsAfterMoveInData(
   private fun toOriginalIndex(idx: Int): Int {
     val left = min(from, to)
     val right = max(from, to)
-    if (idx < left || idx > right) {
+    if (idx !in left..right) {
       return idx
     }
     if (idx == to) {
@@ -90,7 +90,7 @@ internal class AdjustColumnsAfterMoveInData(
     // Restore widths
     grid.visibleColumns.asIterable().forEach { modelIndex ->
       val originalIndex = toOriginalIndex(modelIndex)
-      columns.getLayoutColumn(modelIndex)?.columnWidth = columnWidths[originalIndex]!!
+      columns.shownColumn(modelIndex)?.columnWidth = columnWidths[originalIndex]!!
     }
 
     // Restore attributes (sortOrder, filter, displayType)

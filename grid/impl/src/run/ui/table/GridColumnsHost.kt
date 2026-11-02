@@ -4,14 +4,17 @@ import com.intellij.database.datagrid.ModelIndexSet
 import com.intellij.database.run.ui.ColumnMove
 
 /**
- * Requests that [GridColumns] sends to the view that owns it. The view passes them on to the grid, which identifies a view's
- * column order by the view itself, and to its column layout. [GridColumns] holds no view, table or layout of its own.
+ * What [GridColumns] needs from the view that owns it: one request, to apply the grid's column order, and three notifications.
+ * [GridColumns] holds no view, table or layout of its own.
  */
 internal interface GridColumnsHost {
-  /** Puts the columns in the grid's display order, and tells whether the grid did, which it does only for its current view. */
+  /**
+   * Asks the grid to put the columns in its display order, and returns whether it did. The grid does so only for its current, untransposed
+   * view.
+   */
   fun applyColumnsDisplayOrder(): Boolean
 
-  /** The user moved a column in a header, which the grid records in its display order. */
+  /** A column moved in the view's column model. The grid records the move in its display order, except a move that it makes itself. */
   fun columnMoved(move: ColumnMove)
 
   /** [columns] are shown for the first time, so the column layout sizes them; they are grid rows in a transposed view. */

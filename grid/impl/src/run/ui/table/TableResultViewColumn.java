@@ -66,12 +66,13 @@ public abstract class TableResultViewColumn extends TableColumn implements Resul
     if (isPinned()) setWidth(width);
   }
 
-  /** Width this column takes in the pinned strip: a user width wins, otherwise the wider of laid-out and preferred. */
-  int getFrozenStripWidth() {
+  /** The width this column takes when pinned: a user width wins, otherwise the wider of laid-out and preferred. */
+  int getPinnedWidth() {
     return myWidthSetByUser ? getColumnWidth() : Math.max(getWidth(), getColumnWidth());
   }
 
-  void setFrozenColumnWidth(int width, boolean widthSetByUser) {
+  /** Locks the width of a pinned column, which the column layout then leaves alone. */
+  void setPinnedWidth(int width, boolean widthSetByUser) {
     myWidthSetByUser = widthSetByUser;
     myWidthLockedForLayout = true;
     setPreferredWidth(width);

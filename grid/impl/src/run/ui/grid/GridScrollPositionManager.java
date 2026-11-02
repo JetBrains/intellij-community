@@ -8,10 +8,20 @@ import com.intellij.database.datagrid.ResultView;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
+/** Stores, restores and changes the grid's scroll position. */
 public interface GridScrollPositionManager {
   String SCROLL_POSITION_MANAGER_KEY = "GridScrollPositionManager";
 
   void scrollSelectionToVisible();
+
+  /** Scrolls the scrolling part as little as needed to show its first selected cell, or its top left cell with no selection. */
+  void scrollFirstSelectedCellToVisible();
+
+  /**
+   * Scrolls the scrolling part as little as needed to show one of its cells. {@code row} and {@code column} are its own indices, as its
+   * {@code rowAtPoint} and {@code columnAtPoint} give them, not grid indices.
+   */
+  void scrollTableCellToVisible(int row, int column);
 
   static @NotNull GridScrollPositionManager get(@NotNull ResultView resultView, @NotNull DataGrid grid) {
     GridScrollPositionManager manager =
@@ -42,6 +52,14 @@ public interface GridScrollPositionManager {
 
     @Override
     public void scrollSelectionToVisible() {
+    }
+
+    @Override
+    public void scrollFirstSelectedCellToVisible() {
+    }
+
+    @Override
+    public void scrollTableCellToVisible(int row, int column) {
     }
 
     @Override
