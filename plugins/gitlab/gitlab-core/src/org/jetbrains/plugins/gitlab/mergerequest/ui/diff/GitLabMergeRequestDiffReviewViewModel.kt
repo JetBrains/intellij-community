@@ -101,8 +101,11 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
 
   override val locationsWithNewDiscussions: StateFlow<Set<DiffLineLocation>> =
     discussionsContainer.newDiscussions
-      .flatMapLatestEach {
-        it.position.mapNotNull { pos -> pos.mapToLocation(diffData)?.let { DiffLineLocation(it.side, it.lineIdx) } }
+      .flatMapLatestEach { noteVm ->
+        noteVm.position.mapNotNull { pos ->
+          pos.position.mapToLocation(diffData, Side.LEFT)
+            ?.let { (val side, val lineIdx) -> DiffLineLocation(side, lineIdx) }
+        }
       }.map { locations -> locations.toSet() }
       .stateInNow(cs, emptySet())
 
