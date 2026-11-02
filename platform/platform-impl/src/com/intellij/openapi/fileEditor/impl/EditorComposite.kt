@@ -730,7 +730,7 @@ open class EditorComposite internal constructor(
     get() = java.util.List.copyOf(fileEditorWithProviders.value)
 
   fun getTopComponents(editor: FileEditor): List<JComponent> {
-    return topComponents.get(editor)!!.components.mapNotNull { (it as? NonOpaquePanel)?.targetComponent }
+    return topComponents.get(editor)!!.components.mapNotNull { (it as? Wrapper)?.targetComponent }
   }
 
   internal fun containsFileEditor(editor: FileEditor): Boolean = fileEditorWithProviders.value.any { it.fileEditor === editor }
