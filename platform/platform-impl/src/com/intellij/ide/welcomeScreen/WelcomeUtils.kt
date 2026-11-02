@@ -18,7 +18,10 @@ import com.intellij.openapi.wm.ex.ProjectFrameCapabilitiesService
 import com.intellij.openapi.wm.ex.ProjectFrameCapability
 import com.intellij.openapi.wm.ex.WelcomeScreenProjectProvider
 import com.intellij.openapi.wm.ex.getWelcomeScreenProjectProvider
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Component
+import java.awt.Graphics
 import java.io.IOException
 import java.nio.file.Path
 import javax.swing.Icon
@@ -85,7 +88,17 @@ object WelcomeUtils {
 
   fun getWelcomeProjectIcon(project: Project): Icon? {
     if (WelcomeAccessPoint.isAvailable() && isWelcomeProject(project)) {
-      return AllIcons.General.Home
+      return object : Icon {
+        private val icon = AllIcons.General.Home
+
+        override fun paintIcon(c: Component, g: Graphics, x: Int, y: Int) {
+          icon.paintIcon(c, g, x, y - JBUI.scale(1))
+        }
+
+        override fun getIconWidth() = icon.iconWidth
+
+        override fun getIconHeight() = icon.iconHeight
+      }
     }
     return null
   }
