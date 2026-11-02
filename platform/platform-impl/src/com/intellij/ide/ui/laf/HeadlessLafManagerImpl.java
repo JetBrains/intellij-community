@@ -10,6 +10,7 @@ import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.components.BasicOptionButtonUI;
 import com.intellij.ui.components.DarculaSearchFieldWithExtensionUI;
 import com.intellij.ui.components.DefaultLinkButtonUI;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import com.intellij.ui.tree.ui.DefaultTreeUI;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
@@ -57,7 +58,7 @@ final class HeadlessLafManagerImpl extends LafManager {
 
   @Override
   public ListCellRenderer<LafReference> getLookAndFeelCellRenderer(JComponent component) {
-    return null;
+    return BuilderKt.textListCellRenderer("", reference -> reference.name);
   }
 
   @Override

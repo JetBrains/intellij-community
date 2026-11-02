@@ -6,7 +6,6 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.useCopy
 import com.intellij.util.ui.JBUI
 import java.awt.Color
-import java.awt.Dimension
 import java.awt.GradientPaint
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -54,8 +53,7 @@ internal class ToolWindowLayoutDiagramPanel : JPanel() {
 
   init {
     preferredSize = JBUI.size(270, 170)
-    minimumSize = JBUI.size(240, 140)
-    maximumSize = Dimension(JBUI.scale(320), JBUI.scale(220))
+    minimumSize = preferredSize
     isOpaque = false
   }
 

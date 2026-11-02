@@ -44,7 +44,6 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.MacCustomAppIcon
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
@@ -481,7 +480,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           {
             val diagram = ToolWindowLayoutDiagramPanel()
             cell(diagram)
-              .align(Align.FILL)
               .onApply {
                 diagram.wideScreenSupport = settings.wideScreenSupport
                 diagram.leftHorizontalSplit = settings.leftHorizontalSplit
