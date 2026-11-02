@@ -2083,6 +2083,7 @@ c:com.intellij.codeInspection.ex.ProblemDescriptorImpl
 - getHintAction():com.intellij.codeInspection.HintAction
 f:com.intellij.codeInspection.ex.ProblemDescriptorUserDataKt
 - sf:FINGERPRINT_DATA:com.intellij.openapi.util.Key
+- sf:VULNERABILITY_IDS:com.intellij.openapi.util.Key
 f:com.intellij.codeInspection.ex.ReportConverterUtil
 - <init>():V
 - s:getReportConverter(java.lang.String):com.intellij.codeInspection.InspectionsReportConverter
