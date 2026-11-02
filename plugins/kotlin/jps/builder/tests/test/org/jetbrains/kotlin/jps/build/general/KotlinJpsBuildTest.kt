@@ -16,6 +16,7 @@ import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.jps.incremental.messages.BuildMessage
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.config.JvmDefaultMode
 import org.jetbrains.kotlin.config.KotlinFacetSettings
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -475,6 +476,20 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
     }
     finally {
       System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
+    }
+  }
+
+  @WorkingDir("KotlinProjectTwoFilesInOnePackage")
+  @Test
+  fun testCompileAllWithoutIncrementalCompilation() {
+    doTest()
+
+    System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "false")
+    try {
+      checkWhen(createTouchAction("src/test1.kt"), arrayOf("src/test1.kt", "src/test2.kt"), null)
+    }
+    finally {
+      System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
     }
   }
 

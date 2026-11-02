@@ -9,6 +9,7 @@ import org.jetbrains.jps.model.java.JpsJavaLibraryType
 import org.jetbrains.jps.model.java.JpsJavaSdkType
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -25,6 +26,7 @@ class KotlinJpsBuilderTest : JpsBuildTestBase() {
   fun setUpKotlinJpsBuilderTest() {
     KotlinBtaImplementation.CURRENT.install()
     System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
+    System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
   }
 
   @Test

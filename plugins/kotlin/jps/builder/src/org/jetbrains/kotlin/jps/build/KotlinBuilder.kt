@@ -293,7 +293,9 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         }
         val compilerVersion = session.kotlinToolchains.getCompilerVersion()
 
-        if (needsChunkRebuild(context, kotlinChunk, kotlinDirtyFilesHolder, compilerVersion)) {
+        if (needsChunkRebuild(context, kotlinChunk, kotlinDirtyFilesHolder, compilerVersion) ||
+            needsChunkRebuildWithoutIncrementalCompilation(context, kotlinChunk, kotlinDirtyFilesHolder)
+        ) {
             return ExitCode.CHUNK_REBUILD_REQUIRED
         }
 
@@ -336,6 +338,25 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         JavaBuilderUtil.registerSuccessfullyCompiled(context, kotlinDirtyFilesHolder.allDirtyFiles)
         LOG.info("Compiled successfully")
         return ExitCode.OK
+    }
+
+    /**
+     * With the incremental compilation off in the IDE settings, each change compiles all Kotlin sources of the chunk, as in
+     * the legacy Kotlin JPS plugin. The IDE then does not pass `kotlin.incremental.compilation=true`. The setting is the
+     * usual workaround for an error of the incremental compilation.
+     */
+    private fun needsChunkRebuildWithoutIncrementalCompilation(
+        context: CompileContext,
+        kotlinChunk: KotlinChunk,
+        dirtyFilesHolder: KotlinDirtySourceFilesHolder,
+    ): Boolean {
+        if (IncrementalCompilation.isEnabledForJvm() || JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) return false
+
+        // JPS rebuilds a chunk only once per build, so all sources are dirty in the second pass
+        val target = kotlinChunk.targets.firstOrNull { dirtyFilesHolder.getDirtyFiles(it.jpsModuleBuildTarget).size < it.sources.size }
+                     ?: return false
+        LOG.info("The incremental compilation is off and $target has sources that are not dirty: rebuilding ${kotlinChunk.presentableShortName}")
+        return true
     }
 
     /**

@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.util.JpsPathUtil
+import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.jps.build.KotlinBtaImplementation
 import org.jetbrains.kotlin.jps.build.KotlinBuilder
 import org.jetbrains.kotlin.jps.build.KotlinJpsTestData
@@ -63,6 +64,7 @@ abstract class KotlinJpsBuildTestBase : JpsBuildTestBase() {
   @BeforeEach
   fun setUpKotlinJpsBuildTest(testInfo: TestInfo) {
     System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
+    System.setProperty(IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY, "true")
     btaImplementation.install()
 
     val workingDir = testInfo.testMethod.get().getAnnotation(WorkingDir::class.java)?.name ?: getTestName(false)
