@@ -1,9 +1,13 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.util.ui.EDT;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -16,6 +20,7 @@ import org.junit.runners.JUnit4;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @RunWith(JUnit4.class)
 public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
@@ -45,6 +50,29 @@ public class UpdateBreakpointsAfterRenameTest extends XBreakpointsTestCase {
     final XLineBreakpoint<?> b = putBreakpoint(file);
     rename(file.getParent(), "dir2");
     assertTrue(b.getFileUrl().endsWith("dir2/x.txt"));
+  }
+
+  @Test
+  public void testDeleteFile() throws IOException {
+    final VirtualFile file = createFile("file.txt");
+    final XLineBreakpoint<?> breakpoint = putBreakpoint(file);
+    AtomicBoolean breakpointRemoved = new AtomicBoolean();
+    AtomicBoolean breakpointRemovedOnEdt = new AtomicBoolean();
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(XBreakpointListener.TOPIC, new XBreakpointListener<>() {
+      @Override
+      public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
+        if (removedBreakpoint == breakpoint) {
+          breakpointRemoved.set(true);
+          breakpointRemovedOnEdt.set(EDT.isCurrentThreadEdt());
+        }
+      }
+    });
+
+    WriteAction.runAndWait(() -> file.delete(this));
+
+    assertTrue(breakpointRemoved.get());
+    assertFalse(breakpointRemovedOnEdt.get());
+    assertFalse(getAllBreakpoints().contains(breakpoint));
   }
 
   private XLineBreakpoint<?> putBreakpoint(final VirtualFile file) {

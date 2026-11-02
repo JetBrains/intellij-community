@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileUrlChangeAdapter;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
-import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
+import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapterBackgroundable;
 import com.intellij.platform.debugger.impl.rpc.XBreakpointId;
 import com.intellij.platform.debugger.impl.shared.BreakpointRequestCounter;
 import com.intellij.platform.debugger.impl.shared.proxy.XLineBreakpointProxy;
@@ -149,7 +149,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
       }
     });
 
-    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkVirtualFileListenerAdapter(new VirtualFileUrlChangeAdapter() {
+    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES_BG, new BulkVirtualFileListenerAdapterBackgroundable(new VirtualFileUrlChangeAdapter() {
       @Override
       public void fileDeleted(@NotNull VirtualFileEvent event) {
         myLineBreakpointManager.onFileDeleted(event.getFile());
