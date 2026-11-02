@@ -199,7 +199,7 @@ final class SettingsHelper {
       args = ArrayUtil.mergeArrays(args, "--remote-debugging-port=0", "--remote-allow-origins=*");
     }
 
-    if (Registry.is("ide.browser.jcef.component.update.disable")) {
+    if (Registry.is("ide.browser.jcef.component.update.disable", false)) {
       args = ArrayUtil.mergeArrays(args, "--disable-component-update");
     }
 
