@@ -181,24 +181,24 @@ public final class SourceCodeChecker {
       i++;
       try {
         for (Location loc : DebuggerUtilsAsync.allLineLocationsSync(type)) {
-          SourcePosition position =
-            ReadAction.compute(() -> {
-              try {
-                return positionManager.getSourcePosition(loc);
-              }
-              catch (NoDataException ignore) {
-                return null;
-              }
-            });
+          SourcePosition position;
+          try {
+            position = positionManager.getSourcePosition(loc);
+          }
+          catch (NoDataException ignored) {
+            continue;
+          }
           if (position == null) {
             continue;
           }
-          if (position.getFile() instanceof PsiCompiledFile) {
-            VirtualFile file = position.getFile().getVirtualFile();
+          var psiFile = ReadAction.computeBlocking(position::getFile);
+          if (psiFile instanceof PsiCompiledFile) {
+            VirtualFile file = ReadAction.computeBlocking(psiFile::getVirtualFile);
             if (file == null || file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY) == null) {
               break; // no mapping - skip the whole file
             }
-            if (DebuggerUtilsEx.bytecodeToSourceLine(position.getFile(), loc.lineNumber()) == -1) {
+            int lineNumber = loc.lineNumber();
+            if (ReadAction.computeBlocking(() -> DebuggerUtilsEx.bytecodeToSourceLine(psiFile, lineNumber)) == -1) {
               continue;
             }
           }

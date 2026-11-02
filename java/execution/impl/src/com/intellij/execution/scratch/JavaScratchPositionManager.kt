@@ -4,13 +4,17 @@ package com.intellij.execution.scratch
 import com.intellij.debugger.NoDataException
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.PositionManagerImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
 import com.sun.jdi.request.ClassPrepareRequest
@@ -40,43 +44,36 @@ open class JavaScratchPositionManager(debugProcess: DebugProcessImpl, private va
 
   @Throws(NoDataException::class)
   private fun checkPosition(position: SourcePosition) {
-    if (myScratchFile != position.file.virtualFile) {
+    if (!runReadActionBlocking { myScratchFile == position.file.virtualFile }) {
       throw NoDataException.INSTANCE
     }
   }
 
+  @RequiresBlockingContext
   @Throws(NoDataException::class)
   override fun getSourcePosition(location: Location?): SourcePosition? {
-    val position = super.getSourcePosition(location)
-    if (position == null) {
-      throw NoDataException.INSTANCE
-    }
-    return position
+    return super.getSourcePosition(location)
   }
 
+  @RequiresBackgroundThread
+  override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    return super.getSourcePositionAsync(location) ?: throw NoDataException.INSTANCE
+  }
+
+  @RequiresBlockingContext
   override fun getPsiFileByLocation(project: Project, location: Location): PsiFile? {
     if (!myScratchFile.isValid) return null
     val refType = location.declaringType() ?: return null
-    val psiFile = PsiManager.getInstance(project).findFile(myScratchFile) as? PsiJavaFile ?: return null
-    val classes = psiFile.classes
-    if (classes.isEmpty()) return null
-
     val originalQName = refType.name()
-    for (psiClass in classes) {
-      if (originalQName == psiClass.qualifiedName) {
-        return psiFile
-      }
-    }
-
     val dollar = originalQName.indexOf('$')
     val alternativeQName = if (dollar > 0) originalQName.substring(0, dollar) else null
-    if (!alternativeQName.isNullOrEmpty()) {
-      for (psiClass in classes) {
-        if (alternativeQName == psiClass.qualifiedName) {
-          return psiFile
-        }
+    return runReadActionBlocking {
+      if (!myScratchFile.isValid) return@runReadActionBlocking null
+      val psiFile = PsiManager.getInstance(project).findFile(myScratchFile) as? PsiJavaFile ?: return@runReadActionBlocking null
+      psiFile.takeIf { file ->
+        file.classes.any { it.qualifiedName == originalQName || alternativeQName != null && it.qualifiedName == alternativeQName }
       }
     }
-    return null
   }
 }

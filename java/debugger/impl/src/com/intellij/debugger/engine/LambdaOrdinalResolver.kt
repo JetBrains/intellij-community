@@ -3,7 +3,7 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.impl.DebuggerUtilsEx
-import com.intellij.openapi.application.runReadActionBlocking
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiLambdaExpression
 import com.intellij.psi.util.PsiTreeUtil
@@ -48,34 +48,33 @@ import org.jetbrains.annotations.TestOnly
 object LambdaOrdinalResolver {
   private val LOG = Logger.getInstance(LambdaOrdinalResolver::class.java)
 
-  @JvmStatic
-  fun findLambdaOrdinal(sourcePosition: SourcePosition, method: Method?): Int {
+  suspend fun findLambdaOrdinalAsync(sourcePosition: SourcePosition, method: Method?): Int {
     if (method == null || !DebuggerUtilsEx.isLambda(method)) {
       return -1
     }
 
-    val bytecodeLambdas = collectBytecodeLambdas(sourcePosition, method.declaringType())
+    val line = readAction { if (sourcePosition.file.isValid) sourcePosition.line + 1 else null } ?: return -1
+    val bytecodeLambdas = collectBytecodeLambdas(line, method.declaringType())
     if (bytecodeLambdas.size <= 1 || !bytecodeLambdas.contains(method)) {
       return -1
     }
 
-    val lambdaOrdinal = findLambdaOrdinalBySourceInfo(sourcePosition, method, bytecodeLambdas)
+    val sourceLambdas = readAction { collectSourceLambdaInfos(sourcePosition) }
+    val lambdaOrdinal = findLambdaOrdinalBySourceInfo(sourceLambdas, method, bytecodeLambdas)
     if (lambdaOrdinal >= 0) {
       return lambdaOrdinal
     }
     return bytecodeLambdas.sortedWith(DebuggerUtilsEx.LAMBDA_ORDINAL_COMPARATOR).indexOf(method)
   }
 
-  private fun collectBytecodeLambdas(sourcePosition: SourcePosition, type: ReferenceType): List<Method> {
-    val line = sourcePosition.line + 1
+  private fun collectBytecodeLambdas(line: Int, type: ReferenceType): List<Method> {
     return type.methods().asSequence()
       .filter(DebuggerUtilsEx::isLambda) // call locationsOfLine only for lambdas
       .filter { DebuggerUtilsEx.locationsOfLine(it, line).isNotEmpty() }
       .toList()
   }
 
-  private fun findLambdaOrdinalBySourceInfo(sourcePosition: SourcePosition, method: Method, bytecodeLambdas: List<Method>): Int {
-    val sourceLambdas = collectSourceLambdaInfos(sourcePosition)
+  private fun findLambdaOrdinalBySourceInfo(sourceLambdas: List<SourceLambdaInfo>, method: Method, bytecodeLambdas: List<Method>): Int {
     if (sourceLambdas.size <= 1) {
       return -1
     }
@@ -86,18 +85,17 @@ object LambdaOrdinalResolver {
     return findLambdaOrdinalByArgumentNames(method, sourceLambdas)
   }
 
-  // Collect all required information from PSI in one read action here
+  @RequiresReadLock
   private fun collectSourceLambdaInfos(sourcePosition: SourcePosition): List<SourceLambdaInfo> {
-    return runReadActionBlocking {
-      val lambdas = DebuggerUtilsEx.collectLambdas(sourcePosition, true)
-      lambdas.mapIndexed { ordinal, lambda ->
-        SourceLambdaInfo(
-          ordinal,
-          countPsiAncestors(lambda, lambdas),
-          countPsiDescendants(lambda, lambdas),
-          lambda.parameterList.parameters.map { it.name },
-        )
-      }
+    if (!sourcePosition.file.isValid) return emptyList()
+    val lambdas = DebuggerUtilsEx.collectLambdas(sourcePosition, true)
+    return lambdas.mapIndexed { ordinal, lambda ->
+      SourceLambdaInfo(
+        ordinal,
+        countPsiAncestors(lambda, lambdas),
+        countPsiDescendants(lambda, lambdas),
+        lambda.parameterList.parameters.map { it.name },
+      )
     }
   }
 

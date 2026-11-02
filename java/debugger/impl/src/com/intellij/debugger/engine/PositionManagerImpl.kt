@@ -3,10 +3,10 @@ package com.intellij.debugger.engine
 
 import com.intellij.debugger.MultiRequestPositionManager
 import com.intellij.debugger.NoDataException
-import com.intellij.debugger.PositionManager
+import com.intellij.debugger.PositionManagerAsync
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl.Companion.assertIsManagerThread
-import com.intellij.debugger.engine.LambdaOrdinalResolver.findLambdaOrdinal
+import com.intellij.debugger.engine.LambdaOrdinalResolver.findLambdaOrdinalAsync
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.AlternativeJreClassFinder
 import com.intellij.debugger.impl.DebuggerUtilsAsync
@@ -17,13 +17,14 @@ import com.intellij.debugger.ui.breakpoints.JavaLineBreakpointType
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.runReadActionBlocking
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry.Companion.`is`
@@ -41,12 +42,16 @@ import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiLambdaExpression
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifier
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.util.Processor
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.EDT
@@ -63,7 +68,7 @@ import java.util.function.Consumer
 import kotlin.math.max
 import kotlin.math.min
 
-open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : PositionManager, MultiRequestPositionManager {
+open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : PositionManagerAsync, MultiRequestPositionManager {
   open fun getDebugProcess(): DebugProcess = myDebugProcess
 
   @get:JvmName("getDebugProcessForKotlin")
@@ -73,8 +78,9 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
 
   @Throws(NoDataException::class)
   override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
+    val line = runReadActionBlocking { position.line + 1 }
     try {
-      return DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, position.getLine() + 1)
+      return DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, line)
     }
     catch (_: AbsentInformationException) {
     }
@@ -90,8 +96,8 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
 
   @Throws(NoDataException::class)
   override fun createPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<ClassPrepareRequest> {
-    return ReadAction.computeBlocking<List<ClassPrepareRequest>, RuntimeException> {
-      val res = ArrayList<ClassPrepareRequest>()
+    val requests = runReadActionBlocking {
+      val res = ArrayList<Pair<ClassPrepareRequestor, String>>()
       for (psiClass in getLineClasses(position.getFile(), position.getLine())) {
         var prepareRequestor = requestor
         var classPattern = JVMNameUtil.getNonAnonymousClassName(psiClass)
@@ -111,25 +117,32 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
             }
           }
         }
-        val request = myDebugProcess.requestsManager.createClassPrepareRequest(prepareRequestor, classPattern)
-        if (request != null) {
-          res.add(request)
-        }
+        res.add(prepareRequestor to classPattern)
       }
       res
     }
+    return requests.mapNotNull { [prepareRequestor, classPattern] ->
+      myDebugProcess.requestsManager.createClassPrepareRequest(prepareRequestor, classPattern)
+    }
   }
 
+  @RequiresBlockingContext
   @Throws(NoDataException::class)
   override fun getSourcePosition(location: Location?): SourcePosition? {
+    return super.getSourcePosition(location)
+  }
+
+  @RequiresBackgroundThread
+  override suspend fun getSourcePositionAsync(location: Location?): SourcePosition? {
     assertIsManagerThread()
     if (location == null) {
       return null
     }
 
     val project = debugProcess.project
-    var psiFile = getPsiFileByLocation(project, location)
-    if (psiFile == null) {
+    @Suppress("ForbiddenInSuspectContextMethod")
+    val originalFile = getPsiFileByLocation(project, location)
+    if (originalFile == null) {
       return null
     }
 
@@ -137,48 +150,47 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
 
     val qName = location.declaringType().name()
 
-    // replace file with alternative
-    val altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, project)
-    if (altFileUrl != null) {
-      val altFile = VirtualFileManager.getInstance().findFileByUrl(altFileUrl)
-      if (altFile != null) {
-        val altPsiFile = psiFile.getManager().findFile(altFile)
-        if (altPsiFile != null) {
-          psiFile = altPsiFile
-        }
-      }
-    }
+    val psiFile = readAction {
+      if (!originalFile.isValid) return@readAction null
+      val altFileUrl = DebuggerUtilsEx.getAlternativeSourceUrl(qName, project)
+      val altFile = altFileUrl?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
+      altFile?.let { originalFile.manager.findFile(it) } ?: originalFile
+    } ?: return null
 
-    var sourcePosition: SourcePosition? = null
-    if (lineNumber > -1) {
-      sourcePosition = calcLineMappedSourcePosition(psiFile, lineNumber)
+    var sourcePosition = readAction {
+      if (psiFile.isValid && lineNumber > -1) calcLineMappedSourcePosition(psiFile, lineNumber) else null
     }
 
     val method = DebuggerUtilsEx.getMethod(location)
 
     if (sourcePosition == null && (psiFile is PsiCompiledElement || lineNumber < 0)) {
-      if (method?.name() != null && method.signature() != null) {
-        val psiClass = findPsiClassByName(qName, null)
-        val compiledMethod = findMethod(psiClass ?: psiFile, qName, method.name(), method.signature())
+      val methodName = method?.name()
+      val methodSignature = method?.signature()
+      if (methodName != null && methodSignature != null) {
+        val psiClass = readAction { findPsiClassByName(qName, null) }
+        @Suppress("ForbiddenInSuspectContextMethod")
+        val compiledMethod = findMethod(psiClass ?: psiFile, qName, methodName, methodSignature)
         if (compiledMethod != null) {
-          sourcePosition = SourcePosition.createFromElement(compiledMethod)
-          if (sourcePosition != null && lineNumber >= 0) {
-            sourcePosition = ClsSourcePosition(sourcePosition, lineNumber)
+          sourcePosition = readAction {
+            if (!compiledMethod.isValid) return@readAction null
+            val position = SourcePosition.createFromElement(compiledMethod)
+            if (position != null && lineNumber >= 0) ClsSourcePosition(position, lineNumber) else position
           }
         }
       }
       else {
-        return SourcePosition.createFromLine(psiFile, -1)
+        return readAction { if (psiFile.isValid) SourcePosition.createFromLine(psiFile, -1) else null }
       }
     }
 
     if (sourcePosition == null) {
-      sourcePosition = SourcePosition.createFromLine(psiFile, lineNumber)
+      sourcePosition = readAction { if (psiFile.isValid) SourcePosition.createFromLine(psiFile, lineNumber) else null }
     }
+    if (sourcePosition == null) return null
 
-    val lambdaOrdinal = findLambdaOrdinal(sourcePosition, method)
+    val lambdaOrdinal = findLambdaOrdinalAsync(sourcePosition, method)
 
-    val condRetPos: SourcePosition? = adjustPositionForConditionalReturn(location, psiFile, lineNumber)
+    val condRetPos = adjustPositionForConditionalReturnAsync(location, psiFile, lineNumber)
     if (condRetPos != null) {
       sourcePosition = condRetPos
     }
@@ -276,6 +288,7 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
     }
   }
 
+  @RequiresBlockingContext
   protected open fun getPsiFileByLocation(project: Project, location: Location): PsiFile? {
     val refType = location.declaringType()
     if (refType == null) {
@@ -289,45 +302,47 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
     //}
     val originalQName = refType.name()
 
-    val altSource = Ref<PsiFile?>()
-    val psiClass = findPsiClassByName(originalQName, Consumer { c: ClsClassImpl -> altSource.set(findAlternativeJreSourceFile(c)) })
+    val psiFile = runReadActionBlocking {
+      val altSource = Ref<PsiFile?>()
+      val psiClass = findPsiClassByName(originalQName, Consumer { c: ClsClassImpl -> altSource.set(findAlternativeJreSourceFile(c)) })
 
-    if (!altSource.isNull) {
-      return altSource.get()
-    }
-
-    if (psiClass != null) {
-      var element = psiClass.getNavigationElement()
-      // see IDEA-137167, prefer not compiled elements
-      if (element is PsiCompiledElement) {
-        val fileElement = psiClass.getContainingFile().getNavigationElement()
-        if (fileElement !is PsiCompiledElement) {
-          element = fileElement
-        }
+      if (!altSource.isNull) {
+        return@runReadActionBlocking altSource.get()
       }
-      return element.getContainingFile()
-    }
-    else {
-      // try to search by filename
-      try {
-        val files = FilenameIndex.getFilesByName(project, refType.sourceName(), GlobalSearchScope.allScope(project))
-        for (file in files) {
-          if (file is PsiJavaFile) {
-            for (cls in PsiTreeUtil.findChildrenOfAnyType<PsiClass?>(file, PsiClass::class.java)) {
-              if (StringUtil.equals(originalQName, JVMNameUtil.getClassVMName(cls))) {
-                return file
-              }
-            }
+
+      if (psiClass != null) {
+        var element = psiClass.navigationElement
+        // see IDEA-137167, prefer not compiled elements
+        if (element is PsiCompiledElement) {
+          val fileElement = psiClass.containingFile.navigationElement
+          if (fileElement !is PsiCompiledElement) {
+            element = fileElement
           }
         }
+        element.containingFile
       }
-      catch (_: AbsentInformationException) {
-      }
+      else null
+    }
+    if (psiFile != null) {
+      return psiFile
     }
 
-    return null
+    val sourceName = try {
+      refType.sourceName()
+    }
+    catch (_: AbsentInformationException) {
+      return null
+    }
+    return runReadActionBlocking {
+      FilenameIndex.getFilesByName(project, sourceName, GlobalSearchScope.allScope(project)).firstOrNull { file ->
+        file is PsiJavaFile && PsiTreeUtil.findChildrenOfAnyType(file, PsiClass::class.java).any { cls ->
+          originalQName == JVMNameUtil.getClassVMName(cls)
+        }
+      }
+    }
   }
 
+  @RequiresReadLock
   private fun findPsiClassByName(originalQName: String, altClsProcessor: Consumer<in ClsClassImpl>?): PsiClass? {
     var psiClass: PsiClass? = null
     // first check alternative jre if any
@@ -346,6 +361,7 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
     return psiClass
   }
 
+  @RequiresReadLock
   private fun findAlternativeJreSourceFile(psiClass: ClsClassImpl): PsiFile? {
     val sourceFileName = psiClass.getSourceFileName()
     val packageName = (psiClass.getContainingFile() as PsiClassOwner).getPackageName()
@@ -377,17 +393,17 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
 
     @RequiresReadLock
     fun createClassInfo(): ClassInfo {
+      if (!psiClass.isValid) return ClassInfo(false, 0, null)
       var isLocalOrAnonymous = false
       var requiredDepth = 0
       var className = JVMNameUtil.getNonAnonymousClassName(psiClass)
       if (className == null) {
         isLocalOrAnonymous = true
-        val enclosing = getTopOrStaticEnclosingClass(psiClass)
-        val topLevelClass = enclosing.first
+        val [topLevelClass, depth] = getTopOrStaticEnclosingClass(psiClass)
         if (topLevelClass != null) {
           val parentClassName = JVMNameUtil.getNonAnonymousClassName(topLevelClass)
           if (parentClassName != null) {
-            requiredDepth = enclosing.second
+            requiredDepth = depth
             className = parentClassName
           }
         }
@@ -403,7 +419,7 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
       return ClassInfo(isLocalOrAnonymous, requiredDepth, className)
     }
 
-    val (isLocalOrAnonymous, requiredDepth, className) = ReadAction.computeBlocking<ClassInfo, RuntimeException> { createClassInfo() }
+    val [isLocalOrAnonymous, requiredDepth, className] = ReadAction.computeBlocking<ClassInfo, RuntimeException> { createClassInfo() }
 
     if (className == null) {
       return emptyList()
@@ -449,121 +465,87 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
         return null
       }
 
-      // reached the required depth - check if the position is contained within the fromClass locations
-      var rangeBegin = Int.MAX_VALUE
-      var rangeEnd = Int.MIN_VALUE
-      val locations = DebuggerUtilsEx.allLineLocations(fromClass)
-      if (locations != null) {
-        for (location in locations) {
-          val lnumber = DebuggerUtilsEx.getLineNumber(location, false)
-          if (lnumber <= 1) {
-            // should be a native method, skipping
-            // sometimes compiler generates location where line number is exactly 1 (e.g. GWT)
-            // such locations are hardly correspond to real lines in code, so skipping them too
-            continue
-          }
-          val method = DebuggerUtilsEx.getMethod(location)
-          if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge) {
-            // do not take into account synthetic stuff
-            continue
-          }
-          var locationLine = lnumber - 1
-          val psiFile = position.getFile().getOriginalFile()
-          if (psiFile is PsiCompiledFile) {
-            locationLine = DebuggerUtilsEx.bytecodeToSourceLine(psiFile, locationLine)
-            if (locationLine < 0) continue
-          }
-          rangeBegin = min(rangeBegin, locationLine)
-          rangeEnd = max(rangeEnd, locationLine)
+      val locationLines = DebuggerUtilsEx.allLineLocations(fromClass).orEmpty().mapNotNull { location ->
+        val lineNumber = DebuggerUtilsEx.getLineNumber(location, false)
+        if (lineNumber <= 1) {
+          // Native methods and some generated locations do not have a useful line number.
+          return@mapNotNull null
         }
+        val method = DebuggerUtilsEx.getMethod(location)
+        if (method == null || DebuggerUtils.isSynthetic(method) || method.isBridge) {
+          return@mapNotNull null
+        }
+        lineNumber - 1
       }
-
-      val positionLine = position.getLine()
-      if (positionLine in rangeBegin..rangeEnd) {
-        val finalRangeEnd = rangeEnd
-        val lineClasses = ReadAction.computeBlocking<Set<PsiClass>, RuntimeException> {
-          // Now we use the last line to find the class, previously it was:
-          // choose the second line to make sure that only this class' code exists on the line chosen
-          // Otherwise the line (depending on the offset in it) can contain code that belongs to different classes
-          // and JVMNameUtil.getClassAt(candidatePosition) will return the wrong class.
-          // Example of such line:
-          // list.add(new Runnable(){......
-          // First offsets belong to parent class, and offsets inside te substring "new Runnable(){" belong to anonymous runnable.
-          if (!classToFind.isValid()) {
-            return@computeBlocking emptySet()
-          }
-          getLineClasses(position.getFile(), finalRangeEnd)
+      val matches = runReadActionBlocking {
+        if (!classToFind.isValid) return@runReadActionBlocking false
+        val file = position.file
+        if (!file.isValid) return@runReadActionBlocking false
+        val originalFile = file.originalFile
+        var rangeBegin = Int.MAX_VALUE
+        var rangeEnd = Int.MIN_VALUE
+        for (line in locationLines) {
+          val sourceLine = if (originalFile is PsiCompiledFile) DebuggerUtilsEx.bytecodeToSourceLine(originalFile, line) else line
+          if (sourceLine < 0) continue
+          rangeBegin = min(rangeBegin, sourceLine)
+          rangeEnd = max(rangeEnd, sourceLine)
         }
-        if (lineClasses.contains(classToFind)) {
-          return fromClass
-        }
-        return null
+        // Use the last line to distinguish an anonymous class from its enclosing class on the first line.
+        position.line in rangeBegin..rangeEnd && getLineClasses(file, rangeEnd).contains(classToFind)
       }
+      if (matches) return fromClass
     }
     return null
   }
 
+  @RequiresBlockingContext
   open fun findMethod(container: PsiElement, className: String?, methodName: String?, methodSignature: String?): PsiMethod? {
-    val finder = MethodFinder(className, methodName, methodSignature)
-    container.accept(finder)
-    return finder.compiledMethod
-  }
+    data class MethodCandidate(
+      val method: SmartPsiElementPointer<PsiMethod>,
+      val containingClass: SmartPsiElementPointer<PsiClass>,
+      val classPosition: SourcePosition?,
+    )
 
-  //don't use JavaRecursiveElementWalkingVisitor because getNextSibling() works slowly for compiled elements
-  private inner class MethodFinder(
-    private val myClassName: String?,
-    private val myMethodName: String?,
-    private val myMethodSignature: String?,
-  ) : JavaRecursiveElementVisitor() {
-    private var myCompiledClass: PsiClass? = null
-    var compiledMethod: PsiMethod? = null
-      private set
-
-    override fun visitClass(aClass: PsiClass) {
-      if (this.compiledMethod == null) {
-        if (getClassReferences(aClass, SourcePosition.createFromElement(aClass)).any { it.name() == myClassName }
-        ) {
-          myCompiledClass = aClass
-        }
-
-        aClass.acceptChildren(this)
-      }
-    }
-
-    override fun visitMethod(method: PsiMethod) {
-      if (this.compiledMethod == null) {
-        try {
-          val containingClass = method.getContainingClass()
-
-          if (containingClass != null &&
-              containingClass == myCompiledClass &&
-              JVMNameUtil.getJVMMethodName(method) == myMethodName &&
-              checkSignature(method)
-          ) {
-            this.compiledMethod = method
+    val candidates = runReadActionBlocking {
+      val result = ArrayList<MethodCandidate>()
+      if (container.isValid) {
+        // JavaRecursiveElementWalkingVisitor.getNextSibling() is slow for compiled elements.
+        container.accept(object : JavaRecursiveElementVisitor() {
+          @RequiresReadLock
+          override fun visitMethod(method: PsiMethod) {
+            val containingClass = method.containingClass ?: return
+            if (JVMNameUtil.getJVMMethodName(method) == methodName) {
+              result.add(MethodCandidate(SmartPointerManager.createPointer(method),
+                                         SmartPointerManager.createPointer(containingClass),
+                                         SourcePosition.createFromElement(containingClass)))
+            }
           }
-        }
-        catch (e: EvaluateException) {
-          LOG.debug(e)
-        }
+        })
       }
+      result
     }
-
-    @Throws(EvaluateException::class)
-    fun checkSignature(method: PsiMethod): Boolean {
+    val matchingClasses = HashMap<SmartPsiElementPointer<PsiClass>, Boolean>()
+    for ([methodPointer, classPointer, classPosition] in candidates) {
+      val matches = matchingClasses.getOrPut(classPointer) {
+        val psiClass = runReadActionBlocking { classPointer.element }
+        psiClass != null && getClassReferences(psiClass, classPosition).any { it.name() == className }
+      }
+      if (!matches) continue
       try {
-        return JVMNameUtil.getJVMSignature(method).getName(myDebugProcess) == myMethodSignature
+        val signature = runReadActionBlocking { methodPointer.element?.let { JVMNameUtil.getJVMSignature(it) } } ?: continue
+        if (signature.getName(myDebugProcess) != methodSignature) continue
       }
       catch (_: IndexNotReadyException) {
-        return true // fallback: do not care about the signature
+        // Accept the method without a signature when the indices are unavailable.
       }
-    }
-
-    override fun visitElement(element: PsiElement) {
-      if (this.compiledMethod == null) {
-        super.visitElement(element)
+      catch (e: EvaluateException) {
+        LOG.debug(e)
+        continue
       }
+      val method = runReadActionBlocking { methodPointer.element }
+      if (method != null) return method
     }
+    return null
   }
 
   class ClsSourcePosition(delegate: SourcePosition, private val myOriginalLine: Int) : RemappedSourcePosition(delegate) {
@@ -596,24 +578,23 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
 
     @ApiStatus.Internal
     @JvmStatic
-    fun adjustPositionForConditionalReturn(location: Location, file: PsiFile, lineNumber: Int): SourcePosition? {
-      if (location.virtualMachine().canGetBytecodes()) {
-        val ret = JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber)
-        if (ret != null) {
-          val bytecodes = DebuggerUtilsEx.getMethod(location).bytecodes()
-          val bytecodeOffs = Math.toIntExact(location.codeIndex())
-          // Implicit return instruction at the end of bytecode should not be treated as conditional return.
-          // (Note that we also relay on the fact that all return instructions have no operands.)
-          if (0 <= bytecodeOffs && bytecodeOffs < bytecodes.size - 1) {
-            val opcode = bytecodes[bytecodeOffs].toInt() and 0xFF
-            if (Opcodes.IRETURN <= opcode && opcode <= Opcodes.RETURN) {
-              return ReadAction.computeBlocking<SourcePosition?, RuntimeException> {
-                SourcePosition.createFromOffset(
-                  file,
-                  ret.getTextOffset()
-                )
-              }
-            }
+    suspend fun adjustPositionForConditionalReturnAsync(location: Location, file: PsiFile, lineNumber: Int): SourcePosition? {
+      if (!location.virtualMachine().canGetBytecodes()) return null
+      val returnPointer = readAction {
+        if (!file.isValid) return@readAction null
+        JavaLineBreakpointType.findSingleConditionalReturn(file, lineNumber)?.let {
+          SmartPointerManager.createPointer(it)
+        }
+      } ?: return null
+      val method = DebuggerUtilsEx.getMethod(location) ?: return null
+      val bytecodes = method.bytecodes()
+      val bytecodeOffset = Math.toIntExact(location.codeIndex())
+      // The final implicit return must not be treated as a conditional return.
+      if (bytecodeOffset in 0 until bytecodes.size - 1) {
+        val opcode = bytecodes[bytecodeOffset].toInt() and 0xFF
+        if (opcode in Opcodes.IRETURN..Opcodes.RETURN) {
+          return readAction {
+            returnPointer.element?.let { SourcePosition.createFromOffset(it.containingFile, it.textOffset) }
           }
         }
       }
@@ -664,7 +645,7 @@ open class PositionManagerImpl(private val myDebugProcess: DebugProcessImpl) : P
         }
         enclosing = next
       }
-      return Pair.create(enclosing, depth)
+      return enclosing to depth
     }
 
     private fun calcLineMappedSourcePosition(psiFile: PsiFile, originalLine: Int): SourcePosition? {

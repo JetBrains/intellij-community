@@ -18,7 +18,6 @@ import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.execution.filters.LineNumbersMapping
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
@@ -26,6 +25,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.checkCanceled
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.xdebugger.frame.XStackFrame
 import com.sun.jdi.Location
 import com.sun.jdi.ReferenceType
@@ -92,12 +92,8 @@ open class CompoundPositionManager() : PositionManagerWithConditionEvaluation, M
       iterate<SourcePosition?>(null, fileType, { checkCanceled() }) { getSourcePositionAsync(it, location) }
     }
 
-  override fun getSourcePosition(location: Location?): SourcePosition? =
-    getCachedSourcePosition(location, { action -> runReadAction(action) }) { fileType: FileType? ->
-      ReadAction.nonBlocking<SourcePosition?> {
-        iterate<SourcePosition?>(null, fileType, ProgressManager::checkCanceled) { it.getSourcePosition(location) }
-      }.executeSynchronously()
-    }
+  @RequiresBlockingContext
+  override fun getSourcePosition(location: Location?): SourcePosition? = super.getSourcePosition(location)
 
   private inline fun getCachedSourcePosition(
     location: Location?,

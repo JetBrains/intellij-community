@@ -257,7 +257,7 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return null
         }
 
-        PositionManagerImpl.adjustPositionForConditionalReturn(location, psiFile, sourceLineNumber)?.let {
+        PositionManagerImpl.adjustPositionForConditionalReturnAsync(location, psiFile, sourceLineNumber)?.let {
             return it
         }
 
