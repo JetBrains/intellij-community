@@ -3,7 +3,6 @@ package com.intellij.psi.stubs;
 
 import com.intellij.codeInsight.multiverse.CodeInsightContext;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -31,6 +30,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlowException;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.StubPsiCheck;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.WrongPsiFileClassInNonPsiStub;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.ZeroStubIdList;
@@ -182,15 +182,18 @@ public abstract class StubProcessingHelperBase {
 
       LOG.error(extraMessage + dumbState + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null, source));
     }
-    catch (ProcessCanceledException pce) {
-      throw pce;
-    }
     catch (Throwable t) {
+      rethrowControlFlowException(t);
       onInternalError(psiFile.getVirtualFile());
       throw t;
     }
+    onInternalError(psiFile.getVirtualFile());
   }
 
+  /**
+   * Marks the file for an index cleanup and a stub recovery. It also covers the errors that
+   * {@link StubTreeLoader#stubTreeAndIndexDoNotMatch} does not see. {@link StubRecoveryService} merges a second request for the same file.
+   */
   protected abstract void onInternalError(VirtualFile file);
 
   protected static @NotNull String getFileTypeInfo(@NotNull VirtualFile file, @NotNull Project project) {

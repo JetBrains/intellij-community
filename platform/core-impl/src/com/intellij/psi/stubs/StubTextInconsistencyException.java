@@ -63,6 +63,9 @@ public final class StubTextInconsistencyException extends RuntimeException imple
   /**
    * `reason` parameter is used for tracking statistic of the errors' sources.
    * {@code null}  is recommended values for callers outside IntelliJ repository.
+   * <p/>
+   * On an inconsistency, requests the stub recovery when the application provides {@link StubRecoveryService} and then throws.
+   * The caller does not request it again.
    */
   public static void checkStubTextConsistency(@NotNull PsiFile file,
                                               @Nullable StubInconsistencyReporter.SourceOfCheck reason)
@@ -112,6 +115,11 @@ public final class StubTextInconsistencyException extends RuntimeException imple
                                           @Nullable StubInconsistencyReporter.SourceOfCheck reason,
                                           @NotNull InconsistencyType inconsistencyType) {
     StubInconsistencyReporter.getInstance().reportStubInconsistencyBetweenPsiAndText(file.getProject(), reason, inconsistencyType);
+    StubRecoveryService recovery = StubRecoveryService.getInstanceOrNull();
+    if (recovery != null) {
+      recovery.scheduleReindexing(file.getProject(), file.getViewProvider().getVirtualFile(),
+                                  StubRecoveryExtraStep.DROP_PSI_CACHES, StubRecoveryExtraStep.REPARSE_FILE);
+    }
   }
 
   private static @NotNull List<PsiFileStub<?>> restoreStubsFromText(FileViewProvider viewProvider) {

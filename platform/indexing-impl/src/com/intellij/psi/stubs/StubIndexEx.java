@@ -2,8 +2,6 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -13,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -312,16 +309,10 @@ public abstract class StubIndexEx extends StubIndex {
       });
 
       // schedule indexes to rebuild
+      var stubRecoveryService = StubRecoveryService.getInstance();
       for (VirtualFile file : filesWithProblems) {
-        FileBasedIndex.getInstance().requestReindex(file);
+        stubRecoveryService.scheduleReindexing(project, file, StubRecoveryExtraStep.DROP_PSI_CACHES);
       }
-
-      // drop caches
-      ApplicationManager.getApplication().invokeLater(() -> WriteAction.run(() -> {
-        PsiManager psiManager = PsiManager.getInstance(project);
-        psiManager.dropPsiCaches();
-        psiManager.dropResolveCaches();
-      }), ModalityState.nonModal(), project.getDisposed());
     }
   }
 

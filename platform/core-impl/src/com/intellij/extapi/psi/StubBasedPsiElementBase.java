@@ -31,6 +31,8 @@ import com.intellij.psi.stubs.ObjectStubBase;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.PsiFileStubImpl;
 import com.intellij.psi.stubs.StubElement;
+import com.intellij.psi.stubs.StubRecoveryExtraStep;
+import com.intellij.psi.stubs.StubRecoveryService;
 import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -144,6 +146,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   }
 
   private ASTNode failedToBindStubToAst(@NotNull PsiFileImpl file, final @NotNull FileElement fileElement) {
+    StubRecoveryService.scheduleReindexing(file, StubRecoveryExtraStep.DROP_PSI_CACHES,
+                                          StubRecoveryExtraStep.SAVE_DOCUMENT, StubRecoveryExtraStep.REPARSE_FILE);
     VirtualFile vFile = file.getVirtualFile();
     StubTree stubTree = file.getStubTree();
     final String stubString = stubTree != null ? ((PsiFileStubImpl<?>)stubTree.getRoot()).printTree() : null;
@@ -193,6 +197,8 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @SuppressWarnings({"NonConstantStringShouldBeStringBuffer", "StringConcatenationInLoop"})
   private ASTNode notBoundInExistingAst(@NotNull PsiFileImpl file, @NotNull FileElement treeElement) {
+    StubRecoveryService.scheduleReindexing(file, StubRecoveryExtraStep.DROP_PSI_CACHES,
+                                          StubRecoveryExtraStep.SAVE_DOCUMENT, StubRecoveryExtraStep.REPARSE_FILE);
     @NonNls String message = "file=" + file + "; tree=" + treeElement;
     PsiElement each = this;
     while (each != null) {

@@ -64,6 +64,8 @@ public abstract class StubTreeLoader {
    * Creates exception with full description.
    * Should be used when requesting indexes is safe, in particular, counting indexes for changed files won't need some already taken lock.
    * <p/>
+   * Requests the stub recovery when the application provides {@link StubRecoveryService}. The caller does not request it again.
+   * <p/>
    * From under lock, which may be needed to compute indexes for changed files,
    * use {@link StubTreeLoader#createCoarseExceptionStubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
    * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)}
@@ -82,6 +84,8 @@ public abstract class StubTreeLoader {
   }
 
   /**
+   * Requests the stub recovery when the application provides {@link StubRecoveryService}. The caller does not request it again.
+   *
    * @see StubTreeLoader#stubTreeAndIndexDoNotMatch(ObjectStubTree, PsiFileWithStubSupport, Throwable,
    * StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource)
    */
@@ -105,6 +109,10 @@ public abstract class StubTreeLoader {
   ) {
     return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
       VirtualFile file = psiFile.getViewProvider().getVirtualFile();
+      StubRecoveryService recovery = StubRecoveryService.getInstanceOrNull();
+      if (recovery != null) {
+        recovery.scheduleReindexing(psiFile.getProject(), file, recoverySteps(source));
+      }
       boolean compiled = psiFile instanceof PsiCompiledElement;
       Document document = compiled ? null : FileDocumentManager.getInstance().getDocument(file);
       IndexingStampInfo indexingStampInfo = getIndexingStampInfo(file);
@@ -159,6 +167,19 @@ public abstract class StubTreeLoader {
       StubInconsistencyReporter.getInstance().reportStubTreeAndIndexDoNotMatch(psiFile.getProject(), source);
       return new StubTreeAndIndexUnmatchCoarseException(psiFile, file, msg, attachments, upToDate, cause, stubTree);
     });
+  }
+
+  private static StubRecoveryExtraStep @NotNull [] recoverySteps(@NotNull StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource source) {
+    switch (source) {
+      case FileTreesPsiReconciliation:
+        return StubRecoveryExtraStep.getEntries().toArray(new StubRecoveryExtraStep[0]);
+      case WrongPsiFileClassInNonPsiStub:
+      case ZeroStubIdList:
+      case StubPsiCheck:
+        return new StubRecoveryExtraStep[]{StubRecoveryExtraStep.DROP_PSI_CACHES};
+      default:
+        throw new IllegalArgumentException("Unknown source: " + source);
+    }
   }
 
   /**

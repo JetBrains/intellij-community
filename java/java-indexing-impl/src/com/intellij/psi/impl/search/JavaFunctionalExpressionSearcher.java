@@ -63,6 +63,7 @@ import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch.SearchParameters;
 import com.intellij.psi.stubs.StubInconsistencyReporter;
 import com.intellij.psi.stubs.StubIndex;
+import com.intellij.psi.stubs.StubRecoveryService;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
@@ -338,7 +339,7 @@ public final class JavaFunctionalExpressionSearcher extends QueryExecutorBase<Ps
       throw e;
     }
     catch (Throwable e) {
-      FileBasedIndex.getInstance().requestReindex(viewProvider.getVirtualFile());
+      StubRecoveryService.getInstance().scheduleReindexing(file.getProject(), viewProvider.getVirtualFile());
       LOG.error(e);
       return expression;
     }

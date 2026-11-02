@@ -338,7 +338,6 @@ final class FileTrees {
     }
     catch (Throwable e) {
       myFile.clearContent(PsiFileImpl.STUB_PSI_MISMATCH);
-      myFile.rebuildStub();
       throw StubTreeLoader.getInstance().createCoarseExceptionStubTreeAndIndexDoNotMatch(stubTree, myFile, e, FileTreesPsiReconciliation);
     }
   }

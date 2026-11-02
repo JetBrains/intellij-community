@@ -1,8 +1,6 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.application.AppUIExecutor;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -235,19 +233,8 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
   }
 
   private static ObjectStubTree<?> processError(final VirtualFile vFile, @NotNull Exception e) {
+    StubRecoveryService.getInstance().scheduleReindexing(null, vFile, StubRecoveryExtraStep.SAVE_DOCUMENT);
     LOG.error(e);
-
-    AppUIExecutor.onWriteThread(ModalityState.nonModal()).later().submit(() -> {
-      final Document doc = FileDocumentManager.getInstance().getCachedDocument(vFile);
-      if (doc != null) {
-        FileDocumentManager.getInstance().saveDocument(doc);
-      }
-
-      // avoid deadlock by requesting reindex later.
-      // processError may be invoked under stub index's read action and requestReindex in EDT starts dumb mode in writeAction (IDEA-197296)
-      FileBasedIndex.getInstance().requestReindex(vFile);
-    });
-
     return null;
   }
 

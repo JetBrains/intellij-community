@@ -67,7 +67,7 @@ final class StubRef extends SubstrateRef {
                                            null);
     if (PsiFileImpl.STUB_PSI_MISMATCH.equals(reason)) {
       // we're between finding stub-psi mismatch and the next EDT spot where the file is reparsed and stub rebuilt
-      //    see com.intellij.psi.impl.source.PsiFileImpl.rebuildStub()
+      //    see com.intellij.psi.stubs.StubRecoveryService.scheduleReindexing
       // most likely it's just another highlighting thread accessing the same PSI concurrently and not yet canceled, so cancel it
       throw new ProcessCanceledException(exception);
     }

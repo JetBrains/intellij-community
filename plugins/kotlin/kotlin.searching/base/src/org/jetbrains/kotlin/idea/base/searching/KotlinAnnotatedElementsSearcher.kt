@@ -15,10 +15,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
+import com.intellij.psi.stubs.StubRecoveryService
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.Processor
 import com.intellij.util.QueryExecutor
-import com.intellij.util.indexing.FileBasedIndex
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
@@ -220,8 +220,8 @@ class KotlinAnnotatedElementsSearcher : QueryExecutor<PsiModifierListOwner, Anno
 
             val faultyContainer = PsiUtilCore.getVirtualFile(found)
             LOG.error("Non annotation in annotations list: $faultyContainer; element:$found")
-            if (faultyContainer != null && faultyContainer.isValid) {
-                FileBasedIndex.getInstance().requestReindex(faultyContainer)
+            if (faultyContainer != null) {
+                StubRecoveryService.getInstance().scheduleReindexing(found.project, faultyContainer)
             }
 
             return true
