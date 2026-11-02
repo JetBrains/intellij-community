@@ -68,11 +68,11 @@ import static java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE;
 import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 
 /**
- * Obsolete; please use NIO API instead ({@link Path}, {@link Files}, {@link NioFiles}, etc.)
+ * Obsolete; please use NIO API instead ({@link Path}, {@link Files}, {@link NioFiles}, Kotlin stdlib, etc.)
  */
 @ApiStatus.NonExtendable
 @ApiStatus.Obsolete
-@SuppressWarnings({"NonFinalUtilityClass", "IO_FILE_USAGE", "IOStreamConstructor"})
+@SuppressWarnings({"NonFinalUtilityClass", "IO_FILE_USAGE", "IOStreamConstructor", "SSBasedInspection"})
 public class FileUtil {
   /** @deprecated async delete is no longer used */
   @Deprecated
@@ -82,6 +82,7 @@ public class FileUtil {
 
   private static final Logger LOG = Logger.getInstance(FileUtil.class);
 
+  /** Consider using {@link Path#resolve(Path)} instead. */
   @Contract(pure = true)
   public static @NotNull @NlsSafe String join(String @NotNull ... parts) {
     return String.join(File.separator, parts);
@@ -91,6 +92,8 @@ public class FileUtil {
    * Gets the relative path from the {@code base} to the {@code file} regardless existence or the type of the {@code base}.
    * <p>
    * NOTE: if the file(not directory) passed as the {@code base} the result can not be used as a relative path from the {@code base} parent directory to the {@code file}
+   * <p>
+   * Consider using {@link Path#relativize(Path)} instead.
    *
    * @param base the base
    * @param file the file
@@ -101,29 +104,32 @@ public class FileUtil {
     return FileUtilRt.getRelativePath(base, file);
   }
 
+  /** Consider using {@link Path#relativize(Path)} instead. */
   @Contract(pure = true)
   public static @Nullable @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
+  /** Consider using {@link Path#relativize(Path)} instead. */
   @Contract(pure = true)
-  public static @Nullable @NlsSafe String getRelativePath(@NotNull String basePath,
-                                                          @NotNull String filePath,
-                                                          char separator,
-                                                          boolean caseSensitive) {
+  public static @Nullable @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, char separator, boolean caseSensitive) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator, caseSensitive);
   }
 
+  /** Consider using {@link Path#isAbsolute()} instead. */
   public static boolean isAbsolute(@NotNull String path) {
     return !path.isEmpty() && new File(path).isAbsolute();
   }
 
+  /** Consider using {@link Files#exists(Path, LinkOption...)} instead. */
   public static boolean exists(@Nullable String path) {
     return path != null && new File(path).exists();
   }
 
   /**
    * Check if the {@code ancestor} is an ancestor of {@code file}.
+   * <p>
+   * Consider using {@link Path#startsWith(Path)} instead.
    *
    * @param ancestor supposed ancestor.
    * @param file     supposed descendant.
@@ -134,12 +140,15 @@ public class FileUtil {
     return isAncestor(ancestor.getPath(), file.getPath(), strict);
   }
 
+  /** Consider using {@link Path#startsWith(Path)} instead. */
   public static boolean isAncestor(@NotNull String ancestor, @NotNull String file, boolean strict) {
     return !ThreeState.NO.equals(isAncestorThreeState(ancestor, file, strict));
   }
 
   /**
    * Checks if the {@code ancestor} is an ancestor of the {@code file}, and if it is an immediate parent or not.
+   * <p>
+   * Consider using {@link Path#startsWith(Path)} instead.
    *
    * @param ancestor supposed ancestor.
    * @param file     supposed descendant.
@@ -155,21 +164,25 @@ public class FileUtil {
     return startsWith(filePath, ancestorPath, strict, SystemInfoRt.isFileSystemCaseSensitive, true);
   }
 
+  /** Consider using {@link Path#startsWith(Path)} instead. */
   @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix) {
     return startsWith(path, prefix, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
+  /** Consider using {@link Path#startsWith(Path)} instead. */
   @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive) {
     return startsWith(path, prefix, isCaseSensitive, false);
   }
 
+  /** Consider using {@link Path#startsWith(Path)} instead. */
   @Contract(pure = true)
   public static boolean startsWith(@NotNull String path, @NotNull String prefix, boolean isCaseSensitive, boolean strict) {
     return !ThreeState.NO.equals(startsWith(path, prefix, strict, isCaseSensitive, false));
   }
 
+  /** Consider using {@link Path#startsWith(Path)} instead. */
   @Contract(pure = true)
   private static @NotNull ThreeState startsWith(@NotNull String path, @NotNull String prefix, boolean strict, boolean isCaseSensitive, boolean checkImmediateParent) {
     int pathLength = path.length();
@@ -198,6 +211,7 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link #findAncestor(Path, Path)} instead. */
   @Contract(pure = true)
   public static @Nullable File findAncestor(@NotNull File f1, @NotNull File f2) {
     File ancestor = f1;
@@ -216,11 +230,13 @@ public class FileUtil {
     return ancestor;
   }
 
+  /** Consider using {@link Path#getParent()} instead. */
   @Contract(pure = true)
   public static @Nullable File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }
 
+  /** Consider using {@link Files#readAllBytes(Path)} instead. */
   public static byte @NotNull [] loadFileBytes(@NotNull File file) throws IOException {
     byte[] bytes;
     try (InputStream stream = new FileInputStream(file)) {
@@ -239,10 +255,12 @@ public class FileUtil {
     return bytes;
   }
 
+  /** Consider using {@link StreamUtil#readText(Reader)} instead. */
   public static @NotNull String loadTextAndClose(@NotNull InputStream stream) throws IOException {
     return loadTextAndClose(new InputStreamReader(stream, StandardCharsets.UTF_8));
   }
 
+  /** Consider using {@link StreamUtil#readText(Reader)} instead. */
   public static @NotNull String loadTextAndClose(@NotNull Reader reader) throws IOException {
     try {
       return new String(adaptiveLoadText(reader));
@@ -252,6 +270,7 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link StreamUtil#readText(Reader)} instead. */
   public static char @NotNull [] adaptiveLoadText(@NotNull Reader reader) throws IOException {
     char[] chars = new char[4096];
     List<char[]> buffers = null;
@@ -284,6 +303,7 @@ public class FileUtil {
     return result;
   }
 
+  /** Consider using {@link StreamUtil#readBytes(InputStream)} instead. */
   public static byte @NotNull [] adaptiveLoadBytes(@NotNull InputStream stream) throws IOException {
     byte[] bytes = new byte[StreamUtil.BUFFER_SIZE];
     List<byte[]> buffers = null;
@@ -333,6 +353,7 @@ public class FileUtil {
     });
   }
 
+  /** Consider using {@link NioFiles#deleteRecursively(Path)} instead. */
   public static boolean delete(@NotNull File file) {
     return FileUtilRt.delete(file);
   }
@@ -341,24 +362,27 @@ public class FileUtil {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static void deleteRecursively(@NotNull Path file) throws IOException {
-    FileUtilRt.deleteRecursively(file, null);
+    NioFiles.deleteRecursively(file);
   }
 
   /** @deprecated use {@link NioFiles#deleteRecursively} */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static void delete(@NotNull Path path) throws IOException {
-    FileUtilRt.deleteRecursively(path, null);
+    NioFiles.deleteRecursively(path);
   }
 
+  /** Consider using {@link NioFiles#createParentDirectories(Path)} instead. */
   public static boolean createParentDirs(@NotNull File file) {
     return FileUtilRt.createParentDirs(file);
   }
 
+  /** Consider using {@link NioFiles#createDirectories(Path)} instead. */
   public static boolean createDirectory(@NotNull File path) {
     return FileUtilRt.createDirectory(path);
   }
 
+  /** Consider using {@link NioFiles#createIfNotExists(Path)} instead. */
   public static boolean createIfDoesntExist(@NotNull File file) {
     return FileUtilRt.createIfNotExists(file);
   }
@@ -367,14 +391,17 @@ public class FileUtil {
     return FileUtilRt.ensureCanCreateFile(file);
   }
 
+  /** Consider using {@link NioFiles#createIfNotExists(Path)} instead. */
   public static boolean createIfNotExists(@NotNull File file) {
     return FileUtilRt.createIfNotExists(file);
   }
 
+  /** Consider using {@link Files#copy(Path, Path, java.nio.file.CopyOption...)} with {@link java.nio.file.StandardCopyOption#COPY_ATTRIBUTES} instead. */
   public static void copy(@NotNull File fromFile, @NotNull File toFile) throws IOException {
     performCopy(fromFile, toFile, true);
   }
 
+  /** Consider using {@link Files#copy(Path, Path, java.nio.file.CopyOption...)} with {@link java.nio.file.StandardCopyOption#REPLACE_EXISTING} instead. */
   public static void copyContent(@NotNull File fromFile, @NotNull File toFile) throws IOException {
     performCopy(fromFile, toFile, false);
   }
@@ -432,14 +459,17 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@code InputStream.transferTo} instead. */
   public static void copy(@NotNull InputStream inputStream, @NotNull OutputStream outputStream) throws IOException {
     FileUtilRt.copy(inputStream, outputStream);
   }
 
+  /** Consider using {@code InputStream.transferTo} instead. */
   public static void copy(@NotNull InputStream inputStream, int maxSize, @NotNull OutputStream outputStream) throws IOException {
     copy(inputStream, (long)maxSize, outputStream);
   }
 
+  /** Consider using {@code InputStream.transferTo} instead. */
   public static void copy(@NotNull InputStream inputStream, long maxSize, @NotNull OutputStream outputStream) throws IOException {
     byte[] buffer = new byte[StreamUtil.BUFFER_SIZE];
     long toRead = maxSize;
@@ -451,10 +481,12 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link NioFiles#copyRecursively(Path, Path)} instead. */
   public static void copyFileOrDir(@NotNull File from, @NotNull File to) throws IOException {
     copyFileOrDir(from, to, from.isDirectory());
   }
 
+  /** Consider using {@link NioFiles#copyRecursively(Path, Path)} instead. */
   public static void copyFileOrDir(@NotNull File from, @NotNull File to, boolean isDir) throws IOException {
     if (isDir) {
       copyDir(from, to);
@@ -464,6 +496,7 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link NioFiles#copyRecursively(Path, Path)} instead. */
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir) throws IOException {
     copyDir(fromDir, toDir, true);
   }
@@ -471,6 +504,8 @@ public class FileUtil {
   /**
    * Copies content of {@code fromDir} to {@code toDir}.
    * It's equivalent to "cp --dereference -r fromDir/* toDir" unix command.
+   * <p>
+   * Consider using {@link NioFiles#copyRecursively(Path, Path)} instead.
    *
    * @param fromDir source directory
    * @param toDir   destination directory
@@ -483,10 +518,12 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link NioFiles#copyRecursively(Path, Path)} instead. */
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, boolean copySystemFiles) throws IOException {
     copyDir(fromDir, toDir, copySystemFiles ? null : file -> !StringUtil.startsWithChar(file.getName(), '.'));
   }
 
+  /** Consider using {@link NioFiles#copyRecursively(Path, Path, Predicate)} instead. */
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, @Nullable FileFilter filter) throws IOException {
     ensureExists(toDir);
     if (isAncestor(fromDir, toDir, true)) {
@@ -509,16 +546,19 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link NioFiles#createDirectories(Path)} instead. */
   public static void ensureExists(@NotNull File dir) throws IOException {
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException(UtilBundle.message("exception.directory.can.not.create", dir.getPath()));
     }
   }
 
+  /** Consider using {@link kotlin.io.path.PathsKt#getNameWithoutExtension(Path)} instead. */
   public static @NotNull @NlsSafe String getNameWithoutExtension(@NotNull File file) {
     return FileUtilRt.getNameWithoutExtension(file.getName());
   }
 
+  /** Consider using {@link kotlin.io.path.PathsKt#getNameWithoutExtension(Path)} instead. */
   public static @NotNull @NlsSafe String getNameWithoutExtension(@NotNull String name) {
     return FileUtilRt.getNameWithoutExtension(name);
   }
@@ -567,11 +607,14 @@ public class FileUtil {
    * Converts {@code filePath} to file system dependent form which uses forward slashes ('/') on Linux and Mac OS, and use back slashes ('\')
    * on Windows. Such paths are shown in UI. They must be converted to {@link #toSystemIndependentName file system independent form} to
    * store in configuration files.
+   * <p>
+   * Consider using {@link Path#of} and {@link Path#toString()} instead.
    */
   public static @NotNull @NlsSafe String toSystemDependentName(@NotNull String filePath) {
     return FileUtilRt.toSystemDependentName(filePath);
   }
 
+  /** Consider using {@link Path#of} and {@link Path#toString()} instead. */
   public static @NotNull String toSystemDependentName(@NotNull String path, char separatorChar) {
     return FileUtilRt.toSystemDependentName(path, separatorChar);
   }
@@ -579,6 +622,8 @@ public class FileUtil {
   /**
    * Converts {@code filePath} to file system independent form which uses forward slashes ('/'). Such paths can be stored in internal structures
    * and configuration files. They must be converted to {@link #toSystemDependentName file system dependent form} to show in UI.
+   * <p>
+   * Consider using {@link kotlin.io.path.PathsKt#getInvariantSeparatorsPathString(Path)} instead.
    */
   public static @NotNull @NonNls String toSystemIndependentName(@NotNull String filePath) {
     return FileUtilRt.toSystemIndependentName(filePath);
@@ -590,12 +635,15 @@ public class FileUtil {
    * what {@link File#getCanonicalPath()} will return) - so use with care.<br>
    * <br>
    * If the path may contain symlinks, use {@link FileUtil#toCanonicalPath(String, boolean)} instead.
+   * <p>
+   * Consider using {@link Path#normalize()} instead.
    */
   @Contract("null -> null; !null->!null")
   public static String toCanonicalPath(@Nullable String path) {
     return FileUtilRt.toCanonicalPath(path, File.separatorChar, true);
   }
 
+  /** Consider using {@link Path#normalize()} instead. */
   public static String toCanonicalPath(@Nullable String path, char separatorChar, boolean removeLastSlash) {
     return FileUtilRt.toCanonicalPath(path, separatorChar, removeLastSlash);
   }
@@ -614,17 +662,21 @@ public class FileUtil {
    *   dir2/
    * </pre>
    * 'root/dir1/link_to_dir1/../dir2' should be resolved to 'root/dir2'
+   * <p>
+   * Consider using {@link Path#toRealPath} or {@link Path#normalize} instead.
    */
   @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, boolean resolveSymlinksIfNecessary) {
     return toCanonicalPath(path, File.separatorChar, true, resolveSymlinksIfNecessary);
   }
 
+  /** Consider using {@link Path#toRealPath} or {@link Path#normalize} instead. */
   @Contract("null, _ -> null; !null,_->!null")
   public static String toCanonicalPath(@Nullable String path, char separatorChar) {
     return FileUtilRt.toCanonicalPath(path, separatorChar, true);
   }
 
+  /** Consider using {@link Path#toRealPath} or {@link Path#normalize} instead. */
   @SuppressWarnings("unused")
   @Contract("null -> null; !null->!null")
   public static String toCanonicalUriPath(@Nullable String path) {
@@ -649,6 +701,7 @@ public class FileUtil {
     }
   };
 
+  /** Consider using {@link Path#toRealPath} or {@link Path#normalize} instead. */
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
   private static String toCanonicalPath(@Nullable String path,
                                         char separatorChar,
@@ -661,6 +714,8 @@ public class FileUtil {
   /**
    * converts back slashes to forward slashes
    * removes double slashes inside the path, e.g. "x/y//z" => "x/y/z"
+   * <p>
+   * Consider using {@link Path#normalize()} instead.
    */
   public static @NotNull String normalize(@NotNull String path) {
     int start = 0;
@@ -724,6 +779,7 @@ public class FileUtil {
     return URLUtil.unescapePercentSequences(urlString);
   }
 
+  /** Consider using {@link NioFiles#rename(Path, String)} instead. */
   public static boolean rename(@NotNull File source, @NotNull String newName) throws IOException {
     File target = new File(source.getParent(), newName);
     if (!SystemInfoRt.isFileSystemCaseSensitive && newName.equalsIgnoreCase(source.getName())) {
@@ -735,6 +791,7 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@link Files#move(Path, Path, java.nio.file.CopyOption...)} instead. */
   public static void rename(@NotNull File source, @NotNull File target) throws IOException {
     if (source.renameTo(target)) return;
     if (!source.exists()) return;
@@ -794,10 +851,12 @@ public class FileUtil {
     return Strings.toLowerCase(FileUtilRt.getExtension(fileName));
   }
 
+  /** Consider using {@link kotlin.io.path.PathsKt#getExtension(Path)} instead. */
   public static @NotNull CharSequence getExtension(@NotNull CharSequence fileName) {
     return FileUtilRt.getExtension(fileName);
   }
 
+  /** Consider using {@link kotlin.io.path.PathsKt#getExtension(Path)} instead. */
   public static CharSequence getExtension(@NotNull CharSequence fileName, @Nullable String defaultValue) {
     return FileUtilRt.getExtension(fileName, defaultValue);
   }
@@ -986,6 +1045,7 @@ public class FileUtil {
     return builder.toString();
   }
 
+  /** Consider using {@link Files#move(Path, Path, java.nio.file.CopyOption...)} instead. */
   public static boolean moveDirWithContent(@NotNull File fromDir, @NotNull File toDir) {
     if (!toDir.exists()) return fromDir.renameTo(toDir);
 
@@ -1053,34 +1113,42 @@ public class FileUtil {
     return result.toString();
   }
 
+  /** Consider using {@link Files#isExecutable(Path)} instead. */
   public static boolean canExecute(@NotNull File file) {
     return file.canExecute();
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void appendToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), true);
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void writeToFile(@NotNull File file, byte @NotNull [] content) throws IOException {
     writeToFile(file, content, false);
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
     writeToFile(file, text, false);
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void writeToFile(@NotNull File file, @NotNull String text, @NotNull Charset charset) throws IOException {
     writeToFile(file, text.getBytes(charset));
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void writeToFile(@NotNull File file, @NotNull String text, boolean append) throws IOException {
     writeToFile(file, text.getBytes(StandardCharsets.UTF_8), append);
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void writeToFile(@NotNull File file, byte @NotNull [] content, int off, int len) throws IOException {
     writeToFile(file, content, off, len, false);
   }
 
+  /** Consider using {@link Files#write(Path, byte[], java.nio.file.OpenOption...)} instead. */
   public static void writeToFile(@NotNull File file, byte @NotNull [] content, boolean append) throws IOException {
     writeToFile(file, content, 0, content.length, append);
   }
@@ -1098,10 +1166,12 @@ public class FileUtil {
       (Function<File, Iterable<File>>)file -> file == null ? Collections.emptySet() : JBIterable.of(file.listFiles()));
   }
 
+  /** Consider using {@link Files#walk(Path, java.nio.file.FileVisitOption...)} instead. */
   public static @NotNull JBTreeTraverser<File> fileTraverser(@Nullable File root) {
     return Lazy.FILE_TRAVERSER.withRoot(root);
   }
 
+  /** Consider using {@link Files#walk(Path, java.nio.file.FileVisitOption...)} instead. */
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<? super File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
   }
@@ -1150,6 +1220,7 @@ public class FileUtil {
     return null;
   }
 
+  /** Consider using {@link Files#walk(Path, java.nio.file.FileVisitOption...)} instead. */
   public static @NotNull List<File> findFilesByMask(@NotNull Pattern pattern, @NotNull File dir) {
     List<File> found = new ArrayList<>();
     File[] files = dir.listFiles();
@@ -1166,6 +1237,7 @@ public class FileUtil {
     return found;
   }
 
+  /** Consider using {@link Files#walk(Path, java.nio.file.FileVisitOption...)} instead. */
   public static @NotNull List<Path> findPathsByMask(@NotNull Pattern pattern, @NotNull Path dir) {
     List<Path> found = new ArrayList<>();
     try (Stream<Path> files = Files.list(dir)) {
@@ -1183,6 +1255,7 @@ public class FileUtil {
     return found;
   }
 
+  /** Consider using {@link Files#walk(Path, java.nio.file.FileVisitOption...)} instead. */
   public static @NotNull List<File> findFilesOrDirsByMask(@NotNull Pattern pattern, @NotNull File dir) {
     List<File> found = new ArrayList<>();
     File[] files = dir.listFiles();
@@ -1205,6 +1278,8 @@ public class FileUtil {
    * Unless found, checks if provided file was a directory. In this case checks existence
    * of child files with given names in order "as provided". Finally checks filename among
    * brother-files of provided. Returns null if nothing found.
+   * <p>
+   * Consider using {@link com.intellij.execution.configurations.PathEnvironmentVariableUtil} instead.
    *
    * @return path of the first of found files or empty string or null.
    */
@@ -1261,11 +1336,13 @@ public class FileUtil {
            || OSAgnosticPathUtil.isAbsoluteDosPath(path);
   }
 
+  /** Consider using {@link Path#relativize(Path)} instead. */
   @Contract("null -> null; !null -> !null")
   public static @NlsSafe String getLocationRelativeToUserHome(@Nullable String path) {
     return getLocationRelativeToUserHome(path, true);
   }
 
+  /** Consider using {@link Path#relativize(Path)} instead. */
   @Contract("null,_ -> null; !null,_ -> !null")
   public static @NlsSafe String getLocationRelativeToUserHome(@Nullable String path, boolean unixOnly) {
     if (path == null) return null;
@@ -1309,20 +1386,24 @@ public class FileUtil {
     return lineBreak >= 0 && Strings.indexOf(firstCharsIfText, marker, 2, lineBreak) != -1;
   }
 
+  /** Consider using {@link Files#createTempDirectory(String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempDirectory(prefix, suffix);
   }
 
+  /** Consider using {@link Files#createTempDirectory(String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempDirectory(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit)
     throws IOException {
     return FileUtilRt.createTempDirectory(prefix, suffix, deleteOnExit);
   }
 
+  /** Consider using {@link Files#createTempDirectory(Path, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempDirectory(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix)
     throws IOException {
     return FileUtilRt.createTempDirectory(dir, prefix, suffix);
   }
 
+  /** Consider using {@link Files#createTempDirectory(Path, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempDirectory(@NotNull File dir,
                                                   @NotNull @NonNls String prefix,
                                                   @Nullable @NonNls String suffix,
@@ -1330,19 +1411,23 @@ public class FileUtil {
     return FileUtilRt.createTempDirectory(dir, prefix, suffix, deleteOnExit);
   }
 
+  /** Consider using {@link Files#createTempFile(String, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempFile(prefix, suffix);
   }
 
+  /** Consider using {@link Files#createTempFile(String, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempFile(@NotNull @NonNls String prefix, @Nullable @NonNls String suffix, boolean deleteOnExit)
     throws IOException {
     return FileUtilRt.createTempFile(prefix, suffix, deleteOnExit);
   }
 
+  /** Consider using {@link Files#createTempFile(Path, String, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempFile(@NotNull File dir, @NotNull @NonNls String prefix, @Nullable @NonNls String suffix) throws IOException {
     return FileUtilRt.createTempFile(dir, prefix, suffix);
   }
 
+  /** Consider using {@link Files#createTempFile(Path, String, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempFile(@NotNull File dir,
                                              @NotNull @NonNls String prefix,
                                              @Nullable @NonNls String suffix,
@@ -1350,6 +1435,7 @@ public class FileUtil {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create);
   }
 
+  /** Consider using {@link Files#createTempFile(Path, String, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull File createTempFile(@NotNull File dir,
                                              @NotNull @NonNls String prefix,
                                              @Nullable @NonNls String suffix,
@@ -1358,6 +1444,7 @@ public class FileUtil {
     return FileUtilRt.createTempFile(dir, prefix, suffix, create, deleteOnExit);
   }
 
+  /** Consider using {@link Files#createTempDirectory(Path, String, java.nio.file.attribute.FileAttribute[])} instead. */
   public static @NotNull @NlsSafe String getTempDirectory() {
     return FileUtilRt.getTempDirectory();
   }
@@ -1367,22 +1454,27 @@ public class FileUtil {
     FileUtilRt.resetCanonicalTempPathCache(tempPath);
   }
 
+  /** Consider using {@link Files#createTempFile} or {@link Files#createTempDirectory} instead. */
   public static @NotNull File generateRandomTemporaryPath() throws IOException {
     return FileUtilRt.generateRandomTemporaryPath();
   }
 
+  /** Consider using {@link Files#createTempFile} or {@link Files#createTempDirectory} instead. */
   public static @NotNull File generateRandomTemporaryPath(@NotNull String prefix, @NotNull String suffix) throws IOException {
     return FileUtilRt.generateRandomTemporaryPath(prefix, suffix);
   }
 
+  /** Consider using {@link NioFiles#setExecutable(Path)} instead. */
   public static void setExecutable(@NotNull File file) throws IOException {
     NioFiles.setExecutable(file.toPath());
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @Nullable String loadFileOrNull(@NotNull String path) {
     return loadFileOrNull(new File(path));
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @Nullable String loadFileOrNull(@NotNull File file) {
     try {
       return loadFile(file);
@@ -1392,78 +1484,97 @@ public class FileUtil {
     }
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @NotNull String loadFile(@NotNull File file) throws IOException {
     return FileUtilRt.loadFile(file);
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @NotNull String loadFile(@NotNull File file, boolean convertLineSeparators) throws IOException {
     return FileUtilRt.loadFile(file, convertLineSeparators);
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @NotNull String loadFile(@NotNull File file, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadFile(file, encoding);
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @NotNull String loadFile(@NotNull File file, @NotNull Charset encoding) throws IOException {
     return String.valueOf(FileUtilRt.loadFileText(file, encoding));
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static @NotNull String loadFile(@NotNull File file, @Nullable String encoding, boolean convertLineSeparators) throws IOException {
     return FileUtilRt.loadFile(file, encoding, convertLineSeparators);
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static char @NotNull [] loadFileText(@NotNull File file) throws IOException {
     return FileUtilRt.loadFileText(file);
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static char @NotNull [] loadFileText(@NotNull File file, @NotNull Charset encoding) throws IOException {
     return FileUtilRt.loadFileText(file, encoding);
   }
 
+  /** Consider using {@code Files.readString} instead. */
   public static char[] loadFileText(@NotNull File file, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadFileText(file, encoding);
   }
 
+  /** Consider using {@link Reader#readAllAsString()} instead. */
   public static char @NotNull [] loadText(@NotNull Reader reader, int length) throws IOException {
     return FileUtilRt.loadText(reader, length);
   }
 
+  /** Consider using {@link Files#readAllLines(Path)} instead. */
   public static @NotNull List<String> loadLines(@NotNull File file) throws IOException {
     return FileUtilRt.loadLines(file);
   }
 
+  /** Consider using {@link Files#readAllLines(Path)} instead. */
   public static @NotNull List<String> loadLines(@NotNull File file, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadLines(file, encoding);
   }
 
+  /** Consider using {@link Files#readAllLines(Path)} instead. */
   public static @NotNull List<String> loadLines(@NotNull String path) throws IOException {
     return FileUtilRt.loadLines(path);
   }
 
+  /** Consider using {@link Files#readAllLines(Path)} instead. */
   public static @NotNull List<String> loadLines(@NotNull String path, @Nullable String encoding) throws IOException {
     return FileUtilRt.loadLines(path, encoding);
   }
 
+  /** Consider using {@link BufferedReader#lines()} instead. */
   public static @NotNull List<String> loadLines(@NotNull BufferedReader reader) throws IOException {
     return FileUtilRt.loadLines(reader);
   }
 
+  /** Consider using {@link StreamUtil#readBytes(InputStream)} or {@link InputStream#readAllBytes()} instead. */
   public static byte @NotNull [] loadBytes(@NotNull InputStream stream) throws IOException {
     return FileUtilRt.loadBytes(stream);
   }
 
+  /** Consider using {@link StreamUtil#readBytes(InputStream, int)} instead. */
   public static byte @NotNull [] loadBytes(@NotNull InputStream stream, int length) throws IOException {
     return FileUtilRt.loadBytes(stream, length);
   }
 
+  /** Consider using {@link Path#iterator()} instead. */
   public static @NotNull List<String> splitPath(@NotNull String path) {
     return FileUtilRt.splitPath(path, File.separatorChar);
   }
 
+  /** Consider using {@link Path#iterator()} instead. */
   public static @NotNull List<String> splitPath(@NotNull String path, char separatorChar) {
     return FileUtilRt.splitPath(path, separatorChar);
   }
 
+  /** Consider using {@link Files#walk(Path, java.nio.file.FileVisitOption...)} instead. */
   public static boolean visitFiles(@NotNull File root, @NotNull Processor<? super File> processor) {
     if (!processor.process(root)) {
       return false;
@@ -1481,20 +1592,24 @@ public class FileUtil {
     return true;
   }
 
+  /** Consider using {@link NioFiles#deleteRecursively(Path)} instead. */
   public static boolean deleteWithRenamingIfExists(@NotNull Path file) {
     return Files.exists(file) && deleteWithRenaming(file);
   }
 
+  /** Consider using {@link NioFiles#deleteRecursively(Path)} instead. */
   public static boolean deleteWithRenaming(@NotNull Path file) {
     return deleteWithRenaming(file.toFile());
   }
 
+  /** Consider using {@link NioFiles#deleteRecursively(Path)} instead. */
   public static boolean deleteWithRenaming(@NotNull File file) {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
     return delete(success ? tempFileNameForDeletion : file);
   }
 
+  /** Consider using {@link Path#toUri()} instead. */
   public static @NotNull String getUrl(@NotNull File file) {
     try {
       return file.toURI().toURL().toExternalForm();
