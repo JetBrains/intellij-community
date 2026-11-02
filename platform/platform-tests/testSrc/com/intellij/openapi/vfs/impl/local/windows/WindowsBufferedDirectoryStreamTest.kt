@@ -16,15 +16,27 @@ import org.junit.jupiter.api.condition.EnabledOnOs
 import org.junit.jupiter.api.condition.OS
 import org.junit.jupiter.api.io.TempDir
 import java.io.IOException
+import java.lang.foreign.MemorySegment
+import java.lang.foreign.ValueLayout
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.NotDirectoryException
 import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
+import java.time.Instant
 import kotlin.io.path.createDirectory
 import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.writeText
+
+// Field offsets of FILE_FULL_DIR_INFORMATION.
+private const val LAST_WRITE_TIME_OFFSET = 24L
+private const val END_OF_FILE_OFFSET = 40L
+private const val FILE_NAME_LENGTH_OFFSET = 60L
+private const val FILE_NAME_OFFSET = 68L
+
+// 100-nanosecond intervals from 1601-01-01 to 1970-01-01.
+private const val FILETIME_EPOCH_DIFFERENCE = 116_444_736_000_000_000L
 
 /**
  * Tests the native kernel32/ntdll directory enumeration in [WindowsBufferedDirectoryStream]: opening and
@@ -90,6 +102,40 @@ class WindowsBufferedDirectoryStreamTest {
     assertTrue(listed.getValue("nested").isDirectory, "'nested' must be reported as a directory")
     assertTrue(listed.getValue("alpha.txt").isRegularFile, "'alpha.txt' must be reported as a regular file")
     assertEquals(Files.size(tempDir / "alpha.txt"), listed.getValue("alpha.txt").size(), "Reported size must match the file size")
+  }
+
+  @Test
+  fun readsAnEntryAtAFourByteAlignedOffset(@TempDir tempDir: Path) {
+    (tempDir / "a.txt").writeText("x")
+
+    WindowsBufferedDirectoryIterator(tempDir).use { iter ->
+      assertEquals("a.txt", iter.next().first.fileName.toString())
+
+      // Emulate RIDER-143624: a next entry on a 4-byte boundary instead of the documented 8-byte one.
+      val buffer = iter.buffer
+      val current = iter.currentEntry.address() - buffer.address()
+      val recordEnd = current + FILE_NAME_OFFSET + "a.txt".length * 2
+      val next = (recordEnd + 7) / 8 * 8 + 4 - current
+      check((buffer.address() + current + next) % 8 == 4L)
+      val lastWrite = Instant.parse("2026-01-01T00:00:00Z")
+      writeRecord(buffer, current + next, "foo", lastWrite, size = 7)
+      buffer.set(ValueLayout.JAVA_INT_UNALIGNED, current, next.toInt())
+
+      assertTrue(iter.hasNext(), "An entry at a 4-byte aligned offset must be readable")
+      val entry = iter.next()
+      assertEquals("foo", entry.first.fileName.toString())
+      assertEquals(lastWrite.toEpochMilli(), entry.second.lastModifiedTime().toMillis())
+      assertEquals(7L, entry.second.size())
+    }
+  }
+
+  private fun writeRecord(buffer: MemorySegment, offset: Long, name: String, lastWrite: Instant, size: Long) {
+    val nameBytes = name.toByteArray(Charsets.UTF_16LE)
+    buffer.asSlice(offset, FILE_NAME_OFFSET + nameBytes.size).fill(0)
+    buffer.set(ValueLayout.JAVA_LONG_UNALIGNED, offset + LAST_WRITE_TIME_OFFSET, lastWrite.toEpochMilli() * 10_000 + FILETIME_EPOCH_DIFFERENCE)
+    buffer.set(ValueLayout.JAVA_LONG_UNALIGNED, offset + END_OF_FILE_OFFSET, size)
+    buffer.set(ValueLayout.JAVA_INT_UNALIGNED, offset + FILE_NAME_LENGTH_OFFSET, nameBytes.size)
+    MemorySegment.copy(MemorySegment.ofArray(nameBytes), 0L, buffer, offset + FILE_NAME_OFFSET, nameBytes.size.toLong())
   }
 
   // Symlink probing is exercised locally; TeamCity agents lack the privilege/Developer Mode to create them.
