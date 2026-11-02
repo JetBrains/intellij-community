@@ -23,7 +23,6 @@ import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.options.BoundCompositeSearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
-import com.intellij.terminal.ANSIColoredConsoleColorsPage
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.BrowseFolderDescriptor.Companion.withFileToTextConvertor
@@ -48,6 +47,7 @@ import com.intellij.platform.eel.provider.asNioPath
 import com.intellij.platform.eel.provider.getEelDescriptor
 import com.intellij.platform.ide.productMode.IdeProductMode
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.terminal.ANSIColoredConsoleColorsPage
 import com.intellij.terminal.TerminalUiSettingsManager
 import com.intellij.terminal.frontend.action.TerminalInsertInlineCompletionAction
 import com.intellij.terminal.frontend.toolwindow.impl.migration.askForFeedbackIfSwitchedBackToClassicTerminal
@@ -61,7 +61,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.installFileCompletionAndBrowseDialog
 import com.intellij.ui.dsl.builder.AlignX
-import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.Panel
@@ -192,7 +191,11 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
         val inlineCompletionSettingsProvider = TerminalCloudCompletionSettingsProvider.getProvider()
         val inlineCompletionAvailable = inlineCompletionSettingsProvider?.isAvailable() == true
         val commandCompletionAvailable = TerminalCommandCompletion.isEnabled(project)
-        group(message("terminal.command.completion")) {
+        val completionSettingsVisible = terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
+          .and(shellPathField.shellWithIntegrationSelected(project))
+          .and(ComponentPredicate.fromValue(AppMode.isMonolith()))
+
+        group(message("terminal.command.completion.popup")) {
           rowsRange {
             lateinit var completionEnabledCheckBox: JBCheckBox
 
@@ -228,29 +231,28 @@ internal class TerminalOptionsConfigurable(private val project: Project) : Bound
                 actionId = "Terminal.CommandCompletion.InsertSuggestion"
               )
             }
-          }.visible(commandCompletionAvailable)
+          }
 
+        }.visibleIf(completionSettingsVisible.and(ComponentPredicate.fromValue(commandCompletionAvailable)))
+
+        group(message("terminal.inline.completion")) {
           if (inlineCompletionAvailable) {
             inlineCompletionSettingsProvider.addSettingsRow(this, project)
-
-            row {
-              actionShortcutCombobox(
-                labelText = message("terminal.inline.completion.shortcut.insert"),
-                presets = listOf(
-                  RIGHT_ARROW_SHORTCUT_PRESET,
-                  TAB_SHORTCUT_PRESET,
-                  ENTER_SHORTCUT_PRESET,
-                  SHIFT_RIGHT_ARROW_SHORTCUT_PRESET,
-                ),
-                actionId =  TerminalInsertInlineCompletionAction.ACTION_ID
-              )
-            }
           }
-        }.bottomGap(BottomGap.NONE)
-          .visibleIf(terminalEngineComboBox.selectedValueIs(TerminalEngine.REWORKED)
-                       .and(shellPathField.shellWithIntegrationSelected(project))
-                       .and(ComponentPredicate.fromValue(AppMode.isMonolith()))
-                       .and(ComponentPredicate.fromValue(commandCompletionAvailable || inlineCompletionAvailable)))
+
+          row {
+            actionShortcutCombobox(
+              labelText = message("terminal.inline.completion.shortcut.insert"),
+              presets = listOf(
+                RIGHT_ARROW_SHORTCUT_PRESET,
+                TAB_SHORTCUT_PRESET,
+                ENTER_SHORTCUT_PRESET,
+                SHIFT_RIGHT_ARROW_SHORTCUT_PRESET,
+              ),
+              actionId = TerminalInsertInlineCompletionAction.ACTION_ID
+            )
+          }
+        }.visibleIf(completionSettingsVisible.and(ComponentPredicate.fromValue(inlineCompletionAvailable)))
 
         indent {
           buttonsGroup(title = message("settings.prompt.style")) {

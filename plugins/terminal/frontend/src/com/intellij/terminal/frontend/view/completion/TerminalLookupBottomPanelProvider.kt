@@ -185,7 +185,7 @@ internal class TerminalCommandCompletionSettingsAction : DumbAwareAction(
     ShowSettingsUtilImpl.showSettingsDialog(
       project,
       idToSelect = TerminalUtil.TERMINAL_CONFIGURABLE_ID,
-      filter = TerminalBundle.message("terminal.command.completion")
+      filter = TerminalBundle.message("terminal.command.completion.popup"),
     )
   }
 }
