@@ -47,12 +47,11 @@ class PMarkerDirectRoot private constructor(
 
   /** Creates a stable handle without registering it in a lookup table. */
   override fun <T : SnapshotRangeMarkerImpl> createHandle(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
-    if (retainStrong) PMarkerStrongNodeReference(marker) else PMarkerWeakNodeReference(marker)
+    if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
 
-  override fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T> = PMarkerStrongNodeReference(marker)
+  override fun <T : SnapshotRangeMarkerImpl> createStrongHandle(marker: T): SnapshotMarkerReference<T> = StrongSnapshotMarkerReference(marker)
 
   override fun isValid(handle: SnapshotMarkerReference<*>): Boolean {
-    if (handle !is PMarkerNodeReference<*>) return false
     val resolution = cachedResolutions?.get(handle.order) ?: PMarkerResolution.UNRESOLVED
     if (resolution != PMarkerResolution.UNRESOLVED) return true
     return keepingRootAlive {
@@ -70,7 +69,6 @@ class PMarkerDirectRoot private constructor(
 
   /** Reuses this snapshot's validated resolutions. A cache miss checks the state and follows versioned parents. */
   override fun resolve(handle: SnapshotMarkerReference<*>): Long {
-    if (handle !is PMarkerNodeReference<*>) return PMarkerResolution.ABSENT
     val cached = cachedResolutions?.get(handle.order) ?: PMarkerResolution.UNRESOLVED
     if (cached != PMarkerResolution.UNRESOLVED) return cached
     return keepingRootAlive {
@@ -115,14 +113,14 @@ class PMarkerDirectRoot private constructor(
   ): PMarkerDirectRoot = keepingRootAlive {
     val entry = MarkerEntry(handle, startOffset, endOffset, spec, flavorFlags, measure, policy)
     val editor = Editor()
-    editor.finish(editor.insert(root, requireNodeHandle(handle), entry))
+    editor.finish(editor.insert(root, handle, entry))
   }
 
   override fun insertMany(entries: List<MarkerEntry>): PMarkerDirectRoot = keepingRootAlive {
     if (entries.isEmpty()) return@keepingRootAlive this
     val editor = Editor()
     var result = root
-    for (entry in entries) result = editor.insert(result, requireNodeHandle(entry.handle), entry)
+    for (entry in entries) result = editor.insert(result, entry.handle, entry)
     editor.finish(result)
   }
 
@@ -130,11 +128,6 @@ class PMarkerDirectRoot private constructor(
   override fun restoreEntries(entries: List<MarkerEntry>): PMarkerDirectRoot {
     if (entries.isEmpty()) return this
     return purgeMany(entries.map { it.handle }).insertMany(entries)
-  }
-
-  private fun requireNodeHandle(handle: SnapshotMarkerReference<*>): PMarkerNodeReference<*> {
-    require(handle is PMarkerNodeReference<*>) { "The marker handle does not match this root" }
-    return handle
   }
 
   override fun updateSpec(handle: SnapshotMarkerReference<*>, spec: Byte): PMarkerDirectRoot =
@@ -165,7 +158,6 @@ class PMarkerDirectRoot private constructor(
   }
 
   override fun remove(handle: SnapshotMarkerReference<*>): PMarkerDirectRoot = keepingRootAlive {
-    if (handle !is PMarkerNodeReference<*>) return@keepingRootAlive this
     val previous = state(handle) ?: return@keepingRootAlive this
     if (previous is PMarkerInvalidNode && previous.reason == 0) return@keepingRootAlive this
     val offsets = resolveState(previous)
@@ -190,9 +182,8 @@ class PMarkerDirectRoot private constructor(
     val editor = Editor()
     var result = root
     var changed = false
-    val processed = HashSet<PMarkerNodeReference<*>>()
-    for (candidate in handles) {
-      val handle = candidate as? PMarkerNodeReference<*> ?: continue
+    val processed = HashSet<SnapshotMarkerReference<*>>()
+    for (handle in handles) {
       if (!processed.add(handle)) continue
       val previous = state(handle) ?: continue
       val offsets = resolveState(previous)
@@ -222,7 +213,7 @@ class PMarkerDirectRoot private constructor(
     val editor = Editor()
     var result = root
     for (entry in entries) {
-      val handle = entry.nodeHandle
+      val handle = entry.handle
       if (invalids.getUnchecked(handle.order) == null && !isValid(handle)) {
         result = editor.insert(result, handle, entry)
       }
@@ -278,7 +269,7 @@ class PMarkerDirectRoot private constructor(
       val moved = ArrayList<MarkerEntry>()
       collectContained(result, 0, moveStart, moveStart + length, moved)
       for (movedEntry in moved) {
-        val handle = movedEntry.nodeHandle
+        val handle = movedEntry.handle
         result = editor.delete(result, movedEntry.nodeStart, handle)
         val entry = movedEntry.copy(nodeStart = movedEntry.nodeStart + start - moveStart, nodeEnd = movedEntry.nodeEnd + start - moveStart)
         val update = entry.policy.afterRetarget(entry, afterText)
@@ -373,7 +364,6 @@ class PMarkerDirectRoot private constructor(
    * Callers must check whether a valid node belongs to this root.
    */
   private fun state(handle: SnapshotMarkerReference<*>): PMarkerNodeState? {
-    if (handle !is PMarkerNodeReference<*>) return null
     val state = handle.states.get(version)
     return if (state is PMarkerInvalidNode && invalids.getUnchecked(handle.order) !== state) null else state
   }
@@ -435,7 +425,7 @@ class PMarkerDirectRoot private constructor(
     }
 
     /** Tracks the latest state created for each handle, including nodes that later leave the final tree. */
-    val pending: MutableMap<PMarkerNodeReference<*>, PMarkerNodeState> = IdentityHashMap()
+    val pending: MutableMap<SnapshotMarkerReference<*>, PMarkerNodeState> = IdentityHashMap()
 
     /** Builds the map of invalid and removed states for this version from the existing [invalids]. */
     val invalidsBuilder: PersistentLongMapBuilder<PMarkerInvalidNode> = invalids.builder()
@@ -473,7 +463,7 @@ class PMarkerDirectRoot private constructor(
      * Checks the handle and range before inserting a new marker.
      * Reads [pending] first to detect repeated handles within one batch.
      */
-    fun insert(root: PMarkerNode?, handle: PMarkerNodeReference<*>, entry: MarkerEntry): PMarkerNode {
+    fun insert(root: PMarkerNode?, handle: SnapshotMarkerReference<*>, entry: MarkerEntry): PMarkerNode {
       require(entry.nodeStart >= 0 && entry.nodeEnd >= entry.nodeStart) { "The marker range is invalid" }
       var existing = pending[handle] ?: state(handle)
       if (existing is PMarkerNode && !pending.containsKey(handle) && !isValid(handle)) existing = null
@@ -487,7 +477,7 @@ class PMarkerDirectRoot private constructor(
      * Inserts by start offset and handle order, copying and balancing the search path.
      * The caller must check whether the handle already exists.
      */
-    fun insertNode(initial: PMarkerNode?, handle: PMarkerNodeReference<*>, entry: MarkerEntry): PMarkerNode {
+    fun insertNode(initial: PMarkerNode?, handle: SnapshotMarkerReference<*>, entry: MarkerEntry): PMarkerNode {
       if (initial == null) {
         invalidsBuilder.remove(handle.order)
         return make(entry)
@@ -503,7 +493,7 @@ class PMarkerDirectRoot private constructor(
     }
 
     /** Copies the search path to replace an entry. The transform must preserve the entry's ordering key. */
-    fun update(initial: PMarkerNode?, start: Int, handle: PMarkerNodeReference<*>, transform: (MarkerEntry) -> MarkerEntry): PMarkerNode? {
+    fun update(initial: PMarkerNode?, start: Int, handle: SnapshotMarkerReference<*>, transform: (MarkerEntry) -> MarkerEntry): PMarkerNode? {
       if (initial == null) return null
       val node = push(initial)
       val order = compare(start, handle, node.entry.nodeStart, node.handle)
@@ -515,7 +505,7 @@ class PMarkerDirectRoot private constructor(
     }
 
     /** Removes an entry from the valid subtree. The caller records any invalid or removed state separately. */
-    fun delete(initial: PMarkerNode?, start: Int, handle: PMarkerNodeReference<*>): PMarkerNode? {
+    fun delete(initial: PMarkerNode?, start: Int, handle: SnapshotMarkerReference<*>): PMarkerNode? {
       if (initial == null) return null
       val node = push(initial)
       val order = compare(start, handle, node.entry.nodeStart, node.handle)
@@ -654,7 +644,7 @@ class PMarkerDirectRoot private constructor(
       invalidated: Consumer<in SnapshotMarkerReference<*>>,
       affected: Consumer<in SnapshotMarkerReference<*>>,
     ) {
-      val handle = entry.nodeHandle
+      val handle = entry.handle
       if (!result.isValid || result.startOffset != entry.nodeStart || result.endOffset != entry.nodeEnd) {
         firstChangedEnd = minOf(firstChangedEnd, entry.nodeEnd)
       }
@@ -666,7 +656,7 @@ class PMarkerDirectRoot private constructor(
     }
 
     /** Records an invalid state or removal tombstone for this version. A zero [reason] marks removal. */
-    fun recordInvalid(handle: PMarkerNodeReference<*>, range: Long, reason: Int) {
+    fun recordInvalid(handle: SnapshotMarkerReference<*>, range: Long, reason: Int) {
       val state = PMarkerInvalidNode(range, reason)
       pending[handle] = state
       invalidsBuilder.put(handle.order, state)
@@ -715,9 +705,6 @@ class PMarkerDirectRoot private constructor(
         PMarkerNodeHistory.initialVersion, null, PersistentLongMap.empty(),
       )
     }
-
-    private val MarkerEntry.nodeHandle: PMarkerNodeReference<*>
-      get() = handle as PMarkerNodeReference<*>
 
     private fun compare(first: MarkerEntry, second: MarkerEntry): Int =
       compare(first.nodeStart, first.handle, second.nodeStart, second.handle)

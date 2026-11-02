@@ -23,8 +23,8 @@ internal class PMarkerNode(
   val right: PMarkerNode?,
   val lazyDelta: Int = 0,
 ) : PMarkerNodeState {
-  val handle: PMarkerNodeReference<*>
-    get() = entry.handle as PMarkerNodeReference<*>
+  val handle: SnapshotMarkerReference<*>
+    get() = entry.handle
 
   /** Finds a parent for a snapshot version without retaining that parent. */
   val parents: PMarkerNodeHistory<PMarkerNode> = PMarkerNodeHistory()
@@ -44,24 +44,6 @@ internal class PMarkerNode(
                              (left?.persistentCount ?: 0) + (right?.persistentCount ?: 0)
 
   private fun shiftedEnd(child: PMarkerNode?): Int = if (child == null) Int.MIN_VALUE else child.maximumEnd + lazyDelta
-}
-
-/** Identifies one marker across node copies without retaining the nodes. */
-internal sealed interface PMarkerNodeReference<out T : SnapshotRangeMarkerImpl?> : SnapshotMarkerReference<T> {
-  /** Selects a marker state for a snapshot version without retaining that state. */
-  val states: PMarkerNodeHistory<PMarkerNodeState>
-}
-
-/** Retains the marker while keeping only weak references to its states. */
-internal class PMarkerStrongNodeReference<T : SnapshotRangeMarkerImpl>(marker: T) :
-  StrongSnapshotMarkerReference<T>(marker), PMarkerNodeReference<T> {
-  override val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
-}
-
-/** Lets the marker and its states be collected when their owners release them. */
-internal class PMarkerWeakNodeReference<T : SnapshotRangeMarkerImpl>(marker: T) :
-  WeakSnapshotMarkerReference<T>(marker), PMarkerNodeReference<T?> {
-  override val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
 }
 
 /** Represents a valid, invalid, or removed marker state in a handle's history. */

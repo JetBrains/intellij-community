@@ -19,18 +19,27 @@ sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl?> : Com
   }
 }
 
-/** Retains the marker for the lifetime of this reference. */
-internal open class StrongSnapshotMarkerReference<out T : SnapshotRangeMarkerImpl>(private val marker: T) : SnapshotMarkerReference<T> {
-  final override val order: Long = SnapshotMarkerReference.nextOrder()
+/** Selects a marker state for a snapshot version without retaining that state. */
+internal val SnapshotMarkerReference<*>.states: PMarkerNodeHistory<PMarkerNodeState>
+  get() = when (this) {
+    is StrongSnapshotMarkerReference<*> -> states
+    is WeakSnapshotMarkerReference<*> -> states
+  }
 
-  final override fun get(): T = marker
+/** Retains the marker while keeping only weak references to its states. */
+internal class StrongSnapshotMarkerReference<out T : SnapshotRangeMarkerImpl>(private val marker: T) : SnapshotMarkerReference<T> {
+  override val order: Long = SnapshotMarkerReference.nextOrder()
+  val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
+
+  override fun get(): T = marker
 }
 
 /** Queues this reference for cleanup after its marker is collected. */
-internal open class WeakSnapshotMarkerReference<T : SnapshotRangeMarkerImpl>(marker: T) :
+internal class WeakSnapshotMarkerReference<T : SnapshotRangeMarkerImpl>(marker: T) :
   WeakReference<T>(marker, SnapshotMarkerEngine.markerQueue), SnapshotMarkerReference<T?> {
-  final override val order: Long = SnapshotMarkerReference.nextOrder()
+  override val order: Long = SnapshotMarkerReference.nextOrder()
+  val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
   internal val rootStorageReference: WeakReference<MarkerRootUpdater> = marker.rootStorage.weakReference
 
-  final override fun get(): T? = super.get()
+  override fun get(): T? = super.get()
 }
