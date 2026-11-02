@@ -11,8 +11,8 @@ import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGenerator") {
 

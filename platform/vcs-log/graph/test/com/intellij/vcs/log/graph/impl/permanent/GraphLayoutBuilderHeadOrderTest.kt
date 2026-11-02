@@ -4,8 +4,8 @@ package com.intellij.vcs.log.graph.impl.permanent
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.graph
 import it.unimi.dsi.fastutil.ints.IntComparator
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class GraphLayoutBuilderHeadOrderTest {
   @Test

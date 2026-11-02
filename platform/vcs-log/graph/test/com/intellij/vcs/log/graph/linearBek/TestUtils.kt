@@ -11,7 +11,7 @@ import com.intellij.vcs.log.graph.impl.facade.sort.bek.BekSorter
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutBuilder
 import com.intellij.vcs.log.graph.impl.permanent.GraphLayoutImpl
 import com.intellij.vcs.log.graph.utils.TimestampGetter
-import org.junit.Assert.assertEquals
+import org.junit.jupiter.api.Assertions.assertEquals
 import kotlin.test.assertNull
 
 class DummyTimestampGetter(val nodesCount: Int) : TimestampGetter {

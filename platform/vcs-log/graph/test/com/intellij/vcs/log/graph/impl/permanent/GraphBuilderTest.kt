@@ -19,8 +19,8 @@ package com.intellij.vcs.log.graph.impl.permanent
 import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.impl.CommitIdManager
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 abstract class GraphBuilderTest<CommitId : Comparable<CommitId>> : AbstractTestWithTwoTextFile("graphBuilder/") {
 

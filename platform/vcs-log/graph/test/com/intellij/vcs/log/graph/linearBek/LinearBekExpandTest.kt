@@ -18,7 +18,7 @@ package com.intellij.vcs.log.graph.linearBek
 import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class LinearBekExpandTest {
   fun runTest(beforeLinearBekBuilder: TestGraphBuilder.() -> Unit, afterExpansionBuilder: TestGraphBuilder.() -> Unit, fromNodeToExpand: Int, toNodeToExpand: Int) {

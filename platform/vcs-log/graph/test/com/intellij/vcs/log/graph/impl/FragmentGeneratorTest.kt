@@ -21,8 +21,8 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.collapsing.FragmentGenerator
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 private val LinearGraph.lite: LiteLinearGraph get() = LinearGraphUtils.asLiteLinearGraph(this)
 

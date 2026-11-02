@@ -16,7 +16,7 @@
 package com.intellij.vcs.log.graph.linearBek
 
 import com.intellij.vcs.log.graph.TestGraphBuilder
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class BekTest {
   fun runTest(beforeBekBuilder: TestGraphBuilder.() -> Unit, afterBekBuilder: TestGraphBuilder.() -> Unit) {

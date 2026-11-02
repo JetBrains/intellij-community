@@ -24,8 +24,8 @@ import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.collapsing.EdgeStorage
 import com.intellij.vcs.log.graph.collapsing.EdgeStorageWrapper
 import com.intellij.vcs.log.graph.utils.sortR
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class EdgeStorageTest : BaseTestGraphBuilder {
   private val nodeIdByIndex: (Int) -> Int = { it - 10 }

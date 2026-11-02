@@ -5,7 +5,7 @@ import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.linearBek.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class FirstParentTest {
   private fun LinearGraph.assertFirstParent(startNodes: Set<Int>, matchedNodes: Set<Int>? = null, expected: TestGraphBuilder.() -> Unit) {

@@ -5,7 +5,7 @@ import com.intellij.vcs.log.graph.TestGraphBuilder
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.graph
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class InplaceFilterEdgesGeneratorTest {
 

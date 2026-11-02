@@ -19,12 +19,12 @@ package com.intellij.vcs.log.graph.impl.print;
 import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.parser.LinearGraphParser;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 
 import static com.intellij.vcs.log.graph.GraphStrUtils.edgesInRowToStr;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class EdgesInRowTest extends AbstractTestWithTwoTextFile {
 

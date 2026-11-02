@@ -3,7 +3,7 @@ package com.intellij.vcs.log.graph.utils
 
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 
 class BfsTests {

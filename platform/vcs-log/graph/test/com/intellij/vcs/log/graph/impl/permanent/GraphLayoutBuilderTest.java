@@ -20,13 +20,13 @@ import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.GraphLayout;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.GraphStrUtils.permanentGraphLayoutModelToStr;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class GraphLayoutBuilderTest<CommitId> extends AbstractTestWithTwoTextFile {
   public GraphLayoutBuilderTest() {

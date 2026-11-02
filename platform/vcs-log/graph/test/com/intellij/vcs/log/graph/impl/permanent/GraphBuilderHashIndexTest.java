@@ -6,13 +6,13 @@ import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo;
 import com.intellij.vcs.log.graph.impl.CommitIdManager;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.GraphStrUtils.commitsInfoToStr;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class GraphBuilderHashIndexTest<CommitId> extends AbstractTestWithTwoTextFile {
 

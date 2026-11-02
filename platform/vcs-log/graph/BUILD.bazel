@@ -68,7 +68,7 @@ jvm_library(
     deps = [
         # do not sort,
         "//platform/testFramework",
-        "//libraries/junit4",
+        "//libraries/junit6",
         "@lib//:kotlin-stdlib",
         "//libraries/fastutil",
         "//libraries/assertj-core",

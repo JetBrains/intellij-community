@@ -16,8 +16,8 @@
 package com.intellij.vcs.log.graph.utils
 
 import com.intellij.util.containers.MultiMap
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 
 private class MapTester {
@@ -49,8 +49,8 @@ private class MapTester {
     val testedArrayStr = keys.joinLines {
       "$it:" + testedMap.getAsArray(it).sortR().joinToString()
     }
-    assertEquals("get and getasArray have nonequal results", testedArrayStr, testedStr)
-    assertEquals("maps non equals", correctStr, testedStr)
+    assertEquals(testedArrayStr, testedStr, "get and getasArray have nonequal results")
+    assertEquals(correctStr, testedStr, "maps non equals")
   }
 
   fun compareKeys(): List<Int> {

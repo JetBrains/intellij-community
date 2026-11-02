@@ -18,8 +18,8 @@ package com.intellij.vcs.log.graph.impl.print
 import com.intellij.vcs.log.graph.AbstractTestWithTwoTextFile
 import com.intellij.vcs.log.graph.asString
 import com.intellij.vcs.log.graph.parser.LinearGraphParser
-import org.junit.Assert.assertEquals
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 class TestGraphBuilderTest : AbstractTestWithTwoTextFile("testParser") {
 

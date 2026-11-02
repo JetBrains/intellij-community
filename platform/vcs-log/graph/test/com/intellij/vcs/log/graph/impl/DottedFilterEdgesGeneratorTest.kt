@@ -23,9 +23,9 @@ import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.graph
 import com.intellij.vcs.log.graph.utils.UnsignedBitSet
-import org.junit.Assert.assertEquals
-import org.junit.Ignore
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.Test
 
 fun LinearGraph.assert(process: (CollapsedGraph) -> Unit, result: TestGraphBuilder.() -> Unit) {
   val nodesVisibility = UnsignedBitSet()
@@ -196,7 +196,7 @@ class DottedFilterEdgesGeneratorTest {
   6
   */
   @Test
-  @Ignore("This test fails, there has to be a 0-6 dotted edge, but there isn't")
+  @Disabled("This test fails, there has to be a 0-6 dotted edge, but there isn't")
   fun anotherRoot() = graph {
     0(1)
     1.UNM(2, 3)
