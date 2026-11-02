@@ -9,6 +9,7 @@ import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.Failure
 import com.intellij.build.events.MessageEvent
 import com.intellij.build.events.OutputBuildEvent
+import com.intellij.build.events.OutputId
 import com.intellij.build.events.OutputReferenceEvent
 import com.intellij.codeWithMe.ClientId
 import com.intellij.execution.impl.ConsoleViewImpl
@@ -32,6 +33,7 @@ import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Alarm
@@ -144,8 +146,8 @@ internal class BuildConsoleViewImplV2(
     val result = StringBuilder()
 
     state.accessFlushed {
-      for (outputMarker in sortedOutputMarkers(nodeId)) {
-        result.append(editor.document.getText(outputMarker.textRange))
+      for (outputRange in sortedOutputMarkers(nodeId)) {
+        result.append(editor.document.getText(outputRange))
       }
     }
 
@@ -187,13 +189,13 @@ internal class BuildConsoleViewImplV2(
         editor.flashInlayComponent(inlay.renderer.component)
       }
       else {
-        val outputMarkers = sortedOutputMarkers(nodeId).toList()
-        val outputMarker = outputMarkers.firstOrNull()
-        if (outputMarker != null) {
-          editor.caretModel.moveToOffset(outputMarker.startOffset)
+        val outputRanges = sortedOutputMarkers(nodeId)
+        val outputRange = outputRanges.firstOrNull()
+        if (outputRange != null) {
+          editor.caretModel.moveToOffset(outputRange.startOffset)
           editor.scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE)
         }
-        editor.selectOutputText(outputMarkers)
+        editor.selectOutputText(outputRanges)
       }
     }
   }
@@ -220,21 +222,21 @@ internal class BuildConsoleViewImplV2(
     }, 700)
   }
 
-  private fun Editor.selectOutputText(outputMarkers: List<RangeMarker>) {
+  private fun Editor.selectOutputText(outputRanges: List<TextRange>) {
     caretModel.removeSecondaryCarets()
     caretModel.primaryCaret.removeSelection()
-    for ((index, outputMarker) in outputMarkers.withIndex()) {
+    for ([index, outputRange] in outputRanges.withIndex()) {
       if (index == 0) {
-        caretModel.primaryCaret.moveToOffset(outputMarker.startOffset)
-        caretModel.primaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
+        caretModel.primaryCaret.moveToOffset(outputRange.startOffset)
+        caretModel.primaryCaret.setSelection(outputRange.startOffset, outputRange.endOffset)
       }
       else {
-        val visualPosition = offsetToVisualPosition(outputMarker.startOffset)
+        val visualPosition = offsetToVisualPosition(outputRange.startOffset)
         val secondaryCaret = caretModel.addCaret(visualPosition, false) ?: run {
-          thisLogger().error("Failed to allocate console caret at $visualPosition")
+          thisLogger().warn("Failed to allocate console caret at $visualPosition")
           continue
         }
-        secondaryCaret.setSelection(outputMarker.startOffset, outputMarker.endOffset)
+        secondaryCaret.setSelection(outputRange.startOffset, outputRange.endOffset)
       }
     }
   }
@@ -275,15 +277,8 @@ internal class BuildConsoleViewImplV2(
       delegate.print(inlayInfo.plainText, contentType)
       return
     }
-    val consoleOffset = delegate.contentSize
     state.access {
-      when (inlayInfo.outputIds.isEmpty()) {
-        true -> when (consoleOffset <= editor.document.textLength) {
-          true -> addNodeOutputMarker(nodeId, consoleOffset)
-          else -> addNodeOutputMarker(nodeId, editor.document.textLength)
-        }
-        else -> addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
-      }
+      addNodeOutputMarkers(nodeId, inlayInfo.outputIds)
       inlayCount++
       (editor as? EditorEx)?.let { ensureFollowListeners(it) }
       val inlayProperties = InlayProperties()
@@ -335,7 +330,7 @@ internal class BuildConsoleViewImplV2(
   private class ConsoleViewState(private val consoleView: ConsoleViewImpl) {
 
     private val outputMarkers = HashMap<Any, RangeMarker>()
-    private val nodeToOutputMarkers = HashMap<Any, MutableSet<RangeMarker>>()
+    private val nodeToOutputMarkers = HashMap<Any, MutableSet<OutputId>>()
     private val nodeToInlays = HashMap<Any, MutableList<Inlay<ComponentInlayRenderer<JComponent>>>>()
 
     private val pendingStateActions = ArrayDeque<ConsoleViewStateAccessor.() -> Unit>()
@@ -389,14 +384,9 @@ internal class BuildConsoleViewImplV2(
         outputMarkers[outputId] = editor.document.createRangeMarker(startOffset, endOffset)
       }
 
-      fun addNodeOutputMarker(nodeId: Any, offset: Int) {
-        nodeToOutputMarkers.computeIfAbsent(nodeId) { HashSet() }
-          .add(editor.document.createRangeMarker(offset, offset))
-      }
-
       fun addNodeOutputMarkers(nodeId: Any, outputIds: Collection<Any>) {
         nodeToOutputMarkers.computeIfAbsent(nodeId) { HashSet() }
-          .addAll(outputIds.mapNotNull { outputMarkers[it] })
+          .addAll(outputIds)
       }
 
       fun addNodeInlay(nodeId: Any, inlay: Inlay<ComponentInlayRenderer<JComponent>>) {
@@ -409,10 +399,27 @@ internal class BuildConsoleViewImplV2(
           .filter { it.isValid }
       }
 
-      fun sortedOutputMarkers(nodeId: Any): Sequence<RangeMarker> {
-        return nodeToOutputMarkers[nodeId].orEmpty().asSequence()
+      fun sortedOutputMarkers(nodeId: Any): List<TextRange> {
+        val markers = nodeToOutputMarkers[nodeId] ?: return emptyList()
+
+        val ranges = markers.asSequence()
+          .mapNotNull { outputMarkers[it] }
           .filter { it.isValid }
+          .map { it.textRange }
           .sortedBy { it.startOffset }
+          .toList()
+
+        val result = ArrayList<TextRange>(ranges.size)
+        for (range in ranges) {
+          val last = result.lastOrNull()
+          if (last != null && range.startOffset <= last.endOffset) {
+            result[result.lastIndex] = last.union(range)
+          }
+          else {
+            result.add(range)
+          }
+        }
+        return result
       }
     }
   }
