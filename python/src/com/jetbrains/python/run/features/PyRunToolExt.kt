@@ -10,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus
 /**
  * The parameters of the tool this configuration runs with, or `null` when the interpreter runs it by itself.
  *
- * The same decision [com.jetbrains.python.run.PythonCommandLineState.startProcess] makes for Run and the pydevd
- * debugger, for a launch that does not go through it: the debugpy debuggee, which the debug adapter spawns (PY-93398).
+ * The same decision is used for Run and the pydevd debugger through [com.jetbrains.python.run.PythonCommandLineState.startProcess].
+ * The debugpy debuggee uses it too, although its launch bypasses that method (PY-93398).
  */
 @ApiStatus.Internal
 suspend fun AbstractPythonRunConfiguration<*>.resolveRunToolParameters(sdk: Sdk): PyRunToolParameters? {

@@ -5,8 +5,7 @@ import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.run.features.PyRunToolParameters
-import com.jetbrains.python.run.features.PyRunToolProvider
-import java.nio.file.Path
+import com.jetbrains.python.run.features.resolveRunToolParameters
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -14,5 +13,5 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
-fun PyRunToolProvider.getRunToolParametersForJvm(sdk: Sdk, inlineScriptTarget: Path?): PyRunToolParameters =
-  runBlockingMaybeCancellable { getRunToolParameters(sdk, inlineScriptTarget) }
+fun AbstractPythonRunConfiguration<*>.resolveRunToolParametersForJvm(sdk: Sdk): PyRunToolParameters? =
+  runBlockingMaybeCancellable { resolveRunToolParameters(sdk) }
