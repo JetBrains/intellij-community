@@ -1,5 +1,6 @@
 package com.intellij.platform.lsp.impl.features.inlayHint
 
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.SequencePresentation
@@ -33,6 +34,10 @@ private const val MIN_ALLOWED_INLAY_HINT_LENGTH = 1
 @RequiresBackgroundThread(generateAssertion = false /* IJPL-115548 */)
 @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
 internal fun collectInlayHintItems(project: Project, virtualFile: VirtualFile): List<LspInlayItem> {
+  // The LSP client paints the hints out of band, so the global inlay hints switch does not reach them.
+  // Read the switch here so the LSP hints follow it, like the daemon hints do.
+  if (!InlayHintsSettings.instance().hintsEnabledGlobally()) return emptyList()
+
   val clients = LspClientManagerImpl.getInstanceImpl(project).getClientsWithThisFileOpen(virtualFile)
   return clients.flatMap { client ->
     val customizer = client.descriptor.lspCustomization.inlayHintCustomizer

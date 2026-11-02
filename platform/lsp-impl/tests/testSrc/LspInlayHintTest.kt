@@ -1,6 +1,7 @@
 package com.intellij.platform.lsp
 
 import com.intellij.codeInsight.hints.InlayDumpUtil
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.editor.Inlay
@@ -291,6 +292,37 @@ internal class LspInlayHintTest {
 
     checkInlaysRetrying(sourceText, "hello/*<# : B #>*/ world")
     serverSession.awaitExpected()
+  }
+
+  @Test
+  fun `inlay hints follow the global switch`(): Unit = timeoutRunBlocking {
+    (codeInsightFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+
+    val settings = InlayHintsSettings.instance()
+    val sourceText = "hello world"
+    val virtualFile = codeInsightFixture.configureByText("test.txt", sourceText).virtualFile
+    val serverSession = configureServerSession(project, virtualFile)
+
+    serverSession.expectRequest(serverSession.INLAY_HINT, { it.textDocument.uri == serverSession.fileUri(virtualFile) }) {
+      listOf(InlayHint(Position(0, 5), Either.forLeft(": String")))
+    }
+
+    try {
+      // The switch is on by default, so the hint shows.
+      checkInlaysRetrying(sourceText, "hello/*<# : String #>*/ world")
+      serverSession.awaitExpected()
+
+      // The switch goes off: the hint goes away without an edit.
+      settings.setEnabledGlobally(false)
+      checkInlaysRetrying(sourceText, "hello world")
+
+      // The switch goes on again: the cached hint comes back.
+      settings.setEnabledGlobally(true)
+      checkInlaysRetrying(sourceText, "hello/*<# : String #>*/ world")
+    }
+    finally {
+      settings.setEnabledGlobally(true)
+    }
   }
 
   private suspend fun checkInlaysRetrying(sourceText: String, expected: String) {

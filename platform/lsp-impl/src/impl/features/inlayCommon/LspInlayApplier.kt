@@ -1,10 +1,12 @@
 package com.intellij.platform.lsp.impl.features.inlayCommon
 
 import com.intellij.codeInsight.hints.InlayContentListener
+import com.intellij.codeInsight.hints.InlayHintsSettings
 import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.injected.editor.VirtualFileWindow
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
@@ -21,6 +23,7 @@ import com.intellij.platform.lsp.impl.features.inlayHint.collectInlayHintItems
 import com.intellij.platform.lsp.impl.features.inlayHintColor.collectColorInlayItems
 import com.intellij.util.containers.Java11Shim
 import java.util.concurrent.ConcurrentMap
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -56,12 +59,25 @@ internal interface LspInlayItem {
  * the flicker/layout-thrash/GC-churn a dispose-all-then-readd would cause.
  */
 @Service(Service.Level.PROJECT)
-internal class LspInlayApplier(private val project: Project) {
+internal class LspInlayApplier(private val project: Project, coroutineScope: CoroutineScope) {
 
   // Weak keys: the daemon schedules refreshes for every editor, including the in-memory files of diff viewers and
   // dialogs, which never reach [onFileClosed].
   private val fileToCurrentGeneration: ConcurrentMap<VirtualFile, AtomicLong> = Java11Shim.INSTANCE.createConcurrentWeakMap()
   private val serializedDispatcher = Dispatchers.Default.limitedParallelism(1)
+
+  init {
+    // The daemon skips our hidden provider while the global inlay hints switch is off, so it never removes the hints
+    // we paint out of band. React to the switch here and re-apply to every file we paint. An off switch removes them.
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
+      .subscribe(InlayHintsSettings.INLAY_SETTINGS_CHANGED, object : InlayHintsSettings.SettingsListener {
+        override fun globalEnabledStatusChanged(newEnabled: Boolean) {
+          for (file in fileToCurrentGeneration.keys) {
+            scheduleRefresh(file)
+          }
+        }
+      })
+  }
 
   /**
    * Called when any backing cache (inlay hint, document color) is updated for [file]. Increments the per-file

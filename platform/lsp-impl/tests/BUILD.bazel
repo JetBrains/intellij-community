@@ -50,6 +50,7 @@ jvm_library(
         "//platform/core-impl",
         "//platform/analysis-api:analysis",
         "//platform/platform-api:ide",
+        "//platform/projectModel-api:projectModel",
         "//platform/ide-core",
         "//platform/platform-util-io:ide-util-io",
         "//platform/indexing-api:indexing",
