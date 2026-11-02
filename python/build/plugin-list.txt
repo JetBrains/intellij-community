@@ -10,7 +10,7 @@ intellij.grazie
 intellij.markdown.plugin
 intellij.mermaid
 intellij.minimap.plugin
-intellij.properties
+intellij.properties.plugin
 intellij.restructuredtext
 intellij.searchEverywhereMl
 intellij.sh.plugin

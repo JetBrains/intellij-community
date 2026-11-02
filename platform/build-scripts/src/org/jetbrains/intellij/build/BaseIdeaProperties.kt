@@ -15,7 +15,7 @@ val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + per
   JavaPluginLayout.MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
   "intellij.copyright",
-  "intellij.properties",
+  "intellij.properties.plugin",
   "intellij.terminal",
   "intellij.textmate.plugin",
   "intellij.editorconfig.plugin",

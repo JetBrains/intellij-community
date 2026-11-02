@@ -80,7 +80,7 @@ class MPSProperties : JetBrainsProductProperties() {
             "intellij.json.plugin",
             "intellij.copyright",
             "intellij.mcpserver.plugin",
-            "intellij.properties",
+            "intellij.properties.plugin",
             "intellij.terminal",
             "intellij.vcs.git",
             "intellij.vcs.github",
