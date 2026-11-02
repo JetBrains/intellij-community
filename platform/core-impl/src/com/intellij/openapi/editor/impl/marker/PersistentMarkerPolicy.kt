@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.lineDiff
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
 import com.intellij.util.diff.FilesTooBigForDiffException
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Range-marker policy that attempts to retain a marker through large replacements by translating its line and column
@@ -76,7 +75,7 @@ object PersistentMarkerPolicy : MarkerPolicy {
     return MarkerTransformResult(startOffset, endOffset)
   }
 
-  private fun MarkerEntry.shouldTranslateViaDiff(
+  internal fun MarkerEntry.shouldTranslateViaDiff(
       patch: DocumentPatch,
       beforeText: DocumentText,
       afterText: DocumentText,

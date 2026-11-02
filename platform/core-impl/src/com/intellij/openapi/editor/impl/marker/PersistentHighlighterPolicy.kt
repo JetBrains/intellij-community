@@ -5,8 +5,8 @@ import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.lineDiff
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy.shouldTranslateViaDiff
 import com.intellij.util.diff.FilesTooBigForDiffException
-import org.jetbrains.annotations.ApiStatus
 
 /**
  * Persistent line translation for an exact-range or line-range highlighter.
@@ -60,16 +60,6 @@ enum class PersistentHighlighterPolicy(private val wholeLineRange: Boolean) : Ma
     val lineEnd = text.lineEndOffset(line)
     val startOffset = if (wholeLineRange) firstNonSpaceOffset(text.luckyChars(), lineStart, lineEnd) else lineStart
     return MarkerTransformResult(startOffset, lineEnd)
-  }
-
-  private fun MarkerEntry.shouldTranslateViaDiff(
-      patch: DocumentPatch,
-      beforeText: DocumentText,
-      afterText: DocumentText,
-  ): Boolean {
-    if (beforeText.length() != 0 && patch.originStartOffset() == 0 && patch.originEndOffset() == beforeText.length()) return true
-    if (patch.startOffset() >= nodeEnd || patch.endOffset() <= nodeStart) return false
-    return PersistentMarkerPolicy.requiresFullTraversal(patch, beforeText, afterText)
   }
 
   private fun firstNonSpaceOffset(text: CharSequence, lineStart: Int, lineEnd: Int): Int {
