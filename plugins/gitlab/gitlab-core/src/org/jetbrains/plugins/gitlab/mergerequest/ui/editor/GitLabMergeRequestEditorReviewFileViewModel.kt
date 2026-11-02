@@ -39,10 +39,8 @@ import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
-import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filterInFile
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
-import org.jetbrains.plugins.gitlab.mergerequest.ui.review.mapToLocation
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestDiscussionUtil
 import org.jetbrains.plugins.gitlab.mergerequest.util.toLines
 
@@ -129,11 +127,9 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
 
   override val linesWithDiscussions: StateFlow<Set<Int>> =
     GitLabMergeRequestDiscussionUtil
-      .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption).toLines {
-        it.mapToLocation(diffData, Side.RIGHT)?.takeIf {
-          it.startSide == Side.RIGHT && it.side == Side.RIGHT
-        }?.lineIdx
-      }.stateInNow(cs, emptySet())
+      .createDiscussionsPositionsFlow(mergeRequest, discussionsViewOption)
+      .toLines { it.mapToEditorLine(diffData) }
+      .stateInNow(cs, emptySet())
 
   override val canNavigate: Boolean = diffData.isCumulative
 
@@ -142,9 +138,7 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
 
   override val linesWithNewDiscussions: StateFlow<Set<Int>> =
     discussionsContainer.newDiscussions.flatMapLatestEach {
-      it.position.mapNotNull { pos ->
-        pos.mapToLocation(diffData)?.takeIf { loc -> loc.startSide == Side.RIGHT && loc.side == Side.RIGHT }?.lineIdx
-      }
+      it.position.mapNotNull { pos -> pos.position.mapToEditorLine(diffData) }
     }.map { lines -> lines.toSet() }.stateInNow(cs, emptySet())
 
   override fun requestNewDiscussion(location: GitLabNoteLocation, focus: Boolean) {

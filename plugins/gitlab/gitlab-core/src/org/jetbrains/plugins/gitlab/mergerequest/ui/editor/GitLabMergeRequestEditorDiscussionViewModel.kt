@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInlayModel
 import com.intellij.diff.util.Side
+import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
@@ -100,6 +101,18 @@ private fun mapPositionToRightLocation(
     val position = positionOrNull ?: return@combineStates null
     val diffData = diffDataOrNull?.diffData ?: return@combineStates null
 
-    position.mapToLocation(diffData, Side.RIGHT)
-      ?.takeIf { it.startSide == Side.RIGHT && it.side == Side.RIGHT }
+    position.mapToEditorLocation(diffData)
   }
+
+/**
+ * Maps the position to a line range in the editor.
+ * The editor shows the right side only, so a range that touches the left side gives `null`.
+ */
+internal fun GitLabNotePosition.mapToEditorLocation(diffData: GitTextFilePatchWithHistory): GitLabNoteLocation? =
+  mapToLocation(diffData, Side.RIGHT)?.takeIf { it.startSide == Side.RIGHT && it.side == Side.RIGHT }
+
+/**
+ * Maps the position to the end line in the editor.
+ */
+internal fun GitLabNotePosition.mapToEditorLine(diffData: GitTextFilePatchWithHistory): Int? =
+  mapToEditorLocation(diffData)?.lineIdx

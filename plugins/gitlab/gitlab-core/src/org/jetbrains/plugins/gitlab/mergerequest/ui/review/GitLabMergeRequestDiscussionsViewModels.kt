@@ -96,9 +96,6 @@ interface GitLabMergeRequestDiscussionsViewModels {
   }
 }
 
-fun GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory): GitLabNoteLocation? =
-  position.mapToLocation(diffData, side)
-
 internal class GitLabMergeRequestDiscussionsViewModelsImpl(
   private val project: Project,
   parentCs: CoroutineScope,

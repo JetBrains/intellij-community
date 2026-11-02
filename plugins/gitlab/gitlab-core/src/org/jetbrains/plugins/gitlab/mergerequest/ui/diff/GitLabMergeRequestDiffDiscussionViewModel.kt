@@ -8,6 +8,7 @@ import com.intellij.collaboration.ui.FocusableViewModel
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.diff.util.Side
+import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNoteLocation
@@ -83,5 +84,18 @@ private fun mapPositionToDiffLine(
     val position = positionOrNull ?: return@combineStates null
     val diffData = diffDataOrNull?.diffData ?: return@combineStates null
 
-    position.mapToLocation(diffData, Side.LEFT)
+    position.mapToDiffLocation(diffData)
   }
+
+/**
+ * Maps the position to a line range in the diff viewer.
+ * A note on a line without changes goes to the left side.
+ */
+internal fun GitLabNotePosition.mapToDiffLocation(diffData: GitTextFilePatchWithHistory): GitLabNoteLocation? =
+  mapToLocation(diffData, Side.LEFT)
+
+/**
+ * Maps the position to the end line in the diff viewer.
+ */
+internal fun GitLabNotePosition.mapToDiffLineLocation(diffData: GitTextFilePatchWithHistory): DiffLineLocation? =
+  mapToDiffLocation(diffData)?.let { (val side, val lineIdx) -> DiffLineLocation(side, lineIdx) }

@@ -88,13 +88,6 @@ fun GitLabNotePosition.mapToLocation(diffData: GitTextFilePatchWithHistory, cont
   return unmappedLocation.toMapped(diffData, parentSha, sha)
 }
 
-fun GitLabMergeRequestNewDiscussionPosition.mapToLocation(diffData: GitTextFilePatchWithHistory, contextSide: Side = Side.LEFT)
-  : GitLabNoteLocation? {
-  val unmappedLocation = getLocation(contextSide) ?: return null
-  if (!diffData.contains(baseSha, paths.oldPath, headSha, paths.newPath)) return null
-  return unmappedLocation.toMapped(diffData, baseSha, sha)
-}
-
 private fun DiffLineRange.toMapped(diffData: GitTextFilePatchWithHistory, parentSha: String, sha: String): GitLabNoteLocation? {
   val (startLineLocation, endLineLocation) = this
   val startRevision = startLineLocation.first.select(parentSha, sha)
