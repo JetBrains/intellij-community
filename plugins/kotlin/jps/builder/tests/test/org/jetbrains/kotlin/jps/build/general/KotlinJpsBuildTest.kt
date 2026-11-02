@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.jps.build.general
 
 import org.jetbrains.jps.api.CanceledStatus
+import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.BuildResult
 import org.jetbrains.jps.builders.TestProjectBuilderLogger
 import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase
@@ -456,6 +457,23 @@ open class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
 
     val warnings = result.getMessages(BuildMessage.Kind.WARNING)
     assertTrue(warnings.isEmpty(), "Unexpected warnings: \n${warnings.joinToString("\n")}")
+  }
+
+  @WorkingDir("KotlinProject")
+  @Test
+  fun testErrorWithoutDependencyGraph() {
+    initProject(JVM_MOCK_RUNTIME)
+    System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "false")
+    try {
+      val result = buildAllModules()
+      result.assertFailed()
+      val errors = result.getMessages(BuildMessage.Kind.ERROR).map { it.messageText }
+      val expected = "The Kotlin JPS builder does not support these legacy modes: ${GlobalOptions.DEPENDENCY_GRAPH_ENABLED}=false."
+      assertTrue(errors.any { it.startsWith(expected) }) { "Expected an error that starts with \"$expected\", got: $errors" }
+    }
+    finally {
+      System.setProperty(GlobalOptions.DEPENDENCY_GRAPH_ENABLED, "true")
+    }
   }
 
   @WorkingDir("KotlinProject")

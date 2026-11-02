@@ -5,7 +5,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtilRt
+import org.jetbrains.annotations.Nls
 import org.jetbrains.jps.ModuleChunk
+import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.builders.DirtyFilesHolder
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor
@@ -49,6 +51,23 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         val LOG: Logger = Logger.getInstance("#org.jetbrains.kotlin.jps.build.KotlinBuilder")
 
         private val buildToolsSessionKey = GlobalContextKey<KotlinBuildToolsSession>("kotlinBuildToolsSession")
+
+        /**
+         * @return the error for the legacy modes of the build process that the builder does not support, or `null`.
+         *
+         * The legacy Kotlin JPS plugin only warns about such modes. This builder hands the symbol lookups only to the
+         * dependency graph. Without the graph, JPS falls back to the old mappings, which drop the lookups, so an
+         * incremental build would be wrong.
+         */
+        fun legacyModesMessageIfAny(context: CompileContext): @Nls String? {
+            val legacyModes = buildList {
+                if (!JavaBuilderUtil.isDepGraphEnabled() || context.projectDescriptor.dataManager.dependencyGraph == null) {
+                    add("${GlobalOptions.DEPENDENCY_GRAPH_ENABLED}=false")
+                }
+            }
+            if (legacyModes.isEmpty()) return null
+            return KotlinJpsBuilderBundle.message("error.legacy.jps.modes.0", legacyModes.joinToString("; "))
+        }
     }
 
     override fun getPresentableName(): String = KOTLIN_BUILDER_NAME
@@ -58,6 +77,8 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
     override fun buildStarted(context: CompileContext) {
         context.putUserData(buildToolsSessionKey, KotlinBuildToolsSession())
         reportImplementation(context)
+        // A build without Kotlin must not fail, so the error is reported only when a chunk has Kotlin to compile
+        legacyModesMessageIfAny(context)?.let { LOG.warn(it) }
     }
 
     /**
@@ -228,6 +249,12 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         val kotlinDirtyFilesHolder = KotlinDirtySourceFilesHolder(chunk, context, dirtyFilesHolder)
         if (!kotlinDirtyFilesHolder.hasDirtyOrRemovedFiles) {
             return ExitCode.NOTHING_DONE
+        }
+
+        val legacyModesMessage = legacyModesMessageIfAny(context)
+        if (legacyModesMessage != null) {
+            sink.reportError(legacyModesMessage)
+            return ExitCode.ABORT
         }
 
         val targetsWithoutOutputDir = chunk.targets.filter { it.outputDir == null }
