@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ContextHelpLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -30,6 +31,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +62,8 @@ import java.util.function.Consumer;
 public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent extends JComponent> extends JPanel {
 
   private EditableSchemesCombo<T> mySchemesCombo;
+  private final HelpTooltip mySchemeDescriptionTooltip = new HelpTooltip();
+  private final ContextHelpLabel mySchemeDescriptionLabel = createSchemeDescriptionLabel(mySchemeDescriptionTooltip);
   private AbstractSchemeActions<T> myActions;
   private JComponent myToolbar;
   InfoComponent myInfoComponent;
@@ -130,6 +134,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo = new EditableSchemesCombo<>(this);
     mySchemesCombo.setComboBoxAccessibleName(label != null ? label : getSchemeTypeName());
     controlsPanel.add(mySchemesCombo.getComponent());
+    controlsPanel.add(mySchemeDescriptionLabel);
     ActionToolbar toolbar = createToolbar();
     toolbar.setTargetComponent(mySchemesCombo.getComponent());
     myToolbar = toolbar.getComponent();
@@ -221,6 +226,29 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   
   public void selectScheme(@Nullable T scheme) {
     mySchemesCombo.selectScheme(scheme);
+  }
+
+  private static @NotNull ContextHelpLabel createSchemeDescriptionLabel(@NotNull HelpTooltip tooltip) {
+    tooltip.setNeverHideOnTimeout(true).setLocation(HelpTooltip.Alignment.HELP_BUTTON);
+    ContextHelpLabel label = ContextHelpLabel.createFromTooltip(tooltip);
+    label.setBorder(JBUI.Borders.emptyLeft(6));
+    label.setVisible(false);
+    return label;
+  }
+
+  /**
+   * Shows the description of the selected scheme in the context help after the combo box.
+   */
+  final void updateSchemeDescription() {
+    T scheme = getSelectedScheme();
+    String description = scheme == null ? null : getSchemeDescription(scheme);
+    mySchemeDescriptionTooltip.setDescription(description == null ? null : HtmlChunk.text(description));
+    mySchemeDescriptionLabel.getAccessibleContext().setAccessibleDescription(description);
+    boolean visible = description != null;
+    if (mySchemeDescriptionLabel.isVisible() != visible) {
+      mySchemeDescriptionLabel.setVisible(visible);
+      mySchemeDescriptionLabel.revalidate();
+    }
   }
 
   private @Nullable ContextHelpLabel createContextHelpLabel() {
@@ -320,6 +348,14 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    */
   public final void updateOnCurrentSettingsChange() {
     mySchemesCombo.updateSelected();
+  }
+
+  /**
+   * @return the plain text that describes the scheme
+   */
+  @ApiStatus.Internal
+  protected @Nullable @NlsContexts.Tooltip String getSchemeDescription(@NotNull T scheme) {
+    return null;
   }
 
   /**

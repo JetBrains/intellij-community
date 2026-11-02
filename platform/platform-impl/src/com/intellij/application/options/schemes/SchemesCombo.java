@@ -97,6 +97,14 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
   protected abstract @NotNull SimpleTextAttributes getSchemeAttributes(T scheme);
 
+  /**
+   * @return the plain text description of the scheme. The list shows it as a tooltip.
+   */
+  @ApiStatus.Internal
+  protected @Nullable @NlsContexts.Tooltip String getDescription(@NotNull T scheme) {
+    return null;
+  }
+
   private void addItems(@NotNull Collection<? extends T> schemes, Predicate<? super T> filter, @Nullable @Nls String separatorTitle) {
     MySchemeListItem<T> firstItem = null;
 

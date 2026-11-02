@@ -3326,6 +3326,7 @@ a:com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
 c:com.intellij.openapi.keymap.impl.DefaultKeymap
 - getDefaultKeymapName():java.lang.String
 - sf:getInstance():com.intellij.openapi.keymap.impl.DefaultKeymap
+- getKeymapDescription(com.intellij.openapi.keymap.impl.KeymapImpl):java.lang.String
 f:com.intellij.openapi.keymap.impl.DefaultKeymap$Companion
 - f:getInstance():com.intellij.openapi.keymap.impl.DefaultKeymap
 f:com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher

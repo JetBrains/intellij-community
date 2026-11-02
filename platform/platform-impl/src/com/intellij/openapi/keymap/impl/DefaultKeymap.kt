@@ -11,9 +11,12 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.ResourceUtil
@@ -121,7 +124,7 @@ open class DefaultKeymap {
       else -> KeymapManager.DEFAULT_IDEA_KEYMAP
     }
 
-  open fun getKeymapPresentableName(keymap: KeymapImpl): String {
+  open fun getKeymapPresentableName(keymap: KeymapImpl): @NlsSafe String {
     return when (val name = keymap.name) {
       KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> "macOS"
       KeymapManager.DEFAULT_IDEA_KEYMAP -> "Windows"
@@ -129,7 +132,7 @@ open class DefaultKeymap {
       KeymapManager.KDE_KEYMAP -> "KDE"
       KeymapManager.X_WINDOW_KEYMAP -> "XWin"
       KeymapManager.MAC_OS_X_KEYMAP -> "IntelliJ IDEA Classic" + (if (SystemInfoRt.isMac) "" else " (macOS)")
-      "NetBeans 6.5" -> "NetBeans"
+      KeymapManager.NET_BEANS_6_5 -> "NetBeans"
       else -> {
         val newName = name
           .removeSuffix(" (Mac OS X)")
@@ -140,6 +143,43 @@ open class DefaultKeymap {
         }
           .removePrefix("${osName()}/")
       }
+    }
+  }
+
+  @Suppress("DialogTitleCapitalization") // the descriptions contain product names
+  open fun getKeymapDescription(keymap: KeymapImpl): @NlsContexts.Tooltip String? {
+    if (keymap !is DefaultKeymapImpl) {
+      return null
+    }
+    return when (keymap.name) {
+      KeymapManager.DEFAULT_IDEA_KEYMAP -> KeyMapBundle.message("keymap.\$default.description")
+      KeymapManager.GNOME_KEYMAP -> KeyMapBundle.message("keymap.Default_for_GNOME.description")
+      KeymapManager.KDE_KEYMAP -> KeyMapBundle.message("keymap.Default_for_KDE.description")
+      KeymapManager.X_WINDOW_KEYMAP -> KeyMapBundle.message("keymap.Default_for_XWin.description")
+      KeymapManager.ECLIPSE -> KeyMapBundle.message("keymap.Eclipse.description")
+      KeymapManager.ECLIPSE_MAC_OS_X -> KeyMapBundle.message("keymap.Eclipse_(Mac_OS_X).description")
+      KeymapManager.EMACS -> KeyMapBundle.message("keymap.Emacs.description")
+      KeymapManager.MAC_OS_X_KEYMAP -> KeyMapBundle.message("keymap.Mac_OS_X.description")
+      KeymapManager.MAC_OS_X_10_5_PLUS_KEYMAP -> KeyMapBundle.message("keymap.Mac_OS_X_10.5+.description")
+      KeymapManager.MAC_OS_SYSTEM_SHORTCUTS -> KeyMapBundle.message("keymap.macOS_System_Shortcuts.description")
+      KeymapManager.NET_BEANS_6_5 -> KeyMapBundle.message("keymap.NetBeans_6.5.description")
+      KeymapManager.QT_CREATOR -> KeyMapBundle.message("keymap.QtCreator.description")
+      KeymapManager.QT_CREATOR_MAC_OS_X -> KeyMapBundle.message("keymap.QtCreator_(Mac_OS_X).description")
+      KeymapManager.RESHARPER -> KeyMapBundle.message("keymap.ReSharper.description")
+      KeymapManager.RESHARPER_OSX -> KeyMapBundle.message("keymap.ReSharper_OSX.description")
+      KeymapManager.SUBLIME_TEXT -> KeyMapBundle.message("keymap.Sublime_Text.description")
+      KeymapManager.SUBLIME_TEXT_MAC_OS_X -> KeyMapBundle.message("keymap.Sublime_Text_(Mac_OS_X).description")
+      KeymapManager.TEXT_MATE -> KeyMapBundle.message("keymap.TextMate.description")
+      KeymapManager.VISUAL_ASSIST -> KeyMapBundle.message("keymap.Visual_Assist.description")
+      KeymapManager.VISUAL_ASSIST_OSX -> KeyMapBundle.message("keymap.Visual_Assist_OSX.description")
+      KeymapManager.VISUAL_STUDIO -> KeyMapBundle.message("keymap.Visual_Studio.description")
+      KeymapManager.VISUAL_STUDIO_2022 -> KeyMapBundle.message("keymap.Visual_Studio_2022.description")
+      KeymapManager.VISUAL_STUDIO_OSX -> KeyMapBundle.message("keymap.Visual_Studio_OSX.description")
+      KeymapManager.VISUAL_STUDIO_FOR_MAC -> KeyMapBundle.message("keymap.Visual_Studio_for_Mac.description")
+      KeymapManager.VSCODE -> KeyMapBundle.message("keymap.VSCode.description")
+      KeymapManager.VSCODE_OSX -> KeyMapBundle.message("keymap.VSCode_OSX.description")
+      KeymapManager.XCODE -> KeyMapBundle.message("keymap.Xcode.description")
+      else -> null
     }
   }
 }

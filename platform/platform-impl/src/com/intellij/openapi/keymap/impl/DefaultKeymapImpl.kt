@@ -9,10 +9,11 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.options.SchemeState
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import org.jdom.Element
-import java.awt.event.MouseEvent
 import org.jetbrains.annotations.ApiStatus
+import java.awt.event.MouseEvent
 
 @ApiStatus.Internal
 open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
@@ -26,7 +27,7 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
 
   override fun getSchemeState(): SchemeState = SchemeState.NON_PERSISTENT
 
-  override fun getPresentableName(): String = DefaultKeymap.getInstance().getKeymapPresentableName(this)
+  override fun getPresentableName(): @NlsSafe String = DefaultKeymap.getInstance().getKeymapPresentableName(this)
 
   override fun readExternal(keymapElement: Element,
                             actionIdToShortcuts: MutableMap<String, List<Shortcut>>,
