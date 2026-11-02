@@ -7,7 +7,10 @@ load("//platform/jewel:bridge-e2e.bzl", "bridge_e2e_test")
 jps_test(
     name = "ideLafBridge-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [":ideLafBridge-tests_test_lib"],
 )
 

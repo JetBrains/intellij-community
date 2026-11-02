@@ -5,7 +5,10 @@ load("//build:compiler-options.bzl", "create_kotlinc_options")
 jps_test(
     name = "decoratedWindow-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [":decoratedWindow-tests_test_lib"],
 )
 

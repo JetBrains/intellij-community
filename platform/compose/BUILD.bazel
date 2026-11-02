@@ -5,7 +5,10 @@ load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_mod
 jps_test(
     name = "compose-tests_test",
     timeout = "moderate",
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [":compose-tests_test_lib"],
 )
 

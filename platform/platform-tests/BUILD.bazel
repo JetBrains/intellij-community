@@ -23,7 +23,10 @@ jps_test(
         "-Dintellij.build.bazel.targets.json.file=$(rlocationpath %s)" % BAZEL_TARGETS_JSON,
         ##"-Djava.awt.headless=true",
     ],
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [
         ":tests_test_lib",
     ],

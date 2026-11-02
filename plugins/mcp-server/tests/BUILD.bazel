@@ -6,7 +6,10 @@ jps_test(
     name = "tests_test",
     timeout = "moderate",
     data = all_test_dep_targets,
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [
         ":tests_test_lib",
         "//java/plugin",

@@ -7,7 +7,10 @@ jps_test(
     name = "foundation-tests_test",
     timeout = "moderate",
     data = ["//platform/jewel:jewel_build_metadata"],
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [":foundation-tests_test_lib"],
 )
 

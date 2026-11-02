@@ -13,7 +13,10 @@ jps_test(
     name = "ide-impl-tests_test",
     timeout = "moderate",
     env = {"JB_TEST_JAR": "ide-impl-tests_test_lib.jar"},
-    tags = ["community-aggregator"],
+    tags = [
+        "community-aggregator",
+        "community-aggregator-dirty",
+    ],
     runtime_deps = [":ide-impl-tests_test_lib"],
 )
 ### skip generation section `test intellij.platform.ide.impl.tests`
