@@ -7,10 +7,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.ToolWindowManagerLifecycleKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,11 +23,10 @@ public class ToggleWindowedModeAction extends ToggleAction implements DumbAware,
 
   @Override
   public boolean isSelected(@NotNull AnActionEvent event) {
-    Project project = event.getProject();
-    if (project == null) {
+    ToolWindowManagerEx windowManager = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(event);
+    if (windowManager == null) {
       return false;
     }
-    ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
     String id = windowManager.getActiveToolWindowId();
     if (id == null) {
       return false;
@@ -37,15 +36,15 @@ public class ToggleWindowedModeAction extends ToggleAction implements DumbAware,
 
   @Override
   public void setSelected(@NotNull AnActionEvent event, boolean flag) {
-    Project project = event.getProject();
-    if (project == null) {
+    ToolWindowManagerEx windowManager = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(event);
+    if (windowManager == null) {
       return;
     }
-    String id = ToolWindowManager.getInstance(project).getActiveToolWindowId();
+    String id = windowManager.getActiveToolWindowId();
     if (id == null) {
       return;
     }
-    ToolWindowEx toolWindow = (ToolWindowEx)ToolWindowManager.getInstance(project).getToolWindow(id);
+    ToolWindowEx toolWindow = (ToolWindowEx)windowManager.getToolWindow(id);
     ToolWindowType type = toolWindow.getType();
     if (ToolWindowType.WINDOWED == type) {
       toolWindow.setType(toolWindow.getInternalType(), null);
@@ -59,12 +58,11 @@ public class ToggleWindowedModeAction extends ToggleAction implements DumbAware,
   public void update(@NotNull AnActionEvent event) {
     super.update(event);
     Presentation presentation = event.getPresentation();
-    Project project = event.getProject();
-    if (project == null) {
+    ToolWindowManagerEx mgr = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(event);
+    if (mgr == null) {
       presentation.setEnabled(false);
       return;
     }
-    ToolWindowManager mgr = ToolWindowManager.getInstance(project);
     String id = mgr.getActiveToolWindowId();
     presentation.setEnabled(id != null && mgr.getToolWindow(id).isAvailable());
   }

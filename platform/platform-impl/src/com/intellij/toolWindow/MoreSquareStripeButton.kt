@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
 import com.intellij.openapi.wm.impl.getStripeToolbarButtonIconSize
 import com.intellij.openapi.wm.impl.getStripeToolbarButtonSize
+import com.intellij.openapi.wm.impl.getToolWindowManagerForEvent
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.icons.loadIconCustomVersionOrScale
@@ -52,7 +53,7 @@ internal class MoreSquareStripeButton(toolWindowToolbar: ToolWindowToolbar,
     for (anchor in moveTo) {
       group.add(object : DumbAwareAction(UIBundle.message("tool.window.more.button.move", anchor.capitalizedDisplayName)) {
         override fun actionPerformed(e: AnActionEvent) {
-          ToolWindowManagerEx.getInstanceEx(e.project ?: return).setMoreButtonSide(anchor)
+          getToolWindowManagerForEvent(e)?.setMoreButtonSide(anchor)
         }
       })
     }

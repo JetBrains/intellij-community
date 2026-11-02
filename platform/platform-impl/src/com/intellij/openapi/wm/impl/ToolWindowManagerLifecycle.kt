@@ -143,6 +143,19 @@ private inline fun process(processor: (manager: ToolWindowManagerImpl) -> Unit) 
   }
 }
 
+/**
+ * The manager that shows the tool window of [event]: the manager of the `TOOL_WINDOW` in the context, else the manager of
+ * the frame owner of the event project. A frame guest shows no tool window of its own, and the title data context of a
+ * tool window gives the active project of the frame, so the event project alone can name the wrong manager.
+ * The JVM name lets a Java action of this module call it as `ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent`.
+ */
+@JvmName("getToolWindowManagerForEvent")
+internal fun getToolWindowManagerForEvent(event: AnActionEvent): ToolWindowManagerImpl? {
+  (event.getData(PlatformDataKeys.TOOL_WINDOW) as? ToolWindowImpl)?.let { return it.toolWindowManager }
+  val project = event.project?.takeIf { !it.isDisposed } ?: return null
+  return ToolWindowManager.getInstance(frameOwnerOf(project)) as? ToolWindowManagerImpl
+}
+
 private class MyListener : AWTEventListener {
   override fun eventDispatched(event: AWTEvent?) {
     if (event is FocusEvent) {
@@ -229,13 +242,13 @@ internal class ToolWindowManagerAppLevelHelper(coroutineScope: CoroutineScope) {
 
         if (ExperimentalUI.isNewUI()) {
           if (event.place == ActionPlaces.TOOLWINDOW_TITLE) {
-            val toolWindowManager = ToolWindowManager.getInstance(event.project!!) as? ToolWindowManagerImpl ?: return
+            val toolWindowManager = getToolWindowManagerForEvent(event) ?: return
             val toolWindowId = event.dataContext.getData(PlatformDataKeys.TOOL_WINDOW)?.id ?: return
             toolWindowManager.activateToolWindow(toolWindowId, null, true)
           }
 
           if (ActionPlaces.isToolWindowPopupPlace(event.place)) {
-            val toolWindowManager = ToolWindowManager.getInstance(event.project!!) as? ToolWindowManagerImpl ?: return
+            val toolWindowManager = getToolWindowManagerForEvent(event) ?: return
             val activeEntry = toolWindowManager.idToEntry.get(toolWindowManager.lastActiveToolWindowId ?: return) ?: return
             (activeEntry.toolWindow.decorator ?: return).headerToolbar.component.isVisible = true
           }

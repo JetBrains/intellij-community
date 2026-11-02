@@ -7,9 +7,9 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.ToolWindowManagerLifecycleKt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,11 +17,10 @@ import org.jetbrains.annotations.NotNull;
 public abstract class BaseToolWindowToggleAction extends ToggleAction implements ActionRemoteBehaviorSpecification.Frontend, DumbAware {
   @Override
   public final boolean isSelected(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null || project.isDisposed()) {
+    ToolWindowManagerEx mgr = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(e);
+    if (mgr == null) {
       return false;
     }
-    ToolWindowManager mgr=ToolWindowManager.getInstance(project);
     String id=mgr.getActiveToolWindowId();
     if(id==null){
       return false;
@@ -33,11 +32,10 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
 
   @Override
   public final void setSelected(@NotNull AnActionEvent e, boolean state) {
-    Project project = e.getProject();
-    if (project == null) {
+    ToolWindowManagerEx toolWindowManager = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(e);
+    if (toolWindowManager == null) {
       return;
     }
-    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
     String id = toolWindowManager.getActiveToolWindowId();
     if (id == null) {
       return;
@@ -52,12 +50,11 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
   public final void update(@NotNull AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
-    Project project = e.getProject();
-    if (project == null) {
+    ToolWindowManagerEx mgr = ToolWindowManagerLifecycleKt.getToolWindowManagerForEvent(e);
+    if (mgr == null) {
       presentation.setEnabled(false);
       return;
     }
-    ToolWindowManager mgr=ToolWindowManager.getInstance(project);
     String id=mgr.getActiveToolWindowId();
 
     if (id == null) {
