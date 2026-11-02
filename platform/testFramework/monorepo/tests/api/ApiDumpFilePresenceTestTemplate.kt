@@ -7,10 +7,10 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.junit.jupiter.api.fail
 import kotlin.io.path.exists
 
-fun checkModulesDefineApiDump(modules: List<JpsModule>) {
+fun checkModulesDefineApiDump(modules: List<JpsModule>, filter: (JpsModule) -> Boolean = { it.isPlatformModule() }) {
   val modulesWithoutApiDump = modules
     .filter { module ->
-      module.isPlatformModule()
+      filter(module)
       && module.hasProductionSources() // skip modules without sources, for example, modules with tests
       && module.firstContentRoot().let { contentRoot ->
         contentRoot != null // skip modules without content roots
