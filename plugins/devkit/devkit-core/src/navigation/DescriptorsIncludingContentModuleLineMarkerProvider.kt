@@ -8,15 +8,10 @@ import com.intellij.navigation.GotoRelatedItem
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.XmlFile
-import com.intellij.psi.xml.XmlToken
-import com.intellij.psi.xml.XmlTokenType
 import com.intellij.util.NotNullFunction
-import com.intellij.util.xml.DomUtil
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.ContentDescriptor.ModuleDescriptor
-import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.SplitModeModuleKindIcons
 import org.jetbrains.idea.devkit.inspections.remotedev.SplitModeInspectionUtil.findDependingContentModuleEntriesInFile
 import org.jetbrains.idea.devkit.inspections.remotedev.analysis.recognizeSplitModeModuleKind
@@ -77,13 +72,4 @@ internal class DescriptorsIncludingContentModuleLineMarkerProvider : DevkitRelat
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(leaf)
   }
-}
-
-internal fun isIdeaPluginElementNameLeaf(leaf: PsiElement): Boolean {
-  if (leaf !is XmlToken) return false
-  if (leaf.getNode().elementType != XmlTokenType.XML_NAME) return false
-  val prev = PsiTreeUtil.getPrevSiblingOfType(leaf, XmlToken::class.java)
-  if (prev == null || prev.node.elementType !== XmlTokenType.XML_START_TAG_START) return false
-  if (!leaf.textMatches("idea-plugin")) return false
-  return DomUtil.getDomElement(leaf) is IdeaPlugin
 }
