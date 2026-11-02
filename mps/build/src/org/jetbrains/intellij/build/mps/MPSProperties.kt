@@ -76,6 +76,7 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.bundledPluginModules +=
         sequenceOf(
             "intellij.java.plugin",
+            "intellij.java.basic.plugin",
             "intellij.java.ide.customization",
             "intellij.json.plugin",
             "intellij.copyright",

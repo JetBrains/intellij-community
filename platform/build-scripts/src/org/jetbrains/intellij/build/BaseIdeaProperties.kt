@@ -13,6 +13,7 @@ import org.jetbrains.intellij.build.productLayout.DEFAULT_BUNDLED_PLUGINS
  */
 val IDEA_BUNDLED_PLUGINS: PersistentList<String> = DEFAULT_BUNDLED_PLUGINS + persistentListOf(
   JavaPluginLayout.MAIN_MODULE_NAME,
+  JavaPluginLayout.BASIC_PLUGIN_MAIN_MODULE_NAME,
   "intellij.java.ide.customization",
   "intellij.copyright",
   "intellij.properties.plugin",
