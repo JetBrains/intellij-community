@@ -30,14 +30,14 @@ import java.util.function.Consumer
  * @param onDocumentChanged receives the document event after the marker callbacks run
  * @param onMarkersAffected receives handles for valid markers whose policies processed the text change
  */
-class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> private constructor(
+class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constructor(
   document: DocumentImpl,
   private val markerClass: Class<T>,
-  private val retainStrong: Boolean,
-  private val onMarkersInvalidated: ((List<SnapshotMarkerReference<T?>>) -> Unit)?,
-  private val onDocumentChanged: ((DocumentEvent) -> Unit)?,
-  private val onMarkersAffected: ((List<SnapshotMarkerReference<T?>>) -> Unit)?,
-  @Volatile private var emptyRoot: PMarkerRoot,
+  private val retainStrong: Boolean = false,
+  private val onMarkersInvalidated: ((List<SnapshotMarkerReference<T>>) -> Unit)? = null,
+  private val onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
+  private val onMarkersAffected: ((List<SnapshotMarkerReference<T>>) -> Unit)? = null,
+  @Volatile private var emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
 ) : MarkerRootUpdater() {
   private val documentReference: WeakReference<DocumentImpl> = WeakReference(document)
 
@@ -80,8 +80,8 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> private constructor(
 
   /** Returns [handles] with this store's marker type, or an empty list when [handles] is `null`. */
   @Suppress("UNCHECKED_CAST")
-  private fun markerReferences(handles: List<SnapshotMarkerReference<*>>?): List<SnapshotMarkerReference<T?>> =
-    handles as List<SnapshotMarkerReference<T?>>? ?: emptyList()
+  private fun markerReferences(handles: List<SnapshotMarkerReference<*>>?): List<SnapshotMarkerReference<T>> =
+    handles as List<SnapshotMarkerReference<T>>? ?: emptyList()
 
   /** Removes the document listener and the store registration. It also clears all snapshot roots. */
   fun dispose(markerStores: SnapshotMarkerStores) {
@@ -111,7 +111,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> private constructor(
   }
 
   /** Creates a handle for this store without reading a document snapshot. */
-  override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T?> =
+  override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T> =
     SnapshotMarkerReference.create(markerClass.cast(marker), this.retainStrong || retainStrong)
 
   /**
@@ -381,23 +381,6 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> private constructor(
     private class Notifications(
       val invalidatedMarkers: List<SnapshotMarkerReference<*>>,
       val affectedMarkers: List<SnapshotMarkerReference<*>>,
-    )
-  }
-
-  companion object {
-    /** Creates a store for [markerClass]. When [retainStrong] is true, the store retains every marker. */
-    @JvmStatic
-    @JvmOverloads
-    fun <T : SnapshotRangeMarkerImpl> create(
-      document: DocumentImpl,
-      markerClass: Class<T>,
-      retainStrong: Boolean = false,
-      onMarkersInvalidated: ((List<SnapshotMarkerReference<T?>>) -> Unit)? = null,
-      onDocumentChanged: ((DocumentEvent) -> Unit)? = null,
-      onMarkersAffected: ((List<SnapshotMarkerReference<T?>>) -> Unit)? = null,
-      emptyRoot: PMarkerRoot = PMarkerRoot.empty(),
-    ): SnapshotMarkerRootStore<T> = SnapshotMarkerRootStore(
-      document, markerClass, retainStrong, onMarkersInvalidated, onDocumentChanged, onMarkersAffected, emptyRoot,
     )
   }
 }

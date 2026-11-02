@@ -41,7 +41,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
       myRangeMarkerTree = null;
       myPersistentRangeMarkerTree = null;
       mySnapshotMarkerRootStore = hostDocument == null
-                                  ? SnapshotMarkerRootStore.create(myDocument, SnapshotRangeMarkerImpl.class)
+                                  ? new SnapshotMarkerRootStore<>(myDocument, SnapshotRangeMarkerImpl.class)
                                   : hostDocument.getRangeMarkers().mySnapshotMarkerRootStore;
     }
     else {

@@ -5,10 +5,11 @@ import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicLong
 
 /** Identifies one marker across snapshots and provides access to it with the selected ownership. */
-sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl?> : Comparable<SnapshotMarkerReference<*>> {
+sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl> : Comparable<SnapshotMarkerReference<*>> {
   val order: Long
 
-  fun get(): T
+  /** Returns the marker, or null after a weak marker is collected. */
+  fun get(): T?
 
   override fun compareTo(other: SnapshotMarkerReference<*>): Int = order.compareTo(other.order)
 
@@ -17,7 +18,7 @@ sealed interface SnapshotMarkerReference<out T : SnapshotRangeMarkerImpl?> : Com
 
     /** Creates a handle that retains [marker] when [retainStrong] is true. */
     @JvmStatic
-    fun <T : SnapshotRangeMarkerImpl> create(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T?> =
+    fun <T : SnapshotRangeMarkerImpl> create(marker: T, retainStrong: Boolean): SnapshotMarkerReference<T> =
       if (retainStrong) StrongSnapshotMarkerReference(marker) else WeakSnapshotMarkerReference(marker)
 
     internal fun nextOrder(): Long = sequence.incrementAndGet()
@@ -41,7 +42,7 @@ internal class StrongSnapshotMarkerReference<out T : SnapshotRangeMarkerImpl>(pr
 
 /** Queues this reference for cleanup after its marker is collected. */
 internal class WeakSnapshotMarkerReference<T : SnapshotRangeMarkerImpl>(marker: T) :
-  WeakReference<T>(marker, SnapshotMarkerEngine.markerQueue), SnapshotMarkerReference<T?> {
+  WeakReference<T>(marker, SnapshotMarkerEngine.markerQueue), SnapshotMarkerReference<T> {
   override val order: Long = SnapshotMarkerReference.nextOrder()
   val states: PMarkerNodeHistory<PMarkerNodeState> = PMarkerNodeHistory()
   internal val rootStorageReference: WeakReference<MarkerRootUpdater> = marker.rootStorage.weakReference

@@ -32,12 +32,12 @@ internal class SnapshotInlayStorage(
   val document: DocumentImpl,
 ) {
   private val registeredMarkers: MutableSet<SnapshotMarkerReference<*>> = ConcurrentHashMap.newKeySet()
-  val rootStore: SnapshotMarkerRootStore<SnapshotInlayMarker<*>> = SnapshotMarkerRootStore.create(
+  val rootStore: SnapshotMarkerRootStore<SnapshotInlayMarker<*>> = SnapshotMarkerRootStore(
     document, SnapshotInlayMarker::class.java, retainStrong = true,
     onMarkersInvalidated = ::saveInvalidatedMarkers,
     onDocumentChanged = ::processInvalidatedMarkers,
   )
-  private var invalidatedHandles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>?>> = emptyList()
+  private var invalidatedHandles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>>> = emptyList()
   private var querySnapshot: DocumentSnapshot? = null
 
   fun <R : EditorCustomElementRenderer> createInline(
@@ -191,7 +191,7 @@ internal class SnapshotInlayStorage(
     return marker
   }
 
-  private fun saveInvalidatedMarkers(handles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>?>>) {
+  private fun saveInvalidatedMarkers(handles: List<SnapshotMarkerReference<SnapshotInlayMarker<*>>>) {
     invalidatedHandles = handles
   }
 
