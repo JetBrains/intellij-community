@@ -21,3 +21,14 @@ For intentions, completion, and other code insight, read the other sections of [
 
 Before you write test data for an inspection, a quick fix, or an intention, read [Test data coverage](docs/fir-ide/architecture/code-insights.md#test-data-coverage).
 Plan the cases first. Reuse the Kotlin compiler tests for the same diagnostic.
+
+## Commit messages
+
+These rules override the `commits` skill for a change in the Kotlin plugin.
+
+Use this subject format for a change with a ticket: `KTIJ-XXX [kotlin] Short description`.
+For example: `KTIJ-36151 [kotlin] Report ignored Java calls to must-use functions`.
+
+- Put the `[kotlin]` tag after the ticket id.
+- Start the description with a capital letter.
+- Keep the subject on one line.
