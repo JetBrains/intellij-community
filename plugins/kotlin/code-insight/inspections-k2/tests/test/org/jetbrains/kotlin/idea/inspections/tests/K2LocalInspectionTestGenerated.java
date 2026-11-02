@@ -13409,6 +13409,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("arrayOperand.kt")
+            public void testArrayOperand() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/arrayOperand.kt");
+            }
+
             @TestMetadata("caretAtCall.kt")
             public void testCaretAtCall() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/caretAtCall.kt");
@@ -13417,6 +13422,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("complexExpressions.kt")
             public void testComplexExpressions() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/complexExpressions.kt");
+            }
+
+            @TestMetadata("mapFilterOperand.kt")
+            public void testMapFilterOperand() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/mapFilterOperand.kt");
             }
 
             @TestMetadata("mapTo.kt")
@@ -13437,6 +13447,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             @TestMetadata("parenthesis.kt")
             public void testParenthesis() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/parenthesis.kt");
+            }
+
+            @TestMetadata("primitiveArrayOperand.kt")
+            public void testPrimitiveArrayOperand() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/list/primitiveArrayOperand.kt");
             }
 
             @TestMetadata("singleExpression.kt")
@@ -13465,6 +13480,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         public static class Set extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayOperandMinus.kt")
+            public void testArrayOperandMinus() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/collections/concatenationToBuildCollection/set/arrayOperandMinus.kt");
             }
 
             @TestMetadata("complexExpressions.kt")

@@ -1,0 +1,7 @@
+// FIX: Convert to collection builder
+
+fun test(a: List<Any>, arr: IntArray): List<Any> = buildList {
+    addAll(a)
+    add(arr)
+    add(3)
+}

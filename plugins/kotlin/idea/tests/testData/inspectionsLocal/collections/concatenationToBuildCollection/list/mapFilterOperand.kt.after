@@ -1,0 +1,7 @@
+// FIX: Convert to collection builder
+
+fun test(any: List<Any>, m: Map<String, Int>): List<Any> = buildList {
+    addAll(any)
+    add(m.filter { it.value > 0 })
+    add(3)
+}

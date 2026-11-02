@@ -155,13 +155,13 @@ class CollectionConcatenationToBuildCollectionInspection :
     private fun createInitialOperation(element: KtBinaryExpression): Context.Operation? {
         val expression = nestedBinaryExpressionSequence(element).lastOrNull()?.left ?: return null
         val type = expression.expressionType ?: return null
-        return expression.toOperationForPlus(isIterableOrSequence(type))
+        return expression.toOperationForPlus(isIterableSequenceOrArray(type))
     }
 
     context(_: KaSession)
     private fun KtExpression.toOperationForStandalone(): Context.Operation? {
         val type = expressionType ?: return null
-        return toOperationForPlus(isIterableOrSequence(type))
+        return toOperationForPlus(isIterableSequenceOrArray(type))
     }
 
     context(_: KaSession)
@@ -177,7 +177,7 @@ class CollectionConcatenationToBuildCollectionInspection :
         val rhs = right ?: return null
         val rhsType = rhs.expressionType ?: return null
 
-        val isCollectionOrSequence = isIterableOrSequence(rhsType)
+        val isCollectionOrSequence = isIterableSequenceOrArray(rhsType)
         return when (operationToken) {
             KtTokens.MINUS -> when {
                 isCollectionOrSequence -> Context.Operation.AddRemoveOperation(
@@ -198,16 +198,17 @@ class CollectionConcatenationToBuildCollectionInspection :
     }
 
     context(_: KaSession)
-    private fun isIterableOrSequence(rhsType: KaType): Boolean {
-        return rhsType.isSubtypeOf(StandardClassIds.Iterable) || rhsType.isSubtypeOf(StandardClassIds.Sequence)
+    private fun isIterableSequenceOrArray(rhsType: KaType): Boolean {
+        return rhsType.isSubtypeOf(StandardClassIds.Iterable)
+                || rhsType.isSubtypeOf(StandardClassIds.Sequence)
+                || rhsType.isSubtypeOf(StandardClassIds.Array)
     }
 
     context(_: KaSession)
     private fun KtExpression.toOperationForPlus(isCollectionOrSequence: Boolean): Context.Operation {
-        toTransformingOperation()?.let { return it }
         return when {
-            isCollectionOrSequence ->
-                Context.Operation.AddRemoveOperation(createSmartPointer(), Context.Operation.AddRemoveOperation.Kind.AddAll)
+            isCollectionOrSequence -> toTransformingOperation()
+                ?: Context.Operation.AddRemoveOperation(createSmartPointer(), Context.Operation.AddRemoveOperation.Kind.AddAll)
 
             else ->
                 Context.Operation.AddRemoveOperation(createSmartPointer(), Context.Operation.AddRemoveOperation.Kind.Add)
