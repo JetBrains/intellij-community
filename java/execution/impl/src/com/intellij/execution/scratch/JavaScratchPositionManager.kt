@@ -1,107 +1,82 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.execution.scratch;
+package com.intellij.execution.scratch
 
-import com.intellij.debugger.NoDataException;
-import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.PositionManagerImpl;
-import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiManager;
-import com.sun.jdi.Location;
-import com.sun.jdi.ReferenceType;
-import com.sun.jdi.request.ClassPrepareRequest;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
-
-import java.util.List;
+import com.intellij.debugger.NoDataException
+import com.intellij.debugger.SourcePosition
+import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.PositionManagerImpl
+import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiManager
+import com.sun.jdi.Location
+import com.sun.jdi.ReferenceType
+import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.annotations.Unmodifiable
 
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaScratchPositionManager extends PositionManagerImpl{
-  private final @NotNull VirtualFile myScratchFile;
-
-  public JavaScratchPositionManager(@NotNull DebugProcessImpl debugProcess, @NotNull VirtualFile scratchFile) {
-    super(debugProcess);
-    myScratchFile = scratchFile;
+open class JavaScratchPositionManager(debugProcess: DebugProcessImpl, private val myScratchFile: VirtualFile) : PositionManagerImpl(debugProcess) {
+  @Throws(NoDataException::class)
+  override fun locationsOfLine(type: ReferenceType, position: SourcePosition): List<Location> {
+    checkPosition(position)
+    return super.locationsOfLine(type, position)
   }
 
-  @Override
-  public @NotNull List<Location> locationsOfLine(@NotNull ReferenceType type, @NotNull SourcePosition position) throws NoDataException {
-    checkPosition(position);
-    return super.locationsOfLine(type, position);
+  @Throws(NoDataException::class)
+  override fun createPrepareRequests(requestor: ClassPrepareRequestor, position: SourcePosition): List<ClassPrepareRequest> {
+    checkPosition(position)
+    return super.createPrepareRequests(requestor, position)
   }
 
-  @Override
-  public @NotNull List<ClassPrepareRequest> createPrepareRequests(@NotNull ClassPrepareRequestor requestor,
-                                                                  @NotNull SourcePosition position) throws NoDataException {
-    checkPosition(position);
-    return super.createPrepareRequests(requestor, position);
+  @Throws(NoDataException::class)
+  override fun getAllClasses(position: SourcePosition): @Unmodifiable List<ReferenceType> {
+    checkPosition(position)
+    return super.getAllClasses(position)
   }
 
-  @Override
-  public @NotNull @Unmodifiable List<ReferenceType> getAllClasses(@NotNull SourcePosition position) throws NoDataException {
-    checkPosition(position);
-    return super.getAllClasses(position);
-  }
-
-  private void checkPosition(@NotNull SourcePosition position) throws NoDataException{
-    if (!myScratchFile.equals(position.getFile().getVirtualFile())) {
-      throw NoDataException.INSTANCE;
+  @Throws(NoDataException::class)
+  private fun checkPosition(position: SourcePosition) {
+    if (myScratchFile != position.file.virtualFile) {
+      throw NoDataException.INSTANCE
     }
   }
 
-  @Override
-  public @Nullable SourcePosition getSourcePosition(Location location) throws NoDataException {
-    final SourcePosition position = super.getSourcePosition(location);
+  @Throws(NoDataException::class)
+  override fun getSourcePosition(location: Location?): SourcePosition? {
+    val position = super.getSourcePosition(location)
     if (position == null) {
-      throw NoDataException.INSTANCE; // delegate to other managers
+      throw NoDataException.INSTANCE
     }
-    return position;
+    return position
   }
 
-  @Override
-  protected @Nullable PsiFile getPsiFileByLocation(Project project, Location location) {
-    if (location == null || !myScratchFile.isValid()) {
-      return null;
-    }
-    final ReferenceType refType = location.declaringType();
-    if (refType == null) {
-      return null;
-    }
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(myScratchFile);
-    if (!(psiFile instanceof PsiJavaFile)) {
-      return null;
-    }
-    final PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-    if (classes.length == 0) {
-      return null;
-    }
+  override fun getPsiFileByLocation(project: Project, location: Location): PsiFile? {
+    if (!myScratchFile.isValid) return null
+    val refType = location.declaringType() ?: return null
+    val psiFile = PsiManager.getInstance(project).findFile(myScratchFile) as? PsiJavaFile ?: return null
+    val classes = psiFile.classes
+    if (classes.isEmpty()) return null
 
-    final String originalQName = refType.name();
-    for (PsiClass aClass : classes) {
-      if (StringUtil.equals(originalQName, aClass.getQualifiedName())) {
-        return psiFile;
+    val originalQName = refType.name()
+    for (psiClass in classes) {
+      if (originalQName == psiClass.qualifiedName) {
+        return psiFile
       }
     }
 
-    final int dollar = originalQName.indexOf('$');
-    final String alternativeQName = dollar > 0? originalQName.substring(0, dollar) : null;
-    if (!StringUtil.isEmpty(alternativeQName)) {
-      for (PsiClass aClass : classes) {
-        if (StringUtil.equals(alternativeQName, aClass.getQualifiedName())) {
-          return psiFile;
+    val dollar = originalQName.indexOf('$')
+    val alternativeQName = if (dollar > 0) originalQName.substring(0, dollar) else null
+    if (!alternativeQName.isNullOrEmpty()) {
+      for (psiClass in classes) {
+        if (alternativeQName == psiClass.qualifiedName) {
+          return psiFile
         }
       }
     }
-
-    return null;
+    return null
   }
 }
