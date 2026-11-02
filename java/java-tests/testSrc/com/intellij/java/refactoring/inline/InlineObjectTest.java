@@ -28,6 +28,7 @@ public class InlineObjectTest extends LightJavaCodeInsightTestCase {
   public void testInlinePointToString() { doTest(); }
   public void testInlineBitString() { doTest(); }
   public void testInlineSideEffect() { doTest(); }
+  public void testInlineConstructorWithStaticConstant() { doTest(); }
   
   public void testRecordWithCompactConstructor() {
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());

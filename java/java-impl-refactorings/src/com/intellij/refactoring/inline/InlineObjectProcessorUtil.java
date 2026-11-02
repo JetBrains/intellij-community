@@ -272,6 +272,7 @@ public final class InlineObjectProcessorUtil {
     ctorHelper.initializeParameters(ctorParameters);
     nextHelper.initializeParameters(nextParameters);
 
+    ChangeContextUtil.decodeContextInfo(target, null, null);
     removeRedundantFieldVars(fieldLocals, target);
     ctorHelper.inlineParameters(ctorParameters);
     nextHelper.inlineParameters(nextParameters);

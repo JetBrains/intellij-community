@@ -5,8 +5,8 @@ class Main {
         if (path == null) {
             throw new NullPointerException();
         }
-        String path1 = fs.normalize(path);
-        int prefixLength = fs.prefixLength(path1);
+        String path1 = File.fs.normalize(path);
+        int prefixLength = File.fs.prefixLength(path1);
         int index = path1.lastIndexOf(File.separatorChar);
         if (index < prefixLength) {
             if ((prefixLength > 0) && (path1.length() > prefixLength))
