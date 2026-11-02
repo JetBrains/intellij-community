@@ -144,6 +144,12 @@ To run tests on the build, apply these settings to the _Run | Edit Configuration
 ./bazel.cmd run //build:idea_community
 ```
 
+To debug it, set the JVM debug option in the `IJ_JAVA_OPTIONS` environment variable.
+The IDE waits until a debugger attaches to port 5005, for example a _Remote JVM Debug_ run configuration:
+```shell
+IJ_JAVA_OPTIONS='-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=localhost:5005' ./bazel.cmd run //build:idea_community
+```
+
 ### Running IntelliJ IDEA in a CI/CD environment
 
 To run tests outside IntelliJ IDEA, use the `tests.cmd` command in `<IDEA_HOME>` directory.
