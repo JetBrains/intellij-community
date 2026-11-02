@@ -15,6 +15,7 @@ import com.intellij.driver.sdk.HintRenderer
 import com.intellij.driver.sdk.Inlay
 import com.intellij.driver.sdk.InlineCompletionLineRenderer
 import com.intellij.driver.sdk.ScrollType
+import com.intellij.driver.sdk.WaitForException
 import com.intellij.driver.sdk.getHighlights
 import com.intellij.driver.sdk.invokeAction
 import com.intellij.driver.sdk.logicalPosition
@@ -32,11 +33,15 @@ import com.intellij.driver.sdk.ui.components.elements.JTextFieldUI
 import com.intellij.driver.sdk.ui.components.elements.actionButton
 import com.intellij.driver.sdk.ui.components.elements.checkBox
 import com.intellij.driver.sdk.ui.components.elements.textField
+import com.intellij.driver.sdk.ui.getClipboardText
+import com.intellij.driver.sdk.ui.pasteText
+import com.intellij.driver.sdk.ui.printableString
 import com.intellij.driver.sdk.ui.rdTarget
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.shouldContainText
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.waitNotNull
+import com.intellij.openapi.diagnostic.fileLogger
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
@@ -47,6 +52,9 @@ import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 private const val FOLDING_ANCHOR_SEARCH_WIDTH = 40
+private val WHITESPACE = Regex("\\s+")
+
+private fun normalizeWhitespace(text: String): String = text.replace(WHITESPACE, " ")
 
 private fun Driver.scrollType(name: String = "CENTER") = utility(ScrollType::class).valueOf(name)
 
@@ -87,6 +95,33 @@ open class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
         driver.withWriteAction {
           document.setText(value)
         }
+      }
+    }
+
+  /**
+   * Pastes [text] through the system clipboard, like [pasteText], and waits until the document grows and contains [text].
+   *
+   * The function pastes once. The check ignores the amount of whitespace, because the editor can indent the pasted lines.
+   * The document must grow, so a short [text] that the document already contains still proves the paste.
+   * So use it only to insert text, not to replace a selection.
+   * When the check fails within [timeout], the function logs the clipboard content and throws an [AssertionError].
+   * Use [pasteText] when the paste can leave the document unchanged, for example in a read-only editor.
+   */
+  fun pasteTextAndCheck(text: String, timeout: Duration = 3.seconds): Unit =
+    step("Paste '${printableString(text)}' and check that the document contains it") {
+      val textBefore = this.text
+      val expected = normalizeWhitespace(text)
+      pasteText(text)
+      try {
+        waitFor("the document grows and contains the pasted text", timeout = timeout, interval = 100.milliseconds) {
+          val textAfter = this.text
+          textAfter.length > textBefore.length && expected in normalizeWhitespace(textAfter)
+        }
+      }
+      catch (e: WaitForException) {
+        val clipboardText = runCatching { driver.getClipboardText() }.getOrElse { "<the clipboard is not readable: $it>" }
+        fileLogger().warn("The paste of '${printableString(text)}' did not reach the document. The clipboard contains '$clipboardText'")
+        throw AssertionError("The document does not contain the pasted text '${printableString(text)}'", e)
       }
     }
 
