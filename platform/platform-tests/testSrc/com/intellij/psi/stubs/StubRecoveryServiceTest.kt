@@ -1,6 +1,7 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs
 
+import com.intellij.concurrency.SensitiveProgressWrapper
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
@@ -8,12 +9,16 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.edtWriteAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListenerBackgroundable
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
@@ -28,10 +33,12 @@ import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.stubs.StubRecoveryExtraStep.DROP_PSI_CACHES
 import com.intellij.psi.stubs.StubRecoveryExtraStep.REPARSE_FILE
 import com.intellij.psi.stubs.StubRecoveryExtraStep.SAVE_DOCUMENT
+import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.junit5.RegistryKey
 import com.intellij.testFramework.junit5.SystemProperty
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
@@ -68,6 +75,7 @@ import org.mockito.Mockito.doAnswer
 import org.mockito.Mockito.doThrow
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
+import org.mockito.Mockito.verifyNoMoreInteractions
 import org.mockito.Mockito.`when`
 import java.nio.file.Files
 
@@ -838,6 +846,68 @@ class StubRecoveryServiceTest {
   @Test
   fun `register the recovery service`() {
     assertThat(StubRecoveryService.getInstance()).isInstanceOf(StubRecoveryServiceImpl::class.java)
+  }
+
+  @Test
+  @RegistryKey(key = "daemon.suppress.stub.inconsistency.errors", value = "true")
+  fun `log an inconsistency at debug level under wrapped highlighting progress`() {
+    val logger = mock(Logger::class.java)
+    val cause = IllegalStateException("test stub inconsistency")
+    val indicator = object : EmptyProgressIndicator(), StubRecoveryService.HighlightingProgress {}
+    ProgressManager.getInstance().runProcess(
+      Runnable { StubRecoveryService.logStubInconsistency(project.get(), logger, "test inconsistency", cause) },
+      SensitiveProgressWrapper(SensitiveProgressWrapper(indicator)),
+    )
+    verify(logger).debug("test inconsistency, isDumb= false, canRunSmart= true", cause)
+    verifyNoMoreInteractions(logger)
+    assertThat(indicator.isCanceled).isFalse()
+  }
+
+  @Test
+  @RegistryKey(key = "daemon.suppress.stub.inconsistency.errors", value = "false")
+  fun `report an inconsistency when highlighting suppression is disabled`() {
+    val logger = mock(Logger::class.java)
+    val cause = IllegalStateException("test stub inconsistency")
+    val indicator = object : EmptyProgressIndicator(), StubRecoveryService.HighlightingProgress {}
+    ProgressManager.getInstance().runProcess(
+      Runnable { StubRecoveryService.logStubInconsistency(project.get(), logger, "test inconsistency", cause) }, indicator,
+    )
+    verify(logger).error("test inconsistency, isDumb= false, canRunSmart= true", cause)
+    verifyNoMoreInteractions(logger)
+  }
+
+  @Test
+  @RegistryKey(key = "daemon.suppress.stub.inconsistency.errors", value = "true")
+  fun `report an inconsistency outside highlighting`() {
+    val logger = mock(Logger::class.java)
+    val cause = IllegalStateException("test stub inconsistency")
+    ProgressManager.getInstance().runProcess(
+      Runnable { StubRecoveryService.logStubInconsistency(project.get(), logger, "test inconsistency", cause) }, EmptyProgressIndicator(),
+    )
+    verify(logger).error("test inconsistency, isDumb= false, canRunSmart= true", cause)
+    verifyNoMoreInteractions(logger)
+  }
+
+  @Test
+  @RegistryKey(key = "daemon.suppress.stub.inconsistency.errors", value = "true")
+  fun `report an inconsistency when the project cannot run smart`() {
+    val testProject = project.get()
+    val dumbTask = DumbModeTestUtils.startEternalDumbModeTask(testProject)
+    try {
+      assertThat(DumbService.getInstance(testProject).canRunSmart()).isFalse
+      val logger = mock(Logger::class.java)
+      val cause = IllegalStateException("test stub inconsistency")
+      val indicator = object : EmptyProgressIndicator(), StubRecoveryService.HighlightingProgress {}
+      ProgressManager.getInstance().runProcess(
+        Runnable { StubRecoveryService.logStubInconsistency(testProject, logger, "test inconsistency", cause) },
+        indicator,
+      )
+      verify(logger).error("test inconsistency, isDumb= true, canRunSmart= false", cause)
+      verifyNoMoreInteractions(logger)
+    }
+    finally {
+      DumbModeTestUtils.endEternalDumbModeTaskAndWaitForSmartMode(testProject, dumbTask)
+    }
   }
 
   private var VirtualFile.rebuildRequested: Boolean?

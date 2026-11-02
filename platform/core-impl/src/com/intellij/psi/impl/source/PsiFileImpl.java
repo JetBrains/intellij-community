@@ -106,6 +106,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.intellij.psi.stubs.StubRecoveryService.logStubInconsistency;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable, Cloneable {
@@ -907,8 +908,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
         if (stubRoots.length != roots.size()) {
           com.intellij.util.Function<PsiFileStub<?>, String> stubToString =
             stub -> "{" + stub.getClass().getSimpleName() + " " + stub.getFileElementType().getLanguage() + "}";
-          LOG.error("readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
-                    StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
+          logStubInconsistency(getProject(), LOG, "readOrBuilt roots = " + StringUtil.join(stubRoots, stubToString, ", ") + "; " +
+                               StubTreeLoader.getFileViewProviderMismatchDiagnostics(viewProvider));
           StubRecoveryService.scheduleReindexing(this, StubRecoveryExtraStep.DROP_PSI_CACHES,
                                                 StubRecoveryExtraStep.SAVE_DOCUMENT, StubRecoveryExtraStep.REPARSE_FILE);
           return Pair.empty();

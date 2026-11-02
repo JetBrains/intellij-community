@@ -132,7 +132,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
                       "dumb=" + isDumb + "," +
                       "scanning=" + isScanning +
                       "): " + e.getMessage();
-        return processError(vFile, new Exception(message, e));
+        return processError(project, vFile, new Exception(message, e));
       }
       if (stub == SerializedStubTree.NO_STUB) {
         return null;
@@ -158,13 +158,14 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
     IndexingStampInfo indexingStampInfo = getIndexingStampInfo(vFile);
     if (indexingStampInfo != null &&
         !indexingStampInfo.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document, cachedPsi))) {
-      diagnoseLengthMismatch(vFile, wasIndexedAlready, document, saved, cachedPsi);
+      diagnoseLengthMismatch(project, vFile, wasIndexedAlready, document, saved, cachedPsi);
       return false;
     }
     return true;
   }
 
-  private void diagnoseLengthMismatch(@NotNull VirtualFile vFile,
+  private void diagnoseLengthMismatch(@NotNull Project contextProject,
+                                      @NotNull VirtualFile vFile,
                                       boolean wasIndexedAlready,
                                       @Nullable Document document,
                                       boolean saved,
@@ -204,7 +205,7 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
       message += getPhysicalFileReport(nioPath);
     }
 
-    processError(vFile, new Exception(message));
+    processError(contextProject, vFile, new Exception(message));
   }
 
   private static String getPhysicalFileReport(@NotNull Path file) {
@@ -232,9 +233,9 @@ final class StubTreeLoaderImpl extends StubTreeLoader implements Closeable {
     return -1;
   }
 
-  private static ObjectStubTree<?> processError(final VirtualFile vFile, @NotNull Exception e) {
-    StubRecoveryService.getInstance().scheduleReindexing(null, vFile, StubRecoveryExtraStep.SAVE_DOCUMENT);
-    LOG.error(e);
+  private static ObjectStubTree<?> processError(@NotNull Project project, final VirtualFile vFile, @NotNull Exception e) {
+    StubRecoveryService.getInstance().scheduleReindexing(project, vFile, StubRecoveryExtraStep.SAVE_DOCUMENT);
+    StubRecoveryService.logStubInconsistency(project, LOG, "Cannot read the indexed stubs", e);
     return null;
   }
 

@@ -34,6 +34,7 @@ import static com.intellij.diagnostic.ControlFlowExceptionsKt.rethrowControlFlow
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.StubPsiCheck;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.WrongPsiFileClassInNonPsiStub;
 import static com.intellij.psi.stubs.StubInconsistencyReporter.StubTreeAndIndexDoNotMatchSource.ZeroStubIdList;
+import static com.intellij.psi.stubs.StubRecoveryService.logStubInconsistency;
 
 /**
  * Author: dmitrylomov
@@ -53,10 +54,10 @@ public abstract class StubProcessingHelperBase {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file, context);
 
     if (psiFile == null) {
-      LOG.error("Stub index points to a file without PSI: " +
-                getFileTypeInfo(file, project) + ", " +
-                "indexing stamp info = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
-                "used scope = " + scope);
+      logStubInconsistency(project, LOG, "Stub index points to a file without PSI: " +
+                           getFileTypeInfo(file, project) + ", " +
+                           "indexing stamp info = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
+                           "used scope = " + scope);
       onInternalError(file);
       return true;
     }
@@ -131,8 +132,9 @@ public abstract class StubProcessingHelperBase {
                                                              @NotNull Class<Psi> requiredClass,
                                                              @NotNull PsiFile psiFile) {
     if (BinaryFileStubBuilders.INSTANCE.forFileType(psiFile.getFileType()) == null) {
-      LOG.error("unable to get stub builder for file with " + getFileTypeInfo(file, psiFile.getProject()) + ", " +
-                StubTreeLoader.getFileViewProviderMismatchDiagnostics(psiFile.getViewProvider()));
+      logStubInconsistency(psiFile.getProject(), LOG,
+                           "unable to get stub builder for file with " + getFileTypeInfo(file, psiFile.getProject()) + ", " +
+                           StubTreeLoader.getFileViewProviderMismatchDiagnostics(psiFile.getViewProvider()));
       onInternalError(file);
       return true;
     }
@@ -146,12 +148,14 @@ public abstract class StubProcessingHelperBase {
 
     ObjectStubTree<?> objectStubTree = StubTreeLoader.getInstance().readFromVFile(psiFile.getProject(), file);
     if (objectStubTree == null) {
-      LOG.error("Stub index points to a file without indexed stubs: " + getFileTypeInfo(file, psiFile.getProject()));
+      logStubInconsistency(psiFile.getProject(), LOG,
+                           "Stub index points to a file without indexed stubs: " + getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
       return true;
     }
     if (objectStubTree instanceof StubTree) {
-      LOG.error("Stub index points to a file with PSI stubs (instead of non-PSI ones): " + getFileTypeInfo(file, psiFile.getProject()));
+      logStubInconsistency(psiFile.getProject(), LOG, "Stub index points to a file with PSI stubs (instead of non-PSI ones): " +
+                               getFileTypeInfo(file, psiFile.getProject()));
       onInternalError(file);
       return true;
     }
@@ -180,7 +184,8 @@ public abstract class StubProcessingHelperBase {
                          "\ndumbMode,dumbModeAccessType=" + FileBasedIndex.getInstance().getCurrentDumbModeAccessType(null) :
                          "\nno dumbMode";
 
-      LOG.error(extraMessage + dumbState + "\n" + StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null, source));
+      logStubInconsistency(psiFile.getProject(), LOG, extraMessage + dumbState + "\n" +
+                               StubTreeLoader.getInstance().stubTreeAndIndexDoNotMatch(stubTree, psiFile, null, source));
     }
     catch (Throwable t) {
       rethrowControlFlowException(t);

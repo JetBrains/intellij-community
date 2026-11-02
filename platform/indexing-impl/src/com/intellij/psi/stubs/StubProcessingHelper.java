@@ -18,6 +18,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.psi.stubs.StubRecoveryService.logStubInconsistency;
+
 @ApiStatus.Internal
 public final class StubProcessingHelper extends StubProcessingHelperBase {
   static final boolean REPORT_SENSITIVE_DATA_ON_ERROR =
@@ -35,10 +37,11 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
       Map<Integer, SerializedStubTree> data = StubIndexEx.getStubUpdatingIndex().getIndexedFileData(id);
       if (data.size() != 1) {
         if (failOnMissedKeys) {
-          LOG.error("Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
-                    "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
-                    "can have stubs = " + StubUpdatingIndex.canHaveStub(file) + ", " +
-                    "actual stub count = " + data.size());
+          logStubInconsistency(project, LOG,
+                               "Stub index points to a file (" + getFileTypeInfo(file, project) + ") without indexed stub tree; " +
+                               "indexing stamp = " + StubTreeLoader.getInstance().getIndexingStampInfo(file) + ", " +
+                               "can have stubs = " + StubUpdatingIndex.canHaveStub(file) + ", " +
+                               "actual stub count = " + data.size());
           onInternalError(file);
         }
         return null;
@@ -59,7 +62,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
         else {
           additionalMessage = "";
         }
-        LOG.error(mainMessage + additionalMessage);
+        logStubInconsistency(project, LOG, mainMessage + additionalMessage);
         onInternalError(file);
       }
       return stubIdList;

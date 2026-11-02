@@ -383,8 +383,8 @@ a:com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 - s:processHighlights(com.intellij.openapi.editor.ex.MarkupModelEx,com.intellij.openapi.project.Project,com.intellij.lang.annotation.HighlightSeverity,I,I,com.intellij.util.Processor):Z
 - pa:progressIsAdvanced(com.intellij.codeInsight.daemon.impl.HighlightingSession,com.intellij.openapi.editor.Editor,D):V
 c:com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
-- com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 - com.intellij.openapi.progress.StandardProgressIndicator
+- com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 - <init>():V
 - f:cancel():V
 - f:cancel(java.lang.String):V

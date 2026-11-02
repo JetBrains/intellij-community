@@ -26,12 +26,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.AnyPsiChangeListener;
+import com.intellij.psi.impl.PsiManagerImpl;
+import com.intellij.psi.stubs.StubIdList;
+import com.intellij.psi.stubs.StubProcessingHelperBase;
+import com.intellij.psi.stubs.StubRecoveryExtraStep;
+import com.intellij.psi.stubs.StubRecoveryService;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.TestTimeOut;
@@ -51,6 +60,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * tests {@link HighlightVisitor} behaviour during highlighting
@@ -130,6 +140,89 @@ public class DaemonHighlightVisitorRespondToChangesTest extends ProductionDaemon
     List<HighlightInfo> myWarns = filterMy(
       myTestDaemonCodeAnalyzer.waitHighlighting(getFile(), HighlightSeverity.INFORMATION));
     assertOneElement(myWarns);
+  }
+
+  public void testHighlightingRunsAgainAfterStubIndexMismatch() throws Exception {
+    doTestHighlightingRunsAgainAfterStubIndexMismatch(true);
+  }
+
+  public void testHighlightingRunsAgainAfterDependencyStubIndexMismatch() throws Exception {
+    doTestHighlightingRunsAgainAfterStubIndexMismatch(false);
+  }
+
+  private void doTestHighlightingRunsAgainAfterStubIndexMismatch(boolean openInconsistentFile) throws Exception {
+    var dependency = createFile("Dependency.java", "class Dependency {}").getVirtualFile();
+    var scheduled = new AtomicBoolean();
+    var cachesDropped = new AtomicBoolean();
+    var attempts = new AtomicInteger();
+    var completed = new AtomicBoolean();
+    var recovery = StubRecoveryService.getInstance();
+    ServiceContainerUtil.replaceService(ApplicationManager.getApplication(), StubRecoveryService.class,
+      (project, file, extraSteps) -> {
+        if (file.equals(dependency)) {
+          assertSame(getProject(), project);
+          assertContainsElements(List.of(extraSteps), StubRecoveryExtraStep.DROP_PSI_CACHES);
+          scheduled.set(true);
+        }
+        recovery.scheduleReindexing(project, file, extraSteps);
+      }, getTestRootDisposable());
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(PsiManagerImpl.ANY_PSI_CHANGE_TOPIC,
+      new AnyPsiChangeListener() {
+        @Override
+        public void afterPsiChanged(boolean isPhysical) {
+          if (scheduled.get()) cachesDropped.set(true);
+        }
+      });
+    var helper = new StubProcessingHelperBase() {
+      @Override
+      protected void onInternalError(VirtualFile file) { }
+    };
+    var fileName = openInconsistentFile ? "Dependency.java" : "Use.java";
+    HighlightVisitor visitor = new HighlightVisitor() {
+      @Override
+      public boolean suitableForFile(@NotNull PsiFile file) {
+        return file.getName().equals(fileName);
+      }
+
+      @Override
+      public void visit(@NotNull PsiElement element) { }
+
+      @Override
+      public boolean analyze(@NotNull PsiFile file, boolean updateWholeFile,
+                             @NotNull HighlightInfoHolder holder, @NotNull Runnable action) {
+        if (attempts.incrementAndGet() == 1) {
+          helper.processStubsInFile(getProject(), dependency, new StubIdList(0),
+                                   _ -> { fail("The processor must reject the file PSI"); return false; },
+                                   null, PsiClass.class, () -> "test stub inconsistency during highlighting");
+          assertTrue("The inconsistency must schedule reindexing", scheduled.get());
+        }
+        action.run();
+        if (cachesDropped.get()) {
+          holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.WARNING).range(0, 1)
+                       .description("Highlighting completed after stub recovery").create());
+          completed.set(true);
+        }
+        return true;
+      }
+
+      @Override
+      @SuppressWarnings("CloneDoesntCallSuperClone")
+      public @NotNull HighlightVisitor clone() {
+        return this;
+      }
+    };
+    myProject.getExtensionArea().getExtensionPoint(HighlightVisitor.EP_HIGHLIGHT_VISITOR)
+      .registerExtension(visitor, getTestRootDisposable());
+    configureByExistingFile(openInconsistentFile ? dependency :
+                            createFile("Use.java", "class Use { Dependency value; }").getVirtualFile());
+    PlatformTestUtil.waitWithEventsDispatching("Highlighting must resume after stub recovery",
+                                             () -> completed.get() && myDaemonCodeAnalyzer.isAllAnalysisFinished(getFile()), 60);
+    assertTrue("The inconsistency must schedule reindexing", scheduled.get());
+    assertTrue("The recovery must drop the PSI caches", cachesDropped.get());
+    assertTrue("Highlighting must run again without an edit or an explicit restart", attempts.get() >= 2);
+    assertTrue(ContainerUtil.exists(
+      DaemonCodeAnalyzerImpl.getHighlights(getEditor().getDocument(), HighlightSeverity.WARNING, getProject()),
+      info -> "Highlighting completed after stub recovery".equals(info.getDescription())));
   }
 
   @NotNull

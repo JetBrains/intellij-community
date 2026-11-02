@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.StandardProgressIndicator;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
+import com.intellij.psi.stubs.StubRecoveryService;
 import com.intellij.openapi.util.TraceableDisposable;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.Scope;
@@ -22,7 +23,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class DaemonProgressIndicator extends AbstractProgressIndicatorBase implements StandardProgressIndicator {
+public class DaemonProgressIndicator extends AbstractProgressIndicatorBase
+  implements StandardProgressIndicator, StubRecoveryService.HighlightingProgress {
   private static final Logger LOG = Logger.getInstance(DaemonProgressIndicator.class);
   @ApiStatus.Internal
   public static final String CANCEL_WAS_CALLED_REASON = "cancel() was called";
