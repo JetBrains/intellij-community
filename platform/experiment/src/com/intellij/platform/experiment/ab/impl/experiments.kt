@@ -79,20 +79,20 @@ val experimentsPartition: List<ExperimentAssignment> = listOf(
   //  majorVersion = "2026.2",
   //  products = EnumSet.of(IntelliJPlatformProduct.CLION),
   //),
-  ExperimentAssignment(
-    experiment = ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING,
-    experimentBuckets = (0 until 512).toSet(),
-    controlBuckets = (512 until 1024).toSet(),
-    // We run this experiment only on the pre-release builds (EAP, Beta, RC). See [isAllowed]
-    majorVersion = "2026.3",
-  ),
   //ExperimentAssignment(
-  //  experiment = ABExperimentOption.CLION_DFA_DISABLE_COMPUTATION,
-  //  experimentBuckets = (0 until 256).toSet(),
-  //  controlBuckets = (256 until 512).toSet(),
+  //  experiment = ABExperimentOption.SEARCH_EVERYWHERE_NO_ML_SORTING,
+  //  experimentBuckets = (0 until 512).toSet(),
+  //  controlBuckets = (512 until 1024).toSet(),
+  //   We run this experiment only on the pre-release builds (EAP, Beta, RC). See [isAllowed]
   //  majorVersion = "2026.3",
-  //  products = EnumSet.of(IntelliJPlatformProduct.CLION),
   //),
+  ExperimentAssignment(
+    experiment = ABExperimentOption.CLION_DFA_DISABLE_COMPUTATION,
+    experimentBuckets = (0 until 256).toSet(),
+    controlBuckets = (256 until 512).toSet(),
+    majorVersion = "2026.3",
+    products = EnumSet.of(IntelliJPlatformProduct.CLION),
+  ),
   // the rest belongs to the "unassigned" experiment
 )
 
