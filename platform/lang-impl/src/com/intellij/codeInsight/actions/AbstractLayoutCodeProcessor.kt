@@ -456,6 +456,12 @@ abstract class AbstractLayoutCodeProcessor private constructor(
   private inner class ProcessingTask(val progressIndicator: ProgressIndicator) {
     private val processors = getAllProcessors()
 
+    /**
+     * The undo group id of this run. The undo manager holds a group id only weakly,
+     * so this field keeps the same string alive until the last file is processed.
+     */
+    private val undoGroupId: String = this@AbstractLayoutCodeProcessor.toString()
+
     /** @return Presentable file path or `null` if the processing of this file should be skipped */
     @RequiresReadLock(generateAssertion = false /* IJPL-115548 */)
     private fun shouldProcessFile(file: VirtualFile): @NlsSafe String? {
@@ -482,9 +488,9 @@ abstract class AbstractLayoutCodeProcessor private constructor(
       // Using the same groupId for *all* processed files makes this a single undoable action for all processed files.
       // See docs for #setProcessAllFilesAsSingleUndoRedoCommand(boolean)
       val groupId: String = if (processAllFilesAsSingleUndoStep)
-        this@AbstractLayoutCodeProcessor.toString()
+        undoGroupId
       else
-        this@AbstractLayoutCodeProcessor.toString() + file.hashCode()
+        undoGroupId + file.hashCode()
       for (processor in processors) {
         val writeTask: FutureTask<Boolean>?
         if (processor.needsReadActionToPrepareTask()) {
