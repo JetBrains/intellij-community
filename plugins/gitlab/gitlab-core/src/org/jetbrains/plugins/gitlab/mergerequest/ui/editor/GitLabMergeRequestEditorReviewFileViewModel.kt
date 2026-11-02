@@ -32,7 +32,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.stateIn
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
@@ -138,8 +137,8 @@ internal class GitLabMergeRequestEditorReviewFileViewModelImpl(
 
   override val linesWithNewDiscussions: StateFlow<Set<Int>> =
     discussionsContainer.newDiscussions.flatMapLatestEach {
-      it.position.mapNotNull { pos -> pos.position.mapToEditorLine(diffData) }
-    }.map { lines -> lines.toSet() }.stateInNow(cs, emptySet())
+      it.position.map { pos -> pos.position.mapToEditorLine(diffData) }
+    }.map { lines -> lines.filterNotNullTo(mutableSetOf()) }.stateInNow(cs, emptySet())
 
   override fun requestNewDiscussion(location: GitLabNoteLocation, focus: Boolean) {
     val position = GitLabMergeRequestNewDiscussionPosition.calcFor(diffData, location).let {

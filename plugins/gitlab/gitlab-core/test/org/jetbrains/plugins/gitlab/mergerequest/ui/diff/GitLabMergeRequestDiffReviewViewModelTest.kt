@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestNewDiscussionPosition
@@ -31,10 +32,11 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffView
 import org.jetbrains.plugins.gitlab.mergerequest.ui.createDiffDataFlow
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels.NewDiscussionPosition
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModelsImpl
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import kotlin.time.Duration.Companion.seconds
 
 internal class GitLabMergeRequestDiffReviewViewModelTest {
   @AfterEach
@@ -119,6 +121,25 @@ internal class GitLabMergeRequestDiffReviewViewModelTest {
 
     assertEquals(listOf(otherNote), discussionsContainer.newDiscussions.value)
     assertEquals("Keep this note", otherNote.text.value)
+  }
+
+  /**
+   * Cancellation button was not shown for some new comments in the case when comments are added to many files
+   */
+  @Test
+  fun `review probe for gutter updates with a note in another file`() = withReview {
+    val otherPosition = GitLabMergeRequestNewDiscussionPosition.calcFor(
+      createDiffData("other.txt"), GitLabNoteLocation(Side.RIGHT, 3, Side.RIGHT, 3)
+    )
+    discussionsContainer.requestNewDiscussion(NewDiscussionPosition(otherPosition, Side.RIGHT), false)
+    reviewVm.requestNewDiscussion(GitLabNoteLocation(Side.RIGHT, 3, Side.RIGHT, 3), false)
+    val inlay = reviewVm.newDiscussions.first { it.isNotEmpty() }.single()
+    assertEquals(GitLabNoteLocation(Side.LEFT, 1, Side.LEFT, 1), inlay.location.value)
+
+    val locations = withTimeoutOrNull(5.seconds) {
+      reviewVm.locationsWithNewDiscussions.first { it.isNotEmpty() }
+    }
+    assertEquals(setOf(Side.LEFT to 1), locations)
   }
 
   private fun withReview(action: suspend ReviewFixture.() -> Unit): Unit = timeoutRunBlocking {

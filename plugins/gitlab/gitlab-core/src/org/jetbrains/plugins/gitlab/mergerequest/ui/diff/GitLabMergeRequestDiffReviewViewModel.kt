@@ -18,7 +18,6 @@ import git4idea.changes.GitTextFilePatchWithHistory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
@@ -99,8 +98,8 @@ internal class GitLabMergeRequestDiffReviewViewModelImpl(
   override val locationsWithNewDiscussions: StateFlow<Set<DiffLineLocation>> =
     discussionsContainer.newDiscussions
       .flatMapLatestEach { noteVm ->
-        noteVm.position.mapNotNull { it.position.mapToDiffLineLocation(diffData) }
-      }.map { locations -> locations.toSet() }
+        noteVm.position.map { it.position.mapToDiffLineLocation(diffData) }
+      }.map { locations -> locations.filterNotNullTo(mutableSetOf()) }
       .stateInNow(cs, emptySet())
 
   override fun requestNewDiscussion(location: GitLabNoteLocation, focus: Boolean) {
