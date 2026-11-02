@@ -187,15 +187,33 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
   @RequiresBackgroundThread
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration, @Nullable ProgressIndicator indicator)
     throws Exception {
+    return doAcquire(target, Ref.create(configuration), indicator, false);
+  }
 
-    EntryPoint inProcess = acquireInProcess(target, configuration);
+  /**
+   * Selects the configuration under the process map lock and writes it to {@code configuration}.
+   * The selection can change while this call waits for a process.
+   */
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  protected final EntryPoint acquireWithConfigurationSelection(@NotNull Target target,
+                                                               @NotNull Ref<Parameters> configuration,
+                                                               @Nullable ProgressIndicator indicator) throws Exception {
+    return doAcquire(target, configuration, indicator, true);
+  }
+
+  private EntryPoint doAcquire(@NotNull Target target,
+                               @NotNull Ref<Parameters> configuration,
+                               @Nullable ProgressIndicator indicator,
+                               boolean useSelection) throws Exception {
+    EntryPoint inProcess = acquireInProcess(target, configuration, useSelection);
     if (inProcess != null) return inProcess;
 
     Ref<RunningInfo> ref = Ref.create(null);
-    Pair<Target, Parameters> key = Pair.create(target, configuration);
     boolean created = false;
-    if (!getExistingInfo(ref, key)) {
-      startProcess(target, configuration, key);
+    if (!getExistingInfo(ref, target, configuration, useSelection)) {
+      Parameters actualConfiguration = configuration.get();
+      startProcess(target, actualConfiguration, Pair.create(target, actualConfiguration));
       if (ref.isNull()) {
         try {
           //noinspection SynchronizationOnLocalVariableOrMethodParameter
@@ -222,9 +240,21 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     }
     EntryPoint result = acquire(info);
     if (created) {
-      onCreated(target, configuration, result);
+      onCreated(target, configuration.get(), result);
     }
     return result;
+  }
+
+  /**
+   * Selects a configuration from the current process keys while the process map lock is held.
+   * The implementation must not block or retain the keys.
+   * Explicit acquisitions do not call this method.
+   */
+  @ApiStatus.Internal
+  protected @NotNull Parameters selectConfiguration(@NotNull Target target,
+                                                    @NotNull Parameters configuration,
+                                                    @NotNull Iterable<Pair<Target, Parameters>> processKeys) {
+    return configuration;
   }
 
   protected void onCreated(@NotNull Target target, @NotNull Parameters configuration, @NotNull EntryPoint result) {
@@ -319,9 +349,18 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
                                                         @NotNull Executor executor)
     throws ExecutionException;
 
-  private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref, @NotNull Pair<Target, Parameters> key) {
+  private boolean getExistingInfo(@NotNull Ref<RunningInfo> ref,
+                                  @NotNull Target target,
+                                  @NotNull Ref<Parameters> configuration,
+                                  boolean useSelection) {
     Info info;
+    Parameters requestedConfiguration = configuration.get();
+    Pair<Target, Parameters> key = Pair.create(target, requestedConfiguration);
     synchronized (myProcMap) {
+      if (useSelection) {
+        configuration.set(selectConfiguration(target, requestedConfiguration, myProcMap.keySet()));
+        key = Pair.create(target, configuration.get());
+      }
       info = myProcMap.get(key);
       try {
         while (info != null && (!(info instanceof RunningInfo) ||
@@ -329,6 +368,10 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
                                 info.handler.isProcessTerminated())) {
           myProcMap.wait(1000);
           ProgressManager.checkCanceled();
+          if (useSelection) {
+            configuration.set(selectConfiguration(target, requestedConfiguration, myProcMap.keySet()));
+            key = Pair.create(target, configuration.get());
+          }
           info = myProcMap.get(key);
         }
       }
@@ -512,23 +555,28 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return info != null;
   }
 
-  private @Nullable EntryPoint acquireInProcess(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
+  private @Nullable EntryPoint acquireInProcess(@NotNull Target target,
+                                                @NotNull Ref<Parameters> configuration,
+                                                boolean useSelection) throws Exception {
     if (!RemoteObject.IN_PROCESS) return null;
-    Pair<Target, Parameters> key = Pair.create(target, configuration);
     InProcessInfo<EntryPoint> info;
     boolean created = false;
     synchronized (myInProcMap) {
+      if (useSelection) {
+        configuration.set(selectConfiguration(target, configuration.get(), myInProcMap.keySet()));
+      }
+      Pair<Target, Parameters> key = Pair.create(target, configuration.get());
       info = myInProcMap.get(key);
       if (info == null) {
         LOG.info("Running remote service in process: " + key);
-        info = new InProcessInfo<>(acquireInProcessFactory(target, configuration));
+        info = new InProcessInfo<>(acquireInProcessFactory(target, configuration.get()));
         myInProcMap.put(key, info);
         created = true;
       }
     }
     EntryPoint result = info.factory.compute();
     if (created) {
-      onCreated(target, configuration, result);
+      onCreated(target, configuration.get(), result);
     }
     return result;
   }
