@@ -15785,6 +15785,94 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort")
+        public static class ConvertNameBasedDestructuringFullFormToShort extends AbstractK2LocalInspectionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("forLoopCompleteOption.kt")
+            public void testForLoopCompleteOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/forLoopCompleteOption.kt");
+            }
+
+            @TestMetadata("forLoopNameMismatchOption.kt")
+            public void testForLoopNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/forLoopNameMismatchOption.kt");
+            }
+
+            @TestMetadata("indexedValueForLoopNameMismatchOption.kt")
+            public void testIndexedValueForLoopNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/indexedValueForLoopNameMismatchOption.kt");
+            }
+
+            @TestMetadata("lambdaCompleteOption.kt")
+            public void testLambdaCompleteOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/lambdaCompleteOption.kt");
+            }
+
+            @TestMetadata("localDeclarationNameMismatchOption.kt")
+            public void testLocalDeclarationNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/localDeclarationNameMismatchOption.kt");
+            }
+
+            @TestMetadata("mapEntryForLoopNameMismatchOption.kt")
+            public void testMapEntryForLoopNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/mapEntryForLoopNameMismatchOption.kt");
+            }
+
+            @TestMetadata("missingClosingParenthesisCompleteOptionNoWarn.kt")
+            public void testMissingClosingParenthesisCompleteOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/missingClosingParenthesisCompleteOptionNoWarn.kt");
+            }
+
+            @TestMetadata("mixedKeywordsCompleteOptionNoWarn.kt")
+            public void testMixedKeywordsCompleteOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/mixedKeywordsCompleteOptionNoWarn.kt");
+            }
+
+            @TestMetadata("onlySyntaxOptionNoWarn.kt")
+            public void testOnlySyntaxOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/onlySyntaxOptionNoWarn.kt");
+            }
+
+            @TestMetadata("pairForLoopNameMismatchOption.kt")
+            public void testPairForLoopNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/pairForLoopNameMismatchOption.kt");
+            }
+
+            @TestMetadata("renamedEntryNameMismatchOptionNoWarn.kt")
+            public void testRenamedEntryNameMismatchOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/renamedEntryNameMismatchOptionNoWarn.kt");
+            }
+
+            @TestMetadata("renamedEntryWithCommentsCompleteOption.kt")
+            public void testRenamedEntryWithCommentsCompleteOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/renamedEntryWithCommentsCompleteOption.kt");
+            }
+
+            @TestMetadata("reversedEntriesNameMismatchOptionNoWarn.kt")
+            public void testReversedEntriesNameMismatchOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/reversedEntriesNameMismatchOptionNoWarn.kt");
+            }
+
+            @TestMetadata("shortFormCompleteOptionNoWarn.kt")
+            public void testShortFormCompleteOptionNoWarn() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/shortFormCompleteOptionNoWarn.kt");
+            }
+
+            @TestMetadata("tripleForLoopNameMismatchOption.kt")
+            public void testTripleForLoopNameMismatchOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/tripleForLoopNameMismatchOption.kt");
+            }
+
+            @TestMetadata("varCompleteOption.kt")
+            public void testVarCompleteOption() throws Exception {
+                runTest("testData/inspectionsLocal/convertNameBasedDestructuringFullFormToShort/varCompleteOption.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertRangeCheckToTwoComparisons")
         public static class ConvertRangeCheckToTwoComparisons extends AbstractK2LocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {

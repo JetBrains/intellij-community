@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
+import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.calls.util.isSingleUnderscore
@@ -91,7 +92,10 @@ fun KaSession.extractDestructuringComponentNames(declaration: KtDestructuringDec
 @ApiStatus.Internal
 context(_: KaSession)
 fun KtDestructuringDeclaration.getDestructuredClassType(): KaClassType? {
-    val type = initializer?.expressionType ?: (parent as? KtParameter)?.symbol?.returnType ?: return null
+    val type = initializer?.expressionType
+        ?: (parent as? KtParameter)?.symbol?.returnType
+        ?: (parent as? KtForExpression)?.loopParameter?.symbol?.returnType
+        ?: return null
     return type.lowerBoundIfFlexible() as? KaClassType
 }
 

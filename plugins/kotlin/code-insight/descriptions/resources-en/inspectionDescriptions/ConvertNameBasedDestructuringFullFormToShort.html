@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports full-form name-based destructuring declarations that can use the short form.
+<p>The full form repeats the same keyword for each entry. The short form removes this repetition.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  data class Person(val firstName: String, val lastName: String)
+  (val firstName, val lastName) = person
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  val (firstName, lastName) = person
+</code></pre>
+</body>
+</html>
