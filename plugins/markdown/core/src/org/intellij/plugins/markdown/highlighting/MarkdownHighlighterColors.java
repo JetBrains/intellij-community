@@ -23,6 +23,7 @@ public final class MarkdownHighlighterColors {
   public static final TextAttributesKey ITALIC = createTextAttributesKey("MARKDOWN_ITALIC");
   public static final TextAttributesKey ITALIC_MARKER = createTextAttributesKey("MARKDOWN_ITALIC_MARKER", KEYWORD);
   public static final TextAttributesKey CODE_SPAN = createTextAttributesKey("MARKDOWN_CODE_SPAN", STRING);
+  public static final TextAttributesKey CODE_SPAN_BACKGROUND = createTextAttributesKey("MARKDOWN_CODE_SPAN_BACKGROUND");
   public static final TextAttributesKey CODE_SPAN_MARKER = createTextAttributesKey("MARKDOWN_CODE_SPAN_MARKER", KEYWORD);
   public static final TextAttributesKey BLOCK_QUOTE = createTextAttributesKey("MARKDOWN_BLOCK_QUOTE", STRING);
   public static final TextAttributesKey BLOCK_QUOTE_MARKER = createTextAttributesKey("MARKDOWN_BLOCK_QUOTE_MARKER", KEYWORD);

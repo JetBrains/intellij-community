@@ -20,7 +20,7 @@ import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 
 /**
  * Shows one editor in the UI font at the `Preview font size` and with soft wraps while live preview is on.
- * Hides line numbers and indent guides while live preview is on.
+ * Hides line numbers, indent guides and the right margin while live preview is on.
  * Restores the font of the global scheme and the saved settings from before live preview when live preview turns off.
  * While live preview is on, keeps soft wraps on. Only a document above the IntelliSense size limit keeps its soft-wrap flag.
  * A wrapped line keeps the indent of its first line, so a nested list item stays indented.
@@ -29,7 +29,13 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
   /** The editor settings before live preview. Null while live preview is off. */
   private var preLivePreviewState: State? = null
 
-  private data class State(val softWraps: Boolean, val customSoftWrapIndent: Boolean, val lineNumbers: Boolean, val indentGuides: Boolean)
+  private data class State(
+    val softWraps: Boolean,
+    val customSoftWrapIndent: Boolean,
+    val lineNumbers: Boolean,
+    val indentGuides: Boolean,
+    val rightMargin: Boolean,
+  )
 
   init {
     val connection = ApplicationManager.getApplication().messageBus.connect(this)
@@ -49,10 +55,18 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     applyFont()
     val settings = editor.settings
     if (preLivePreviewState == null) {
-      preLivePreviewState = State(settings.isUseSoftWraps, settings.isUseCustomSoftWrapIndent, settings.isLineNumbersShown, settings.isIndentGuidesShown)
+      preLivePreviewState = State(
+        settings.isUseSoftWraps,
+        settings.isUseCustomSoftWrapIndent,
+        settings.isLineNumbersShown,
+        settings.isIndentGuidesShown,
+        settings.isRightMarginShown,
+      )
     }
     settings.isLineNumbersShown = false
     settings.isIndentGuidesShown = false
+    // The UI font puts the margin column in the middle of the text.
+    settings.isRightMarginShown = false
     forceSoftWraps()
     settings.isUseCustomSoftWrapIndent = true
   }
@@ -62,12 +76,13 @@ internal class MarkdownLivePreviewEditorAppearance(private val editor: EditorEx)
     editor.colorsScheme.editorFontName = null
     // The zoomed global size clears the font size of this editor.
     editor.setFontSize(UISettingsUtils.getInstance().scaledEditorFontSize)
-    (val softWraps, val customSoftWrapIndent, val lineNumbers, val indentGuides) = preLivePreviewState ?: return
+    (val softWraps, val customSoftWrapIndent, val lineNumbers, val indentGuides, val rightMargin) = preLivePreviewState ?: return
     preLivePreviewState = null
     editor.settings.isUseSoftWraps = softWraps
     editor.settings.isUseCustomSoftWrapIndent = customSoftWrapIndent
     editor.settings.isLineNumbersShown = lineNumbers
     editor.settings.isIndentGuidesShown = indentGuides
+    editor.settings.isRightMarginShown = rightMargin
   }
 
   override fun dispose() = Unit

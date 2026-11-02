@@ -199,8 +199,13 @@ internal class MarkdownHighlightingAnnotator : Annotator, DumbAware {
     if (keys.isEmpty()) return
 
     val scheme = EditorColorsManager.getInstance().globalScheme
+    val attributes = LayeredTextAttributes.create(scheme, keys.toTypedArray())
+    // The code background pass paints a rounded background behind a code span and a code fence.
+    if (MarkdownHighlighterColors.CODE_SPAN in keys || MarkdownHighlighterColors.CODE_FENCE in keys) {
+      attributes.backgroundColor = null
+    }
     holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-      .enforcedTextAttributes(LayeredTextAttributes.create(scheme, keys.toTypedArray()))
+      .enforcedTextAttributes(attributes)
       .range(element.textRange)
       .create()
   }

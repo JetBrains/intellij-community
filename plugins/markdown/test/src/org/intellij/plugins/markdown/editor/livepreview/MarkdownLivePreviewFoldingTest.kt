@@ -84,6 +84,20 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
     assertTrue(concealedLivePreviewRegions(myFixture.editor).none { FoldingKeys.HIDE_PLACEHOLDER_BACKGROUND.isIn(it) })
   }
 
+  fun testCodeSpanBackgroundStartsAfterTheHiddenBacktick() {
+    configure("a `x    y` b<caret>")
+    val editor = myFixture.editor
+    editor.settings.isCaretRowShown = false
+    editor.colorsScheme.setAttributes(MarkdownHighlighterColors.CODE_SPAN, TextAttributes(null, Color.RED, null, null, Font.PLAIN))
+
+    val image = paintEditor()
+    val content = editor.offsetToXY(3)
+    val y = content.y + editor.lineHeight / 2
+
+    assertEquals("A space inside the span must have the code background", Color.RED.rgb, image.getRGB(editor.offsetToXY(5).x, y))
+    assertTrue("The space before the hidden backtick must keep the editor background", Color.RED.rgb != image.getRGB(content.x - 2, y))
+  }
+
   fun testTopLevelHeadingsUseHtmlHeadingStyles() {
     val content = (1..6).joinToString("\n") { "#".repeat(it) + " title" } + "\n\nbody\nmore body"
     configure("$content<caret>")
@@ -603,7 +617,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
   }
 
   fun testOnlyOffsetsOnTheListMarkerRevealIt() = assertNothingLogged {
-    for ((prefix, marker) in listOf("  - " to "-", "  - [ ] " to "- [ ]", "  1. [x] " to "[x]")) {
+    for ([prefix, marker] in listOf("  - " to "-", "  - [ ] " to "- [ ]", "  1. [x] " to "[x]")) {
       val line = "${prefix}item text  "
       val content = "$line\n\ntail"
       configure("$content<caret>")
@@ -724,7 +738,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       val widths = checkboxInlays().map { it.widthInPixels }
       assertEquals("Every checkbox must have the same width", 1, widths.distinct().size)
       assertTrue("The checkbox must fit within one line height", widths.first() <= editor.lineHeight)
-      for ((word, marker) in listOf("first" to "- [ ]", "second" to "-\t[x]", "third" to "[X]")) {
+      for ([word, marker] in listOf("first" to "- [ ]", "second" to "-\t[x]", "third" to "[X]")) {
         moveCaretTo(content.length)
         val offset = content.indexOf(word)
         val position = editor.offsetToXY(offset)
@@ -1310,7 +1324,7 @@ class MarkdownLivePreviewFoldingTest : BasePlatformTestCase() {
       assertEquals("The rule must start at the x position of its marker", editor.offsetToXY(marker).x, bounds.x)
     }
     val outerRules = (0..2).map { concealedRules.getValue(document.getLineStartOffset(it)) }
-    outerRules.zipWithNext { above, below -> assertEquals("The outer rules must join", above.y + above.height + 1, below.y) }
+    val _ = outerRules.zipWithNext { above, below -> assertEquals("The outer rules must join", above.y + above.height + 1, below.y) }
 
     for (line in 0..2) {
       val lineStart = document.getLineStartOffset(line)
