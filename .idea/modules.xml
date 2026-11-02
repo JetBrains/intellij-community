@@ -1001,6 +1001,8 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k2/intellij.kotlin.j2k.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k2/intellij.kotlin.j2k.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/mcp/intellij.kotlin.j2k.mcp.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/mcp/intellij.kotlin.j2k.mcp.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/j2k/k2/tests/intellij.kotlin.j2k.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/j2k/k2/tests/intellij.kotlin.j2k.tests.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/builder/intellij.kotlin.jps.builder.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/builder/intellij.kotlin.jps.builder.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jps/common/intellij.kotlin.jps.common.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jps/common/intellij.kotlin.jps.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/scripting-plugin/intellij.kotlin.jsr223.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/scripting-plugin/intellij.kotlin.jsr223.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jsr223/intellij.kotlin.jsr223.tests.iml" />

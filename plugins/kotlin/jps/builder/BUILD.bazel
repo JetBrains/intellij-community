@@ -1,0 +1,68 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.builder.jps` start
+content_module_jar(module = ":builder")
+### auto-generated section `dev intellij.kotlin.builder.jps` end
+
+### auto-generated section `build intellij.kotlin.builder.jps` start
+create_kotlinc_options(
+    name = "custom_builder",
+    api_version = "2.4",
+    jvm_target = "11",
+    language_version = "2.4",
+    opt_in = [
+        "org.jetbrains.kotlin.buildtools.api.ExperimentalBuildToolsApi",
+        "org.jetbrains.kotlin.buildtools.api.arguments.ExperimentalCompilerArgument",
+        "org.jetbrains.kotlin.buildtools.api.jps.InternalBuildToolsApi",
+    ],
+)
+
+jvm_library(
+    name = "builder",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_builder",
+    module_name = "intellij.kotlin.builder.jps",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/asm",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "@lib//:kotlinc-kotlin-build-tools-api",
+        "@lib//:kotlinc-kotlin-build-tools-api-jps",
+        "//plugins/kotlin/jps/util/runtime",
+        "//jps/jps-builders:build",
+        "@community//build:dependency-graph",
+        "@community//build:build-javac-rt",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "//platform/util",
+        "//platform/util/base/multiplatform",
+        "//platform/util/jdom",
+    ],
+)
+### auto-generated section `build intellij.kotlin.builder.jps` end
+
+### auto-generated section `iml intellij.kotlin.builder.jps` start
+exports_files(
+    [
+        "intellij.kotlin.builder.jps.iml",
+        "resources/intellij.kotlin.builder.jps.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.builder.jps` end

@@ -1,0 +1,58 @@
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+load("//build:compiler-options.bzl", "create_kotlinc_options")
+load("//platform/build-scripts/bazel-rules:content_module_jar.bzl", "content_module_jar")
+
+### auto-generated section `dev intellij.kotlin.jps.util.runtime` start
+content_module_jar(module = ":common")
+### auto-generated section `dev intellij.kotlin.jps.util.runtime` end
+
+### auto-generated section `build intellij.kotlin.jps.util.runtime` start
+create_kotlinc_options(
+    name = "custom_common",
+    api_version = "2.4",
+    jvm_target = "11",
+    language_version = "2.4",
+)
+
+jvm_library(
+    name = "common",
+    srcs = glob(
+        [
+            "src/**/*.kt",
+            "src/**/*.java",
+            "src/**/*.form",
+        ],
+        allow_empty = True,
+    ),
+    kotlinc_opts = ":custom_common",
+    module_name = "intellij.kotlin.jps.util.runtime",
+    resource_strip_prefix = "resources",
+    resources = glob(
+        ["resources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    exports = ["//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/jetbrains/annotations",
+        "//libraries/kotlin/reflect",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "//platform/util",
+        "//platform/util/base/multiplatform",
+        "//platform/util/jdom",
+    ],
+)
+### auto-generated section `build intellij.kotlin.jps.util.runtime` end
+
+### auto-generated section `iml intellij.kotlin.jps.util.runtime` start
+exports_files(
+    [
+        "intellij.kotlin.jps.util.runtime.iml",
+        "resources/intellij.kotlin.jps.util.runtime.xml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.jps.util.runtime` end
