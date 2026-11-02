@@ -2,7 +2,7 @@
 package com.intellij.python.junit5Tests.unit
 
 import com.intellij.python.community.execService.impl.processLaunchers.computeDownloadRelativeDir
-import org.junit.jupiter.api.Assertions.assertEquals
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 /**
@@ -14,12 +14,26 @@ class DownloadRelativeDirTest {
   @Test
   fun `working dir equal to volume root yields empty prefix`() {
     // PY-91340: single-module uv-over-SSH case; must be "" so download gets a plain relative path.
-    assertEquals("", computeDownloadRelativeDir("/home/user/proj", "/home/user/proj"))
+    assertThat(computeDownloadRelativeDir("/home/user/proj", "/home/user/proj")).isEqualTo("")
   }
 
   @Test
   fun `working dir under volume root yields subpath with trailing slash`() {
-    assertEquals("sub/", computeDownloadRelativeDir("/home/user/proj/sub", "/home/user/proj"))
-    assertEquals("a/b/", computeDownloadRelativeDir("/home/user/proj/a/b", "/home/user/proj"))
+    assertThat(computeDownloadRelativeDir("/home/user/proj/sub", "/home/user/proj")).isEqualTo("sub/")
+    assertThat(computeDownloadRelativeDir("/home/user/proj/a/b", "/home/user/proj")).isEqualTo("a/b/")
+  }
+
+  /** PY-91930: the target path of a volume root has a trailing slash. */
+  @Test
+  fun `trailing slash yields the same prefix`() {
+    assertThat(computeDownloadRelativeDir("/home/user/proj/", "/home/user/proj")).isEqualTo("")
+    assertThat(computeDownloadRelativeDir("/home/user/proj", "/home/user/proj/")).isEqualTo("")
+    assertThat(computeDownloadRelativeDir("/home/user/proj/sub/", "/home/user/proj")).isEqualTo("sub/")
+  }
+
+  @Test
+  fun `working dir outside volume root yields null`() {
+    assertThat(computeDownloadRelativeDir("/home/user/proj2", "/home/user/proj")).isNull()
+    assertThat(computeDownloadRelativeDir("/home/user", "/home/user/proj")).isNull()
   }
 }

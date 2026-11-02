@@ -329,10 +329,15 @@ private class TargetProcessCommands(
     if (downloadConfig == null) return
     val workingDirOnTarget = info.cwd ?: return
 
-    targetEnv.downloadVolumes.forEach { (_, volume) ->
-      if (!workingDirOnTarget.startsWith(volume.targetRoot)) return@forEach
-      val downloadRelativeDir = computeDownloadRelativeDir(workingDirOnTarget, volume.targetRoot)
-      val paths = downloadConfig.relativePaths.takeIf { it.isNotEmpty() } ?: listOf(".")
+    val volumesWithWorkingDir = targetEnv.downloadVolumes.values.mapNotNull { volume ->
+      computeDownloadRelativeDir(workingDirOnTarget, volume.targetRoot)?.let { volume to it }
+    }
+    if (volumesWithWorkingDir.isEmpty()) {
+      logger.warn("No download volume for $workingDirOnTarget, volumes: ${targetEnv.downloadVolumes.values.map { it.targetRoot }}")
+      return
+    }
+    val paths = downloadConfig.relativePaths.takeIf { it.isNotEmpty() } ?: listOf(".")
+    for ((volume, downloadRelativeDir) in volumesWithWorkingDir) {
       for (path in paths) {
         volume.downloadAndLogError(downloadRelativeDir + path)
       }
@@ -426,10 +431,19 @@ fun measureUploadTime(@RequiresBackgroundThread upload: () -> Unit, genMessage: 
  * Returns an empty string when the working dir *is* the volume root (the common single-module
  * case) so `download` receives just the plain relative path (e.g. `pyproject.toml`); otherwise the
  * subpath with a trailing `/`. Never returns an absolute path.
+ *
+ * Returns null when [workingDirOnTarget] is not in [targetRoot].
+ * A trailing `/` of a path does not change the result. The target path of a volume root has one.
  */
-internal fun computeDownloadRelativeDir(workingDirOnTarget: String, targetRoot: String): String =
-  if (workingDirOnTarget == targetRoot) ""
-  else workingDirOnTarget.substringAfter("$targetRoot/") + "/"
+internal fun computeDownloadRelativeDir(workingDirOnTarget: String, targetRoot: String): String? {
+  val workingDir = workingDirOnTarget.trimEnd('/')
+  val root = targetRoot.trimEnd('/')
+  return when {
+    workingDir == root -> ""
+    workingDir.startsWith("$root/") -> workingDir.removePrefix("$root/") + "/"
+    else -> null
+  }
+}
 
 /**
  * Maps download roots using existing upload roots.
