@@ -5,7 +5,7 @@ description: Update markdown-jvm and regenerate Bazel/Fleet metadata.
 
 # Update the Markdown library
 
-Use this skill when the user gives a Markdown version in `A.B.C` form. Treat it as `MARKDOWN_VERSION`. Never guess the version.
+Use this skill when the user gives a Markdown version in `A.B.C` or `A.B.C.x` form. Treat it as `MARKDOWN_VERSION`. Never guess the version.
 
 Use the 0.7.15 to 0.7.16 update commit (`783603fe95b8`) as the model. This is normally a metadata-only update.
 
@@ -25,17 +25,28 @@ These files are generated. Do not edit them by hand:
 
 `fleet/build/gradle/jps.versions.toml` normally does not change. Do not add a Markdown entry when the generator omits it.
 
-## 1. Wait for cache-redirector
+## 1. Verify the artifacts
 
-Before editing, verify all required artifacts through cache-redirector. Follow redirects. Do not use direct Maven URLs.
+Before editing, verify all required artifacts. Use cache-redirector for three-part versions. Use the IntelliJ Dependencies repository for four-part versions.
+
+Do not run the cache-redirector availability check for an `A.B.C.x` version. Verify the artifacts at the IntelliJ Dependencies repository instead.
 
 ```bash
 set -euo pipefail
 
 MARKDOWN_VERSION="A.B.C" # replace with the requested version
-MARKDOWN_JVM_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-jvm/${MARKDOWN_VERSION}"
-MARKDOWN_WASM_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown-wasm-js/${MARKDOWN_VERSION}"
-MARKDOWN_KMP_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains/markdown/${MARKDOWN_VERSION}"
+if [[ "$MARKDOWN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  MARKDOWN_REPOSITORY_BASE_URL="https://cache-redirector.jetbrains.com/repo1.maven.org/maven2/org/jetbrains"
+elif [[ "$MARKDOWN_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  MARKDOWN_REPOSITORY_BASE_URL="https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains"
+else
+  echo "Unsupported Markdown version: $MARKDOWN_VERSION" >&2
+  exit 1
+fi
+
+MARKDOWN_JVM_BASE_URL="${MARKDOWN_REPOSITORY_BASE_URL}/markdown-jvm/${MARKDOWN_VERSION}"
+MARKDOWN_WASM_BASE_URL="${MARKDOWN_REPOSITORY_BASE_URL}/markdown-wasm-js/${MARKDOWN_VERSION}"
+MARKDOWN_KMP_BASE_URL="${MARKDOWN_REPOSITORY_BASE_URL}/markdown/${MARKDOWN_VERSION}"
 MARKDOWN_ARTIFACT_DIR="$(mktemp -d)"
 
 for MARKDOWN_ARTIFACT in \
@@ -63,9 +74,15 @@ shasum -a 256 \
   "$MARKDOWN_ARTIFACT_DIR/markdown-jvm-${MARKDOWN_VERSION}-sources.jar"
 ```
 
-If any download fails, make no edits. Wait for cache-redirector. If the version stays unavailable for 12-24 hours, report it in `#ij-builds`.
+If any download fails, make no edits. For an `A.B.C` version, wait for cache-redirector.
+If the version stays unavailable for 12-24 hours, report it in `#ij-builds`.
+For an `A.B.C.x` version, report an unavailable package artifact and do not continue.
 
 Use the downloaded main-JAR SHA-256 in the `.iml`. Never invent or reuse a checksum.
+
+For an `A.B.C.x` version, the KMP module must be available at
+`https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/markdown/A.B.C.x/`.
+The JVM and Wasm artifacts use the matching `markdown-jvm` and `markdown-wasm-js` paths.
 
 ## 2. Update the source descriptor
 
@@ -80,6 +97,8 @@ Update only these values:
 
 Keep the exclusions, XML format, and no-trailing-line-break format unchanged.
 
+Keep `$MAVEN_REPOSITORY$` in the `.iml` URLs. For an `A.B.C.x` version, the generators select the IntelliJ Dependencies repository from `.idea/jarRepositories.xml`.
+
 Register the edited module, then regenerate JVM metadata:
 
 ```bash
@@ -87,7 +106,10 @@ bun build/jps-module.mjs register community/libraries/markdown/intellij.librarie
 ./build/jpsModelToBazel.cmd
 ```
 
-Check that the Markdown entries in `community/lib/BUILD.bazel` and `community/lib/MODULE.bazel` use the new version, filenames, cache-redirector URLs, and generated checksums. Do not edit these files by hand.
+Check that the Markdown entries in `community/lib/BUILD.bazel` and `community/lib/MODULE.bazel` use the new version, filenames, repository URLs, and generated checksums. Do not edit these files by hand.
+
+For an `A.B.C` version, the generated URLs use the Maven Central cache-redirector path.
+For an `A.B.C.x` version, the generated URLs use the cache-redirector path for IntelliJ Dependencies.
 
 ## 3. Regenerate Fleet metadata
 
@@ -98,6 +120,7 @@ Run:
 ```
 
 Check that every `jetbrains.markdown` row in `fleet/build/jps-library-mappings.tsv` and the `org.jetbrains:markdown` coordinate in `fleet/kmp.MODULE.bazel` use the new version.
+For an `A.B.C.x` version, check that the Wasm URLs use the IntelliJ Dependencies path in `MODULE.bazel.lock`.
 
 Do not hand-edit generated Fleet files.
 
