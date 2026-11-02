@@ -221,6 +221,13 @@ public final class VfsRootAccess {
       if (testSrcDir != null && !testSrcDir.isBlank()) {
         var testSrcDirPath = Path.of(testSrcDir).toAbsolutePath();
         allowed.add(FileUtil.toSystemIndependentName(testSrcDirPath.toString()));
+        // Without symlinks (e.g., on Windows), the runfiles tree holds only a manifest.
+        // Test dependencies are then accessed by their real paths under bazel-out and <output_base>/external.
+        if ("1".equals(System.getenv("RUNFILES_MANIFEST_ONLY"))) {
+          for (var dir : findBazelDependencyDirs(testSrcDirPath)) {
+            allowed.add(PathsKt.getInvariantSeparatorsPathString(dir));
+          }
+        }
       }
 
       for (final var project : openProjects) {
@@ -261,6 +268,27 @@ public final class VfsRootAccess {
     assert !allowed.contains("/") : "Allowed roots should not contain '/'. You can disable the root access check explicitly if you don't need it.";
 
     return allowed;
+  }
+
+  /**
+   * For a path under {@code <output_base>/execroot/<workspace>/bazel-out}, returns that {@code bazel-out} directory
+   * and {@code <output_base>/external}. Returns an empty list for a path outside the execution root.
+   */
+  private static @NotNull List<Path> findBazelDependencyDirs(@NotNull Path pathUnderBazelOut) {
+    Path bazelOut = null;
+    for (var dir = pathUnderBazelOut; dir != null; dir = dir.getParent()) {
+      var fileName = dir.getFileName();
+      if (fileName == null) break;
+      if (bazelOut == null && fileName.toString().equals("bazel-out")) {
+        bazelOut = dir;
+      }
+      else if (fileName.toString().equals("execroot")) {
+        var outputBase = dir.getParent();
+        if (bazelOut == null || outputBase == null) break;
+        return List.of(bazelOut, outputBase.resolve("external"));
+      }
+    }
+    return List.of();
   }
 
   private static String resolvedPath(String path) {

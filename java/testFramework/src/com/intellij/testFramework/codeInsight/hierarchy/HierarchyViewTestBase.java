@@ -20,16 +20,6 @@ import java.util.function.Supplier;
  * Checks tree structure for Type Hierarchy (Ctrl+H), Call Hierarchy (Ctrl+Alt+H), Method Hierarchy (Ctrl+Shift+H).
  */
 public abstract class HierarchyViewTestBase extends DaemonAnalyzerTestCase {
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    // BundledGroovyClassFinder tries to load this jar
-    String groovyJar = PathManager.getJarPathForClass(GroovyObject.class);
-    if (groovyJar != null) {
-      VfsRootAccess.allowRootAccess(getTestRootDisposable(), groovyJar);
-    }
-  }
-
   protected abstract String getBasePath();
 
   protected void doHierarchyTest(@NotNull Supplier<? extends HierarchyTreeStructure> treeStructure,
