@@ -45,7 +45,8 @@ public class JavaInjectedLanguageCompletionTest extends LightCompletionTestCase 
 
     myItems = null;
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
-    GCWatcher.fromClearedRef(editorWindowRef).ensureCollected();
+    GCWatcher.fromClearedRef(editorWindowRef)
+      .ensureCollectedWithinTimeout(10_000, PlatformTestUtil::dispatchAllInvocationEventsInIdeEventQueue);
 
     WriteCommandAction.runWriteCommandAction(getProject(), () -> {
       Document document = getEditor().getDocument();
