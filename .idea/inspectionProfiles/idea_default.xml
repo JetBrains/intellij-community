@@ -2876,6 +2876,16 @@
         <constraint name="Class" within="" contains="" />
         <constraint name="logger" nameOfExprType="Logger|libraries\.klogging\.BaseLogger" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
       </searchConfiguration>
+      <searchConfiguration name="LSP analyzer: convert a path with UriConverter, not a raw VFS call" uuid="739d1420-eea9-45fd-9eac-7e53977cf658" description="The Analyzer file system is case-sensitive. A raw path-to-file or path-to-URI call keeps the Windows drive-letter case and misses the workspace model. Convert the path with UriConverter instead. See LSP-2084." suppressId="LspAnalyzerRawPathConversion" problemDescriptor="Convert the path with UriConverter, do not resolve it with a raw VFS or toUri call. See LSP-2084." text="$receiver$.$method$($args$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="receiver" within="" contains="" />
+        <constraint name="method" regexp="findFileByNioPath|refreshAndFindFileByNioPath|findFileByPath|refreshAndFindFileByPath" target="true" within="" contains="" />
+        <constraint name="args" minCount="0" maxCount="2147483647" within="" contains="" />
+      </searchConfiguration>
+      <searchConfiguration name="LSP analyzer: convert a path with UriConverter, not a raw VFS call" uuid="739d1420-eea9-45fd-9eac-7e53977cf658" text="$path$.toUri()" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false">
+        <constraint name="__context__" within="" contains="" />
+        <constraint name="path" nameOfExprType="java\.nio\.file\.Path" exprTypeWithinHierarchy="true" target="true" within="" contains="" />
+      </searchConfiguration>
       <replaceConfiguration name="LspServerImpl: call `send*` via requestExecutor explicitly" suppressId="LspServerImplSendViaRequestExecutor" problemDescriptor="On `LspServerImpl`, call `requestExecutor.#ref` explicitly instead of using public `LspServer` API." text="$server$.$method$($args$)" recursive="true" caseInsensitive="false" type="Kotlin" pattern_context="default" search_injected="false" reformatAccordingToStyle="false" shortenFQN="false" replacement="requestExecutor.$method$($args$)">
         <constraint name="__context__" within="" contains="" />
         <constraint name="server" nameOfExprType="com\.intellij\.platform\.lsp\.impl\.LspServerImpl" within="" contains="" />
