@@ -740,8 +740,7 @@ class SnapshotMarkerEngineTest {
 
     var processedMarker: RangeMarker? = null
     assertTrue(
-      SnapshotMarkerEngine.processRangeMarkersOverlappingWith(
-        fixture.rootStore,
+      fixture.rootStore.processRangeMarkersOverlappingWith(
         fixture.initialSnapshot,
         startOffset = 0,
         endOffset = 6,

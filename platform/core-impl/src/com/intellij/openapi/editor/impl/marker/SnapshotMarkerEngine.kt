@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Processor
 import org.jetbrains.annotations.TestOnly
 import java.lang.ref.ReferenceQueue
 
@@ -141,74 +140,6 @@ object SnapshotMarkerEngine {
     }
     if (batchStorage != null && batchStorage.purgeCollected(handles)) purgedAny = true
     return purgedAny
-  }
-
-  /**
-   * Processes valid markers from one captured root by increasing start offset, then marker ID.
-   * Includes markers beyond the snapshot text length. Purges collected handles and skips disposed markers.
-   * Returns `false` when [processor] stops processing.
-   */
-  fun processAllRangeMarkers(
-    rootStore: SnapshotMarkerRootStore<*>,
-    snapshot: DocumentSnapshot,
-    processor: Processor<in RangeMarkerEx>,
-  ): Boolean {
-    processQueue()
-    val root = rootStore.root(snapshot) ?: return true
-    val markerProcessor = MarkerProcessor(processor)
-    try {
-      return root.processAllRangeMarkers(markerProcessor)
-    }
-    finally {
-      markerProcessor.purgeCollected(rootStore, snapshot)
-    }
-  }
-
-  /**
-   * Processes valid markers that non-strictly intersect the requested range and contain every bit in [tastePreference].
-   * A zero preference matches every marker. Purges collected handles and skips disposed markers.
-   * Returns `false` when [processor] stops processing.
-   */
-  fun processRangeMarkersOverlappingWith(
-    rootStore: SnapshotMarkerRootStore<*>,
-    snapshot: DocumentSnapshot,
-    startOffset: Int,
-    endOffset: Int,
-    tastePreference: Int,
-    processor: Processor<in RangeMarkerEx>,
-  ): Boolean {
-    processQueue()
-    val root = rootStore.root(snapshot) ?: return true
-    val markerProcessor = MarkerProcessor(processor)
-    try {
-      return root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, markerProcessor)
-    }
-    finally {
-      markerProcessor.purgeCollected(rootStore, snapshot)
-    }
-  }
-
-  private class MarkerProcessor(
-    private val processor: Processor<in RangeMarkerEx>,
-  ) : Processor<PMarkerRoot.MarkerEntry>, PMarkerRoot.MarkerDeltaProcessor {
-    private var collectedHandles: ArrayList<SnapshotMarkerReference<*>>? = null
-
-    override fun process(entry: PMarkerRoot.MarkerEntry): Boolean {
-      val marker = entry.marker
-      if (marker == null) {
-        val handles = collectedHandles ?: ArrayList<SnapshotMarkerReference<*>>().also { collectedHandles = it }
-        handles.add(entry.handle)
-        return true
-      }
-      return marker.isDisposed() || processor.process(marker)
-    }
-
-    override fun process(entry: PMarkerRoot.MarkerEntry, ancestorDelta: Int): Boolean = process(entry)
-
-    fun purgeCollected(rootStore: SnapshotMarkerRootStore<*>, snapshot: DocumentSnapshot) {
-      val handles = collectedHandles ?: return
-      rootStore.purgeMany(snapshot, handles)
-    }
   }
 
   /** Returns the disposal or invalidation reason, or `null` when the marker is valid or absent. */

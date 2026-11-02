@@ -46,7 +46,7 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
   }
 
   fun processOverlapping(startOffset: Int, endOffset: Int, processor: Processor<in RangeMarkerEx>): Boolean {
-    return SnapshotMarkerEngine.processRangeMarkersOverlappingWith(rootStore, currentSnapshot(), startOffset, endOffset, 0, processor)
+    return rootStore.processRangeMarkersOverlappingWith(currentSnapshot(), startOffset, endOffset, 0, processor)
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()

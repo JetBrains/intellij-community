@@ -213,10 +213,10 @@ public class SnapshotMarkerEngineBenchmark {
   }
 
   /**
-   * Calls {@link SnapshotMarkerEngine#processRangeMarkersOverlappingWith} 2,000,000 times.
+   * Calls {@link SnapshotMarkerRootStore#processRangeMarkersOverlappingWith} 2,000,000 times.
    *
    * <p>This uses the same marker population and query workload as {@link #reportIntersecting2MQueries}, but creates
-   * and retains real marker handles and enumerates them through the engine. The timed path therefore includes the
+   * and retains real marker handles and enumerates them through the store. The timed path therefore includes the
    * embedded weak-reference dereference and marker-handle materialization for every reported marker.</p>
    */
   @Benchmark
@@ -228,8 +228,7 @@ public class SnapshotMarkerEngineBenchmark {
     accumulator.reset();
 
     for (int index = 0; index < INTERSECTION_CALLS; index++) {
-      SnapshotMarkerEngine.INSTANCE.processRangeMarkersOverlappingWith(
-        state.rootStore,
+      state.rootStore.processRangeMarkersOverlappingWith(
         snapshot,
         queryStarts[index],
         queryEnds[index],

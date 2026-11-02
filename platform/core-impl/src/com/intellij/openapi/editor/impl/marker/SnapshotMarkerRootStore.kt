@@ -5,8 +5,10 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener
+import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorDocumentPriorities
+import com.intellij.util.Processor
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.containers.Java11Shim
 import com.intellij.util.containers.ReferenceQueueable
@@ -110,6 +112,50 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     return reference.get()
   }
 
+  /**
+   * Processes valid markers from one captured root by increasing start offset, then marker ID.
+   * Usually faster than [processRangeMarkersOverlappingWith]
+   * Includes markers beyond the snapshot text length. Purges collected handles and skips disposed markers.
+   * Returns `false` when [processor] stops processing.
+   */
+  fun processAllRangeMarkers(
+    snapshot: DocumentSnapshot,
+    processor: Processor<in RangeMarkerEx>,
+  ): Boolean {
+    SnapshotMarkerEngine.processQueue()
+    val root = root(snapshot) ?: return true
+    val markerProcessor = MarkerProcessor(processor)
+    try {
+      return root.processAllRangeMarkers(markerProcessor)
+    }
+    finally {
+      markerProcessor.purgeCollected(this, snapshot)
+    }
+  }
+
+  /**
+   * Processes valid markers that non-strictly intersect the requested range and contain every bit in [tastePreference].
+   * A zero preference matches every marker. Purges collected handles and skips disposed markers.
+   * Returns `false` when [processor] stops processing.
+   */
+  fun processRangeMarkersOverlappingWith(
+    snapshot: DocumentSnapshot,
+    startOffset: Int,
+    endOffset: Int,
+    tastePreference: Int,
+    processor: Processor<in RangeMarkerEx>,
+  ): Boolean {
+    SnapshotMarkerEngine.processQueue()
+    val root = root(snapshot) ?: return true
+    val markerProcessor = MarkerProcessor(processor)
+    try {
+      return root.processRangeMarkersOverlappingWith(startOffset, endOffset, tastePreference, markerProcessor)
+    }
+    finally {
+      markerProcessor.purgeCollected(this, snapshot)
+    }
+  }
+
   /** Creates a handle for this store without reading a document snapshot. */
   override fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<T> =
     SnapshotMarkerReference.create(markerClass.cast(marker), this.retainStrong || retainStrong)
@@ -196,25 +242,15 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   }
 
   /**
-   * Applies [update] only when [snapshot] already has a root entry.
-   * [update] can run more than once and must have no side effects.
-   *
-   * @return `true` if this call installs a new root
-   */
-  private fun updateRootIfPresent(snapshot: DocumentSnapshot, update: (PMarkerRoot) -> PMarkerRoot): Boolean {
-    processQueue()
-    val rootReference = roots[snapshot]?.rootReference ?: return false
-    return updateRootAtomically(rootReference, update) != null
-  }
-
-  /**
    * Removes all state for [handles] from an existing root for [snapshot].
    *
    * @return `true` if this call changes the root
    */
   fun purgeMany(snapshot: DocumentSnapshot, handles: Collection<SnapshotMarkerReference<*>>): Boolean {
     if (handles.isEmpty()) return false
-    return updateRootIfPresent(snapshot) { it.purgeMany(handles) }
+    processQueue()
+    val rootReference = roots[snapshot]?.rootReference
+    return rootReference != null && updateRootAtomically(rootReference) { it: PMarkerRoot -> it.purgeMany(handles) } != null
   }
 
   /** Replaces the root for [snapshot] with [root]. */
@@ -300,6 +336,29 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
    * @return `true` when at least one entry was removed
    */
   fun processQueue(): Boolean = (roots as ReferenceQueueable).processQueue()
+
+  private class MarkerProcessor(
+    private val processor: Processor<in RangeMarkerEx>,
+  ) : Processor<PMarkerRoot.MarkerEntry>, PMarkerRoot.MarkerDeltaProcessor {
+    private var collectedHandles: ArrayList<SnapshotMarkerReference<*>>? = null
+
+    override fun process(entry: PMarkerRoot.MarkerEntry): Boolean {
+      val marker = entry.marker
+      if (marker == null) {
+        val handles = collectedHandles ?: ArrayList<SnapshotMarkerReference<*>>().also { collectedHandles = it }
+        handles.add(entry.handle)
+        return true
+      }
+      return marker.isDisposed() || processor.process(marker)
+    }
+
+    override fun process(entry: PMarkerRoot.MarkerEntry, ancestorDelta: Int): Boolean = process(entry)
+
+    fun purgeCollected(rootStore: SnapshotMarkerRootStore<*>, snapshot: DocumentSnapshot) {
+      val handles = collectedHandles ?: return
+      rootStore.purgeMany(snapshot, handles)
+    }
+  }
 
   /**
    * Registers [store] and holds its current root reference.
