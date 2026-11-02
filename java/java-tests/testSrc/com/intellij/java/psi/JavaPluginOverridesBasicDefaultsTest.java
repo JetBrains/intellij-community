@@ -2,10 +2,12 @@
 package com.intellij.java.psi;
 
 import com.intellij.core.CoreJavaCodeStyleManager;
+import com.intellij.core.CoreJavaDirectoryService;
 import com.intellij.core.CorePackageIndex;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.PackageIndex;
+import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.testFramework.junit5.TestApplication;
 import com.intellij.testFramework.junit5.fixture.TestFixture;
@@ -17,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 /**
  * The basic Java plugin registers an open default for each Java PSI service that the Java backend implements.
  * With the Java plugin loaded, each override must win over its default.
+ * The checks compare the exact class, because {@code JavaDirectoryServiceImpl} extends its default.
  */
 @TestApplication
 public class JavaPluginOverridesBasicDefaultsTest {
@@ -25,6 +28,7 @@ public class JavaPluginOverridesBasicDefaultsTest {
   @Test
   public void applicationServices() {
     assertNotEquals(JavaVersionService.class, JavaVersionService.getInstance().getClass());
+    assertNotEquals(CoreJavaDirectoryService.class, JavaDirectoryService.getInstance().getClass());
   }
 
   @Test
