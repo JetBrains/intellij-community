@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 class ProjectRootPersistentStateComponent : SerializablePersistentStateComponent<ProjectRootPersistentStateComponent.State>(State()) {
   fun addProjectRoot(projectRootUrl: String) {
     updateState {
-      it.copy(projectRootUrls = it.projectRootUrls + projectRootUrl)
+      if (projectRootUrl in it.projectRootUrls) it else it.copy(projectRootUrls = it.projectRootUrls + projectRootUrl)
     }
   }
 

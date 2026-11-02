@@ -5,6 +5,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.runWriteActionAndWait
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectRootPersistentStateComponent
 import com.intellij.openapi.project.impl.ProjectRootsSynchronizer
 import com.intellij.openapi.vfs.VfsUtil
@@ -56,6 +57,35 @@ class ProjectRootEntityTest {
 
       val updatedRoots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
       assertThat(updatedRoots.map { it.root }).containsExactly(renamedProjectFile.toVirtualFileUrl(project))
+    }
+  }
+
+  @Test
+  fun `test project root entity exists when the project is open`(): Unit = runBlocking {
+    val name = "project root entity on init"
+    val projectFile = TemporaryDirectory.generateTemporaryPath(name).createDirectories()
+    val options = createTestOpenProjectOptions().copy(projectName = name)
+    ProjectUtil.openOrImportAsync(projectFile, options)!!.useProjectAsync { project ->
+      // the project init registers the root, so the project view has it from its first update
+      val roots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
+      assertThat(roots.map { it.root }).containsExactly(projectFile.toVirtualFileUrl(project))
+      assertThat(project.serviceAsync<ProjectRootPersistentStateComponent>().projectRootUrls).containsExactly(projectFile.toVirtualFileUrl(project).url)
+    }
+  }
+
+  @Test
+  fun `test project root entity exists when the project is reopened without a root directory`(): Unit = runBlocking {
+    val name = "project root entity on reopen"
+    val projectFile = TemporaryDirectory.generateTemporaryPath(name).createDirectories()
+    val options = createTestOpenProjectOptions().copy(projectName = name)
+    ProjectUtil.openOrImportAsync(projectFile, options)!!.useProjectAsync { project ->
+      project.stateStore.save(forceSavingAllSettings = true)
+    }
+
+    // the recent projects list reopens a project with no root directory in its options
+    ProjectManagerEx.getInstanceEx().openProjectAsync(projectFile, options)!!.useProjectAsync { project ->
+      val roots = project.workspaceModel.currentSnapshot.entities(ProjectRootEntity::class.java).toList()
+      assertThat(roots.map { it.root }).containsExactly(projectFile.toVirtualFileUrl(project))
     }
   }
 

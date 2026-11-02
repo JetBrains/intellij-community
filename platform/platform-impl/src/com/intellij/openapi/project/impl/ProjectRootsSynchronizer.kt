@@ -11,7 +11,6 @@ import com.intellij.workspaceModel.ide.ProjectRootEntity
 import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.flow.filter
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
 
 @Internal
 class ProjectRootsSynchronizer : ProjectActivity {
@@ -19,7 +18,6 @@ class ProjectRootsSynchronizer : ProjectActivity {
     /**
      * Registers project roots from [ProjectRootPersistentStateComponent] to the workspace model
      */
-    @VisibleForTesting
     suspend fun doRegister(project: Project) {
       val projectRootsComponent = project.serviceAsync<ProjectRootPersistentStateComponent>()
       val roots = projectRootsComponent.projectRootUrls

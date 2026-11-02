@@ -142,7 +142,6 @@ import com.intellij.util.runSuppressing
 import com.intellij.util.system.LowLevelLocalMachineAccess
 import com.intellij.util.system.OS
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
-import com.intellij.workspaceModel.ide.registerProjectRoot
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -835,10 +834,12 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
                   projectIdentityFile, options.projectName, options.beforeInit, options.useDefaultProjectAsTemplate,
                   options.preloadServices, markAsNewlyCreated = options.isProjectCreatedWithWizard,
                   projectInitHelper = initHelper.takeIf { initFrameEarly },
+                  projectRootDir = options.projectRootDir,
                 )
                 else -> prepareProject(
                   projectIdentityFile, options.projectName, options.beforeInit,
-                  projectInitHelper = initHelper.takeIf { initFrameEarly }, options.runConversionBeforeOpen, options.preloadServices
+                  projectInitHelper = initHelper.takeIf { initFrameEarly }, options.runConversionBeforeOpen, options.preloadServices,
+                  projectRootDir = options.projectRootDir,
                 )
               }
             }
@@ -858,13 +859,9 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
               }
             }
 
-            if (Registry.`is`("ide.create.project.root.entity") && options.projectRootDir != null) {
-              val root = options.projectRootDir!!.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
-              project.serviceAsync<ProjectRootPersistentStateComponent>().addProjectRoot(root.url)
-
-              // We also register the project root here, so the project view will have a "files" node immediately.
-              // Otherwise, it might appear too late causing issues like AMPER-4695
-              registerProjectRoot(project, root)
+            if (options.project != null) {
+              // a project that this open did not init gets its roots here; `initProject` registers them for the other projects
+              registerProjectRootsOnInit(project, options.projectRootDir)
             }
 
             val addedToOpened = span("project add to opened") {
@@ -1101,6 +1098,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     markAsNewlyCreated: Boolean,
     markAsNew: Boolean = true,
     projectInitHelper: ProjectInitHelper? = null,
+    projectRootDir: Path? = null,
   ): Project {
     return coroutineScope {
       val templateAsync = if (useDefaultProjectAsTemplate) {
@@ -1134,7 +1132,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         project.putUserData(PROJECT_NEWLY_CREATED, markAsNewlyCreated)
         val template = templateAsync?.await()
         // `initProject` applies the template before it reports the pre-init to the helper
-        initProject(identityFle, project, preloadServices, template, projectInitHelper)
+        initProject(identityFle, project, preloadServices, template, projectInitHelper, projectRootDir)
         project
       }
       catch (e: Throwable) {
@@ -1159,6 +1157,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     projectInitHelper: ProjectInitHelper?,
     runConversionBeforeOpen: Boolean,
     preloadServices: Boolean,
+    projectRootDir: Path? = null,
   ): Project {
     val conversionResult: ConversionResult? = if (runConversionBeforeOpen) {
       runConversion(projectIdentityFile)
@@ -1170,7 +1169,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     val project = instantiateProject(projectIdentityFile, projectName, beforeInit)
     try {
       // template as null here because it is not a new project
-      initProject(projectIdentityFile, project, preloadServices, template = null, projectInitHelper)
+      initProject(projectIdentityFile, project, preloadServices, template = null, projectInitHelper, projectRootDir)
       if (conversionResult != null && !conversionResult.conversionNotNeeded()) {
         project.serviceAsync<StartupManager>().runAfterOpened {
           conversionResult.postStartupActivity(project)
@@ -1549,6 +1548,7 @@ private suspend fun initProject(
   preloadServices: Boolean,
   template: Project?,
   projectInitHelper: ProjectInitHelper? = null,
+  projectRootDir: Path? = null,
 ) {
   LOG.assertTrue(!project.isDefault)
 
@@ -1579,6 +1579,11 @@ private suspend fun initProject(
 
     projectInitHelper?.notifyInit(project)
 
+    // the Project View lists the project roots from its first update, as it lists the content root of a module
+    launch {
+      registerProjectRootsOnInit(project, projectRootDir)
+    }
+
     if (preloadServices) {
       schedulePreloadServices(project)
     }
@@ -1586,6 +1591,22 @@ private suspend fun initProject(
     preInitJob?.join()
     project.createComponentsNonBlocking()
   }
+}
+
+/**
+ * Registers the persisted project roots of [project] and [projectRootDir] in the workspace model.
+ * A reopen from the recent projects passes no [projectRootDir], so the persisted roots are its only source.
+ * A second call with the same roots changes nothing.
+ */
+private suspend fun registerProjectRootsOnInit(project: Project, projectRootDir: Path?) {
+  if (!Registry.`is`("ide.create.project.root.entity")) {
+    return
+  }
+  if (projectRootDir != null) {
+    val root = projectRootDir.toVirtualFileUrl(project.workspaceModel.getVirtualFileUrlManager())
+    project.serviceAsync<ProjectRootPersistentStateComponent>().addProjectRoot(root.url)
+  }
+  ProjectRootsSynchronizer.doRegister(project)
 }
 
 /**
