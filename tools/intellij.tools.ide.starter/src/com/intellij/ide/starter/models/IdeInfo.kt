@@ -83,7 +83,6 @@ data class IdeInfo(
         "CL" -> "CLion"
         "DS" -> "dataspell"
         "PC" -> "pycharmPC"
-        "QA" -> "aqua"
         "RR" -> "RustRover"
         "AI" -> "AndroidStudio"
         "JBC" -> PlatformUtils.JETBRAINS_CLIENT_PREFIX

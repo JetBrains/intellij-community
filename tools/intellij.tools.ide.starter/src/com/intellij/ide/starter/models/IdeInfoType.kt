@@ -24,7 +24,6 @@ enum class IdeInfoType(
   PYCHARM("PY", "pycharm", "PyCharm"),
   CLION("CL", "clion", "CLion"),
   PYCHARM_COMMUNITY("PC", "pycharm", "PyCharm"),
-  AQUA("QA", "aqua", "Aqua"),
   RUSTROVER("RR", "rustrover", "RustRover"),
   RIDER("RD", "rider", "Rider"),
   GATEWAY("GW", "gateway", "Gateway"),

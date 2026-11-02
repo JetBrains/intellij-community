@@ -21,7 +21,6 @@ class ApplicationNamesInfoTest {
       PlatformUtils.IDEA_CE_PREFIX to "IdeaProjects",
       PlatformUtils.IDEA_EDU_PREFIX to "IdeaProjects",
       PlatformUtils.APPCODE_PREFIX to "AppCodeProjects",
-      PlatformUtils.AQUA_PREFIX to "AquaProjects",
       PlatformUtils.CLION_PREFIX to "CLionProjects",
       PlatformUtils.PYCHARM_PREFIX to "PycharmProjects",
       PlatformUtils.PYCHARM_CE_PREFIX to "PycharmProjects",

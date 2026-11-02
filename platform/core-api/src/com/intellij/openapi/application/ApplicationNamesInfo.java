@@ -231,9 +231,6 @@ public final class ApplicationNamesInfo {
       case PlatformUtils.APPCODE_PREFIX:
         baseName = "AppCode";
         break;
-      case PlatformUtils.AQUA_PREFIX:
-        baseName = "Aqua";
-        break;
       case PlatformUtils.CLION_PREFIX:
         baseName = "CLion";
         break;

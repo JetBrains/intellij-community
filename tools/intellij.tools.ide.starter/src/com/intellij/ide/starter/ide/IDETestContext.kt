@@ -712,7 +712,6 @@ open class IDETestContext(
       IdeInfoType.PYCHARM.productCode -> "pycharm.key"
       IdeInfoType.DATAGRIP.productCode -> "datagrip.key"
       IdeInfoType.CLION.productCode -> "clion.key"
-      IdeInfoType.AQUA.productCode -> "aqua.key"
       IdeInfoType.RUSTROVER.productCode -> "rustrover.key"
       IdeInfoType.RIDER.productCode -> "rider.key"
       else -> return this

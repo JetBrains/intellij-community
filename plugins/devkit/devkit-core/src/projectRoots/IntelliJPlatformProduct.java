@@ -30,7 +30,7 @@ public enum IntelliJPlatformProduct {
   JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, "idea/code-with-me:JetBrainsClient"),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX, "com.jetbrains.intellij.gateway:gateway", "idea/gateway:JetBrainsGateway"),
   FLEET_BACKEND("FLIJ", "Fleet Backend", PlatformUtils.FLEET_PREFIX, "com.jetbrains.intellij.fleetBackend:fleetBackend", null),
-  AQUA("QA", "Aqua", PlatformUtils.AQUA_PREFIX, null, "aqua:aqua"),
+  AQUA("QA", "Aqua", "Aqua", null, "aqua:aqua"),
   RUSTROVER("RR", "RustRover", PlatformUtils.RUSTROVER_PREFIX, "com.jetbrains.intellij.rustrover:RustRover", "rustrover:RustRover"),
   MPS("MPS", "MPS", PlatformUtils.MPS_PREFIX, null, "mps:MPS"),;
 

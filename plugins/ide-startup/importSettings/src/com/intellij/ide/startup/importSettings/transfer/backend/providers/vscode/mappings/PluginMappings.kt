@@ -49,7 +49,6 @@ internal class CommonPluginMapping : VSCodePluginMapping {
   // Note that the later files will override the data from the former.
   @Suppress("DEPRECATION")
   private fun getResourceMappings(): List<String> = when {
-    PlatformUtils.isAqua() -> listOf("aq.json")
     PlatformUtils.isCLion() -> listOf("cl.json")
     PlatformUtils.isDataGrip() -> listOf("dg.json")
     PlatformUtils.isGoIde() -> listOf("go.json")

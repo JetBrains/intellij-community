@@ -236,7 +236,6 @@ internal fun getProductTag(): String {
     PlatformUtils.isJetBrainsClient() -> "ij_code_with_me1"
     PlatformUtils.isRider() -> "ij_rider1"
     PlatformUtils.isRustRover() -> "ij_rustrover1"
-    PlatformUtils.isAqua() -> "ij_aqua1"
     else -> "undefined"
   }
 }

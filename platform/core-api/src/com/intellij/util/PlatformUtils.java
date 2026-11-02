@@ -36,7 +36,6 @@ public final class PlatformUtils {
   public static final String IDEA_EDU_PREFIX = "IdeaEdu";
   public static final String ANDROID_STUDIO_PREFIX = "AndroidStudio";
   public static final String APPCODE_PREFIX = "AppCode";
-  public static final String AQUA_PREFIX = "Aqua";
   public static final String CLION_PREFIX = "CLion";
   public static final String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
@@ -55,7 +54,7 @@ public final class PlatformUtils {
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
-    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX, AQUA_PREFIX));
+    DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX, RUSTROVER_PREFIX));
 
   public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
@@ -113,10 +112,6 @@ public final class PlatformUtils {
    */
   public static boolean isAppCode() {
     return is(APPCODE_PREFIX);
-  }
-
-  public static boolean isAqua() {
-    return is(AQUA_PREFIX);
   }
 
   /**
