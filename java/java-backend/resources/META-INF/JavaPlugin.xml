@@ -121,8 +121,6 @@
                     serviceImplementation="com.intellij.ide.util.TreeClassChooserFactoryImpl"/>
     <projectService serviceInterface="com.intellij.psi.impl.JavaPsiImplementationHelper"
                     serviceImplementation="com.intellij.psi.impl.JavaPsiImplementationHelperImpl"/>
-    <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade"
-                    serviceImplementation="com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacadeImpl"/>
     <projectService serviceInterface="com.intellij.psi.JavaCodeFragmentFactory"
                     serviceImplementation="com.intellij.psi.impl.JavaCodeFragmentFactoryImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
