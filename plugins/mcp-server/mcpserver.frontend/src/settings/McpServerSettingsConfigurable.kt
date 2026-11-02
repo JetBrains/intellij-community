@@ -33,6 +33,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.ide.CopyPasteManager
@@ -88,6 +90,9 @@ import javax.swing.JComponent
 import kotlin.io.path.createFile
 
 
+@Service(Service.Level.APP)
+private class McpServerSettingsCoroutineScope(val cs: CoroutineScope)
+
 /**
  * Settings page of the MCP Server plugin, rendered with the Swing-Compose UI stack.
  *
@@ -122,6 +127,8 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
   /** Runs only the enable-toggle coroutines, so [reset] can cancel the queued toggles as a unit. */
   @Suppress("RAW_SCOPE_CREATION")
   private val enableChangeScope: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  /** Runs the server restart from [apply], so the restart survives [disposeUIResources] on OK. */
+  private val portChangeScope = service<McpServerSettingsCoroutineScope>().cs
 
   init {
     refreshServerStatus()
@@ -189,7 +196,8 @@ class McpServerSettingsConfigurable : ComposeSwingSearchableConfigurable() {
       // A toggle that holds the lock refreshes `port` to the running server's port, so read it before queuing.
       val requestedPort = port
       // The restart touches the server like a toggle does, so it queues behind the toggles under the same lock.
-      enableChangeScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
+      // The restart runs outside `enableChangeScope`, because `disposeUIResources` cancels that scope on OK.
+      portChangeScope.launch(Dispatchers.EDT + ModalityState.stateForComponent(getContent()).asContextElement()) {
         enableChangeMutex.withLock {
           updateServerSettings(settings.enableMcpServer, requestedPort)
           val service = McpServerService.getInstance()
