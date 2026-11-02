@@ -176,12 +176,24 @@ public final class TypeAnnotationPath {
     }
   }
 
+  /**
+   * In {@code @A Outer.@B Inner}, both annotations belong to the {@code Inner} type, so their indexes are 0 and 1.
+   */
   private static int indexInParent(@NotNull PsiAnnotation annotation) {
-    int index = 0;
-    for (PsiElement sibling = annotation.getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
-      if (sibling instanceof PsiAnnotation) index++;
+    int index = countAnnotationsBefore(annotation);
+    PsiElement parent = annotation.getParent();
+    if (parent instanceof PsiJavaCodeReferenceElement && parent.getParent() instanceof PsiTypeElement) {
+      index += countAnnotationsBefore(parent);
     }
     return index;
+  }
+
+  private static int countAnnotationsBefore(@NotNull PsiElement element) {
+    int count = 0;
+    for (PsiElement sibling = element.getPrevSibling(); sibling != null; sibling = sibling.getPrevSibling()) {
+      if (sibling instanceof PsiAnnotation) count++;
+    }
+    return count;
   }
 
   @Override

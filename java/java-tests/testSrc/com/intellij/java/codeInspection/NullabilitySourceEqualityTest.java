@@ -6,13 +6,18 @@ import com.intellij.codeInsight.NullabilitySource;
 import com.intellij.codeInsight.TypeNullability;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiArrayType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiFileImpl;
+import com.intellij.psi.util.TypeAnnotationPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.ref.GCUtil;
 import org.jetbrains.annotations.NotNull;
@@ -159,6 +164,63 @@ public final class NullabilitySourceEqualityTest extends LightJavaCodeInsightFix
       assertEquals(first.getNullability(), second.getNullability());
       return second;
     });
+  }
+
+  private static final String INNER_CLASSES = """
+    class Outer { class Inner {} }
+    @java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE_USE) @interface Other {}
+    """;
+
+  public void testInnerType() {
+    assertStubAndAstNullable(INNER_CLASSES + "List<Outer.@Nullable Inner> f;", aClass ->
+      ((PsiClassType)aClass.findFieldByName("f", false).getType()).getParameters()[0]);
+  }
+
+  public void testAnnotatedOuterAndInnerType() {
+    assertStubAndAstNullable(INNER_CLASSES + "List<@Other Outer.@Nullable Inner> f;", aClass ->
+      ((PsiClassType)aClass.findFieldByName("f", false).getType()).getParameters()[0]);
+  }
+
+  public void testAnnotatedQualifierPaths() {
+    assertDistinctStubAndAstPaths("List<Stubbed.@Other Outer.@Nullable Inner> f;");
+  }
+
+  public void testAnnotatedOuterAndInnerPaths() {
+    assertDistinctStubAndAstPaths("List<@Other Outer.@Nullable Inner> f;");
+  }
+
+  /**
+   * Checks the paths of the two annotations in the type argument of field {@code f}.
+   */
+  private void assertDistinctStubAndAstPaths(@NotNull String field) {
+    PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("Stubbed.java", """
+      import org.jetbrains.annotations.*;
+      import java.util.List;
+
+      class Stubbed {
+        %s
+        %s
+      }
+      """.formatted(INNER_CLASSES, field));
+    PsiClass aClass = ((PsiJavaFile)file).getClasses()[0];
+    List<TypeAnnotationPath> fromStub = annotationPaths(aClass.findFieldByName("f", false).getType());
+    assertFalse(file.isContentsLoaded());
+
+    ASTNode node = file.getNode();
+    GCUtil.tryGcSoftlyReachableObjects();
+    assertTrue(file.withGreenStubTreeOrAst(_ -> false, _ -> true));
+    List<TypeAnnotationPath> fromAst = annotationPaths(aClass.findFieldByName("f", false).getType());
+    assertSize(2, fromStub);
+    assertNotNull(fromStub.get(0));
+    assertEquals(fromStub, fromAst);
+    assertNotEquals(fromStub.get(0), fromStub.get(1));
+    assertNotNull(node);
+  }
+
+  private static @NotNull List<TypeAnnotationPath> annotationPaths(@NotNull PsiType type) {
+    PsiClassType argument = (PsiClassType)((PsiClassType)type).getParameters()[0];
+    PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)argument).getReference();
+    return SyntaxTraverser.psiTraverser(reference.getParent()).filter(PsiAnnotation.class).map(TypeAnnotationPath::of).toList();
   }
 
   private void assertStubAndAstNullable(@NotNull String member, @NotNull Function<PsiClass, PsiType> typeGetter) {

@@ -543,8 +543,16 @@ public /*sealed*/ abstract class TypeInfo {
       }
       else if (tokenType == JavaElementType.ANNOTATION) {
         String anno = LightTreeUtil.toFilteredString(tree, child, null);
-        byte[] typePath = Arrays.copyOf(prefix, prefix.length + nestingLevel);
-        Arrays.fill(typePath, prefix.length, typePath.length, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+        int outerCount = 0;
+        if (info instanceof RefTypeInfo) {
+          // An annotation before a qualified reference must stay before its first segment
+          for (RefTypeInfo outer = ((RefTypeInfo)info).outerType(); outer != null; outer = outer.outerType()) {
+            outerCount++;
+          }
+        }
+        byte[] typePath = Arrays.copyOf(prefix, prefix.length + nestingLevel + outerCount);
+        Arrays.fill(typePath, prefix.length, prefix.length + nestingLevel, ExplicitTypeAnnotationContainer.Collector.ARRAY_ELEMENT);
+        Arrays.fill(typePath, prefix.length + nestingLevel, typePath.length, ExplicitTypeAnnotationContainer.Collector.ENCLOSING_CLASS);
         collector.add(typePath, anno);
       }
     }
