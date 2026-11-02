@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+annotation class JvmStatic
+
+class Foo {
+    companion {
+        <caret>@JvmStatic
+        fun foo() = 0
+    }
+}

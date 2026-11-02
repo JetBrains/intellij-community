@@ -1,0 +1,7 @@
+// COMPILER_ARGUMENTS: -Xcompanion-blocks
+
+class Foo {
+    companion {
+        <caret>fun foo() = 0
+    }
+}

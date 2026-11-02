@@ -13,7 +13,6 @@ import com.intellij.psi.util.siblings
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor
 import com.intellij.util.takeWhileInclusive
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
 import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.createKotlinFile
@@ -21,6 +20,7 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2ChangePackageDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
+import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.idea.util.sourceRoot
 import org.jetbrains.kotlin.kdoc.psi.api.KDocElement
 import org.jetbrains.kotlin.name.FqName
@@ -121,7 +121,9 @@ internal fun PsiDirectory.getPossiblyForcedPackageFqName(): FqName {
 }
 
 internal fun KtDeclaration.removeJvmStaticAnnotation() {
-    val annotationEntry = KotlinPsiHeuristics.findAnnotation(this, JvmStandardClassIds.JVM_STATIC_FQ_NAME) ?: return
+    val annotationEntry = findAnnotation(
+        JvmStandardClassIds.JVM_STATIC_FQ_NAME,
+    ) ?: return
     val modifierList = annotationEntry.parent as? KtModifierList ?: return
     modifierList.deleteChildWithWhiteSpaces(annotationEntry, forward = modifierList.lastChild != annotationEntry)
     if (modifierList.firstChild == null) {

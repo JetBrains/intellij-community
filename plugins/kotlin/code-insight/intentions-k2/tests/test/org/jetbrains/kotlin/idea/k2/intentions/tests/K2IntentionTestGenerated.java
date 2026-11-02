@@ -13927,6 +13927,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/actualFun.kt");
         }
 
+        @TestMetadata("aliasedJvmStaticFunFromCompanionObject.kt")
+        public void testAliasedJvmStaticFunFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/aliasedJvmStaticFunFromCompanionObject.kt");
+        }
+
         @TestMetadata("comments.kt")
         public void testComments() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/comments.kt");
@@ -13960,6 +13965,11 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         @TestMetadata("expectProperty.kt")
         public void testExpectProperty() throws Exception {
             runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/expectProperty.kt");
+        }
+
+        @TestMetadata("fakeJvmStaticFunFromCompanionObject.kt")
+        public void testFakeJvmStaticFunFromCompanionObject() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/moveToCompanionBlock/fakeJvmStaticFunFromCompanionObject.kt");
         }
 
         @TestMetadata("funFromCompanionObject.kt")
