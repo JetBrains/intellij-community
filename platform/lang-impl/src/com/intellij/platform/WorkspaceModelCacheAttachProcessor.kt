@@ -96,7 +96,7 @@ class WorkspaceModelCacheAttachProcessor : ProjectAttachProcessor() {
     if (storage == null) {
       return null
     }
-    val toMigrate = ProjectEntitiesAttacher.getAllEntitiesToMigrate(storage)
+    val toMigrate = ProjectEntitiesAttacher.getAllEntitiesToMigrate(project.workspaceModel.currentSnapshot, storage)
     val attachedModuleNames = toMigrate.entities(ModuleEntity::class.java).map { it.name }.toSet()
     project.workspaceModel.update("Importing workspace model from $projectDir to project name=${project.name}, locationHash=${project.locationHash}") {
       it.applyChangesFrom(toMigrate)

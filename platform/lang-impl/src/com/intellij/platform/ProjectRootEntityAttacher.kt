@@ -9,9 +9,9 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class ProjectRootEntityAttacher : ProjectEntitiesAttacher {
-  override fun extractEntitiesToAttach(storage: EntityStorage): MutableEntityStorage {
+  override fun extractEntitiesToAttach(currentSnapshot: EntityStorage, attachingProjectStorage: EntityStorage): MutableEntityStorage {
     return MutableEntityStorage.create().also { newStorage ->
-      newStorage.replaceBySource({ it is ProjectRootEntitySource }, storage)
+      newStorage.replaceBySource({ it is ProjectRootEntitySource }, attachingProjectStorage)
     }
   }
 }

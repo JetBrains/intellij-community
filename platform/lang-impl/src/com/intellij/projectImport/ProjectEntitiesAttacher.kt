@@ -8,14 +8,14 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 interface ProjectEntitiesAttacher {
-  fun extractEntitiesToAttach(storage: EntityStorage): MutableEntityStorage
+  fun extractEntitiesToAttach(currentSnapshot: EntityStorage, attachingProjectStorage: EntityStorage): MutableEntityStorage
 
   companion object {
     val EP: ExtensionPointName<ProjectEntitiesAttacher> = ExtensionPointName("com.intellij.projectEntitiesAttacher")
 
-    fun getAllEntitiesToMigrate(attachingProjectStorage: EntityStorage): MutableEntityStorage {
+    fun getAllEntitiesToMigrate(currentSnapshot: EntityStorage, attachingProjectStorage: EntityStorage): MutableEntityStorage {
       val newStorage = MutableEntityStorage.create()
-      EP.forEachExtensionSafe { e -> newStorage.applyChangesFrom(e.extractEntitiesToAttach(attachingProjectStorage)) }
+      EP.forEachExtensionSafe { e -> newStorage.applyChangesFrom(e.extractEntitiesToAttach(currentSnapshot, attachingProjectStorage)) }
       return newStorage
     }
   }

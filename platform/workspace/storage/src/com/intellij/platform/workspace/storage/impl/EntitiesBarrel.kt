@@ -2,6 +2,7 @@
 package com.intellij.platform.workspace.storage.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.platform.workspace.storage.SingletonWorkspaceEntity
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
@@ -123,6 +124,8 @@ internal sealed class EntitiesBarrel {
       if (family == null) return@forEachIndexed
       val clazz = i.findWorkspaceEntity()
       val hasSymbolicId = WorkspaceEntityWithSymbolicId::class.java.isAssignableFrom(clazz)
+      val isSingleton = SingletonWorkspaceEntity::class.java.isAssignableFrom(clazz)
+
       family.assertConsistency { entityData ->
         // Assert correctness of the class
         val immutableClass = entityData.getEntityInterface()
@@ -139,6 +142,9 @@ internal sealed class EntitiesBarrel {
           assert(symbolicId != null) { "Symbolic id expected for $clazz" }
           assert(symbolicId !in symbolicIds) { "Duplicated symbolic ids: $symbolicId" }
           symbolicIds.add(symbolicId!!)
+        }
+        if (isSingleton) {
+          assert(family.size() <= 1) { "Singleton entity family $clazz must contain zero or one entity. Size=${family.size()}" }
         }
       }
     }
