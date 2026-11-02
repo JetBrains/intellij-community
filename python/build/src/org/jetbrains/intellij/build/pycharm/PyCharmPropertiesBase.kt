@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.pycharm
 
-import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.JavaPluginLayout
 import org.jetbrains.intellij.build.JetBrainsProductProperties
 import org.jetbrains.intellij.build.impl.copyDirWithFileFilter
 import org.jetbrains.intellij.build.zipSourcesOfModules
@@ -35,7 +35,7 @@ abstract class PyCharmPropertiesBase(enlargeWelcomeScreen: Boolean) : JetBrainsP
 
     productLayout.compatiblePluginsToIgnore = productLayout.compatiblePluginsToIgnore.addingAll(
       //workaround (IJPL-209175) for IDEA-366600
-      persistentListOf("intellij.java.plugin"))
+      JavaPluginLayout.ALL_MAIN_MODULE_NAMES)
   }
 
   override fun copyAdditionalFiles(targetDir: Path, context: BuildContext) {

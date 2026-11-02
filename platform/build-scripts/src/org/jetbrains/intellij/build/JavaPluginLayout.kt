@@ -1,10 +1,21 @@
 // Copyright 2000-2025 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.PluginLayout
 
 object JavaPluginLayout {
   const val MAIN_MODULE_NAME = "intellij.java.plugin"
+
+  /** The main module of `com.intellij.java.basic`, which holds the Java parser, the PSI, and the lexer-based highlighting. */
+  const val BASIC_PLUGIN_MAIN_MODULE_NAME: String = "intellij.java.basic.plugin"
+
+  /**
+   * The main modules of `com.intellij.java` and `com.intellij.java.basic`. A product that ignores the Java plugin as a
+   * compatible plugin ignores all of them.
+   */
+  val ALL_MAIN_MODULE_NAMES: PersistentList<String> = persistentListOf(MAIN_MODULE_NAME, BASIC_PLUGIN_MAIN_MODULE_NAME)
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->

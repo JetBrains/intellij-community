@@ -98,7 +98,7 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.skipUnresolvedContentModules = true
         productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
         productLayout.buildAllCompatiblePlugins = false
-        productLayout.compatiblePluginsToIgnore = persistentListOf("intellij.java.plugin")
+        productLayout.compatiblePluginsToIgnore = JavaPluginLayout.ALL_MAIN_MODULE_NAMES
 
         val previousPluginLayouts = productLayout.pluginLayouts
         productLayout.pluginLayouts = lazy {
