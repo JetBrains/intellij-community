@@ -23,6 +23,11 @@ public class K2IdeK2CodeKotlinEvaluationExpressionTestGenerated extends Abstract
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("atomicfuPrefill.kt")
+    public void testAtomicfuPrefill() throws Exception {
+        runTest("../testData/evaluationExpression/atomicfuPrefill.kt");
+    }
+
     @TestMetadata("castToInnerClass.kt")
     public void testCastToInnerClass() throws Exception {
         runTest("../testData/evaluationExpression/castToInnerClass.kt");
