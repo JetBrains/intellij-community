@@ -8,12 +8,14 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.containers.ConcurrentLongLongMap
 import com.intellij.util.ref.GCWatcher
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotSame
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -26,8 +28,16 @@ import kotlin.random.Random
 @UsePMarkerImplementation
 internal class PMarkerDirectRootTest {
   private val empty: PMarkerDirectRoot = PMarkerDirectRoot.empty()
-  private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
-    DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+  private lateinit var markerForHandles: SnapshotRangeMarkerImpl
+
+  @BeforeEach
+  fun setUp() {
+    markerForHandles = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+  }
+
+  @AfterEach
+  fun tearDown() {
+    if (::markerForHandles.isInitialized) markerForHandles.dispose()
   }
 
   @Test

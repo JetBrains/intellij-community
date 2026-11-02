@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil
 import com.intellij.util.ObjectUtilsRt
 import com.intellij.util.Processor
 import com.intellij.util.ref.GCUtil
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
@@ -22,6 +23,7 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.ValueSource
@@ -37,13 +39,23 @@ import kotlin.random.Random
 @Suppress("SameParameterValue")
 @UsePMarkerImplementation
 class SnapshotMarkerEngineTest {
-  private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
-    DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-  }
+  private lateinit var markerForHandles: RangeMarker
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
 
+  @BeforeEach
+  fun setUp() {
+    markerForHandles = DocumentImpl("", true).createRangeMarker(0, 0)
+  }
+
+  @AfterEach
+  fun tearDown() {
+    if (::markerForHandles.isInitialized) markerForHandles.dispose()
+    handles.clear()
+  }
+
   private fun handle(label: Long): SnapshotMarkerReference<*> {
-    while (handles.size <= label) handles.add(SnapshotMarkerReference.create(markerForHandles, false))
+    val marker = markerForHandles as SnapshotRangeMarkerImpl
+    while (handles.size <= label) handles.add(SnapshotMarkerReference.create(marker, false))
     return handles[label.toInt()]
   }
 

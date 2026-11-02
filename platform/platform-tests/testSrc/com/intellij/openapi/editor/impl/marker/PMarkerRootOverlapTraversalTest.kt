@@ -5,16 +5,26 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentText
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot.MarkerEntry
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.random.Random
 
 @UsePMarkerImplementation
 internal class PMarkerRootOverlapTraversalTest {
-  private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
-    DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+  private lateinit var markerForHandles: SnapshotRangeMarkerImpl
+
+  @BeforeEach
+  fun setUp() {
+    markerForHandles = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+  }
+
+  @AfterEach
+  fun tearDown() {
+    if (::markerForHandles.isInitialized) markerForHandles.dispose()
   }
 
   @Test

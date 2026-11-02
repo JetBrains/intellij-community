@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.TextRangeScalarUtil
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotEquals
@@ -12,14 +13,23 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @UsePMarkerImplementation
 internal class PMarkerResolutionTest {
-  private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
-    DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
-  }
+  private lateinit var markerForHandles: SnapshotRangeMarkerImpl
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
+
+  @BeforeEach
+  fun setUp() {
+    markerForHandles = DocumentImpl("", true).createRangeMarker(0, 0) as SnapshotRangeMarkerImpl
+  }
+
+  @AfterEach
+  fun tearDown() {
+    if (::markerForHandles.isInitialized) markerForHandles.dispose()
+  }
 
   private fun handle(label: Long): SnapshotMarkerReference<*> {
     while (handles.size <= label) handles.add(SnapshotMarkerReference.create(markerForHandles, false))
