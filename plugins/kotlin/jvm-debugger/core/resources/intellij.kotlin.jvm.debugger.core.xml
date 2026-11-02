@@ -76,6 +76,9 @@
     <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.core.classNameContributor" dynamic="true"
                     interface="org.jetbrains.kotlin.idea.debugger.core.ClassNameProvider$ClassNameContributor"
     />
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.core.mangledMemberContributor" dynamic="true"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.KotlinMangledMemberContributor"
+    />
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -173,5 +176,10 @@
             defaultValue="false"
             description="Enable Kotlin evaluation features when hitting/suspending in Java frames (suggest Kotlin language in evaluation prompts, conditional breakpoints, and 'Evaluate and log' field; support Kotlin watches)"/>
   </extensions>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea.debugger.core">
+    <mangledMemberContributor implementation="org.jetbrains.kotlin.idea.debugger.core.AtomicfuMangledMemberContributor"/>
+  </extensions>
+
   <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>
