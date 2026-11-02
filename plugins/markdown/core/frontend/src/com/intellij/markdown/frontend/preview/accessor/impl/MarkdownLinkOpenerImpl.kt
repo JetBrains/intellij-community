@@ -68,7 +68,9 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
         if (isLocalFilePathLink(link, containingFile != null)) {
           return@launch
         }
-        openExternalLink(currentProject, uri)
+        withContext(Dispatchers.EDT) {
+          openExternalLink(currentProject, uri)
+        }
         return@launch
       }
       val project = currentProject ?: data.projectId?.findProject() ?: return@launch
@@ -108,14 +110,16 @@ internal class MarkdownLinkOpenerImpl(val coroutineScope: CoroutineScope) : Mark
       }
       return
     }
-    val point = obtainHeadersPopupPosition(project)
-    if (point == null) {
-      logger.warn("Failed to obtain screen point for showing popup")
-      return
-    }
-    when {
-      headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
-      headers.size > 1 ->  showHeadersPopup(project, headers, point)
+    withContext(Dispatchers.EDT) {
+      val point = obtainHeadersPopupPosition(project)
+      if (point == null) {
+        logger.warn("Failed to obtain screen point for showing popup")
+        return@withContext
+      }
+      when {
+        headers.isEmpty() -> showCannotNavigateNotification(project, anchor, point)
+        headers.size > 1 ->  showHeadersPopup(project, headers, point)
+      }
     }
   }
 
