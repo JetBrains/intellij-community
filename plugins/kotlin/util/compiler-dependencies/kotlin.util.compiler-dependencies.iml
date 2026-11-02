@@ -38,6 +38,7 @@
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.scripting.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.libraries.kotlinc.kotlin.script.runtime" scope="RUNTIME" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-api" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-api-jps" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-impl" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-build-tools-cri-impl" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-jps-plugin-tests" level="project" />

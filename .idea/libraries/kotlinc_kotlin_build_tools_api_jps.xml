@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="kotlinc.kotlin-build-tools-api-jps" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:kotlin-build-tools-api-jps:2.5.20-dev-3853">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api-jps/2.5.20-dev-3853/kotlin-build-tools-api-jps-2.5.20-dev-3853.jar">
+          <sha256sum>1d98f28653e80c827eb00b455ef81eae4389c513acf4490cda4a057e22ab269b</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api-jps/2.5.20-dev-3853/kotlin-build-tools-api-jps-2.5.20-dev-3853.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-tools-api-jps/2.5.20-dev-3853/kotlin-build-tools-api-jps-2.5.20-dev-3853-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

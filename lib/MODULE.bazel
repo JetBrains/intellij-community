@@ -4089,6 +4089,20 @@ http_file(
 )
 
 http_file(
+    name = "org_jetbrains_kotlin-kotlin-build-tools-api-jps-2_5_20-dev-3853_http",
+    downloaded_file_path = "kotlin-build-tools-api-jps-2.5.20-dev-3853.jar",
+    sha256 = "1d98f28653e80c827eb00b455ef81eae4389c513acf4490cda4a057e22ab269b",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-api-jps/2.5.20-dev-3853/kotlin-build-tools-api-jps-2.5.20-dev-3853.jar",
+)
+
+http_file(
+    name = "org_jetbrains_kotlin-kotlin-build-tools-api-jps-2_5_20-dev-3853-sources_http",
+    downloaded_file_path = "kotlin-build-tools-api-jps-2.5.20-dev-3853-sources.jar",
+    sha256 = "3e9cb600a73097334d8e3bc7ab77f2c22b56b3f4605cc04a7829f7b68a6b3c4a",
+    url = "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/kotlin/kotlin-build-tools-api-jps/2.5.20-dev-3853/kotlin-build-tools-api-jps-2.5.20-dev-3853-sources.jar",
+)
+
+http_file(
     name = "org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_5_20-dev-3853_http",
     downloaded_file_path = "kotlin-build-tools-cri-impl-2.5.20-dev-3853.jar",
     sha256 = "e5765d82a28c94108a07f049b41f4d4aa27def0b9a54b9e543a0845746d35d2a",

@@ -13,6 +13,7 @@
         <entry key="kotlinc.js-plain-objects-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-common-tests" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-tools-api" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-build-tools-api-jps" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-tools-cri-impl" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-build-tools-impl" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.kotlin-compiler-cli" value="kotlin.util.compiler-classpath" />

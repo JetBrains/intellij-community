@@ -5225,6 +5225,28 @@ java_library(
 )
 
 copy_file(
+    name = "org.jetbrains.kotlin/kotlin-build-tools-api-jps-2.5.20-dev-3853.jar_copy",
+    src = "@org_jetbrains_kotlin-kotlin-build-tools-api-jps-2_5_20-dev-3853_http//file",
+    out = "org.jetbrains.kotlin/kotlin-build-tools-api-jps-2.5.20-dev-3853.jar",
+    allow_symlink = True,
+    visibility = ["//visibility:public"],
+)
+
+jvm_import(
+    name = "kotlinc-kotlin-build-tools-api-jps",
+    jar = "@org_jetbrains_kotlin-kotlin-build-tools-api-jps-2_5_20-dev-3853_http//file",
+    source_jar = "@org_jetbrains_kotlin-kotlin-build-tools-api-jps-2_5_20-dev-3853-sources_http//file",
+    visibility = ["//visibility:public"],
+)
+
+java_library(
+    name = "kotlinc-kotlin-build-tools-api-jps-provided",
+    neverlink = True,
+    visibility = ["//visibility:public"],
+    exports = [":kotlinc-kotlin-build-tools-api-jps"],
+)
+
+copy_file(
     name = "org.jetbrains.kotlin/kotlin-build-tools-cri-impl-2.5.20-dev-3853.jar_copy",
     src = "@org_jetbrains_kotlin-kotlin-build-tools-cri-impl-2_5_20-dev-3853_http//file",
     out = "org.jetbrains.kotlin/kotlin-build-tools-cri-impl-2.5.20-dev-3853.jar",

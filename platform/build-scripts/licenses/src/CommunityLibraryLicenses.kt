@@ -1527,6 +1527,7 @@ val COMMUNITY_LICENSES_LIST: List<LibraryLicense> = listOf(
     jetbrainsLibrary("kotlinc.compose-compiler-plugin"),
     jetbrainsLibrary("kotlinc.js-plain-objects-compiler-plugin"),
     jetbrainsLibrary("kotlinc.kotlin-build-tools-api"),
+    jetbrainsLibrary("kotlinc.kotlin-build-tools-api-jps"),
     jetbrainsLibrary("kotlinc.kotlin-build-tools-cri-impl"),
     jetbrainsLibrary("kotlinc.kotlin-build-tools-impl"),
     jetbrainsLibrary("kotlinc.kotlin-compiler-cli"),
