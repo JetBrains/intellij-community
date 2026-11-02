@@ -20,7 +20,6 @@ import java.util.Set;
 
 @ApiStatus.Internal
 public final class StubProcessingHelper extends StubProcessingHelperBase {
-  private static final boolean SKIP_INDEX_REPAIR_ON_ERROR = Boolean.getBoolean("skip.index.repair");
   static final boolean REPORT_SENSITIVE_DATA_ON_ERROR =
     ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isInternal();
 
@@ -72,7 +71,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
 
   @Override
   protected void onInternalError(final VirtualFile file) {
-    if (SKIP_INDEX_REPAIR_ON_ERROR) return;
+    if (!StubRecoveryService.isRecoveryEnabled()) return;
     Set<VirtualFile> set = myFilesHavingProblems.get();
     if (set == null) {
       myFilesHavingProblems.set(set = new HashSet<>());
@@ -82,7 +81,7 @@ public final class StubProcessingHelper extends StubProcessingHelperBase {
 
   @Nullable
   Set<VirtualFile> takeAccumulatedFilesWithIndexProblems() {
-    if (SKIP_INDEX_REPAIR_ON_ERROR) return null;
+    if (!StubRecoveryService.isRecoveryEnabled()) return null;
     Set<VirtualFile> filesWithProblems = myFilesHavingProblems.get();
     if (filesWithProblems != null) myFilesHavingProblems.remove();
     return filesWithProblems;
