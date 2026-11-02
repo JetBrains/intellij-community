@@ -156,6 +156,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
 
   /**
    * Waits for the update jobs of the open files.
+   * It also waits for the update-all job that [updateAllNotifications] starts from a background thread in unit-test mode.
    * A job needs the EDT, so call it from a background thread or from a coroutine that can suspend.
    */
   @TestOnly
@@ -237,7 +238,7 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun doUpdateNotifications(file: VirtualFile, fileEditorManager: FileEditorManager) {
     var editors = getEditors(file, fileEditorManager)
     if (!ApplicationManager.getApplication().isHeadlessEnvironment) {
@@ -389,21 +390,36 @@ class EditorNotificationsImpl(private val project: Project, coroutineScope: Coro
     return fileEditor.getUserData(FILE_LEVEL_INTENTIONS) ?: emptyList()
   }
 
+  /**
+   * In unit-test mode, a call on the EDT starts the update jobs of the open files at once.
+   * A call from another thread starts a job on the EDT.
+   * [awaitUpdateJobs] and [completeAsyncTasks] wait for this job.
+   */
   override fun updateAllNotifications() {
     if (project.isDefault) {
       throw UnsupportedOperationException("Editor notifications aren't supported for default project")
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    val application = ApplicationManager.getApplication()
+    if (application.isUnitTestMode) {
       val fileEditorManager = FileEditorManager.getInstance(project) ?: throw IllegalStateException("No FileEditorManager for $project")
-      doUpdateAllNotifications(fileEditorManager)
+      if (application.isDispatchThread) {
+        doUpdateAllNotifications(fileEditorManager)
+      }
+      else {
+        coroutineScope.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+          if (!project.isDisposed) {
+            doUpdateAllNotifications(fileEditorManager)
+          }
+        }
+      }
     }
     else {
       check(updateAllRequests.tryEmit(Unit))
     }
   }
 
-  @RequiresEdt(generateAssertion = false /* IJPL-115548 */)
+  @RequiresEdt
   private fun doUpdateAllNotifications(fileEditorManager: FileEditorManager) {
     for (file in fileEditorManager.openFilesWithRemotes) {
       doUpdateNotifications(file, fileEditorManager)
