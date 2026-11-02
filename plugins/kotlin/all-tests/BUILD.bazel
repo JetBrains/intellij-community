@@ -123,6 +123,7 @@ jvm_library(
         "//plugins/kotlin/gradle/gradle-java/tests.shared:kotlin-gradle-gradle-java-tests-shared-tests_test_lib",
         "//plugins/kotlin/j2k/shared/tests:tests_test_lib",
         "//plugins/kotlin/jps/graphImplementationTests:graphImplementationTests_test_lib",
+        "//plugins/kotlin/jps/builder/tests:tests_test_lib",
         "//plugins/kotlin/jvm-debugger/testFramework:testFramework_test_lib",
     ],
 )

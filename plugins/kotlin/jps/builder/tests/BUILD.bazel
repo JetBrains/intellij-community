@@ -1,0 +1,75 @@
+load("@community//build:tests-options.bzl", "jps_test")
+load("@rules_jvm//:jvm.bzl", "jvm_library")
+
+# The overlay of the published test data of the Kotlin repository
+filegroup(
+    name = "testData",
+    srcs = glob(
+        ["testData/**"],
+        allow_empty = True,
+    ),
+    visibility = ["//visibility:public"],
+)
+
+jps_test(
+    name = "tests_test",
+    data = [
+        ":testData",
+    ],
+    runtime_deps = [":tests_test_lib"],
+)
+### skip generation section `test intellij.kotlin.builder.jps.tests`
+
+### auto-generated section `build intellij.kotlin.builder.jps.tests` start
+jvm_library(
+    name = "tests_test_lib",
+    testonly = True,
+    srcs = glob(
+        [
+            "test/**/*.kt",
+            "test/**/*.java",
+            "test/**/*.form",
+            "test-gen/**/*.kt",
+            "test-gen/**/*.java",
+        ],
+        allow_empty = True,
+    ),
+    module_name = "intellij.kotlin.builder.jps.tests",
+    resource_strip_prefix = "testResources",
+    resources = glob(
+        ["testResources/**/*"],
+    ),
+    visibility = ["//visibility:public"],
+    deps = [
+        # do not sort,
+        "@lib//:kotlin-stdlib",
+        "//libraries/junit4",
+        "//libraries/junit6",
+        "//plugins/kotlin/jps/builder:kotlin-builder-jps",
+        "//plugins/kotlin/jps/util/runtime",
+        "//jps/jps-builders:build",
+        "//jps/jps-builders:build-tests_test_lib",
+        "//jps/model-api:model",
+        "//jps/model-serialization",
+        "//platform/testFramework",
+        "//platform/util",
+        "//platform/testFramework/core",
+        "//platform/testFramework/common",
+        "//platform/bazel-runfiles",
+        "//plugins/kotlin/base/pluginTestFramework:kotlin-base-plugin-testFramework",
+        "//libraries/kotlinc/kotlin-compiler-common:libraries-kotlinc-kotlin-compiler-common",
+        "//libraries/asm",
+        "@community//build:build-javac-rt",
+        "@lib//:kotlinc-kotlin-build-tools-api",
+    ],
+)
+### auto-generated section `build intellij.kotlin.builder.jps.tests` end
+
+### auto-generated section `iml intellij.kotlin.builder.jps.tests` start
+exports_files(
+    [
+        "intellij.kotlin.builder.jps.tests.iml",
+    ],
+    visibility = ["//visibility:public"],
+)
+### auto-generated section `iml intellij.kotlin.builder.jps.tests` end

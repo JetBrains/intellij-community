@@ -68,5 +68,6 @@
     <orderEntry type="module" module-name="intellij.kotlin.base.scripting.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.libraries.junit6" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.scratch.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.kotlin.builder.jps.tests" scope="TEST" />
   </component>
 </module>

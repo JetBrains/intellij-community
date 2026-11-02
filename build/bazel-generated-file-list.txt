@@ -1609,8 +1609,9 @@ plugins/kotlin/j2k/k2/tests
 plugins/kotlin/j2k/mcp
 plugins/kotlin/j2k/shared/tests
 plugins/kotlin/jps/builder
-plugins/kotlin/jps/common
+plugins/kotlin/jps/builder/tests
 plugins/kotlin/jps/graphImplementationTests
+plugins/kotlin/jps/util/runtime
 plugins/kotlin/jsr223
 plugins/kotlin/jvm-debugger/base/util
 plugins/kotlin/jvm-debugger/core

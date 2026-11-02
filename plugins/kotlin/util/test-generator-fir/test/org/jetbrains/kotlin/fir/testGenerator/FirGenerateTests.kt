@@ -134,6 +134,7 @@ import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileFull
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinConverterSingleFileTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2JavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.j2k.k2.AbstractK2TextJavaToKotlinCopyPasteConversionTest
+import org.jetbrains.kotlin.jps.build.generateKotlinJpsBuilderTests
 import org.jetbrains.kotlin.parcelize.ide.test.AbstractParcelizeK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.generator.TestGenerator
 import org.jetbrains.kotlin.testGenerator.model.GroupCategory.CODE_INSIGHT
@@ -172,6 +173,7 @@ fun assembleK2Workspace(): TWorkspace = assembleWorkspace()
 fun generateK2Tests(isUpToDateCheck: Boolean = false) {
     System.setProperty("java.awt.headless", "true")
     TestGenerator.write(assembleWorkspace(), isUpToDateCheck)
+    generateKotlinJpsBuilderTests(isUpToDateCheck)
 }
 
 private fun assembleWorkspace(): TWorkspace = workspace() {

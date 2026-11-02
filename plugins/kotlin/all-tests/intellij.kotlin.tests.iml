@@ -114,6 +114,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.j2k.shared.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jps.graphImplementationTests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.kotlin.builder.jps.tests" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.testFramework" scope="RUNTIME" />
   </component>
 </module>
