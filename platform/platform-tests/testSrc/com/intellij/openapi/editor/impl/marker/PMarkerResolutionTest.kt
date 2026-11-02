@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test
 @UsePMarkerImplementation
 internal class PMarkerResolutionTest {
   private val markerForHandles: SnapshotRangeMarkerImpl by lazy {
-    SnapshotMarkerEngineImpl.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy) as SnapshotRangeMarkerImpl
+    SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, 0, false, DefaultMarkerPolicy)
   }
   private val handles: ArrayList<SnapshotMarkerReference<*>> = ArrayList()
 

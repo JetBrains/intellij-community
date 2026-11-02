@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRangeScalarUtil
@@ -19,7 +19,7 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
   }
 
   fun create(startOffset: Int, endOffset: Int): SnapshotFocusRegion {
-    SnapshotMarkerEngineImpl.processQueue()
+    SnapshotMarkerEngine.processQueue()
     val snapshot = currentSnapshot()
     require(startOffset >= 0) { "startOffset must be non-negative" }
     require(endOffset >= startOffset) { "endOffset must not precede startOffset" }
@@ -46,7 +46,7 @@ internal class SnapshotFocusRegionStorage(val document: DocumentImpl) {
   }
 
   fun processOverlapping(startOffset: Int, endOffset: Int, processor: Processor<in RangeMarkerEx>): Boolean {
-    return SnapshotMarkerEngineImpl.processRangeMarkersOverlappingWith(rootStore, currentSnapshot(), startOffset, endOffset, 0, processor)
+    return SnapshotMarkerEngine.processRangeMarkersOverlappingWith(rootStore, currentSnapshot(), startOffset, endOffset, 0, processor)
   }
 
   fun currentSnapshot(): DocumentSnapshot = document.core.snapshot()

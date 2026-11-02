@@ -24,8 +24,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.RangeMarkers;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
-import com.intellij.openapi.editor.impl.marker.SnapshotMarker;
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl;
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine;
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -1264,7 +1263,7 @@ public class RangeMarkerTest {
   public void testInvalidMarkerIsPurgedAfterGc() {
     Ref<RangeMarkerEx> markerRef = new Ref<>(createMarker("0123456789", 2, 5));
     long markerId = markerRef.get().getId();
-    boolean snapshotMarker = markerRef.get() instanceof SnapshotMarker;
+    boolean snapshotMarker = markerRef.get() instanceof SnapshotRangeMarkerImpl;
     var handle = snapshotMarker ? ((SnapshotRangeMarkerImpl)markerRef.get()).getMarkerHandle() : null;
     deleteString(document, 1, 6);
     assertFalse(markerRef.get().isValid());
@@ -1274,7 +1273,7 @@ public class RangeMarkerTest {
     GCUtil.tryGcSoftlyReachableObjects(() -> reference.get() == null);
     assertNull(reference.get());
     if (snapshotMarker) {
-      while (!SnapshotMarkerEngineImpl.INSTANCE.processQueue()) {
+      while (!SnapshotMarkerEngine.INSTANCE.processQueue()) {
         Thread.yield();
       }
     }

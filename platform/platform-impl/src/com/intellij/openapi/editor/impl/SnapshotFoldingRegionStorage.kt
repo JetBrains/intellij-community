@@ -17,7 +17,7 @@ import com.intellij.openapi.editor.impl.marker.MarkerTransformError
 import com.intellij.openapi.editor.impl.marker.MarkerTransformResult
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PMarkerRoot
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerReference
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
@@ -91,7 +91,7 @@ internal class SnapshotFoldingRegionStorage(
     if (region !is SnapshotFoldRegion || region.storage !== this) return false
     if (region.markerHandle !in registeredRegions || !region.isValid) return false
     model.notifyBeforeFoldRegionDisposed(region)
-    val removed = SnapshotMarkerEngineImpl.removeRangeMarker(region)
+    val removed = SnapshotMarkerEngine.removeRangeMarker(region)
     registeredRegions.remove(region.markerHandle)
     return removed
   }

@@ -134,8 +134,8 @@ internal class SnapshotRangeMarkerImplTest {
   fun `root insertion does not need a live marker for its policy`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
-      val marker = SnapshotMarkerEngineImpl.createRangeMarker(DocumentImpl("", true), 0, 0, spec, false, DefaultMarkerPolicy)
-      val handle = PMarkerRootImpl.empty().createHandle(marker as SnapshotRangeMarkerImpl, false)
+      val marker = SnapshotMarkerEngine.createRangeMarker(DocumentImpl("", true), 0, 0, spec, false, DefaultMarkerPolicy)
+      val handle = PMarkerRootImpl.empty().createHandle(marker, false)
       (handle as Reference<*>).clear()
       val policy = MarkerPolicy { _, _, _, _ -> error("Insertion must not transform the marker") }
       val root = PMarkerRootImpl.empty().insert(handle, 2, 4, spec, flavorFlags = 0, policy = policy)
@@ -150,9 +150,9 @@ internal class SnapshotRangeMarkerImplTest {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)
       val policy = MarkerPolicy { entry, _, _, _ -> MarkerTransformResult(entry.nodeStart, 6) }
-      val marker = SnapshotMarkerEngineImpl.createRangeMarker(
+      val marker = SnapshotMarkerEngine.createRangeMarker(
         document, 2, 4, MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false), policy = policy,
-      ) as SnapshotRangeMarkerImpl
+      )
 
       marker.isGreedyToLeft = true
       marker.isGreedyToRight = true
@@ -185,7 +185,7 @@ internal class SnapshotRangeMarkerImplTest {
       reference.set(shifted.remove(marker.markerHandle))
 
       repeat(2) {
-        assertEquals(PMarkerResolution.ABSENT, SnapshotMarkerEngineImpl.resolveRangeMarker(marker, reference.get()))
+        assertEquals(PMarkerResolution.ABSENT, SnapshotMarkerEngine.resolveRangeMarker(marker, reference.get()))
         assertFalse(marker.isValid)
         assertEquals(2, marker.startOffset)
         assertEquals(4, marker.endOffset)
@@ -197,7 +197,7 @@ internal class SnapshotRangeMarkerImplTest {
 
       marker.dispose()
       repeat(2) {
-        assertEquals(PMarkerResolution.ABSENT, SnapshotMarkerEngineImpl.resolveRangeMarker(marker, reference.get()))
+        assertEquals(PMarkerResolution.ABSENT, SnapshotMarkerEngine.resolveRangeMarker(marker, reference.get()))
         assertFalse(marker.isValid)
         assertEquals(4, marker.startOffset)
         assertEquals(6, marker.endOffset)

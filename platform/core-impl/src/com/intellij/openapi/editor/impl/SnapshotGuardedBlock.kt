@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.util.TextRangeScalarUtil
 
@@ -22,7 +22,7 @@ internal class SnapshotGuardedBlock private constructor(
     fun create(document: DocumentImpl, startOffset: Int, endOffset: Int): SnapshotGuardedBlock {
       val spec = MarkerSpec.create(isGreedyToLeft = false, isGreedyToRight = false)
       val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, endOffset)
-      return SnapshotMarkerEngineImpl.createRangeMarker(
+      return SnapshotMarkerEngine.createRangeMarker(
         document,
         startOffset,
         endOffset,

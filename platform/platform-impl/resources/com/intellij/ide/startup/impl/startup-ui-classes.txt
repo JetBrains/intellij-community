@@ -10725,7 +10725,6 @@ com.intellij.ide.scratch.FewRootsLightDirectoryIndex$1
 com.intellij.ide.scratch.FewRootsLightDirectoryIndex$2
 com.intellij.internal.statistic.eventLog.events.StringListEventField$ValidatedByAllowedValues
 com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
-com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
 com.intellij.openapi.editor.impl.marker.VirtualFileMarkerRoot$Companion
 com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil$getCustomEditorTabTitleAsync$1
 com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil$getEditorTabTitleAsync$1

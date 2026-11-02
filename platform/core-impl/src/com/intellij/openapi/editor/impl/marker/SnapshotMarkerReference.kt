@@ -1,7 +1,6 @@
 // Copyright 2000-2026 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.marker
 
-import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicLong
 
@@ -29,7 +28,7 @@ internal open class StrongSnapshotMarkerReference<out T : SnapshotRangeMarkerImp
 
 /** Queues this reference for cleanup after its marker is collected. */
 internal open class WeakSnapshotMarkerReference<T : SnapshotRangeMarkerImpl>(marker: T) :
-  WeakReference<T>(marker, SnapshotMarkerEngineImpl.markerQueue), SnapshotMarkerReference<T?> {
+  WeakReference<T>(marker, SnapshotMarkerEngine.markerQueue), SnapshotMarkerReference<T?> {
   final override val order: Long = SnapshotMarkerReference.nextOrder()
   internal val rootStorageReference: WeakReference<MarkerRootUpdater> = marker.rootStorage.weakReference
 

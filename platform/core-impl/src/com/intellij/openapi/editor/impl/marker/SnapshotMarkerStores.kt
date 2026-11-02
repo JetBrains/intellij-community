@@ -6,7 +6,6 @@ import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore.CapturedRoot
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.util.IdentityHashMap
 
@@ -94,7 +93,7 @@ class SnapshotMarkerStores {
     isCurrent: () -> Boolean,
     publish: () -> Unit,
   ): Boolean {
-    SnapshotMarkerEngineImpl.processQueue()
+    SnapshotMarkerEngine.processQueue()
     val version: Long
     val capturedRoots: List<CapturedRoot>
     synchronized(this) {
@@ -161,7 +160,7 @@ class SnapshotMarkerStores {
    * @return [metadataSnapshot] if the snapshots are identical or no store contains either snapshot; otherwise, a new snapshot
    */
   fun mergeMarkerRoots(markerSnapshot: DocumentSnapshot, metadataSnapshot: DocumentSnapshot): DocumentSnapshot {
-    SnapshotMarkerEngineImpl.processQueue()
+    SnapshotMarkerEngine.processQueue()
     if (markerSnapshot === metadataSnapshot) return metadataSnapshot
 
     val relevantStores = stores.filter { it.containsSnapshot(markerSnapshot) || it.containsSnapshot(metadataSnapshot) }

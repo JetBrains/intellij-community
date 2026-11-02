@@ -8,7 +8,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater
 import java.util.concurrent.atomic.AtomicReference
 
@@ -23,7 +22,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   private var spec: Byte,
   initialRange: Long,
   retainStrong: Boolean,
-) : UserDataHolderBase(), SnapshotMarker, RangeMarkerEx {
+) : UserDataHolderBase(), RangeMarkerEx {
   /** Reused for every root operation, including offset reads. */
   val markerHandle: SnapshotMarkerReference<*> = rootStorage.createHandle(this, retainStrong)
 
@@ -136,7 +135,7 @@ open class SnapshotRangeMarkerImpl private constructor(
       try {
         beforeDispose()
         markDisposed()
-        SnapshotMarkerEngineImpl.removeRangeMarker(this)
+        SnapshotMarkerEngine.removeRangeMarker(this)
         afterDispose()
       }
       finally {
@@ -198,7 +197,7 @@ open class SnapshotRangeMarkerImpl private constructor(
       PMarkerResolution.UNRESOLVED
     }
     val resolution = if (advanced != PMarkerResolution.UNRESOLVED) advanced
-                            else SnapshotMarkerEngineImpl.resolveRangeMarker(this, root)
+                            else SnapshotMarkerEngine.resolveRangeMarker(this, root)
     cacheResolution(root, resolution)
     return resolution
   }

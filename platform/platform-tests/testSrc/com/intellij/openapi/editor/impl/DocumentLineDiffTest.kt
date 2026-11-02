@@ -6,8 +6,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.editor.impl.marker.MarkerSpec
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
 import com.intellij.openapi.editor.impl.marker.PersistentMarkerPolicy
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngineImpl
-import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -16,6 +15,7 @@ import org.junit.jupiter.api.Timeout
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+
 @UsePMarkerImplementation
 internal class DocumentLineDiffTest {
   @Test
@@ -63,7 +63,7 @@ internal class DocumentLineDiffTest {
     val document = DocumentImpl(OLD_TEXT, true)
     val initialSnapshot = document.core.snapshot()
     val markerStart = OLD_TEXT.indexOf("target") + 1
-    val marker = SnapshotMarkerEngineImpl.createRangeMarker(
+    val marker = SnapshotMarkerEngine.createRangeMarker(
       document,
       markerStart,
       markerStart + 3,
@@ -72,7 +72,7 @@ internal class DocumentLineDiffTest {
         isGreedyToRight = false,
       ),
       policy = PersistentMarkerPolicy,
-    ) as SnapshotRangeMarkerImpl
+    )
     val patch = DocumentPatch.simple(
       startOffset = 0,
       endOffset = OLD_TEXT.length,
@@ -86,7 +86,7 @@ internal class DocumentLineDiffTest {
 
     runConcurrently {
       val snapshot = markerStores.applyPatch(initialSnapshot, patch)
-      val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, rootStore.rootReference(snapshot).get())
+      val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, rootStore.rootReference(snapshot).get())
       assertEquals(expectedStart, PMarkerResolution.startOffset(resolution))
       assertEquals(expectedStart + 3, PMarkerResolution.endOffset(resolution))
     }
@@ -110,7 +110,7 @@ internal class DocumentLineDiffTest {
       val document = DocumentImpl(oldText, true, true)
       val initialSnapshot = document.core.snapshot()
       val markerStart = oldText.indexOf("target") + 1
-      val marker = SnapshotMarkerEngineImpl.createRangeMarker(
+      val marker = SnapshotMarkerEngine.createRangeMarker(
         document,
         markerStart,
         markerStart + 3,
@@ -119,11 +119,11 @@ internal class DocumentLineDiffTest {
           isGreedyToRight = false,
         ),
         policy = PersistentMarkerPolicy,
-      ) as SnapshotRangeMarkerImpl
+      )
 
       val snapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, patch)
       val root = document.rangeMarkers.rootStore().rootReference(snapshot).get()
-      val resolution = SnapshotMarkerEngineImpl.resolveRangeMarker(marker, root)
+      val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, root)
       return PMarkerResolution.startOffset(resolution) to PMarkerResolution.endOffset(resolution)
     }
 
