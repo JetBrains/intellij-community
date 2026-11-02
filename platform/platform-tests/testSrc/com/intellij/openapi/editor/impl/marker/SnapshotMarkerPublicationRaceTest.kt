@@ -231,7 +231,7 @@ internal class SnapshotMarkerPublicationRaceTest {
     }
 
     private fun isInRootUpdate(): Boolean = Thread.currentThread().stackTrace.any {
-      it.className == VirtualFileMarkerRoot::class.java.name && it.methodName.startsWith("updateRootAtomically")
+      it.className == VirtualFileMarkerRoot::class.java.name && it.methodName == "updateCurrentRoot"
     }
 
     fun pauseIn(thread: Thread) {

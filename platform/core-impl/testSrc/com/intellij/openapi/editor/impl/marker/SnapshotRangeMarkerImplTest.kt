@@ -50,6 +50,26 @@ internal class SnapshotRangeMarkerImplTest {
   }
 
   @Test
+  fun `updates to a previous snapshot preserve the current root`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val document = DocumentImpl("abcdefgh", true)
+      val marker = document.createRangeMarker(2, 4) as SnapshotRangeMarkerImpl
+      val store = document.rangeMarkers.rootStore()
+      val previous = document.core.snapshot()
+      document.insertString(0, "x")
+      val current = document.core.snapshot()
+      val currentRoot = checkNotNull(store.root(current))
+
+      store.updateRoot(previous) { it.remove(marker.markerHandle) }
+
+      assertFalse(checkNotNull(store.root(previous)).isValid(marker.markerHandle))
+      assertSame(currentRoot, store.root(current))
+      assertTrue(marker.isValid)
+      assertEquals(TextRange(3, 5), marker.textRange)
+    }
+  }
+
+  @Test
   fun `a failed snapshot publication preserves marker offsets`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)

@@ -105,7 +105,7 @@ final class VirtualFileMarkerRootTest {
         updateStarted.countDown();
         await(finishUpdate);
         return root.insert(handle, 1, 2, MarkerSpec.create(false, false), (byte)0, 0, DefaultMarkerPolicy.INSTANCE);
-      })
+      }) != null
     );
     new Thread(updateTask, "file marker root update").start();
     assertTrue(updateStarted.await(30, TimeUnit.SECONDS));

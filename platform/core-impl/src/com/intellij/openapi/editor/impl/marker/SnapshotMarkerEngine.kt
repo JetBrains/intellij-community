@@ -74,7 +74,7 @@ object SnapshotMarkerEngine {
     val fileRoot = VirtualFileMarkerRoot.getOrCreate(documentImpl)
 
     val marker = markerFactory(fileRoot)
-    val insertedRoot = checkNotNull(rootStore.updateCurrentRootAtomically { currentSnapshot, root ->
+    val insertedRoot = checkNotNull(rootStore.updateCurrentRoot { currentSnapshot, root ->
       require(endOffset <= currentSnapshot.text().length()) { "Marker range exceeds snapshot length" }
       root.insert(marker.markerHandle, startOffset, endOffset, spec, marker.flavorFlags, policy = policy)
     })
@@ -110,7 +110,7 @@ object SnapshotMarkerEngine {
     }
     val initialRange = TextRangeScalarUtil.toScalarRange(startOffset, startOffset)
     val marker = SnapshotLazyRangeMarker(fileRoot, spec, initialRange, initialLineColumns)
-    val insertedRoot = checkNotNull(fileRoot.updateRootAtomically(null) { it: PMarkerRoot ->
+    val insertedRoot = checkNotNull(fileRoot.updateCurrentRoot { it: PMarkerRoot ->
       it.insert(marker.markerHandle, startOffset, startOffset, spec, marker.flavorFlags, policy = policy)
     })
     marker.cacheResolution(insertedRoot, PMarkerResolution.valid(initialRange))

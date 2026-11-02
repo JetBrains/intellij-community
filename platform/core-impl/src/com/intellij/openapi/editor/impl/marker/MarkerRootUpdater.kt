@@ -3,7 +3,6 @@ package com.intellij.openapi.editor.impl.marker
 
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.util.ObjectUtilsRt
-import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 
@@ -27,14 +26,6 @@ abstract class MarkerRootUpdater {
   internal abstract fun createHandle(marker: SnapshotRangeMarkerImpl, retainStrong: Boolean): SnapshotMarkerReference<*>
 
   /**
-   * Applies [update] to the root for the current document state.
-   * [update] can run more than once and must have no side effects.
-   *
-   * @return `true` if this call publishes a new root, or `false` if it publishes no new root
-   */
-  fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean = updateRootAtomically(null, update) != null
-
-  /**
    * Purges collected [handles] from the current root when [document] is available.
    *
    * @return `true` if the purge publishes a new root
@@ -52,7 +43,7 @@ abstract class MarkerRootUpdater {
    */
   protected fun purgeCollected(document: DocumentImpl?, handles: Collection<SnapshotMarkerReference<*>>): Boolean {
     try {
-      return updateCurrentRoot { it.purgeMany(handles) }
+      return updateCurrentRoot { it.purgeMany(handles) } != null
     }
     finally {
       if (document != null) ObjectUtilsRt.reachabilityFence(document)
@@ -66,26 +57,30 @@ abstract class MarkerRootUpdater {
   internal abstract fun currentRootReference(): AtomicReference<PMarkerRoot>
 
   /**
-   * Applies [update] and publishes a new root with compare-and-set.
+   * Applies [update] to the current root with this updater's publication protocol.
+   * [update] can run more than once and must have no side effects.
    *
-   * A `null` [rootReference] selects [currentRootReference] on each attempt.
-   * A non-null reference remains the update target for all attempts.
+   * @return the root published by this call, or `null` if it publishes no new root
+   */
+  abstract fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot?
+
+  /**
+   * Applies [update] to [rootReference] with compare-and-set. Every retry uses the supplied reference.
    *
    * [update] can run again after a failed publication and must have no side effects.
    * Returning the input root instance skips publication.
    *
    * @return the root published by this call, or `null` if it publishes no new root
    */
-  internal open fun updateRootAtomically(
-    rootReference: AtomicReference<PMarkerRoot>?,
+  internal fun updateRootAtomically(
+    rootReference: AtomicReference<PMarkerRoot>,
     update: (PMarkerRoot) -> PMarkerRoot,
   ): PMarkerRoot? {
     while (true) {
-      val reference = rootReference ?: currentRootReference()
-      val oldRoot = reference.get()
+      val oldRoot = rootReference.get()
       val newRoot = update(oldRoot)
       if (newRoot === oldRoot) return null
-      if (reference.compareAndSet(oldRoot, newRoot)) return newRoot
+      if (rootReference.compareAndSet(oldRoot, newRoot)) return newRoot
     }
   }
 }

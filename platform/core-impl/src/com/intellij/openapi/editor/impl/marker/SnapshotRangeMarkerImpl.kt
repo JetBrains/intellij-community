@@ -203,7 +203,7 @@ open class SnapshotRangeMarkerImpl private constructor(
   }
 
   internal fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): Boolean {
-    return rootStorage.updateCurrentRoot(update)
+    return rootStorage.updateCurrentRoot(update) != null
   }
 
   fun currentRootReference(): AtomicReference<PMarkerRoot> = currentRootCache?.state?.reference ?: rootStorage.currentRootReference()

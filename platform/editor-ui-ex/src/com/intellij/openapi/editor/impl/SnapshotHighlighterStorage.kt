@@ -54,7 +54,7 @@ internal class SnapshotHighlighterStorage(
       inserted = rootStore.updateCurrentRoot {
         require(endOffset <= document.textLength) { "Highlighter range exceeds document length" }
         it.insert(handle, startOffset, endOffset, spec, flavorFlags, policy = policy)
-      }
+      } != null
     }
     finally {
       if (!inserted) highlighter.unregister()

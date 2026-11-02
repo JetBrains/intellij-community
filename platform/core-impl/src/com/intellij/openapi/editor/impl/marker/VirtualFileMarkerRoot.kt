@@ -46,14 +46,10 @@ class VirtualFileMarkerRoot private constructor(
   }
 
   @Synchronized
-  override fun updateRootAtomically(
-    rootReference: AtomicReference<PMarkerRoot>?, // null means currentRootReference()
-    update: (PMarkerRoot) -> PMarkerRoot,
-  ): PMarkerRoot? {
-    val document = if (rootReference == null) document else null
-    if (document == null) return super.updateRootAtomically(rootReference, update)
+  override fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
+    val document = document ?: return updateRootAtomically(rootReference, update)
     try {
-      return document.rangeMarkers.rootStore().updateRootAtomically(null, update)
+      return document.rangeMarkers.rootStore().updateCurrentRoot(update)
     }
     finally {
       this.rootReference = markerRoot(document)

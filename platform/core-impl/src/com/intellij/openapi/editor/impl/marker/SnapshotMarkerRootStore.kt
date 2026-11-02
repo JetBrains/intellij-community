@@ -151,14 +151,9 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
     return rootReference(document!!.core.snapshot())
   }
 
-  /** Uses the commit gate when [rootReference] is `null`. */
-  override fun updateRootAtomically(
-    rootReference: AtomicReference<PMarkerRoot>?,
-    update: (PMarkerRoot) -> PMarkerRoot,
-  ): PMarkerRoot? {
-    if (rootReference != null) return super.updateRootAtomically(rootReference, update)
-    return updateCurrentRootAtomically { _, root -> update(root) }
-  }
+  /** Publishes updates to the current root through the commit gate. */
+  override fun updateCurrentRoot(update: (PMarkerRoot) -> PMarkerRoot): PMarkerRoot? =
+    updateCurrentRoot { _, root -> update(root) }
 
   /**
    * Applies [update] to the root for [snapshot], creating the root entry when necessary.
@@ -174,7 +169,7 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl?> private constructor(
    *
    * @return the new root, or `null` if the store is disposed or [update] returns the input root
    */
-  internal fun updateCurrentRootAtomically(update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
+  internal fun updateCurrentRoot(update: (DocumentSnapshot, PMarkerRoot) -> PMarkerRoot): PMarkerRoot? {
     val initialRoot = emptyRoot
     val document = documentReference.get()
     val markerStores = document!!.snapshotMarkerStores
