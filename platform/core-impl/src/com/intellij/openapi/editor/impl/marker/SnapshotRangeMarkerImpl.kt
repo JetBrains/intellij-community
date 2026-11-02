@@ -135,7 +135,7 @@ open class SnapshotRangeMarkerImpl private constructor(
       try {
         beforeDispose()
         markDisposed()
-        SnapshotMarkerEngine.removeRangeMarker(this)
+        removeFromCurrentRoot()
         afterDispose()
       }
       finally {
@@ -148,6 +148,28 @@ open class SnapshotRangeMarkerImpl private constructor(
   }
 
   protected open fun afterDispose() {
+  }
+
+  /** Disposes this marker and returns whether this call removes it from the current root. */
+  fun removeFromCurrentRoot(): Boolean {
+    SnapshotMarkerEngine.processQueue()
+    val handle = markerHandle
+    markDisposed()
+    return updateCurrentRoot { it.remove(handle) }
+  }
+
+  /**
+   * Returns this marker's state in [root], or [PMarkerResolution.ABSENT] when the marker is absent.
+   * Marks a retained state as invalid when this marker is disposed.
+   */
+  fun resolve(root: PMarkerRoot): Long {
+    val resolution = root.resolve(markerHandle)
+    return if (isDisposed()) {
+      PMarkerResolution.invalid(resolution)
+    }
+    else {
+      resolution
+    }
   }
 
   /**
@@ -197,7 +219,7 @@ open class SnapshotRangeMarkerImpl private constructor(
       PMarkerResolution.UNRESOLVED
     }
     val resolution = if (advanced != PMarkerResolution.UNRESOLVED) advanced
-                            else SnapshotMarkerEngine.resolveRangeMarker(this, root)
+                            else resolve(root)
     cacheResolution(root, resolution)
     return resolution
   }

@@ -592,7 +592,7 @@ class SnapshotMarkerEngineTest {
     val child = fixture.edit(initialSnapshot, startOffset = 1, endOffset = 5, newFragment = "")
 
     assertRange(marker, initialSnapshot, startOffset = 2, endOffset = 4)
-    val invalid = SnapshotMarkerEngine.resolveRangeMarker(marker, rootFor(marker, child))
+    val invalid = marker.resolve(rootFor(marker, child))
     assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(2, 4)), invalid)
     assertTrue(fixture.document.removeRangeMarker(marker))
     assertDisposed(marker, child, startOffset = 2, endOffset = 4)
@@ -610,7 +610,7 @@ class SnapshotMarkerEngineTest {
     marker.dispose()
 
     val root = rootFor(marker, currentSnapshot)
-    val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, root)
+    val resolution = marker.resolve(root)
     assertEquals("Marker is disposed", SnapshotMarkerEngine.invalidationReason(marker, root))
     assertEquals(PMarkerResolution.ABSENT, resolution)
     assertFalse(marker.isValid)
@@ -632,7 +632,7 @@ class SnapshotMarkerEngineTest {
 
     val currentSnapshot = fixture.document.core.snapshot()
     val root = rootFor(marker, currentSnapshot)
-    val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, root)
+    val resolution = marker.resolve(root)
     assertEquals(PMarkerResolution.ABSENT, resolution)
     assertEquals("Marker is disposed", SnapshotMarkerEngine.invalidationReason(marker, root))
     assertFalse(marker.isValid)
@@ -1413,7 +1413,7 @@ class SnapshotMarkerEngineTest {
     fixture.document.insertString(0, "XX")
 
     assertSame(fixture.document, marker.document)
-    val initialResolution = SnapshotMarkerEngine.resolveRangeMarker(marker, rootFor(marker, fixture.initialSnapshot))
+    val initialResolution = marker.resolve(rootFor(marker, fixture.initialSnapshot))
     assertEquals(2, PMarkerResolution.startOffset(initialResolution))
     assertEquals(4, PMarkerResolution.endOffset(initialResolution))
 
@@ -1424,7 +1424,7 @@ class SnapshotMarkerEngineTest {
   }
 
   private fun assertCurrentResolution(marker: SnapshotRangeMarkerImpl, message: String = "", disposedRange: TextRange? = null) {
-    val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, marker.currentRootReference().get())
+    val resolution = marker.resolve(marker.currentRootReference().get())
     val expected = if (PMarkerResolution.isAbsent(resolution)) checkNotNull(disposedRange) { message }
     else PMarkerResolution.toTextRange(resolution)
     val actual = marker.textRange
@@ -1435,19 +1435,19 @@ class SnapshotMarkerEngineTest {
   }
 
   private fun assertRange(marker: SnapshotRangeMarkerImpl, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
-    val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, rootFor(marker, snapshot))
+    val resolution = marker.resolve(rootFor(marker, snapshot))
     assertEquals(startOffset, PMarkerResolution.startOffset(resolution))
     assertEquals(endOffset, PMarkerResolution.endOffset(resolution))
   }
 
   private fun assertAbsent(marker: SnapshotRangeMarkerImpl, snapshot: DocumentSnapshot) {
-    val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, rootFor(marker, snapshot))
+    val resolution = marker.resolve(rootFor(marker, snapshot))
     assertEquals(PMarkerResolution.ABSENT, resolution)
   }
 
   private fun assertDisposed(marker: SnapshotRangeMarkerImpl, snapshot: DocumentSnapshot, startOffset: Int, endOffset: Int) {
     val root = rootFor(marker, snapshot)
-    val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, root)
+    val resolution = marker.resolve(root)
     assertEquals("Marker is disposed", SnapshotMarkerEngine.invalidationReason(marker, root))
     assertEquals(PMarkerResolution.invalid(TextRangeScalarUtil.toScalarRange(startOffset, endOffset)), resolution)
   }

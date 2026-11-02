@@ -9,7 +9,6 @@ import com.intellij.openapi.editor.InlayModel
 import com.intellij.openapi.editor.InlayProperties
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
@@ -63,7 +62,7 @@ class SnapshotInlayModelTest {
       val marker = editor.inlayModel.addInlineElement(2, false, renderer)!! as SnapshotRangeMarkerImpl
       val rootStore = editor.inlayModel.rootStore()
       val shiftedSnapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, textPatch(0, 0, "xy"))
-      val shiftedResolution = SnapshotMarkerEngine.resolveRangeMarker(marker, rootStore.rootReference(shiftedSnapshot).get())
+      val shiftedResolution = marker.resolve(rootStore.rootReference(shiftedSnapshot).get())
 
       BranchState(
         initialOffset = marker.startOffset,

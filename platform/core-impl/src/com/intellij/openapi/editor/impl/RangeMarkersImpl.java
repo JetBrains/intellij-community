@@ -91,7 +91,7 @@ public final class RangeMarkersImpl implements RangeMarkers {
   @Override
   public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) {
     if (rangeMarker instanceof SnapshotRangeMarkerImpl) {
-      return SnapshotMarkerEngine.INSTANCE.removeRangeMarker((SnapshotRangeMarkerImpl)rangeMarker);
+      return ((SnapshotRangeMarkerImpl)rangeMarker).removeFromCurrentRoot();
     }
     return treeFor(rangeMarker).removeInterval(rangeMarker);
   }

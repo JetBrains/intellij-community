@@ -143,14 +143,6 @@ object SnapshotMarkerEngine {
     return purgedAny
   }
 
-  /** Disposes [marker] and returns whether this call removes it from the current root. */
-  fun removeRangeMarker(marker: SnapshotRangeMarkerImpl): Boolean {
-    processQueue()
-    val handle = marker.markerHandle
-    marker.markDisposed()
-    return marker.updateCurrentRoot { it.remove(handle) }
-  }
-
   /**
    * Processes valid markers from one captured root by increasing start offset, then marker ID.
    * Includes markers beyond the snapshot text length. Purges collected handles and skips disposed markers.
@@ -216,20 +208,6 @@ object SnapshotMarkerEngine {
     fun purgeCollected(rootStore: SnapshotMarkerRootStore<*>, snapshot: DocumentSnapshot) {
       val handles = collectedHandles ?: return
       rootStore.purgeMany(snapshot, handles)
-    }
-  }
-
-  /**
-   * Returns the marker state in [root], or [PMarkerResolution.ABSENT] when the marker is absent.
-   * Marks a retained state as invalid when the marker is disposed.
-   */
-  fun resolveRangeMarker(marker: SnapshotRangeMarkerImpl, root: PMarkerRoot): Long {
-    val resolution = root.resolve(marker.markerHandle)
-    return if (marker.isDisposed()) {
-      PMarkerResolution.invalid(resolution)
-    }
-    else {
-      resolution
     }
   }
 

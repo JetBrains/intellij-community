@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import com.intellij.openapi.util.Disposer
@@ -34,7 +33,7 @@ class SnapshotFocusModeModelTest {
     assertThat(region.isValid).isTrue()
 
     val branch = document.snapshotMarkerStores.applyPatch(initialSnapshot, textPatch(0, 0, "x"))
-    assertThat(SnapshotMarkerEngine.resolveRangeMarker(snapshotRegion, rootStore.rootReference(branch).get()))
+    assertThat(snapshotRegion.resolve(rootStore.rootReference(branch).get()))
       .isEqualTo(PMarkerResolution.valid(TextRangeScalarUtil.toScalarRange(3, 5)))
     assertThat(region.textRange).isEqualTo(TextRange(2, 4))
     assertThat(region.isValid).isTrue()

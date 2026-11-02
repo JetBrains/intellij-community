@@ -231,7 +231,7 @@ internal class SnapshotRangeMarkerImplTest {
       reference.set(shifted.remove(marker.markerHandle))
 
       repeat(2) {
-        assertEquals(PMarkerResolution.ABSENT, SnapshotMarkerEngine.resolveRangeMarker(marker, reference.get()))
+        assertEquals(PMarkerResolution.ABSENT, marker.resolve(reference.get()))
         assertFalse(marker.isValid)
         assertEquals(2, marker.startOffset)
         assertEquals(4, marker.endOffset)
@@ -243,7 +243,7 @@ internal class SnapshotRangeMarkerImplTest {
 
       marker.dispose()
       repeat(2) {
-        assertEquals(PMarkerResolution.ABSENT, SnapshotMarkerEngine.resolveRangeMarker(marker, reference.get()))
+        assertEquals(PMarkerResolution.ABSENT, marker.resolve(reference.get()))
         assertFalse(marker.isValid)
         assertEquals(4, marker.startOffset)
         assertEquals(6, marker.endOffset)

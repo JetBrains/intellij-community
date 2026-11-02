@@ -4,7 +4,6 @@ package com.intellij.openapi.editor.impl
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl
 import com.intellij.openapi.editor.impl.marker.PMarkerResolution
-import com.intellij.openapi.editor.impl.marker.SnapshotMarkerEngine
 import com.intellij.openapi.editor.impl.marker.SnapshotRangeMarkerImpl
 import com.intellij.openapi.editor.impl.marker.UsePMarkerImplementation
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -76,7 +75,7 @@ internal class DocumentLineDiffTest {
 
     runConcurrently {
       val snapshot = markerStores.applyPatch(initialSnapshot, patch)
-      val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, rootStore.rootReference(snapshot).get())
+      val resolution = marker.resolve(rootStore.rootReference(snapshot).get())
       assertEquals(expectedStart, PMarkerResolution.startOffset(resolution))
       assertEquals(expectedStart + 3, PMarkerResolution.endOffset(resolution))
     }
@@ -104,7 +103,7 @@ internal class DocumentLineDiffTest {
 
       val snapshot = document.snapshotMarkerStores.applyPatch(initialSnapshot, patch)
       val root = document.rangeMarkers.rootStore().rootReference(snapshot).get()
-      val resolution = SnapshotMarkerEngine.resolveRangeMarker(marker, root)
+      val resolution = marker.resolve(root)
       return PMarkerResolution.startOffset(resolution) to PMarkerResolution.endOffset(resolution)
     }
 
