@@ -446,7 +446,6 @@
     <group id="ProjectViewPopupMenuModifyGroup">
       <reference ref="ReformatCode"/>
       <reference ref="OptimizeImports"/>
-      <reference ref="$Delete"/>
       <group id="MarkFileAs">
         <reference ref="OverrideFileTypeAction"/>
         <reference ref="ReverteOverrideFileTypeAction"/>
@@ -471,6 +470,7 @@
       <separator/>
       <reference ref="RenameElement"/>
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
+      <reference ref="$Delete"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
