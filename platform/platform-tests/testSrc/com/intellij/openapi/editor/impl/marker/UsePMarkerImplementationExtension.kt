@@ -11,12 +11,28 @@ import java.lang.reflect.Method
 
 @TestOnly
 class UsePMarkerImplementationExtension : InvocationInterceptor {
+  override fun interceptBeforeAllMethod(
+    invocation: InvocationInterceptor.Invocation<Void?>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
+  ) {
+    intercept(invocation, extensionContext)
+  }
+
+  override fun interceptBeforeEachMethod(
+    invocation: InvocationInterceptor.Invocation<Void?>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
+  ) {
+    intercept(invocation, extensionContext)
+  }
+
   override fun interceptTestMethod(
     invocation: InvocationInterceptor.Invocation<Void?>,
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
-    intercept(invocation, invocationContext)
+    intercept(invocation, extensionContext)
   }
 
   override fun interceptTestTemplateMethod(
@@ -24,15 +40,31 @@ class UsePMarkerImplementationExtension : InvocationInterceptor {
     invocationContext: ReflectiveInvocationContext<Method>,
     extensionContext: ExtensionContext,
   ) {
-    intercept(invocation, invocationContext)
+    intercept(invocation, extensionContext)
+  }
+
+  override fun interceptAfterEachMethod(
+    invocation: InvocationInterceptor.Invocation<Void?>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
+  ) {
+    intercept(invocation, extensionContext)
+  }
+
+  override fun interceptAfterAllMethod(
+    invocation: InvocationInterceptor.Invocation<Void?>,
+    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
+  ) {
+    intercept(invocation, extensionContext)
   }
 
   private fun intercept(
     invocation: InvocationInterceptor.Invocation<Void?>,
-    invocationContext: ReflectiveInvocationContext<Method>,
+    extensionContext: ExtensionContext,
   ) {
-    val annotation = invocationContext.executable.getAnnotation(UsePMarkerImplementation::class.java)
-                     ?: invocationContext.targetClass.getAnnotation(UsePMarkerImplementation::class.java)
+    val annotation = extensionContext.testMethod.orElse(null)?.getAnnotation(UsePMarkerImplementation::class.java)
+                     ?: extensionContext.requiredTestClass.getAnnotation(UsePMarkerImplementation::class.java)
                      ?: error("The range marker implementation annotation is missing")
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException>(annotation.usePMarkerImplementation) {
       invocation.proceed()
@@ -40,7 +72,7 @@ class UsePMarkerImplementationExtension : InvocationInterceptor {
   }
 }
 
-/** Runs an annotated JUnit 5 test with [com.intellij.openapi.editor.ex.RangeMarkers.Holder.USE_PMARKER_IMPLEMENTATION] `=` the selected range marker implementation. */
+/** Selects the range marker implementation for a JUnit 5 test and its setup and teardown methods. */
 @Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
 @ExtendWith(
   UsePMarkerImplementationExtension::class
