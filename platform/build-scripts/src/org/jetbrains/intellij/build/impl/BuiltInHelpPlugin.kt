@@ -76,6 +76,7 @@ internal fun helpPluginXml(version: String, buildNumber: String, productName: St
   <description>$productName Web Help for offline use: when help is invoked, pages are delivered via built-in Web server. In the plugin settings (Settings | Tools | $productName Help), you can opt to always use built-in help, even when Internet connection is available.</description>
 
   <depends>$productModuleDep</depends>
+  <content namespace="jetbrains"/>
   <dependencies>
     <module name="intellij.libraries.jackson3"/>
     <module name="intellij.libraries.jackson3.databind"/>
