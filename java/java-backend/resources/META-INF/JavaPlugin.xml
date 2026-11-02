@@ -119,7 +119,7 @@
     <projectService serviceInterface="com.intellij.psi.JavaCodeFragmentFactory"
                     serviceImplementation="com.intellij.psi.impl.JavaCodeFragmentFactoryImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
+                    serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl" overrides="true"/>
     <projectService serviceInterface="com.intellij.psi.codeStyle.JavaCodeStyleManager"
                     serviceImplementation="com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl" overrides="true"/>
     <projectService serviceInterface="com.intellij.codeInsight.NullableNotNullManager" open="true"

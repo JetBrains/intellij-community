@@ -3,10 +3,12 @@ package com.intellij.java.psi;
 
 import com.intellij.core.CoreJavaCodeStyleManager;
 import com.intellij.core.CoreJavaDirectoryService;
+import com.intellij.core.CoreLanguageLevelProjectExtension;
 import com.intellij.core.CorePackageIndex;
 import com.intellij.core.CorePsiPackageImplementationHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.psi.JavaDirectoryService;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -37,6 +39,7 @@ public class JavaPluginOverridesBasicDefaultsTest {
   @Test
   public void projectServices() {
     Project project = projectFixture.get();
+    assertNotEquals(CoreLanguageLevelProjectExtension.class, LanguageLevelProjectExtension.getInstance(project).getClass());
     assertNotEquals(CoreJavaCodeStyleManager.class, JavaCodeStyleManager.getInstance(project).getClass());
     assertNotEquals(CorePackageIndex.class, PackageIndex.getInstance(project).getClass());
   }
