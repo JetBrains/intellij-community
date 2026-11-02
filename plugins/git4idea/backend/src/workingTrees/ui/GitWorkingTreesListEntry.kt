@@ -67,7 +67,10 @@ private fun buildRepositoryEntries(
 ): List<GitWorkingTreesListEntry> {
   val kind = repositoryKind(repository)
   val entries = mutableListOf<GitWorkingTreesListEntry>()
-  repository.state.workingTrees.sortedByDescending { it.isMain }.forEach { wt ->
+  val pendingInRepository = pendingCreations(repository)
+  // A worktree that is still pending shows only its creating row, also after git has listed it.
+  val pendingPaths = pendingInRepository.mapTo(HashSet()) { it.targetPath }
+  repository.state.workingTrees.filter { it.path !in pendingPaths }.sortedByDescending { it.isMain }.forEach { wt ->
     entries.add(GitWorktreeRow(
       repository = repository,
       multiRoot = multiRoot,
@@ -77,7 +80,7 @@ private fun buildRepositoryEntries(
       repositoryKind = kind,
     ))
   }
-  pendingCreations(repository).forEach { pending ->
+  pendingInRepository.forEach { pending ->
     entries.add(GitWorktreeCreatingRow(
       repository = repository,
       multiRoot = multiRoot,

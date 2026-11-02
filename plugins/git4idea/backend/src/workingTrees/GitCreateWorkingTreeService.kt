@@ -2,6 +2,7 @@
 package git4idea.workingTrees
 
 import com.intellij.diagnostic.rethrowControlFlowException
+import com.intellij.dvcs.repo.repositoryId
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
@@ -42,6 +43,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.text.UniqueNameGenerator
+import com.intellij.vcs.git.repo.GitRepositoriesHolder
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitBranch
 import git4idea.GitOperationsCollector
@@ -64,10 +66,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.onSubscription
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Files
@@ -75,6 +80,7 @@ import java.nio.file.Path
 import kotlin.coroutines.resume
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.time.Duration.Companion.seconds
 
 @Service(Service.Level.APP)
 @ApiStatus.Internal
@@ -88,6 +94,7 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
 
     private const val LAST_PARENT_PATH_KEY = "Git.CreateWorkingTree.LastParentPath"
     private const val MAX_WORKTREE_DIR_NAME_LENGTH = 100
+    private val PENDING_CREATION_LISTING_TIMEOUT = 10.seconds
 
     //The system temp directory, resolved in the [eel]'s own environment (WSL/Docker/local)
     @RequiresBackgroundThread(generateAssertion = false)
@@ -178,7 +185,10 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
 
   private val _pendingCreations = MutableStateFlow<Map<FilePath, GitWorktreePendingCreation>>(emptyMap())
 
-  /** Worktrees whose `git worktree add` is still running, keyed by target path; feeds the tab's synthetic "creating" rows. */
+  /**
+   * Worktrees whose `git worktree add` is still running, or that the Worktrees tab model does not list yet, keyed by
+   * target path; feeds the tab's synthetic "creating" rows.
+   */
   internal val pendingCreations: StateFlow<Map<FilePath, GitWorktreePendingCreation>> = _pendingCreations.asStateFlow()
 
   internal fun isWorkingTreeCreationInProgress(workingTree: GitWorkingTree): Boolean {
@@ -556,13 +566,57 @@ class GitCreateWorkingTreeService(private val coroutineScope: CoroutineScope) {
     force: Boolean,
     reportOwnProgress: Boolean,
   ): GitWorkingTreesService.Result {
-    val pending = GitWorktreePendingCreation.from(request)
-    _pendingCreations.update { it + (request.workingTreePath to pending) }
+    addPendingCreation(request)
+    var result: GitWorkingTreesService.Result? = null
     try {
-      return gitWTService.createWorkingTree(request, force, reportOwnProgress)
+      result = gitWTService.createWorkingTree(request, force, reportOwnProgress)
+      return result
     }
     finally {
-      _pendingCreations.update { it - request.workingTreePath }
+      if (result?.success == true) {
+        removePendingCreationOnceListed(request)
+      }
+      else {
+        _pendingCreations.update { it - request.workingTreePath }
+      }
+    }
+  }
+
+  /** Adds the pending creation of [request], so the Worktrees tab shows a creating row for it. */
+  @VisibleForTesting
+  internal fun addPendingCreation(request: GitWorktreeCreationRequest) {
+    _pendingCreations.update { it + (request.workingTreePath to GitWorktreePendingCreation.from(request)) }
+  }
+
+  /**
+   * Keeps the pending creation of [request] until the Worktrees tab model lists the new worktree, so the tab never
+   * shows the worktree as missing between `git worktree add` and the next model reload. Removes it after
+   * [PENDING_CREATION_LISTING_TIMEOUT] even if no reload lists the worktree. Stops waiting, and removes the pending
+   * creation, when the repository is disposed, also when the repository was disposed before the wait started.
+   */
+  @VisibleForTesting
+  internal fun removePendingCreationOnceListed(request: GitWorktreeCreationRequest) {
+    val path = request.workingTreePath
+    request.repository.coroutineScope.launch {
+      withTimeoutOrNull(PENDING_CREATION_LISTING_TIMEOUT) {
+        awaitWorkingTreeListed(request.repository, path)
+      }
+    }.invokeOnCompletion {
+      _pendingCreations.update { it - path }
+    }
+  }
+
+  /**
+   * Reloads the working trees of [repository] and waits until [GitRepositoriesHolder] lists [path] without a lock.
+   */
+  @VisibleForTesting
+  internal suspend fun awaitWorkingTreeListed(repository: GitRepository, path: FilePath) {
+    val project = repository.project
+    if (project.isDisposed) return
+    val holder = GitRepositoriesHolder.getInstance(project)
+    val repositoryId = repository.repositoryId()
+    holder.updates.onSubscription { repository.workingTreeHolder.scheduleReload() }.first {
+      holder.initialized && holder.get(repositoryId)?.state?.workingTrees?.any { tree -> tree.path == path && !tree.isLocked } == true
     }
   }
 
