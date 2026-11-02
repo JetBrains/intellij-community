@@ -54,30 +54,6 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
     styleSheetCache.get(JBHtmlPaneStylesheetParameters(paneBackgroundColor.rgb and 0xffffff, scaleFactor,
                                                        baseFontSize, JBHtmlPaneStyleConfigurationSnapshot(configuration)))
 
-  init {
-    // Editor color scheme can be referenced from JBHtmlPaneStyleConfiguration,
-    // through linked stylesheets e.g., EditorColorsSchemeStyleSheet,
-    // which can contain references to projects and editors.
-    // Drop caches if projects or editors are closed to avoid memory leaks.
-    val messageBus = ApplicationManager.getApplication().messageBus.connect()
-    messageBus.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
-      override fun projectClosed(project: Project) {
-        invalidateCache()
-      }
-    })
-    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
-      override fun editorReleased(event: EditorFactoryEvent) {
-        invalidateCache()
-      }
-    }, messageBus)
-    // Drop caches on global colors scheme change
-    messageBus.subscribe(EditorColorsManager.TOPIC, object : EditorColorsListener {
-      override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-        invalidateCache()
-      }
-    })
-  }
-
   private fun invalidateCache() {
     styleSheetCache.invalidateAll()
   }
@@ -111,6 +87,30 @@ internal class JBHtmlPaneStyleSheetRulesProvider {
   private val styleSheetCache: LoadingCache<JBHtmlPaneStylesheetParameters, StyleSheet> = Caffeine.newBuilder()
     .maximumSize(20)
     .build { (bgColor, scaleFactor, baseFontSize, configuration) -> buildStyleSheet(Color(bgColor), { (it * scaleFactor).roundToInt() }, baseFontSize, configuration) }
+
+  init {
+    // Editor color scheme can be referenced from JBHtmlPaneStyleConfiguration,
+    // through linked stylesheets e.g., EditorColorsSchemeStyleSheet,
+    // which can contain references to projects and editors.
+    // Drop caches if projects or editors are closed to avoid memory leaks.
+    val messageBus = ApplicationManager.getApplication().messageBus.connect()
+    messageBus.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosed(project: Project) {
+        invalidateCache()
+      }
+    })
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        invalidateCache()
+      }
+    }, messageBus)
+    // Drop caches on global colors scheme change
+    messageBus.subscribe(EditorColorsManager.TOPIC, object : EditorColorsListener {
+      override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+        invalidateCache()
+      }
+    })
+  }
 
   private fun buildStyleSheet(paneBackgroundColor: Color, scale: (Int) -> Int, baseFontSize: Int, configuration: JBHtmlPaneStyleConfigurationSnapshot): StyleSheet =
     StyleSheetUtil.loadStyleSheet(sequenceOf(
