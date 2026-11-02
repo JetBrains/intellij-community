@@ -144,8 +144,8 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
     }
   }
 
-  /** Returns whether the document is available and its current snapshot is this exact [snapshot] instance. */
-  internal fun isCurrentSnapshot(snapshot: DocumentSnapshot): Boolean = documentReference.get()?.core?.snapshot() === snapshot
+  /** Returns whether this store is active and its document's current snapshot is this exact [snapshot] instance. */
+  internal fun isCurrentSnapshot(snapshot: DocumentSnapshot): Boolean = !disposed && documentReference.get()?.core?.snapshot() === snapshot
 
   /** Returns the root reference for the current document snapshot, creating the root entry when necessary. */
   override fun currentRootReference(): AtomicReference<PMarkerRoot> {
@@ -220,14 +220,6 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   /** Replaces the root for [snapshot] with [root]. */
   internal fun restoreRoot(snapshot: DocumentSnapshot, root: PMarkerRoot) {
     rootReference(snapshot, root).set(root)
-  }
-
-  /**
-   * Captures the root state and root instance for [snapshot] without creating an entry.
-   * The caller must hold the registry's monitor.
-   */
-  internal fun captureRoot(snapshot: DocumentSnapshot): CapturedRoot {
-    return CapturedRoot(this, roots[snapshot])
   }
 
   /**
@@ -310,12 +302,18 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   fun processQueue(): Boolean = (roots as ReferenceQueueable).processQueue()
 
   /**
-   * Holds a root reference for the current document snapshot.
+   * Registers [store] and holds its current root reference.
    * Publication clears [state] before the snapshot changes. It fills [state] after the new snapshot is visible.
    */
-  internal class CurrentRootCache {
+  internal class CurrentRootCache(val store: SnapshotMarkerRootStore<*>) {
     @Volatile
     var state: State? = null
+
+    /**
+     * Captures the root state and root instance for [snapshot] without creating an entry.
+     * The caller must hold the registry's monitor.
+     */
+    fun captureRoot(snapshot: DocumentSnapshot): CapturedRoot = CapturedRoot(this, store.roots[snapshot])
 
     /** Returns the cached reference for this exact [snapshot] instance, or `null` on a cache miss. */
     fun get(snapshot: DocumentSnapshot): AtomicReference<PMarkerRoot>? {
@@ -327,9 +325,12 @@ class SnapshotMarkerRootStore<T : SnapshotRangeMarkerImpl> @JvmOverloads constru
   }
 
   internal class CapturedRoot(
-    val store: SnapshotMarkerRootStore<*>,
+    val cache: CurrentRootCache,
     private val beforeState: RootState?,
   ) {
+    val store: SnapshotMarkerRootStore<*>
+      get() = cache.store
+
     val root: PMarkerRoot? = beforeState?.rootReference?.get()
     var afterState: RootState? = null
 

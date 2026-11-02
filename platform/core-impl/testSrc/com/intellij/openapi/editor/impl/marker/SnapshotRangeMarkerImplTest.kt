@@ -50,6 +50,32 @@ internal class SnapshotRangeMarkerImplTest {
   }
 
   @Test
+  fun `disposal during publication clears the store cache`() {
+    RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
+      val core = DocumentImpl("abcdefgh", true).core
+      var current = core.snapshot()
+      val document = DocumentImpl(object : DocumentCore by core {
+        override fun snapshot(): DocumentBranch = current
+      }, null)
+      val store = SnapshotMarkerRootStore(document, SnapshotRangeMarkerImpl::class.java)
+      val before = current
+      store.rootReference(before)
+      val cache = checkNotNull(store.currentRootCache.get())
+      val patch = DocumentPatch.simple(0, 0, "xx", newModStamp = 1, clearLineFlags = false)
+      var after = before
+      for (op in patch.ops()) after = after.applyOp(op)
+
+      assertTrue(document.snapshotMarkerStores.tryCommit(before, after, patch, isCurrent = { current === before }, publish = {
+        current = after
+        store.dispose(document.snapshotMarkerStores)
+      }))
+
+      assertNull(cache.get(after))
+      assertNull(store.root(after))
+    }
+  }
+
+  @Test
   fun `updates to a previous snapshot preserve the current root`() {
     RangeMarkersImpl.usePMarkerImplementationIn<RuntimeException> {
       val document = DocumentImpl("abcdefgh", true)

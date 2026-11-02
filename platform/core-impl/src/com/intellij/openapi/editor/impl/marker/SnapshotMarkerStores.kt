@@ -5,9 +5,9 @@ import com.intellij.openapi.editor.ex.DocumentOp
 import com.intellij.openapi.editor.ex.DocumentPatch
 import com.intellij.openapi.editor.ex.DocumentSnapshot
 import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore.CapturedRoot
+import com.intellij.openapi.editor.impl.marker.SnapshotMarkerRootStore.CurrentRootCache
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.TestOnly
-import java.util.IdentityHashMap
 
 /**
  * Applies each [DocumentOp] to all marker roots for one document.
@@ -18,8 +18,7 @@ import java.util.IdentityHashMap
  * Its monitor guards validation and publication. Tree transformations run outside the monitor.
  */
 class SnapshotMarkerStores {
-  private val stores: MutableList<SnapshotMarkerRootStore<*>> = ContainerUtil.createEmptyCOWList()
-  private val currentRoots: MutableMap<SnapshotMarkerRootStore<*>, SnapshotMarkerRootStore.CurrentRootCache> = IdentityHashMap()
+  private val registrations: MutableList<CurrentRootCache> = ContainerUtil.createEmptyCOWList()
   private var storeVersion: Long = 0
 
   /** The commit gate guards this flag. A lookup must not fill a slot while publication changes the current snapshot. */
@@ -30,11 +29,12 @@ class SnapshotMarkerStores {
    * Registers [store] for document changes and returns an empty cache for its current root.
    * The registry holds both strongly until [unregister] removes them.
    */
-  internal fun register(store: SnapshotMarkerRootStore<*>): SnapshotMarkerRootStore.CurrentRootCache =
+  internal fun register(store: SnapshotMarkerRootStore<*>): CurrentRootCache =
     synchronized(this) {
-      stores.add(store)
+      val cache = CurrentRootCache(store)
+      registrations.add(cache)
       storeVersion++
-      SnapshotMarkerRootStore.CurrentRootCache().also { currentRoots[store] = it }
+      cache
     }
 
   /**
@@ -43,8 +43,11 @@ class SnapshotMarkerStores {
    */
   internal fun unregister(store: SnapshotMarkerRootStore<*>) {
     synchronized(this) {
-      stores.remove(store)
-      currentRoots.remove(store)?.state = null
+      val cache = registrations.firstOrNull { it.store === store }
+      if (cache != null) {
+        registrations.remove(cache)
+        cache.state = null
+      }
       storeVersion++
     }
   }
@@ -102,7 +105,7 @@ class SnapshotMarkerStores {
         emptyList()
       }
       else {
-        stores.map { it.captureRoot(beforeSnapshot) }
+        registrations.map { it.captureRoot(beforeSnapshot) }
       }
     }
     if (patch != null) {
@@ -134,7 +137,7 @@ class SnapshotMarkerStores {
         captured.afterState = captured.store.installRoot(afterSnapshot, state)
       }
       isPublishing = true
-      for (cache in currentRoots.values) cache.state = null
+      for (cache in registrations) cache.state = null
       try {
         publish()
       }
@@ -145,7 +148,7 @@ class SnapshotMarkerStores {
         val captured = capturedRoots[i]
         val state = captured.afterState ?: continue
         if (captured.store.isCurrentSnapshot(afterSnapshot)) {
-          currentRoots[captured.store]?.state = SnapshotMarkerRootStore.CurrentRootCache.State(afterSnapshot, state.rootReference)
+          captured.cache.state = CurrentRootCache.State(afterSnapshot, state.rootReference)
         }
       }
       true
@@ -163,13 +166,15 @@ class SnapshotMarkerStores {
     SnapshotMarkerEngine.processQueue()
     if (markerSnapshot === metadataSnapshot) return metadataSnapshot
 
-    val relevantStores = stores.filter { it.containsSnapshot(markerSnapshot) || it.containsSnapshot(metadataSnapshot) }
-    if (relevantStores.isEmpty()) {
+    val relevantRegistrations = registrations.filter {
+      it.store.containsSnapshot(markerSnapshot) || it.store.containsSnapshot(metadataSnapshot)
+    }
+    if (relevantRegistrations.isEmpty()) {
       return metadataSnapshot
     }
 
     val mergedSnapshot = metadataSnapshot.newInstance()
-    relevantStores.forEach { it.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
+    relevantRegistrations.forEach { it.store.merge(markerSnapshot, metadataSnapshot, mergedSnapshot) }
     return mergedSnapshot
   }
 
