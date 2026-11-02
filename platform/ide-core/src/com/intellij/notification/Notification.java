@@ -191,29 +191,35 @@ public class Notification {
 
   @ApiStatus.Internal
   public boolean canShowFor(@Nullable Project project) {
-    configureDoNotAskOption();
-    if (DoNotAskAppManager.getInstance().isDoNotAsk(myDoNotAskId)) {
+    var doNotAskId = getDoNotAskId();
+    if (DoNotAskAppManager.getInstance().isDoNotAsk(doNotAskId)) {
       return false;
     }
     if (project != null) {
-      return !DoNotAskProjectManager.getInstance(project).isDoNotAsk(myDoNotAskId);
+      return !DoNotAskProjectManager.getInstance(project).isDoNotAsk(doNotAskId);
     }
     return true;
   }
 
-  private void configureDoNotAskOption() {
-    if (myDoNotAskId == null && myDisplayId != null) {
-      myDoNotAskDisplayName = myTitle;
-      myDoNotAskId = myDisplayId;
+  private @NotNull String getDoNotAskId() {
+    if (myDoNotAskId != null) {
+      return myDoNotAskId;
     }
-    else if (myDoNotAskId == null) {
-      @NlsSafe var title = NotificationGroup.getGroupTitle(myGroupId);
-      if (title == null) {
-        title = myGroupId;
-      }
-      myDoNotAskDisplayName = title;
-      myDoNotAskId = myGroupId;
+    return myDisplayId != null ? myDisplayId : myGroupId;
+  }
+
+  /**
+   * Returns the name of the "Don't ask again" option for the notification settings.
+   */
+  private @Nls @Nullable String getDoNotAskDisplayName() {
+    if (myDoNotAskId != null) {
+      return myDoNotAskDisplayName;
     }
+    if (myDisplayId != null) {
+      return myTitle;
+    }
+    @NlsSafe var title = NotificationGroup.getGroupTitle(myGroupId);
+    return title == null ? myGroupId : title;
   }
 
   @ApiStatus.Internal
@@ -451,12 +457,13 @@ public class Notification {
   @ApiStatus.Experimental
   @Contract("_ -> this")
   public Notification setDoNotAskFor(@Nullable Project project) {
-    configureDoNotAskOption();
+    var doNotAskId = getDoNotAskId();
+    var displayName = getDoNotAskDisplayName();
     if (project == null) {
-      DoNotAskAppManager.getInstance().markDoNotAsk(myDoNotAskId, myDoNotAskDisplayName);
+      DoNotAskAppManager.getInstance().markDoNotAsk(doNotAskId, displayName);
     }
     else {
-      DoNotAskProjectManager.getInstance(project).markDoNotAsk(myDoNotAskId, myDoNotAskDisplayName);
+      DoNotAskProjectManager.getInstance(project).markDoNotAsk(doNotAskId, displayName);
     }
     return this;
   }

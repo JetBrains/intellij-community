@@ -39,6 +39,26 @@ internal class NotificationGroupLazyTitleTest {
     assertThat(classLoader.bundleRequests.get()).isEqualTo(requestsAfterFirstRead)
   }
 
+  @Test
+  fun `canShowFor does not read the group title`(@TestDisposable disposable: Disposable) {
+    val classLoader = BundleClassLoader("group.title=Lazy group title")
+    registerGroup(classLoader, disposable)
+    val doNotAskManager = DoNotAskAppManager.getInstance()
+    try {
+      val notification = Notification(GROUP_ID, "Title", "Content", NotificationType.INFORMATION)
+      assertThat(notification.canShowFor(null)).isTrue()
+      assertThat(classLoader.bundleRequests.get()).isZero()
+
+      notification.setDoNotAskFor(null)
+      assertThat(classLoader.bundleRequests.get()).isPositive()
+      assertThat(doNotAskManager.getDoNotAskNotifications()[GROUP_ID]).isEqualTo("Lazy group title")
+      assertThat(notification.canShowFor(null)).isFalse()
+    }
+    finally {
+      doNotAskManager.clearDoNotAsk(GROUP_ID)
+    }
+  }
+
   private fun registerGroup(classLoader: ClassLoader, disposable: Disposable) {
     val element = JDOMUtil.load("""<notificationGroup id="$GROUP_ID" displayType="BALLOON"
                                                    bundle="${BUNDLE_PATH.replace('/', '.')}" key="group.title"/>""")
