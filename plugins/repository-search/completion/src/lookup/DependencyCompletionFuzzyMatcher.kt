@@ -93,8 +93,8 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
    * returning one highlight fragment per matched token, or `null` if no prefix token matches at all.
    *
    * [offset] is the absolute start of [namePart] within the whole search result. Each prefix token is aligned
-   * to a name token by their shared (case-insensitive) leading characters, and only those characters are
-   * highlighted. A token matches when it is a full prefix of the name token (so a short token like `b` still
+   * to the name token with the longest shared (case-insensitive) leading characters, and only those characters
+   * are highlighted. On a tie, the earlier name token wins. A token matches when it is a full prefix of the name token (so a short token like `b` still
    * matches `beans`) or shares at least [MIN_PARTIAL_MATCH_LENGTH] characters (so a typo like `stater` still
    * highlights the `sta` of `starter`). A prefix token that matches no name token is skipped without consuming
    * any name token, so the remaining prefix tokens can still match (e.g. `boot-stater-actuator` against
@@ -109,16 +109,20 @@ open class DependencyCompletionFuzzyMatcher(prefix: String) : PrefixMatcher(pref
     val fragments = mutableListOf<MatchedFragment>()
     var cursor = 0
     for (prefixToken in prefixTokens) {
-      // Find the next name token (at or after the cursor) that shares enough of a leading prefix.
-      var index = cursor
+      // Find the name token (at or after the cursor) with the longest shared leading prefix. A full prefix match stops the scan.
+      var index = nameTokens.size
       var matchLength = 0
-      while (index < nameTokens.size) {
-        val length = prefixToken.text.commonPrefixWith(nameTokens[index].text, ignoreCase = true).length
-        if (length == prefixToken.text.length || length >= MIN_PARTIAL_MATCH_LENGTH) {
+      for (candidate in cursor until nameTokens.size) {
+        val length = prefixToken.text.commonPrefixWith(nameTokens[candidate].text, ignoreCase = true).length
+        if (length == prefixToken.text.length) {
+          index = candidate
           matchLength = length
           break
         }
-        index++
+        if (length >= MIN_PARTIAL_MATCH_LENGTH && length > matchLength) {
+          index = candidate
+          matchLength = length
+        }
       }
       // No name token matches this prefix token: skip it without advancing the cursor, so the name tokens
       // scanned over remain available for the following prefix tokens.

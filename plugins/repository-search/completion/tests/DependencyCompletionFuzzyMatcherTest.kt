@@ -59,6 +59,18 @@ class DependencyCompletionFuzzyMatcherTest {
   }
 
   @Test
+  fun `full token match beats an earlier token with a shared leading prefix`() {
+    // "junit" shares "ju" with "jupiter", but the later "jupiter" token matches fully.
+    assertThat(highlighted("jupiter", "org.junit.jupiter")).containsExactly("jupiter")
+  }
+
+  @Test
+  fun `longer partial match beats an earlier shorter partial match`() {
+    // "stater" shares "st" with "stream" and "sta" with "starter"; the longer shared prefix wins.
+    assertThat(highlighted("stater", "spring-stream-starter")).containsExactly("sta")
+  }
+
+  @Test
   fun `matching is case-insensitive`() {
     assertThat(highlighted("JUnit", "junit-jupiter-api")).containsExactly("junit")
   }
