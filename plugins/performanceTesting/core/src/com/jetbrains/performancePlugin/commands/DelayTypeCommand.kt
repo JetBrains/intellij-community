@@ -3,19 +3,15 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ProjectUtil
-import com.intellij.internal.statistic.collectors.fus.LatencyRecord
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeIntentReadAction
-import com.intellij.openapi.editor.actionSystem.LatencyListener
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerResult
@@ -64,12 +60,6 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
     val calculateAnalyzesTime = argumentList.size > 2 && argumentList[2].toBoolean()
     val disableWriteProtection = argumentList.size > 3 && argumentList[3].toBoolean()
 
-    val latencyRecorder = LatencyRecord()
-    val applicationConnection = ApplicationManager.getApplication().messageBus.connect()
-    applicationConnection.subscribe(LatencyListener.TOPIC, LatencyListener { _, _, latencyMs ->
-      latencyRecorder.update(latencyMs.toInt())
-    })
-
     withContext(Dispatchers.EDT) {
       ProjectUtil.focusProjectWindow(project, true)
     }
@@ -85,7 +75,7 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
     val codeAnalysisJob = Ref<DaemonCodeAnalyzerResult>()
     val projectConnection = project.messageBus.simpleConnect()
 
-    PerformanceTestSpan.TRACER.spanBuilder(SPAN_NAME).setParent(PerformanceTestSpan.getContext()).useWithScope { span ->
+    withTypingLatencySpan { span ->
       coroutineScope {
         val barriers = Array(text.length) { CompletableDeferred<Unit>() }
         List(text.length) { i ->
@@ -140,19 +130,12 @@ class DelayTypeCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapte
           }
         }
       }
-
-      if (!latencyRecorder.samples.isEmpty) {
-        span.setAttribute("latency#max", latencyRecorder.maxLatency.toLong())
-        span.setAttribute("latency#p90", latencyRecorder.percentile(90).toLong())
-        span.setAttribute("latency#mean_value", latencyRecorder.averageLatency)
-      }
     }
 
     if (calculateAnalyzesTime) {
       codeAnalysisJob.get().blockingWaitForComplete()
     }
     projectConnection.disconnect()
-    applicationConnection.disconnect()
   }
 
 }
