@@ -17,7 +17,7 @@ object JavaPluginLayout {
    */
   val ALL_MAIN_MODULE_NAMES: PersistentList<String> = persistentListOf(MAIN_MODULE_NAME, BASIC_PLUGIN_MAIN_MODULE_NAME)
 
-  fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
+  private fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
     return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       // run configurations put this jar on the classpath of a user process, so it stays a jar of its own
@@ -35,4 +35,19 @@ object JavaPluginLayout {
       addition?.invoke(spec)
     }
   }
+
+  /**
+   * The layout of `com.intellij.java` and the layout of `com.intellij.java.basic`, in this order. [addition] goes to the
+   * Java layout.
+   */
+  fun javaPluginLayouts(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PersistentList<PluginLayout> {
+    return persistentListOf(javaPlugin(addition), javaBasicPlugin())
+  }
+
+  /**
+   * The layout of `com.intellij.java.basic`.
+   *
+   * Register it next to [javaPlugin].
+   */
+  fun javaBasicPlugin(): PluginLayout = PluginLayout.pluginAuto(listOf(BASIC_PLUGIN_MAIN_MODULE_NAME))
 }

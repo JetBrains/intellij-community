@@ -102,7 +102,7 @@ class MPSProperties : JetBrainsProductProperties() {
 
         val previousPluginLayouts = productLayout.pluginLayouts
         productLayout.pluginLayouts = lazy {
-            (previousPluginLayouts.value + JavaPluginLayout.javaPlugin(patchPluginXml())).toPersistentList()
+            (previousPluginLayouts.value + JavaPluginLayout.javaPluginLayouts(patchPluginXml())).toPersistentList()
         }
 
         productLayout.addPlatformSpec { layout ->

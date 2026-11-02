@@ -69,10 +69,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : JetBrai
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = true
     productLayout.pluginLayouts = lazy {
-      getCommunityRepositoryPlugins() + persistentListOf(
-        JavaPluginLayout.javaPlugin(),
-        groovyPlugin()
-      ) + androidPlugin()
+      getCommunityRepositoryPlugins() + JavaPluginLayout.javaPluginLayouts() + groovyPlugin() + androidPlugin()
     }
 
     productLayout.skipUnresolvedContentModules = true
