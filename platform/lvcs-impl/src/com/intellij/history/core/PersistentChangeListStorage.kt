@@ -2,6 +2,7 @@
 package com.intellij.history.core
 
 import com.intellij.history.core.LocalHistoryStorageUtil.buildBrokenStorageMessage
+import com.intellij.history.core.LocalHistoryStorageUtil.getPurgePeriod
 import com.intellij.history.core.LocalHistoryStorageUtil.notifyStorageBroken
 import com.intellij.history.core.LocalHistoryStorageUtil.openLocalHistoryStorage
 import com.intellij.history.core.changes.ChangeSet
@@ -38,6 +39,11 @@ internal class PersistentChangeListStorage(
   val lastId: Long get() = lastIdRef.get()
 
   private var isCompletelyBroken = false
+
+  /**
+   * True after [purgeOnce] ran [purge].
+   */
+  private var isPurged = false
 
   init {
     storage = initStorage()
@@ -109,6 +115,7 @@ internal class PersistentChangeListStorage(
   }
 
   override fun flush() {
+    purgeOnce()
     try {
       flushPending()
       writeLastId()
@@ -199,5 +206,17 @@ internal class PersistentChangeListStorage(
     catch (e: IOException) {
       handleError(e, null)
     }
+  }
+
+  /**
+   * Runs [purge] on the first call only. [getPurgePeriod] gives the period.
+   * [flush] calls it, so the first flush purges the storage.
+   */
+  @Synchronized
+  private fun purgeOnce() {
+    if (isPurged) return
+    isPurged = true
+    LocalHistoryLog.LOG.debug("Purging local history...")
+    purge(getPurgePeriod(), ChangeList.DEFAULT_INTERVAL_BETWEEN_ACTIVITIES_MILLISECONDS)
   }
 }

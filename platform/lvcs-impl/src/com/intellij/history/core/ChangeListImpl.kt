@@ -6,22 +6,13 @@ import com.intellij.history.core.changes.Change
 import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.progress.checkCanceled
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.NlsContexts
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.Duration.Companion.days
-
-private const val DAYS_TO_KEEP_PROPERTY_KEY = "localHistory.daysToKeep"
-private const val DEFAULT_DAYS_TO_KEEP = 5
 
 internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeList {
-  private val purged = AtomicBoolean(false)
-
   private var changeSetDepth = 0
   private var currentChangeSet: ChangeSet? = null
 
@@ -113,28 +104,9 @@ internal class ChangeListImpl(private val storage: ChangeListStorage) : ChangeLi
 
   suspend fun flush() {
     withContext(Dispatchers.IO) {
-      if (purged.compareAndSet(false, true)) {
-        val daysToKeep = getDaysToKeep()
-        val period = daysToKeep.days.inWholeMilliseconds
-        LocalHistoryLog.LOG.debug("Purging local history...")
-        purgeObsolete(period)
-      }
-      checkCanceled()
-
       storage.flush()
     }
   }
-
-  private fun getDaysToKeep(): Int =
-    try {
-      AdvancedSettings.getInt(DAYS_TO_KEEP_PROPERTY_KEY)
-    }
-    catch (e: IllegalArgumentException) {
-      // The advanced setting may not be registered (e.g. in test environments where the lvcs-impl extensions aren't loaded).
-      LocalHistoryLog.LOG.warn("Advanced setting '$DAYS_TO_KEEP_PROPERTY_KEY' is not registered, using default value $DEFAULT_DAYS_TO_KEEP",
-                               e)
-      DEFAULT_DAYS_TO_KEEP
-    }
 
   @Synchronized
   fun close(drop: Boolean) {

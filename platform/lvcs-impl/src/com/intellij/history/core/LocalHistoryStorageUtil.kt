@@ -5,6 +5,7 @@ import com.intellij.history.core.changes.ChangeSet
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.history.utils.LocalHistoryLog
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.io.delete
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
@@ -14,9 +15,13 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.text.DateFormat
+import kotlin.time.Duration.Companion.days
+
+private const val DAYS_TO_KEEP_PROPERTY_KEY = "localHistory.daysToKeep"
+private const val DEFAULT_DAYS_TO_KEEP = 5
 
 /**
- * The storage constants, the storage init, the log texts, and the notification of the persistent local history storage.
+ * The storage constants, the storage init, the purge period, the log texts, and the notification of the persistent local history storage.
  * The record helpers, the change set iterator, and the purge are at the file level.
  */
 internal object LocalHistoryStorageUtil {
@@ -63,6 +68,23 @@ internal object LocalHistoryStorageUtil {
 
     return storage
   }
+
+  /**
+   * Returns the purge period in milliseconds. The `localHistory.daysToKeep` advanced setting gives it in days.
+   * When the advanced setting is not registered, the period is [DEFAULT_DAYS_TO_KEEP] days.
+   */
+  fun getPurgePeriod(): Long = getDaysToKeep().days.inWholeMilliseconds
+
+  private fun getDaysToKeep(): Int =
+    try {
+      AdvancedSettings.getInt(DAYS_TO_KEEP_PROPERTY_KEY)
+    }
+    catch (e: IllegalArgumentException) {
+      // The advanced setting may not be registered (e.g. in test environments where the lvcs-impl extensions aren't loaded).
+      LocalHistoryLog.LOG.warn("Advanced setting '$DAYS_TO_KEEP_PROPERTY_KEY' is not registered, using default value $DEFAULT_DAYS_TO_KEEP",
+                               e)
+      DEFAULT_DAYS_TO_KEEP
+    }
 
   /**
    * Returns the log text about a broken storage in [storageDir].

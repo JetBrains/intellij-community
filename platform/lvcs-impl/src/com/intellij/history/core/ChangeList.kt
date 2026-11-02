@@ -39,6 +39,6 @@ interface ChangeList {
   val changesInTests: List<ChangeSet> get() = iterChanges().toList()
 
   companion object {
-    private val DEFAULT_INTERVAL_BETWEEN_ACTIVITIES_MILLISECONDS: Long = 12.hours.inWholeMilliseconds
+    internal val DEFAULT_INTERVAL_BETWEEN_ACTIVITIES_MILLISECONDS: Long = 12.hours.inWholeMilliseconds
   }
 }
